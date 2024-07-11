@@ -1,0 +1,449 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云REDIS_N",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": false,
+                "id": "2c38fd30-4c4c-40a9-ad4a-5c945db32947",
+                "layout": {
+                    "h": 1,
+                    "i": "2c38fd30-4c4c-40a9-ad4a-5c945db32947",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "默认分组",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+                "layout": {
+                    "h": 4,
+                    "i": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "CPU 使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_cpu_usage_average{instance_id=\"$instance_id\"}",
+                        "instant": false,
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c43eb882-915f-4c38-a0b5-8f33c21ab44a",
+                "layout": {
+                    "h": 4,
+                    "i": "09903231-6557-42be-9cf3-2873878e9bf2",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "内存使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_memory_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "37447883-ad79-46bc-888a-1be2835c1c64",
+                "layout": {
+                    "h": 4,
+                    "i": "378a5a26-c28e-4612-af09-f82ec2e11d80",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "连接数使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_connection_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2d1c8cdf-538e-48b5-8563-358f242825e5",
+                "layout": {
+                    "h": 4,
+                    "i": "764e188d-d728-44a0-a79d-133d957df9a9",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "流入带宽使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_intranet_in_ratio_average{instance_id=\"$instance_id\"}",
+                        "instant": false,
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0577dc0f-887a-4a54-9100-ef5e5e7443a0",
+                "layout": {
+                    "h": 4,
+                    "i": "93955b6b-620c-4407-908c-01ba4f544fef",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "流出带宽使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_intranet_out_ratio_average{instance_id=\"$instance_id\"}",
+                        "instant": false,
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "a83bd550-3866-4225-9c09-08dd77e1b281",
+                "layout": {
+                    "h": 4,
+                    "i": "7b4d509b-1a8d-4f6a-9df4-f14116c4b9eb",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "连接数使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_kvstore_connection_usage_average{instance_id=\"$instance_id\"}",
+                        "instant": false,
+                        "legend": "",
+                        "refId": "A",
+                        "step": 120
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_kvstore_cpu_usage_average,name)",
+                "multi": false,
+                "name": "name",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_kvstore_cpu_usage_average,instance_id)",
+                "multi": false,
+                "name": "instance_id",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327133348000
+}

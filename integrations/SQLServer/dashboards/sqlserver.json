@@ -1,0 +1,838 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "SQLServer",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "aggrDimension": [],
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "28f81145-c0d2-49bc-9b6c-28e969c25537",
+                "layout": {
+                    "h": 3,
+                    "i": "28f81145-c0d2-49bc-9b6c-28e969c25537",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "Server resource overview",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "F"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "seconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "from": 0,
+                                        "special": 0,
+                                        "to": 100
+                                    },
+                                    "result": {
+                                        "color": "#ff9919"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 100
+                                    },
+                                    "result": {
+                                        "color": "#3fc453"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "D"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "none"
+                            }
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "H"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecSI"
+                            }
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesIEC"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "from": 102400000,
+                                        "textValue": "200",
+                                        "to": null
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 0,
+                                        "to": 100000000
+                                    },
+                                    "result": {
+                                        "color": "#ffae39"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "G"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#3fc453"
+                                    },
+                                    "type": "special"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "I"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#3fc453"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1
+                                    },
+                                    "result": {
+                                        "color": "#ff9919"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Total Server Memory (KB)\",serverName=\"$instance\"}",
+                        "legend": "Total RAM",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Total Server Memory (KB)\",serverName=\"$instance\"}-sqlserver_performance_value{counter=\"Used memory (KB)\",serverName=\"$instance\"}",
+                        "legend": "RAM availbable",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Free Space in tempdb (KB)\",serverName=\"$instance\"}",
+                        "legend": "Pagefile  available size",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Page life expectancy\",serverName=\"$instance\"}",
+                        "legend": "Total page faults",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Batch Requests/sec\",serverName=\"$instance\"}",
+                        "legend": "Batch reqs /sec",
+                        "maxDataPoints": 240,
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Page life expectancy\",serverName=\"$instance\"}",
+                        "legend": "Page life expectancy(sec)",
+                        "maxDataPoints": 240,
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Number of Deadlocks/sec\",serverName=\"$instance\"}",
+                        "legend": "Deadlocks",
+                        "maxDataPoints": 240,
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Errors/sec\",serverName=\"$instance\"}",
+                        "legend": "User errors /sec",
+                        "maxDataPoints": 240,
+                        "refId": "H"
+                    },
+                    {
+                        "expr": "mssql_kill_connection_errors{job=~\"$Job\"}-0",
+                        "legend": "Kill conn errors /sec",
+                        "maxDataPoints": 240,
+                        "refId": "I"
+                    },
+                    {
+                        "expr": "sqlserver_cpu_system_idle_cpu{serverName=\"$instance\"}",
+                        "legend": "sqlserver_cpu_system_idle",
+                        "maxDataPoints": 240,
+                        "refId": "K"
+                    },
+                    {
+                        "expr": "sqlserver_up{serverName=\"$instance\"}",
+                        "legend": "sqlserver_up",
+                        "maxDataPoints": 240,
+                        "refId": "L"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "77467d35-8002-4211-a95d-ed6278567ab4",
+                "layout": {
+                    "h": 1,
+                    "i": "77467d35-8002-4211-a95d-ed6278567ab4",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 3
+                },
+                "name": "Summary",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "f8795e89-0e61-43ec-9c05-90424bf7eb60",
+                "layout": {
+                    "h": 7,
+                    "i": "f8795e89-0e61-43ec-9c05-90424bf7eb60",
+                    "isResizable": true,
+                    "w": 7,
+                    "x": 0,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "当前数据库连接",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "table"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Logical Connections\",serverName=\"$instance\"}",
+                        "legend": "{{sql_instance}} ",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9247c782-4abf-4423-84ba-6453d5491e23",
+                "layout": {
+                    "h": 7,
+                    "i": "9247c782-4abf-4423-84ba-6453d5491e23",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 7,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "DB Log growth since last restart",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "columns": [
+                            "last"
+                        ],
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Log Growths\",serverName=\"$instance\"}",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "47686441-a9d6-4ede-8901-5d05ce3ef8b8",
+                "layout": {
+                    "h": 7,
+                    "i": "47686441-a9d6-4ede-8901-5d05ce3ef8b8",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Number of Deadlocks/sec",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "columns": [
+                            "last"
+                        ],
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_performance_value{counter=\"Number of Deadlocks/sec\",serverName=\"$instance\"}",
+                        "legend": "Number of Deadlocks/sec",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "de76a102-cf5e-40b6-9e2d-833446b48ec2",
+                "layout": {
+                    "h": 7,
+                    "i": "28d8f090-b9c1-4bf9-a2ff-fa4f1d3da661",
+                    "isResizable": true,
+                    "w": 7,
+                    "x": 0,
+                    "y": 11
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "硬盘空闲空间",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "sqlserver_volume_space_available_space_bytes{serverName=\"$instance\"}",
+                        "instant": true,
+                        "legend": "硬盘空闲空间",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9f7ac94a-cc31-4a9b-a242-3ef3daaccd9e",
+                "layout": {
+                    "h": 7,
+                    "i": "db5406f3-7877-42b5-a5d8-23d02be39d4f",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 7,
+                    "y": 11
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "CPU",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "columns": [
+                            "last"
+                        ],
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_cpu_sqlserver_process_cpu{serverName=\"$instance\"}",
+                        "legend": "CPU",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "875eba8d-b99d-462d-99e9-00bd9682e713",
+                "layout": {
+                    "h": 7,
+                    "i": "92d37458-9b5a-4f61-8779-9e5f23e98d27",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 11
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Total wait time of I/O stall",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "columns": [
+                            "last"
+                        ],
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sqlserver_database_io_read_latency_ms{serverName=\"$instance\",database_name=\"h3cloud\"}",
+                        "instant": false,
+                        "legend": "io_read_latency_ms",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-1h"
+                        }
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "bb996a6d-ddec-46c3-8c64-dd2a57a13fd4",
+                "layout": {
+                    "h": 1,
+                    "i": "bb996a6d-ddec-46c3-8c64-dd2a57a13fd4",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "Database I/O wait of stall detailed",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "9c5037d4-563c-412f-b4e9-103d90ecc62d",
+                "layout": {
+                    "h": 8,
+                    "i": "9c5037d4-563c-412f-b4e9-103d90ecc62d",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "links": [],
+                "maxPerRow": 3,
+                "name": "Database wait by I/O stall ",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "columns": [
+                            "last"
+                        ],
+                        "displayMode": "list",
+                        "placement": "right"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "repeat": "database",
+                "targets": [
+                    {
+                        "expr": "sqlserver_database_io_rg_write_stall_ms{serverName=\"$instance\"}+sqlserver_database_io_rg_read_stall_ms{serverName=\"$instance\"}",
+                        "legend": "{{database_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "label": "DS_PROMETHEUS",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(sqlserver_up,sql_instance)",
+                "name": "instance",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328380733000
+}

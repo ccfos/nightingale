@@ -46,9 +46,12 @@ _test
 /docker/n9e
 /docker/compose-bridge/mysqldata
 /docker/compose-host-network/mysqldata
+/docker/compose-host-network-metric-log/mysqldata
+/docker/compose-host-network-metric-log/n9e-logs
 /docker/compose-postgres/pgdata
 /etc.local*
 /front/statik/statik.go
+/docker/compose-bridge/etc-nightingale/rsa/
 
 .alerts
 .idea

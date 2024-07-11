@@ -1,0 +1,1261 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Vsphere",
+    "ident": "",
+    "tags": "Categraf Nightingale VMware-Sphere",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "datasourceValue": "Default",
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "0a149fdd-5c4c-4d09-857c-b16ca3e60f1f",
+                "layout": {
+                    "h": 1,
+                    "i": "0a149fdd-5c4c-4d09-857c-b16ca3e60f1f",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "vSphere Overview",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 5,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {
+                        "title": 12,
+                        "value": 36
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "89ae4416-32f6-4cbd-97dc-12aa11c1363e",
+                "layout": {
+                    "h": 2,
+                    "i": "89ae4416-32f6-4cbd-97dc-12aa11c1363e",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#9470ff",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "count(count(vsphere_host_cpu_usage_average) by(vcenter))",
+                        "legend": "vCenter Summary",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "count(count(vsphere_host_cpu_usage_average) by(clustername))",
+                        "legend": "cluster Summary",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "count(count(vsphere_host_cpu_usage_average) by(esxhostname))",
+                        "legend": "ESXi Summary",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "count(count(vsphere_vm_cpu_used_summation) by(vmname))",
+                        "legend": "VM Summary",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "count(count(vsphere_datastore_disk_used_latest) by(dsname))",
+                        "legend": "Datastore Summary",
+                        "refId": "E"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470ff",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6e2b4ee6-1f73-413a-a174-840490177541",
+                "layout": {
+                    "h": 5,
+                    "i": "6e2b4ee6-1f73-413a-a174-840490177541",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 3
+                },
+                "name": "EXSI cpu使用率排名",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 60,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#ff656b"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_cpu_usage_average{}) by(esxhostname)/count(vsphere_host_cpu_usage_average{}) by(esxhostname))",
+                        "legend": "{{esxhostname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470ff",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ff88cb4a-c396-415c-ad8d-bbb3af289427",
+                "layout": {
+                    "h": 5,
+                    "i": "905a1562-f7dc-4f3e-bbf6-b1697db9d489",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 3
+                },
+                "name": "EXSI mem使用率排名",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 60,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#ff656b"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_mem_usage_average{}) by(esxhostname)/count(vsphere_host_mem_usage_average{}) by(esxhostname))",
+                        "legend": "{{esxhostname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470ff",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d651d6eb-5e30-408c-ba7f-1823d960251a",
+                "layout": {
+                    "h": 5,
+                    "i": "70cc38e7-2ded-48c2-bb75-fe1d71d4a770",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "name": "VM cpu使用率排名",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 60,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#ff656b"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_cpu_usage_average{}) by(vmname)/count(vsphere_vm_cpu_usage_average{}) by(vmname))",
+                        "legend": "{{vmname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470ff",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "cdd8f673-750e-408e-80ab-3990c16b1da5",
+                "layout": {
+                    "h": 5,
+                    "i": "f6e55bcf-6d39-425e-8c6d-efc6b8350501",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                },
+                "name": "VM mem使用率排名",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 60,
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "#ff656b"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_mem_usage_average{}) by(vmname)/count(vsphere_vm_mem_usage_average{}) by(vmname))",
+                        "legend": "{{vmname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "5329376c-2084-4f4d-b5f4-372cd702b643",
+                "layout": {
+                    "h": 1,
+                    "i": "5329376c-2084-4f4d-b5f4-372cd702b643",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "name": "cluster Status",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 3,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "046163e4-031e-44e8-b592-7dc606496922",
+                "layout": {
+                    "h": 5,
+                    "i": "046163e4-031e-44e8-b592-7dc606496922",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 0,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "uptime",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_sys_uptime_latest{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername)/count(vsphere_host_sys_uptime_latest{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername))/86500",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "8aca78d4-2869-44c4-a702-ad46f5c89443",
+                "layout": {
+                    "h": 5,
+                    "i": "af0d1102-cf29-45b9-b647-1bc0b605ac04",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 2,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "cluster CPU Usage %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_cpu_usage_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername)/count(vsphere_host_cpu_usage_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername))",
+                        "legend": "{{clustername}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "8309ec72-51cb-4b9d-ba7e-e22acfd6e461",
+                "layout": {
+                    "h": 5,
+                    "i": "69332b5d-8841-4572-92f5-6ad237fb6ad5",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 6,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "cluster RAM Usage in %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_mem_usage_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername)/count(vsphere_host_mem_usage_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername))",
+                        "legend": "{{clustername}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7b43af1c-0814-42eb-ba31-14ed6eb07dc9",
+                "layout": {
+                    "h": 5,
+                    "i": "7dad6d09-2d17-41aa-845f-30f916ee344d",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 10,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "cluster Network Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_net_bytesRx_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername))/1000 ",
+                        "legend": "{{clustername}}-net_bytesRx",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "(sum(vsphere_host_net_bytesTx_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(clustername))/1000",
+                        "legend": "{{clustername}}-net_bytesTx",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "aggrDimension": "source",
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
+                    "showHeader": true,
+                    "sortColumn": "source",
+                    "sortOrder": "descend"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6dffc761-7805-47c5-b82d-cf34dd7b8b11",
+                "layout": {
+                    "h": 5,
+                    "i": "6dffc761-7805-47c5-b82d-cf34dd7b8b11",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 15,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "C"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "to": 30
+                                    },
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 30,
+                                        "special": 30,
+                                        "to": 50
+                                    },
+                                    "result": {
+                                        "color": "rgba(185, 159, 0, 1)"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 50,
+                                        "special": 90
+                                    },
+                                    "result": {
+                                        "color": "rgba(255, 101, 107, 1)"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "from": 1
+                                    },
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "special": 1,
+                                        "to": 350
+                                    },
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 350,
+                                        "special": 300
+                                    },
+                                    "result": {
+                                        "color": "rgba(185, 159, 0, 1)"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(vsphere_datastore_disk_capacity_latest{vcenter=\"$vcenter\"}) by(source) / 1024 / 1024",
+                        "legend": "总量(GB)",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(vsphere_datastore_disk_used_latest{vcenter=\"$vcenter\"}) by(source) / 1024 / 1024",
+                        "legend": "使用量(GB)",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(vsphere_datastore_disk_used_latest{vcenter=\"$vcenter\"}/vsphere_datastore_disk_capacity_latest{vcenter=\"$vcenter\"}) by(source)*100",
+                        "legend": "使用率(%)",
+                        "refId": "C"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "fe54e096-8e11-406b-98f6-d2c5d76d9d8d",
+                "layout": {
+                    "h": 1,
+                    "i": "fe54e096-8e11-406b-98f6-d2c5d76d9d8d",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "Exsi status",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "4cca929b-8a04-4c0c-924f-240ad5cf08d9",
+                "layout": {
+                    "h": 5,
+                    "i": "4cca929b-8a04-4c0c-924f-240ad5cf08d9",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 0,
+                    "y": 20
+                },
+                "name": "uptime\n",
+                "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vsphere_host_sys_uptime_latest{esxhostname=\"$esxi\"}",
+                        "legend": "{{esxhostname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c097de32-5d94-4b32-8f93-0ac8cfe32657",
+                "layout": {
+                    "h": 5,
+                    "i": "7f2edbdb-d890-4799-89b0-fad87ebf1c22",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 2,
+                    "y": 20
+                },
+                "name": "Host CPU Ready Time",
+                "options": {
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_cpu_ready_summation{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname)/count(vsphere_host_cpu_ready_summation{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname))",
+                        "legend": "cpu usage",
+                        "refId": "B"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "25ed7e6c-1d20-4d3f-a2d3-de1e9bb2fb17",
+                "layout": {
+                    "h": 5,
+                    "i": "9e349e57-b55e-462b-b63f-faed76213544",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 5,
+                    "y": 20
+                },
+                "name": "Host CPU Usage %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_cpu_usage_average{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname)/count(vsphere_host_cpu_usage_average{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname))",
+                        "legend": "{{esxhostname}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2f77a4cc-0950-4fe5-86d7-0d6ebfed3d0c",
+                "layout": {
+                    "h": 5,
+                    "i": "01d79496-7b09-44c1-8e5e-8430509295f3",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 10,
+                    "y": 20
+                },
+                "name": "Host RAM Usage in %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_mem_usage_average{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname)/count(vsphere_host_mem_usage_average{vcenter=\"$vcenter\",esxhostname=\"$esxi\"}) by(esxhostname))",
+                        "legend": "{{esxhostname}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "af8a3cca-ad6e-4650-838f-c38c1cf2c7fa",
+                "layout": {
+                    "h": 5,
+                    "i": "446ea897-c338-40f7-a146-2cda7bbca311",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 15,
+                    "y": 20
+                },
+                "maxPerRow": 4,
+                "name": "cluster Network Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_host_net_bytesRx_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(esxhostname))/1000",
+                        "legend": "{{esxhostname}}-net_bytesRx",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "(sum(vsphere_host_net_bytesTx_average{clustername=\"$cluster\",vcenter=\"$vcenter\"}) by(esxhostname))/1000",
+                        "legend": "{{esxhostname}}-net_bytesTx",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "d2f2839c-11d2-470f-85a8-da9e81e72ad3",
+                "layout": {
+                    "h": 1,
+                    "i": "d2f2839c-11d2-470f-85a8-da9e81e72ad3",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 25
+                },
+                "name": "VMs status",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "772d5173-cde1-4e3f-a72d-864f737e07b4",
+                "layout": {
+                    "h": 5,
+                    "i": "7a9fe621-aca3-4a32-aae0-c3f3cf951ba3",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 0,
+                    "y": 26
+                },
+                "name": "uptime",
+                "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "vsphere_vm_sys_uptime_latest{vmname=\"$vmname\"}",
+                        "legend": "{{vmname}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6a28ae90-8a63-45a1-9ceb-ab660f0a0d75",
+                "layout": {
+                    "h": 5,
+                    "i": "f1ba46e5-558d-483e-bc9b-5cffff7343a8",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 2,
+                    "y": 26
+                },
+                "name": "VM CPU Ready Time",
+                "options": {
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_cpu_ready_summation{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname)/count(vsphere_vm_cpu_ready_summation{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname))",
+                        "legend": "cpu usage",
+                        "refId": "B"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0cd4f9df-81c6-4a31-a15e-060a3b0c7e65",
+                "layout": {
+                    "h": 5,
+                    "i": "96826cc9-cbe0-4e4e-9144-90d9052904cd",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 5,
+                    "y": 26
+                },
+                "name": "VM CPU Usage %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_cpu_usage_average{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname)/count(vsphere_vm_cpu_usage_average{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname))",
+                        "legend": "{{vmname}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2beeb800-bacd-49ec-b44a-4b19d6497808",
+                "layout": {
+                    "h": 5,
+                    "i": "7651144f-7b05-4a21-a595-2816f108b23d",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 10,
+                    "y": 26
+                },
+                "name": "VM RAM Usage in %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "single"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_mem_usage_average{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname)/count(vsphere_vm_mem_usage_average{vcenter=\"$vcenter\",vmname=\"$vmname\"}) by(vmname))",
+                        "legend": "{{vmname}}",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c2804d43-f9b0-4a74-a3fe-fb1f8b5f4a01",
+                "layout": {
+                    "h": 5,
+                    "i": "06122a9b-53b1-4ef9-93be-2419197600c8",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 15,
+                    "y": 26
+                },
+                "name": "VMNetwork Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(sum(vsphere_vm_net_bytesRx_average{vmname=\"$vmname\",vcenter=\"$vcenter\"}) by(vmname))/1000",
+                        "legend": "{{vmname}}-net_bytesRx",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "(sum(vsphere_vm_net_bytesTx_average{vmname=\"$vmname\",vcenter=\"$vcenter\"}) by(vmname))/1000",
+                        "legend": "{{vmname}}-net_bytesTx",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "vsphere_host_cpu_usage_average",
+                "multi": false,
+                "name": "vcenter",
+                "reg": "/.*vcenter=\"(.*?)\".*/",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "vsphere_host_cpu_usage_average{vcenter=\"$vcenter\"}",
+                "name": "cluster",
+                "reg": "/.*clustername=\"(.*?)\".*/",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "vsphere_host_cpu_usage_average{vcenter=\"$vcenter\"}",
+                "name": "esxi",
+                "reg": "/.*esxhostname=\"(.*?)\".*/",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "vsphere_vm_sys_uptime_latest{vcenter=\"$vcenter\"}",
+                "name": "vmname",
+                "reg": "/.*vmname=\"(.*?)\".*/",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "vsphere_datastore_disk_provisioned_latest{vcenter=\"$vcenter\"}",
+                "name": "datastore",
+                "reg": "/.*dsname=\"(.*?)\".*/",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328609733000
+}

@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "HOST by Telegraf",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "links": [
             {
@@ -39,6 +45,8 @@
                         "value": 50
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "877b6db5-e82c-499a-9ebc-8ad72c2891a8",
                 "layout": {
                     "h": 3,
@@ -58,17 +66,19 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "29a3e6ae-d278-49b3-972b-f12a6c7c091c",
                 "layout": {
                     "h": 3,
@@ -96,17 +106,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "9f2a24d5-d19f-4651-b76d-add6b9011821",
                 "layout": {
                     "h": 3,
@@ -134,17 +146,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "dcd60296-db84-4562-99f3-2829c2f064a4",
                 "layout": {
                     "h": 3,
@@ -173,17 +187,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "ef7df29d-7dce-4788-ae42-d21d842c67d6",
                 "layout": {
                     "h": 3,
@@ -212,9 +228,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -239,6 +253,8 @@
                         "value": 30
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "50f09231-fc5e-4f6d-9367-a3158504689b",
                 "layout": {
                     "h": 3,
@@ -262,9 +278,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -276,6 +290,8 @@
                         "value": 30
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "d44e951d-c333-4ed9-9303-9c8d29da7993",
                 "layout": {
                     "h": 3,
@@ -320,9 +336,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -334,6 +348,8 @@
                         "value": 30
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "278c2fa1-0b19-4718-8b12-fb1c2e776258",
                 "layout": {
                     "h": 3,
@@ -378,9 +394,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -392,6 +406,8 @@
                         "value": 25
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "484afcd4-7b25-4af1-8e95-88cc675f7f43",
                 "layout": {
                     "h": 3,
@@ -436,9 +452,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -450,6 +464,8 @@
                         "value": 40
                     }
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "142f63d7-4979-4354-81b5-a9c5ec81fae9",
                 "layout": {
                     "h": 3,
@@ -473,17 +489,19 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "4d6ec15c-8fdd-47db-a9f7-a57f03009e66",
                 "layout": {
                     "h": 3,
@@ -515,17 +533,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "2991ad6b-c219-4f1d-b298-e195cf35cfec",
                 "layout": {
                     "h": 3,
@@ -557,17 +577,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "935435db-5a1e-4330-b95f-825e91e9d99e",
                 "layout": {
                     "h": 3,
@@ -599,9 +621,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -619,10 +639,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "bab39b5e-63cf-4e88-a474-4ea8f2585d8e",
                 "layout": {
                     "h": 7,
@@ -657,17 +681,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "0ea75485-cc11-4b44-b13f-911429d9e103",
                 "layout": {
                     "h": 7,
@@ -701,17 +727,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "32d764fa-ed86-4099-b0f8-1cb8c7f67315",
                 "layout": {
                     "h": 7,
@@ -747,9 +775,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -767,10 +793,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "f5b86c4f-2104-41a4-9d01-a62ee64c04ff",
                 "layout": {
                     "h": 7,
@@ -806,17 +836,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "e833715f-065c-4b1b-9f0d-e1223b6992b8",
                 "layout": {
                     "h": 7,
@@ -874,17 +906,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "b19f9420-9ce2-4d3c-86bf-fc247c8b760e",
                 "layout": {
                     "h": 7,
@@ -920,9 +954,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -940,11 +972,15 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
-                "description": "内存指标可参考链接 [/PROC/MEMINFO之谜](http://linuxperf.com/?p=142) ",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "",
                 "id": "655608d2-0d6d-46ed-9e6a-c482edaeacec",
                 "layout": {
                     "h": 7,
@@ -996,17 +1032,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "d57fe702-e21f-45ee-9b36-31695e698059",
                 "layout": {
                     "h": 7,
@@ -1050,9 +1088,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1070,10 +1106,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "b39143a6-9ca8-4732-9100-0a8c029440b5",
                 "layout": {
                     "h": 7,
@@ -1112,17 +1152,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "3a13d95d-a311-4b0b-87f2-4216cac9a533",
                 "layout": {
                     "h": 7,
@@ -1154,17 +1196,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "6a1fa455-a385-456a-a32b-30119082f453",
                 "layout": {
                     "h": 7,
@@ -1198,17 +1242,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "c74e5155-0e3c-4cb4-8e57-ce8af46ddf90",
                 "layout": {
                     "h": 7,
@@ -1242,17 +1288,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "c522e6f5-fb3d-4fc0-9ae6-7ec002e55e95",
                 "layout": {
                     "h": 7,
@@ -1289,17 +1337,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "47fd7f57-ed4a-43cf-86e3-628c2f697769",
                 "layout": {
                     "h": 7,
@@ -1328,9 +1378,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1348,10 +1396,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "7fe8774f-7d03-4514-a6b6-b626d2a95265",
                 "layout": {
                     "h": 7,
@@ -1388,17 +1440,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "d030e5e7-06cd-42e9-b1e5-0c32b51f853e",
                 "layout": {
                     "h": 7,
@@ -1434,17 +1488,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "330f5fd9-aca5-4619-b81b-33203256d560",
                 "layout": {
                     "h": 7,
@@ -1480,17 +1536,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "34a73b20-56d7-4edb-b6f7-acc93d00a026",
                 "layout": {
                     "h": 7,
@@ -1526,17 +1584,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "7664d34f-7bcf-4431-a6a7-4d924d2e176d",
                 "layout": {
                     "h": 7,
@@ -1572,27 +1632,31 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
-                "definition": "label_values(system_load1,ident)",
-                "name": "ident",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
-                }
+                },
+                "definition": "label_values(system_load1,ident)",
+                "name": "ident",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327754929000
 }

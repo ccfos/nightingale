@@ -1,11 +1,15 @@
 package idents
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
@@ -14,12 +18,14 @@ import (
 type Set struct {
 	sync.Mutex
 	items map[string]struct{}
+	redis storage.Redis
 	ctx   *ctx.Context
 }
 
-func New(ctx *ctx.Context) *Set {
+func New(ctx *ctx.Context, redis storage.Redis) *Set {
 	set := &Set{
 		items: make(map[string]struct{}),
+		redis: redis,
 		ctx:   ctx,
 	}
 
@@ -90,6 +96,11 @@ type TargetUpdate struct {
 }
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
+	err := updateTargetsUpdateTs(lst, now, s.redis)
+	if err != nil {
+		logger.Errorf("failed to update targets:%v update_ts: %v", lst, err)
+	}
+
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
 			Lst: lst,
@@ -115,7 +126,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 
 	// there are some idents not found in db, so insert them
 	var exists []string
-	err := s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
+	err = s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
 	if err != nil {
 		return err
 	}
@@ -129,4 +140,27 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	}
 
 	return nil
+}
+
+func updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis) error {
+	if redis == nil {
+		return fmt.Errorf("redis is nil")
+	}
+
+	count := int64(len(lst))
+	if count == 0 {
+		return nil
+	}
+
+	newMap := make(map[string]interface{}, count)
+	for _, ident := range lst {
+		hostUpdateTime := models.HostUpdteTime{
+			UpdateTime: now,
+			Ident:      ident,
+		}
+		newMap[models.WrapIdentUpdateTime(ident)] = hostUpdateTime
+	}
+
+	err := storage.MSet(context.Background(), redis, newMap)
+	return err
 }

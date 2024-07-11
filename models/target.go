@@ -9,20 +9,23 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"gorm.io/gorm"
 )
 
 type Target struct {
-	Id       int64             `json:"id" gorm:"primaryKey"`
-	GroupId  int64             `json:"group_id"`
-	GroupObj *BusiGroup        `json:"group_obj" gorm:"-"`
-	Ident    string            `json:"ident"`
-	Note     string            `json:"note"`
-	Tags     string            `json:"-"`
-	TagsJSON []string          `json:"tags" gorm:"-"`
-	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
-	UpdateAt int64             `json:"update_at"`
-	HostIp   string            `json:"host_ip"` //ipv4，do not needs range select
+	Id           int64             `json:"id" gorm:"primaryKey"`
+	GroupId      int64             `json:"group_id"`
+	GroupObj     *BusiGroup        `json:"group_obj" gorm:"-"`
+	Ident        string            `json:"ident"`
+	Note         string            `json:"note"`
+	Tags         string            `json:"-"`
+	TagsJSON     []string          `json:"tags" gorm:"-"`
+	TagsMap      map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
+	UpdateAt     int64             `json:"update_at"`
+	HostIp       string            `json:"host_ip"` //ipv4，do not needs range select
+	AgentVersion string            `json:"agent_version"`
+	EngineName   string            `json:"engine_name"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -37,10 +40,6 @@ type Target struct {
 
 func (t *Target) TableName() string {
 	return "target"
-}
-
-func (t *Target) DB2FE() error {
-	return nil
 }
 
 func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
@@ -216,14 +215,6 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(fields).Error
 }
 
-func TargetUpdateHostIpAndBgid(ctx *ctx.Context, ident string, ipv4 string, bgid int64) error {
-	return DB(ctx).Model(&Target{}).Where("ident = ?", ident).Updates(map[string]interface{}{
-		"host_ip":   ipv4,
-		"group_id":  bgid,
-		"update_at": time.Now().Unix(),
-	}).Error
-}
-
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
 	var lst []*Target
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
@@ -246,6 +237,62 @@ func TargetGetById(ctx *ctx.Context, id int64) (*Target, error) {
 
 func TargetGetByIdent(ctx *ctx.Context, ident string) (*Target, error) {
 	return TargetGet(ctx, "ident = ?", ident)
+}
+
+func TargetsGetByIdents(ctx *ctx.Context, idents []string) ([]*Target, error) {
+	var targets []*Target
+	err := DB(ctx).Where("ident IN ?", idents).Find(&targets).Error
+	return targets, err
+}
+
+func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []string) (map[string]string, []string, error) {
+	inexistence := make(map[string]string)
+	identSet := set.NewStringSet()
+
+	// Query the ident corresponding to idents
+	if len(idents) > 0 {
+		var identsFromIdents []string
+		err := DB(ctx).Model(&Target{}).Where("ident IN ?", idents).Pluck("ident", &identsFromIdents).Error
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for _, ident := range identsFromIdents {
+			identSet.Add(ident)
+		}
+
+		for _, ident := range idents {
+			if !identSet.Exists(ident) {
+				inexistence[ident] = "Ident not found"
+			}
+		}
+	}
+
+	// Query the hostIp corresponding to idents
+	if len(hostIps) > 0 {
+		var hostIpToIdentMap []struct {
+			HostIp string
+			Ident  string
+		}
+		err := DB(ctx).Model(&Target{}).Select("host_ip, ident").Where("host_ip IN ?", hostIps).Scan(&hostIpToIdentMap).Error
+		if err != nil {
+			return nil, nil, err
+		}
+
+		hostIpToIdent := set.NewStringSet()
+		for _, entry := range hostIpToIdentMap {
+			hostIpToIdent.Add(entry.HostIp)
+			identSet.Add(entry.Ident)
+		}
+
+		for _, hostIp := range hostIps {
+			if !hostIpToIdent.Exists(hostIp) {
+				inexistence[hostIp] = "HostIp not found"
+			}
+		}
+	}
+
+	return inexistence, identSet.ToSlice(), nil
 }
 
 func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
@@ -302,8 +349,8 @@ func (t *Target) AddTags(ctx *ctx.Context, tags []string) error {
 }
 
 func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
-	for i := 0; i < len(tags); i++ {
-		t.Tags = strings.ReplaceAll(t.Tags, tags[i]+" ", "")
+	for _, tag := range tags {
+		t.Tags = strings.ReplaceAll(t.Tags, tag+" ", "")
 	}
 
 	return DB(ctx).Model(t).Updates(map[string]interface{}{
@@ -315,13 +362,29 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
 	t.TagsMap = make(map[string]string)
+	m := make(map[string]string)
 	for _, item := range t.TagsJSON {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
 		}
-		t.TagsMap[arr[0]] = arr[1]
+		m[arr[0]] = arr[1]
 	}
+
+	t.TagsMap = m
+}
+
+func (t *Target) GetTagsMap() map[string]string {
+	tagsJSON := strings.Fields(t.Tags)
+	m := make(map[string]string)
+	for _, item := range tagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		m[arr[0]] = arr[1]
+	}
+	return m
 }
 
 func (t *Target) FillMeta(meta *HostMeta) {

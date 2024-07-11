@@ -1,22 +1,26 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/str"
 )
 
 type boardForm struct {
-	Name    string `json:"name"`
-	Ident   string `json:"ident"`
-	Tags    string `json:"tags"`
-	Configs string `json:"configs"`
-	Public  int    `json:"public"`
+	Name       string  `json:"name"`
+	Ident      string  `json:"ident"`
+	Tags       string  `json:"tags"`
+	Configs    string  `json:"configs"`
+	Public     int     `json:"public"`
+	PublicCate int     `json:"public_cate"`
+	Bgids      []int64 `json:"bgids"`
 }
 
 func (rt *Router) boardAdd(c *gin.Context) {
@@ -62,6 +66,28 @@ func (rt *Router) boardGet(c *gin.Context) {
 		if !me.IsAdmin() {
 			// check permission
 			rt.bgroCheck(c, board.GroupId)
+		}
+	}
+
+	if board.PublicCate == models.PublicLogin {
+		rt.auth()(c)
+	} else if board.PublicCate == models.PublicBusi {
+		rt.auth()(c)
+		rt.user()(c)
+
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			bgids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+			if len(bgids) == 0 {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
+			}
+
+			ok, err := models.BoardBusigroupCheck(rt.Ctx, board.Id, bgids)
+			ginx.Dangerous(err)
+			if !ok {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
+			}
 		}
 	}
 
@@ -192,10 +218,20 @@ func (rt *Router) boardPutPublic(c *gin.Context) {
 	}
 
 	bo.Public = f.Public
+	bo.PublicCate = f.PublicCate
+
+	if bo.PublicCate == models.PublicBusi {
+		err := models.BoardBusigroupUpdate(rt.Ctx, bo.Id, f.Bgids)
+		ginx.Dangerous(err)
+	} else {
+		err := models.BoardBusigroupDelByBoardId(rt.Ctx, bo.Id)
+		ginx.Dangerous(err)
+	}
+
 	bo.UpdateBy = me.Username
 	bo.UpdateAt = time.Now().Unix()
 
-	err := bo.Update(rt.Ctx, "public", "update_by", "update_at")
+	err := bo.Update(rt.Ctx, "public", "public_cate", "update_by", "update_at")
 	ginx.NewRender(c).Data(bo, err)
 }
 
@@ -207,21 +243,64 @@ func (rt *Router) boardGets(c *gin.Context) {
 	ginx.NewRender(c).Data(boards, err)
 }
 
+func (rt *Router) publicBoardGets(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+
+	bgids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+
+	boardIds, err := models.BoardIdsByBusiGroupIds(rt.Ctx, bgids)
+	ginx.Dangerous(err)
+
+	boards, err := models.BoardGets(rt.Ctx, "", "public=1 and (public_cate in (?) or id in (?))", []int64{0, 1}, boardIds)
+	ginx.NewRender(c).Data(boards, err)
+}
+
+func (rt *Router) boardGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	query := ginx.QueryStr(c, "query", "")
+
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+
+			if len(gids) == 0 {
+				ginx.NewRender(c).Data([]int{}, nil)
+				return
+			}
+		}
+	}
+
+	boardBusigroups, err := models.BoardBusigroupGets(rt.Ctx)
+	ginx.Dangerous(err)
+	m := make(map[int64][]int64)
+	for _, boardBusigroup := range boardBusigroups {
+		m[boardBusigroup.BoardId] = append(m[boardBusigroup.BoardId], boardBusigroup.BusiGroupId)
+	}
+
+	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
+	ginx.Dangerous(err)
+	for i := 0; i < len(boards); i++ {
+		if ids, ok := m[boards[i].Id]; ok {
+			boards[i].Bgids = ids
+		}
+	}
+
+	ginx.NewRender(c).Data(boards, err)
+}
+
 func (rt *Router) boardClone(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	bo := rt.Board(ginx.UrlParamInt64(c, "bid"))
 
-	newBoard := &models.Board{
-		Name:     bo.Name + " Copy",
-		Tags:     bo.Tags,
-		GroupId:  bo.GroupId,
-		CreateBy: me.Username,
-		UpdateBy: me.Username,
-	}
-
-	if bo.Ident != "" {
-		newBoard.Ident = uuid.NewString()
-	}
+	newBoard := bo.Clone(me.Username, bo.GroupId, " Cloned")
 
 	ginx.Dangerous(newBoard.Add(rt.Ctx))
 
@@ -234,4 +313,40 @@ func (rt *Router) boardClone(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(nil)
+}
+
+type boardsForm struct {
+	BoardIds []int64 `json:"board_ids"`
+	Bgids    []int64 `json:"bgids"`
+}
+
+func (rt *Router) boardBatchClone(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+	var f boardsForm
+	ginx.BindJSON(c, &f)
+
+	for _, bgid := range f.Bgids {
+		rt.bgrwCheck(c, bgid)
+	}
+
+	reterr := make(map[string]string, len(f.BoardIds))
+	lang := c.GetHeader("X-Language")
+
+	for _, bgid := range f.Bgids {
+		for _, bid := range f.BoardIds {
+			bo := rt.Board(bid)
+			newBoard := bo.Clone(me.Username, bgid, "")
+			payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
+			if err != nil {
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				continue
+			}
+
+			if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(reterr, nil)
 }

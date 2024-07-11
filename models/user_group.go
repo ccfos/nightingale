@@ -20,15 +20,13 @@ type UserGroup struct {
 	UpdateAt int64   `json:"update_at"`
 	UpdateBy string  `json:"update_by"`
 	UserIds  []int64 `json:"-" gorm:"-"`
+	Users    []User  `json:"users" gorm:"-"`
 }
 
 func (ug *UserGroup) TableName() string {
 	return "user_group"
 }
 
-func (ug *UserGroup) DB2FE() error {
-	return nil
-}
 func (ug *UserGroup) Verify() error {
 	if str.Dangerous(ug.Name) {
 		return errors.New("Name has invalid characters")

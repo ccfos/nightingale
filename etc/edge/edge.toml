@@ -74,7 +74,7 @@ EngineName = "edge"
 LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
-# ForceUseServerTS = false
+ForceUseServerTS = true
 
 # [Pushgw.DebugSample]
 # ident = "xx"
@@ -115,3 +115,24 @@ MaxIdleConnsPerHost = 100
 # Regex = "([^:]+)(?::\\d+)?"
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
+
+[Ibex]
+Enable = false
+RPCListen = "0.0.0.0:20090"
+
+# n9e-edge cannot directly reuse the redis that n9e relies on at the center.
+# It needs to deploy a separate redis in the edge region for n9e-edge to use.
+[Redis]
+# address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
+Address = "127.0.0.1:6379"
+# Username = ""
+# Password = ""
+# DB = 0
+# UseTLS = false
+# TLSMinVersion = "1.2"
+# standalone cluster sentinel
+RedisType = "standalone"
+# Mastername for sentinel type
+# MasterName = "mymaster"
+# SentinelUsername = ""
+# SentinelPassword = ""

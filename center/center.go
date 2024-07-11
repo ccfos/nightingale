@@ -7,9 +7,13 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/cstats"
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/center/metas"
+	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -17,19 +21,19 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	alertrt "github.com/ccfos/nightingale/v6/alert/router"
-	centerrt "github.com/ccfos/nightingale/v6/center/router"
-	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
+	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -50,52 +54,62 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	i18nx.Init(configDir)
 	cstats.Init()
+	flashduty.Init(config.Center.FlashDuty)
 
 	db, err := storage.New(config.DB)
 	if err != nil {
 		return nil, err
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
-	models.InitRoot(ctx)
 	migrate.Migrate(db)
-	httpx.InitRSAConfig(&config.HTTP.RSA)
+	models.InitRoot(ctx)
 
-	redis, err := storage.NewRedis(config.Redis)
+	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
+
+	err = rsa.InitRSAConfig(ctx, &config.HTTP.RSA)
+	if err != nil {
+		return nil, err
+	}
+
+	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}
 
 	metas := metas.New(redis)
-	idents := idents.New(ctx)
+	idents := idents.New(ctx, redis)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
-	sso := sso.Init(config.Center, ctx)
-
+	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
+	taskTplCache := memsto.NewTaskTplCache(ctx)
 
-	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
+	sso := sso.Init(config.Center, ctx, configCache)
+	promClients := prom.NewPromClient(ctx)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
 	go version.GetGithubVersion()
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
+	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
-	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 
@@ -103,6 +117,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
 	dumper.ConfigRouter(r)
+
+	if config.Ibex.Enable {
+		migrate.MigrateIbexTables(db)
+		ibex.ServerStart(true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
+	}
 
 	httpClean := httpx.Init(config.HTTP, r)
 

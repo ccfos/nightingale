@@ -1,0 +1,486 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "MSE监控大盘",
+    "ident": "MSE-Monitor",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "aba69dc0-5a11-4bcd-add9-335b5a677bee",
+                "layout": {
+                    "h": 5,
+                    "i": "aba69dc0-5a11-4bcd-add9-335b5a677bee",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "PV（一分钟）",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(envoy_http_rq_total{envoy_clusterid=\"$envoy_clusterid\"}[1m]))",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "detailName": "详情",
+                    "legengPosition": "right"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "e34a272e-6125-4afa-a2c1-80d7d9078673",
+                "layout": {
+                    "h": 5,
+                    "i": "116a5607-5860-426e-a560-d3241da88b57",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 6,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "请求成功率",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "percentUnit"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(envoy_http_downstream_rq{envoy_clusterid=\"$envoy_clusterid\"}[3m])) by (response_code_class)",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "pie",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "a8917108-58a6-479a-8ec4-571f1b5a79c2",
+                "layout": {
+                    "h": 5,
+                    "i": "9be66a1f-c0bb-47dc-a3c0-ad43b588789b",
+                    "isResizable": true,
+                    "w": 9,
+                    "x": 15,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "请求量（一分钟）",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(delta(envoy_http_downstream_cx_rx_bytes_total{envoy_clusterid=\"$envoy_clusterid\"}[1m]))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "1b102bee-ccc9-49a0-a1d1-cc097bb6a987",
+                "layout": {
+                    "h": 6,
+                    "i": "1b102bee-ccc9-49a0-a1d1-cc097bb6a987",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "平均延迟",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(envoy_http_downstream_rq_time_sum{envoy_clusterid=\"$envoy_clusterid\"}[10m])) / sum(rate(envoy_http_downstream_rq_time_count{envoy_clusterid=\"$envoy_clusterid\"}[10m]))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "b432fc11-2f9d-4b72-826b-6ca787401859",
+                "layout": {
+                    "h": 6,
+                    "i": "ea4c1073-07d3-4adc-a4d3-4812cc55ad7c",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "P95",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, sum(rate(envoy_http_downstream_rq_time_bucket{envoy_clusterid=\"$envoy_clusterid\"}[10m])) by (le, service))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "9062d707-d8a7-4a93-82e5-46f6059e8d70",
+                "layout": {
+                    "h": 6,
+                    "i": "d36246b9-4a9c-4ab0-9171-c5ac330be0ca",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "QPS",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(irate(envoy_http_downstream_rq{envoy_clusterid=\"$envoy_clusterid\"}[2m]))",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 40,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "c3f64cfd-adb2-4316-bb84-55f88ed513a3",
+                "layout": {
+                    "h": 6,
+                    "i": "807c34f9-bd61-4da3-ad88-41bb3e045605",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 11
+                },
+                "maxPerRow": 4,
+                "name": "Top Service Request",
+                "options": {
+                    "standardOptions": {}
+                },
+                "targets": [
+                    {
+                        "expr": "label_replace(label_replace(topk(10, sum(delta(envoy_cluster_upstream_rq_total{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\", cluster_name!~\".*waf-proxy.static\", cluster_name!~\"outbound_([0-9]+)_(.*)_kubernetes.default.svc.cluster.local\", cluster_name!~\"outbound_([0-9]+)_(.*)_(.*).kube-system.svc.cluster.local\", cluster_name!~\"outbound_([0-9]+)_(.*)_(.*).arms-prom.svc.cluster.local\"}[1m])) by (cluster_name)), \"service_name\", \"$3\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\"), \"port\", \"$1\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*).svc.cluster.local$\")",
+                        "legend": "{{service_name}}:{{port}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 7,
+                "id": "8df57678-ff19-4b63-b768-4dad3f12222b",
+                "layout": {
+                    "h": 5,
+                    "i": "44f413ba-3262-4ccf-a4b1-c1165bafaaff",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17
+                },
+                "maxPerRow": 4,
+                "name": "Top Service RT",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "label_replace(label_replace(avg(delta(envoy_cluster_upstream_rq_time_sum{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*)$\"}[3m])) by (cluster_name) / avg(delta(envoy_cluster_upstream_rq_time_count{envoy_clusterid=\"$envoy_clusterid\", cluster_name=~\"outbound_([0-9]+)_(.*)_(.*)$\"}[1m])) by (cluster_name), \"service_name\", \"$3\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*)$\"), \"port\", \"$1\", \"cluster_name\", \"outbound_([0-9]+)_(.*)_(.*)$\")",
+                        "legend": "{{service_name}}:{{port}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(envoy_cluster_bind_errors, envoy_clusterid)",
+                "hide": false,
+                "label": "envoy_clusterid",
+                "multi": false,
+                "name": "envoy_clusterid",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327111860000
+}

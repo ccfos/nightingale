@@ -1,15 +1,9 @@
 package sender
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"html/template"
 	"strings"
-	"time"
-
-	"github.com/ccfos/nightingale/v6/alert/astats"
-	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 type dingtalkMarkdown struct {
@@ -28,6 +22,10 @@ type dingtalk struct {
 	At       dingtalkAt       `json:"at"`
 }
 
+var (
+	_ CallBacker = (*DingtalkSender)(nil)
+)
+
 type DingtalkSender struct {
 	tpl *template.Template
 }
@@ -41,7 +39,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ds.tpl, ctx.Events)
+	message := BuildTplMessage(models.Dingtalk, ds.tpl, ctx.Events)
 
 	for _, url := range urls {
 		var body dingtalk
@@ -72,6 +70,37 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 	}
 }
 
+func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+
+	body := dingtalk{
+		Msgtype: "markdown",
+		Markdown: dingtalkMarkdown{
+			Title: ctx.Events[0].RuleName,
+		},
+	}
+
+	ats := ExtractAtsParams(ctx.CallBackURL)
+	message := BuildTplMessage(models.Dingtalk, ds.tpl, ctx.Events)
+
+	if len(ats) > 0 {
+		body.Markdown.Text = message + "\n@" + strings.Join(ats, "@")
+		body.At = dingtalkAt{
+			AtMobiles: ats,
+			IsAtAll:   false,
+		}
+	} else {
+		// NoAt in url
+		body.Markdown.Text = message
+	}
+
+	doSend(ctx.CallBackURL, body, models.Dingtalk, ctx.Stats)
+
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
+}
+
 // extract urls and ats from Users
 func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
 	urls := make([]string, 0, len(users))
@@ -90,16 +119,4 @@ func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
 		}
 	}
 	return urls, ats
-}
-
-func doSend(url string, body interface{}, channel string, stats *astats.Stats) {
-	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
-
-	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	if err != nil {
-		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v response=%s", channel, url, code, err, string(res))
-		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
-	} else {
-		logger.Infof("%s_sender: result=succ url=%s code=%d response=%s", channel, url, code, string(res))
-	}
 }

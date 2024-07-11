@@ -27,9 +27,10 @@ type RecordingRule struct {
 	QueryConfigs      string        `json:"-" gorm:"query_configs"`  // query_configs
 	QueryConfigsJson  []QueryConfig `json:"query_configs" gorm:"-"`  // query_configs for fe
 	PromEvalInterval  int           `json:"prom_eval_interval"`      // unit:s
-	AppendTags        string        `json:"-"`                       // split by space: service=n9e mod=api
-	AppendTagsJSON    []string      `json:"append_tags" gorm:"-"`    // for fe
-	Note              string        `json:"note"`                    // note
+	CronPattern       string        `json:"cron_pattern"`
+	AppendTags        string        `json:"-"`                    // split by space: service=n9e mod=api
+	AppendTagsJSON    []string      `json:"append_tags" gorm:"-"` // for fe
+	Note              string        `json:"note"`                 // note
 	CreateAt          int64         `json:"create_at"`
 	CreateBy          string        `json:"create_by"`
 	UpdateAt          int64         `json:"update_at"`
@@ -68,8 +69,12 @@ func (re *RecordingRule) DB2FE() error {
 	json.Unmarshal([]byte(re.DatasourceIds), &re.DatasourceIdsJson)
 
 	json.Unmarshal([]byte(re.QueryConfigs), &re.QueryConfigsJson)
-	return nil
 
+	if re.CronPattern == "" && re.PromEvalInterval != 0 {
+		re.CronPattern = fmt.Sprintf("@every %ds", re.PromEvalInterval)
+	}
+
+	return nil
 }
 
 func (re *RecordingRule) Verify() error {
@@ -97,6 +102,10 @@ func (re *RecordingRule) Verify() error {
 
 	if re.PromEvalInterval <= 0 {
 		re.PromEvalInterval = 60
+	}
+
+	if re.CronPattern == "" {
+		re.CronPattern = "@every 60s"
 	}
 
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
@@ -196,6 +205,23 @@ func RecordingRuleDels(ctx *ctx.Context, ids []int64, groupId int64) error {
 
 func RecordingRuleGets(ctx *ctx.Context, groupId int64) ([]RecordingRule, error) {
 	session := DB(ctx).Where("group_id=?", groupId).Order("name")
+
+	var lst []RecordingRule
+	err := session.Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+func RecordingRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]RecordingRule, error) {
+	session := DB(ctx)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids).Order("name")
+	}
 
 	var lst []RecordingRule
 	err := session.Find(&lst).Error

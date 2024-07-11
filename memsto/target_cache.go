@@ -78,6 +78,18 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
+func (tc *TargetCacheType) Gets(idents []string) []*models.Target {
+	tc.RLock()
+	defer tc.RUnlock()
+	var targets []*models.Target
+	for _, ident := range idents {
+		if target, has := tc.targets[ident]; has {
+			targets = append(targets, target)
+		}
+	}
+	return targets
+}
+
 func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()
@@ -170,6 +182,65 @@ func (tc *TargetCacheType) syncTargets() error {
 	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil
+}
+
+// get host update time
+func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 {
+	metaMap := make(map[string]int64)
+	if tc.redis == nil {
+		return metaMap
+	}
+
+	num := 0
+	var keys []string
+	for i := 0; i < len(targets); i++ {
+		keys = append(keys, models.WrapIdentUpdateTime(targets[i]))
+		num++
+		if num == 100 {
+			vals := storage.MGet(context.Background(), tc.redis, keys)
+			for _, value := range vals {
+				var hostUpdateTime models.HostUpdteTime
+				if value == nil {
+					continue
+				}
+
+				err := json.Unmarshal(value, &hostUpdateTime)
+				if err != nil {
+					logger.Errorf("failed to unmarshal host meta: %s value:%v", err, value)
+					continue
+				}
+				metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime
+			}
+			keys = keys[:0]
+			num = 0
+		}
+	}
+
+	vals := storage.MGet(context.Background(), tc.redis, keys)
+	for _, value := range vals {
+		var hostUpdateTime models.HostUpdteTime
+		if value == nil {
+			continue
+		}
+
+		err := json.Unmarshal(value, &hostUpdateTime)
+		if err != nil {
+			continue
+		}
+		metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime
+	}
+
+	for _, ident := range targets {
+		if _, ok := metaMap[ident]; !ok {
+			// if not exists, get from cache
+			target, exists := tc.Get(ident)
+			if exists {
+				metaMap[ident] = target.UpdateAt
+			}
+		}
+	}
+
+	return metaMap
 }
 
 func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*models.HostMeta {

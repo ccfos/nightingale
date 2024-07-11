@@ -1,0 +1,24 @@
+# # collect interval
+#interval = 3600
+
+#[[instances]]
+## Used to collect domain name information.
+#domain = "baidu.com"
+
+## append some labels for series
+#labels = { region="n9e", product="test1" }
+
+## interval = global.interval * interval_times
+#interval_times = 1
+
+
+#[[instances]]
+## Used to collect domain name information.
+#domain = "google.com"
+
+## append some labels for series
+#labels = { region="n9e", product="test2" }
+
+## interval = global.interval * interval_times
+#interval_times = 1
+

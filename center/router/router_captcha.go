@@ -65,7 +65,7 @@ func (rt *Router) generateCaptcha(c *gin.Context) {
 	var driver = captcha.NewDriverMath(60, 200, 0, captcha.OptionShowHollowLine, nil, nil, []string{"wqy-microhei.ttc"})
 	cc := captcha.NewCaptcha(driver, rt.newCaptchaRedisStore())
 	//data:image/png;base64
-	id, b64s, err := cc.Generate()
+	id, b64s, _, err := cc.Generate()
 
 	if err != nil {
 		ginx.NewRender(c).Message(err)

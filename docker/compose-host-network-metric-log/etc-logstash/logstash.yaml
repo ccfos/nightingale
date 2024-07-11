@@ -1,0 +1,22 @@
+input {
+  kafka {
+    bootstrap_servers => "127.0.0.1:9092"
+    topics => ["flashcatcloud"]
+    codec => json
+    type => n9e
+  }
+}
+
+filter {
+  grok {
+    match => {"message" => "%{LOGLEVEL:status}"}
+    overwrite => ["status"]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["127.0.0.1:9200"]
+    index => "n9e-%{+YYYY.MM.DD}"
+   }
+}

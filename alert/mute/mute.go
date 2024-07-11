@@ -12,28 +12,28 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) bool {
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string) {
 	if rule.Disabled == 1 {
-		return true
+		return true, "rule disabled"
 	}
 
 	if TimeSpanMuteStrategy(rule, event) {
-		return true
+		return true, "rule is not effective for period of time"
 	}
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
-		return true
+		return true, "ident not exists mute"
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true
+		return true, "bg not match mute"
 	}
 
 	if EventMuteStrategy(event, alertMuteCache) {
-		return true
+		return true, "match mute rule"
 	}
 
-	return false
+	return false, ""
 }
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
@@ -147,7 +147,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	}
 
 	// 如果不是全局的，判断 匹配的 datasource id
-	if !(len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] == 0) && event.DatasourceId != 0 {
+	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
 		idm := make(map[int64]struct{}, len(mute.DatasourceIdsJson))
 		for i := 0; i < len(mute.DatasourceIdsJson); i++ {
 			idm[mute.DatasourceIdsJson[i]] = struct{}{}
@@ -172,7 +172,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 		for i := 0; i < len(mute.PeriodicMutesJson); i++ {
 			if strings.Contains(mute.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime {
+				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime || (mute.PeriodicMutesJson[i].EnableStime == "00:00" && mute.PeriodicMutesJson[i].EnableEtime == "23:59") {
 					matchTime = true
 					break
 				} else if mute.PeriodicMutesJson[i].EnableStime < mute.PeriodicMutesJson[i].EnableEtime {
@@ -207,6 +207,10 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 	if !matchSeverity {
 		return false
+	}
+
+	if mute.ITags == nil || len(mute.ITags) == 0 {
+		return true
 	}
 
 	return common.MatchTags(event.TagsMap, mute.ITags)

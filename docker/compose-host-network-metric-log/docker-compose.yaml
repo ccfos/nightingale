@@ -1,0 +1,143 @@
+version: "3.7"
+
+services:
+  mysql:
+    image: "mysql:8"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 1234
+    volumes:
+      - ./mysqldata:/var/lib/mysql/
+      - ../initsql:/docker-entrypoint-initdb.d/
+      - ./etc-mysql/my.cnf:/etc/my.cnf
+    network_mode: host
+
+  redis:
+    image: "redis:6.2"
+    container_name: redis
+    hostname: redis
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    network_mode: host
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./etc-prometheus:/etc/prometheus
+    network_mode: host
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--enable-feature=remote-write-receiver"
+      - "--query.lookback-delta=2m"
+
+  n9e:
+    image: flashcatcloud/nightingale:latest
+    container_name: n9e
+    hostname: n9e
+    restart: always
+    environment:
+      GIN_MODE: release
+      TZ: Asia/Shanghai
+      WAIT_HOSTS: 127.0.0.1:3306, 127.0.0.1:6379
+    volumes:
+      - ./etc-nightingale:/app/etc
+      - ./n9e-logs:/app/logs
+    network_mode: host
+    depends_on:
+      - mysql
+      - redis
+      - prometheus
+    command: >
+      sh -c "/app/n9e"
+
+  categraf:
+    image: "flashcatcloud/categraf:latest"
+    container_name: "categraf"
+    hostname: "categraf01"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_MOUNT_PREFIX: /hostfs
+      WAIT_HOSTS: 127.0.0.1:17000, 127.0.0.1:20090, 127.0.0.1:9092
+    volumes:
+      - ./etc-categraf:/etc/categraf/conf
+      - ./n9e-logs:/logs
+      - /:/hostfs
+    network_mode: host
+    depends_on:
+      - n9e
+      - kafka
+
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: "zookeeper"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    network_mode: host
+    depends_on:
+      - n9e
+
+  kafka:
+    image: bitnami/kafka:3.4
+    container_name: "kafka"
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 2000000
+    network_mode: host
+    depends_on:
+      - zookeeper
+
+  elasticsearch:    
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1    
+    container_name: "elasticsearch"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - discovery.type=single-node
+    network_mode: host
+    depends_on:
+      - kafka 
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.3
+    container_name: "logstash"
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+      - LS_JAVA_OPTS=-Xmx256m -Xms256m
+    volumes:
+      - ./etc-logstash/logstash.yaml:/etc/logstash/conf.d/logstash.yaml
+    entrypoint:
+      - logstash
+      - -f
+      - /etc/logstash/conf.d/logstash.yaml
+    network_mode: host
+    depends_on:
+      - elasticsearch
+      - kafka
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "3"
+

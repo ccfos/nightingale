@@ -1,0 +1,316 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "cAdvisor",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
+                "layout": {
+                    "h": 7,
+                    "i": "eeb56afe-8a3e-46d6-8923-aeb3d0f124ea",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "CPU Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name) *100",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+                "layout": {
+                    "h": 8,
+                    "i": "6690fff4-c159-40e5-b340-65a3ba85e37e",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(container_memory_rss{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3c798af5-cfae-4962-9b70-85736df44bb1",
+                "layout": {
+                    "h": 8,
+                    "i": "3c798af5-cfae-4962-9b70-85736df44bb1",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Cached",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(container_memory_cache{instance=~\"$host\",name=~\"$container\",name=~\".+\"}) by (name)",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+                "layout": {
+                    "h": 8,
+                    "i": "111835e1-cfb5-40db-bb52-1aca74cf1a00",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Received Network Traffic",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(container_network_receive_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "2.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+                "layout": {
+                    "h": 8,
+                    "i": "b8050f8f-aee7-4fa5-888d-b6025df14aa1",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Sent Network Traffic",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(container_network_transmit_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[5m])) by (name)",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "allValue": ".*",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values({__name__=~\"container.*\"},instance)",
+                "multi": false,
+                "name": "host",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "allValue": ".*",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values({__name__=~\"container.*\", instance=~\"$host\"},name)",
+                "multi": false,
+                "name": "container",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328497218000
+}

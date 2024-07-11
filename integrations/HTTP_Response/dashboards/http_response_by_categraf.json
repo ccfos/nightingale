@@ -1,0 +1,232 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "HTTP detect by UlricQin",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "aggrDimension": "target",
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
+                    "showHeader": true,
+                    "sortColumn": "target",
+                    "sortOrder": "ascend"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "3674dbfa-243a-49f6-baa5-b7f887c1afb0",
+                "layout": {
+                    "h": 15,
+                    "i": "3674dbfa-243a-49f6-baa5-b7f887c1afb0",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "URL Details",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#417505",
+                                        "text": "UP"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "special": 1
+                                    },
+                                    "result": {
+                                        "color": "#e90f0f",
+                                        "text": "DOWN"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "value": "D"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "humantimeSeconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 604800
+                                    },
+                                    "result": {
+                                        "color": "#f60c0c"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "to": 2592000
+                                    },
+                                    "result": {
+                                        "color": "#ffae39"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 399
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "to": 499
+                                    },
+                                    "result": {
+                                        "color": "#ff656b"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 500
+                                    },
+                                    "result": {
+                                        "color": "#f10808"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "value": "C"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 400
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 400
+                                    },
+                                    "result": {
+                                        "color": "#ff656b"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 2000
+                                    },
+                                    "result": {
+                                        "color": "#f11313"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "max(http_response_result_code) by (target)",
+                        "instant": true,
+                        "legend": "UP?",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(http_response_response_code) by (target)",
+                        "instant": true,
+                        "legend": "status code",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(http_response_response_time) by (target) *1000",
+                        "instant": true,
+                        "legend": "latency",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(http_response_cert_expire_timestamp) by (target) - time()",
+                        "instant": true,
+                        "legend": "cert expire",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "Datasource",
+                "type": "datasource"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327500066000
+}

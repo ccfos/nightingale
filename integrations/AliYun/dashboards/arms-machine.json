@@ -1,0 +1,441 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "ARMS-Machine",
+    "ident": "",
+    "tags": "ARMS",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "8865eacb-f0f6-45fa-912a-8494907c48d6",
+                "layout": {
+                    "h": 1,
+                    "i": "8865eacb-f0f6-45fa-912a-8494907c48d6",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "系统信息",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7fd3186b-6190-44c7-ad05-1c81993f27c9",
+                "layout": {
+                    "h": 9,
+                    "i": "7fd3186b-6190-44c7-ad05-1c81993f27c9",
+                    "w": 24,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "CPU",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(arms_system_cpu_system{host=~\"$host\"})",
+                        "legend": "系统CPU使用率",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(arms_system_cpu_io_wait{host=~\"$host\"})",
+                        "legend": "等待IO完成的CPU使用率",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(arms_system_cpu_user{host=~\"$host\"})",
+                        "legend": "用户CPU使用率",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(arms_system_cpu_system{host=\"$host\"})+max(arms_system_cpu_io_wait{host=~\"$host\"})+max(arms_system_cpu_user{host=\"$host\"})",
+                        "legend": "总和",
+                        "refId": "D"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "60fc127b-b565-40de-9346-860062d5ea58",
+                "layout": {
+                    "h": 9,
+                    "i": "60fc127b-b565-40de-9346-860062d5ea58",
+                    "w": 24,
+                    "x": 0,
+                    "y": 10
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "内存",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(arms_system_mem_used_bytes{host=\"$host\"})",
+                        "legend": "系统的已经使用的内存",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(arms_system_mem_total_bytes{host=\"$host\"})",
+                        "legend": "总和",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(arms_system_mem_buffers_bytes{host=\"$host\"})",
+                        "legend": "系统的BufferCache的内存数",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "max(arms_system_mem_cached_bytes{host=\"$host\"})",
+                        "legend": "系统的PageCache里的内存数",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "max(arms_system_mem_free_bytes{host=\"$host\"})",
+                        "legend": "系统的空闲内存",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "5229fd8c-3e26-44e6-a091-145c3caef46f",
+                "layout": {
+                    "h": 9,
+                    "i": "5229fd8c-3e26-44e6-a091-145c3caef46f",
+                    "w": 24,
+                    "x": 0,
+                    "y": 19
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "负载",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(arms_system_load{host=\"$host\"})",
+                        "legend": "负载",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "60872e48-5445-4ee1-b0a2-19be72b6f737",
+                "layout": {
+                    "h": 9,
+                    "i": "60872e48-5445-4ee1-b0a2-19be72b6f737",
+                    "w": 24,
+                    "x": 0,
+                    "y": 28
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "磁盘",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(arms_system_disk_free_bytes{host=\"$host\"})",
+                        "legend": "可用磁盘容量",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(arms_system_disk_total_bytes{host=\"$host\"})",
+                        "legend": "总磁盘容量",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(arms_system_disk_total_bytes{host=~\"$host\"})-max(arms_system_disk_free_bytes{host=~\"$host\"})",
+                        "legend": "已使用磁盘容量",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "517cc410-c4a0-4923-a902-3c102f06cd0c",
+                "layout": {
+                    "h": 9,
+                    "i": "517cc410-c4a0-4923-a902-3c102f06cd0c",
+                    "w": 24,
+                    "x": 0,
+                    "y": 37
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "网络流量(Byte)/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(max_over_time(arms_system_net_in_bytes{host=~\"$host\"}[1m]))",
+                        "legend": "网络接收的字节数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(max_over_time(arms_system_net_out_bytes{host=~\"$host\"}[1m]))",
+                        "legend": "网络发送的字节数",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "752d89ce-1136-4ddf-b4b9-1a232a8840db",
+                "layout": {
+                    "h": 9,
+                    "i": "752d89ce-1136-4ddf-b4b9-1a232a8840db",
+                    "w": 24,
+                    "x": 0,
+                    "y": 46
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "网络数据包(个)/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(max_over_time(arms_system_net_in_packets{host=~\"$host\"}[1m]))",
+                        "legend": "网络接收的报文数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(max_over_time(arms_system_net_out_packets{host=~\"$host\"}[1m]))",
+                        "legend": "网络发送的报文数",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(max_over_time(arms_system_net_in_errs{host=~\"$host\"}[1m]))",
+                        "legend": "网络接收的错误数",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "max(max_over_time(arms_system_net_out_errs{host=~\"$host\"}[1m]))",
+                        "legend": "网络丢弃报文数",
+                        "refId": "E"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(arms_system_cpu_idle,service)",
+                "multi": false,
+                "name": "service",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "allValue": "*",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(arms_system_cpu_idle{service=\"$service\"},host)",
+                "multi": false,
+                "name": "host",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327098444000
+}

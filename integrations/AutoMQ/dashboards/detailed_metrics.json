@@ -1,0 +1,4103 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Detailed  Metrics",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "d88272f7-f9f7-4a94-84f7-00a1b3674de9",
+                "layout": {
+                    "h": 1,
+                    "i": "d88272f7-f9f7-4a94-84f7-00a1b3674de9",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "System Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "299f918c-b627-44ab-bf3a-6291389acb72",
+                "layout": {
+                    "h": 5,
+                    "i": "299f918c-b627-44ab-bf3a-6291389acb72",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM CPU Utilization",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "process_runtime_jvm_cpu_utilization_ratio{job=\"$cluster_id\", instance=~\"$node_id\"}",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "c3f483df-3c9a-47d1-a02e-459bd61f832c",
+                "layout": {
+                    "h": 5,
+                    "i": "bff120e4-a3d7-406e-acf8-0ccfbf5c9e0d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM Heap Memory Utilization",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, type) (process_runtime_jvm_memory_usage_bytes{job=\"$cluster_id\", instance=~\"$node_id\", type=\"heap\"})\n/\nsum by(type, instance) (process_runtime_jvm_memory_limit_bytes{job=\"$cluster_id\", instance=~\"$node_id\", type=\"heap\"})",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "7fd86b25-a721-4e30-9495-93349d3dcc42",
+                "layout": {
+                    "h": 5,
+                    "i": "4800354c-1360-49f1-859d-3fe54ecab27e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Allocation",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "1 - sum by(job, instance) (kafka_stream_buffer_allocated_memory_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"}) / sum by(job, instance) (kafka_stream_buffer_used_memory_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "aa626e9e-1a08-4d34-a5a9-2d6f6dc498ea",
+                "layout": {
+                    "h": 5,
+                    "i": "aa626e9e-1a08-4d34-a5a9-2d6f6dc498ea",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Allocation Detailed",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, type) (kafka_stream_buffer_allocated_memory_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#{{type}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "77674110-158a-43cf-96e8-7b5566473c49",
+                "layout": {
+                    "h": 5,
+                    "i": "77674110-158a-43cf-96e8-7b5566473c49",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Cache Size",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance) (kafka_stream_delta_wal_cache_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#Delta_WAL_Cache",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(job, instance) (kafka_stream_block_cache_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#Block_Cache",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "11cbfa04-73ff-40e1-b577-ca4348c74993",
+                "layout": {
+                    "h": 1,
+                    "i": "11cbfa04-73ff-40e1-b577-ca4348c74993",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 11
+                },
+                "name": "Kafka Requests",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "02ac7786-566c-4e24-bc84-213635a8b05f",
+                "layout": {
+                    "h": 7,
+                    "i": "02ac7786-566c-4e24-bc84-213635a8b05f",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, job, type) (rate(kafka_request_count_total{job=\"$cluster_id\", instance=~\"$node_id\", type=~\"$request_type\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{type}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "2e16284f-d7ae-4acc-98ee-05ee32c80d72",
+                "layout": {
+                    "h": 7,
+                    "i": "2e16284f-d7ae-4acc-98ee-05ee32c80d72",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (Avg)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_request_time_mean_milliseconds{job=\"$cluster_id\", instance=~\"$node_id\", type=~\"$request_type\"}",
+                        "legend": "Node-{{instance}}#{{type}}",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "c1dfc44e-1ac9-4f28-b10e-c40077dd708a",
+                "layout": {
+                    "h": 7,
+                    "i": "c1dfc44e-1ac9-4f28-b10e-c40077dd708a",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 12
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (P99)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_request_time_99p_milliseconds{job=\"$cluster_id\", instance=~\"$node_id\", type=~\"$request_type\"}",
+                        "legend": "Node-{{instance}}#{{type}}",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "e437d394-379d-41e7-9df3-9486b0380dde",
+                "layout": {
+                    "h": 6,
+                    "i": "e437d394-379d-41e7-9df3-9486b0380dde",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 19
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "IO Thread Idle Ratio",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_io_threads_idle_rate_1m{job=\"$cluster_id\", instance=~\"$node_id\"}",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "1bb285b7-7d02-430e-9b66-7d985c87c32a",
+                "layout": {
+                    "h": 6,
+                    "i": "1bb285b7-7d02-430e-9b66-7d985c87c32a",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Network Thread Idle Ratio",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_network_threads_idle_rate{job=\"$cluster_id\", instance=~\"$node_id\"}",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "55b0d7fc-9ae3-4ae2-971a-593d49bb9650",
+                "layout": {
+                    "h": 1,
+                    "i": "55b0d7fc-9ae3-4ae2-971a-593d49bb9650",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 25
+                },
+                "name": "S3Stream Request",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "fb96dfec-bbb8-4372-bc81-a57794a45e39",
+                "layout": {
+                    "h": 6,
+                    "i": "fb96dfec-bbb8-4372-bc81-a57794a45e39",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 26
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name, operation_type) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3stream_request\", operation_type=\"S3Stream\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "700efda2-c816-4014-b7fd-e02262e23218",
+                "layout": {
+                    "h": 6,
+                    "i": "700efda2-c816-4014-b7fd-e02262e23218",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 26
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (Avg)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3stream_request\", operation_type=\"S3Stream\"}",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "74596486-1c73-46ad-be71-4c84f8782a8f",
+                "layout": {
+                    "h": 6,
+                    "i": "74596486-1c73-46ad-be71-4c84f8782a8f",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 26
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (P99)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3stream_request\", operation_type=\"S3Stream\"}",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "5cfbeac7-6507-4d22-8ad3-5ceb37b70c55",
+                "layout": {
+                    "h": 1,
+                    "i": "5cfbeac7-6507-4d22-8ad3-5ceb37b70c55",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32
+                },
+                "name": "S3 Request",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "4f64e96e-bccf-43e0-b15b-4a3cf85c2555",
+                "layout": {
+                    "h": 6,
+                    "i": "4f64e96e-bccf-43e0-b15b-4a3cf85c2555",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 33
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Error Rate",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 0.1
+                            }
+                        ],
+                        "style": "off"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(operation_name, instance) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Request\", status=\"failed\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "ad31f321-fc64-4a40-8b63-cba3f82ee493",
+                "layout": {
+                    "h": 6,
+                    "i": "ad31f321-fc64-4a40-8b63-cba3f82ee493",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 33
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3request\", operation_type=\"S3Request\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "91eb39ef-6c0c-4f97-a395-f2a282cf0f02",
+                "layout": {
+                    "h": 5,
+                    "i": "91eb39ef-6c0c-4f97-a395-f2a282cf0f02",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 39
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (Avg)",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69"
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ],
+                        "style": "off"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3request\", operation_type=\"S3Request\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "768b847a-214d-4fa0-bb25-465f12d53ef3",
+                "layout": {
+                    "h": 5,
+                    "i": "768b847a-214d-4fa0-bb25-465f12d53ef3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 39
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (P99)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"$s3request\", operation_type=\"S3Request\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "0fc296de-7e62-4422-a2bf-193b11c3f66f",
+                "layout": {
+                    "h": 1,
+                    "i": "0fc296de-7e62-4422-a2bf-193b11c3f66f",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 44
+                },
+                "name": "Delta WAL",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "f52eb9f4-198b-422b-b669-58c3684177a3",
+                "layout": {
+                    "h": 5,
+                    "i": "f52eb9f4-198b-422b-b669-58c3684177a3",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, operation_name) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_wal|append_wal_full\", operation_type=\"S3Storage\", stage=\"complete\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "bd378630-0756-4734-95ae-49b61d7ad45c",
+                "layout": {
+                    "h": 5,
+                    "i": "bd378630-0756-4734-95ae-49b61d7ad45c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, stage) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_wal\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{stage}}_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, stage) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_wal\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{stage}}_P99",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "de311c0f-406e-45fb-b489-14fcb535332e",
+                "layout": {
+                    "h": 1,
+                    "i": "de311c0f-406e-45fb-b489-14fcb535332e",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 50
+                },
+                "name": "Delta WAL Cache",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "94970a87-f173-4828-89ba-421c31b62252",
+                "layout": {
+                    "h": 5,
+                    "i": "94970a87-f173-4828-89ba-421c31b62252",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 51
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_log_cache|append_log_cache_full\", operation_type=\"S3Storage\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(job, instance, operation_name, status) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Storage\", operation_name=\"read_log_cache\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "b3714360-1340-4088-80cd-587fdd847888",
+                "layout": {
+                    "h": 5,
+                    "i": "b3714360-1340-4088-80cd-587fdd847888",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 51
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (Avg)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_log_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_log_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "778750a6-c587-42d7-b7a2-9ab123ad2be8",
+                "layout": {
+                    "h": 5,
+                    "i": "778750a6-c587-42d7-b7a2-9ab123ad2be8",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 51
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency (P99)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"append_log_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_log_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "7d25b5df-0130-4464-87eb-91939d141487",
+                "layout": {
+                    "h": 1,
+                    "i": "7d25b5df-0130-4464-87eb-91939d141487",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 56
+                },
+                "name": "Upload WAL",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "c3cb53a0-80cf-43fa-b758-e41c5a354b33",
+                "layout": {
+                    "h": 6,
+                    "i": "c3cb53a0-80cf-43fa-b758-e41c5a354b33",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 57
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Upload WAL Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"upload_wal|force_upload_wal\", operation_type=\"S3Storage\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "99715d27-cc5a-4625-aa37-f05594e7af58",
+                "layout": {
+                    "h": 6,
+                    "i": "99715d27-cc5a-4625-aa37-f05594e7af58",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 57
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, stage) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"upload_wal|force_upload_wal\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{stage}}_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, stage) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"upload_wal|force_upload_wal\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{stage}}_P99",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "debcdc1d-d36b-4992-a8d4-f9b02bf3299c",
+                "layout": {
+                    "h": 1,
+                    "i": "debcdc1d-d36b-4992-a8d4-f9b02bf3299c",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 63
+                },
+                "name": "Block Cache",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "3afefad7-cd2d-4cb8-9071-6bebd067870d",
+                "layout": {
+                    "h": 5,
+                    "i": "3afefad7-cd2d-4cb8-9071-6bebd067870d",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 64
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name, status) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=~\"read_block_cache\", operation_type=\"S3Storage\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "2aa45efb-e3d4-4a8c-996c-a23ecbedbfe7",
+                "layout": {
+                    "h": 5,
+                    "i": "2aa45efb-e3d4-4a8c-996c-a23ecbedbfe7",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 64
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Request Latency",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_block_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_block_cache\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}_P99",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "46168b03-fae4-415c-b17e-28b40a436a1e",
+                "layout": {
+                    "h": 6,
+                    "i": "46168b03-fae4-415c-b17e-28b40a436a1e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 69
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Read Ahead Request Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance, operation_name, status) (rate(kafka_stream_operation_latency_count{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_ahead\", operation_type=\"S3Storage\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "1b7708a0-3e19-421a-8a22-155c78846797",
+                "layout": {
+                    "h": 6,
+                    "i": "1b7708a0-3e19-421a-8a22-155c78846797",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 69
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Read Ahead Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance) (rate(kafka_stream_read_ahead_size_sum_bytes{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "957402a2-77c2-46a7-8258-461b3c463345",
+                "layout": {
+                    "h": 6,
+                    "i": "957402a2-77c2-46a7-8258-461b3c463345",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 69
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Read Ahead Latency",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_ahead\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance, operation_name, status) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_name=\"read_ahead\", operation_type=\"S3Storage\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{status}}_P99",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "",
+                "id": "2f2fd063-d7d5-4bb9-9c8a-b0d5d41920a1",
+                "layout": {
+                    "h": 5,
+                    "i": "2f2fd063-d7d5-4bb9-9c8a-b0d5d41920a1",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 75
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Read Ahead Size Avg",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance) (kafka_stream_read_ahead_size_mean_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "c2fa4768-45d7-4653-97ef-0c26d78ffe15",
+                "layout": {
+                    "h": 5,
+                    "i": "c2fa4768-45d7-4653-97ef-0c26d78ffe15",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 75
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Available Inflight Read Ahead Size",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(job, instance) (kafka_stream_available_inflight_read_ahead_size_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "",
+                "id": "3ecc36e8-5ad0-404b-a70e-b3a036ec3325",
+                "layout": {
+                    "h": 5,
+                    "i": "3ecc36e8-5ad0-404b-a70e-b3a036ec3325",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 75
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Read Ahead Throttle Time",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance) (kafka_stream_read_ahead_limiter_queue_time_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance) (kafka_stream_read_ahead_limiter_queue_time_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}_P99",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "8c0dcf14-6d8b-4525-a23e-07c7d4bcb116",
+                "layout": {
+                    "h": 1,
+                    "i": "8c0dcf14-6d8b-4525-a23e-07c7d4bcb116",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 80
+                },
+                "name": "Networks",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "3c3878b8-665b-43ac-b59b-09457ea69114",
+                "layout": {
+                    "h": 6,
+                    "i": "3c3878b8-665b-43ac-b59b-09457ea69114",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 81
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Total Bytes In / Out",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, job) (rate(kafka_stream_network_inbound_usage_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#In",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(instance, job) (rate(kafka_stream_network_outbound_usage_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval])) * -1",
+                        "legend": "Node-{{instance}}#Out",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "a0f1b7de-5c7d-488e-8699-5839453ba1c1",
+                "layout": {
+                    "h": 6,
+                    "i": "a0f1b7de-5c7d-488e-8699-5839453ba1c1",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 81
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bytes In / Out",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, job) (rate(kafka_stream_download_size_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#In_S3",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sum by(instance, job) (rate(kafka_stream_upload_size_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval])) * -1",
+                        "legend": "Node-{{instance}}#Out_S3",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum by(instance, job, direction) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#In_Msg",
+                        "maxDataPoints": 240,
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "sum by(instance, job, direction) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\", direction=\"out\"}[$__rate_interval])) * -1",
+                        "legend": "Node-{{instance}}#Out_Msg",
+                        "maxDataPoints": 240,
+                        "refId": "F"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "40f8fcd4-8d2c-44b7-8697-abc455f3dbaf",
+                "layout": {
+                    "h": 6,
+                    "i": "40f8fcd4-8d2c-44b7-8697-abc455f3dbaf",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 87
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Available Bandwidth",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance, job) (kafka_stream_network_inbound_available_bandwidth_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#In",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(instance, job) (kafka_stream_network_outbound_available_bandwidth_bytes{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#Out",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "2e1cc35b-aed8-498e-9ab2-1a06732921f8",
+                "layout": {
+                    "h": 6,
+                    "i": "2e1cc35b-aed8-498e-9ab2-1a06732921f8",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 87
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Network Limiter Queue Time",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance) (kafka_stream_network_inbound_limiter_queue_time_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#In_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "avg by(instance) (kafka_stream_network_outbound_limiter_queue_time_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#Out_Avg",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "avg by(instance) (kafka_stream_network_inbound_limiter_queue_time_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#In_P99",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "avg by(instance) (kafka_stream_network_outbound_limiter_queue_time_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\"})",
+                        "legend": "Node-{{instance}}#Out_P99",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "3a5d1265-435f-4b55-a0ff-8d756abf2482",
+                "layout": {
+                    "h": 1,
+                    "i": "3a5d1265-435f-4b55-a0ff-8d756abf2482",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 93
+                },
+                "name": "S3 Object",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "7890d4fb-abd0-4909-bf18-40aad3396865",
+                "layout": {
+                    "h": 5,
+                    "i": "7890d4fb-abd0-4909-bf18-40aad3396865",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 94
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "S3 Object Count Total",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(state) (kafka_stream_s3_object_count{job=\"$cluster_id\"})",
+                        "legend": "__auto",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "3cbffbbb-a527-4c70-88c3-a40e6da04a70",
+                "layout": {
+                    "h": 5,
+                    "i": "3cbffbbb-a527-4c70-88c3-a40e6da04a70",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 94
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "S3 Object Size Total",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_stream_s3_object_size_bytes{job=\"$cluster_id\"}",
+                        "legend": "Size",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "86821c1e-4735-4a2a-8493-8e83bef54acb",
+                "layout": {
+                    "h": 5,
+                    "i": "86821c1e-4735-4a2a-8493-8e83bef54acb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 99
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "StreamSetObject Num",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(node_id) (kafka_stream_stream_set_object_num{job=\"$cluster_id\", node_id=~\"$node_id\"})",
+                        "legend": "Node-{{node_id}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d9608713-38c0-417a-a315-39e66177db50",
+                "layout": {
+                    "h": 5,
+                    "i": "d9608713-38c0-417a-a315-39e66177db50",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 99
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "StreamObject Num",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_stream_stream_object_num{job=\"$cluster_id\"}",
+                        "legend": "Count",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "f087fb68-3ef2-4dc0-a406-4ac554b630be",
+                "layout": {
+                    "h": 6,
+                    "i": "f087fb68-3ef2-4dc0-a406-4ac554b630be",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 104
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Get Object Throughput By Size",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(size, instance) (rate(kafka_stream_operation_latency_count{operation_type=\"S3Request\", operation_name=\"get_object\", job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "434a445d-419a-4b59-a284-aee5faf7fe62",
+                "layout": {
+                    "h": 6,
+                    "i": "434a445d-419a-4b59-a284-aee5faf7fe62",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 104
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Get Object Request Latency Avg",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, size) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Request\", operation_name=\"get_object\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "90282958-1378-45e8-a535-6ac1d92a568d",
+                "layout": {
+                    "h": 6,
+                    "i": "90282958-1378-45e8-a535-6ac1d92a568d",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 104
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Get Object Request Latency P99",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, operation_name, size) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Request\", operation_name=\"get_object\"})",
+                        "legend": "Node-{{instance}}#{{operation_name}}-{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "abff8180-66cf-48a0-a29a-ee17f8f01390",
+                "layout": {
+                    "h": 7,
+                    "i": "abff8180-66cf-48a0-a29a-ee17f8f01390",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 110
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Upload Object Throughput By Size",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(size, instance) (rate(kafka_stream_operation_latency_count{operation_type=\"S3Request\", operation_name=~\"put_object|upload_part\", job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]))",
+                        "legend": "Node-{{instance}}#{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "4aff03b3-88f3-4ef0-99c9-9c97813ad474",
+                "layout": {
+                    "h": 7,
+                    "i": "4aff03b3-88f3-4ef0-99c9-9c97813ad474",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 110
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Put Object Request Latency Avg",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, size) (kafka_stream_operation_latency_mean_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Request\", operation_name=~\"put_object|upload_part\"})",
+                        "legend": "Node-{{instance}}#{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "bda7d930-ce56-4201-996c-a36ac54aaa8d",
+                "layout": {
+                    "h": 7,
+                    "i": "bda7d930-ce56-4201-996c-a36ac54aaa8d",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 110
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Put Object Request Latency P99",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "avg by(instance, size) (kafka_stream_operation_latency_99p_nanoseconds{job=\"$cluster_id\", instance=~\"$node_id\", operation_type=\"S3Request\", operation_name=~\"put_object|upload_part\"})",
+                        "legend": "Node-{{instance}}#{{size}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "2bc4051b-eba3-4917-a30b-893d004069cf",
+                "layout": {
+                    "h": 1,
+                    "i": "2bc4051b-eba3-4917-a30b-893d004069cf",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 117
+                },
+                "name": "Compaction",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.15,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "7c60cf60-593c-46f5-9e26-81851b3df023",
+                "layout": {
+                    "h": 6,
+                    "i": "7c60cf60-593c-46f5-9e26-81851b3df023",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 118
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Compaction Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(kafka_stream_compaction_read_size_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval])",
+                        "legend": "Node-{{instance}}#In",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(kafka_stream_compaction_write_size_bytes_total{job=\"$cluster_id\", instance=~\"$node_id\"}[$__rate_interval]) * -1",
+                        "legend": "Node-{{instance}}#Out",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "93d6e740-d0b6-42ac-8a4a-a7c513214916",
+                "layout": {
+                    "h": 1,
+                    "i": "93d6e740-d0b6-42ac-8a4a-a7c513214916",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 124
+                },
+                "name": "Auto-Balancer",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "4f70ad3c-ca70-4dc4-bfde-ab09ddd4fcc4",
+                "layout": {
+                    "h": 6,
+                    "i": "4f70ad3c-ca70-4dc4-bfde-ab09ddd4fcc4",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 125
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Metrics Delay",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "kafka_stream_auto_balancer_metrics_time_delay_milliseconds{job=\"$cluster_id\", node_id=~\"$node_id\"}",
+                        "legend": "Node-{{node_id}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "DS_PROMETHEUS",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,job)",
+                "hide": false,
+                "multi": false,
+                "name": "cluster_id",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,instance)",
+                "hide": false,
+                "multi": true,
+                "name": "node_id",
+                "reg": "/(^[0-9]*$)/",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(kafka_request_count_total,type)",
+                "hide": false,
+                "multi": true,
+                "name": "request_type",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(kafka_stream_operation_latency_count{operation_type=\"S3Stream\"},operation_name)",
+                "hide": false,
+                "multi": true,
+                "name": "s3stream_request",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(kafka_stream_operation_latency_count{operation_type=\"S3Request\"},operation_name)",
+                "hide": false,
+                "multi": true,
+                "name": "s3request",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327167247000
+}

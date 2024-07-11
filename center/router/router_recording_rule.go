@@ -11,11 +11,36 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) recordingRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	ars, err := models.RecordingRuleGets(rt.Ctx, busiGroupId)
+	ginx.NewRender(c).Data(ars, err)
+}
+
+func (rt *Router) recordingRuleGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+
+			if len(gids) == 0 {
+				ginx.NewRender(c).Data([]int{}, nil)
+				return
+			}
+		}
+	}
+
+	ars, err := models.RecordingRuleGetsByBGIds(rt.Ctx, gids)
 	ginx.NewRender(c).Data(ars, err)
 }
 

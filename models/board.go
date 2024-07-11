@@ -5,33 +5,39 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
 )
 
+const (
+	PublicAnonymous = 0
+	PublicLogin     = 1
+	PublicBusi      = 2
+)
+
 type Board struct {
-	Id       int64  `json:"id" gorm:"primaryKey"`
-	GroupId  int64  `json:"group_id"`
-	Name     string `json:"name"`
-	Ident    string `json:"ident"`
-	Tags     string `json:"tags"`
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
-	Configs  string `json:"configs" gorm:"-"`
-	Public   int    `json:"public"`   // 0: false, 1: true
-	BuiltIn  int    `json:"built_in"` // 0: false, 1: true
-	Hide     int    `json:"hide"`     // 0: false, 1: true
+	Id         int64   `json:"id" gorm:"primaryKey"`
+	GroupId    int64   `json:"group_id"`
+	Name       string  `json:"name"`
+	Ident      string  `json:"ident"`
+	Tags       string  `json:"tags"`
+	CreateAt   int64   `json:"create_at"`
+	CreateBy   string  `json:"create_by"`
+	UpdateAt   int64   `json:"update_at"`
+	UpdateBy   string  `json:"update_by"`
+	Configs    string  `json:"configs" gorm:"-"`
+	Public     int     `json:"public"`      // 0: false, 1: true
+	PublicCate int     `json:"public_cate"` // 0: anonymous, 1: login, 2: busi
+	Bgids      []int64 `json:"bgids" gorm:"-"`
+	BuiltIn    int     `json:"built_in"` // 0: false, 1: true
+	Hide       int     `json:"hide"`     // 0: false, 1: true
 }
 
 func (b *Board) TableName() string {
 	return "board"
-}
-
-func (b *Board) DB2FE() error {
-	return nil
 }
 
 func (b *Board) Verify() error {
@@ -44,6 +50,26 @@ func (b *Board) Verify() error {
 	}
 
 	return nil
+}
+
+func (b *Board) Clone(operatorName string, newBgid int64, suffix string) *Board {
+	clone := &Board{
+		Name:     b.Name,
+		Tags:     b.Tags,
+		GroupId:  newBgid,
+		CreateBy: operatorName,
+		UpdateBy: operatorName,
+	}
+
+	if suffix != "" {
+		clone.Name = clone.Name + " " + suffix
+	}
+
+	if b.Ident != "" {
+		clone.Ident = uuid.NewString()
+	}
+
+	return clone
 }
 
 func (b *Board) CanRenameIdent(ctx *ctx.Context, ident string) (bool, error) {
@@ -76,11 +102,39 @@ func (b *Board) Add(ctx *ctx.Context) error {
 		}
 	}
 
+	cnt, err := Count(DB(ctx).Model(b).Where("name = ? and group_id = ?", b.Name, b.GroupId))
+	if err != nil {
+		return err
+	}
+
+	if cnt > 0 {
+		return errors.New("Name duplicate")
+	}
+
 	now := time.Now().Unix()
 	b.CreateAt = now
 	b.UpdateAt = now
 
 	return Insert(ctx, b)
+}
+
+func (b *Board) AtomicAdd(c *ctx.Context, payload string) error {
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		if err := b.Add(tCtx); err != nil {
+			return err
+		}
+
+		if payload != "" {
+			if err := BoardPayloadSave(tCtx, b.Id, payload); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (b *Board) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
@@ -153,6 +207,30 @@ func BoardExists(ctx *ctx.Context, where string, args ...interface{}) (bool, err
 // BoardGets for list page
 func BoardGetsByGroupId(ctx *ctx.Context, groupId int64, query string) ([]Board, error) {
 	session := DB(ctx).Where("group_id=?", groupId).Order("name")
+
+	arr := strings.Fields(query)
+	if len(arr) > 0 {
+		for i := 0; i < len(arr); i++ {
+			if strings.HasPrefix(arr[i], "-") {
+				q := "%" + arr[i][1:] + "%"
+				session = session.Where("name not like ? and tags not like ?", q, q)
+			} else {
+				q := "%" + arr[i] + "%"
+				session = session.Where("(name like ? or tags like ?)", q, q)
+			}
+		}
+	}
+
+	var objs []Board
+	err := session.Find(&objs).Error
+	return objs, err
+}
+
+func BoardGetsByBGIds(ctx *ctx.Context, gids []int64, query string) ([]Board, error) {
+	session := DB(ctx)
+	if len(gids) > 0 {
+		session = session.Where("group_id in (?)", gids).Order("name")
+	}
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {

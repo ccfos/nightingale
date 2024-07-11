@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -15,11 +17,11 @@ import (
 )
 
 type NotifyConfigCacheType struct {
-	ctx      *ctx.Context
-	webhooks []*models.Webhook
-	smtp     aconf.SMTPConfig
-	script   models.NotifyScript
-	ibex     aconf.Ibex
+	ctx         *ctx.Context
+	ConfigCache *ConfigCache
+	webhooks    []*models.Webhook
+	smtp        aconf.SMTPConfig
+	script      models.NotifyScript
 
 	sync.RWMutex
 }
@@ -41,9 +43,10 @@ BasicAuthPass = "ibex"
 Timeout = 3000
 `
 
-func NewNotifyConfigCache(ctx *ctx.Context) *NotifyConfigCacheType {
+func NewNotifyConfigCache(ctx *ctx.Context, configCache *ConfigCache) *NotifyConfigCacheType {
 	w := &NotifyConfigCacheType{
-		ctx: ctx,
+		ctx:         ctx,
+		ConfigCache: configCache,
 	}
 	w.SyncNotifyConfigs()
 	return w
@@ -70,6 +73,7 @@ func (w *NotifyConfigCacheType) loopSyncNotifyConfigs() {
 
 func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	start := time.Now()
+	userVariableMap := w.ConfigCache.Get()
 
 	w.RWMutex.Lock()
 	defer w.RWMutex.Unlock()
@@ -96,6 +100,8 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 		dumper.PutSyncRecord("smtp", start.Unix(), -1, -1, "failed to query configs.smtp_config: "+err.Error())
 		return err
 	}
+
+	cval = tplx.ReplaceTemplateUseText(models.SMTP, cval, userVariableMap)
 
 	if strings.TrimSpace(cval) != "" {
 		err = toml.Unmarshal([]byte(cval), &w.smtp)
@@ -124,29 +130,6 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 
 	dumper.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
 
-	start = time.Now()
-	cval, err = models.ConfigsGet(w.ctx, models.IBEX)
-	if err != nil {
-		dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to query configs.ibex_server: "+err.Error())
-		return err
-	}
-
-	if strings.TrimSpace(cval) != "" {
-		err = toml.Unmarshal([]byte(cval), &w.ibex)
-		if err != nil {
-			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
-			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
-		}
-	} else {
-		err = toml.Unmarshal([]byte(DefaultIbex), &w.ibex)
-		if err != nil {
-			dumper.PutSyncRecord("ibex", start.Unix(), -1, -1, "failed to unmarshal configs.ibex_server: "+err.Error())
-			logger.Errorf("failed to unmarshal ibex:%s error:%v", cval, err)
-		}
-	}
-
-	dumper.PutSyncRecord("ibex", start.Unix(), time.Since(start).Milliseconds(), 1, "success, ibex_server config:\n"+cval)
-
 	return nil
 }
 
@@ -170,10 +153,4 @@ func (w *NotifyConfigCacheType) GetNotifyScript() models.NotifyScript {
 	}
 
 	return w.script
-}
-
-func (w *NotifyConfigCacheType) GetIbex() aconf.Ibex {
-	w.RWMutex.RLock()
-	defer w.RWMutex.RUnlock()
-	return w.ibex
 }

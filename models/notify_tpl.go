@@ -17,19 +17,19 @@ import (
 )
 
 type NotifyTpl struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Channel string `json:"channel"`
-	Content string `json:"content"`
-	BuiltIn bool   `json:"built_in" gorm:"-"`
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	Channel  string `json:"channel"`
+	Content  string `json:"content"`
+	BuiltIn  bool   `json:"built_in" gorm:"-"`
+	CreateAt int64  `json:"create_at"`
+	CreateBy string `json:"create_by"`
+	UpdateAt int64  `json:"update_at"`
+	UpdateBy string `json:"update_by"`
 }
 
 func (n *NotifyTpl) TableName() string {
 	return "notify_tpl"
-}
-
-func (n *NotifyTpl) DB2FE() error {
-	return nil
 }
 
 func (n *NotifyTpl) Create(c *ctx.Context) error {
@@ -37,11 +37,11 @@ func (n *NotifyTpl) Create(c *ctx.Context) error {
 }
 
 func (n *NotifyTpl) UpdateContent(c *ctx.Context) error {
-	return DB(c).Model(n).Update("content", n.Content).Error
+	return DB(c).Model(n).Select("content", "update_at", "update_by").Updates(n).Error
 }
 
 func (n *NotifyTpl) Update(c *ctx.Context) error {
-	return DB(c).Model(n).Select("name").Updates(n).Error
+	return DB(c).Model(n).Select("name", "update_at", "update_by").Updates(n).Error
 }
 
 func (n *NotifyTpl) CreateIfNotExists(c *ctx.Context, channel string) error {
@@ -100,6 +100,13 @@ func ListTpls(c *ctx.Context) (map[string]*template.Template, error) {
 		tpls[notifyTpl.Channel] = tpl
 	}
 	return tpls, nil
+}
+
+// get notify by id
+func NotifyTplGet(c *ctx.Context, id int64) (*NotifyTpl, error) {
+	var tpl NotifyTpl
+	err := DB(c).Where("id=?", id).First(&tpl).Error
+	return &tpl, err
 }
 
 func InitNotifyConfig(c *ctx.Context, tplDir string) {
@@ -222,17 +229,31 @@ func getNotifyTpl(tplDir string) map[string]string {
 }
 
 var TplMap = map[string]string{
-	Dingtalk: `#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
+	Dingtalk: `#### {{if .IsRecovered}}<font color="#008800">💚{{.RuleName}}</font>{{else}}<font color="#FF0000">💔{{.RuleName}}</font>{{end}}
 
 ---
-
-- **规则标题**: {{.RuleName}}{{if .RuleNote}}
-- **规则备注**: {{.RuleNote}}{{end}}
-{{if not .IsRecovered}}- **触发时值**: {{.TriggerValue}}{{end}}
-{{if .TargetIdent}}- **监控对象**: {{.TargetIdent}}{{end}}
-- **监控指标**: {{.TagsJSON}}
-- {{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**触发时间**: {{timeformat .TriggerTime}}{{end}}
-- **发送时间**: {{timestamp}}
+{{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}
+- **告警级别**: {{.Severity}}级
+{{- if .RuleNote}}
+- **规则备注**: {{.RuleNote}}
+{{- end}}
+{{- if not .IsRecovered}}
+- **当次触发时值**: {{.TriggerValue}}
+- **当次触发时间**: {{timeformat .TriggerTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if .AnnotationsJSON.recovery_value}}
+- **恢复时值**: {{formatDecimal .AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **恢复时间**: {{timeformat .LastEvalTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **告警事件标签**:
+{{- range $key, $val := .TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
 	`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">

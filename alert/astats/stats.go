@@ -16,9 +16,13 @@ type Stats struct {
 	GaugeAlertQueueSize         prometheus.Gauge
 	CounterRuleEval             *prometheus.CounterVec
 	CounterQueryDataErrorTotal  *prometheus.CounterVec
+	CounterQueryDataTotal       *prometheus.CounterVec
 	CounterRecordEval           *prometheus.CounterVec
 	CounterRecordEvalErrorTotal *prometheus.CounterVec
 	CounterMuteTotal            *prometheus.CounterVec
+	CounterRuleEvalErrorTotal   *prometheus.CounterVec
+	CounterHeartbeatErrorTotal  *prometheus.CounterVec
+	CounterSubEventTotal        *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
@@ -29,19 +33,40 @@ func NewSyncStats() *Stats {
 		Help:      "Number of rule eval.",
 	}, []string{})
 
+	CounterRuleEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "rule_eval_error_total",
+		Help:      "Number of rule eval error.",
+	}, []string{"datasource", "stage"})
+
+	CounterQueryDataErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "query_data_error_total",
+		Help:      "Number of rule eval query data error.",
+	}, []string{"datasource"})
+
+	CounterQueryDataTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "query_data_total",
+		Help:      "Number of rule eval query data.",
+	}, []string{"datasource"})
+
 	CounterRecordEval := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "record_eval_total",
 		Help:      "Number of record eval.",
-	}, []string{})
+	}, []string{"datasource"})
 
 	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "record_eval_error_total",
 		Help:      "Number of record eval error.",
-	}, []string{})
+	}, []string{"datasource"})
 
 	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
@@ -73,13 +98,6 @@ func NewSyncStats() *Stats {
 		Help:      "The size of alert queue.",
 	})
 
-	CounterQueryDataErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "query_data_error_total",
-		Help:      "Number of query data error.",
-	}, []string{"datasource"})
-
 	CounterMuteTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -87,16 +105,34 @@ func NewSyncStats() *Stats {
 		Help:      "Number of mute.",
 	}, []string{"group"})
 
+	CounterSubEventTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "sub_event_total",
+		Help:      "Number of sub event.",
+	}, []string{"group"})
+
+	CounterHeartbeatErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "heartbeat_error_count",
+		Help:      "Number of heartbeat error.",
+	}, []string{})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
 		AlertNotifyTotal,
 		AlertNotifyErrorTotal,
 		CounterRuleEval,
+		CounterQueryDataTotal,
 		CounterQueryDataErrorTotal,
 		CounterRecordEval,
 		CounterRecordEvalErrorTotal,
 		CounterMuteTotal,
+		CounterRuleEvalErrorTotal,
+		CounterHeartbeatErrorTotal,
+		CounterSubEventTotal,
 	)
 
 	return &Stats{
@@ -105,9 +141,13 @@ func NewSyncStats() *Stats {
 		AlertNotifyTotal:            AlertNotifyTotal,
 		AlertNotifyErrorTotal:       AlertNotifyErrorTotal,
 		CounterRuleEval:             CounterRuleEval,
+		CounterQueryDataTotal:       CounterQueryDataTotal,
 		CounterQueryDataErrorTotal:  CounterQueryDataErrorTotal,
 		CounterRecordEval:           CounterRecordEval,
 		CounterRecordEvalErrorTotal: CounterRecordEvalErrorTotal,
 		CounterMuteTotal:            CounterMuteTotal,
+		CounterRuleEvalErrorTotal:   CounterRuleEvalErrorTotal,
+		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
+		CounterSubEventTotal:        CounterSubEventTotal,
 	}
 }

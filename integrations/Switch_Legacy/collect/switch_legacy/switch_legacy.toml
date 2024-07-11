@@ -1,0 +1,79 @@
+# # collect interval
+# interval = "300s"
+
+switch_id_label = "ip"
+
+[mappings]
+"192.168.88.160" = "switch001.bj"
+"192.168.88.161" = "switch002.bj"
+
+[[instances]]
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# use global unique string to specify instance
+# labels = { region="beijing" }
+
+ips = [
+#     "172.16.2.1",
+#     "172.16.4/24",
+#     "192.168.56.102-192.168.56.120"
+]
+
+community = "public"
+
+# whether use index tag
+index_tag = false
+
+ignore_ifaces = ["Nu", "NU", "Vlan", "Vl"]
+
+concurrency_for_address = 1000
+concurrency_for_request = 4
+
+ping_enable = true
+ping_mode_fastping = true
+ping_timeout_ms = 300
+ping_retries = 4
+
+# true: use gosnmp, false: use snmpwalk
+snmp_mode_gosnmp = true
+snmp_timeout_ms = 1000
+snmp_retries = 5
+
+gather_ping_metrics = true
+gather_flow_metrics = true
+gather_cpu_metrics = true
+gather_mem_metrics = true
+gather_oper_status = false
+gather_pkt = false
+gather_broadcast_pkt = false
+gather_multicast_pkt = false
+gather_discards = false
+gather_errors = false
+gather_unknown_protos = false
+gather_out_qlen = false
+
+# ignore metrics if limit > 0 and collected value > limit
+speed_limit = 0
+pkt_limit = 0
+broadcast_pkt_limit = 0
+multicast_pkt_limit = 0
+discards_pkt_limit = 0
+errors_pkt_limit = 0
+unknown_protos_pkt_limit = 0
+out_qlen_pkt_limit = 0
+
+# [[instances.customs]]
+# metric = "AnyconnectSession"
+# tags = {}
+# oid = "1.3.6.1.4.1.9.9.392.1.3.35.0"
+
+# [[instances.customs]]
+# metric = "ConnectionStat"
+# tags = {}
+# oid = "1.3.6.1.4.1.9.9.147.1.2.2.2.1.5.40.6"
+
+# [[instances.customs]]
+# metric = "TempStatus"
+# tags = {}
+# oid = "1.3.6.1.4.1.9.9.13.1.3.1.3.1004"

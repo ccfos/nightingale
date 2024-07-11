@@ -1,0 +1,73 @@
+[logs]
+## just a placholder
+api_key = "ef4ahfbwzwwtlwfpbertgq1i6mq0ab1q"
+## enable log collect or not
+enable = true
+## the server receive logs, http/tcp/kafka, only kafka brokers can be multiple ip:ports with concatenation character ","
+send_to = "127.0.0.1:9092"
+## send logs with protocol: http/tcp/kafka
+send_type = "kafka"
+topic = "flashcatcloud"
+## send logs with compression or not 
+use_compress = false
+## use ssl or not
+send_with_tls = false
+## send logs in batchs
+batch_wait = 5
+## save offset in this path 
+run_path = "/opt/categraf/run"
+## max files can be open 
+open_files_limit = 100
+## scan config file in 10 seconds
+scan_period = 10
+## read buffer of udp 
+frame_size = 9000
+
+## channal size, default 100
+## 读取日志缓冲区，行数
+chan_size = 1000
+## pipeline num , default 4
+## 有多少线程处理日志
+pipeline=4
+## configuration for kafka
+## 指定kafka版本
+kafka_version="2.8.1"
+# 默认0 表示串行,如果对日志顺序有要求,保持默认配置
+batch_max_concurrence = 0
+# 最大并发批次, 默认100
+batch_max_size=100
+# 每次最大发送的内容上限 默认1000000
+batch_max_contentsize=1000000
+# client timeout in seconds
+producer_timeout= 10
+
+# 是否开启sasl模式
+sasl_enable = false
+sasl_user = "admin"
+sasl_password = "admin"
+# PLAIN
+sasl_mechanism= "PLAIN"
+# v1
+sasl_version=1
+# set true
+sasl_handshake = true
+# optional
+# sasl_auth_identity=""
+#
+##
+# v0.3.39以上版本新增,是否开启pod日志采集
+enable_collect_container=false
+
+# 是否采集所有pod的stdout stderr
+collect_container_all = false
+  ## glog processing rules
+  # [[logs.Processing_rules]]
+  ## single log configure
+  [[logs.items]]
+  ## file/journald/tcp/udp
+  type = "file"
+  ## type=file, path is required; type=journald/tcp/udp, port is required
+  path = "/logs/*"
+  source = "n9e"
+  service = "n9e_service"
+

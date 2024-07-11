@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -12,29 +14,35 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
 
-type EnrichLabelsFunc func(pt *prompb.TimeSeries)
+type HandleTSFunc func(pt *prompb.TimeSeries)
 
 type Router struct {
 	HTTP           httpx.Config
 	Pushgw         pconf.Pushgw
+	Aconf          aconf.Alert
 	TargetCache    *memsto.TargetCacheType
 	BusiGroupCache *memsto.BusiGroupCacheType
 	IdentSet       *idents.Set
+	MetaSet        *metas.Set
 	Writers        *writer.WritersType
 	Ctx            *ctx.Context
-	EnrichLabels   EnrichLabelsFunc
+	HandleTS       HandleTSFunc
 }
 
-func New(httpConfig httpx.Config, pushgw pconf.Pushgw, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, idents *idents.Set, writers *writer.WritersType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType,
+	idents *idents.Set, metas *metas.Set,
+	writers *writer.WritersType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Pushgw:         pushgw,
+		Aconf:          aconf,
 		Writers:        writers,
 		Ctx:            ctx,
 		TargetCache:    tc,
 		BusiGroupCache: bg,
 		IdentSet:       idents,
-		EnrichLabels:   func(pt *prompb.TimeSeries) {},
+		MetaSet:        metas,
+		HandleTS:       func(pt *prompb.TimeSeries) {},
 	}
 }
 
@@ -44,6 +52,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 
 	registerMetrics()
+	go rt.ReportIdentStats()
 
 	// datadog url: http://n9e-pushgw.foo.com/datadog
 	// use apiKey not basic auth

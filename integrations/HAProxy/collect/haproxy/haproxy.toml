@@ -1,0 +1,22 @@
+[[instances]]
+# URI on which to scrape HAProxy.
+# e.g. 
+# uri = "http://localhost:5000/baz?stats;csv"
+# uri = "http://user:pass@haproxy.example.com/haproxy?stats;csv"
+# uri = "unix:/run/haproxy/admin.sock"
+uri = ""
+
+# Flag that enables SSL certificate verification for the scrape URI
+ssl_verify = false
+
+# Comma-separated list of exported server metrics. See http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#9.1
+server_metric_fields = ""
+
+# Comma-separated list of exported server states to exclude. See https://cbonte.github.io/haproxy-dconv/1.8/management.html#9.1, field 17 status
+server_exclude_states = ""
+
+# Timeout for trying to get stats from HAProxy.
+timeout = "5s"
+
+# Flag that enables using HTTP proxy settings from environment variables ($http_proxy, $https_proxy, $no_proxy)
+proxy_from_env = false

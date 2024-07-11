@@ -1,0 +1,1122 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云NAT",
+    "ident": "",
+    "tags": "NAT",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": false,
+                "id": "446c0b21-14f5-4347-a2b6-41a7ffb48e0a",
+                "layout": {
+                    "h": 1,
+                    "i": "446c0b21-14f5-4347-a2b6-41a7ffb48e0a",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Snat Session统计",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ec8fcf96-1691-4e45-9a5f-2f183021b434",
+                "layout": {
+                    "h": 4,
+                    "i": "ec8fcf96-1691-4e45-9a5f-2f183021b434",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "并发连接数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_active_connection_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "be560c38-4046-4f89-af05-bbef24cf21aa",
+                "layout": {
+                    "h": 4,
+                    "i": "48f9d2e1-600c-401a-b351-8d6ee9e33600",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "并发丢弃连接速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_limit_drop_connection_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "12563bff-298b-4b44-bd21-0c47df8f9636",
+                "layout": {
+                    "h": 4,
+                    "i": "cad14ba1-6830-4873-9c5e-28f2d1c30f55",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "新建连接速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_new_connection_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0ba23c30-d378-4916-a833-fe46cdbc1a3f",
+                "layout": {
+                    "h": 4,
+                    "i": "35188f14-d7ef-46bd-85cb-a510334ce3c1",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "新建丢弃连接速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_new_limit_drop_connection_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "13931491-40cd-4a6a-b888-b81e3800a705",
+                "layout": {
+                    "h": 4,
+                    "i": "345a4573-35a2-4654-9d4d-cdda3134bbac",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "新建连接水位",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_new_connection_water_lever_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9ff84fb6-81bf-43d8-9abf-4b2f95ef1071",
+                "layout": {
+                    "h": 4,
+                    "i": "5b5e4fc7-ed87-473a-9918-47e3707a639c",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "并发连接水位",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_session_active_connection_water_lever_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "be39a88e-8433-4cd1-ba3c-68a5bea890bc",
+                "layout": {
+                    "h": 4,
+                    "i": "cbb88b7e-6c95-41f4-a5ea-e607bcf0a30e",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "区间内port分配失败的个数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_error_port_allocation_count_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ed75b227-f4bd-4a72-8269-0d7a1b2dd2a7",
+                "layout": {
+                    "h": 4,
+                    "i": "a25ee068-126f-4d7c-acde-574ecd1534ef",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "区间内port分配失败的速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_error_port_allocation_rate_value{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "a638124d-151f-4ad8-994d-a29385747ac8",
+                "layout": {
+                    "h": 1,
+                    "i": "a638124d-151f-4ad8-994d-a29385747ac8",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9
+                },
+                "name": "入方向统计",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "fc7cda13-3ad0-4e05-8861-38989debd507",
+                "layout": {
+                    "h": 4,
+                    "i": "bf83d311-1cdc-4013-92de-c412a900d2a8",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "入方向流量速率(bps)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bitsIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bw_rate_in_from_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bw_rate_in_from_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3b07e195-c481-463f-8de9-c5c7f6539175",
+                "layout": {
+                    "h": 4,
+                    "i": "29363208-08f6-4bfd-a9b0-836062e2b88f",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "入方向流量(bytes)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bytes_in_from_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bytes_in_from_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "be3f5f15-d399-4fd9-84d5-d000d0da86e6",
+                "layout": {
+                    "h": 4,
+                    "i": "0cbe7dd4-eba9-47e6-8c86-e11359a97bc2",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "入方向包速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_packets_in_from_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_packets_in_from_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ffa8eb49-3236-43ec-9fe6-00a2a398d64a",
+                "layout": {
+                    "h": 4,
+                    "i": "339eb9d0-1613-4117-b59c-278b3727ba0a",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "入方向包量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_pps_rate_in_from_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_pps_rate_in_from_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "from_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "b8e7b1b9-4e8d-4a26-b524-13a1cc141b6e",
+                "layout": {
+                    "h": 1,
+                    "i": "b8e7b1b9-4e8d-4a26-b524-13a1cc141b6e",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "name": "出方向统计",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "e1d94e76-9e7f-4a7e-b207-e4bc63382e06",
+                "layout": {
+                    "h": 4,
+                    "i": "8c17c2d6-aba3-4b40-8a85-71e57f53d71b",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "出方向流量速率(bps)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bitsIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bw_rate_out_to_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bw_rate_out_to_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d314b395-16d6-4fe9-a020-84ca656f0117",
+                "layout": {
+                    "h": 4,
+                    "i": "65c4598a-1a95-4d55-b0ac-ae2446c7c98a",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "出方向流量(bytes)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bytes_out_to_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_bytes_out_to_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "efd5b118-f530-4750-8ac8-c9e8ae4da600",
+                "layout": {
+                    "h": 4,
+                    "i": "9c22e1d7-8d2c-47c9-83ce-37e9eccbc8a4",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "出方向包速率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_packets_out_to_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_packets_out_to_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "50d416eb-3518-4f37-a554-17bb9af79dd8",
+                "layout": {
+                    "h": 4,
+                    "i": "3bd0c456-6d70-4479-b5aa-ed68705fda7e",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 15
+                },
+                "maxPerRow": 4,
+                "name": "出方向包量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_nat_gateway_pps_rate_out_to_inside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_inside",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_nat_gateway_pps_rate_out_to_outside_value{instance_id=\"$instance_id\"}",
+                        "legend": "out_to_outside",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "label": "datasource",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_nat_gateway_bw_rate_in_from_inside_value, instance_id)",
+                "label": "instance_id",
+                "name": "instance_id",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327113592000
+}

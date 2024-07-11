@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "ElasticSearch By Exporter",
-    "tags": "Prometheus ElasticSearch ES",
     "ident": "",
+    "tags": "Prometheus ElasticSearch ES",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -25,6 +31,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "集群数据节点数量",
                 "id": "ae1ebc12-8639-4812-b5ae-9391a0ec4dbc",
                 "layout": {
@@ -45,9 +53,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -57,6 +63,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "集群节点数量",
                 "id": "8648c6f9-ab82-4067-a02c-eebe84ae3a96",
                 "layout": {
@@ -77,9 +85,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -89,6 +95,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均CPU使用率",
                 "id": "20bf6dec-36cb-4e3a-a096-275a33e791b9",
                 "layout": {
@@ -142,9 +150,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -154,6 +160,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均JVM内存使用率",
                 "id": "6380e6f2-3aec-4d56-a07a-efe6106c492f",
                 "layout": {
@@ -207,9 +215,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -219,6 +225,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "de70ff1e-5ad6-4d68-b961-10eb78840d90",
                 "layout": {
                     "h": 3,
@@ -238,9 +246,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -250,6 +256,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "集群断路器阻断总数",
                 "id": "88631ba2-b3d4-45e1-966a-9c3eb12a1d49",
                 "layout": {
@@ -282,9 +290,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -294,6 +300,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "等待执行的集群变更任务数量",
                 "id": "7b85a99f-9cee-4cda-936c-eedcd2409e42",
                 "layout": {
@@ -344,9 +352,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -356,6 +362,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "绿色：健康，黄色：存在副本分片异常，红色：存在主分片异常",
                 "id": "a9c1c7fa-2985-4a14-bbe9-2ee7db630e94",
                 "layout": {
@@ -415,9 +423,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -440,6 +446,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "活跃分片数\nAggregate total of all shards across all indices, which includes replica shards",
                 "id": "717067e8-5f9c-4485-8158-d977c217d620",
                 "layout": {
@@ -460,9 +468,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -472,6 +478,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "活跃主分片数\nThe number of primary shards in your cluster. This is an aggregate total across all indices.",
                 "id": "03e4fbef-93dd-488c-bb52-3eac620cc331",
                 "layout": {
@@ -492,9 +500,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -504,6 +510,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "创建中分片数量\nCount of shards that are being freshly created",
                 "id": "90b642aa-4815-492b-a821-94a8120f2dc9",
                 "layout": {
@@ -524,9 +532,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -536,6 +542,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "迁移中分片数量\nThe number of shards that are currently moving from one node to another node.",
                 "id": "684d1be6-ebdf-4075-a7bc-6580c148b997",
                 "layout": {
@@ -556,9 +564,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -568,6 +574,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "未分配的分片数量\nThe number of shards that exist in the cluster state, but cannot be found in the cluster itself",
                 "id": "df959515-14fa-44e5-a16c-f40f87eacb01",
                 "layout": {
@@ -588,9 +596,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -600,6 +606,8 @@
                     "textMode": "value",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "暂缓分配的分片数量，当节点丢失，会发生选主和数据拷贝。为了较少网络抖动等原因导致的重分配情况，配置delay参数，该值为等待delay到期将被重分配的分片数量\nShards delayed to reduce reallocation overhead",
                 "id": "f307f045-cfcf-4cd9-a39f-10d4360a85b2",
                 "layout": {
@@ -620,9 +628,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -640,10 +646,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "GC运行次数",
                 "id": "f39502b5-a6a8-4bed-93d7-be83096eecbf",
                 "layout": {
@@ -673,17 +683,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "GC运行耗时（秒）",
                 "id": "df97e013-e810-4b78-8253-0a1fe7c96b3a",
                 "layout": {
@@ -715,9 +727,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -735,10 +745,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "translog大小（byte）",
                 "id": "47583195-3a48-4d76-8b36-c08c29be936e",
                 "layout": {
@@ -770,17 +784,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "translog大小（byte）",
                 "id": "dca13d7f-90ca-4302-afed-753c2c181cf5",
                 "layout": {
@@ -812,9 +828,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -832,10 +846,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "节点断路器阻断总数",
                 "id": "7040d182-228f-4a58-b4ce-1eb4addeb88f",
                 "layout": {
@@ -865,17 +883,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "预估内存大小和限制内存大小",
                 "id": "31d1efe8-d58a-4f1c-b510-1854ec1f491a",
                 "layout": {
@@ -912,9 +932,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -932,10 +950,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "1m/5m/15m系统负载",
                 "id": "1295b795-0e8a-4db7-afc1-5248e386062d",
                 "layout": {
@@ -975,17 +997,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "进程CPU占比",
                 "id": "356d363a-682b-41f9-9fdd-7212e943fc49",
                 "layout": {
@@ -1017,17 +1041,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "进程内存占用/限制/峰值（byte）",
                 "id": "f0216c7e-ade7-47c0-aec1-6efab9543e58",
                 "layout": {
@@ -1069,17 +1095,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "JVM申请/限制内存（byte）",
                 "id": "12bce6cc-a0fc-4e98-ba19-5cf5fdeb6332",
                 "layout": {
@@ -1116,9 +1144,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1136,10 +1162,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "磁盘使用率",
                 "id": "5de089e7-c5cd-4a01-9cd7-70e39feef131",
                 "layout": {
@@ -1171,17 +1201,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "网络流量（byte）",
                 "id": "957402f9-2e17-4c67-8d6b-02a8cc6789d9",
                 "layout": {
@@ -1218,9 +1250,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1238,10 +1268,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "节点文档总数，不包含已删除文档和子文档以及刚索引的文档",
                 "id": "6220138b-3452-4529-a008-c78e20672169",
                 "layout": {
@@ -1271,17 +1305,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均每秒索引文档数",
                 "id": "242dff44-09b1-4468-856d-642e76048296",
                 "layout": {
@@ -1311,17 +1347,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均每秒删除文档数",
                 "id": "400efbe3-a4c5-49af-a0bf-eabf2511ebf5",
                 "layout": {
@@ -1351,17 +1389,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均每秒合并文档数",
                 "id": "0b2d6480-6f50-413f-8552-f49109d2be59",
                 "layout": {
@@ -1391,17 +1431,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "平均每秒合并文档大小",
                 "id": "981c2d24-56df-437c-bc43-77682008dd01",
                 "layout": {
@@ -1433,9 +1475,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1453,10 +1493,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "查询操作耗时（秒）",
                 "id": "e217b136-6021-473a-859e-7ac4218c4e86",
                 "layout": {
@@ -1488,17 +1532,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "索引操作耗时（秒）",
                 "id": "d51a4ef1-1fc5-4d1b-ba6c-a2fd483295ee",
                 "layout": {
@@ -1530,17 +1576,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "合并操作耗时（秒）",
                 "id": "20751b64-38da-4263-a055-02bc844bd416",
                 "layout": {
@@ -1572,17 +1620,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "索引存储限制耗时（秒）",
                 "id": "d688b715-5959-433a-89b2-51bcd2b0b1f3",
                 "layout": {
@@ -1614,9 +1664,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1634,10 +1682,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "9be3061f-ade2-43a5-ab5f-bfdc8861e4be",
                 "layout": {
                     "h": 7,
@@ -1718,17 +1770,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "55cf0c8e-bf4f-430c-bc68-1eca72d7055d",
                 "layout": {
                     "h": 7,
@@ -1802,9 +1856,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1822,10 +1874,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "线程池reject次数",
                 "id": "d337f12c-6fbe-4463-9181-faecdc612a90",
                 "layout": {
@@ -1855,17 +1911,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "活跃线程数",
                 "id": "1053fab0-f105-4a6b-9508-dc87c4f78956",
                 "layout": {
@@ -1895,17 +1953,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "排队等待线程任务数量",
                 "id": "aad51280-5725-4485-841d-c08f0277508f",
                 "layout": {
@@ -1935,17 +1995,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "线程池complete次数",
                 "id": "76538cda-67f3-4040-b42e-be27078440e4",
                 "layout": {
@@ -1975,9 +2037,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1995,10 +2055,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "fielddata cache内存占用（byte）",
                 "id": "100f8d6d-073b-46f4-a664-db11e889a111",
                 "layout": {
@@ -2030,17 +2094,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "fielddata cache平均每秒内存剔除次数",
                 "id": "4af09644-306e-404d-a1a0-174397b26c4e",
                 "layout": {
@@ -2072,17 +2138,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "query cache内存占用（byte）",
                 "id": "e9632f58-8186-43bf-81b1-c57e91078e35",
                 "layout": {
@@ -2114,17 +2182,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "query cache平均每秒内存剔除次数",
                 "id": "e1145b0d-b839-4189-bd02-d955ae3dbcf3",
                 "layout": {
@@ -2156,17 +2226,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "老版本的filter cache内存剔除次数",
                 "id": "14ce9ebf-5ff7-42da-9628-8746e18fe32b",
                 "layout": {
@@ -2198,9 +2270,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2218,10 +2288,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "segment个数",
                 "id": "7f3f74ca-a8ca-4d07-b17a-72bb198f9726",
                 "layout": {
@@ -2251,17 +2325,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "segment内存占用（byte）",
                 "id": "0d2bbc28-2211-4097-acbc-e1f72b3cad88",
                 "layout": {
@@ -2293,9 +2369,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2313,10 +2387,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片文档数",
                 "id": "8620f336-4e26-40db-8c85-6a336a5fb7c9",
                 "layout": {
@@ -2346,17 +2424,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片索引容量（byte）",
                 "id": "d4541f1a-136f-4b3e-b5e9-8cc92267aa8a",
                 "layout": {
@@ -2388,17 +2468,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片索引容量（byte）",
                 "id": "66926f5a-d562-428e-b48b-d69b4d705b8f",
                 "layout": {
@@ -2430,9 +2512,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2450,10 +2530,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片索引写入数据量（byte）",
                 "id": "7837ae60-c490-4e8a-a604-133cdeb5a3e7",
                 "layout": {
@@ -2485,17 +2569,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片索引写入数据量（byte）",
                 "id": "8f200ba5-8c9b-4a26-b7b3-307cdb504316",
                 "layout": {
@@ -2527,9 +2613,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2547,10 +2631,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片segment数",
                 "id": "d20fb2f9-0e51-4bd1-a580-1308349e0b71",
                 "layout": {
@@ -2580,17 +2668,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片segment总数",
                 "id": "b8f5151d-d7d9-4cf2-822e-56ce5b0f58b2",
                 "layout": {
@@ -2620,17 +2710,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片segment容量",
                 "id": "c6c1eee0-4c93-462e-8c53-f369fee48e46",
                 "layout": {
@@ -2662,17 +2754,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片segment容量",
                 "id": "d9b36d80-c753-4bde-8e6d-29af8c5a7e83",
                 "layout": {
@@ -2704,9 +2798,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2724,10 +2816,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片doc value内存占用（byte）",
                 "id": "205f362a-ad57-4cb8-ac3f-7afdb5dc87d6",
                 "layout": {
@@ -2759,17 +2855,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片doc value内存占用（byte）",
                 "id": "ea838448-825c-4627-a09d-19db6c1e4a14",
                 "layout": {
@@ -2801,9 +2899,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2821,10 +2917,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "分片field内存占用（byte）",
                 "id": "6f8efb01-aac1-427c-bf7b-d6b90a968185",
                 "layout": {
@@ -2856,17 +2956,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片field内存占用（byte）",
                 "id": "b82b390b-8f72-427b-9d1f-37d279f94366",
                 "layout": {
@@ -2898,9 +3000,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -2918,10 +3018,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片fixed bit set内存占用（byte）",
                 "id": "707cfc5f-cdbe-43dc-9d1f-f79e306ca7ff",
                 "layout": {
@@ -2953,17 +3057,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片fixed bit set内存占用（byte）",
                 "id": "ee949fc8-2c50-4ca3-944f-b42030439968",
                 "layout": {
@@ -2995,9 +3101,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -3015,10 +3119,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片normalization factor内存占用（byte）",
                 "id": "167f10ca-179d-4dfd-ba1d-e2184be993be",
                 "layout": {
@@ -3048,17 +3156,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片normalization factor内存占用（byte）",
                 "id": "41fba22d-bbb0-4cbd-a8cd-c7910991cecf",
                 "layout": {
@@ -3088,9 +3198,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -3108,10 +3216,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片point内存占用（byte）",
                 "id": "24e451cb-3835-4172-926b-54a33aa3b9b4",
                 "layout": {
@@ -3143,17 +3255,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片point内存占用（byte）",
                 "id": "79665ebe-5804-4809-af68-15d3a72a2c2c",
                 "layout": {
@@ -3185,9 +3299,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -3205,10 +3317,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "主分片term内存占用（byte）",
                 "id": "c464e467-a6cf-4d60-8108-fb0359c801d8",
                 "layout": {
@@ -3240,17 +3356,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片term内存占用（byte）",
                 "id": "b0befc26-33c8-44f3-aa3e-80a9ed99180a",
                 "layout": {
@@ -3282,9 +3400,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -3302,10 +3418,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片version map内存占用（byte）",
                 "id": "a2778c3a-6473-4482-bade-398904922e2f",
                 "layout": {
@@ -3337,17 +3457,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "所有分片version map内存占用（byte）",
                 "id": "322b0c1b-982a-4654-8552-7f246f496480",
                 "layout": {
@@ -3379,43 +3501,45 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(elasticsearch_indices_docs,cluster)",
                 "name": "cluster",
                 "options": [
                     "elasticsearch-cluster"
                 ],
-                "type": "query",
+                "type": "query"
+            },
+            {
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
-                }
-            },
-            {
+                },
                 "definition": "label_values(elasticsearch_indices_docs{cluster=\"$cluster\", name!=\"\"},instance)",
                 "name": "instance",
                 "options": [
                     "10.206.0.7:9200"
                 ],
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             },
             {
                 "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
                 "definition": "label_values(elasticsearch_indices_docs{instance=\"$instance\",cluster=\"$cluster\", name!=\"\"},name)",
                 "multi": true,
                 "name": "name",
@@ -3424,13 +3548,15 @@
                     "node-1",
                     "node-3"
                 ],
-                "type": "query",
-                "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
-                }
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327380871000
 }

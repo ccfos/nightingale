@@ -1,0 +1,245 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Processes by UlricQin",
+    "ident": "",
+    "tags": "Categraf Linux OS",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "adc3f1d3-6d0d-4c1e-80ca-5b6d8103bac5",
+                "layout": {
+                    "h": 8,
+                    "i": "adc3f1d3-6d0d-4c1e-80ca-5b6d8103bac5",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Running Processes",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 50
+                            },
+                            "result": {
+                                "color": "#f10808"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "processes_running{ident=~\"$ident\"}",
+                        "instant": true,
+                        "legend": "{{ident}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "659f5f75-24ca-493c-97cb-3d99abd52172",
+                "layout": {
+                    "h": 8,
+                    "i": "df457bf0-17c8-4d05-a527-cfaf0f2b844c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "name": "Total Processes",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 600
+                            },
+                            "result": {
+                                "color": "#f10808"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "processes_total{ident=~\"$ident\"}",
+                        "instant": true,
+                        "legend": "{{ident}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "5e849509-1c41-44c7-85ee-d8c0adf7c623",
+                "layout": {
+                    "h": 8,
+                    "i": "62291285-be84-470a-9ccc-53be7a8733fd",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "name": "Total Threads",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 2000
+                            },
+                            "result": {
+                                "color": "#ff8286"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 4000
+                            },
+                            "result": {
+                                "color": "#f30909"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "processes_total_threads{ident=~\"$ident\"}",
+                        "instant": true,
+                        "legend": "{{ident}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "showHeader": true,
+                    "sortColumn": "value",
+                    "sortOrder": "descend"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "id": "b2850506-6cdd-48cc-9223-70acff9212b0",
+                "layout": {
+                    "h": 8,
+                    "i": "b2850506-6cdd-48cc-9223-70acff9212b0",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                },
+                "name": "SUM by Process state",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "sum({__name__=~\"processes_sleeping|processes_dead|processes_paging|processes_total_threads|processes_total|processes_idle|processes_running|processes_zombies|processes_stopped|processes_unknown|processes_blocked\", ident=~\"$ident\"}) by (__name__)",
+                        "instant": true,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "label": "",
+                "name": "Datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${Datasource}"
+                },
+                "definition": "label_values(processes_running, ident)",
+                "label": "Host",
+                "multi": true,
+                "name": "ident",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327738575000
+}

@@ -1,0 +1,292 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "ARMS-DB",
+    "ident": "",
+    "tags": "ARMS",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "bd8c0aac-06df-4b2d-9456-cad8e7389499",
+                "layout": {
+                    "h": 1,
+                    "i": "bd8c0aac-06df-4b2d-9456-cad8e7389499",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "概览(DB级别)",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "8d2da301-e5e8-4b2f-9b31-59aa0835c312",
+                "layout": {
+                    "h": 8,
+                    "i": "8d2da301-e5e8-4b2f-9b31-59aa0835c312",
+                    "w": 12,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "请求数/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (callType) (sum_over_time(arms_db_requests_count{endpoint=\"${instance}\",destId=~\"${db}\"}[1m]))",
+                        "legend": "{{callType}}入口",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ab2b0969-50e7-4e4b-962a-58be133e6aef",
+                "layout": {
+                    "h": 8,
+                    "i": "ab2b0969-50e7-4e4b-962a-58be133e6aef",
+                    "w": 12,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "响应时间/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (callType) (sum_over_time(arms_db_requests_seconds{endpoint=\"$instance\",destId=~\"^$db$\"}[1m]))/sum by (callType) (sum_over_time(arms_db_requests_count{endpoint=\"$instance\",destId=~\"^$db$\"}[1m]))",
+                        "legend": "{{callType}}入口",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6bd5d219-0a94-4f90-b2e0-93ed3eeca9f0",
+                "layout": {
+                    "h": 8,
+                    "i": "6bd5d219-0a94-4f90-b2e0-93ed3eeca9f0",
+                    "w": 12,
+                    "x": 0,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "错误数/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (callType) (sum_over_time(arms_db_requests_error_count{endpoint=\"$instance\",destId=~\"$db\"}[1m]))",
+                        "legend": "{{callType}}入口",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "针对所有SQL的聚和指标",
+                "id": "d9093b86-5796-471a-a28c-fe1d8daf1721",
+                "layout": {
+                    "h": 8,
+                    "i": "d9093b86-5796-471a-a28c-fe1d8daf1721",
+                    "w": 12,
+                    "x": 12,
+                    "y": 9
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "性能一览/每分钟",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(sum_over_time(arms_db_requests_count{endpoint=\"$instance\",destId=~\"$db\"}[1m]))",
+                        "legend": "请求次数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(sum_over_time(arms_db_requests_seconds{endpoint=\"$instance\",destId=~\"$db\"}[1m]))/sum(sum_over_time(arms_db_requests_count{endpoint=\"$instance\",destId=~\"$db\"}[1m]))",
+                        "legend": "平均耗时",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(arms_system_cpu_idle,service)",
+                "multi": false,
+                "name": "service",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(arms_db_requests_count{service=\"$service\"},endpoint)",
+                "multi": false,
+                "name": "instance",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "allValue": ".*",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(arms_db_requests_count{endpoint=\"${instance}\"},destId)",
+                "multi": false,
+                "name": "db",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327092680000
+}

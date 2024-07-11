@@ -1,501 +1,512 @@
 {
-  "name": "GitLab - NGINX VTS",
-  "tags": "",
-  "ident": "",
-  "configs": {
-    "version": "3.0.0",
-    "links": [],
-    "var": [
-      {
-        "name": "DS_PROMETHEUS",
-        "type": "datasource",
-        "definition": "prometheus",
-        "defaultValue": 5
-      },
-      {
-        "name": "instance",
-        "type": "query",
-        "datasource": {
-          "cate": "prometheus",
-          "value": "${DS_PROMETHEUS}"
-        },
-        "definition": "label_values(up{job=\"nginx\"}, instance)",
-        "reg": "",
-        "multi": true,
-        "allOption": true
-      }
-    ],
-    "panels": [
-      {
-        "type": "timeseries",
-        "id": "ad321a25-c895-4cf0-b5ce-2a60c7f035ac",
-        "layout": {
-          "h": 4,
-          "w": 7,
-          "x": 0,
-          "y": 0,
-          "i": "ad321a25-c895-4cf0-b5ce-2a60c7f035ac"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "B",
-            "expr": "topk(1, count by (hostname) (nginx_vts_info{instance=~\"$instance\"}))",
-            "legend": "hostname: {{hostname}}"
-          },
-          {
-            "refId": "C",
-            "expr": "topk(1, count by (version) (nginx_vts_info{instance=~\"$instance\"}))",
-            "legend": "nginx:  {{version}}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Nginx Info",
+    "id": 0,
+    "group_id": 0,
+    "name": "GitLab - NGINX VTS",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
         "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "f6643654-98f5-4d4a-8dd2-943a2f4f8e68",
-        "layout": {
-          "h": 12,
-          "w": 17,
-          "x": 7,
-          "y": 0,
-          "i": "f6643654-98f5-4d4a-8dd2-943a2f4f8e68"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by (instance) (\n  rate(nginx_vts_upstream_request_seconds_total{instance=~\"$instance\"}[5m])\n) /\nsum by (instance) (\n  rate(nginx_vts_upstream_requests_total{instance=~\"$instance\"}[5m])\n)",
-            "legend": "{{instance}}",
-            "step": 15,
-            "instant": false,
-            "time": {
-              "start": "now-6h",
-              "end": "now"
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "ad321a25-c895-4cf0-b5ce-2a60c7f035ac",
+                "layout": {
+                    "h": 4,
+                    "i": "ad321a25-c895-4cf0-b5ce-2a60c7f035ac",
+                    "w": 7,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Nginx Info",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(1, count by (hostname) (nginx_vts_info{instance=~\"$instance\"}))",
+                        "legend": "hostname: {{hostname}}",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "topk(1, count by (version) (nginx_vts_info{instance=~\"$instance\"}))",
+                        "legend": "nginx:  {{version}}",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "f6643654-98f5-4d4a-8dd2-943a2f4f8e68",
+                "layout": {
+                    "h": 12,
+                    "i": "f6643654-98f5-4d4a-8dd2-943a2f4f8e68",
+                    "w": 17,
+                    "x": 7,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Latency",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "min": 0,
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (instance) (\n  rate(nginx_vts_upstream_request_seconds_total{instance=~\"$instance\"}[5m])\n) /\nsum by (instance) (\n  rate(nginx_vts_upstream_requests_total{instance=~\"$instance\"}[5m])\n)",
+                        "instant": false,
+                        "legend": "{{instance}}",
+                        "refId": "A",
+                        "step": 15,
+                        "time": {
+                            "end": "now",
+                            "start": "now-6h"
+                        }
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "cb24fbce-8bb5-425e-89f3-c32e22532b5d",
+                "layout": {
+                    "h": 8,
+                    "i": "cb24fbce-8bb5-425e-89f3-c32e22532b5d",
+                    "w": 7,
+                    "x": 0,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Shared Memory Usage",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum by (shared) (nginx_vts_main_shm_usage_bytes{instance=~\"$instance\", job=~\"nginx\"})",
+                        "legend": "{{shared}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "54c5264a-a596-486f-a4a8-4ab451d91870",
+                "layout": {
+                    "h": 8,
+                    "i": "54c5264a-a596-486f-a4a8-4ab451d91870",
+                    "w": 12,
+                    "x": 0,
+                    "y": 13
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Server - Current total of incoming / outgoing bytes",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum without (instance) (\n  rate(nginx_vts_server_bytes_total{instance=~\"$instance\"}[5m])\n)",
+                        "legend": "{{direction}}-{{host}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.1,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "d0efa52f-862e-49b0-aa8c-7a9ba4f2af0b",
+                "layout": {
+                    "h": 8,
+                    "i": "d0efa52f-862e-49b0-aa8c-7a9ba4f2af0b",
+                    "w": 12,
+                    "x": 12,
+                    "y": 13
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Upstream - Current total of incoming / outgoing bytes",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum without (instance) (\n  rate(nginx_vts_upstream_bytes_total{instance=~\"$instance\"}[5m])\n)",
+                        "legend": "{{direction}}-{{backend}}-{{upstream}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "712b82cd-633a-4088-8695-fa2d75ab37ca",
+                "layout": {
+                    "h": 8,
+                    "i": "712b82cd-633a-4088-8695-fa2d75ab37ca",
+                    "w": 12,
+                    "x": 0,
+                    "y": 22
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Server - Requests by HTTP code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "min": 0,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum without (instance) (\n  rate(nginx_vts_server_requests_total{instance=~\"$instance\"}[5m])\n)",
+                        "legend": "{{code}} {{host}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "09ca96b6-4e23-4db2-bc14-79c5f965d16f",
+                "layout": {
+                    "h": 8,
+                    "i": "09ca96b6-4e23-4db2-bc14-79c5f965d16f",
+                    "w": 12,
+                    "x": 12,
+                    "y": 22
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Upstream - Requests by HTTP code",
+                "options": {
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "multi"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum without (instance) (\n  rate(nginx_vts_upstream_requests_total{instance=~\"$instance\"}[5m])\n)",
+                        "legend": "{{code}} {{backend}} {{upstream }}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             }
-          }
         ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "DS_PROMETHEUS",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(up{job=\"nginx\"}, instance)",
+                "multi": true,
+                "name": "instance",
+                "reg": "",
+                "type": "query"
+            }
         ],
-        "name": "Latency",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "multi"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "seconds",
-            "min": 0
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null,
-                "type": "base"
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "linear",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.1,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "cb24fbce-8bb5-425e-89f3-c32e22532b5d",
-        "layout": {
-          "h": 8,
-          "w": 7,
-          "x": 0,
-          "y": 4,
-          "i": "cb24fbce-8bb5-425e-89f3-c32e22532b5d"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum by (shared) (nginx_vts_main_shm_usage_bytes{instance=~\"$instance\", job=~\"nginx\"})",
-            "legend": "{{shared}}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Shared Memory Usage",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "all",
-            "sort": "none"
-          },
-          "legend": {
-            "displayMode": "hidden"
-          },
-          "standardOptions": {},
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#634CD9",
-                "value": null,
-                "type": "base"
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "smooth",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.5,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "54c5264a-a596-486f-a4a8-4ab451d91870",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 13,
-          "i": "54c5264a-a596-486f-a4a8-4ab451d91870"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum without (instance) (\n  rate(nginx_vts_server_bytes_total{instance=~\"$instance\"}[5m])\n)",
-            "legend": "{{direction}}-{{host}}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Server - Current total of incoming / outgoing bytes",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "multi"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "bytesSI"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null,
-                "type": "base"
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "linear",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.2,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "d0efa52f-862e-49b0-aa8c-7a9ba4f2af0b",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 13,
-          "i": "d0efa52f-862e-49b0-aa8c-7a9ba4f2af0b"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum without (instance) (\n  rate(nginx_vts_upstream_bytes_total{instance=~\"$instance\"}[5m])\n)",
-            "legend": "{{direction}}-{{backend}}-{{upstream}}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Upstream - Current total of incoming / outgoing bytes",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "multi"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "bytesSI"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null,
-                "type": "base"
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "linear",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.1,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "712b82cd-633a-4088-8695-fa2d75ab37ca",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 22,
-          "i": "712b82cd-633a-4088-8695-fa2d75ab37ca"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum without (instance) (\n  rate(nginx_vts_server_requests_total{instance=~\"$instance\"}[5m])\n)",
-            "legend": "{{code}} {{host}}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Server - Requests by HTTP code",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "multi"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none",
-            "min": 0
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null,
-                "type": "base"
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "linear",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.2,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      },
-      {
-        "type": "timeseries",
-        "id": "09ca96b6-4e23-4db2-bc14-79c5f965d16f",
-        "layout": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 22,
-          "i": "09ca96b6-4e23-4db2-bc14-79c5f965d16f"
-        },
-        "version": "3.0.0",
-        "datasourceCate": "prometheus",
-        "datasourceValue": "${DS_PROMETHEUS}",
-        "targets": [
-          {
-            "refId": "A",
-            "expr": "sum without (instance) (\n  rate(nginx_vts_upstream_requests_total{instance=~\"$instance\"}[5m])\n)",
-            "legend": "{{code}} {{backend}} {{upstream }}"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {}
-          }
-        ],
-        "name": "Upstream - Requests by HTTP code",
-        "links": [],
-        "maxPerRow": 4,
-        "options": {
-          "tooltip": {
-            "mode": "multi"
-          },
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom"
-          },
-          "standardOptions": {
-            "util": "none"
-          },
-          "thresholds": {
-            "steps": [
-              {
-                "color": "#73BF69",
-                "value": null,
-                "type": "base"
-              },
-              {
-                "color": "#F2495C",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "custom": {
-          "drawStyle": "lines",
-          "lineInterpolation": "linear",
-          "spanNulls": false,
-          "lineWidth": 1,
-          "fillOpacity": 0.2,
-          "gradientMode": "none",
-          "stack": "off",
-          "scaleDistribution": {
-            "type": "linear"
-          }
-        }
-      }
-    ]
-  }
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327480972000
 }

@@ -1,0 +1,567 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云RDS_N",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "37447883-ad79-46bc-888a-1be2835c1c64",
+                "layout": {
+                    "h": 4,
+                    "i": "378a5a26-c28e-4612-af09-f82ec2e11d80",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "硬盘使用(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_disk_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c9735607-3f24-44a7-bbf1-3ad39441c5c9",
+                "layout": {
+                    "h": 4,
+                    "i": "93a4c8a6-ac23-4e26-8a38-781ec1668820",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "IOPS使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_iops_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9480ea17-27e7-49fa-ab87-3b10f2d4b6ed",
+                "layout": {
+                    "h": 4,
+                    "i": "d428b946-aa8b-449e-a4b7-303e9423b787",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "连接数使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_connection_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+                "layout": {
+                    "h": 4,
+                    "i": "01f4d444-aa2d-466d-9615-c76baf60a40c",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "CPU使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_cpu_usage_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c43eb882-915f-4c38-a0b5-8f33c21ab44a",
+                "layout": {
+                    "h": 4,
+                    "i": "09903231-6557-42be-9cf3-2873878e9bf2",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "内存使用率(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_memory_usage_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6a03d4e9-f1f8-4989-bbe0-0ef428365d6e",
+                "layout": {
+                    "h": 4,
+                    "i": "d42cd666-4060-43fc-b0bc-e9698f816c97",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "MySQL网络入流量(bits/s)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bitsSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_my_sql_network_in_new_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "b516e7dc-8022-409d-b907-18c4143df891",
+                "layout": {
+                    "h": 5,
+                    "i": "b516e7dc-8022-409d-b907-18c4143df891",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 8
+                },
+                "maxPerRow": 4,
+                "name": "SQL执行量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_delete_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "delete",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "insert",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_insert_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "insert_select",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_update_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "update",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sum(aliyun_acs_rds_dashboard_my_sql_com_select_average{instance_id=\"$instance_id\"}) by (instance_id)",
+                        "legend": "select",
+                        "refId": "E"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7a3fbc77-1d6c-40cf-bec9-38b3b0f45dd9",
+                "layout": {
+                    "h": 5,
+                    "i": "96d3ff16-9947-4ec6-95a4-bec2bdfd24d0",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "maxPerRow": 4,
+                "name": "SQL慢查询",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_rds_dashboard_my_sql_slow_queries_average{instance_id=\"$instance_id\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average,name)",
+                "multi": false,
+                "name": "name",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_rds_dashboard_cpu_usage_average{name=\"$name\"},instance_id)",
+                "multi": false,
+                "name": "instance_id",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327127106000
+}

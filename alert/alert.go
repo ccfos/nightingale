@@ -24,7 +24,10 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
+
+	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -40,27 +43,40 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
+	if err != nil {
+		return nil, err
+	}
+
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
-	targetCache := memsto.NewTargetCache(ctx, syncStats, nil)
+	configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
+	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 	dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
+	taskTplsCache := memsto.NewTaskTplCache(ctx)
 
-	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
+	promClients := prom.NewPromClient(ctx)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
 
-	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
+
+	if config.Ibex.Enable {
+		ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
+	}
+
 	rt.Config(r)
 	dumper.ConfigRouter(r)
 
@@ -73,26 +89,28 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 }
 
 func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, alertStats *astats.Stats, externalProcessors *process.ExternalProcessorsType, targetCache *memsto.TargetCacheType, busiGroupCache *memsto.BusiGroupCacheType,
-	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, notifyConfigCache *memsto.NotifyConfigCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
+	alertMuteCache *memsto.AlertMuteCacheType, alertRuleCache *memsto.AlertRuleCacheType, notifyConfigCache *memsto.NotifyConfigCacheType, taskTplsCache *memsto.TaskTplCache, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	promClients *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) {
 	alertSubscribeCache := memsto.NewAlertSubscribeCache(ctx, syncStats)
 	recordingRuleCache := memsto.NewRecordingRuleCache(ctx, syncStats)
+	targetsOfAlertRulesCache := memsto.NewTargetOfAlertRuleCache(ctx, alertc.Heartbeat.EngineName, syncStats)
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 
-	naming := naming.NewNaming(ctx, alertc.Heartbeat)
+	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
 
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats)
 
-	eval.NewScheduler(alertc, externalProcessors, alertRuleCache, targetCache, busiGroupCache, alertMuteCache, datasourceCache, promClients, tdendgineClients, naming, ctx, alertStats)
+	eval.NewScheduler(alertc, externalProcessors, alertRuleCache, targetCache, targetsOfAlertRulesCache,
+		busiGroupCache, alertMuteCache, datasourceCache, promClients, tdendgineClients, naming, ctx, alertStats)
 
-	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, alertc.Alerting, ctx, alertStats)
-	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp)
+	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, taskTplsCache, alertc.Alerting, ctx, alertStats)
+	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp, promClients)
 
 	go dp.ReloadTpls()
 	go consumer.LoopConsume()
 
 	go queue.ReportQueueSize(alertStats)
-	go sender.InitEmailSender(notifyConfigCache.GetSMTP())
+	go sender.InitEmailSender(notifyConfigCache)
 }

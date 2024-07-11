@@ -1,0 +1,1802 @@
+{
+    "name": "MySQL 仪表盘",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "dfd77e6d-4e88-4bd9-8c19-74f566920f6c",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "dfd77e6d-4e88-4bd9-8c19-74f566920f6c",
+                    "isResizable": false
+                },
+                "name": "Basic Info",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "type": "text",
+                "id": "74a5cd8c-f870-442d-bda6-48b5ce4e87ea",
+                "layout": {
+                    "h": 6,
+                    "w": 5,
+                    "x": 0,
+                    "y": 1,
+                    "i": "74a5cd8c-f870-442d-bda6-48b5ce4e87ea",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "name": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textColor": "#000000",
+                    "textDarkColor": "#FFFFFF",
+                    "bgColor": "rgba(0, 0, 0, 0)",
+                    "textSize": 12,
+                    "justifyContent": "center",
+                    "alignItems": "center",
+                    "content": "<img src=\"https://download.flashcat.cloud/ulric/icon-mysql.png\" width=\"256\"/>"
+                }
+            },
+            {
+                "type": "stat",
+                "id": "98364700-8949-4e5d-a6ac-34becb52edf2",
+                "layout": {
+                    "h": 3,
+                    "w": 7,
+                    "x": 5,
+                    "y": 1,
+                    "i": "75363e2e-deba-421a-bb28-dedf0d7a1a6f",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_uptime{ident=~\"$ident\"}",
+                        "legend": "{{ident}} > {{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "MySQL Uptime Days",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "title": null,
+                        "value": null
+                    },
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 1800
+                            },
+                            "result": {
+                                "color": "#ec7718"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 1800
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 1
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "1763bcc6-d058-4a2b-a099-3d590debd01a",
+                "layout": {
+                    "h": 3,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1,
+                    "i": "1763bcc6-d058-4a2b-a099-3d590debd01a",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_queries{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} > {{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Current QPS",
+                "description": "mysql_global_status_queries",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "title": null,
+                        "value": null
+                    },
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 100
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 100,
+                                "to": 1000
+                            },
+                            "result": {
+                                "color": "rgba(255, 153, 25, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)"
+                            },
+                            "match": {
+                                "from": 1000
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "decimals": 2
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "28d16171-9e36-4f5d-87be-95bcb2aeb643",
+                "layout": {
+                    "h": 3,
+                    "w": 7,
+                    "x": 5,
+                    "y": 4,
+                    "i": "28d16171-9e36-4f5d-87be-95bcb2aeb643",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_variables_innodb_buffer_pool_size{ident=~\"$ident\"}",
+                        "legend": "{{ident}} > {{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "InnoDB Buffer Pool",
+                "description": "**InnoDB Buffer Pool Size**\n\nInnoDB maintains a storage area called the buffer pool for caching data and indexes in memory.  Knowing how the InnoDB buffer pool works, and taking advantage of it to keep frequently accessed data in memory, is one of the most important aspects of MySQL tuning. The goal is to keep the working set in memory. In most cases, this should be between 60%-90% of available memory on a dedicated database host, but depends on many factors.",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "title": null,
+                        "value": null
+                    },
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(83, 170, 177, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "5fe39015-bf33-4f02-b79e-a8977e56d7ca",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 12,
+                    "y": 4,
+                    "i": "5fe39015-bf33-4f02-b79e-a8977e56d7ca",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "increase(mysql_global_status_table_locks_waited{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} > {{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Table Locks Waited(5min)",
+                "description": "**Table Locks**\n\nMySQL takes a number of different locks for varying reasons. In this graph we see how many Table level locks MySQL has requested from the storage engine. In the case of InnoDB, many times the locks could actually be row locks as it only takes table level locks in a few specific cases.\n\nIt is most useful to compare Locks Immediate and Locks Waited. If Locks waited is rising, it means you have lock contention. Otherwise, Locks Immediate rising and falling is normal activity.",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "title": null,
+                        "value": null
+                    },
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 1
+                            },
+                            "result": {
+                                "color": "#e70d0d"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "to": 1
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "70ee692b-24d9-4807-81b4-81582b5526c2",
+                "layout": {
+                    "h": 3,
+                    "w": 6,
+                    "x": 18,
+                    "y": 4,
+                    "i": "70ee692b-24d9-4807-81b4-81582b5526c2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_slave_status_seconds_behind_master{ident=~\"$ident\"} - mysql_slave_status_sql_delay{ident=~\"$ident\"}",
+                        "legend": "{{address}}",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Slave Replication Lag",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "c6da1a55-04d2-4e3e-a22f-e5790182da4a",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 7,
+                    "i": "c6da1a55-04d2-4e3e-a22f-e5790182da4a",
+                    "isResizable": false
+                },
+                "name": "Connections",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "458753cc-a6d0-4afc-bf5e-54585dc5990c",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 8,
+                    "i": "458753cc-a6d0-4afc-bf5e-54585dc5990c",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_connected{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Connections",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "MySQL Connections",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ebf01aad-c07b-4541-9891-bb3d5a7175a6",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 8,
+                    "i": "13bf0230-db47-4338-9b32-8e15af8915e4",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_connected{ident=~\"$ident\"}/mysql_global_variables_max_connections{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "MySQL Connections Used Percent",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f18e13bf-5495-492f-95c5-4a590e38c58e",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 8,
+                    "i": "f18e13bf-5495-492f-95c5-4a590e38c58e",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_threads_running{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Threads Running",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "MySQL Client Thread Running",
+                "description": "Threads Connected is the number of open connections, while Threads Running is the number of threads not sleeping.",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "86251111-3a14-4c52-b1f2-a5cbe009bc0f",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 8,
+                    "i": "34bd296e-bea3-4638-9a35-f97121e804b2",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_max_used_connections{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Max Used Connections",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_aborted_connects{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Aborted Connections",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Max Used and Aborted Connections",
+                "description": "**Max Connections** \n\nMax Connections is the maximum permitted number of simultaneous client connections. By default, this is 151. Increasing this value increases the number of file descriptors that mysqld requires. If the required number of descriptors are not available, the server reduces the value of Max Connections.\n\nmysqld actually permits Max Connections + 1 clients to connect. The extra connection is reserved for use by accounts that have the SUPER privilege, such as root.\n\nMax Used Connections is the maximum number of connections that have been in use simultaneously since the server started.\n\nConnections is the number of connection attempts (successful or not) to the MySQL server.",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "462559f7-06d3-4585-9ad3-a0906e7c362d",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13,
+                    "i": "462559f7-06d3-4585-9ad3-a0906e7c362d",
+                    "isResizable": false
+                },
+                "name": "Query Performance",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0428fde5-3fbf-45dd-b1a9-1a498d6c2de4",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 14,
+                    "i": "0428fde5-3fbf-45dd-b1a9-1a498d6c2de4",
+                    "isResizable": true
+                },
+                "name": "MySQL Temporary Objects",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_tables{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Tables"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_disk_tables{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Disk Tables"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_created_tmp_files{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Created Tmp Files"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Select Types**\n\nAs with most relational databases, selecting based on indexes is more efficient than scanning an entire table's data. Here we see the counters for selects not done with indexes.\n\n* ***Select Scan*** is how many queries caused full table scans, in which all the data in the table had to be read and either discarded or returned.\n* ***Select Range*** is how many queries used a range scan, which means MySQL scanned all rows in a given range.\n* ***Select Full Join*** is the number of joins that are not joined on an index, this is usually a huge performance hit.",
+                "id": "7333267f-e76e-495a-b3d8-08b100ab1330",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 14,
+                    "i": "7333267f-e76e-495a-b3d8-08b100ab1330",
+                    "isResizable": true
+                },
+                "name": "MySQL Select Types",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_select_full_join{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Full Join"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_full_range_join{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Full Range Join"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_range{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Range"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_range_check{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Range Check"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_select_scan{ ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Select Scan"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Sorts**\n\nDue to a query's structure, order, or other requirements, MySQL sorts the rows before returning them. For example, if a table is ordered 1 to 10 but you want the results reversed, MySQL then has to sort the rows to return 10 to 1.\n\nThis graph also shows when sorts had to scan a whole table or a given range of a table in order to return the results and which could not have been sorted via an index.",
+                "id": "033652d8-8918-4eee-80bd-625cb0cf8d05",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18,
+                    "i": "033652d8-8918-4eee-80bd-625cb0cf8d05",
+                    "isResizable": true
+                },
+                "name": "MySQL Sorts",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_sort_rows{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Rows"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_range{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Range"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_merge_passes{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Merge Passes"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_sort_scan{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Sort Scan"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "bars",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Slow Queries**\n\nSlow queries are defined as queries being slower than the long_query_time setting. For example, if you have long_query_time set to 3, all queries that take longer than 3 seconds to complete will show on this graph.",
+                "id": "08c7c660-5dbb-4fce-9037-3680b9e807d6",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18,
+                    "i": "08c7c660-5dbb-4fce-9037-3680b9e807d6",
+                    "isResizable": true
+                },
+                "name": "MySQL Slow Queries",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_slow_queries{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Slow Queries"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "6f36134c-8dd7-4cfb-8a55-7b18ecce2cd6",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 22,
+                    "i": "6f36134c-8dd7-4cfb-8a55-7b18ecce2cd6",
+                    "isResizable": false
+                },
+                "name": "Network",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Network Traffic**\n\nHere we can see how much network traffic is generated by MySQL. Outbound is network traffic sent from MySQL and Inbound is network traffic MySQL has received.",
+                "id": "6d50c653-a256-461d-80f1-69e3db613dbc",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 23,
+                    "i": "6d50c653-a256-461d-80f1-69e3db613dbc",
+                    "isResizable": true
+                },
+                "name": "MySQL Network Traffic",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_bytes_received{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Inbound"
+                    },
+                    {
+                        "expr": "rate(mysql_global_status_bytes_sent{ident=~\"$ident\"}[5m])",
+                        "legend": "{{ident}} {{address}} Outbound"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "73cbe32a-36cd-488e-a818-23bb1857d6e7",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 27,
+                    "i": "73cbe32a-36cd-488e-a818-23bb1857d6e7",
+                    "isResizable": false
+                },
+                "name": "Commands, Handlers",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**Top Command Counters**\n\nThe Com_{{xxx}} statement counter variables indicate the number of times each xxx statement has been executed. There is one status variable for each type of statement. For example, Com_delete and Com_update count [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements, respectively. Com_delete_multi and Com_update_multi are similar but apply to [``DELETE``](https://dev.mysql.com/doc/refman/5.7/en/delete.html) and [``UPDATE``](https://dev.mysql.com/doc/refman/5.7/en/update.html) statements that use multiple-table syntax.",
+                "id": "ffa708e1-2132-4dca-9cda-2dd73fad16da",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 28,
+                    "i": "ffa708e1-2132-4dca-9cda-2dd73fad16da",
+                    "isResizable": true
+                },
+                "name": "Top Command Counters",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "topk(10, rate(mysql_global_status_commands_total{ident=~\"$ident\"}[5m])>0)",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "49a40cdf-4715-4d5c-90f9-944479296d8b",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 28,
+                    "i": "ad5d900a-3e60-436a-b8a6-eccc9ba117d4",
+                    "isResizable": true
+                },
+                "name": "Select per second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=\"select\"}[1m])",
+                        "legend": "{{ident}} {{address}} "
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "lineInterpolation": "smooth",
+                    "stack": "noraml"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "01970b88-417a-4c75-9bd0-33eb017a7264",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 28,
+                    "i": "10a3834f-5074-4a0a-9013-03c42a78e2c5",
+                    "isResizable": true
+                },
+                "name": "Write(insert|update|delete) per second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=~\"insert|update|delete\"}[1m])",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.2,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "noraml"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "958eae25-8c2a-4886-962f-eb12d57bd594",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 28,
+                    "i": "64603263-1433-4041-9078-65ca95e09932",
+                    "isResizable": true
+                },
+                "name": "TPS(commit|rollback)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_commands_total{ident=~\"$ident\", command=~\"commit|rollback\"}[10m])",
+                        "legend": "{{ident}} {{address}} {{command}}"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Handlers**\n\nHandler statistics are internal statistics on how MySQL is selecting, updating, inserting, and modifying rows, tables, and indexes.\n\nThis is in fact the layer between the Storage Engine and MySQL.\n\n* `read_rnd_next` is incremented when the server performs a full table scan and this is a counter you don't really want to see with a high value.\n* `read_key` is incremented when a read is done with an index.\n* `read_next` is incremented when the storage engine is asked to 'read the next index entry'. A high value means a lot of index scans are being done.",
+                "id": "d9623f6a-64f4-4520-b7b5-01abfc76144d",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32,
+                    "i": "d9623f6a-64f4-4520-b7b5-01abfc76144d",
+                    "isResizable": true
+                },
+                "name": "MySQL Handlers",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 3
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_handlers_total{ident=~\"$ident\", handler!~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{ident}} {{address}} {{handler}}"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3a5ad3a4-5877-46e6-bb3d-bd71174c693e",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32,
+                    "i": "3a5ad3a4-5877-46e6-bb3d-bd71174c693e",
+                    "isResizable": true
+                },
+                "name": "MySQL Transaction Handlers",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_handlers_total{ident=~\"$ident\", handler=~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{ident}} {{address}} {{handler}}"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "4595a676-3d0e-4746-a881-260505002f64",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 36,
+                    "i": "4595a676-3d0e-4746-a881-260505002f64",
+                    "isResizable": false
+                },
+                "name": "Open Files",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ac66ac2b-e48b-4ba7-95e5-4846d616449a",
+                "layout": {
+                    "h": 4,
+                    "w": 24,
+                    "x": 0,
+                    "y": 37,
+                    "i": "ac66ac2b-e48b-4ba7-95e5-4846d616449a",
+                    "isResizable": true
+                },
+                "name": "MySQL Open Files",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "mysql_global_variables_open_files_limit{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Files Limit"
+                    },
+                    {
+                        "expr": "mysql_global_status_open_files{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Files"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "ddf0e641-3ef6-4be2-a90c-d013eb8a6c30",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 41,
+                    "i": "ddf0e641-3ef6-4be2-a90c-d013eb8a6c30",
+                    "isResizable": false
+                },
+                "name": "Table Openings",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Table Open Cache Status**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
+                "id": "c215348c-ecdf-4480-8371-bc6a8d72da10",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 42,
+                    "i": "c215348c-ecdf-4480-8371-bc6a8d72da10",
+                    "isResizable": true
+                },
+                "name": "Table Open Cache Hit Ratio  Mysql 5.6.6+",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_table_open_cache_hits{ident=~\"$ident\"}[5m])\n/\n(\nrate(mysql_global_status_table_open_cache_hits{ident=~\"$ident\"}[5m])\n+\nrate(mysql_global_status_table_open_cache_misses{ident=~\"$ident\"}[5m])\n)",
+                        "legend": "{{ident}} {{address}} Table Open Cache Hit Ratio"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "**MySQL Open Tables**\n\nThe recommendation is to set the `table_open_cache_instances` to a loose correlation to virtual CPUs, keeping in mind that more instances means the cache is split more times. If you have a cache set to 500 but it has 10 instances, each cache will only have 50 cached.\n\nThe `table_definition_cache` and `table_open_cache` can be left as default as they are auto-sized MySQL 5.6 and above (ie: do not set them to any value).",
+                "id": "a8fde020-a904-4eaf-84e3-7dbc9f4febf5",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 42,
+                    "i": "a8fde020-a904-4eaf-84e3-7dbc9f4febf5",
+                    "isResizable": true
+                },
+                "name": "MySQL Open Tables",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_open_tables{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Open Tables"
+                    },
+                    {
+                        "expr": "mysql_global_variables_table_open_cache{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}} Table Open Cache"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "d70df2e3-bd10-4072-a027-0cc83235e972",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 46,
+                    "i": "d70df2e3-bd10-4072-a027-0cc83235e972",
+                    "isResizable": false
+                },
+                "name": "InnoDB",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2bce3a5c-1ec3-4789-9ce5-897a3e40de30",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 47,
+                    "i": "2bce3a5c-1ec3-4789-9ce5-897a3e40de30",
+                    "isResizable": true
+                },
+                "name": "Read requests / second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_read_requests{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6bded8a5-383e-49ad-b61b-1b0c72a8a911",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 47,
+                    "i": "ab9b8335-2e25-40f6-9402-cd673dc7ae4e",
+                    "isResizable": true
+                },
+                "name": "Reads from disk / second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_reads{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "08e60f4e-f7fd-4513-bf08-f9514371fa94",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 47,
+                    "i": "763c8183-4315-474c-991e-f3ec78699b4e",
+                    "isResizable": true
+                },
+                "name": "Reads from memory percent",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "100 - increase(mysql_global_status_innodb_buffer_pool_reads{ident=~\"$ident\"}[5m])/increase(mysql_global_status_innodb_buffer_pool_read_requests{ident=~\"$ident\"}[5m]) * 100",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "768306ee-2092-42f6-8b92-7edaf09fdab0",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 51,
+                    "i": "25e1fc62-9e94-4a39-9fc3-2a174777f93b",
+                    "isResizable": true
+                },
+                "name": "Row lock waits / second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_innodb_row_lock_waits{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "722ff93d-630f-4921-a1f4-8240af974fd3",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 51,
+                    "i": "37679c80-588d-45e3-b2ac-3e0dad4be32a",
+                    "isResizable": true
+                },
+                "name": "Row lock time / second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_innodb_row_lock_time{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3f8ba45a-a9bc-4420-980d-382c2638cda0",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 12,
+                    "y": 51,
+                    "i": "33c8d0e1-03a3-4a3f-8b20-7b5b6373bdb0",
+                    "isResizable": true
+                },
+                "name": "Log fsyncs / second",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(mysql_global_status_innodb_os_log_fsyncs{ident=~\"$ident\"}[1m])",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c98ff938-5076-4217-bb0f-e082f34cc6bb",
+                "layout": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 18,
+                    "y": 51,
+                    "i": "c5b892ee-bc0d-4fe9-b57d-7132c329752d",
+                    "isResizable": true
+                },
+                "name": "Buffer Pool Pages Utilization %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "mysql_global_status_buffer_pool_pages_utilization{ident=~\"$ident\"}",
+                        "legend": "{{ident}} {{address}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(mysql_global_status_uptime, ident)",
+                "name": "ident",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1717556328087994321
+}

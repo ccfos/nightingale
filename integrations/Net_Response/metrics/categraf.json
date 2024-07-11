@@ -1,0 +1,32 @@
+[
+    {
+        "id": 0,
+        "uuid": 1717556328185013000,
+        "collector": "Categraf",
+        "typ": "Net_Response",
+        "name": "NET 探测结果状态码",
+        "unit": "none",
+        "note": "0 值表示正常，大于 0 就是异常，各个值的含义如下：\n\n- 0: Success\n- 1: Timeout\n- 2: ConnectionFailed\n- 3: ReadFailed\n- 4: StringMismatch",
+        "lang": "zh_CN",
+        "expression": "net_response_result_code",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    },
+    {
+        "id": 0,
+        "uuid": 1717556328186975000,
+        "collector": "Categraf",
+        "typ": "Net_Response",
+        "name": "NET 探测耗时",
+        "unit": "seconds",
+        "note": "",
+        "lang": "zh_CN",
+        "expression": "net_response_response_time",
+        "created_at": 0,
+        "created_by": "",
+        "updated_at": 0,
+        "updated_by": ""
+    }
+]

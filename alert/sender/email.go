@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/toolkits/pkg/logger"
@@ -30,11 +31,11 @@ func (es *EmailSender) Send(ctx MessageContext) {
 	var subject string
 
 	if es.subjectTpl != nil {
-		subject = BuildTplMessage(es.subjectTpl, []*models.AlertCurEvent{ctx.Events[0]})
+		subject = BuildTplMessage(models.Email, es.subjectTpl, []*models.AlertCurEvent{ctx.Events[0]})
 	} else {
 		subject = ctx.Events[0].RuleName
 	}
-	content := BuildTplMessage(es.contentTpl, ctx.Events)
+	content := BuildTplMessage(models.Email, es.contentTpl, ctx.Events)
 	es.WriteEmail(subject, content, tos)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues(models.Email).Add(float64(len(tos)))
@@ -85,12 +86,18 @@ func (es *EmailSender) WriteEmail(subject, content string, tos []string) {
 
 func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 	for {
-		if s, err := d.Dial(); err != nil {
-			logger.Errorf("email_sender: failed to dial smtp: %s", err)
+		select {
+		case <-mailQuit:
+			// Note that Sendcloser is not obtained below,
+			// and the outgoing signal (with configuration changes) exits the current dial
+			return nil
+		default:
+			if s, err := d.Dial(); err != nil {
+				logger.Errorf("email_sender: failed to dial smtp: %s", err)
+			} else {
+				return s
+			}
 			time.Sleep(time.Second)
-			continue
-		} else {
-			return s
 		}
 	}
 }
@@ -98,14 +105,31 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 var mailQuit = make(chan struct{})
 
 func RestartEmailSender(smtp aconf.SMTPConfig) {
-	close(mailQuit)
-	mailQuit = make(chan struct{})
+	// Notify internal start exit
+	mailQuit <- struct{}{}
 	startEmailSender(smtp)
 }
 
-func InitEmailSender(smtp aconf.SMTPConfig) {
+var smtpConfig aconf.SMTPConfig
+
+func InitEmailSender(ncc *memsto.NotifyConfigCacheType) {
 	mailch = make(chan *gomail.Message, 100000)
-	startEmailSender(smtp)
+	go updateSmtp(ncc)
+	smtpConfig = ncc.GetSMTP()
+	startEmailSender(smtpConfig)
+}
+
+func updateSmtp(ncc *memsto.NotifyConfigCacheType) {
+	for {
+		time.Sleep(1 * time.Minute)
+		smtp := ncc.GetSMTP()
+		if smtpConfig.Host != smtp.Host || smtpConfig.Batch != smtp.Batch || smtpConfig.From != smtp.From ||
+			smtpConfig.Pass != smtp.Pass || smtpConfig.User != smtp.User || smtpConfig.Port != smtp.Port ||
+			smtpConfig.InsecureSkipVerify != smtp.InsecureSkipVerify { //diff
+			smtpConfig = smtp
+			RestartEmailSender(smtp)
+		}
+	}
 }
 
 func startEmailSender(smtp aconf.SMTPConfig) {
@@ -114,7 +138,7 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
-	logger.Infof("start email sender... %+v", conf)
+	logger.Infof("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Pass)
 	if conf.InsecureSkipVerify {
@@ -135,6 +159,12 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 
 			if !open {
 				s = dialSmtp(d)
+				if s == nil {
+					// Indicates that the dialing failed and exited the current goroutine directly,
+					// but put the Message back in the mailch
+					mailch <- m
+					return
+				}
 				open = true
 			}
 			if err := gomail.Send(s, m); err != nil {
@@ -146,6 +176,12 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 				}
 
 				s = dialSmtp(d)
+				if s == nil {
+					// Indicates that the dialing failed and exited the current goroutine directly,
+					// but put the Message back in the mailch
+					mailch <- m
+					return
+				}
 				open = true
 
 				if err := gomail.Send(s, m); err != nil {

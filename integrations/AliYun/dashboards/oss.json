@@ -1,0 +1,2582 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云OSS",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "ae6ab52c-c38f-4697-aa93-1a4a7beed598",
+                "layout": {
+                    "h": 1,
+                    "i": "ae6ab52c-c38f-4697-aa93-1a4a7beed598",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "整体情况",
+                "panels": [],
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "aff2b3e8-e536-491e-98e4-e15639922ec5",
+                "layout": {
+                    "h": 4,
+                    "i": "e440abe0-5b4d-4877-ac1e-1d5b37c3db6c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "可用性/有效请求率",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_availability_value{user_id=\"$user_id\"}",
+                        "legend": "可用性",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_request_valid_rate_value{user_id=\"$user_id\"}",
+                        "legend": "有效请求率",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "db8f77c9-fd97-4f58-af82-b51992bd5495",
+                "layout": {
+                    "h": 4,
+                    "i": "db8f77c9-fd97-4f58-af82-b51992bd5495",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "总请求数/有效请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_total_request_count_value{user_id=\"$user_id\"}",
+                        "legend": "总请求数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_valid_request_count_value{user_id=\"$user_id\"}",
+                        "legend": "效请求数",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "e28752b4-5f16-4358-a363-e76ddddb9c24",
+                "layout": {
+                    "h": 4,
+                    "i": "facf2d97-6eba-4559-80c8-73c0164fa29c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "公网出流量/公网入流量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_internet_send_value{user_id=\"$user_id\"}",
+                        "legend": "公网出流量",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_internet_recv_value{user_id=\"$user_id\"}",
+                        "legend": "公网入流量",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "98d4c729-06c9-4e67-aa57-7864f2e46d98",
+                "layout": {
+                    "h": 1,
+                    "i": "98d4c729-06c9-4e67-aa57-7864f2e46d98",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 9
+                },
+                "name": "请求状态详情",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "b8217fcb-278e-4dfe-8449-56bc9ebcb1c3",
+                "layout": {
+                    "h": 4,
+                    "i": "61ae3ba8-3a75-4297-b53f-f9de5c8476da",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "服务端错误请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_server_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "服务端错误请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1cb9ec59-73dc-4559-b7f0-ca90679bda79",
+                "layout": {
+                    "h": 4,
+                    "i": "e6566470-8b07-4061-bdff-1cfb38daa963",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "服务端错误请求占比",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_server_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "服务端错误请求占比",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "5f48c124-d36b-423d-bc11-fa0b9fdca3f2",
+                "layout": {
+                    "h": 4,
+                    "i": "104c6702-9114-421a-ad5e-7ad4b72d0c02",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "网络错误请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_network_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "网络错误请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "755a1c23-48c5-4491-b009-5137882723b0",
+                "layout": {
+                    "h": 4,
+                    "i": "082830cf-310a-4108-98e2-0c60d5c5bc35",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 10
+                },
+                "maxPerRow": 4,
+                "name": "网络错误请求占比",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_network_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "网络错误请求占比",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "f486359b-2733-4d92-adb9-1348f9565d65",
+                "layout": {
+                    "h": 4,
+                    "i": "1cb945cc-4b3c-4f2c-ace4-8037ad0e8816",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "客户端错误请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_client_other_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "客户端其他错误请求数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_client_timeout_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "客户端超时错误请求数",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_resource_not_found_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "客户端资源不存在错误请求数",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_authorization_error_count_value{user_id=\"$user_id\"}",
+                        "legend": "客户端授权错误请求数",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d525f038-812e-4024-9a8c-d4a9cbcf9d87",
+                "layout": {
+                    "h": 4,
+                    "i": "a237200b-1f05-4093-9aa6-d1e27770c38f",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "客户端错误请求占比",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_client_other_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "客户端其他错误请求占比",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_client_timeout_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "客户端超时错误请求占比",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_resource_not_found_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "客户端资源不存在错误请求占比",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_authorization_error_rate_value{user_id=\"$user_id\"}",
+                        "legend": "客户端授权错误请求占比",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "39c5dc8b-5e87-47c8-89ba-73a9985483e2",
+                "layout": {
+                    "h": 4,
+                    "i": "74a86f62-668c-426c-b69d-4f9e5fd6fb2b",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "有效请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_success_count_value{user_id=\"$user_id\"}",
+                        "legend": "成功请求数",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_redirect_count_value{user_id=\"$user_id\"}",
+                        "legend": "重定向请求数",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "5f10a135-c092-4905-9986-c51d28cb532f",
+                "layout": {
+                    "h": 4,
+                    "i": "9d9a4a35-a3bf-41c0-a019-8d70d1a38eab",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "有效请求占比",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_success_rate_value{user_id=\"$user_id\"}",
+                        "legend": "成功请求占比",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_redirect_rate_value{user_id=\"$user_id\"}",
+                        "legend": "重定向请求占比",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "eae6d0ff-c5a3-4d6e-8fd6-53c765562234",
+                "layout": {
+                    "h": 1,
+                    "i": "eae6d0ff-c5a3-4d6e-8fd6-53c765562234",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "计量参考",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2722be43-b2aa-44d2-9066-8a2818aadfa2",
+                "layout": {
+                    "h": 4,
+                    "i": "99bc9b5d-ac08-473a-8566-466777eb62e8",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 19
+                },
+                "maxPerRow": 4,
+                "name": "存储大小",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_metering_storage_utilization_value{user_id=\"$user_id\"}",
+                        "legend": "存储大小",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "af133902-12f9-4746-b028-e021391e4a67",
+                "layout": {
+                    "h": 4,
+                    "i": "ecabf939-7f31-4fd5-a825-7d8ffd4033d7",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 19
+                },
+                "maxPerRow": 4,
+                "name": "计费请求数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_metering_get_request_value{user_id=\"$user_id\"}",
+                        "legend": "客户端其他错误请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6bb61b7c-4b49-4d9b-a707-34913be40e6e",
+                "layout": {
+                    "h": 4,
+                    "i": "616e7a61-6bc1-4499-8065-b944789953e0",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 19
+                },
+                "maxPerRow": 4,
+                "name": "计量流量",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_metering_internet_rx_value{user_id=\"$user_id\"}",
+                        "legend": "internet_rx",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_metering_internet_tx_value{user_id=\"$user_id\"}",
+                        "legend": "internet_tx",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "d27c946f-33e2-4d35-ad84-87b68a0076f1",
+                "layout": {
+                    "h": 1,
+                    "i": "d27c946f-33e2-4d35-ad84-87b68a0076f1",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 23
+                },
+                "name": "平均延时",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9c635833-ebb1-441a-b5ce-81a5bfabaa71",
+                "layout": {
+                    "h": 4,
+                    "i": "38632126-ab8b-4c9c-b15f-6dbcdc0e8ced",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 24
+                },
+                "maxPerRow": 4,
+                "name": "GetObject请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_get_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "GetObject请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_get_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "GetObject请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "f1f08b1f-fda7-47a6-803d-fc68599cbbde",
+                "layout": {
+                    "h": 4,
+                    "i": "a61ee3b0-4097-4ee7-9567-16fcd5cc50a0",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 24
+                },
+                "maxPerRow": 4,
+                "name": "HeadObject请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_head_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "HeadObject请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_head_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "HeadObject请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7282be15-52e2-40a2-951f-6140daa7d595",
+                "layout": {
+                    "h": 4,
+                    "i": "0d424100-822c-4c5f-a02d-883fe3642fab",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 24
+                },
+                "maxPerRow": 4,
+                "name": "PutObject请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_put_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PutObject请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_put_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PutObject请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6f211349-a330-437a-bfab-29404739098d",
+                "layout": {
+                    "h": 4,
+                    "i": "58a5a502-0d4d-4b73-a9dd-8b930fc11052",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 24
+                },
+                "maxPerRow": 4,
+                "name": "PostObject请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_post_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PostObject请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_post_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PostObject请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6b392bdb-9677-42d4-b2fd-de53601fc858",
+                "layout": {
+                    "h": 4,
+                    "i": "2205cc4b-dcd2-444d-8b37-0694deb9308d",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 28
+                },
+                "maxPerRow": 4,
+                "name": "AppendObject请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_append_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "AppendObject请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_append_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "AppendObject请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1400ae72-eae2-4ffe-bcf5-2ebd8194d470",
+                "layout": {
+                    "h": 4,
+                    "i": "f2015851-061f-4345-8b20-989103549937",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 28
+                },
+                "maxPerRow": 4,
+                "name": "UploadPart请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPart请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPart请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "060e67f9-4db5-4a5f-a24c-3c54efcbf297",
+                "layout": {
+                    "h": 4,
+                    "i": "8bd12d33-05d8-484a-82b4-d161bf1681d0",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 28
+                },
+                "maxPerRow": 4,
+                "name": "UploadPartCopy请求平均延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_copy_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPartCopy请求E2E平均延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_copy_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPartCopy请求平均服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "40fb9cf4-c166-4ab8-b0b5-b510a63821a3",
+                "layout": {
+                    "h": 1,
+                    "i": "40fb9cf4-c166-4ab8-b0b5-b510a63821a3",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32
+                },
+                "name": "最大延时",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0997c38b-4776-476b-a859-109a6a5a3f74",
+                "layout": {
+                    "h": 4,
+                    "i": "f72517cd-65b3-40d8-8886-ae0870f4c4ec",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "GetObject请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_get_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "GetObject请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_get_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "GetObject请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "51bd67db-3c51-43bf-a4ad-fdb9688968c3",
+                "layout": {
+                    "h": 4,
+                    "i": "911f4590-e7f9-470a-a940-0fd78380200b",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "HeadObject请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_head_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "HeadObject请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_head_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "HeadObject请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "37e46a51-94cd-4bf5-ac8b-c2034d28f7b1",
+                "layout": {
+                    "h": 4,
+                    "i": "c2081d5d-f5c7-4989-9613-68e1b4090cd4",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "PutObject请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_put_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PutObject请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_put_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PutObject请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "30782208-bd2e-4e13-b9ad-09b3aab748dc",
+                "layout": {
+                    "h": 4,
+                    "i": "5fb8bde2-d319-411d-bfac-24a70b80fbc3",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 33
+                },
+                "maxPerRow": 4,
+                "name": "PostObject请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_post_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PostObject请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_post_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "PostObject请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "613657f6-bea5-4efb-a124-c35f0391b719",
+                "layout": {
+                    "h": 4,
+                    "i": "3cc0b72f-7691-4860-9076-816b4294b8a1",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 37
+                },
+                "maxPerRow": 4,
+                "name": "AppendObject请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_append_object_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "AppendObject请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_append_object_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "AppendObject请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7217044b-7b5a-4484-9eb5-0ecbb28cd8f6",
+                "layout": {
+                    "h": 4,
+                    "i": "e933e521-d5ba-4f72-81c8-553d4ff025a7",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 37
+                },
+                "maxPerRow": 4,
+                "name": "UploadPart请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_upload_part_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPart请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_upload_part_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPart请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c1b2077d-024c-4ed1-955e-9f556346e28b",
+                "layout": {
+                    "h": 4,
+                    "i": "30d3a018-ac07-4dda-a28c-63e34a724f98",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 37
+                },
+                "maxPerRow": 4,
+                "name": "UploadPartCopy请求最大延时(Milliseconds)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_upload_part_copy_e2e_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPartCopy请求E2E最大延时",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_max_upload_part_copy_server_latency_value{user_id=\"$user_id\"}",
+                        "legend": "UploadPartCopy请求最大服务器延时",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "aee6d2ba-1489-4a09-a9b5-97e22a9c25de",
+                "layout": {
+                    "h": 1,
+                    "i": "aee6d2ba-1489-4a09-a9b5-97e22a9c25de",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 41
+                },
+                "name": "请求成功操作分类",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9776ff4c-ee48-4c34-b15f-f59d6957eff6",
+                "layout": {
+                    "h": 4,
+                    "i": "5f3b1b12-57c7-4ed7-9d36-e54b7693c5ce",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 42
+                },
+                "maxPerRow": 4,
+                "name": "GetObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_get_object_count_value",
+                        "legend": "GetObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "4d06cc49-1729-4239-bfe9-3d74c41dbaca",
+                "layout": {
+                    "h": 4,
+                    "i": "d7b32954-4413-4ba2-a854-b5cc5df93e74",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 42
+                },
+                "maxPerRow": 4,
+                "name": "HeadObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_head_object_count_value",
+                        "legend": "HeadObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "93f35c48-0d5a-4f0a-a12a-da7a9f259b6e",
+                "layout": {
+                    "h": 4,
+                    "i": "f2fb1ebc-e309-465a-a13b-a2777639adc2",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 42
+                },
+                "maxPerRow": 4,
+                "name": "PutObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_put_object_count_value",
+                        "legend": "PutObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "02427f33-29fe-4c9e-b636-4902409920ae",
+                "layout": {
+                    "h": 4,
+                    "i": "8e5f7ed6-5721-4323-ac67-b4f1360bf9f5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 42
+                },
+                "maxPerRow": 4,
+                "name": "PostObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_post_object_count_value",
+                        "legend": "PostObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "5088ba65-9da3-4d6a-95bb-a64a75b7c687",
+                "layout": {
+                    "h": 4,
+                    "i": "fba364b1-2ba3-48dc-8107-09a7594fb012",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 46
+                },
+                "maxPerRow": 4,
+                "name": "AppendObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_append_object_count_value",
+                        "legend": "AppendObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1c679bf2-3487-46fc-84bc-cd87a141cb56",
+                "layout": {
+                    "h": 4,
+                    "i": "ac88ce75-7f09-45e8-8088-d74a75e417c5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 46
+                },
+                "maxPerRow": 4,
+                "name": "UploadPart成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_count_value",
+                        "legend": "UploadPart成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "9fb546a9-f159-4187-b054-b6a63d193743",
+                "layout": {
+                    "h": 4,
+                    "i": "f67a210d-6f21-4a7e-9987-6056d9e2b237",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 46
+                },
+                "maxPerRow": 4,
+                "name": "UploadPartCopy成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_upload_part_copy_count_value",
+                        "legend": "UploadPartCopy成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "51834321-efc6-4fe8-af4d-de0aa0a8ac32",
+                "layout": {
+                    "h": 4,
+                    "i": "601ac8db-e263-4465-9dea-136b0480e437",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 46
+                },
+                "maxPerRow": 4,
+                "name": "DeleteObject成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_delete_object_count_value",
+                        "legend": "DeleteObject成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c455124e-a519-43fb-b6eb-b617e80dcfcc",
+                "layout": {
+                    "h": 4,
+                    "i": "ad8b49a7-f63e-4952-88b8-afcf44fb674c",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 50
+                },
+                "maxPerRow": 4,
+                "name": "DeleteObjects成功请求",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_oss_dashboard_delete_objects_count_value",
+                        "legend": "DeleteObjects成功请求数",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_oss_dashboard_get_object_count_value, user_id)",
+                "multi": true,
+                "name": "user_id",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327116137000
+}

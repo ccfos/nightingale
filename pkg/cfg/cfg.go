@@ -8,6 +8,7 @@ import (
 
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/runner"
 )
 
 func LoadConfigByDir(configDir string, configPtr interface{}) error {
@@ -18,6 +19,10 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	loaders := []multiconfig.Loader{
 		&multiconfig.TagLoader{},
 		&multiconfig.EnvironmentLoader{},
+	}
+
+	if !file.IsExist(configDir) {
+		return fmt.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
 	}
 
 	files, err := file.FilesUnder(configDir)

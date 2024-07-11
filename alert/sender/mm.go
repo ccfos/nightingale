@@ -36,13 +36,28 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	if len(urls) == 0 {
 		return
 	}
-	message := BuildTplMessage(ms.tpl, ctx.Events)
+	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
 
 	SendMM(MatterMostMessage{
 		Text:   message,
 		Tokens: urls,
 		Stats:  ctx.Stats,
 	})
+}
+
+func (ms *MmSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
+
+	SendMM(MatterMostMessage{
+		Text:   message,
+		Tokens: []string{ctx.CallBackURL},
+		Stats:  ctx.Stats,
+	})
+
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 func (ms *MmSender) extract(users []*models.User) []string {

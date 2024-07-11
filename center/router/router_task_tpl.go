@@ -18,10 +18,45 @@ func (rt *Router) taskTplGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	groupId := ginx.UrlParamInt64(c, "id")
 
-	total, err := models.TaskTplTotal(rt.Ctx, groupId, query)
+	total, err := models.TaskTplTotal(rt.Ctx, []int64{groupId}, query)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskTplGets(rt.Ctx, groupId, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"total": total,
+		"list":  list,
+	}, nil)
+}
+
+func (rt *Router) taskTplGetsByGids(c *gin.Context) {
+	query := ginx.QueryStr(c, "query", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+
+			if len(gids) == 0 {
+				ginx.NewRender(c).Data([]int{}, nil)
+				return
+			}
+		}
+	}
+
+	total, err := models.TaskTplTotal(rt.Ctx, gids, query)
+	ginx.Dangerous(err)
+
+	list, err := models.TaskTplGets(rt.Ctx, gids, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -59,6 +94,14 @@ func (rt *Router) taskTplGetByService(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(tpl, err)
+}
+
+func (rt *Router) taskTplGetsByService(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplGetAll(rt.Ctx))
+}
+
+func (rt *Router) taskTplStatistics(c *gin.Context) {
+	ginx.NewRender(c).Data(models.TaskTplStatistics(rt.Ctx))
 }
 
 type taskTplForm struct {

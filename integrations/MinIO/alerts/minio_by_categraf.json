@@ -1,142 +1,164 @@
 [
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "DisksOffline",
-    "note": "Disks down in MinIO deployment",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{}[5m]) > 0",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{}[5m]) > 0",
-          "severity": 2
-        }
-      ],
-      "severity": 0
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "DisksOffline",
+        "note": "Disks down in MinIO deployment",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{}[5m]) \u003e 0",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "avg_over_time(minio_cluster_disk_offline_total{}[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328048390000
     },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null
-  },
-  {
-    "cate": "prometheus",
-    "datasource_ids": [
-      0
-    ],
-    "name": "NodesOffline",
-    "note": "Node down in MinIO deployment",
-    "prod": "metric",
-    "algorithm": "",
-    "algo_params": null,
-    "delay": 0,
-    "severity": 2,
-    "severities": [
-      2
-    ],
-    "disabled": 1,
-    "prom_for_duration": 600,
-    "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{}[5m]) > 0",
-    "rule_config": {
-      "algo_params": null,
-      "inhibit": false,
-      "prom_ql": "",
-      "queries": [
-        {
-          "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{}[5m]) > 0",
-          "severity": 2
-        }
-      ],
-      "severity": 0
-    },
-    "prom_eval_interval": 15,
-    "enable_stime": "00:00",
-    "enable_stimes": [
-      "00:00"
-    ],
-    "enable_etime": "23:59",
-    "enable_etimes": [
-      "23:59"
-    ],
-    "enable_days_of_week": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "0"
-    ],
-    "enable_days_of_weeks": [
-      [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "0"
-      ]
-    ],
-    "enable_in_bg": 0,
-    "notify_recovered": 1,
-    "notify_channels": [],
-    "notify_repeat_step": 60,
-    "notify_max_number": 0,
-    "recover_duration": 0,
-    "callbacks": [],
-    "runbook_url": "",
-    "append_tags": [],
-    "annotations": null
-  }
+    {
+        "id": 0,
+        "group_id": 0,
+        "cate": "prometheus",
+        "datasource_ids": [
+            0
+        ],
+        "cluster": "",
+        "name": "NodesOffline",
+        "note": "Node down in MinIO deployment",
+        "prod": "metric",
+        "algorithm": "",
+        "algo_params": null,
+        "delay": 0,
+        "severity": 2,
+        "severities": [
+            2
+        ],
+        "disabled": 1,
+        "prom_for_duration": 600,
+        "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{}[5m]) \u003e 0",
+        "rule_config": {
+            "algo_params": null,
+            "inhibit": false,
+            "prom_ql": "",
+            "queries": [
+                {
+                    "prom_ql": "avg_over_time(minio_cluster_nodes_offline_total{}[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ],
+            "severity": 0
+        },
+        "prom_eval_interval": 15,
+        "enable_stime": "00:00",
+        "enable_stimes": [
+            "00:00"
+        ],
+        "enable_etime": "23:59",
+        "enable_etimes": [
+            "23:59"
+        ],
+        "enable_days_of_week": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "0"
+        ],
+        "enable_days_of_weeks": [
+            [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "0"
+            ]
+        ],
+        "enable_in_bg": 0,
+        "notify_recovered": 1,
+        "notify_channels": [],
+        "notify_groups_obj": null,
+        "notify_groups": null,
+        "notify_repeat_step": 60,
+        "notify_max_number": 0,
+        "recover_duration": 0,
+        "callbacks": [],
+        "runbook_url": "",
+        "append_tags": [],
+        "annotations": null,
+        "extra_config": null,
+        "create_at": 0,
+        "create_by": "",
+        "update_at": 0,
+        "update_by": "",
+        "uuid": 1717556328048820000
+    }
 ]

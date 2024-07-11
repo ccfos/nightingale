@@ -1,11 +1,25 @@
-#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
+#### {{if .IsRecovered}}<font color="#008800">💚{{.RuleName}}</font>{{else}}<font color="#FF0000">💔{{.RuleName}}</font>{{end}}
 
 ---
-
-- **规则标题**: {{.RuleName}}{{if .RuleNote}}
-- **规则备注**: {{.RuleNote}}{{end}}
-- **监控指标**: {{.TagsJSON}}
-- {{if .IsRecovered}}**恢复时间**：{{timeformat .LastEvalTime}}{{else}}**触发时间**: {{timeformat .TriggerTime}}
-- **触发时值**: {{.TriggerValue}}{{end}}
-- **发送时间**: {{timestamp}}
-
+{{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}
+- **告警级别**: {{.Severity}}级
+{{- if .RuleNote}}
+- **规则备注**: {{.RuleNote}}
+{{- end}}
+{{- if not .IsRecovered}}
+- **当次触发时值**: {{.TriggerValue}}
+- **当次触发时间**: {{timeformat .TriggerTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if .AnnotationsJSON.recovery_value}}
+- **恢复时值**: {{formatDecimal .AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **恢复时间**: {{timeformat .LastEvalTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **告警事件标签**:
+{{- range $key, $val := .TagsMap}}
+{{- if ne $key "rulename" }}
+  - `{{$key}}`: `{{$val}}`
+{{- end}}
+{{- end}}

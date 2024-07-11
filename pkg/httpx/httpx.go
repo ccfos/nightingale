@@ -6,19 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/aop"
-	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
 )
 
 type Config struct {
@@ -28,6 +24,7 @@ type Config struct {
 	KeyFile          string
 	PProf            bool
 	PrintAccessLog   bool
+	PrintBody        bool
 	ExposeMetrics    bool
 	ShutdownTimeout  int
 	MaxContentLength int64
@@ -76,7 +73,7 @@ type JWTAuth struct {
 func GinEngine(mode string, cfg Config) *gin.Engine {
 	gin.SetMode(mode)
 
-	loggerMid := aop.Logger()
+	loggerMid := aop.Logger(aop.LoggerConfig{PrintBody: cfg.PrintBody})
 	recoveryMid := aop.Recovery()
 
 	if strings.ToLower(mode) == "release" {
@@ -164,40 +161,4 @@ func Init(cfg Config, handler http.Handler) func() {
 			fmt.Println("http server stopped")
 		}
 	}
-}
-
-func InitRSAConfig(rsaConfig *RSAConfig) {
-	if err := initRSAFile(rsaConfig); err != nil {
-		logger.Warning(err)
-	}
-	// 读取公钥配置文件
-	//获取文件内容
-	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
-	if err != nil {
-		logger.Warningf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err)
-	}
-	rsaConfig.RSAPublicKey = publicBuf
-	// 读取私钥配置文件
-	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
-	if err != nil {
-		logger.Warningf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err)
-	}
-	rsaConfig.RSAPrivateKey = privateBuf
-}
-
-func initRSAFile(encryption *RSAConfig) error {
-	dirPath := filepath.Dir(encryption.RSAPrivateKeyPath)
-	// Check if the directory exists
-	errCreateDir := file.InsureDir(dirPath)
-	if errCreateDir != nil {
-		return fmt.Errorf("could not create directory for initRSAFile %q: %v", dirPath, errCreateDir)
-	}
-	// Check if the file exists
-	if !file.IsExist(encryption.RSAPrivateKeyPath) {
-		errGen := secu.GenerateKeyWithPassword(encryption.RSAPrivateKeyPath, encryption.RSAPublicKeyPath, encryption.RSAPassWord)
-		if errGen != nil {
-			return fmt.Errorf("could not create file for initRSAFile %+v: %v", encryption, errGen)
-		}
-	}
-	return nil
 }

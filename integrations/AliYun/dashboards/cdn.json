@@ -1,0 +1,364 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "阿里云CDN",
+    "ident": "",
+    "tags": "CDN",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": true,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "0430c7e9-7372-45e3-9bb2-c5939baf6bfa",
+                "layout": {
+                    "h": 4,
+                    "i": "0430c7e9-7372-45e3-9bb2-c5939baf6bfa",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "网络带宽(bits/s)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_cdn_bps_isp_value{instance_id=\"$instance_id\"}",
+                        "legend": "峰值 {{instance_id}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_cdn_internet_out_average{instance_id=\"$instance_id\"}",
+                        "legend": "均值 {{instance_id}}",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "b438ae81-3dfc-4ed8-b66f-262a4b507e4b",
+                "layout": {
+                    "h": 4,
+                    "i": "b438ae81-3dfc-4ed8-b66f-262a4b507e4b",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "下行流量(bytes)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_cdn_internet_out_isp_value{instance_id=\"$instance_id\"}",
+                        "legend": "{{instance_id}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "af0874c7-3123-437a-93bc-448f6de8b43b",
+                "layout": {
+                    "h": 4,
+                    "i": "c6e41c04-d591-4117-bdf1-5dc6e1f4c084",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "每秒访问次数(个)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_cdn_qps_isp_value{instance_id=\"$instance_id\"}",
+                        "legend": "{{instance_id}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": true,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "ec8fcf96-1691-4e45-9a5f-2f183021b434",
+                "layout": {
+                    "h": 4,
+                    "i": "ec8fcf96-1691-4e45-9a5f-2f183021b434",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "边缘状态码4XX占比(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_cdn_code4xx_isp_value{instance_id=\"$instance_id\"}",
+                        "legend": "峰值{{instance_id}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_cdn_bps_average{instance_id=\"$instance_id\"}",
+                        "legend": "均值 {{instance_id}}",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": true,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "25b6e3fa-f6dd-4452-8025-3c7d9a9a592c",
+                "layout": {
+                    "h": 4,
+                    "i": "e884b781-1bd4-476c-a807-a68a6417764e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "边缘状态码5XX占比(%)",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "aliyun_acs_cdn_code5xx_isp_value{instance_id=\"$instance_id\"}",
+                        "legend": "峰值{{instance_id}}",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "aliyun_acs_cdn_bps_average{instance_id=\"$instance_id\"}",
+                        "legend": "均值 {{instance_id}}",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "label": "datasource",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(aliyun_acs_cdn_qps_isp_value, instance_id)",
+                "label": "instance_id",
+                "name": "instance_id",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327104499000
+}

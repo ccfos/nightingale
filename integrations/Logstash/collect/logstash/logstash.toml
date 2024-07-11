@@ -1,0 +1,42 @@
+# # collect interval
+# interval = 15
+
+# Read metrics exposed by Logstash
+[[instances]]
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# append labels
+# labels = { instance="x" }
+
+## The URL of the exposed Logstash API endpoint.
+# url = "http://127.0.0.1:9600"
+url = ""
+
+## Use Logstash 5 single pipeline API, set to true when monitoring
+## Logstash 5.
+# single_pipeline = false
+
+## Enable optional collection components.  Can contain
+## "pipelines", "process", and "jvm".
+# collect = ["pipelines", "process", "jvm"]
+
+## Timeout for HTTP requests.
+# timeout = "5s"
+
+## Optional HTTP Basic Auth credentials.
+# username = "username"
+# password = "pa$$word"
+
+## Optional HTTP headers.
+# [inputs.logstash.headers]
+#   "X-Special-Header" = "Special-Value"
+
+## Optional TLS Config
+# use_tls = false
+# tls_min_version = "1.2"
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true

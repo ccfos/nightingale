@@ -55,8 +55,6 @@ Enable = true
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
-# signing key
-SigningKey = "5b94a0fd640fe2765af826acfe42d151"
 # unit: min
 AccessExpired = 1500
 # unit: min
@@ -97,8 +95,6 @@ MaxLifetime = 7200
 MaxOpenConns = 150
 # max idle connections
 MaxIdleConns = 50
-# table prefix
-TablePrefix = ""
 # enable auto migrate or not
 # EnableAutoMigrate = false
 
@@ -141,7 +137,7 @@ AlertDetail = true
 LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
-# ForceUseServerTS = false
+ForceUseServerTS = true
 
 # [Pushgw.DebugSample]
 # ident = "xx"
@@ -182,3 +178,7 @@ MaxIdleConnsPerHost = 100
 # Regex = "([^:]+)(?::\\d+)?"
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
+
+[Ibex]
+Enable = true
+RPCListen = "0.0.0.0:20090"

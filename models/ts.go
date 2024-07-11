@@ -1,12 +1,39 @@
 package models
 
-import "github.com/prometheus/common/model"
+import (
+	"bytes"
+	"fmt"
+	"strconv"
+
+	"github.com/prometheus/common/model"
+)
 
 type DataResp struct {
 	Ref    string       `json:"ref"`
 	Metric model.Metric `json:"metric"`
 	Labels string       `json:"-"`
 	Values [][]float64  `json:"values"`
+	Query  string       `json:"query"`
+}
+
+func (d *DataResp) String() string {
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("Ref: %s ", d.Ref))
+	buf.WriteString(fmt.Sprintf("Metric: %+v ", d.Metric))
+	buf.WriteString(fmt.Sprintf("Labels: %s ", d.Labels))
+	buf.WriteString("Values: ")
+	for _, v := range d.Values {
+		buf.WriteString("  [")
+		for i, ts := range v {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(strconv.FormatInt(int64(ts), 10))
+		}
+		buf.WriteString("] ")
+	}
+	buf.WriteString(fmt.Sprintf("Query: %s ", d.Query))
+	return buf.String()
 }
 
 func (d *DataResp) Last() (float64, float64, bool) {

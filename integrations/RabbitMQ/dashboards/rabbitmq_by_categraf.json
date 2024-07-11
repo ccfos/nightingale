@@ -1,7 +1,13 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "RabbitMQ 3.8",
-    "tags": "",
     "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
         "panels": [
             {
@@ -25,6 +31,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "a20b5d06-4343-457a-89f2-33a52c4dec04",
                 "layout": {
                     "h": 3,
@@ -73,9 +81,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -85,6 +91,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "893409b0-4ca0-450b-a0c9-f48eddf0e243",
                 "layout": {
                     "h": 3,
@@ -115,9 +123,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -127,6 +133,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "d596e7f0-5095-420e-bc38-674001dcf5f4",
                 "layout": {
                     "h": 3,
@@ -157,9 +165,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -169,6 +175,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "9f6d7dee-666d-4e1b-90d0-129b2e5ba085",
                 "layout": {
                     "h": 3,
@@ -199,9 +207,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -211,6 +217,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "910eae0f-2b78-4d10-a780-8f997f6e96cb",
                 "layout": {
                     "h": 3,
@@ -241,9 +249,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -253,6 +259,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "2e8cd60f-51b0-46b2-8c0f-bf55604d340d",
                 "layout": {
                     "h": 3,
@@ -301,9 +309,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -313,6 +319,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "4b242c1e-85d5-48b3-8cce-b467209245ec",
                 "layout": {
                     "h": 3,
@@ -343,9 +351,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -355,6 +361,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "b87b1c6b-644a-42f4-915a-bd6857540f70",
                 "layout": {
                     "h": 3,
@@ -385,9 +393,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -397,6 +403,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "65103bcf-fb21-488d-a06b-7b0ea130ca4d",
                 "layout": {
                     "h": 3,
@@ -427,9 +435,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -439,6 +445,8 @@
                     "textMode": "valueAndName",
                     "textSize": {}
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "c6454712-e265-4387-ae86-9ac865af46f2",
                 "layout": {
                     "h": 3,
@@ -479,9 +487,7 @@
                     }
                 ],
                 "type": "stat",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -508,6 +514,8 @@
                     "displayMode": "labelsOfSeriesToRows",
                     "showHeader": true
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "id": "1b3fdea0-1921-48ae-b11f-31cc27f816b0",
                 "layout": {
                     "h": 3,
@@ -530,17 +538,19 @@
                     }
                 ],
                 "type": "table",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "If the value is zero or less, the memory alarm will be triggered and all publishing connections across all cluster nodes will be blocked.\n\nThis value can temporarily go negative because the memory alarm is triggered with a slight delay.\n\nThe kernel's view of the amount of memory used by the node can differ from what the node itself can observe. This means that this value can be negative for a sustained period of time.\n\nBy default nodes use resident set size (RSS) to compute how much memory they use. This strategy can be changed (see the guides below).\n\n* [Alarms](https://www.rabbitmq.com/alarms.html)\n* [Memory Alarms](https://www.rabbitmq.com/memory.html)\n* [Reasoning About Memory Use](https://www.rabbitmq.com/memory-use.html)\n* [Blocked Connection Notifications](https://www.rabbitmq.com/connection-blocked.html)",
                 "id": "b91068ed-0914-4a8d-91dd-9ffb3b692516",
                 "layout": {
@@ -571,17 +581,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "This metric is reported for the partition where the RabbitMQ data directory is stored.\n\nIf the value is zero or less, the disk alarm will be triggered and all publishing connections across all cluster nodes will be blocked.\n\nThis value can temporarily go negative because the free disk space alarm is triggered with a slight delay.\n\n* [Alarms](https://www.rabbitmq.com/alarms.html)\n* [Disk Space Alarms](https://www.rabbitmq.com/disk-alarms.html)\n* [Disk Space](https://www.rabbitmq.com/production-checklist.html#resource-limits-disk-space)\n* [Persistence Configuration](https://www.rabbitmq.com/persistence-conf.html)\n* [Blocked Connection Notifications](https://www.rabbitmq.com/connection-blocked.html)",
                 "id": "a74ca489-6101-49bc-9560-4cde368bc47e",
                 "layout": {
@@ -612,17 +624,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "When this value reaches zero, new connections will not be accepted and disk write operations may fail.\n\nClient libraries, peer nodes and CLI tools will not be able to connect when the node runs out of available file descriptors.\n\n* [Open File Handles Limit](https://www.rabbitmq.com/production-checklist.html#resource-limits-file-handle-limit)",
                 "id": "100ed9ae-2b84-4f2b-82b2-0444dd28deed",
                 "layout": {
@@ -651,17 +665,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "When this value reaches zero, new connections will not be accepted.\n\nClient libraries, peer nodes and CLI tools will not be able to connect when the node runs out of available file descriptors.\n\n* [Networking and RabbitMQ](https://www.rabbitmq.com/networking.html)",
                 "id": "a4859891-2538-47fc-946b-7ae3aa507c51",
                 "layout": {
@@ -690,9 +706,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -710,10 +724,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Total number of ready messages ready to be delivered to consumers.\n\nAim to keep this value as low as possible. RabbitMQ behaves best when messages are flowing through it. It's OK for publishers to occasionally outpace consumers, but the expectation is that consumers will eventually process all ready messages.\n\nIf this metric keeps increasing, your system will eventually run out of memory and/or disk space. Consider using TTL or Queue Length Limit to prevent unbounded message growth.\n\n* [Queues](https://www.rabbitmq.com/queues.html)\n* [Consumers](https://www.rabbitmq.com/consumers.html)\n* [Queue Length Limit](https://www.rabbitmq.com/maxlength.html)\n* [Time-To-Live and Expiration](https://www.rabbitmq.com/ttl.html)",
                 "id": "145dc75a-d3b8-491f-9ba6-6da787c8e265",
                 "layout": {
@@ -742,17 +760,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The total number of messages that are either in-flight to consumers, currently being processed by consumers or simply waiting for the consumer acknowledgements to be processed by the queue. Until the queue processes the message acknowledgement, the message will remain unacknowledged.\n\n* [Queues](https://www.rabbitmq.com/queues.html)\n* [Confirms and Acknowledgements](https://www.rabbitmq.com/confirms.html)\n* [Consumer Prefetch](https://www.rabbitmq.com/consumer-prefetch.html)",
                 "id": "a6ca328a-8b19-488e-a70d-74372f994901",
                 "layout": {
@@ -781,9 +801,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -801,10 +819,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The incoming message rate before any routing rules are applied.\n\nIf this value is lower than the number of messages published to queues, it may indicate that some messages are delivered to more than one queue.\n\nIf this value is higher than the number of messages published to queues, messages cannot be routed and will either be dropped or returned to publishers.\n\n* [Publishers](https://www.rabbitmq.com/publishers.html)",
                 "id": "ef4352a4-c281-4596-b89e-d79a565ca112",
                 "layout": {
@@ -833,17 +855,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages confirmed by the broker to publishers. Publishers must opt-in to receive message confirmations.\n\nIf this metric is consistently at zero it may suggest that publisher confirms are not used by clients. The safety of published messages is likely to be at risk.\n\n* [Publisher Confirms](https://www.rabbitmq.com/confirms.html#publisher-confirms)\n* [Publisher Confirms and Data Safety](https://www.rabbitmq.com/publishers.html#data-safety)\n* [When Will Published Messages Be Confirmed by the Broker?](https://www.rabbitmq.com/confirms.html#when-publishes-are-confirmed)",
                 "id": "f0932549-d4a7-4eb1-a86e-35eb49569f29",
                 "layout": {
@@ -872,17 +896,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages received from publishers and successfully routed to the master queue replicas.\n\n* [Queues](https://www.rabbitmq.com/queues.html)\n* [Publishers](https://www.rabbitmq.com/publishers.html)",
                 "id": "f47766cb-3cdb-4f67-896f-77af421ff404",
                 "layout": {
@@ -911,17 +937,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages received from publishers that have publisher confirms enabled and the broker has not confirmed yet.\n\n* [Publishers](https://www.rabbitmq.com/publishers.html)\n* [Confirms and Acknowledgements](https://www.rabbitmq.com/confirms.html)\n* [When Will Published Messages Be Confirmed by the Broker?](https://www.rabbitmq.com/confirms.html#when-publishes-are-confirmed)",
                 "id": "644302ba-3c99-4787-8023-93770b0a9e6c",
                 "layout": {
@@ -950,17 +978,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages that cannot be routed and are dropped. \n\nAny value above zero means message loss and likely suggests a routing problem on the publisher end.\n\n* [Unroutable Message Handling](https://www.rabbitmq.com/publishers.html#unroutable)",
                 "id": "0a3eadfd-d84c-4070-9527-b4c62fc20787",
                 "layout": {
@@ -989,17 +1019,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages that cannot be routed and are returned back to publishers.\n\nSustained values above zero may indicate a routing problem on the publisher end.\n\n* [Unroutable Message Handling](https://www.rabbitmq.com/publishers.html#unroutable)\n* [When Will Published Messages Be Confirmed by the Broker?](https://www.rabbitmq.com/confirms.html#when-publishes-are-confirmed)",
                 "id": "a14e8796-9614-4204-b5b8-5d1a47f356d8",
                 "layout": {
@@ -1028,9 +1060,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1048,10 +1078,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages delivered to consumers. It includes messages that have been redelivered.\n\nThis metric does not include messages that have been fetched by consumers using `basic.get` (consumed by polling).\n\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "be0f1872-172c-4bc3-a901-4b645ebf5abe",
                 "layout": {
@@ -1080,17 +1114,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages that have been redelivered to consumers. It includes messages that have been requeued automatically and redelivered due to channel exceptions or connection closures.\n\nHaving some redeliveries is expected, but if this metric is consistently non-zero, it is worth investigating why.\n\n* [Negative Acknowledgement and Requeuing of Deliveries](https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "eff794ca-e844-4a12-b230-690aadefa53f",
                 "layout": {
@@ -1119,17 +1155,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of message deliveries to consumers that use manual acknowledgement mode.\n\nWhen this mode is used, RabbitMQ waits for consumers to acknowledge messages before more messages can be delivered.\n\nThis is the safest way of consuming messages.\n\n* [Consumer Acknowledgements](https://www.rabbitmq.com/confirms.html)\n* [Consumer Prefetch](https://www.rabbitmq.com/consumer-prefetch.html)\n* [Consumer Acknowledgement Modes, Prefetch and Throughput](https://www.rabbitmq.com/confirms.html#channel-qos-prefetch-throughput)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "2ed4be63-4fe9-462f-bc2f-967319bc3626",
                 "layout": {
@@ -1158,17 +1196,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of message deliveries to consumers that use automatic acknowledgement mode.\n\nWhen this mode is used, RabbitMQ does not wait for consumers to acknowledge message deliveries.\n\nThis mode is fire-and-forget and does not offer any delivery safety guarantees. It tends to provide higher throughput and it may lead to consumer overload  and higher consumer memory usage.\n\n* [Consumer Acknowledgement Modes, Prefetch and Throughput](https://www.rabbitmq.com/confirms.html#channel-qos-prefetch-throughput)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "116c44e0-c8e1-4f02-8eae-2140997e2280",
                 "layout": {
@@ -1197,17 +1237,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of message acknowledgements coming from consumers that use manual acknowledgement mode.\n\n* [Consumer Acknowledgements](https://www.rabbitmq.com/confirms.html)\n* [Consumer Prefetch](https://www.rabbitmq.com/consumer-prefetch.html)\n* [Consumer Acknowledgement Modes, Prefetch and Throughput](https://www.rabbitmq.com/confirms.html#channel-qos-prefetch-throughput)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "a1184534-3226-4c9a-ba6c-6d5258998518",
                 "layout": {
@@ -1236,17 +1278,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages delivered to polling consumers that use automatic acknowledgement mode.\n\nThe use of polling consumers is highly inefficient and therefore strongly discouraged.\n\n* [Fetching individual messages](https://www.rabbitmq.com/consumers.html#fetching)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "2f34e8c7-e7fb-4695-afce-034a10081437",
                 "layout": {
@@ -1275,17 +1319,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of polling consumer operations that yield no result.\n\nAny value above zero means that RabbitMQ resources are wasted by polling consumers.\n\nCompare this metric to the other polling consumer metrics to see the inefficiency rate.\n\nThe use of polling consumers is highly inefficient and therefore strongly discouraged.\n\n* [Fetching individual messages](https://www.rabbitmq.com/consumers.html#fetching)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "c7b1f4b8-5069-480f-a1f7-1c85dbc389c1",
                 "layout": {
@@ -1314,17 +1360,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of messages delivered to polling consumers that use manual acknowledgement mode.\n\nThe use of polling consumers is highly inefficient and therefore strongly discouraged.\n\n* [Fetching individual messages](https://www.rabbitmq.com/consumers.html#fetching)\n* [Consumers](https://www.rabbitmq.com/consumers.html)",
                 "id": "4c2f60db-3cb4-4926-944c-022cf876eec2",
                 "layout": {
@@ -1353,9 +1401,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1373,10 +1419,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Total number of queue masters  per node. \n\nThis metric makes it easy to see sub-optimal queue distribution in a cluster.\n\n* [Queue Masters, Data Locality](https://www.rabbitmq.com/ha.html#master-migration-data-locality)\n* [Queues](https://www.rabbitmq.com/queues.html)",
                 "id": "c26434ca-065f-4088-81c6-ef8f0cbca552",
                 "layout": {
@@ -1405,9 +1455,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1416,6 +1464,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of queue declarations performed by clients.\n\nLow sustained values above zero are to be expected. High rates may be indicative of queue churn or high rates of connection recovery. Confirm connection recovery rates by using the _Connections opened_ metric.\n\n* [Queues](https://www.rabbitmq.com/queues.html)",
                 "id": "ff021951-7991-4c3e-a667-8cd11e5c444c",
                 "layout": {
@@ -1444,9 +1494,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1455,6 +1503,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of new queues created (as opposed to redeclarations).\n\nLow sustained values above zero are to be expected. High rates may be indicative of queue churn or high rates of connection recovery. Confirm connection recovery rates by using the _Connections opened_ metric.\n\n* [Queues](https://www.rabbitmq.com/queues.html)",
                 "id": "00bbb4fc-5cdf-4b29-a440-ff4da4325a0c",
                 "layout": {
@@ -1483,9 +1533,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1494,6 +1542,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of queues deleted.\n\nLow sustained values above zero are to be expected. High rates may be indicative of queue churn or high rates of connection recovery. Confirm connection recovery rates by using the _Connections opened_ metric.\n\n* [Queues](https://www.rabbitmq.com/queues.html)",
                 "id": "f802e41d-14fe-4193-a5cf-c31957b146f7",
                 "layout": {
@@ -1522,9 +1572,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1542,10 +1590,14 @@
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Total number of channels on all currently opened connections.\n\nIf this metric grows monotonically it is highly likely a channel leak in one of the applications. Confirm channel leaks by using the _Channels opened_ and _Channels closed_ metrics.\n\n* [Channel Leak](https://www.rabbitmq.com/channels.html#channel-leaks)\n* [Channels](https://www.rabbitmq.com/channels.html)",
                 "id": "362c622f-3fd8-4bdd-8dce-7ebf335f42f9",
                 "layout": {
@@ -1574,9 +1626,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1585,6 +1635,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of new channels opened by applications across all connections. Channels are expected to be long-lived.\n\nLow sustained values above zero are to be expected. High rates may be indicative of channel churn or mass connection recovery. Confirm connection recovery rates by using the _Connections opened_ metric.\n\n* [High Channel Churn](https://www.rabbitmq.com/channels.html#high-channel-churn)\n* [Channels](https://www.rabbitmq.com/channels.html)",
                 "id": "3a1a643b-8e2a-4ed1-8621-e5fae3ebc7c2",
                 "layout": {
@@ -1613,9 +1665,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1624,6 +1674,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of channels closed by applications across all connections. Channels are expected to be long-lived.\n\nLow sustained values above zero are to be expected. High rates may be indicative of channel churn or mass connection recovery. Confirm connection recovery rates by using the _Connections opened_ metric.\n\n* [High Channel Churn](https://www.rabbitmq.com/channels.html#high-channel-churn)\n* [Channels](https://www.rabbitmq.com/channels.html)",
                 "id": "01f1771a-dd54-45e5-aa1d-b6ee2111c53b",
                 "layout": {
@@ -1652,9 +1704,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "collapsed": true,
@@ -1676,6 +1726,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of connections closed. Connections are expected to be long-lived.\n\nLow sustained values above zero are to be expected. High rates may be indicative of connection churn or mass connection recovery.\n\n* [Connections](https://www.rabbitmq.com/connections.html)",
                 "id": "c14fd6f4-d3de-4811-82c6-2b20c9146e89",
                 "layout": {
@@ -1704,17 +1756,19 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
                     "drawStyle": "lines",
-                    "fillOpacity": 0.5,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
+                    "lineWidth": 2,
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "Total number of client connections.\n\nIf this metric grows monotonically it is highly likely a connection leak in one of the applications. Confirm connection leaks by using the _Connections opened_ and _Connections closed_ metrics.\n\n* [Connection Leak](https://www.rabbitmq.com/connections.html#monitoring)\n* [Connections](https://www.rabbitmq.com/connections.html)",
                 "id": "1d06679b-c603-4cbf-85a7-7c8f4594258f",
                 "layout": {
@@ -1743,9 +1797,7 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             },
             {
                 "custom": {
@@ -1754,6 +1806,8 @@
                     "lineInterpolation": "smooth",
                     "stack": "off"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "description": "The rate of new connections opened by clients. Connections are expected to be long-lived.\n\nLow sustained values above zero are to be expected. High rates may be indicative of connection churn or mass connection recovery.\n\n* [Connection Leak](https://www.rabbitmq.com/connections.html#monitoring)\n* [Connections](https://www.rabbitmq.com/connections.html)",
                 "id": "8c91f7fe-79e9-454a-9dd3-6f214a29e1eb",
                 "layout": {
@@ -1782,27 +1836,31 @@
                     }
                 ],
                 "type": "timeseries",
-                "version": "2.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}"
+                "version": "2.0.0"
             }
         ],
         "var": [
             {
+                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource",
-                "definition": "prometheus"
+                "type": "datasource"
             },
             {
-                "definition": "label_values(rabbitmq_identity_info, rabbitmq_cluster)",
-                "name": "rabbitmq_cluster",
-                "type": "query",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
-                }
+                },
+                "definition": "label_values(rabbitmq_identity_info, rabbitmq_cluster)",
+                "name": "rabbitmq_cluster",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
-    }
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328323134000
 }

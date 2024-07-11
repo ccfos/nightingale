@@ -16,8 +16,29 @@ type wecom struct {
 	Markdown wecomMarkdown `json:"markdown"`
 }
 
+var (
+	_ CallBacker = (*WecomSender)(nil)
+)
+
 type WecomSender struct {
 	tpl *template.Template
+}
+
+func (ws *WecomSender) CallBack(ctx CallBackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+		return
+	}
+
+	message := BuildTplMessage(models.Wecom, ws.tpl, ctx.Events)
+	body := wecom{
+		Msgtype: "markdown",
+		Markdown: wecomMarkdown{
+			Content: message,
+		},
+	}
+
+	doSend(ctx.CallBackURL, body, models.Wecom, ctx.Stats)
+	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 func (ws *WecomSender) Send(ctx MessageContext) {
@@ -25,7 +46,7 @@ func (ws *WecomSender) Send(ctx MessageContext) {
 		return
 	}
 	urls := ws.extract(ctx.Users)
-	message := BuildTplMessage(ws.tpl, ctx.Events)
+	message := BuildTplMessage(models.Wecom, ws.tpl, ctx.Events)
 	for _, url := range urls {
 		body := wecom{
 			Msgtype: "markdown",

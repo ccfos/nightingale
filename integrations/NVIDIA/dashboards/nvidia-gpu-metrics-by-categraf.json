@@ -1,0 +1,1395 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Nvidia GPU Metrics by nvidia-smi",
+    "ident": "nvidia-gpu-metrics-by-nvidia-smi",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "graphTooltip": "default",
+        "graphZoom": "default",
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The official product name of the GPU. This is an alphanumeric string. For all products.",
+                "id": "dc97df4f-3983-4c94-af14-ceaace1e64f9",
+                "layout": {
+                    "h": 3,
+                    "i": "dc97df4f-3983-4c94-af14-ceaace1e64f9",
+                    "w": 4,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Name",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
+                        "legend": "{{name}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The current performance state for the GPU. States range from P0 (maximum performance) to P12 (minimum performance).",
+                "id": "6d1fe3b0-4873-438c-9135-32fae6ad03ad",
+                "layout": {
+                    "h": 3,
+                    "i": "6d1fe3b0-4873-438c-9135-32fae6ad03ad",
+                    "w": 2,
+                    "x": 4,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "P-State",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "": {
+                                    "text": ""
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_pstate{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Percent of time over the past sample period during which one or more kernels was executing on the GPU.\nThe sample period may be between 1 second and 1/6 second depending on the product.",
+                "id": "de5719b9-2288-4b14-9ffe-3103cfaddf96",
+                "layout": {
+                    "h": 5,
+                    "i": "de5719b9-2288-4b14-9ffe-3103cfaddf96",
+                    "w": 3,
+                    "x": 6,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU Utilization %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_utilization_gpu_ratio{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The last measured power draw for the entire board, in watts. Only available if power management is supported. This reading is accurate to within +/- 5 watts / The software power limit in watts.",
+                "id": "591615c2-2dde-47d5-a905-c83ae5140556",
+                "layout": {
+                    "h": 5,
+                    "i": "591615c2-2dde-47d5-a905-c83ae5140556",
+                    "w": 3,
+                    "x": 9,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Power Draw %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_power_draw_watts{uuid=\"$gpu\"} / nvidia_smi_power_default_limit_watts{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The fan speed value is the percent of the product's maximum noise tolerance fan speed that the device's fan is currently intended to run at. This value may exceed 100% in certain cases. Note: The reported speed is the intended fan speed. If the fan is physically blocked and unable to spin, this output will not match the actual fan speed. Many parts do not report fan speeds because they rely on cooling via fans in the surrounding enclosure.\n",
+                "id": "72a73e7e-7d78-4966-a32f-448ab24f74bc",
+                "layout": {
+                    "h": 5,
+                    "i": "72a73e7e-7d78-4966-a32f-448ab24f74bc",
+                    "w": 3,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Fan Speed %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_fan_speed_ratio{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Core GPU temperature. in degrees C.",
+                "id": "4fdd82a2-c08f-490c-af6f-c6305971fb17",
+                "layout": {
+                    "h": 5,
+                    "i": "4fdd82a2-c08f-490c-af6f-c6305971fb17",
+                    "w": 3,
+                    "x": 15,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Temperature",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 100,
+                        "min": 0,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 80
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_temperature_gpu{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Percent of time over the past sample period during which global (device) memory was being read or written.\nThe sample period may be between 1 second and 1/6 second depending on the product.",
+                "id": "9e47375c-7db9-4ec3-8912-5f2870362405",
+                "layout": {
+                    "h": 5,
+                    "i": "9e47375c-7db9-4ec3-8912-5f2870362405",
+                    "w": 6,
+                    "x": 18,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Utilization %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_utilization_memory_ratio{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The version of the installed NVIDIA display driver. This is an alphanumeric string.",
+                "id": "a4d93297-1437-479d-b4a2-8957b4fd8107",
+                "layout": {
+                    "h": 2,
+                    "i": "a4d93297-1437-479d-b4a2-8957b4fd8107",
+                    "w": 3,
+                    "x": 0,
+                    "y": 3
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Driver Version",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
+                        "legend": "{{driver_version}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The BIOS of the GPU board.",
+                "id": "f1541d28-c8ee-40c8-b625-06ddf9ffdca3",
+                "layout": {
+                    "h": 2,
+                    "i": "f1541d28-c8ee-40c8-b625-06ddf9ffdca3",
+                    "w": 3,
+                    "x": 3,
+                    "y": 3
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Vbios Version",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
+                        "legend": "{{vbios_version}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Information about factors that are reducing the frequency of clocks. If all throttle reasons are returned as \"Not Active\" it means that clocks are running as high as possible.",
+                "id": "412ec2b8-253f-4906-bc47-31c0344a6c55",
+                "layout": {
+                    "h": 5,
+                    "i": "412ec2b8-253f-4906-bc47-31c0344a6c55",
+                    "w": 6,
+                    "x": 0,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Throttle Reasons",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "text": "Not Active"
+                                },
+                                "1": {
+                                    "text": "Active"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_gpu_idle{uuid=\"$gpu\"}",
+                        "legend": "Idle",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_hw_thermal_slowdown{uuid=\"$gpu\"}",
+                        "legend": "HW Thermal Slowdown",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_sw_power_cap{uuid=\"$gpu\"}",
+                        "legend": "SW Power Cap",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_applications_clocks_setting{uuid=\"$gpu\"}",
+                        "legend": "App Clocks Setting",
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_hw_power_brake_slowdown{uuid=\"$gpu\"}",
+                        "legend": "HW Power Brake",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_sw_thermal_slowdown{uuid=\"$gpu\"}",
+                        "legend": "SW Thermal Slowdown",
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "nvidia_smi_clocks_throttle_reasons_sync_boost{uuid=\"$gpu\"}",
+                        "legend": "Sync Boost",
+                        "refId": "G"
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of graphics (shader) clock\n/\nMaximum frequency of graphics (shader) clock.\n",
+                "id": "bc00b64d-de08-4dcb-824a-40798ed5e382",
+                "layout": {
+                    "h": 5,
+                    "i": "bc00b64d-de08-4dcb-824a-40798ed5e382",
+                    "w": 3,
+                    "x": 6,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU Clock Speed %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_graphics_clock_hz{uuid=\"$gpu\"} / nvidia_smi_clocks_max_graphics_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of memory clock / Maximum frequency of memory clock",
+                "id": "3d11c7ed-a7aa-4b4e-8fab-7e75fa024fce",
+                "layout": {
+                    "h": 5,
+                    "i": "3d11c7ed-a7aa-4b4e-8fab-7e75fa024fce",
+                    "w": 3,
+                    "x": 9,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Clock Speed %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_memory_clock_hz{uuid=\"$gpu\"} / nvidia_smi_clocks_max_memory_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Total memory allocated by active contexts / Total installed GPU memory.",
+                "id": "5531b3b0-6fcb-4c0e-bfbe-97a27f69d694",
+                "layout": {
+                    "h": 5,
+                    "i": "5531b3b0-6fcb-4c0e-bfbe-97a27f69d694",
+                    "w": 3,
+                    "x": 12,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Allocation %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_memory_used_bytes{uuid=\"$gpu\"} / nvidia_smi_memory_total_bytes{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "last",
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Percent of time over the past sample period during which global (device) memory was being read or written.\nThe sample period may be between 1 second and 1/6 second depending on the product.",
+                "id": "0f7051b8-f94a-427a-b4e3-5edcf50cd1ac",
+                "layout": {
+                    "h": 5,
+                    "i": "0f7051b8-f94a-427a-b4e3-5edcf50cd1ac",
+                    "w": 3,
+                    "x": 15,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Utilization %",
+                "options": {
+                    "legend": {
+                        "displayMode": "list"
+                    },
+                    "standardOptions": {
+                        "max": 1,
+                        "min": 0,
+                        "util": "percentUnit"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#EAB839",
+                                "value": 70
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 90
+                            }
+                        ],
+                        "style": "line"
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_utilization_memory_ratio{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Percent of time over the past sample period during which one or more kernels was executing on the GPU.\nThe sample period may be between 1 second and 1/6 second depending on the product.",
+                "id": "c15d98fa-619b-4a6d-a50d-321bcf5dd993",
+                "layout": {
+                    "h": 5,
+                    "i": "c15d98fa-619b-4a6d-a50d-321bcf5dd993",
+                    "w": 6,
+                    "x": 18,
+                    "y": 5
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "GPU Utilization %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_utilization_gpu_ratio{uuid=\"$gpu\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Total memory allocated by active contexts.",
+                "id": "04ba1b8b-9319-4f4a-9432-c773b8adee78",
+                "layout": {
+                    "h": 5,
+                    "i": "04ba1b8b-9319-4f4a-9432-c773b8adee78",
+                    "w": 6,
+                    "x": 0,
+                    "y": 10
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Allocation",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_memory_used_bytes{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Core GPU temperature. in degrees C.",
+                "id": "57305284-7479-4b51-bc4c-7c3128a64278",
+                "layout": {
+                    "h": 5,
+                    "i": "57305284-7479-4b51-bc4c-7c3128a64278",
+                    "w": 6,
+                    "x": 6,
+                    "y": 10
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Temperature",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_temperature_gpu{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The last measured power draw for the entire board, in watts. Only available if power management is supported. This reading is accurate to within +/- 5 watts",
+                "id": "a183857f-cd22-4065-9f76-dc8e5c7c10df",
+                "layout": {
+                    "h": 5,
+                    "i": "a183857f-cd22-4065-9f76-dc8e5c7c10df",
+                    "w": 6,
+                    "x": 12,
+                    "y": 10
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Power Draw",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_power_draw_watts{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "The fan speed value is the percent of the product's maximum noise tolerance fan speed that the device's fan is currently intended to run at. This value may exceed 100% in certain cases. Note: The reported speed is the intended fan speed. If the fan is physically blocked and unable to spin, this output will not match the actual fan speed. Many parts do not report fan speeds because they rely on cooling via fans in the surrounding enclosure.\n",
+                "id": "e83d4003-c6d4-4bb3-bf21-2572c5c32f1c",
+                "layout": {
+                    "h": 5,
+                    "i": "e83d4003-c6d4-4bb3-bf21-2572c5c32f1c",
+                    "w": 6,
+                    "x": 18,
+                    "y": 10
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Fan Speed %",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_fan_speed_ratio{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of graphics (shader) clock.",
+                "id": "7ba96896-b5e8-4168-868a-80ca82550337",
+                "layout": {
+                    "h": 5,
+                    "i": "7ba96896-b5e8-4168-868a-80ca82550337",
+                    "w": 6,
+                    "x": 0,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Graphics Clock Speed",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_graphics_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of video encoder/decoder clock.",
+                "id": "cc1786fc-2c94-410b-a1cc-88d0418a9d99",
+                "layout": {
+                    "h": 5,
+                    "i": "cc1786fc-2c94-410b-a1cc-88d0418a9d99",
+                    "w": 6,
+                    "x": 6,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Video Clock Speed",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_video_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of SM (Streaming Multiprocessor) clock.",
+                "id": "6eaf7e94-5e61-4e79-9f2a-f2204c0382e8",
+                "layout": {
+                    "h": 5,
+                    "i": "6eaf7e94-5e61-4e79-9f2a-f2204c0382e8",
+                    "w": 6,
+                    "x": 12,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "SM Clock Speed",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_sm_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "description": "Current frequency of memory clock.",
+                "id": "b14d69c3-a130-4e96-9d9d-934350acb34e",
+                "layout": {
+                    "h": 5,
+                    "i": "b14d69c3-a130-4e96-9d9d-934350acb34e",
+                    "w": 6,
+                    "x": 18,
+                    "y": 15
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Memory Clock Speed",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "nvidia_smi_clocks_current_memory_clock_hz{uuid=\"$gpu\"}",
+                        "legend": "{{uuid}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "DS_PROMETHEUS",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "allValue": null,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(nvidia_smi_index, uuid)",
+                "hide": false,
+                "multi": false,
+                "name": "gpu",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328176016000
+}

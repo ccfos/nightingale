@@ -1,0 +1,238 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Group Metrics",
+    "ident": "automq-group-metrics",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "id": "cac8a249-bb61-4c2d-bc90-91a7dac58f3b",
+                "layout": {
+                    "h": 5,
+                    "i": "cac8a249-bb61-4c2d-bc90-91a7dac58f3b",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Consumer Throughput",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(consumer_group, topic, partition) (rate(kafka_group_commit_offset{job=\"$cluster_id\", consumer_group=~\"$group_id\", topic=~\"$topic\", partition=~\"$partition\"}[$__rate_interval]))",
+                        "legend": "{{consumer_group}}#{{topic}}-{{partition}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${TSDB}",
+                "id": "fc0afd7c-0161-4ee4-88de-81c74f432769",
+                "layout": {
+                    "h": 5,
+                    "i": "12e7bb88-2851-44ea-a311-44ebcdb0e7b7",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Consumer Lag",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(topic) (max by(topic, partition) (kafka_log_end_offset{job=\"$cluster_id\", topic=~\"$topic\", partition=~\"$partition\"}))\n- on(topic) group_left(consumer_group)\nsum by(consumer_group, topic) (max by(consumer_group, topic, partition) (kafka_group_commit_offset{job=\"$cluster_id\", consumer_group=~\"$group_id\", topic=~\"$topic\", partition=~\"$partition\"}))",
+                        "legend": "{{consumer_group}}#{{topic}}-{{partition}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "TSDB",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,job)",
+                "hide": false,
+                "multi": false,
+                "name": "cluster_id",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(kafka_group_commit_offset,consumer_group)",
+                "hide": false,
+                "multi": true,
+                "name": "group_id",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(kafka_group_commit_offset,topic)",
+                "hide": false,
+                "multi": true,
+                "name": "topic",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${TSDB}"
+                },
+                "definition": "label_values(kafka_group_commit_offset,partition)",
+                "hide": false,
+                "multi": true,
+                "name": "partition",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327172992000
+}

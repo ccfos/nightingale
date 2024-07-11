@@ -3,13 +3,15 @@ package models
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -34,6 +36,16 @@ const (
 	FeishuKey   = "feishu_robot_token"
 	MmKey       = "mm_webhook_url"
 	TelegramKey = "telegram_robot_token"
+
+	DingtalkDomain = "oapi.dingtalk.com"
+	WecomDomain    = "qyapi.weixin.qq.com"
+	FeishuDomain   = "open.feishu.cn"
+
+	// FeishuCardDomain The domain name of the feishu card is the same as the feishu,distinguished by the parameter
+	FeishuCardDomain = "open.feishu.cn?card=1"
+	TelegramDomain   = "api.telegram.org"
+	IbexDomain       = "ibex"
+	DefaultDomain    = "default"
 )
 
 var (
@@ -41,30 +53,41 @@ var (
 )
 
 type User struct {
-	Id         int64        `json:"id" gorm:"primaryKey"`
-	Username   string       `json:"username"`
-	Nickname   string       `json:"nickname"`
-	Password   string       `json:"-"`
-	Phone      string       `json:"phone"`
-	Email      string       `json:"email"`
-	Portrait   string       `json:"portrait"`
-	Roles      string       `json:"-"`              // 这个字段写入数据库
-	RolesLst   []string     `json:"roles" gorm:"-"` // 这个字段和前端交互
-	Contacts   ormx.JSONObj `json:"contacts"`       // 内容为 map[string]string 结构
-	Maintainer int          `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
-	CreateAt   int64        `json:"create_at"`
-	CreateBy   string       `json:"create_by"`
-	UpdateAt   int64        `json:"update_at"`
-	UpdateBy   string       `json:"update_by"`
-	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
+	Id             int64           `json:"id" gorm:"primaryKey"`
+	Username       string          `json:"username"`
+	Nickname       string          `json:"nickname"`
+	Password       string          `json:"-"`
+	Phone          string          `json:"phone"`
+	Email          string          `json:"email"`
+	Portrait       string          `json:"portrait"`
+	Roles          string          `json:"-"`              // 这个字段写入数据库
+	RolesLst       []string        `json:"roles" gorm:"-"` // 这个字段和前端交互
+	TeamsLst       []int64         `json:"-" gorm:"-"`     // 这个字段方便映射团队，前端和数据库都不用到
+	Contacts       ormx.JSONObj    `json:"contacts"`       // 内容为 map[string]string 结构
+	Maintainer     int             `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64           `json:"create_at"`
+	CreateBy       string          `json:"create_by"`
+	UpdateAt       int64           `json:"update_at"`
+	UpdateBy       string          `json:"update_by"`
+	Belong         string          `json:"belong"`
+	Admin          bool            `json:"admin" gorm:"-"` // 方便前端使用
+	UserGroupsRes  []*UserGroupRes `json:"user_groups" gorm:"-"`
+	BusiGroupsRes  []*BusiGroupRes `json:"busi_groups" gorm:"-"`
+	LastActiveTime int64           `json:"last_active_time"`
+}
+
+type UserGroupRes struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type BusiGroupRes struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 func (u *User) TableName() string {
 	return "users"
-}
-
-func (u *User) DB2FE() error {
-	return nil
 }
 
 func (u *User) String() string {
@@ -111,6 +134,63 @@ func (u *User) Verify() error {
 	return nil
 }
 
+func (u *User) UpdateSsoFields(sso string, nickname, phone, email string) []interface{} {
+	u.UpdateAt = time.Now().Unix()
+
+	if nickname != "" {
+		u.Nickname = nickname
+	}
+	if phone != "" {
+		u.Phone = phone
+	}
+	if email != "" {
+		u.Email = email
+	}
+	u.UpdateBy = sso
+	u.Belong = sso
+
+	updatedFields := []interface{}{"nickname", "phone", "email", "update_by", "belong"}
+	return updatedFields
+}
+
+func (u *User) UpdateSsoFieldsWithRoles(sso string, nickname, phone, email string, roles []string) []interface{} {
+	updatedFields := u.UpdateSsoFields(sso, nickname, phone, email)
+
+	if len(roles) == 0 {
+		return updatedFields
+	}
+
+	u.Roles = strings.Join(roles, " ")
+	u.RolesLst = roles
+
+	return append(updatedFields, "roles")
+}
+
+func (u *User) FullSsoFields(sso, username, nickname, phone, email string, defaultRoles []string) {
+	now := time.Now().Unix()
+
+	u.Username = username
+	u.Password = "******"
+	u.Nickname = nickname
+	u.Phone = phone
+	u.Email = email
+	u.Portrait = ""
+	u.Roles = strings.Join(defaultRoles, " ")
+	u.RolesLst = defaultRoles
+	u.Contacts = []byte("{}")
+	u.CreateAt = now
+	u.UpdateAt = now
+	u.CreateBy = sso
+	u.UpdateBy = sso
+	u.Belong = sso
+}
+
+func (u *User) FullSsoFieldsWithTeams(sso, username, nickname, phone, email string, defaultRoles []string,
+	teams []int64) {
+	u.FullSsoFields(sso, username, nickname, phone, email, defaultRoles)
+	u.TeamsLst = teams
+}
+
 func (u *User) Add(ctx *ctx.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
@@ -128,8 +208,10 @@ func (u *User) Add(ctx *ctx.Context) error {
 }
 
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
-	if err := u.Verify(); err != nil {
-		return err
+	if u.Belong == "" {
+		if err := u.Verify(); err != nil {
+			return err
+		}
 	}
 
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
@@ -149,6 +231,13 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 		"password":  password,
 		"update_at": time.Now().Unix(),
 		"update_by": updateBy,
+	}).Error
+}
+
+func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int64) error {
+	return DB(ctx).Model(&User{}).Where("id = ?", userId).Updates(map[string]interface{}{
+		"last_active_time": lastActiveTime,
+		"update_at":        time.Now().Unix(),
 	}).Error
 }
 
@@ -240,13 +329,106 @@ func InitRoot(ctx *ctx.Context) {
 	fmt.Println("root password init done")
 }
 
-func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
+func reachLoginFailCount(ctx *ctx.Context, redisObj storage.Redis, username string, count int64) (bool, error) {
+	key := "/userlogin/errorcount/" + username
+	val, err := redisObj.Get(ctx.GetContext(), key).Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	c, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return false, err
+	}
+
+	return c >= count, nil
+}
+
+func incrLoginFailCount(ctx *ctx.Context, redisObj storage.Redis, username string, seconds int64) {
+	key := "/userlogin/errorcount/" + username
+	duration := time.Duration(seconds) * time.Second
+
+	val, err := redisObj.Get(ctx.GetContext(), key).Result()
+	if err == redis.Nil {
+		redisObj.Set(ctx.GetContext(), key, "1", duration)
+		return
+	}
+
+	if err != nil {
+		logger.Warningf("login_fail_count: failed to get redis value. key:%s, error:%s", key, err)
+		redisObj.Set(ctx.GetContext(), key, "1", duration)
+		return
+	}
+
+	count, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		logger.Warningf("login_fail_count: failed to parse int64. key:%s, error:%s", key, err)
+		redisObj.Set(ctx.GetContext(), key, "1", duration)
+		return
+	}
+
+	count++
+	redisObj.Set(ctx.GetContext(), key, fmt.Sprintf("%d", count), duration)
+}
+
+func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*User, error) {
+	// 300 5 meaning: 300 seconds, 5 times
+	val, err := ConfigsGet(ctx, "login_fail_count")
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		needCheck = val != "" // DB 里有配置，说明启用了这个 feature
+		seconds   int64
+		count     int64
+	)
+
+	if needCheck {
+		pair := strings.Fields(val)
+		if len(pair) != 2 {
+			logger.Warningf("login_fail_count config invalid: %s", val)
+			needCheck = false
+		} else {
+			seconds, err = strconv.ParseInt(pair[0], 10, 64)
+			if err != nil {
+				logger.Warningf("login_fail_count seconds invalid: %s", pair[0])
+				needCheck = false
+			}
+
+			count, err = strconv.ParseInt(pair[1], 10, 64)
+			if err != nil {
+				logger.Warningf("login_fail_count count invalid: %s", pair[1])
+				needCheck = false
+			}
+		}
+	}
+
+	if needCheck {
+		reach, err := reachLoginFailCount(ctx, redis, username, count)
+		if err != nil {
+			return nil, err
+		}
+
+		if reach {
+			return nil, fmt.Errorf("reach login fail count")
+		}
+	}
+
 	user, err := UserGetByUsername(ctx, username)
 	if err != nil {
 		return nil, err
 	}
 
 	if user == nil {
+		if needCheck {
+			incrLoginFailCount(ctx, redis, username, seconds)
+		}
+
 		return nil, fmt.Errorf("Username or password invalid")
 	}
 
@@ -256,82 +438,27 @@ func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
 	}
 
 	if loginPass != user.Password {
+		if needCheck {
+			incrLoginFailCount(ctx, redis, username, seconds)
+		}
 		return nil, fmt.Errorf("Username or password invalid")
 	}
 
 	return user, nil
 }
 
-func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoClient) (*User, error) {
-	sr, err := ldap.LdapReq(username, pass)
-	if err != nil {
-		return nil, err
+func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, err error) {
+	db := DB(ctx).Model(&User{})
+
+	if stime != 0 && etime != 0 {
+		db = db.Where("last_active_time between ? and ?", stime, etime)
 	}
 
-	user, err := UserGetByUsername(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	if user == nil {
-		// default user settings
-		user = &User{
-			Username: username,
-			Nickname: username,
-		}
-	}
-
-	// copy attributes from ldap
-	ldap.RLock()
-	attrs := ldap.Attributes
-	coverAttributes := ldap.CoverAttributes
-	ldap.RUnlock()
-
-	if attrs.Nickname != "" {
-		user.Nickname = sr.Entries[0].GetAttributeValue(attrs.Nickname)
-	}
-	if attrs.Email != "" {
-		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
-	}
-	if attrs.Phone != "" {
-		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
-	}
-
-	if user.Roles == "" {
-		user.Roles = roles
-	}
-
-	if user.Id > 0 {
-		if coverAttributes {
-			err := DB(ctx).Updates(user).Error
-			if err != nil {
-				return nil, errors.WithMessage(err, "failed to update user")
-			}
-		}
-		return user, nil
-	}
-
-	now := time.Now().Unix()
-
-	user.Password = "******"
-	user.Portrait = ""
-
-	user.Contacts = []byte("{}")
-	user.CreateAt = now
-	user.UpdateAt = now
-	user.CreateBy = "ldap"
-	user.UpdateBy = "ldap"
-
-	err = DB(ctx).Create(user).Error
-	return user, err
-}
-
-func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
 	if query != "" {
 		q := "%" + query + "%"
-		num, err = Count(DB(ctx).Model(&User{}).Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
+		num, err = Count(db.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
 	} else {
-		num, err = Count(DB(ctx).Model(&User{}))
+		num, err = Count(db)
 	}
 
 	if err != nil {
@@ -341,23 +468,62 @@ func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
 	return num, nil
 }
 
-func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error) {
-	session := DB(ctx).Limit(limit).Offset(offset).Order("username")
+func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
+	order string, desc bool) ([]User, error) {
+
+	session := DB(ctx)
+
+	if stime != 0 && etime != 0 {
+		session = session.Where("last_active_time between ? and ?", stime, etime)
+	}
+
+	if desc {
+		order = order + " desc"
+	} else {
+		order = order + " asc"
+	}
+
+	session = session.Order(order)
+
 	if query != "" {
 		q := "%" + query + "%"
 		session = session.Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q)
 	}
 
 	var users []User
-	err := session.Find(&users).Error
+	err := session.Limit(limit).Offset(offset).Find(&users).Error
 	if err != nil {
 		return users, errors.WithMessage(err, "failed to query user")
 	}
 
-	for i := 0; i < len(users); i++ {
+	for i := range users {
 		users[i].RolesLst = strings.Fields(users[i].Roles)
 		users[i].Admin = users[i].IsAdmin()
 		users[i].Password = ""
+
+		// query for user group information
+		var userGroupIDs []int64
+		userGroupIDs, err = MyGroupIds(ctx, users[i].Id)
+		if err != nil {
+			return users, errors.WithMessage(err, "failed to query group_ids")
+		}
+
+		if err = DB(ctx).Table("user_group").Where("id IN (?)", userGroupIDs).
+			Find(&users[i].UserGroupsRes).Error; err != nil {
+			return users, errors.WithMessage(err, "failed to query user_groups")
+		}
+
+		// query business group information
+		var busiGroupIDs []int64
+		busiGroupIDs, err = BusiGroupIds(ctx, userGroupIDs)
+		if err != nil {
+			return users, errors.WithMessage(err, "failed to query busi_group_id")
+		}
+
+		if err = DB(ctx).Table("busi_group").Where("id IN (?)", busiGroupIDs).
+			Find(&users[i].BusiGroupsRes).Error; err != nil {
+			return users, errors.WithMessage(err, "failed to query busi_groups")
+		}
 	}
 
 	return users, nil
@@ -395,6 +561,37 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 	}
 
 	return lst, err
+}
+
+func UserGetsBySso(ctx *ctx.Context, sso string) (map[string]*User, error) {
+	session := DB(ctx).Where("belong=?", sso).Order("username")
+
+	var users []User
+	err := session.Find(&users).Error
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to query user")
+	}
+
+	usersMap := make(map[string]*User, len(users))
+	for i, user := range users {
+		usersMap[user.Username] = &users[i]
+	}
+
+	return usersMap, nil
+}
+
+func UserDelByIds(ctx *ctx.Context, userIds []int64) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id in ?", userIds).Delete(&UserGroupMember{}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("id in ?", userIds).Delete(&User{}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {
@@ -484,13 +681,13 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 		return idents, nil
 	}
 
-	var arr []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &arr).Error
+	var allowedIdents []string
+	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
 
-	return slice.SubString(idents, arr), nil
+	return slice.SubString(idents, allowedIdents), nil
 }
 
 // 我是管理员，返回所有
@@ -549,7 +746,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
-		if slice.ContainsInt64(busiGroupIds, t.GroupId) {
+		if t != nil && slice.ContainsInt64(busiGroupIds, t.GroupId) {
 			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
 		}
 	}
@@ -567,9 +764,10 @@ func (u *User) UserGroups(ctx *ctx.Context, limit int, query string) ([]UserGrou
 			return lst, err
 		}
 
+		var user *User
 		if len(lst) == 0 && len(query) > 0 {
 			// 隐藏功能，一般人不告诉，哈哈。query可能是给的用户名，所以上面的sql没有查到，当做user来查一下试试
-			user, err := UserGetByUsername(ctx, query)
+			user, err = UserGetByUsername(ctx, query)
 			if user == nil {
 				return lst, err
 			}
@@ -630,4 +828,32 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func (u *User) FindSameContact(email, phone string) string {
+	if u.Email != "" && u.Email == email {
+		return "email"
+	}
+
+	if u.Phone != "" && u.Phone == phone {
+		return "phone"
+	}
+
+	return ""
+}
+
+// AddUserAndGroups Add a user and add it to multiple groups in a single transaction
+func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
+
+	// Try to add a user
+	if err := u.Add(ctx); err != nil {
+		return errors.WithMessage(err, "failed to add user")
+	}
+
+	// Try to add a group for the user
+	if err := UserGroupMemberSyncByUser(ctx, u, coverTeams); err != nil {
+		return errors.WithMessage(err, "failed to add user to groups")
+	}
+
+	return nil
 }

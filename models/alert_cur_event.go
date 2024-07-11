@@ -17,53 +17,54 @@ import (
 )
 
 type AlertCurEvent struct {
-	Id                       int64             `json:"id" gorm:"primaryKey"`
-	Cate                     string            `json:"cate"`
-	Cluster                  string            `json:"cluster"`
-	DatasourceId             int64             `json:"datasource_id"`
-	GroupId                  int64             `json:"group_id"`   // busi group id
-	GroupName                string            `json:"group_name"` // busi group name
-	Hash                     string            `json:"hash"`       // rule_id + vector_key
-	RuleId                   int64             `json:"rule_id"`
-	RuleName                 string            `json:"rule_name"`
-	RuleNote                 string            `json:"rule_note"`
-	RuleProd                 string            `json:"rule_prod"`
-	RuleAlgo                 string            `json:"rule_algo"`
-	Severity                 int               `json:"severity"`
-	PromForDuration          int               `json:"prom_for_duration"`
-	PromQl                   string            `json:"prom_ql"`
-	RuleConfig               string            `json:"-" gorm:"rule_config"` // rule config
-	RuleConfigJson           interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
-	PromEvalInterval         int               `json:"prom_eval_interval"`
-	Callbacks                string            `json:"-"`                  // for db
-	CallbacksJSON            []string          `json:"callbacks" gorm:"-"` // for fe
-	RunbookUrl               string            `json:"runbook_url"`
-	NotifyRecovered          int               `json:"notify_recovered"`
-	NotifyChannels           string            `json:"-"`                          // for db
-	NotifyChannelsJSON       []string          `json:"notify_channels" gorm:"-"`   // for fe
-	NotifyGroups             string            `json:"-"`                          // for db
-	NotifyGroupsJSON         []string          `json:"notify_groups" gorm:"-"`     // for fe
-	NotifyGroupsObj          []*UserGroup      `json:"notify_groups_obj" gorm:"-"` // for fe
-	TargetIdent              string            `json:"target_ident"`
-	TargetNote               string            `json:"target_note"`
-	TriggerTime              int64             `json:"trigger_time"`
-	TriggerValue             string            `json:"trigger_value"`
-	Tags                     string            `json:"-"`                         // for db
-	TagsJSON                 []string          `json:"tags" gorm:"-"`             // for fe
-	TagsMap                  map[string]string `json:"tags_map" gorm:"-"`         // for internal usage
-	Annotations              string            `json:"-"`                         //
-	AnnotationsJSON          map[string]string `json:"annotations" gorm:"-"`      // for fe
-	IsRecovered              bool              `json:"is_recovered" gorm:"-"`     // for notify.py
-	NotifyUsersObj           []*User           `json:"notify_users_obj" gorm:"-"` // for notify.py
-	LastEvalTime             int64             `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
-	LastEscalationNotifyTime int64             `json:"last_escalation_notify_time" gorm:"-"`
-	LastSentTime             int64             `json:"last_sent_time" gorm:"-"` // 上次发送时间
-	NotifyCurNumber          int               `json:"notify_cur_number"`       // notify: current number
-	FirstTriggerTime         int64             `json:"first_trigger_time"`      // 连续告警的首次告警时间
-	ExtraConfig              interface{}       `json:"extra_config" gorm:"-"`
-	Status                   int               `json:"status" gorm:"-"`
-	Claimant                 string            `json:"claimant" gorm:"-"`
-	SubRuleId                int64             `json:"sub_rule_id" gorm:"-"`
+	Id                 int64             `json:"id" gorm:"primaryKey"`
+	Cate               string            `json:"cate"`
+	Cluster            string            `json:"cluster"`
+	DatasourceId       int64             `json:"datasource_id"`
+	GroupId            int64             `json:"group_id"`   // busi group id
+	GroupName          string            `json:"group_name"` // busi group name
+	Hash               string            `json:"hash"`       // rule_id + vector_key
+	RuleId             int64             `json:"rule_id"`
+	RuleName           string            `json:"rule_name"`
+	RuleNote           string            `json:"rule_note"`
+	RuleProd           string            `json:"rule_prod"`
+	RuleAlgo           string            `json:"rule_algo"`
+	Severity           int               `json:"severity"`
+	PromForDuration    int               `json:"prom_for_duration"`
+	PromQl             string            `json:"prom_ql"`
+	RuleConfig         string            `json:"-" gorm:"rule_config"` // rule config
+	RuleConfigJson     interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
+	PromEvalInterval   int               `json:"prom_eval_interval"`
+	Callbacks          string            `json:"-"`                  // for db
+	CallbacksJSON      []string          `json:"callbacks" gorm:"-"` // for fe
+	RunbookUrl         string            `json:"runbook_url"`
+	NotifyRecovered    int               `json:"notify_recovered"`
+	NotifyChannels     string            `json:"-"`                          // for db
+	NotifyChannelsJSON []string          `json:"notify_channels" gorm:"-"`   // for fe
+	NotifyGroups       string            `json:"-"`                          // for db
+	NotifyGroupsJSON   []string          `json:"notify_groups" gorm:"-"`     // for fe
+	NotifyGroupsObj    []*UserGroup      `json:"notify_groups_obj" gorm:"-"` // for fe
+	TargetIdent        string            `json:"target_ident"`
+	TargetNote         string            `json:"target_note"`
+	TriggerTime        int64             `json:"trigger_time"`
+	TriggerValue       string            `json:"trigger_value"`
+	TriggerValues      string            `json:"trigger_values" gorm:"-"`
+	Tags               string            `json:"-"`                         // for db
+	TagsJSON           []string          `json:"tags" gorm:"-"`             // for fe
+	TagsMap            map[string]string `json:"tags_map" gorm:"-"`         // for internal usage
+	Annotations        string            `json:"-"`                         //
+	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"`      // for fe
+	IsRecovered        bool              `json:"is_recovered" gorm:"-"`     // for notify.py
+	NotifyUsersObj     []*User           `json:"notify_users_obj" gorm:"-"` // for notify.py
+	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
+	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
+	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
+	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
+	Status             int               `json:"status" gorm:"-"`
+	Claimant           string            `json:"claimant" gorm:"-"`
+	SubRuleId          int64             `json:"sub_rule_id" gorm:"-"`
+	ExtraInfo          []string          `json:"extra_info" gorm:"-"`
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -87,9 +88,53 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		return nil
 	}
 
+	if field == "annotations" {
+		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		if err != nil {
+			logger.Warningf("ruleid:%d failed to parse annotations: %v", e.RuleId, err)
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = e.Annotations
+		}
+
+		for k, v := range e.AnnotationsJSON {
+			f = v
+			var defs = []string{
+				"{{$labels := .TagsMap}}",
+				"{{$value := .TriggerValue}}",
+			}
+
+			text := strings.Join(append(defs, f), "")
+			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+			if err != nil {
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+				continue
+			}
+
+			var body bytes.Buffer
+			err = t.Execute(&body, e)
+			if err != nil {
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+				continue
+			}
+
+			e.AnnotationsJSON[k] = body.String()
+		}
+
+		b, err := json.Marshal(e.AnnotationsJSON)
+		if err != nil {
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+		} else {
+			e.Annotations = string(b)
+		}
+
+		return nil
+	}
+
 	var defs = []string{
 		"{{$labels := .TagsMap}}",
 		"{{$value := .TriggerValue}}",
+		"{{$annotations := .AnnotationsJSON}}",
 	}
 
 	text := strings.Join(append(defs, f), "")
@@ -112,12 +157,36 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		e.RuleNote = body.String()
 	}
 
-	if field == "annotations" {
-		e.Annotations = body.String()
-		json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+	return nil
+}
+
+func (e *AlertCurEvent) ParseURL(url string) (string, error) {
+
+	f := strings.TrimSpace(url)
+
+	if f == "" {
+		return url, nil
 	}
 
-	return nil
+	var defs = []string{
+		"{{$labels := .TagsMap}}",
+		"{{$value := .TriggerValue}}",
+		"{{$annotations := .AnnotationsJSON}}",
+	}
+
+	text := strings.Join(append(defs, f), "")
+	t, err := template.New("callbackUrl" + fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+	if err != nil {
+		return url, nil
+	}
+
+	var body bytes.Buffer
+	err = t.Execute(&body, e)
+	if err != nil {
+		return url, nil
+	}
+
+	return body.String(), nil
 }
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
@@ -307,7 +376,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -316,8 +385,8 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {
@@ -343,7 +412,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -352,8 +421,8 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if bgid > 0 {
-		session = session.Where("group_id = ?", bgid)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
 	}
 
 	if severity >= 0 {
@@ -377,7 +446,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	}
 
 	var lst []AlertCurEvent
-	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("trigger_time desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
@@ -457,7 +526,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 		return lst, nil
 	}
 
-	err := DB(ctx).Where("id in ?", ids).Order("id desc").Find(&lst).Error
+	err := DB(ctx).Where("id in ?", ids).Order("trigger_time desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -570,16 +639,13 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 
-	tx := DB(ctx).Where("group_id = ? and rule_prod = ?", alertMute.GroupId, alertMute.Prod)
+	tx := DB(ctx).Where("group_id = ?", alertMute.GroupId)
 
 	if len(alertMute.SeveritiesJson) != 0 {
 		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
 	}
-	if alertMute.Prod != HOST {
-		tx = tx.Where("cate = ?", alertMute.Cate)
-		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
-			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
-		}
+	if len(alertMute.DatasourceIdsJson) != 0 && !IsAllDatasource(alertMute.DatasourceIdsJson) {
+		tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
 	}
 
 	err := tx.Order("id desc").Find(&lst).Error

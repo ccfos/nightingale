@@ -1,0 +1,983 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "Cluster Overview",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "970f949f-cdc8-4ec0-b2c8-c49d3bd14d8d",
+                "layout": {
+                    "h": 4,
+                    "i": "970f949f-cdc8-4ec0-b2c8-c49d3bd14d8d",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 0,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#F2495C",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#73BF69",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum by(job) (kafka_controller_active_count{job=\"$cluster_id\"})",
+                        "legend": "Active Controller",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "bcf3c5d7-9dd1-4cb6-81a1-3198f4b049e2",
+                "layout": {
+                    "h": 4,
+                    "i": "bcf3c5d7-9dd1-4cb6-81a1-3198f4b049e2",
+                    "isResizable": true,
+                    "w": 3,
+                    "x": 3,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "kafka_broker_fenced_count{job=\"$cluster_id\", instance=\"$active_controller\"}",
+                        "legend": "Fenced Broker",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "333648e6-4bef-4e2d-bb84-f1d720d383cc",
+                "layout": {
+                    "h": 4,
+                    "i": "333648e6-4bef-4e2d-bb84-f1d720d383cc",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 6,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#3274D9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "kafka_topic_count{job=\"$cluster_id\", instance=\"$active_controller\"}",
+                        "legend": "Topics",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "659a8d96-5276-49fb-a011-22d85dace435",
+                "layout": {
+                    "h": 4,
+                    "i": "659a8d96-5276-49fb-a011-22d85dace435",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 10,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Error Rate",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#F2495C",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(kafka_request_error_count_total{job=\"$cluster_id\", error!=\"NONE\"}[$__rate_interval]))",
+                        "legend": "__auto",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "0650f241-385f-4386-8b76-7f23d53ef8fb",
+                "layout": {
+                    "h": 8,
+                    "i": "0650f241-385f-4386-8b76-7f23d53ef8fb",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Bytes In (+) / Out (-)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesSecIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#73BF69",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(kafka_broker_network_io_bytes_total{job=\"$cluster_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "In",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(rate(kafka_broker_network_io_bytes_total{job=\"$cluster_id\", direction=\"out\"}[$__rate_interval])) * -1",
+                        "legend": "Out",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "aac842e5-e997-4c0f-84e4-0b104dd303e3",
+                "layout": {
+                    "h": 4,
+                    "i": "aac842e5-e997-4c0f-84e4-0b104dd303e3",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#F2495C",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#73BF69",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "kafka_broker_active_count{job=\"$cluster_id\", instance=\"$active_controller\"}",
+                        "legend": "Active Broker",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "fb4e88e4-9e6e-44d0-8bb8-1fe717c0b824",
+                "layout": {
+                    "h": 4,
+                    "i": "fb4e88e4-9e6e-44d0-8bb8-1fe717c0b824",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 6,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#3274D9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "kafka_partition_total_count{job=\"$cluster_id\", instance=\"$active_controller\"}",
+                        "legend": "Partitions",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "b752e09e-4bc4-4e12-935e-d24f1d422a9b",
+                "layout": {
+                    "h": 4,
+                    "i": "b752e09e-4bc4-4e12-935e-d24f1d422a9b",
+                    "isResizable": true,
+                    "w": 2,
+                    "x": 10,
+                    "y": 4
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "standardOptions": {
+                        "decimals": 0,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#56A64B",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(kafka_log_size{job=\"$cluster_id\"})",
+                        "legend": "Size",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "baseColor": "#9470FF",
+                    "calc": "lastNotNull",
+                    "serieWidth": 70,
+                    "sortOrder": "desc"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "7b8a904f-179f-4140-9ed4-d109271ec7af",
+                "layout": {
+                    "h": 5,
+                    "i": "7b8a904f-179f-4140-9ed4-d109271ec7af",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 0,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Group Count",
+                "options": {
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "sum(kafka_group_count{job=\"$cluster_id\"})",
+                        "legend": "total",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(kafka_group_stable_count{job=\"$cluster_id\"})",
+                        "legend": "stable",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sum(kafka_group_dead_count{job=\"$cluster_id\"})",
+                        "legend": "dead",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(kafka_group_empty_count{job=\"$cluster_id\"})",
+                        "legend": "empty",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum(kafka_group_preparing_rebalance_count{job=\"$cluster_id\"})",
+                        "legend": "prepare_rebalance",
+                        "maxDataPoints": 240,
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "sum(kafka_group_completing_rebalance_count{job=\"$cluster_id\"})",
+                        "legend": "completing_rebalance",
+                        "maxDataPoints": 240,
+                        "refId": "F"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barGauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "columns": [],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-group-metrics?TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026group_id=${__field.labels.consumer_group}\u0026partition=all\u0026topic=${__field.labels.topic}"
+                        }
+                    ],
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "b7cb494b-413f-4b12-ae1e-7da55b65d5ee",
+                "layout": {
+                    "h": 5,
+                    "i": "b7cb494b-413f-4b12-ae1e-7da55b65d5ee",
+                    "isResizable": true,
+                    "w": 19,
+                    "x": 5,
+                    "y": 8
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Consumer Lag",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 0
+                            },
+                            "result": {
+                                "color": "rgba(44, 157, 61, 1)"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "from": 0
+                            },
+                            "result": {
+                                "color": "rgba(228, 22, 22, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "valueMappings": []
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(topic) (max by(topic, partition) (kafka_log_end_offset{job=\"$cluster_id\"}))\n- on(topic) group_left(consumer_group)\nsum by(consumer_group, topic) (max by(consumer_group, topic, partition) (kafka_group_commit_offset{job=\"$cluster_id\"}))",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "value": "lag"
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "aggrDimension": [
+                        "topic"
+                    ],
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "labelValuesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-topic-metrics?TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026topic=${__field.labels.topic}"
+                        }
+                    ],
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "90716481-5dd6-4c4e-8219-cbcb724a22d9",
+                "layout": {
+                    "h": 4,
+                    "i": "90716481-5dd6-4c4e-8219-cbcb724a22d9",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Topic Statistics",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "D"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "decimals": 2,
+                                "util": "bytesIEC"
+                            },
+                            "valueMappings": []
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "decimals": 1,
+                                "util": "bytesSecIEC"
+                            }
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "decimals": 1,
+                                "util": "bytesSecIEC"
+                            }
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(topic) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Bytes in",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(topic) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", direction=\"out\"}[$__rate_interval]))",
+                        "legend": "Bytes out",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum by(topic) (rate(kafka_message_count_total{job=\"$cluster_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Msgs in",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum by(topic) (kafka_log_size{job=\"$cluster_id\"})",
+                        "legend": "Size",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "aggrDimension": [
+                        "instance"
+                    ],
+                    "calc": "lastNotNull",
+                    "colorMode": "value",
+                    "displayMode": "labelValuesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "links": [
+                        {
+                            "title": "下钻",
+                            "url": "/dashboards/automq-broker-metrics?DS_PROMETHEUS=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026node_id=${__field.labels.instance}"
+                        }
+                    ],
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "id": "a427c6d3-0fab-45c2-92e5-585e5435fcfe",
+                "layout": {
+                    "h": 6,
+                    "i": "a427c6d3-0fab-45c2-92e5-585e5435fcfe",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Broker Statistics",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecIEC"
+                            }
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "D"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "bytesSecIEC"
+                            }
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "H"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            }
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "I"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            }
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum by(instance) (kafka_partition_count{job=\"$cluster_id\"})",
+                        "legend": "Partitions",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum by(instance) (kafka_server_connection_count{job=\"$cluster_id\"})",
+                        "legend": "Connections",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Bytes In",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_network_io_bytes_total{job=\"$cluster_id\", direction=\"out\"}[$__rate_interval]))",
+                        "legend": "Bytes Out",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_message_count_total{job=\"$cluster_id\", direction=\"in\"}[$__rate_interval]))",
+                        "legend": "Msgs In",
+                        "maxDataPoints": 240,
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_request_count_total{job=\"$cluster_id\", type=\"Produce\"}[$__rate_interval]))",
+                        "legend": "Produce",
+                        "maxDataPoints": 240,
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_request_count_total{job=\"$cluster_id\", type=\"Fetch\"}[$__rate_interval]))",
+                        "legend": "Fetch",
+                        "maxDataPoints": 240,
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "sum by(instance) (kafka_request_time_99p_milliseconds{job=\"$cluster_id\", type=\"Produce\"})",
+                        "legend": "Produce P99",
+                        "maxDataPoints": 240,
+                        "refId": "H"
+                    },
+                    {
+                        "expr": "sum by(instance) (kafka_request_time_99p_milliseconds{job=\"$cluster_id\", type=\"Fetch\"})",
+                        "legend": "Fetch P99",
+                        "maxDataPoints": 240,
+                        "refId": "I"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_topic_request_failed_total{job=\"$cluster_id\", type=\"produce\"}[$__rate_interval]))",
+                        "legend": "Failed Produce",
+                        "maxDataPoints": 240,
+                        "refId": "J"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_topic_request_failed_total{job=\"$cluster_id\", type=\"fetch\"}[$__rate_interval]))",
+                        "legend": "Failed Fetch",
+                        "maxDataPoints": 240,
+                        "refId": "K"
+                    },
+                    {
+                        "expr": "sum by(instance) (rate(kafka_request_error_count_total{job=\"$cluster_id\", error!=\"NONE\"}[$__rate_interval]))",
+                        "legend": "Error Request",
+                        "maxDataPoints": 240,
+                        "refId": "L"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "instance": "Node ID"
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "DS_PROMETHEUS",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(process_runtime_jvm_cpu_utilization_ratio,job)",
+                "hide": false,
+                "multi": false,
+                "name": "cluster_id",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${DS_PROMETHEUS}"
+                },
+                "definition": "label_values(kafka_controller_active_count{job=\"$cluster_id\"} \u003e 0, instance)",
+                "hide": false,
+                "multi": false,
+                "name": "active_controller",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327162929000
+}

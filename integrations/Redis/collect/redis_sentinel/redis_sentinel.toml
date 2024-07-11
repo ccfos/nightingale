@@ -1,0 +1,21 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+# [protocol://][:password]@address[:port]
+# e.g. servers = ["tcp://localhost:26379"]
+servers = []
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+# add some dimension data by labels
+# labels = {}
+
+## Optional TLS Config
+# use_tls = false
+# tls_min_version = "1.2"
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true

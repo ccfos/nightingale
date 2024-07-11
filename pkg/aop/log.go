@@ -2,6 +2,7 @@ package aop
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,7 +41,8 @@ type LoggerConfig struct {
 
 	// Output is a writer where logs are written.
 	// Optional. Default value is gin.DefaultWriter.
-	Output io.Writer
+	Output    io.Writer
+	PrintBody bool
 
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
@@ -177,8 +179,13 @@ func ErrorLoggerT(typ gin.ErrorType) gin.HandlerFunc {
 
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default gin.DefaultWriter = os.Stdout.
-func Logger() gin.HandlerFunc {
-	return LoggerWithConfig(LoggerConfig{})
+func Logger(conf ...LoggerConfig) gin.HandlerFunc {
+	var configuration LoggerConfig
+	if len(conf) > 0 {
+		configuration = conf[0]
+	}
+
+	return LoggerWithConfig(configuration)
 }
 
 // LoggerWithFormatter instance a Logger middleware with the specified log format function.
@@ -195,6 +202,25 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) gin.HandlerFunc {
 		Output:    out,
 		SkipPaths: notlogged,
 	})
+}
+
+type CustomResponseWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w CustomResponseWriter) Write(data []byte) (int, error) {
+	w.body.Write(data)
+	return w.ResponseWriter.Write(data)
+}
+
+func (w CustomResponseWriter) WriteString(s string) (int, error) {
+	w.body.WriteString(s)
+	return w.ResponseWriter.WriteString(s)
+}
+
+func (w CustomResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 // LoggerWithConfig instance a Logger middleware with config.
@@ -234,18 +260,24 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
-		// var (
-		// 	rdr1 io.ReadCloser
-		// 	rdr2 io.ReadCloser
-		// )
+		var (
+			rdr1 io.ReadCloser
+			rdr2 io.ReadCloser
+		)
 
-		// if c.Request.Method != "GET" {
-		// 	buf, _ := ioutil.ReadAll(c.Request.Body)
-		// 	rdr1 = ioutil.NopCloser(bytes.NewBuffer(buf))
-		// 	rdr2 = ioutil.NopCloser(bytes.NewBuffer(buf))
+		bodyWriter := &CustomResponseWriter{
+			ResponseWriter: c.Writer,
+			body:           bytes.NewBuffer(nil),
+		}
+		c.Writer = bodyWriter
 
-		// 	c.Request.Body = rdr2
-		// }
+		if conf.PrintBody {
+			buf, _ := io.ReadAll(c.Request.Body)
+			rdr1 = io.NopCloser(bytes.NewBuffer(buf))
+			rdr2 = io.NopCloser(bytes.NewBuffer(buf))
+
+			c.Request.Body = rdr2
+		}
 
 		// Process request
 		c.Next()
@@ -277,18 +309,36 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
-
-			// if c.Request.Method != "GET" {
-			// 	logger.Debug(readBody(rdr1))
-			// }
+			if conf.PrintBody {
+				respBody := readBody(bytes.NewReader(bodyWriter.body.Bytes()), c.Writer.Header().Get("Content-Encoding"))
+				reqBody := readBody(rdr1, c.Request.Header.Get("Content-Encoding"))
+				logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)
+			}
 		}
 	}
 }
 
-func readBody(reader io.Reader) string {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(reader)
+func readBody(reader io.Reader, encoding string) string {
+	var bodyBytes []byte
+	var err error
 
-	s := buf.String()
-	return s
+	if encoding == "gzip" {
+		gzipReader, err := gzip.NewReader(reader)
+		if err != nil {
+			return fmt.Sprintf("failed to create gzip reader: %v", err)
+		}
+		defer gzipReader.Close()
+
+		bodyBytes, err = io.ReadAll(gzipReader)
+		if err != nil {
+			return fmt.Sprintf("failed to read gzip response body: %v", err)
+		}
+	} else {
+		bodyBytes, err = io.ReadAll(reader)
+		if err != nil {
+			return fmt.Sprintf("failed to read response body: %v", err)
+		}
+	}
+
+	return string(bodyBytes)
 }

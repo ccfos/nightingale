@@ -1,614 +1,786 @@
 {
+    "id": 0,
+    "group_id": 0,
     "name": "Canal instances",
+    "ident": "",
     "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
     "configs": {
-        "version": "2.0.0",
         "links": [],
-        "var": [
-            {
-                "name": "destination",
-                "allOption": false,
-                "multi": false,
-                "definition": "label_values(canal_instance, destination)"
-            }
-        ],
         "panels": [
             {
-                "version": "2.0.0",
-                "id": "758ed076-0140-4755-bd86-da18d0648fdd",
-                "type": "row",
+                "collapsed": true,
+                "id": "c876d624-3357-4511-bed9-fd30fd82e2e8",
+                "layout": {
+                    "h": 1,
+                    "i": "c876d624-3357-4511-bed9-fd30fd82e2e8",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
                 "name": "Instance status",
-                "collapsed": true,
-                "layout": {
-                    "h": 1,
-                    "w": 24,
-                    "x": 0,
-                    "y": 0,
-                    "i": "758ed076-0140-4755-bd86-da18d0648fdd"
-                },
-                "panels": []
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "0c611d83-9ccb-402f-b3ed-14d53bd3e818",
-                "type": "timeseries",
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance 基本信息。",
+                "id": "235ad194-ad14-4431-9633-543bd679e9dc",
+                "layout": {
+                    "h": 5,
+                    "i": "235ad194-ad14-4431-9633-543bd679e9dc",
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
                 "name": "Basic",
-                "description": "Canal instance ������Ϣ��",
-                "links": [],
-                "layout": {
-                    "h": 5,
-                    "w": 6,
-                    "x": 0,
-                    "y": 1,
-                    "i": "0c611d83-9ccb-402f-b3ed-14d53bd3e818"
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
+                "repeat": null,
                 "targets": [
                     {
-                        "refId": "A",
                         "expr": "canal_instance{destination=~\"$destination\"}",
-                        "legend": "Destination: {{destination}}"
+                        "legend": "Destination: {{destination}}",
+                        "refId": "A"
                     },
                     {
-                        "refId": "B",
                         "expr": "canal_instance_parser_mode{destination=~\"$destination\"}",
-                        "legend": "Parallel parser: {{parallel}}"
+                        "legend": "Parallel parser: {{parallel}}",
+                        "refId": "B"
                     },
                     {
-                        "refId": "C",
                         "expr": "canal_instance_store{destination=~\"$destination\"}",
-                        "legend": "Batch mode: {{batchMode}}"
+                        "legend": "Batch mode: {{batchMode}}",
+                        "refId": "C"
                     },
                     {
-                        "refId": "D",
                         "expr": "canal_instance_store{destination=~\"$destination\"}",
-                        "legend": "Buffer size: {{size}}"
+                        "legend": "Buffer size: {{size}}",
+                        "refId": "D"
                     }
                 ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "efde62a5-f4ac-4062-80d1-4cc7dd50bb9f",
-                "type": "timeseries",
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance 网络带宽占用。\ninbound: 读取MySQL binlog.\noutbound: 对Client端传输格式化binlog.",
+                "id": "13080d70-8fe9-4388-9d72-f587b3b480b9",
+                "layout": {
+                    "h": 5,
+                    "i": "13080d70-8fe9-4388-9d72-f587b3b480b9",
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
                 "name": "Network bandwith",
-                "description": "Canal instance �������ռ�á�\ninbound: ��ȡMySQL binlog.\noutbound: ��Client�˴����ʽ��binlog.",
-                "links": [],
-                "layout": {
-                    "h": 5,
-                    "w": 6,
-                    "x": 6,
-                    "y": 1,
-                    "i": "efde62a5-f4ac-4062-80d1-4cc7dd50bb9f"
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
                 "targets": [
                     {
-                        "refId": "A",
                         "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"0\"}[2m]) / 1024",
-                        "legend": "inbound"
+                        "legend": "inbound",
+                        "refId": "A"
                     },
                     {
-                        "refId": "B",
                         "expr": "rate(canal_instance_client_bytes{destination=~\"$destination\"}[2m]) / 1024",
-                        "legend": "outbound"
+                        "legend": "outbound",
+                        "refId": "B"
                     },
                     {
-                        "refId": "C",
                         "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"1\"}[2m]) / 1024",
-                        "legend": "inbound-1"
+                        "legend": "inbound-1",
+                        "refId": "C"
                     },
                     {
-                        "refId": "D",
                         "expr": "rate(canal_instance_received_binlog_bytes{destination=~\"$destination\", parser=\"2\"}[2m]) / 1024",
-                        "legend": "inbound-2"
+                        "legend": "inbound-2",
+                        "refId": "D"
                     }
                 ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "93d407a9-c1bf-4f9c-b88b-f0a01c023ea4",
-                "type": "timeseries",
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "master: Canal server相对于MySQL master的延时。通过master heartbeat机制能刷新idle状态下的延时。\nput: store put操作的时间点为基准。\nget: client get操作的时间点为基准。\nack:  client ack操作的时间点为基准。",
+                "id": "8f46e835-1c9a-4ec1-94d4-2416646061d6",
+                "layout": {
+                    "h": 5,
+                    "i": "8f46e835-1c9a-4ec1-94d4-2416646061d6",
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
                 "name": "Delay",
-                "description": "master: Canal server�����MySQL master����ʱ��ͨ��master heartbeat������ˢ��idle״̬�µ���ʱ��\nput: store put������ʱ���Ϊ��׼��\nget: client get������ʱ���Ϊ��׼��\nack:  client ack������ʱ���Ϊ��׼��",
-                "links": [],
-                "layout": {
-                    "h": 5,
-                    "w": 6,
-                    "x": 12,
-                    "y": 1,
-                    "i": "93d407a9-c1bf-4f9c-b88b-f0a01c023ea4"
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
                 "targets": [
                     {
-                        "refId": "D",
                         "expr": "canal_instance_traffic_delay{destination=~\"$destination\"} / 1000",
-                        "legend": "master"
+                        "legend": "master",
+                        "refId": "D"
                     },
                     {
-                        "refId": "A",
                         "expr": "canal_instance_put_delay{destination=~\"$destination\"} / 1000",
-                        "legend": "put"
+                        "legend": "put",
+                        "refId": "A"
                     },
                     {
-                        "refId": "B",
                         "expr": "canal_instance_get_delay{destination=~\"$destination\"} / 1000",
-                        "legend": "get"
+                        "legend": "get",
+                        "refId": "B"
                     },
                     {
-                        "refId": "C",
                         "expr": "canal_instance_ack_delay{destination=~\"$destination\"} / 1000",
-                        "legend": "ack"
+                        "legend": "ack",
+                        "refId": "C"
                     }
                 ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "131cbcbe-29e7-469a-bb17-5914a8471ee7",
-                "type": "timeseries",
-                "name": "Blocking",
-                "description": "sink�߳�blockingռ�ȣ�dump�߳�blockingռ��(��parallel mode)��",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "sink线程blocking占比；dump线程blocking占比(仅parallel mode)。",
+                "id": "986e87d8-37d3-4995-8f8d-7141d4b792af",
                 "layout": {
                     "h": 5,
+                    "i": "986e87d8-37d3-4995-8f8d-7141d4b792af",
                     "w": 6,
                     "x": 18,
-                    "y": 1,
-                    "i": "131cbcbe-29e7-469a-bb17-5914a8471ee7"
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Blocking",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
                 },
                 "targets": [
                     {
-                        "refId": "B",
                         "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"0\"}[2m]), 1000) / 10",
-                        "legend": "dump"
+                        "legend": "dump",
+                        "refId": "B"
                     },
                     {
-                        "refId": "A",
                         "expr": "clamp_max(rate(canal_instance_sink_blocking_time{destination=~\"$destination\"}[2m]), 1000) / 10",
-                        "legend": "sink"
+                        "legend": "sink",
+                        "refId": "A"
                     },
                     {
-                        "refId": "C",
                         "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"1\"}[2m]), 1000) / 10",
-                        "legend": "dump-1"
+                        "legend": "dump-1",
+                        "refId": "C"
                     },
                     {
-                        "refId": "D",
                         "expr": "clamp_max(rate(canal_instance_publish_blocking_time{destination=~\"$destination\", parser=\"2\"}[2m]), 1000) / 10",
-                        "legend": "dump-2"
+                        "legend": "dump-2",
+                        "refId": "D"
                     }
                 ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "de248e75-37cb-4536-874c-fbdd61a4a6a4",
-                "type": "row",
+                "collapsed": true,
+                "id": "d51067ea-6e23-41c1-91d9-dd264c041add",
+                "layout": {
+                    "h": 1,
+                    "i": "d51067ea-6e23-41c1-91d9-dd264c041add",
+                    "w": 24,
+                    "x": 0,
+                    "y": 6
+                },
                 "name": "Throughput",
-                "collapsed": true,
-                "layout": {
-                    "h": 1,
-                    "w": 24,
-                    "x": 0,
-                    "y": 6,
-                    "i": "de248e75-37cb-4536-874c-fbdd61a4a6a4"
-                },
-                "panels": []
-            },
-            {
-                "version": "2.0.0",
-                "id": "16e7b311-3e9e-4c17-874e-4ef3beb8779f",
-                "type": "timeseries",
-                "name": "TPS(table rows)",
-                "description": "Instance����binlog��TPS(��master�������table rowsΪ��׼����)��\nput: put����TPS��\nget: get����TPS��\nack: ack����TPS��",
-                "links": [],
-                "layout": {
-                    "h": 5,
-                    "w": 6,
-                    "x": 0,
-                    "y": 7,
-                    "i": "16e7b311-3e9e-4c17-874e-4ef3beb8779f"
-                },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "rate(canal_instance_put_rows{destination=~\"$destination\"}[2m])",
-                        "legend": "put"
-                    },
-                    {
-                        "refId": "B",
-                        "expr": "rate(canal_instance_get_rows{destination=~\"$destination\"}[2m])",
-                        "legend": "get"
-                    },
-                    {
-                        "refId": "C",
-                        "expr": "rate(canal_instance_ack_rows{destination=~\"$destination\"}[2m])",
-                        "legend": "ack"
-                    }
-                ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
-            },
-            {
-                "version": "2.0.0",
-                "id": "791852f6-dad5-43fd-8629-3f84f8b4ae85",
-                "type": "timeseries",
-                "name": "TPS(MySQL transaction)",
-                "description": "Canal instance ����binlog��TPS����MySQL transactionΪ��λ���㡣",
-                "links": [],
-                "layout": {
-                    "h": 5,
-                    "w": 6,
-                    "x": 6,
-                    "y": 7,
-                    "i": "791852f6-dad5-43fd-8629-3f84f8b4ae85"
-                },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "rate(canal_instance_transactions{destination=~\"$destination\"}[2m])",
-                        "legend": "transactions"
-                    }
-                ],
-                "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
-                    }
-                },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
-            },
-            {
-                "version": "2.0.0",
-                "id": "3de66e9d-a9ad-41a9-8a48-8911e382e1fe",
+                "panels": [],
                 "type": "row",
-                "name": "Client",
-                "collapsed": true,
-                "layout": {
-                    "h": 1,
-                    "w": 24,
-                    "x": 0,
-                    "y": 12,
-                    "i": "3de66e9d-a9ad-41a9-8a48-8911e382e1fe"
-                },
-                "panels": []
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "74c61ee7-2c28-4ee4-997d-e9a4bd9e7183",
-                "type": "timeseries",
-                "name": "Client requests",
-                "description": "Canal instance���յ�������ͳ�ƣ������packet type���ࡣ",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Instance处理binlog的TPS(以master变更行数table rows为基准计算)。\nput: put操作TPS。\nget: get操作TPS。\nack: ack操作TPS。",
+                "id": "66a0392c-ffbe-42a5-b423-7e83007318b2",
                 "layout": {
                     "h": 5,
+                    "i": "66a0392c-ffbe-42a5-b423-7e83007318b2",
                     "w": 6,
                     "x": 0,
-                    "y": 13,
-                    "i": "74c61ee7-2c28-4ee4-997d-e9a4bd9e7183"
+                    "y": 7
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "canal_instance_client_packets{destination=~\"$destination\"}",
-                        "legend": "{{packetType}}"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "TPS(table rows)",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "rate(canal_instance_put_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "put",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(canal_instance_get_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "get",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "rate(canal_instance_ack_rows{destination=~\"$destination\"}[2m])",
+                        "legend": "ack",
+                        "refId": "C"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "037002c9-dda5-4ce2-b8a3-d14e8ef9440b",
-                "type": "timeseries",
-                "name": "Client QPS",
-                "description": "client �����GET��ACK����QPS��",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance 处理binlog的TPS，以MySQL transaction为单位计算。",
+                "id": "daaa8cfd-3238-4ee2-ae30-4d5bd0c899d7",
                 "layout": {
                     "h": 5,
+                    "i": "daaa8cfd-3238-4ee2-ae30-4d5bd0c899d7",
                     "w": 6,
                     "x": 6,
-                    "y": 13,
-                    "i": "037002c9-dda5-4ce2-b8a3-d14e8ef9440b"
+                    "y": 7
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"GET\"}[2m])",
-                        "legend": "GET"
-                    },
-                    {
-                        "refId": "B",
-                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"CLIENTACK\"}[2m])",
-                        "legend": "ACK"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "TPS(MySQL transaction)",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "rate(canal_instance_transactions{destination=~\"$destination\"}[2m])",
+                        "legend": "transactions",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "2a433709-f08d-404a-acd6-3ef295157b83",
-                "type": "timeseries",
-                "name": "Empty packets",
-                "description": "server��ӦGET���󣬵����ؿհ���ռ�ȡ�",
-                "links": [],
+                "collapsed": true,
+                "id": "72043279-0d2a-47d9-97f9-80cb4c595bc4",
+                "layout": {
+                    "h": 1,
+                    "i": "72043279-0d2a-47d9-97f9-80cb4c595bc4",
+                    "w": 24,
+                    "x": 0,
+                    "y": 12
+                },
+                "name": "Client",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance接收到的请求统计，结果按packet type分类。",
+                "id": "bae11c21-18ad-4964-90a5-09ba9b083fb9",
                 "layout": {
                     "h": 5,
+                    "i": "bae11c21-18ad-4964-90a5-09ba9b083fb9",
+                    "w": 6,
+                    "x": 0,
+                    "y": 13
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client requests",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "canal_instance_client_packets{destination=~\"$destination\"}",
+                        "legend": "{{packetType}}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "client 请求的GET与ACK包的QPS。",
+                "id": "9e94fdcd-fc2a-4dc1-8f64-9242409a7345",
+                "layout": {
+                    "h": 5,
+                    "i": "9e94fdcd-fc2a-4dc1-8f64-9242409a7345",
+                    "w": 6,
+                    "x": 6,
+                    "y": 13
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Client QPS",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"GET\"}[2m])",
+                        "legend": "GET",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\",packetType=\"CLIENTACK\"}[2m])",
+                        "legend": "ACK",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "server响应GET请求，但返回空包的占比。",
+                "id": "7fc92a43-77c1-469f-b1b4-dc2b5c45a81d",
+                "layout": {
+                    "h": 5,
+                    "i": "7fc92a43-77c1-469f-b1b4-dc2b5c45a81d",
                     "w": 6,
                     "x": 12,
-                    "y": 13,
-                    "i": "2a433709-f08d-404a-acd6-3ef295157b83"
+                    "y": 13
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "rate(canal_instance_client_empty_batches{destination=~\"$destination\"}[2m])",
-                        "legend": "empty"
-                    },
-                    {
-                        "refId": "B",
-                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\", packetType=\"GET\"}[2m])",
-                        "legend": "nonempty"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Empty packets",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "rate(canal_instance_client_empty_batches{destination=~\"$destination\"}[2m])",
+                        "legend": "empty",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(canal_instance_client_packets{destination=~\"$destination\", packetType=\"GET\"}[2m])",
+                        "legend": "nonempty",
+                        "refId": "B"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "1c262e9e-1dc5-4aae-bf8c-0e4c3e85a84f",
-                "type": "timeseries",
-                "name": "Response time",
-                "description": "Canal client ������Ӧʱ��ĸſ���",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal client 请求响应时间的概况。",
+                "id": "99623fe5-652c-4091-81d9-942e94b4ac4c",
                 "layout": {
                     "h": 5,
+                    "i": "99623fe5-652c-4091-81d9-942e94b4ac4c",
                     "w": 6,
                     "x": 18,
-                    "y": 13,
-                    "i": "1c262e9e-1dc5-4aae-bf8c-0e4c3e85a84f"
+                    "y": 13
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "rate(canal_instance_client_request_latency_bucket{destination=~\"$destination\"}[2m])",
-                        "legend": "{{le}}ms"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Response time",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "rate(canal_instance_client_request_latency_bucket{destination=~\"$destination\"}[2m])",
+                        "legend": "{{le}}ms",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "ae68fd29-4dd4-445a-86b9-76144d23d27c",
-                "type": "row",
-                "name": "Store",
                 "collapsed": true,
+                "id": "24ce3843-8303-4a17-ac74-36f3ddc50af5",
                 "layout": {
                     "h": 1,
+                    "i": "24ce3843-8303-4a17-ac74-36f3ddc50af5",
                     "w": 24,
                     "x": 0,
-                    "y": 18,
-                    "i": "ae68fd29-4dd4-445a-86b9-76144d23d27c"
+                    "y": 18
                 },
-                "panels": []
+                "name": "Store",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "27b7365c-2bca-42b7-836d-33dc769b2a4e",
-                "type": "timeseries",
-                "name": "Store remain events",
-                "description": "Canal instance ringbuffer��δ�ͷŵ�events������",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance ringbuffer内未释放的events数量。",
+                "id": "326dcd0e-dc9c-42b9-83a7-ea59648092cc",
                 "layout": {
                     "h": 5,
+                    "i": "326dcd0e-dc9c-42b9-83a7-ea59648092cc",
                     "w": 6,
                     "x": 0,
-                    "y": 19,
-                    "i": "27b7365c-2bca-42b7-836d-33dc769b2a4e"
+                    "y": 19
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "canal_instance_store_produce_seq{destination=~\"$destination\"} - canal_instance_store_consume_seq{destination=~\"$destination\"}",
-                        "legend": "events"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Store remain events",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "canal_instance_store_produce_seq{destination=~\"$destination\"} - canal_instance_store_consume_seq{destination=~\"$destination\"}",
+                        "legend": "events",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             },
             {
-                "version": "2.0.0",
-                "id": "f399e86f-8f87-43fe-80a2-5b6f2ef7529f",
-                "type": "timeseries",
-                "name": "Store remain mem",
-                "description": "Canal instance ringbuffer ��δ�ͷ�eventsռ���ڴ档",
-                "links": [],
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "linear",
+                    "stack": "off",
+                    "version": "3.0.0"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "Canal instance ringbuffer 内未释放events占用内存。",
+                "id": "c328535d-9864-4681-865c-8551115dac07",
                 "layout": {
                     "h": 5,
+                    "i": "c328535d-9864-4681-865c-8551115dac07",
                     "w": 6,
                     "x": 6,
-                    "y": 19,
-                    "i": "f399e86f-8f87-43fe-80a2-5b6f2ef7529f"
+                    "y": 19
                 },
-                "targets": [
-                    {
-                        "refId": "A",
-                        "expr": "(canal_instance_store_produce_mem{destination=~\"$destination\"} - canal_instance_store_consume_mem{destination=~\"$destination\"}) / 1024",
-                        "legend": "memsize"
-                    }
-                ],
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Store remain mem",
                 "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden"
                     }
                 },
-                "custom": {
-                    "version": "2.0.0",
-                    "drawStyle": "lines",
-                    "lineInterpolation": "linear",
-                    "fillOpacity": 0.5,
-                    "stack": "off"
-                }
+                "targets": [
+                    {
+                        "expr": "(canal_instance_store_produce_mem{destination=~\"$destination\"} - canal_instance_store_consume_mem{destination=~\"$destination\"}) / 1024",
+                        "legend": "memsize",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
             }
-        ]
-    }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "hide": false,
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "allOption": false,
+                "allValue": null,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(canal_instance, destination)",
+                "hide": false,
+                "multi": false,
+                "name": "destination",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556327308578000
 }

@@ -1,0 +1,637 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "各个接入交换机",
+    "ident": "h",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "graphTooltip": "default",
+        "graphZoom": "default",
+        "links": [],
+        "panels": [
+            {
+                "custom": {
+                    "aggrDimension": [
+                        "sys_name",
+                        "sys_pm",
+                        "LocalIP"
+                    ],
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true,
+                    "sortColumn": "sys_name",
+                    "sortOrder": "ascend"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "4f20d79f-8092-43eb-8298-7492b8fc7b4a",
+                "layout": {
+                    "h": 3,
+                    "i": "4f20d79f-8092-43eb-8298-7492b8fc7b4a",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 0,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "设备基本信息",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "humantimeSeconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 86400
+                                    },
+                                    "result": {
+                                        "color": "rgba(250, 6, 6, 1)"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "to": 2592000
+                                    },
+                                    "result": {
+                                        "color": "rgba(230, 198, 39, 1)"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 2592000
+                                    },
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "snmp_sys_uptime",
+                        "instant": false,
+                        "legend": "设备在线",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "excludeByName": {
+                                "ifDescr": false
+                            },
+                            "indexByName": {
+                                "ifDescr": 0
+                            },
+                            "renameByName": {
+                                "LocalIP": "管理IP地址",
+                                "ifDescr": "",
+                                "sys_name": "设备名称",
+                                "sys_pm": "设备型号"
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {
+                        "title": 24,
+                        "value": 24
+                    },
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "1ce09285-bf26-4518-acbd-26db4e1292a2",
+                "layout": {
+                    "h": 4,
+                    "i": "1ce09285-bf26-4518-acbd-26db4e1292a2",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 13,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "Panel Title",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": []
+                },
+                "targets": [
+                    {
+                        "expr": "snmp_TotalPorts",
+                        "legend": "设备端口数",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "textMode": "valueAndName",
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "b0a707e6-2059-4158-8e44-ee19db45e12e",
+                "layout": {
+                    "h": 4,
+                    "i": "b0a707e6-2059-4158-8e44-ee19db45e12e",
+                    "isResizable": true,
+                    "w": 7,
+                    "x": 17,
+                    "y": 0
+                },
+                "maxPerRow": 4,
+                "name": "设备资源占用",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#3FC453",
+                                "type": "base",
+                                "value": null
+                            },
+                            {
+                                "color": "#FF9919",
+                                "value": 60
+                            },
+                            {
+                                "color": "#FF656B",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "snmp_cpu_usage",
+                        "legend": "CPU使用率",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "snmp_mem_use / snmp_mem_max*100",
+                        "legend": "内存使用率",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "gauge",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "aggrDimension": [
+                        "ifDescr"
+                    ],
+                    "calc": "lastNotNull",
+                    "colorMode": "background",
+                    "displayMode": "labelValuesToRows",
+                    "linkMode": "appendLinkColumn",
+                    "showHeader": true,
+                    "sortColumn": "A",
+                    "sortOrder": "descend"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "89d8708e-051d-4bc6-b846-17ade266c77b",
+                "layout": {
+                    "h": 11,
+                    "i": "89d8708e-051d-4bc6-b846-17ade266c77b",
+                    "isResizable": true,
+                    "w": 13,
+                    "x": 0,
+                    "y": 3
+                },
+                "maxPerRow": 4,
+                "name": "设备端口状态",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "C"
+                        },
+                        "properties": {
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 1,
+                                        "to": 1
+                                    },
+                                    "result": {
+                                        "color": "rgba(63, 196, 83, 1)",
+                                        "text": "UP"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "special": 2
+                                    },
+                                    "result": {
+                                        "color": "#000000",
+                                        "text": "DOWN"
+                                    },
+                                    "type": "special"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID",
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "none"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 1000
+                                    },
+                                    "result": {
+                                        "color": "rgba(108, 155, 248, 1)",
+                                        "text": "千兆"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#000000",
+                                        "text": "无连接"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "special": 100
+                                    },
+                                    "result": {
+                                        "color": "rgba(18, 238, 51, 1)",
+                                        "text": "百兆"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "special": 200
+                                    },
+                                    "result": {
+                                        "color": "rgba(33, 112, 44, 1)",
+                                        "text": "接入汇聚"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "special": 2000
+                                    },
+                                    "result": {
+                                        "color": "rgba(4, 62, 175, 1)",
+                                        "text": "核心堆叠"
+                                    },
+                                    "type": "special"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "snmp_interface_ifSpeed",
+                        "legend": "端口速率",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "snmp_interface_ifOperStatus",
+                        "legend": "端口状态",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {
+                            "renameByName": {
+                                "DCN": "IP地址",
+                                "ifDescr": "端口名称",
+                                "ifSpeed": "端口速率",
+                                "sysname": "设备名称"
+                            }
+                        }
+                    }
+                ],
+                "type": "table",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colorDomainAuto": true,
+                    "colorRange": [
+                        "#83c898",
+                        "#c2c2c2",
+                        "#fc653f"
+                    ],
+                    "fontBackground": false,
+                    "reverseColorOrder": false,
+                    "textMode": "value",
+                    "valueField": "ifDescr"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "2307e3b9-af4c-4ffa-aae2-987d7c010f00",
+                "layout": {
+                    "h": 10,
+                    "i": "2307e3b9-af4c-4ffa-aae2-987d7c010f00",
+                    "isResizable": true,
+                    "w": 11,
+                    "x": 13,
+                    "y": 4
+                },
+                "maxPerRow": 4,
+                "name": "端口状态",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "snmp_interface_ifOperStatus",
+                        "legend": "{{LocalIP}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "hexbin",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "barMaxWidth": null,
+                    "calc": "lastNotNull",
+                    "colorField": "__name__",
+                    "xAxisField": "ifDescr",
+                    "yAxisField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "7178cb95-1023-483e-bc27-8dffe6749524",
+                "layout": {
+                    "h": 6,
+                    "i": "7178cb95-1023-483e-bc27-8dffe6749524",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "maxPerRow": 4,
+                "name": "各个端口流量汇总",
+                "options": {
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "snmp_interface_ifInOctets",
+                        "legend": "端口IN流量",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "snmp_interface_ifOutOctets",
+                        "legend": "端口OUT流量",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "barchart",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.75,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": true,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${jieru}",
+                "id": "ccb183c2-8918-464f-beda-511dac02390d",
+                "layout": {
+                    "h": 8,
+                    "i": "ccb183c2-8918-464f-beda-511dac02390d",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 20
+                },
+                "maxPerRow": 4,
+                "name": "核心堆叠口流量汇总",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSI"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "util": "none"
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "irate(snmp_interface_ifInOctets{ifDescr=~\"Vlan256\"}[5m])",
+                        "legend": "INT",
+                        "maxDataPoints": 240,
+                        "refId": "A",
+                        "time": {
+                            "end": "now",
+                            "start": "now-6h"
+                        }
+                    },
+                    {
+                        "expr": "-irate(snmp_interface_ifOutOctets{ ifDescr=~\"Vlan256\"}[5m])",
+                        "legend": "OUT",
+                        "maxDataPoints": 240,
+                        "refId": "B",
+                        "time": {
+                            "end": "now",
+                            "start": "now-6h"
+                        }
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "defaultValue": "",
+                "definition": "prometheus",
+                "label": "数据源",
+                "name": "jieru",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "allValue": "",
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${jieru}"
+                },
+                "definition": "label_values(LocalIP)",
+                "label": "ip地址",
+                "multi": true,
+                "name": "ipadd",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${jieru}"
+                },
+                "definition": "label_values(sys_name)",
+                "label": "设备名称",
+                "multi": true,
+                "name": "sys_name",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328371021000
+}

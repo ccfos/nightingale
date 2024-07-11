@@ -11,12 +11,44 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/str"
 )
 
 // Return all, front-end search and paging
 func (rt *Router) alertRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	ars, err := models.AlertRuleGets(rt.Ctx, busiGroupId)
+	if err == nil {
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(ars); i++ {
+			ars[i].FillNotifyGroups(rt.Ctx, cache)
+			ars[i].FillSeverities()
+		}
+	}
+	ginx.NewRender(c).Data(ars, err)
+}
+
+func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
+	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	if len(gids) > 0 {
+		for _, gid := range gids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
+		me := c.MustGet("user").(*models.User)
+		if !me.IsAdmin() {
+			var err error
+			gids, err = models.MyBusiGroupIds(rt.Ctx, me.Id)
+			ginx.Dangerous(err)
+
+			if len(gids) == 0 {
+				ginx.NewRender(c).Data([]int{}, nil)
+				return
+			}
+		}
+	}
+
+	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
@@ -99,6 +131,17 @@ func (rt *Router) alertRuleAddByService(c *gin.Context) {
 	}
 	reterr := rt.alertRuleAddForService(lst, "")
 	ginx.NewRender(c).Data(reterr, nil)
+}
+
+func (rt *Router) alertRuleAddOneByService(c *gin.Context) {
+	var f models.AlertRule
+	ginx.BindJSON(c, &f)
+
+	err := f.FE2DB()
+	ginx.Dangerous(err)
+
+	err = f.Add(rt.Ctx)
+	ginx.NewRender(c).Data(f.Id, err)
 }
 
 func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string) map[string]string {
@@ -273,6 +316,20 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	ginx.NewRender(c).Data(ar, err)
 }
 
+func (rt *Router) alertRulePureGet(c *gin.Context) {
+	arid := ginx.UrlParamInt64(c, "arid")
+
+	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	ginx.Dangerous(err)
+
+	if ar == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		return
+	}
+
+	ginx.NewRender(c).Data(ar, err)
+}
+
 // pre validation before save rule
 func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new
@@ -322,4 +379,26 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message("")
+}
+
+func (rt *Router) alertRuleCallbacks(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	bussGroupIds, err := models.MyBusiGroupIds(rt.Ctx, user.Id)
+	ginx.Dangerous(err)
+
+	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, bussGroupIds)
+	ginx.Dangerous(err)
+
+	var callbacks []string
+	callbackFilter := make(map[string]struct{})
+	for i := range ars {
+		for _, callback := range ars[i].CallbacksJSON {
+			if _, ok := callbackFilter[callback]; !ok {
+				callbackFilter[callback] = struct{}{}
+				callbacks = append(callbacks, callback)
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(callbacks, nil)
 }

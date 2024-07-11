@@ -1,0 +1,39 @@
+[[instances]]
+  urls = ["http://localhost:8778/jolokia"]
+  metrics_name_prefix = "bitbucket_"
+
+  [[instances.metric]]
+    name  = "jvm_operatingsystem"
+    mbean = "java.lang:type=OperatingSystem"
+
+  [[instances.metric]]
+    name  = "jvm_runtime"
+    mbean = "java.lang:type=Runtime"
+
+  [[instances.metric]]
+    name  = "jvm_thread"
+    mbean = "java.lang:type=Threading"
+
+  [[instances.metric]]
+    name  = "jvm_memory"
+    mbean = "java.lang:type=Memory"
+
+  [[instances.metric]]
+    name  = "jvm_class_loading"
+    mbean = "java.lang:type=ClassLoading"
+
+  [[instances.metric]]
+    name  = "jvm_memory_pool"
+    mbean = "java.lang:type=MemoryPool,name=*"
+
+  [[instances.metric]]
+    name  = "webhooks"
+    mbean = "com.atlassian.webhooks:name=*"
+
+  [[instances.metric]]
+    name  = "atlassian"
+    mbean = "com.atlassian.bitbucket:name=*"
+
+  [[instances.metric]]
+    name  = "thread_pools"
+    mbean = "com.atlassian.bitbucket.thread-pools:name=*"

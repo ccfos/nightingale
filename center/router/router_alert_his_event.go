@@ -1,13 +1,16 @@
 package router
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"golang.org/x/exp/slices"
 )
 
 func getTimeRange(c *gin.Context) (stime, etime int64) {
@@ -33,7 +36,6 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	recovered := ginx.QueryInt(c, "is_recovered", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
-	busiGroupId := ginx.QueryInt64(c, "bgid", 0)
 	dsIds := queryDatasourceIds(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
@@ -52,10 +54,13 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	total, err := models.AlertHisEventTotal(rt.Ctx, prods, busiGroupId, stime, etime, severity, recovered, dsIds, cates, query)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertHisEventGets(rt.Ctx, prods, busiGroupId, stime, etime, severity, recovered, dsIds, cates, query, limit, ginx.Offset(c, limit))
+	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, query)
+	ginx.Dangerous(err)
+
+	list, err := models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered, dsIds, cates, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -78,5 +83,50 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 		ginx.Bomb(404, "No such alert event")
 	}
 
+	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
+		rt.bgroCheck(c, event.GroupId)
+	}
+
 	ginx.NewRender(c).Data(event, err)
+}
+
+func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView bool) ([]int64, error) {
+	bgid := ginx.QueryInt64(c, "bgid", 0)
+	var bgids []int64
+
+	if !eventHistoryGroupView || strings.HasPrefix(c.Request.URL.Path, "/v1") {
+		if bgid > 0 {
+			return []int64{bgid}, nil
+		}
+		return bgids, nil
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		if bgid > 0 {
+			return []int64{bgid}, nil
+		}
+		return bgids, nil
+	}
+
+	bussGroupIds, err := models.MyBusiGroupIds(ctx, user.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bussGroupIds) == 0 {
+		// 如果没查到用户属于任何业务组，需要返回一个0，否则会导致查询到全部告警历史
+		return []int64{0}, nil
+	}
+
+	if bgid > 0 && !slices.Contains(bussGroupIds, bgid) {
+		return nil, fmt.Errorf("business group ID not allowed")
+	}
+
+	if bgid > 0 {
+		// Pass filter parameters, priority to use
+		return []int64{bgid}, nil
+	}
+
+	return bussGroupIds, nil
 }

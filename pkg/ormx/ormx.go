@@ -2,12 +2,16 @@ package ormx
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
+	tklog "github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -22,15 +26,63 @@ type DBConfig struct {
 	TablePrefix  string
 }
 
+var gormLogger = logger.New(
+	&TKitLogger{tklog.GetLogger()},
+	logger.Config{
+		SlowThreshold:             2 * time.Second,
+		LogLevel:                  logger.Warn,
+		IgnoreRecordNotFoundError: false,
+		Colorful:                  true,
+	},
+)
+var logLevelMap map[string]logger.LogLevel
+
+func init() {
+	logLevelMap = make(map[string]logger.LogLevel, 8)
+	v := reflect.ValueOf(gormLogger).Elem()
+	logLevelMap[v.FieldByName("infoStr").String()] = logger.Info
+	logLevelMap[v.FieldByName("warnStr").String()] = logger.Warn
+	logLevelMap[v.FieldByName("errStr").String()] = logger.Error
+	logLevelMap[v.FieldByName("traceStr").String()] = logger.Info
+	logLevelMap[v.FieldByName("traceWarnStr").String()] = logger.Warn
+	logLevelMap[v.FieldByName("traceErrStr").String()] = logger.Error
+
+}
+
+type TKitLogger struct {
+	writer *tklog.Logger
+}
+
+func (l *TKitLogger) Printf(s string, i ...interface{}) {
+	level, ok := logLevelMap[s]
+	if !ok {
+		l.writer.Debugf(s, i...)
+	}
+	switch level {
+	case logger.Info:
+		l.writer.Infof(s, i...)
+	case logger.Warn:
+		l.writer.Warningf(s, i...)
+	case logger.Error:
+		l.writer.Errorf(s, i...)
+	default:
+		l.writer.Debugf(s, i...)
+	}
+}
+
 // New Create gorm.DB instance
 func New(c DBConfig) (*gorm.DB, error) {
 	var dialector gorm.Dialector
+	sqliteUsed := false
 
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
 		dialector = mysql.Open(c.DSN)
 	case "postgres":
 		dialector = postgres.Open(c.DSN)
+	case "sqlite":
+		dialector = sqlite.Open(c.DSN)
+		sqliteUsed = true
 	default:
 		return nil, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
@@ -40,6 +92,7 @@ func New(c DBConfig) (*gorm.DB, error) {
 			TablePrefix:   c.TablePrefix,
 			SingularTable: true,
 		},
+		Logger: gormLogger,
 	}
 
 	db, err := gorm.Open(dialector, gconfig)
@@ -56,9 +109,11 @@ func New(c DBConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	sqlDB.SetMaxIdleConns(c.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(c.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
+	if !sqliteUsed {
+		sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
+	}
 
 	return db, nil
 }
