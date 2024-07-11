@@ -18,7 +18,7 @@ var MetricDesc MetricDescType
 // GetMetricDesc , if metric is not registered, empty string will be returned
 func GetMetricDesc(lang, metric string) string {
 	var m map[string]string
-	if lang == "zh" {
+	if lang == "zh_CN" {
 		m = MetricDesc.Zh
 	} else {
 		m = MetricDesc.En
