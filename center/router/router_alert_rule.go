@@ -316,6 +316,20 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	ginx.NewRender(c).Data(ar, err)
 }
 
+func (rt *Router) alertRulePureGet(c *gin.Context) {
+	arid := ginx.UrlParamInt64(c, "arid")
+
+	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	ginx.Dangerous(err)
+
+	if ar == nil {
+		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		return
+	}
+
+	ginx.NewRender(c).Data(ar, err)
+}
+
 // pre validation before save rule
 func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new

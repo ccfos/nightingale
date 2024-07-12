@@ -76,6 +76,9 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		if len(req.GlobalLabels) > 0 {
 			lst := []string{}
 			for k, v := range req.GlobalLabels {
+				if v == "" {
+					continue
+				}
 				lst = append(lst, k+"="+v)
 			}
 			sort.Strings(lst)

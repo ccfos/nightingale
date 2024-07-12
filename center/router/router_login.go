@@ -55,12 +55,12 @@ func (rt *Router) loginPost(c *gin.Context) {
 	var err error
 	lc := rt.Sso.LDAP.Copy()
 	if lc.Enable {
-		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc)
+		user, err = ldapx.LdapLogin(rt.Ctx, f.Username, authPassWord, lc.DefaultRoles, lc.DefaultTeams, lc)
 		if err != nil {
 			logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 			var errLoginInN9e error
 			// to use n9e as the minimum guarantee for login
-			if user, errLoginInN9e = models.PassLogin(rt.Ctx, f.Username, authPassWord); errLoginInN9e != nil {
+			if user, errLoginInN9e = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord); errLoginInN9e != nil {
 				ginx.NewRender(c).Message("ldap login failed: %v; n9e login failed: %v", err, errLoginInN9e)
 				return
 			}
@@ -68,7 +68,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 			user.RolesLst = strings.Fields(user.Roles)
 		}
 	} else {
-		user, err = models.PassLogin(rt.Ctx, f.Username, authPassWord)
+		user, err = models.PassLogin(rt.Ctx, rt.Redis, f.Username, authPassWord)
 		ginx.Dangerous(err)
 	}
 

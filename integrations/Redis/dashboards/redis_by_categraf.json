@@ -1,13 +1,7 @@
 {
-    "id": 0,
-    "group_id": 0,
     "name": "Redis Overview - categraf",
-    "ident": "",
     "tags": "Redis Prometheus",
-    "create_at": 0,
-    "create_by": "",
-    "update_at": 0,
-    "update_by": "",
+    "ident": "",
     "configs": {
         "panels": [
             {
@@ -15,99 +9,234 @@
                 "id": "2ecb82c6-4d1a-41b5-8cdc-0284db16bd54",
                 "layout": {
                     "h": 1,
-                    "i": "2ecb82c6-4d1a-41b5-8cdc-0284db16bd54",
                     "w": 24,
                     "x": 0,
-                    "y": 0
+                    "y": 0,
+                    "i": "2ecb82c6-4d1a-41b5-8cdc-0284db16bd54",
+                    "isResizable": false
                 },
                 "name": "Basic Info",
                 "type": "row"
             },
             {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "textMode": "value",
-                    "textSize": {}
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "text",
                 "id": "b5acc352-a2bd-4afc-b6cd-d6db0905f807",
                 "layout": {
                     "h": 3,
-                    "i": "b5acc352-a2bd-4afc-b6cd-d6db0905f807",
-                    "w": 6,
+                    "w": 4,
                     "x": 0,
-                    "y": 1
+                    "y": 1,
+                    "i": "b5acc352-a2bd-4afc-b6cd-d6db0905f807",
+                    "isResizable": true
                 },
-                "name": "Redis Uptime",
-                "options": {
-                    "standardOptions": {
-                        "util": "humantimeSeconds"
-                    }
-                },
-                "targets": [
-                    {
-                        "expr": "min(redis_uptime_in_seconds{instance=~\"$instance\"})"
-                    }
-                ],
-                "type": "stat",
-                "version": "2.0.0"
+                "version": "3.0.0",
+                "name": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textColor": "#000000",
+                    "textDarkColor": "#FFFFFF",
+                    "bgColor": "rgba(0, 0, 0, 0)",
+                    "textSize": 12,
+                    "justifyContent": "center",
+                    "alignItems": "center",
+                    "content": "<img src=\"https://download.flashcat.cloud/ulric/redis.png\" width=128 />"
+                }
             },
             {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "textMode": "value",
-                    "textSize": {}
+                "type": "stat",
+                "id": "5eb6fbcf-4260-40d0-ad6a-540e54a1f922",
+                "layout": {
+                    "h": 3,
+                    "w": 5,
+                    "x": 4,
+                    "y": 1,
+                    "i": "2a02e1d4-2ed3-4bd2-9fa0-69bb10f13888",
+                    "isResizable": true
                 },
+                "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "redis_uptime_in_seconds{instance=~\"$instance\"}",
+                        "maxDataPoints": 240,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Redis Uptime",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)"
+                            },
+                            "match": {
+                                "to": 600
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "match": {
+                                "from": 600
+                            }
+                        }
+                    ],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 2
+                    }
+                }
+            },
+            {
+                "type": "stat",
                 "id": "8ccada5e-02f3-4efc-9b36-2a367612e4cb",
                 "layout": {
                     "h": 3,
+                    "w": 5,
+                    "x": 9,
+                    "y": 1,
                     "i": "8ccada5e-02f3-4efc-9b36-2a367612e4cb",
-                    "w": 6,
-                    "x": 6,
-                    "y": 1
+                    "isResizable": true
                 },
-                "name": "Connected Clients",
-                "options": {
-                    "standardOptions": {}
-                },
-                "targets": [
-                    {
-                        "expr": "sum(redis_connected_clients{instance=~\"$instance\"})"
-                    }
-                ],
-                "type": "stat",
-                "version": "2.0.0"
-            },
-            {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "textMode": "value",
-                    "textSize": {}
-                },
+                "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "redis_connected_clients{instance=~\"$instance\"}",
+                        "maxDataPoints": 240,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Connected Clients",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "match": {
+                                "to": 500
+                            }
+                        },
+                        {
+                            "type": "range",
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)"
+                            },
+                            "match": {
+                                "from": 500
+                            }
+                        }
+                    ],
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "stat",
                 "id": "716dc7e7-c9ec-4195-93f6-db1c572ae8b0",
                 "layout": {
                     "h": 3,
+                    "w": 5,
+                    "x": 14,
+                    "y": 1,
                     "i": "716dc7e7-c9ec-4195-93f6-db1c572ae8b0",
-                    "w": 6,
-                    "x": 12,
-                    "y": 1
+                    "isResizable": true
                 },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "redis_used_memory{instance=~\"$instance\"}",
+                        "maxDataPoints": 240,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
                 "name": "Memory Used",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "vertical"
+                },
                 "options": {
-                    "standardOptions": {
-                        "decimals": 0,
-                        "util": "bytesIEC"
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
                     },
                     "valueMappings": [
                         {
@@ -128,384 +257,648 @@
                             },
                             "type": "range"
                         }
-                    ]
-                },
-                "targets": [
-                    {
-                        "expr": "redis_used_memory{instance=~\"$instance\"}"
+                    ],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
                     }
-                ],
-                "type": "stat",
-                "version": "2.0.0"
+                }
             },
             {
-                "custom": {
-                    "calc": "lastNotNull",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "textMode": "value",
-                    "textSize": {}
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "stat",
                 "id": "c6948161-db07-42df-beb1-765ee9c071a9",
                 "layout": {
                     "h": 3,
+                    "w": 5,
+                    "x": 19,
+                    "y": 1,
                     "i": "c6948161-db07-42df-beb1-765ee9c071a9",
-                    "w": 6,
-                    "x": 18,
-                    "y": 1
+                    "isResizable": true
                 },
-                "name": "Max Memory Limit",
-                "options": {
-                    "standardOptions": {
-                        "util": "bytesIEC"
-                    }
-                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "redis_maxmemory{instance=~\"$instance\"}"
+                        "expr": "redis_maxmemory{instance=~\"$instance\"}",
+                        "maxDataPoints": 240,
+                        "legend": "{{instance}}"
                     }
                 ],
-                "type": "stat",
-                "version": "2.0.0"
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Max Memory Limit",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {},
+                    "orientation": "vertical"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    }
+                }
             },
             {
                 "collapsed": true,
                 "id": "bd54cf4f-1abb-4945-8aab-f89aec16daef",
                 "layout": {
                     "h": 1,
-                    "i": "bd54cf4f-1abb-4945-8aab-f89aec16daef",
                     "w": 24,
                     "x": 0,
-                    "y": 4
+                    "y": 4,
+                    "i": "bd54cf4f-1abb-4945-8aab-f89aec16daef",
+                    "isResizable": false
                 },
                 "name": "Commands",
                 "type": "row"
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "off"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "timeseries",
                 "id": "3d5f8c4e-0ddf-4d68-9f6d-2cc57d864a8e",
                 "layout": {
-                    "h": 7,
-                    "i": "3d5f8c4e-0ddf-4d68-9f6d-2cc57d864a8e",
+                    "h": 5,
                     "w": 8,
                     "x": 0,
-                    "y": 5
+                    "y": 5,
+                    "i": "3d5f8c4e-0ddf-4d68-9f6d-2cc57d864a8e",
+                    "isResizable": true
                 },
-                "name": "Commands Executed / sec",
-                "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    }
-                },
-                "targets": [
-                    {
-                        "expr": "rate(redis_total_commands_processed{instance=~\"$instance\"}[5m])"
-                    }
-                ],
-                "type": "timeseries",
-                "version": "2.0.0"
-            },
-            {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "noraml"
-                },
+                "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
-                "id": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
-                "layout": {
-                    "h": 7,
-                    "i": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
-                    "w": 8,
-                    "x": 8,
-                    "y": 5
-                },
-                "name": "Hits / Misses per Sec",
+                "targets": [
+                    {
+                        "expr": "rate(redis_total_commands_processed{instance=~\"$instance\"}[5m])",
+                        "maxDataPoints": 240,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Commands Executed / sec",
+                "maxPerRow": 4,
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
                     "tooltip": {
                         "mode": "all",
                         "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
                     }
                 },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5,
+                    "i": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
                         "expr": "irate(redis_keyspace_hits{instance=~\"$instance\"}[5m])",
-                        "legend": "hits"
+                        "legend": "{{instance}} hits",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "irate(redis_keyspace_misses{instance=~\"$instance\"}[5m])",
-                        "legend": "misses"
+                        "legend": "{{instance}} misses",
+                        "maxDataPoints": 240
                     }
                 ],
-                "type": "timeseries",
-                "version": "2.0.0"
-            },
-            {
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Hits / Misses per Sec",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
                 "custom": {
                     "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
                     "fillOpacity": 0.3,
                     "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "off"
+                    "stack": "noraml",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
                 },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
                 "id": "3c83cd35-585c-4070-a210-1f17345f13f4",
                 "layout": {
-                    "h": 7,
-                    "i": "3c83cd35-585c-4070-a210-1f17345f13f4",
+                    "h": 5,
                     "w": 8,
                     "x": 16,
-                    "y": 5
+                    "y": 5,
+                    "i": "3c83cd35-585c-4070-a210-1f17345f13f4",
+                    "isResizable": true
                 },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "topk(5, irate(redis_cmdstat_calls{instance=~\"$instance\"}[1m]))",
+                        "legend": "{{instance}} {{command}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
                 "name": "Top Commands",
+                "maxPerRow": 4,
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
                     "tooltip": {
                         "mode": "all",
                         "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
                     }
                 },
-                "targets": [
-                    {
-                        "expr": "topk(5, irate(redis_cmdstat_calls{instance=~\"$instance\"} [1m]))",
-                        "legend": "{{command}}"
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
                     }
-                ],
-                "type": "timeseries",
-                "version": "2.0.0"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             },
             {
                 "collapsed": true,
                 "id": "1ea61073-a46d-4d7c-b072-fcdcbc5ac084",
                 "layout": {
                     "h": 1,
-                    "i": "1ea61073-a46d-4d7c-b072-fcdcbc5ac084",
                     "w": 24,
                     "x": 0,
-                    "y": 12
+                    "y": 10,
+                    "i": "1ea61073-a46d-4d7c-b072-fcdcbc5ac084",
+                    "isResizable": false
                 },
                 "name": "Keys",
                 "type": "row"
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "off"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "timeseries",
                 "id": "b2b4451c-4f8a-438a-8c48-69c95c68361e",
                 "layout": {
-                    "h": 7,
-                    "i": "b2b4451c-4f8a-438a-8c48-69c95c68361e",
+                    "h": 5,
                     "w": 8,
                     "x": 0,
-                    "y": 13
+                    "y": 11,
+                    "i": "b2b4451c-4f8a-438a-8c48-69c95c68361e",
+                    "isResizable": true
                 },
-                "name": "Total Items per DB",
-                "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "desc"
-                    }
-                },
-                "targets": [
-                    {
-                        "expr": "sum (redis_keyspace_keys{instance=~\"$instance\"}) by (db)",
-                        "legend": "{{db}}"
-                    }
-                ],
-                "type": "timeseries",
-                "version": "2.0.0"
-            },
-            {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "off"
-                },
+                "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
-                "id": "894b9beb-e764-441c-ae04-13e5dbbb901d",
-                "layout": {
-                    "h": 7,
-                    "i": "894b9beb-e764-441c-ae04-13e5dbbb901d",
-                    "w": 8,
-                    "x": 8,
-                    "y": 13
-                },
-                "name": "Expired / Evicted",
+                "targets": [
+                    {
+                        "expr": "sum(redis_keyspace_keys{instance=~\"$instance\"}) by (instance, db)",
+                        "legend": "{{instance}} {{db}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Items per DB",
+                "maxPerRow": 4,
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
                     "tooltip": {
                         "mode": "all",
                         "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
                     }
                 },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "894b9beb-e764-441c-ae04-13e5dbbb901d",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 11,
+                    "i": "894b9beb-e764-441c-ae04-13e5dbbb901d",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
                         "expr": "sum(rate(redis_expired_keys{instance=~\"$instance\"}[5m])) by (instance)",
-                        "legend": "expired"
+                        "legend": "{{instance}} expired",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "sum(rate(redis_evicted_keys{instance=~\"$instance\"}[5m])) by (instance)",
-                        "legend": "evicted"
+                        "legend": "{{instance}} evicted",
+                        "maxDataPoints": 240
                     }
                 ],
-                "type": "timeseries",
-                "version": "2.0.0"
-            },
-            {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "noraml"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
-                "id": "f721a641-28c7-4e82-a37c-ec17704a0c57",
-                "layout": {
-                    "h": 7,
-                    "i": "f721a641-28c7-4e82-a37c-ec17704a0c57",
-                    "w": 8,
-                    "x": 16,
-                    "y": 13
-                },
-                "name": "Expiring vs Not-Expiring Keys",
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Expired / Evicted",
+                "maxPerRow": 4,
                 "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {},
                     "tooltip": {
                         "mode": "all",
-                        "sort": "none"
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
                     }
                 },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "f721a641-28c7-4e82-a37c-ec17704a0c57",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 11,
+                    "i": "f721a641-28c7-4e82-a37c-ec17704a0c57",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
                         "expr": "sum(redis_keyspace_keys{instance=~\"$instance\"}) - sum(redis_keyspace_expires{instance=~\"$instance\"}) ",
-                        "legend": "not expiring"
+                        "legend": "{{instance}} not expiring",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "sum(redis_keyspace_expires{instance=~\"$instance\"}) ",
-                        "legend": "expiring"
+                        "legend": "{{instance}} expiring",
+                        "maxDataPoints": 240
                     }
                 ],
-                "type": "timeseries",
-                "version": "2.0.0"
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Expiring vs Not-Expiring Keys",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "noraml",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             },
             {
                 "collapsed": true,
                 "id": "60ff41ed-9d41-40ee-a13b-c968f3ca49d0",
                 "layout": {
                     "h": 1,
-                    "i": "60ff41ed-9d41-40ee-a13b-c968f3ca49d0",
                     "w": 24,
                     "x": 0,
-                    "y": 20
+                    "y": 16,
+                    "i": "60ff41ed-9d41-40ee-a13b-c968f3ca49d0",
+                    "isResizable": false
                 },
                 "name": "Network",
                 "type": "row"
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "stack": "off"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
+                "type": "timeseries",
                 "id": "1841950c-e867-4a62-b846-78754dc0e34d",
                 "layout": {
                     "h": 7,
-                    "i": "1841950c-e867-4a62-b846-78754dc0e34d",
                     "w": 24,
                     "x": 0,
-                    "y": 21
+                    "y": 17,
+                    "i": "1841950c-e867-4a62-b846-78754dc0e34d",
+                    "isResizable": true
                 },
-                "name": "Network I/O",
-                "options": {
-                    "legend": {
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "decimals": 2,
-                        "util": "bytesIEC"
-                    },
-                    "thresholds": {},
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "desc"
-                    }
-                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
                         "expr": "sum(rate(redis_total_net_input_bytes{instance=~\"$instance\"}[5m]))",
-                        "legend": "input"
+                        "legend": "input",
+                        "maxDataPoints": 240
                     },
                     {
                         "expr": "sum(rate(redis_total_net_output_bytes{instance=~\"$instance\"}[5m]))",
-                        "legend": "output"
+                        "legend": "output",
+                        "maxDataPoints": 240
                     }
                 ],
-                "type": "timeseries",
-                "version": "2.0.0"
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Network I/O",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "behaviour": "showItem"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             }
         ],
         "var": [
@@ -515,22 +908,19 @@
                 "type": "datasource"
             },
             {
+                "name": "instance",
+                "type": "query",
+                "hide": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${prom}"
                 },
                 "definition": "label_values(redis_uptime_in_seconds,instance)",
-                "name": "instance",
-                "selected": "10.206.0.16:6379",
-                "type": "query"
+                "multi": true,
+                "allOption": true
             }
         ],
         "version": "3.0.0"
     },
-    "public": 0,
-    "public_cate": 0,
-    "bgids": null,
-    "built_in": 0,
-    "hide": 0,
     "uuid": 1717556328355498000
 }

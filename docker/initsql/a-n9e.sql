@@ -397,6 +397,7 @@ CREATE TABLE `recording_rule` (
     `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
+    `cron_pattern` varchar(255) default '' comment 'cron pattern',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
     `query_configs` text not null comment 'query configs',
     `create_at` bigint default '0',
