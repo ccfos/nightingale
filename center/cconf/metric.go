@@ -18,20 +18,28 @@ var MetricDesc MetricDescType
 // GetMetricDesc , if metric is not registered, empty string will be returned
 func GetMetricDesc(lang, metric string) string {
 	var m map[string]string
-	if lang == "zh" {
-		m = MetricDesc.Zh
-	} else {
+
+	switch lang {
+	case "en":
 		m = MetricDesc.En
+	default:
+		m = MetricDesc.Zh
 	}
+
 	if m != nil {
-		if desc, has := m[metric]; has {
+		if desc, ok := m[metric]; ok {
 			return desc
 		}
 	}
 
-	return MetricDesc.CommonDesc[metric]
-}
+	if MetricDesc.CommonDesc != nil {
+		if desc, ok := MetricDesc.CommonDesc[metric]; ok {
+			return desc
+		}
+	}
 
+	return ""
+}
 func LoadMetricsYaml(configDir, metricsYamlFile string) error {
 	fp := metricsYamlFile
 	if fp == "" {

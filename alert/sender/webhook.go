@@ -2,6 +2,7 @@ package sender
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -46,10 +47,15 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 		}
 	}
-
-	// todo add skip verify
+	insecureSkipVerify := false
+	if webhook != nil {
+		insecureSkipVerify = webhook.SkipVerify
+	}
 	client := http.Client{
 		Timeout: time.Duration(conf.Timeout) * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
+		},
 	}
 
 	stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
@@ -85,7 +91,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 				break
 			}
 			retryCount++
-			time.Sleep(time.Second * 10 * time.Duration(retryCount))
+			time.Sleep(time.Minute * 1 * time.Duration(retryCount))
 		}
 	}
 }
