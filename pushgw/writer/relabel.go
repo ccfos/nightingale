@@ -3,7 +3,6 @@ package writer
 import (
 	"crypto/md5"
 	"fmt"
-	"log"
 	"regexp"
 	"sort"
 	"strings"
@@ -99,6 +98,10 @@ func relabel(lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
 	regx := cfg.RegexCompiled
 	if regx == nil {
 		regx = compileRegex(cfg.Regex)
+	}
+
+	if regx == nil {
+		return lset
 	}
 
 	val := strings.Join(values, cfg.Separator)
@@ -231,8 +234,10 @@ func handleDropIfEqual(lb *LabelBuilder, cfg *pconf.RelabelConfig, lset []prompb
 func compileRegex(expr string) *regexp.Regexp {
 	regex, err := regexp.Compile(expr)
 	if err != nil {
-		log.Fatalln("failed to compile regexp:", expr, "error:", err)
+		logger.Error("failed to compile regexp:", expr, "error:", err)
+		return nil
 	}
+
 	return regex
 }
 
