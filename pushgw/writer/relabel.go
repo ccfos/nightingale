@@ -150,20 +150,6 @@ func relabel(lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
 	return lb.labels()
 }
 
-func handleDrop(lb *LabelBuilder, regx *regexp.Regexp, val string) []prompb.Label {
-	if regx.MatchString(val) {
-		return nil
-	}
-	return lb.labels()
-}
-
-func handleKeep(lb *LabelBuilder, regx *regexp.Regexp, val string) []prompb.Label {
-	if !regx.MatchString(val) {
-		return nil
-	}
-	return lb.labels()
-}
-
 func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConfig, val string, lset []prompb.Label) []prompb.Label {
 	// Check the "if" condition
 	if cfg.If != "" {
