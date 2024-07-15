@@ -268,7 +268,7 @@ func handleDropIfEqual(lb *LabelBuilder, cfg *pconf.RelabelConfig, lset []prompb
 }
 
 func compileRegex(expr string) *regexp.Regexp {
-	regex, err := regexp.Compile("^" + expr + "$")
+	regex, err := regexp.Compile(expr)
 	if err != nil {
 		log.Fatalln("failed to compile regexp:", expr, "error:", err)
 	}

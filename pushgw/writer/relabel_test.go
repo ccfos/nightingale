@@ -55,12 +55,11 @@ func TestProcess(t *testing.T) {
 			labels: []prompb.Label{{Name: "instance", Value: "bar:123"}},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "replace",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "([^:]+):.+",
-					TargetLabel:   "instance",
-					Replacement:   "$1",
-					RegexCompiled: regexp.MustCompile("([^:]+):.+"),
+					Action:       "replace",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "([^:]+):.+",
+					TargetLabel:  "instance",
+					Replacement:  "$1",
 				},
 			},
 			expected: []prompb.Label{{Name: "instance", Value: "bar"}},
@@ -72,7 +71,7 @@ func TestProcess(t *testing.T) {
 				{
 					Action:       "replace",
 					SourceLabels: model.LabelNames{"instance"},
-					Regex:        ".*:([0-9]+)$",
+					Regex:        ":([0-9]+)$",
 					TargetLabel:  "port",
 					Replacement:  "$1",
 				},
@@ -85,12 +84,11 @@ func TestProcess(t *testing.T) {
 			labels: []prompb.Label{{Name: "__name__", Value: "foo_suffix"}},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "replace",
-					SourceLabels:  model.LabelNames{"__name__"},
-					Regex:         "(.+)_suffix",
-					TargetLabel:   "__name__",
-					Replacement:   "prefix_$1",
-					RegexCompiled: regexp.MustCompile("(.+)_suffix"),
+					Action:       "replace",
+					SourceLabels: model.LabelNames{"__name__"},
+					Regex:        "(.+)_suffix",
+					TargetLabel:  "__name__",
+					Replacement:  "prefix_$1",
 				},
 			},
 			expected: []prompb.Label{{Name: "__name__", Value: "prefix_foo"}},
@@ -106,9 +104,8 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "labeldrop",
-					Regex:         "foo.+",
-					RegexCompiled: regexp.MustCompile("foo.+"),
+					Action: "labeldrop",
+					Regex:  "foo.+",
 				},
 			},
 			expected: []prompb.Label{
@@ -126,9 +123,8 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "labelkeep",
-					Regex:         "foo.+",
-					RegexCompiled: regexp.MustCompile("foo.+"),
+					Action: "labelkeep",
+					Regex:  "foo.+",
 				},
 			},
 			expected: []prompb.Label{
@@ -145,12 +141,11 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "replace",
-					SourceLabels:  model.LabelNames{"foo"},
-					Regex:         "bar",
-					TargetLabel:   "foo",
-					Replacement:   "",
-					RegexCompiled: regexp.MustCompile("bar"),
+					Action:       "replace",
+					SourceLabels: model.LabelNames{"foo"},
+					Regex:        "bar",
+					TargetLabel:  "foo",
+					Replacement:  "",
 				},
 			},
 			expected: []prompb.Label{
@@ -165,10 +160,9 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "drop",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "foobar.+",
-					RegexCompiled: regexp.MustCompile("foobar.+"),
+					Action:       "drop",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "foobar.+",
 				},
 			},
 			expected: nil,
@@ -182,10 +176,9 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "drop",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "foobar.+",
-					RegexCompiled: regexp.MustCompile("foobar.+"),
+					Action:       "drop",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "foobar.+",
 				},
 			},
 			expected: nil,
@@ -197,10 +190,9 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "drop",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "foobar.+",
-					RegexCompiled: regexp.MustCompile("foobar.+"),
+					Action:       "drop",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "foobar.+",
 				},
 			},
 			expected: []prompb.Label{
@@ -215,10 +207,9 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "drop",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "foobar.+",
-					RegexCompiled: regexp.MustCompile("foobar.+"),
+					Action:       "drop",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "foobar.+",
 				},
 			},
 			expected: []prompb.Label{
@@ -234,11 +225,10 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "drop",
-					SourceLabels:  model.LabelNames{"job", "instance"},
-					Regex:         "foo;bar",
-					Separator:     ";",
-					RegexCompiled: regexp.MustCompile("foo;bar"),
+					Action:       "drop",
+					SourceLabels: model.LabelNames{"job", "instance"},
+					Regex:        "foo;bar",
+					Separator:    ";",
 				},
 			},
 			expected: nil,
@@ -284,10 +274,9 @@ func TestProcess(t *testing.T) {
 			},
 			cfgs: []*pconf.RelabelConfig{
 				{
-					Action:        "labelmap",
-					Regex:         "foo_(.+)",
-					Replacement:   "bar_$1",
-					RegexCompiled: regexp.MustCompile("foo_(.+)"),
+					Action:      "labelmap",
+					Regex:       "foo_(.+)",
+					Replacement: "bar_$1",
 				},
 			},
 			expected: []prompb.Label{
@@ -330,12 +319,11 @@ func TestProcess(t *testing.T) {
 					Replacement: "bar",
 				},
 				{
-					Action:        "replace",
-					SourceLabels:  model.LabelNames{"instance"},
-					Regex:         "([^:]+):.*",
-					TargetLabel:   "instance",
-					Replacement:   "$1",
-					RegexCompiled: regexp.MustCompile("([^:]+):.*"),
+					Action:       "replace",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        "([^:]+):.*",
+					TargetLabel:  "instance",
+					Replacement:  "$1",
 				},
 			},
 			expected: []prompb.Label{
