@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
@@ -105,27 +106,45 @@ func relabel(lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
 
 	switch cfg.Action {
 	case Drop:
-		return handleDrop(lb, regx, val)
+		if regx.MatchString(val) {
+			return nil
+		}
 	case Keep:
-		return handleKeep(lb, regx, val)
+		if !regx.MatchString(val) {
+			return nil
+		}
 	case Replace:
 		return handleReplace(lb, regx, cfg, val, lset)
 	case Lowercase:
-		return handleLowercase(lb, cfg, val)
+		lb.set(cfg.TargetLabel, strings.ToLower(val))
 	case Uppercase:
-		return handleUppercase(lb, cfg, val)
+		lb.set(cfg.TargetLabel, strings.ToUpper(val))
 	case HashMod:
-		return handleHashMod(lb, cfg, val)
+		mod := sum64(md5.Sum([]byte(val))) % cfg.Modulus
+		lb.set(cfg.TargetLabel, fmt.Sprintf("%d", mod))
 	case LabelMap:
-		return handleLabelMap(lb, regx, lset, cfg)
+		for _, l := range lset {
+			if regx.MatchString(l.Name) {
+				res := regx.ReplaceAllString(l.Name, cfg.Replacement)
+				lb.set(res, l.Value)
+			}
+		}
 	case LabelDrop:
-		return handleLabelDrop(lb, regx, lset)
+		for _, l := range lset {
+			if regx.MatchString(l.Name) {
+				lb.del(l.Name)
+			}
+		}
 	case LabelKeep:
-		return handleLabelKeep(lb, regx, lset)
+		for _, l := range lset {
+			if !regx.MatchString(l.Name) {
+				lb.del(l.Name)
+			}
+		}
 	case DropIfEqual:
 		return handleDropIfEqual(lb, cfg, lset)
 	default:
-		panic(fmt.Errorf("relabel: unknown relabel action type %q", cfg.Action))
+		logger.Errorf("relabel: unknown relabel action type %q", cfg.Action)
 	}
 
 	return lb.labels()
@@ -171,7 +190,7 @@ func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConf
 		return lb.labels()
 	}
 
-	// 如果 Replacement 为空，则处理多个标签的情况（用已有标签构建新标签）
+	// 如果 Replacement 为空, separator 不为空, 则用已有标签构建新标签
 	if cfg.Replacement == "" && len(cfg.SourceLabels) > 1 {
 		lb.set(cfg.TargetLabel, val)
 		return lb.labels()
@@ -191,7 +210,7 @@ func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConf
 		}
 
 		res := regx.ExpandString([]byte{}, cfg.Replacement, val, indexes)
-		if string(res) == "" {
+		if len(res) == 0 {
 			lb.del(cfg.TargetLabel)
 		} else {
 			lb.set(string(target), string(res))
@@ -202,50 +221,6 @@ func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConf
 
 	// 默认情况，直接设置目标标签值
 	lb.set(cfg.TargetLabel, cfg.Replacement)
-	return lb.labels()
-}
-
-func handleLowercase(lb *LabelBuilder, cfg *pconf.RelabelConfig, val string) []prompb.Label {
-	lb.set(cfg.TargetLabel, strings.ToLower(val))
-	return lb.labels()
-}
-
-func handleUppercase(lb *LabelBuilder, cfg *pconf.RelabelConfig, val string) []prompb.Label {
-	lb.set(cfg.TargetLabel, strings.ToUpper(val))
-	return lb.labels()
-}
-
-func handleHashMod(lb *LabelBuilder, cfg *pconf.RelabelConfig, val string) []prompb.Label {
-	mod := sum64(md5.Sum([]byte(val))) % cfg.Modulus
-	lb.set(cfg.TargetLabel, fmt.Sprintf("%d", mod))
-	return lb.labels()
-}
-
-func handleLabelMap(lb *LabelBuilder, regx *regexp.Regexp, lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
-	for _, l := range lset {
-		if regx.MatchString(l.Name) {
-			res := regx.ReplaceAllString(l.Name, cfg.Replacement)
-			lb.set(res, l.Value)
-		}
-	}
-	return lb.labels()
-}
-
-func handleLabelDrop(lb *LabelBuilder, regx *regexp.Regexp, lset []prompb.Label) []prompb.Label {
-	for _, l := range lset {
-		if regx.MatchString(l.Name) {
-			lb.del(l.Name)
-		}
-	}
-	return lb.labels()
-}
-
-func handleLabelKeep(lb *LabelBuilder, regx *regexp.Regexp, lset []prompb.Label) []prompb.Label {
-	for _, l := range lset {
-		if !regx.MatchString(l.Name) {
-			lb.del(l.Name)
-		}
-	}
 	return lb.labels()
 }
 
