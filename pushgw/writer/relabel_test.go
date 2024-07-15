@@ -65,6 +65,20 @@ func TestProcess(t *testing.T) {
 			},
 			expected: []prompb.Label{{Name: "instance", Value: "bar"}},
 		},
+		{
+			name:   "Rewriting existing label",
+			labels: []prompb.Label{{Name: "instance", Value: "bar:123"}},
+			cfgs: []*pconf.RelabelConfig{
+				{
+					Action:       "replace",
+					SourceLabels: model.LabelNames{"instance"},
+					Regex:        ".*:([0-9]+)$",
+					TargetLabel:  "port",
+					Replacement:  "$1",
+				},
+			},
+			expected: []prompb.Label{{Name: "port", Value: "123"}, {Name: "instance", Value: "bar:123"}},
+		},
 		// 4. 更新度量标准名称 (Updating metric name)
 		{
 			name:   "Updating metric name",

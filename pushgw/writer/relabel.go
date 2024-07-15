@@ -165,7 +165,7 @@ func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConf
 		}
 	}
 
-	// 如果没有source_labels，直接设置标签（新增标签）
+	// 如果没有 source_labels，直接设置标签（新增标签）
 	if len(cfg.SourceLabels) == 0 {
 		lb.set(cfg.TargetLabel, cfg.Replacement)
 		return lb.labels()
@@ -183,17 +183,20 @@ func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConf
 		if indexes == nil {
 			return lb.labels()
 		}
+
 		target := model.LabelName(cfg.TargetLabel)
 		if !target.IsValid() {
 			lb.del(cfg.TargetLabel)
 			return lb.labels()
 		}
+
 		res := regx.ExpandString([]byte{}, cfg.Replacement, val, indexes)
 		if string(res) == "" {
 			lb.del(cfg.TargetLabel)
 		} else {
 			lb.set(string(target), string(res))
 		}
+
 		return lb.labels()
 	}
 
