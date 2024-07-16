@@ -154,25 +154,6 @@ func relabel(lset []prompb.Label, cfg *pconf.RelabelConfig) []prompb.Label {
 }
 
 func handleReplace(lb *LabelBuilder, regx *regexp.Regexp, cfg *pconf.RelabelConfig, val string, lset []prompb.Label) []prompb.Label {
-	// Check the "if" condition
-	if cfg.If != "" {
-		if cfg.IfRegex == nil {
-			cfg.IfRegex = compileRegex(cfg.If)
-		}
-		matched := false
-		// 将每个标签拼接成字符串进行匹配
-		for _, l := range lset {
-			labelStr := fmt.Sprintf("%s=\"%s\"", l.Name, l.Value)
-			if cfg.IfRegex.MatchString(labelStr) {
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return lset
-		}
-	}
-
 	// 如果没有 source_labels，直接设置标签（新增标签）
 	if len(cfg.SourceLabels) == 0 {
 		lb.set(cfg.TargetLabel, cfg.Replacement)
