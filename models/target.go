@@ -119,9 +119,15 @@ func TargetTotal(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, d
 	return Count(buildTargetWhere(ctx, bgids, dsIds, query, downtime))
 }
 
-func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64, limit, offset int) ([]*Target, error) {
+func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64, limit, offset int,
+	order string, desc bool) ([]*Target, error) {
 	var lst []*Target
-	err := buildTargetWhere(ctx, bgids, dsIds, query, downtime).Order("ident").Limit(limit).Offset(offset).Find(&lst).Error
+	if desc {
+		order += " desc"
+	} else {
+		order += " asc"
+	}
+	err := buildTargetWhere(ctx, bgids, dsIds, query, downtime).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
