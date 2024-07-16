@@ -85,6 +85,56 @@ func TargetDel(ctx *ctx.Context, idents []string) error {
 	return DB(ctx).Where("ident in ?", idents).Delete(new(Target)).Error
 }
 
+type buildTargetWhereOption func(ctx *gorm.DB) *gorm.DB
+
+func buildTargetWhereWithBgids(bgids []int64) buildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		if len(bgids) > 0 {
+			session = session.Where("group_id in (?)", bgids)
+		}
+		return session
+	}
+}
+
+func buildTargetWhereWithDsIds(dsIds []int64) buildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		if len(dsIds) > 0 {
+			session = session.Where("datasource_id in (?)", dsIds)
+		}
+		return session
+	}
+}
+
+func buildTargetWhereWithQuery(query string) buildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		if query != "" {
+			arr := strings.Fields(query)
+			for i := 0; i < len(arr); i++ {
+				q := "%" + arr[i] + "%"
+				session = session.Where("ident like ? or note like ? or tags like ?", q, q, q)
+			}
+		}
+		return session
+	}
+}
+
+func buildTargetWhereWithDowntime(downtime int64) buildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		if downtime > 0 {
+			session = session.Where("update_at < ?", time.Now().Unix()-downtime)
+		}
+		return session
+	}
+}
+
+func buildTargetWhereWithOption(ctx *ctx.Context, options ...buildTargetWhereOption) *gorm.DB {
+	session := DB(ctx).Model(&Target{})
+	for _, opt := range options {
+		session = opt(session)
+	}
+	return session
+}
+
 func buildTargetWhere(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 
