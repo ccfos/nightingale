@@ -91,7 +91,7 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 				break
 			}
 			retryCount++
-			time.Sleep(time.Second * 10 * time.Duration(retryCount))
+			time.Sleep(time.Minute * 1 * time.Duration(retryCount))
 		}
 	}
 }
