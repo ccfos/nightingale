@@ -85,7 +85,7 @@ func TargetDel(ctx *ctx.Context, idents []string) error {
 	return DB(ctx).Where("ident in ?", idents).Delete(new(Target)).Error
 }
 
-type buildTargetWhereOption func(ctx *gorm.DB) *gorm.DB
+type buildTargetWhereOption func(session *gorm.DB) *gorm.DB
 
 func buildTargetWhereWithBgids(bgids []int64) buildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
