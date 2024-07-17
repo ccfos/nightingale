@@ -211,6 +211,20 @@ func (e *Consumer) relabel(event *models.AlertCurEvent) {
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
 
+	for i := 0; i < len(rule.EventRelabelConfig); i++ {
+		if rule.EventRelabelConfig[i].Replacement == "" {
+			rule.EventRelabelConfig[i].Replacement = "$1"
+		}
+
+		if rule.EventRelabelConfig[i].Separator == "" {
+			rule.EventRelabelConfig[i].Separator = ";"
+		}
+
+		if rule.EventRelabelConfig[i].Regex == "" {
+			rule.EventRelabelConfig[i].Regex = "(.*)"
+		}
+	}
+
 	// relabel process
 	relabels := writer.Process(labels, rule.EventRelabelConfig...)
 	event.TagsJSON = make([]string, len(relabels))

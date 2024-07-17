@@ -430,6 +430,20 @@ func (rt *Router) relabelTest(c *gin.Context) {
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
 
+	for i := 0; i < len(f.Configs); i++ {
+		if f.Configs[i].Replacement == "" {
+			f.Configs[i].Replacement = "$1"
+		}
+
+		if f.Configs[i].Separator == "" {
+			f.Configs[i].Separator = ";"
+		}
+
+		if f.Configs[i].Regex == "" {
+			f.Configs[i].Regex = "(.*)"
+		}
+	}
+
 	relabels := writer.Process(labels, f.Configs...)
 
 	var tags []string
