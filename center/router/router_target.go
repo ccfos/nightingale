@@ -65,12 +65,17 @@ func (rt *Router) targetGets(c *gin.Context) {
 			bgids = append(bgids, 0)
 		}
 	}
-
-	total, err := models.TargetTotal(rt.Ctx, bgids, dsIds, query, downtime)
+	options := []models.BuildTargetWhereOption{
+		models.BuildTargetWhereWithBgids(bgids),
+		models.BuildTargetWhereWithDsIds(dsIds),
+		models.BuildTargetWhereWithQuery(query),
+		models.BuildTargetWhereWithDowntime(downtime),
+	}
+	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
 
-	list, err := models.TargetGets(rt.Ctx, bgids, dsIds, query, downtime, limit,
-		ginx.Offset(c, limit), order, desc)
+	list, err := models.TargetGets(rt.Ctx, limit,
+		ginx.Offset(c, limit), order, desc, options...)
 	ginx.Dangerous(err)
 
 	if err == nil {

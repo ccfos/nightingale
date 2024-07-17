@@ -85,9 +85,9 @@ func TargetDel(ctx *ctx.Context, idents []string) error {
 	return DB(ctx).Where("ident in ?", idents).Delete(new(Target)).Error
 }
 
-type buildTargetWhereOption func(session *gorm.DB) *gorm.DB
+type BuildTargetWhereOption func(session *gorm.DB) *gorm.DB
 
-func buildTargetWhereWithBgids(bgids []int64) buildTargetWhereOption {
+func BuildTargetWhereWithBgids(bgids []int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if len(bgids) > 0 {
 			session = session.Where("group_id in (?)", bgids)
@@ -96,7 +96,7 @@ func buildTargetWhereWithBgids(bgids []int64) buildTargetWhereOption {
 	}
 }
 
-func buildTargetWhereWithDsIds(dsIds []int64) buildTargetWhereOption {
+func BuildTargetWhereWithDsIds(dsIds []int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if len(dsIds) > 0 {
 			session = session.Where("datasource_id in (?)", dsIds)
@@ -105,7 +105,7 @@ func buildTargetWhereWithDsIds(dsIds []int64) buildTargetWhereOption {
 	}
 }
 
-func buildTargetWhereWithQuery(query string) buildTargetWhereOption {
+func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if query != "" {
 			arr := strings.Fields(query)
@@ -118,7 +118,7 @@ func buildTargetWhereWithQuery(query string) buildTargetWhereOption {
 	}
 }
 
-func buildTargetWhereWithDowntime(downtime int64) buildTargetWhereOption {
+func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if downtime > 0 {
 			session = session.Where("update_at < ?", time.Now().Unix()-downtime)
@@ -127,7 +127,7 @@ func buildTargetWhereWithDowntime(downtime int64) buildTargetWhereOption {
 	}
 }
 
-func buildTargetWhereWithOption(ctx *ctx.Context, options ...buildTargetWhereOption) *gorm.DB {
+func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 	for _, opt := range options {
 		session = opt(session)
@@ -135,49 +135,18 @@ func buildTargetWhereWithOption(ctx *ctx.Context, options ...buildTargetWhereOpt
 	return session
 }
 
-func buildTargetWhere(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64) *gorm.DB {
-	session := DB(ctx).Model(&Target{})
-
-	if len(bgids) > 0 {
-		session = session.Where("group_id in (?)", bgids)
-	}
-
-	if len(dsIds) > 0 {
-		session = session.Where("datasource_id in (?)", dsIds)
-	}
-
-	if downtime > 0 {
-		session = session.Where("update_at < ?", time.Now().Unix()-downtime)
-	}
-
-	if query != "" {
-		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
-			q := "%" + arr[i] + "%"
-			session = session.Where("ident like ? or note like ? or tags like ?", q, q, q)
-		}
-	}
-
-	return session
+func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, error) {
+	return Count(buildTargetWhere(ctx, options...))
 }
 
-func TargetTotalCount(ctx *ctx.Context) (int64, error) {
-	return Count(DB(ctx).Model(new(Target)))
-}
-
-func TargetTotal(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64) (int64, error) {
-	return Count(buildTargetWhere(ctx, bgids, dsIds, query, downtime))
-}
-
-func TargetGets(ctx *ctx.Context, bgids []int64, dsIds []int64, query string, downtime int64, limit, offset int,
-	order string, desc bool) ([]*Target, error) {
+func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
 	var lst []*Target
 	if desc {
 		order += " desc"
 	} else {
 		order += " asc"
 	}
-	err := buildTargetWhere(ctx, bgids, dsIds, query, downtime).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
+	err := buildTargetWhere(ctx, options...).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
