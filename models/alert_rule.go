@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -26,60 +27,61 @@ const (
 )
 
 type AlertRule struct {
-	Id                    int64             `json:"id" gorm:"primaryKey"`
-	GroupId               int64             `json:"group_id"`                      // busi group id
-	Cate                  string            `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
-	DatasourceIds         string            `json:"-" gorm:"datasource_ids"`       // datasource ids
-	DatasourceIdsJson     []int64           `json:"datasource_ids" gorm:"-"`       // for fe
-	Cluster               string            `json:"cluster"`                       // take effect by clusters, seperated by space
-	Name                  string            `json:"name"`                          // rule name
-	Note                  string            `json:"note"`                          // will sent in notify
-	Prod                  string            `json:"prod"`                          // product empty means n9e
-	Algorithm             string            `json:"algorithm"`                     // algorithm (''|holtwinters), empty means threshold
-	AlgoParams            string            `json:"-" gorm:"algo_params"`          // params algorithm need
-	AlgoParamsJson        interface{}       `json:"algo_params" gorm:"-"`          // for fe
-	Delay                 int               `json:"delay"`                         // Time (in seconds) to delay evaluation
-	Severity              int               `json:"severity"`                      // 1: Emergency 2: Warning 3: Notice
-	Severities            []int             `json:"severities" gorm:"-"`           // 1: Emergency 2: Warning 3: Notice
-	Disabled              int               `json:"disabled"`                      // 0: enabled, 1: disabled
-	PromForDuration       int               `json:"prom_for_duration"`             // prometheus for, unit:s
-	PromQl                string            `json:"prom_ql"`                       // just one ql
-	RuleConfig            string            `json:"-" gorm:"rule_config"`          // rule config
-	RuleConfigJson        interface{}       `json:"rule_config" gorm:"-"`          // rule config for fe
-	PromEvalInterval      int               `json:"prom_eval_interval"`            // unit:s
-	EnableStime           string            `json:"-"`                             // split by space: "00:00 10:00 12:00"
-	EnableStimeJSON       string            `json:"enable_stime" gorm:"-"`         // for fe
-	EnableStimesJSON      []string          `json:"enable_stimes" gorm:"-"`        // for fe
-	EnableEtime           string            `json:"-"`                             // split by space: "00:00 10:00 12:00"
-	EnableEtimeJSON       string            `json:"enable_etime" gorm:"-"`         // for fe
-	EnableEtimesJSON      []string          `json:"enable_etimes" gorm:"-"`        // for fe
-	EnableDaysOfWeek      string            `json:"-"`                             // eg: "0 1 2 3 4 5 6 ; 0 1 2"
-	EnableDaysOfWeekJSON  []string          `json:"enable_days_of_week" gorm:"-"`  // for fe
-	EnableDaysOfWeeksJSON [][]string        `json:"enable_days_of_weeks" gorm:"-"` // for fe
-	EnableInBG            int               `json:"enable_in_bg"`                  // 0: global 1: enable one busi-group
-	NotifyRecovered       int               `json:"notify_recovered"`              // whether notify when recovery
-	NotifyChannels        string            `json:"-"`                             // split by space: sms voice email dingtalk wecom
-	NotifyChannelsJSON    []string          `json:"notify_channels" gorm:"-"`      // for fe
-	NotifyGroups          string            `json:"-"`                             // split by space: 233 43
-	NotifyGroupsObj       []UserGroup       `json:"notify_groups_obj" gorm:"-"`    // for fe
-	NotifyGroupsJSON      []string          `json:"notify_groups" gorm:"-"`        // for fe
-	NotifyRepeatStep      int               `json:"notify_repeat_step"`            // notify repeat interval, unit: min
-	NotifyMaxNumber       int               `json:"notify_max_number"`             // notify: max number
-	RecoverDuration       int64             `json:"recover_duration"`              // unit: s
-	Callbacks             string            `json:"-"`                             // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON         []string          `json:"callbacks" gorm:"-"`            // for fe
-	RunbookUrl            string            `json:"runbook_url"`                   // sop url
-	AppendTags            string            `json:"-"`                             // split by space: service=n9e mod=api
-	AppendTagsJSON        []string          `json:"append_tags" gorm:"-"`          // for fe
-	Annotations           string            `json:"-"`                             //
-	AnnotationsJSON       map[string]string `json:"annotations" gorm:"-"`          // for fe
-	ExtraConfig           string            `json:"-" gorm:"extra_config"`         // extra config
-	ExtraConfigJSON       interface{}       `json:"extra_config" gorm:"-"`         // for fe
-	CreateAt              int64             `json:"create_at"`
-	CreateBy              string            `json:"create_by"`
-	UpdateAt              int64             `json:"update_at"`
-	UpdateBy              string            `json:"update_by"`
-	UUID                  int64             `json:"uuid" gorm:"-"` // tpl identifier
+	Id                    int64                  `json:"id" gorm:"primaryKey"`
+	GroupId               int64                  `json:"group_id"`                      // busi group id
+	Cate                  string                 `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
+	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`       // datasource ids
+	DatasourceIdsJson     []int64                `json:"datasource_ids" gorm:"-"`       // for fe
+	Cluster               string                 `json:"cluster"`                       // take effect by clusters, seperated by space
+	Name                  string                 `json:"name"`                          // rule name
+	Note                  string                 `json:"note"`                          // will sent in notify
+	Prod                  string                 `json:"prod"`                          // product empty means n9e
+	Algorithm             string                 `json:"algorithm"`                     // algorithm (''|holtwinters), empty means threshold
+	AlgoParams            string                 `json:"-" gorm:"algo_params"`          // params algorithm need
+	AlgoParamsJson        interface{}            `json:"algo_params" gorm:"-"`          // for fe
+	Delay                 int                    `json:"delay"`                         // Time (in seconds) to delay evaluation
+	Severity              int                    `json:"severity"`                      // 1: Emergency 2: Warning 3: Notice
+	Severities            []int                  `json:"severities" gorm:"-"`           // 1: Emergency 2: Warning 3: Notice
+	Disabled              int                    `json:"disabled"`                      // 0: enabled, 1: disabled
+	PromForDuration       int                    `json:"prom_for_duration"`             // prometheus for, unit:s
+	PromQl                string                 `json:"prom_ql"`                       // just one ql
+	RuleConfig            string                 `json:"-" gorm:"rule_config"`          // rule config
+	RuleConfigJson        interface{}            `json:"rule_config" gorm:"-"`          // rule config for fe
+	EventRelabelConfig    []*pconf.RelabelConfig `json:"event_relabel_config" gorm:"-"` // event relabel config
+	PromEvalInterval      int                    `json:"prom_eval_interval"`            // unit:s
+	EnableStime           string                 `json:"-"`                             // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON       string                 `json:"enable_stime" gorm:"-"`         // for fe
+	EnableStimesJSON      []string               `json:"enable_stimes" gorm:"-"`        // for fe
+	EnableEtime           string                 `json:"-"`                             // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON       string                 `json:"enable_etime" gorm:"-"`         // for fe
+	EnableEtimesJSON      []string               `json:"enable_etimes" gorm:"-"`        // for fe
+	EnableDaysOfWeek      string                 `json:"-"`                             // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON  []string               `json:"enable_days_of_week" gorm:"-"`  // for fe
+	EnableDaysOfWeeksJSON [][]string             `json:"enable_days_of_weeks" gorm:"-"` // for fe
+	EnableInBG            int                    `json:"enable_in_bg"`                  // 0: global 1: enable one busi-group
+	NotifyRecovered       int                    `json:"notify_recovered"`              // whether notify when recovery
+	NotifyChannels        string                 `json:"-"`                             // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON    []string               `json:"notify_channels" gorm:"-"`      // for fe
+	NotifyGroups          string                 `json:"-"`                             // split by space: 233 43
+	NotifyGroupsObj       []UserGroup            `json:"notify_groups_obj" gorm:"-"`    // for fe
+	NotifyGroupsJSON      []string               `json:"notify_groups" gorm:"-"`        // for fe
+	NotifyRepeatStep      int                    `json:"notify_repeat_step"`            // notify repeat interval, unit: min
+	NotifyMaxNumber       int                    `json:"notify_max_number"`             // notify: max number
+	RecoverDuration       int64                  `json:"recover_duration"`              // unit: s
+	Callbacks             string                 `json:"-"`                             // split by space: http://a.com/api/x http://a.com/api/y'
+	CallbacksJSON         []string               `json:"callbacks" gorm:"-"`            // for fe
+	RunbookUrl            string                 `json:"runbook_url"`                   // sop url
+	AppendTags            string                 `json:"-"`                             // split by space: service=n9e mod=api
+	AppendTagsJSON        []string               `json:"append_tags" gorm:"-"`          // for fe
+	Annotations           string                 `json:"-"`                             //
+	AnnotationsJSON       map[string]string      `json:"annotations" gorm:"-"`          // for fe
+	ExtraConfig           string                 `json:"-" gorm:"extra_config"`         // extra config
+	ExtraConfigJSON       interface{}            `json:"extra_config" gorm:"-"`         // for fe
+	CreateAt              int64                  `json:"create_at"`
+	CreateBy              string                 `json:"create_by"`
+	UpdateAt              int64                  `json:"update_at"`
+	UpdateBy              string                 `json:"update_by"`
+	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 }
 
 type PromRuleConfig struct {
@@ -621,6 +623,13 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.RuleConfig), &ar.RuleConfigJson)
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
+
+	// 解析 RuleConfig 字段
+	var ruleConfig struct {
+		EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+	}
+	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
+	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
 	err := ar.FillDatasourceIds()
 	return err

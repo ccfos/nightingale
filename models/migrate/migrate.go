@@ -60,8 +60,23 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.BuiltinComponent{}}
 
-	if !columnHasIndex(db, &AlertHisEvent{}, "last_eval_time") {
-		dts = append(dts, &AlertHisEvent{})
+	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
+		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
+		asyncDts := []interface{}{&AlertHisEvent{}, &AlertCurEvent{}}
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					logger.Errorf("panic to migrate table: %v", r)
+				}
+			}()
+
+			for _, dt := range asyncDts {
+				if err := db.AutoMigrate(dt); err != nil {
+					logger.Errorf("failed to migrate table: %v", err)
+				}
+			}
+		}()
 	}
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
@@ -203,8 +218,14 @@ type TaskRecord struct {
 	EventId int64 `gorm:"column:event_id;bigint(20);not null;default:0;comment:event id;index:idx_event_id"`
 }
 type AlertHisEvent struct {
-	LastEvalTime int64 `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
+	LastEvalTime int64  `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
+	OriginalTags string `gorm:"column:original_tags;type:varchar(1024);default:'';comment:labels key=val,,k2=v2"`
 }
+
+type AlertCurEvent struct {
+	OriginalTags string `gorm:"column:original_tags;type:varchar(1024);default:'';comment:labels key=val,,k2=v2"`
+}
+
 type Target struct {
 	HostIp       string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
 	AgentVersion string `gorm:"column:agent_version;varchar(255);default:'';comment:agent version;index:idx_agent_version"`
