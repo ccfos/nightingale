@@ -306,13 +306,14 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 		return nil
 	}
 
+	// use his id as cur id
+	event.Id = his.Id
+
 	if event.IsRecovered {
 		// alert_cur_event表里没有数据，表示之前没告警，结果现在报了恢复，神奇....理论上不应该出现的
 		return nil
 	}
 
-	// use his id as cur id
-	event.Id = his.Id
 	if event.Id > 0 {
 		if err := event.Add(ctx); err != nil {
 			return fmt.Errorf("add cur event error:%v", err)
