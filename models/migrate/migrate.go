@@ -219,11 +219,11 @@ type TaskRecord struct {
 }
 type AlertHisEvent struct {
 	LastEvalTime int64  `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
-	OriginalTags string `gorm:"column:original_tags;type:varchar(1024);default:'';comment:labels key=val,,k2=v2"`
+	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 }
 
 type AlertCurEvent struct {
-	OriginalTags string `gorm:"column:original_tags;type:varchar(1024);default:'';comment:labels key=val,,k2=v2"`
+	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 }
 
 type Target struct {

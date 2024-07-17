@@ -82,5 +82,5 @@ ALTER TABLE users ADD COLUMN last_active_time BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE recording_rule ADD COLUMN cron_pattern VARCHAR(255) DEFAULT '' COMMENT 'cron pattern';
 
 /* v7.0.0-beta.14 */
-ALTER TABLE alert_cur_event ADD COLUMN original_tags VARCHAR(1024) DEFAULT '' COMMENT 'labels key=val,,k2=v2';
-ALTER TABLE alert_his_event ADD COLUMN original_tags VARCHAR(1024) DEFAULT '' COMMENT 'labels key=val,,k2=v2';
+ALTER TABLE alert_cur_event ADD COLUMN original_tags TEXT COMMENT 'labels key=val,,k2=v2';
+ALTER TABLE alert_his_event ADD COLUMN original_tags TEXT COMMENT 'labels key=val,,k2=v2';
