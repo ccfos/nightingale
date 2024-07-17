@@ -1,14 +1,18 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
@@ -401,4 +405,37 @@ func (rt *Router) alertRuleCallbacks(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(callbacks, nil)
+}
+
+type alertRuleTestForm struct {
+	Configs []*pconf.RelabelConfig `json:"configs"`
+	Tags    []string               `json:"tags"`
+}
+
+func (rt *Router) relabelTest(c *gin.Context) {
+	var f alertRuleTestForm
+	ginx.BindJSON(c, &f)
+
+	if len(f.Tags) == 0 || len(f.Configs) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "relabel config is empty")
+	}
+
+	labels := make([]prompb.Label, len(f.Tags))
+	for i, tag := range f.Tags {
+		label := strings.Split(tag, "=")
+		if len(label) != 2 {
+			ginx.Bomb(http.StatusBadRequest, "tag:%s format error", tag)
+		}
+
+		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
+	}
+
+	relabels := writer.Process(labels, f.Configs...)
+
+	var tags []string
+	for _, label := range relabels {
+		tags = append(tags, fmt.Sprintf("%s=%s", label.Name, label.Value))
+	}
+
+	ginx.NewRender(c).Data(tags, nil)
 }
