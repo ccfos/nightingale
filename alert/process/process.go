@@ -271,6 +271,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 			// hash 对应的恢复事件的被抑制了，把之前的事件删除
 			p.fires.Delete(e.Hash)
 			p.pendings.Delete(e.Hash)
+			models.AlertCurEventDelByHash(p.ctx, e.Hash)
 			eventMap[event.Tags] = *event
 		}
 	}
