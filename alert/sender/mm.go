@@ -7,6 +7,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -42,7 +43,7 @@ func (ms *MmSender) Send(ctx MessageContext) {
 		Text:   message,
 		Tokens: urls,
 		Stats:  ctx.Stats,
-	})
+	}, ctx.Events[0], ctx.Ctx)
 }
 
 func (ms *MmSender) CallBack(ctx CallBackContext) {
@@ -55,7 +56,7 @@ func (ms *MmSender) CallBack(ctx CallBackContext) {
 		Text:   message,
 		Tokens: []string{ctx.CallBackURL},
 		Stats:  ctx.Stats,
-	})
+	}, ctx.Events[0], ctx.Ctx)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
@@ -70,7 +71,7 @@ func (ms *MmSender) extract(users []*models.User) []string {
 	return tokens
 }
 
-func SendMM(message MatterMostMessage) {
+func SendMM(message MatterMostMessage, event *models.AlertCurEvent, ctx *ctx.Context) {
 	for i := 0; i < len(message.Tokens); i++ {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
@@ -103,7 +104,7 @@ func SendMM(message MatterMostMessage) {
 				Username: username,
 				Text:     txt + message.Text,
 			}
-			doSend(ur, body, models.Mm, message.Stats)
+			doSendAndRecord(ur, body, models.Mm, message.Stats, event, ctx)
 		}
 	}
 }

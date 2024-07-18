@@ -1,9 +1,10 @@
 package sender
 
 import (
-	"github.com/ccfos/nightingale/v6/models"
 	"html/template"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 type dingtalkMarkdown struct {
@@ -66,7 +67,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			}
 		}
 
-		doSend(url, body, models.Dingtalk, ctx.Stats)
+		doSendAndRecord(url, body, models.Dingtalk, ctx.Stats, ctx.Events[0], ctx.Ctx)
 	}
 }
 
@@ -96,7 +97,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		body.Markdown.Text = message
 	}
 
-	doSend(ctx.CallBackURL, body, models.Dingtalk, ctx.Stats)
+	doSendAndRecord(ctx.CallBackURL, body, models.Dingtalk, ctx.Stats, ctx.Events[0], ctx.Ctx)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }

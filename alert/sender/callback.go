@@ -120,16 +120,38 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 	}
 }
 
-func doSend(url string, body interface{}, channel string, stats *astats.Stats) {
+func doSendAndRecord(url string, body interface{}, channel string, stats *astats.Stats,
+	event *models.AlertCurEvent, ctx *ctx.Context) {
+	res, err := doSend(url, body, channel, stats)
+	doRecord(event, channel, url, res, err, ctx)
+}
+
+func doRecord(evt *models.AlertCurEvent, channel, target, res string, err error, ctx *ctx.Context) {
+	noti := models.NewNotificationRecord(evt, channel, target)
+	if err != nil {
+		noti.SetStatus(2)
+		noti.SetDetails(map[string]string{"error": err.Error()})
+	} else if res != "" {
+		noti.SetDetails(map[string]string{"res": string(res)})
+	}
+	logger.Infof("Build noti done: %+v", noti)
+	if err := noti.Add(ctx); err != nil {
+		logger.Errorf("Add noti failed, err: %v", err)
+	}
+}
+
+func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
 	if err != nil {
 		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v req:%v response=%s", channel, url, code, err, body, string(res))
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
-	} else {
-		logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
+		return "", err
 	}
+
+	logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
+	return string(res), nil
 }
 
 type TaskCreateReply struct {

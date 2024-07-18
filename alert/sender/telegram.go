@@ -6,6 +6,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -39,7 +40,7 @@ func (ts *TelegramSender) CallBack(ctx CallBackContext) {
 		Text:   message,
 		Tokens: []string{ctx.CallBackURL},
 		Stats:  ctx.Stats,
-	})
+	}, ctx.Events[0], ctx.Ctx)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
@@ -55,7 +56,7 @@ func (ts *TelegramSender) Send(ctx MessageContext) {
 		Text:   message,
 		Tokens: tokens,
 		Stats:  ctx.Stats,
-	})
+	}, ctx.Events[0], ctx.Ctx)
 }
 
 func (ts *TelegramSender) extract(users []*models.User) []string {
@@ -68,7 +69,7 @@ func (ts *TelegramSender) extract(users []*models.User) []string {
 	return tokens
 }
 
-func SendTelegram(message TelegramMessage) {
+func SendTelegram(message TelegramMessage, event *models.AlertCurEvent, ctx *ctx.Context) {
 	for i := 0; i < len(message.Tokens); i++ {
 		if !strings.Contains(message.Tokens[i], "/") && !strings.HasPrefix(message.Tokens[i], "https://") {
 			logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
@@ -92,6 +93,6 @@ func SendTelegram(message TelegramMessage) {
 			Text:      message.Text,
 		}
 
-		doSend(url, body, models.Telegram, message.Stats)
+		doSendAndRecord(url, body, models.Telegram, message.Stats, event, ctx)
 	}
 }
