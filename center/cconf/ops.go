@@ -78,6 +78,7 @@ ops:
     - "/dashboards/del"
     - "/embedded-dashboards/put"
     - "/embedded-dashboards"
+    - "/public-dashboards"
 
 - name: alert
   cname: 告警规则
