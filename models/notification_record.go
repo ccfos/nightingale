@@ -12,15 +12,16 @@ import (
 
 type NotificaitonRecord struct {
 	Id          int64             `json:"id" gorm:"primaryKey"`
-	EventId     int64             `json:"event_id"` // event history id
+	EventId     int64             `json:"event_id" gorm:"index"` // event history id
 	SubId       int64             `json:"sub_id"`
 	Channel     string            `json:"channel"`
 	Status      uint8             `json:"status"` // 1-成功，2-失败
 	Target      string            `json:"target"`
 	Details     string            `json:"-"` // 可扩展字段
 	DetailsJSON map[string]string `json:"details" gorm:"-"`
-	CreatedAt   time.Time         `json:"created_at"`
-	DeletedAt   gorm.DeletedAt    `gorm:"index"`
+	CreatedAt   time.Time         `json:"-"`
+	CreatedAtTs int64             `json:"created_at" gorm:"-"`
+	DeletedAt   gorm.DeletedAt    `json:"-" gorm:"index"`
 }
 
 func NewNotificationRecord(event *AlertCurEvent, channel, target string) *NotificaitonRecord {
@@ -67,9 +68,10 @@ func (n *NotificaitonRecord) DB2FE() {
 			n.DetailsJSON["error"] = n.Details
 		}
 	}
+	n.CreatedAtTs = n.CreatedAt.Unix()
 }
 
-func NotificaitonRecordGetByEventId(ctx *ctx.Context, evtId int64) ([]*NotificaitonRecord, error) {
+func NotificaitonRecordsGetByEventId(ctx *ctx.Context, evtId int64) ([]*NotificaitonRecord, error) {
 	return NotificaitonRecordsGet(ctx, "event_id=?", evtId)
 }
 
@@ -78,10 +80,6 @@ func NotificaitonRecordsGet(ctx *ctx.Context, where string, args ...interface{})
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
 		return nil, err
-	}
-
-	if len(lst) == 0 {
-		return nil, nil
 	}
 
 	for _, n := range lst {
