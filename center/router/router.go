@@ -91,7 +91,9 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 		if headerKey != "" {
 			lang := c.GetHeader(headerKey)
 			if lang != "" {
-				if strings.HasPrefix(lang, "zh") {
+				if strings.HasPrefix(lang, "zh_HK") {
+					c.Request.Header.Set("X-Language", "zh_HK")
+				} else if strings.HasPrefix(lang, "zh") {
 					c.Request.Header.Set("X-Language", "zh_CN")
 				} else if strings.HasPrefix(lang, "en") {
 					c.Request.Header.Set("X-Language", "en")
@@ -112,7 +114,7 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf":
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -374,8 +376,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks"), rt.bgro(), rt.taskGets)
 		pages.POST("/busi-group/:id/tasks", rt.auth(), rt.user(), rt.perm("/job-tasks/add"), rt.bgrw(), rt.taskAdd)
 
-		pages.GET("/servers", rt.auth(), rt.user(), rt.perm("/help/servers"), rt.serversGet)
-		pages.GET("/server-clusters", rt.auth(), rt.user(), rt.perm("/help/servers"), rt.serverClustersGet)
+		pages.GET("/servers", rt.auth(), rt.user(), rt.serversGet)
+		pages.GET("/server-clusters", rt.auth(), rt.user(), rt.serverClustersGet)
 
 		pages.POST("/datasource/list", rt.auth(), rt.user(), rt.datasourceList)
 		pages.POST("/datasource/plugin/list", rt.auth(), rt.pluginList)

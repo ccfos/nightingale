@@ -14,7 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
 
-type HandleTSFunc func(pt *prompb.TimeSeries)
+type HandleTSFunc func(pt *prompb.TimeSeries) *prompb.TimeSeries
 
 type Router struct {
 	HTTP           httpx.Config
@@ -42,7 +42,7 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *me
 		BusiGroupCache: bg,
 		IdentSet:       idents,
 		MetaSet:        metas,
-		HandleTS:       func(pt *prompb.TimeSeries) {},
+		HandleTS:       func(pt *prompb.TimeSeries) *prompb.TimeSeries { return pt },
 	}
 }
 
