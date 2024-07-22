@@ -47,8 +47,8 @@ func NewSender(key string, tpls map[string]*template.Template, smtp ...aconf.SMT
 	return nil
 }
 
-func BuildMessageContext(rule *models.AlertRule, events []*models.AlertCurEvent, uids []int64,
-	userCache *memsto.UserCacheType, stats *astats.Stats, ctx *ctx.Context) MessageContext {
+func BuildMessageContext(ctx *ctx.Context, rule *models.AlertRule, events []*models.AlertCurEvent,
+	uids []int64, userCache *memsto.UserCacheType, stats *astats.Stats) MessageContext {
 	users := userCache.GetByUserIds(uids)
 	return MessageContext{
 		Rule:   rule,

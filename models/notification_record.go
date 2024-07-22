@@ -10,6 +10,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	NotiStatusSuccess = iota + 1
+	NotiStatusFailure
+)
+
 type NotificaitonRecord struct {
 	Id          int64             `json:"id" gorm:"primaryKey"`
 	EventId     int64             `json:"event_id" gorm:"index"` // event history id
@@ -29,7 +34,7 @@ func NewNotificationRecord(event *AlertCurEvent, channel, target string) *Notifi
 		EventId: event.Id,
 		SubId:   event.SubRuleId,
 		Channel: channel,
-		Status:  1,
+		Status:  NotiStatusSuccess,
 		Target:  target,
 	}
 }

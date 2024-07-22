@@ -120,14 +120,14 @@ func RestartEmailSender(smtp aconf.SMTPConfig, ctx *ctx.Context) {
 
 var smtpConfig aconf.SMTPConfig
 
-func InitEmailSender(ncc *memsto.NotifyConfigCacheType, ctx *ctx.Context) {
+func InitEmailSender(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
 	mailch = make(chan *EmailContext, 100000)
-	go updateSmtp(ncc, ctx)
+	go updateSmtp(ctx, ncc)
 	smtpConfig = ncc.GetSMTP()
-	startEmailSender(smtpConfig, ctx)
+	startEmailSender(ctx, smtpConfig)
 }
 
-func updateSmtp(ncc *memsto.NotifyConfigCacheType, ctx *ctx.Context) {
+func updateSmtp(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
 	for {
 		time.Sleep(1 * time.Minute)
 		smtp := ncc.GetSMTP()
@@ -140,7 +140,7 @@ func updateSmtp(ncc *memsto.NotifyConfigCacheType, ctx *ctx.Context) {
 	}
 }
 
-func startEmailSender(smtp aconf.SMTPConfig, ctx *ctx.Context) {
+func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 	conf := smtp
 	if conf.Host == "" || conf.Port == 0 {
 		logger.Warning("SMTP configurations invalid")

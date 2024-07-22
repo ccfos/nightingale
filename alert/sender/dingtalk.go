@@ -67,7 +67,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			}
 		}
 
-		doSendAndRecord(url, body, models.Dingtalk, ctx.Stats, ctx.Events[0], ctx.Ctx)
+		doSendAndRecord(ctx.Ctx, url, body, models.Dingtalk, ctx.Stats, ctx.Events[0])
 	}
 }
 
@@ -97,7 +97,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		body.Markdown.Text = message
 	}
 
-	doSendAndRecord(ctx.CallBackURL, body, models.Dingtalk, ctx.Stats, ctx.Events[0], ctx.Ctx)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, body, models.Dingtalk, ctx.Stats, ctx.Events[0])
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }

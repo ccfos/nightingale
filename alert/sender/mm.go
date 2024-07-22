@@ -39,11 +39,11 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	}
 	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
 
-	SendMM(MatterMostMessage{
+	SendMM(ctx.Ctx, MatterMostMessage{
 		Text:   message,
 		Tokens: urls,
 		Stats:  ctx.Stats,
-	}, ctx.Events[0], ctx.Ctx)
+	}, ctx.Events[0])
 }
 
 func (ms *MmSender) CallBack(ctx CallBackContext) {
@@ -52,11 +52,11 @@ func (ms *MmSender) CallBack(ctx CallBackContext) {
 	}
 	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
 
-	SendMM(MatterMostMessage{
+	SendMM(ctx.Ctx, MatterMostMessage{
 		Text:   message,
 		Tokens: []string{ctx.CallBackURL},
 		Stats:  ctx.Stats,
-	}, ctx.Events[0], ctx.Ctx)
+	}, ctx.Events[0])
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
@@ -71,7 +71,7 @@ func (ms *MmSender) extract(users []*models.User) []string {
 	return tokens
 }
 
-func SendMM(message MatterMostMessage, event *models.AlertCurEvent, ctx *ctx.Context) {
+func SendMM(ctx *ctx.Context, message MatterMostMessage, event *models.AlertCurEvent) {
 	for i := 0; i < len(message.Tokens); i++ {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
@@ -104,7 +104,7 @@ func SendMM(message MatterMostMessage, event *models.AlertCurEvent, ctx *ctx.Con
 				Username: username,
 				Text:     txt + message.Text,
 			}
-			doSendAndRecord(ur, body, models.Mm, message.Stats, event, ctx)
+			doSendAndRecord(ctx, ur, body, models.Mm, message.Stats, event)
 		}
 	}
 }

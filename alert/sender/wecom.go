@@ -37,7 +37,7 @@ func (ws *WecomSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSendAndRecord(ctx.CallBackURL, body, models.Wecom, ctx.Stats, ctx.Events[0], ctx.Ctx)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, body, models.Wecom, ctx.Stats, ctx.Events[0])
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
@@ -54,7 +54,7 @@ func (ws *WecomSender) Send(ctx MessageContext) {
 				Content: message,
 			},
 		}
-		doSendAndRecord(url, body, models.Wecom, ctx.Stats, ctx.Events[0], ctx.Ctx)
+		doSendAndRecord(ctx.Ctx, url, body, models.Wecom, ctx.Stats, ctx.Events[0])
 	}
 }
 

@@ -134,7 +134,7 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 	}
 	parsedURL.RawQuery = ""
 
-	doSendAndRecord(parsedURL.String(), body, models.FeishuCard, ctx.Stats, ctx.Events[0], ctx.Ctx)
+	doSendAndRecord(ctx.Ctx, parsedURL.String(), body, models.FeishuCard, ctx.Stats, ctx.Events[0])
 }
 
 func (fs *FeishuCardSender) Send(ctx MessageContext) {
@@ -157,7 +157,7 @@ func (fs *FeishuCardSender) Send(ctx MessageContext) {
 	body.Card.Elements[0].Text.Content = message
 	body.Card.Elements[2].Elements[0].Content = SendTitle
 	for _, url := range urls {
-		doSendAndRecord(url, body, models.FeishuCard, ctx.Stats, ctx.Events[0], ctx.Ctx)
+		doSendAndRecord(ctx.Ctx, url, body, models.FeishuCard, ctx.Stats, ctx.Events[0])
 	}
 }
 
