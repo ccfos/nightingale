@@ -228,6 +228,7 @@ func (e *Consumer) relabel(event *models.AlertCurEvent) {
 	// relabel process
 	relabels := writer.Process(labels, rule.EventRelabelConfig...)
 	event.TagsJSON = make([]string, len(relabels))
+	event.TagsMap = make(map[string]string, len(relabels))
 	for i, label := range relabels {
 		event.TagsJSON[i] = fmt.Sprintf("%s=%s", label.Name, label.Value)
 		event.TagsMap[label.Name] = label.Value
