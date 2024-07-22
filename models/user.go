@@ -42,6 +42,7 @@ const (
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"
 	FeishuDomain   = "open.feishu.cn"
+	LarkDomain     = "open.larksuite.com"
 
 	// FeishuCardDomain The domain name of the feishu card is the same as the feishu,distinguished by the parameter
 	FeishuCardDomain = "open.feishu.cn?card=1"
@@ -52,6 +53,7 @@ const (
 
 var (
 	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark}
+	DefaultContacts = []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey}
 )
 
 type User struct {

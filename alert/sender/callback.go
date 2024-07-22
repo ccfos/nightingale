@@ -96,6 +96,8 @@ func NewCallBacker(
 	//	return &MmSender{tpl: tpls[models.Mm]}
 	case models.TelegramDomain:
 		return &TelegramSender{tpl: tpls[models.Telegram]}
+	case models.LarkDomain:
+		return &LarkSender{tpl: tpls[models.Lark]}
 	}
 
 	return nil
