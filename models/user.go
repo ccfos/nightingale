@@ -30,6 +30,7 @@ const (
 	Telegram     = "telegram"
 	Email        = "email"
 	EmailSubject = "mailsubject"
+	Lark         = "lark"
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
