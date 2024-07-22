@@ -37,6 +37,7 @@ const (
 	FeishuKey   = "feishu_robot_token"
 	MmKey       = "mm_webhook_url"
 	TelegramKey = "telegram_robot_token"
+	LarkKey     = "lark_robot_token"
 
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"
@@ -50,7 +51,7 @@ const (
 )
 
 var (
-	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark}
 )
 
 type User struct {
@@ -826,6 +827,9 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
+	case Lark:
+		ret := gjson.GetBytes(bs, LarkKey)
+		return ret.String(), ret.Exists()
 	default:
 		return "", false
 	}

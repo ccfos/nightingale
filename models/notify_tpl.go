@@ -171,7 +171,7 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 
 	if cval == "" {
 		var notifyContacts []NotifyContact
-		contacts := []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey}
+		contacts := []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey}
 		for _, contact := range contacts {
 			notifyContacts = append(notifyContacts, NotifyContact{Ident: contact, Name: contact, BuiltIn: true})
 		}
@@ -522,4 +522,11 @@ var TplMap = map[string]string{
 {{if .IsRecovered}}**恢复时间**: {{timeformat .LastEvalTime}}{{else}}**首次触发时间**: {{timeformat .FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}`,
+	Lark: `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}   
+规则名称: {{.RuleName}}{{if .RuleNote}}   
+规则备注: {{.RuleNote}}{{end}}   
+监控指标: {{.TagsJSON}}
+{{if .IsRecovered}}恢复时间：{{timeformat .LastEvalTime}}{{else}}触发时间: {{timeformat .TriggerTime}}
+触发时值: {{.TriggerValue}}{{end}}
+发送时间: {{timestamp}}`,
 }

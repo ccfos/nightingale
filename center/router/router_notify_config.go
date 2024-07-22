@@ -127,7 +127,8 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 	var notifyContacts []models.NotifyContact
 	ginx.BindJSON(c, &notifyContacts)
 
-	keys := []string{models.DingtalkKey, models.WecomKey, models.FeishuKey, models.MmKey, models.TelegramKey}
+	keys := []string{models.DingtalkKey, models.WecomKey, models.FeishuKey, models.MmKey,
+		models.TelegramKey}
 
 	m := make(map[string]struct{})
 	for _, v := range notifyContacts {
