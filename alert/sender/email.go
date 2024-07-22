@@ -112,10 +112,10 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 
 var mailQuit = make(chan struct{})
 
-func RestartEmailSender(smtp aconf.SMTPConfig, ctx *ctx.Context) {
+func RestartEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 	// Notify internal start exit
 	mailQuit <- struct{}{}
-	startEmailSender(smtp, ctx)
+	startEmailSender(ctx, smtp)
 }
 
 var smtpConfig aconf.SMTPConfig
@@ -135,7 +135,7 @@ func updateSmtp(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
 			smtpConfig.Pass != smtp.Pass || smtpConfig.User != smtp.User || smtpConfig.Port != smtp.Port ||
 			smtpConfig.InsecureSkipVerify != smtp.InsecureSkipVerify { //diff
 			smtpConfig = smtp
-			RestartEmailSender(smtp, ctx)
+			RestartEmailSender(ctx, smtp)
 		}
 	}
 }
@@ -200,8 +200,8 @@ func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 				logger.Infof("email_sender: result=succ subject=%v to=%v",
 					m.mail.GetHeader("Subject"), m.mail.GetHeader("To"))
 			}
-			doRecord(m.event, models.Email, strings.Join(
-				m.mail.GetHeader("To"), ","), "", err, ctx)
+			doRecord(ctx, m.event, models.Email,
+				strings.Join(m.mail.GetHeader("To"), ","), "", err)
 
 			size++
 
