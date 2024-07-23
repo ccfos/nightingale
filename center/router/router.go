@@ -345,11 +345,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		if rt.Center.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+			pages.GET("/notifications/:eid", rt.notificationRecordList)
 		} else {
 			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.user(), rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.auth(), rt.user(), rt.alertHisEventGet)
+			pages.GET("/notifications/:eid", rt.auth(), rt.user(), rt.notificationRecordList)
 		}
-		pages.GET("/notifications/:eid", rt.auth(), rt.user(), rt.notificationRecordList)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)

@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"html/template"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -200,8 +199,10 @@ func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 				logger.Infof("email_sender: result=succ subject=%v to=%v",
 					m.mail.GetHeader("Subject"), m.mail.GetHeader("To"))
 			}
-			doRecord(ctx, m.event, models.Email,
-				strings.Join(m.mail.GetHeader("To"), ","), "", err)
+
+			for _, to := range m.mail.GetHeader("To") {
+				doRecord(ctx, m.event, models.Email, to, "", err)
+			}
 
 			size++
 

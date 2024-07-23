@@ -93,6 +93,6 @@ func SendTelegram(ctx *ctx.Context, message TelegramMessage, event *models.Alert
 			Text:      message.Text,
 		}
 
-		doSendAndRecord(ctx, url, body, models.Telegram, message.Stats, event)
+		doSendAndRecord(ctx, url, message.Tokens[i], body, models.Telegram, message.Stats, event)
 	}
 }

@@ -104,7 +104,7 @@ func SendMM(ctx *ctx.Context, message MatterMostMessage, event *models.AlertCurE
 				Username: username,
 				Text:     txt + message.Text,
 			}
-			doSendAndRecord(ctx, ur, body, models.Mm, message.Stats, event)
+			doSendAndRecord(ctx, ur, message.Tokens[i], body, models.Mm, message.Stats, event)
 		}
 	}
 }

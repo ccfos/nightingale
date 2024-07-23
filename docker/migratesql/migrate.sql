@@ -84,3 +84,16 @@ ALTER TABLE recording_rule ADD COLUMN cron_pattern VARCHAR(255) DEFAULT '' COMME
 /* v7.0.0-beta.14 */
 ALTER TABLE alert_cur_event ADD COLUMN original_tags TEXT COMMENT 'labels key=val,,k2=v2';
 ALTER TABLE alert_his_event ADD COLUMN original_tags TEXT COMMENT 'labels key=val,,k2=v2';
+
+CREATE TABLE notification_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    sub_id BIGINT NOT NULL,
+    channel VARCHAR(255) NOT NULL,
+    status TINYINT UNSIGNED NOT NULL,
+    target VARCHAR(255) NOT NULL,
+    details VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    deleted_at DATETIME DEFAULT NULL,
+    INDEX idx_evt (event_id, deleted_at)
+);

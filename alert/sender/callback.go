@@ -120,10 +120,10 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 	}
 }
 
-func doSendAndRecord(ctx *ctx.Context, url string, body interface{}, channel string, stats *astats.Stats,
-	event *models.AlertCurEvent) {
+func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
+	stats *astats.Stats, event *models.AlertCurEvent) {
 	res, err := doSend(url, body, channel, stats)
-	doRecord(ctx, event, channel, url, res, err)
+	doRecord(ctx, event, channel, token, res, err)
 }
 
 func doRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res string, err error) {
@@ -134,7 +134,7 @@ func doRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res 
 	} else if res != "" {
 		noti.SetDetails(map[string]string{"res": string(res)})
 	}
-	logger.Infof("Build noti done: %+v", noti)
+
 	if err := noti.Add(ctx); err != nil {
 		logger.Errorf("Add noti failed, err: %v", err)
 	}
