@@ -10,11 +10,13 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/logger"
 )
 
-func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) bool {
+func sendWebhook(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent,
+	stats *astats.Stats) bool {
 	conf := webhook
 	if conf.Url == "" || !conf.Enable {
 		return false
@@ -60,14 +62,15 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 
 	stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
 	var resp *http.Response
+	var body []byte
 	resp, err = client.Do(req)
+	defer doRecord(ctx, event, "webhook", webhook.Url, string(body), err)
 	if err != nil {
 		stats.AlertNotifyErrorTotal.WithLabelValues("webhook").Inc()
 		logger.Errorf("event_webhook_fail, ruleId: [%d], eventId: [%d], event:%+v, url: [%s], error: [%s]", event.RuleId, event.Id, event, conf.Url, err)
 		return true
 	}
 
-	var body []byte
 	if resp.Body != nil {
 		defer resp.Body.Close()
 		body, _ = io.ReadAll(resp.Body)
@@ -82,11 +85,12 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 	return false
 }
 
-func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func SendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *models.AlertCurEvent,
+	stats *astats.Stats) {
 	for _, conf := range webhooks {
 		retryCount := 0
 		for retryCount < 3 {
-			needRetry := sendWebhook(conf, event, stats)
+			needRetry := sendWebhook(ctx, conf, event, stats)
 			if !needRetry {
 				break
 			}

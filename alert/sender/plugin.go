@@ -2,26 +2,30 @@ package sender
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/sys"
 )
 
-func MayPluginNotify(noticeBytes []byte, notifyScript models.NotifyScript, stats *astats.Stats) {
+func MayPluginNotify(ctx *ctx.Context, noticeBytes []byte, notifyScript models.NotifyScript,
+	stats *astats.Stats, event *models.AlertCurEvent) {
 	if len(noticeBytes) == 0 {
 		return
 	}
-	alertingCallScript(noticeBytes, notifyScript, stats)
+	alertingCallScript(ctx, noticeBytes, notifyScript, stats, event)
 }
 
-func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript, stats *astats.Stats) {
+func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models.NotifyScript,
+	stats *astats.Stats, event *models.AlertCurEvent) {
 	// not enable or no notify.py? do nothing
 	config := notifyScript
 	if !config.Enable || config.Content == "" {
@@ -81,6 +85,7 @@ func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript, sta
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
+	doRecord(ctx, event, channel, cmd.String(), "", buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
@@ -101,4 +106,12 @@ func alertingCallScript(stdinBytes []byte, notifyScript models.NotifyScript, sta
 	}
 
 	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
+}
+
+func buildErr(err error, isTimeout bool) error {
+	if err == nil && !isTimeout {
+		return nil
+	} else {
+		return fmt.Errorf("is_timeout: %v, err: %v", isTimeout, err)
+	}
 }

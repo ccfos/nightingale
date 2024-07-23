@@ -8,18 +8,22 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 )
 
 type Noti struct {
-	SubId   int64  `json:"sub_id"`
-	Channel string `json:"channel"`
-	Result  []*struct {
-		Target   string `json:"target"`
-		Status   uint8  `json:"status"`
-		Details  string `json:"details"`
-		Username string `json:"username,omitempty"`
-	} `json:"result"`
+	SubId   int64         `json:"sub_id"`
+	Channel string        `json:"channel"`
+	Result  []*NotiDetail `json:"result"`
+}
+
+type NotiDetail struct {
+	Target    string   `json:"target"`
+	Status    uint8    `json:"status"`
+	Details   []string `json:"details,omitempty"`
+	Username  string   `json:"username,omitempty"`
+	CreatedAt int64    `json:"created_at"`
 }
 
 func (rt *Router) notificationRecordList(c *gin.Context) {
@@ -32,12 +36,12 @@ func (rt *Router) notificationRecordList(c *gin.Context) {
 	}, nil)
 }
 
-func buildNotiListByChannelAndSubId(ctx *ctx.Context, notiList []*models.NotificaitonRecord) []*Noti {
+func buildNotiListByChannelAndSubId(ctx *ctx.Context, nl []*models.NotificaitonRecord) []*Noti {
 	indexMap := make(map[string]int)
 	usernameByTarget := make(map[string][]string)
 	groupIdSet := make(map[int64]struct{})
 	res := make([]*Noti, 0)
-	for _, n := range notiList {
+	for _, n := range nl {
 		key := fmt.Sprintf("%s_%d", n.Channel, n.SubId)
 		noti := &Noti{}
 		if idx, ok := indexMap[key]; ok {
@@ -51,12 +55,15 @@ func buildNotiListByChannelAndSubId(ctx *ctx.Context, notiList []*models.Notific
 			res = append(res, noti)
 		}
 
-		noti.Result = append(noti.Result, &struct {
-			Target   string `json:"target"`
-			Status   uint8  `json:"status"`
-			Details  string `json:"details"`
-			Username string `json:"username,omitempty"`
-		}{n.Target, n.Status, n.Details, ""})
+		if idx, ok := noti.MergeIdx(n.Target); !ok {
+			noti.Result = append(noti.Result, &NotiDetail{n.Target,
+				n.Status, []string{n.Details}, "", n.CreatedAt.Unix()})
+		} else {
+			noti.Result[idx].Details = append(noti.Result[idx].Details, n.Details)
+			if n.Status == models.NotiStatusFailure {
+				noti.Result[idx].Status = models.NotiStatusFailure
+			}
+		}
 	}
 
 	for _, ns := range res {
@@ -66,6 +73,18 @@ func buildNotiListByChannelAndSubId(ctx *ctx.Context, notiList []*models.Notific
 	}
 
 	return res
+}
+
+func (n *Noti) MergeIdx(curTarget string) (int, bool) {
+	if n == nil || len(n.Result) == 0 {
+		return 0, false
+	}
+	for idx, nd := range n.Result {
+		if nd.Target == curTarget {
+			return idx, true
+		}
+	}
+	return 0, false
 }
 
 func fillUserName(ctx *ctx.Context, noti *models.NotificaitonRecord,
@@ -82,7 +101,11 @@ func fillUserName(ctx *ctx.Context, noti *models.NotificaitonRecord,
 		}
 	}
 
-	users := noti.GetUsers(ctx, gids)
+	users, err := models.UsersGetByGroupIds(ctx, gids)
+	if err != nil {
+		logger.Errorf("UsersGetByGroupIds failed, err: %v", err)
+		return
+	}
 	for _, user := range users {
 		for _, ch := range models.DefaultChannels {
 			target, exist := user.ExtractToken(ch)
