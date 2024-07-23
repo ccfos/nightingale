@@ -3,19 +3,33 @@ package router
 import (
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"sort"
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/metas"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
+type HeartbeatHookFunc func(ident string) map[string]interface{}
+
 func (rt *Router) heartbeat(c *gin.Context) {
+	req, err := HandleHeartbeat(c, rt.Ctx, rt.Alert.Heartbeat.EngineName, rt.MetaSet, rt.IdentSet, rt.TargetCache)
+	ginx.Dangerous(err)
+
+	m := rt.HeartbeatHook(req.Hostname)
+	ginx.NewRender(c).Data(m, err)
+}
+
+func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSet *metas.Set, identSet *idents.Set, targetCache *memsto.TargetCacheType) (models.HostMeta, error) {
 	var bs []byte
 	var err error
 	var r *gzip.Reader
@@ -24,7 +38,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		r, err = gzip.NewReader(c.Request.Body)
 		if err != nil {
 			c.String(400, err.Error())
-			return
+			return req, err
 		}
 		defer r.Close()
 		bs, err = ioutil.ReadAll(r)
@@ -32,14 +46,18 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	} else {
 		defer c.Request.Body.Close()
 		bs, err = ioutil.ReadAll(c.Request.Body)
-		ginx.Dangerous(err)
+		if err != nil {
+			return req, err
+		}
 	}
 
 	err = json.Unmarshal(bs, &req)
-	ginx.Dangerous(err)
+	if err != nil {
+		return req, err
+	}
 
 	if req.Hostname == "" {
-		ginx.Dangerous("hostname is required", 400)
+		return req, fmt.Errorf("hostname is required", 400)
 	}
 
 	// maybe from pushgw
@@ -52,54 +70,61 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	}
 
 	if req.EngineName == "" {
-		req.EngineName = rt.Alert.Heartbeat.EngineName
+		req.EngineName = engineName
 	}
 
-	rt.MetaSet.Set(req.Hostname, req)
+	metaSet.Set(req.Hostname, req)
 	var items = make(map[string]struct{})
 	items[req.Hostname] = struct{}{}
-	rt.IdentSet.MSet(items)
+	identSet.MSet(items)
 
-	if target, has := rt.TargetCache.Get(req.Hostname); has && target != nil {
+	if target, has := targetCache.Get(req.Hostname); has && target != nil {
 		gid := ginx.QueryInt64(c, "gid", 0)
 		hostIp := strings.TrimSpace(req.HostIp)
 
-		filed := make(map[string]interface{})
+		field := make(map[string]interface{})
 		if gid != 0 && gid != target.GroupId {
-			filed["group_id"] = gid
+			field["group_id"] = gid
 		}
 
 		if hostIp != "" && hostIp != target.HostIp {
-			filed["host_ip"] = hostIp
+			field["host_ip"] = hostIp
 		}
 
-		if len(req.GlobalLabels) > 0 {
+		tagsMap := target.GetTagsMap()
+		tagNeedUpdate := false
+		for k, v := range req.GlobalLabels {
+			if v == "" {
+				continue
+			}
+
+			if tagv, ok := tagsMap[k]; !ok || tagv != v {
+				tagNeedUpdate = true
+				tagsMap[k] = v
+			}
+		}
+
+		if tagNeedUpdate {
 			lst := []string{}
-			for k, v := range req.GlobalLabels {
-				if v == "" {
-					continue
-				}
+			for k, v := range tagsMap {
 				lst = append(lst, k+"="+v)
 			}
-			sort.Strings(lst)
-			labels := strings.Join(lst, " ")
-			if target.Tags != labels {
-				filed["tags"] = labels
-			}
+			labels := strings.Join(lst, " ") + " "
+			field["tags"] = labels
 		}
 
 		if req.EngineName != "" && req.EngineName != target.EngineName {
-			filed["engine_name"] = req.EngineName
+			field["engine_name"] = req.EngineName
 		}
 
-		if len(filed) > 0 {
-			err := target.UpdateFieldsMap(rt.Ctx, filed)
+		if len(field) > 0 {
+			err := target.UpdateFieldsMap(ctx, field)
 			if err != nil {
 				logger.Errorf("update target fields failed, err: %v", err)
 			}
 		}
-		logger.Debugf("heartbeat field:%+v target: %v", filed, *target)
+		logger.Debugf("heartbeat field:%+v target: %v", field, *target)
 	}
 
-	ginx.NewRender(c).Message(err)
+	return req, nil
 }
