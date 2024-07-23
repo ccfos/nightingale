@@ -117,6 +117,10 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 			field["engine_name"] = req.EngineName
 		}
 
+		if req.AgentVersion != "" && req.AgentVersion != target.AgentVersion {
+			field["agent_version"] = req.AgentVersion
+		}
+
 		if len(field) > 0 {
 			err := target.UpdateFieldsMap(ctx, field)
 			if err != nil {
