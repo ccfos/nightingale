@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
 type (
@@ -22,6 +23,7 @@ type (
 		Rule   *models.AlertRule
 		Events []*models.AlertCurEvent
 		Stats  *astats.Stats
+		Ctx    *ctx.Context
 	}
 )
 
@@ -45,13 +47,15 @@ func NewSender(key string, tpls map[string]*template.Template, smtp ...aconf.SMT
 	return nil
 }
 
-func BuildMessageContext(rule *models.AlertRule, events []*models.AlertCurEvent, uids []int64, userCache *memsto.UserCacheType, stats *astats.Stats) MessageContext {
+func BuildMessageContext(ctx *ctx.Context, rule *models.AlertRule, events []*models.AlertCurEvent,
+	uids []int64, userCache *memsto.UserCacheType, stats *astats.Stats) MessageContext {
 	users := userCache.GetByUserIds(uids)
 	return MessageContext{
 		Rule:   rule,
 		Events: events,
 		Users:  users,
 		Stats:  stats,
+		Ctx:    ctx,
 	}
 }
 

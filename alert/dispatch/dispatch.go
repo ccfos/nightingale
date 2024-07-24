@@ -238,7 +238,8 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
+			msgCtx := sender.BuildMessageContext(e.ctx, rule, []*models.AlertCurEvent{event},
+				uids, e.userCache, e.Astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()

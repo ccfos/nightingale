@@ -180,7 +180,7 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 
 		smtp, errSmtp := SmtpValidate(text)
 		ginx.Dangerous(errSmtp)
-		go sender.RestartEmailSender(smtp)
+		go sender.RestartEmailSender(rt.Ctx, smtp)
 	}
 
 	ginx.NewRender(c).Message(nil)
