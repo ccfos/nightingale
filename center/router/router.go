@@ -48,6 +48,7 @@ type Router struct {
 	UserCache         *memsto.UserCacheType
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
+	HeartbeatHook     HeartbeatHookFunc
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
@@ -68,6 +69,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, operat
 		UserCache:         uc,
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
+		HeartbeatHook:     func(ident string) map[string]interface{} { return nil },
 	}
 }
 
