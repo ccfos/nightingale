@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -118,6 +119,11 @@ type taskTplForm struct {
 }
 
 func (rt *Router) taskTplAdd(c *gin.Context) {
+	if !rt.Ibex.Enable {
+		ginx.Bomb(400, i18n.Sprintf(c.GetHeader("X-Language"), "This functionality has not been enabled. Please contact the system administrator to activate it."))
+		return
+	}
+
 	var f taskTplForm
 	ginx.BindJSON(c, &f)
 
