@@ -17,6 +17,7 @@ type HostMeta struct {
 	EngineName   string                 `json:"engine_name"`
 	GlobalLabels map[string]string      `json:"global_labels"`
 	ExtendInfo   map[string]interface{} `json:"extend_info"`
+	Config       interface{}            `json:"config"`
 }
 
 type HostUpdteTime struct {
