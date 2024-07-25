@@ -10,6 +10,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -93,5 +94,37 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 			retryCount++
 			time.Sleep(time.Minute * 1 * time.Duration(retryCount))
 		}
+	}
+}
+
+type WebhookQueue struct {
+	list    *writer.SafeListLimited
+	closeCh chan struct{}
+}
+
+func PushSample(ident string, v interface{}) {
+	ws.RLock()
+	identQueue := ws.queues[ident]
+	ws.RUnlock()
+	if identQueue == nil {
+		identQueue = &IdentQueue{
+			list:    NewSafeListLimited(ws.pushgw.WriterOpt.QueueMaxSize),
+			closeCh: make(chan struct{}),
+			ts:      time.Now().Unix(),
+		}
+
+		ws.Lock()
+		ws.queues[ident] = identQueue
+		ws.Unlock()
+
+		go ws.ReportQueueStats(ident, identQueue)
+		go ws.StartConsumer(identQueue)
+	}
+
+	identQueue.ts = time.Now().Unix()
+	succ := identQueue.list.PushFront(v)
+	if !succ {
+		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
+		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 	}
 }

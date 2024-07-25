@@ -17,6 +17,9 @@ type Webhook struct {
 	Headers       []string          `json:"headers_str"`
 	SkipVerify    bool              `json:"skip_verify"`
 	Note          string            `json:"note"`
+	RetryCount    int               `json:"retry_count"`
+	RetryInterval int               `json:"retry_interval"`
+	Batch         int               `json:"batch"`
 }
 
 type NotifyScript struct {
