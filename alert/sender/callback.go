@@ -130,9 +130,9 @@ func doRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res 
 	noti := models.NewNotificationRecord(evt, channel, target)
 	if err != nil {
 		noti.SetStatus(models.NotiStatusFailure)
-		noti.SetDetails(map[string]string{"error": err.Error()})
+		noti.SetDetails(err.Error())
 	} else if res != "" {
-		noti.SetDetails(map[string]string{"res": string(res)})
+		noti.SetDetails(string(res))
 	}
 
 	if err := noti.Add(ctx); err != nil {

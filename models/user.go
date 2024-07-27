@@ -298,6 +298,22 @@ func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
+func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {
+	if len(groupIds) == 0 {
+		return nil, nil
+	}
+
+	userIds, err := GroupsMemberIds(ctx, groupIds)
+	if err != nil {
+		return nil, err
+	}
+	users, err := UserGetsByIds(ctx, userIds)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func InitRoot(ctx *ctx.Context) {
 	user, err := UserGetByUsername(ctx, "root")
 	if err != nil {

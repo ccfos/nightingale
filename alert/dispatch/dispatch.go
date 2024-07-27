@@ -262,10 +262,11 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	e.SendCallbacks(rule, notifyTarget, event)
 
 	// handle global webhooks
-	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
+	sender.SendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.Astats)
+	go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
+		GetNotifyScript(), e.Astats, event)
 }
 
 func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTarget, event *models.AlertCurEvent) {
