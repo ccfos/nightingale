@@ -30,26 +30,32 @@ const (
 	Telegram     = "telegram"
 	Email        = "email"
 	EmailSubject = "mailsubject"
+	Lark         = "lark"
+	LarkCard     = "larkcard"
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
 	FeishuKey   = "feishu_robot_token"
 	MmKey       = "mm_webhook_url"
 	TelegramKey = "telegram_robot_token"
+	LarkKey     = "lark_robot_token"
 
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"
 	FeishuDomain   = "open.feishu.cn"
+	LarkDomain     = "open.larksuite.com"
 
 	// FeishuCardDomain The domain name of the feishu card is the same as the feishu,distinguished by the parameter
 	FeishuCardDomain = "open.feishu.cn?card=1"
+	LarkCardDomain   = "open.larksuite.com?card=1"
 	TelegramDomain   = "api.telegram.org"
 	IbexDomain       = "ibex"
 	DefaultDomain    = "default"
 )
 
 var (
-	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark, LarkCard}
+	DefaultContacts = []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey}
 )
 
 type User struct {
@@ -825,6 +831,9 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
+	case Lark, LarkCard:
+		ret := gjson.GetBytes(bs, LarkKey)
+		return ret.String(), ret.Exists()
 	default:
 		return "", false
 	}

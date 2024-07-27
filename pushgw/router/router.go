@@ -27,6 +27,7 @@ type Router struct {
 	Writers        *writer.WritersType
 	Ctx            *ctx.Context
 	HandleTS       HandleTSFunc
+	HeartbeartApi  string
 }
 
 func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType,
