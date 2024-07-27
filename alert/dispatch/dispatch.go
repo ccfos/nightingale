@@ -100,6 +100,8 @@ func (e *Dispatch) relaodTpls() error {
 		models.Mm:         sender.NewSender(models.Mm, tmpTpls),
 		models.Telegram:   sender.NewSender(models.Telegram, tmpTpls),
 		models.FeishuCard: sender.NewSender(models.FeishuCard, tmpTpls),
+		models.Lark:       sender.NewSender(models.Lark, tmpTpls),
+		models.LarkCard:   sender.NewSender(models.LarkCard, tmpTpls),
 	}
 
 	// domain -> Callback()
@@ -110,7 +112,9 @@ func (e *Dispatch) relaodTpls() error {
 		models.TelegramDomain:   sender.NewCallBacker(models.TelegramDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.FeishuCardDomain: sender.NewCallBacker(models.FeishuCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.IbexDomain:       sender.NewCallBacker(models.IbexDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkDomain:       sender.NewCallBacker(models.LarkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.DefaultDomain:    sender.NewCallBacker(models.DefaultDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkCardDomain:   sender.NewCallBacker(models.LarkCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 	}
 
 	e.RwLock.RLock()
@@ -296,6 +300,12 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 		// process feishu card
 		if parsedURL.Host == models.FeishuDomain && parsedURL.Query().Get("card") == "1" {
 			e.CallBacks[models.FeishuCardDomain].CallBack(cbCtx)
+			continue
+		}
+
+		// process lark card
+		if parsedURL.Host == models.LarkDomain && parsedURL.Query().Get("card") == "1" {
+			e.CallBacks[models.LarkCardDomain].CallBack(cbCtx)
 			continue
 		}
 
