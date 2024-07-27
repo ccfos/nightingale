@@ -31,6 +31,7 @@ const (
 	Email        = "email"
 	EmailSubject = "mailsubject"
 	Lark         = "lark"
+	LarkCard     = "larkcard"
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
@@ -46,13 +47,14 @@ const (
 
 	// FeishuCardDomain The domain name of the feishu card is the same as the feishu,distinguished by the parameter
 	FeishuCardDomain = "open.feishu.cn?card=1"
+	LarkCardDomain   = "open.larksuite.com?card=1"
 	TelegramDomain   = "api.telegram.org"
 	IbexDomain       = "ibex"
 	DefaultDomain    = "default"
 )
 
 var (
-	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark}
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark, LarkCard}
 	DefaultContacts = []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey}
 )
 
@@ -829,7 +831,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
-	case Lark:
+	case Lark, LarkCard:
 		ret := gjson.GetBytes(bs, LarkKey)
 		return ret.String(), ret.Exists()
 	default:
