@@ -90,7 +90,8 @@ func (rt *Router) notifyChannelPuts(c *gin.Context) {
 	var notifyChannels []models.NotifyChannel
 	ginx.BindJSON(c, &notifyChannels)
 
-	channels := []string{models.Dingtalk, models.Wecom, models.Feishu, models.Mm, models.Telegram, models.Email}
+	channels := []string{models.Dingtalk, models.Wecom, models.Feishu, models.Mm, models.Telegram,
+		models.Email, models.Lark}
 
 	m := make(map[string]struct{})
 	for _, v := range notifyChannels {
@@ -126,7 +127,8 @@ func (rt *Router) notifyContactPuts(c *gin.Context) {
 	var notifyContacts []models.NotifyContact
 	ginx.BindJSON(c, &notifyContacts)
 
-	keys := []string{models.DingtalkKey, models.WecomKey, models.FeishuKey, models.MmKey, models.TelegramKey}
+	keys := []string{models.DingtalkKey, models.WecomKey, models.FeishuKey, models.MmKey,
+		models.TelegramKey}
 
 	m := make(map[string]struct{})
 	for _, v := range notifyContacts {
