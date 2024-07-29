@@ -98,7 +98,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 	}
 
 	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body,
-		models.Dingtalk, ctx.Stats, ctx.Events[0])
+		"callback", ctx.Stats, ctx.Events[0])
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }

@@ -134,7 +134,7 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 	}
 	parsedURL.RawQuery = ""
 
-	doSendAndRecord(ctx.Ctx, parsedURL.String(), parsedURL.String(), body, models.FeishuCard,
+	doSendAndRecord(ctx.Ctx, parsedURL.String(), parsedURL.String(), body, "callback",
 		ctx.Stats, ctx.Events[0])
 }
 

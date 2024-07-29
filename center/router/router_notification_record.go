@@ -1,29 +1,36 @@
 package router
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/slice"
 )
 
-type Noti struct {
-	SubId   int64         `json:"sub_id"`
-	Channel string        `json:"channel"`
-	Result  []*NotiDetail `json:"result"`
+type NotificationResponse struct {
+	SubRules []SubRule           `json:"sub_rules"`
+	Notifies map[string][]Record `json:"notifies"`
 }
 
-type NotiDetail struct {
-	Target    string   `json:"target"`
-	Status    uint8    `json:"status"`
-	Details   []string `json:"details,omitempty"`
-	Username  string   `json:"username,omitempty"`
-	CreatedAt int64    `json:"created_at"`
+type SubRule struct {
+	SubID    int64               `json:"sub_id"`
+	Notifies map[string][]Record `json:"notifies"`
+}
+
+type Notify struct {
+	Channel string   `json:"channel"`
+	Records []Record `json:"records"`
+}
+
+type Record struct {
+	Target   string `json:"target"`
+	Username string `json:"username"`
+	Status   int    `json:"status"`
+	Detail   string `json:"detail"`
 }
 
 func (rt *Router) notificationRecordList(c *gin.Context) {
@@ -31,88 +38,134 @@ func (rt *Router) notificationRecordList(c *gin.Context) {
 	lst, err := models.NotificaitonRecordsGetByEventId(rt.Ctx, eid)
 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(gin.H{
-		"noti_res": buildNotiListByChannelAndSubId(rt.Ctx, lst),
-	}, nil)
+	response := buildNotificationResponse(rt.Ctx, lst)
+	ginx.NewRender(c).Data(response, nil)
 }
 
-func buildNotiListByChannelAndSubId(ctx *ctx.Context, nl []*models.NotificaitonRecord) []*Noti {
-	indexMap := make(map[string]int)
-	usernameByTarget := make(map[string][]string)
+func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord) NotificationResponse {
+	response := NotificationResponse{
+		SubRules: []SubRule{},
+		Notifies: make(map[string][]Record),
+	}
+
+	subRuleMap := make(map[int64]*SubRule)
+
+	// Collect all group IDs
 	groupIdSet := make(map[int64]struct{})
-	res := make([]*Noti, 0)
-	for _, n := range nl {
-		key := fmt.Sprintf("%s_%d", n.Channel, n.SubId)
-		noti := &Noti{}
-		if idx, ok := indexMap[key]; ok {
-			noti = res[idx]
-		} else {
-			noti.Channel = n.Channel
-			noti.SubId = n.SubId
-			fillUserName(ctx, n, usernameByTarget, groupIdSet)
+	filter := make(map[int64]map[string]map[string]int)
 
-			indexMap[key] = len(res)
-			res = append(res, noti)
-		}
-
-		if idx, ok := noti.MergeIdx(n.Target); !ok {
-			noti.Result = append(noti.Result, &NotiDetail{n.Target,
-				n.Status, []string{n.Details}, "", n.CreatedAt.Unix()})
-		} else {
-			noti.Result[idx].Details = append(noti.Result[idx].Details, n.Details)
-			if n.Status == models.NotiStatusFailure {
-				noti.Result[idx].Status = models.NotiStatusFailure
-			}
-		}
-	}
-
-	for _, ns := range res {
-		for _, n := range ns.Result {
-			n.Username = strings.Join(usernameByTarget[n.Target], ",")
-		}
-	}
-
-	return res
-}
-
-func (n *Noti) MergeIdx(curTarget string) (int, bool) {
-	if n == nil || len(n.Result) == 0 {
-		return 0, false
-	}
-	for idx, nd := range n.Result {
-		if nd.Target == curTarget {
-			return idx, true
-		}
-	}
-	return 0, false
-}
-
-func fillUserName(ctx *ctx.Context, noti *models.NotificaitonRecord,
-	userNameByTarget map[string][]string, groupIdSet map[int64]struct{}) {
-	if !slice.ContainsString(models.DefaultChannels, noti.Channel) {
-		return
-	}
-	gids := make([]int64, 0)
-	for _, gid := range noti.GetGroupIds(ctx) {
-		if _, ok := groupIdSet[gid]; !ok {
-			gids = append(gids, gid)
-		} else {
+	for i, n := range nl {
+		for _, gid := range n.GetGroupIds(ctx) {
 			groupIdSet[gid] = struct{}{}
 		}
+
+		if _, exists := filter[n.SubId]; !exists {
+			filter[n.SubId] = make(map[string]map[string]int)
+		}
+
+		if _, exists := filter[n.SubId][n.Channel]; !exists {
+			filter[n.SubId][n.Channel] = make(map[string]int)
+		}
+
+		idx, exists := filter[n.SubId][n.Channel][n.Target]
+		if !exists {
+			filter[n.SubId][n.Channel][n.Target] = i
+		} else {
+			if nl[idx].Status < n.Status {
+				nl[idx].Status = n.Status
+			}
+			nl[idx].Details = nl[idx].Details + ", " + n.Details
+			nl[i] = nil
+		}
+	}
+
+	// Fill usernames only once
+	usernameByTarget := fillUserNames(ctx, groupIdSet)
+
+	for _, n := range nl {
+		if n == nil {
+			continue
+		}
+
+		record := Record{
+			Target: n.Target,
+			Status: n.Status,
+			Detail: n.Details,
+		}
+
+		m := usernameByTarget[n.Target]
+		usernames := make([]string, 0, len(m))
+		for k := range m {
+			usernames = append(usernames, k)
+		}
+		record.Username = strings.Join(usernames, ",")
+
+		if n.SubId > 0 {
+			// Handle SubRules
+			subRule, ok := subRuleMap[n.SubId]
+			if !ok {
+				newSubRule := &SubRule{
+					SubID: n.SubId,
+				}
+				newSubRule.Notifies = make(map[string][]Record)
+				newSubRule.Notifies[n.Channel] = []Record{record}
+
+				subRuleMap[n.SubId] = newSubRule
+			} else {
+				if _, exists := subRule.Notifies[n.Channel]; !exists {
+
+					subRule.Notifies[n.Channel] = []Record{record}
+				} else {
+					subRule.Notifies[n.Channel] = append(subRule.Notifies[n.Channel], record)
+				}
+			}
+			continue
+		}
+
+		if response.Notifies == nil {
+			response.Notifies = make(map[string][]Record)
+		}
+
+		if _, exists := response.Notifies[n.Channel]; !exists {
+			response.Notifies[n.Channel] = []Record{record}
+		} else {
+			response.Notifies[n.Channel] = append(response.Notifies[n.Channel], record)
+		}
+	}
+
+	for _, subRule := range subRuleMap {
+		response.SubRules = append(response.SubRules, *subRule)
+	}
+
+	return response
+}
+
+func fillUserNames(ctx *ctx.Context, groupIdSet map[int64]struct{}) map[string]map[string]struct{} {
+	userNameByTarget := make(map[string]map[string]struct{})
+
+	gids := make([]int64, 0, len(groupIdSet))
+	for gid := range groupIdSet {
+		gids = append(gids, gid)
 	}
 
 	users, err := models.UsersGetByGroupIds(ctx, gids)
 	if err != nil {
 		logger.Errorf("UsersGetByGroupIds failed, err: %v", err)
-		return
+		return userNameByTarget
 	}
+
 	for _, user := range users {
+		logger.Warningf("user: %s", user.Username)
 		for _, ch := range models.DefaultChannels {
 			target, exist := user.ExtractToken(ch)
-			usl := userNameByTarget[target]
-			if exist && !slice.ContainsString(usl, user.Username) {
-				userNameByTarget[target] = append(usl, user.Username)
+			if exist {
+				if _, ok := userNameByTarget[target]; !ok {
+					userNameByTarget[target] = make(map[string]struct{})
+				}
+				userNameByTarget[target][user.Username] = struct{}{}
 			}
 		}
 	}
+
+	return userNameByTarget
 }
