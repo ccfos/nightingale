@@ -82,6 +82,12 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
+	TaskTpls              []Tpl                  `json:"task_tpls" gorm:"type:text;serializer:json"`
+}
+
+type Tpl struct {
+	TplId int64    `json:"tpl_id"`
+	Host  []string `json:"host"`
 }
 
 type PromRuleConfig struct {
@@ -677,6 +683,20 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 		}
 	}
 	return false, nil
+}
+
+func AlertRuleExistsByTaskId(ctx *ctx.Context, taskId int64) (bool, error) {
+	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "%"
+	cb := "{ibex}/" + fmt.Sprint(taskId) + "%"
+	session := DB(ctx).Where("task_tpls like ? or callbacks like ?", tpl, cb)
+
+	var lst []AlertRule
+	err := session.Find(&lst).Error
+	if err != nil || len(lst) == 0 {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {

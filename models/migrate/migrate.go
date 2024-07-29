@@ -185,7 +185,8 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig string `gorm:"type:text;column:extra_config"` // extra config
+	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
+	TaskTpls    []models.Tpl `json:"task_tpls" gorm:"type:text;serializer:json"`
 }
 
 type AlertSubscribe struct {
