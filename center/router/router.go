@@ -58,6 +58,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		HTTP:              httpConfig,
 		Center:            center,
 		Alert:             alert,
+		Ibex:              ibex,
 		Operations:        operations,
 		DatasourceCache:   ds,
 		NotifyConfigCache: ncc,
