@@ -20,7 +20,6 @@ type Webhook struct {
 	RetryCount    int               `json:"retry_count"`
 	RetryInterval int               `json:"retry_interval"`
 	Batch         int               `json:"batch"`
-	QueueMaxSize  int               `json:"queue_max_size"`
 }
 
 type NotifyScript struct {
