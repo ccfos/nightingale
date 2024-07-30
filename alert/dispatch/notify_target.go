@@ -80,7 +80,7 @@ func (s *NotifyTarget) ToWebhookList() []*models.Webhook {
 	webhooks := make([]*models.Webhook, 0, len(s.webhooks))
 	for _, wh := range s.webhooks {
 		if wh.Batch == 0 {
-			wh.Batch = 100
+			wh.Batch = 1000
 		}
 
 		if wh.Timeout == 0 {
