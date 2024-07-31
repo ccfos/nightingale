@@ -230,6 +230,7 @@ type Target struct {
 	HostIp       string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
 	AgentVersion string `gorm:"column:agent_version;varchar(255);default:'';comment:agent version;index:idx_agent_version"`
 	EngineName   string `gorm:"column:engine_name;varchar(255);default:'';comment:engine name;index:idx_engine_name"`
+	OS           string `gorm:"column:os;varchar(31);default:'';comment:os type;index:idx_os"`
 }
 
 type Datasource struct {
