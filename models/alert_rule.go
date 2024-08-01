@@ -430,7 +430,7 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 		}
 		b, err := json.Marshal(ar.AnnotationsJSON)
 		if err != nil {
-			return fmt.Errorf("marshal annotations err:%v", err)
+			return err
 		}
 		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
 	}
