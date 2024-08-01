@@ -152,7 +152,8 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	if isSubscribe {
 		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, EventCallbacksDispatch}
 	} else {
-		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, GlobalWebhookDispatch, EventCallbacksDispatch}
+		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, GlobalWebhookDispatch,
+			EventCallbacksDispatch}
 	}
 
 	notifyTarget := NewNotifyTarget()
@@ -264,6 +265,9 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	// handle event callbacks
 	e.SendCallbacks(rule, notifyTarget, event)
 
+	// handle ibex callbacks
+	e.HandleIbex(rule, event)
+
 	// handle global webhooks
 	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
 
@@ -314,6 +318,24 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			callBacker.CallBack(cbCtx)
 		} else {
 			e.CallBacks[models.DefaultDomain].CallBack(cbCtx)
+		}
+	}
+}
+
+func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEvent) {
+	for _, t := range rule.TaskTpls {
+		if t.TplId == 0 {
+			continue
+		}
+
+		if len(t.Host) == 0 {
+			sender.CallIbex(e.ctx, t.TplId, event.TargetIdent,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
+			continue
+		}
+		for _, host := range t.Host {
+			sender.CallIbex(e.ctx, t.TplId, host,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
 		}
 	}
 }
