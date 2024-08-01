@@ -3,7 +3,7 @@ package router
 import (
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -57,7 +57,7 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 	}
 
 	if req.Hostname == "" {
-		return req, fmt.Errorf("hostname is required", 400)
+		return req, errors.New("hostname is required")
 	}
 
 	// maybe from pushgw
@@ -119,6 +119,10 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 
 		if req.AgentVersion != "" && req.AgentVersion != target.AgentVersion {
 			field["agent_version"] = req.AgentVersion
+		}
+
+		if req.OS != "" && req.OS != target.OS {
+			field["os"] = req.OS
 		}
 
 		if len(field) > 0 {
