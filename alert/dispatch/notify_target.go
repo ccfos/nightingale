@@ -79,6 +79,22 @@ func (s *NotifyTarget) ToCallbackList() []string {
 func (s *NotifyTarget) ToWebhookList() []*models.Webhook {
 	webhooks := make([]*models.Webhook, 0, len(s.webhooks))
 	for _, wh := range s.webhooks {
+		if wh.Batch == 0 {
+			wh.Batch = 1000
+		}
+
+		if wh.Timeout == 0 {
+			wh.Timeout = 10
+		}
+
+		if wh.RetryCount == 0 {
+			wh.RetryCount = 10
+		}
+
+		if wh.RetryInterval == 0 {
+			wh.RetryInterval = 10
+		}
+
 		webhooks = append(webhooks, wh)
 	}
 	return webhooks
