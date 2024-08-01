@@ -141,6 +141,7 @@ func PushEvent(webhook *models.Webhook, event *models.AlertCurEvent, stats *asta
 
 	succ := queue.list.PushFront(event)
 	if !succ {
+		stats.AlertNotifyErrorTotal.WithLabelValues("push_event_queue").Inc()
 		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.list.Len(), event)
 	}
 }
