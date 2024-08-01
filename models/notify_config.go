@@ -7,7 +7,11 @@ const NOTIFYCONTACT = "notify_contact"
 const SMTP = "smtp_config"
 const IBEX = "ibex_server"
 
+var GlobalCallback = 0
+var RuleCallback = 1
+
 type Webhook struct {
+	Type          int               `json:"type"`
 	Enable        bool              `json:"enable"`
 	Url           string            `json:"url"`
 	BasicAuthUser string            `json:"basic_auth_user"`

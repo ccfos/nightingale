@@ -16,13 +16,18 @@ import (
 )
 
 func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats) bool {
+	channel := "webhook"
+	if webhook.Type == models.RuleCallback {
+		channel = "callback"
+	}
+
 	conf := webhook
 	if conf.Url == "" || !conf.Enable {
 		return false
 	}
 	bs, err := json.Marshal(event)
 	if err != nil {
-		logger.Errorf("alertingWebhook failed to marshal event:%+v err:%v", event, err)
+		logger.Errorf("%s alertingWebhook failed to marshal event:%+v err:%v", channel, event, err)
 		return false
 	}
 
@@ -30,7 +35,7 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 
 	req, err := http.NewRequest("POST", conf.Url, bf)
 	if err != nil {
-		logger.Warningf("alertingWebhook failed to new reques event:%s err:%v", string(bs), err)
+		logger.Warningf("%s alertingWebhook failed to new reques event:%s err:%v", channel, string(bs), err)
 		return true
 	}
 
@@ -59,12 +64,12 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 		},
 	}
 
-	stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
+	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 	var resp *http.Response
 	resp, err = client.Do(req)
 	if err != nil {
-		stats.AlertNotifyErrorTotal.WithLabelValues("webhook").Inc()
-		logger.Errorf("event_webhook_fail, event:%s, url: [%s], error: [%s]", string(bs), conf.Url, err)
+		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
+		logger.Errorf("event_%s_fail, event:%s, url: [%s], error: [%s]", channel, string(bs), conf.Url, err)
 		return true
 	}
 
@@ -75,11 +80,11 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	}
 
 	if resp.StatusCode == 429 {
-		logger.Errorf("event_webhook_fail, url: %s, response code: %d, body: %s event:%s", conf.Url, resp.StatusCode, string(body), string(bs))
+		logger.Errorf("event_%s_fail, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
 		return true
 	}
 
-	logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s event:%s", conf.Url, resp.StatusCode, string(body), string(bs))
+	logger.Debugf("event_%s_succ, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
 	return false
 }
 
@@ -105,6 +110,8 @@ func BatchSendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, 
 }
 
 var EventQueue = make(map[string]*WebhookQueue)
+var CallbackEventQueue = make(map[string]*WebhookQueue)
+var CallbackEventQueueLock sync.RWMutex
 var EventQueueLock sync.RWMutex
 
 const QueueMaxSize = 100000

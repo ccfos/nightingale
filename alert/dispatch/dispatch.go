@@ -284,7 +284,7 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			continue
 		}
 
-		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
+		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
 
 		if strings.HasPrefix(urlStr, "${ibex}") {
 			e.CallBacks[models.IbexDomain].CallBack(cbCtx)
