@@ -422,6 +422,19 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
 	}
 
+	if column == "annotations" {
+		newAnnotations := value.(map[string]interface{})
+		ar.AnnotationsJSON = make(map[string]string)
+		for k, v := range newAnnotations {
+			ar.AnnotationsJSON[k] = v.(string)
+		}
+		b, err := json.Marshal(ar.AnnotationsJSON)
+		if err != nil {
+			return err
+		}
+		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
+	}
+
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
 }
 
