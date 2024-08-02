@@ -111,12 +111,12 @@ func BusiGroupGetById(ctx *ctx.Context, id int64) (*BusiGroup, error) {
 }
 
 func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool, error) {
-	num, err := Count(DB(ctx).Model(&BusiGroup{}).Where(where, args...))
+	num, err := Count(Model[BusiGroup](ctx).Where(where, args...))
 	return num > 0, err
 }
 
 func (bg *BusiGroup) Del(ctx *ctx.Context) error {
-	has, err := Exists(DB(ctx).Model(&AlertMute{}).Where("group_id=?", bg.Id))
+	has, err := Exists(Model[AlertMute](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some alert mutes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&AlertSubscribe{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[AlertSubscribe](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some alert subscribes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&Target{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[Target](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some targets still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&Board{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[Board](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some dashboards still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&TaskTpl{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[TaskTpl](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 	// 	return errors.New("Some collect rules still in the BusiGroup")
 	// }
 
-	has, err = Exists(DB(ctx).Model(&AlertRule{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[AlertRule](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}

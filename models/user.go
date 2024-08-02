@@ -704,7 +704,7 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 	}
 
 	var allowedIdents []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
+	err = Model[Target](ctx).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
