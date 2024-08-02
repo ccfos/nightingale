@@ -291,9 +291,9 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 
 		if f.Action == "annotations_del" {
 			if annotations, has := f.Fields["annotations"]; has {
-				annotationsKeys := annotations.([]interface{})
-				for _, key := range annotationsKeys {
-					delete(ar.AnnotationsJSON, key.(string))
+				annotationsKeys := annotations.(map[string]interface{})
+				for key := range annotationsKeys {
+					delete(ar.AnnotationsJSON, key)
 				}
 				b, err := json.Marshal(ar.AnnotationsJSON)
 				ginx.Dangerous(err)
