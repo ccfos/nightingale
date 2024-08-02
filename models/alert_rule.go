@@ -26,6 +26,21 @@ const (
 	TDENGINE   = "tdengine"
 )
 
+const (
+	AlertRuleEnabled  = 0
+	AlertRuleDisabled = 1
+
+	AlertRuleEnableInGlobalBG = 0
+	AlertRuleEnableInOneBG    = 1
+
+	AlertRuleNotNotifyRecovered = 0
+	AlertRuleNotifyRecovered    = 1
+
+	AlertRuleNotifyRepeatStep60Min = 60
+
+	AlertRuleRecoverDuration0Sec = 0
+)
+
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
 	GroupId               int64                  `json:"group_id"`                      // busi group id

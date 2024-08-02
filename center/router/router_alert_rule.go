@@ -125,6 +125,25 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	ginx.NewRender(c).Data(reterr, nil)
 }
 
+func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
+	username := c.MustGet("username").(string)
+
+	type PromRule struct {
+		Groups []models.PromRuleGroup `yaml:"groups"`
+	}
+	var pr PromRule
+	ginx.Dangerous(c.BindYAML(&pr))
+	if len(pr.Groups) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
+	}
+
+	lst := models.DealPromGroup(pr.Groups)
+	bgid := ginx.UrlParamInt64(c, "id")
+	err := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+
+	ginx.NewRender(c).Data(err, nil)
+}
+
 func (rt *Router) alertRuleAddByService(c *gin.Context) {
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
