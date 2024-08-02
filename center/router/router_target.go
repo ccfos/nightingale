@@ -215,7 +215,7 @@ func (rt *Router) targetBindTags(f targetTagsForm, failedIdents map[string]strin
 	}
 
 	// 2. Acquire targets by idents
-	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents))
+	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents...))
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func (rt *Router) targetUnbindTagsByService(c *gin.Context) {
 
 func (rt *Router) targetUnbindTags(f targetTagsForm, failedIdents map[string]string) (map[string]string, error) {
 	// 1. Acquire targets by idents
-	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents))
+	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents...))
 	if err != nil {
 		return nil, err
 	}

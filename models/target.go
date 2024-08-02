@@ -151,7 +151,7 @@ func BuildTargetWhereWithOffset(offset int) BuildTargetWhereOption {
 	}
 }
 
-func BuildTargetWhereWithIdents(idents []string) BuildTargetWhereOption {
+func BuildTargetWhereWithIdents(idents ...string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if len(idents) == 0 {
 			return session
