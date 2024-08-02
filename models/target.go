@@ -346,9 +346,7 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
 	var arr []string
-	if len(idents) > 0 {
-		session = session.Where("ident in ?", idents)
-	}
+	session = BuildTargetWhereWithIdents(idents...)(session)
 
 	err := session.Select("distinct(tags) as tags").Pluck("tags", &arr).Error
 	if err != nil {
