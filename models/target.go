@@ -153,6 +153,9 @@ func BuildTargetWhereWithOffset(offset int) BuildTargetWhereOption {
 
 func BuildTargetWhereWithIdents(idents []string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
+		if len(idents) == 0 {
+			return session
+		}
 		return session.Where("ident in ?", idents)
 	}
 }
@@ -377,7 +380,7 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 }
 
 func (t *Target) AddTags(ctx *ctx.Context, tags []string) error {
-	for i := 0; i < len(tags); i++ {
+	for i := range tags {
 		if !strings.Contains(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
 		}
