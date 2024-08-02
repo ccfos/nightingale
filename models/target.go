@@ -128,6 +128,35 @@ func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	}
 }
 
+func BuildTargetWhereWithOrder(order string, desc bool) BuildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		if desc {
+			order += " desc"
+		} else {
+			order += " asc"
+		}
+		return session.Order(order)
+	}
+}
+
+func BuildTargetWhereWithLimit(limit int) BuildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		return session.Limit(limit)
+	}
+}
+
+func BuildTargetWhereWithOffset(offset int) BuildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		return session.Offset(offset)
+	}
+}
+
+func BuildTargetWhereWithIdents(idents []string) BuildTargetWhereOption {
+	return func(session *gorm.DB) *gorm.DB {
+		return session.Where("ident in ?", idents)
+	}
+}
+
 func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 	for _, opt := range options {
@@ -140,14 +169,9 @@ func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, er
 	return Count(buildTargetWhere(ctx, options...))
 }
 
-func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
+func TargetGets(ctx *ctx.Context, options ...BuildTargetWhereOption) ([]*Target, error) {
 	var lst []*Target
-	if desc {
-		order += " desc"
-	} else {
-		order += " asc"
-	}
-	err := buildTargetWhere(ctx, options...).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
+	err := buildTargetWhere(ctx, options...).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
@@ -263,12 +287,6 @@ func TargetGetById(ctx *ctx.Context, id int64) (*Target, error) {
 
 func TargetGetByIdent(ctx *ctx.Context, ident string) (*Target, error) {
 	return TargetGet(ctx, "ident = ?", ident)
-}
-
-func TargetsGetByIdents(ctx *ctx.Context, idents []string) ([]*Target, error) {
-	var targets []*Target
-	err := DB(ctx).Where("ident IN ?", idents).Find(&targets).Error
-	return targets, err
 }
 
 func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []string) (map[string]string, []string, error) {
