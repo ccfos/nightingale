@@ -274,19 +274,15 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 }
 
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
-	var lst []*Target
-	err := DB(ctx).Where(where, args...).Find(&lst).Error
+	var target Target
+	err := DB(ctx).Where(where, args...).First(&target).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
-
-	if len(lst) == 0 {
-		return nil, nil
-	}
-
-	lst[0].TagsJSON = strings.Fields(lst[0].Tags)
-
-	return lst[0], nil
+	return &target, nil
 }
 
 func TargetGetById(ctx *ctx.Context, id int64) (*Target, error) {
