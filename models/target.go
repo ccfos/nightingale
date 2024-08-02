@@ -26,6 +26,7 @@ type Target struct {
 	HostIp       string            `json:"host_ip"` //ipv4，do not needs range select
 	AgentVersion string            `json:"agent_version"`
 	EngineName   string            `json:"engine_name"`
+	OS           string            `json:"os" gorm:"column:os"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -33,7 +34,6 @@ type Target struct {
 	MemUtil    float64 `json:"mem_util" gorm:"-"`
 	CpuNum     int     `json:"cpu_num" gorm:"-"`
 	CpuUtil    float64 `json:"cpu_util" gorm:"-"`
-	OS         string  `json:"os" gorm:"-"`
 	Arch       string  `json:"arch" gorm:"-"`
 	RemoteAddr string  `json:"remote_addr" gorm:"-"`
 }
@@ -111,7 +111,8 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 			arr := strings.Fields(query)
 			for i := 0; i < len(arr); i++ {
 				q := "%" + arr[i] + "%"
-				session = session.Where("ident like ? or note like ? or tags like ?", q, q, q)
+				session = session.Where("ident like ? or note like ? or tags like ? "+
+					"or os like ?", q, q, q, q)
 			}
 		}
 		return session
@@ -418,7 +419,6 @@ func (t *Target) FillMeta(meta *HostMeta) {
 	t.CpuNum = meta.CpuNum
 	t.UnixTime = meta.UnixTime
 	t.Offset = meta.Offset
-	t.OS = meta.OS
 	t.Arch = meta.Arch
 	t.RemoteAddr = meta.RemoteAddr
 }

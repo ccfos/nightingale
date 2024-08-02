@@ -29,13 +29,14 @@ type (
 		Rule        *models.AlertRule
 		Events      []*models.AlertCurEvent
 		Stats       *astats.Stats
+		BatchSend   bool
 	}
 
 	DefaultCallBacker struct{}
 )
 
 func BuildCallBackContext(ctx *ctx.Context, callBackURL string, rule *models.AlertRule, events []*models.AlertCurEvent,
-	uids []int64, userCache *memsto.UserCacheType, stats *astats.Stats) CallBackContext {
+	uids []int64, userCache *memsto.UserCacheType, batchSend bool, stats *astats.Stats) CallBackContext {
 	users := userCache.GetByUserIds(uids)
 
 	newCallBackUrl, _ := events[0].ParseURL(callBackURL)
@@ -45,6 +46,7 @@ func BuildCallBackContext(ctx *ctx.Context, callBackURL string, rule *models.Ale
 		Rule:        rule,
 		Events:      events,
 		Users:       users,
+		BatchSend:   batchSend,
 		Stats:       stats,
 	}
 }
@@ -112,6 +114,21 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 
 	event := ctx.Events[0]
 
+	if ctx.BatchSend {
+		webhookConf := &models.Webhook{
+			Type:          models.RuleCallback,
+			Enable:        true,
+			Url:           ctx.CallBackURL,
+			Timeout:       5,
+			RetryCount:    3,
+			RetryInterval: 10,
+			Batch:         1000,
+		}
+
+		PushCallbackEvent(webhookConf, event, ctx.Stats)
+		return
+	}
+
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 	resp, code, err := poster.PostJSON(ctx.CallBackURL, 5*time.Second, event, 3)
 	if err != nil {
@@ -139,4 +156,28 @@ func doSend(url string, body interface{}, channel string, stats *astats.Stats) {
 type TaskCreateReply struct {
 	Err string `json:"err"`
 	Dat int64  `json:"dat"` // task.id
+}
+
+func PushCallbackEvent(webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+	CallbackEventQueueLock.RLock()
+	queue := CallbackEventQueue[webhook.Url]
+	CallbackEventQueueLock.RUnlock()
+
+	if queue == nil {
+		queue = &WebhookQueue{
+			list:    NewSafeListLimited(QueueMaxSize),
+			closeCh: make(chan struct{}),
+		}
+
+		CallbackEventQueueLock.Lock()
+		CallbackEventQueue[webhook.Url] = queue
+		CallbackEventQueueLock.Unlock()
+
+		StartConsumer(queue, webhook.Batch, webhook, stats)
+	}
+
+	succ := queue.list.PushFront(event)
+	if !succ {
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.list.Len(), event)
+	}
 }

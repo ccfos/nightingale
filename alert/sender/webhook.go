@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -14,14 +15,19 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) bool {
+func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats) bool {
+	channel := "webhook"
+	if webhook.Type == models.RuleCallback {
+		channel = "callback"
+	}
+
 	conf := webhook
 	if conf.Url == "" || !conf.Enable {
 		return false
 	}
 	bs, err := json.Marshal(event)
 	if err != nil {
-		logger.Errorf("alertingWebhook failed to marshal event:%+v err:%v", event, err)
+		logger.Errorf("%s alertingWebhook failed to marshal event:%+v err:%v", channel, event, err)
 		return false
 	}
 
@@ -29,7 +35,7 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 
 	req, err := http.NewRequest("POST", conf.Url, bf)
 	if err != nil {
-		logger.Warningf("alertingWebhook failed to new reques event:%+v err:%v", event, err)
+		logger.Warningf("%s alertingWebhook failed to new reques event:%s err:%v", channel, string(bs), err)
 		return true
 	}
 
@@ -58,12 +64,12 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 		},
 	}
 
-	stats.AlertNotifyTotal.WithLabelValues("webhook").Inc()
+	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 	var resp *http.Response
 	resp, err = client.Do(req)
 	if err != nil {
-		stats.AlertNotifyErrorTotal.WithLabelValues("webhook").Inc()
-		logger.Errorf("event_webhook_fail, ruleId: [%d], eventId: [%d], event:%+v, url: [%s], error: [%s]", event.RuleId, event.Id, event, conf.Url, err)
+		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
+		logger.Errorf("event_%s_fail, event:%s, url: [%s], error: [%s]", channel, string(bs), conf.Url, err)
 		return true
 	}
 
@@ -74,15 +80,15 @@ func sendWebhook(webhook *models.Webhook, event *models.AlertCurEvent, stats *as
 	}
 
 	if resp.StatusCode == 429 {
-		logger.Errorf("event_webhook_fail, url: %s, response code: %d, body: %s event:%+v", conf.Url, resp.StatusCode, string(body), event)
+		logger.Errorf("event_%s_fail, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
 		return true
 	}
 
-	logger.Debugf("event_webhook_succ, url: %s, response code: %d, body: %s event:%+v", conf.Url, resp.StatusCode, string(body), event)
+	logger.Debugf("event_%s_succ, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
 	return false
 }
 
-func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func SingleSendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
 		retryCount := 0
 		for retryCount < 3 {
@@ -92,6 +98,76 @@ func SendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats
 			}
 			retryCount++
 			time.Sleep(time.Minute * 1 * time.Duration(retryCount))
+		}
+	}
+}
+
+func BatchSendWebhooks(webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+	for _, conf := range webhooks {
+		logger.Infof("push event:%+v to queue:%v", event, conf)
+		PushEvent(conf, event, stats)
+	}
+}
+
+var EventQueue = make(map[string]*WebhookQueue)
+var CallbackEventQueue = make(map[string]*WebhookQueue)
+var CallbackEventQueueLock sync.RWMutex
+var EventQueueLock sync.RWMutex
+
+const QueueMaxSize = 100000
+
+type WebhookQueue struct {
+	list    *SafeListLimited
+	closeCh chan struct{}
+}
+
+func PushEvent(webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+	EventQueueLock.RLock()
+	queue := EventQueue[webhook.Url]
+	EventQueueLock.RUnlock()
+
+	if queue == nil {
+		queue = &WebhookQueue{
+			list:    NewSafeListLimited(QueueMaxSize),
+			closeCh: make(chan struct{}),
+		}
+
+		EventQueueLock.Lock()
+		EventQueue[webhook.Url] = queue
+		EventQueueLock.Unlock()
+
+		StartConsumer(queue, webhook.Batch, webhook, stats)
+	}
+
+	succ := queue.list.PushFront(event)
+	if !succ {
+		stats.AlertNotifyErrorTotal.WithLabelValues("push_event_queue").Inc()
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.list.Len(), event)
+	}
+}
+
+func StartConsumer(queue *WebhookQueue, popSize int, webhook *models.Webhook, stats *astats.Stats) {
+	for {
+		select {
+		case <-queue.closeCh:
+			logger.Infof("event queue:%v closed", queue)
+			return
+		default:
+			events := queue.list.PopBack(popSize)
+			if len(events) == 0 {
+				time.Sleep(time.Millisecond * 400)
+				continue
+			}
+
+			retryCount := 0
+			for retryCount < webhook.RetryCount {
+				needRetry := sendWebhook(webhook, events, stats)
+				if !needRetry {
+					break
+				}
+				retryCount++
+				time.Sleep(time.Second * time.Duration(webhook.RetryInterval) * time.Duration(retryCount))
+			}
 		}
 	}
 }
