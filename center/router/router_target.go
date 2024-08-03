@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/storage"
@@ -82,19 +81,12 @@ func (rt *Router) targetGets(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if err == nil {
-		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
 
 		var keys []string
 		for i := range list {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
-			delta := now.Unix() - list[i].UpdateAt
-			if delta < 60 {
-				list[i].TargetUp = 2
-			} else if delta < 180 {
-				list[i].TargetUp = 1
-			}
 		}
 
 		if len(keys) > 0 {
