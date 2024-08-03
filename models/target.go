@@ -253,9 +253,6 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 
 	var lst []*Target
 	err := Model[Target](ctx).Find(&lst).Error
-	for i := range lst {
-		lst[i].FillTagsMap()
-	}
 	return lst, err
 }
 
