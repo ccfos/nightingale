@@ -152,8 +152,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	if isSubscribe {
 		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, EventCallbacksDispatch}
 	} else {
-		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, GlobalWebhookDispatch,
-			EventCallbacksDispatch}
+		handlers = []NotifyTargetDispatch{NotifyGroupDispatch, GlobalWebhookDispatch, EventCallbacksDispatch}
 	}
 
 	notifyTarget := NewNotifyTarget()
@@ -323,7 +322,13 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 }
 
 func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEvent) {
-	for _, t := range rule.TaskTpls {
+	// 解析 RuleConfig 字段
+	var ruleConfig struct {
+		TaskTpls []*models.Tpl `json:"task_tpls"`
+	}
+	json.Unmarshal([]byte(rule.RuleConfig), &ruleConfig)
+
+	for _, t := range ruleConfig.TaskTpls {
 		if t.TplId == 0 {
 			continue
 		}
