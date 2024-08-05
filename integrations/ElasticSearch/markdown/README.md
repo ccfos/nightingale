@@ -4,7 +4,6 @@ ElasticSearch 通过 HTTP JSON 的方式暴露了自身的监控指标，通过 
 
 如果是小规模集群，设置 `local=false`，从集群中某一个节点抓取数据，即可拿到整个集群所有节点的监控数据。如果是大规模集群，建议设置 `local=true`，在集群的每个节点上都部署抓取器，抓取本地 elasticsearch 进程的监控数据。
 
-ElasticSearch 详细的监控讲解，请参考这篇 [文章](https://time.geekbang.org/column/article/628847)。
 
 ## 配置示例
 

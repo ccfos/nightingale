@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -273,6 +274,32 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 
 		if ar == nil {
 			continue
+		}
+
+		if f.Action == "annotations_add" {
+			if annotations, has := f.Fields["annotations"]; has {
+				annotationsMap := annotations.(map[string]interface{})
+				for k, v := range annotationsMap {
+					ar.AnnotationsJSON[k] = v.(string)
+				}
+				b, err := json.Marshal(ar.AnnotationsJSON)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
+				continue
+			}
+		}
+
+		if f.Action == "annotations_del" {
+			if annotations, has := f.Fields["annotations"]; has {
+				annotationsKeys := annotations.(map[string]interface{})
+				for key := range annotationsKeys {
+					delete(ar.AnnotationsJSON, key)
+				}
+				b, err := json.Marshal(ar.AnnotationsJSON)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
+				continue
+			}
 		}
 
 		if f.Action == "callback_add" {
