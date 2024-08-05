@@ -223,5 +223,5 @@ func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy s
 	if old == new {
 		return nil
 	}
-	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{"typ": new, "updated_by": updatedBy}).Error
+	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{col: new, "updated_by": updatedBy}).Error
 }
