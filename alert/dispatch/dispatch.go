@@ -264,6 +264,9 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	// handle event callbacks
 	e.SendCallbacks(rule, notifyTarget, event)
 
+	// handle ibex callbacks
+	e.HandleIbex(rule, event)
+
 	// handle global webhooks
 	if e.alerting.WebhookBatchSend {
 		sender.BatchSendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
@@ -318,6 +321,30 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			callBacker.CallBack(cbCtx)
 		} else {
 			e.CallBacks[models.DefaultDomain].CallBack(cbCtx)
+		}
+	}
+}
+
+func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEvent) {
+	// 解析 RuleConfig 字段
+	var ruleConfig struct {
+		TaskTpls []*models.Tpl `json:"task_tpls"`
+	}
+	json.Unmarshal([]byte(rule.RuleConfig), &ruleConfig)
+
+	for _, t := range ruleConfig.TaskTpls {
+		if t.TplId == 0 {
+			continue
+		}
+
+		if len(t.Host) == 0 {
+			sender.CallIbex(e.ctx, t.TplId, event.TargetIdent,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
+			continue
+		}
+		for _, host := range t.Host {
+			sender.CallIbex(e.ctx, t.TplId, host,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
 		}
 	}
 }
