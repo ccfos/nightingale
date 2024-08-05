@@ -52,15 +52,15 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					bp := models.BuiltinPayload{
-						Type:      lst[i].Type,
-						Component: lst[i].Component,
-						Cate:      lst[i].Cate,
-						Name:      rule.Name,
-						Tags:      rule.AppendTags,
-						UUID:      rule.UUID,
-						Content:   string(contentBytes),
-						CreatedBy: username,
-						UpdatedBy: username,
+						Type:        lst[i].Type,
+						ComponentID: lst[i].ComponentID,
+						Cate:        lst[i].Cate,
+						Name:        rule.Name,
+						Tags:        rule.AppendTags,
+						UUID:        rule.UUID,
+						Content:     string(contentBytes),
+						CreatedBy:   username,
+						UpdatedBy:   username,
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
@@ -81,15 +81,15 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			bp := models.BuiltinPayload{
-				Type:      lst[i].Type,
-				Component: lst[i].Component,
-				Cate:      lst[i].Cate,
-				Name:      alertRule.Name,
-				Tags:      alertRule.AppendTags,
-				UUID:      alertRule.UUID,
-				Content:   lst[i].Content,
-				CreatedBy: username,
-				UpdatedBy: username,
+				Type:        lst[i].Type,
+				ComponentID: lst[i].ComponentID,
+				Cate:        lst[i].Cate,
+				Name:        alertRule.Name,
+				Tags:        alertRule.AppendTags,
+				UUID:        alertRule.UUID,
+				Content:     lst[i].Content,
+				CreatedBy:   username,
+				UpdatedBy:   username,
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
@@ -115,15 +115,15 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					bp := models.BuiltinPayload{
-						Type:      lst[i].Type,
-						Component: lst[i].Component,
-						Cate:      lst[i].Cate,
-						Name:      dashboard.Name,
-						Tags:      dashboard.Tags,
-						UUID:      dashboard.UUID,
-						Content:   string(contentBytes),
-						CreatedBy: username,
-						UpdatedBy: username,
+						Type:        lst[i].Type,
+						ComponentID: lst[i].ComponentID,
+						Cate:        lst[i].Cate,
+						Name:        dashboard.Name,
+						Tags:        dashboard.Tags,
+						UUID:        dashboard.UUID,
+						Content:     string(contentBytes),
+						CreatedBy:   username,
+						UpdatedBy:   username,
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
@@ -144,15 +144,15 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			bp := models.BuiltinPayload{
-				Type:      lst[i].Type,
-				Component: lst[i].Component,
-				Cate:      lst[i].Cate,
-				Name:      dashboard.Name,
-				Tags:      dashboard.Tags,
-				UUID:      dashboard.UUID,
-				Content:   lst[i].Content,
-				CreatedBy: username,
-				UpdatedBy: username,
+				Type:        lst[i].Type,
+				ComponentID: lst[i].ComponentID,
+				Cate:        lst[i].Cate,
+				Name:        dashboard.Name,
+				Tags:        dashboard.Tags,
+				UUID:        dashboard.UUID,
+				Content:     lst[i].Content,
+				CreatedBy:   username,
+				UpdatedBy:   username,
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
@@ -171,19 +171,20 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
-	component := ginx.QueryStr(c, "component", "")
+	ComponentID := ginx.QueryInt64(c, "component_id", 0)
+
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	lst, err := models.BuiltinPayloadGets(rt.Ctx, typ, component, cate, query)
+	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
 	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
-	component := ginx.QueryStr(c, "component", "")
+	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
-	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, component)
+	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
 	ginx.NewRender(c).Data(cates, err)
 }
 

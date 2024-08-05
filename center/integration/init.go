@@ -92,6 +92,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					logger.Warning("update builtin component fail ", old, err)
 				}
 			}
+			component.ID = old.ID
 		}
 
 		// delete uuid is emtpy
@@ -141,13 +142,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 					cate := strings.Replace(f, ".json", "", -1)
 					builtinAlert := models.BuiltinPayload{
-						Component: component.Ident,
-						Type:      "alert",
-						Cate:      cate,
-						Name:      alert.Name,
-						Tags:      alert.AppendTags,
-						Content:   string(content),
-						UUID:      alert.UUID,
+						ComponentID: component.ID,
+						Type:        "alert",
+						Cate:        cate,
+						Name:        alert.Name,
+						Tags:        alert.AppendTags,
+						Content:     string(content),
+						UUID:        alert.UUID,
 					}
 
 					old, err := models.BuiltinPayloadGet(ctx, "uuid = ?", alert.UUID)
@@ -231,13 +232,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				builtinDashboard := models.BuiltinPayload{
-					Component: component.Ident,
-					Type:      "dashboard",
-					Cate:      "",
-					Name:      dashboard.Name,
-					Tags:      dashboard.Tags,
-					Content:   string(content),
-					UUID:      dashboard.UUID,
+					ComponentID: component.ID,
+					Type:        "dashboard",
+					Cate:        "",
+					Name:        dashboard.Name,
+					Tags:        dashboard.Tags,
+					Content:     string(content),
+					UUID:        dashboard.UUID,
 				}
 
 				old, err := models.BuiltinPayloadGet(ctx, "uuid = ?", dashboard.UUID)

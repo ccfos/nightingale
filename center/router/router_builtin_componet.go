@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -53,7 +55,24 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 	username := Username(c)
 	req.UpdatedBy = username
 
-	ginx.NewRender(c).Message(bc.Update(rt.Ctx, req))
+	err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		txErr := models.BuiltinMetricBatchUpdateColumn(tCtx, "typ", bc.Ident, req.Ident)
+		if txErr != nil {
+			return txErr
+		}
+
+		txErr = bc.Update(tCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+		return nil
+	})
+
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) builtinComponentsDel(c *gin.Context) {
