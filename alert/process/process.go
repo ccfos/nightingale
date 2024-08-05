@@ -232,17 +232,17 @@ func Relabel(rule *models.AlertRule, event *models.AlertCurEvent) {
 		return
 	}
 
+	if len(rule.EventRelabelConfig) == 0 {
+		return
+	}
+
 	// need to keep the original label
 	event.OriginalTags = event.Tags
 	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
 
 	labels := make([]prompb.Label, len(event.TagsJSON))
 	for i, tag := range event.TagsJSON {
-		label := strings.Split(tag, "=")
-		if len(label) != 2 {
-			logger.Errorf("event%+v relabel: the label length is not 2:%v", event, label)
-			continue
-		}
+		label := strings.SplitN(tag, "=", 2)
 		event.OriginalTagsJSON[i] = tag
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
