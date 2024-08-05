@@ -10,6 +10,8 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
+const SYSTEM = "system"
+
 func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 	var lst []models.BuiltinComponent
 	ginx.BindJSON(c, &lst)
@@ -52,6 +54,11 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 		return
 	}
 
+	if bc.CreatedBy == SYSTEM {
+		ginx.NewRender(c, http.StatusBadRequest).Message("System template can not be updated")
+		return
+	}
+
 	username := Username(c)
 	req.UpdatedBy = username
 
@@ -60,7 +67,7 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 			DB: tx,
 		}
 
-		txErr := models.BuiltinMetricBatchUpdateColumn(tCtx, "typ", bc.Ident, req.Ident)
+		txErr := models.BuiltinMetricBatchUpdateColumn(tCtx, "typ", bc.Ident, req.Ident, req.UpdatedBy)
 		if txErr != nil {
 			return txErr
 		}

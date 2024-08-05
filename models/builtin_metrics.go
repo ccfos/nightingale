@@ -219,6 +219,9 @@ func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]strin
 	return collectors, err
 }
 
-func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new string) error {
-	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Update("typ", new).Error
+func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy string) error {
+	if old == new {
+		return nil
+	}
+	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{"typ": new, "updated_by": updatedBy}).Error
 }
