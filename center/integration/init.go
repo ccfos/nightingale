@@ -16,6 +16,12 @@ import (
 const SYSTEM = "system"
 
 func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
+	err := models.InitBuiltinPayloads(ctx)
+	if err != nil {
+		logger.Warning("init old builtinPayloads fail ", err)
+		return
+	}
+
 	fp := builtinIntegrationsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "integrations")
@@ -166,6 +172,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 
 					if old.UpdatedBy == SYSTEM {
+						old.ComponentID = component.ID
 						old.Content = string(content)
 						old.Name = alert.Name
 						old.Tags = alert.AppendTags
@@ -256,6 +263,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				if old.UpdatedBy == SYSTEM {
+					old.ComponentID = component.ID
 					old.Content = string(content)
 					old.Name = dashboard.Name
 					old.Tags = dashboard.Tags
