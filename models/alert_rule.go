@@ -689,18 +689,23 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 	return false, nil
 }
 
-func AlertRuleExistsByTaskId(ctx *ctx.Context, taskId int64) (bool, error) {
-	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "%"
+func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
+	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "}%"
 	cb := "{ibex}/" + fmt.Sprint(taskId) + "%"
 	session := DB(ctx).Where("rule_config like ? or callbacks like ?", tpl, cb)
 
 	var lst []AlertRule
+	var ids []int64
 	err := session.Find(&lst).Error
 	if err != nil || len(lst) == 0 {
-		return false, err
+		return ids, err
 	}
 
-	return true, nil
+	for i := 0; i < len(lst); i++ {
+		ids = append(ids, lst[i].Id)
+	}
+
+	return ids, nil
 }
 
 func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
