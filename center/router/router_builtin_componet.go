@@ -56,8 +56,7 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 	}
 
 	if bc.CreatedBy == SYSTEM {
-		ginx.NewRender(c, http.StatusBadRequest).Message("System template can not be updated")
-		return
+		req.Ident = bc.Ident
 	}
 
 	username := Username(c)
