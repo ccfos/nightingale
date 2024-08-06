@@ -1,6 +1,6 @@
 # Kubernetes
 
-这个插件已经废弃。Kubernetes 监控系列可以参考这个 [文章](https://flashcat.cloud/categories/kubernetes%E7%9B%91%E6%8E%A7%E4%B8%93%E6%A0%8F/)。或者参考 [专栏](https://time.geekbang.org/column/article/630306)。
+这个插件已经废弃。Kubernetes 监控系列可以参考这个 [文章](https://flashcat.cloud/categories/kubernetes%E7%9B%91%E6%8E%A7%E4%B8%93%E6%A0%8F/)。
 
 不过 Kubernetes 这个类别下的内置告警规则和内置仪表盘都是可以使用的。
 

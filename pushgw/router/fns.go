@@ -136,7 +136,7 @@ func matchSample(filterMap, sampleMap map[string]string) bool {
 }
 
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
-	rt.BeforePush(clientIP, v)
+	v = rt.BeforePush(clientIP, v)
 	if v == nil {
 		return
 	}
@@ -157,7 +157,7 @@ func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSe
 }
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
-	rt.BeforePush(clientIP, v)
+	v = rt.BeforePush(clientIP, v)
 	if v == nil {
 		return
 	}
@@ -177,7 +177,7 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	rt.Writers.PushSample(hashkey, *v)
 }
 
-func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {
-	rt.HandleTS(v)
+func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) *prompb.TimeSeries {
 	rt.debugSample(clientIP, v)
+	return rt.HandleTS(v)
 }

@@ -32,6 +32,7 @@ type Alerting struct {
 	Timeout           int64
 	TemplatesDir      string
 	NotifyConcurrency int
+	WebhookBatchSend  bool
 }
 
 type CallPlugin struct {

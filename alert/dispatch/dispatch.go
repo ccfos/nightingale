@@ -100,6 +100,8 @@ func (e *Dispatch) relaodTpls() error {
 		models.Mm:         sender.NewSender(models.Mm, tmpTpls),
 		models.Telegram:   sender.NewSender(models.Telegram, tmpTpls),
 		models.FeishuCard: sender.NewSender(models.FeishuCard, tmpTpls),
+		models.Lark:       sender.NewSender(models.Lark, tmpTpls),
+		models.LarkCard:   sender.NewSender(models.LarkCard, tmpTpls),
 	}
 
 	// domain -> Callback()
@@ -110,7 +112,9 @@ func (e *Dispatch) relaodTpls() error {
 		models.TelegramDomain:   sender.NewCallBacker(models.TelegramDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.FeishuCardDomain: sender.NewCallBacker(models.FeishuCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.IbexDomain:       sender.NewCallBacker(models.IbexDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkDomain:       sender.NewCallBacker(models.LarkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 		models.DefaultDomain:    sender.NewCallBacker(models.DefaultDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkCardDomain:   sender.NewCallBacker(models.LarkCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 	}
 
 	e.RwLock.RLock()
@@ -261,8 +265,15 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	// handle event callbacks
 	e.SendCallbacks(rule, notifyTarget, event)
 
+	// handle ibex callbacks
+	e.HandleIbex(rule, event)
+
 	// handle global webhooks
-	sender.SendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+	if e.alerting.WebhookBatchSend {
+		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+	} else {
+		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+	}
 
 	// handle plugin call
 	go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
@@ -278,7 +289,7 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			continue
 		}
 
-		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
+		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
 
 		if strings.HasPrefix(urlStr, "${ibex}") {
 			e.CallBacks[models.IbexDomain].CallBack(cbCtx)
@@ -301,11 +312,41 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			continue
 		}
 
+		// process lark card
+		if parsedURL.Host == models.LarkDomain && parsedURL.Query().Get("card") == "1" {
+			e.CallBacks[models.LarkCardDomain].CallBack(cbCtx)
+			continue
+		}
+
 		callBacker, ok := e.CallBacks[parsedURL.Host]
 		if ok {
 			callBacker.CallBack(cbCtx)
 		} else {
 			e.CallBacks[models.DefaultDomain].CallBack(cbCtx)
+		}
+	}
+}
+
+func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEvent) {
+	// 解析 RuleConfig 字段
+	var ruleConfig struct {
+		TaskTpls []*models.Tpl `json:"task_tpls"`
+	}
+	json.Unmarshal([]byte(rule.RuleConfig), &ruleConfig)
+
+	for _, t := range ruleConfig.TaskTpls {
+		if t.TplId == 0 {
+			continue
+		}
+
+		if len(t.Host) == 0 {
+			sender.CallIbex(e.ctx, t.TplId, event.TargetIdent,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
+			continue
+		}
+		for _, host := range t.Host {
+			sender.CallIbex(e.ctx, t.TplId, host,
+				e.taskTplsCache, e.targetCache, e.userCache, event)
 		}
 	}
 }

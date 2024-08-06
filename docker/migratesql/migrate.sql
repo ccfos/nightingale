@@ -86,6 +86,9 @@ ALTER TABLE alert_cur_event ADD COLUMN original_tags TEXT COMMENT 'labels key=va
 ALTER TABLE alert_his_event ADD COLUMN original_tags TEXT COMMENT 'labels key=val,,k2=v2';
 
 /* v7.1.0 */
+ALTER TABLE target ADD COLUMN os VARCHAR(31) DEFAULT '' COMMENT 'os type';
+
+/* v7.2.0 */
 CREATE TABLE notification_record (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `event_id` BIGINT NOT NULL,

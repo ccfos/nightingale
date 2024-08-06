@@ -49,7 +49,8 @@ var I18N = `
       "url path invalid":"url非法",
       "no such server":"无此实例",
       "admin role can not be modified":"管理员角色不允许修改",
-      "builtin payload already exists":"内置模板已存在"
+      "builtin payload already exists":"内置模板已存在",
+      "This functionality has not been enabled. Please contact the system administrator to activate it.":"此功能尚未启用。请联系系统管理员启用"
   },
   "zh_CN": {
     "Username or password invalid": "用户名或密码错误",
@@ -101,7 +102,8 @@ var I18N = `
     "admin role can not be modified":"管理员角色不允许修改",
     "builtin payload already exists":"内置模板已存在",
     "builtin metric already exists":"内置指标已存在",
-    "AlertRule already exists":"告警规则已存在"
+    "AlertRule already exists":"告警规则已存在",
+    "This functionality has not been enabled. Please contact the system administrator to activate it.":"此功能尚未启用。请联系系统管理员启用"
   }
 }
 `

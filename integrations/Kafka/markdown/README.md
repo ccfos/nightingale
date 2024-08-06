@@ -1,6 +1,6 @@
 # kafka plugin
 
-Kafka 的核心指标，其实都是通过 JMX 的方式暴露的，可以参考这篇 [文章](https://time.geekbang.org/column/article/628498)。对于 JMX 暴露的指标，使用 jolokia 或者使用 jmx_exporter 那个 jar 包来采集即可，不需要本插件。
+Kafka 的核心指标，其实都是通过 JMX 的方式暴露的。对于 JMX 暴露的指标，使用 jolokia 或者使用 jmx_exporter 那个 jar 包来采集即可，不需要本插件。
 
 本插件主要是采集的消费者延迟数据，这个数据无法通过 Kafka 服务端的 JMX 拿到。
 

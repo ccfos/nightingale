@@ -7,7 +7,11 @@ const NOTIFYCONTACT = "notify_contact"
 const SMTP = "smtp_config"
 const IBEX = "ibex_server"
 
+var GlobalCallback = 0
+var RuleCallback = 1
+
 type Webhook struct {
+	Type          int               `json:"type"`
 	Enable        bool              `json:"enable"`
 	Url           string            `json:"url"`
 	BasicAuthUser string            `json:"basic_auth_user"`
@@ -17,6 +21,9 @@ type Webhook struct {
 	Headers       []string          `json:"headers_str"`
 	SkipVerify    bool              `json:"skip_verify"`
 	Note          string            `json:"note"`
+	RetryCount    int               `json:"retry_count"`
+	RetryInterval int               `json:"retry_interval"`
+	Batch         int               `json:"batch"`
 }
 
 type NotifyScript struct {

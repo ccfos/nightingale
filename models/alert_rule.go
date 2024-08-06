@@ -84,6 +84,16 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 }
 
+type Tpl struct {
+	TplId int64    `json:"tpl_id"`
+	Host  []string `json:"host"`
+}
+
+type RuleConfig struct {
+	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+	TaskTpls           []*Tpl                 `json:"task_tpls"`
+}
+
 type PromRuleConfig struct {
 	Queries    []PromQuery `json:"queries"`
 	Inhibit    bool        `json:"inhibit"`
@@ -422,6 +432,19 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
 	}
 
+	if column == "annotations" {
+		newAnnotations := value.(map[string]interface{})
+		ar.AnnotationsJSON = make(map[string]string)
+		for k, v := range newAnnotations {
+			ar.AnnotationsJSON[k] = v.(string)
+		}
+		b, err := json.Marshal(ar.AnnotationsJSON)
+		if err != nil {
+			return err
+		}
+		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
+	}
+
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
 }
 
@@ -677,6 +700,25 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 		}
 	}
 	return false, nil
+}
+
+func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
+	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "}%"
+	cb := "{ibex}/" + fmt.Sprint(taskId) + "%"
+	session := DB(ctx).Where("rule_config like ? or callbacks like ?", tpl, cb)
+
+	var lst []AlertRule
+	var ids []int64
+	err := session.Find(&lst).Error
+	if err != nil || len(lst) == 0 {
+		return ids, err
+	}
+
+	for i := 0; i < len(lst); i++ {
+		ids = append(ids, lst[i].Id)
+	}
+
+	return ids, nil
 }
 
 func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
