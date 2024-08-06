@@ -192,7 +192,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 \u003c 10",
+                    "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_in_bytes * 100 \u003c 10",
                     "severity": 1
                 }
             ],
@@ -275,7 +275,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 \u003c 20",
+                    "prom_ql": "elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_in_bytes * 100 \u003c 20",
                     "severity": 2
                 }
             ],
