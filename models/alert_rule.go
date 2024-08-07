@@ -26,6 +26,21 @@ const (
 	TDENGINE   = "tdengine"
 )
 
+const (
+	AlertRuleEnabled  = 0
+	AlertRuleDisabled = 1
+
+	AlertRuleEnableInGlobalBG = 0
+	AlertRuleEnableInOneBG    = 1
+
+	AlertRuleNotNotifyRecovered = 0
+	AlertRuleNotifyRecovered    = 1
+
+	AlertRuleNotifyRepeatStep60Min = 60
+
+	AlertRuleRecoverDuration0Sec = 0
+)
+
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
 	GroupId               int64                  `json:"group_id"`                      // busi group id
@@ -82,6 +97,16 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
+}
+
+type Tpl struct {
+	TplId int64    `json:"tpl_id"`
+	Host  []string `json:"host"`
+}
+
+type RuleConfig struct {
+	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
+	TaskTpls           []*Tpl                 `json:"task_tpls"`
 }
 
 type PromRuleConfig struct {
@@ -690,6 +715,25 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 		}
 	}
 	return false, nil
+}
+
+func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
+	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "}%"
+	cb := "{ibex}/" + fmt.Sprint(taskId) + "%"
+	session := DB(ctx).Where("rule_config like ? or callbacks like ?", tpl, cb)
+
+	var lst []AlertRule
+	var ids []int64
+	err := session.Find(&lst).Error
+	if err != nil || len(lst) == 0 {
+		return ids, err
+	}
+
+	for i := 0; i < len(lst); i++ {
+		ids = append(ids, lst[i].Id)
+	}
+
+	return ids, nil
 }
 
 func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {

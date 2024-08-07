@@ -196,6 +196,13 @@ func (rt *Router) taskTplDel(c *gin.Context) {
 		return
 	}
 
+	ids, err := models.GetAlertRuleIdsByTaskId(rt.Ctx, tid)
+	ginx.Dangerous(err)
+	if len(ids) > 0 {
+		ginx.NewRender(c).Message("can't del this task tpl, used by alert rule ids(%v) ", ids)
+		return
+	}
+
 	ginx.NewRender(c).Message(tpl.Del(rt.Ctx))
 }
 
