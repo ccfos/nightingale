@@ -144,10 +144,10 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
 	stats *astats.Stats, event *models.AlertCurEvent) {
 	res, err := doSend(url, body, channel, stats)
-	doRecord(ctx, event, channel, token, res, err)
+	NotifyRecord(ctx, event, channel, token, res, err)
 }
 
-func doRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res string, err error) {
+func NotifyRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res string, err error) {
 	noti := models.NewNotificationRecord(evt, channel, target)
 	if err != nil {
 		noti.SetStatus(models.NotiStatusFailure)

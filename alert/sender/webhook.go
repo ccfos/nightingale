@@ -96,7 +96,7 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *mod
 		retryCount := 0
 		for retryCount < 3 {
 			needRetry, res, err := sendWebhook(conf, event, stats)
-			doRecord(ctx, event, "webhook", conf.Url, res, err)
+			NotifyRecord(ctx, event, "webhook", conf.Url, res, err)
 			if !needRetry {
 				break
 			}
@@ -180,6 +180,6 @@ func StartConsumer(ctx *ctx.Context, queue *WebhookQueue, popSize int, webhook *
 func RecordEvents(ctx *ctx.Context, webhook *models.Webhook, events []*models.AlertCurEvent, stats *astats.Stats, res string, err error) {
 	for _, event := range events {
 		time.Sleep(time.Millisecond * 10)
-		doRecord(ctx, event, "webhook", webhook.Url, res, err)
+		NotifyRecord(ctx, event, "webhook", webhook.Url, res, err)
 	}
 }
