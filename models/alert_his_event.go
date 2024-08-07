@@ -150,7 +150,7 @@ func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
@@ -188,7 +188,7 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
@@ -198,7 +198,7 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 	err := session.Order("trigger_time desc, id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -238,7 +238,7 @@ func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		return err
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ds, exists := dsm[lst[i].Cluster]
 		if !exists {
 			continue

@@ -28,7 +28,7 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	}
 
 	event.TagsMap = make(map[string]string)
-	for i := 0; i < len(event.TagsJSON); i++ {
+	for i := range event.TagsJSON {
 		pair := strings.TrimSpace(event.TagsJSON[i])
 		if pair == "" {
 			continue
@@ -102,7 +102,7 @@ func (rt *Router) makeEvent(c *gin.Context) {
 	var events []*eventForm
 	ginx.BindJSON(c, &events)
 	//now := time.Now().Unix()
-	for i := 0; i < len(events); i++ {
+	for i := range events {
 		node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(events[i].DatasourceId, 10), fmt.Sprintf("%d", events[i].RuleId))
 		if err != nil {
 			logger.Warningf("event:%+v get node err:%v", events[i], err)

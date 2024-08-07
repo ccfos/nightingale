@@ -20,7 +20,7 @@ func (rt *Router) alertSubscribeGets(c *gin.Context) {
 	ugcache := make(map[int64]*models.UserGroup)
 	rulecache := make(map[int64]string)
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
 		ginx.Dangerous(lst[i].FillRuleNames(rt.Ctx, rulecache))
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
@@ -56,7 +56,7 @@ func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
 	ugcache := make(map[int64]*models.UserGroup)
 	rulecache := make(map[int64]string)
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ginx.Dangerous(lst[i].FillUserGroups(rt.Ctx, ugcache))
 		ginx.Dangerous(lst[i].FillRuleNames(rt.Ctx, rulecache))
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
@@ -110,7 +110,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 
 	timestamp := time.Now().Unix()
 	username := c.MustGet("username").(string)
-	for i := 0; i < len(fs); i++ {
+	for i := range fs {
 		fs[i].UpdateBy = username
 		fs[i].UpdateAt = timestamp
 		//After adding the function of batch subscription alert rules, rule_ids is used instead of rule_id.

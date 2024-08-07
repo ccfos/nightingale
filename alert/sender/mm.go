@@ -72,7 +72,7 @@ func (ms *MmSender) extract(users []*models.User) []string {
 }
 
 func SendMM(ctx *ctx.Context, message MatterMostMessage, event *models.AlertCurEvent) {
-	for i := 0; i < len(message.Tokens); i++ {
+	for i := range message.Tokens {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
 			logger.Errorf("mm_sender: failed to parse error=%v", err)

@@ -210,7 +210,7 @@ func BoardGetsByGroupId(ctx *ctx.Context, groupId int64, query string) ([]Board,
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			if strings.HasPrefix(arr[i], "-") {
 				q := "%" + arr[i][1:] + "%"
 				session = session.Where("name not like ? and tags not like ?", q, q)
@@ -234,7 +234,7 @@ func BoardGetsByBGIds(ctx *ctx.Context, gids []int64, query string) ([]Board, er
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			if strings.HasPrefix(arr[i], "-") {
 				q := "%" + arr[i][1:] + "%"
 				session = session.Where("name not like ? and tags not like ?", q, q)
@@ -258,7 +258,7 @@ func BoardGets(ctx *ctx.Context, query, where string, args ...interface{}) ([]Bo
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			if strings.HasPrefix(arr[i], "-") {
 				q := "%" + arr[i][1:] + "%"
 				session = session.Where("name not like ? and tags not like ?", q, q)

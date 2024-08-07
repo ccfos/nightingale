@@ -106,7 +106,7 @@ func (u *User) String() string {
 }
 
 func (u *User) IsAdmin() bool {
-	for i := 0; i < len(u.RolesLst); i++ {
+	for i := range u.RolesLst {
 		if u.RolesLst[i] == AdminRole {
 			return true
 		}
@@ -560,7 +560,7 @@ func UserGetAll(ctx *ctx.Context) ([]*User, error) {
 	var lst []*User
 	err := DB(ctx).Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
 		}
@@ -576,7 +576,7 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 	var lst []User
 	err := DB(ctx).Where("id in ?", ids).Order("username").Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
 		}

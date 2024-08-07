@@ -56,7 +56,7 @@ func (po *TdengineOption) Equal(target TdengineOption) bool {
 		return false
 	}
 
-	for i := 0; i < len(po.Headers); i++ {
+	for i := range po.Headers {
 		if po.Headers[i] != target.Headers[i] {
 			return false
 		}

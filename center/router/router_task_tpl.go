@@ -221,7 +221,7 @@ func (f *tplTagsForm) Verify() {
 	}
 
 	newTags := make([]string, 0, len(f.Tags))
-	for i := 0; i < len(f.Tags); i++ {
+	for i := range f.Tags {
 		tag := strings.TrimSpace(f.Tags[i])
 		if tag == "" {
 			continue
@@ -247,7 +247,7 @@ func (rt *Router) taskTplBindTags(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 
-	for i := 0; i < len(f.Ids); i++ {
+	for i := range f.Ids {
 		tpl, err := models.TaskTplGet(rt.Ctx, "id = ?", f.Ids[i])
 		ginx.Dangerous(err)
 
@@ -268,7 +268,7 @@ func (rt *Router) taskTplUnbindTags(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 
-	for i := 0; i < len(f.Ids); i++ {
+	for i := range f.Ids {
 		tpl, err := models.TaskTplGet(rt.Ctx, "id = ?", f.Ids[i])
 		ginx.Dangerous(err)
 
