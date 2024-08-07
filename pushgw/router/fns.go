@@ -79,7 +79,7 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 	}
 
 	labelMap := make(map[string]string)
-	for i := 0; i < len(v.Labels); i++ {
+	for i := range v.Labels {
 		labelMap[v.Labels[i].Name] = v.Labels[i].Value
 	}
 
@@ -104,7 +104,7 @@ func (rt *Router) DropSample(v *prompb.TimeSeries) bool {
 	}
 
 	labelMap := make(map[string]string)
-	for i := 0; i < len(v.Labels); i++ {
+	for i := range v.Labels {
 		labelMap[v.Labels[i].Name] = v.Labels[i].Value
 	}
 

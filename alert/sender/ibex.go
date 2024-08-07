@@ -102,7 +102,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	}
 
 	tagsMap := make(map[string]string)
-	for i := 0; i < len(event.TagsJSON); i++ {
+	for i := range event.TagsJSON {
 		pair := strings.TrimSpace(event.TagsJSON[i])
 		if pair == "" {
 			continue

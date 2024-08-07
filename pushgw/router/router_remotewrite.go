@@ -13,7 +13,7 @@ import (
 )
 
 func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
-	for i := 0; i < len(s.Labels); i++ {
+	for i := range s.Labels {
 		if s.Labels[i].Name == "__name__" {
 			return s.Labels[i].Value
 		}

@@ -25,7 +25,7 @@ func (rt *Router) notifyTplGets(c *gin.Context) {
 	m[models.EmailSubject] = struct{}{}
 
 	lst, err := models.NotifyTplGets(rt.Ctx)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		if _, exists := m[lst[i].Channel]; exists {
 			lst[i].BuiltIn = true
 		}
@@ -132,7 +132,7 @@ func (rt *Router) notifyTplPreview(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	event.TagsMap = make(map[string]string)
-	for i := 0; i < len(event.TagsJSON); i++ {
+	for i := range event.TagsJSON {
 		pair := strings.TrimSpace(event.TagsJSON[i])
 		if pair == "" {
 			continue

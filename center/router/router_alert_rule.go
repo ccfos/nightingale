@@ -25,7 +25,7 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 	ars, err := models.AlertRuleGets(rt.Ctx, busiGroupId)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
-		for i := 0; i < len(ars); i++ {
+		for i := range ars {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
 		}
@@ -56,7 +56,7 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
-		for i := 0; i < len(ars); i++ {
+		for i := range ars {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
 		}
@@ -84,7 +84,7 @@ func (rt *Router) alertRulesGetByService(c *gin.Context) {
 	ars, err := models.AlertRulesGetsBy(rt.Ctx, prods, query, algorithm, cluster, cates, disabled)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
-		for i := 0; i < len(ars); i++ {
+		for i := range ars {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 		}
 	}
@@ -287,7 +287,7 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 	f.Fields["update_by"] = c.MustGet("username").(string)
 	f.Fields["update_at"] = time.Now().Unix()
 
-	for i := 0; i < len(f.Ids); i++ {
+	for i := range f.Ids {
 		ar, err := models.AlertRuleGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
 
@@ -476,7 +476,7 @@ func (rt *Router) relabelTest(c *gin.Context) {
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
 
-	for i := 0; i < len(f.Configs); i++ {
+	for i := range f.Configs {
 		if f.Configs[i].Replacement == "" {
 			f.Configs[i].Replacement = "$1"
 		}

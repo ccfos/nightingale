@@ -62,7 +62,7 @@ func (rt *Router) configsPut(c *gin.Context) { //for APIForService
 		username = "default"
 	}
 	now := time.Now().Unix()
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		arr[i].UpdateBy = username
 		arr[i].UpdateAt = now
 		ginx.Dangerous(arr[i].Update(rt.Ctx))
@@ -79,7 +79,7 @@ func (rt *Router) configsPost(c *gin.Context) { //for APIForService
 		username = "default"
 	}
 	now := time.Now().Unix()
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		arr[i].CreateBy = username
 		arr[i].UpdateBy = username
 		arr[i].CreateAt = now
