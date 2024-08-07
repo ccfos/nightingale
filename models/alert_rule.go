@@ -292,14 +292,14 @@ func (ar *AlertRule) Verify() error {
 
 	ar.AppendTags = strings.TrimSpace(ar.AppendTags)
 	arr := strings.Fields(ar.AppendTags)
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		if len(strings.Split(arr[i], "=")) != 2 {
 			return fmt.Errorf("AppendTags(%s) invalid", arr[i])
 		}
 	}
 
 	gids := strings.Fields(ar.NotifyGroups)
-	for i := 0; i < len(gids); i++ {
+	for i := range gids {
 		if _, err := strconv.ParseInt(gids[i], 10, 64); err != nil {
 			return fmt.Errorf("NotifyGroups(%s) invalid", ar.NotifyGroups)
 		}
@@ -578,7 +578,7 @@ func (ar *AlertRule) FE2DB() error {
 	}
 
 	if len(ar.EnableDaysOfWeeksJSON) > 0 {
-		for i := 0; i < len(ar.EnableDaysOfWeeksJSON); i++ {
+		for i := range ar.EnableDaysOfWeeksJSON {
 			if len(ar.EnableDaysOfWeeksJSON) == 1 {
 				ar.EnableDaysOfWeek = strings.Join(ar.EnableDaysOfWeeksJSON[i], " ")
 			} else {
@@ -659,7 +659,7 @@ func (ar *AlertRule) DB2FE() error {
 	}
 
 	cache := strings.Split(ar.EnableDaysOfWeek, ";")
-	for i := 0; i < len(cache); i++ {
+	for i := range cache {
 		ar.EnableDaysOfWeeksJSON = append(ar.EnableDaysOfWeeksJSON, strings.Fields(cache[i]))
 	}
 	if len(ar.EnableDaysOfWeeksJSON) > 0 {
@@ -687,7 +687,7 @@ func (ar *AlertRule) DB2FE() error {
 }
 
 func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
-	for i := 0; i < len(ids); i++ {
+	for i := range ids {
 		session := DB(ctx).Where("id = ?", ids[i])
 		if len(bgid) > 0 {
 			session = session.Where("group_id = ?", bgid[0])
@@ -742,7 +742,7 @@ func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
 		return ids, err
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ids = append(ids, lst[i].Id)
 	}
 
@@ -755,7 +755,7 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 	var lst []AlertRule
 	err := session.Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -772,7 +772,7 @@ func AlertRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]AlertRule, error) 
 	var lst []AlertRule
 	err := session.Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -786,7 +786,7 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].FE2DB()
 		}
 		return lst, err
@@ -804,7 +804,7 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 		return lst, nil
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		lst[i].DB2FE()
 	}
 	return lst, nil
@@ -819,7 +819,7 @@ func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluste
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("append_tags like ?", qarg)
 		}
@@ -844,7 +844,7 @@ func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluste
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -876,7 +876,7 @@ func AlertRuleGetsByIds(ctx *ctx.Context, ids []int64) ([]AlertRule, error) {
 	lst := make([]AlertRule, 0, len(ids))
 	err := DB(ctx).Model(new(AlertRule)).Where("id in ?", ids).Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -963,7 +963,7 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 		return err
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		var ids []int64
 		if lst[i].Cluster == "$all" {
 			ids = append(ids, 0)
@@ -1044,7 +1044,7 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 		return m, err
 	}
 
-	for i := 0; i < len(hostAlertRules); i++ {
+	for i := range hostAlertRules {
 		var rule *HostRuleConfig
 		if err := json.Unmarshal([]byte(hostAlertRules[i].RuleConfig), &rule); err != nil {
 			logger.Errorf("rule:%d rule_config:%s, error:%v", hostAlertRules[i].Id, hostAlertRules[i].RuleConfig, err)

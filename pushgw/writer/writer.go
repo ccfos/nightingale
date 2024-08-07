@@ -57,7 +57,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 
 	if w.ForceUseServerTS {
 		ts := int64(fasttime.UnixTimestamp()) * 1000
-		for i := 0; i < len(items); i++ {
+		for i := range items {
 			if len(items[i].Samples) == 0 {
 				continue
 			}
@@ -246,7 +246,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 func (ws *WritersType) Init() error {
 	opts := ws.pushgw.Writers
 
-	for i := 0; i < len(opts); i++ {
+	for i := range opts {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()
 		if err != nil {
 			return err

@@ -111,7 +111,7 @@ func (rt *Router) boardDel(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	f.Verify()
 
-	for i := 0; i < len(f.Ids); i++ {
+	for i := range f.Ids {
 		bid := f.Ids[i]
 
 		board, err := models.BoardGet(rt.Ctx, "id = ?", bid)
@@ -287,7 +287,7 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 
 	boards, err := models.BoardGetsByBGIds(rt.Ctx, gids, query)
 	ginx.Dangerous(err)
-	for i := 0; i < len(boards); i++ {
+	for i := range boards {
 		if ids, ok := m[boards[i].Id]; ok {
 			boards[i].Bgids = ids
 		}

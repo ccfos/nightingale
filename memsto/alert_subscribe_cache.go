@@ -90,7 +90,7 @@ func (c *AlertSubscribeCacheType) GetStructs(ruleId int64) []models.AlertSubscri
 	}
 
 	ret := make([]models.AlertSubscribe, len(lst))
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ret[i] = *lst[i]
 	}
 
@@ -140,7 +140,7 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 
 	subs := make(map[int64][]*models.AlertSubscribe)
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		if lst[i].Disabled == 1 {
 			continue
 		}

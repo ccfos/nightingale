@@ -33,7 +33,7 @@ func (rt *Router) webhookGets(c *gin.Context) {
 func (rt *Router) webhookPuts(c *gin.Context) {
 	var webhooks []models.Webhook
 	ginx.BindJSON(c, &webhooks)
-	for i := 0; i < len(webhooks); i++ {
+	for i := range webhooks {
 		webhooks[i].Headers = []string{}
 		if len(webhooks[i].HeaderMap) > 0 {
 			for k, v := range webhooks[i].HeaderMap {

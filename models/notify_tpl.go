@@ -236,23 +236,21 @@ func getNotifyTpl(tplDir string) map[string]string {
 	}
 
 	tplMap := make(map[string]string)
-	if len(filenames) != 0 {
-		for i := 0; i < len(filenames); i++ {
-			if strings.HasSuffix(filenames[i], ".tpl") {
-				name := strings.TrimSuffix(filenames[i], ".tpl")
-				tplpath := path.Join(tplDir, filenames[i])
-				content, err := file.ToString(tplpath)
-				if err != nil {
-					logger.Errorf("failed to read tpl file: %s", filenames[i])
-					continue
-				}
-				tplMap[name] = content
-			}
-		}
-		return tplMap
+	if len(filenames) == 0 {
+		logger.Debugf("no tpl files under %s, use default tpl", tplDir)
 	}
-
-	logger.Debugf("no tpl files under %s, use default tpl", tplDir)
+	for i := range filenames {
+		if strings.HasSuffix(filenames[i], ".tpl") {
+			name := strings.TrimSuffix(filenames[i], ".tpl")
+			tplpath := path.Join(tplDir, filenames[i])
+			content, err := file.ToString(tplpath)
+			if err != nil {
+				logger.Errorf("failed to read tpl file: %s", filenames[i])
+				continue
+			}
+			tplMap[name] = content
+		}
+	}
 	return TplMap
 }
 

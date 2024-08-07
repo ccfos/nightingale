@@ -76,7 +76,7 @@ func (amc *AlertMuteCacheType) GetAllStructs() map[int64][]models.AlertMute {
 	ret := make(map[int64][]models.AlertMute)
 	for bgid := range amc.mutes {
 		lst := amc.mutes[bgid]
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			ret[bgid] = append(ret[bgid], *lst[i])
 		}
 	}
@@ -127,7 +127,7 @@ func (amc *AlertMuteCacheType) syncAlertMutes() error {
 	}
 
 	oks := make(map[int64][]*models.AlertMute)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		err = lst[i].Parse()
 		if err != nil {
 			logger.Warningf("failed to parse alert_mute, id: %d", lst[i].Id)

@@ -37,7 +37,7 @@ func (rt *Router) userGroupGetsByService(c *gin.Context) {
 	if len(ids) == 0 {
 		lst, err := models.UserGroupGetAll(rt.Ctx)
 		ginx.Dangerous(err)
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			ids, err := models.MemberIds(rt.Ctx, lst[i].Id)
 			ginx.Dangerous(err)
 

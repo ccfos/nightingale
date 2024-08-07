@@ -171,7 +171,7 @@ func (uc *UserCacheType) syncUsers() error {
 	}
 
 	m := make(map[int64]*models.User)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		m[lst[i].Id] = lst[i]
 	}
 	uc.Set(m, stat.Total, stat.LastUpdated, configsStat.Total, configsStat.LastUpdated)
