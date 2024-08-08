@@ -19,7 +19,7 @@ type Target struct {
 	GroupObj     *BusiGroup        `json:"group_obj" gorm:"-"`
 	Ident        string            `json:"ident"`
 	Note         string            `json:"note"`
-	Tags         string            `json:"-"`
+	Tags         string            `json:"-"` // user tags
 	TagsJSON     []string          `json:"tags" gorm:"-"`
 	TagsMap      map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt     int64             `json:"update_at"`
@@ -27,6 +27,7 @@ type Target struct {
 	AgentVersion string            `json:"agent_version"`
 	EngineName   string            `json:"engine_name"`
 	OS           string            `json:"os" gorm:"column:os"`
+	HostTags     []string          `json:"host_tags" gorm:"serializer:json"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -389,7 +390,8 @@ func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
 	t.TagsMap = make(map[string]string)
 	m := make(map[string]string)
-	for _, item := range t.TagsJSON {
+	allTags := append(t.TagsJSON, t.HostTags...)
+	for _, item := range allTags {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
@@ -404,6 +406,18 @@ func (t *Target) GetTagsMap() map[string]string {
 	tagsJSON := strings.Fields(t.Tags)
 	m := make(map[string]string)
 	for _, item := range tagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		m[arr[0]] = arr[1]
+	}
+	return m
+}
+
+func (t *Target) GetHostTagsMap() map[string]string {
+	m := make(map[string]string)
+	for _, item := range t.HostTags {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"sort"
 	"strings"
 	"time"
 
@@ -82,56 +83,87 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 		gid := ginx.QueryInt64(c, "gid", 0)
 		hostIp := strings.TrimSpace(req.HostIp)
 
-		field := make(map[string]interface{})
+		newTarget := models.Target{}
+		targetNeedUpdate := false
 		if gid != 0 && gid != target.GroupId {
-			field["group_id"] = gid
+			newTarget.GroupId = gid
+			targetNeedUpdate = true
 		}
 
 		if hostIp != "" && hostIp != target.HostIp {
-			field["host_ip"] = hostIp
+			newTarget.HostIp = hostIp
+			targetNeedUpdate = true
 		}
 
-		tagsMap := target.GetTagsMap()
-		tagNeedUpdate := false
-		for k, v := range req.GlobalLabels {
+		hostTagsMap := target.GetHostTagsMap()
+		hostTagNeedUpdate := false
+		if len(hostTagsMap) != len(req.GlobalLabels) {
+			hostTagNeedUpdate = true
+		} else {
+			for k, v := range req.GlobalLabels {
+				if v == "" {
+					continue
+				}
+
+				if tagv, ok := hostTagsMap[k]; !ok || tagv != v {
+					hostTagNeedUpdate = true
+					break
+				}
+			}
+		}
+
+		if hostTagNeedUpdate {
+			lst := []string{}
+			for k, v := range req.GlobalLabels {
+				lst = append(lst, k+"="+v)
+			}
+			sort.Strings(lst)
+			newTarget.HostTags = lst
+			targetNeedUpdate = true
+		}
+
+		userTagsMap := target.GetTagsMap()
+		userTagNeedUpdate := false
+		userTags := []string{}
+		for k, v := range userTagsMap {
 			if v == "" {
 				continue
 			}
 
-			if tagv, ok := tagsMap[k]; !ok || tagv != v {
-				tagNeedUpdate = true
-				tagsMap[k] = v
+			if _, ok := req.GlobalLabels[k]; !ok {
+				userTags = append(userTags, k+"="+v)
+			} else { // 该key在hostTags中已经存在
+				userTagNeedUpdate = true
 			}
 		}
 
-		if tagNeedUpdate {
-			lst := []string{}
-			for k, v := range tagsMap {
-				lst = append(lst, k+"="+v)
-			}
-			labels := strings.Join(lst, " ") + " "
-			field["tags"] = labels
+		if userTagNeedUpdate {
+			newTarget.Tags = strings.Join(userTags, " ") + " "
+			targetNeedUpdate = true
 		}
 
 		if req.EngineName != "" && req.EngineName != target.EngineName {
-			field["engine_name"] = req.EngineName
+			newTarget.EngineName = req.EngineName
+			targetNeedUpdate = true
 		}
 
 		if req.AgentVersion != "" && req.AgentVersion != target.AgentVersion {
-			field["agent_version"] = req.AgentVersion
+			newTarget.AgentVersion = req.AgentVersion
+			targetNeedUpdate = true
 		}
 
 		if req.OS != "" && req.OS != target.OS {
-			field["os"] = req.OS
+			newTarget.OS = req.OS
+			targetNeedUpdate = true
 		}
 
-		if len(field) > 0 {
-			err := target.UpdateFieldsMap(ctx, field)
+		if targetNeedUpdate {
+			err := models.DB(ctx).Model(&target).Updates(newTarget).Error
 			if err != nil {
 				logger.Errorf("update target fields failed, err: %v", err)
 			}
 		}
-		logger.Debugf("heartbeat field:%+v target: %v", field, *target)
+		logger.Debugf("heartbeat field:%+v target: %v", newTarget, *target)
 	}
 
 	return req, nil
