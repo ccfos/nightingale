@@ -3,13 +3,15 @@ package tool
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/storage"
+
 	"github.com/toolkits/pkg/logger"
-	"time"
 )
 
 var AlertRecordRedisKeyPrefix = "alert::*"

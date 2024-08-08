@@ -3,7 +3,6 @@ package center
 import (
 	"context"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/center/cron"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -11,6 +10,7 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
+	"github.com/ccfos/nightingale/v6/center/cron"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/center/metas"

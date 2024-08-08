@@ -2,17 +2,17 @@ package router
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/tool"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/tool"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"

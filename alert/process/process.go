@@ -3,7 +3,6 @@ package process
 import (
 	"bytes"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/tool"
 	"html/template"
 	"sort"
 	"strings"
@@ -20,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/tool"
 
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/toolkits/pkg/logger"
 )

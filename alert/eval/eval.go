@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/tool"
 	"math"
 	"sort"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
+	"github.com/ccfos/nightingale/v6/tool"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
