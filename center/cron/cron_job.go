@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	limitAlertRecordCountCron = "@every 1m"
+	limitAlertRecordCountCron = "@every 1h"
 )
 
 func InitCron(ctx *ctx.Context) error {
 	c := cron.New()
-	// 添加一个任务，每分钟执行一次
+
 	_, err := c.AddFunc(limitAlertRecordCountCron, func() {
 		tool.LimitAlertRecordCount(ctx)
 	})
@@ -21,7 +21,6 @@ func InitCron(ctx *ctx.Context) error {
 		return err
 	}
 
-	// 启动 Cron 调度器
 	c.Start()
 
 	return nil

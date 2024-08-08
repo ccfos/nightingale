@@ -122,6 +122,7 @@ type keyAndLen struct {
 	length int64
 }
 
+// LimitAlertRecordCount drop keys when alert record's count exceed AlertRecordMaxCount
 func LimitAlertRecordCount(ctx *ctx.Context) {
 	var cursor uint64
 	var keys []string
