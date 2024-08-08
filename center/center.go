@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/center/cron"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -60,9 +61,20 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := ctx.NewContext(context.Background(), db, true)
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := ctx.NewContext(context.Background(), db, &redis, true)
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
+	err = cron.InitCron(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
@@ -72,11 +84,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
-	var redis storage.Redis
-	redis, err = storage.NewRedis(config.Redis)
-	if err != nil {
-		return nil, err
-	}
 
 	metas := metas.New(redis)
 	idents := idents.New(ctx, redis)

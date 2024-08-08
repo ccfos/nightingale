@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/tool"
 	"math"
 	"sort"
 	"strings"
@@ -105,6 +106,11 @@ func (arw *AlertRuleWorker) Eval() {
 		// logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
+
+	if arw.processor == nil {
+		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
+		return
+	}
 	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
 
 	typ := cachedRule.GetRuleType()
@@ -120,12 +126,12 @@ func (arw *AlertRuleWorker) Eval() {
 	case models.LOKI:
 		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
+		tool.Record(arw.ctx, nil, nil, false, tool.InvalidType, cachedRule.Name, cachedRule.Id)
 		return
 	}
 
-	if arw.processor == nil {
-		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
-		return
+	if len(anomalyPoints) == 0 {
+		tool.Record(arw.ctx, nil, nil, false, tool.NoAnomalyPoint, cachedRule.Name, cachedRule.Id)
 	}
 
 	if arw.inhibit {
@@ -146,6 +152,7 @@ func (arw *AlertRuleWorker) Eval() {
 				models.AlertCurEventDelByHash(arw.ctx, hash)
 
 				pointsMap[tagHash] = point
+				tool.Record(arw.ctx, &p, nil, true, tool.RecoverMerge, cachedRule.Name, cachedRule.Id)
 			}
 		}
 

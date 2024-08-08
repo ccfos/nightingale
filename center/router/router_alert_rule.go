@@ -2,6 +2,9 @@ package router
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/tool"
 	"net/http"
 	"strconv"
 	"strings"
@@ -452,4 +455,60 @@ func (rt *Router) relabelTest(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(tags, nil)
+}
+
+func (rt *Router) redisLPush(c *gin.Context) {
+	var ar tool.AlertRecordRedis
+	ginx.BindJSON(c, &ar)
+	ginx.NewRender(c).Message(storage.LPush(rt.Ctx.GetContext(), *rt.Ctx.Redis, ar.MaxLength, ar.ExpireDuration, ar.Key, ar.Value))
+}
+
+func (rt *Router) getRuleRecords(c *gin.Context) {
+	stime, etime := getTimeRange(c)
+	limit := ginx.QueryInt(c, "limit", 20)
+	ruleId := ginx.QueryInt64(c, "rule_id", 0)
+	query := ginx.QueryStr(c, "query", "")
+	alertRecords := foo(rt.Ctx, stime, etime, ruleId, limit, query)
+	ginx.NewRender(c).Data(gin.H{
+		"list":  alertRecords,
+		"total": len(alertRecords),
+	}, nil)
+}
+
+func foo(ctx *ctx.Context, stime int64, etime, ruleId int64, limit int, query string) []*tool.AlertRecord {
+	s := time.Unix(stime, 0).Round(time.Hour)
+	e := time.Unix(etime, 0).Round(time.Hour)
+
+	keys := make([]string, 0)
+	for t := s; !t.After(e); t = t.Add(time.Hour) {
+		keys = append(keys, fmt.Sprintf(tool.AlertRecordRedisKey, ruleId, t.Day(), t.Hour()))
+	}
+
+	alertRecords, err := storage.MRangeList[*tool.AlertRecord](ctx.GetContext(), *ctx.Redis, keys)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return filterAlertRecords(alertRecords, query)
+}
+
+func filterAlertRecords(alertRecords []*tool.AlertRecord, query string) []*tool.AlertRecord {
+	if query == "" {
+		return alertRecords
+	}
+	queryFields := strings.Fields(query)
+	var res []*tool.AlertRecord
+	for i := range alertRecords {
+		need := true
+		for j := range queryFields {
+			if !strings.Contains(alertRecords[i].Labels, queryFields[j]) {
+				need = false
+				break
+			}
+		}
+		if need {
+			res = append(res, alertRecords[i])
+		}
+	}
+	return res
 }

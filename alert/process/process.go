@@ -3,6 +3,7 @@ package process
 import (
 	"bytes"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/tool"
 	"html/template"
 	"sort"
 	"strings"
@@ -134,6 +135,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event").Inc()
+		tool.Record(p.ctx, nil, nil, false, tool.RuleNotFound, p.rule.Name, p.rule.Id)
 		return
 	}
 
@@ -152,12 +154,14 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		if isMuted {
 			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
+			tool.Record(p.ctx, nil, event, false, tool.AlertMutedReason(detail), p.rule.Name, p.rule.Id)
 			continue
 		}
 
 		if p.EventMuteHook(event) {
 			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
+			tool.Record(p.ctx, nil, event, false, tool.MutedByHook, p.rule.Name, p.rule.Id)
 			continue
 		}
 
@@ -277,6 +281,8 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
+		event, _ := p.pendings.Get(hash)
+		tool.Record(p.ctx, nil, event, true, tool.EventRecovered, p.rule.Name, p.rule.Id)
 		p.pendings.Delete(hash)
 	}
 
@@ -324,6 +330,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 			p.pendings.Delete(e.Hash)
 			models.AlertCurEventDelByHash(p.ctx, e.Hash)
 			eventMap[event.Tags] = *event
+			tool.Record(p.ctx, nil, &e, true, tool.IsInhibit, p.rule.Name, p.rule.Id)
 		}
 	}
 
@@ -345,6 +352,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	// 如果配置了留观时长，就不能立马恢复了
 	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
 		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+		tool.Record(p.ctx, nil, event, true, tool.RecoverDuration, p.rule.Name, p.rule.Id)
 		return
 	}
 	if value != nil {
@@ -401,6 +409,8 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 				severity = event.Severity
 			}
 			continue
+		} else {
+			tool.Record(p.ctx, nil, event, false, tool.Interval, p.rule.Name, p.rule.Id)
 		}
 	}
 
@@ -411,6 +421,7 @@ func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity in
 	for _, event := range events {
 		if p.inhibit && event.Severity > highSeverity {
 			logger.Debugf("rule_eval:%s event:%+v inhibit highSeverity:%d", p.Key(), event, highSeverity)
+			tool.Record(p.ctx, nil, event, false, tool.IsInhibit, p.rule.Name, p.rule.Id)
 			continue
 		}
 		p.fireEvent(event)
@@ -421,6 +432,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	// As p.rule maybe outdated, use rule from cache
 	cachedRule := p.rule
 	if cachedRule == nil {
+		tool.Record(p.ctx, nil, event, false, tool.RuleNotFound, p.rule.Name, p.rule.Id)
 		return
 	}
 
@@ -434,6 +446,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", p.Key(), event)
 			// 说明不想重复通知，那就直接返回了，nothing to do
 			// do not need to send alert again
+			tool.Record(p.ctx, nil, event, false, tool.RepeatStep, p.rule.Name, p.rule.Id)
 			return
 		}
 
@@ -447,12 +460,15 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
 				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
 					logger.Debugf("rule_eval:%s event:%+v reach max number", p.Key(), event)
+					tool.Record(p.ctx, nil, event, false, tool.NotifyNumber, p.rule.Name, p.rule.Id)
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
 					p.pushEventToQueue(event)
 				}
 			}
+		} else {
+			tool.Record(p.ctx, nil, event, false, tool.RepeatStep, p.rule.Name, p.rule.Id)
 		}
 	} else {
 		event.NotifyCurNumber = 1
@@ -472,6 +488,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue").Inc()
+		tool.Record(p.ctx, nil, e, e.IsRecovered, tool.FullQueue, p.rule.Name, p.rule.Id)
 	}
 }
 

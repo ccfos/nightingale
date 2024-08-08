@@ -41,13 +41,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
-
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx := ctx.NewContext(context.Background(), nil, &redis, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
