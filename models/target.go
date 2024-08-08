@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
+
 	"gorm.io/gorm"
 )
 
@@ -19,7 +20,7 @@ type Target struct {
 	GroupObj     *BusiGroup        `json:"group_obj" gorm:"-"`
 	Ident        string            `json:"ident"`
 	Note         string            `json:"note"`
-	Tags         string            `json:"-"`
+	Tags         string            `json:"-"` // user tags
 	TagsJSON     []string          `json:"tags" gorm:"-"`
 	TagsMap      map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt     int64             `json:"update_at"`
@@ -27,6 +28,7 @@ type Target struct {
 	AgentVersion string            `json:"agent_version"`
 	EngineName   string            `json:"engine_name"`
 	OS           string            `json:"os" gorm:"column:os"`
+	HostTags     []string          `json:"host_tags" gorm:"serializer:json"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -324,12 +326,12 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
-	var arr []string
+	var arr []*Target
 	if len(idents) > 0 {
 		session = session.Where("ident in ?", idents)
 	}
 
-	err := session.Select("distinct(tags) as tags").Pluck("tags", &arr).Error
+	err := session.Select("tags", "host_tags").Find(&arr).Error
 	if err != nil {
 		return nil, err
 	}
@@ -341,9 +343,12 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 
 	set := make(map[string]struct{})
 	for i := 0; i < cnt; i++ {
-		tags := strings.Fields(arr[i])
+		tags := strings.Fields(arr[i].Tags)
 		for j := 0; j < len(tags); j++ {
 			set[tags[j]] = struct{}{}
+		}
+		for _, ht := range arr[i].HostTags {
+			set[ht] = struct{}{}
 		}
 	}
 
@@ -389,7 +394,8 @@ func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
 	t.TagsMap = make(map[string]string)
 	m := make(map[string]string)
-	for _, item := range t.TagsJSON {
+	allTags := append(t.TagsJSON, t.HostTags...)
+	for _, item := range allTags {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
@@ -404,6 +410,18 @@ func (t *Target) GetTagsMap() map[string]string {
 	tagsJSON := strings.Fields(t.Tags)
 	m := make(map[string]string)
 	for _, item := range tagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		m[arr[0]] = arr[1]
+	}
+	return m
+}
+
+func (t *Target) GetHostTagsMap() map[string]string {
+	m := make(map[string]string)
+	for _, item := range t.HostTags {
 		arr := strings.Split(item, "=")
 		if len(arr) != 2 {
 			continue
