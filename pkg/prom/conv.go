@@ -77,7 +77,7 @@ func GetMetric(ql string) (map[string]string, error) {
 	}
 
 	selectors := parser.ExtractSelectors(expr)
-	for i := 0; i < len(selectors); i++ {
+	for i := range selectors {
 		var metric string
 		var labels []string
 		for j := 0; j < len(selectors[i]); j++ {

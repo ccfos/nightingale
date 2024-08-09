@@ -50,7 +50,7 @@ func (v *AlertAggrView) Verify() error {
 	}
 
 	arr := strings.Split(v.Rule, "::")
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		pair := strings.Split(arr[i], ":")
 		if len(pair) != 2 {
 			return errors.New("rule invalid")

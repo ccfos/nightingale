@@ -115,7 +115,7 @@ func (s *AlertSubscribe) Verify() error {
 	}
 
 	ugids := strings.Fields(s.UserGroupIds)
-	for i := 0; i < len(ugids); i++ {
+	for i := range ugids {
 		if _, err := strconv.ParseInt(ugids[i], 10, 64); err != nil {
 			return errors.New("user_group_ids invalid")
 		}
@@ -344,7 +344,7 @@ func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].FE2DB()
 		}
 		return lst, err
@@ -415,7 +415,7 @@ func AlertSubscribeUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) erro
 		return err
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		var ids []int64
 		if lst[i].Cluster == "$all" {
 			ids = append(ids, 0)

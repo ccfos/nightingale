@@ -16,6 +16,10 @@ func DB(ctx *ctx.Context) *gorm.DB {
 	return ctx.DB
 }
 
+func Model[T any](ctx *ctx.Context) *gorm.DB {
+	return DB(ctx).Model(new(T))
+}
+
 func Count(tx *gorm.DB) (int64, error) {
 	var cnt int64
 	err := tx.Count(&cnt).Error
@@ -86,7 +90,7 @@ type LabelAndKey struct {
 }
 
 func LabelAndKeyHasKey(keys []LabelAndKey, key string) bool {
-	for i := 0; i < len(keys); i++ {
+	for i := range keys {
 		if keys[i].Key == key {
 			return true
 		}

@@ -76,7 +76,7 @@ func Upgrade(configFile string) error {
 	}
 
 	m := make(map[string]models.Datasource)
-	for i := 0; i < len(datasources); i++ {
+	for i := range datasources {
 		m[datasources[i].Name] = datasources[i]
 	}
 

@@ -92,7 +92,7 @@ func (m *FalconMetric) ToProm() (*prompb.TimeSeries, string, error) {
 	tagarr := strings.Split(m.Tags, ",")
 	tagmap := make(map[string]string, len(tagarr)+1)
 
-	for i := 0; i < len(tagarr); i++ {
+	for i := range tagarr {
 		tmp := strings.SplitN(tagarr[i], "=", 2)
 		if len(tmp) != 2 {
 			continue
@@ -183,7 +183,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 		ids  = make(map[string]struct{})
 	)
 
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		if err := arr[i].Clean(ts); err != nil {
 			fail++
 			continue

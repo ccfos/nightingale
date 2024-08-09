@@ -48,7 +48,7 @@ func TaskTplTotal(ctx *ctx.Context, bgids []int64, query string) (int64, error) 
 	}
 
 	arr := strings.Fields(query)
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		arg := "%" + arr[i] + "%"
 		session = session.Where("title like ? or tags like ?", arg, arg)
 	}
@@ -92,7 +92,7 @@ func TaskTplGets(ctx *ctx.Context, bgids []int64, query string, limit, offset in
 	var tpls []TaskTpl
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			arg := "%" + arr[i] + "%"
 			session = session.Where("title like ? or tags like ?", arg, arg)
 		}
@@ -100,7 +100,7 @@ func TaskTplGets(ctx *ctx.Context, bgids []int64, query string, limit, offset in
 
 	err := session.Find(&tpls).Error
 	if err == nil {
-		for i := 0; i < len(tpls); i++ {
+		for i := range tpls {
 			tpls[i].TagsJSON = strings.Fields(tpls[i].Tags)
 		}
 	}
@@ -211,7 +211,7 @@ func (t *TaskTpl) Save(ctx *ctx.Context, hosts []string) error {
 			return err
 		}
 
-		for i := 0; i < len(hosts); i++ {
+		for i := range hosts {
 			host := strings.TrimSpace(hosts[i])
 			if host == "" {
 				continue
@@ -276,7 +276,7 @@ func (t *TaskTpl) Update(ctx *ctx.Context, hosts []string) error {
 			return err
 		}
 
-		for i := 0; i < len(hosts); i++ {
+		for i := range hosts {
 			host := strings.TrimSpace(hosts[i])
 			if host == "" {
 				continue
@@ -311,7 +311,7 @@ func (t *TaskTpl) Del(ctx *ctx.Context) error {
 }
 
 func (t *TaskTpl) AddTags(ctx *ctx.Context, tags []string, updateBy string) error {
-	for i := 0; i < len(tags); i++ {
+	for i := range tags {
 		if -1 == strings.Index(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
 		}
@@ -328,7 +328,7 @@ func (t *TaskTpl) AddTags(ctx *ctx.Context, tags []string, updateBy string) erro
 }
 
 func (t *TaskTpl) DelTags(ctx *ctx.Context, tags []string, updateBy string) error {
-	for i := 0; i < len(tags); i++ {
+	for i := range tags {
 		t.Tags = strings.ReplaceAll(t.Tags, tags[i]+" ", "")
 	}
 

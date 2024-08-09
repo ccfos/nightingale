@@ -49,7 +49,7 @@ func (bg *BusiGroup) FillUserGroups(ctx *ctx.Context) error {
 		return nil
 	}
 
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		ug, err := UserGroupGetById(ctx, members[i].UserGroupId)
 		if err != nil {
 			return err
@@ -79,7 +79,7 @@ func BusiGroupGetMap(ctx *ctx.Context) (map[int64]*BusiGroup, error) {
 	}
 
 	ret := make(map[int64]*BusiGroup)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ret[lst[i].Id] = lst[i]
 	}
 
@@ -111,12 +111,12 @@ func BusiGroupGetById(ctx *ctx.Context, id int64) (*BusiGroup, error) {
 }
 
 func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool, error) {
-	num, err := Count(DB(ctx).Model(&BusiGroup{}).Where(where, args...))
+	num, err := Count(Model[BusiGroup](ctx).Where(where, args...))
 	return num > 0, err
 }
 
 func (bg *BusiGroup) Del(ctx *ctx.Context) error {
-	has, err := Exists(DB(ctx).Model(&AlertMute{}).Where("group_id=?", bg.Id))
+	has, err := Exists(Model[AlertMute](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some alert mutes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&AlertSubscribe{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[AlertSubscribe](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some alert subscribes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&Target{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[Target](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some targets still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&Board{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[Board](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some dashboards still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&TaskTpl{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[TaskTpl](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 	// 	return errors.New("Some collect rules still in the BusiGroup")
 	// }
 
-	has, err = Exists(DB(ctx).Model(&AlertRule{}).Where("group_id=?", bg.Id))
+	has, err = Exists(Model[AlertRule](ctx).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 }
 
 func (bg *BusiGroup) AddMembers(ctx *ctx.Context, members []BusiGroupMember, username string) error {
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		err := BusiGroupMemberAdd(ctx, members[i])
 		if err != nil {
 			return err
@@ -214,7 +214,7 @@ func (bg *BusiGroup) AddMembers(ctx *ctx.Context, members []BusiGroupMember, use
 }
 
 func (bg *BusiGroup) DelMembers(ctx *ctx.Context, members []BusiGroupMember, username string) error {
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		num, err := BusiGroupMemberCount(ctx, "busi_group_id = ? and user_group_id <> ?", members[i].BusiGroupId, members[i].UserGroupId)
 		if err != nil {
 			return err
@@ -324,7 +324,7 @@ func BusiGroupAdd(ctx *ctx.Context, name string, labelEnable int, labelValue str
 			return err
 		}
 
-		for i := 0; i < len(members); i++ {
+		for i := range members {
 			if err := tx.Create(&BusiGroupMember{
 				BusiGroupId: obj.Id,
 				UserGroupId: members[i].UserGroupId,
