@@ -346,6 +346,34 @@ func (e *AlertCurEvent) DB2Mem() {
 	}
 }
 
+func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bool) {
+	var config RuleConfig
+	err := json.Unmarshal([]byte(ruleConfig), &config)
+	if err != nil {
+		logger.Warningf("failed to unmarshal rule config: %v", err)
+		return nil, false
+	}
+
+	if len(config.TaskTpls) == 0 {
+		return nil, false
+	}
+
+	for i := 0; i < len(config.TaskTpls); i++ {
+		tpl, err := TaskTplGetById(ctx, config.TaskTpls[i].TplId)
+		if err != nil {
+			logger.Warningf("failed to get task tpl by id:%d, %v", config.TaskTpls[i].TplId, err)
+			return nil, false
+		}
+
+		if tpl == nil {
+			logger.Warningf("task tpl not found by id:%d", config.TaskTpls[i].TplId)
+			return nil, false
+		}
+		config.TaskTpls[i].TplName = tpl.Title
+	}
+	return config, true
+}
+
 // for webui
 func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGroup) error {
 	// some user-group already deleted ?

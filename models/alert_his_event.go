@@ -117,6 +117,10 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
+// func (e *AlertHisEvent) FillTaskTplName(ctx *ctx.Context, cache map[int64]*UserGroup) error {
+
+// }
+
 func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time between ? and ?", stime, etime)
 

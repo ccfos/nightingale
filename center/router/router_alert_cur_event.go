@@ -222,6 +222,11 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 		rt.bgroCheck(c, event.GroupId)
 	}
 
+	ruleConfig, needReset := models.FillRuleConfigTplName(rt.Ctx, event.RuleConfig)
+	if needReset {
+		event.RuleConfigJson = ruleConfig
+	}
+
 	ginx.NewRender(c).Data(event, nil)
 }
 
