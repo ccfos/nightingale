@@ -38,6 +38,12 @@ func MemberIds(ctx *ctx.Context, groupId int64) ([]int64, error) {
 	return ids, err
 }
 
+func GroupsMemberIds(ctx *ctx.Context, groupIds []int64) ([]int64, error) {
+	var ids []int64
+	err := DB(ctx).Model(&UserGroupMember{}).Where("group_id in ?", groupIds).Pluck("user_id", &ids).Error
+	return ids, err
+}
+
 func UserGroupMemberCount(ctx *ctx.Context, where string, args ...interface{}) (int64, error) {
 	return Count(DB(ctx).Model(&UserGroupMember{}).Where(where, args...))
 }

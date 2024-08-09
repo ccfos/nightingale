@@ -125,7 +125,7 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 			Batch:         1000,
 		}
 
-		PushCallbackEvent(webhookConf, event, ctx.Stats)
+		PushCallbackEvent(ctx.Ctx, webhookConf, event, ctx.Stats)
 		return
 	}
 
@@ -141,16 +141,38 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 	}
 }
 
-func doSend(url string, body interface{}, channel string, stats *astats.Stats) {
+func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
+	stats *astats.Stats, event *models.AlertCurEvent) {
+	res, err := doSend(url, body, channel, stats)
+	NotifyRecord(ctx, event, channel, token, res, err)
+}
+
+func NotifyRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res string, err error) {
+	noti := models.NewNotificationRecord(evt, channel, target)
+	if err != nil {
+		noti.SetStatus(models.NotiStatusFailure)
+		noti.SetDetails(err.Error())
+	} else if res != "" {
+		noti.SetDetails(string(res))
+	}
+
+	if err := noti.Add(ctx); err != nil {
+		logger.Errorf("Add noti failed, err: %v", err)
+	}
+}
+
+func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
 	if err != nil {
 		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v req:%v response=%s", channel, url, code, err, body, string(res))
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
-	} else {
-		logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
+		return "", err
 	}
+
+	logger.Infof("%s_sender: result=succ url=%s code=%d req:%v response=%s", channel, url, code, body, string(res))
+	return string(res), nil
 }
 
 type TaskCreateReply struct {
@@ -158,7 +180,7 @@ type TaskCreateReply struct {
 	Dat int64  `json:"dat"` // task.id
 }
 
-func PushCallbackEvent(webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	CallbackEventQueueLock.RLock()
 	queue := CallbackEventQueue[webhook.Url]
 	CallbackEventQueueLock.RUnlock()
@@ -173,7 +195,7 @@ func PushCallbackEvent(webhook *models.Webhook, event *models.AlertCurEvent, sta
 		CallbackEventQueue[webhook.Url] = queue
 		CallbackEventQueueLock.Unlock()
 
-		StartConsumer(queue, webhook.Batch, webhook, stats)
+		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
 
 	succ := queue.list.PushFront(event)
