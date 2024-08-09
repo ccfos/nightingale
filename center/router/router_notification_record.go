@@ -77,6 +77,11 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 			nl[idx].Details = nl[idx].Details + ", " + n.Details
 			nl[i] = nil
 		}
+
+		if !checkChannel(n.Channel) {
+			// Hide sensitive information
+			n.Target = replaceLastEightChars(n.Target)
+		}
 	}
 
 	// Fill usernames only once
@@ -138,6 +143,22 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 	}
 
 	return response
+}
+
+// check channel is one of the following:  tx-sms, tx-voice, ali-sms, ali-voice, email, script
+func checkChannel(channel string) bool {
+	switch channel {
+	case "tx-sms", "tx-voice", "ali-sms", "ali-voice", "email", "script":
+		return true
+	}
+	return false
+}
+
+func replaceLastEightChars(s string) string {
+	if len(s) <= 8 {
+		return strings.Repeat("*", len(s))
+	}
+	return s[:len(s)-8] + strings.Repeat("*", 8)
 }
 
 func fillUserNames(ctx *ctx.Context, groupIdSet map[int64]struct{}) map[string]map[string]struct{} {
