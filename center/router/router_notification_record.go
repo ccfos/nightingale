@@ -88,11 +88,6 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 			continue
 		}
 
-		if !checkChannel(n.Channel) {
-			// Hide sensitive information
-			n.Target = replaceLastEightChars(n.Target)
-		}
-
 		record := Record{
 			Target: n.Target,
 			Status: n.Status,
@@ -105,6 +100,11 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 			usernames = append(usernames, k)
 		}
 		record.Username = strings.Join(usernames, ",")
+
+		if !checkChannel(n.Channel) {
+			// Hide sensitive information
+			n.Target = replaceLastEightChars(n.Target)
+		}
 
 		if n.SubId > 0 {
 			// Handle SubRules
