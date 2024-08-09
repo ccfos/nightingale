@@ -52,9 +52,12 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 
 	// Collect all group IDs
 	groupIdSet := make(map[int64]struct{})
+
+	// map[SubId]map[Channel]map[Target]index
 	filter := make(map[int64]map[string]map[string]int)
 
 	for i, n := range nl {
+		// 对相同的 channel-target 进行合并
 		for _, gid := range n.GetGroupIds(ctx) {
 			groupIdSet[gid] = struct{}{}
 		}
