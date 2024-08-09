@@ -22,6 +22,9 @@ func cleanNotifyRecord(ctx *ctx.Context, day int) {
 // 每天凌晨1点执行清理任务
 func CleanNotifyRecord(ctx *ctx.Context, day int) {
 	c := cron.New()
+	if day < 1 {
+		day = 7
+	}
 
 	// 使用cron表达式设置每天凌晨1点执行
 	_, err := c.AddFunc("0 1 * * *", func() {
