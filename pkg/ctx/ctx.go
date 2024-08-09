@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ccfos/nightingale/v6/conf"
-
 	"gorm.io/gorm"
 )
 

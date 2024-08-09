@@ -18,7 +18,6 @@ import (
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -105,6 +104,11 @@ func (arw *AlertRuleWorker) Eval() {
 		// logger.Errorf("rule_eval:%s rule not found", arw.Key())
 		return
 	}
+
+	if arw.processor == nil {
+		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
+		return
+	}
 	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
 
 	typ := cachedRule.GetRuleType()
@@ -120,12 +124,12 @@ func (arw *AlertRuleWorker) Eval() {
 	case models.LOKI:
 		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
+		process.Record(arw.ctx, nil, nil, false, process.InvalidType, cachedRule.Name, cachedRule.Id, arw.processor.Redis)
 		return
 	}
 
-	if arw.processor == nil {
-		logger.Warningf("rule_eval:%s processor is nil", arw.Key())
-		return
+	if len(anomalyPoints) == 0 {
+		process.Record(arw.ctx, nil, nil, false, process.NoAnomalyPoint, cachedRule.Name, cachedRule.Id, arw.processor.Redis)
 	}
 
 	if arw.inhibit {
@@ -146,6 +150,7 @@ func (arw *AlertRuleWorker) Eval() {
 				models.AlertCurEventDelByHash(arw.ctx, hash)
 
 				pointsMap[tagHash] = point
+				process.Record(arw.ctx, &p, nil, true, process.RecoverMerge, cachedRule.Name, cachedRule.Id, arw.processor.Redis)
 			}
 		}
 
@@ -178,12 +183,14 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.InvalidRuleConfig, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return lst
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.RuleNotFound, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return lst
 	}
 
@@ -197,12 +204,14 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		if promql == "" {
 			logger.Warningf("rule_eval:%s promql is blank", arw.Key())
 			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
+			process.Record(arw.ctx, nil, nil, false, process.InvalidQuery, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 			continue
 		}
 
 		if arw.promClients.IsNil(arw.datasourceId) {
 			logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
 			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
+			process.Record(arw.ctx, nil, nil, false, process.EmptyPromClient, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 			continue
 		}
 
@@ -215,6 +224,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 			logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
 			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+			process.Record(arw.ctx, nil, nil, false, process.QueryError(promql, err), arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 			continue
 		}
 
@@ -243,6 +253,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	if ruleConfig == "" {
 		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.InvalidRuleConfig, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return points, recoverPoints
 	}
 
@@ -252,6 +263,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId())).Inc()
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.InvalidQuery, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return points, recoverPoints
 	}
 
@@ -267,6 +279,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
+				process.Record(arw.ctx, nil, nil, false, process.EmptyPromClient, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 				continue
 			}
 
@@ -276,6 +289,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+				process.Record(arw.ctx, nil, nil, false, process.QueryError(query, err), arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 				continue
 			}
 
@@ -298,12 +312,14 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.InvalidRuleConfig, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return lst
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+		process.Record(arw.ctx, nil, nil, false, process.RuleNotFound, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		return lst
 	}
 
@@ -338,6 +354,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			idents = append(idents, engineIdents...)
 
 			if len(idents) == 0 {
+				process.Record(arw.ctx, nil, nil, false, process.TargetNotFound, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 				continue
 			}
 
@@ -370,6 +387,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			if !exists {
 				logger.Warningf("rule_eval:%s targets not found", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+				process.Record(arw.ctx, nil, nil, false, process.TargetNotFound, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 				continue
 			}
 
@@ -424,6 +442,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			if !exists {
 				logger.Warningf("rule_eval:%s targets not found", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+				process.Record(arw.ctx, nil, nil, false, process.TargetNotFound, arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 				continue
 			}
 

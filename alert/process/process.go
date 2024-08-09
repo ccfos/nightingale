@@ -19,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
@@ -77,6 +78,8 @@ type Processor struct {
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
 	EventMuteHook          EventMuteHookFunc
+
+	Redis *storage.Redis
 }
 
 func (p *Processor) Key() string {
@@ -99,7 +102,7 @@ func (p *Processor) Hash() string {
 func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64, alertRuleCache *memsto.AlertRuleCacheType,
 	targetCache *memsto.TargetCacheType, targetsOfAlertRuleCache *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
-	stats *astats.Stats) *Processor {
+	stats *astats.Stats, redis *storage.Redis) *Processor {
 
 	p := &Processor{
 		EngineName:   engineName,
@@ -119,6 +122,7 @@ func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64,
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
 		EventMuteHook:          func(event *models.AlertCurEvent) bool { return false },
+		Redis:                  redis,
 	}
 
 	p.mayHandleGroup()
@@ -134,6 +138,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event").Inc()
+		Record(p.ctx, nil, nil, false, RuleNotFound, p.rule.Name, p.rule.Id, p.Redis)
 		return
 	}
 
@@ -152,12 +157,14 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		if isMuted {
 			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
+			Record(p.ctx, nil, event, false, AlertMutedReason(detail), p.rule.Name, p.rule.Id, p.Redis)
 			continue
 		}
 
 		if p.EventMuteHook(event) {
 			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
+			Record(p.ctx, nil, event, false, MutedByHook, p.rule.Name, p.rule.Id, p.Redis)
 			continue
 		}
 
@@ -277,6 +284,8 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
+		event, _ := p.pendings.Get(hash)
+		Record(p.ctx, nil, event, true, EventRecovered, p.rule.Name, p.rule.Id, p.Redis)
 		p.pendings.Delete(hash)
 	}
 
@@ -324,6 +333,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 			p.pendings.Delete(e.Hash)
 			models.AlertCurEventDelByHash(p.ctx, e.Hash)
 			eventMap[event.Tags] = *event
+			Record(p.ctx, nil, &e, true, IsInhibit, p.rule.Name, p.rule.Id, p.Redis)
 		}
 	}
 
@@ -345,6 +355,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	// 如果配置了留观时长，就不能立马恢复了
 	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
 		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+		Record(p.ctx, nil, event, true, RecoverDuration, p.rule.Name, p.rule.Id, p.Redis)
 		return
 	}
 	if value != nil {
@@ -401,6 +412,8 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 				severity = event.Severity
 			}
 			continue
+		} else {
+			Record(p.ctx, nil, event, false, Interval, p.rule.Name, p.rule.Id, p.Redis)
 		}
 	}
 
@@ -411,6 +424,7 @@ func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity in
 	for _, event := range events {
 		if p.inhibit && event.Severity > highSeverity {
 			logger.Debugf("rule_eval:%s event:%+v inhibit highSeverity:%d", p.Key(), event, highSeverity)
+			Record(p.ctx, nil, event, false, IsInhibit, p.rule.Name, p.rule.Id, p.Redis)
 			continue
 		}
 		p.fireEvent(event)
@@ -421,6 +435,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 	// As p.rule maybe outdated, use rule from cache
 	cachedRule := p.rule
 	if cachedRule == nil {
+		Record(p.ctx, nil, event, false, RuleNotFound, p.rule.Name, p.rule.Id, p.Redis)
 		return
 	}
 
@@ -434,6 +449,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", p.Key(), event)
 			// 说明不想重复通知，那就直接返回了，nothing to do
 			// do not need to send alert again
+			Record(p.ctx, nil, event, false, RepeatStep, p.rule.Name, p.rule.Id, p.Redis)
 			return
 		}
 
@@ -447,12 +463,15 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
 				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
 					logger.Debugf("rule_eval:%s event:%+v reach max number", p.Key(), event)
+					Record(p.ctx, nil, event, false, NotifyNumber, p.rule.Name, p.rule.Id, p.Redis)
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
 					p.pushEventToQueue(event)
 				}
 			}
+		} else {
+			Record(p.ctx, nil, event, false, RepeatStep, p.rule.Name, p.rule.Id, p.Redis)
 		}
 	} else {
 		event.NotifyCurNumber = 1
@@ -472,6 +491,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue").Inc()
+		Record(p.ctx, nil, e, e.IsRecovered, FullQueue, p.rule.Name, p.rule.Id, p.Redis)
 	}
 }
 
