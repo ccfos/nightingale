@@ -95,8 +95,8 @@ CREATE TABLE notification_record (
     `sub_id` BIGINT NOT NULL,
     `channel` VARCHAR(255) NOT NULL,
     `status` TINYINT NOT NULL DEFAULT 0,
-    `target` VARCHAR(255) NOT NULL,
-    `details` VARCHAR(1024),
+    `target` VARCHAR(1024) NOT NULL,
+    `details` VARCHAR(2048),
     `created_at` BIGINT NOT NULL,
     INDEX idx_evt (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

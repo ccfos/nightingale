@@ -17,8 +17,8 @@ type NotificaitonRecord struct {
 	SubId     int64  `json:"sub_id" gorm:"type:bigint;comment:subscribed rule id"`
 	Channel   string `json:"channel" gorm:"type:varchar(255);not null;comment:notification channel name"`
 	Status    int    `json:"status" gorm:"type:int;comment:notification status"` // 1-成功，2-失败
-	Target    string `json:"target" gorm:"type:varchar(255);not null;comment:notification target"`
-	Details   string `json:"details" gorm:"type:varchar(255);default:'';comment:notification other info"`
+	Target    string `json:"target" gorm:"type:varchar(1024);not null;comment:notification target"`
+	Details   string `json:"details" gorm:"type:varchar(2048);default:'';comment:notification other info"`
 	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;comment:create time"`
 }
 
