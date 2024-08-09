@@ -242,7 +242,8 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
+			msgCtx := sender.BuildMessageContext(e.ctx, rule, []*models.AlertCurEvent{event},
+				uids, e.userCache, e.Astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -269,13 +270,14 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 
 	// handle global webhooks
 	if e.alerting.WebhookBatchSend {
-		sender.BatchSendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 	} else {
-		sender.SingleSendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 	}
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.Astats)
+	go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
+		GetNotifyScript(), e.Astats, event)
 }
 
 func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTarget, event *models.AlertCurEvent) {
