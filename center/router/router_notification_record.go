@@ -78,10 +78,6 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 			nl[i] = nil
 		}
 
-		if !checkChannel(n.Channel) {
-			// Hide sensitive information
-			n.Target = replaceLastEightChars(n.Target)
-		}
 	}
 
 	// Fill usernames only once
@@ -90,6 +86,11 @@ func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord
 	for _, n := range nl {
 		if n == nil {
 			continue
+		}
+
+		if !checkChannel(n.Channel) {
+			// Hide sensitive information
+			n.Target = replaceLastEightChars(n.Target)
 		}
 
 		record := Record{
