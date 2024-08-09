@@ -10,13 +10,13 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
-	"github.com/ccfos/nightingale/v6/center/cron"
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/cron"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -68,10 +68,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	ctx := ctx.NewContext(context.Background(), db, &redis, true)
+	ctx := ctx.NewContext(context.Background(), db, true)
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
-	err = cron.InitCron(ctx)
+	err = cron.InitLimitAlertRecordCountCron(ctx, &redis)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache, &redis)
+	process.InitAlertRecordCount(ctx, &redis)
 
 	writers := writer.NewWriters(config.Pushgw)
 

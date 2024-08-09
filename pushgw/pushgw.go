@@ -40,7 +40,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		}
 	}
 
-	ctx := ctx.NewContext(context.Background(), nil, &redis, false, config.CenterApi)
+	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	idents := idents.New(ctx, redis)
 	metas := metas.New(redis)

@@ -4,20 +4,17 @@ import (
 	"context"
 
 	"github.com/ccfos/nightingale/v6/conf"
-	"github.com/ccfos/nightingale/v6/storage"
-
 	"gorm.io/gorm"
 )
 
 type Context struct {
 	DB        *gorm.DB
-	Redis     *storage.Redis
 	CenterApi conf.CenterApi
 	Ctx       context.Context
 	IsCenter  bool
 }
 
-func NewContext(ctx context.Context, db *gorm.DB, redis *storage.Redis, isCenter bool, centerApis ...conf.CenterApi) *Context {
+func NewContext(ctx context.Context, db *gorm.DB, isCenter bool, centerApis ...conf.CenterApi) *Context {
 	var api conf.CenterApi
 	if len(centerApis) > 0 {
 		api = centerApis[0]
@@ -26,7 +23,6 @@ func NewContext(ctx context.Context, db *gorm.DB, redis *storage.Redis, isCenter
 	return &Context{
 		Ctx:       ctx,
 		DB:        db,
-		Redis:     redis,
 		CenterApi: api,
 		IsCenter:  isCenter,
 	}

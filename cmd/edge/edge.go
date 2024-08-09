@@ -47,7 +47,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if len(config.CenterApi.Addrs) < 1 {
 		return nil, errors.New("failed to init config: the CenterApi configuration is missing")
 	}
-	ctx := ctx.NewContext(context.Background(), nil, &redis, false, config.CenterApi)
+	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
 
@@ -76,7 +76,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		externalProcessors := process.NewExternalProcessors()
 
 		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,
-			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache, &redis)
 
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 

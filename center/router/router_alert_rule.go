@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/alert/process"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,8 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/tool"
-
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/ginx"
@@ -458,9 +457,9 @@ func (rt *Router) relabelTest(c *gin.Context) {
 }
 
 func (rt *Router) redisLPush(c *gin.Context) {
-	var ar tool.AlertRecordRedis
+	var ar process.AlertRecordRedis
 	ginx.BindJSON(c, &ar)
-	ginx.NewRender(c).Message(storage.LPush(rt.Ctx.GetContext(), *rt.Ctx.Redis, ar.MaxLength, ar.ExpireDuration, ar.Key, ar.Value))
+	ginx.NewRender(c).Message(process.PushAlertRecord(rt.Ctx, &rt.Redis, ar.Key, ar.Value))
 }
 
 func (rt *Router) getRuleRecords(c *gin.Context) {
@@ -468,23 +467,23 @@ func (rt *Router) getRuleRecords(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	ruleId := ginx.QueryInt64(c, "rule_id", 0)
 	query := ginx.QueryStr(c, "query", "")
-	alertRecords := foo(rt.Ctx, stime, etime, ruleId, limit, query)
+	alertRecords := foo(rt.Ctx, &rt.Redis, stime, etime, ruleId, limit, query)
 	ginx.NewRender(c).Data(gin.H{
 		"list":  alertRecords,
 		"total": len(alertRecords),
 	}, nil)
 }
 
-func foo(ctx *ctx.Context, stime int64, etime, ruleId int64, limit int, query string) []*tool.AlertRecord {
+func foo(ctx *ctx.Context, redis *storage.Redis, stime int64, etime, ruleId int64, limit int, query string) []*process.AlertRecord {
 	s := time.Unix(stime, 0).Round(time.Hour)
 	e := time.Unix(etime, 0).Round(time.Hour)
 
 	keys := make([]string, 0)
 	for t := s; !t.After(e); t = t.Add(time.Hour) {
-		keys = append(keys, fmt.Sprintf(tool.AlertRecordRedisKey, ruleId, t.Day(), t.Hour()))
+		keys = append(keys, fmt.Sprintf(process.AlertRecordRedisKey, ruleId, t.Day(), t.Hour()))
 	}
 
-	alertRecords, err := storage.MRangeList[*tool.AlertRecord](ctx.GetContext(), *ctx.Redis, keys)
+	alertRecords, err := storage.MRangeList[*process.AlertRecord](ctx.GetContext(), *redis, keys)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -492,12 +491,12 @@ func foo(ctx *ctx.Context, stime int64, etime, ruleId int64, limit int, query st
 	return filterAlertRecords(alertRecords, query)
 }
 
-func filterAlertRecords(alertRecords []*tool.AlertRecord, query string) []*tool.AlertRecord {
+func filterAlertRecords(alertRecords []*process.AlertRecord, query string) []*process.AlertRecord {
 	if query == "" {
 		return alertRecords
 	}
 	queryFields := strings.Fields(query)
-	var res []*tool.AlertRecord
+	var res []*process.AlertRecord
 	for i := range alertRecords {
 		need := true
 		for j := range queryFields {

@@ -140,29 +140,21 @@ func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
 }
 
 // LPush push value to list
-func LPush(ctx context.Context, r Redis, maxLength int64, expireDuration time.Duration, key string, values ...interface{}) error {
+func LPush(ctx context.Context, r Redis, key string, values ...interface{}) error {
 
-	exists, err := r.Exists(ctx, key).Result()
+	_, err := r.LPush(ctx, key, values).Result()
 	if err != nil {
 		return err
-	}
-	_, err = r.LPush(ctx, key, values).Result()
-	if err != nil {
-		return err
-	}
-	if exists == 0 && expireDuration != 0 {
-		err = r.Expire(ctx, key, expireDuration).Err()
-		if err != nil {
-			return err
-		}
-	}
-	if maxLength != 0 {
-		err = r.LTrim(ctx, key, 0, maxLength-1).Err()
-		if err != nil {
-			return err
-		}
 	}
 	return nil
+}
+
+func LTrim(ctx context.Context, r Redis, key string, start, stop int64) error {
+	return r.LTrim(ctx, key, start, stop).Err()
+}
+
+func Expire(ctx context.Context, r Redis, key string, expiration time.Duration) error {
+	return r.Expire(ctx, key, expiration).Err()
 }
 
 // MRangeList get multiple list from redis and unmarshal to []T
@@ -197,8 +189,59 @@ func Scan(ctx context.Context, r Redis, cursor uint64, match string, count int64
 	return r.Scan(ctx, cursor, match, count).Result()
 }
 
+func MLLen(ctx context.Context, r Redis, keys []string) (map[string]int64, error) {
+	pipe := r.Pipeline()
+	for _, key := range keys {
+		pipe.LLen(ctx, key)
+	}
+	cmds, err := pipe.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[string]int64)
+	for i, key := range keys {
+		cmd := cmds[i]
+		if errors.Is(cmd.Err(), redis.Nil) {
+			res[key] = 0
+			continue
+		}
+
+		if cmd.Err() != nil {
+			logger.Errorf("failed to get length of key: %s, err: %s", key, cmd.Err())
+			continue
+		}
+		res[key] = cmd.(*redis.IntCmd).Val()
+	}
+	return res, nil
+}
+
 func LLen(ctx context.Context, r Redis, key string) (int64, error) {
 	return r.LLen(ctx, key).Result()
+}
+
+func MTTL(ctx context.Context, r Redis, keys []string) (map[string]time.Duration, error) {
+	pipe := r.Pipeline()
+	for _, key := range keys {
+		pipe.TTL(ctx, key)
+	}
+	cmds, err := pipe.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[string]time.Duration)
+	for i, key := range keys {
+		cmd := cmds[i]
+		if errors.Is(cmd.Err(), redis.Nil) {
+			continue
+		}
+
+		if cmd.Err() != nil {
+			logger.Errorf("failed to get ttl of key: %s, err: %s", key, cmd.Err())
+			continue
+		}
+		res[key] = cmd.(*redis.DurationCmd).Val()
+	}
+	return res, nil
 }
 
 func TTL(ctx context.Context, r Redis, key string) (time.Duration, error) {
