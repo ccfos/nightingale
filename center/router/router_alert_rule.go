@@ -465,16 +465,17 @@ func (rt *Router) redisLPush(c *gin.Context) {
 func (rt *Router) getRuleRecords(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	limit := ginx.QueryInt(c, "limit", 20)
+	offset := ginx.QueryInt(c, "offset", 0)
 	ruleId := ginx.QueryInt64(c, "rule_id", 0)
 	query := ginx.QueryStr(c, "query", "")
-	alertRecords := foo(rt.Ctx, &rt.Redis, stime, etime, ruleId, limit, query)
+	alertRecords := getRuleRecordsFromRedis(rt.Ctx, &rt.Redis, stime, etime, ruleId, limit, offset, query)
 	ginx.NewRender(c).Data(gin.H{
 		"list":  alertRecords,
 		"total": len(alertRecords),
 	}, nil)
 }
 
-func foo(ctx *ctx.Context, redis *storage.Redis, stime int64, etime, ruleId int64, limit int, query string) []*process.AlertRecord {
+func getRuleRecordsFromRedis(ctx *ctx.Context, redis *storage.Redis, stime int64, etime, ruleId int64, limit, offset int, query string) []*process.AlertRecord {
 	s := time.Unix(stime, 0).Round(time.Hour)
 	e := time.Unix(etime, 0).Round(time.Hour)
 
@@ -487,8 +488,19 @@ func foo(ctx *ctx.Context, redis *storage.Redis, stime int64, etime, ruleId int6
 	if err != nil {
 		fmt.Println(err)
 	}
+	alertRecords = filterAlertRecords(alertRecords, query)
 
-	return filterAlertRecords(alertRecords, query)
+	start := offset * limit
+	if start > len(alertRecords) {
+		return nil
+	}
+
+	end := start + limit
+	if end > len(alertRecords) {
+		end = len(alertRecords)
+	}
+
+	return alertRecords[start:end]
 }
 
 func filterAlertRecords(alertRecords []*process.AlertRecord, query string) []*process.AlertRecord {

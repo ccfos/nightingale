@@ -171,13 +171,13 @@ func PushAlertRecord(ctx *ctx.Context, redis *storage.Redis, key string, ar *Ale
 		AlertRecordCount.Store(key, count)
 	}
 
-	if count > AlertRecordMaxCount {
-		err := storage.LTrim(ctx.GetContext(), *redis, key, 0, AlertRecordMaxCount-1)
+	if count > defaultMaxLengthForList {
+		err := storage.LTrim(ctx.GetContext(), *redis, key, 0, defaultMaxLengthForList-1)
 		if err != nil {
 			logger.Errorf("fail to trim alert record, key :%s, err:%s", key, err.Error())
 			return err
 		}
-		AlertRecordCount.Store(key, AlertRecordMaxCount)
+		AlertRecordCount.Store(key, defaultMaxLengthForList)
 	}
 	return nil
 }
