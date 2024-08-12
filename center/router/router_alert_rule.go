@@ -2,8 +2,10 @@ package router
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -498,4 +500,82 @@ func (rt *Router) relabelTest(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(tags, nil)
+}
+
+type identListForm struct {
+	IdentList []string `json:"ident_list"`
+}
+
+func (rt *Router) cloneToMachine(c *gin.Context) {
+	var f identListForm
+	ginx.BindJSON(c, &f)
+
+	if len(f.IdentList) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "ident_list is empty")
+	}
+
+	arid := ginx.UrlParamInt64(c, "arid")
+	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	ginx.Dangerous(err)
+
+	ruleConfig, code, err := parsePromRuleConfig(ar)
+	fmt.Println(ruleConfig)
+	if err != nil {
+		ginx.NewRender(c, code).Message(err)
+	}
+
+	rt.bgrwCheck(c, ar.GroupId)
+
+	re := regexp.MustCompile("ident = \".*?\"")
+
+	user := c.MustGet("username").(string)
+	now := time.Now().Unix()
+
+	newRules := make([]*models.AlertRule, len(f.IdentList))
+	for i := range f.IdentList {
+		newRule, err := ar.Copy(rt.Ctx)
+		if err != nil {
+			ginx.NewRender(c, http.StatusInternalServerError).Message(err)
+		}
+		newRule.Id = 0
+		newRule.Name = ar.Name + "_" + f.IdentList[i]
+
+		for j := range ruleConfig.Queries {
+			ruleConfig.Queries[j].PromQl = re.ReplaceAllString(ruleConfig.Queries[j].PromQl, fmt.Sprintf("ident = \"%s\"", f.IdentList[i]))
+		}
+		rc, err := json.Marshal(ruleConfig)
+		if err != nil {
+			ginx.NewRender(c, http.StatusInternalServerError).Message(err)
+		}
+		newRule.RuleConfig = string(rc)
+		newRule.CreateBy = user
+		newRule.UpdateBy = user
+		newRule.CreateAt = now
+		newRule.UpdateAt = now
+		newRules[i] = newRule
+
+	}
+
+	ginx.NewRender(c).Message(models.InsertAlertRule(rt.Ctx, newRules))
+}
+
+func parsePromRuleConfig(ar *models.AlertRule) (r *models.PromRuleConfig, code int, err error) {
+	if ar == nil {
+		return nil, http.StatusNotFound, errors.New("no such AlertRule")
+	}
+
+	if ar.Cate != "prometheus" {
+		return nil, http.StatusInternalServerError, errors.New("only support prometheus cate")
+	}
+
+	var ruleConfig *models.PromRuleConfig
+	if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	if len(ruleConfig.Queries) == 0 {
+		return
+	}
+
+	return ruleConfig, 0, nil
 }
