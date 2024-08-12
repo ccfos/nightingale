@@ -235,6 +235,9 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		}
 
 		logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
+		process.Record(arw.ctx, nil, nil, false,
+			process.QueryRecord(fmt.Sprintf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)),
+			arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		points := common.ConvertAnomalyPoints(value)
 		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
@@ -296,9 +299,12 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
+			process.Record(arw.ctx, nil, nil, false,
+				process.QueryRecord(fmt.Sprintf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)),
+				arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 		}
 
-		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndex, seriesStore)
+		points, recoverPoints = GetAnomalyPoint(arw, rule.Id, ruleQuery, seriesTagIndex, seriesStore)
 	}
 
 	return points, recoverPoints
@@ -463,7 +469,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+func GetAnomalyPoint(arw *AlertRuleWorker, ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
 	points := []common.AnomalyPoint{}
 	recoverPoints := []common.AnomalyPoint{}
 
@@ -503,6 +509,9 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex ma
 			isTriggered := parser.Calc(trigger.Exp, m)
 			//  此条日志很重要，是告警判断的现场值
 			logger.Infof("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", ruleId, trigger, trigger.Exp, isTriggered, m)
+			process.Record(arw.ctx, nil, nil, false,
+				process.QueryRecord(fmt.Sprintf("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", ruleId, trigger, trigger.Exp, isTriggered, m)),
+				arw.rule.Name, arw.rule.Id, arw.processor.Redis)
 
 			var values string
 			for k, v := range m {

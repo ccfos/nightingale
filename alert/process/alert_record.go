@@ -77,12 +77,12 @@ const (
 	Interval          NoEventReason = "fail to reach alert interval"
 	RepeatStep        NoEventReason = "fail to reach repeat step"
 	NotifyNumber      NoEventReason = "reach max notify number"
+	ValueRecord       NoEventReason = "this is a debug record instead of no even reason, "
 )
 
 type AlertRecord struct {
 	AlertName        string        `json:"alert_name"`
 	CreateAt         int64         `json:"create_at"`
-	SendEvent        bool          `json:"send_event"`
 	ReasonForNoEvent NoEventReason `json:"reason_for_no_event"`
 	IsRecovery       bool          `json:"is_recovery"`
 	Labels           string        `json:"labels"`
@@ -142,13 +142,13 @@ func Record(ctx *ctx.Context, point *common.AnomalyPoint, event *models.AlertCur
 			MaxLength:      defaultMaxLengthForList,
 		})
 		if err != nil {
-			logger.Errorf("fail to forward alert record, err:%s", err.Error())
+			logger.Errorf("fail to forward alert record: %v, err:%s", ar, err.Error())
 		}
 		return
 	}
 	err := PushAlertRecord(ctx, redis, key, &ar)
 	if err != nil {
-		logger.Errorf("fail to push alert record, err:%s", err.Error())
+		logger.Errorf("fail to push alert record: %v, err:%s", ar, err.Error())
 	}
 }
 
@@ -190,6 +190,10 @@ func QueryError(query interface{}, err error) NoEventReason {
 	return NoEventReason(fmt.Sprintf(string(QueryErr), query, err.Error()))
 }
 
+func QueryRecord(info string) NoEventReason {
+	return NoEventReason(fmt.Sprintf(string(ValueRecord) + info))
+}
+
 type keyAndLen struct {
 	key    string
 	length int64
@@ -208,12 +212,12 @@ func LimitAlertRecordCount(ctx *ctx.Context, redis *storage.Redis) {
 	var count int64
 	kToLen, err := storage.MLLen(ctx.GetContext(), *redis, keys)
 	if err != nil {
-		logger.Errorf("fail to limit alert record's count, err:%s", err.Error())
+		logger.Errorf("fail to limit alert record's count, keys: %v, err:%s", keys, err.Error())
 		return
 	}
 	kToTTL, err := storage.MTTL(ctx.GetContext(), *redis, keys)
 	if err != nil {
-		logger.Errorf("fail to limit alert record's count, err:%s", err.Error())
+		logger.Errorf("fail to limit alert record's count, keys: %v, err:%s", keys, err.Error())
 		return
 	}
 	// 按照过期时间将 key 分组
@@ -254,7 +258,7 @@ func LimitAlertRecordCount(ctx *ctx.Context, redis *storage.Redis) {
 
 	err = storage.MDel(ctx.GetContext(), *redis, keyDel...)
 	if err != nil {
-		logger.Errorf("fail to limit alert record's count, err:%s", err.Error())
+		logger.Errorf("fail to limit alert record's count, keys: %v, err:%s", keyDel, err.Error())
 	}
 	for i := range keyDel {
 		AlertRecordCount.Delete(keyDel[i])

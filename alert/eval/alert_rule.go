@@ -3,7 +3,6 @@ package eval
 import (
 	"context"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/storage"
 	"strconv"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/toolkits/pkg/logger"

@@ -552,7 +552,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			service.GET("/targets-of-alert-rule", rt.targetsOfAlertRule)
 
-			service.POST("/redis/lpush", rt.redisLPush)
+			service.POST("/redis/lpush", rt.redisLPushAlertRecord)
 		}
 	}
 

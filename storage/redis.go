@@ -185,10 +185,6 @@ func MRangeList[T any](ctx context.Context, r Redis, keys []string) ([]T, error)
 	return res, nil
 }
 
-func Scan(ctx context.Context, r Redis, cursor uint64, match string, count int64) ([]string, uint64, error) {
-	return r.Scan(ctx, cursor, match, count).Result()
-}
-
 func MLLen(ctx context.Context, r Redis, keys []string) (map[string]int64, error) {
 	pipe := r.Pipeline()
 	for _, key := range keys {
@@ -215,10 +211,6 @@ func MLLen(ctx context.Context, r Redis, keys []string) (map[string]int64, error
 	return res, nil
 }
 
-func LLen(ctx context.Context, r Redis, key string) (int64, error) {
-	return r.LLen(ctx, key).Result()
-}
-
 func MTTL(ctx context.Context, r Redis, keys []string) (map[string]time.Duration, error) {
 	pipe := r.Pipeline()
 	for _, key := range keys {
@@ -242,10 +234,6 @@ func MTTL(ctx context.Context, r Redis, keys []string) (map[string]time.Duration
 		res[key] = cmd.(*redis.DurationCmd).Val()
 	}
 	return res, nil
-}
-
-func TTL(ctx context.Context, r Redis, key string) (time.Duration, error) {
-	return r.TTL(ctx, key).Result()
 }
 
 func MDel(ctx context.Context, r Redis, keys ...string) error {

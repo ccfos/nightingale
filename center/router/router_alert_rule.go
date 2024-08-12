@@ -456,7 +456,7 @@ func (rt *Router) relabelTest(c *gin.Context) {
 	ginx.NewRender(c).Data(tags, nil)
 }
 
-func (rt *Router) redisLPush(c *gin.Context) {
+func (rt *Router) redisLPushAlertRecord(c *gin.Context) {
 	var ar process.AlertRecordRedis
 	ginx.BindJSON(c, &ar)
 	ginx.NewRender(c).Message(process.PushAlertRecord(rt.Ctx, &rt.Redis, ar.Key, ar.Value))
