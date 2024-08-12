@@ -1,6 +1,7 @@
 package sso
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -145,7 +146,7 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 		}
 	}
 	if configCache == nil {
-		logger.Error("configCache is nil, sso initialization failed")
+		log.Fatalln(fmt.Errorf("configCache is nil, sso initialization failed"))
 	}
 	ssoClient.configCache = configCache
 	userVariableMap := configCache.Get()
