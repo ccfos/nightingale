@@ -16,10 +16,6 @@ func DB(ctx *ctx.Context) *gorm.DB {
 	return ctx.DB
 }
 
-func Model[T any](ctx *ctx.Context) *gorm.DB {
-	return DB(ctx).Model(new(T))
-}
-
 func Count(tx *gorm.DB) (int64, error) {
 	var cnt int64
 	err := tx.Count(&cnt).Error
