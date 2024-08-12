@@ -621,8 +621,8 @@ func AlertCurEventGetMap(ctx *ctx.Context, cluster string) (map[int64]map[string
 	return ret, nil
 }
 
-func (m *AlertCurEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
-	return DB(ctx).Model(m).Updates(fields).Error
+func (e *AlertCurEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
+	return DB(ctx).Model(e).Updates(fields).Error
 }
 
 func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
