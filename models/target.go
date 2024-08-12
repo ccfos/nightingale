@@ -81,7 +81,7 @@ func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	}
 
 	var stats []*Statistics
-	err := Model[Target](ctx).Select("count(*) as total", "max(update_at) as last_updated").Find(&stats).Error
+	err := DB(ctx).Model(&Target{}).Select("count(*) as total", "max(update_at) as last_updated").Find(&stats).Error
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func BuildTargetWhereWithIdents(idents ...string) BuildTargetWhereOption {
 }
 
 func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
-	session := Model[Target](ctx)
+	session := DB(ctx).Model(&Target{})
 	for _, opt := range options {
 		session = opt(session)
 	}
@@ -229,9 +229,9 @@ func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, t
 }
 
 func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
-	session := Model[Target](ctx)
+	session := DB(ctx).Model(&Target{})
 	for _, q := range query {
-		tx := Model[Target](ctx)
+		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
 			tx = tx.Or(k, v)
 		}
@@ -252,12 +252,12 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	}
 
 	var lst []*Target
-	err := Model[Target](ctx).Find(&lst).Error
+	err := DB(ctx).Model(&Target{}).Find(&lst).Error
 	return lst, err
 }
 
 func TargetUpdateNote(ctx *ctx.Context, idents []string, note string) error {
-	return Model[Target](ctx).Where("ident in ?", idents).Updates(map[string]interface{}{
+	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(map[string]interface{}{
 		"note":      note,
 		"update_at": time.Now().Unix(),
 	}).Error
@@ -273,7 +273,7 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 		fields["tags"] = ""
 	}
 
-	return Model[Target](ctx).Where("ident in ?", idents).Updates(fields).Error
+	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(fields).Error
 }
 
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
@@ -303,7 +303,7 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 	// Query the ident corresponding to idents
 	if len(idents) > 0 {
 		var identsFromIdents []string
-		err := Model[Target](ctx).Where("ident IN ?", idents).Pluck("ident", &identsFromIdents).Error
+		err := DB(ctx).Model(&Target{}).Where("ident IN ?", idents).Pluck("ident", &identsFromIdents).Error
 		if err != nil {
 			return nil, nil, err
 		}
@@ -325,7 +325,7 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 			HostIp string
 			Ident  string
 		}
-		err := Model[Target](ctx).Select("host_ip, ident").Where("host_ip IN ?", hostIps).Scan(&hostIpToIdentMap).Error
+		err := DB(ctx).Model(&Target{}).Select("host_ip, ident").Where("host_ip IN ?", hostIps).Scan(&hostIpToIdentMap).Error
 		if err != nil {
 			return nil, nil, err
 		}
@@ -441,7 +441,7 @@ func TargetIdents(ctx *ctx.Context, ids []int64) ([]string, error) {
 		return ret, nil
 	}
 
-	err := Model[Target](ctx).Where("id in ?", ids).Pluck("ident", &ret).Error
+	err := DB(ctx).Model(&Target{}).Where("id in ?", ids).Pluck("ident", &ret).Error
 	return ret, err
 }
 
@@ -452,7 +452,7 @@ func TargetIds(ctx *ctx.Context, idents []string) ([]int64, error) {
 		return ret, nil
 	}
 
-	err := Model[Target](ctx).Where("ident in ?", idents).Pluck("id", &ret).Error
+	err := DB(ctx).Model(&Target{}).Where("ident in ?", idents).Pluck("id", &ret).Error
 	return ret, err
 }
 
@@ -462,7 +462,7 @@ func IdentsFilter(ctx *ctx.Context, idents []string, where string, args ...inter
 		return arr, nil
 	}
 
-	err := Model[Target](ctx).Where("ident in ?", idents).Where(where, args...).Pluck("ident", &arr).Error
+	err := DB(ctx).Model(&Target{}).Where("ident in ?", idents).Where(where, args...).Pluck("ident", &arr).Error
 	return arr, err
 }
 
