@@ -348,7 +348,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	if cachedRule.RecoverDuration > 0 {
 		lastPendingEvent, has := p.pendingsUseByRecover.Get(hash)
 		if !has {
-			// 说明说明产生过异常点，就不需要恢复了
+			// 说明没有产生过异常点，就不需要恢复了
 			logger.Debugf("rule_eval:%s event:%v do not has pending event, not recover", p.Key(), event)
 			return
 		}
