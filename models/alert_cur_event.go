@@ -305,8 +305,12 @@ func (e *AlertCurEvent) DB2FE() error {
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	e.OriginalTagsJSON = strings.Split(e.OriginalTags, ",,")
-	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
-	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
+	if err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON); err != nil {
+		return err
+	}
+	if err := json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson); err != nil {
+		return err
+	}
 	return nil
 }
 
