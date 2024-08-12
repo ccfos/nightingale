@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -15,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
@@ -297,6 +297,17 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			continue
 		}
 
+		if f.Action == "update_queries" {
+			if queries, has := f.Fields["queries"]; has {
+				originRule := ar.RuleConfigJson.(map[string]interface{})
+				originRule["queries"] = queries
+				b, err := json.Marshal(originRule)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
+				continue
+			}
+		}
+
 		if f.Action == "annotations_add" {
 			if annotations, has := f.Fields["annotations"]; has {
 				annotationsMap := annotations.(map[string]interface{})
@@ -503,6 +514,7 @@ func (rt *Router) relabelTest(c *gin.Context) {
 }
 
 type identListForm struct {
+	Ids       []int64  `json:"ids"`
 	IdentList []string `json:"ident_list"`
 }
 
@@ -514,68 +526,50 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "ident_list is empty")
 	}
 
-	arid := ginx.UrlParamInt64(c, "arid")
-	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+	alertRules, err := models.AlertRuleGetsByIds(rt.Ctx, f.Ids)
 	ginx.Dangerous(err)
-
-	ruleConfig, code, err := parsePromRuleConfig(ar)
-	fmt.Println(ruleConfig)
-	if err != nil {
-		ginx.NewRender(c, code).Message(err)
-	}
-
-	rt.bgrwCheck(c, ar.GroupId)
 
 	re := regexp.MustCompile("ident = \".*?\"")
 
 	user := c.MustGet("username").(string)
 	now := time.Now().Unix()
 
-	newRules := make([]*models.AlertRule, len(f.IdentList))
-	for i := range f.IdentList {
-		newRule, err := ar.Copy(rt.Ctx)
-		if err != nil {
-			ginx.NewRender(c, http.StatusInternalServerError).Message(err)
-		}
-		newRule.Id = 0
-		newRule.Name = ar.Name + "_" + f.IdentList[i]
+	newRules := make([]*models.AlertRule, 0)
 
-		for j := range ruleConfig.Queries {
-			ruleConfig.Queries[j].PromQl = re.ReplaceAllString(ruleConfig.Queries[j].PromQl, fmt.Sprintf("ident = \"%s\"", f.IdentList[i]))
+	for i := range alertRules {
+		if alertRules[i].Cate != "prometheus" {
+			continue
 		}
-		rc, err := json.Marshal(ruleConfig)
-		if err != nil {
-			ginx.NewRender(c, http.StatusInternalServerError).Message(err)
+		var ruleConfig *models.PromRuleConfig
+		if err := json.Unmarshal([]byte(alertRules[i].RuleConfig), &ruleConfig); err != nil {
+			continue
 		}
-		newRule.RuleConfig = string(rc)
-		newRule.CreateBy = user
-		newRule.UpdateBy = user
-		newRule.CreateAt = now
-		newRule.UpdateAt = now
-		newRules[i] = newRule
 
+		for j := range f.IdentList {
+
+			for q := range ruleConfig.Queries {
+				ruleConfig.Queries[q].PromQl = re.ReplaceAllString(ruleConfig.Queries[q].PromQl, fmt.Sprintf("ident = \"%s\"", f.IdentList[j]))
+			}
+
+			configJson, err := json.Marshal(ruleConfig)
+			if err != nil {
+				continue
+			}
+
+			newRule := &models.AlertRule{}
+			if err := copier.Copy(newRule, alertRules[i]); err != nil {
+				continue
+			}
+			newRule.Id = 0
+			newRule.Name = alertRules[i].Name + "_" + f.IdentList[i]
+			newRule.CreateBy = user
+			newRule.UpdateBy = user
+			newRule.UpdateAt = now
+			newRule.CreateAt = now
+			newRule.RuleConfig = string(configJson)
+			newRules = append(newRules, newRule)
+		}
 	}
 
 	ginx.NewRender(c).Message(models.InsertAlertRule(rt.Ctx, newRules))
-}
-
-func parsePromRuleConfig(ar *models.AlertRule) (r *models.PromRuleConfig, code int, err error) {
-	if ar == nil {
-		return nil, http.StatusNotFound, errors.New("no such AlertRule")
-	}
-
-	if ar.Cate != "prometheus" {
-		return nil, http.StatusInternalServerError, errors.New("only support prometheus cate")
-	}
-
-	var ruleConfig *models.PromRuleConfig
-	if err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig); err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
-
-	if len(ruleConfig.Queries) == 0 {
-		return
-	}
-
-	return ruleConfig, 0, nil
 }
