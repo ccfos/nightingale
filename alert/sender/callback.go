@@ -156,8 +156,16 @@ func NotifyRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, 
 		noti.SetDetails(string(res))
 	}
 
+	if !ctx.IsCenter {
+		_, err := poster.PostByUrlsWithResp[int64](ctx, "/v1/n9e/notify-record", noti)
+		if err != nil {
+			logger.Errorf("add noti:%v failed, err: %v", noti, err)
+		}
+		return
+	}
+
 	if err := noti.Add(ctx); err != nil {
-		logger.Errorf("Add noti failed, err: %v", err)
+		logger.Errorf("add noti:%v failed, err: %v", noti, err)
 	}
 }
 

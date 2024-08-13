@@ -555,6 +555,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			service.GET("/targets-of-alert-rule", rt.targetsOfAlertRule)
 
+			service.POST("/notify-record", rt.notificationRecordAdd)
 		}
 	}
 
