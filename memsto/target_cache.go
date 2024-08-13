@@ -173,6 +173,15 @@ func (tc *TargetCacheType) syncTargets() error {
 		m[lst[i].Ident] = lst[i]
 	}
 
+	tgs, err := models.TargetBusiGroupsGetAll(tc.ctx)
+	if err != nil {
+		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		return errors.WithMessage(err, "failed to call TargetBusiGroupsGetAll")
+	}
+	for _, t := range lst {
+		t.GroupIds = tgs[t.Ident]
+	}
+
 	tc.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
