@@ -50,9 +50,9 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 		for i := 0; i < headersLength; i += 2 {
 			if conf.Headers[i] == "host" || conf.Headers[i] == "Host" {
 				req.Host = conf.Headers[i+1]
-				continue
+			} else {
+				req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 			}
-			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 		}
 	}
 	insecureSkipVerify := false
