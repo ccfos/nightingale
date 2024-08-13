@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -1079,4 +1080,20 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 	}
 
 	return m, nil
+}
+
+func (ar *AlertRule) Copy(ctx *ctx.Context) (*AlertRule, error) {
+	newAr := &AlertRule{}
+	err := copier.Copy(newAr, ar)
+	if err != nil {
+		logger.Errorf("copy alert rule failed, %v", err)
+	}
+	return newAr, err
+}
+
+func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
+	if len(ars) == 0 {
+		return nil
+	}
+	return DB(ctx).Create(ars).Error
 }
