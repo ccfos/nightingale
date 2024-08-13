@@ -63,17 +63,6 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 	return nil
 }
 
-func (t *Target) AfterFind(tx *gorm.DB) (err error) {
-	delta := time.Now().Unix() - t.UpdateAt
-	if delta < 60 {
-		t.TargetUp = 2
-	} else if delta < 180 {
-		t.TargetUp = 1
-	}
-	t.FillTagsMap()
-	return
-}
-
 func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target")
@@ -120,7 +109,7 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if query != "" {
 			arr := strings.Fields(query)
-			for i := range arr {
+			for i := 0; i < len(arr); i++ {
 				q := "%" + arr[i] + "%"
 				session = session.Where("ident like ? or note like ? or tags like ? "+
 					"or os like ?", q, q, q, q)
@@ -139,38 +128,6 @@ func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	}
 }
 
-func BuildTargetWhereWithOrder(order string, desc bool) BuildTargetWhereOption {
-	return func(session *gorm.DB) *gorm.DB {
-		if desc {
-			order += " desc"
-		} else {
-			order += " asc"
-		}
-		return session.Order(order)
-	}
-}
-
-func BuildTargetWhereWithLimit(limit int) BuildTargetWhereOption {
-	return func(session *gorm.DB) *gorm.DB {
-		return session.Limit(limit)
-	}
-}
-
-func BuildTargetWhereWithOffset(offset int) BuildTargetWhereOption {
-	return func(session *gorm.DB) *gorm.DB {
-		return session.Offset(offset)
-	}
-}
-
-func BuildTargetWhereWithIdents(idents ...string) BuildTargetWhereOption {
-	return func(session *gorm.DB) *gorm.DB {
-		if len(idents) == 0 {
-			return session
-		}
-		return session.Where("ident in ?", idents)
-	}
-}
-
 func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
 	for _, opt := range options {
@@ -183,11 +140,16 @@ func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, er
 	return Count(buildTargetWhere(ctx, options...))
 }
 
-func TargetGets(ctx *ctx.Context, options ...BuildTargetWhereOption) ([]*Target, error) {
+func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
 	var lst []*Target
-	err := buildTargetWhere(ctx, options...).Find(&lst).Error
+	if desc {
+		order += " desc"
+	} else {
+		order += " asc"
+	}
+	err := buildTargetWhere(ctx, options...).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
 	if err == nil {
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
 		}
 	}
@@ -200,7 +162,7 @@ func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit,
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	err := session.Order("ident").Find(&lst).Error
 	cache := make(map[int64]*BusiGroup)
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].TagsJSON = strings.Fields(lst[i].Tags)
 		lst[i].FillGroup(ctx, cache)
 	}
@@ -253,6 +215,9 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
+	for i := 0; i < len(lst); i++ {
+		lst[i].FillTagsMap()
+	}
 	return lst, err
 }
 
@@ -277,15 +242,19 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 }
 
 func TargetGet(ctx *ctx.Context, where string, args ...interface{}) (*Target, error) {
-	var target Target
-	err := DB(ctx).Where(where, args...).First(&target).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
+	var lst []*Target
+	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
-	return &target, nil
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	lst[0].TagsJSON = strings.Fields(lst[0].Tags)
+
+	return lst[0], nil
 }
 
 func TargetGetById(ctx *ctx.Context, id int64) (*Target, error) {
@@ -294,6 +263,12 @@ func TargetGetById(ctx *ctx.Context, id int64) (*Target, error) {
 
 func TargetGetByIdent(ctx *ctx.Context, ident string) (*Target, error) {
 	return TargetGet(ctx, "ident = ?", ident)
+}
+
+func TargetsGetByIdents(ctx *ctx.Context, idents []string) ([]*Target, error) {
+	var targets []*Target
+	err := DB(ctx).Where("ident IN ?", idents).Find(&targets).Error
+	return targets, err
 }
 
 func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []string) (map[string]string, []string, error) {
@@ -350,7 +325,9 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
 	var arr []string
-	session = BuildTargetWhereWithIdents(idents...)(session)
+	if len(idents) > 0 {
+		session = session.Where("ident in ?", idents)
+	}
 
 	err := session.Select("distinct(tags) as tags").Pluck("tags", &arr).Error
 	if err != nil {
@@ -382,7 +359,7 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 }
 
 func (t *Target) AddTags(ctx *ctx.Context, tags []string) error {
-	for i := range tags {
+	for i := 0; i < len(tags); i++ {
 		if !strings.Contains(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
 		}
@@ -410,16 +387,28 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 
 func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
-	t.TagsMap = t.GetTagsMap()
+	t.TagsMap = make(map[string]string)
+	m := make(map[string]string)
+	for _, item := range t.TagsJSON {
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
+		}
+		m[arr[0]] = arr[1]
+	}
+
+	t.TagsMap = m
 }
 
 func (t *Target) GetTagsMap() map[string]string {
 	tagsJSON := strings.Fields(t.Tags)
 	m := make(map[string]string)
 	for _, item := range tagsJSON {
-		if arr := strings.Split(item, "="); len(arr) == 2 {
-			m[arr[0]] = arr[1]
+		arr := strings.Split(item, "=")
+		if len(arr) != 2 {
+			continue
 		}
+		m[arr[0]] = arr[1]
 	}
 	return m
 }
