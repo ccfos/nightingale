@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/toolkits/pkg/logger"
@@ -40,12 +41,14 @@ type Scheduler struct {
 
 	ctx   *ctx.Context
 	stats *astats.Stats
+
+	redis *storage.Redis
 }
 
 func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType,
 	targetCache *memsto.TargetCacheType, toarc *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType,
-	promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, naming *naming.Naming, ctx *ctx.Context, stats *astats.Stats) *Scheduler {
+	promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, naming *naming.Naming, ctx *ctx.Context, stats *astats.Stats, redis *storage.Redis) *Scheduler {
 	scheduler := &Scheduler{
 		aconf:      aconf,
 		alertRules: make(map[string]*AlertRuleWorker),
@@ -65,6 +68,8 @@ func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcess
 
 		ctx:   ctx,
 		stats: stats,
+
+		redis: redis,
 	}
 
 	go scheduler.LoopSyncRules(context.Background())
@@ -117,7 +122,7 @@ func (s *Scheduler) syncAlertRules() {
 					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
 					continue
 				}
-				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats, s.redis)
 
 				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.tdengineClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
@@ -127,7 +132,7 @@ func (s *Scheduler) syncAlertRules() {
 			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
-			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats, s.redis)
 			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.tdengineClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
@@ -144,7 +149,7 @@ func (s *Scheduler) syncAlertRules() {
 					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
 					continue
 				}
-				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
+				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats, s.redis)
 				externalRuleWorkers[processor.Key()] = processor
 			}
 		}

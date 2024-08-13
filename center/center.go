@@ -16,6 +16,7 @@ import (
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/cron"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -60,9 +61,20 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := ctx.NewContext(context.Background(), db, true)
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
+	err = cron.InitLimitAlertRecordCountCron(ctx, &redis)
+	if err != nil {
+		return nil, err
+	}
 
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
@@ -72,11 +84,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
-	var redis storage.Redis
-	redis, err = storage.NewRedis(config.Redis)
-	if err != nil {
-		return nil, err
-	}
 
 	metas := metas.New(redis)
 	idents := idents.New(ctx, redis)
@@ -100,7 +107,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache, &redis)
+	process.InitAlertRecordCount(ctx, &redis)
 
 	writers := writer.NewWriters(config.Pushgw)
 
