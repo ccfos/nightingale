@@ -100,13 +100,21 @@ type AlertRule struct {
 }
 
 type Tpl struct {
-	TplId int64    `json:"tpl_id"`
-	Host  []string `json:"host"`
+	TplId   int64    `json:"tpl_id"`
+	TplName string   `json:"tpl_name"`
+	Host    []string `json:"host"`
 }
 
 type RuleConfig struct {
-	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
-	TaskTpls           []*Tpl                 `json:"task_tpls"`
+	Version            string                 `json:"version,omitempty"`
+	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config,omitempty"`
+	TaskTpls           []*Tpl                 `json:"task_tpls,omitempty"`
+	Queries            interface{}            `json:"queries,omitempty"`
+	Triggers           []Trigger              `json:"triggers,omitempty"`
+	Inhibit            bool                   `json:"inhibit,omitempty"`
+	PromQl             string                 `json:"prom_ql,omitempty"`
+	Severity           int                    `json:"severity,omitempty"`
+	AlgoParams         interface{}            `json:"algo_params,omitempty"`
 }
 
 type PromRuleConfig struct {
@@ -147,6 +155,10 @@ type Trigger struct {
 	Mode        int         `json:"mode"`
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
+
+	Type     string `json:"type,omitempty"`
+	Duration int    `json:"duration,omitempty"`
+	Percent  int    `json:"percent,omitempty"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {

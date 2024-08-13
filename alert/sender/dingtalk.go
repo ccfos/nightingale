@@ -1,9 +1,10 @@
 package sender
 
 import (
-	"github.com/ccfos/nightingale/v6/models"
 	"html/template"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 type dingtalkMarkdown struct {
@@ -35,13 +36,13 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 		return
 	}
 
-	urls, ats := ds.extract(ctx.Users)
+	urls, ats, tokens := ds.extract(ctx.Users)
 	if len(urls) == 0 {
 		return
 	}
 	message := BuildTplMessage(models.Dingtalk, ds.tpl, ctx.Events)
 
-	for _, url := range urls {
+	for i, url := range urls {
 		var body dingtalk
 		// NoAt in url
 		if strings.Contains(url, "noat=1") {
@@ -66,7 +67,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			}
 		}
 
-		doSend(url, body, models.Dingtalk, ctx.Stats)
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Dingtalk, ctx.Stats, ctx.Events[0])
 	}
 }
 
@@ -96,15 +97,17 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		body.Markdown.Text = message
 	}
 
-	doSend(ctx.CallBackURL, body, models.Dingtalk, ctx.Stats)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body,
+		"callback", ctx.Stats, ctx.Events[0])
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 // extract urls and ats from Users
-func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
+func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string, []string) {
 	urls := make([]string, 0, len(users))
 	ats := make([]string, 0, len(users))
+	tokens := make([]string, 0, len(users))
 
 	for _, user := range users {
 		if user.Phone != "" {
@@ -116,7 +119,8 @@ func (ds *DingtalkSender) extract(users []*models.User) ([]string, []string) {
 				url = "https://oapi.dingtalk.com/robot/send?access_token=" + token
 			}
 			urls = append(urls, url)
+			tokens = append(tokens, token)
 		}
 	}
-	return urls, ats
+	return urls, ats, tokens
 }

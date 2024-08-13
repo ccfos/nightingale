@@ -27,7 +27,8 @@ func (lk *LarkSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSend(ctx.CallBackURL, body, models.Lark, ctx.Stats)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback",
+		ctx.Stats, ctx.Events[0])
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 

@@ -112,5 +112,5 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	go consumer.LoopConsume()
 
 	go queue.ReportQueueSize(alertStats)
-	go sender.InitEmailSender(notifyConfigCache)
+	go sender.InitEmailSender(ctx, notifyConfigCache)
 }
