@@ -81,6 +81,13 @@ func (rt *Router) targetGets(c *gin.Context) {
 		ginx.Offset(c, limit), order, desc, options...)
 	ginx.Dangerous(err)
 
+	tgs, err := models.TargetBusiGroupsGetAll(rt.Ctx)
+	ginx.Dangerous(err)
+
+	for _, t := range list {
+		t.GroupIds = tgs[t.Ident]
+	}
+
 	if err == nil {
 		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
@@ -446,6 +453,92 @@ func (rt *Router) targetUpdateBgid(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
+}
+
+type targetBgidsForm struct {
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids   []int64  `json:"bgids"`
+}
+
+func (rt *Router) targetBindBgids(c *gin.Context) {
+	var f targetBgidsForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+		return
+	}
+
+	can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
+	ginx.Dangerous(err)
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+	}
+
+	rt.checkTargetPerm(c, f.Idents)
+
+	for _, bgid := range f.Bgids {
+		bg := BusiGroup(rt.Ctx, bgid)
+		can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
+		ginx.Dangerous(err)
+
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+		}
+	}
+
+	ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+}
+
+type targetUnbindBgidsForm struct {
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids   []int64  `json:"bgids"`
+}
+
+func (rt *Router) targetUnbindBgids(c *gin.Context) {
+	var f targetUnbindBgidsForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+		return
+	}
+
+	rt.checkTargetPerm(c, f.Idents)
+	ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+}
+
+// 允许手动触发 busi_group 与 target 的关联关系的迁移
+func (rt *Router) migrateBg(c *gin.Context) {
+	ginx.NewRender(c).Data(nil, models.DoMigrateBg(rt.Ctx, rt.Pushgw.BusiGroupLabelKey))
 }
 
 func (rt *Router) targetUpdateBgidByService(c *gin.Context) {

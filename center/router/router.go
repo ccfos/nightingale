@@ -22,6 +22,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
@@ -38,6 +39,7 @@ type Router struct {
 	Ibex              conf.Ibex
 	Alert             aconf.Alert
 	Operations        cconf.Operation
+	Pushgw            pconf.Pushgw
 	DatasourceCache   *memsto.DatasourceCacheType
 	NotifyConfigCache *memsto.NotifyConfigCacheType
 	PromClients       *prom.PromClientMap
@@ -53,13 +55,19 @@ type Router struct {
 	HeartbeatHook     HeartbeatHookFunc
 }
 
-func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
+func New(httpConfig httpx.Config, center cconf.Center,
+	alert aconf.Alert, ibex conf.Ibex, operations cconf.Operation, pushgw pconf.Pushgw,
+	ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap,
+	tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient,
+	ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
 		Alert:             alert,
 		Ibex:              ibex,
 		Operations:        operations,
+		Pushgw:            pushgw,
 		DatasourceCache:   ds,
 		NotifyConfigCache: ncc,
 		PromClients:       pc,
@@ -277,6 +285,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/targets/tags", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUnbindTagsByFE)
 		pages.PUT("/targets/note", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateNote)
 		pages.PUT("/targets/bgid", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateBgid)
+		pages.PUT("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetBindBgids)
+		pages.DELETE("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/del"), rt.targetUnbindBgids)
+		pages.POST("/targets/migrate-bg", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.migrateBg)
 
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
