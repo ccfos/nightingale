@@ -503,6 +503,11 @@ func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func AlertCurEventDelByHash(ctx *ctx.Context, hash string) error {
+	if !ctx.IsCenter {
+		_, err := poster.GetByUrls[string](ctx, "/v1/n9e/alert-cur-events-del-by-hash?hash="+hash)
+		return err
+	}
+
 	return DB(ctx).Where("hash = ?", hash).Delete(&AlertCurEvent{}).Error
 }
 
