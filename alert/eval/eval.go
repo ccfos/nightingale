@@ -226,7 +226,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 
 		logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
 		points := common.ConvertAnomalyPoints(value)
-		for i := range points {
+		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
 			points[i].Query = promql
 		}
@@ -520,7 +520,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex ma
 }
 
 func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) {
-	for i := range series {
+	for i := 0; i < len(series); i++ {
 		serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
 		tagHash := hash.GetTagHash(series[i].Metric)
 		seriesStore[serieHash] = series[i]

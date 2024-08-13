@@ -56,7 +56,7 @@ func (po *PromOption) Equal(target PromOption) bool {
 		return false
 	}
 
-	for i := range po.Headers {
+	for i := 0; i < len(po.Headers); i++ {
 		if po.Headers[i] != target.Headers[i] {
 			return false
 		}

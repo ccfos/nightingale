@@ -13,7 +13,7 @@ type BuiltinPayload struct {
 	Type      string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
 	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
 	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
-	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"` //
+	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"`                //
 	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
 	UUID      int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
@@ -132,7 +132,7 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string) ([
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := range arr {
+		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("name like ? or tags like ?", qarg, qarg)
 		}

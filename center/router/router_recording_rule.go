@@ -156,7 +156,7 @@ func (rt *Router) recordingRulePutFields(c *gin.Context) {
 		f.Fields["datasource_ids"] = string(bs)
 	}
 
-	for i := range f.Ids {
+	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.RecordingRuleGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
 

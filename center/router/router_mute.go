@@ -81,7 +81,7 @@ func (rt *Router) alertMutePreview(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	matchEvents := make([]*models.AlertCurEvent, 0, len(events))
-	for i := range events {
+	for i := 0; i < len(events); i++ {
 		events[i].DB2Mem()
 		if common.MatchTags(events[i].TagsMap, f.ITags) {
 			matchEvents = append(matchEvents, events[i])
@@ -150,7 +150,7 @@ func (rt *Router) alertMutePutFields(c *gin.Context) {
 	f.Fields["update_by"] = c.MustGet("username").(string)
 	f.Fields["update_at"] = time.Now().Unix()
 
-	for i := range f.Ids {
+	for i := 0; i < len(f.Ids); i++ {
 		am, err := models.AlertMuteGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
 

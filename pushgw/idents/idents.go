@@ -131,7 +131,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	}
 
 	news := slice.SubString(lst, exists)
-	for i := range news {
+	for i := 0; i < len(news); i++ {
 		err = s.ctx.DB.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {
 			logger.Error("failed to insert target:", news[i], "error:", err)

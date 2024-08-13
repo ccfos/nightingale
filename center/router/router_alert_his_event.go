@@ -64,7 +64,7 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
-	for i := range list {
+	for i := 0; i < len(list); i++ {
 		list[i].FillNotifyGroups(rt.Ctx, cache)
 	}
 

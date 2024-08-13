@@ -124,7 +124,7 @@ func (rrc *RecordingRuleCacheType) syncRecordingRules() error {
 	}
 
 	m := make(map[int64]*models.RecordingRule)
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		m[lst[i].Id] = lst[i]
 	}
 

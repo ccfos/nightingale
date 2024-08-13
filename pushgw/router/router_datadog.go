@@ -39,7 +39,7 @@ func (m *DatadogMetric) Clean() error {
 
 func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 	pt := &prompb.TimeSeries{}
-	for i := range m.Points {
+	for i := 0; i < len(m.Points); i++ {
 		pt.Samples = append(pt.Samples, prompb.Sample{
 			// use ms
 			Timestamp: int64(m.Points[i][0]) * 1000,
@@ -67,7 +67,7 @@ func (m *DatadogMetric) ToProm() (*prompb.TimeSeries, string, error) {
 	identInTag := ""
 	hostInTag := ""
 
-	for i := range m.Tags {
+	for i := 0; i < len(m.Tags); i++ {
 		arr := strings.SplitN(m.Tags[i], ":", 2)
 		if len(arr) != 2 {
 			continue

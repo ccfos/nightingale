@@ -70,7 +70,7 @@ func (ts *TelegramSender) extract(users []*models.User) []string {
 }
 
 func SendTelegram(ctx *ctx.Context, message TelegramMessage, event *models.AlertCurEvent) {
-	for i := range message.Tokens {
+	for i := 0; i < len(message.Tokens); i++ {
 		if !strings.Contains(message.Tokens[i], "/") && !strings.HasPrefix(message.Tokens[i], "https://") {
 			logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
 			continue

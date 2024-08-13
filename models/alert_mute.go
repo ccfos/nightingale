@@ -33,7 +33,7 @@ func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	if err != nil {
 		return nil, err
 	}
-	for i := range bFilters {
+	for i := 0; i < len(bFilters); i++ {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
 			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
 			if err != nil {
@@ -121,14 +121,14 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := range arr {
+		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("cause like ?", qarg)
 		}
 	}
 
 	err = session.Order("id desc").Find(&lst).Error
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 	return
@@ -136,7 +136,7 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 
 func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 	return
@@ -149,7 +149,7 @@ func AlertMuteGetsByBGIds(ctx *ctx.Context, bgids []int64) (lst []AlertMute, err
 	}
 
 	err = session.Order("id desc").Find(&lst).Error
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 	return
@@ -312,7 +312,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].FE2DB()
 		}
 		return lst, err
@@ -325,7 +325,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 		return nil, err
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 
@@ -339,7 +339,7 @@ func AlertMuteUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 		return err
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		var ids []int64
 		if lst[i].Cluster == "$all" {
 			ids = append(ids, 0)

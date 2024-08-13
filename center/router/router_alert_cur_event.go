@@ -20,7 +20,7 @@ func parseAggrRules(c *gin.Context) []*models.AggrRule {
 	}
 
 	rules := make([]*models.AggrRule, len(aggrRules))
-	for i := range aggrRules {
+	for i := 0; i < len(aggrRules); i++ {
 		pair := strings.Split(aggrRules[i], ":")
 		if len(pair) != 2 {
 			ginx.Bomb(http.StatusBadRequest, "rule invalid")
@@ -95,7 +95,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	sort.Strings(titles)
 
 	cards := make([]*AlertCard, len(titles))
-	for i := range titles {
+	for i := 0; i < len(titles); i++ {
 		cards[i] = cardmap[titles[i]]
 	}
 
@@ -123,7 +123,7 @@ func (rt *Router) alertCurEventsCardDetails(c *gin.Context) {
 	list, err := models.AlertCurEventGetByIds(rt.Ctx, f.Ids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
-		for i := range list {
+		for i := 0; i < len(list); i++ {
 			list[i].FillNotifyGroups(rt.Ctx, cache)
 		}
 	}
@@ -172,7 +172,7 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
-	for i := range list {
+	for i := 0; i < len(list); i++ {
 		list[i].FillNotifyGroups(rt.Ctx, cache)
 	}
 
@@ -198,7 +198,7 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 	// event group id is 0, ignore perm check
 	set[0] = struct{}{}
 
-	for i := range ids {
+	for i := 0; i < len(ids); i++ {
 		event, err := models.AlertCurEventGetById(rt.Ctx, ids[i])
 		ginx.Dangerous(err)
 

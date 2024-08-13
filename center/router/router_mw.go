@@ -223,7 +223,7 @@ func (rt *Router) bgrwCheck(c *gin.Context, bgid int64) {
 func (rt *Router) bgrwChecks(c *gin.Context, bgids []int64) {
 	set := make(map[int64]struct{})
 
-	for i := range bgids {
+	for i := 0; i < len(bgids); i++ {
 		if _, has := set[bgids[i]]; has {
 			continue
 		}
@@ -281,7 +281,7 @@ func (rt *Router) admin() gin.HandlerFunc {
 
 		roles := strings.Fields(user.Roles)
 		found := false
-		for i := range roles {
+		for i := 0; i < len(roles); i++ {
 			if roles[i] == models.AdminRole {
 				found = true
 				break

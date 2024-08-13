@@ -110,7 +110,7 @@ func (re *RecordingRule) Verify() error {
 
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
 	rer := strings.Fields(re.AppendTags)
-	for i := range rer {
+	for i := 0; i < len(rer); i++ {
 		pair := strings.Split(rer[i], "=")
 		if len(pair) != 2 || !model.LabelNameRE.MatchString(pair[0]) {
 			return fmt.Errorf("AppendTags(%s) invalid", rer[i])
@@ -172,7 +172,7 @@ func (re *RecordingRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]int
 }
 
 func RecordingRuleDels(ctx *ctx.Context, ids []int64, groupId int64) error {
-	for i := range ids {
+	for i := 0; i < len(ids); i++ {
 		ret := DB(ctx).Where("id = ? and group_id=?", ids[i], groupId).Delete(&RecordingRule{})
 		if ret.Error != nil {
 			return ret.Error
@@ -209,7 +209,7 @@ func RecordingRuleGets(ctx *ctx.Context, groupId int64) ([]RecordingRule, error)
 	var lst []RecordingRule
 	err := session.Find(&lst).Error
 	if err == nil {
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 		}
 	}
@@ -226,7 +226,7 @@ func RecordingRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]RecordingRule,
 	var lst []RecordingRule
 	err := session.Find(&lst).Error
 	if err == nil {
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 		}
 	}
@@ -263,7 +263,7 @@ func RecordingRuleEnabledGets(ctx *ctx.Context) ([]*RecordingRule, error) {
 		return lst, err
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 	return lst, nil
@@ -275,7 +275,7 @@ func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].FE2DB()
 		}
 		return lst, err
@@ -293,7 +293,7 @@ func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 		return lst, nil
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}
 	return lst, nil
@@ -323,7 +323,7 @@ func RecordingRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		return err
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		var ids []int64
 		if lst[i].Cluster == "$all" {
 			ids = append(ids, 0)

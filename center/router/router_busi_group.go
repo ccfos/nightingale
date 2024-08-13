@@ -27,7 +27,7 @@ func (rt *Router) busiGroupAdd(c *gin.Context) {
 	}
 
 	rwhas := false
-	for i := range f.Members {
+	for i := 0; i < len(f.Members); i++ {
 		if f.Members[i].PermFlag == "rw" {
 			rwhas = true
 			break
@@ -69,7 +69,7 @@ func (rt *Router) busiGroupMemberAdd(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
 
-	for i := range members {
+	for i := 0; i < len(members); i++ {
 		if members[i].BusiGroupId != targetbg.Id {
 			ginx.Bomb(http.StatusBadRequest, "business group id invalid")
 		}
@@ -85,7 +85,7 @@ func (rt *Router) busiGroupMemberDel(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	targetbg := c.MustGet("busi_group").(*models.BusiGroup)
 
-	for i := range members {
+	for i := 0; i < len(members); i++ {
 		if members[i].BusiGroupId != targetbg.Id {
 			ginx.Bomb(http.StatusBadRequest, "business group id invalid")
 		}

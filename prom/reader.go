@@ -51,7 +51,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 			logger.Errorf("failed to get datasources, error: %v", err)
 			return
 		}
-		for i := range datasources {
+		for i := 0; i < len(datasources); i++ {
 			datasources[i].FE2DB()
 		}
 	} else {

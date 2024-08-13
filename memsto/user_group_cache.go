@@ -129,7 +129,7 @@ func (ugc *UserGroupCacheType) syncUserGroups() error {
 	}
 
 	m := make(map[int64]*models.UserGroup)
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		m[lst[i].Id] = lst[i]
 	}
 
@@ -140,7 +140,7 @@ func (ugc *UserGroupCacheType) syncUserGroups() error {
 		return errors.WithMessage(err, "failed to exec UserGroupMemberGetAll")
 	}
 
-	for i := range members {
+	for i := 0; i < len(members); i++ {
 		ug, has := m[members[i].GroupId]
 		if !has {
 			continue

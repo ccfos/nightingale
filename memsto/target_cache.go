@@ -162,14 +162,14 @@ func (tc *TargetCacheType) syncTargets() error {
 	m := make(map[string]*models.Target)
 	if tc.ctx.IsCenter {
 		metaMap := tc.GetHostMetas(lst)
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			if meta, ok := metaMap[lst[i].Ident]; ok {
 				lst[i].FillMeta(meta)
 			}
 		}
 	}
 
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
 	}
 
@@ -193,7 +193,7 @@ func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 
 
 	num := 0
 	var keys []string
-	for i := range targets {
+	for i := 0; i < len(targets); i++ {
 		keys = append(keys, models.WrapIdentUpdateTime(targets[i]))
 		num++
 		if num == 100 {
@@ -251,7 +251,7 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 	var metas []*models.HostMeta
 	num := 0
 	var keys []string
-	for i := range targets {
+	for i := 0; i < len(targets); i++ {
 		keys = append(keys, models.WrapIdent(targets[i].Ident))
 		num++
 		if num == 100 {

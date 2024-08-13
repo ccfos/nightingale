@@ -46,8 +46,9 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 	enableStime := strings.Fields(rule.EnableStime)
 	enableEtime := strings.Fields(rule.EnableEtime)
 	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
+	length := len(enableDaysOfWeek)
 	// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
-	for i := range enableDaysOfWeek {
+	for i := 0; i < length; i++ {
 		enableDaysOfWeek[i] = strings.Replace(enableDaysOfWeek[i], "7", "0", 1)
 		if !strings.Contains(enableDaysOfWeek[i], triggerWeek) {
 			continue
@@ -126,7 +127,7 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 		return false
 	}
 
-	for i := range mutes {
+	for i := 0; i < len(mutes); i++ {
 		if matchMute(event, mutes[i]) {
 			return true
 		}
@@ -148,7 +149,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
 		idm := make(map[int64]struct{}, len(mute.DatasourceIdsJson))
-		for i := range mute.DatasourceIdsJson {
+		for i := 0; i < len(mute.DatasourceIdsJson); i++ {
 			idm[mute.DatasourceIdsJson[i]] = struct{}{}
 		}
 
@@ -169,7 +170,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		triggerTime := tm.Format("15:04")
 		triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
-		for i := range mute.PeriodicMutesJson {
+		for i := 0; i < len(mute.PeriodicMutesJson); i++ {
 			if strings.Contains(mute.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
 				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime || (mute.PeriodicMutesJson[i].EnableStime == "00:00" && mute.PeriodicMutesJson[i].EnableEtime == "23:59") {
 					matchTime = true

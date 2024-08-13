@@ -136,7 +136,7 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].FE2DB()
 		}
 		return lst, nil
@@ -145,7 +145,7 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 	var dss []Datasource
 	err := DB(ctx).Find(&dss).Error
 
-	for i := range dss {
+	for i := 0; i < len(dss); i++ {
 		dss[i].DB2FE()
 	}
 
@@ -165,7 +165,7 @@ func GetDatasourceIdsByEngineName(ctx *ctx.Context, engineName string) ([]int64,
 		return ids, err
 	}
 
-	for i := range dss {
+	for i := 0; i < len(dss); i++ {
 		ids = append(ids, dss[i].Id)
 	}
 	return ids, err
@@ -185,7 +185,7 @@ func GetDatasourcesCountBy(ctx *ctx.Context, typ, cate, name string) (int64, err
 
 	if name != "" {
 		arr := strings.Fields(name)
-		for i := range arr {
+		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("name =  ?", qarg)
 		}
@@ -207,7 +207,7 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 
 	if name != "" {
 		arr := strings.Fields(name)
-		for i := range arr {
+		for i := 0; i < len(arr); i++ {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("name =  ?", qarg)
 		}
@@ -228,7 +228,7 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 	var lst []*Datasource
 	err := session.Order("id desc").Find(&lst).Error
 	if err == nil {
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 		}
 	}
@@ -240,7 +240,7 @@ func GetDatasourcesGetsByTypes(ctx *ctx.Context, typs []string) (map[string]*Dat
 	m := make(map[string]*Datasource)
 	err := DB(ctx).Where("plugin_type in ?", typs).Find(&lst).Error
 	if err == nil {
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
 			m[lst[i].Name] = lst[i]
 		}
@@ -317,7 +317,7 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		if err != nil {
 			return nil, err
 		}
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			lst[i].FE2DB()
 		}
 	} else {
@@ -326,7 +326,7 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 			return nil, err
 		}
 
-		for i := range lst {
+		for i := 0; i < len(lst); i++ {
 			err := lst[i].DB2FE()
 			if err != nil {
 				logger.Warningf("get ds:%+v err:%v", lst[i], err)
@@ -336,7 +336,7 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 	}
 
 	ret := make(map[int64]*Datasource)
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		ret[lst[i].Id] = lst[i]
 	}
 

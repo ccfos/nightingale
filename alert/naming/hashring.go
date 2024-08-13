@@ -22,8 +22,8 @@ var DatasourceHashRing = DatasourceHashRingType{Rings: make(map[string]*consiste
 func NewConsistentHashRing(replicas int32, nodes []string) *consistent.Consistent {
 	ret := consistent.New()
 	ret.NumberOfReplicas = int(replicas)
-	for _, node := range nodes {
-		ret.Add(node)
+	for i := 0; i < len(nodes); i++ {
+		ret.Add(nodes[i])
 	}
 	return ret
 }
@@ -31,8 +31,8 @@ func NewConsistentHashRing(replicas int32, nodes []string) *consistent.Consisten
 func RebuildConsistentHashRing(datasourceId string, nodes []string) {
 	r := consistent.New()
 	r.NumberOfReplicas = NodeReplicas
-	for _, node := range nodes {
-		r.Add(node)
+	for i := 0; i < len(nodes); i++ {
+		r.Add(nodes[i])
 	}
 
 	DatasourceHashRing.Set(datasourceId, r)

@@ -72,7 +72,7 @@ func AlertingEngineGetDatasourceIds(ctx *ctx.Context, instance string) ([]int64,
 		return []int64{}, nil
 	}
 	var ids []int64
-	for i := range objs {
+	for i := 0; i < len(objs); i++ {
 		ids = append(ids, objs[i].DatasourceId)
 	}
 

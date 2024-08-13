@@ -123,7 +123,7 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 	}
 
 	m := make(map[int64]*models.AlertRule)
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		m[lst[i].Id] = lst[i]
 	}
 

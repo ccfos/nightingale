@@ -340,7 +340,7 @@ func ConfigUserVariableGetDecryptMap(context *ctx.Context, privateKey []byte, pa
 		return nil, err
 	}
 	ret := make(map[string]string, len(lst))
-	for i := range lst {
+	for i := 0; i < len(lst); i++ {
 		if lst[i].Encrypted != ConfigEncrypted {
 			ret[lst[i].Ckey] = lst[i].Cval
 		} else {
