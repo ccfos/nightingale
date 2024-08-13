@@ -55,7 +55,11 @@ type Router struct {
 	TargetDeleteHook  models.TargetDeleteHookFunc
 }
 
-func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
+func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
+	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
+	pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis,
+	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -284,6 +288,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/targets/tags", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUnbindTagsByFE)
 		pages.PUT("/targets/note", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateNote)
 		pages.PUT("/targets/bgid", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateBgid)
+		pages.PUT("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetBindBgids)
+		pages.DELETE("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/del"), rt.targetUnbindBgids)
 
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
