@@ -63,6 +63,17 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 	return nil
 }
 
+func (t *Target) AfterFind(tx *gorm.DB) (err error) {
+	delta := time.Now().Unix() - t.UpdateAt
+	if delta < 60 {
+		t.TargetUp = 2
+	} else if delta < 180 {
+		t.TargetUp = 1
+	}
+	t.FillTagsMap()
+	return
+}
+
 func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target")
