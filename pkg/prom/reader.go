@@ -917,7 +917,7 @@ func (h *apiClientImpl) Do(ctx context.Context, req *http.Request) (*http.Respon
 
 	headerCount := len(h.opt.Headers)
 	if headerCount > 0 && headerCount%2 == 0 {
-		for i := 0; i < len(h.opt.Headers); i += 2 {
+		for i := 0; i < headerCount; i += 2 {
 			req.Header.Add(h.opt.Headers[i], h.opt.Headers[i+1])
 			if h.opt.Headers[i] == "Host" {
 				req.Host = h.opt.Headers[i+1]

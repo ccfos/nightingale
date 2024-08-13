@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/storage"
@@ -72,21 +73,25 @@ func (rt *Router) targetGets(c *gin.Context) {
 	}
 	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
-	options = append(options,
-		models.BuildTargetWhereWithLimit(limit),
-		models.BuildTargetWhereWithOffset(ginx.Offset(c, limit)),
-		models.BuildTargetWhereWithOrder(order, desc),
-	)
-	list, err := models.TargetGets(rt.Ctx, options...)
+
+	list, err := models.TargetGets(rt.Ctx, limit,
+		ginx.Offset(c, limit), order, desc, options...)
 	ginx.Dangerous(err)
 
 	if err == nil {
+		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
 
 		var keys []string
 		for i := range list {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
+
+			if now.Unix()-list[i].UpdateAt < 60 {
+				list[i].TargetUp = 2
+			} else if now.Unix()-list[i].UpdateAt < 180 {
+				list[i].TargetUp = 1
+			}
 		}
 
 		if len(keys) > 0 {
@@ -207,7 +212,7 @@ func (rt *Router) targetBindTags(f targetTagsForm, failedIdents map[string]strin
 	}
 
 	// 2. Acquire targets by idents
-	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents...))
+	targets, err := models.TargetsGetByIdents(rt.Ctx, f.Idents)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +310,7 @@ func (rt *Router) targetUnbindTagsByService(c *gin.Context) {
 
 func (rt *Router) targetUnbindTags(f targetTagsForm, failedIdents map[string]string) (map[string]string, error) {
 	// 1. Acquire targets by idents
-	targets, err := models.TargetGets(rt.Ctx, models.BuildTargetWhereWithIdents(f.Idents...))
+	targets, err := models.TargetsGetByIdents(rt.Ctx, f.Idents)
 	if err != nil {
 		return nil, err
 	}

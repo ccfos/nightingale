@@ -362,7 +362,7 @@ func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bo
 		return nil, false
 	}
 
-	for i := 0; i < len(config.TaskTpls); i++ {
+	for i := range config.TaskTpls {
 		tpl, err := TaskTplGetById(ctx, config.TaskTpls[i].TplId)
 		if err != nil {
 			logger.Warningf("failed to get task tpl by id:%d, %v", config.TaskTpls[i].TplId, err)

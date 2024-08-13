@@ -32,7 +32,7 @@ func Upgrade(configFile string) error {
 		header := make(map[string]string)
 		headerCount := len(cluster.Headers)
 		if headerCount > 0 && headerCount%2 == 0 {
-			for i := 0; i < len(cluster.Headers); i += 2 {
+			for i := 0; i < headerCount; i += 2 {
 				header[cluster.Headers[i]] = cluster.Headers[i+1]
 			}
 		}

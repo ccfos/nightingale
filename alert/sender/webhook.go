@@ -45,9 +45,9 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	if conf.BasicAuthUser != "" && conf.BasicAuthPass != "" {
 		req.SetBasicAuth(conf.BasicAuthUser, conf.BasicAuthPass)
 	}
-
-	if len(conf.Headers) > 0 && len(conf.Headers)%2 == 0 {
-		for i := 0; i < len(conf.Headers); i += 2 {
+	headersLength := len(conf.Headers)
+	if headersLength > 0 && headersLength%2 == 0 {
+		for i := 0; i < headersLength; i += 2 {
 			if conf.Headers[i] == "host" || conf.Headers[i] == "Host" {
 				req.Host = conf.Headers[i+1]
 				continue

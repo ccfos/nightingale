@@ -171,10 +171,9 @@ func (rt *Router) alertRuleAddOneByService(c *gin.Context) {
 }
 
 func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string) map[string]string {
-	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
-	for i := 0; i < count; i++ {
+	for i := range lst {
 		lst[i].Id = 0
 		if username != "" {
 			lst[i].CreateBy = username
@@ -196,10 +195,9 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 }
 
 func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
-	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
-	for i := 0; i < count; i++ {
+	for i := range lst {
 		lst[i].Id = 0
 		lst[i].GroupId = bgid
 		if username != "" {

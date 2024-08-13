@@ -109,7 +109,7 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if query != "" {
 			arr := strings.Fields(query)
-			for i := 0; i < len(arr); i++ {
+			for i := range arr {
 				q := "%" + arr[i] + "%"
 				session = session.Where("ident like ? or note like ? or tags like ? "+
 					"or os like ?", q, q, q, q)
@@ -149,7 +149,7 @@ func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, op
 	}
 	err := buildTargetWhere(ctx, options...).Order(order).Limit(limit).Offset(offset).Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
 		}
 	}
@@ -162,7 +162,7 @@ func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit,
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	err := session.Order("ident").Find(&lst).Error
 	cache := make(map[int64]*BusiGroup)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		lst[i].TagsJSON = strings.Fields(lst[i].Tags)
 		lst[i].FillGroup(ctx, cache)
 	}
@@ -215,7 +215,7 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		lst[i].FillTagsMap()
 	}
 	return lst, err
@@ -359,7 +359,7 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 }
 
 func (t *Target) AddTags(ctx *ctx.Context, tags []string) error {
-	for i := 0; i < len(tags); i++ {
+	for i := range tags {
 		if !strings.Contains(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
 		}
