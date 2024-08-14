@@ -33,6 +33,8 @@ func MathCalc(s string, data map[string]interface{}) (float64, error) {
 		} else {
 			return 0, nil
 		}
+	} else if result, ok := output.(int); ok {
+		return float64(result), nil
 	} else {
 		return 0, nil
 	}
