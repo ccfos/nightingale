@@ -14,6 +14,7 @@ func MathCalc(s string, data map[string]interface{}) (float64, error) {
 		m[cleanStr(k)] = v
 	}
 
+	// 表达式要求类型一致，否则此处编译会报错
 	program, err := expr.Compile(cleanStr(s), expr.Env(m))
 	if err != nil {
 		return 0, err
