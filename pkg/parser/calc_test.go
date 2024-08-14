@@ -506,6 +506,18 @@ func TestCalc(t *testing.T) {
 			data:     map[string]interface{}{"$.A": "abc", "$.B": "^[0-9]+$"},
 			expected: false,
 		},
+		{
+			name:     "between function resulting in true",
+			expr:     `between($.A, [100,200])`,
+			data:     map[string]interface{}{"$.A": 155, "between": between},
+			expected: true,
+		},
+		{
+			name:     "between function resulting in false",
+			expr:     `not between($.A, [100,200])`,
+			data:     map[string]interface{}{"$.A": 155, "between": between},
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -516,4 +528,19 @@ func TestCalc(t *testing.T) {
 			}
 		})
 	}
+}
+
+func between(target int, arr []interface{}) bool {
+	if len(arr) != 2 {
+		return false
+	}
+	min, ok := arr[0].(int)
+	if !ok {
+		return false
+	}
+	max, ok := arr[1].(int)
+	if !ok {
+		return false
+	}
+	return target >= min && target <= max
 }
