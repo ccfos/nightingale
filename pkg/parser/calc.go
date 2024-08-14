@@ -8,8 +8,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func MathCalc(s string, data map[string]float64) (float64, error) {
-	m := make(map[string]float64)
+func MathCalc(s string, data map[string]interface{}) (float64, error) {
+	m := make(map[string]interface{})
 	for k, v := range data {
 		m[cleanStr(k)] = v
 	}
@@ -37,7 +37,7 @@ func MathCalc(s string, data map[string]float64) (float64, error) {
 	}
 }
 
-func Calc(s string, data map[string]float64) bool {
+func Calc(s string, data map[string]interface{}) bool {
 	v, err := MathCalc(s, data)
 	if err != nil {
 		logger.Errorf("Calc exp:%s data:%v error: %v", s, data, err)

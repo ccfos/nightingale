@@ -454,7 +454,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex ma
 				return seriesHash[i] < seriesHash[j]
 			})
 
-			m := make(map[string]float64)
+			m := make(map[string]interface{})
 			var ts int64
 			var sample models.DataResp
 			var value float64
