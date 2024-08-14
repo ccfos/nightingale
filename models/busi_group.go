@@ -49,7 +49,7 @@ func (bg *BusiGroup) FillUserGroups(ctx *ctx.Context) error {
 		return nil
 	}
 
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		ug, err := UserGroupGetById(ctx, members[i].UserGroupId)
 		if err != nil {
 			return err
@@ -79,7 +79,7 @@ func BusiGroupGetMap(ctx *ctx.Context) (map[int64]*BusiGroup, error) {
 	}
 
 	ret := make(map[int64]*BusiGroup)
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ret[lst[i].Id] = lst[i]
 	}
 
@@ -200,7 +200,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 }
 
 func (bg *BusiGroup) AddMembers(ctx *ctx.Context, members []BusiGroupMember, username string) error {
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		err := BusiGroupMemberAdd(ctx, members[i])
 		if err != nil {
 			return err
@@ -214,7 +214,7 @@ func (bg *BusiGroup) AddMembers(ctx *ctx.Context, members []BusiGroupMember, use
 }
 
 func (bg *BusiGroup) DelMembers(ctx *ctx.Context, members []BusiGroupMember, username string) error {
-	for i := 0; i < len(members); i++ {
+	for i := range members {
 		num, err := BusiGroupMemberCount(ctx, "busi_group_id = ? and user_group_id <> ?", members[i].BusiGroupId, members[i].UserGroupId)
 		if err != nil {
 			return err
@@ -324,7 +324,7 @@ func BusiGroupAdd(ctx *ctx.Context, name string, labelEnable int, labelValue str
 			return err
 		}
 
-		for i := 0; i < len(members); i++ {
+		for i := range members {
 			if err := tx.Create(&BusiGroupMember{
 				BusiGroupId: obj.Id,
 				UserGroupId: members[i].UserGroupId,

@@ -130,7 +130,7 @@ func DashboardGets(ctx *ctx.Context, groupId int64, query string) ([]Dashboard, 
 
 	arr := strings.Fields(query)
 	if len(arr) > 0 {
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			if strings.HasPrefix(arr[i], "-") {
 				q := "%" + arr[i][1:] + "%"
 				session = session.Where("name not like ? and tags not like ?", q, q)
@@ -144,7 +144,7 @@ func DashboardGets(ctx *ctx.Context, groupId int64, query string) ([]Dashboard, 
 	var objs []Dashboard
 	err := session.Select("id", "group_id", "name", "tags", "create_at", "create_by", "update_at", "update_by").Find(&objs).Error
 	if err == nil {
-		for i := 0; i < len(objs); i++ {
+		for i := range objs {
 			objs[i].TagsLst = strings.Fields(objs[i].Tags)
 		}
 	}

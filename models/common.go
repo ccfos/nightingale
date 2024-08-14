@@ -86,7 +86,7 @@ type LabelAndKey struct {
 }
 
 func LabelAndKeyHasKey(keys []LabelAndKey, key string) bool {
-	for i := 0; i < len(keys); i++ {
+	for i := range keys {
 		if keys[i].Key == key {
 			return true
 		}

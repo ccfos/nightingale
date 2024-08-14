@@ -83,7 +83,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 		cache := make(map[int64]*models.BusiGroup)
 
 		var keys []string
-		for i := 0; i < len(list); i++ {
+		for i := range list {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
 
@@ -110,7 +110,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 				metaMap[meta.Hostname] = &meta
 			}
 
-			for i := 0; i < len(list); i++ {
+			for i := range list {
 				if meta, ok := metaMap[list[i].Ident]; ok {
 					list[i].FillMeta(meta)
 				} else {

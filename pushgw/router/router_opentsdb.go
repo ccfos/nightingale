@@ -169,7 +169,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		ids  = make(map[string]struct{})
 	)
 
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		if err := arr[i].Clean(ts); err != nil {
 			logger.Debugf("opentsdb msg clean error: %s", err.Error())
 			if fail == 0 {

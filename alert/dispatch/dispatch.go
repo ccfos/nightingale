@@ -385,7 +385,7 @@ func (e *Dispatch) genNoticeBytes(event *models.AlertCurEvent) []byte {
 // for alerting
 func fillUsers(ce *models.AlertCurEvent, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) {
 	gids := make([]int64, 0, len(ce.NotifyGroupsJSON))
-	for i := 0; i < len(ce.NotifyGroupsJSON); i++ {
+	for i := range ce.NotifyGroupsJSON {
 		gid, err := strconv.ParseInt(ce.NotifyGroupsJSON[i], 10, 64)
 		if err != nil {
 			continue
@@ -396,7 +396,7 @@ func fillUsers(ce *models.AlertCurEvent, uc *memsto.UserCacheType, ugc *memsto.U
 	ce.NotifyGroupsObj = ugc.GetByUserGroupIds(gids)
 
 	uids := make(map[int64]struct{})
-	for i := 0; i < len(ce.NotifyGroupsObj); i++ {
+	for i := range ce.NotifyGroupsObj {
 		ug := ce.NotifyGroupsObj[i]
 		for j := 0; j < len(ug.UserIds); j++ {
 			uids[ug.UserIds[j]] = struct{}{}

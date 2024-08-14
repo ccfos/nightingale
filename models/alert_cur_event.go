@@ -193,7 +193,7 @@ func (e *AlertCurEvent) ParseURL(url string) (string, error) {
 
 func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
 	arr := make([]string, len(rules))
-	for i := 0; i < len(rules); i++ {
+	for i := range rules {
 		rule := rules[i]
 
 		if rule.Type == "field" {
@@ -335,7 +335,7 @@ func (e *AlertCurEvent) DB2Mem() {
 	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	e.TagsMap = make(map[string]string)
-	for i := 0; i < len(e.TagsJSON); i++ {
+	for i := range e.TagsJSON {
 		pair := strings.TrimSpace(e.TagsJSON[i])
 		if pair == "" {
 			continue
@@ -362,7 +362,7 @@ func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bo
 		return nil, false
 	}
 
-	for i := 0; i < len(config.TaskTpls); i++ {
+	for i := range config.TaskTpls {
 		tpl, err := TaskTplGetById(ctx, config.TaskTpls[i].TplId)
 		if err != nil {
 			logger.Warningf("failed to get task tpl by id:%d, %v", config.TaskTpls[i].TplId, err)
@@ -440,7 +440,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
@@ -476,7 +476,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 
 	if query != "" {
 		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
+		for i := range arr {
 			qarg := "%" + arr[i] + "%"
 			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
 		}
@@ -486,7 +486,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 	err := session.Order("trigger_time desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -554,7 +554,7 @@ func AlertNumbers(ctx *ctx.Context, bgids []int64) (map[int64]int64, error) {
 		return nil, err
 	}
 
-	for i := 0; i < len(arr); i++ {
+	for i := range arr {
 		ret[arr[i].GroupId] = arr[i].GroupCount
 	}
 
@@ -570,7 +570,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 
 	err := DB(ctx).Where("id in ?", ids).Order("trigger_time desc").Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -582,7 +582,7 @@ func AlertCurEventGetByRuleIdAndDsId(ctx *ctx.Context, ruleId int64, datasourceI
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertCurEvent](ctx, "/v1/n9e/alert-cur-events-get-by-rid?rid="+strconv.FormatInt(ruleId, 10)+"&dsid="+strconv.FormatInt(datasourceId, 10))
 		if err == nil {
-			for i := 0; i < len(lst); i++ {
+			for i := range lst {
 				lst[i].FE2DB()
 			}
 		}
@@ -592,7 +592,7 @@ func AlertCurEventGetByRuleIdAndDsId(ctx *ctx.Context, ruleId int64, datasourceI
 	var lst []*AlertCurEvent
 	err := DB(ctx).Where("rule_id=? and datasource_id = ?", ruleId, datasourceId).Find(&lst).Error
 	if err == nil {
-		for i := 0; i < len(lst); i++ {
+		for i := range lst {
 			lst[i].DB2FE()
 		}
 	}
@@ -612,7 +612,7 @@ func AlertCurEventGetMap(ctx *ctx.Context, cluster string) (map[int64]map[string
 	}
 
 	ret := make(map[int64]map[string]struct{})
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		rid := lst[i].RuleId
 		hash := lst[i].Hash
 		if _, has := ret[rid]; has {
@@ -637,7 +637,7 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		return err
 	}
 
-	for i := 0; i < len(lst); i++ {
+	for i := range lst {
 		ds, exists := dsm[lst[i].Cluster]
 		if !exists {
 			continue

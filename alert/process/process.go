@@ -248,7 +248,7 @@ func Relabel(rule *models.AlertRule, event *models.AlertCurEvent) {
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
 
-	for i := 0; i < len(rule.EventRelabelConfig); i++ {
+	for i := range rule.EventRelabelConfig {
 		if rule.EventRelabelConfig[i].Replacement == "" {
 			rule.EventRelabelConfig[i].Replacement = "$1"
 		}
