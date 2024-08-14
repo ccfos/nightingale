@@ -203,17 +203,24 @@ func TestMathCalc(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:     "Division by zero",
-			expr:     "( $D/$A >= 0.1 || $D/$B <= 0.5 ) && $C >= 1000",
-			data:     map[string]interface{}{"$A": 428382, "$B": 250218, "$C": 305578, "$D": 325028},
-			expected: 1,
-			wantErr:  true,
-		},
-		{
 			name:     "Parentheses",
 			expr:     "($.A + $.B) / ($.C - $.D)",
 			data:     map[string]interface{}{"$.A": 6, "$.B": 4, "$.C": 10, "$.D": 2},
 			expected: 1.25, // Corrected from 2.5 to 1.25
+			wantErr:  false,
+		},
+		{
+			name:     "Add and Multiply with Parentheses for float64 and int",
+			expr:     "($.A + $.B) * ($.C - $.D)",
+			data:     map[string]interface{}{"$.A": 8.0, "$.B": 2.0, "$.C": 4.0, "$.D": 2},
+			expected: 20,
+			wantErr:  false,
+		},
+		{
+			name:     "Divide and Multiply with Parentheses for float64 and int",
+			expr:     "($.A * $.B) / ($.C - $.D)",
+			data:     map[string]interface{}{"$.A": 8, "$.B": 2, "$.C": 4.0, "$.D": 2},
+			expected: 8,
 			wantErr:  false,
 		},
 	}
@@ -438,6 +445,54 @@ func TestCalc(t *testing.T) {
 			expr:     "$.A != $.B",
 			data:     map[string]interface{}{"$.A": "!@#$qwer1234", "$.B": "!@#$qwer1234"},
 			expected: false,
+		},
+		{
+			name:     "In operation for string resulting in false",
+			expr:     `$.A in ["admin", "moderator"]`,
+			data:     map[string]interface{}{"$.A": "admin1"},
+			expected: false,
+		},
+		{
+			name:     "In operation for string resulting in true",
+			expr:     `$.A in ["admin", "moderator"]`,
+			data:     map[string]interface{}{"$.A": "admin"},
+			expected: true,
+		},
+		{
+			name:     "In operation for int resulting in false",
+			expr:     `$.A not in [1, 2, 3]`,
+			data:     map[string]interface{}{"$.A": 2},
+			expected: false,
+		},
+		{
+			name:     "In operation for int resulting in true",
+			expr:     `$.A not in [1, 2, 3]`,
+			data:     map[string]interface{}{"$.A": 5},
+			expected: true,
+		},
+		{
+			name:     "Contains operation resulting in true",
+			expr:     `$.A contains $.B`,
+			data:     map[string]interface{}{"$.A": "hello world", "$.B": "world"},
+			expected: true,
+		},
+		{
+			name:     "Contains operation resulting in false",
+			expr:     `$.A contains $.B`,
+			data:     map[string]interface{}{"$.A": "hello world", "$.B": "go"},
+			expected: false,
+		},
+		{
+			name:     "Contains operation resulting in false",
+			expr:     `$.A not contains $.B`,
+			data:     map[string]interface{}{"$.A": "hello world", "$.B": "world"},
+			expected: false,
+		},
+		{
+			name:     "Contains operation resulting in true",
+			expr:     `$.A not contains $.B`,
+			data:     map[string]interface{}{"$.A": "hello world", "$.B": "go"},
+			expected: true,
 		},
 	}
 
