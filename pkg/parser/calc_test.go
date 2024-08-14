@@ -494,6 +494,18 @@ func TestCalc(t *testing.T) {
 			data:     map[string]interface{}{"$.A": "hello world", "$.B": "go"},
 			expected: true,
 		},
+		{
+			name:     "regex operation resulting in true",
+			expr:     `$.A matches $.B`,
+			data:     map[string]interface{}{"$.A": "123", "$.B": "^[0-9]+$"},
+			expected: true,
+		},
+		{
+			name:     "regex operation resulting in false",
+			expr:     `$.A matches $.B`,
+			data:     map[string]interface{}{"$.A": "abc", "$.B": "^[0-9]+$"},
+			expected: false,
+		},
 	}
 
 	for _, tc := range tests {
