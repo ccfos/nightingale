@@ -129,15 +129,13 @@ func DashboardGets(ctx *ctx.Context, groupId int64, query string) ([]Dashboard, 
 	session := DB(ctx).Where("group_id=?", groupId).Order("name")
 
 	arr := strings.Fields(query)
-	if len(arr) > 0 {
-		for i := range arr {
-			if strings.HasPrefix(arr[i], "-") {
-				q := "%" + arr[i][1:] + "%"
-				session = session.Where("name not like ? and tags not like ?", q, q)
-			} else {
-				q := "%" + arr[i] + "%"
-				session = session.Where("(name like ? or tags like ?)", q, q)
-			}
+	for i := range arr {
+		if strings.HasPrefix(arr[i], "-") {
+			q := "%" + arr[i][1:] + "%"
+			session = session.Where("name not like ? and tags not like ?", q, q)
+		} else {
+			q := "%" + arr[i] + "%"
+			session = session.Where("(name like ? or tags like ?)", q, q)
 		}
 	}
 
