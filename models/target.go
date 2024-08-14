@@ -405,11 +405,9 @@ func (t *Target) GetTagsMap() map[string]string {
 	tagsJSON := strings.Fields(t.Tags)
 	m := make(map[string]string)
 	for _, item := range tagsJSON {
-		arr := strings.Split(item, "=")
-		if len(arr) != 2 {
-			continue
+		if arr := strings.Split(item, "="); len(arr) == 2 {
+			m[arr[0]] = arr[1]
 		}
-		m[arr[0]] = arr[1]
 	}
 	return m
 }
