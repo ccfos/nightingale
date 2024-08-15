@@ -305,8 +305,12 @@ func (e *AlertCurEvent) DB2FE() error {
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	e.OriginalTagsJSON = strings.Split(e.OriginalTags, ",,")
-	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
-	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
+	if err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON); err != nil {
+		return err
+	}
+	if err := json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -344,6 +348,34 @@ func (e *AlertCurEvent) DB2Mem() {
 
 		e.TagsMap[arr[0]] = arr[1]
 	}
+}
+
+func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bool) {
+	var config RuleConfig
+	err := json.Unmarshal([]byte(ruleConfig), &config)
+	if err != nil {
+		logger.Warningf("failed to unmarshal rule config: %v", err)
+		return nil, false
+	}
+
+	if len(config.TaskTpls) == 0 {
+		return nil, false
+	}
+
+	for i := 0; i < len(config.TaskTpls); i++ {
+		tpl, err := TaskTplGetById(ctx, config.TaskTpls[i].TplId)
+		if err != nil {
+			logger.Warningf("failed to get task tpl by id:%d, %v", config.TaskTpls[i].TplId, err)
+			return nil, false
+		}
+
+		if tpl == nil {
+			logger.Warningf("task tpl not found by id:%d", config.TaskTpls[i].TplId)
+			return nil, false
+		}
+		config.TaskTpls[i].TplName = tpl.Title
+	}
+	return config, true
 }
 
 // for webui
@@ -471,6 +503,11 @@ func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 }
 
 func AlertCurEventDelByHash(ctx *ctx.Context, hash string) error {
+	if !ctx.IsCenter {
+		_, err := poster.GetByUrls[string](ctx, "/v1/n9e/alert-cur-events-del-by-hash?hash="+hash)
+		return err
+	}
+
 	return DB(ctx).Where("hash = ?", hash).Delete(&AlertCurEvent{}).Error
 }
 
@@ -589,8 +626,8 @@ func AlertCurEventGetMap(ctx *ctx.Context, cluster string) (map[int64]map[string
 	return ret, nil
 }
 
-func (m *AlertCurEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
-	return DB(ctx).Model(m).Updates(fields).Error
+func (e *AlertCurEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
+	return DB(ctx).Model(e).Updates(fields).Error
 }
 
 func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {

@@ -9,18 +9,24 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/logger"
 
 	"gopkg.in/gomail.v2"
 )
 
-var mailch chan *gomail.Message
+var mailch chan *EmailContext
 
 type EmailSender struct {
 	subjectTpl *template.Template
 	contentTpl *template.Template
 	smtp       aconf.SMTPConfig
+}
+
+type EmailContext struct {
+	event *models.AlertCurEvent
+	mail  *gomail.Message
 }
 
 func (es *EmailSender) Send(ctx MessageContext) {
@@ -36,7 +42,7 @@ func (es *EmailSender) Send(ctx MessageContext) {
 		subject = ctx.Events[0].RuleName
 	}
 	content := BuildTplMessage(models.Email, es.contentTpl, ctx.Events)
-	es.WriteEmail(subject, content, tos)
+	es.WriteEmail(subject, content, tos, ctx.Events[0])
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues(models.Email).Add(float64(len(tos)))
 }
@@ -73,7 +79,8 @@ func SendEmail(subject, content string, tos []string, stmp aconf.SMTPConfig) err
 	return nil
 }
 
-func (es *EmailSender) WriteEmail(subject, content string, tos []string) {
+func (es *EmailSender) WriteEmail(subject, content string, tos []string,
+	event *models.AlertCurEvent) {
 	m := gomail.NewMessage()
 
 	m.SetHeader("From", es.smtp.From)
@@ -81,7 +88,7 @@ func (es *EmailSender) WriteEmail(subject, content string, tos []string) {
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", content)
 
-	mailch <- m
+	mailch <- &EmailContext{event, m}
 }
 
 func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
@@ -104,22 +111,22 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 
 var mailQuit = make(chan struct{})
 
-func RestartEmailSender(smtp aconf.SMTPConfig) {
+func RestartEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 	// Notify internal start exit
 	mailQuit <- struct{}{}
-	startEmailSender(smtp)
+	startEmailSender(ctx, smtp)
 }
 
 var smtpConfig aconf.SMTPConfig
 
-func InitEmailSender(ncc *memsto.NotifyConfigCacheType) {
-	mailch = make(chan *gomail.Message, 100000)
-	go updateSmtp(ncc)
+func InitEmailSender(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
+	mailch = make(chan *EmailContext, 100000)
+	go updateSmtp(ctx, ncc)
 	smtpConfig = ncc.GetSMTP()
-	startEmailSender(smtpConfig)
+	startEmailSender(ctx, smtpConfig)
 }
 
-func updateSmtp(ncc *memsto.NotifyConfigCacheType) {
+func updateSmtp(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
 	for {
 		time.Sleep(1 * time.Minute)
 		smtp := ncc.GetSMTP()
@@ -127,12 +134,12 @@ func updateSmtp(ncc *memsto.NotifyConfigCacheType) {
 			smtpConfig.Pass != smtp.Pass || smtpConfig.User != smtp.User || smtpConfig.Port != smtp.Port ||
 			smtpConfig.InsecureSkipVerify != smtp.InsecureSkipVerify { //diff
 			smtpConfig = smtp
-			RestartEmailSender(smtp)
+			RestartEmailSender(ctx, smtp)
 		}
 	}
 }
 
-func startEmailSender(smtp aconf.SMTPConfig) {
+func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 	conf := smtp
 	if conf.Host == "" || conf.Port == 0 {
 		logger.Warning("SMTP configurations invalid")
@@ -167,7 +174,8 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 				}
 				open = true
 			}
-			if err := gomail.Send(s, m); err != nil {
+			var err error
+			if err = gomail.Send(s, m.mail); err != nil {
 				logger.Errorf("email_sender: failed to send: %s", err)
 
 				// close and retry
@@ -184,11 +192,16 @@ func startEmailSender(smtp aconf.SMTPConfig) {
 				}
 				open = true
 
-				if err := gomail.Send(s, m); err != nil {
+				if err = gomail.Send(s, m.mail); err != nil {
 					logger.Errorf("email_sender: failed to retry send: %s", err)
 				}
 			} else {
-				logger.Infof("email_sender: result=succ subject=%v to=%v", m.GetHeader("Subject"), m.GetHeader("To"))
+				logger.Infof("email_sender: result=succ subject=%v to=%v",
+					m.mail.GetHeader("Subject"), m.mail.GetHeader("To"))
+			}
+
+			for _, to := range m.mail.GetHeader("To") {
+				NotifyRecord(ctx, m.event, models.Email, to, "", err)
 			}
 
 			size++

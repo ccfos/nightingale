@@ -53,10 +53,11 @@ type Processor struct {
 	datasourceId int64
 	EngineName   string
 
-	rule     *models.AlertRule
-	fires    *AlertCurEventMap
-	pendings *AlertCurEventMap
-	inhibit  bool
+	rule                 *models.AlertRule
+	fires                *AlertCurEventMap
+	pendings             *AlertCurEventMap
+	pendingsUseByRecover *AlertCurEventMap
+	inhibit              bool
 
 	tagsMap    map[string]string
 	tagsArr    []string
@@ -232,17 +233,17 @@ func Relabel(rule *models.AlertRule, event *models.AlertCurEvent) {
 		return
 	}
 
+	if len(rule.EventRelabelConfig) == 0 {
+		return
+	}
+
 	// need to keep the original label
 	event.OriginalTags = event.Tags
 	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
 
 	labels := make([]prompb.Label, len(event.TagsJSON))
 	for i, tag := range event.TagsJSON {
-		label := strings.Split(tag, "=")
-		if len(label) != 2 {
-			logger.Errorf("event%+v relabel: the label length is not 2:%v", event, label)
-			continue
-		}
+		label := strings.SplitN(tag, "=", 2)
 		event.OriginalTagsJSON[i] = tag
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
@@ -342,11 +343,22 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	if !has {
 		return
 	}
+
 	// 如果配置了留观时长，就不能立马恢复了
-	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
-		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
-		return
+	if cachedRule.RecoverDuration > 0 {
+		lastPendingEvent, has := p.pendingsUseByRecover.Get(hash)
+		if !has {
+			// 说明没有产生过异常点，就不需要恢复了
+			logger.Debugf("rule_eval:%s event:%v do not has pending event, not recover", p.Key(), event)
+			return
+		}
+
+		if now-lastPendingEvent.LastEvalTime < cachedRule.RecoverDuration {
+			logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+			return
+		}
 	}
+
 	if value != nil {
 		event.TriggerValue = *value
 		if len(values) > 0 {
@@ -358,6 +370,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
 	p.fires.Delete(hash)
 	p.pendings.Delete(hash)
+	p.pendingsUseByRecover.Delete(hash)
 
 	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
 	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
@@ -389,9 +402,11 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
 			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+			p.pendingsUseByRecover.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 			preTriggerTime = preEvent.TriggerTime
 		} else {
 			p.pendings.Set(event.Hash, event)
+			p.pendingsUseByRecover.Set(event.Hash, event)
 			preTriggerTime = event.TriggerTime
 		}
 
@@ -477,6 +492,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 func (p *Processor) RecoverAlertCurEventFromDb() {
 	p.pendings = NewAlertCurEventMap(nil)
+	p.pendingsUseByRecover = NewAlertCurEventMap(nil)
 
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
@@ -576,6 +592,7 @@ func (p *Processor) mayHandleGroup() {
 func (p *Processor) DeleteProcessEvent(hash string) {
 	p.fires.Delete(hash)
 	p.pendings.Delete(hash)
+	p.pendingsUseByRecover.Delete(hash)
 }
 
 func labelMapToArr(m map[string]string) []string {
