@@ -143,7 +143,7 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 	var pr struct {
 		Groups []models.PromRuleGroup `yaml:"groups"`
 	}
-	yaml.Unmarshal([]byte(f.Payload), &pr)
+	ginx.Dangerous(yaml.Unmarshal([]byte(f.Payload), &pr))
 	if len(pr.Groups) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
 	}

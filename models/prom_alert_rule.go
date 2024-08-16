@@ -25,13 +25,13 @@ type PromRuleGroup struct {
 func convertInterval(interval string) int {
 	duration, err := time.ParseDuration(interval)
 	if err != nil {
-		logger.Errorf("Error parsing interval `%s`,err: %v", interval, err)
+		logger.Errorf("Error parsing interval `%s`, err: %v", interval, err)
 		return 0
 	}
 	return int(duration.Seconds())
 }
 
-func ConvertAlert(rule PromRule, interval, datasouceIds string, diasabled int) AlertRule {
+func ConvertAlert(rule PromRule, interval, datasouceIds string, disabled int) AlertRule {
 	annotations := rule.Annotations
 	appendTags := []string{}
 	severity := 2
@@ -57,7 +57,7 @@ func ConvertAlert(rule PromRule, interval, datasouceIds string, diasabled int) A
 		Name:             rule.Alert,
 		Severity:         severity,
 		DatasourceIds:    datasouceIds,
-		Disabled:         diasabled,
+		Disabled:         disabled,
 		PromForDuration:  convertInterval(rule.For),
 		PromQl:           rule.Expr,
 		PromEvalInterval: convertInterval(interval),
