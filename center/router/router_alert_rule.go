@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
@@ -128,23 +130,30 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	ginx.NewRender(c).Data(reterr, nil)
 }
 
-func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
-	username := c.MustGet("username").(string)
+type promRuleForm struct {
+	Payload       string  `json:"payload" binding:"required"`
+	DatasourceIds []int64 `json:"datasource_ids" binding:"required"`
+	Disabled      int     `json:"disabled" binding:"gte=0,lte=1"`
+}
 
-	type PromRule struct {
+func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
+	var f promRuleForm
+	ginx.Dangerous(c.BindJSON(&f))
+
+	var pr struct {
 		Groups []models.PromRuleGroup `yaml:"groups"`
 	}
-	var pr PromRule
-	ginx.Dangerous(c.BindYAML(&pr))
+	ginx.Dangerous(yaml.Unmarshal([]byte(f.Payload), &pr))
 	if len(pr.Groups) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
 	}
+	ds, err := json.Marshal(f.DatasourceIds)
+	ginx.Dangerous(err)
 
-	lst := models.DealPromGroup(pr.Groups)
+	lst := models.DealPromGroup(pr.Groups, string(ds), f.Disabled)
+	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
-	err := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
-
-	ginx.NewRender(c).Data(err, nil)
+	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
 }
 
 func (rt *Router) alertRuleAddByService(c *gin.Context) {
