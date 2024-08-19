@@ -517,6 +517,9 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	}
 
 	p.fires = NewAlertCurEventMap(fireMap)
+
+	// 修改告警规则，或者进程重启之后，需要重新加载 pendingsUseByRecover
+	p.pendingsUseByRecover = NewAlertCurEventMap(fireMap)
 }
 
 func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
