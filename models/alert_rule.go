@@ -173,12 +173,14 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 				blank := " "
 				for _, tag := range lst {
 					m["tags like ?"+blank] = "%" + tag + "%"
+					m["host_tags like ?"+blank] = "%" + tag + "%"
 					blank += " "
 				}
 			} else {
 				blank := " "
 				for _, tag := range lst {
 					m["tags not like ?"+blank] = "%" + tag + "%"
+					m["host_tags not like ?"+blank] = "%" + tag + "%"
 					blank += " "
 				}
 			}
