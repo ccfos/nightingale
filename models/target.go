@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
+
 	"gorm.io/gorm"
 )
 
@@ -325,12 +326,12 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
-	var arr []string
+	var arr []*Target
 	if len(idents) > 0 {
 		session = session.Where("ident in ?", idents)
 	}
 
-	err := session.Select("distinct(tags) as tags").Pluck("tags", &arr).Error
+	err := session.Select("tags", "host_tags").Find(&arr).Error
 	if err != nil {
 		return nil, err
 	}
@@ -342,9 +343,12 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 
 	set := make(map[string]struct{})
 	for i := 0; i < cnt; i++ {
-		tags := strings.Fields(arr[i])
+		tags := strings.Fields(arr[i].Tags)
 		for j := 0; j < len(tags); j++ {
 			set[tags[j]] = struct{}{}
+		}
+		for _, ht := range arr[i].HostTags {
+			set[ht] = struct{}{}
 		}
 	}
 
