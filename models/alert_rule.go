@@ -157,9 +157,11 @@ type Trigger struct {
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
 
-	Type     string `json:"type,omitempty"`
-	Duration int    `json:"duration,omitempty"`
-	Percent  int    `json:"percent,omitempty"`
+	Type     string   `json:"type,omitempty"`
+	Duration int      `json:"duration,omitempty"`
+	Percent  int      `json:"percent,omitempty"`
+	EnableOn bool     `json:"enabled"`
+	On       []string `json:"on"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {

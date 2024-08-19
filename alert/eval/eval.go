@@ -258,9 +258,12 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	arw.inhibit = ruleQuery.Inhibit
 	if len(ruleQuery.Queries) > 0 {
 		seriesStore := make(map[uint64]models.DataResp)
-		seriesTagIndex := make(map[uint64][]uint64)
+		// 将不同查询的 hash 索引分组存放
+		seriesTagIndexes := make([]map[uint64][]uint64, 0)
 
 		for _, query := range ruleQuery.Queries {
+			seriesTagIndex := make(map[uint64][]uint64)
+
 			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 			cli := arw.tdengineClients.GetCli(dsId)
 			if cli == nil {
@@ -278,13 +281,13 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
 				continue
 			}
-
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
+			seriesTagIndexes = append(seriesTagIndexes, seriesTagIndex)
 		}
 
-		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndex, seriesStore)
+		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndexes, seriesStore)
 	}
 
 	return points, recoverPoints
@@ -444,11 +447,76 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
 	points := []common.AnomalyPoint{}
 	recoverPoints := []common.AnomalyPoint{}
 
 	for _, trigger := range ruleQuery.Triggers {
+
+		seriesTagIndex := make(map[uint64][]uint64)
+
+		if !trigger.EnableOn {
+			// 没有指定 on，则将 seriesTagIndexes 合并即可
+			for _, s := range seriesTagIndexes {
+				for k, v := range s {
+					if _, ok := seriesTagIndex[k]; !ok {
+						seriesTagIndex[k] = v
+					} else {
+						seriesTagIndex[k] = append(seriesTagIndex[k], v...)
+					}
+				}
+			}
+		} else {
+			// 若指定了 on 则需要根据指定的字段进行 rehash 分组
+			lastHashTagIndex := make(map[uint64][][]uint64)
+			for i := range seriesTagIndexes {
+				curHashTagIndex := make(map[uint64][][]uint64)
+				// 每个查询各自的结果做 rehash 分组
+				for _, seriesHashList := range seriesTagIndexes[i] {
+					if len(seriesHashList) == 0 {
+						continue
+					}
+					series, exists := seriesStore[seriesHashList[0]]
+					if !exists {
+						continue
+					}
+					rehash := hash.GetTargetTagHash(series.Metric, trigger.On)
+					if _, ok := curHashTagIndex[rehash]; !ok {
+						curHashTagIndex[rehash] = make([][]uint64, 0)
+					}
+					// rehash 值相同的记录放在一起但不合并，每个内层数组是原本 hash 值相同的记录
+					curHashTagIndex[rehash] = append(curHashTagIndex[rehash], seriesHashList)
+				}
+				if len(curHashTagIndex) == 0 {
+					continue
+				}
+				if len(lastHashTagIndex) == 0 {
+					lastHashTagIndex = curHashTagIndex
+					continue
+				}
+
+				nextHashTagIndex := make(map[uint64][][]uint64)
+				// 合并前后两个查询结果， rehash 值相同说明符合当前的 on 条件，内层数组依次结合
+				for k, v := range lastHashTagIndex {
+					if _, ok := curHashTagIndex[k]; ok {
+						for _, i2 := range v {
+							for _, i3 := range curHashTagIndex[k] {
+								nextHashTagIndex[k] = append(nextHashTagIndex[k], append(i2, i3...))
+							}
+						}
+					}
+				}
+				lastHashTagIndex = nextHashTagIndex
+			}
+			var i uint64
+			for _, HashTagIndex := range lastHashTagIndex {
+				for u := range HashTagIndex {
+					seriesTagIndex[i] = HashTagIndex[u]
+					i++
+				}
+			}
+		}
+
 		for _, seriesHash := range seriesTagIndex {
 			sort.Slice(seriesHash, func(i, j int) bool {
 				return seriesHash[i] < seriesHash[j]
