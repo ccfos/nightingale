@@ -465,25 +465,43 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 
 	for _, trigger := range ruleQuery.Triggers {
 
-		seriesTagIndex := make(map[uint64][]uint64)
-
-		switch trigger.JoinType {
-		case "origin":
-			seriesTagIndex = originalJoin(seriesTagIndexes)
-		case "none":
-			seriesTagIndex = noneJoin(seriesTagIndexes)
-		case "cartesian":
-			seriesTagIndex = cartesianJoin(seriesTagIndexes)
-		case "inner":
-			seriesTagIndex = onJoin(seriesTagIndexes, seriesStore, trigger.On, Inner)
-		case "left":
-			seriesTagIndex = onJoin(seriesTagIndexes, seriesStore, trigger.On, Left)
-		case "right":
-			seriesTagIndex = onJoin(seriesTagIndexes, seriesStore, trigger.On, Right)
-		default:
-			logger.Warningf("rule_eval rid:%d trigger:%+v join type not support", ruleId, trigger)
+		if len(seriesTagIndexes) != len(trigger.JoinTypes)+1 {
+			logger.Errorf("rule_eval rid:%d queries' count: %d not match join condition's count: %d", ruleId, len(seriesTagIndexes), len(trigger.JoinTypes))
 			continue
 		}
+
+		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
+		seriesTagIndex := make(map[uint64][]uint64)
+
+		last := seriesTagIndexes[0]
+		lastRehashed := rehashSet(last, seriesStore, trigger.On[0])
+		for i := range trigger.JoinTypes {
+			left := last
+			right := seriesTagIndexes[i+1]
+			switch trigger.JoinTypes[i] {
+			case "original":
+				last = originalJoin(left, right)
+			case "none":
+				last = noneJoin(left, right)
+			case "cartesian":
+				last = cartesianJoin(left, right)
+			case "inner":
+				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(lastRehashed, rightRehashed, Inner)
+				last = flatten(lastRehashed)
+			case "left":
+				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(lastRehashed, rightRehashed, Left)
+				last = flatten(lastRehashed)
+			case "right":
+				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(rightRehashed, lastRehashed, Right)
+				last = flatten(lastRehashed)
+			default:
+				logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.JoinTypes[i])
+			}
+		}
+		seriesTagIndex = last
 
 		for _, seriesHash := range seriesTagIndex {
 			sort.Slice(seriesHash, func(i, j int) bool {
@@ -555,170 +573,106 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 	return points, recoverPoints
 }
 
-func onJoin(seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp, on []string, joinType JoinType) map[uint64][]uint64 {
-	if joinType == Right {
-		// 右联，翻转后就以右优先联
-		i, j := 0, len(seriesTagIndexes)
-		for i < j {
-			seriesTagIndexes[i], seriesTagIndexes[j] = seriesTagIndexes[j], seriesTagIndexes[i]
+func flatten(rehashed map[uint64][][]uint64) map[uint64][]uint64 {
+	seriesTagIndex := make(map[uint64][]uint64)
+	var i uint64
+	for _, HashTagIndex := range rehashed {
+		for u := range HashTagIndex {
+			seriesTagIndex[i] = HashTagIndex[u]
 			i++
-			j--
 		}
 	}
-	// 先 rehash 第一个集合
-	seriesTagIndex := make(map[uint64][]uint64)
-	lastHashTagIndex := make(map[uint64][][]uint64)
-	for _, seriesHashList := range seriesTagIndexes[0] {
-		if len(seriesHashList) == 0 {
+	return seriesTagIndex
+}
+
+// onJoin 组合两个经过 rehash 之后的集合
+// 如查询 A，经过 on data_base rehash 分组后
+// [[A1{data_base=1, table=alert}，A2{data_base=1, table=alert}]，[A5{data_base=1, table=board}]]
+// [[A3{data_base=2, table=board}]，[A4{data_base=2, table=alert}]]
+// 查询 B，经过 on data_base rehash 分组后
+// [[B1{data_base=1, table=alert}]]
+// [[B2{data_base=2, table=alert}]]
+// 内联得到
+// [[A1{data_base=1, table=alert}，A2{data_base=1, table=alert}，B1{data_base=1, table=alert}]，[A5{data_base=1, table=board}，[B1{data_base=1, table=alert}]]
+// [[A3{data_base=2, table=board}，B2{data_base=2, table=alert}]，[A4{data_base=2, table=alert}，B2{data_base=2, table=alert}]]
+func onJoin(reHashTagIndex1 map[uint64][][]uint64, reHashTagIndex2 map[uint64][][]uint64, joinType JoinType) map[uint64][][]uint64 {
+	reHashTagIndex := make(map[uint64][][]uint64)
+	for rehash, _ := range reHashTagIndex1 {
+		if _, ok := reHashTagIndex2[rehash]; ok {
+			// 若有 rehash 相同的记录，两两合并
+			for i1 := range reHashTagIndex1[rehash] {
+				for i2 := range reHashTagIndex2[rehash] {
+					reHashTagIndex[rehash] = append(reHashTagIndex[rehash], mergeNewArray(reHashTagIndex1[rehash][i1], reHashTagIndex2[rehash][i2]))
+				}
+			}
+		} else {
+			// 合并方式不为 inner 时，需要保留 reHashTagIndex1 中未匹配的记录
+			if joinType != Inner {
+				reHashTagIndex[rehash] = reHashTagIndex1[rehash]
+			}
+		}
+	}
+	return reHashTagIndex
+}
+
+// rehashSet 重新 hash 分组
+// 如当前查询 A 有五条记录
+// A1{data_base=1, table=alert}
+// A2{data_base=1, table=alert}
+// A3{data_base=2, table=board}
+// A4{data_base=2, table=alert}
+// A5{data_base=1, table=board}
+// 经过预处理（按曲线分组，此步已在进入 GetAnomalyPoint 函数前完成）后，分为 4 组，
+// [A1{data_base=1, table=alert}，A2{data_base=1, table=alert}]
+// [A3{data_base=2, table=board}]
+// [A4{data_base=2, table=alert}]
+// [A5{data_base=1, table=board}]
+// 若 rehashSet 按 data_base 重新分组，此时会得到按 rehash 值分的二维数组，即不会将 rehash 值相同的记录完全合并
+// [[A1{data_base=1, table=alert}，A2{data_base=1, table=alert}]，[A5{data_base=1, table=board}]]
+// [[A3{data_base=2, table=board}]，[A4{data_base=2, table=alert}]]
+func rehashSet(seriesTagIndex1 map[uint64][]uint64, seriesStore map[uint64]models.DataResp, on []string) map[uint64][][]uint64 {
+	reHashTagIndex := make(map[uint64][][]uint64)
+	for _, seriesHashes := range seriesTagIndex1 {
+		if len(seriesHashes) == 0 {
 			continue
 		}
-		series, exists := seriesStore[seriesHashList[0]]
+		series, exists := seriesStore[seriesHashes[0]]
 		if !exists {
 			continue
 		}
 		rehash := hash.GetTargetTagHash(series.Metric, on)
-		if _, ok := lastHashTagIndex[rehash]; !ok {
-			lastHashTagIndex[rehash] = make([][]uint64, 0)
+		if _, ok := reHashTagIndex[rehash]; !ok {
+			reHashTagIndex[rehash] = make([][]uint64, 0)
 		}
-		lastHashTagIndex[rehash] = append(lastHashTagIndex[rehash], seriesHashList)
+		reHashTagIndex[rehash] = append(reHashTagIndex[rehash], seriesHashes)
 	}
-	// 后序集合依次向前合并
-	for i := 1; i < len(seriesTagIndexes); i++ {
-		curHashTagIndex := make(map[uint64][][]uint64)
-		for _, seriesHashList := range seriesTagIndexes[i] {
-			if len(seriesHashList) == 0 {
-				continue
-			}
-			series, exists := seriesStore[seriesHashList[0]]
-			if !exists {
-				continue
-			}
-			rehash := hash.GetTargetTagHash(series.Metric, on)
-			if _, ok := curHashTagIndex[rehash]; !ok {
-				curHashTagIndex[rehash] = make([][]uint64, 0)
-			}
-			curHashTagIndex[rehash] = append(curHashTagIndex[rehash], seriesHashList)
-		}
-
-		nextHashTagIndex := make(map[uint64][][]uint64)
-		for k, v := range lastHashTagIndex {
-			if _, ok := curHashTagIndex[k]; ok {
-				for i1 := range v {
-					for i2 := range curHashTagIndex[k] {
-						nextHashTagIndex[k] = append(nextHashTagIndex[k], mergeArray(v[i1], curHashTagIndex[k][i2]))
-					}
-				}
-			} else {
-				// 合并方式不为 inner 时，需要保留未匹配的记录
-				if joinType != Inner {
-					nextHashTagIndex[k] = v
-				}
-			}
-		}
-		lastHashTagIndex = nextHashTagIndex
-	}
-
-	var i uint64
-	for _, HashTagIndex := range lastHashTagIndex {
-		for u := range HashTagIndex {
-			seriesTagIndex[i] = HashTagIndex[u]
-			i++
-		}
-	}
-	return seriesTagIndex
+	return reHashTagIndex
 }
 
-// 笛卡尔积，将多个查询的结果合并
-func cartesianJoin(seriesTagIndexes []map[uint64][]uint64) map[uint64][]uint64 {
-	if len(seriesTagIndexes) == 1 {
-		return seriesTagIndexes[0]
-	}
-	// 先合并前两个集合
+// 笛卡尔积，查询的结果两两合并
+func cartesianJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint64][]uint64) map[uint64][]uint64 {
 	var index uint64
-	lastHashTagIndex := make(map[uint64][]uint64)
-	for _, v1 := range seriesTagIndexes[0] {
-		for _, v2 := range seriesTagIndexes[1] {
-			lastHashTagIndex[index] = mergeArray(v1, v2)
-			index++
-		}
-	}
-	// 再依次合并后序集合
-	for i := 2; i < len(seriesTagIndexes); i++ {
-		nextHashTagIndex := make(map[uint64][]uint64)
-		for _, v1 := range lastHashTagIndex {
-			for _, v2 := range seriesTagIndexes[i] {
-				nextHashTagIndex[index] = mergeArray(v1, v2)
-				index++
-			}
-		}
-		lastHashTagIndex = nextHashTagIndex
-	}
-
-	return lastHashTagIndex
-}
-
-// 不合并，各个查询直接放入一个集合
-func noneJoin(seriesTagIndexes []map[uint64][]uint64) map[uint64][]uint64 {
 	seriesTagIndex := make(map[uint64][]uint64)
-	var index uint64
-	for _, s := range seriesTagIndexes {
-		for _, v := range s {
-			seriesTagIndex[index] = v
+	for _, seriesHashes1 := range seriesTagIndex1 {
+		for _, seriesHashes2 := range seriesTagIndex2 {
+			seriesTagIndex[index] = mergeNewArray(seriesHashes1, seriesHashes2)
 			index++
 		}
 	}
 	return seriesTagIndex
 }
 
-// 内联，根据指定的字段进行 rehash 分组
-func innerJoin(seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp, on []string) map[uint64][]uint64 {
+// noneJoin 直接拼接
+func noneJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint64][]uint64) map[uint64][]uint64 {
 	seriesTagIndex := make(map[uint64][]uint64)
-	lastHashTagIndex := make(map[uint64][][]uint64)
-	for i := range seriesTagIndexes {
-		curHashTagIndex := make(map[uint64][][]uint64)
-		// 每个查询各自的结果做 rehash 分组
-		for _, seriesHashList := range seriesTagIndexes[i] {
-			if len(seriesHashList) == 0 {
-				continue
-			}
-			series, exists := seriesStore[seriesHashList[0]]
-			if !exists {
-				continue
-			}
-			rehash := hash.GetTargetTagHash(series.Metric, on)
-			if _, ok := curHashTagIndex[rehash]; !ok {
-				curHashTagIndex[rehash] = make([][]uint64, 0)
-			}
-			// rehash 值相同的记录放在一起但不合并，每个内层数组是原本 hash 值相同的记录
-			curHashTagIndex[rehash] = append(curHashTagIndex[rehash], seriesHashList)
-		}
-		if len(curHashTagIndex) == 0 {
-			continue
-		}
-		if len(lastHashTagIndex) == 0 {
-			lastHashTagIndex = curHashTagIndex
-			continue
-		}
-
-		nextHashTagIndex := make(map[uint64][][]uint64)
-		// 合并前后两个查询结果， rehash 值相同说明符合当前的 on 条件，内层数组依次结合
-		for k, v := range lastHashTagIndex {
-			if _, ok := curHashTagIndex[k]; ok {
-				for _, i2 := range v {
-					for _, i3 := range curHashTagIndex[k] {
-						nextHashTagIndex[k] = append(nextHashTagIndex[k], mergeArray(i2, i3))
-					}
-				}
-			}
-		}
-		lastHashTagIndex = nextHashTagIndex
+	var index uint64
+	for _, seriesHashes := range seriesTagIndex1 {
+		seriesTagIndex[index] = seriesHashes
+		index++
 	}
-	var i uint64
-	for _, HashTagIndex := range lastHashTagIndex {
-		for u := range HashTagIndex {
-			seriesTagIndex[i] = HashTagIndex[u]
-			i++
-		}
+	for _, seriesHashes := range seriesTagIndex2 {
+		seriesTagIndex[index] = seriesHashes
+		index++
 	}
 	return seriesTagIndex
 }
@@ -737,22 +691,29 @@ func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64,
 	}
 }
 
-// 原逻辑的联合方式，将 seriesTagIndexes 合并即可
-func originalJoin(seriesTagIndexes []map[uint64][]uint64) map[uint64][]uint64 {
+// originalJoin 原始分组方案，key 相同，即标签全部相同分为一组
+func originalJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint64][]uint64) map[uint64][]uint64 {
 	seriesTagIndex := make(map[uint64][]uint64)
-	for _, s := range seriesTagIndexes {
-		for k, v := range s {
-			if _, ok := seriesTagIndex[k]; !ok {
-				seriesTagIndex[k] = v
-			} else {
-				seriesTagIndex[k] = append(seriesTagIndex[k], v...)
-			}
+	for tagHash, seriesHashes := range seriesTagIndex1 {
+		if _, ok := seriesTagIndex[tagHash]; !ok {
+			seriesTagIndex[tagHash] = mergeNewArray(seriesHashes)
+		} else {
+			seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], seriesHashes...)
 		}
 	}
+
+	for tagHash, seriesHashes := range seriesTagIndex2 {
+		if _, ok := seriesTagIndex[tagHash]; !ok {
+			seriesTagIndex[tagHash] = mergeNewArray(seriesHashes)
+		} else {
+			seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], seriesHashes...)
+		}
+	}
+
 	return seriesTagIndex
 }
 
-func mergeArray(arg ...[]uint64) []uint64 {
+func mergeNewArray(arg ...[]uint64) []uint64 {
 	res := make([]uint64, 0)
 	for _, a := range arg {
 		res = append(res, a...)
