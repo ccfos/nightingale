@@ -157,11 +157,15 @@ type Trigger struct {
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
 
-	Type      string     `json:"type,omitempty"`
-	Duration  int        `json:"duration,omitempty"`
-	Percent   int        `json:"percent,omitempty"`
-	JoinTypes []string   `json:"join_type"`
-	On        [][]string `json:"on"`
+	Type     string `json:"type,omitempty"`
+	Duration int    `json:"duration,omitempty"`
+	Percent  int    `json:"percent,omitempty"`
+	Joins    []Join `json:"joins"`
+}
+
+type Join struct {
+	JoinType string   `json:"join_type"`
+	On       []string `json:"on"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
@@ -1098,47 +1102,4 @@ func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
 		return nil
 	}
 	return DB(ctx).Create(ars).Error
-}
-
-// UpdateRulesForJoin 更新告警规则，添加默认的关联信息
-func UpdateRulesForJoin(ctx *ctx.Context) error {
-	rules, err := AlertRuleGetsAll(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, rule := range rules {
-		if rule.Cate == "tdengine" {
-			var ruleQuery RuleQuery
-			err := json.Unmarshal([]byte(rule.RuleConfig), &ruleQuery)
-			if err != nil {
-				continue
-			}
-
-			if len(ruleQuery.Queries) == 0 {
-				continue
-			}
-			for i := range ruleQuery.Triggers {
-				if len(ruleQuery.Queries) == len(ruleQuery.Triggers[i].JoinTypes)+1 && len(ruleQuery.Queries) == len(ruleQuery.Triggers[i].On)+1 {
-					continue
-				}
-				ruleQuery.Triggers[i].JoinTypes = make([]string, len(ruleQuery.Queries)-1)
-				for j := 0; j < len(ruleQuery.Queries)-1; j++ {
-					ruleQuery.Triggers[i].JoinTypes[j] = "original"
-				}
-				ruleQuery.Triggers[i].On = make([][]string, len(ruleQuery.Queries)-1)
-				for j := 0; j < len(ruleQuery.Queries)-1; j++ {
-					ruleQuery.Triggers[i].On[j] = make([]string, 0)
-				}
-			}
-
-			b, err := json.Marshal(ruleQuery)
-			if err != nil {
-				continue
-			}
-			rule.RuleConfig = string(b)
-		}
-	}
-
-	return DB(ctx).Save(&rules).Error
 }

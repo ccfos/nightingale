@@ -65,11 +65,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
 
-	err = models.UpdateRulesForJoin(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
 	err = rsa.InitRSAConfig(ctx, &config.HTTP.RSA)
