@@ -160,6 +160,12 @@ type Trigger struct {
 	Type     string `json:"type,omitempty"`
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
+	Joins    []Join `json:"joins"`
+}
+
+type Join struct {
+	JoinType string   `json:"join_type"`
+	On       []string `json:"on"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
