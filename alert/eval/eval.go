@@ -476,26 +476,33 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 		last := seriesTagIndexes[0]
 		lastRehashed := rehashSet(last, seriesStore, trigger.On[0])
 		for i := range trigger.JoinTypes {
-			left := last
-			right := seriesTagIndexes[i+1]
+			cur := seriesTagIndexes[i+1]
 			switch trigger.JoinTypes[i] {
 			case "original":
-				last = originalJoin(left, right)
+				last = originalJoin(last, cur)
 			case "none":
-				last = noneJoin(left, right)
+				last = noneJoin(last, cur)
 			case "cartesian":
-				last = cartesianJoin(left, right)
-			case "inner":
-				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
-				lastRehashed = onJoin(lastRehashed, rightRehashed, Inner)
+				last = cartesianJoin(last, cur)
+			case "inner_join":
+				curRehashed := rehashSet(cur, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(lastRehashed, curRehashed, Inner)
 				last = flatten(lastRehashed)
-			case "left":
-				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
-				lastRehashed = onJoin(lastRehashed, rightRehashed, Left)
+			case "left_join":
+				curRehashed := rehashSet(cur, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(lastRehashed, curRehashed, Left)
 				last = flatten(lastRehashed)
-			case "right":
-				rightRehashed := rehashSet(right, seriesStore, trigger.On[i])
-				lastRehashed = onJoin(rightRehashed, lastRehashed, Right)
+			case "right_join":
+				curRehashed := rehashSet(cur, seriesStore, trigger.On[i])
+				lastRehashed = onJoin(curRehashed, lastRehashed, Right)
+				last = flatten(lastRehashed)
+			case "left_exclude":
+				curRehashed := rehashSet(cur, seriesStore, trigger.On[i])
+				lastRehashed = exclude(lastRehashed, curRehashed)
+				last = flatten(lastRehashed)
+			case "right_exclude":
+				curRehashed := rehashSet(cur, seriesStore, trigger.On[i])
+				lastRehashed = exclude(curRehashed, lastRehashed)
 				last = flatten(lastRehashed)
 			default:
 				logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.JoinTypes[i])
@@ -677,20 +684,6 @@ func noneJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint64][]
 	return seriesTagIndex
 }
 
-func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) {
-	for i := 0; i < len(series); i++ {
-		serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
-		tagHash := hash.GetTagHash(series[i].Metric)
-		seriesStore[serieHash] = series[i]
-
-		// 将曲线按照相同的 tag 分组
-		if _, exists := seriesTagIndex[tagHash]; !exists {
-			seriesTagIndex[tagHash] = make([]uint64, 0)
-		}
-		seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
-	}
-}
-
 // originalJoin 原始分组方案，key 相同，即标签全部相同分为一组
 func originalJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint64][]uint64) map[uint64][]uint64 {
 	seriesTagIndex := make(map[uint64][]uint64)
@@ -711,6 +704,31 @@ func originalJoin(seriesTagIndex1 map[uint64][]uint64, seriesTagIndex2 map[uint6
 	}
 
 	return seriesTagIndex
+}
+
+// exclude 左斥，留下在 reHashTagIndex1 中，但不在 reHashTagIndex2 中的记录
+func exclude(reHashTagIndex1 map[uint64][][]uint64, reHashTagIndex2 map[uint64][][]uint64) map[uint64][][]uint64 {
+	reHashTagIndex := make(map[uint64][][]uint64)
+	for rehash, _ := range reHashTagIndex1 {
+		if _, ok := reHashTagIndex2[rehash]; !ok {
+			reHashTagIndex[rehash] = reHashTagIndex1[rehash]
+		}
+	}
+	return reHashTagIndex
+}
+
+func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) {
+	for i := 0; i < len(series); i++ {
+		serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
+		tagHash := hash.GetTagHash(series[i].Metric)
+		seriesStore[serieHash] = series[i]
+
+		// 将曲线按照相同的 tag 分组
+		if _, exists := seriesTagIndex[tagHash]; !exists {
+			seriesTagIndex[tagHash] = make([]uint64, 0)
+		}
+		seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+	}
 }
 
 func mergeNewArray(arg ...[]uint64) []uint64 {
