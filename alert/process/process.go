@@ -492,7 +492,6 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 func (p *Processor) RecoverAlertCurEventFromDb() {
 	p.pendings = NewAlertCurEventMap(nil)
-	p.pendingsUseByRecover = NewAlertCurEventMap(nil)
 
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
@@ -503,6 +502,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	}
 
 	fireMap := make(map[string]*models.AlertCurEvent)
+	pendingsUseByRecoverMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
 		if event.Cate == models.HOST {
 			target, exists := p.TargetCache.Get(event.TargetIdent)
@@ -514,12 +514,13 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 		event.DB2Mem()
 		fireMap[event.Hash] = event
+		pendingsUseByRecoverMap[event.Hash] = event
 	}
 
 	p.fires = NewAlertCurEventMap(fireMap)
 
 	// 修改告警规则，或者进程重启之后，需要重新加载 pendingsUseByRecover
-	p.pendingsUseByRecover = NewAlertCurEventMap(fireMap)
+	p.pendingsUseByRecover = NewAlertCurEventMap(pendingsUseByRecoverMap)
 }
 
 func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
