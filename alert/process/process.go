@@ -390,6 +390,13 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 		if event == nil {
 			continue
 		}
+
+		if _, has := p.pendingsUseByRecover.Get(event.Hash); has {
+			p.pendingsUseByRecover.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		} else {
+			p.pendingsUseByRecover.Set(event.Hash, event)
+		}
+
 		if p.rule.PromForDuration == 0 {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
@@ -398,15 +405,13 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			continue
 		}
 
-		var preTriggerTime int64
+		var preTriggerTime int64 // 第一个 pending event 的触发时间
 		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
 			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
-			p.pendingsUseByRecover.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 			preTriggerTime = preEvent.TriggerTime
 		} else {
 			p.pendings.Set(event.Hash, event)
-			p.pendingsUseByRecover.Set(event.Hash, event)
 			preTriggerTime = event.TriggerTime
 		}
 
