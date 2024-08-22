@@ -1,6 +1,6 @@
 set names utf8mb4;
 
-drop database if exists n9e_v6;
+-- drop database if exists n9e_v6;
 create database n9e_v6;
 use n9e_v6;
 
