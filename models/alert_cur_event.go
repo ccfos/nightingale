@@ -348,6 +348,11 @@ func (e *AlertCurEvent) DB2Mem() {
 
 		e.TagsMap[arr[0]] = arr[1]
 	}
+
+	// 解决之前数据库中 FirstTriggerTime 为 0 的情况
+	if e.FirstTriggerTime == 0 {
+		e.FirstTriggerTime = e.TriggerTime
+	}
 }
 
 func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bool) {
