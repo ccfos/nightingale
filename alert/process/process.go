@@ -519,7 +519,8 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 		event.DB2Mem()
 		fireMap[event.Hash] = event
-		pendingsUseByRecoverMap[event.Hash] = event
+		e := *event
+		pendingsUseByRecoverMap[event.Hash] = &e
 	}
 
 	p.fires = NewAlertCurEventMap(fireMap)
