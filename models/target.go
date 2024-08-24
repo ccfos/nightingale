@@ -84,6 +84,17 @@ func (t *Target) MatchGroupId(gid ...int64) bool {
 	return false
 }
 
+func (t *Target) AfterFind(tx *gorm.DB) (err error) {
+	delta := time.Now().Unix() - t.UpdateAt
+	if delta < 60 {
+		t.TargetUp = 2
+	} else if delta < 180 {
+		t.TargetUp = 1
+	}
+	t.FillTagsMap()
+	return
+}
+
 func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target")
@@ -409,28 +420,16 @@ func (t *Target) DelTags(ctx *ctx.Context, tags []string) error {
 
 func (t *Target) FillTagsMap() {
 	t.TagsJSON = strings.Fields(t.Tags)
-	t.TagsMap = make(map[string]string)
-	m := make(map[string]string)
-	for _, item := range t.TagsJSON {
-		arr := strings.Split(item, "=")
-		if len(arr) != 2 {
-			continue
-		}
-		m[arr[0]] = arr[1]
-	}
-
-	t.TagsMap = m
+	t.TagsMap = t.GetTagsMap()
 }
 
 func (t *Target) GetTagsMap() map[string]string {
 	tagsJSON := strings.Fields(t.Tags)
 	m := make(map[string]string)
 	for _, item := range tagsJSON {
-		arr := strings.Split(item, "=")
-		if len(arr) != 2 {
-			continue
+		if arr := strings.Split(item, "="); len(arr) == 2 {
+			m[arr[0]] = arr[1]
 		}
-		m[arr[0]] = arr[1]
 	}
 	return m
 }

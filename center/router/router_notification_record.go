@@ -33,6 +33,15 @@ type Record struct {
 	Detail   string `json:"detail"`
 }
 
+// notificationRecordAdd
+func (rt *Router) notificationRecordAdd(c *gin.Context) {
+	var req models.NotificaitonRecord
+	ginx.BindJSON(c, &req)
+	err := req.Add(rt.Ctx)
+
+	ginx.NewRender(c).Data(req.Id, err)
+}
+
 func (rt *Router) notificationRecordList(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	lst, err := models.NotificaitonRecordsGetByEventId(rt.Ctx, eid)

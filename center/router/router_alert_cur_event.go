@@ -234,3 +234,8 @@ func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
 
 	ginx.NewRender(c).Data(models.AlertCurEventStatistics(rt.Ctx, time.Now()), nil)
 }
+
+func (rt *Router) alertCurEventDelByHash(c *gin.Context) {
+	hash := ginx.QueryStr(c, "hash")
+	ginx.NewRender(c).Message(models.AlertCurEventDelByHash(rt.Ctx, hash))
+}
