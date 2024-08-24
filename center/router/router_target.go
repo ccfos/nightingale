@@ -52,6 +52,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 	order := ginx.QueryStr(c, "order", "ident")
 	desc := ginx.QueryBool(c, "desc", false)
 
+	hosts := queryStrListField(c, "hosts", ",", " ", "\n")
+
 	var err error
 	if len(bgids) == 0 {
 		user := c.MustGet("user").(*models.User)
@@ -70,6 +72,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 		models.BuildTargetWhereWithDsIds(dsIds),
 		models.BuildTargetWhereWithQuery(query),
 		models.BuildTargetWhereWithDowntime(downtime),
+		models.BuildTargetWhereWithHosts(hosts),
 	}
 	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
