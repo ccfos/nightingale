@@ -167,7 +167,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
-	go e.Send(rule, event, notifyTarget)
+	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
 	if !isSubscribe {
@@ -238,11 +238,12 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 	e.HandleEventNotify(&event, true)
 }
 
-func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget) {
+func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget, isSubscribe bool) {
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
+			msgCtx := sender.BuildMessageContext(e.ctx, rule, []*models.AlertCurEvent{event},
+				uids, e.userCache, e.Astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -264,18 +265,20 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	// handle event callbacks
 	e.SendCallbacks(rule, notifyTarget, event)
 
-	// handle ibex callbacks
-	e.HandleIbex(rule, event)
-
 	// handle global webhooks
 	if e.alerting.WebhookBatchSend {
-		sender.BatchSendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 	} else {
-		sender.SingleSendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 	}
 
-	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.Astats)
+	if !isSubscribe {
+		// handle ibex callbacks
+		e.HandleIbex(rule, event)
+		// handle plugin call
+		go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
+			GetNotifyScript(), e.Astats, event)
+	}
 }
 
 func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTarget, event *models.AlertCurEvent) {
