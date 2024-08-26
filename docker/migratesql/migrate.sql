@@ -100,3 +100,7 @@ CREATE TABLE notification_record (
     `created_at` BIGINT NOT NULL,
     INDEX idx_evt (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+/* v7.3.0 2024-08-26 */
+ALTER TABLE `target` ADD COLUMN `host_tags` TEXT COMMENT 'global labels set in conf file';
