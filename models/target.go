@@ -334,7 +334,7 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 	return inexistence, identSet.ToSlice(), nil
 }
 
-func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
+func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool) ([]string, error) {
 	session := DB(ctx).Model(new(Target))
 
 	var arr []*Target
@@ -358,8 +358,11 @@ func TargetGetTags(ctx *ctx.Context, idents []string) ([]string, error) {
 		for j := 0; j < len(tags); j++ {
 			set[tags[j]] = struct{}{}
 		}
-		for _, ht := range arr[i].HostTags {
-			set[ht] = struct{}{}
+
+		if !ignoreHostTag {
+			for _, ht := range arr[i].HostTags {
+				set[ht] = struct{}{}
+			}
 		}
 	}
 
