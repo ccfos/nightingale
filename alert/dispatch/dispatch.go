@@ -272,12 +272,13 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
 	}
 
+	// handle plugin call
+	go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
+		GetNotifyScript(), e.Astats, event)
+
 	if !isSubscribe {
 		// handle ibex callbacks
 		e.HandleIbex(rule, event)
-		// handle plugin call
-		go sender.MayPluginNotify(e.ctx, e.genNoticeBytes(event), e.notifyConfigCache.
-			GetNotifyScript(), e.Astats, event)
 	}
 }
 
