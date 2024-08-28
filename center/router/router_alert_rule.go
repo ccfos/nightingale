@@ -143,14 +143,16 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 	var pr struct {
 		Groups []models.PromRuleGroup `yaml:"groups"`
 	}
-	ginx.Dangerous(yaml.Unmarshal([]byte(f.Payload), &pr))
+	err := yaml.Unmarshal([]byte(f.Payload), &pr)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "invalid yaml format, please use the example format. err: %v", err)
+	}
+
 	if len(pr.Groups) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
 	}
-	ds, err := json.Marshal(f.DatasourceIds)
-	ginx.Dangerous(err)
 
-	lst := models.DealPromGroup(pr.Groups, string(ds), f.Disabled)
+	lst := models.DealPromGroup(pr.Groups, f.DatasourceIds, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
