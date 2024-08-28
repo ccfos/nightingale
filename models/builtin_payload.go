@@ -178,7 +178,7 @@ func InitBuiltinPayloads(ctx *ctx.Context) error {
 		identToId[component.Ident] = component.ID
 	}
 
-	err = DB(ctx).Where("component_id = 0").Find(&lst).Error
+	err = DB(ctx).Where("component_id = 0 or component_id is NULL").Find(&lst).Error
 	if err != nil {
 		return err
 	}

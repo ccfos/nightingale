@@ -277,5 +277,5 @@ type SsoConfig struct {
 
 type BuiltinPayloads struct {
 	UUID        int64 `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
-	ComponentID int64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;comment:'component_id of payload'"`
+	ComponentID int64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;not null;default:0;comment:'component_id of payload'"`
 }
