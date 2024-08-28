@@ -1,0 +1,2464 @@
+{
+    "name": "JVM仪表盘",
+    "tags": "Actuator",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "98ba9b06-9d1e-44b9-a626-f4e704cc39ac",
+                "layout": {
+                    "h": 1,
+                    "i": "98ba9b06-9d1e-44b9-a626-f4e704cc39ac",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Quick Facts",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 2,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c325f6ba-bca2-42f1-a518-1d3077b54a54",
+                "layout": {
+                    "h": 4,
+                    "i": "c325f6ba-bca2-42f1-a518-1d3077b54a54",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Start time",
+                "options": {
+                    "standardOptions": {
+                        "util": "datetimeMilliseconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_start_time_seconds{ident=~\"$instance\"}*1000",
+                        "legend": "{{ident}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 2,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "95bc69c0-0b29-4dc5-8404-c0ca0741918f",
+                "layout": {
+                    "h": 4,
+                    "i": "95bc69c0-0b29-4dc5-8404-c0ca0741918f",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Uptime",
+                "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "process_uptime_seconds{ident=~\"$instance\"}",
+                        "legend": "{{ident}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 2,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "03627849-92c0-4a5c-9558-738dc6bd6186",
+                "layout": {
+                    "h": 4,
+                    "i": "03627849-92c0-4a5c-9558-738dc6bd6186",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Heap used",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(jvm_memory_used_bytes{ident=~\"$instance\", area=\"heap\"}) by(ident)/on(ident)(sum(jvm_memory_max_bytes{ident=~\"$instance\", area=\"heap\"}) by(ident)) * 100",
+                        "legend": "{{ident}}",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 2,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "4e85e1c3-9623-4e1c-bbb2-a4824455c5b3",
+                "layout": {
+                    "h": 4,
+                    "i": "4e85e1c3-9623-4e1c-bbb2-a4824455c5b3",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Non-Heap used",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(jvm_memory_used_bytes{ident=~\"$instance\", area=\"nonheap\"})by(ident)/on(ident)(sum(jvm_memory_max_bytes{ident=~\"$instance\", area=\"nonheap\"})by(ident))*100",
+                        "legend": "",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "abe6c0c1-8b88-450a-908f-0f51cc973761",
+                "layout": {
+                    "h": 1,
+                    "i": "abe6c0c1-8b88-450a-908f-0f51cc973761",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 5
+                },
+                "name": "I/O Overview",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "4d5bedf5-2b3c-425b-a4be-b5e7f36300af",
+                "layout": {
+                    "h": 7,
+                    "i": "4d5bedf5-2b3c-425b-a4be-b5e7f36300af",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Rate",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(http_server_requests_seconds_count{ident=~\"$instance\"}[1m])) by (ident)",
+                        "legend": "{{ident}}-HTTP",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "68f7255b-6637-4967-906d-a6d4c9a61d88",
+                "layout": {
+                    "h": 7,
+                    "i": "68f7255b-6637-4967-906d-a6d4c9a61d88",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Errors",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(http_server_requests_seconds_count{ident=~\"$instance\", status=~\"5..\"}[1m])) by (ident)",
+                        "legend": "{{ident}}-HTTP - 5xx",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "07d11fe1-7005-420f-bbfc-16f304294ef7",
+                "layout": {
+                    "h": 7,
+                    "i": "07d11fe1-7005-420f-bbfc-16f304294ef7",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Duration",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden",
+                        "heightInPercentage": 30,
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(http_server_requests_seconds_sum{ident=~\"$instance\", status!~\"5..\"}[1m]) by(ident)/on(ident)(sum(http_server_requests_seconds_count{ident=~\"$instance\", status!~\"5..\"}[1m]) by(ident))",
+                        "legend": "{{ident}}-HTTP - AVG",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(http_server_requests_seconds_max{ident=~\"$instance\", status!~\"5..\"}) by (ident)",
+                        "hide": false,
+                        "legend": "{{ident}}-HTTP - MAX",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "description": "",
+                "id": "caf07cdd-42e4-427b-b511-ee967246330a",
+                "layout": {
+                    "h": 7,
+                    "i": "caf07cdd-42e4-427b-b511-ee967246330a",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 6
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Utilisation",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "tomcat_threads_busy{ident=~\"$instance\"} or tomcat_threads_busy_threads{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-TOMCAT - BSY",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "tomcat_threads_current{ident=~\"$instance\"} or tomcat_threads_current_threads{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-TOMCAT - CUR",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "tomcat_threads_config_max{ident=~\"$instance\"} or tomcat_threads_config_max_threads{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-TOMCAT - MAX",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "jetty_threads_busy{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-JETTY - BSY",
+                        "maxDataPoints": 240,
+                        "refId": "D"
+                    },
+                    {
+                        "expr": "jetty_threads_current{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-JETTY - CUR",
+                        "maxDataPoints": 240,
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "jetty_threads_config_max{ident=~\"$instance\"}",
+                        "legend": "{{ident}}-JETTY - MAX",
+                        "maxDataPoints": 240,
+                        "refId": "F"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "83e3307c-b862-471b-a14f-9f88c8b67dbf",
+                "layout": {
+                    "h": 1,
+                    "i": "83e3307c-b862-471b-a14f-9f88c8b67dbf",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "name": "JVM Memory",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1aeab3d4-de80-4795-ae7e-57c9b085a074",
+                "layout": {
+                    "h": 7,
+                    "i": "1aeab3d4-de80-4795-ae7e-57c9b085a074",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM Heap",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off",
+                            "standardOptions": {
+                                "decimals": null
+                            }
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(jvm_memory_used_bytes{ident=~\"$instance\", area=\"heap\"}) by (ident)",
+                        "legend": "{{ident}}-used",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_committed_bytes{ident=~\"$instance\", area=\"heap\"}) by (ident)",
+                        "legend": "{{ident}}-committed",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_max_bytes{ident=~\"$instance\", area=\"heap\"}) by (ident)",
+                        "legend": "{{ident}}-max",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "dd9a63b6-9a33-416f-8dbe-dbbae1ff3fed",
+                "layout": {
+                    "h": 7,
+                    "i": "dd9a63b6-9a33-416f-8dbe-dbbae1ff3fed",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM Non-Heap",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "valueMappings": []
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(jvm_memory_used_bytes{ident=~\"$instance\", area=\"nonheap\"}) by (ident)",
+                        "legend": "{{ident}}-used",
+                        "maxDataPoints": 240,
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_committed_bytes{ident=~\"$instance\", area=\"nonheap\"}) by (ident)",
+                        "legend": "{{ident}}-committed",
+                        "maxDataPoints": 240,
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_max_bytes{ident=~\"$instance\", area=\"nonheap\"}) by (ident)",
+                        "legend": "{{ident}}-max",
+                        "maxDataPoints": 240,
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "df058502-188f-4711-b1da-3240a39cb35b",
+                "layout": {
+                    "h": 7,
+                    "i": "df058502-188f-4711-b1da-3240a39cb35b",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM Total",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(jvm_memory_used_bytes{ident=\"$instance\"})",
+                        "legend": "used",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_committed_bytes{ident=\"$instance\"})",
+                        "legend": "committed",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "sum(jvm_memory_max_bytes{ident=\"$instance\"})",
+                        "legend": "max",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "process_memory_rss_bytes{ident=\"$instance\"}",
+                        "legend": "rss",
+                        "refId": "E"
+                    },
+                    {
+                        "expr": "process_memory_pss_bytes{ident=\"$instance\"}",
+                        "legend": "pss",
+                        "refId": "F"
+                    },
+                    {
+                        "expr": "process_memory_swap_bytes{ident=\"$instance\"}",
+                        "legend": "swap",
+                        "refId": "G"
+                    },
+                    {
+                        "expr": "process_memory_swappss_bytes{ident=\"$instance\"}",
+                        "legend": "swappss",
+                        "refId": "H"
+                    },
+                    {
+                        "expr": "process_memory_pss_bytes{ident=\"$instance\"} + process_memory_swap_bytes{ident=\"$instance\"}",
+                        "legend": "phys (pss+swap)",
+                        "refId": "I"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "1607d97f-074a-457c-90f2-c6ccbf5ffef3",
+                "layout": {
+                    "h": 7,
+                    "i": "1607d97f-074a-457c-90f2-c6ccbf5ffef3",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 14
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "JVM Native Memory",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "(process_memory_pss_bytes{ident=\"$instance\"} + process_memory_swap_bytes{ident=\"$instance\"}  - on(instance) sum(jvm_memory_committed_bytes{ident=\"$instance\"})  by(instance)) >= 0",
+                        "legend": "native",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "ea05f925-19aa-4ba4-8daa-4133e939c5fb",
+                "layout": {
+                    "h": 1,
+                    "i": "ea05f925-19aa-4ba4-8daa-4133e939c5fb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 28
+                },
+                "name": "JVM Misc",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "8e65b992-ea8b-40b0-b201-23c8e54436a5",
+                "layout": {
+                    "h": 7,
+                    "i": "8e65b992-ea8b-40b0-b201-23c8e54436a5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 29
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "CPU",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "system_cpu_usage{ident=\"$instance\"}",
+                        "legend": "system",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "process_cpu_usage{ident=\"$instance\"}",
+                        "legend": "process",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "avg_over_time(process_cpu_usage{ident=\"$instance\"}[1h])",
+                        "legend": "process-1h",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "c8db3f1c-b857-473b-be1a-4d4d5b1d7618",
+                "layout": {
+                    "h": 7,
+                    "i": "c8db3f1c-b857-473b-be1a-4d4d5b1d7618",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 29
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "File Descriptors",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "process_open_fds{ident=\"$instance\"}",
+                        "legend": "open",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "process_max_fds{ident=\"$instance\"}",
+                        "legend": "max",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "process_files_open{ident=\"$instance\"} or process_files_open_files{ident=\"$instance\"}",
+                        "legend": "open",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "process_files_max{ident=\"$instance\"} or process_files_max_files{ident=\"$instance\"}",
+                        "legend": "max",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "d1e449d5-31e3-4df9-a69a-c22edab3a44e",
+                "layout": {
+                    "h": 7,
+                    "i": "d1e449d5-31e3-4df9-a69a-c22edab3a44e",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 29
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Threads",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "jvm_threads_live{ident=\"$instance\"} or jvm_threads_live_threads{ident=\"$instance\"}",
+                        "legend": "live",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_threads_daemon{ident=\"$instance\"} or jvm_threads_daemon_threads{ident=\"$instance\"}",
+                        "legend": "daemon",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "jvm_threads_peak{ident=\"$instance\"} or jvm_threads_peak_threads{ident=\"$instance\"}",
+                        "legend": "peak",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "process_threads{ident=\"$instance\"}",
+                        "legend": "process",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "3b8ef3a3-f687-4cf9-8348-da9e60bfa0f5",
+                "layout": {
+                    "h": 7,
+                    "i": "3b8ef3a3-f687-4cf9-8348-da9e60bfa0f5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 29
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Thread States",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "jvm_threads_states_threads{ident=\"$instance\"}",
+                        "legend": "{{state}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "2e02407c-9beb-460a-bca8-9b4dfd2e3a37",
+                "layout": {
+                    "h": 8,
+                    "i": "2e02407c-9beb-460a-bca8-9b4dfd2e3a37",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 36
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Log Events (1m)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "increase(logback_events_total{ident=\"$instance\"}[1m])",
+                        "legend": "{{level}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "84242a2f-64ec-4b71-8a9e-5441eb3ac271",
+                "layout": {
+                    "h": 1,
+                    "i": "84242a2f-64ec-4b71-8a9e-5441eb3ac271",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 44
+                },
+                "name": "JVM Memory Pools (Heap)",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "22a3c8aa-4452-46c9-9439-4a5c524ab79e",
+                "layout": {
+                    "h": 8,
+                    "i": "22a3c8aa-4452-46c9-9439-4a5c524ab79e",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 45
+                },
+                "links": [],
+                "maxPerRow": 3,
+                "name": "$jvm_memory_pool_heap",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "repeat": "jvm_memory_pool_heap",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_used_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_heap\"}",
+                        "legend": "used",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_memory_committed_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_heap\"}",
+                        "legend": "commited",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "jvm_memory_max_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_heap\"}",
+                        "legend": "max",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "5b6abe6d-7496-454c-9ab9-fcb7f068f626",
+                "layout": {
+                    "h": 1,
+                    "i": "5b6abe6d-7496-454c-9ab9-fcb7f068f626",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 77
+                },
+                "name": "JVM Memory Pools (Non-Heap)",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "6ebac55a-4d88-4f3e-8414-5df8e27d3d60",
+                "layout": {
+                    "h": 7,
+                    "i": "6ebac55a-4d88-4f3e-8414-5df8e27d3d60",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 78
+                },
+                "links": [],
+                "maxPerRow": 3,
+                "name": "$jvm_memory_pool_nonheap",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "repeat": "jvm_memory_pool_nonheap",
+                "targets": [
+                    {
+                        "expr": "jvm_memory_used_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_nonheap\"}",
+                        "legend": "used",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_memory_committed_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_nonheap\"}",
+                        "legend": "commited",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "jvm_memory_max_bytes{ident=\"$instance\", id=\"$jvm_memory_pool_nonheap\"}",
+                        "legend": "max",
+                        "refId": "C"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "ec6d25b8-cfe1-42c0-afc4-c32886432636",
+                "layout": {
+                    "h": 1,
+                    "i": "ec6d25b8-cfe1-42c0-afc4-c32886432636",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 106
+                },
+                "name": "Garbage Collection",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "adf56723-9689-4202-a7dd-1d9d844a5e66",
+                "layout": {
+                    "h": 7,
+                    "i": "adf56723-9689-4202-a7dd-1d9d844a5e66",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 107
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Collections",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(jvm_gc_pause_seconds_count{ident=\"$instance\"}[1m])",
+                        "legend": "{{action}} ({{cause}})",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "7caea97e-1cfb-45c6-892f-fe89377bd8fa",
+                "layout": {
+                    "h": 7,
+                    "i": "7caea97e-1cfb-45c6-892f-fe89377bd8fa",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 107
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Pause Durations",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(jvm_gc_pause_seconds_sum{ident=\"$instance\"}[1m])/rate(jvm_gc_pause_seconds_count{ident=\"$instance\"}[1m])",
+                        "legend": "avg {{action}} ({{cause}})",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_gc_pause_seconds_max{ident=\"$instance\"}",
+                        "legend": "max {{action}} ({{cause}})",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "00223434-f6e0-4c53-8562-38bcb46948f4",
+                "layout": {
+                    "h": 7,
+                    "i": "00223434-f6e0-4c53-8562-38bcb46948f4",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 107
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Allocated/Promoted",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(jvm_gc_memory_allocated_bytes_total{ident=\"$instance\"}[1m])",
+                        "legend": "allocated",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "rate(jvm_gc_memory_promoted_bytes_total{ident=\"$instance\"}[1m])",
+                        "legend": "promoted",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "fe904abb-6089-453d-8e7e-79e2483ef9c9",
+                "layout": {
+                    "h": 7,
+                    "i": "ea58a286-37cb-48a8-92f6-f09347a04964",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 114
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Pause Durations",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(jvm_gc_pause_seconds_sum{ident=\"$instance\"}[1m])/rate(jvm_gc_pause_seconds_count{ident=\"$instance\"}[1m])",
+                        "legend": "avg {{action}} ({{cause}})",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "jvm_gc_pause_seconds_max{ident=\"$instance\"}",
+                        "legend": "max {{action}} ({{cause}})",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "a199f2f8-136c-44f4-aea5-da20e0e479fb",
+                "layout": {
+                    "h": 1,
+                    "i": "a199f2f8-136c-44f4-aea5-da20e0e479fb",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 121
+                },
+                "name": "Classloading",
+                "panels": [],
+                "type": "row",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "903e6501-6f64-4860-a12a-4e07a7424ef8",
+                "layout": {
+                    "h": 7,
+                    "i": "903e6501-6f64-4860-a12a-4e07a7424ef8",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 122
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Classes loaded",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "jvm_classes_loaded{ident=\"$instance\"} or jvm_classes_loaded_classes{ident=\"$instance\"}",
+                        "legend": "loaded",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${datasource}",
+                "id": "dc21d536-f4c0-48c0-99f1-eef82b30e979",
+                "layout": {
+                    "h": 7,
+                    "i": "dc21d536-f4c0-48c0-99f1-eef82b30e979",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 122
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "Class delta (5m)",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "delta(jvm_classes_loaded{application=\"$application\",ident=\"$instance\"}[5m]) or delta(jvm_classes_loaded_classes{application=\"$application\",ident=\"$instance\"}[5m])",
+                        "legend": "delta",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": false,
+                "id": "6c164737-84da-4d51-911b-38e207bef57e",
+                "layout": {
+                    "h": 1,
+                    "i": "6c164737-84da-4d51-911b-38e207bef57e",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 129
+                },
+                "name": "Buffer Pools",
+                "panels": [
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.5,
+                            "gradientMode": "none",
+                            "lineInterpolation": "linear",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "id": "9ac2c14e-9871-4b84-a5cb-976f8dfe6c19",
+                        "layout": {
+                            "h": 7,
+                            "i": "9ac2c14e-9871-4b84-a5cb-976f8dfe6c19",
+                            "isResizable": true,
+                            "w": 6,
+                            "x": 0,
+                            "y": 130
+                        },
+                        "links": [],
+                        "maxPerRow": 4,
+                        "name": "Direct Buffers",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "jvm_buffer_memory_used_bytes{ident=\"$instance\", id=\"direct\"}",
+                                "legend": "used",
+                                "refId": "A"
+                            },
+                            {
+                                "expr": "jvm_buffer_total_capacity_bytes{ident=\"$instance\", id=\"direct\"}",
+                                "legend": "capacity",
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.5,
+                            "gradientMode": "none",
+                            "lineInterpolation": "linear",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "id": "f38df099-4559-4239-b283-21bd3949c81d",
+                        "layout": {
+                            "h": 7,
+                            "i": "f38df099-4559-4239-b283-21bd3949c81d",
+                            "isResizable": true,
+                            "w": 6,
+                            "x": 6,
+                            "y": 130
+                        },
+                        "links": [],
+                        "maxPerRow": 4,
+                        "name": "Direct Buffers",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "jvm_buffer_count{ident=\"$instance\", id=\"direct\"} or jvm_buffer_count_buffers{ident=\"$instance\", id=\"direct\"}",
+                                "legend": "count",
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.5,
+                            "gradientMode": "none",
+                            "lineInterpolation": "linear",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "id": "ef8f0a38-f98e-428c-a601-186dccafd2c1",
+                        "layout": {
+                            "h": 7,
+                            "i": "ef8f0a38-f98e-428c-a601-186dccafd2c1",
+                            "isResizable": true,
+                            "w": 6,
+                            "x": 12,
+                            "y": 130
+                        },
+                        "links": [],
+                        "maxPerRow": 4,
+                        "name": "Mapped Buffers",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "jvm_buffer_memory_used_bytes{ident=\"$instance\", id=\"mapped\"}",
+                                "legend": "used",
+                                "refId": "A"
+                            },
+                            {
+                                "expr": "jvm_buffer_total_capacity_bytes{ident=\"$instance\", id=\"mapped\"}",
+                                "legend": "capacity",
+                                "refId": "B"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    },
+                    {
+                        "custom": {
+                            "drawStyle": "lines",
+                            "fillOpacity": 0.5,
+                            "gradientMode": "none",
+                            "lineInterpolation": "linear",
+                            "lineWidth": 1,
+                            "scaleDistribution": {
+                                "type": "linear"
+                            },
+                            "spanNulls": false,
+                            "stack": "off"
+                        },
+                        "datasourceCate": "prometheus",
+                        "datasourceValue": "${datasource}",
+                        "id": "3abe8423-f8fd-44b8-8321-1753943d4e9c",
+                        "layout": {
+                            "h": 7,
+                            "i": "3abe8423-f8fd-44b8-8321-1753943d4e9c",
+                            "isResizable": true,
+                            "w": 6,
+                            "x": 18,
+                            "y": 130
+                        },
+                        "links": [],
+                        "maxPerRow": 4,
+                        "name": "Mapped Buffers",
+                        "options": {
+                            "legend": {
+                                "behaviour": "showItem",
+                                "displayMode": "hidden"
+                            },
+                            "standardOptions": {},
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#634CD9",
+                                        "type": "base",
+                                        "value": null
+                                    }
+                                ]
+                            },
+                            "tooltip": {
+                                "mode": "all",
+                                "sort": "none"
+                            }
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byFrameRefID"
+                                },
+                                "properties": {
+                                    "rightYAxisDisplay": "off"
+                                }
+                            }
+                        ],
+                        "targets": [
+                            {
+                                "expr": "jvm_buffer_count{ident=\"$instance\", id=\"mapped\"} or jvm_buffer_count_buffers{ident=\"$instance\", id=\"mapped\"}",
+                                "legend": "count",
+                                "refId": "A"
+                            }
+                        ],
+                        "transformations": [
+                            {
+                                "id": "organize",
+                                "options": {}
+                            }
+                        ],
+                        "type": "timeseries",
+                        "version": "3.0.0"
+                    }
+                ],
+                "type": "row",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "datasource",
+                "type": "datasource"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(jvm_memory_used_bytes, application)",
+                "multi": false,
+                "name": "application",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(jvm_memory_used_bytes{application=\"$application\"}, ident)",
+                "multi": true,
+                "name": "instance",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(jvm_memory_used_bytes{application=\"$application\",ident=~\"$instance\",area=\"heap\", },id)",
+                "hide": false,
+                "multi": false,
+                "name": "jvm_memory_pool_heap",
+                "reg": "",
+                "type": "query"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(jvm_memory_used_bytes{application=\"$application\",ident=~\"$instance\",area=\"nonheap\"}, id)",
+                "hide": false,
+                "multi": false,
+                "name": "jvm_memory_pool_nonheap",
+                "reg": "",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1724670732548038000
+}

@@ -58,7 +58,7 @@ func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.BuiltinComponent{}}
+		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
 		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
@@ -227,14 +227,15 @@ type AlertCurEvent struct {
 }
 
 type Target struct {
-	HostIp       string `gorm:"column:host_ip;varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
-	AgentVersion string `gorm:"column:agent_version;varchar(255);default:'';comment:agent version;index:idx_agent_version"`
-	EngineName   string `gorm:"column:engine_name;varchar(255);default:'';comment:engine name;index:idx_engine_name"`
-	OS           string `gorm:"column:os;varchar(31);default:'';comment:os type;index:idx_os"`
+	HostIp       string   `gorm:"column:host_ip;type:varchar(15);default:'';comment:IPv4 string;index:idx_host_ip"`
+	AgentVersion string   `gorm:"column:agent_version;type:varchar(255);default:'';comment:agent version;index:idx_agent_version"`
+	EngineName   string   `gorm:"column:engine_name;type:varchar(255);default:'';comment:engine name;index:idx_engine_name"`
+	OS           string   `gorm:"column:os;type:varchar(31);default:'';comment:os type;index:idx_os"`
+	HostTags     []string `gorm:"column:host_tags;type:text;comment:global labels set in conf file;serializer:json"`
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;type:boolean;not null;comment:is default datasource"`
+	IsDefault bool `gorm:"column:is_default;type:boolean;comment:is default datasource"`
 }
 
 type Configs struct {

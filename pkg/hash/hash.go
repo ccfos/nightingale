@@ -2,6 +2,7 @@ package hash
 
 import (
 	"sort"
+	"strings"
 
 	prommodel "github.com/prometheus/common/model"
 	"github.com/spaolacci/murmur3"
@@ -52,4 +53,15 @@ func GetTagHash(m prommodel.Metric) uint64 {
 	}
 
 	return murmur3.Sum64([]byte(str))
+}
+
+func GetTargetTagHash(m prommodel.Metric, target []string) uint64 {
+	builder := strings.Builder{}
+	for _, k := range target {
+		builder.WriteString("/")
+		builder.WriteString(k)
+		builder.WriteString("/")
+		builder.WriteString(string(m[prommodel.LabelName(k)]))
+	}
+	return murmur3.Sum64([]byte(builder.String()))
 }

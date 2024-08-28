@@ -315,6 +315,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGets)
 		pages.POST("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByFE)
 		pages.POST("/busi-group/:id/alert-rules/import", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByImport)
+		pages.POST("/busi-group/:id/alert-rules/import-prom-rule", rt.auth(),
+			rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByImportPromRule)
 		pages.DELETE("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules/del"), rt.bgrw(), rt.alertRuleDel)
 		pages.PUT("/busi-group/:id/alert-rules/fields", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.bgrw(), rt.alertRulePutFields)
 		pages.PUT("/busi-group/:id/alert-rule/:arid", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRulePutByFE)
@@ -322,6 +324,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-rule/:arid/pure", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRulePureGet)
 		pages.PUT("/busi-group/alert-rule/validate", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRuleValidation)
 		pages.POST("/relabel-test", rt.auth(), rt.user(), rt.relabelTest)
+		pages.POST("/busi-group/:id/alert-rules/clone", rt.auth(), rt.user(), rt.perm("/alert-rules/post"), rt.bgrw(), rt.cloneToMachine)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -350,9 +353,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		if rt.Center.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+			pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 		} else {
 			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.user(), rt.alertCurEventGet)
 			pages.GET("/alert-his-event/:eid", rt.auth(), rt.user(), rt.alertHisEventGet)
+			pages.GET("/event-notify-records/:eid", rt.auth(), rt.user(), rt.notificationRecordList)
 		}
 
 		// card logic
@@ -551,6 +556,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			service.GET("/targets-of-alert-rule", rt.targetsOfAlertRule)
 
+			service.POST("/notify-record", rt.notificationRecordAdd)
+
+			service.GET("/alert-cur-events-del-by-hash", rt.alertCurEventDelByHash)
 		}
 	}
 

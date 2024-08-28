@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -24,6 +25,21 @@ const (
 
 	PROMETHEUS = "prometheus"
 	TDENGINE   = "tdengine"
+)
+
+const (
+	AlertRuleEnabled  = 0
+	AlertRuleDisabled = 1
+
+	AlertRuleEnableInGlobalBG = 0
+	AlertRuleEnableInOneBG    = 1
+
+	AlertRuleNotNotifyRecovered = 0
+	AlertRuleNotifyRecovered    = 1
+
+	AlertRuleNotifyRepeatStep60Min = 60
+
+	AlertRuleRecoverDuration0Sec = 0
 )
 
 type AlertRule struct {
@@ -84,6 +100,24 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 }
 
+type Tpl struct {
+	TplId   int64    `json:"tpl_id"`
+	TplName string   `json:"tpl_name"`
+	Host    []string `json:"host"`
+}
+
+type RuleConfig struct {
+	Version            string                 `json:"version,omitempty"`
+	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config,omitempty"`
+	TaskTpls           []*Tpl                 `json:"task_tpls,omitempty"`
+	Queries            interface{}            `json:"queries,omitempty"`
+	Triggers           []Trigger              `json:"triggers,omitempty"`
+	Inhibit            bool                   `json:"inhibit,omitempty"`
+	PromQl             string                 `json:"prom_ql,omitempty"`
+	Severity           int                    `json:"severity,omitempty"`
+	AlgoParams         interface{}            `json:"algo_params,omitempty"`
+}
+
 type PromRuleConfig struct {
 	Queries    []PromQuery `json:"queries"`
 	Inhibit    bool        `json:"inhibit"`
@@ -122,6 +156,16 @@ type Trigger struct {
 	Mode        int         `json:"mode"`
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
+
+	Type     string `json:"type,omitempty"`
+	Duration int    `json:"duration,omitempty"`
+	Percent  int    `json:"percent,omitempty"`
+	Joins    []Join `json:"joins"`
+}
+
+type Join struct {
+	JoinType string   `json:"join_type"`
+	On       []string `json:"on"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
@@ -148,12 +192,14 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 				blank := " "
 				for _, tag := range lst {
 					m["tags like ?"+blank] = "%" + tag + "%"
+					m["host_tags like ?"+blank] = "%" + tag + "%"
 					blank += " "
 				}
 			} else {
 				blank := " "
 				for _, tag := range lst {
 					m["tags not like ?"+blank] = "%" + tag + "%"
+					m["host_tags not like ?"+blank] = "%" + tag + "%"
 					blank += " "
 				}
 			}
@@ -692,6 +738,25 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 	return false, nil
 }
 
+func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
+	tpl := "%\"tpl_id\":" + fmt.Sprint(taskId) + "}%"
+	cb := "{ibex}/" + fmt.Sprint(taskId) + "%"
+	session := DB(ctx).Where("rule_config like ? or callbacks like ?", tpl, cb)
+
+	var lst []AlertRule
+	var ids []int64
+	err := session.Find(&lst).Error
+	if err != nil || len(lst) == 0 {
+		return ids, err
+	}
+
+	for i := 0; i < len(lst); i++ {
+		ids = append(ids, lst[i].Id)
+	}
+
+	return ids, nil
+}
+
 func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 	session := DB(ctx).Where("group_id=?", groupId).Order("name")
 
@@ -1023,4 +1088,20 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 	}
 
 	return m, nil
+}
+
+func (ar *AlertRule) Copy(ctx *ctx.Context) (*AlertRule, error) {
+	newAr := &AlertRule{}
+	err := copier.Copy(newAr, ar)
+	if err != nil {
+		logger.Errorf("copy alert rule failed, %v", err)
+	}
+	return newAr, err
+}
+
+func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
+	if len(ars) == 0 {
+		return nil
+	}
+	return DB(ctx).Create(ars).Error
 }

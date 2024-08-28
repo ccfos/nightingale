@@ -87,3 +87,20 @@ ALTER TABLE alert_his_event ADD COLUMN original_tags TEXT COMMENT 'labels key=va
 
 /* v7.1.0 */
 ALTER TABLE target ADD COLUMN os VARCHAR(31) DEFAULT '' COMMENT 'os type';
+
+/* v7.2.0 */
+CREATE TABLE notification_record (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `event_id` BIGINT NOT NULL,
+    `sub_id` BIGINT NOT NULL,
+    `channel` VARCHAR(255) NOT NULL,
+    `status` TINYINT NOT NULL DEFAULT 0,
+    `target` VARCHAR(1024) NOT NULL,
+    `details` VARCHAR(2048),
+    `created_at` BIGINT NOT NULL,
+    INDEX idx_evt (event_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+/* v7.3.0 2024-08-26 */
+ALTER TABLE `target` ADD COLUMN `host_tags` TEXT COMMENT 'global labels set in conf file';

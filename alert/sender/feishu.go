@@ -54,7 +54,8 @@ func (fs *FeishuSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSend(ctx.CallBackURL, body, models.Feishu, ctx.Stats)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback",
+		ctx.Stats, ctx.Events[0])
 	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
@@ -62,9 +63,9 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
-	urls, ats := fs.extract(ctx.Users)
+	urls, ats, tokens := fs.extract(ctx.Users)
 	message := BuildTplMessage(models.Feishu, fs.tpl, ctx.Events)
-	for _, url := range urls {
+	for i, url := range urls {
 		body := feishu{
 			Msgtype: "text",
 			Content: feishuContent{
@@ -77,13 +78,14 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 				IsAtAll:   false,
 			}
 		}
-		doSend(url, body, models.Feishu, ctx.Stats)
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Feishu, ctx.Stats, ctx.Events[0])
 	}
 }
 
-func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
+func (fs *FeishuSender) extract(users []*models.User) ([]string, []string, []string) {
 	urls := make([]string, 0, len(users))
 	ats := make([]string, 0, len(users))
+	tokens := make([]string, 0, len(users))
 
 	for _, user := range users {
 		if user.Phone != "" {
@@ -95,7 +97,8 @@ func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + token
 			}
 			urls = append(urls, url)
+			tokens = append(tokens, token)
 		}
 	}
-	return urls, ats
+	return urls, ats, tokens
 }
