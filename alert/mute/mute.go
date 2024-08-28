@@ -114,7 +114,7 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	target, exists := targetCache.Get(ident)
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
-	if exists && target.GroupId != rule.GroupId {
+	if exists && !target.MatchGroupId(rule.GroupId) {
 		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s", "BgNotMatchMuteStrategy", rule.Id, event.Cluster)
 		return true
 	}

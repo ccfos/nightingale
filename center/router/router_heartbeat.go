@@ -82,11 +82,14 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 		gid := ginx.QueryInt64(c, "gid", 0)
 		hostIp := strings.TrimSpace(req.HostIp)
 
-		field := make(map[string]interface{})
-		if gid != 0 && gid != target.GroupId {
-			field["group_id"] = gid
+		if gid != 0 && !target.MatchGroupId(gid) {
+			err := models.TargetBindBgids(ctx, []string{target.Ident}, []int64{gid})
+			if err != nil {
+				logger.Errorf("update target group ids failed, err: %v", err)
+			}
 		}
 
+		field := make(map[string]interface{})
 		if hostIp != "" && hostIp != target.HostIp {
 			field["host_ip"] = hostIp
 		}
