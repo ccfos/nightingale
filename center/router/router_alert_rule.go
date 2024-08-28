@@ -540,7 +540,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 	alertRules, err := models.AlertRuleGetsByIds(rt.Ctx, f.Ids)
 	ginx.Dangerous(err)
 
-	re := regexp.MustCompile("ident = \".*?\"")
+	re := regexp.MustCompile(`ident\s*=\s*\\".*?\\"`)
 
 	user := c.MustGet("username").(string)
 	now := time.Now().Unix()
@@ -556,36 +556,23 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 			reterr[alertRules[i].Name]["all"] = "Only Prometheus rules can be cloned to machines"
 			continue
 		}
-		var ruleConfig *models.PromRuleConfig
-		if err := json.Unmarshal([]byte(alertRules[i].RuleConfig), &ruleConfig); err != nil {
-			reterr[alertRules[i].Name]["all"] = "invalid rule, fail to unmarshal rule config"
-			continue
-		}
 
 		for j := range f.IdentList {
-
-			for q := range ruleConfig.Queries {
-				ruleConfig.Queries[q].PromQl = re.ReplaceAllString(ruleConfig.Queries[q].PromQl, fmt.Sprintf("ident = \"%s\"", f.IdentList[j]))
-			}
-
-			configJson, err := json.Marshal(ruleConfig)
-			if err != nil {
-				reterr[alertRules[i].Name][f.IdentList[j]] = fmt.Sprintf("invalid rule, fail to marshal rule config, err: %s", err)
-				continue
-			}
+			alertRules[i].RuleConfig = re.ReplaceAllString(alertRules[i].RuleConfig, fmt.Sprintf(`ident=\"%s\"`, f.IdentList[j]))
 
 			newRule := &models.AlertRule{}
 			if err := copier.Copy(newRule, alertRules[i]); err != nil {
 				reterr[alertRules[i].Name][f.IdentList[j]] = fmt.Sprintf("fail to clone rule, err: %s", err)
 				continue
 			}
+
 			newRule.Id = 0
 			newRule.Name = alertRules[i].Name + "_" + f.IdentList[j]
 			newRule.CreateBy = user
 			newRule.UpdateBy = user
 			newRule.UpdateAt = now
 			newRule.CreateAt = now
-			newRule.RuleConfig = string(configJson)
+			newRule.RuleConfig = alertRules[i].RuleConfig
 
 			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.DatasourceIdsJson, newRule.Name)
 			if err != nil {
