@@ -460,8 +460,8 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
-	severity int, dsIds []int64, cates []string, ruleId int64, query string, limit, offset int) (
+func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, dsIds []int64, cates []string, ruleIds []int64, query string, limit, offset int) (
 	[]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
@@ -487,8 +487,8 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 		session = session.Where("cate in ?", cates)
 	}
 
-	if ruleId > 0 {
-		session = session.Where("rule_id = ?", ruleId)
+	if len(ruleIds) > 0 {
+		session = session.Where("rule_id in ?", ruleIds)
 	}
 
 	if query != "" {
