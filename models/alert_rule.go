@@ -98,6 +98,7 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
+	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 }
 
 type Tpl struct {
@@ -573,6 +574,15 @@ func (ar *AlertRule) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGro
 	}
 
 	return nil
+}
+
+func (ar *AlertRule) FillCurEventCount(ctx *ctx.Context, stime, etime int64) {
+	cnt, err := AlertCurEventTotal(ctx, nil, nil, stime, etime, -1, nil, nil, ar.Id, "")
+	if err != nil {
+		logger.Errorf("AlertCurEventTotal err: %v", err)
+		return
+	}
+	ar.CurEventCount = cnt
 }
 
 func (ar *AlertRule) FE2DB() error {
