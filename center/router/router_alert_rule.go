@@ -550,19 +550,18 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 	reterr := make(map[string]map[string]string)
 
 	for i := range alertRules {
-		reterr[alertRules[i].Name] = make(map[string]string)
-
 		if alertRules[i].Cate != "prometheus" {
 			reterr[alertRules[i].Name]["all"] = "Only Prometheus rules can be cloned to machines"
 			continue
 		}
 
+		errMsg := make(map[string]string)
 		for j := range f.IdentList {
 			alertRules[i].RuleConfig = re.ReplaceAllString(alertRules[i].RuleConfig, fmt.Sprintf(`ident=\"%s\"`, f.IdentList[j]))
 
 			newRule := &models.AlertRule{}
 			if err := copier.Copy(newRule, alertRules[i]); err != nil {
-				reterr[alertRules[i].Name][f.IdentList[j]] = fmt.Sprintf("fail to clone rule, err: %s", err)
+				errMsg[f.IdentList[j]] = fmt.Sprintf("fail to clone rule, err: %s", err)
 				continue
 			}
 
@@ -576,16 +575,20 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 
 			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.DatasourceIdsJson, newRule.Name)
 			if err != nil {
-				reterr[alertRules[i].Name][f.IdentList[j]] = err.Error()
+				errMsg[f.IdentList[j]] = err.Error()
 				continue
 			}
 
 			if exist {
-				reterr[alertRules[i].Name][f.IdentList[j]] = fmt.Sprintf("rule already exists, ruleName: %s", newRule.Name)
+				errMsg[f.IdentList[j]] = fmt.Sprintf("rule already exists, ruleName: %s", newRule.Name)
 				continue
 			}
 
 			newRules = append(newRules, newRule)
+		}
+
+		if len(errMsg) > 0 {
+			reterr[alertRules[i].Name] = errMsg
 		}
 	}
 
