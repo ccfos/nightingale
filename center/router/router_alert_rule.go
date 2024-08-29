@@ -561,6 +561,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 		if !strings.Contains(alertRules[i].RuleConfig, "ident") {
 			errMsg["all"] = "promql is missing ident"
 			reterr[alertRules[i].Name] = errMsg
+			continue
 		}
 
 		for j := range f.IdentList {
