@@ -104,3 +104,6 @@ CREATE TABLE notification_record (
 
 /* v7.3.0 2024-08-26 */
 ALTER TABLE `target` ADD COLUMN `host_tags` TEXT COMMENT 'global labels set in conf file';
+
+/* v7.4.0 2024-08-28 */
+ALTER TABLE `builtin_payloads` ADD COLUMN `component_id` bigint(20) NOT NULL DEFAULT 0 COMMENT 'component_id';

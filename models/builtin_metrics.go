@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -216,4 +217,11 @@ func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]strin
 
 	err := session.Select("distinct(collector)").Pluck("collector", &collectors).Error
 	return collectors, err
+}
+
+func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy string) error {
+	if old == new {
+		return nil
+	}
+	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{col: new, "updated_by": updatedBy}).Error
 }
