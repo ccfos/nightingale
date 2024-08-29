@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	imodels "github.com/ccfos/nightingale/v6/ibex/models"
+	"github.com/ccfos/nightingale/v6/ibex/storage"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	imodels "github.com/flashcatcloud/ibex/src/models"
-	"github.com/flashcatcloud/ibex/src/storage"
 
 	"github.com/toolkits/pkg/logger"
 )

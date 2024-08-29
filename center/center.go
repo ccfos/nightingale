@@ -3,7 +3,6 @@ package center
 import (
 	"context"
 	"fmt"
-
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
@@ -34,7 +33,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	"github.com/flashcatcloud/ibex/src/cmd/ibex"
+	"github.com/ccfos/nightingale/v6/ibex/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {

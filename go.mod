@@ -3,12 +3,11 @@ module github.com/ccfos/nightingale/v6
 go 1.18
 
 require (
-	github.com/BurntSushi/toml v0.3.1
+	github.com/BurntSushi/toml v1.3.2
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/expr-lang/expr v1.16.1
-	github.com/flashcatcloud/ibex v1.3.5
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-ldap/ldap/v3 v3.4.4
@@ -34,6 +33,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.6
+	github.com/urfave/cli/v2 v2.27.4
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 	golang.org/x/oauth2 v0.10.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
@@ -42,6 +42,12 @@ require (
 	gorm.io/driver/postgres v1.4.5
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
+)
+
+require (
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 )
 
 require (
@@ -90,7 +96,7 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/ugorji/go/codec v1.2.11 // indirect
+	github.com/ugorji/go/codec v1.2.11
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.5.2 // indirect
 	golang.org/x/arch v0.3.0 // indirect

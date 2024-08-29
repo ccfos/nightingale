@@ -23,7 +23,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
-	"github.com/flashcatcloud/ibex/src/cmd/ibex"
+	"github.com/ccfos/nightingale/v6/ibex/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {

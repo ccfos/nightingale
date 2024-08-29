@@ -6,7 +6,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
-	imodels "github.com/flashcatcloud/ibex/src/models"
+	imodels "github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
