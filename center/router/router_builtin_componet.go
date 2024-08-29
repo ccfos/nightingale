@@ -4,9 +4,14 @@ import (
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"gorm.io/gorm"
 )
+
+const SYSTEM = "system"
 
 func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 	var lst []models.BuiltinComponent
@@ -50,10 +55,31 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 		return
 	}
 
+	if bc.CreatedBy == SYSTEM {
+		req.Ident = bc.Ident
+	}
+
 	username := Username(c)
 	req.UpdatedBy = username
 
-	ginx.NewRender(c).Message(bc.Update(rt.Ctx, req))
+	err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{
+			DB: tx,
+		}
+
+		txErr := models.BuiltinMetricBatchUpdateColumn(tCtx, "typ", bc.Ident, req.Ident, req.UpdatedBy)
+		if txErr != nil {
+			return txErr
+		}
+
+		txErr = bc.Update(tCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+		return nil
+	})
+
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) builtinComponentsDel(c *gin.Context) {

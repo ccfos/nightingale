@@ -9,18 +9,19 @@ import (
 )
 
 type BuiltinPayload struct {
-	ID        int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Type      string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
-	Component string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` // Host MySQL Redis
-	Cate      string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
-	Name      string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"`                //
-	Tags      string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
-	Content   string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
-	UUID      int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
-	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID          int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	Type        string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
+	Component   string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` //
+	ComponentID uint64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;comment:'component_id of payload'"`          // ComponentID which the payload belongs to
+	Cate        string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
+	Name        string `json:"name" gorm:"type:varchar(191);not null;index:idx_buildinpayload_name,sort:asc;comment:'name of payload'"` //
+	Tags        string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
+	Content     string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
+	UUID        int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
+	CreatedAt   int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy   string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt   int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy   string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
 func (bp *BuiltinPayload) TableName() string {
@@ -33,9 +34,8 @@ func (bp *BuiltinPayload) Verify() error {
 		return errors.New("type is blank")
 	}
 
-	bp.Component = strings.TrimSpace(bp.Component)
-	if bp.Component == "" {
-		return errors.New("component is blank")
+	if bp.ComponentID == 0 {
+		return errors.New("component_id is blank")
 	}
 
 	if bp.Name == "" {
@@ -47,7 +47,7 @@ func (bp *BuiltinPayload) Verify() error {
 
 func BuiltinPayloadExists(ctx *ctx.Context, bp *BuiltinPayload) (bool, error) {
 	var count int64
-	err := DB(ctx).Model(bp).Where("type = ? AND component = ? AND name = ? AND cate = ?", bp.Type, bp.Component, bp.Name, bp.Cate).Count(&count).Error
+	err := DB(ctx).Model(bp).Where("type = ? AND component_id = ? AND name = ? AND cate = ?", bp.Type, bp.ComponentID, bp.Name, bp.Cate).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
@@ -78,7 +78,7 @@ func (bp *BuiltinPayload) Update(ctx *ctx.Context, req BuiltinPayload) error {
 		return err
 	}
 
-	if bp.Type != req.Type || bp.Component != req.Component || bp.Name != req.Name {
+	if bp.Type != req.Type || bp.ComponentID != req.ComponentID || bp.Name != req.Name {
 		exists, err := BuiltinPayloadExists(ctx, &req)
 		if err != nil {
 			return err
@@ -117,13 +117,13 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 	return &bp, nil
 }
 
-func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string) ([]*BuiltinPayload, error) {
+func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query string) ([]*BuiltinPayload, error) {
 	session := DB(ctx)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
 	}
-	if component != "" {
-		session = session.Where("component = ?", component)
+	if componentId != 0 {
+		session = session.Where("component_id = ?", componentId)
 	}
 
 	if cate != "" {
@@ -144,9 +144,9 @@ func BuiltinPayloadGets(ctx *ctx.Context, typ, component, cate, query string) ([
 }
 
 // get cates of BuiltinPayload by type and component, return []string
-func BuiltinPayloadCates(ctx *ctx.Context, typ, component string) ([]string, error) {
+func BuiltinPayloadCates(ctx *ctx.Context, typ string, componentID uint64) ([]string, error) {
 	var cates []string
-	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component = ?", typ, component).Distinct("cate").Pluck("cate", &cates).Error
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component_id = ?", typ, componentID).Distinct("cate").Pluck("cate", &cates).Error
 	return cates, err
 }
 
@@ -162,4 +162,34 @@ func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error
 		return "", nil
 	}
 	return components[0], nil
+}
+
+// InitBuiltinPayloads 兼容新旧 BuiltinPayload 格式
+func InitBuiltinPayloads(ctx *ctx.Context) error {
+	var lst []*BuiltinPayload
+
+	components, err := BuiltinComponentGets(ctx, "")
+	if err != nil {
+		return err
+	}
+
+	identToId := make(map[string]uint64)
+	for _, component := range components {
+		identToId[component.Ident] = component.ID
+	}
+
+	err = DB(ctx).Where("component_id = 0 or component_id is NULL").Find(&lst).Error
+	if err != nil {
+		return err
+	}
+
+	for _, bp := range lst {
+		componentId, ok := identToId[bp.Component]
+		if !ok {
+			continue
+		}
+		bp.ComponentID = componentId
+	}
+
+	return DB(ctx).Save(&lst).Error
 }

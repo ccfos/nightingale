@@ -16,6 +16,12 @@ import (
 const SYSTEM = "system"
 
 func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
+	err := models.InitBuiltinPayloads(ctx)
+	if err != nil {
+		logger.Warning("init old builtinPayloads fail ", err)
+		return
+	}
+
 	fp := builtinIntegrationsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "integrations")
@@ -92,6 +98,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					logger.Warning("update builtin component fail ", old, err)
 				}
 			}
+			component.ID = old.ID
 		}
 
 		// delete uuid is emtpy
@@ -141,13 +148,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 
 					cate := strings.Replace(f, ".json", "", -1)
 					builtinAlert := models.BuiltinPayload{
-						Component: component.Ident,
-						Type:      "alert",
-						Cate:      cate,
-						Name:      alert.Name,
-						Tags:      alert.AppendTags,
-						Content:   string(content),
-						UUID:      alert.UUID,
+						ComponentID: component.ID,
+						Type:        "alert",
+						Cate:        cate,
+						Name:        alert.Name,
+						Tags:        alert.AppendTags,
+						Content:     string(content),
+						UUID:        alert.UUID,
 					}
 
 					old, err := models.BuiltinPayloadGet(ctx, "uuid = ?", alert.UUID)
@@ -165,6 +172,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 
 					if old.UpdatedBy == SYSTEM {
+						old.ComponentID = component.ID
 						old.Content = string(content)
 						old.Name = alert.Name
 						old.Tags = alert.AppendTags
@@ -231,13 +239,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				builtinDashboard := models.BuiltinPayload{
-					Component: component.Ident,
-					Type:      "dashboard",
-					Cate:      "",
-					Name:      dashboard.Name,
-					Tags:      dashboard.Tags,
-					Content:   string(content),
-					UUID:      dashboard.UUID,
+					ComponentID: component.ID,
+					Type:        "dashboard",
+					Cate:        "",
+					Name:        dashboard.Name,
+					Tags:        dashboard.Tags,
+					Content:     string(content),
+					UUID:        dashboard.UUID,
 				}
 
 				old, err := models.BuiltinPayloadGet(ctx, "uuid = ?", dashboard.UUID)
@@ -255,6 +263,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				if old.UpdatedBy == SYSTEM {
+					old.ComponentID = component.ID
 					old.Content = string(content)
 					old.Name = dashboard.Name
 					old.Tags = dashboard.Tags

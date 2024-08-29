@@ -67,6 +67,7 @@ type AlertCurEvent struct {
 	Claimant           string            `json:"claimant" gorm:"-"`
 	SubRuleId          int64             `json:"sub_rule_id" gorm:"-"`
 	ExtraInfo          []string          `json:"extra_info" gorm:"-"`
+	Target             *Target           `json:"target" gorm:"-"`
 }
 
 func (e *AlertCurEvent) TableName() string {
