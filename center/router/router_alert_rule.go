@@ -550,16 +550,19 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 	reterr := make(map[string]map[string]string)
 
 	for i := range alertRules {
+		errMsg := make(map[string]string)
+
 		if alertRules[i].Cate != "prometheus" {
-			reterr[alertRules[i].Name]["all"] = fmt.Sprintf("Only Prometheus rule can be cloned to machines,%s is not Prometheus rule", alertRules[i].Name)
+			errMsg["all"] = "Only Prometheus rule can be cloned to machines"
+			reterr[alertRules[i].Name] = errMsg
 			continue
 		}
 
 		if !strings.Contains(alertRules[i].RuleConfig, "ident") {
-			reterr[alertRules[i].Name]["all"] = fmt.Sprintf("%s promql is missing ident", alertRules[i].Name)
+			errMsg["all"] = "promql is missing ident"
+			reterr[alertRules[i].Name] = errMsg
 		}
 
-		errMsg := make(map[string]string)
 		for j := range f.IdentList {
 			alertRules[i].RuleConfig = re.ReplaceAllString(alertRules[i].RuleConfig, fmt.Sprintf(`ident=\"%s\"`, f.IdentList[j]))
 
