@@ -252,7 +252,7 @@
                     "cate": "prometheus",
                     "value": "${prom}"
                 },
-                "definition": "label_values(node_cpu_seconds_total,  instance)",
+                "definition": "label_values(node_uname_info,  instance)",
                 "name": "node",
                 "selected": "$node",
                 "type": "query"

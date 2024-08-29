@@ -117,6 +117,10 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
+// func (e *AlertHisEvent) FillTaskTplName(ctx *ctx.Context, cache map[int64]*UserGroup) error {
+
+// }
+
 func AlertHisEventTotal(
 	ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int,
 	recovered int, dsIds []int64, cates []string, ruleId int64, query string) (int64, error) {

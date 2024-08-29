@@ -25,13 +25,13 @@ type PromRuleGroup struct {
 func convertInterval(interval string) int {
 	duration, err := time.ParseDuration(interval)
 	if err != nil {
-		logger.Errorf("Error parsing interval `%s`,err: %v", interval, err)
+		logger.Errorf("Error parsing interval `%s`, err: %v", interval, err)
 		return 0
 	}
 	return int(duration.Seconds())
 }
 
-func ConvertAlert(rule PromRule, interval string) AlertRule {
+func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled int) AlertRule {
 	annotations := rule.Annotations
 	appendTags := []string{}
 	severity := 2
@@ -54,14 +54,15 @@ func ConvertAlert(rule PromRule, interval string) AlertRule {
 	}
 
 	return AlertRule{
-		Name:             rule.Alert,
-		Severity:         severity,
-		Disabled:         AlertRuleEnabled,
-		PromForDuration:  convertInterval(rule.For),
-		PromQl:           rule.Expr,
-		PromEvalInterval: convertInterval(interval),
-		EnableStimeJSON:  "00:00",
-		EnableEtimeJSON:  "23:59",
+		Name:              rule.Alert,
+		Severity:          severity,
+		DatasourceIdsJson: datasouceIds,
+		Disabled:          disabled,
+		PromForDuration:   convertInterval(rule.For),
+		PromQl:            rule.Expr,
+		PromEvalInterval:  convertInterval(interval),
+		EnableStimeJSON:   "00:00",
+		EnableEtimeJSON:   "23:59",
 		EnableDaysOfWeekJSON: []string{
 			"1", "2", "3", "4", "5", "6", "0",
 		},
@@ -74,7 +75,7 @@ func ConvertAlert(rule PromRule, interval string) AlertRule {
 	}
 }
 
-func DealPromGroup(promRule []PromRuleGroup) []AlertRule {
+func DealPromGroup(promRule []PromRuleGroup, dataSourceIds []int64, disabled int) []AlertRule {
 	var alertRules []AlertRule
 
 	for _, group := range promRule {
@@ -84,7 +85,8 @@ func DealPromGroup(promRule []PromRuleGroup) []AlertRule {
 		}
 		for _, rule := range group.Rules {
 			if rule.Alert != "" {
-				alertRules = append(alertRules, ConvertAlert(rule, interval))
+				alertRules = append(alertRules,
+					ConvertAlert(rule, interval, dataSourceIds, disabled))
 			}
 		}
 	}

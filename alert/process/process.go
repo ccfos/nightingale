@@ -53,10 +53,11 @@ type Processor struct {
 	datasourceId int64
 	EngineName   string
 
-	rule     *models.AlertRule
-	fires    *AlertCurEventMap
-	pendings *AlertCurEventMap
-	inhibit  bool
+	rule                 *models.AlertRule
+	fires                *AlertCurEventMap
+	pendings             *AlertCurEventMap
+	pendingsUseByRecover *AlertCurEventMap
+	inhibit              bool
 
 	tagsMap    map[string]string
 	tagsArr    []string
@@ -342,11 +343,22 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	if !has {
 		return
 	}
+
 	// 如果配置了留观时长，就不能立马恢复了
-	if cachedRule.RecoverDuration > 0 && now-event.LastEvalTime < cachedRule.RecoverDuration {
-		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
-		return
+	if cachedRule.RecoverDuration > 0 {
+		lastPendingEvent, has := p.pendingsUseByRecover.Get(hash)
+		if !has {
+			// 说明没有产生过异常点，就不需要恢复了
+			logger.Debugf("rule_eval:%s event:%v do not has pending event, not recover", p.Key(), event)
+			return
+		}
+
+		if now-lastPendingEvent.LastEvalTime < cachedRule.RecoverDuration {
+			logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+			return
+		}
 	}
+
 	if value != nil {
 		event.TriggerValue = *value
 		if len(values) > 0 {
@@ -358,6 +370,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	// 我确实无法分辨，是prom中有值但是未满足阈值所以没返回，还是prom中确实丢了一些点导致没有数据可以返回，尴尬
 	p.fires.Delete(hash)
 	p.pendings.Delete(hash)
+	p.pendingsUseByRecover.Delete(hash)
 
 	// 可能是因为调整了promql才恢复的，所以事件里边要体现最新的promql，否则用户会比较困惑
 	// 当然，其实rule的各个字段都可能发生变化了，都更新一下吧
@@ -377,6 +390,13 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 		if event == nil {
 			continue
 		}
+
+		if _, has := p.pendingsUseByRecover.Get(event.Hash); has {
+			p.pendingsUseByRecover.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
+		} else {
+			p.pendingsUseByRecover.Set(event.Hash, event)
+		}
+
 		if p.rule.PromForDuration == 0 {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
@@ -385,7 +405,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			continue
 		}
 
-		var preTriggerTime int64
+		var preTriggerTime int64 // 第一个 pending event 的触发时间
 		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
 			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
@@ -487,6 +507,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	}
 
 	fireMap := make(map[string]*models.AlertCurEvent)
+	pendingsUseByRecoverMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
 		if event.Cate == models.HOST {
 			target, exists := p.TargetCache.Get(event.TargetIdent)
@@ -498,9 +519,14 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 		event.DB2Mem()
 		fireMap[event.Hash] = event
+		e := *event
+		pendingsUseByRecoverMap[event.Hash] = &e
 	}
 
 	p.fires = NewAlertCurEventMap(fireMap)
+
+	// 修改告警规则，或者进程重启之后，需要重新加载 pendingsUseByRecover
+	p.pendingsUseByRecover = NewAlertCurEventMap(pendingsUseByRecoverMap)
 }
 
 func (p *Processor) fillTags(anomalyPoint common.AnomalyPoint) {
@@ -576,6 +602,7 @@ func (p *Processor) mayHandleGroup() {
 func (p *Processor) DeleteProcessEvent(hash string) {
 	p.fires.Delete(hash)
 	p.pendings.Delete(hash)
+	p.pendingsUseByRecover.Delete(hash)
 }
 
 func labelMapToArr(m map[string]string) []string {

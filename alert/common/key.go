@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 )
@@ -34,9 +35,9 @@ func MatchGroupsName(groupName string, groupFilter []models.TagFilter) bool {
 func matchTag(value string, filter models.TagFilter) bool {
 	switch filter.Func {
 	case "==":
-		return filter.Value == value
+		return strings.TrimSpace(filter.Value) == strings.TrimSpace(value)
 	case "!=":
-		return filter.Value != value
+		return strings.TrimSpace(filter.Value) != strings.TrimSpace(value)
 	case "in":
 		_, has := filter.Vset[value]
 		return has

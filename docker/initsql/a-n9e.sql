@@ -1,6 +1,6 @@
 set names utf8mb4;
 
-drop database if exists n9e_v6;
+-- drop database if exists n9e_v6;
 create database n9e_v6;
 use n9e_v6;
 
@@ -366,6 +366,7 @@ CREATE TABLE `target` (
     `host_ip` varchar(15) default '' COMMENT 'IPv4 string',
     `agent_version` varchar(255) default '' COMMENT 'agent version',
     `engine_name` varchar(255) default '' COMMENT 'engine_name',
+    `os` VARCHAR(31) DEFAULT '' COMMENT 'os type',
     `update_at` bigint not null default 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ident`),
@@ -527,6 +528,7 @@ CREATE TABLE `builtin_components` (
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `component_id` bigint(20) NOT NULL DEFAULT 0 COMMENT 'component_id',
   `uuid` bigint(20) NOT NULL COMMENT '''uuid of payload''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
@@ -544,6 +546,18 @@ CREATE TABLE `builtin_payloads` (
   KEY `idx_cate` (`cate`),
   KEY `idx_uuid` (`uuid`),
   KEY `idx_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE notification_record (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `event_id` BIGINT NOT NULL,
+    `sub_id` BIGINT NOT NULL,
+    `channel` VARCHAR(255) NOT NULL,
+    `status` TINYINT NOT NULL DEFAULT 0,
+    `target` VARCHAR(1024) NOT NULL,
+    `details` VARCHAR(2048),
+    `created_at` BIGINT NOT NULL,
+    INDEX idx_evt (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_tpl`

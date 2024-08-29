@@ -16,6 +16,7 @@ import (
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/cron"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -105,6 +106,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	go version.GetGithubVersion()
+
+	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,

@@ -227,10 +227,20 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 		rt.bgroCheck(c, event.GroupId)
 	}
 
+	ruleConfig, needReset := models.FillRuleConfigTplName(rt.Ctx, event.RuleConfig)
+	if needReset {
+		event.RuleConfigJson = ruleConfig
+	}
+
 	ginx.NewRender(c).Data(event, nil)
 }
 
 func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
 
 	ginx.NewRender(c).Data(models.AlertCurEventStatistics(rt.Ctx, time.Now()), nil)
+}
+
+func (rt *Router) alertCurEventDelByHash(c *gin.Context) {
+	hash := ginx.QueryStr(c, "hash")
+	ginx.NewRender(c).Message(models.AlertCurEventDelByHash(rt.Ctx, hash))
 }

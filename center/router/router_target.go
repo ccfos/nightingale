@@ -157,7 +157,8 @@ func (rt *Router) targetGetsByService(c *gin.Context) {
 func (rt *Router) targetGetTags(c *gin.Context) {
 	idents := ginx.QueryStr(c, "idents", "")
 	idents = strings.ReplaceAll(idents, ",", " ")
-	lst, err := models.TargetGetTags(rt.Ctx, strings.Fields(idents))
+	ignoreHostTag := ginx.QueryBool(c, "ignore_host_tag", false)
+	lst, err := models.TargetGetTags(rt.Ctx, strings.Fields(idents), ignoreHostTag)
 	ginx.NewRender(c).Data(lst, err)
 }
 
