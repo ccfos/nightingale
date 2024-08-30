@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"os"
 
 	"github.com/toolkits/pkg/logger"
 
-	"github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/ccfos/nightingale/v6/ibex/types"
 )
 

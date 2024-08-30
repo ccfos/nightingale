@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/cron"
 	"github.com/ccfos/nightingale/v6/dumper"
+	"github.com/ccfos/nightingale/v6/ibex"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
@@ -32,8 +33,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
-	"github.com/ccfos/nightingale/v6/ibex/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {

@@ -3,9 +3,8 @@ package timer
 import (
 	"context"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"time"
-
-	"github.com/ccfos/nightingale/v6/ibex/models"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -30,14 +29,14 @@ func loopCacheHostDoing() {
 func cacheHostDoing() error {
 	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("models.TableRecordGets fail: %v", err)
+		logger.Errorf("ibex_models.TableRecordGets fail: %v", err)
 	}
 
 	ctx := context.Background()
 
 	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx)
 	if err != nil {
-		logger.Errorf("models.CacheRecordGets fail: %v", err)
+		logger.Errorf("ibex_models.CacheRecordGets fail: %v", err)
 	}
 
 	set := make(map[string][]models.TaskHostDoing)

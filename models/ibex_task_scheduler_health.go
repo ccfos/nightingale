@@ -15,19 +15,19 @@ func (TaskSchedulerHealth) TableName() string {
 
 func TaskSchedulerHeartbeat(scheduler string) error {
 	var cnt int64
-	err := DB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Count(&cnt).Error
+	err := IbexDB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Count(&cnt).Error
 	if err != nil {
 		return err
 	}
 
 	if cnt == 0 {
-		ret := DB().Create(&TaskSchedulerHealth{
+		ret := IbexDB().Create(&TaskSchedulerHealth{
 			Scheduler: scheduler,
 			Clock:     time.Now().Unix(),
 		})
 		err = ret.Error
 	} else {
-		err = DB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Update("clock", time.Now().Unix()).Error
+		err = IbexDB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Update("clock", time.Now().Unix()).Error
 	}
 
 	return err
@@ -36,10 +36,10 @@ func TaskSchedulerHeartbeat(scheduler string) error {
 func DeadTaskSchedulers() ([]string, error) {
 	clock := time.Now().Unix() - 10
 	var arr []string
-	err := DB().Model(&TaskSchedulerHealth{}).Where("clock < ?", clock).Pluck("scheduler", &arr).Error
+	err := IbexDB().Model(&TaskSchedulerHealth{}).Where("clock < ?", clock).Pluck("scheduler", &arr).Error
 	return arr, err
 }
 
 func DelDeadTaskScheduler(scheduler string) error {
-	return DB().Where("scheduler = ?", scheduler).Delete(&TaskSchedulerHealth{}).Error
+	return IbexDB().Where("scheduler = ?", scheduler).Delete(&TaskSchedulerHealth{}).Error
 }

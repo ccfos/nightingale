@@ -1,9 +1,9 @@
 package timer
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
 	"github.com/ccfos/nightingale/v6/ibex/server/logic"
 

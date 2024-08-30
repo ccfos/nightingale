@@ -13,12 +13,12 @@ func (TaskScheduler) TableName() string {
 
 func TasksOfScheduler(scheduler string) ([]int64, error) {
 	var ids []int64
-	err := DB().Model(&TaskScheduler{}).Where("scheduler = ?", scheduler).Pluck("id", &ids).Error
+	err := IbexDB().Model(&TaskScheduler{}).Where("scheduler = ?", scheduler).Pluck("id", &ids).Error
 	return ids, err
 }
 
 func TakeOverTask(id int64, pre, current string) (bool, error) {
-	ret := DB().Model(&TaskScheduler{}).Where("id = ? and scheduler = ?", id, pre).Update("scheduler", current)
+	ret := IbexDB().Model(&TaskScheduler{}).Where("id = ? and scheduler = ?", id, pre).Update("scheduler", current)
 	if ret.Error != nil {
 		return false, ret.Error
 	}
@@ -28,12 +28,12 @@ func TakeOverTask(id int64, pre, current string) (bool, error) {
 
 func OrphanTaskIds() ([]int64, error) {
 	var ids []int64
-	err := DB().Model(&TaskScheduler{}).Where("scheduler = ''").Pluck("id", &ids).Error
+	err := IbexDB().Model(&TaskScheduler{}).Where("scheduler = ''").Pluck("id", &ids).Error
 	return ids, err
 }
 
 func CleanDoneTask(id int64) error {
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id = ?", id).Delete(&TaskScheduler{}).Error; err != nil {
 			return err
 		}

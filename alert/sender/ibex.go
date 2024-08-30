@@ -9,11 +9,10 @@ import (
 	"strings"
 	"time"
 
-	imodels "github.com/ccfos/nightingale/v6/ibex/models"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -43,7 +42,7 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 }
 
 func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent) {
-	if imodels.DB() == nil && ctx.IsCenter {
+	if models.IbexDB() == nil && ctx.IsCenter {
 		logger.Warning("event_callback_ibex: db is nil")
 		return
 	}
@@ -190,7 +189,7 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 		return 0, fmt.Errorf("arg(hosts) empty")
 	}
 
-	taskMeta := &imodels.TaskMeta{
+	taskMeta := &models.TaskMeta{
 		Title:     f.Title,
 		Account:   f.Account,
 		Batch:     f.Batch,
@@ -223,7 +222,7 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 			}
 		}
 
-		taskHost := imodels.TaskHost{
+		taskHost := models.TaskHost{
 			Id:     taskMeta.Id,
 			Host:   hosts[0],
 			Status: "running",

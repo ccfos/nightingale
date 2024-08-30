@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/ibex"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -22,8 +23,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
-	"github.com/ccfos/nightingale/v6/ibex/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {

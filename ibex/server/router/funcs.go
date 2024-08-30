@@ -1,10 +1,10 @@
 package router
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"net/http"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/toolkits/pkg/errorx"
 )
 

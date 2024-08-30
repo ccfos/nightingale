@@ -14,7 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/ibex/server/router"
 	"github.com/ccfos/nightingale/v6/ibex/server/rpc"
 	"github.com/ccfos/nightingale/v6/ibex/server/timer"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/i18n"
 )
@@ -101,7 +101,7 @@ func (s Server) initialize() (func(), error) {
 
 	// init database
 	if config.C.IsCenter {
-		if err = storage.InitDB(config.C.DB); err != nil {
+		if err = storage.InitIbexDB(config.C.DB); err != nil {
 			return fns.Ret(), err
 		}
 	}

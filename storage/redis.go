@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 	"github.com/redis/go-redis/v9"
@@ -134,4 +135,31 @@ func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
 	}
 	_, err := pipe.Exec(ctx)
 	return err
+}
+
+var IbexCache Redis
+
+const DEFAULT = time.Hour
+
+func InitRedis(cfg RedisConfig) (err error) {
+	IbexCache, err = NewRedis(cfg)
+	if err != nil {
+		return err
+	}
+
+	return IdInit()
+}
+
+func CacheMGet(ctx context.Context, keys []string) [][]byte {
+	return MGet(ctx, IbexCache, keys)
+}
+
+const IDINITIAL = 1 << 32
+
+func IdInit() error {
+	return IbexCache.Set(context.Background(), "id", IDINITIAL, 0).Err()
+}
+
+func IdGet() (int64, error) {
+	return IbexCache.Incr(context.Background(), "id").Result()
 }

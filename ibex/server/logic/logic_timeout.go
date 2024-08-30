@@ -1,9 +1,9 @@
 package logic
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/toolkits/pkg/logger"
 )
 

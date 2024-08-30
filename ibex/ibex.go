@@ -9,7 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/ibex/server/router"
 	"github.com/ccfos/nightingale/v6/ibex/server/rpc"
 	"github.com/ccfos/nightingale/v6/ibex/server/timer"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	n9eRouter "github.com/ccfos/nightingale/v6/center/router"
@@ -46,7 +46,7 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 		router.ConfigRouter(r)
 	}
 
-	storage.Cache = rc
+	storage.IbexCache = rc
 	if err := storage.IdInit(); err != nil {
 		fmt.Println("cannot init id generator: ", err)
 		os.Exit(1)
@@ -55,7 +55,7 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 	rpc.Start(ibex.RPCListen)
 
 	if isCenter {
-		storage.DB = db
+		storage.IbexDB = db
 
 		go timer.Heartbeat()
 		go timer.Schedule()

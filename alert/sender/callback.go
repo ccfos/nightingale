@@ -94,8 +94,8 @@ func NewCallBacker(
 		return &FeishuSender{tpl: tpls[models.Feishu]}
 	case models.FeishuCardDomain:
 		return &FeishuCardSender{tpl: tpls[models.FeishuCard]}
-	//case models.Mm:
-	//	return &MmSender{tpl: tpls[models.Mm]}
+	//case ibex_models.Mm:
+	//	return &MmSender{tpl: tpls[ibex_models.Mm]}
 	case models.TelegramDomain:
 		return &TelegramSender{tpl: tpls[models.Telegram]}
 	case models.LarkDomain:

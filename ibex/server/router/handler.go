@@ -2,15 +2,15 @@ package router
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"strconv"
 
 	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"

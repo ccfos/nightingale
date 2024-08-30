@@ -2,11 +2,9 @@ package migrate
 
 import (
 	"fmt"
-
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
-	imodels "github.com/ccfos/nightingale/v6/ibex/models"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -28,7 +26,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
-	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &imodels.TaskHostDoing{}, &imodels.TaskAction{}}
+	dts := []interface{}{&models.TaskMeta{}, &models.TaskScheduler{}, &models.TaskSchedulerHealth{}, &models.TaskHostDoing{}, &models.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
@@ -38,7 +36,7 @@ func MigrateIbexTables(db *gorm.DB) {
 
 	for i := 0; i < 100; i++ {
 		tableName := fmt.Sprintf("task_host_%d", i)
-		err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
+		err := db.Table(tableName).AutoMigrate(&models.TaskHost{})
 		if err != nil {
 			logger.Errorf("failed to migrate table:%s %v", tableName, err)
 		}

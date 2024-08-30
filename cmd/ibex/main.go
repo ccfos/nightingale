@@ -2,71 +2,118 @@ package main
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/alert/aconf"
-	"github.com/ccfos/nightingale/v6/conf"
-	"github.com/ccfos/nightingale/v6/ibex/server/router"
-	"github.com/ccfos/nightingale/v6/ibex/server/rpc"
-	"github.com/ccfos/nightingale/v6/ibex/server/timer"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
-	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"os"
-	"strings"
+
+	"github.com/ccfos/nightingale/v6/ibex/agentd"
+	"github.com/ccfos/nightingale/v6/ibex/server"
+
+	"github.com/toolkits/pkg/net/tcpx"
+	"github.com/toolkits/pkg/runner"
+	"github.com/urfave/cli/v2"
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Accounts, heartbeat aconf.HeartbeatConfig,
-	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int) {
-	config.C.IsCenter = isCenter
-	config.C.BasicAuth = make(gin.Accounts)
-	if len(basicAuth) > 0 {
-		config.C.BasicAuth = basicAuth
+// VERSION go build -ldflags "-X main.VERSION=x.x.x"
+var VERSION = "not specified"
+
+func main() {
+	app := cli.NewApp()
+	app.Name = "ibex"
+	app.Version = VERSION
+	app.Usage = "Ibex, running scripts on large scale machines"
+	app.Commands = []*cli.Command{
+		newCenterServerCmd(),
+		newEdgeServerCmd(),
+		newAgentdCmd(),
 	}
-
-	config.C.Heartbeat.IP = heartbeat.IP
-	config.C.Heartbeat.Interval = heartbeat.Interval
-	config.C.Heartbeat.LocalAddr = schedulerAddrGet(ibex.RPCListen)
-	HttpPort = httpPort
-
-	config.C.Output.ComeFrom = ibex.Output.ComeFrom
-	config.C.Output.AgtdPort = ibex.Output.AgtdPort
-
-	if centerRouter != nil {
-		router.ConfigRouter(r, centerRouter)
-	} else {
-		router.ConfigRouter(r)
-	}
-
-	storage.Cache = rc
-	if err := storage.IdInit(); err != nil {
-		fmt.Println("cannot init id generator: ", err)
-		os.Exit(1)
-	}
-
-	rpc.Start(ibex.RPCListen)
-
-	if isCenter {
-		storage.DB = db
-
-		go timer.Heartbeat()
-		go timer.Schedule()
-		go timer.CleanLong()
-	} else {
-		config.C.CenterApi = *api
-	}
-
-	timer.CacheHostDoing()
-	timer.ReportResult()
+	app.Run(os.Args)
 }
 
-func schedulerAddrGet(rpcListen string) string {
-	ip := fmt.Sprint(config.GetOutboundIP())
-	if ip == "" {
-		fmt.Println("heartbeat ip auto got is blank")
-		os.Exit(1)
-	}
+func newCenterServerCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "server",
+		Usage: "Run server",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "conf",
+				Aliases: []string{"c"},
+				Usage:   "specify configuration file(.json,.yaml,.toml)",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			printEnv()
 
-	port := strings.Split(rpcListen, ":")[1]
-	localAddr := ip + ":" + port
-	return localAddr
+			tcpx.WaitHosts()
+
+			var opts []server.ServerOption
+			if c.String("conf") != "" {
+				opts = append(opts, server.SetConfigFile(c.String("conf")))
+			}
+			opts = append(opts, server.SetVersion(VERSION))
+
+			server.Run(true, opts...)
+			return nil
+		},
+	}
+}
+
+func newEdgeServerCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "edge server",
+		Usage: "Run edge server",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "conf",
+				Aliases: []string{"c"},
+				Usage:   "specify configuration file(.json,.yaml,.toml)",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			printEnv()
+
+			tcpx.WaitHosts()
+
+			var opts []server.ServerOption
+			if c.String("conf") != "" {
+				opts = append(opts, server.SetConfigFile(c.String("conf")))
+			}
+			opts = append(opts, server.SetVersion(VERSION))
+
+			server.Run(false, opts...)
+			return nil
+		},
+	}
+}
+
+func newAgentdCmd() *cli.Command {
+	return &cli.Command{
+		Name:  "agentd",
+		Usage: "Run agentd",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "conf",
+				Aliases: []string{"c"},
+				Usage:   "specify configuration file(.json,.yaml,.toml)",
+			},
+		},
+		Action: func(c *cli.Context) error {
+			printEnv()
+
+			var opts []agentd.AgentdOption
+			if c.String("conf") != "" {
+				opts = append(opts, agentd.SetConfigFile(c.String("conf")))
+			}
+			opts = append(opts, agentd.SetVersion(VERSION))
+
+			agentd.Run(opts...)
+			return nil
+		},
+	}
+}
+
+func printEnv() {
+	runner.Init()
+	fmt.Println("runner.cwd:", runner.Cwd)
+	fmt.Println("runner.hostname:", runner.Hostname)
+	fmt.Println("runner.fd_limits:", runner.FdLimits())
+	fmt.Println("runner.vm_limits:", runner.VMLimits())
 }

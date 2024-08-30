@@ -8,7 +8,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
@@ -25,7 +25,7 @@ type TaskHost struct {
 }
 
 func (taskHost *TaskHost) Upsert() error {
-	return DB().Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
+	return IbexDB().Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
 		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
 	}).Create(taskHost).Error
@@ -33,7 +33,7 @@ func (taskHost *TaskHost) Upsert() error {
 
 func (taskHost *TaskHost) Create() error {
 	if config.C.IsCenter {
-		return DB().Table(tht(taskHost.Id)).Create(taskHost).Error
+		return IbexDB().Table(tht(taskHost.Id)).Create(taskHost).Error
 	}
 	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", taskHost)
 }
@@ -58,7 +58,7 @@ func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
 
 func TaskHostGet(id int64, host string) (*TaskHost, error) {
 	var ret []*TaskHost
-	err := DB().Table(tht(id)).Where("id=? and host=?", id, host).Find(&ret).Error
+	err := IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Find(&ret).Error
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		}
 
 		if count == 1 {
-			return DB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
+			return IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 				"status": status,
 				"stdout": stdout,
 				"stderr": stderr,
@@ -114,7 +114,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		return nil
 	}
 
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		err = tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 			"status": status,
 			"stdout": stdout,
@@ -133,7 +133,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 }
 
 func RealTimeUpdateOutput(id int64, host, stdout, stderr string) error {
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		err := tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 			"stdout": stdout,
 			"stderr": stderr,
@@ -147,7 +147,7 @@ func RealTimeUpdateOutput(id int64, host, stdout, stderr string) error {
 }
 
 func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
-	if err := storage.Cache.HDel(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
+	if err := storage.IbexCache.HDel(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
 		return err
 	}
 	TaskHostCachePush(taskHost)
@@ -157,7 +157,7 @@ func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
 
 func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
 	var hosts []TaskHost
-	session := DB().Table(tht(id)).Where("id = ? and status = 'waiting'", id).Order("ii")
+	session := IbexDB().Table(tht(id)).Where("id = ? and status = 'waiting'", id).Order("ii")
 	if len(limit) > 0 {
 		session = session.Limit(limit[0])
 	}
@@ -185,7 +185,7 @@ func RunWaitingHosts(taskHosts []TaskHost) error {
 
 	now := time.Now().Unix()
 
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		for i := 0; i < count; i++ {
 			if err := tx.Table(tht(taskHosts[i].Id)).Where("id=? and host=?", taskHosts[i].Id, taskHosts[i].Host).Update("status", "running").Error; err != nil {
 				return err
@@ -202,13 +202,13 @@ func RunWaitingHosts(taskHosts []TaskHost) error {
 
 func TaskHostStatus(id int64) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(id)).Select("id", "host", "status").Where("id=?", id).Order("ii").Find(&ret).Error
+	err := IbexDB().Table(tht(id)).Select("id", "host", "status").Where("id=?", id).Order("ii").Find(&ret).Error
 	return ret, err
 }
 
 func TaskHostGets(id int64) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(id)).Where("id=?", id).Order("ii").Find(&ret).Error
+	err := IbexDB().Table(tht(id)).Where("id=?", id).Order("ii").Find(&ret).Error
 	return ret, err
 }
 

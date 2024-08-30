@@ -1,11 +1,10 @@
 package logic
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
-
-	"github.com/ccfos/nightingale/v6/ibex/models"
 )
 
 func ScheduleTask(id int64) {

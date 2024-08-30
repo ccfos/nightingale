@@ -19,7 +19,7 @@ func (TaskAction) TableName() string {
 
 func TaskActionGet(where string, args ...interface{}) (*TaskAction, error) {
 	var obj TaskAction
-	ret := DB().Where(where, args...).Find(&obj)
+	ret := IbexDB().Where(where, args...).Find(&obj)
 	if ret.Error != nil {
 		return nil, ret.Error
 	}
@@ -37,16 +37,16 @@ func TaskActionExistsIds(ids []int64) ([]int64, error) {
 	}
 
 	var ret []int64
-	err := DB().Model(&TaskAction{}).Where("id in ?", ids).Pluck("id", &ret).Error
+	err := IbexDB().Model(&TaskAction{}).Where("id in ?", ids).Pluck("id", &ret).Error
 	return ret, err
 }
 
 func CancelWaitingHosts(id int64) error {
-	return DB().Table(tht(id)).Where("id = ? and status = ?", id, "waiting").Update("status", "cancelled").Error
+	return IbexDB().Table(tht(id)).Where("id = ? and status = ?", id, "waiting").Update("status", "cancelled").Error
 }
 
 func StartTask(id int64) error {
-	return DB().Model(&TaskScheduler{}).Where("id = ?", id).Update("scheduler", "").Error
+	return IbexDB().Model(&TaskScheduler{}).Where("id = ?", id).Update("scheduler", "").Error
 }
 
 func CancelTask(id int64) error {
@@ -60,7 +60,7 @@ func KillTask(id int64) error {
 
 	now := time.Now().Unix()
 
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(&TaskHostDoing{}).Where("id = ? and action <> ?", id, "kill").Updates(map[string]interface{}{
 			"clock":  now,
 			"action": "kill",
@@ -78,7 +78,7 @@ func (a *TaskAction) Update(action string) error {
 		return fmt.Errorf("action invalid")
 	}
 
-	err := DB().Model(a).Updates(map[string]interface{}{
+	err := IbexDB().Model(a).Updates(map[string]interface{}{
 		"action": action,
 		"clock":  time.Now().Unix(),
 	}).Error
@@ -105,6 +105,6 @@ func (a *TaskAction) Update(action string) error {
 func LongTaskIds() ([]int64, error) {
 	clock := time.Now().Unix() - 604800*2
 	var ids []int64
-	err := DB().Model(&TaskAction{}).Where("clock < ?", clock).Pluck("id", &ids).Error
+	err := IbexDB().Model(&TaskAction{}).Where("clock < ?", clock).Pluck("id", &ids).Error
 	return ids, err
 }

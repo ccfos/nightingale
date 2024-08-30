@@ -9,7 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
-	"github.com/ccfos/nightingale/v6/ibex/storage"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
@@ -45,7 +45,7 @@ func (taskMeta *TaskMeta) UnmarshalBinary(data []byte) error {
 
 func (taskMeta *TaskMeta) Create() error {
 	if config.C.IsCenter {
-		return DB().Create(taskMeta).Error
+		return IbexDB().Create(taskMeta).Error
 	}
 
 	id, err := poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/task/meta", taskMeta)
@@ -89,13 +89,13 @@ func TaskMetaGetByID(id int64) (*TaskMeta, error) {
 		return nil, nil
 	}
 
-	_, err = storage.Cache.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
+	_, err = storage.IbexCache.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
 
 	return meta, err
 }
 
 func TaskMetaCacheGet(id int64) (*TaskMeta, error) {
-	res := storage.Cache.Get(context.Background(), taskMetaCacheKey(id))
+	res := storage.IbexCache.Get(context.Background(), taskMetaCacheKey(id))
 	meta := new(TaskMeta)
 	err := res.Scan(meta)
 	return meta, err
@@ -160,7 +160,7 @@ func (m *TaskMeta) HandleFH(fh string) {
 func (taskMeta *TaskMeta) Cache(host string) error {
 	ctx := context.Background()
 
-	tx := storage.Cache.TxPipeline()
+	tx := storage.IbexCache.TxPipeline()
 	tx.Set(ctx, taskMetaCacheKey(taskMeta.Id), taskMeta, storage.DEFAULT)
 	tx.HSet(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
 		Id:     taskMeta.Id,
@@ -175,7 +175,7 @@ func (taskMeta *TaskMeta) Cache(host string) error {
 }
 
 func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
-	return DB().Transaction(func(tx *gorm.DB) error {
+	return IbexDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(taskMeta).Error; err != nil {
 			return err
 		}
@@ -212,7 +212,7 @@ func (m *TaskMeta) Action() (*TaskAction, error) {
 
 func (m *TaskMeta) Hosts() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
+	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
@@ -259,25 +259,25 @@ func (m *TaskMeta) RedoHost(host string) error {
 }
 
 func statusSet(id int64, host, status string) error {
-	return DB().Table(tht(id)).Where("id=? and host=?", id, host).Update("status", status).Error
+	return IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Update("status", status).Error
 }
 
 func redoHost(id int64, host, action string) error {
-	count, err := Count(DB().Model(&TaskHostDoing{}).Where("id=? and host=?", id, host))
+	count, err := IbexCount(IbexDB().Model(&TaskHostDoing{}).Where("id=? and host=?", id, host))
 	if err != nil {
 		return err
 	}
 
 	now := time.Now().Unix()
 	if count == 0 {
-		err = DB().Table("task_host_doing").Create(map[string]interface{}{
+		err = IbexDB().Table("task_host_doing").Create(map[string]interface{}{
 			"id":     id,
 			"host":   host,
 			"clock":  now,
 			"action": action,
 		}).Error
 	} else {
-		err = DB().Table("task_host_doing").Where("id=? and host=? and action <> ?", id, host, action).Updates(map[string]interface{}{
+		err = IbexDB().Table("task_host_doing").Where("id=? and host=? and action <> ?", id, host, action).Updates(map[string]interface{}{
 			"clock":  now,
 			"action": action,
 		}).Error
@@ -287,24 +287,24 @@ func redoHost(id int64, host, action string) error {
 
 func (m *TaskMeta) HostStrs() ([]string, error) {
 	var ret []string
-	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Order("ii").Pluck("host", &ret).Error
+	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Order("ii").Pluck("host", &ret).Error
 	return ret, err
 }
 
 func (m *TaskMeta) Stdouts() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
+	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
 func (m *TaskMeta) Stderrs() ([]TaskHost, error) {
 	var ret []TaskHost
-	err := DB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
+	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
 func TaskMetaTotal(creator, query string, before time.Time) (int64, error) {
-	session := DB().Model(&TaskMeta{})
+	session := IbexDB().Model(&TaskMeta{})
 
 	session = session.Where("created > '" + before.Format("2006-01-02 15:04:05") + "'")
 
@@ -329,11 +329,11 @@ func TaskMetaTotal(creator, query string, before time.Time) (int64, error) {
 		}
 	}
 
-	return Count(session)
+	return IbexCount(session)
 }
 
 func TaskMetaGets(creator, query string, before time.Time, limit, offset int) ([]TaskMeta, error) {
-	session := DB().Model(&TaskMeta{}).Order("created desc").Limit(limit).Offset(offset)
+	session := IbexDB().Model(&TaskMeta{}).Order("created desc").Limit(limit).Offset(offset)
 
 	session = session.Where("created > '" + before.Format("2006-01-02 15:04:05") + "'")
 
