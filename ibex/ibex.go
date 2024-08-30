@@ -58,8 +58,6 @@ func ServerStart(ctx *ctx.Context, isCenter bool, db *gorm.DB, rc redis.Cmdable,
 	rpc.Start(ibex.RPCListen, ctx)
 
 	if isCenter {
-		storage.IbexDB = db
-
 		go timer.Heartbeat(ctx)
 		go timer.Schedule(ctx)
 		go timer.CleanLong(ctx)

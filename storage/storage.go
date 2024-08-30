@@ -14,10 +14,3 @@ func New(cfg ormx.DBConfig) (*gorm.DB, error) {
 
 	return db, nil
 }
-
-var IbexDB *gorm.DB
-
-func InitIbexDB(cfg ormx.DBConfig) (err error) {
-	IbexDB, err = ormx.New(cfg)
-	return
-}

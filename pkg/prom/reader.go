@@ -139,22 +139,22 @@ const (
 	epFlags           = apiPrefix + "/status/flags"
 )
 
-// AlertState ibex_models the state of an alert.
+// AlertState models the state of an alert.
 type AlertState string
 
-// ErrorType ibex_models the different API error types.
+// ErrorType models the different API error types.
 type ErrorType string
 
-// HealthStatus ibex_models the health status of a scrape target.
+// HealthStatus models the health status of a scrape target.
 type HealthStatus string
 
-// RuleType ibex_models the type of a rule.
+// RuleType models the type of a rule.
 type RuleType string
 
-// RuleHealth ibex_models the health status of a rule.
+// RuleHealth models the health status of a rule.
 type RuleHealth string
 
-// MetricType ibex_models the type of a metric.
+// MetricType models the type of a metric.
 type MetricType string
 
 const (
@@ -296,7 +296,7 @@ type AlertManagersResult struct {
 	Dropped []AlertManager `json:"droppedAlertManagers"`
 }
 
-// AlertManager ibex_models a configured Alert Manager.
+// AlertManager models a configured Alert Manager.
 type AlertManager struct {
 	URL string `json:"url"`
 }
@@ -319,7 +319,7 @@ type RulesResult struct {
 	Groups []RuleGroup `json:"groups"`
 }
 
-// RuleGroup ibex_models a rule group that contains a set of recording and alerting rules.
+// RuleGroup models a rule group that contains a set of recording and alerting rules.
 type RuleGroup struct {
 	Name     string  `json:"name"`
 	File     string  `json:"file"`
@@ -329,7 +329,7 @@ type RuleGroup struct {
 
 type Rules []interface{}
 
-// AlertingRule ibex_models a alerting rule.
+// AlertingRule models a alerting rule.
 type AlertingRule struct {
 	Name        string         `json:"name"`
 	Query       string         `json:"query"`
@@ -341,7 +341,7 @@ type AlertingRule struct {
 	LastError   string         `json:"lastError,omitempty"`
 }
 
-// RecordingRule ibex_models a recording rule.
+// RecordingRule models a recording rule.
 type RecordingRule struct {
 	Name      string         `json:"name"`
 	Query     string         `json:"query"`
@@ -350,7 +350,7 @@ type RecordingRule struct {
 	LastError string         `json:"lastError,omitempty"`
 }
 
-// Alert ibex_models an active alert.
+// Alert models an active alert.
 type Alert struct {
 	ActiveAt    time.Time `json:"activeAt"`
 	Annotations model.LabelSet
@@ -365,7 +365,7 @@ type TargetsResult struct {
 	Dropped []DroppedTarget `json:"droppedTargets"`
 }
 
-// ActiveTarget ibex_models an active Prometheus scrape target.
+// ActiveTarget models an active Prometheus scrape target.
 type ActiveTarget struct {
 	DiscoveredLabels map[string]string `json:"discoveredLabels"`
 	Labels           model.LabelSet    `json:"labels"`
@@ -375,12 +375,12 @@ type ActiveTarget struct {
 	Health           HealthStatus      `json:"health"`
 }
 
-// DroppedTarget ibex_models a dropped Prometheus scrape target.
+// DroppedTarget models a dropped Prometheus scrape target.
 type DroppedTarget struct {
 	DiscoveredLabels map[string]string `json:"discoveredLabels"`
 }
 
-// MetricMetadata ibex_models the metadata of a metric with its scrape target and name.
+// MetricMetadata models the metadata of a metric with its scrape target and name.
 type MetricMetadata struct {
 	Target map[string]string `json:"target"`
 	Metric string            `json:"metric,omitempty"`
@@ -389,7 +389,7 @@ type MetricMetadata struct {
 	Unit   string            `json:"unit"`
 }
 
-// Metadata ibex_models the metadata of a metric.
+// Metadata models the metadata of a metric.
 type Metadata struct {
 	Type MetricType `json:"type"`
 	Help string     `json:"help"`
