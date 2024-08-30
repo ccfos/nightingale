@@ -124,8 +124,7 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 			arr := strings.Fields(query)
 			for i := 0; i < len(arr); i++ {
 				q := "%" + arr[i] + "%"
-				session = session.Where("ident like ? or note like ? or tags like ? or host_tags like ?"+
-					"or os like ?", q, q, q, q, q)
+				session = session.Where("ident like ? or note like ? or tags like ? or host_tags like ? or os like ?", q, q, q, q, q)
 			}
 		}
 		return session
