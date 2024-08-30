@@ -389,7 +389,7 @@ CREATE TABLE `alert_cur_event` (
     `target_note` varchar(191) not null default '',
     `first_trigger_time` bigint,
     `trigger_time` bigint not null,
-    `trigger_value` varchar(255) not null,
+    `trigger_value` varchar(2048) not null,
     `annotations` text not null,
     `rule_config` text not null,
     `tags` varchar(1024) not null default ''
@@ -427,7 +427,7 @@ CREATE TABLE `alert_his_event` (
     `target_note` varchar(191) not null default '',
     `first_trigger_time` bigint,
     `trigger_time` bigint not null,
-    `trigger_value` varchar(255) not null,
+    `trigger_value` varchar(2048) not null,
     `recover_time` bigint not null default 0,
     `last_eval_time` bigint not null default 0,
     `tags` varchar(1024) not null default '',
