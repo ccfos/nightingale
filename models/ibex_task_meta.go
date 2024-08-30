@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"strings"
 	"time"
 
@@ -43,9 +44,9 @@ func (taskMeta *TaskMeta) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, taskMeta)
 }
 
-func (taskMeta *TaskMeta) Create() error {
+func (taskMeta *TaskMeta) Create(ctx *ctx.Context) error {
 	if config.C.IsCenter {
-		return IbexDB().Create(taskMeta).Error
+		return DB(ctx).Create(taskMeta).Error
 	}
 
 	id, err := poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/task/meta", taskMeta)
@@ -60,8 +61,8 @@ func taskMetaCacheKey(id int64) string {
 	return fmt.Sprintf("task:meta:%d", id)
 }
 
-func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
-	lst, err := TableRecordGets[[]*TaskMeta](TaskMeta{}.TableName(), where, args...)
+func TaskMetaGet(ctx *ctx.Context, where string, args ...interface{}) (*TaskMeta, error) {
+	lst, err := TableRecordGets[[]*TaskMeta](ctx, TaskMeta{}.TableName(), where, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,13 +75,13 @@ func TaskMetaGet(where string, args ...interface{}) (*TaskMeta, error) {
 }
 
 // TaskMetaGet 根据ID获取任务元信息，会用到缓存
-func TaskMetaGetByID(id int64) (*TaskMeta, error) {
+func TaskMetaGetByID(ctx *ctx.Context, id int64) (*TaskMeta, error) {
 	meta, err := TaskMetaCacheGet(id)
 	if err == nil {
 		return meta, nil
 	}
 
-	meta, err = TaskMetaGet("id=?", id)
+	meta, err = TaskMetaGet(ctx, "id=?", id)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +175,8 @@ func (taskMeta *TaskMeta) Cache(host string) error {
 	return err
 }
 
-func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
-	return IbexDB().Transaction(func(tx *gorm.DB) error {
+func (taskMeta *TaskMeta) Save(ctx *ctx.Context, hosts []string, action string) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(taskMeta).Error; err != nil {
 			return err
 		}
@@ -206,18 +207,18 @@ func (taskMeta *TaskMeta) Save(hosts []string, action string) error {
 	})
 }
 
-func (m *TaskMeta) Action() (*TaskAction, error) {
-	return TaskActionGet("id=?", m.Id)
+func (m *TaskMeta) Action(ctx *ctx.Context) (*TaskAction, error) {
+	return TaskActionGet(ctx, "id=?", m.Id)
 }
 
-func (m *TaskMeta) Hosts() ([]TaskHost, error) {
+func (m *TaskMeta) Hosts(ctx *ctx.Context) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
+	err := DB(ctx).Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func (m *TaskMeta) KillHost(host string) error {
-	bean, err := TaskHostGet(m.Id, host)
+func (m *TaskMeta) KillHost(ctx *ctx.Context, host string) error {
+	bean, err := TaskHostGet(ctx, m.Id, host)
 	if err != nil {
 		return err
 	}
@@ -230,19 +231,19 @@ func (m *TaskMeta) KillHost(host string) error {
 		return fmt.Errorf("current status cannot kill")
 	}
 
-	if err := redoHost(m.Id, host, "kill"); err != nil {
+	if err := redoHost(ctx, m.Id, host, "kill"); err != nil {
 		return err
 	}
 
-	return statusSet(m.Id, host, "killing")
+	return statusSet(ctx, m.Id, host, "killing")
 }
 
-func (m *TaskMeta) IgnoreHost(host string) error {
-	return statusSet(m.Id, host, "ignored")
+func (m *TaskMeta) IgnoreHost(ctx *ctx.Context, host string) error {
+	return statusSet(ctx, m.Id, host, "ignored")
 }
 
-func (m *TaskMeta) RedoHost(host string) error {
-	bean, err := TaskHostGet(m.Id, host)
+func (m *TaskMeta) RedoHost(ctx *ctx.Context, host string) error {
+	bean, err := TaskHostGet(ctx, m.Id, host)
 	if err != nil {
 		return err
 	}
@@ -251,33 +252,33 @@ func (m *TaskMeta) RedoHost(host string) error {
 		return fmt.Errorf("no such host")
 	}
 
-	if err := redoHost(m.Id, host, "start"); err != nil {
+	if err := redoHost(ctx, m.Id, host, "start"); err != nil {
 		return err
 	}
 
-	return statusSet(m.Id, host, "running")
+	return statusSet(ctx, m.Id, host, "running")
 }
 
-func statusSet(id int64, host, status string) error {
-	return IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Update("status", status).Error
+func statusSet(ctx *ctx.Context, id int64, host, status string) error {
+	return DB(ctx).Table(tht(id)).Where("id=? and host=?", id, host).Update("status", status).Error
 }
 
-func redoHost(id int64, host, action string) error {
-	count, err := IbexCount(IbexDB().Model(&TaskHostDoing{}).Where("id=? and host=?", id, host))
+func redoHost(ctx *ctx.Context, id int64, host, action string) error {
+	count, err := IbexCount(DB(ctx).Model(&TaskHostDoing{}).Where("id=? and host=?", id, host))
 	if err != nil {
 		return err
 	}
 
 	now := time.Now().Unix()
 	if count == 0 {
-		err = IbexDB().Table("task_host_doing").Create(map[string]interface{}{
+		err = DB(ctx).Table("task_host_doing").Create(map[string]interface{}{
 			"id":     id,
 			"host":   host,
 			"clock":  now,
 			"action": action,
 		}).Error
 	} else {
-		err = IbexDB().Table("task_host_doing").Where("id=? and host=? and action <> ?", id, host, action).Updates(map[string]interface{}{
+		err = DB(ctx).Table("task_host_doing").Where("id=? and host=? and action <> ?", id, host, action).Updates(map[string]interface{}{
 			"clock":  now,
 			"action": action,
 		}).Error
@@ -285,26 +286,26 @@ func redoHost(id int64, host, action string) error {
 	return err
 }
 
-func (m *TaskMeta) HostStrs() ([]string, error) {
+func (m *TaskMeta) HostStrs(ctx *ctx.Context) ([]string, error) {
 	var ret []string
-	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Order("ii").Pluck("host", &ret).Error
+	err := DB(ctx).Table(tht(m.Id)).Where("id=?", m.Id).Order("ii").Pluck("host", &ret).Error
 	return ret, err
 }
 
-func (m *TaskMeta) Stdouts() ([]TaskHost, error) {
+func (m *TaskMeta) Stdouts(ctx *ctx.Context) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
+	err := DB(ctx).Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stdout").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func (m *TaskMeta) Stderrs() ([]TaskHost, error) {
+func (m *TaskMeta) Stderrs(ctx *ctx.Context) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := IbexDB().Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
+	err := DB(ctx).Table(tht(m.Id)).Where("id=?", m.Id).Select("id", "host", "status", "stderr").Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func TaskMetaTotal(creator, query string, before time.Time) (int64, error) {
-	session := IbexDB().Model(&TaskMeta{})
+func TaskMetaTotal(ctx *ctx.Context, creator, query string, before time.Time) (int64, error) {
+	session := DB(ctx).Model(&TaskMeta{})
 
 	session = session.Where("created > '" + before.Format("2006-01-02 15:04:05") + "'")
 
@@ -332,8 +333,8 @@ func TaskMetaTotal(creator, query string, before time.Time) (int64, error) {
 	return IbexCount(session)
 }
 
-func TaskMetaGets(creator, query string, before time.Time, limit, offset int) ([]TaskMeta, error) {
-	session := IbexDB().Model(&TaskMeta{}).Order("created desc").Limit(limit).Offset(offset)
+func TaskMetaGets(ctx *ctx.Context, creator, query string, before time.Time, limit, offset int) ([]TaskMeta, error) {
+	session := DB(ctx).Model(&TaskMeta{}).Order("created desc").Limit(limit).Offset(offset)
 
 	session = session.Where("created > '" + before.Format("2006-01-02 15:04:05") + "'")
 

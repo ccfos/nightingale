@@ -1,0 +1,20 @@
+[Unit]
+Description="ibex-agentd"
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/root/gopath/src/ibex/ibex agentd
+WorkingDirectory=/root/gopath/src/ibex
+
+Restart=on-failure
+SuccessExitStatus=0
+LimitNOFILE=65536
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ibex-agentd
+
+
+[Install]
+WantedBy=multi-user.target

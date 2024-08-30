@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"os"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(version string) *gin.Engine {
+func New(ctx *ctx.Context, version string) *gin.Engine {
 	gin.SetMode(config.C.RunMode)
 
 	loggerMid := aop.Logger()
@@ -33,13 +34,25 @@ func New(version string) *gin.Engine {
 		r.Use(loggerMid)
 	}
 
-	configBaseRouter(r, version)
-	ConfigRouter(r)
+	rou := NewRouter(ctx)
+
+	rou.configBaseRouter(r, version)
+	rou.ConfigRouter(r)
 
 	return r
 }
 
-func configBaseRouter(r *gin.Engine, version string) {
+type Router struct {
+	ctx *ctx.Context
+}
+
+func NewRouter(ctx *ctx.Context) *Router {
+	return &Router{
+		ctx: ctx,
+	}
+}
+
+func (rou *Router) configBaseRouter(r *gin.Engine, version string) {
 	if config.C.HTTP.PProf {
 		pprof.Register(r, "/debug/pprof")
 	}
@@ -61,27 +74,27 @@ func configBaseRouter(r *gin.Engine, version string) {
 	})
 }
 
-func ConfigRouter(r *gin.Engine, rts ...*router.Router) {
+func (rou *Router) ConfigRouter(r *gin.Engine, rts ...*router.Router) {
 
 	if len(rts) > 0 {
 		rt := rts[0]
 		pagesPrefix := "/api/n9e/busi-group/:id"
 		pages := r.Group(pagesPrefix)
 		{
-			pages.GET("/task/:id", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskGet)
-			pages.PUT("/task/:id/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), taskAction)
-			pages.GET("/task/:id/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdout)
-			pages.GET("/task/:id/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderr)
-			pages.GET("/task/:id/state", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskState)
-			pages.GET("/task/:id/result", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskResult)
-			pages.PUT("/task/:id/host/:host/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), taskHostAction)
-			pages.GET("/task/:id/host/:host/output", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostOutput)
-			pages.GET("/task/:id/host/:host/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostStdout)
-			pages.GET("/task/:id/host/:host/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskHostStderr)
-			pages.GET("/task/:id/stdout.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdoutTxt)
-			pages.GET("/task/:id/stderr.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderrTxt)
-			pages.GET("/task/:id/stdout.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStdoutJSON)
-			pages.GET("/task/:id/stderr.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), taskStderrJSON)
+			pages.GET("/task/:id", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskGet)
+			pages.PUT("/task/:id/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), rou.taskAction)
+			pages.GET("/task/:id/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStdout)
+			pages.GET("/task/:id/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStderr)
+			pages.GET("/task/:id/state", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskState)
+			pages.GET("/task/:id/result", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskResult)
+			pages.PUT("/task/:id/host/:host/action", rt.Auth(), rt.User(), rt.Perm("/job-tasks/put"), rt.Bgrw(), rou.taskHostAction)
+			pages.GET("/task/:id/host/:host/output", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskHostOutput)
+			pages.GET("/task/:id/host/:host/stdout", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskHostStdout)
+			pages.GET("/task/:id/host/:host/stderr", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskHostStderr)
+			pages.GET("/task/:id/stdout.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStdoutTxt)
+			pages.GET("/task/:id/stderr.txt", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStderrTxt)
+			pages.GET("/task/:id/stdout.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStdoutJSON)
+			pages.GET("/task/:id/stderr.json", rt.Auth(), rt.User(), rt.Perm("/job-tasks"), rou.taskStderrJSON)
 		}
 	}
 
@@ -90,30 +103,30 @@ func ConfigRouter(r *gin.Engine, rts ...*router.Router) {
 		api = r.Group("/ibex/v1", gin.BasicAuth(config.C.BasicAuth))
 	}
 	{
-		api.POST("/tasks", taskAdd)
-		api.GET("/tasks", taskGets)
-		api.GET("/tasks/done-ids", doneIds)
-		api.GET("/task/:id", taskGet)
-		api.PUT("/task/:id/action", taskAction)
-		api.GET("/task/:id/stdout", taskStdout)
-		api.GET("/task/:id/stderr", taskStderr)
-		api.GET("/task/:id/state", taskState)
-		api.GET("/task/:id/result", taskResult)
-		api.PUT("/task/:id/host/:host/action", taskHostAction)
-		api.GET("/task/:id/host/:host/output", taskHostOutput)
-		api.GET("/task/:id/host/:host/stdout", taskHostStdout)
-		api.GET("/task/:id/host/:host/stderr", taskHostStderr)
-		api.GET("/task/:id/stdout.txt", taskStdoutTxt)
-		api.GET("/task/:id/stderr.txt", taskStderrTxt)
-		api.GET("/task/:id/stdout.json", taskStdoutJSON)
-		api.GET("/task/:id/stderr.json", taskStderrJSON)
+		api.POST("/tasks", rou.taskAdd)
+		api.GET("/tasks", rou.taskGets)
+		api.GET("/tasks/done-ids", rou.doneIds)
+		api.GET("/task/:id", rou.taskGet)
+		api.PUT("/task/:id/action", rou.taskAction)
+		api.GET("/task/:id/stdout", rou.taskStdout)
+		api.GET("/task/:id/stderr", rou.taskStderr)
+		api.GET("/task/:id/state", rou.taskState)
+		api.GET("/task/:id/result", rou.taskResult)
+		api.PUT("/task/:id/host/:host/action", rou.taskHostAction)
+		api.GET("/task/:id/host/:host/output", rou.taskHostOutput)
+		api.GET("/task/:id/host/:host/stdout", rou.taskHostStdout)
+		api.GET("/task/:id/host/:host/stderr", rou.taskHostStderr)
+		api.GET("/task/:id/stdout.txt", rou.taskStdoutTxt)
+		api.GET("/task/:id/stderr.txt", rou.taskStderrTxt)
+		api.GET("/task/:id/stdout.json", rou.taskStdoutJSON)
+		api.GET("/task/:id/stderr.json", rou.taskStderrJSON)
 
 		// api for edge server
-		api.POST("/table/record/list", tableRecordListGet)
-		api.POST("/table/record/count", tableRecordCount)
-		api.POST("/mark/done", markDone)
-		api.POST("/task/meta", taskMetaAdd)
-		api.POST("/task/host/", taskHostAdd)
-		api.POST("/task/hosts/upsert", taskHostUpsert)
+		api.POST("/table/record/list", rou.tableRecordListGet)
+		api.POST("/table/record/count", rou.tableRecordCount)
+		api.POST("/mark/done", rou.markDone)
+		api.POST("/task/meta", rou.taskMetaAdd)
+		api.POST("/task/host/", rou.taskHostAdd)
+		api.POST("/task/hosts/upsert", rou.taskHostUpsert)
 	}
 }

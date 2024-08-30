@@ -17,7 +17,7 @@ func (*Server) Ping(input string, output *string) error {
 }
 
 func (*Server) GetTaskMeta(id int64, resp *types.TaskMetaResponse) error {
-	meta, err := models.TaskMetaGetByID(id)
+	meta, err := models.TaskMetaGetByID(ctxC, id)
 	if err != nil {
 		resp.Message = err.Error()
 		return nil
@@ -66,7 +66,7 @@ func handleDoneTask(req types.ReportRequest) error {
 	for i := 0; i < count; i++ {
 		t := req.ReportTasks[i]
 		if ok && val == "1" && t.Status == "running" {
-			err := models.RealTimeUpdateOutput(t.Id, req.Ident, t.Stdout, t.Stderr)
+			err := models.RealTimeUpdateOutput(ctxC, t.Id, req.Ident, t.Stdout, t.Stderr)
 			if err != nil {
 				logger.Errorf("cannot update output, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 				return err
@@ -79,7 +79,7 @@ func handleDoneTask(req types.ReportRequest) error {
 					continue
 				}
 
-				err := models.MarkDoneStatus(t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, isEdgeAlertTriggered)
+				err := models.MarkDoneStatus(ctxC, t.Id, t.Clock, req.Ident, t.Status, t.Stdout, t.Stderr, isEdgeAlertTriggered)
 				if err != nil {
 					logger.Errorf("cannot mark task done, id:%d, hostname:%s, clock:%d, status:%s, err: %v", t.Id, req.Ident, t.Clock, t.Status, err)
 					return err

@@ -2,6 +2,7 @@ package ibex
 
 import (
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"os"
 	"strings"
 
@@ -24,7 +25,7 @@ var (
 	HttpPort int
 )
 
-func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Accounts, heartbeat aconf.HeartbeatConfig,
+func ServerStart(ctx *ctx.Context, isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Accounts, heartbeat aconf.HeartbeatConfig,
 	api *n9eConf.CenterApi, r *gin.Engine, centerRouter *n9eRouter.Router, ibex conf.Ibex, httpPort int) {
 	config.C.IsCenter = isCenter
 	config.C.BasicAuth = make(gin.Accounts)
@@ -40,10 +41,12 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 	config.C.Output.ComeFrom = ibex.Output.ComeFrom
 	config.C.Output.AgtdPort = ibex.Output.AgtdPort
 
+	rou := router.NewRouter(ctx)
+
 	if centerRouter != nil {
-		router.ConfigRouter(r, centerRouter)
+		rou.ConfigRouter(r, centerRouter)
 	} else {
-		router.ConfigRouter(r)
+		rou.ConfigRouter(r)
 	}
 
 	storage.IbexCache = rc
@@ -52,20 +55,20 @@ func ServerStart(isCenter bool, db *gorm.DB, rc redis.Cmdable, basicAuth gin.Acc
 		os.Exit(1)
 	}
 
-	rpc.Start(ibex.RPCListen)
+	rpc.Start(ibex.RPCListen, ctx)
 
 	if isCenter {
 		storage.IbexDB = db
 
-		go timer.Heartbeat()
-		go timer.Schedule()
-		go timer.CleanLong()
+		go timer.Heartbeat(ctx)
+		go timer.Schedule(ctx)
+		go timer.CleanLong(ctx)
 	} else {
 		config.C.CenterApi = *api
 	}
 
-	timer.CacheHostDoing()
-	timer.ReportResult()
+	timer.CacheHostDoing(ctx)
+	timer.ReportResult(ctx)
 }
 
 func schedulerAddrGet(rpcListen string) string {

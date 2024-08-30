@@ -126,7 +126,7 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	rt.checkTargetPerm(c, f.Hosts)
 
 	// call ibex
-	taskId, err := sender.TaskAdd(f, user.Username, rt.Ctx.IsCenter)
+	taskId, err := sender.TaskAdd(rt.Ctx, f, user.Username, rt.Ctx.IsCenter)
 	ginx.Dangerous(err)
 
 	if taskId <= 0 {

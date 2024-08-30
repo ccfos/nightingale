@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"sync"
 	"time"
 
@@ -24,21 +25,21 @@ type TaskHost struct {
 	Stderr string `gorm:"column:stderr;type:text" json:"stderr"`
 }
 
-func (taskHost *TaskHost) Upsert() error {
-	return IbexDB().Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
+func (taskHost *TaskHost) Upsert(ctx *ctx.Context) error {
+	return DB(ctx).Table(tht(taskHost.Id)).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}, {Name: "host"}},
 		DoUpdates: clause.AssignmentColumns([]string{"status", "stdout", "stderr"}),
 	}).Create(taskHost).Error
 }
 
-func (taskHost *TaskHost) Create() error {
+func (taskHost *TaskHost) Create(ctx *ctx.Context) error {
 	if config.C.IsCenter {
-		return IbexDB().Table(tht(taskHost.Id)).Create(taskHost).Error
+		return DB(ctx).Table(tht(taskHost.Id)).Create(taskHost).Error
 	}
 	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", taskHost)
 }
 
-func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
+func TaskHostUpserts(ctx *ctx.Context, lst []TaskHost) (map[string]error, error) {
 	if len(lst) == 0 {
 		return nil, fmt.Errorf("empty list")
 	}
@@ -49,16 +50,16 @@ func TaskHostUpserts(lst []TaskHost) (map[string]error, error) {
 
 	errs := make(map[string]error, 0)
 	for _, taskHost := range lst {
-		if err := taskHost.Upsert(); err != nil {
+		if err := taskHost.Upsert(ctx); err != nil {
 			errs[fmt.Sprintf("%d:%s", taskHost.Id, taskHost.Host)] = err
 		}
 	}
 	return errs, nil
 }
 
-func TaskHostGet(id int64, host string) (*TaskHost, error) {
+func TaskHostGet(ctx *ctx.Context, id int64, host string) (*TaskHost, error) {
 	var ret []*TaskHost
-	err := IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Find(&ret).Error
+	err := DB(ctx).Table(tht(id)).Where("id=? and host=?", id, host).Find(&ret).Error
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func TaskHostGet(id int64, host string) (*TaskHost, error) {
 	return ret[0], nil
 }
 
-func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAlertTriggered ...bool) error {
+func MarkDoneStatus(ctx *ctx.Context, id, clock int64, host, status, stdout, stderr string, edgeAlertTriggered ...bool) error {
 	if len(edgeAlertTriggered) > 0 && edgeAlertTriggered[0] {
 		return CacheMarkDone(context.Background(), TaskHost{
 			Id:     id,
@@ -92,20 +93,20 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		})
 	}
 
-	count, err := TableRecordCount(TaskHostDoing{}.TableName(), "id=? and host=? and clock=?", id, host, clock)
+	count, err := TableRecordCount(ctx, TaskHostDoing{}.TableName(), "id=? and host=? and clock=?", id, host, clock)
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
 		// 如果是timeout了，后来任务执行完成之后，结果又上来了，stdout和stderr最好还是存库，让用户看到
-		count, err = TableRecordCount(tht(id), "id=? and host=? and status=?", id, host, "timeout")
+		count, err = TableRecordCount(ctx, tht(id), "id=? and host=? and status=?", id, host, "timeout")
 		if err != nil {
 			return err
 		}
 
 		if count == 1 {
-			return IbexDB().Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
+			return DB(ctx).Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 				"status": status,
 				"stdout": stdout,
 				"stderr": stderr,
@@ -114,7 +115,7 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 		return nil
 	}
 
-	return IbexDB().Transaction(func(tx *gorm.DB) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		err = tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 			"status": status,
 			"stdout": stdout,
@@ -132,8 +133,8 @@ func MarkDoneStatus(id, clock int64, host, status, stdout, stderr string, edgeAl
 	})
 }
 
-func RealTimeUpdateOutput(id int64, host, stdout, stderr string) error {
-	return IbexDB().Transaction(func(tx *gorm.DB) error {
+func RealTimeUpdateOutput(ctx *ctx.Context, id int64, host, stdout, stderr string) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Table(tht(id)).Where("id=? and host=?", id, host).Updates(map[string]interface{}{
 			"stdout": stdout,
 			"stderr": stderr,
@@ -155,9 +156,9 @@ func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
 	return nil
 }
 
-func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
+func WaitingHostList(ctx *ctx.Context, id int64, limit ...int) ([]TaskHost, error) {
 	var hosts []TaskHost
-	session := IbexDB().Table(tht(id)).Where("id = ? and status = 'waiting'", id).Order("ii")
+	session := DB(ctx).Table(tht(id)).Where("id = ? and status = 'waiting'", id).Order("ii")
 	if len(limit) > 0 {
 		session = session.Limit(limit[0])
 	}
@@ -165,19 +166,19 @@ func WaitingHostList(id int64, limit ...int) ([]TaskHost, error) {
 	return hosts, err
 }
 
-func WaitingHostCount(id int64) (int64, error) {
-	return TableRecordCount(tht(id), "id=? and status='waiting'", id)
+func WaitingHostCount(ctx *ctx.Context, id int64) (int64, error) {
+	return TableRecordCount(ctx, tht(id), "id=? and status='waiting'", id)
 }
 
-func UnexpectedHostCount(id int64) (int64, error) {
-	return TableRecordCount(tht(id), "id=? and status in ('failed', 'timeout', 'killfailed')", id)
+func UnexpectedHostCount(ctx *ctx.Context, id int64) (int64, error) {
+	return TableRecordCount(ctx, tht(id), "id=? and status in ('failed', 'timeout', 'killfailed')", id)
 }
 
-func IngStatusHostCount(id int64) (int64, error) {
-	return TableRecordCount(tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
+func IngStatusHostCount(ctx *ctx.Context, id int64) (int64, error) {
+	return TableRecordCount(ctx, tht(id), "id=? and status in ('waiting', 'running', 'killing')", id)
 }
 
-func RunWaitingHosts(taskHosts []TaskHost) error {
+func RunWaitingHosts(ctx *ctx.Context, taskHosts []TaskHost) error {
 	count := len(taskHosts)
 	if count == 0 {
 		return nil
@@ -185,7 +186,7 @@ func RunWaitingHosts(taskHosts []TaskHost) error {
 
 	now := time.Now().Unix()
 
-	return IbexDB().Transaction(func(tx *gorm.DB) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		for i := 0; i < count; i++ {
 			if err := tx.Table(tht(taskHosts[i].Id)).Where("id=? and host=?", taskHosts[i].Id, taskHosts[i].Host).Update("status", "running").Error; err != nil {
 				return err
@@ -200,15 +201,15 @@ func RunWaitingHosts(taskHosts []TaskHost) error {
 	})
 }
 
-func TaskHostStatus(id int64) ([]TaskHost, error) {
+func TaskHostStatus(ctx *ctx.Context, id int64) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := IbexDB().Table(tht(id)).Select("id", "host", "status").Where("id=?", id).Order("ii").Find(&ret).Error
+	err := DB(ctx).Table(tht(id)).Select("id", "host", "status").Where("id=?", id).Order("ii").Find(&ret).Error
 	return ret, err
 }
 
-func TaskHostGets(id int64) ([]TaskHost, error) {
+func TaskHostGets(ctx *ctx.Context, id int64) ([]TaskHost, error) {
 	var ret []TaskHost
-	err := IbexDB().Table(tht(id)).Where("id=?", id).Order("ii").Find(&ret).Error
+	err := DB(ctx).Table(tht(id)).Where("id=?", id).Order("ii").Find(&ret).Error
 	return ret, err
 }
 
@@ -234,7 +235,7 @@ func TaskHostCachePopAll() []TaskHost {
 	return all
 }
 
-func ReportCacheResult() error {
+func ReportCacheResult(ctx *ctx.Context) error {
 	result := TaskHostCachePopAll()
 	reports := make([]TaskHost, 0)
 	for _, th := range result {
@@ -251,7 +252,7 @@ func ReportCacheResult() error {
 		return nil
 	}
 
-	errs, err := TaskHostUpserts(reports)
+	errs, err := TaskHostUpserts(ctx, reports)
 	if err != nil {
 		return err
 	}

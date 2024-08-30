@@ -10,13 +10,18 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"github.com/toolkits/pkg/logger"
 	"github.com/ugorji/go/codec"
 )
 
 type Server int
 
-func Start(listen string) {
+var ctxC *ctx.Context
+
+func Start(listen string, ctx *ctx.Context) {
+	ctxC = ctx
 	go serve(listen)
 }
 

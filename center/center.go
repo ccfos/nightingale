@@ -121,7 +121,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	if config.Ibex.Enable {
 		migrate.MigrateIbexTables(db)
-		ibex.ServerStart(true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
+		ibex.ServerStart(ctx, true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
 	}
 
 	httpClean := httpx.Init(config.HTTP, r)

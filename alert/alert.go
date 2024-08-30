@@ -73,7 +73,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 
 	if config.Ibex.Enable {
-		ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
+		ibex.ServerStart(ctx, false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
 	}
 
 	rt.Config(r)

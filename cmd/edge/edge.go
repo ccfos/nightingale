@@ -81,7 +81,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter.Config(r)
 
 		if config.Ibex.Enable {
-			ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
+			ibex.ServerStart(ctx, false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
 		}
 	}
 

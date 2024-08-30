@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
+)
 
 type TaskScheduler struct {
 	Id        int64  `gorm:"column:id;primaryKey"`
@@ -11,14 +14,14 @@ func (TaskScheduler) TableName() string {
 	return "task_scheduler"
 }
 
-func TasksOfScheduler(scheduler string) ([]int64, error) {
+func TasksOfScheduler(ctx *ctx.Context, scheduler string) ([]int64, error) {
 	var ids []int64
-	err := IbexDB().Model(&TaskScheduler{}).Where("scheduler = ?", scheduler).Pluck("id", &ids).Error
+	err := DB(ctx).Model(&TaskScheduler{}).Where("scheduler = ?", scheduler).Pluck("id", &ids).Error
 	return ids, err
 }
 
-func TakeOverTask(id int64, pre, current string) (bool, error) {
-	ret := IbexDB().Model(&TaskScheduler{}).Where("id = ? and scheduler = ?", id, pre).Update("scheduler", current)
+func TakeOverTask(ctx *ctx.Context, id int64, pre, current string) (bool, error) {
+	ret := DB(ctx).Model(&TaskScheduler{}).Where("id = ? and scheduler = ?", id, pre).Update("scheduler", current)
 	if ret.Error != nil {
 		return false, ret.Error
 	}
@@ -26,14 +29,14 @@ func TakeOverTask(id int64, pre, current string) (bool, error) {
 	return ret.RowsAffected > 0, nil
 }
 
-func OrphanTaskIds() ([]int64, error) {
+func OrphanTaskIds(ctx *ctx.Context) ([]int64, error) {
 	var ids []int64
-	err := IbexDB().Model(&TaskScheduler{}).Where("scheduler = ''").Pluck("id", &ids).Error
+	err := DB(ctx).Model(&TaskScheduler{}).Where("scheduler = ''").Pluck("id", &ids).Error
 	return ids, err
 }
 
-func CleanDoneTask(id int64) error {
-	return IbexDB().Transaction(func(tx *gorm.DB) error {
+func CleanDoneTask(ctx *ctx.Context, id int64) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id = ?", id).Delete(&TaskScheduler{}).Error; err != nil {
 			return err
 		}

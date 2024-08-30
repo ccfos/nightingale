@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
@@ -12,35 +13,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func IbexDB() *gorm.DB {
-	return storage.IbexDB
-}
-
 func IbexCount(tx *gorm.DB) (int64, error) {
 	var cnt int64
 	err := tx.Count(&cnt).Error
 	return cnt, err
 }
 
-func IbexExists(tx *gorm.DB) (bool, error) {
-	num, err := IbexCount(tx)
-	return num > 0, err
-}
-
-func IbexInsert(objPtr interface{}) error {
-	return IbexDB().Create(objPtr).Error
-}
-
 func tht(id int64) string {
 	return fmt.Sprintf("task_host_%d", id%100)
 }
 
-func TableRecordGets[T any](table, where string, args ...interface{}) (lst T, err error) {
+func TableRecordGets[T any](ctx *ctx.Context, table, where string, args ...interface{}) (lst T, err error) {
 	if config.C.IsCenter {
 		if where == "" || len(args) == 0 {
-			err = IbexDB().Table(table).Find(&lst).Error
+			err = DB(ctx).Table(table).Find(&lst).Error
 		} else {
-			err = IbexDB().Table(table).Where(where, args...).Find(&lst).Error
+			err = DB(ctx).Table(table).Where(where, args...).Find(&lst).Error
 		}
 		return
 	}
@@ -52,12 +40,12 @@ func TableRecordGets[T any](table, where string, args ...interface{}) (lst T, er
 	})
 }
 
-func TableRecordCount(table, where string, args ...interface{}) (int64, error) {
+func TableRecordCount(ctx *ctx.Context, table, where string, args ...interface{}) (int64, error) {
 	if config.C.IsCenter {
 		if where == "" || len(args) == 0 {
-			return IbexCount(IbexDB().Table(table))
+			return IbexCount(DB(ctx).Table(table))
 		}
-		return IbexCount(IbexDB().Table(table).Where(where, args...))
+		return IbexCount(DB(ctx).Table(table).Where(where, args...))
 	}
 
 	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/table/record/count", map[string]interface{}{

@@ -1,40 +1,38 @@
 package timer
 
 import (
-	"context"
 	"fmt"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
 )
 
 // CacheHostDoing 缓存task_host_doing表全部内容，减轻DB压力
-func CacheHostDoing() {
-	if err := cacheHostDoing(); err != nil {
+func CacheHostDoing(ctx *ctx.Context) {
+	if err := cacheHostDoing(ctx); err != nil {
 		fmt.Println("cannot cache task_host_doing data: ", err)
 	}
-	go loopCacheHostDoing()
+	go loopCacheHostDoing(ctx)
 }
 
-func loopCacheHostDoing() {
+func loopCacheHostDoing(ctx *ctx.Context) {
 	for {
 		time.Sleep(time.Millisecond * 400)
-		if err := cacheHostDoing(); err != nil {
+		if err := cacheHostDoing(ctx); err != nil {
 			logger.Warning("cannot cache task_host_doing data: ", err)
 		}
 	}
 }
 
-func cacheHostDoing() error {
-	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](models.TaskHostDoing{}.TableName(), "")
+func cacheHostDoing(ctx *ctx.Context) error {
+	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](ctx, models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
 		logger.Errorf("ibex_models.TableRecordGets fail: %v", err)
 	}
 
-	ctx := context.Background()
-
-	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx)
+	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx.Ctx)
 	if err != nil {
 		logger.Errorf("ibex_models.CacheRecordGets fail: %v", err)
 	}

@@ -2,6 +2,7 @@ package timer
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
@@ -10,16 +11,16 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func Schedule() {
+func Schedule(ctx *ctx.Context) {
 	for {
-		scheduleOrphan()
-		scheduleMine()
+		scheduleOrphan(ctx)
+		scheduleMine(ctx)
 		time.Sleep(time.Second)
 	}
 }
 
-func scheduleMine() {
-	ids, err := models.TasksOfScheduler(config.C.Heartbeat.LocalAddr)
+func scheduleMine(ctx *ctx.Context) {
+	ids, err := models.TasksOfScheduler(ctx, config.C.Heartbeat.LocalAddr)
 	if err != nil {
 		logger.Errorf("cannot get tasks of scheduler(%s): %v", config.C.Heartbeat.LocalAddr, err)
 		return
@@ -27,13 +28,13 @@ func scheduleMine() {
 
 	count := len(ids)
 	for i := 0; i < count; i++ {
-		logic.CheckTimeout(ids[i])
-		logic.ScheduleTask(ids[i])
+		logic.CheckTimeout(ctx, ids[i])
+		logic.ScheduleTask(ctx, ids[i])
 	}
 }
 
-func scheduleOrphan() {
-	ids, err := models.OrphanTaskIds()
+func scheduleOrphan(ctx *ctx.Context) {
+	ids, err := models.OrphanTaskIds(ctx)
 	if err != nil {
 		logger.Errorf("cannot get orphan task ids: %v", err)
 		return
@@ -47,7 +48,7 @@ func scheduleOrphan() {
 	logger.Debug("orphan task ids:", ids)
 
 	for i := 0; i < count; i++ {
-		action, err := models.TaskActionGet("id=?", ids[i])
+		action, err := models.TaskActionGet(ctx, "id=?", ids[i])
 		if err != nil {
 			logger.Errorf("cannot get task[%d] action: %v", ids[i], err)
 			continue
@@ -61,7 +62,7 @@ func scheduleOrphan() {
 			continue
 		}
 
-		mine, err := models.TakeOverTask(ids[i], "", config.C.Heartbeat.LocalAddr)
+		mine, err := models.TakeOverTask(ctx, ids[i], "", config.C.Heartbeat.LocalAddr)
 		if err != nil {
 			logger.Errorf("cannot take over task[%d]: %v", ids[i], err)
 			continue
@@ -73,6 +74,6 @@ func scheduleOrphan() {
 
 		logger.Debugf("task[%d] is mine", ids[i])
 
-		logic.ScheduleTask(ids[i])
+		logic.ScheduleTask(ctx, ids[i])
 	}
 }

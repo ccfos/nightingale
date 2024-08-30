@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -85,7 +86,7 @@ EXIT:
 
 func (s Server) initialize() (func(), error) {
 	fns := Functions{}
-	ctx, cancel := context.WithCancel(context.Background())
+	bgCtx, cancel := context.WithCancel(context.Background())
 	fns.Add(cancel)
 
 	// init i18n
@@ -99,30 +100,36 @@ func (s Server) initialize() (func(), error) {
 		fns.Add(loggerClean)
 	}
 
+	var ctxC *ctx.Context
+
 	// init database
 	if config.C.IsCenter {
-		if err = storage.InitIbexDB(config.C.DB); err != nil {
+		db, err := storage.New(config.C.DB)
+		if err != nil {
 			return fns.Ret(), err
 		}
+		ctxC = ctx.NewContext(context.Background(), db, true, config.C.CenterApi)
+	} else {
+		ctxC = ctx.NewContext(context.Background(), nil, false, config.C.CenterApi)
 	}
 	if err = storage.InitRedis(config.C.Redis); err != nil {
 		return fns.Ret(), err
 	}
 
-	timer.CacheHostDoing()
-	timer.ReportResult()
+	timer.CacheHostDoing(ctxC)
+	timer.ReportResult(ctxC)
 	if config.C.IsCenter {
-		go timer.Heartbeat()
-		go timer.Schedule()
-		go timer.CleanLong()
+		go timer.Heartbeat(ctxC)
+		go timer.Schedule(ctxC)
+		go timer.CleanLong(ctxC)
 	}
 	// init http server
-	r := router.New(s.Version)
-	httpClean := httpx.Init(config.C.HTTP, ctx, r)
+	r := router.New(ctxC, s.Version)
+	httpClean := httpx.Init(config.C.HTTP, bgCtx, r)
 	fns.Add(httpClean)
 
 	// start rpc server
-	rpc.Start(config.C.RPC.Listen)
+	rpc.Start(config.C.RPC.Listen, ctxC)
 
 	// release all the resources
 	return fns.Ret(), nil

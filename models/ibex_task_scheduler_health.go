@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"time"
 )
 
@@ -13,33 +14,33 @@ func (TaskSchedulerHealth) TableName() string {
 	return "task_scheduler_health"
 }
 
-func TaskSchedulerHeartbeat(scheduler string) error {
+func TaskSchedulerHeartbeat(ctx *ctx.Context, scheduler string) error {
 	var cnt int64
-	err := IbexDB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Count(&cnt).Error
+	err := DB(ctx).Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Count(&cnt).Error
 	if err != nil {
 		return err
 	}
 
 	if cnt == 0 {
-		ret := IbexDB().Create(&TaskSchedulerHealth{
+		ret := DB(ctx).Create(&TaskSchedulerHealth{
 			Scheduler: scheduler,
 			Clock:     time.Now().Unix(),
 		})
 		err = ret.Error
 	} else {
-		err = IbexDB().Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Update("clock", time.Now().Unix()).Error
+		err = DB(ctx).Model(&TaskSchedulerHealth{}).Where("scheduler = ?", scheduler).Update("clock", time.Now().Unix()).Error
 	}
 
 	return err
 }
 
-func DeadTaskSchedulers() ([]string, error) {
+func DeadTaskSchedulers(ctx *ctx.Context) ([]string, error) {
 	clock := time.Now().Unix() - 10
 	var arr []string
-	err := IbexDB().Model(&TaskSchedulerHealth{}).Where("clock < ?", clock).Pluck("scheduler", &arr).Error
+	err := DB(ctx).Model(&TaskSchedulerHealth{}).Where("clock < ?", clock).Pluck("scheduler", &arr).Error
 	return arr, err
 }
 
-func DelDeadTaskScheduler(scheduler string) error {
-	return IbexDB().Where("scheduler = ?", scheduler).Delete(&TaskSchedulerHealth{}).Error
+func DelDeadTaskScheduler(ctx *ctx.Context, scheduler string) error {
+	return DB(ctx).Where("scheduler = ?", scheduler).Delete(&TaskSchedulerHealth{}).Error
 }

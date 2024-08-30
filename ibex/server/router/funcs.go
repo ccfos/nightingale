@@ -2,14 +2,15 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"net/http"
 	"strings"
 
 	"github.com/toolkits/pkg/errorx"
 )
 
-func TaskMeta(id int64) *models.TaskMeta {
-	obj, err := models.TaskMetaGet("id = ?", id)
+func TaskMeta(ctx *ctx.Context, id int64) *models.TaskMeta {
+	obj, err := models.TaskMetaGet(ctx, "id = ?", id)
 	errorx.Dangerous(err)
 
 	if obj == nil {

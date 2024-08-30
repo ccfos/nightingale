@@ -42,7 +42,7 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 }
 
 func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent) {
-	if models.IbexDB() == nil && ctx.IsCenter {
+	if models.DB(ctx) == nil && ctx.IsCenter {
 		logger.Warning("event_callback_ibex: db is nil")
 		return
 	}
@@ -141,7 +141,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 		AlertTriggered: true,
 	}
 
-	id, err = TaskAdd(in, tpl.UpdateBy, ctx.IsCenter)
+	id, err = TaskAdd(ctx, in, tpl.UpdateBy, ctx.IsCenter)
 	if err != nil {
 		logger.Errorf("event_callback_ibex: call ibex fail: %v", err)
 		return
@@ -183,7 +183,7 @@ func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *m
 	return target.GroupId == tpl.GroupId, nil
 }
 
-func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
+func TaskAdd(ctx *ctx.Context, f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	hosts := cleanHosts(f.Hosts)
 	if len(hosts) == 0 {
 		return 0, fmt.Errorf("arg(hosts) empty")
@@ -212,7 +212,7 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	// 任务类型分为"告警规则触发"和"n9e center用户下发"两种；
 	// 边缘机房"告警规则触发"的任务不需要规划，并且它可能是失联的，无法使用db资源，所以放入redis缓存中，直接下发给agentd执行
 	if !isCenter && f.AlertTriggered {
-		if err := taskMeta.Create(); err != nil {
+		if err := taskMeta.Create(ctx); err != nil {
 			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
 			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
@@ -227,7 +227,7 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 			Host:   hosts[0],
 			Status: "running",
 		}
-		if err = taskHost.Create(); err != nil {
+		if err = taskHost.Create(ctx); err != nil {
 			logger.Warningf("task_add_fail: authUser=%s title=%s err=%s", authUser, taskMeta.Title, err.Error())
 		}
 
@@ -239,7 +239,7 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 
 	} else {
 		// 如果是中心机房，还是保持之前的逻辑
-		err = taskMeta.Save(hosts, f.Action)
+		err = taskMeta.Save(ctx, hosts, f.Action)
 		if err != nil {
 			return 0, err
 		}

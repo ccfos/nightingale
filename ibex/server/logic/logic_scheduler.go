@@ -2,26 +2,27 @@ package logic
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/str"
 )
 
-func ScheduleTask(id int64) {
+func ScheduleTask(ctx *ctx.Context, id int64) {
 	logger.Debugf("task[%d] scheduling...", id)
 
-	count, err := models.WaitingHostCount(id)
+	count, err := models.WaitingHostCount(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] waiting host count: %v", id, err)
 		return
 	}
 
 	if count == 0 {
-		cleanDoneTask(id)
+		cleanDoneTask(ctx, id)
 		return
 	}
 
-	action, err := models.TaskActionGet("id=?", id)
+	action, err := models.TaskActionGet(ctx, "id=?", id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] action: %v", id, err)
 		return
@@ -34,7 +35,7 @@ func ScheduleTask(id int64) {
 
 	switch action.Action {
 	case "start":
-		startTask(id, action)
+		startTask(ctx, id, action)
 	case "pause":
 		return
 	case "cancel":
@@ -46,8 +47,8 @@ func ScheduleTask(id int64) {
 	}
 }
 
-func cleanDoneTask(id int64) {
-	ingCount, err := models.IngStatusHostCount(id)
+func cleanDoneTask(ctx *ctx.Context, id int64) {
+	ingCount, err := models.IngStatusHostCount(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] ing status host count: %v", id, err)
 		return
@@ -57,7 +58,7 @@ func cleanDoneTask(id int64) {
 		return
 	}
 
-	err = models.CleanDoneTask(id)
+	err = models.CleanDoneTask(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot clean done task[%d]: %v", id, err)
 	}
@@ -65,8 +66,8 @@ func cleanDoneTask(id int64) {
 	logger.Debugf("task[%d] done", id)
 }
 
-func startTask(id int64, action *models.TaskAction) {
-	meta, err := models.TaskMetaGetByID(id)
+func startTask(ctx *ctx.Context, id int64, action *models.TaskAction) {
+	meta, err := models.TaskMetaGetByID(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] meta: %v", id, err)
 		return
@@ -77,14 +78,14 @@ func startTask(id int64, action *models.TaskAction) {
 		return
 	}
 
-	count, err := models.UnexpectedHostCount(id)
+	count, err := models.UnexpectedHostCount(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] unexpected host count: %v", id, err)
 		return
 	}
 
 	if count > int64(meta.Tolerance) {
-		err = action.Update("pause")
+		err = action.Update(ctx, "pause")
 		if err != nil {
 			logger.Errorf("cannot update task[%d] action to 'pause': %v", id, err)
 		}
@@ -92,7 +93,7 @@ func startTask(id int64, action *models.TaskAction) {
 		return
 	}
 
-	waitings, err := models.WaitingHostList(id)
+	waitings, err := models.WaitingHostList(ctx, id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] waiting host: %v", id, err)
 		return
@@ -103,7 +104,7 @@ func startTask(id int64, action *models.TaskAction) {
 		return
 	}
 
-	doingsCount, err := models.TableRecordCount(models.TaskHostDoing{}.TableName(), "id=?", id)
+	doingsCount, err := models.TableRecordCount(ctx, models.TaskHostDoing{}.TableName(), "id=?", id)
 	if err != nil {
 		logger.Errorf("cannot get task[%d] doing host count: %v", id, err)
 		return
@@ -127,7 +128,7 @@ func startTask(id int64, action *models.TaskAction) {
 	for i := 0; i < need; i++ {
 		if slice.ContainsString(arr, waitings[i].Host) {
 			end = i + 1
-			err = action.Update("pause")
+			err = action.Update(ctx, "pause")
 			if err != nil {
 				logger.Errorf("cannot update task[%d] action to 'pause': %v", id, err)
 				return
@@ -136,7 +137,7 @@ func startTask(id int64, action *models.TaskAction) {
 		}
 	}
 
-	err = models.RunWaitingHosts(waitings[:end])
+	err = models.RunWaitingHosts(ctx, waitings[:end])
 	if err != nil {
 		logger.Errorf("cannot run waiting hosts: %v", err)
 	}
