@@ -528,6 +528,7 @@ CREATE TABLE `builtin_components` (
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `component_id` bigint(20) NOT NULL DEFAULT 0 COMMENT 'component_id',
   `uuid` bigint(20) NOT NULL COMMENT '''uuid of payload''',
   `type` varchar(191) NOT NULL COMMENT '''type of payload''',
   `component` varchar(191) NOT NULL COMMENT '''component of payload''',
