@@ -1,14 +1,12 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
-	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"gorm.io/gorm"
 )
@@ -33,7 +31,7 @@ func TableRecordGets[T any](ctx *ctx.Context, table, where string, args ...inter
 		return
 	}
 
-	return poster.PostByUrlsWithResp[T](config.C.CenterApi, "/ibex/v1/table/record/list", map[string]interface{}{
+	return poster.PostByUrlsWithResp[T](ctx, "/ibex/v1/table/record/list", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
@@ -48,7 +46,7 @@ func TableRecordCount(ctx *ctx.Context, table, where string, args ...interface{}
 		return IbexCount(DB(ctx).Table(table).Where(where, args...))
 	}
 
-	return poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/table/record/count", map[string]interface{}{
+	return poster.PostByUrlsWithResp[int64](ctx, "/ibex/v1/table/record/count", map[string]interface{}{
 		"table": table,
 		"where": where,
 		"args":  args,
@@ -57,9 +55,9 @@ func TableRecordCount(ctx *ctx.Context, table, where string, args ...interface{}
 
 var IBEX_HOST_DOING = "ibex-host-doing"
 
-func CacheRecordGets[T any](ctx context.Context) ([]T, error) {
+func CacheRecordGets[T any](ctx *ctx.Context) ([]T, error) {
 	lst := make([]T, 0)
-	values, _ := storage.IbexCache.HVals(ctx, IBEX_HOST_DOING).Result()
+	values, _ := ctx.Redis.HVals(ctx.Ctx, IBEX_HOST_DOING).Result()
 	for _, val := range values {
 		t := new(T)
 		if err := json.Unmarshal([]byte(val), t); err != nil {

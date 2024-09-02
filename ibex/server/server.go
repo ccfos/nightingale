@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/httpx"
-	"github.com/ccfos/nightingale/v6/ibex/pkg/logx"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
 	"github.com/ccfos/nightingale/v6/ibex/server/router"
 	"github.com/ccfos/nightingale/v6/ibex/server/rpc"
 	"github.com/ccfos/nightingale/v6/ibex/server/timer"
+	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/i18n"
@@ -102,18 +102,25 @@ func (s Server) initialize() (func(), error) {
 
 	var ctxC *ctx.Context
 
+	var redis storage.Redis
+	if redis, err = storage.NewRedis(config.C.Redis); err != nil {
+		return fns.Ret(), err
+	}
+
 	// init database
 	if config.C.IsCenter {
 		db, err := storage.New(config.C.DB)
 		if err != nil {
 			return fns.Ret(), err
 		}
-		ctxC = ctx.NewContext(context.Background(), db, true, config.C.CenterApi)
+		ctxC = ctx.NewContext(context.Background(), db, redis, true, config.C.CenterApi)
 	} else {
-		ctxC = ctx.NewContext(context.Background(), nil, false, config.C.CenterApi)
+		ctxC = ctx.NewContext(context.Background(), nil, redis, false, config.C.CenterApi)
 	}
-	if err = storage.InitRedis(config.C.Redis); err != nil {
-		return fns.Ret(), err
+
+	if err := storage.IdInit(ctxC.Redis); err != nil {
+		fmt.Println("cannot init id generator: ", err)
+		os.Exit(1)
 	}
 
 	timer.CacheHostDoing(ctxC)

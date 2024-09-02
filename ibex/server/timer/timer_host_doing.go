@@ -29,12 +29,12 @@ func loopCacheHostDoing(ctx *ctx.Context) {
 func cacheHostDoing(ctx *ctx.Context) error {
 	doingsFromDb, err := models.TableRecordGets[[]models.TaskHostDoing](ctx, models.TaskHostDoing{}.TableName(), "")
 	if err != nil {
-		logger.Errorf("ibex_models.TableRecordGets fail: %v", err)
+		logger.Errorf("models.TableRecordGets fail: %v", err)
 	}
 
-	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx.Ctx)
+	doingsFromRedis, err := models.CacheRecordGets[models.TaskHostDoing](ctx)
 	if err != nil {
-		logger.Errorf("ibex_models.CacheRecordGets fail: %v", err)
+		logger.Errorf("models.CacheRecordGets fail: %v", err)
 	}
 
 	set := make(map[string][]models.TaskHostDoing)

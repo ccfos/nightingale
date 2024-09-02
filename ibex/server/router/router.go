@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/aop"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
+	"github.com/ccfos/nightingale/v6/pkg/aop"
 
 	"github.com/ccfos/nightingale/v6/center/router"
 	"github.com/gin-contrib/pprof"

@@ -216,7 +216,7 @@ func TaskAdd(ctx *ctx.Context, f models.TaskForm, authUser string, isCenter bool
 			// 当网络不连通时，生成唯一的id，防止边缘机房中不同任务的id相同；
 			// 方法是，redis自增id去防止同一个机房的不同n9e edge生成的id相同；
 			// 但没法防止不同边缘机房生成同样的id，所以，生成id的数据不会上报存入数据库，只用于闭环执行。
-			taskMeta.Id, err = storage.IdGet()
+			taskMeta.Id, err = storage.IdGet(ctx.Redis)
 			if err != nil {
 				return 0, err
 			}
@@ -232,7 +232,7 @@ func TaskAdd(ctx *ctx.Context, f models.TaskForm, authUser string, isCenter bool
 		}
 
 		// 缓存任务元信息和待下发的任务
-		err = taskMeta.Cache(hosts[0])
+		err = taskMeta.Cache(ctx, hosts[0])
 		if err != nil {
 			return 0, err
 		}

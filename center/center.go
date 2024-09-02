@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/process"
@@ -59,7 +60,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := ctx.NewContext(context.Background(), db, true)
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := ctx.NewContext(context.Background(), db, redis, true)
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
 
@@ -71,11 +79,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
-	var redis storage.Redis
-	redis, err = storage.NewRedis(config.Redis)
-	if err != nil {
-		return nil, err
-	}
 
 	metas := metas.New(redis)
 	idents := idents.New(ctx, redis)
@@ -124,7 +127,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		ibex.ServerStart(ctx, true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
 	}
 
-	httpClean := httpx.Init(config.HTTP, r)
+	httpClean := httpx.Init(config.HTTP, context.Background(), r)
 
 	return func() {
 		logxClean()

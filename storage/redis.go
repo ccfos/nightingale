@@ -137,29 +137,14 @@ func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
 	return err
 }
 
-var IbexCache Redis
-
 const DEFAULT = time.Hour
-
-func InitRedis(cfg RedisConfig) (err error) {
-	IbexCache, err = NewRedis(cfg)
-	if err != nil {
-		return err
-	}
-
-	return IdInit()
-}
-
-func CacheMGet(ctx context.Context, keys []string) [][]byte {
-	return MGet(ctx, IbexCache, keys)
-}
 
 const IDINITIAL = 1 << 32
 
-func IdInit() error {
-	return IbexCache.Set(context.Background(), "id", IDINITIAL, 0).Err()
+func IdInit(redis Redis) error {
+	return redis.Set(context.Background(), "id", IDINITIAL, 0).Err()
 }
 
-func IdGet() (int64, error) {
-	return IbexCache.Incr(context.Background(), "id").Result()
+func IdGet(redis Redis) (int64, error) {
+	return redis.Incr(context.Background(), "id").Result()
 }

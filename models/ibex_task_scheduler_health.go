@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"time"
 )
 

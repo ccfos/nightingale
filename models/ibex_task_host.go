@@ -1,14 +1,13 @@
 package models
 
 import (
-	"context"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
@@ -36,7 +35,7 @@ func (taskHost *TaskHost) Create(ctx *ctx.Context) error {
 	if config.C.IsCenter {
 		return DB(ctx).Table(tht(taskHost.Id)).Create(taskHost).Error
 	}
-	return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/task/host", taskHost)
+	return poster.PostByUrls(ctx, "/ibex/v1/task/host", taskHost)
 }
 
 func TaskHostUpserts(ctx *ctx.Context, lst []TaskHost) (map[string]error, error) {
@@ -45,7 +44,7 @@ func TaskHostUpserts(ctx *ctx.Context, lst []TaskHost) (map[string]error, error)
 	}
 
 	if !config.C.IsCenter {
-		return poster.PostByUrlsWithResp[map[string]error](config.C.CenterApi, "/ibex/v1/task/hosts/upsert", lst)
+		return poster.PostByUrlsWithResp[map[string]error](ctx, "/ibex/v1/task/hosts/upsert", lst)
 	}
 
 	errs := make(map[string]error, 0)
@@ -73,7 +72,7 @@ func TaskHostGet(ctx *ctx.Context, id int64, host string) (*TaskHost, error) {
 
 func MarkDoneStatus(ctx *ctx.Context, id, clock int64, host, status, stdout, stderr string, edgeAlertTriggered ...bool) error {
 	if len(edgeAlertTriggered) > 0 && edgeAlertTriggered[0] {
-		return CacheMarkDone(context.Background(), TaskHost{
+		return CacheMarkDone(ctx, TaskHost{
 			Id:     id,
 			Host:   host,
 			Status: status,
@@ -83,7 +82,7 @@ func MarkDoneStatus(ctx *ctx.Context, id, clock int64, host, status, stdout, std
 	}
 
 	if !config.C.IsCenter {
-		return poster.PostByUrls(config.C.CenterApi, "/ibex/v1/mark/done", map[string]interface{}{
+		return poster.PostByUrls(ctx, "/ibex/v1/mark/done", map[string]interface{}{
 			"id":     id,
 			"clock":  clock,
 			"host":   host,
@@ -147,8 +146,8 @@ func RealTimeUpdateOutput(ctx *ctx.Context, id int64, host, stdout, stderr strin
 	})
 }
 
-func CacheMarkDone(ctx context.Context, taskHost TaskHost) error {
-	if err := storage.IbexCache.HDel(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
+func CacheMarkDone(ctx *ctx.Context, taskHost TaskHost) error {
+	if err := ctx.Redis.HDel(ctx.Ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskHost.Id, taskHost.Host)).Err(); err != nil {
 		return err
 	}
 	TaskHostCachePush(taskHost)

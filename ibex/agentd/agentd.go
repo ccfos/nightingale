@@ -14,7 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/ibex/agentd/config"
 	"github.com/ccfos/nightingale/v6/ibex/agentd/router"
 	"github.com/ccfos/nightingale/v6/ibex/agentd/timer"
-	"github.com/ccfos/nightingale/v6/ibex/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/httpx"
 )
 
 type Agentd struct {

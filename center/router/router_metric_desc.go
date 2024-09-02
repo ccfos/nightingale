@@ -29,10 +29,10 @@ func (rt *Router) metricsDescGetMap(c *gin.Context) {
 // 	limit := ginx.QueryInt(c, "limit", 20)
 // 	query := ginx.QueryStr(c, "query", "")
 
-// 	total, err := ibex_models.MetricDescriptionTotal(query)
+// 	total, err := models.MetricDescriptionTotal(query)
 // 	ginx.Dangerous(err)
 
-// 	list, err := ibex_models.MetricDescriptionGets(query, limit, ginx.Offset(c, limit))
+// 	list, err := models.MetricDescriptionGets(query, limit, ginx.Offset(c, limit))
 // 	ginx.Dangerous(err)
 
 // 	ginx.NewRender(c).Data(gin.H{
@@ -49,7 +49,7 @@ func (rt *Router) metricsDescGetMap(c *gin.Context) {
 // 	var f metricDescriptionAddForm
 // 	ginx.BindJSON(c, &f)
 
-// 	var metricDescriptions []ibex_models.MetricDescription
+// 	var metricDescriptions []models.MetricDescription
 
 // 	lines := strings.Split(f.Data, "\n")
 // 	for _, md := range lines {
@@ -57,7 +57,7 @@ func (rt *Router) metricsDescGetMap(c *gin.Context) {
 // 		if len(arr) != 2 {
 // 			ginx.Bomb(200, "metric description %s is illegal", md)
 // 		}
-// 		m := ibex_models.MetricDescription{
+// 		m := models.MetricDescription{
 // 			Metric:      arr[0],
 // 			Description: arr[1],
 // 		}
@@ -68,14 +68,14 @@ func (rt *Router) metricsDescGetMap(c *gin.Context) {
 // 		ginx.Bomb(http.StatusBadRequest, "Decoded metric description empty")
 // 	}
 
-// 	ginx.NewRender(c).Message(ibex_models.MetricDescriptionUpdate(metricDescriptions))
+// 	ginx.NewRender(c).Message(models.MetricDescriptionUpdate(metricDescriptions))
 // }
 
 // func metricDescriptionDel(c *gin.Context) {
 // 	var f idsForm
 // 	ginx.BindJSON(c, &f)
 // 	f.Verify()
-// 	ginx.NewRender(c).Message(ibex_models.MetricDescriptionDel(f.Ids))
+// 	ginx.NewRender(c).Message(models.MetricDescriptionDel(f.Ids))
 // }
 
 // type metricDescriptionForm struct {
@@ -86,7 +86,7 @@ func (rt *Router) metricsDescGetMap(c *gin.Context) {
 // 	var f metricDescriptionForm
 // 	ginx.BindJSON(c, &f)
 
-// 	md, err := ibex_models.MetricDescriptionGet("id=?", ginx.UrlParamInt64(c, "id"))
+// 	md, err := models.MetricDescriptionGet("id=?", ginx.UrlParamInt64(c, "id"))
 // 	ginx.Dangerous(err)
 
 // 	if md == nil {

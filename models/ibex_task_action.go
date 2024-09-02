@@ -2,8 +2,9 @@ package models
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"time"
+
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"gorm.io/gorm"
 )

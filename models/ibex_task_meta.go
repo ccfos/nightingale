@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/poster"
 	"github.com/ccfos/nightingale/v6/ibex/server/config"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/str"
@@ -49,7 +49,7 @@ func (taskMeta *TaskMeta) Create(ctx *ctx.Context) error {
 		return DB(ctx).Create(taskMeta).Error
 	}
 
-	id, err := poster.PostByUrlsWithResp[int64](config.C.CenterApi, "/ibex/v1/task/meta", taskMeta)
+	id, err := poster.PostByUrlsWithResp[int64](ctx, "/ibex/v1/task/meta", taskMeta)
 	if err == nil {
 		taskMeta.Id = id
 	}
@@ -76,7 +76,7 @@ func TaskMetaGet(ctx *ctx.Context, where string, args ...interface{}) (*TaskMeta
 
 // TaskMetaGet 根据ID获取任务元信息，会用到缓存
 func TaskMetaGetByID(ctx *ctx.Context, id int64) (*TaskMeta, error) {
-	meta, err := TaskMetaCacheGet(id)
+	meta, err := TaskMetaCacheGet(ctx, id)
 	if err == nil {
 		return meta, nil
 	}
@@ -90,13 +90,13 @@ func TaskMetaGetByID(ctx *ctx.Context, id int64) (*TaskMeta, error) {
 		return nil, nil
 	}
 
-	_, err = storage.IbexCache.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
+	_, err = ctx.Redis.Set(context.Background(), taskMetaCacheKey(id), meta, storage.DEFAULT).Result()
 
 	return meta, err
 }
 
-func TaskMetaCacheGet(id int64) (*TaskMeta, error) {
-	res := storage.IbexCache.Get(context.Background(), taskMetaCacheKey(id))
+func TaskMetaCacheGet(ctx *ctx.Context, id int64) (*TaskMeta, error) {
+	res := ctx.Redis.Get(context.Background(), taskMetaCacheKey(id))
 	meta := new(TaskMeta)
 	err := res.Scan(meta)
 	return meta, err
@@ -158,19 +158,18 @@ func (m *TaskMeta) HandleFH(fh string) {
 	m.Title = m.Title + " FH: " + fh
 }
 
-func (taskMeta *TaskMeta) Cache(host string) error {
-	ctx := context.Background()
+func (taskMeta *TaskMeta) Cache(ctx *ctx.Context, host string) error {
 
-	tx := storage.IbexCache.TxPipeline()
-	tx.Set(ctx, taskMetaCacheKey(taskMeta.Id), taskMeta, storage.DEFAULT)
-	tx.HSet(ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
+	tx := ctx.Redis.TxPipeline()
+	tx.Set(ctx.Ctx, taskMetaCacheKey(taskMeta.Id), taskMeta, storage.DEFAULT)
+	tx.HSet(ctx.Ctx, IBEX_HOST_DOING, hostDoingCacheKey(taskMeta.Id, host), &TaskHostDoing{
 		Id:     taskMeta.Id,
 		Host:   host,
 		Clock:  time.Now().Unix(),
 		Action: "start",
 	})
 
-	_, err := tx.Exec(ctx)
+	_, err := tx.Exec(ctx.Ctx)
 
 	return err
 }

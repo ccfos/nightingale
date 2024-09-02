@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/ibex/pkg/httpx"
-	"github.com/ccfos/nightingale/v6/ibex/pkg/logx"
+	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"

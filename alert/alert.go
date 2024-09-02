@@ -3,7 +3,6 @@ package alert
 import (
 	"context"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/ibex"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -17,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
+	"github.com/ccfos/nightingale/v6/ibex"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -40,13 +40,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
-
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx := ctx.NewContext(context.Background(), nil, redis, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
@@ -79,7 +79,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	rt.Config(r)
 	dumper.ConfigRouter(r)
 
-	httpClean := httpx.Init(config.HTTP, r)
+	httpClean := httpx.Init(config.HTTP, context.Background(), r)
 
 	return func() {
 		logxClean()

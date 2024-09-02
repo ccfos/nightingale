@@ -49,8 +49,8 @@ func ServerStart(ctx *ctx.Context, isCenter bool, db *gorm.DB, rc redis.Cmdable,
 		rou.ConfigRouter(r)
 	}
 
-	storage.IbexCache = rc
-	if err := storage.IdInit(); err != nil {
+	ctx.Redis = rc
+	if err := storage.IdInit(ctx.Redis); err != nil {
 		fmt.Println("cannot init id generator: ", err)
 		os.Exit(1)
 	}

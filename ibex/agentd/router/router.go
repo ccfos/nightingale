@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ccfos/nightingale/v6/ibex/agentd/config"
-	"github.com/ccfos/nightingale/v6/ibex/pkg/aop"
+	"github.com/ccfos/nightingale/v6/pkg/aop"
 )
 
 func New(version string) *gin.Engine {
