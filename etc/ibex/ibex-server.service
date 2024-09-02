@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 
-ExecStart=/root/gopath/src/ibex/ibex server
-WorkingDirectory=/root/gopath/src/ibex
+ExecStart=/root/gopath/ibex/ibex server
+WorkingDirectory=/root/gopath/ibex
 
 Restart=on-failure
 SuccessExitStatus=0

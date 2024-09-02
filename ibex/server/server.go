@@ -46,7 +46,7 @@ func Run(isCenter bool, opts ...ServerOption) {
 	signal.Notify(sc, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	server := Server{
-		ConfigFile: filepath.Join("etc", "server.conf"),
+		ConfigFile: filepath.Join("etc", "ibex", "server.toml"),
 		Version:    "not specified",
 	}
 
