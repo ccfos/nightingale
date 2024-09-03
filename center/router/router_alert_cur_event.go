@@ -227,6 +227,7 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 		event.RuleConfigJson = ruleConfig
 	}
 
+	event.LastEvalTime = event.TriggerTime
 	ginx.NewRender(c).Data(event, nil)
 }
 
