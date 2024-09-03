@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/cron"
 	"github.com/ccfos/nightingale/v6/dumper"
+	"github.com/ccfos/nightingale/v6/ibex"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
@@ -33,8 +34,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
-	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -61,7 +60,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := ctx.NewContext(context.Background(), db, true)
+
+	var redis storage.Redis
+	redis, err = storage.NewRedis(config.Redis)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := ctx.NewContext(context.Background(), db, redis, true)
 	migrate.Migrate(db)
 	models.InitRoot(ctx)
 
@@ -73,11 +79,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
-	var redis storage.Redis
-	redis, err = storage.NewRedis(config.Redis)
-	if err != nil {
-		return nil, err
-	}
 
 	metas := metas.New(redis)
 	idents := idents.New(ctx, redis)
@@ -123,10 +124,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	if config.Ibex.Enable {
 		migrate.MigrateIbexTables(db)
-		ibex.ServerStart(true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
+		ibex.ServerStart(ctx, true, db, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, centerRouter, config.Ibex, config.HTTP.Port)
 	}
 
-	httpClean := httpx.Init(config.HTTP, r)
+	httpClean := httpx.Init(config.HTTP, context.Background(), r)
 
 	return func() {
 		logxClean()

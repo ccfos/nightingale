@@ -120,7 +120,7 @@ func GinEngine(mode string, cfg Config) *gin.Engine {
 	return r
 }
 
-func Init(cfg Config, handler http.Handler) func() {
+func Init(cfg Config, ctx context.Context, handler http.Handler) func() {
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	srv := &http.Server{
 		Addr:         addr,
@@ -146,7 +146,7 @@ func Init(cfg Config, handler http.Handler) func() {
 	}()
 
 	return func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(cfg.ShutdownTimeout))
+		ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(cfg.ShutdownTimeout))
 		defer cancel()
 
 		srv.SetKeepAlivesEnabled(false)

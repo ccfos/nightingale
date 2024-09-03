@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
+	"github.com/ccfos/nightingale/v6/ibex"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -22,8 +23,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/tdengine"
-
-	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
@@ -40,13 +39,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if len(config.CenterApi.Addrs) < 1 {
 		return nil, errors.New("failed to init config: the CenterApi configuration is missing")
 	}
-	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx := ctx.NewContext(context.Background(), nil, redis, false, config.CenterApi)
 
 	syncStats := memsto.NewSyncStats()
 
@@ -82,12 +82,12 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		alertrtRouter.Config(r)
 
 		if config.Ibex.Enable {
-			ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
+			ibex.ServerStart(ctx, false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
 		}
 	}
 
 	dumper.ConfigRouter(r)
-	httpClean := httpx.Init(config.HTTP, r)
+	httpClean := httpx.Init(config.HTTP, context.Background(), r)
 
 	return func() {
 		logxClean()

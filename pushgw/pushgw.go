@@ -32,8 +32,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
-
 	var redis storage.Redis
 	if config.Redis.Address != "" {
 		redis, err = storage.NewRedis(config.Redis)
@@ -41,6 +39,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 			return nil, err
 		}
 	}
+
+	ctx := ctx.NewContext(context.Background(), nil, redis, false, config.CenterApi)
+
 	idents := idents.New(ctx, redis)
 	metas := metas.New(redis)
 
@@ -55,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
 
-	httpClean := httpx.Init(config.HTTP, r)
+	httpClean := httpx.Init(config.HTTP, context.Background(), r)
 
 	return func() {
 		logxClean()
