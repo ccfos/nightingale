@@ -98,7 +98,6 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
-	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 }
 
 type Tpl struct {

@@ -37,18 +37,6 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
-func getAlertCueEventTimeRange(c *gin.Context) (stime, etime int64) {
-	stime = ginx.QueryInt64(c, "stime", 0)
-	etime = ginx.QueryInt64(c, "etime", 0)
-	if etime == 0 {
-		etime = time.Now().Unix()
-	}
-	if stime == 0 || stime >= etime {
-		stime = etime - 30*24*int64(time.Hour.Seconds())
-	}
-	return
-}
-
 func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	if len(gids) > 0 {
@@ -72,19 +60,9 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
-		rids := make([]int64, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
-			rids = append(rids, ars[i].Id)
-		}
-
-		stime, etime := getAlertCueEventTimeRange(c)
-		cnt := models.AlertCurEventCountByRuleId(rt.Ctx, rids, stime, etime)
-		if cnt != nil {
-			for i := 0; i < len(ars); i++ {
-				ars[i].CurEventCount = cnt[ars[i].Id]
-			}
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
