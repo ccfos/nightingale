@@ -50,12 +50,16 @@ type Router struct {
 	Sso               *sso.SsoClient
 	UserCache         *memsto.UserCacheType
 	UserGroupCache    *memsto.UserGroupCacheType
+	ConfigCvalCache   *memsto.CvalCache
 	Ctx               *ctx.Context
 	HeartbeatHook     HeartbeatHookFunc
 	TargetDeleteHook  models.TargetDeleteHookFunc
 }
 
-func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
+func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex, operations cconf.Operation,
+	ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType, pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap,
+	redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, cc *memsto.CvalCache) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -73,6 +77,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		Sso:               sso,
 		UserCache:         uc,
 		UserGroupCache:    ugc,
+		ConfigCvalCache:   cc,
 		Ctx:               ctx,
 		HeartbeatHook:     func(ident string) map[string]interface{} { return nil },
 		TargetDeleteHook:  emptyDeleteHook,

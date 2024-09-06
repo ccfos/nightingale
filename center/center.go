@@ -95,6 +95,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
+	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -111,10 +112,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, configCvalCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
+		func() []string { return configCvalCache.PrintBodyPaths() })
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)

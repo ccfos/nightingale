@@ -25,8 +25,7 @@ func (rt *Router) configGet(c *gin.Context) {
 }
 
 func (rt *Router) configGetByKey(c *gin.Context) {
-	config, err := models.ConfigsGet(rt.Ctx, ginx.QueryStr(c, "key"))
-	ginx.NewRender(c).Data(config, err)
+	ginx.NewRender(c).Data(rt.ConfigCvalCache.Get(ginx.QueryStr(c, "key")), nil)
 }
 
 func (rt *Router) configPutByKey(c *gin.Context) {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -41,12 +42,22 @@ type LoggerConfig struct {
 
 	// Output is a writer where logs are written.
 	// Optional. Default value is gin.DefaultWriter.
-	Output    io.Writer
-	PrintBody bool
+	Output         io.Writer
+	PrintBodyPaths func() []string
 
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
+}
+
+func (c *LoggerConfig) ContainsPath(path string) bool {
+	path = strings.Split(path, "?")[0]
+	for _, target := range c.PrintBodyPaths() {
+		if target == path {
+			return true
+		}
+	}
+	return false
 }
 
 // LogFormatter gives the signature of the formatter function passed to LoggerWithFormatter
@@ -271,7 +282,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		}
 		c.Writer = bodyWriter
 
-		if conf.PrintBody {
+		if conf.ContainsPath(c.Request.RequestURI) {
 			buf, _ := io.ReadAll(c.Request.Body)
 			rdr1 = io.NopCloser(bytes.NewBuffer(buf))
 			rdr2 = io.NopCloser(bytes.NewBuffer(buf))
@@ -309,7 +320,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
-			if conf.PrintBody {
+			if conf.ContainsPath(c.Request.RequestURI) {
 				respBody := readBody(bytes.NewReader(bodyWriter.body.Bytes()), c.Writer.Header().Get("Content-Encoding"))
 				reqBody := readBody(rdr1, c.Request.Header.Get("Content-Encoding"))
 				logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)
