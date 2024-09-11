@@ -64,5 +64,6 @@ func (rt *Router) contactKeysGets(c *gin.Context) {
 }
 
 func (rt *Router) siteInfo(c *gin.Context) {
-	ginx.NewRender(c).Data(rt.ConfigCvalCache.Get("site_info"), nil)
+	config, err := models.ConfigsGet(rt.Ctx, "site_info")
+	ginx.NewRender(c).Data(config, err)
 }
