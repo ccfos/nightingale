@@ -127,15 +127,13 @@ func (c *CvalCache) GetSiteInfo() *SiteInfo {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	si := SiteInfo{}
 	if siteInfoStr := c.Get("site_info"); siteInfoStr != "" {
-		si := SiteInfo{}
 		if err := json.Unmarshal([]byte(siteInfoStr), &si); err != nil {
 			logger.Errorf("Failed to unmarshal site info: %v", err)
-			return nil
 		}
-		return &si
 	}
-	return nil
+	return &si
 }
 
 func (c *CvalCache) PrintBodyPaths() map[string]struct{} {
