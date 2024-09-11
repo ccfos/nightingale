@@ -58,7 +58,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
-		func() []string { return configCvalCache.PrintBodyPaths() })
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	pushgwRouter.Config(r)
 
 	if !config.Alert.Disable {

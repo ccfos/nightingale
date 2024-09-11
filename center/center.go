@@ -122,7 +122,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
-		func() []string { return configCvalCache.PrintBodyPaths() })
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)

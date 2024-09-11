@@ -43,7 +43,8 @@ type LoggerConfig struct {
 	// Output is a writer where logs are written.
 	// Optional. Default value is gin.DefaultWriter.
 	Output         io.Writer
-	PrintBodyPaths func() []string
+	PrintAccessLog func() bool
+	PrintBodyPaths func() map[string]struct{}
 
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
@@ -52,12 +53,8 @@ type LoggerConfig struct {
 
 func (c *LoggerConfig) ContainsPath(path string) bool {
 	path = strings.Split(path, "?")[0]
-	for _, target := range c.PrintBodyPaths() {
-		if target == path {
-			return true
-		}
-	}
-	return false
+	_, exist := c.PrintBodyPaths()[path]
+	return exist
 }
 
 // LogFormatter gives the signature of the formatter function passed to LoggerWithFormatter
@@ -266,6 +263,11 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		if !conf.PrintAccessLog() {
+			c.Next()
+			return
+		}
+
 		// Start timer
 		start := time.Now()
 		path := c.Request.URL.Path

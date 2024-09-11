@@ -53,7 +53,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	writers := writer.NewWriters(config.Pushgw)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
-		func() []string { return configCvalCache.PrintBodyPaths() })
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
 

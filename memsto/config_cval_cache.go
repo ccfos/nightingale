@@ -118,18 +118,35 @@ func (c *CvalCache) GetLastUpdateTime() int64 {
 	return c.statLastUpdated
 }
 
-func (c *CvalCache) PrintBodyPaths() []string {
+type SiteInfo struct {
+	PrintBodyPaths []string `json:"print_body_paths"`
+	PrintAccessLog bool     `json:"print_access_log"`
+}
+
+func (c *CvalCache) GetSiteInfo() *SiteInfo {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	siteInfo := struct {
-		PrintBodyPaths []string `json:"print_body_paths"`
-	}{}
+
 	if siteInfoStr := c.Get("site_info"); siteInfoStr != "" {
-		if err := json.Unmarshal([]byte(siteInfoStr), &siteInfo); err != nil {
+		si := SiteInfo{}
+		if err := json.Unmarshal([]byte(siteInfoStr), &si); err != nil {
 			logger.Errorf("Failed to unmarshal site info: %v", err)
-		} else {
-			logger.Infof("siteInfo: %+v", siteInfo)
+			return nil
 		}
+		return &si
 	}
-	return siteInfo.PrintBodyPaths
+	return nil
+}
+
+func (c *CvalCache) PrintBodyPaths() map[string]struct{} {
+	printBodyPaths := c.GetSiteInfo().PrintBodyPaths
+	pbp := make(map[string]struct{}, len(printBodyPaths))
+	for _, p := range printBodyPaths {
+		pbp[p] = struct{}{}
+	}
+	return pbp
+}
+
+func (c *CvalCache) PrintAccessLog() bool {
+	return c.GetSiteInfo().PrintAccessLog
 }
