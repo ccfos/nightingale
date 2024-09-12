@@ -66,7 +66,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	// 最多获取50000个，获取太多也没啥意义
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, nil, query, 50000, 0)
+		cates, 0, query, 50000, 0)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -173,7 +173,7 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, []int64{ruleId}, query, limit, ginx.Offset(c, limit))
+		cates, ruleId, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
