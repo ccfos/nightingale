@@ -52,11 +52,13 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
+	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 	idents := idents.New(ctx, redis)
 	metas := metas.New(redis)
 	writers := writer.NewWriters(config.Pushgw)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	pushgwRouter.Config(r)
 
 	if !config.Alert.Disable {

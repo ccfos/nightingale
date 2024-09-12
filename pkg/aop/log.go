@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -41,12 +42,19 @@ type LoggerConfig struct {
 
 	// Output is a writer where logs are written.
 	// Optional. Default value is gin.DefaultWriter.
-	Output    io.Writer
-	PrintBody bool
+	Output         io.Writer
+	PrintAccessLog func() bool
+	PrintBodyPaths func() map[string]struct{}
 
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
+}
+
+func (c *LoggerConfig) ContainsPath(path string) bool {
+	path = strings.Split(path, "?")[0]
+	_, exist := c.PrintBodyPaths()[path]
+	return exist
 }
 
 // LogFormatter gives the signature of the formatter function passed to LoggerWithFormatter
@@ -255,6 +263,11 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		if !conf.PrintAccessLog() {
+			c.Next()
+			return
+		}
+
 		// Start timer
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -271,7 +284,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		}
 		c.Writer = bodyWriter
 
-		if conf.PrintBody {
+		if conf.ContainsPath(c.Request.RequestURI) {
 			buf, _ := io.ReadAll(c.Request.Body)
 			rdr1 = io.NopCloser(bytes.NewBuffer(buf))
 			rdr2 = io.NopCloser(bytes.NewBuffer(buf))
@@ -309,7 +322,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			// fmt.Fprint(out, formatter(param))
 			logger.Info(formatter(param))
-			if conf.PrintBody {
+			if conf.ContainsPath(c.Request.RequestURI) {
 				respBody := readBody(bytes.NewReader(bodyWriter.body.Bytes()), c.Writer.Header().Get("Content-Encoding"))
 				reqBody := readBody(rdr1, c.Request.Header.Get("Content-Encoding"))
 				logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)

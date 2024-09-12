@@ -62,6 +62,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplsCache := memsto.NewTaskTplCache(ctx)
+	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
@@ -70,7 +71,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 
 	if config.Ibex.Enable {
