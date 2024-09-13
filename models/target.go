@@ -250,8 +250,8 @@ func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, t
 }
 
 func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
-	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").Joins("join target_busi_group " +
-		"on target.ident = target_busi_group.target_ident")
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").Joins("left join " +
+		"target_busi_group on target.ident = target_busi_group.target_ident")
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
