@@ -505,6 +505,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 func (p *Processor) RecoverAlertCurEventFromDb() {
 	p.pendings = NewAlertCurEventMap(nil)
+	p.pendingsUseByRecover = NewAlertCurEventMap(nil)
 
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {

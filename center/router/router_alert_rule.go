@@ -529,6 +529,15 @@ type identListForm struct {
 	IdentList []string `json:"ident_list"`
 }
 
+func containsIdentOperator(s string) bool {
+	pattern := `ident\s*(!=|!~|=~)`
+	matched, err := regexp.MatchString(pattern, s)
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
 func (rt *Router) cloneToMachine(c *gin.Context) {
 	var f identListForm
 	ginx.BindJSON(c, &f)
@@ -558,7 +567,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 			continue
 		}
 
-		if !strings.Contains(alertRules[i].RuleConfig, "ident") {
+		if containsIdentOperator(alertRules[i].RuleConfig) {
 			errMsg["all"] = "promql is missing ident"
 			reterr[alertRules[i].Name] = errMsg
 			continue
