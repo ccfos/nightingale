@@ -177,9 +177,10 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
-				m["group_id in (?)"] = ids
+				m["target_busi_group.group_id in (?)"] = ids
 			} else {
-				m["group_id not in (?)"] = ids
+				m["target.ident not in (select target_ident "+
+					"from target_busi_group where group_id = ?)"] = ids
 			}
 		case "tags":
 			lst := []string{}
