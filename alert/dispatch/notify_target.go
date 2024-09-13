@@ -125,7 +125,7 @@ func (s *NotifyTarget) ToWebhookMap() map[string]*models.Webhook {
 }
 
 func (s *NotifyTarget) ToUidList() []int64 {
-	uids := make([]int64, len(s.userMap))
+	uids := make([]int64, 0, len(s.userMap))
 	for uid, _ := range s.userMap {
 		uids = append(uids, uid)
 	}
