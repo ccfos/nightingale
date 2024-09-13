@@ -704,7 +704,10 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 	}
 
 	var allowedIdents []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").
+		Joins("join target_busi_group on target.ident = target_busi_group.target_ident").
+		Where("target_busi_group.group_id in (?)", bgids)
+	err = DB(ctx).Model(&Target{}).Where("ident in (?)", sub).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
