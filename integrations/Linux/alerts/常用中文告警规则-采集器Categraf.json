@@ -1425,7 +1425,7 @@
         "rule_config": {
             "queries": [
                 {
-                    "prom_ql": "kernel_vmstat_oom_kill != 0",
+                    "prom_ql": "increase(kernel_vmstat_oom_kill[2m]) > 0",
                     "severity": 2
                 }
             ]

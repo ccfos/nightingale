@@ -263,7 +263,7 @@
         "unit": "none",
         "note": "取自 `/proc/vmstat`，需要较高版本的内核，没记错的话应该是 4.13 以上版本",
         "lang": "zh_CN",
-        "expression": "kernel_vmstat_oom_kill",
+        "expression": "increase(kernel_vmstat_oom_kill[2m]) > 0",
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
