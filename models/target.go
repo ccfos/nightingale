@@ -136,7 +136,10 @@ type BuildTargetWhereOption func(session *gorm.DB) *gorm.DB
 
 func BuildTargetWhereWithBgids(bgids []int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
-		if len(bgids) > 0 {
+		if len(bgids) == 1 && bgids[0] == 0 {
+			session = session.Joins("left join target_busi_group on target.ident = " +
+				"target_busi_group.target_ident").Where("target_busi_group.target_ident is null")
+		} else if len(bgids) > 0 {
 			session = session.Joins("join target_busi_group on target.ident = "+
 				"target_busi_group.target_ident").Where("target_busi_group.group_id in (?)", bgids)
 		}
@@ -178,18 +181,18 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if downtime > 0 {
-			session = session.Where("update_at < ?", time.Now().Unix()-downtime)
+			session = session.Where("target.update_at < ?", time.Now().Unix()-downtime)
 		}
 		return session
 	}
 }
 
 func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
-	session := DB(ctx).Model(&Target{})
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident")
 	for _, opt := range options {
-		session = opt(session)
+		sub = opt(sub)
 	}
-	return session
+	return DB(ctx).Model(&Target{}).Where("ident in (?)", sub)
 }
 
 func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, error) {
@@ -247,14 +250,17 @@ func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, t
 }
 
 func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
-	session := DB(ctx).Model(&Target{})
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").Joins("join target_busi_group " +
+		"on target.ident = target_busi_group.target_ident")
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
 			tx = tx.Or(k, v)
 		}
-		session = session.Where(tx)
+		sub = sub.Where(tx)
 	}
+
+	session := DB(ctx).Model(&Target{}).Where("ident in (?)", sub)
 
 	if limit > 0 {
 		session = session.Limit(limit).Offset(offset)
