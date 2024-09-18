@@ -56,8 +56,8 @@ const (
 	Triggered = "triggered"
 )
 
-var (
-	body = feishuCard{
+func createFeishuCardBody() feishuCard {
+	return feishuCard{
 		feishu: feishu{Msgtype: "interactive"},
 		Card: Cards{
 			Config: Conf{
@@ -90,7 +90,7 @@ var (
 			},
 		},
 	}
-)
+}
 
 func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
@@ -121,6 +121,7 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 	}
 
 	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	body := createFeishuCardBody()
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
@@ -153,6 +154,7 @@ func (fs *FeishuCardSender) Send(ctx MessageContext) {
 	}
 
 	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	body := createFeishuCardBody()
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
