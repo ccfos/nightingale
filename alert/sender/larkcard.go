@@ -42,6 +42,7 @@ func (fs *LarkCardSender) CallBack(ctx CallBackContext) {
 	}
 
 	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	body := createFeishuCardBody()
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
@@ -74,6 +75,7 @@ func (fs *LarkCardSender) Send(ctx MessageContext) {
 	}
 
 	SendTitle := fmt.Sprintf("🔔 %s", ctx.Events[0].RuleName)
+	body := createFeishuCardBody()
 	body.Card.Header.Title.Content = SendTitle
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
