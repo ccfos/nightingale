@@ -95,7 +95,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
-	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -121,8 +120,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		models.DoMigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
 	}
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
-		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)

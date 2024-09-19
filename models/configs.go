@@ -106,8 +106,10 @@ func InitRSAPassWord(ctx *ctx.Context) (string, error) {
 
 func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-in type configs
 	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[string](ctx, "/v1/n9e/config?key="+ckey)
-		return s, err
+		if !ctx.IsCenter {
+			s, err := poster.GetByUrls[string](ctx, "/v1/n9e/config?key="+ckey)
+			return s, err
+		}
 	}
 
 	var lst []string
@@ -121,17 +123,6 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-
 	}
 
 	return "", nil
-}
-
-func ConfigsGetAll(ctx *ctx.Context) ([]*Configs, error) { // select built-in type configs
-	var lst []*Configs
-	err := DB(ctx).Model(&Configs{}).Select("ckey, cval").
-		Where("ckey!='' and external=? ", 0).Find(&lst).Error
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to query configs")
-	}
-
-	return lst, nil
 }
 
 func ConfigsSet(ctx *ctx.Context, ckey, cval string) error {
@@ -363,20 +354,4 @@ func ConfigUserVariableGetDecryptMap(context *ctx.Context, privateKey []byte, pa
 	}
 
 	return ret, nil
-}
-
-func ConfigCvalStatistics(context *ctx.Context) (*Statistics, error) {
-	if !context.IsCenter {
-		return poster.GetByUrls[*Statistics](context, "/v1/n9e/statistic?name=cval")
-	}
-
-	session := DB(context).Model(&Configs{}).Select("count(*) as total",
-		"max(update_at) as last_updated").Where("ckey!='' and external=? ", 0) // built-in config
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-	return stats[0], nil
 }
