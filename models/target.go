@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ import (
 type Target struct {
 	Id           int64             `json:"id" gorm:"primaryKey"`
 	GroupId      int64             `json:"group_id"`
-	GroupObj     *BusiGroup        `json:"group_obj" gorm:"-"`
+	GroupObjs    []*BusiGroup      `json:"group_objs" gorm:"-"`
 	Ident        string            `json:"ident"`
 	Note         string            `json:"note"`
 	Tags         string            `json:"-"` // user tags
@@ -38,6 +39,7 @@ type Target struct {
 	CpuUtil    float64 `json:"cpu_util" gorm:"-"`
 	Arch       string  `json:"arch" gorm:"-"`
 	RemoteAddr string  `json:"remote_addr" gorm:"-"`
+	GroupIds   []int64 `json:"group_ids" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -45,24 +47,43 @@ func (t *Target) TableName() string {
 }
 
 func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
-	if t.GroupId <= 0 {
-		return nil
+	var err error
+	if len(t.GroupIds) == 0 {
+		t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
+		if err != nil {
+			return errors.WithMessage(err, "failed to get target gids")
+		}
+		t.GroupObjs = make([]*BusiGroup, 0, len(t.GroupIds))
 	}
 
-	bg, has := cache[t.GroupId]
-	if has {
-		t.GroupObj = bg
-		return nil
+	for _, gid := range t.GroupIds {
+		bg, has := cache[gid]
+		if has {
+			t.GroupObjs = append(t.GroupObjs, bg)
+			continue
+		}
+
+		bg, err := BusiGroupGetById(ctx, gid)
+		if err != nil {
+			return errors.WithMessage(err, "failed to get busi group")
+		}
+
+		t.GroupObjs = append(t.GroupObjs, bg)
+		cache[gid] = bg
 	}
 
-	bg, err := BusiGroupGetById(ctx, t.GroupId)
-	if err != nil {
-		return errors.WithMessage(err, "failed to get busi group")
-	}
-
-	t.GroupObj = bg
-	cache[t.GroupId] = bg
 	return nil
+}
+
+func (t *Target) MatchGroupId(gid ...int64) bool {
+	for _, tgId := range t.GroupIds {
+		for _, id := range gid {
+			if tgId == id {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (t *Target) AfterFind(tx *gorm.DB) (err error) {
@@ -102,8 +123,12 @@ type BuildTargetWhereOption func(session *gorm.DB) *gorm.DB
 
 func BuildTargetWhereWithBgids(bgids []int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
-		if len(bgids) > 0 {
-			session = session.Where("group_id in (?)", bgids)
+		if len(bgids) == 1 && bgids[0] == 0 {
+			session = session.Joins("left join target_busi_group on target.ident = " +
+				"target_busi_group.target_ident").Where("target_busi_group.target_ident is null")
+		} else if len(bgids) > 0 {
+			session = session.Joins("join target_busi_group on target.ident = "+
+				"target_busi_group.target_ident").Where("target_busi_group.group_id in (?)", bgids)
 		}
 		return session
 	}
@@ -143,18 +168,18 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if downtime > 0 {
-			session = session.Where("update_at < ?", time.Now().Unix()-downtime)
+			session = session.Where("target.update_at < ?", time.Now().Unix()-downtime)
 		}
 		return session
 	}
 }
 
 func buildTargetWhere(ctx *ctx.Context, options ...BuildTargetWhereOption) *gorm.DB {
-	session := DB(ctx).Model(&Target{})
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident")
 	for _, opt := range options {
-		session = opt(session)
+		sub = opt(sub)
 	}
-	return session
+	return DB(ctx).Model(&Target{}).Where("ident in (?)", sub)
 }
 
 func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, error) {
@@ -212,14 +237,17 @@ func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, t
 }
 
 func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
-	session := DB(ctx).Model(&Target{})
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").Joins("left join " +
+		"target_busi_group on target.ident = target_busi_group.target_ident")
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
 			tx = tx.Or(k, v)
 		}
-		session = session.Where(tx)
+		sub = sub.Where(tx)
 	}
+
+	session := DB(ctx).Model(&Target{}).Where("ident in (?)", sub)
 
 	if limit > 0 {
 		session = session.Limit(limit).Offset(offset)
@@ -495,4 +523,69 @@ func IdentsFilter(ctx *ctx.Context, idents []string, where string, args ...inter
 
 func (m *Target) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
+}
+
+func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
+	// 1. 判断是否已经完成迁移
+	var cnt int64
+	if err := DB(ctx).Model(&TargetBusiGroup{}).Count(&cnt).Error; err != nil {
+		fmt.Println("Failed to count target_busi_group, err:", err)
+		return
+	}
+	if cnt > 0 {
+		fmt.Println("Migration has been completed.")
+		return
+	}
+
+	DoMigrateBg(ctx, bgLabelKey)
+}
+
+func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
+	// 2. 获取全量 target
+	targets, err := TargetGetsAll(ctx)
+	if err != nil {
+		fmt.Println("Failed to get target, err:", err)
+		return err
+	}
+
+	// 3. 获取全量 busi_group
+	bgs, err := BusiGroupGetAll(ctx)
+	if err != nil {
+		fmt.Println("Failed to get bg, err:", err)
+		return err
+	}
+
+	bgById := make(map[int64]*BusiGroup, len(bgs))
+	for _, bg := range bgs {
+		bgById[bg.Id] = bg
+	}
+
+	// 4. 如果某 busi_group 有 label，将其存至对应的 target tags 中
+	for _, t := range targets {
+		if t.GroupId == 0 {
+			continue
+		}
+		err := DB(ctx).Transaction(func(tx *gorm.DB) error {
+			// 4.1 将 group_id 迁移至关联表
+			if err := TargetBindBgids(ctx, []string{t.Ident}, []int64{t.GroupId}); err != nil {
+				return err
+			}
+			if err := TargetUpdateBgid(ctx, []string{t.Ident}, 0, false); err != nil {
+				return err
+			}
+
+			// 4.2 判断该机器是否需要新增 tag
+			if bg, ok := bgById[t.GroupId]; !ok || bg.LabelEnable == 0 ||
+				strings.Contains(t.Tags, bgLabelKey+"=") {
+				return nil
+			} else {
+				return t.AddTags(ctx, []string{bgLabelKey + "=" + bg.LabelValue})
+			}
+		})
+		if err != nil {
+			fmt.Println("Failed to migrate bg, err:", err)
+			continue
+		}
+	}
+	return nil
 }
