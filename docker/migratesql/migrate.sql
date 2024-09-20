@@ -105,5 +105,15 @@ CREATE TABLE notification_record (
 /* v7.3.0 2024-08-26 */
 ALTER TABLE `target` ADD COLUMN `host_tags` TEXT COMMENT 'global labels set in conf file';
 
-/* v7.4.0 2024-08-28 */
+/* v7.3.4 2024-08-28 */
 ALTER TABLE `builtin_payloads` ADD COLUMN `component_id` bigint(20) NOT NULL DEFAULT 0 COMMENT 'component_id';
+
+/* v7.4.0 2024-09-20 */
+CREATE TABLE `target_busi_group` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `target_ident` varchar(191) NOT NULL,
+  `group_id` bigint NOT NULL,
+  `update_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
