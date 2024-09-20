@@ -67,6 +67,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 			bgids = append(bgids, 0)
 		}
 	}
+
 	options := []models.BuildTargetWhereOption{
 		models.BuildTargetWhereWithBgids(bgids),
 		models.BuildTargetWhereWithDsIds(dsIds),
