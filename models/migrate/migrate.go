@@ -89,7 +89,7 @@ func MigrateTables(db *gorm.DB) error {
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
-			logger.Errorf("failed to migrate table: %v", err)
+			logger.Errorf("failed to migrate table:%v %v", dt, err)
 		}
 	}
 

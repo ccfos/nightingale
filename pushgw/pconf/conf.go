@@ -10,18 +10,17 @@ import (
 )
 
 type Pushgw struct {
-	BusiGroupLabelKey     string
-	IdentMetrics          []string
-	IdentStatsThreshold   int
-	IdentDropThreshold    int
-	WriteConcurrency      int
-	LabelRewrite          bool
-	BusiGroupLabelRewrite bool
-	ForceUseServerTS      bool
-	DebugSample           map[string]string
-	DropSample            []map[string]string
-	WriterOpt             WriterGlobalOpt
-	Writers               []WriterOptions
+	BusiGroupLabelKey   string
+	IdentMetrics        []string
+	IdentStatsThreshold int
+	IdentDropThreshold  int
+	WriteConcurrency    int
+	LabelRewrite        bool
+	ForceUseServerTS    bool
+	DebugSample         map[string]string
+	DropSample          []map[string]string
+	WriterOpt           WriterGlobalOpt
+	Writers             []WriterOptions
 }
 
 type WriterGlobalOpt struct {

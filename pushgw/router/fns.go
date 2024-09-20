@@ -21,9 +21,7 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 	for key, value := range target.TagsMap {
 		if index, has := labelKeys[key]; has {
 			// overwrite labels
-			if rt.Pushgw.BusiGroupLabelRewrite && key == rt.Pushgw.BusiGroupLabelKey {
-				pt.Labels[index].Value = value // 此次更新前，busigroup 标签没有在页面 tag 中配置
-			} else if rt.Pushgw.LabelRewrite {
+			if rt.Pushgw.LabelRewrite {
 				pt.Labels[index].Value = value
 			}
 			continue
