@@ -160,8 +160,9 @@ func (tc *TargetCacheType) syncTargets() error {
 	}
 
 	m := make(map[string]*models.Target)
-	if tc.ctx.IsCenter {
-		metaMap := tc.GetHostMetas(lst)
+
+	metaMap := tc.GetHostMetas(lst)
+	if len(metaMap) > 0 {
 		for i := 0; i < len(lst); i++ {
 			if meta, ok := metaMap[lst[i].Ident]; ok {
 				lst[i].FillMeta(meta)
@@ -171,15 +172,6 @@ func (tc *TargetCacheType) syncTargets() error {
 
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
-	}
-
-	tgs, err := models.TargetBusiGroupsGetAll(tc.ctx)
-	if err != nil {
-		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query records: "+err.Error())
-		return errors.WithMessage(err, "failed to call TargetBusiGroupsGetAll")
-	}
-	for _, t := range lst {
-		t.GroupIds = tgs[t.Ident]
 	}
 
 	tc.Set(m, stat.Total, stat.LastUpdated)

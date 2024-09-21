@@ -264,9 +264,20 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
+	if err != nil {
+		return lst, err
+	}
+
+	tgs, err := TargetBusiGroupsGetAll(ctx)
+	if err != nil {
+		return lst, err
+	}
+
 	for i := 0; i < len(lst); i++ {
 		lst[i].FillTagsMap()
+		lst[i].GroupIds = tgs[lst[i].Ident]
 	}
+
 	return lst, err
 }
 
