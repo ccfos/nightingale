@@ -527,6 +527,11 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		}
 
 		event.DB2Mem()
+		target, exists := p.TargetCache.Get(event.TargetIdent)
+		if exists {
+			event.Target = target
+		}
+
 		fireMap[event.Hash] = event
 		e := *event
 		pendingsUseByRecoverMap[event.Hash] = &e

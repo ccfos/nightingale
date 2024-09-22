@@ -342,7 +342,7 @@ func (e *AlertCurEvent) DB2Mem() {
 			continue
 		}
 
-		arr := strings.Split(pair, "=")
+		arr := strings.SplitN(pair, "=", 2)
 		if len(arr) != 2 {
 			continue
 		}

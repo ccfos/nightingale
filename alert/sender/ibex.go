@@ -108,7 +108,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 			continue
 		}
 
-		arr := strings.Split(pair, "=")
+		arr := strings.SplitN(pair, "=", 2)
 		if len(arr) != 2 {
 			continue
 		}

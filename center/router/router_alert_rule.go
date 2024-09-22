@@ -514,7 +514,7 @@ func (rt *Router) relabelTest(c *gin.Context) {
 
 	labels := make([]prompb.Label, len(f.Tags))
 	for i, tag := range f.Tags {
-		label := strings.Split(tag, "=")
+		label := strings.SplitN(tag, "=", 2)
 		if len(label) != 2 {
 			ginx.Bomb(http.StatusBadRequest, "tag:%s format error", tag)
 		}
