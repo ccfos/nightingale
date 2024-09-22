@@ -457,9 +457,10 @@ func (rt *Router) targetUpdateBgid(c *gin.Context) {
 }
 
 type targetBgidsForm struct {
-	Idents  []string `json:"idents" binding:"required_without=HostIps"`
-	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
-	Bgids   []int64  `json:"bgids"`
+	Idents   []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps  []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids    []int64  `json:"bgids"`
+	Override bool     `json:"override"`
 }
 
 func (rt *Router) targetBindBgids(c *gin.Context) {
@@ -480,7 +481,11 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 	if user.IsAdmin() {
-		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+		if f.Override {
+			ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids))
+		} else {
+			ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+		}
 		return
 	}
 
@@ -490,6 +495,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 		ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
 	}
 
+	// 普通用户，检查用户是否有权限操作所有请求的业务组
 	rt.checkTargetPerm(c, f.Idents)
 
 	for _, bgid := range f.Bgids {
@@ -502,13 +508,19 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 		}
 	}
 
+	if f.Override {
+		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids))
+		return
+	}
+
 	ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
 }
 
 type targetUnbindBgidsForm struct {
-	Idents  []string `json:"idents" binding:"required_without=HostIps"`
-	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
-	Bgids   []int64  `json:"bgids"`
+	Idents    []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps   []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids     []int64  `json:"bgids"`
+	UnbindAll bool     `json:"unbind_all"`
 }
 
 func (rt *Router) targetUnbindBgids(c *gin.Context) {
@@ -529,11 +541,31 @@ func (rt *Router) targetUnbindBgids(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 	if user.IsAdmin() {
-		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+		if f.UnbindAll {
+			ginx.NewRender(c).Data(failedResults, models.TargetDeleteBgids(rt.Ctx, f.Idents))
+		} else {
+			ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+		}
 		return
 	}
 
+	// 普通用户，检查用户是否有权限操作所有请求的业务组
+	for _, bgid := range f.Bgids {
+		bg := BusiGroup(rt.Ctx, bgid)
+		can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
+		ginx.Dangerous(err)
+
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+		}
+	}
 	rt.checkTargetPerm(c, f.Idents)
+
+	if f.UnbindAll {
+		ginx.NewRender(c).Data(failedResults, models.TargetDeleteBgids(rt.Ctx, f.Idents))
+		return
+	}
+
 	ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 }
 

@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -71,4 +73,45 @@ func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
 func TargetUnbindBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
 	return DB(ctx).Where("target_ident in ? and group_id in ?",
 		idents, bgids).Delete(&TargetBusiGroup{}).Error
+}
+
+func TargetDeleteBgids(ctx *ctx.Context, idents []string) error {
+	return DB(ctx).Where("target_ident in ?", idents).Delete(&TargetBusiGroup{}).Error
+}
+
+func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		// 先删除旧的关联
+		if err := tx.Where("target_ident IN ?", idents).Delete(&TargetBusiGroup{}).Error; err != nil {
+			return err
+		}
+
+		// 准备新的关联数据
+		lst := make([]TargetBusiGroup, 0, len(bgids)*len(idents))
+		updateAt := time.Now().Unix()
+		for _, ident := range idents {
+			for _, bgid := range bgids {
+				cur := TargetBusiGroup{
+					TargetIdent: ident,
+					GroupId:     bgid,
+					UpdateAt:    updateAt,
+				}
+				lst = append(lst, cur)
+			}
+		}
+
+		if len(lst) == 0 {
+			return nil
+		}
+
+		// 添加新的关联
+		var cl clause.Expression = clause.Insert{Modifier: "ignore"}
+		switch tx.Dialector.Name() {
+		case "sqlite":
+			cl = clause.Insert{Modifier: "or ignore"}
+		case "postgres":
+			cl = clause.OnConflict{DoNothing: true}
+		}
+		return tx.Clauses(cl).CreateInBatches(&lst, 10).Error
+	})
 }
