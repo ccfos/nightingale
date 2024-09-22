@@ -22,7 +22,7 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		logger.Warningf("req:%v heartbeat failed to handle heartbeat err:%v", req, err)
 		ginx.Dangerous(err)
 	}
-	api := "/v1/n9e/heartbeat"
+	api := "/v1/n9e/center/heartbeat"
 	if rt.HeartbeartApi != "" {
 		api = rt.HeartbeartApi
 	}

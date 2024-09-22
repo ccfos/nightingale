@@ -565,6 +565,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/notify-record", rt.notificationRecordAdd)
 
 			service.GET("/alert-cur-events-del-by-hash", rt.alertCurEventDelByHash)
+
+			service.POST("/center/heartbeat", rt.heartbeat)
 		}
 	}
 

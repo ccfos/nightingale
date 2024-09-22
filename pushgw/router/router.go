@@ -48,6 +48,12 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *me
 }
 
 func (rt *Router) Config(r *gin.Engine) {
+	service := r.Group("/v1/n9e")
+	if len(rt.HTTP.APIForService.BasicAuth) > 0 {
+		service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
+	}
+	service.POST("/target-update", rt.targetUpdate)
+
 	if !rt.HTTP.APIForAgent.Enable {
 		return
 	}
@@ -69,7 +75,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
-		r.POST("/v1/n9e/target-update", auth, rt.targetUpdate)
 		r.POST("/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {
@@ -80,7 +85,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/opentsdb/put", rt.openTSDBPut)
 		r.POST("/openfalcon/push", rt.falconPush)
 		r.POST("/prometheus/v1/write", rt.remoteWrite)
-		r.POST("/v1/n9e/target-update", rt.targetUpdate)
 		r.POST("/v1/n9e/edge/heartbeat", rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {
