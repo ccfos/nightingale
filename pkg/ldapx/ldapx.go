@@ -173,8 +173,8 @@ func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
 			continue
 		}
 
-		// 多个 dn 中，账号必须唯一
-		if len(srs[i].Entries) > 1 || sr != nil {
+		// 多个 dn 中，账号的唯一性由 LDAP 保证
+		if len(srs[i].Entries) > 1 {
 			return nil, fmt.Errorf("ldap.error: search user(%s), multi entries found", user)
 		}
 
@@ -187,6 +187,12 @@ func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {
 		for _, info := range srs[i].Entries[0].Attributes {
 			logger.Infof("ldap.info: user(%s) info: %+v", user, info)
 		}
+
+		break
+	}
+
+	if sr == nil {
+		return nil, fmt.Errorf("username or password invalid")
 	}
 
 	return sr, nil
@@ -317,6 +323,7 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, d
 	if err != nil {
 		return nil, err
 	}
+
 	// copy attributes from ldap
 	ldap.RLock()
 	attrs := ldap.Attributes
