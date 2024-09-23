@@ -393,74 +393,11 @@ type targetBgidForm struct {
 	Bgid    int64    `json:"bgid"`
 }
 
-func (rt *Router) targetUpdateBgid(c *gin.Context) {
-	var f targetBgidForm
-	var err error
-	var failedResults = make(map[string]string)
-	ginx.BindJSON(c, &f)
-
-	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
-	}
-
-	// Acquire idents by idents and hostIps
-	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
-	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
-	}
-
-	user := c.MustGet("user").(*models.User)
-	if user.IsAdmin() {
-		ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
-		return
-	}
-
-	if f.Bgid > 0 {
-		// 把要操作的机器分成两部分，一部分是bgid为0，需要管理员分配，另一部分bgid>0，说明是业务组内部想调整
-		// 比如原来分配给didiyun的机器，didiyun的管理员想把部分机器调整到didiyun-ceph下
-		// 对于调整的这种情况，当前登录用户要对这批机器有操作权限，同时还要对目标BG有操作权限
-		orphans, err := models.IdentsFilter(rt.Ctx, f.Idents, "group_id = ?", 0)
-		ginx.Dangerous(err)
-
-		// 机器里边存在未归组的，登录用户就需要是admin
-		if len(orphans) > 0 && !user.IsAdmin() {
-			can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
-			ginx.Dangerous(err)
-			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
-			}
-		}
-
-		reBelongs, err := models.IdentsFilter(rt.Ctx, f.Idents, "group_id > ?", 0)
-		ginx.Dangerous(err)
-
-		if len(reBelongs) > 0 {
-			// 对于这些要重新分配的机器，操作者要对这些机器本身有权限，同时要对目标bgid有权限
-			rt.checkTargetPerm(c, f.Idents)
-
-			bg := BusiGroup(rt.Ctx, f.Bgid)
-			can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
-			ginx.Dangerous(err)
-
-			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
-			}
-		}
-	} else if f.Bgid == 0 {
-		// 退还机器
-		rt.checkTargetPerm(c, f.Idents)
-	} else {
-		ginx.Bomb(http.StatusBadRequest, "invalid bgid")
-	}
-
-	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
-}
-
 type targetBgidsForm struct {
-	Idents   []string `json:"idents" binding:"required_without=HostIps"`
-	HostIps  []string `json:"host_ips" binding:"required_without=Idents"`
-	Bgids    []int64  `json:"bgids"`
-	Override bool     `json:"override"`
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids   []int64  `json:"bgids"`
+	Action  string   `json:"action"` // add del reset
 }
 
 func (rt *Router) targetBindBgids(c *gin.Context) {
@@ -480,93 +417,37 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	}
 
 	user := c.MustGet("user").(*models.User)
-	if user.IsAdmin() {
-		if f.Override {
-			ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids))
-		} else {
-			ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+	if !user.IsAdmin() {
+		// 普通用户，检查用户是否有权限操作所有请求的业务组
+		rt.checkTargetPerm(c, f.Idents)
+
+		for _, bgid := range f.Bgids {
+			bg := BusiGroup(rt.Ctx, bgid)
+			can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
+			ginx.Dangerous(err)
+
+			if !can {
+				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+			}
 		}
-		return
-	}
 
-	can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
-	ginx.Dangerous(err)
-	if !can {
-		ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
-	}
-
-	// 普通用户，检查用户是否有权限操作所有请求的业务组
-	rt.checkTargetPerm(c, f.Idents)
-
-	for _, bgid := range f.Bgids {
-		bg := BusiGroup(rt.Ctx, bgid)
-		can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
+		can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
 		ginx.Dangerous(err)
-
 		if !can {
-			ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+			ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
 		}
 	}
 
-	if f.Override {
+	switch f.Action {
+	case "add":
+		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+	case "del":
+		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+	case "reset":
 		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids))
-		return
+	default:
+		ginx.Bomb(http.StatusBadRequest, "invalid action")
 	}
-
-	ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
-}
-
-type targetUnbindBgidsForm struct {
-	Idents    []string `json:"idents" binding:"required_without=HostIps"`
-	HostIps   []string `json:"host_ips" binding:"required_without=Idents"`
-	Bgids     []int64  `json:"bgids"`
-	UnbindAll bool     `json:"unbind_all"`
-}
-
-func (rt *Router) targetUnbindBgids(c *gin.Context) {
-	var f targetUnbindBgidsForm
-	var err error
-	var failedResults = make(map[string]string)
-	ginx.BindJSON(c, &f)
-
-	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
-	}
-
-	// Acquire idents by idents and hostIps
-	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
-	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
-	}
-
-	user := c.MustGet("user").(*models.User)
-	if user.IsAdmin() {
-		if f.UnbindAll {
-			ginx.NewRender(c).Data(failedResults, models.TargetDeleteBgids(rt.Ctx, f.Idents))
-		} else {
-			ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
-		}
-		return
-	}
-
-	// 普通用户，检查用户是否有权限操作所有请求的业务组
-	for _, bgid := range f.Bgids {
-		bg := BusiGroup(rt.Ctx, bgid)
-		can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
-		ginx.Dangerous(err)
-
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
-		}
-	}
-	rt.checkTargetPerm(c, f.Idents)
-
-	if f.UnbindAll {
-		ginx.NewRender(c).Data(failedResults, models.TargetDeleteBgids(rt.Ctx, f.Idents))
-		return
-	}
-
-	ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 }
 
 func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
@@ -585,7 +466,7 @@ func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
+	ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, []int64{f.Bgid}))
 }
 
 type identsForm struct {

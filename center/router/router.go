@@ -280,9 +280,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/targets/tags", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetBindTagsByFE)
 		pages.DELETE("/targets/tags", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUnbindTagsByFE)
 		pages.PUT("/targets/note", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateNote)
-		pages.PUT("/targets/bgid", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetUpdateBgid)
 		pages.PUT("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/put"), rt.targetBindBgids)
-		pages.DELETE("/targets/bgids", rt.auth(), rt.user(), rt.perm("/targets/del"), rt.targetUnbindBgids)
 
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
