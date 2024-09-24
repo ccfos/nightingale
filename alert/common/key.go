@@ -7,6 +7,10 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
+func init() {
+	models.MatchGroupsName = MatchGroupsName
+}
+
 func RuleKey(datasourceId, id int64) string {
 	return fmt.Sprintf("alert-%d-%d", datasourceId, id)
 }
