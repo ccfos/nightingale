@@ -419,9 +419,21 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	if !user.IsAdmin() {
 		// 普通用户，检查用户是否有权限操作所有请求的业务组
-		rt.checkTargetPerm(c, f.Idents)
+		existing, _, err := models.SeparateTargetIdents(rt.Ctx, f.Idents)
+		ginx.Dangerous(err)
+		rt.checkTargetPerm(c, existing)
 
-		for _, bgid := range f.Bgids {
+		var groupIds []int64
+		if f.Action == "reset" {
+			// 如果是复写，则需要检查用户是否有权限操作机器之前的业务组
+			bgids, err := models.TargetGroupIdsGetByIdents(rt.Ctx, f.Idents)
+			ginx.Dangerous(err)
+
+			groupIds = append(groupIds, bgids...)
+		}
+		groupIds = append(groupIds, f.Bgids...)
+
+		for _, bgid := range groupIds {
 			bg := BusiGroup(rt.Ctx, bgid)
 			can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
 			ginx.Dangerous(err)

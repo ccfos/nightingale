@@ -46,6 +46,20 @@ func TargetGroupIdsGetByIdent(ctx *ctx.Context, ident string) ([]int64, error) {
 	return groupIds, nil
 }
 
+func TargetGroupIdsGetByIdents(ctx *ctx.Context, idents []string) ([]int64, error) {
+	var groupIds []int64
+	err := DB(ctx).Model(&TargetBusiGroup{}).
+		Where("target_ident IN ?", idents).
+		Distinct().
+		Pluck("group_id", &groupIds).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return groupIds, nil
+}
+
 func TargetBindBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
 	lst := make([]TargetBusiGroup, 0, len(bgids)*len(idents))
 	updateAt := time.Now().Unix()
@@ -114,4 +128,31 @@ func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64) error
 		}
 		return tx.Clauses(cl).CreateInBatches(&lst, 10).Error
 	})
+}
+
+func SeparateTargetIdents(ctx *ctx.Context, idents []string) (existing, nonExisting []string, err error) {
+	existingMap := make(map[string]bool)
+
+	// 查询已存在的 idents 并直接填充 map
+	err = DB(ctx).Model(&TargetBusiGroup{}).
+		Where("target_ident IN ?", idents).
+		Distinct().
+		Pluck("target_ident", &existing).
+		Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, ident := range existing {
+		existingMap[ident] = true
+	}
+
+	// 分离不存在的 idents
+	for _, ident := range idents {
+		if !existingMap[ident] {
+			nonExisting = append(nonExisting, ident)
+		}
+	}
+
+	return
 }
