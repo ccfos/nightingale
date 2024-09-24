@@ -59,7 +59,7 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 
 	for _, gid := range t.GroupIds {
 		bg, has := cache[gid]
-		if has {
+		if has && bg != nil {
 			t.GroupObjs = append(t.GroupObjs, bg)
 			continue
 		}
@@ -67,6 +67,10 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 		bg, err := BusiGroupGetById(ctx, gid)
 		if err != nil {
 			return errors.WithMessage(err, "failed to get busi group")
+		}
+
+		if bg == nil {
+			continue
 		}
 
 		t.GroupObjs = append(t.GroupObjs, bg)
