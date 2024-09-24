@@ -8,6 +8,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
@@ -127,8 +128,13 @@ func BuildTargetWhereWithBgids(bgids []int64) BuildTargetWhereOption {
 			session = session.Joins("left join target_busi_group on target.ident = " +
 				"target_busi_group.target_ident").Where("target_busi_group.target_ident is null")
 		} else if len(bgids) > 0 {
-			session = session.Joins("join target_busi_group on target.ident = "+
-				"target_busi_group.target_ident").Where("target_busi_group.group_id in (?)", bgids)
+			if slices.Contains(bgids, 0) {
+				session = session.Joins("left join target_busi_group on target.ident = target_busi_group.target_ident").
+					Where("target_busi_group.target_ident is null OR target_busi_group.group_id in (?)", bgids)
+			} else {
+				session = session.Joins("join target_busi_group on target.ident = "+
+					"target_busi_group.target_ident").Where("target_busi_group.group_id in (?)", bgids)
+			}
 		}
 		return session
 	}
