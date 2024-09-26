@@ -99,6 +99,7 @@ type AlertRule struct {
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
+	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 }
 
 type Tpl struct {
@@ -820,7 +821,8 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	return lst, nil
 }
 
-func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string, cates []string, disabled int) ([]*AlertRule, error) {
+func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string,
+	cates []string, disabled int) ([]*AlertRule, error) {
 	session := DB(ctx)
 
 	if len(prods) > 0 {
