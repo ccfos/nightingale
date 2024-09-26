@@ -18,9 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
-	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
@@ -80,9 +78,6 @@ type Processor struct {
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
 	EventMuteHook          EventMuteHookFunc
-
-	PromClients     *prom.PromClientMap
-	TdengineClients *tdengine.TdengineClientMap
 }
 
 func (p *Processor) Key() string {
@@ -216,7 +211,6 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.Severity = anomalyPoint.Severity
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
-	event.RecoverConfig = anomalyPoint.RecoverConfig
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
@@ -296,21 +290,9 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 	}
 
 	hashArr := make([]string, 0, len(alertingKeys))
-	for hash, event := range p.fires.GetAll() {
+	for hash, _ := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
-		}
-
-		if event.RecoverConfig.JudgeType != 0 {
-			value, _, err := p.PromClients.GetCli(p.datasourceId).Query(p.ctx.Ctx, event.RecoverConfig.RecoverPromql, time.Now())
-			if err != nil {
-				continue
-			}
-			points := common.ConvertAnomalyPoints(value)
-			// 没查到，说明不满足恢复条件
-			if len(points) == 0 {
-				continue
-			}
 		}
 
 		hashArr = append(hashArr, hash)

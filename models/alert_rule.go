@@ -126,9 +126,17 @@ type PromRuleConfig struct {
 	AlgoParams interface{} `json:"algo_params"`
 }
 
+type RecoverJudge int
+
+const (
+	Origin             RecoverJudge = 0
+	RecoverWithoutData RecoverJudge = 1
+	RecoverOnCondition RecoverJudge = 2
+)
+
 type RecoverConfig struct {
-	JudgeType     int    `json:"judge_type"`
-	RecoverPromql string `json:"recover_promql"`
+	JudgeType  RecoverJudge `json:"judge_type"`
+	RecoverExp string       `json:"recover_exp"`
 }
 
 type HostRuleConfig struct {
