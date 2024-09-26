@@ -60,10 +60,6 @@ func (a *Alert) PreCheck(configDir string) {
 		a.Heartbeat.Interval = 1000
 	}
 
-	if a.Heartbeat.EngineName == "" {
-		a.Heartbeat.EngineName = "default"
-	}
-
 	if a.EngineDelay == 0 {
 		a.EngineDelay = 30
 	}
