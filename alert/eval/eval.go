@@ -564,14 +564,15 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 			}
 
 			point := common.AnomalyPoint{
-				Key:       sample.MetricName(),
-				Labels:    sample.Metric,
-				Timestamp: int64(ts),
-				Value:     value,
-				Values:    values,
-				Severity:  trigger.Severity,
-				Triggered: isTriggered,
-				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				Key:           sample.MetricName(),
+				Labels:        sample.Metric,
+				Timestamp:     int64(ts),
+				Value:         value,
+				Values:        values,
+				Severity:      trigger.Severity,
+				Triggered:     isTriggered,
+				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				RecoverConfig: trigger.RecoverConfig,
 			}
 
 			if sample.Query != "" {
@@ -581,6 +582,13 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 			if isTriggered {
 				points = append(points, point)
 			} else {
+				// 产生恢复点时，再额外判断是否满足恢复条件
+				if trigger.RecoverConfig.JudgeType != 0 && trigger.RecoverConfig.RecoverPromql != "" {
+					fullfil := parser.Calc(trigger.RecoverConfig.RecoverPromql, m)
+					if !fullfil {
+						continue
+					}
+				}
 				recoverPoints = append(recoverPoints, point)
 			}
 		}
