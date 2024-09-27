@@ -16,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/conf"
 	_ "github.com/ccfos/nightingale/v6/front/statik"
 	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
@@ -51,6 +52,7 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
 	HeartbeatHook     HeartbeatHookFunc
+	TargetDeleteHook  models.TargetDeleteHookFunc
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
@@ -77,7 +79,12 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
 		HeartbeatHook:     func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:  emptyDeleteHook,
 	}
+}
+
+func emptyDeleteHook(ctx *ctx.Context, idents []string) error {
+	return nil
 }
 
 func stat() gin.HandlerFunc {
