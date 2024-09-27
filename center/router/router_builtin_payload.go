@@ -260,3 +260,15 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 
 	ginx.NewRender(c).Message(models.BuiltinPayloadDels(rt.Ctx, req.Ids))
 }
+
+func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
+	uuid := ginx.QueryInt64(c, "uuid", 0)
+	// 优先以 uuid 为准
+	if uuid != 0 {
+		ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid))
+		return
+	}
+
+	id := ginx.QueryInt64(c, "id", 0)
+	ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "id = ?", id))
+}
