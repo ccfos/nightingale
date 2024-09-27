@@ -192,7 +192,6 @@ func (s *SsoClient) UserExist(username string) (bool, error) {
 			return true, nil
 		}
 
-		return true, nil
 	}
 
 	return false, nil
