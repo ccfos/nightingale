@@ -35,6 +35,7 @@ type Datasource struct {
 	UpdatedBy      string                 `json:"updated_by"`
 	IsDefault      bool                   `json:"is_default"`
 	Transport      *http.Transport        `json:"-" gorm:"-"`
+	ForceSave      bool                   `json:"force_save" gorm:"-"`
 }
 
 type Auth struct {
