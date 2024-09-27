@@ -72,7 +72,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
+	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
@@ -115,10 +115,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
-	models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
-	if config.Center.MigrateBusiGroupLabel {
-		models.DoMigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
-	}
+	go models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

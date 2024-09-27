@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -548,31 +548,36 @@ func (m *Target) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}
 
 func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
 	// 1. 判断是否已经完成迁移
-	var cnt int64
-	if err := DB(ctx).Model(&TargetBusiGroup{}).Count(&cnt).Error; err != nil {
-		fmt.Println("Failed to count target_busi_group, err:", err)
-		return
-	}
-	if cnt > 0 {
-		fmt.Println("Migration has been completed.")
+	var maxGroupId int64
+	if err := DB(ctx).Model(&Target{}).Select("MAX(group_id)").Scan(&maxGroupId).Error; err != nil {
+		log.Println("failed to get max group_id from target table, err:", err)
 		return
 	}
 
-	DoMigrateBg(ctx, bgLabelKey)
+	if maxGroupId == 0 {
+		log.Println("migration bgid has been completed.")
+		return
+	}
+
+	err := DoMigrateBg(ctx, bgLabelKey)
+	if err != nil {
+		log.Println("failed to migrate bgid, err:", err)
+		return
+	}
+
+	log.Println("migration bgid has been completed")
 }
 
 func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 	// 2. 获取全量 target
 	targets, err := TargetGetsAll(ctx)
 	if err != nil {
-		fmt.Println("Failed to get target, err:", err)
 		return err
 	}
 
 	// 3. 获取全量 busi_group
 	bgs, err := BusiGroupGetAll(ctx)
 	if err != nil {
-		fmt.Println("Failed to get bg, err:", err)
 		return err
 	}
 
@@ -604,7 +609,7 @@ func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 			}
 		})
 		if err != nil {
-			fmt.Println("Failed to migrate bg, err:", err)
+			log.Printf("failed to migrate %v bg, err: %v\n", t.Ident, err)
 			continue
 		}
 	}
