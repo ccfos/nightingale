@@ -1,0 +1,462 @@
+{
+    "name": "IPMI for Prometheus",
+    "ident": "",
+    "configs": {
+        "version": "2.0.0",
+        "links": [],
+        "var": [
+            {
+                "name": "node",
+                "type": "query",
+                "datasource": {
+                    "cate": "prometheus"
+                },
+                "definition": "label_values(ipmi_bmc_info, ident)",
+                "reg": "",
+                "multi": false
+            }
+        ],
+        "panels": [
+            {
+                "type": "gauge",
+                "id": "f975fded-f57e-4a6e-80b4-50d5be6dd84c",
+                "layout": {
+                    "h": 7,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "f975fded-f57e-4a6e-80b4-50d5be6dd84c",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_temperature_celsius{ident='$node'}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Temperatures",
+                "links": [],
+                "custom": {
+                    "textMode": "valueAndName",
+                    "calc": "avg"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "681f1191-4777-4377-8b77-404d9f036406",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 7,
+                    "i": "681f1191-4777-4377-8b77-404d9f036406",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_power_watts{ident='$node'}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "feede24c-8296-4127-982e-08cfc4151933",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 7,
+                    "i": "feede24c-8296-4127-982e-08cfc4151933",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_power_watts{ident='$node'} * 30 * 24 ",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power usage 30d",
+                "links": [],
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "9e11e7f5-ed3c-49eb-8a72-ee76c8700c24",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 12,
+                    "i": "9e11e7f5-ed3c-49eb-8a72-ee76c8700c24",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_temperature_celsius{ident='$node'}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Temperatures",
+                "links": [],
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "95c734f7-26cb-41a7-8376-49332cc220c2",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 12,
+                    "i": "95c734f7-26cb-41a7-8376-49332cc220c2",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_power_watts{ident='$node'}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Power",
+                "links": [],
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "0313f34f-afcf-41e9-8f69-9a3dbd4b2e56",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 19,
+                    "i": "0313f34f-afcf-41e9-8f69-9a3dbd4b2e56",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_fan_speed_rpm{ident='$node'}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Fans",
+                "links": [],
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "29ee004d-a95c-405d-97d1-d715fab4e1de",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 19,
+                    "i": "29ee004d-a95c-405d-97d1-d715fab4e1de",
+                    "isResizable": true
+                },
+                "version": "2.0.0",
+                "datasourceCate": "prometheus",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "ipmi_voltage_volts{ident='$node',name!~\"Voltage 1|Voltage 2\"}",
+                        "legend": "{{name}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Voltages",
+                "links": [],
+                "description": "",
+                "options": {
+                    "tooltip": {
+                        "mode": "multi"
+                    },
+                    "legend": {
+                        "displayMode": "list",
+                        "placement": "bottom"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            }
+        ]
+    }
+}
