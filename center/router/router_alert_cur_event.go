@@ -206,7 +206,9 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 	for i := 0; i < len(ids); i++ {
 		event, err := models.AlertCurEventGetById(rt.Ctx, ids[i])
 		ginx.Dangerous(err)
-
+		if event == nil {
+			continue
+		}
 		if _, has := set[event.GroupId]; !has {
 			rt.bgrwCheck(c, event.GroupId)
 			set[event.GroupId] = struct{}{}
