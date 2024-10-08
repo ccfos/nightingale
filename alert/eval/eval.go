@@ -459,59 +459,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 
 	for _, trigger := range ruleQuery.Triggers {
 		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
-		seriesTagIndex := make(map[uint64][]uint64)
-
-		if len(trigger.Joins) == 0 {
-			// 没有 join 条件，走原逻辑
-			last := seriesTagIndexes[0]
-			for i := 1; i < len(seriesTagIndexes); i++ {
-				last = originalJoin(last, seriesTagIndexes[i])
-			}
-			seriesTagIndex = last
-		} else {
-			// 有 join 条件，按条件依次合并
-			if len(seriesTagIndexes) != len(trigger.Joins)+1 {
-				logger.Errorf("rule_eval rid:%d queries' count: %d not match join condition's count: %d", ruleId, len(seriesTagIndexes), len(trigger.Joins))
-				continue
-			}
-
-			last := seriesTagIndexes[0]
-			lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
-			for i := range trigger.Joins {
-				cur := seriesTagIndexes[i+1]
-				switch trigger.Joins[i].JoinType {
-				case "original":
-					last = originalJoin(last, cur)
-				case "none":
-					last = noneJoin(last, cur)
-				case "cartesian":
-					last = cartesianJoin(last, cur)
-				case "inner_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(lastRehashed, curRehashed, Inner)
-					last = flatten(lastRehashed)
-				case "left_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(lastRehashed, curRehashed, Left)
-					last = flatten(lastRehashed)
-				case "right_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(curRehashed, lastRehashed, Right)
-					last = flatten(lastRehashed)
-				case "left_exclude":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = exclude(lastRehashed, curRehashed)
-					last = flatten(lastRehashed)
-				case "right_exclude":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = exclude(curRehashed, lastRehashed)
-					last = flatten(lastRehashed)
-				default:
-					logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.Joins[i].JoinType)
-				}
-			}
-			seriesTagIndex = last
-		}
+		seriesTagIndex := ProcessJoins(ruleId, trigger, seriesTagIndexes, seriesStore)
 
 		for _, seriesHash := range seriesTagIndex {
 			sort.Slice(seriesHash, func(i, j int) bool {
@@ -740,4 +688,58 @@ func mergeNewArray(arg ...[]uint64) []uint64 {
 		res = append(res, a...)
 	}
 	return res
+}
+
+func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) map[uint64][]uint64 {
+	if len(trigger.Joins) == 0 {
+		// 没有 join 条件，走原逻辑
+		last := seriesTagIndexes[0]
+		for i := 1; i < len(seriesTagIndexes); i++ {
+			last = originalJoin(last, seriesTagIndexes[i])
+		}
+		return last
+	}
+
+	// 有 join 条件，按条件依次合并
+	if len(seriesTagIndexes) < len(trigger.Joins)+1 {
+		logger.Errorf("rule_eval rid:%d queries' count: %d not match join condition's count: %d", ruleId, len(seriesTagIndexes), len(trigger.Joins))
+		return nil
+	}
+
+	last := seriesTagIndexes[0]
+	lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
+	for i := range trigger.Joins {
+		cur := seriesTagIndexes[i+1]
+		switch trigger.Joins[i].JoinType {
+		case "original":
+			last = originalJoin(last, cur)
+		case "none":
+			last = noneJoin(last, cur)
+		case "cartesian":
+			last = cartesianJoin(last, cur)
+		case "inner_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(lastRehashed, curRehashed, Inner)
+			last = flatten(lastRehashed)
+		case "left_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(lastRehashed, curRehashed, Left)
+			last = flatten(lastRehashed)
+		case "right_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(curRehashed, lastRehashed, Right)
+			last = flatten(lastRehashed)
+		case "left_exclude":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = exclude(lastRehashed, curRehashed)
+			last = flatten(lastRehashed)
+		case "right_exclude":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = exclude(curRehashed, lastRehashed)
+			last = flatten(lastRehashed)
+		default:
+			logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.Joins[i].JoinType)
+		}
+	}
+	return last
 }
