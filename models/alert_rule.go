@@ -127,6 +127,19 @@ type PromRuleConfig struct {
 	AlgoParams interface{} `json:"algo_params"`
 }
 
+type RecoverJudge int
+
+const (
+	Origin             RecoverJudge = 0
+	RecoverWithoutData RecoverJudge = 1
+	RecoverOnCondition RecoverJudge = 2
+)
+
+type RecoverConfig struct {
+	JudgeType  RecoverJudge `json:"judge_type"`
+	RecoverExp string       `json:"recover_exp"`
+}
+
 type HostRuleConfig struct {
 	Queries  []HostQuery   `json:"queries"`
 	Triggers []HostTrigger `json:"triggers"`
@@ -134,8 +147,9 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"`
+	PromQl        string        `json:"prom_ql"`
+	Severity      int           `json:"severity"`
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type HostTrigger struct {
@@ -162,6 +176,8 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
+
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type Join struct {

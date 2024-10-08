@@ -571,8 +571,27 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 			if isTriggered {
 				points = append(points, point)
 			} else {
+				switch trigger.RecoverConfig.JudgeType {
+				case models.Origin:
+					// 对齐原实现 do nothing
+				case models.RecoverOnCondition:
+					// 额外判断恢复条件，满足才恢复
+					fulfill := parser.Calc(trigger.RecoverConfig.RecoverExp, m)
+					if !fulfill {
+						continue
+					}
+				}
 				recoverPoints = append(recoverPoints, point)
 			}
+		}
+
+		if trigger.RecoverConfig.JudgeType == models.RecoverWithoutData && len(seriesTagIndex) == 0 {
+			point := common.AnomalyPoint{
+				Severity:  trigger.Severity,
+				Triggered: false,
+				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+			}
+			recoverPoints = append(recoverPoints, point)
 		}
 	}
 
