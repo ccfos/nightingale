@@ -691,9 +691,14 @@ func mergeNewArray(arg ...[]uint64) []uint64 {
 }
 
 func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) map[uint64][]uint64 {
+	last := make(map[uint64][]uint64)
+	if len(seriesTagIndexes) == 0 {
+		return last
+	}
+
 	if len(trigger.Joins) == 0 {
 		// 没有 join 条件，走原逻辑
-		last := seriesTagIndexes[0]
+		last = seriesTagIndexes[0]
 		for i := 1; i < len(seriesTagIndexes); i++ {
 			last = originalJoin(last, seriesTagIndexes[i])
 		}
@@ -706,7 +711,7 @@ func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[u
 		return nil
 	}
 
-	last := seriesTagIndexes[0]
+	last = seriesTagIndexes[0]
 	lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
 	for i := range trigger.Joins {
 		cur := seriesTagIndexes[i+1]
