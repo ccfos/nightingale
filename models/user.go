@@ -296,6 +296,34 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 	return lst[0], nil
 }
 
+func UsersGet(ctx *ctx.Context, where string, args ...interface{}) ([]*User, error) {
+	var lst []*User
+	err := DB(ctx).Where(where, args...).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range lst {
+		user.RolesLst = strings.Fields(user.Roles)
+		user.Admin = user.IsAdmin()
+	}
+
+	return lst, nil
+}
+
+func UserMapGet(ctx *ctx.Context, where string, args ...interface{}) map[string]*User {
+	lst, err := UsersGet(ctx, where, args...)
+	if err != nil {
+		logger.Errorf("UsersGet err: %v", err)
+		return nil
+	}
+	um := make(map[string]*User, len(lst))
+	for _, user := range lst {
+		um[user.Username] = user
+	}
+	return um
+}
+
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
 }

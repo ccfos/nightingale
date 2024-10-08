@@ -73,10 +73,12 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		rids := make([]int64, 0, len(ars))
+		names := make([]string, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
 			rids = append(rids, ars[i].Id)
+			names = append(names, ars[i].UpdateBy)
 		}
 
 		stime, etime := getAlertCueEventTimeRange(c)
@@ -84,6 +86,15 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 		if cnt != nil {
 			for i := 0; i < len(ars); i++ {
 				ars[i].CurEventCount = cnt[ars[i].Id]
+			}
+		}
+
+		users := models.UserMapGet(rt.Ctx, "username in (?)", names)
+		if users != nil {
+			for i := 0; i < len(ars); i++ {
+				if user, exist := users[ars[i].UpdateBy]; exist {
+					ars[i].UpdateByNickname = user.Nickname
+				}
 			}
 		}
 	}
