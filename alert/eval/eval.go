@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -267,7 +268,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	if len(ruleQuery.Queries) > 0 {
 		seriesStore := make(map[uint64]models.DataResp)
 		// 将不同查询的 hash 索引分组存放
-		seriesTagIndexes := make([]map[uint64][]uint64, 0)
+		seriesTagIndexes := make(map[string]map[uint64][]uint64)
 
 		for _, query := range ruleQuery.Queries {
 			seriesTagIndex := make(map[uint64][]uint64)
@@ -292,7 +293,13 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
-			seriesTagIndexes = append(seriesTagIndexes, seriesTagIndex)
+			ref, err := GetQueryRef(query)
+			if err != nil {
+				logger.Warningf("rule_eval rid:%d query ref error: %v", rule.Id, err)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+				continue
+			}
+			seriesTagIndexes[ref] = seriesTagIndex
 		}
 
 		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndexes, seriesStore)
@@ -445,7 +452,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
 	points := []common.AnomalyPoint{}
 	recoverPoints := []common.AnomalyPoint{}
 
@@ -690,17 +697,21 @@ func mergeNewArray(arg ...[]uint64) []uint64 {
 	return res
 }
 
-func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) map[uint64][]uint64 {
+func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) map[uint64][]uint64 {
 	last := make(map[uint64][]uint64)
 	if len(seriesTagIndexes) == 0 {
 		return last
 	}
 
 	if len(trigger.Joins) == 0 {
-		// 没有 join 条件，走原逻辑
-		last = seriesTagIndexes[0]
-		for i := 1; i < len(seriesTagIndexes); i++ {
-			last = originalJoin(last, seriesTagIndexes[i])
+		idx := 0
+		for _, seriesTagIndex := range seriesTagIndexes {
+			if idx == 0 {
+				last = seriesTagIndex
+			} else {
+				last = originalJoin(last, seriesTagIndex)
+			}
+			idx++
 		}
 		return last
 	}
@@ -711,10 +722,10 @@ func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[u
 		return nil
 	}
 
-	last = seriesTagIndexes[0]
+	last = seriesTagIndexes[trigger.Joins[0].LeftRef]
 	lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
 	for i := range trigger.Joins {
-		cur := seriesTagIndexes[i+1]
+		cur := seriesTagIndexes[trigger.Joins[i].RightRef]
 		switch trigger.Joins[i].JoinType {
 		case "original":
 			last = originalJoin(last, cur)
@@ -747,4 +758,27 @@ func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes []map[u
 		}
 	}
 	return last
+}
+
+func GetQueryRef(query interface{}) (string, error) {
+	// 使用反射获取 Ref 字段的值
+	v := reflect.ValueOf(query)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return "", fmt.Errorf("query is not a struct")
+	}
+
+	refField := v.FieldByName("Ref")
+	if !refField.IsValid() {
+		return "", fmt.Errorf("Ref field not found in query")
+	}
+
+	if refField.Kind() != reflect.String {
+		return "", fmt.Errorf("Ref field is not a string")
+	}
+
+	return refField.String(), nil
 }
