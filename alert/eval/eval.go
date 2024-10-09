@@ -453,6 +453,10 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 		return points, recoverPoints
 	}
 
+	if len(seriesTagIndexes) == 0 {
+		return points, recoverPoints
+	}
+
 	for _, trigger := range ruleQuery.Triggers {
 		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
 		seriesTagIndex := make(map[uint64][]uint64)
