@@ -722,10 +722,10 @@ func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes map[str
 		return nil
 	}
 
-	last = seriesTagIndexes[trigger.Joins[0].LeftRef]
+	last = seriesTagIndexes[trigger.JoinRef]
 	lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
 	for i := range trigger.Joins {
-		cur := seriesTagIndexes[trigger.Joins[i].RightRef]
+		cur := seriesTagIndexes[trigger.Joins[i].Ref]
 		switch trigger.Joins[i].JoinType {
 		case "original":
 			last = originalJoin(last, cur)
