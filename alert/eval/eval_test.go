@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"golang.org/x/exp/slices"
 )
@@ -272,68 +273,6 @@ func allValueDeepEqual(got, want map[uint64][]uint64) bool {
 	return true
 }
 
-func Test_paramFilling(t *testing.T) {
-	type args struct {
-		query models.PromQuery
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		// TODO: Add test cases.
-		{
-			name: "param filling",
-			args: args{
-				query: models.PromQuery{
-					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
-					Param: models.ParamNode{
-						Val: map[string]string{
-							"val": "3",
-						},
-						Param: map[string]models.ParamQuery{
-							"test1": {
-								ParamType: "Host",
-							},
-							"test2": {
-								ParamType: "Device",
-							},
-						},
-						SubParamNodes: []models.ParamNode{
-							{
-								Val: map[string]string{
-									"val": "5",
-								},
-								Param: map[string]models.ParamQuery{
-									"test1": {
-										ParamType: "Board",
-									},
-									"test2": {
-										ParamType: "Board",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: []string{
-				"mem{test1=\"Host\",test2=\"Device\"} > \"3\"",
-				"mem{test1=\"Host\",test2=\"test\"} > \"3\"",
-				"mem{test1=\"test\",test2=\"Device\"} > \"3\"",
-				"mem{test1=\"test\",test2=\"test\"} > \"5\"",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := paramFilling(tt.args.query); !allValueDeepEqualOmitOrder(got, tt.want) {
-				t.Errorf("paramFilling() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 // allValueDeepEqualOmitOrder 判断两个字符串切片是否相等，不考虑顺序
 func allValueDeepEqualOmitOrder(got, want []string) bool {
 	if len(got) != len(want) {
@@ -347,4 +286,123 @@ func allValueDeepEqualOmitOrder(got, want []string) bool {
 		}
 	}
 	return true
+}
+
+func Test_paramFilling(t *testing.T) {
+	type args struct {
+		ctx   *ctx.Context
+		query models.PromQuery
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "param filling",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					Param: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test1",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+						SubParamNodes: []models.ParamNode{
+							{
+								Val: map[string]string{
+									"val": "5",
+								},
+								Param: map[string]models.ParamQuery{
+									"test1": {
+										ParamType: "Test3",
+									},
+									"test2": {
+										ParamType: "Test3",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{
+				"mem{test1=\"test11\",test2=\"test21\"} > \"3\"",
+				"mem{test1=\"test12\",test2=\"test21\"} > \"3\"",
+				"mem{test1=\"test12\",test2=\"test22\"} > \"3\"",
+				"mem{test1=\"test11\",test2=\"test11\"} > \"5\"",
+				"mem{test1=\"test11\",test2=\"test22\"} > \"5\"",
+				"mem{test1=\"test22\",test2=\"test11\"} > \"5\"",
+				"mem{test1=\"test22\",test2=\"test22\"} > \"5\"",
+			},
+			wantErr: false,
+		},
+		{
+			name: "param filling",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					Param: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+					},
+				},
+			},
+			want:    []string{},
+			wantErr: true,
+		},
+		{
+			name: "param filling",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					Param: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test4",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+					},
+				},
+			},
+			want:    []string{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := paramFilling(tt.args.ctx, tt.args.query)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("paramFilling() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !allValueDeepEqualOmitOrder(got, tt.want) {
+				t.Errorf("paramFilling() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

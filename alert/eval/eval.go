@@ -201,10 +201,15 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 			arw.severity = query.Severity
 		}
 		// 填充变量，若无则直接返回原始 promql
-		promqls := paramFilling(query)
+		promqls, err := paramFilling(arw.ctx, query)
+		if err != nil {
+			logger.Errorf("rule_eval:%s param filling error:%s", arw.Key(), err.Error())
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+			continue
+		}
 
-		for i, _ := range promqls {
-			promql := strings.TrimSpace(promqls[i])
+		for idx, _ := range promqls {
+			promql := strings.TrimSpace(promqls[idx])
 			if promql == "" {
 				logger.Warningf("rule_eval:%s promql is blank", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
@@ -247,9 +252,9 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func paramFilling(query models.PromQuery) []string {
+func paramFilling(ctx *ctx.Context, query models.PromQuery) ([]string, error) {
 	if strings.Index(query.PromQl, "$") == -1 {
-		return []string{query.PromQl}
+		return []string{query.PromQl}, nil
 	}
 	// key 为参数变量的组合，value 为 promql，使用 map 为了子筛选中相同的 key 会覆盖上层筛选的 promql
 	promqlMap := make(map[string]string)
@@ -262,33 +267,62 @@ func paramFilling(query models.PromQuery) []string {
 		return ParamKeys[i] < ParamKeys[j]
 	})
 	// 广度优先填充参数变量
-	bfsFilling(query.PromQl, query.Param, ParamKeys, promqlMap)
+	err := bfsFilling(ctx, query.PromQl, query.Param, ParamKeys, promqlMap)
+	if err != nil {
+		return nil, err
+	}
 
 	promqls := make([]string, 0, len(promqlMap))
 	for _, promql := range promqlMap {
 		promqls = append(promqls, promql)
 	}
 
-	return promqls
+	return promqls, nil
 }
 
-func bfsFilling(promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) {
+func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) error {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
-	for paramKey, paramQuery := range node.Param {
+	for _, paramKey := range paramKeys {
 		var params []string
-		// todo 得到 params
+		paramQuery, ok := node.Param[paramKey]
+		if !ok {
+			return fmt.Errorf("param key not found: %s", paramKey)
+		}
 		switch paramQuery.ParamType {
 		case "Host":
-			params = []string{"Host", "test"}
+			query := paramQuery.Query.(models.HostQuery)
+			hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
+			session := models.TargetFilterQueryBuild(ctx, hostsQuery, 0, 0)
+			var lst []*models.Target
+			err := session.Find(&lst).Error
+			if err != nil {
+				return err
+			}
+			for i := range lst {
+				params = append(params, lst[i].Ident)
+			}
 		case "Device":
-			params = []string{"Device", "test"}
-		case "Board":
-			params = []string{"test"}
+			// plus 中实现
+		case "Enum":
+			params = paramQuery.Query.([]string)
+		case "Test1":
+			params = []string{"test11", "test12"}
+		case "Test2":
+			params = []string{"test21", "test22"}
+		case "Test3":
+			params = []string{"test11", "test22"}
+		case "Test4":
+			params = []string{}
 		default:
-
+			return fmt.Errorf("unknown param type: %s", paramQuery.ParamType)
 		}
+
+		if len(params) == 0 {
+			return fmt.Errorf("param not found: %s", paramKey)
+		}
+
 		paramMap[paramKey] = params
 	}
 
@@ -310,8 +344,13 @@ func bfsFilling(promql string, node models.ParamNode, paramKeys []string, promql
 	}
 
 	for i := range node.SubParamNodes {
-		bfsFilling(promql, node.SubParamNodes[i], paramKeys, promqls)
+		err := bfsFilling(ctx, promql, node.SubParamNodes[i], paramKeys, promqls)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 // 生成所有排列组合
