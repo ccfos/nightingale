@@ -263,6 +263,7 @@ func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, Tran
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
+	logger.Infof("getUserInfo req:%+v resp: %+v", req, string(body))
 	return body, err
 }
 
