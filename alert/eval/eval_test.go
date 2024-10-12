@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ccfos/nightingale/v6/models"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -264,6 +266,83 @@ func allValueDeepEqual(got, want map[uint64][]uint64) bool {
 			}
 		}
 		if !curEqual {
+			return false
+		}
+	}
+	return true
+}
+
+func Test_paramFilling(t *testing.T) {
+	type args struct {
+		query models.PromQuery
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "param filling",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					Param: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Host",
+							},
+							"test2": {
+								ParamType: "Device",
+							},
+						},
+						SubParamNodes: []models.ParamNode{
+							{
+								Val: map[string]string{
+									"val": "5",
+								},
+								Param: map[string]models.ParamQuery{
+									"test1": {
+										ParamType: "Board",
+									},
+									"test2": {
+										ParamType: "Board",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{
+				"mem{test1=\"Host\",test2=\"Device\"} > \"3\"",
+				"mem{test1=\"Host\",test2=\"test\"} > \"3\"",
+				"mem{test1=\"test\",test2=\"Device\"} > \"3\"",
+				"mem{test1=\"test\",test2=\"test\"} > \"5\"",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := paramFilling(tt.args.query); !allValueDeepEqualOmitOrder(got, tt.want) {
+				t.Errorf("paramFilling() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// allValueDeepEqualOmitOrder 判断两个字符串切片是否相等，不考虑顺序
+func allValueDeepEqualOmitOrder(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	slices.Sort(got)
+	slices.Sort(want)
+	for i := range got {
+		if got[i] != want[i] {
 			return false
 		}
 	}

@@ -100,6 +100,32 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 }
 
+type ParamNode struct {
+	Val           map[string]string     `json:"val"`
+	Param         map[string]ParamQuery `json:"param"`
+	SubParamNodes []ParamNode           `json:"sub_param_nodes"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // Host、Device、Board 三种类型
+	Query     interface{} `json:"query"`
+}
+
+// HostAndDeviceQuery 用于 Host 和 Device 的查询，复用已有结构
+type HostAndDeviceQuery struct {
+	Key    string        `json:"key"`
+	Op     string        `json:"op"`
+	Values []interface{} `json:"values"`
+}
+
+// BoardQuery 用于 Board 的查，复用已有结构
+type BoardQuery struct {
+	QueryType  string      `json:"query_type"`
+	DataSource int         `json:"data_source"`
+	Cate       string      `json:"cate"`
+	Definition interface{} `json:"definition"`
+}
+
 type Tpl struct {
 	TplId   int64    `json:"tpl_id"`
 	TplName string   `json:"tpl_name"`
@@ -133,8 +159,9 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"`
+	PromQl   string    `json:"prom_ql"`
+	Severity int       `json:"severity"`
+	Param    ParamNode `json:"param_node"`
 }
 
 type HostTrigger struct {

@@ -200,47 +200,147 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		if query.Severity < severity {
 			arw.severity = query.Severity
 		}
+		// 填充变量，若无则直接返回原始 promql
+		promqls := paramFilling(query)
 
-		promql := strings.TrimSpace(query.PromQl)
-		if promql == "" {
-			logger.Warningf("rule_eval:%s promql is blank", arw.Key())
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
-			continue
+		for i, _ := range promqls {
+			promql := strings.TrimSpace(promqls[i])
+			if promql == "" {
+				logger.Warningf("rule_eval:%s promql is blank", arw.Key())
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
+				continue
+			}
+
+			if arw.promClients.IsNil(arw.datasourceId) {
+				logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
+				continue
+			}
+
+			readerClient := arw.promClients.GetCli(arw.datasourceId)
+
+			var warnings promsdk.Warnings
+			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+			value, warnings, err := readerClient.Query(context.Background(), promql, time.Now())
+			if err != nil {
+				logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+				continue
+			}
+
+			if len(warnings) > 0 {
+				logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arw.Key(), promql, warnings)
+				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
+			}
+
+			logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
+			points := common.ConvertAnomalyPoints(value)
+			for i := 0; i < len(points); i++ {
+				points[i].Severity = query.Severity
+				points[i].Query = promql
+			}
+			lst = append(lst, points...)
 		}
-
-		if arw.promClients.IsNil(arw.datasourceId) {
-			logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
-			continue
-		}
-
-		readerClient := arw.promClients.GetCli(arw.datasourceId)
-
-		var warnings promsdk.Warnings
-		arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-		value, warnings, err := readerClient.Query(context.Background(), promql, time.Now())
-		if err != nil {
-			logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
-			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-			continue
-		}
-
-		if len(warnings) > 0 {
-			logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arw.Key(), promql, warnings)
-			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA).Inc()
-		}
-
-		logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
-		points := common.ConvertAnomalyPoints(value)
-		for i := 0; i < len(points); i++ {
-			points[i].Severity = query.Severity
-			points[i].Query = promql
-		}
-		lst = append(lst, points...)
 	}
 	return lst
+}
+
+func paramFilling(query models.PromQuery) []string {
+	if strings.Index(query.PromQl, "$") == -1 {
+		return []string{query.PromQl}
+	}
+	// key 为参数变量的组合，value 为 promql，使用 map 为了子筛选中相同的 key 会覆盖上层筛选的 promql
+	promqlMap := make(map[string]string)
+	// 指定参数变量的顺序，后续递归均按照此顺序填充
+	var ParamKeys []string
+	for key := range query.Param.Param {
+		ParamKeys = append(ParamKeys, key)
+	}
+	sort.Slice(ParamKeys, func(i, j int) bool {
+		return ParamKeys[i] < ParamKeys[j]
+	})
+	// 广度优先填充参数变量
+	bfsFilling(query.PromQl, query.Param, ParamKeys, promqlMap)
+
+	promqls := make([]string, 0, len(promqlMap))
+	for _, promql := range promqlMap {
+		promqls = append(promqls, promql)
+	}
+
+	return promqls
+}
+
+func bfsFilling(promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) {
+
+	// 参数变量查询，得到参数变量值
+	paramMap := make(map[string][]string)
+	for paramKey, paramQuery := range node.Param {
+		var params []string
+		// todo 得到 params
+		switch paramQuery.ParamType {
+		case "Host":
+			params = []string{"Host", "test"}
+		case "Device":
+			params = []string{"Device", "test"}
+		case "Board":
+			params = []string{"test"}
+		default:
+
+		}
+		paramMap[paramKey] = params
+	}
+
+	// 得到以 paramKeys 为顺序的所有参数组合
+	paramVals := mapPermutation(paramKeys, paramMap)
+	// 每个参数组合生成一个 promql
+	for _, paramVal := range paramVals {
+		curQl := promql
+		// 替换参数变量
+		for i, param := range paramKeys {
+			curQl = strings.Replace(curQl, fmt.Sprintf("$%s", param), paramVal[i], -1)
+		}
+		// 替换值变量
+		for key, val := range node.Val {
+			curQl = strings.Replace(curQl, fmt.Sprintf("$%s", key), val, -1)
+		}
+		// 存入 promqls，子筛选中相同的 key 会覆盖上层筛选的 promql
+		promqls[strings.Join(paramVal, "-")] = curQl
+	}
+
+	for i := range node.SubParamNodes {
+		bfsFilling(promql, node.SubParamNodes[i], paramKeys, promqls)
+	}
+}
+
+// 生成所有排列组合
+func mapPermutation(paramKeys []string, paraMap map[string][]string) [][]string {
+	var result [][]string
+	current := make([]string, len(paramKeys))
+	combine(paramKeys, paraMap, 0, current, &result)
+	return result
+}
+
+// 递归生成所有排列组合
+func combine(paramKeys []string, paraMap map[string][]string, index int, current []string, result *[][]string) {
+	// 当到达最后一个 key 时，存储当前的组合
+	if index == len(paramKeys) {
+		combination := make([]string, len(current))
+		copy(combination, current)
+		*result = append(*result, combination)
+		return
+	}
+
+	// 获取当前 key 对应的 value 列表
+	key := paramKeys[index]
+	valueList := paraMap[key]
+
+	// 遍历每个 value，并递归生成下一个 key 的组合
+	for _, value := range valueList {
+		current[index] = value
+		combine(paramKeys, paraMap, index+1, current, result)
+	}
 }
 
 func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]common.AnomalyPoint, []common.AnomalyPoint) {
