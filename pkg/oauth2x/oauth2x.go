@@ -234,6 +234,7 @@ func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, Tran
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		req = r
 	} else if TranTokenMethod == "querystring" {
+
 		r, err := http.NewRequest("GET", UserInfoAddr+"?access_token="+accessToken+"&client_id="+ClientId, nil)
 		if err != nil {
 			return nil, err
