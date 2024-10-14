@@ -367,7 +367,7 @@ func Test_paramFilling(t *testing.T) {
 				},
 			},
 			want:    []string{},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "param filling",
@@ -390,7 +390,7 @@ func Test_paramFilling(t *testing.T) {
 				},
 			},
 			want:    []string{},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

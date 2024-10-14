@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"container/list"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -266,10 +267,22 @@ func paramFilling(ctx *ctx.Context, query models.PromQuery) ([]string, error) {
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	// 广度优先填充参数变量
-	err := bfsFilling(ctx, query.PromQl, query.Param, ParamKeys, promqlMap)
-	if err != nil {
-		return nil, err
+
+	// 广度优先填充参数变量以及值变量
+	queue := list.New()
+	queue.PushBack(query.Param)
+	for queue.Len() != 0 {
+		node := queue.Front().Value.(models.ParamNode)
+		queue.Remove(queue.Front())
+		err := filling(ctx, query.PromQl, node, ParamKeys, promqlMap)
+		if err != nil {
+			logger.Errorf("param filling error:%s", err.Error())
+			// 当前筛选失败，跳过当前筛选以及子筛选，不影响其他筛选
+			continue
+		}
+		for i := range node.SubParamNodes {
+			queue.PushBack(node.SubParamNodes[i])
+		}
 	}
 
 	promqls := make([]string, 0, len(promqlMap))
@@ -280,7 +293,7 @@ func paramFilling(ctx *ctx.Context, query models.PromQuery) ([]string, error) {
 	return promqls, nil
 }
 
-func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) error {
+func filling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) error {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
@@ -292,11 +305,21 @@ func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKey
 		}
 		switch paramQuery.ParamType {
 		case "Host":
-			query := paramQuery.Query.(models.HostQuery)
+			//if paramKey != "ident" {
+			//	return fmt.Errorf("param key : %s not support for HostQuery", paramKey)
+			//}
+
+			q, _ := json.Marshal(paramQuery.Query)
+			var query models.HostQuery
+			err := json.Unmarshal(q, &query)
+			if err != nil {
+				logger.Errorf("query:%s fail to unmarshalling into HostQuery, error:%v", paramQuery.Query, err)
+			}
+
 			hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
 			session := models.TargetFilterQueryBuild(ctx, hostsQuery, 0, 0)
 			var lst []*models.Target
-			err := session.Find(&lst).Error
+			err = session.Find(&lst).Error
 			if err != nil {
 				return err
 			}
@@ -306,7 +329,13 @@ func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKey
 		case "Device":
 			// plus 中实现
 		case "Enum":
-			params = paramQuery.Query.([]string)
+			q, _ := json.Marshal(paramQuery.Query)
+			var query []string
+			err := json.Unmarshal(q, &query)
+			if err != nil {
+				logger.Errorf("query:%s fail to unmarshalling into string slice, error:%v", paramQuery.Query, err)
+			}
+			params = query
 		case "Test1":
 			params = []string{"test11", "test12"}
 		case "Test2":
@@ -320,7 +349,7 @@ func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKey
 		}
 
 		if len(params) == 0 {
-			return fmt.Errorf("param not found: %s", paramKey)
+			return fmt.Errorf("param key: %s, params is empty", paramKey)
 		}
 
 		paramMap[paramKey] = params
@@ -341,13 +370,6 @@ func bfsFilling(ctx *ctx.Context, promql string, node models.ParamNode, paramKey
 		}
 		// 存入 promqls，子筛选中相同的 key 会覆盖上层筛选的 promql
 		promqls[strings.Join(paramVal, "-")] = curQl
-	}
-
-	for i := range node.SubParamNodes {
-		err := bfsFilling(ctx, promql, node.SubParamNodes[i], paramKeys, promqls)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

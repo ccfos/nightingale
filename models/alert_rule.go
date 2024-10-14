@@ -107,23 +107,8 @@ type ParamNode struct {
 }
 
 type ParamQuery struct {
-	ParamType string      `json:"param_type"` // Host、Device、Board 三种类型
+	ParamType string      `json:"param_type"` // Host、Device、Enum 三种类型
 	Query     interface{} `json:"query"`
-}
-
-// HostAndDeviceQuery 用于 Host 和 Device 的查询，复用已有结构
-type HostAndDeviceQuery struct {
-	Key    string        `json:"key"`
-	Op     string        `json:"op"`
-	Values []interface{} `json:"values"`
-}
-
-// BoardQuery 用于 Board 的查，复用已有结构
-type BoardQuery struct {
-	QueryType  string      `json:"query_type"`
-	DataSource int         `json:"data_source"`
-	Cate       string      `json:"cate"`
-	Definition interface{} `json:"definition"`
 }
 
 type Tpl struct {
