@@ -8,6 +8,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/common"
@@ -20,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -37,6 +39,10 @@ type AlertRuleWorker struct {
 	promClients     *prom.PromClientMap
 	tdengineClients *tdengine.TdengineClientMap
 	ctx             *ctx.Context
+
+	cache sync.Map
+
+	deviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
 }
 
 const (
@@ -65,6 +71,10 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *p
 		promClients:     promClients,
 		tdengineClients: tdengineClients,
 		ctx:             ctx,
+		cache:           sync.Map{},
+		deviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
+			return nil, nil
+		},
 	}
 
 	return arw
@@ -115,6 +125,7 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 	arw.processor.Stats.CounterRuleEval.WithLabelValues().Inc()
+	arw.cache.Clear()
 
 	typ := cachedRule.GetRuleType()
 	var anomalyPoints []common.AnomalyPoint
@@ -201,16 +212,18 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		if query.Severity < severity {
 			arw.severity = query.Severity
 		}
-		// 填充变量，若无则直接返回原始 promql
-		promqls, err := paramFilling(arw.ctx, query)
-		if err != nil {
-			logger.Errorf("rule_eval:%s param filling error:%s", arw.Key(), err.Error())
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-			continue
-		}
 
-		for idx, _ := range promqls {
-			promql := strings.TrimSpace(promqls[idx])
+		readerClient := arw.promClients.GetCli(arw.datasourceId)
+
+		hasVariable := strings.Index(query.PromQl, "$") != -1
+		if hasVariable {
+			anomalyPoints := arw.VarFilling(query, readerClient)
+			for _, v := range anomalyPoints {
+				lst = append(lst, v)
+			}
+		} else {
+			// 无变量
+			promql := strings.TrimSpace(query.PromQl)
 			if promql == "" {
 				logger.Warningf("rule_eval:%s promql is blank", arw.Key())
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY).Inc()
@@ -222,8 +235,6 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT).Inc()
 				continue
 			}
-
-			readerClient := arw.promClients.GetCli(arw.datasourceId)
 
 			var warnings promsdk.Warnings
 			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
@@ -253,13 +264,24 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func paramFilling(ctx *ctx.Context, query models.PromQuery) ([]string, error) {
-	if strings.Index(query.PromQl, "$") == -1 {
-		return []string{query.PromQl}, nil
-	}
-	// key 为参数变量的组合，value 为 promql，使用 map 为了子筛选中相同的 key 会覆盖上层筛选的 promql
-	promqlMap := make(map[string]string)
-	// 指定参数变量的顺序，后续递归均按照此顺序填充
+type sample struct {
+	Metric    model.Metric      `json:"metric"`
+	Value     model.SampleValue `json:"value"`
+	Timestamp model.Time
+}
+
+// VarFilling 填充变量
+// 公式: mem_used_percent{host="$host"} > $val 其中 $host 为参数变量，$val 为值变量
+// 实现步骤:
+// 广度优先遍历，保证同一参数变量的子筛选可以覆盖上一层筛选
+// 每个节点先查询无参数的 query, 即 mem_used_percent > curVal, 得到满足值变量的所有结果
+// 结果中有满足本节点参数变量的值，加入异常点列表
+// 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
+func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient promsdk.API) map[string]common.AnomalyPoint {
+	fullQuery := removeBucket(query.PromQl)
+	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
+	anomalyPoints := make(map[string]common.AnomalyPoint)
+	// 使用一个统一的参数变量顺序
 	var ParamKeys []string
 	for key := range query.Param.Param {
 		ParamKeys = append(ParamKeys, key)
@@ -267,33 +289,123 @@ func paramFilling(ctx *ctx.Context, query models.PromQuery) ([]string, error) {
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-
-	// 广度优先填充参数变量以及值变量
+	// 广度优先遍历，每个节点先查询无参数变量的 query 得到满足值变量的所有结果，然后判断哪些参数值符合条件
 	queue := list.New()
 	queue.PushBack(query.Param)
 	for queue.Len() != 0 {
+		// curQuery 当前节点的无参数 query，用于时序库查询
+		curQuery := fullQuery
+		// realQuery 当前节点产生异常点的 query，用于告警展示
+		realQuery := query.PromQl
+
 		node := queue.Front().Value.(models.ParamNode)
 		queue.Remove(queue.Front())
-		err := filling(ctx, query.PromQl, node, ParamKeys, promqlMap)
+
+		for key, val := range node.Val {
+			curQuery = strings.Replace(curQuery, fmt.Sprintf("$%s", key), val, -1)
+			realQuery = strings.Replace(realQuery, fmt.Sprintf("$%s", key), val, -1)
+		}
+		// 得到满足值变量的所有结果
+		value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
 		if err != nil {
-			logger.Errorf("param filling error:%s", err.Error())
-			// 当前筛选失败，跳过当前筛选以及子筛选，不影响其他筛选
+			logger.Errorf("promql:%s, error:%v", curQuery, err)
 			continue
 		}
+		seqVals := getSamples(value)
+		// 得到参数变量的所有组合
+		paramPermutation, err := arw.getParamPermutation(node, ParamKeys)
+		if err != nil {
+			logger.Errorf("paramPermutation error:%v", err)
+			continue
+		}
+		// 判断哪些参数值符合条件
+		for i := range seqVals {
+			curRealQuery := realQuery
+			var cur []string
+			for _, paramKey := range ParamKeys {
+				val := string(seqVals[i].Metric[model.LabelName(paramKey)])
+				cur = append(cur, val)
+				curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
+			}
+			if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
+				anomalyPoints[strings.Join(cur, "-")] = common.AnomalyPoint{
+					Key:       seqVals[i].Metric.String(),
+					Timestamp: seqVals[i].Timestamp.Unix(),
+					Value:     float64(seqVals[i].Value),
+					Labels:    seqVals[i].Metric,
+					Severity:  query.Severity,
+					Query:     curRealQuery,
+				}
+				// 生成异常点后，删除该参数组合
+				delete(paramPermutation, strings.Join(cur, "-"))
+			}
+		}
+
+		// 剩余的参数组合为本层筛选不产生异常点的组合，需要覆盖上层筛选中产生的异常点
+		for k, _ := range paramPermutation {
+			delete(anomalyPoints, k)
+		}
+
 		for i := range node.SubParamNodes {
 			queue.PushBack(node.SubParamNodes[i])
 		}
 	}
-
-	promqls := make([]string, 0, len(promqlMap))
-	for _, promql := range promqlMap {
-		promqls = append(promqls, promql)
-	}
-
-	return promqls, nil
+	return anomalyPoints
 }
 
-func filling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys []string, promqls map[string]string) error {
+// getSamples 获取查询结果的所有样本，并转化为统一的格式
+func getSamples(value model.Value) []sample {
+	var seqVals []sample
+	switch value.Type() {
+	case model.ValVector:
+		items, ok := value.(model.Vector)
+		if !ok {
+			break
+		}
+		for i := range items {
+			seqVals = append(seqVals, sample{
+				Metric:    items[i].Metric,
+				Value:     items[i].Value,
+				Timestamp: items[i].Timestamp,
+			})
+		}
+	case model.ValMatrix:
+		items, ok := value.(model.Matrix)
+		if !ok {
+			break
+		}
+		for i := range items {
+			last := items[i].Values[len(items[i].Values)-1]
+			seqVals = append(seqVals, sample{
+				Metric:    items[i].Metric,
+				Value:     last.Value,
+				Timestamp: last.Timestamp,
+			})
+		}
+	default:
+	}
+	return seqVals
+}
+
+func removeBucket(promql string) string {
+	sb := strings.Builder{}
+	inBrackets := false
+
+	for _, char := range promql {
+		if char == '{' {
+			inBrackets = true // 进入括号内
+		} else if char == '}' {
+			inBrackets = false // 离开括号
+		} else if !inBrackets {
+			sb.WriteByte(byte(char))
+		}
+	}
+
+	return sb.String()
+}
+
+// 获取参数变量的所有组合
+func (arw *AlertRuleWorker) getParamPermutation(node models.ParamNode, paramKeys []string) (map[string]struct{}, error) {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
@@ -301,33 +413,31 @@ func filling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys [
 		var params []string
 		paramQuery, ok := node.Param[paramKey]
 		if !ok {
-			return fmt.Errorf("param key not found: %s", paramKey)
+			return nil, fmt.Errorf("param key not found: %s", paramKey)
 		}
 		switch paramQuery.ParamType {
 		case "Host":
-			//if paramKey != "ident" {
-			//	return fmt.Errorf("param key : %s not support for HostQuery", paramKey)
-			//}
-
-			q, _ := json.Marshal(paramQuery.Query)
-			var query models.HostQuery
-			err := json.Unmarshal(q, &query)
+			if paramKey != "ident" {
+				logger.Errorf("param key : %s not support for HostQuery", paramKey)
+				break
+			}
+			hostIdents, err := arw.getHostIdents(paramQuery)
 			if err != nil {
-				logger.Errorf("query:%s fail to unmarshalling into HostQuery, error:%v", paramQuery.Query, err)
+				logger.Errorf("fail to get host idents, error:%v", err)
+				break
 			}
-
-			hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
-			session := models.TargetFilterQueryBuild(ctx, hostsQuery, 0, 0)
-			var lst []*models.Target
-			err = session.Find(&lst).Error
-			if err != nil {
-				return err
-			}
-			for i := range lst {
-				params = append(params, lst[i].Ident)
-			}
+			params = hostIdents
 		case "Device":
-			// plus 中实现
+			if paramKey != "ident" {
+				logger.Errorf("param key : %s not support for DeviceQuery", paramKey)
+				break
+			}
+			deviceIdents, err := arw.getDeviceIdents(paramQuery)
+			if err != nil {
+				logger.Errorf("fail to get device idents, error:%v", err)
+				break
+			}
+			params = deviceIdents
 		case "Enum":
 			q, _ := json.Marshal(paramQuery.Query)
 			var query []string
@@ -345,34 +455,60 @@ func filling(ctx *ctx.Context, promql string, node models.ParamNode, paramKeys [
 		case "Test4":
 			params = []string{}
 		default:
-			return fmt.Errorf("unknown param type: %s", paramQuery.ParamType)
+			return nil, fmt.Errorf("unknown param type: %s", paramQuery.ParamType)
 		}
 
 		if len(params) == 0 {
-			return fmt.Errorf("param key: %s, params is empty", paramKey)
+			return nil, fmt.Errorf("param key: %s, params is empty", paramKey)
 		}
 
 		paramMap[paramKey] = params
 	}
 
 	// 得到以 paramKeys 为顺序的所有参数组合
-	paramVals := mapPermutation(paramKeys, paramMap)
-	// 每个参数组合生成一个 promql
-	for _, paramVal := range paramVals {
-		curQl := promql
-		// 替换参数变量
-		for i, param := range paramKeys {
-			curQl = strings.Replace(curQl, fmt.Sprintf("$%s", param), paramVal[i], -1)
-		}
-		// 替换值变量
-		for key, val := range node.Val {
-			curQl = strings.Replace(curQl, fmt.Sprintf("$%s", key), val, -1)
-		}
-		// 存入 promqls，子筛选中相同的 key 会覆盖上层筛选的 promql
-		promqls[strings.Join(paramVal, "-")] = curQl
+	permutation := mapPermutation(paramKeys, paramMap)
+
+	res := make(map[string]struct{})
+	for i := range permutation {
+		res[strings.Join(permutation[i], "-")] = struct{}{}
 	}
 
-	return nil
+	return res, nil
+}
+
+func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]string, error) {
+	var params []string
+	q, _ := json.Marshal(paramQuery.Query)
+
+	cacheKey := "Host_" + string(q)
+	value, hit := arw.cache.Load(cacheKey)
+	if idents, ok := value.([]string); hit && ok {
+		params = idents
+		return params, nil
+	}
+
+	var query models.HostQuery
+	err := json.Unmarshal(q, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
+	session := models.TargetFilterQueryBuild(arw.ctx, hostsQuery, 0, 0)
+	var lst []*models.Target
+	err = session.Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	for i := range lst {
+		params = append(params, lst[i].Ident)
+	}
+	arw.cache.Store(cacheKey, params)
+	return params, nil
+}
+
+func (arw *AlertRuleWorker) getDeviceIdents(paramQuery models.ParamQuery) ([]string, error) {
+	return arw.deviceIdentHook(arw, paramQuery)
 }
 
 // 生成所有排列组合
