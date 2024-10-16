@@ -2,10 +2,10 @@ package common
 
 import (
 	"fmt"
-	"github.com/ccfos/nightingale/v6/models"
 	"math"
 	"strings"
 
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/prometheus/common/model"
 )
 
