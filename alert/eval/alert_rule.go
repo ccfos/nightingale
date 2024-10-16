@@ -123,7 +123,7 @@ func (s *Scheduler) syncAlertRules() {
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
 		} else if rule.IsHostRule() {
-			// all host rule will be processed by center instance
+			// all host Rule will be processed by center instance
 			if !naming.DatasourceHashRing.IsHit(s.aconf.Heartbeat.EngineName, strconv.FormatInt(rule.Id, 10), s.aconf.Heartbeat.Endpoint) {
 				continue
 			}
@@ -131,8 +131,8 @@ func (s *Scheduler) syncAlertRules() {
 			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.tdengineClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
-			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
-			// if rule is not processed by prometheus engine, create it as externalRule
+			// 如果 Rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
+			// if Rule is not processed by prometheus engine, create it as externalRule
 			for _, dsId := range rule.DatasourceIdsJson {
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {
