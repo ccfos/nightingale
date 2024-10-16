@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	Dir        string
-	Level      string
-	Output     string
-	KeepHours  uint
-	RotateNum  int
-	RotateSize uint64
+	Dir             string
+	Level           string
+	Output          string
+	KeepHours       uint
+	RotateNum       int
+	RotateSize      uint64
+	OutputToOneFile bool
 }
 
 func Init(c Config) (func(), error) {
@@ -35,6 +36,7 @@ func Init(c Config) (func(), error) {
 		} else {
 			return nil, errors.New("KeepHours and Rotatenum both are 0")
 		}
+		lb.OutputToOneFile(c.OutputToOneFile)
 
 		logger.SetLogging(c.Level, lb)
 	}
