@@ -166,10 +166,10 @@ func StartConsumer(ctx *ctx.Context, queue *WebhookQueue, popSize int, webhook *
 			retryCount := 0
 			for retryCount < webhook.RetryCount {
 				needRetry, res, err := sendWebhook(webhook, events, stats)
+				go RecordEvents(ctx, webhook, events, stats, res, err)
 				if !needRetry {
 					break
 				}
-				go RecordEvents(ctx, webhook, events, stats, res, err)
 				retryCount++
 				time.Sleep(time.Second * time.Duration(webhook.RetryInterval) * time.Duration(retryCount))
 			}

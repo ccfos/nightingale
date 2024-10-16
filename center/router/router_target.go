@@ -52,6 +52,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 	order := ginx.QueryStr(c, "order", "ident")
 	desc := ginx.QueryBool(c, "desc", false)
 
+	hosts := queryStrListField(c, "hosts", ",", " ", "\n")
+
 	var err error
 	if len(bgids) == 0 {
 		user := c.MustGet("user").(*models.User)
@@ -70,6 +72,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 		models.BuildTargetWhereWithDsIds(dsIds),
 		models.BuildTargetWhereWithQuery(query),
 		models.BuildTargetWhereWithDowntime(downtime),
+		models.BuildTargetWhereWithHosts(hosts),
 	}
 	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
@@ -77,6 +80,13 @@ func (rt *Router) targetGets(c *gin.Context) {
 	list, err := models.TargetGets(rt.Ctx, limit,
 		ginx.Offset(c, limit), order, desc, options...)
 	ginx.Dangerous(err)
+
+	tgs, err := models.TargetBusiGroupsGetAll(rt.Ctx)
+	ginx.Dangerous(err)
+
+	for _, t := range list {
+		t.GroupIds = tgs[t.Ident]
+	}
 
 	if err == nil {
 		now := time.Now()
@@ -445,6 +455,87 @@ func (rt *Router) targetUpdateBgid(c *gin.Context) {
 	ginx.NewRender(c).Data(failedResults, models.TargetUpdateBgid(rt.Ctx, f.Idents, f.Bgid, false))
 }
 
+type targetBgidsForm struct {
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids   []int64  `json:"bgids"`
+}
+
+func (rt *Router) targetBindBgids(c *gin.Context) {
+	var f targetBgidsForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+		return
+	}
+
+	can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
+	ginx.Dangerous(err)
+	if !can {
+		ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+	}
+
+	rt.checkTargetPerm(c, f.Idents)
+
+	for _, bgid := range f.Bgids {
+		bg := BusiGroup(rt.Ctx, bgid)
+		can, err := user.CanDoBusiGroup(rt.Ctx, bg, "rw")
+		ginx.Dangerous(err)
+
+		if !can {
+			ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+		}
+	}
+
+	ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+}
+
+type targetUnbindBgidsForm struct {
+	Idents  []string `json:"idents" binding:"required_without=HostIps"`
+	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Bgids   []int64  `json:"bgids"`
+}
+
+func (rt *Router) targetUnbindBgids(c *gin.Context) {
+	var f targetUnbindBgidsForm
+	var err error
+	var failedResults = make(map[string]string)
+	ginx.BindJSON(c, &f)
+
+	if len(f.Idents) == 0 && len(f.HostIps) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "idents or host_ips must be provided")
+	}
+
+	// Acquire idents by idents and hostIps
+	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, err.Error())
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if user.IsAdmin() {
+		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+		return
+	}
+
+	rt.checkTargetPerm(c, f.Idents)
+	ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
+}
+
 func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 	var f targetBgidForm
 	var err error
@@ -485,7 +576,7 @@ func (rt *Router) targetDel(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
 }
 
 func (rt *Router) targetDelByService(c *gin.Context) {
@@ -504,7 +595,7 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
 }
 
 func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {

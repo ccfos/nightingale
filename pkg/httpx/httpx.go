@@ -70,10 +70,12 @@ type JWTAuth struct {
 	RedisKeyPrefix string
 }
 
-func GinEngine(mode string, cfg Config) *gin.Engine {
+func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},
+	printAccessLog func() bool) *gin.Engine {
 	gin.SetMode(mode)
 
-	loggerMid := aop.Logger(aop.LoggerConfig{PrintBody: cfg.PrintBody})
+	loggerMid := aop.Logger(aop.LoggerConfig{PrintAccessLog: printAccessLog,
+		PrintBodyPaths: printBodyPaths})
 	recoveryMid := aop.Recovery()
 
 	if strings.ToLower(mode) == "release" {
@@ -84,10 +86,7 @@ func GinEngine(mode string, cfg Config) *gin.Engine {
 
 	r.Use(recoveryMid)
 
-	// whether print access log
-	if cfg.PrintAccessLog {
-		r.Use(loggerMid)
-	}
+	r.Use(loggerMid)
 
 	if cfg.PProf {
 		pprof.Register(r, "/api/debug/pprof")

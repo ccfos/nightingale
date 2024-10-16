@@ -98,6 +98,7 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
+	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 }
 
 type ParamNode struct {
@@ -137,6 +138,19 @@ type PromRuleConfig struct {
 	AlgoParams interface{} `json:"algo_params"`
 }
 
+type RecoverJudge int
+
+const (
+	Origin             RecoverJudge = 0
+	RecoverWithoutData RecoverJudge = 1
+	RecoverOnCondition RecoverJudge = 2
+)
+
+type RecoverConfig struct {
+	JudgeType  RecoverJudge `json:"judge_type"`
+	RecoverExp string       `json:"recover_exp"`
+}
+
 type HostRuleConfig struct {
 	Queries  []HostQuery   `json:"queries"`
 	Triggers []HostTrigger `json:"triggers"`
@@ -144,9 +158,10 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string    `json:"prom_ql"`
-	Severity int       `json:"severity"`
-	Param    ParamNode `json:"param_node"`
+	PromQl        string        `json:"prom_ql"`
+	Severity      int           `json:"severity"`
+	RecoverConfig RecoverConfig `json:"recover_config"`
+  Param    ParamNode `json:"param_node"`
 }
 
 type HostTrigger struct {
@@ -173,6 +188,8 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
+
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type Join struct {
@@ -188,9 +205,10 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
-				m["group_id in (?)"] = ids
+				m["target_busi_group.group_id in (?)"] = ids
 			} else {
-				m["group_id not in (?)"] = ids
+				m["target.ident not in (select target_ident "+
+					"from target_busi_group where group_id = ?)"] = ids
 			}
 		case "tags":
 			lst := []string{}

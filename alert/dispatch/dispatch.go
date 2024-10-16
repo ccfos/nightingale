@@ -286,12 +286,18 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 
 	uids := notifyTarget.ToUidList()
 	urls := notifyTarget.ToCallbackList()
+	whMap := notifyTarget.ToWebhookMap()
 	for _, urlStr := range urls {
 		if len(urlStr) == 0 {
 			continue
 		}
 
 		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
+
+		if wh, ok := whMap[cbCtx.CallBackURL]; ok && wh.Enable {
+			logger.Debugf("SendCallbacks: webhook[%s] is in global conf.", cbCtx.CallBackURL)
+			continue
+		}
 
 		if strings.HasPrefix(urlStr, "${ibex}") {
 			e.CallBacks[models.IbexDomain].CallBack(cbCtx)

@@ -704,7 +704,10 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 	}
 
 	var allowedIdents []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").
+		Joins("join target_busi_group on target.ident = target_busi_group.target_ident").
+		Where("target_busi_group.group_id in (?)", bgids)
+	err = DB(ctx).Model(&Target{}).Where("ident in (?)", sub).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
@@ -736,7 +739,11 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 				return lst, nil
 			}
 
-			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
+			t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
+			if err != nil {
+				return nil, err
+			}
+			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 
 		return lst, err
@@ -768,8 +775,12 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
-		if t != nil && slice.ContainsInt64(busiGroupIds, t.GroupId) {
-			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
+		t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
+		if err != nil {
+			return nil, err
+		}
+		if t != nil && t.MatchGroupId(busiGroupIds...) {
+			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 	}
 

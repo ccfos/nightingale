@@ -45,6 +45,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		statistics, err = models.ConfigsUserVariableStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)
 		return
+	case "cval":
+		statistics, err = models.ConfigCvalStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid name")
 	}
@@ -63,6 +67,23 @@ func queryDatasourceIds(c *gin.Context) []int64 {
 		ids[i] = id
 	}
 	return ids
+}
+
+func queryStrListField(c *gin.Context, fieldName string, sep ...string) []string {
+	str := ginx.QueryStr(c, fieldName, "")
+	if str == "" {
+		return nil
+	}
+
+	lst := []string{str}
+	for _, s := range sep {
+		var newLst []string
+		for _, str := range lst {
+			newLst = append(newLst, strings.Split(str, s)...)
+		}
+		lst = newLst
+	}
+	return lst
 }
 
 type idsForm struct {

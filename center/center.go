@@ -95,6 +95,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
+	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -110,11 +111,18 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
+	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
+		cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
+	models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
+	if config.Center.MigrateBusiGroupLabel {
+		models.DoMigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
+	}
+
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
+		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)

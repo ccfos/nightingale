@@ -50,7 +50,8 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
-	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, query)
+	disabled := ginx.QueryInt(c, "disabled", -1)
+	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, disabled, query)
 
 	ginx.NewRender(c).Data(lst, err)
 }

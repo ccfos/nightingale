@@ -181,7 +181,7 @@ func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *m
 		return false, nil
 	}
 
-	return target.GroupId == tpl.GroupId, nil
+	return target.MatchGroupId(tpl.GroupId), nil
 }
 
 func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
