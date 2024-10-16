@@ -68,6 +68,7 @@ type AlertCurEvent struct {
 	SubRuleId          int64             `json:"sub_rule_id" gorm:"-"`
 	ExtraInfo          []string          `json:"extra_info" gorm:"-"`
 	Target             *Target           `json:"target" gorm:"-"`
+	RecoverConfig      RecoverConfig     `json:"recover_config" gorm:"-"`
 }
 
 func (e *AlertCurEvent) TableName() string {

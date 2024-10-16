@@ -564,20 +564,24 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 			}
 
 			point := common.AnomalyPoint{
-				Key:       sample.MetricName(),
-				Labels:    sample.Metric,
-				Timestamp: int64(ts),
-				Value:     value,
-				Values:    values,
-				Severity:  trigger.Severity,
-				Triggered: isTriggered,
-				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				Key:           sample.MetricName(),
+				Labels:        sample.Metric,
+				Timestamp:     int64(ts),
+				Value:         value,
+				Values:        values,
+				Severity:      trigger.Severity,
+				Triggered:     isTriggered,
+				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				RecoverConfig: trigger.RecoverConfig,
 			}
 
 			if sample.Query != "" {
 				point.Query = sample.Query
 			}
-
+			// 恢复条件判断经过讨论是只在表达式模式下支持，表达式模式会通过 isTriggered 判断是告警点还是恢复点
+			// 1. 不设置恢复判断，满足恢复条件产生 recoverPoint 恢复，无数据不产生 anomalyPoint 恢复
+			// 2. 设置满足条件才恢复，仅可通过产生 recoverPoint 恢复，不能通过不产生 anomalyPoint 恢复
+			// 3. 设置无数据不恢复，仅可通过产生 recoverPoint 恢复，不产生 anomalyPoint 恢复
 			if isTriggered {
 				points = append(points, point)
 			} else {
@@ -593,15 +597,6 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				}
 				recoverPoints = append(recoverPoints, point)
 			}
-		}
-
-		if trigger.RecoverConfig.JudgeType == models.RecoverWithoutData && len(seriesTagIndex) == 0 {
-			point := common.AnomalyPoint{
-				Severity:  trigger.Severity,
-				Triggered: false,
-				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
-			}
-			recoverPoints = append(recoverPoints, point)
 		}
 	}
 
