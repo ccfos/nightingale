@@ -40,7 +40,7 @@ type AlertRuleWorker struct {
 	TdengineClients *tdengine.TdengineClientMap
 	Ctx             *ctx.Context
 
-	Cache sync.Map
+	HostAndDeviceIdentCache sync.Map
 
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
 }
@@ -68,10 +68,10 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *p
 		Rule:         rule,
 		Processor:    processor,
 
-		PromClients:     promClients,
-		TdengineClients: tdengineClients,
-		Ctx:             ctx,
-		Cache:           sync.Map{},
+		PromClients:             promClients,
+		TdengineClients:         tdengineClients,
+		Ctx:                     ctx,
+		HostAndDeviceIdentCache: sync.Map{},
 		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
@@ -125,7 +125,7 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
-	arw.Cache.Clear()
+	arw.HostAndDeviceIdentCache.Clear()
 
 	typ := cachedRule.GetRuleType()
 	var anomalyPoints []common.AnomalyPoint
@@ -278,12 +278,12 @@ type sample struct {
 // 结果中有满足本节点参数变量的值，加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
 func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient promsdk.API) map[string]common.AnomalyPoint {
-	fullQuery := removeBucket(query.PromQl)
+	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPoints := make(map[string]common.AnomalyPoint)
 	// 使用一个统一的参数变量顺序
 	var ParamKeys []string
-	for key := range query.Param.Param {
+	for key := range query.ParamNode.Param {
 		ParamKeys = append(ParamKeys, key)
 	}
 	sort.Slice(ParamKeys, func(i, j int) bool {
@@ -291,7 +291,7 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	})
 	// 广度优先遍历，每个节点先查询无参数变量的 query 得到满足值变量的所有结果，然后判断哪些参数值符合条件
 	queue := list.New()
-	queue.PushBack(query.Param)
+	queue.PushBack(query.ParamNode)
 	for queue.Len() != 0 {
 		// curQuery 当前节点的无参数 query，用于时序库查询
 		curQuery := fullQuery
@@ -308,14 +308,14 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 		// 得到满足值变量的所有结果
 		value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
 		if err != nil {
-			logger.Errorf("promql:%s, error:%v", curQuery, err)
+			logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), curQuery, err)
 			continue
 		}
 		seqVals := getSamples(value)
 		// 得到参数变量的所有组合
 		paramPermutation, err := arw.getParamPermutation(node, ParamKeys)
 		if err != nil {
-			logger.Errorf("paramPermutation error:%v", err)
+			logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
 			continue
 		}
 		// 判断哪些参数值符合条件
@@ -387,21 +387,53 @@ func getSamples(value model.Value) []sample {
 	return seqVals
 }
 
-func removeBucket(promql string) string {
-	sb := strings.Builder{}
-	inBrackets := false
+func removeVal(promql string) string {
 
-	for _, char := range promql {
-		if char == '{' {
-			inBrackets = true // 进入括号内
-		} else if char == '}' {
-			inBrackets = false // 离开括号
-		} else if !inBrackets {
-			sb.WriteByte(byte(char))
+	split := strings.Split(promql, ",")
+	n := len(split)
+	if n <= 1 {
+		return promql
+	}
+
+	sb := strings.Builder{}
+
+	first := true
+
+	firstSplits := strings.Split(split[0], "{")
+	sb.WriteString(firstSplits[0] + "{")
+	if len(firstSplits) > 1 && !isVal(firstSplits[1]) {
+		sb.WriteString(firstSplits[1])
+		first = false
+	}
+
+	for i := 1; i < n-1; i++ {
+		if !isVal(split[i]) {
+			if !first {
+				sb.WriteString(",")
+			}
+			sb.WriteString(split[i])
+			first = false
 		}
 	}
 
+	lastSplits := strings.Split(split[n-1], "}")
+	if len(lastSplits) > 1 && !isVal(lastSplits[0]) {
+		if !first {
+			sb.WriteString(",")
+		}
+		sb.WriteString(lastSplits[0])
+	}
+	sb.WriteString("}" + lastSplits[1])
 	return sb.String()
+}
+
+func isVal(str string) bool {
+	for _, c := range str {
+		if c == '$' {
+			return true
+		}
+	}
+	return false
 }
 
 // 获取参数变量的所有组合
@@ -418,23 +450,23 @@ func (arw *AlertRuleWorker) getParamPermutation(node models.ParamNode, paramKeys
 		switch paramQuery.ParamType {
 		case "Host":
 			if paramKey != "ident" {
-				logger.Errorf("param key : %s not support for HostQuery", paramKey)
+				logger.Errorf("rule_eval:%s, param key : %s not support for HostQuery", arw.Key(), paramKey)
 				break
 			}
 			hostIdents, err := arw.getHostIdents(paramQuery)
 			if err != nil {
-				logger.Errorf("fail to get host idents, error:%v", err)
+				logger.Errorf("rule_eval:%s, fail to get host idents, error:%v", arw.Key(), err)
 				break
 			}
 			params = hostIdents
 		case "Device":
 			if paramKey != "ident" {
-				logger.Errorf("param key : %s not support for DeviceQuery", paramKey)
+				logger.Errorf("rule_eval:%s, param key : %s not support for DeviceQuery", arw.Key(), paramKey)
 				break
 			}
 			deviceIdents, err := arw.getDeviceIdents(paramQuery)
 			if err != nil {
-				logger.Errorf("fail to get device idents, error:%v", err)
+				logger.Errorf("rule_eval:%s, fail to get device idents, error:%v", arw.Key(), err)
 				break
 			}
 			params = deviceIdents
@@ -446,14 +478,6 @@ func (arw *AlertRuleWorker) getParamPermutation(node models.ParamNode, paramKeys
 				logger.Errorf("query:%s fail to unmarshalling into string slice, error:%v", paramQuery.Query, err)
 			}
 			params = query
-		case "Test1":
-			params = []string{"test11", "test12"}
-		case "Test2":
-			params = []string{"test21", "test22"}
-		case "Test3":
-			params = []string{"test11", "test22"}
-		case "Test4":
-			params = []string{}
 		default:
 			return nil, fmt.Errorf("unknown param type: %s", paramQuery.ParamType)
 		}
@@ -481,7 +505,7 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	q, _ := json.Marshal(paramQuery.Query)
 
 	cacheKey := "Host_" + string(q)
-	value, hit := arw.Cache.Load(cacheKey)
+	value, hit := arw.HostAndDeviceIdentCache.Load(cacheKey)
 	if idents, ok := value.([]string); hit && ok {
 		params = idents
 		return params, nil
@@ -503,7 +527,7 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	for i := range lst {
 		params = append(params, lst[i].Ident)
 	}
-	arw.Cache.Store(cacheKey, params)
+	arw.HostAndDeviceIdentCache.Store(cacheKey, params)
 	return params, nil
 }
 
@@ -666,11 +690,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				}
 				m["ident"] = target.Ident
 
-				bg := arw.Processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
-				if bg != nil && bg.LabelEnable == 1 {
-					m["busigroup"] = bg.LabelValue
-				}
-
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
@@ -718,11 +737,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					}
 				}
 				m["ident"] = host
-
-				bg := arw.Processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
-				if bg != nil && bg.LabelEnable == 1 {
-					m["busigroup"] = bg.LabelValue
-				}
 
 				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
