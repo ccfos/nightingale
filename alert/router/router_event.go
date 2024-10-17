@@ -129,7 +129,7 @@ func (rt *Router) makeEvent(c *gin.Context) {
 		} else {
 			for _, vector := range events[i].AnomalyPoints {
 				readableString := vector.ReadableValue()
-				go ruleWorker.RecoverSingle(process.Hash(events[i].RuleId, events[i].DatasourceId, vector), vector.Timestamp, &readableString)
+				go ruleWorker.RecoverSingle(false, process.Hash(events[i].RuleId, events[i].DatasourceId, vector), vector.Timestamp, &readableString)
 			}
 		}
 	}
