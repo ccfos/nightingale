@@ -160,13 +160,13 @@ func (arw *AlertRuleWorker) Eval() {
 		now := time.Now().Unix()
 		for _, point := range pointsMap {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), now, &str)
+			arw.processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), now, &str)
 		}
 	} else {
 		now := time.Now().Unix()
 		for _, point := range recoverPoints {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.processor.RecoverSingle(process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), now, &str)
+			arw.processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.processor.DatasourceId(), point), now, &str)
 		}
 	}
 
