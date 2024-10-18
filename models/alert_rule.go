@@ -101,6 +101,17 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 }
 
+type ParamNode struct {
+	Val           map[string]string     `json:"val"`
+	Param         map[string]ParamQuery `json:"param"`
+	SubParamNodes []ParamNode           `json:"sub_param_nodes"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // Host、Device、Enum 三种类型
+	Query     interface{} `json:"query"`
+}
+
 type Tpl struct {
 	TplId   int64    `json:"tpl_id"`
 	TplName string   `json:"tpl_name"`
@@ -150,6 +161,7 @@ type PromQuery struct {
 	PromQl        string        `json:"prom_ql"`
 	Severity      int           `json:"severity"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
+	ParamNode     ParamNode     `json:"param_node"`
 }
 
 type HostTrigger struct {
