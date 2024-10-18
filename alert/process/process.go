@@ -170,7 +170,9 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	p.HandleRecover(alertingKeys, now, inhibit)
+	if from == "inner" {
+		p.HandleRecover(alertingKeys, now, inhibit)
+	}
 }
 
 func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
