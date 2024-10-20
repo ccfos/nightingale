@@ -163,10 +163,12 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
+	JoinRef  string `json:"join_ref"`
 }
 
 type Join struct {
 	JoinType string   `json:"join_type"`
+	Ref      string   `json:"ref"`
 	On       []string `json:"on"`
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -267,7 +268,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	if len(ruleQuery.Queries) > 0 {
 		seriesStore := make(map[uint64]models.DataResp)
 		// 将不同查询的 hash 索引分组存放
-		seriesTagIndexes := make([]map[uint64][]uint64, 0)
+		seriesTagIndexes := make(map[string]map[uint64][]uint64)
 
 		for _, query := range ruleQuery.Queries {
 			seriesTagIndex := make(map[uint64][]uint64)
@@ -292,7 +293,13 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
-			seriesTagIndexes = append(seriesTagIndexes, seriesTagIndex)
+			ref, err := GetQueryRef(query)
+			if err != nil {
+				logger.Warningf("rule_eval rid:%d query ref error: %v query:%+v", rule.Id, err, query)
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
+				continue
+			}
+			seriesTagIndexes[ref] = seriesTagIndex
 		}
 
 		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndexes, seriesStore)
@@ -445,7 +452,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	return lst
 }
 
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes []map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
 	points := []common.AnomalyPoint{}
 	recoverPoints := []common.AnomalyPoint{}
 
@@ -459,59 +466,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 
 	for _, trigger := range ruleQuery.Triggers {
 		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
-		seriesTagIndex := make(map[uint64][]uint64)
-
-		if len(trigger.Joins) == 0 {
-			// 没有 join 条件，走原逻辑
-			last := seriesTagIndexes[0]
-			for i := 1; i < len(seriesTagIndexes); i++ {
-				last = originalJoin(last, seriesTagIndexes[i])
-			}
-			seriesTagIndex = last
-		} else {
-			// 有 join 条件，按条件依次合并
-			if len(seriesTagIndexes) != len(trigger.Joins)+1 {
-				logger.Errorf("rule_eval rid:%d queries' count: %d not match join condition's count: %d", ruleId, len(seriesTagIndexes), len(trigger.Joins))
-				continue
-			}
-
-			last := seriesTagIndexes[0]
-			lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
-			for i := range trigger.Joins {
-				cur := seriesTagIndexes[i+1]
-				switch trigger.Joins[i].JoinType {
-				case "original":
-					last = originalJoin(last, cur)
-				case "none":
-					last = noneJoin(last, cur)
-				case "cartesian":
-					last = cartesianJoin(last, cur)
-				case "inner_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(lastRehashed, curRehashed, Inner)
-					last = flatten(lastRehashed)
-				case "left_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(lastRehashed, curRehashed, Left)
-					last = flatten(lastRehashed)
-				case "right_join":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = onJoin(curRehashed, lastRehashed, Right)
-					last = flatten(lastRehashed)
-				case "left_exclude":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = exclude(lastRehashed, curRehashed)
-					last = flatten(lastRehashed)
-				case "right_exclude":
-					curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
-					lastRehashed = exclude(curRehashed, lastRehashed)
-					last = flatten(lastRehashed)
-				default:
-					logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.Joins[i].JoinType)
-				}
-			}
-			seriesTagIndex = last
-		}
+		seriesTagIndex := ProcessJoins(ruleId, trigger, seriesTagIndexes, seriesStore)
 
 		for _, seriesHash := range seriesTagIndex {
 			sort.Slice(seriesHash, func(i, j int) bool {
@@ -607,7 +562,7 @@ func flatten(rehashed map[uint64][][]uint64) map[uint64][]uint64 {
 // [[A3{data_base=2, table=board}，B2{data_base=2, table=alert}]，[A4{data_base=2, table=alert}，B2{data_base=2, table=alert}]]
 func onJoin(reHashTagIndex1 map[uint64][][]uint64, reHashTagIndex2 map[uint64][][]uint64, joinType JoinType) map[uint64][][]uint64 {
 	reHashTagIndex := make(map[uint64][][]uint64)
-	for rehash, _ := range reHashTagIndex1 {
+	for rehash := range reHashTagIndex1 {
 		if _, ok := reHashTagIndex2[rehash]; ok {
 			// 若有 rehash 相同的记录，两两合并
 			for i1 := range reHashTagIndex1[rehash] {
@@ -650,6 +605,7 @@ func rehashSet(seriesTagIndex1 map[uint64][]uint64, seriesStore map[uint64]model
 		if !exists {
 			continue
 		}
+
 		rehash := hash.GetTargetTagHash(series.Metric, on)
 		if _, ok := reHashTagIndex[rehash]; !ok {
 			reHashTagIndex[rehash] = make([][]uint64, 0)
@@ -740,4 +696,101 @@ func mergeNewArray(arg ...[]uint64) []uint64 {
 		res = append(res, a...)
 	}
 	return res
+}
+
+func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) map[uint64][]uint64 {
+	last := make(map[uint64][]uint64)
+	if len(seriesTagIndexes) == 0 {
+		return last
+	}
+
+	if len(trigger.Joins) == 0 {
+		idx := 0
+		for _, seriesTagIndex := range seriesTagIndexes {
+			if idx == 0 {
+				last = seriesTagIndex
+			} else {
+				last = originalJoin(last, seriesTagIndex)
+			}
+			idx++
+		}
+		return last
+	}
+
+	// 有 join 条件，按条件依次合并
+	if len(seriesTagIndexes) < len(trigger.Joins)+1 {
+		logger.Errorf("rule_eval rid:%d queries' count: %d not match join condition's count: %d", ruleId, len(seriesTagIndexes), len(trigger.Joins))
+		return nil
+	}
+
+	last = seriesTagIndexes[trigger.JoinRef]
+	lastRehashed := rehashSet(last, seriesStore, trigger.Joins[0].On)
+	for i := range trigger.Joins {
+		cur := seriesTagIndexes[trigger.Joins[i].Ref]
+		switch trigger.Joins[i].JoinType {
+		case "original":
+			last = originalJoin(last, cur)
+		case "none":
+			last = noneJoin(last, cur)
+		case "cartesian":
+			last = cartesianJoin(last, cur)
+		case "inner_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(lastRehashed, curRehashed, Inner)
+			last = flatten(lastRehashed)
+		case "left_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(lastRehashed, curRehashed, Left)
+			last = flatten(lastRehashed)
+		case "right_join":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = onJoin(curRehashed, lastRehashed, Right)
+			last = flatten(lastRehashed)
+		case "left_exclude":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = exclude(lastRehashed, curRehashed)
+			last = flatten(lastRehashed)
+		case "right_exclude":
+			curRehashed := rehashSet(cur, seriesStore, trigger.Joins[i].On)
+			lastRehashed = exclude(curRehashed, lastRehashed)
+			last = flatten(lastRehashed)
+		default:
+			logger.Warningf("rule_eval rid:%d join type:%s not support", ruleId, trigger.Joins[i].JoinType)
+		}
+	}
+	return last
+}
+
+func GetQueryRef(query interface{}) (string, error) {
+	// 首先检查是否为 map
+	if m, ok := query.(map[string]interface{}); ok {
+		if ref, exists := m["ref"]; exists {
+			if refStr, ok := ref.(string); ok {
+				return refStr, nil
+			}
+			return "", fmt.Errorf("ref 字段不是字符串类型")
+		}
+		return "", fmt.Errorf("query 中没有找到 ref 字段")
+	}
+
+	// 如果不是 map，则按原来的方式处理结构体
+	v := reflect.ValueOf(query)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return "", fmt.Errorf("query not a struct or map")
+	}
+
+	refField := v.FieldByName("Ref")
+	if !refField.IsValid() {
+		return "", fmt.Errorf("not find ref field")
+	}
+
+	if refField.Kind() != reflect.String {
+		return "", fmt.Errorf("ref not a string")
+	}
+
+	return refField.String(), nil
 }
