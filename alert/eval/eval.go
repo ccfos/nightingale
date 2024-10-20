@@ -295,7 +295,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
 			ref, err := GetQueryRef(query)
 			if err != nil {
-				logger.Warningf("rule_eval rid:%d query ref error: %v", rule.Id, err)
+				logger.Warningf("rule_eval rid:%d query ref error: %v query:%+v", rule.Id, err, query)
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG).Inc()
 				continue
 			}
@@ -562,7 +562,7 @@ func flatten(rehashed map[uint64][][]uint64) map[uint64][]uint64 {
 // [[A3{data_base=2, table=board}，B2{data_base=2, table=alert}]，[A4{data_base=2, table=alert}，B2{data_base=2, table=alert}]]
 func onJoin(reHashTagIndex1 map[uint64][][]uint64, reHashTagIndex2 map[uint64][][]uint64, joinType JoinType) map[uint64][][]uint64 {
 	reHashTagIndex := make(map[uint64][][]uint64)
-	for rehash, _ := range reHashTagIndex1 {
+	for rehash := range reHashTagIndex1 {
 		if _, ok := reHashTagIndex2[rehash]; ok {
 			// 若有 rehash 相同的记录，两两合并
 			for i1 := range reHashTagIndex1[rehash] {
@@ -605,6 +605,7 @@ func rehashSet(seriesTagIndex1 map[uint64][]uint64, seriesStore map[uint64]model
 		if !exists {
 			continue
 		}
+
 		rehash := hash.GetTargetTagHash(series.Metric, on)
 		if _, ok := reHashTagIndex[rehash]; !ok {
 			reHashTagIndex[rehash] = make([][]uint64, 0)
@@ -761,23 +762,34 @@ func ProcessJoins(ruleId int64, trigger models.Trigger, seriesTagIndexes map[str
 }
 
 func GetQueryRef(query interface{}) (string, error) {
-	// 使用反射获取 Ref 字段的值
+	// 首先检查是否为 map
+	if m, ok := query.(map[string]interface{}); ok {
+		if ref, exists := m["ref"]; exists {
+			if refStr, ok := ref.(string); ok {
+				return refStr, nil
+			}
+			return "", fmt.Errorf("ref 字段不是字符串类型")
+		}
+		return "", fmt.Errorf("query 中没有找到 ref 字段")
+	}
+
+	// 如果不是 map，则按原来的方式处理结构体
 	v := reflect.ValueOf(query)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
 
 	if v.Kind() != reflect.Struct {
-		return "", fmt.Errorf("query is not a struct")
+		return "", fmt.Errorf("query not a struct or map")
 	}
 
 	refField := v.FieldByName("Ref")
 	if !refField.IsValid() {
-		return "", fmt.Errorf("Ref field not found in query")
+		return "", fmt.Errorf("not find ref field")
 	}
 
 	if refField.Kind() != reflect.String {
-		return "", fmt.Errorf("Ref field is not a string")
+		return "", fmt.Errorf("ref not a string")
 	}
 
 	return refField.String(), nil
