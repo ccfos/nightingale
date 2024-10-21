@@ -64,7 +64,7 @@ func (fs *LarkCardSender) Send(ctx MessageContext) {
 	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
-	urls, _ := fs.extract(ctx.Users)
+	urls, tokens := fs.extract(ctx.Users)
 	message := BuildTplMessage(models.LarkCard, fs.tpl, ctx.Events)
 	color := "red"
 	lowerUnicode := strings.ToLower(message)
@@ -80,14 +80,14 @@ func (fs *LarkCardSender) Send(ctx MessageContext) {
 	body.Card.Header.Template = color
 	body.Card.Elements[0].Text.Content = message
 	body.Card.Elements[2].Elements[0].Content = SendTitle
-	for _, url := range urls {
-		doSend(url, body, models.LarkCard, ctx.Stats)
+	for i, url := range urls {
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.LarkCard, ctx.Stats, ctx.Events[0])
 	}
 }
 
 func (fs *LarkCardSender) extract(users []*models.User) ([]string, []string) {
 	urls := make([]string, 0, len(users))
-	ats := make([]string, 0)
+	tokens := make([]string, 0)
 	for i := range users {
 		if token, has := users[i].ExtractToken(models.Lark); has {
 			url := token
@@ -95,7 +95,8 @@ func (fs *LarkCardSender) extract(users []*models.User) ([]string, []string) {
 				url = "https://open.larksuite.com/open-apis/bot/v2/hook/" + strings.TrimSpace(token)
 			}
 			urls = append(urls, url)
+			tokens = append(tokens, token)
 		}
 	}
-	return urls, ats
+	return urls, tokens
 }
