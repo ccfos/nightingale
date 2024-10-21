@@ -144,9 +144,9 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string    `json:"prom_ql"`
-	Severity int       `json:"severity"`
-	Param    ParamNode `json:"param_node"`
+	PromQl    string    `json:"prom_ql"`
+	Severity  int       `json:"severity"`
+	ParamNode ParamNode `json:"param_node"`
 }
 
 type HostTrigger struct {
