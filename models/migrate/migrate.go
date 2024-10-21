@@ -28,7 +28,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
-	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &imodels.TaskHostDoing{}, &imodels.TaskAction{}}
+	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
@@ -279,4 +279,16 @@ type SsoConfig struct {
 type BuiltinPayloads struct {
 	UUID        int64 `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
 	ComponentID int64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;not null;default:0;comment:'component_id of payload'"`
+}
+
+type TaskHostDoing struct {
+	Id             int64  `gorm:"column:id;index;primaryKey:false"`
+	Host           string `gorm:"column:host;size:128;not null;index"`
+	Clock          int64  `gorm:"column:clock;not null;default:0"`
+	Action         string `gorm:"column:action;size:16;not null"`
+	AlertTriggered bool   `gorm:"-"`
+}
+
+func (TaskHostDoing) TableName() string {
+	return "task_host_doing"
 }

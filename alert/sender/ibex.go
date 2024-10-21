@@ -185,6 +185,11 @@ func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *m
 }
 
 func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
+	if storage.Cache == nil {
+		logger.Warning("event_callback_ibex: redis cache is nil")
+		return 0, fmt.Errorf("redis cache is nil")
+	}
+
 	hosts := cleanHosts(f.Hosts)
 	if len(hosts) == 0 {
 		return 0, fmt.Errorf("arg(hosts) empty")
