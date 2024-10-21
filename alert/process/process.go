@@ -310,7 +310,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 
 	if !inhibit {
 		for _, hash := range hashArr {
-			p.RecoverSingle(hash, now, nil)
+			p.RecoverSingle(false, hash, now, nil)
 		}
 		return
 	}
@@ -338,11 +338,11 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 	}
 
 	for _, event := range eventMap {
-		p.RecoverSingle(event.Hash, now, nil)
+		p.RecoverSingle(false, event.Hash, now, nil)
 	}
 }
 
-func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {
+func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value *string, values ...string) {
 	cachedRule := p.rule
 	if cachedRule == nil {
 		return
@@ -369,7 +369,7 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 	}
 
 	// 如果设置了恢复条件，则不能在此处恢复，必须依靠 recoverPoint 来恢复
-	if event.RecoverConfig.JudgeType != models.Origin {
+	if event.RecoverConfig.JudgeType != models.Origin && !byRecover {
 		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
 		return
 	}
