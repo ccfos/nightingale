@@ -89,7 +89,10 @@ func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
 
 func (h HTTP) ParseUrl() (target *url.URL, err error) {
 	for _, u := range h.GetUrls() {
-		if target, err = url.Parse(u); err == nil {
+		if target, err = url.Parse(u); err != nil {
+			continue
+		}
+		if _, err = http.NewRequest("GET", u, nil); err == nil {
 			return
 		}
 	}
