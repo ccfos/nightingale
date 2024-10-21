@@ -21,7 +21,7 @@
                     "colorRange": [
                         "thresholds"
                     ],
-                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}",
+                    "detailUrl": "/built-in-components/dashboard/detail?__uuid__=1717556327744505000&ident=${__field.labels.ident}",
                     "textMode": "valueAndName",
                     "valueField": "Value"
                 },
@@ -91,7 +91,7 @@
                     "colorRange": [
                         "thresholds"
                     ],
-                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}",
+                    "detailUrl": "/built-in-components/dashboard/detail?__uuid__=1717556327744505000&ident=${__field.labels.ident}",
                     "textMode": "valueAndName",
                     "valueField": "Value"
                 },
