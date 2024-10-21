@@ -122,12 +122,14 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 }
 
 func DatasourceCheck(ds models.Datasource) error {
-	if ds.HTTPJson.Url == "" {
-		return fmt.Errorf("url is empty")
-	}
+	if ds.PluginType != models.ELASTICSEARCH {
+		if ds.HTTPJson.Url == "" {
+			return fmt.Errorf("url is empty")
+		}
 
-	if !strings.HasPrefix(ds.HTTPJson.Url, "http") {
-		return fmt.Errorf("url must start with http or https")
+		if !strings.HasPrefix(ds.HTTPJson.Url, "http") {
+			return fmt.Errorf("url must start with http or https")
+		}
 	}
 
 	client := &http.Client{
@@ -138,11 +140,11 @@ func DatasourceCheck(ds models.Datasource) error {
 		},
 	}
 
-	fullURL := ds.HTTPJson.Url
-	req, err := http.NewRequest("GET", fullURL, nil)
+	var fullURL string
+	req, err := ds.HTTPJson.BuildReq(&fullURL)
 	if err != nil {
 		logger.Errorf("Error creating request: %v", err)
-		return fmt.Errorf("request url:%s failed", fullURL)
+		return fmt.Errorf("request urls:%v failed", ds.HTTPJson.GetUrls())
 	}
 
 	if ds.PluginType == models.PROMETHEUS {

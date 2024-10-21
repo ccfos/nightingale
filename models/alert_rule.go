@@ -23,8 +23,9 @@ const (
 	HOST   = "host"
 	LOKI   = "loki"
 
-	PROMETHEUS = "prometheus"
-	TDENGINE   = "tdengine"
+	PROMETHEUS    = "prometheus"
+	TDENGINE      = "tdengine"
+	ELASTICSEARCH = "elasticsearch"
 )
 
 const (
@@ -173,11 +174,11 @@ type Trigger struct {
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
 
-	Type     string `json:"type,omitempty"`
-	Duration int    `json:"duration,omitempty"`
-	Percent  int    `json:"percent,omitempty"`
-	Joins    []Join `json:"joins"`
-	JoinRef  string `json:"join_ref"`
+	Type          string        `json:"type,omitempty"`
+	Duration      int           `json:"duration,omitempty"`
+	Percent       int           `json:"percent,omitempty"`
+	Joins         []Join        `json:"joins"`
+	JoinRef       string        `json:"join_ref"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
