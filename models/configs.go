@@ -124,6 +124,11 @@ func ConfigsGet(ctx *ctx.Context, ckey string) (string, error) { //select built-
 }
 
 func ConfigsGetAll(ctx *ctx.Context) ([]*Configs, error) { // select built-in type configs
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*Configs](ctx, "/v1/n9e/all-configs")
+		return lst, err
+	}
+
 	var lst []*Configs
 	err := DB(ctx).Model(&Configs{}).Select("ckey, cval").
 		Where("ckey!='' and external=? ", 0).Find(&lst).Error
