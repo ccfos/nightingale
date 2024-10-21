@@ -177,8 +177,8 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
-	RecoverConfig RecoverConfig `json:"recover_config"`
 	JoinRef  string `json:"join_ref"`
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type Join struct {
