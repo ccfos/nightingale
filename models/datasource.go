@@ -328,6 +328,10 @@ func (ds *Datasource) DB2FE() error {
 		ds.HTTPJson.MaxIdleConnsPerHost = 100
 	}
 
+	if ds.PluginType == ELASTICSEARCH && len(ds.HTTPJson.Urls) == 0 {
+		ds.HTTPJson.Urls = []string{ds.HTTPJson.Url}
+	}
+
 	if ds.Auth != "" {
 		err := json.Unmarshal([]byte(ds.Auth), &ds.AuthJson)
 		if err != nil {
