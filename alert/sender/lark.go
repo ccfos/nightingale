@@ -29,28 +29,28 @@ func (lk *LarkSender) CallBack(ctx CallBackContext) {
 
 	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback",
 		ctx.Stats, ctx.Events[0])
-	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
 }
 
 func (lk *LarkSender) Send(ctx MessageContext) {
 	if len(ctx.Users) == 0 || len(ctx.Events) == 0 {
 		return
 	}
-	urls := lk.extract(ctx.Users)
+	urls, tokens := lk.extract(ctx.Users)
 	message := BuildTplMessage(models.Lark, lk.tpl, ctx.Events)
-	for _, url := range urls {
+	for i, url := range urls {
 		body := feishu{
 			Msgtype: "text",
 			Content: feishuContent{
 				Text: message,
 			},
 		}
-		doSend(url, body, models.Lark, ctx.Stats)
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Lark, ctx.Stats, ctx.Events[0])
 	}
 }
 
-func (lk *LarkSender) extract(users []*models.User) []string {
+func (lk *LarkSender) extract(users []*models.User) ([]string, []string) {
 	urls := make([]string, 0, len(users))
+	tokens := make([]string, 0, len(users))
 
 	for _, user := range users {
 		if token, has := user.ExtractToken(models.Lark); has {
@@ -59,7 +59,8 @@ func (lk *LarkSender) extract(users []*models.User) []string {
 				url = "https://open.larksuite.com/open-apis/bot/v2/hook/" + token
 			}
 			urls = append(urls, url)
+			tokens = append(tokens, token)
 		}
 	}
-	return urls
+	return urls, tokens
 }
