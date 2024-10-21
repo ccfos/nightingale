@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
@@ -699,15 +701,25 @@ func (ar *AlertRule) DB2FE() error {
 	return err
 }
 
-func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
+func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) (map[int64]string, error) {
+	as, gn, err := PrepareForSubcribeCheck(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	msgMap := make(map[int64]string, len(ids))
 	for i := 0; i < len(ids); i++ {
+		if sl := SubcribeList(as, ids[i], gn[ids[i]]); len(sl) > 0 {
+			msgMap[ids[i]] = fmt.Sprintf("is subscribed by subscribe rule: %v", sl)
+			continue
+		}
 		session := DB(ctx).Where("id = ?", ids[i])
 		if len(bgid) > 0 {
 			session = session.Where("group_id = ?", bgid[0])
 		}
 		ret := session.Delete(&AlertRule{})
 		if ret.Error != nil {
-			return ret.Error
+			msgMap[ids[i]] = ret.Error.Error()
+			continue
 		}
 
 		// 说明确实删掉了，把相关的活跃告警也删了，这些告警永远都不会恢复了，而且策略都没了，说明没人关心了
@@ -716,7 +728,48 @@ func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
 		}
 	}
 
-	return nil
+	return msgMap, nil
+}
+
+func PrepareForSubcribeCheck(ctx *ctx.Context, ruleIds []int64) ([]*AlertSubscribe, map[int64]string, error) {
+	as, err := AlertSubscribeGetsAll(ctx)
+	if err != nil {
+		logger.Errorf("AlertSubscribeGetsAll error: %v", err)
+		return nil, nil, err
+	}
+	for _, s := range as {
+		if err := s.Parse(); err != nil {
+			logger.Errorf("AlertSubscribe Parse error: %v", err)
+			return nil, nil, err
+		}
+	}
+	ar, err := AlertRuleGetsByIds(ctx, ruleIds)
+	if err != nil {
+		logger.Errorf("AlertRuleGetsByIds error: %v", err)
+		return nil, nil, err
+	}
+	gn := make(map[int64]string, len(ar)) // ruleId -> groupName
+	bgm, err := BusiGroupGetMap(ctx)
+	if err != nil {
+		logger.Errorf("BusiGroupGetMap error: %v", err)
+		return nil, nil, err
+	}
+	for _, r := range ar {
+		gn[r.Id] = bgm[r.GroupId].Name
+	}
+	return as, gn, nil
+}
+
+var MatchGroupsName = func(string, []TagFilter) bool { return false }
+
+func SubcribeList(as []*AlertSubscribe, ruleId int64, groupName string) (sl []int64) {
+	for _, s := range as {
+		if slices.Contains(s.RuleIds, ruleId) || (len(s.IBusiGroups) > 0 &&
+			MatchGroupsName(groupName, s.IBusiGroups)) {
+			sl = append(sl, s.Id)
+		}
+	}
+	return
 }
 
 func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64, name string) (bool, error) {

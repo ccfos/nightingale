@@ -271,14 +271,14 @@ func (rt *Router) alertRuleDel(c *gin.Context) {
 	f.Verify()
 
 	// param(busiGroupId) for protect
-	ginx.NewRender(c).Message(models.AlertRuleDels(rt.Ctx, f.Ids, ginx.UrlParamInt64(c, "id")))
+	ginx.NewRender(c).Data(models.AlertRuleDels(rt.Ctx, f.Ids, ginx.UrlParamInt64(c, "id")))
 }
 
 func (rt *Router) alertRuleDelByService(c *gin.Context) {
 	var f idsForm
 	ginx.BindJSON(c, &f)
 	f.Verify()
-	ginx.NewRender(c).Message(models.AlertRuleDels(rt.Ctx, f.Ids))
+	ginx.NewRender(c).Data(models.AlertRuleDels(rt.Ctx, f.Ids))
 }
 
 func (rt *Router) alertRulePutByFE(c *gin.Context) {
