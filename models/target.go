@@ -133,6 +133,10 @@ func TargetDel(ctx *ctx.Context, idents []string, deleteHook TargetDeleteHookFun
 		if txErr != nil {
 			return txErr
 		}
+		txErr = TargetDeleteBgids(ctx, idents)
+		if txErr != nil {
+			return txErr
+		}
 		return nil
 	})
 }
