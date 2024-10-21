@@ -1,13 +1,6 @@
 {
-    "id": 0,
-    "group_id": 0,
     "name": "机器台账表格视图",
-    "ident": "",
     "tags": "",
-    "create_at": 0,
-    "create_by": "",
-    "update_at": 0,
-    "update_by": "",
     "configs": {
         "links": [
             {
@@ -28,7 +21,7 @@
                     "colorRange": [
                         "thresholds"
                     ],
-                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux\u0026__built-in-name=Linux%20Host%20by%20Categraf%20v2\u0026ident=${__field.labels.ident}",
+                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}",
                     "textMode": "valueAndName",
                     "valueField": "Value"
                 },
@@ -98,7 +91,7 @@
                     "colorRange": [
                         "thresholds"
                     ],
-                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux\u0026__built-in-name=Linux%20Host%20by%20Categraf%20v2\u0026ident=${__field.labels.ident}",
+                    "detailUrl": "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Host%20by%20Categraf%20v2&ident=${__field.labels.ident}",
                     "textMode": "valueAndName",
                     "valueField": "Value"
                 },
@@ -171,13 +164,16 @@
                     "linkMode": "appendLinkColumn",
                     "links": [
                         {
+                            "targetBlank": true,
                             "title": "详情",
-                            "url": "/dashboards-built-in/detail?__built-in-cate=Linux\u0026__built-in-name=Linux%20Host%20by%20Categraf%20v2\u0026ident=${__field.labels.ident}"
+                            "url": "/built-in-components/dashboard/detail?__uuid__=1717556327744505000&ident=${__field.labels.ident}"
                         }
                     ],
+                    "nowrap": false,
                     "showHeader": true,
                     "sortColumn": "ident",
-                    "sortOrder": "ascend"
+                    "sortOrder": "ascend",
+                    "tableLayout": "fixed"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -385,10 +381,5 @@
         ],
         "version": "3.0.0"
     },
-    "public": 0,
-    "public_cate": 0,
-    "bgids": null,
-    "built_in": 0,
-    "hide": 0,
     "uuid": 1717556327742611000
 }
