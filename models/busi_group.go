@@ -134,7 +134,7 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		return errors.New("Some alert subscribes still in the BusiGroup")
 	}
 
-	has, err = Exists(DB(ctx).Model(&Target{}).Where("group_id=?", bg.Id))
+	has, err = Exists(DB(ctx).Model(&TargetBusiGroup{}).Where("group_id=?", bg.Id))
 	if err != nil {
 		return err
 	}

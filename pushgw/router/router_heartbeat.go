@@ -3,6 +3,7 @@ package router
 import (
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -17,17 +18,18 @@ import (
 // heartbeat Forward heartbeat request to the center.
 func (rt *Router) heartbeat(c *gin.Context) {
 	gid := ginx.QueryStr(c, "gid", "")
+	overwriteGids := ginx.QueryBool(c, "overwrite_gids", false)
 	req, err := HandleHeartbeat(c, rt.Aconf.Heartbeat.EngineName, rt.MetaSet)
 	if err != nil {
 		logger.Warningf("req:%v heartbeat failed to handle heartbeat err:%v", req, err)
 		ginx.Dangerous(err)
 	}
-	api := "/v1/n9e/heartbeat"
+	api := "/v1/n9e/center/heartbeat"
 	if rt.HeartbeartApi != "" {
 		api = rt.HeartbeartApi
 	}
 
-	ret, err := poster.PostByUrlsWithResp[map[string]interface{}](rt.Ctx, api+"?gid="+gid, req)
+	ret, err := poster.PostByUrlsWithResp[map[string]interface{}](rt.Ctx, fmt.Sprintf("%s?gid=%s&overwrite_gids=%t", api, gid, overwriteGids), req)
 	ginx.NewRender(c).Data(ret, err)
 }
 

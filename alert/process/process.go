@@ -512,6 +512,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 func (p *Processor) RecoverAlertCurEventFromDb() {
 	p.pendings = NewAlertCurEventMap(nil)
+	p.pendingsUseByRecover = NewAlertCurEventMap(nil)
 
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
@@ -533,6 +534,11 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		}
 
 		event.DB2Mem()
+		target, exists := p.TargetCache.Get(event.TargetIdent)
+		if exists {
+			event.Target = target
+		}
+
 		fireMap[event.Hash] = event
 		e := *event
 		pendingsUseByRecoverMap[event.Hash] = &e

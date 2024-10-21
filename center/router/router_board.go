@@ -94,6 +94,14 @@ func (rt *Router) boardGet(c *gin.Context) {
 	ginx.NewRender(c).Data(board, nil)
 }
 
+// 根据 bids 参数，获取多个 board
+func (rt *Router) boardGetsByBids(c *gin.Context) {
+	bids := str.IdsInt64(ginx.QueryStr(c, "bids", ""), ",")
+	boards, err := models.BoardGetsByBids(rt.Ctx, bids)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(boards, err)
+}
+
 func (rt *Router) boardPureGet(c *gin.Context) {
 	board, err := models.BoardGetByID(rt.Ctx, ginx.UrlParamInt64(c, "bid"))
 	ginx.Dangerous(err)

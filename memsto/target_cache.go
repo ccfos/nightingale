@@ -160,8 +160,9 @@ func (tc *TargetCacheType) syncTargets() error {
 	}
 
 	m := make(map[string]*models.Target)
-	if tc.ctx.IsCenter {
-		metaMap := tc.GetHostMetas(lst)
+
+	metaMap := tc.GetHostMetas(lst)
+	if len(metaMap) > 0 {
 		for i := 0; i < len(lst); i++ {
 			if meta, ok := metaMap[lst[i].Ident]; ok {
 				lst[i].FillMeta(meta)

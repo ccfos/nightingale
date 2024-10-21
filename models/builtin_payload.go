@@ -191,5 +191,9 @@ func InitBuiltinPayloads(ctx *ctx.Context) error {
 		bp.ComponentID = componentId
 	}
 
+	if len(lst) == 0 {
+		return nil
+	}
+
 	return DB(ctx).Save(&lst).Error
 }
