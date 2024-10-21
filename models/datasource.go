@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -78,23 +79,29 @@ func (h HTTP) GetUrls() []string {
 }
 
 func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
-	for _, url := range h.GetUrls() {
-		if req, err = http.NewRequest("GET", url, nil); err == nil {
-			*reqUrl = url
+	urls := h.GetUrls()
+	i := rand.Intn(len(urls))
+	for fc := 0; fc < len(urls); fc++ {
+		if req, err = http.NewRequest("GET", urls[i], nil); err == nil {
+			*reqUrl = urls[i]
 			return
 		}
+		i = rand.Intn(len(urls))
 	}
 	return
 }
 
 func (h HTTP) ParseUrl() (target *url.URL, err error) {
-	for _, u := range h.GetUrls() {
-		if target, err = url.Parse(u); err != nil {
+	urls := h.GetUrls()
+	i := rand.Intn(len(urls))
+	for fc := 0; fc < len(urls); fc++ {
+		if target, err = url.Parse(urls[i]); err != nil {
 			continue
 		}
-		if _, err = http.NewRequest("GET", u, nil); err == nil {
+		if _, err = http.NewRequest("GET", urls[i], nil); err == nil {
 			return
 		}
+		i = rand.Intn(len(urls))
 	}
 	return
 }
