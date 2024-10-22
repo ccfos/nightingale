@@ -217,8 +217,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
-  event.RuleHash = ruleHash
-
+	event.RuleHash = ruleHash
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
