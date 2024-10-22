@@ -173,7 +173,9 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	p.HandleRecover(alertingKeys, now, inhibit)
+	if from == "inner" {
+		p.HandleRecover(alertingKeys, now, inhibit)
+	}
 }
 
 func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
@@ -214,7 +216,9 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.Severity = anomalyPoint.Severity
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
-	event.RuleHash = ruleHash
+	event.RecoverConfig = anomalyPoint.RecoverConfig
+  event.RuleHash = ruleHash
+
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
@@ -294,7 +298,7 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 	}
 
 	hashArr := make([]string, 0, len(alertingKeys))
-	for hash := range p.fires.GetAll() {
+	for hash, _ := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
@@ -313,7 +317,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 
 	if !inhibit {
 		for _, hash := range hashArr {
-			p.RecoverSingle(hash, now, nil)
+			p.RecoverSingle(false, hash, now, nil)
 		}
 		return
 	}
@@ -341,11 +345,11 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 	}
 
 	for _, event := range eventMap {
-		p.RecoverSingle(event.Hash, now, nil)
+		p.RecoverSingle(false, event.Hash, now, nil)
 	}
 }
 
-func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {
+func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value *string, values ...string) {
 	cachedRule := p.rule
 	if cachedRule == nil {
 		return
@@ -369,6 +373,12 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 			logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
 			return
 		}
+	}
+
+	// 如果设置了恢复条件，则不能在此处恢复，必须依靠 recoverPoint 来恢复
+	if event.RecoverConfig.JudgeType != models.Origin && !byRecover {
+		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+		return
 	}
 
 	if value != nil {

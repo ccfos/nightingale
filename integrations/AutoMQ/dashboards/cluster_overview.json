@@ -584,7 +584,7 @@
                     "links": [
                         {
                             "title": "下钻",
-                            "url": "/dashboards/automq-group-metrics?TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026group_id=${__field.labels.consumer_group}\u0026partition=all\u0026topic=${__field.labels.topic}"
+                            "url": "/built-in-components/dashboard/detail?__uuid__=1717556327172992000&TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026group_id=${__field.labels.consumer_group}\u0026partition=all\u0026topic=${__field.labels.topic}"
                         }
                     ],
                     "showHeader": true
@@ -669,7 +669,7 @@
                     "links": [
                         {
                             "title": "下钻",
-                            "url": "/dashboards/automq-topic-metrics?TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026topic=${__field.labels.topic}"
+                            "url": "/built-in-components/dashboard/detail?__uuid__=1717556327174664000&TSDB=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026topic=${__field.labels.topic}"
                         }
                     ],
                     "showHeader": true
@@ -781,7 +781,7 @@
                     "links": [
                         {
                             "title": "下钻",
-                            "url": "/dashboards/automq-broker-metrics?DS_PROMETHEUS=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026node_id=${__field.labels.instance}"
+                            "url": "/built-in-components/dashboard/detail?__uuid__=1717556327159415000&DS_PROMETHEUS=${DS_PROMETHEUS}\u0026cluster_id=${cluster_id}\u0026node_id=${__field.labels.instance}"
                         }
                     ],
                     "showHeader": true
