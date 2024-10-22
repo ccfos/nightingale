@@ -1109,3 +1109,7 @@ func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
 	}
 	return DB(ctx).Create(ars).Error
 }
+
+func (ar *AlertRule) Hash() string {
+	return str.MD5(fmt.Sprintf("%d_%s_%s", ar.Id, ar.DatasourceIds, ar.RuleConfig))
+}
