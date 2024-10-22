@@ -90,7 +90,7 @@
 - 推荐搜索关注夜莺公众号，第一时间获取社区动态：`夜莺监控Nightingale`
 - 日常问题交流：
   - QQ群：730841964
-  - [加入微信群](https://download.flashcat.cloud/ulric/20241008153952.png)，如果二维码过期了，可以联系我（我的微信：`picobyte`）拉群，备注： `夜莺互助群`
+  - [加入微信群](https://download.flashcat.cloud/ulric/20241022141621.png)，如果二维码过期了，可以联系我（我的微信：`picobyte`）拉群，备注： `夜莺互助群`
 
 ## 广受关注
 [![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
