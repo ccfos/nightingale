@@ -34,15 +34,16 @@ type Target struct {
 	OS           string            `json:"os" gorm:"column:os"`
 	HostTags     []string          `json:"host_tags" gorm:"serializer:json"`
 
-	UnixTime   int64   `json:"unixtime" gorm:"-"`
-	Offset     int64   `json:"offset" gorm:"-"`
-	TargetUp   float64 `json:"target_up" gorm:"-"`
-	MemUtil    float64 `json:"mem_util" gorm:"-"`
-	CpuNum     int     `json:"cpu_num" gorm:"-"`
-	CpuUtil    float64 `json:"cpu_util" gorm:"-"`
-	Arch       string  `json:"arch" gorm:"-"`
-	RemoteAddr string  `json:"remote_addr" gorm:"-"`
-	GroupIds   []int64 `json:"group_ids" gorm:"-"`
+	UnixTime   int64    `json:"unixtime" gorm:"-"`
+	Offset     int64    `json:"offset" gorm:"-"`
+	TargetUp   float64  `json:"target_up" gorm:"-"`
+	MemUtil    float64  `json:"mem_util" gorm:"-"`
+	CpuNum     int      `json:"cpu_num" gorm:"-"`
+	CpuUtil    float64  `json:"cpu_util" gorm:"-"`
+	Arch       string   `json:"arch" gorm:"-"`
+	RemoteAddr string   `json:"remote_addr" gorm:"-"`
+	GroupIds   []int64  `json:"group_ids" gorm:"-"`
+	GroupNames []string `json:"group_names" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
