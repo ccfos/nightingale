@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -112,9 +111,9 @@ func (rt *Router) dsProxy(c *gin.Context) {
 		return
 	}
 
-	target, err := url.Parse(ds.HTTPJson.Url)
+	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
-		c.String(http.StatusInternalServerError, "invalid  url: %s", ds.HTTPJson.Url)
+		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
 		return
 	}
 

@@ -23,8 +23,9 @@ const (
 	HOST   = "host"
 	LOKI   = "loki"
 
-	PROMETHEUS = "prometheus"
-	TDENGINE   = "tdengine"
+	PROMETHEUS    = "prometheus"
+	TDENGINE      = "tdengine"
+	ELASTICSEARCH = "elasticsearch"
 )
 
 const (
