@@ -32,6 +32,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/spaolacci/murmur3 v1.1.0
+	github.com/stretchr/testify v1.8.4
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.6
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
@@ -43,6 +44,8 @@ require (
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.7-0.20240204074919-46816ad31dde
 )
+
+require github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect

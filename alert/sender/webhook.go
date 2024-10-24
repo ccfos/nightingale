@@ -121,8 +121,8 @@ var EventQueueLock sync.RWMutex
 const QueueMaxSize = 100000
 
 type WebhookQueue struct {
-	list    *SafeListLimited
-	closeCh chan struct{}
+	priorityQueue *SafePriorityQueue
+	closeCh       chan struct{}
 }
 
 func PushEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
@@ -132,8 +132,8 @@ func PushEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCur
 
 	if queue == nil {
 		queue = &WebhookQueue{
-			list:    NewSafeListLimited(QueueMaxSize),
-			closeCh: make(chan struct{}),
+			priorityQueue: NewSafePriorityQueue(QueueMaxSize),
+			closeCh:       make(chan struct{}),
 		}
 
 		EventQueueLock.Lock()
@@ -143,10 +143,10 @@ func PushEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCur
 		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
 
-	succ := queue.list.PushFront(event)
+	succ := queue.priorityQueue.Push(event)
 	if !succ {
 		stats.AlertNotifyErrorTotal.WithLabelValues("push_event_queue").Inc()
-		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.list.Len(), event)
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.priorityQueue.Len(), event)
 	}
 }
 
@@ -157,7 +157,7 @@ func StartConsumer(ctx *ctx.Context, queue *WebhookQueue, popSize int, webhook *
 			logger.Infof("event queue:%v closed", queue)
 			return
 		default:
-			events := queue.list.PopBack(popSize)
+			events := queue.priorityQueue.PopN(popSize)
 			if len(events) == 0 {
 				time.Sleep(time.Millisecond * 400)
 				continue
