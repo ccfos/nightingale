@@ -40,9 +40,7 @@ func (ts *TelegramSender) CallBack(ctx CallBackContext) {
 		Text:   message,
 		Tokens: []string{ctx.CallBackURL},
 		Stats:  ctx.Stats,
-	}, ctx.Events[0])
-
-	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
+	}, ctx.Events[0], "callback")
 }
 
 func (ts *TelegramSender) Send(ctx MessageContext) {
@@ -56,7 +54,7 @@ func (ts *TelegramSender) Send(ctx MessageContext) {
 		Text:   message,
 		Tokens: tokens,
 		Stats:  ctx.Stats,
-	}, ctx.Events[0])
+	}, ctx.Events[0], models.Telegram)
 }
 
 func (ts *TelegramSender) extract(users []*models.User) []string {
@@ -69,7 +67,7 @@ func (ts *TelegramSender) extract(users []*models.User) []string {
 	return tokens
 }
 
-func SendTelegram(ctx *ctx.Context, message TelegramMessage, event *models.AlertCurEvent) {
+func SendTelegram(ctx *ctx.Context, message TelegramMessage, event *models.AlertCurEvent, channel string) {
 	for i := 0; i < len(message.Tokens); i++ {
 		if !strings.Contains(message.Tokens[i], "/") && !strings.HasPrefix(message.Tokens[i], "https://") {
 			logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
@@ -93,6 +91,6 @@ func SendTelegram(ctx *ctx.Context, message TelegramMessage, event *models.Alert
 			Text:      message.Text,
 		}
 
-		doSendAndRecord(ctx, url, message.Tokens[i], body, models.Telegram, message.Stats, event)
+		doSendAndRecord(ctx, url, message.Tokens[i], body, channel, message.Stats, event)
 	}
 }

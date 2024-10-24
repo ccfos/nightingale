@@ -129,16 +129,7 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 		return
 	}
 
-	ctx.Stats.AlertNotifyTotal.WithLabelValues("rule_callback").Inc()
-	resp, code, err := poster.PostJSON(ctx.CallBackURL, 5*time.Second, event, 3)
-	if err != nil {
-		logger.Errorf("event_callback_fail(rule_id=%d url=%s), event:%+v, resp: %s, err: %v, code: %d",
-			event.RuleId, ctx.CallBackURL, event, string(resp), err, code)
-		ctx.Stats.AlertNotifyErrorTotal.WithLabelValues("rule_callback").Inc()
-	} else {
-		logger.Infof("event_callback_succ(rule_id=%d url=%s), event:%+v, resp: %s, code: %d",
-			event.RuleId, ctx.CallBackURL, event, string(resp), code)
-	}
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, event, "callback", ctx.Stats, event)
 }
 
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
