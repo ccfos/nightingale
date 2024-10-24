@@ -217,6 +217,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
+			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
 			event.Target = pt
 		} else {
 			logger.Infof("Target[ident: %s] doesn't exist in cache.", p.target)
@@ -538,6 +539,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		event.DB2Mem()
 		target, exists := p.TargetCache.Get(event.TargetIdent)
 		if exists {
+			target.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(target.GroupIds)
 			event.Target = target
 		}
 
