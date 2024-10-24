@@ -3,8 +3,8 @@ package eval
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"sort"
 	"strings"
