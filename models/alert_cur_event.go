@@ -70,6 +70,7 @@ type AlertCurEvent struct {
 	Target             *Target           `json:"target" gorm:"-"`
 	RecoverConfig      RecoverConfig     `json:"recover_config" gorm:"-"`
 	RuleHash           string            `json:"rule_hash" gorm:"-"`
+	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 }
 
 func (e *AlertCurEvent) TableName() string {
