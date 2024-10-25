@@ -102,6 +102,17 @@ type AlertRule struct {
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 }
 
+type ParamNode struct {
+	Val           map[string]string     `json:"val"`
+	Param         map[string]ParamQuery `json:"param"`
+	SubParamNodes []ParamNode           `json:"sub_param_nodes"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // Host、Device、Enum 三种类型
+	Query     interface{} `json:"query"`
+}
+
 type Tpl struct {
 	TplId   int64    `json:"tpl_id"`
 	TplName string   `json:"tpl_name"`
@@ -135,8 +146,9 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"`
+	PromQl    string    `json:"prom_ql"`
+	Severity  int       `json:"severity"`
+	ParamNode ParamNode `json:"param_node"`
 }
 
 type HostTrigger struct {

@@ -4,6 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -268,4 +271,214 @@ func allValueDeepEqual(got, want map[uint64][]uint64) bool {
 		}
 	}
 	return true
+}
+
+// allValueDeepEqualOmitOrder 判断两个字符串切片是否相等，不考虑顺序
+func allValueDeepEqualOmitOrder(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	slices.Sort(got)
+	slices.Sort(want)
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func Test_paramFilling(t *testing.T) {
+	type args struct {
+		ctx   *ctx.Context
+		query models.PromQuery
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+		{
+			name: "param getParamPermutation",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					ParamNode: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test1",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+						SubParamNodes: []models.ParamNode{
+							{
+								Val: map[string]string{
+									"val": "5",
+								},
+								Param: map[string]models.ParamQuery{
+									"test1": {
+										ParamType: "Test3",
+									},
+									"test2": {
+										ParamType: "Test3",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []string{
+				"mem{test1=\"test11\",test2=\"test21\"} > \"3\"",
+				"mem{test1=\"test12\",test2=\"test21\"} > \"3\"",
+				"mem{test1=\"test12\",test2=\"test22\"} > \"3\"",
+				"mem{test1=\"test11\",test2=\"test11\"} > \"5\"",
+				"mem{test1=\"test11\",test2=\"test22\"} > \"5\"",
+				"mem{test1=\"test22\",test2=\"test11\"} > \"5\"",
+				"mem{test1=\"test22\",test2=\"test22\"} > \"5\"",
+			},
+			wantErr: false,
+		},
+		{
+			name: "param getParamPermutation",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					ParamNode: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+					},
+				},
+			},
+			want:    []string{},
+			wantErr: false,
+		},
+		{
+			name: "param getParamPermutation",
+			args: args{
+				query: models.PromQuery{
+					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
+					ParamNode: models.ParamNode{
+						Val: map[string]string{
+							"val": "3",
+						},
+						Param: map[string]models.ParamQuery{
+							"test1": {
+								ParamType: "Test4",
+							},
+							"test2": {
+								ParamType: "Test2",
+							},
+						},
+					},
+				},
+			},
+			want:    []string{},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			//got, _, err := paramFilling(tt.args.Ctx, tt.args.query)
+			//if (err != nil) != tt.wantErr {
+			//	t.Errorf("paramFilling() error = %v, wantErr %v", err, tt.wantErr)
+			//	return
+			//}
+			//if !allValueDeepEqualOmitOrder(got, tt.want) {
+			//	t.Errorf("paramFilling() got = %v, want %v", got, tt.want)
+			//}
+		})
+	}
+}
+
+func Test_removeVal(t *testing.T) {
+	type args struct {
+		promql string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "removeVal1",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"$test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{} > $val",
+		},
+		{
+			name: "removeVal2",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\"} > $val",
+		},
+		{
+			name: "removeVal3",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test2=\"test2\"} > $val",
+		},
+		{
+			name: "removeVal4",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"$test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal5",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test2=\"test2\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal6",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal7",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val",
+		},
+		{
+			name: "removeVal8",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeVal(tt.args.promql); got != tt.want {
+				t.Errorf("removeVal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
