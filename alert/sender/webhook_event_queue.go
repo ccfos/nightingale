@@ -8,11 +8,11 @@ import (
 )
 
 type SafeEventQueue struct {
-	lock           sync.RWMutex
-	maxSize        int
-	queueSeverity1 *list.List
-	queueSeverity2 *list.List
-	queueSeverity3 *list.List
+	lock        sync.RWMutex
+	maxSize     int
+	queueHigh   *list.List
+	queueMiddle *list.List
+	queueLow    *list.List
 }
 
 const (
@@ -23,23 +23,23 @@ const (
 
 func NewSafeEventQueue(maxSize int) *SafeEventQueue {
 	return &SafeEventQueue{
-		maxSize:        maxSize,
-		lock:           sync.RWMutex{},
-		queueSeverity1: list.New(),
-		queueSeverity2: list.New(),
-		queueSeverity3: list.New(),
+		maxSize:     maxSize,
+		lock:        sync.RWMutex{},
+		queueHigh:   list.New(),
+		queueMiddle: list.New(),
+		queueLow:    list.New(),
 	}
 }
 
 func (spq *SafeEventQueue) Len() int {
 	spq.lock.RLock()
 	defer spq.lock.RUnlock()
-	return spq.queueSeverity1.Len() + spq.queueSeverity2.Len() + spq.queueSeverity3.Len()
+	return spq.queueHigh.Len() + spq.queueMiddle.Len() + spq.queueLow.Len()
 }
 
 // len 无锁读取长度，不要在本文件外调用
 func (spq *SafeEventQueue) len() int {
-	return spq.queueSeverity1.Len() + spq.queueSeverity2.Len() + spq.queueSeverity3.Len()
+	return spq.queueHigh.Len() + spq.queueMiddle.Len() + spq.queueLow.Len()
 }
 
 func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
@@ -47,22 +47,22 @@ func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
 	defer spq.lock.Unlock()
 	switch event.Severity {
 	case High:
-		spq.queueSeverity1.PushBack(event)
+		spq.queueHigh.PushBack(event)
 	case Middle:
-		spq.queueSeverity2.PushBack(event)
+		spq.queueMiddle.PushBack(event)
 	case Low:
-		spq.queueSeverity3.PushBack(event)
+		spq.queueLow.PushBack(event)
 	default:
 		return false
 	}
 
 	for spq.len() > spq.maxSize {
-		if spq.queueSeverity3.Len() > 0 {
-			spq.queueSeverity3.Remove(spq.queueSeverity3.Front())
-		} else if spq.queueSeverity2.Len() > 0 {
-			spq.queueSeverity2.Remove(spq.queueSeverity2.Front())
+		if spq.queueLow.Len() > 0 {
+			spq.queueLow.Remove(spq.queueLow.Front())
+		} else if spq.queueMiddle.Len() > 0 {
+			spq.queueMiddle.Remove(spq.queueMiddle.Front())
 		} else {
-			spq.queueSeverity1.Remove(spq.queueSeverity1.Front())
+			spq.queueHigh.Remove(spq.queueHigh.Front())
 		}
 	}
 	return true
@@ -76,12 +76,12 @@ func (spq *SafeEventQueue) pop() *models.AlertCurEvent {
 
 	var elem interface{}
 
-	if spq.queueSeverity1.Len() > 0 {
-		elem = spq.queueSeverity1.Remove(spq.queueSeverity1.Front())
-	} else if spq.queueSeverity2.Len() > 0 {
-		elem = spq.queueSeverity2.Remove(spq.queueSeverity2.Front())
+	if spq.queueHigh.Len() > 0 {
+		elem = spq.queueHigh.Remove(spq.queueHigh.Front())
+	} else if spq.queueMiddle.Len() > 0 {
+		elem = spq.queueMiddle.Remove(spq.queueMiddle.Front())
 	} else {
-		elem = spq.queueSeverity3.Remove(spq.queueSeverity3.Front())
+		elem = spq.queueLow.Remove(spq.queueLow.Front())
 	}
 	event, ok := elem.(*models.AlertCurEvent)
 	if !ok {
