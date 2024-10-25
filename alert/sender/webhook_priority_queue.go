@@ -1,110 +1,113 @@
 package sender
 
 import (
+	"container/list"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-type SafePriorityQueue struct {
-	lock    sync.RWMutex
-	maxSize int
-	events  []*models.AlertCurEvent
+type SafeEventQueue struct {
+	lock           sync.RWMutex
+	maxSize        int
+	queueSeverity1 *list.List
+	queueSeverity2 *list.List
+	queueSeverity3 *list.List
 }
 
-func NewSafePriorityQueue(maxSize int) *SafePriorityQueue {
-	return &SafePriorityQueue{
-		maxSize: maxSize,
-		events:  make([]*models.AlertCurEvent, 0),
-		lock:    sync.RWMutex{},
+const (
+	High   = 1
+	Middle = 2
+	Low    = 3
+)
+
+func NewSafeEventQueue(maxSize int) *SafeEventQueue {
+	return &SafeEventQueue{
+		maxSize:        maxSize,
+		lock:           sync.RWMutex{},
+		queueSeverity1: list.New(),
+		queueSeverity2: list.New(),
+		queueSeverity3: list.New(),
 	}
 }
 
-func (spq *SafePriorityQueue) Len() int {
+func (spq *SafeEventQueue) Len() int {
 	spq.lock.RLock()
 	defer spq.lock.RUnlock()
-	return len(spq.events)
+	return spq.queueSeverity1.Len() + spq.queueSeverity2.Len() + spq.queueSeverity3.Len()
 }
 
-func (spq *SafePriorityQueue) Push(event *models.AlertCurEvent) bool {
-	if spq.Len() >= spq.maxSize {
-		return false
-	}
+// len 无锁读取长度，不要在本文件外调用
+func (spq *SafeEventQueue) len() int {
+	return spq.queueSeverity1.Len() + spq.queueSeverity2.Len() + spq.queueSeverity3.Len()
+}
+
+func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
 	spq.lock.Lock()
 	defer spq.lock.Unlock()
-	spq.events = append(spq.events, event)
-	spq.up(len(spq.events) - 1)
+	switch event.Severity {
+	case High:
+		spq.queueSeverity1.PushBack(event)
+	case Middle:
+		spq.queueSeverity2.PushBack(event)
+	case Low:
+		spq.queueSeverity3.PushBack(event)
+	default:
+		return false
+	}
+
+	for spq.len() > spq.maxSize {
+		if spq.queueSeverity3.Len() > 0 {
+			spq.queueSeverity3.Remove(spq.queueSeverity3.Front())
+		} else if spq.queueSeverity2.Len() > 0 {
+			spq.queueSeverity2.Remove(spq.queueSeverity2.Front())
+		} else {
+			spq.queueSeverity1.Remove(spq.queueSeverity1.Front())
+		}
+	}
 	return true
 }
 
-func (spq *SafePriorityQueue) Pop() *models.AlertCurEvent {
-	spq.lock.Lock()
-	defer spq.lock.Unlock()
-	if len(spq.events) == 0 {
+// pop 无锁弹出事件，不要在本文件外调用
+func (spq *SafeEventQueue) pop() *models.AlertCurEvent {
+	if spq.len() == 0 {
 		return nil
 	}
-	event := spq.events[0]
-	spq.events[0] = spq.events[len(spq.events)-1]
-	spq.events = spq.events[:len(spq.events)-1]
-	spq.down(0)
+
+	var elem interface{}
+
+	if spq.queueSeverity1.Len() > 0 {
+		elem = spq.queueSeverity1.Remove(spq.queueSeverity1.Front())
+	} else if spq.queueSeverity2.Len() > 0 {
+		elem = spq.queueSeverity2.Remove(spq.queueSeverity2.Front())
+	} else {
+		elem = spq.queueSeverity3.Remove(spq.queueSeverity3.Front())
+	}
+	event, ok := elem.(*models.AlertCurEvent)
+	if !ok {
+		return nil
+	}
 	return event
 }
 
-func (spq *SafePriorityQueue) PopN(n int) []*models.AlertCurEvent {
+func (spq *SafeEventQueue) Pop() *models.AlertCurEvent {
 	spq.lock.Lock()
 	defer spq.lock.Unlock()
-	if len(spq.events) < n {
-		n = len(spq.events)
-	}
+	return spq.pop()
+}
+
+func (spq *SafeEventQueue) PopN(n int) []*models.AlertCurEvent {
+	spq.lock.Lock()
+	defer spq.lock.Unlock()
 
 	events := make([]*models.AlertCurEvent, 0, n)
-	for i := 0; i < n; i++ {
-		events = append(events, spq.events[0])
-		spq.events[0] = spq.events[len(spq.events)-1]
-		spq.events = spq.events[:len(spq.events)-1]
-		spq.down(0)
+	count := 0
+	for count < n && spq.len() > 0 {
+		event := spq.pop()
+		if event != nil {
+			events = append(events, event)
+		}
+		count++
 	}
 	return events
-}
-
-func (spq *SafePriorityQueue) less(i, j int) bool {
-	if spq.events[i].Severity == spq.events[j].Severity {
-		// todo 这里用哪个时间更合适
-		return spq.events[i].TriggerTime < spq.events[j].TriggerTime
-	}
-	return spq.events[i].Severity < spq.events[j].Severity
-}
-
-func (spq *SafePriorityQueue) swap(i, j int) {
-	if i < 0 || i >= len(spq.events) || j < 0 || j >= len(spq.events) {
-		return
-	}
-	spq.events[i], spq.events[j] = spq.events[j], spq.events[i]
-}
-
-func (spq *SafePriorityQueue) up(idx int) {
-	if idx == 0 {
-		return
-	}
-	parentIdx := (idx - 1) / 2
-	if spq.less(idx, parentIdx) {
-		spq.swap(idx, parentIdx)
-		spq.up(parentIdx)
-	}
-}
-
-func (spq *SafePriorityQueue) down(idx int) {
-	leftIdx := 2*idx + 1
-	rightIdx := 2*idx + 2
-	minIdx := idx
-	if leftIdx < len(spq.events) && spq.less(leftIdx, minIdx) {
-		minIdx = leftIdx
-	}
-	if rightIdx < len(spq.events) && spq.less(rightIdx, minIdx) {
-		minIdx = rightIdx
-	}
-	if minIdx != idx {
-		spq.swap(idx, minIdx)
-		spq.down(minIdx)
-	}
 }

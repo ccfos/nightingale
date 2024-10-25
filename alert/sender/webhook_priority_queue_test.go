@@ -10,7 +10,7 @@ import (
 )
 
 func TestSafePriorityQueue_ConcurrentPushPop(t *testing.T) {
-	spq := NewSafePriorityQueue(100000)
+	spq := NewSafeEventQueue(100000)
 
 	var wg sync.WaitGroup
 	numGoroutines := 100
@@ -23,7 +23,7 @@ func TestSafePriorityQueue_ConcurrentPushPop(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < numEvents; j++ {
 				event := &models.AlertCurEvent{
-					Severity:    goroutineID % 5,
+					Severity:    goroutineID%3 + 1,
 					TriggerTime: time.Now().UnixNano(),
 				}
 				spq.Push(event)
@@ -56,12 +56,12 @@ func TestSafePriorityQueue_ConcurrentPushPop(t *testing.T) {
 }
 
 func TestSafePriorityQueue_ConcurrentPopMax(t *testing.T) {
-	spq := NewSafePriorityQueue(100000)
+	spq := NewSafeEventQueue(100000)
 
 	// 添加初始数据
 	for i := 0; i < 1000; i++ {
 		spq.Push(&models.AlertCurEvent{
-			Severity:    i % 5,
+			Severity:    i%3 + 1,
 			TriggerTime: time.Now().UnixNano(),
 		})
 	}
@@ -90,7 +90,7 @@ func TestSafePriorityQueue_ConcurrentPopMax(t *testing.T) {
 }
 
 func TestSafePriorityQueue_ConcurrentPushPopWithDifferentSeverities(t *testing.T) {
-	spq := NewSafePriorityQueue(100000)
+	spq := NewSafeEventQueue(100000)
 
 	var wg sync.WaitGroup
 	numGoroutines := 50
@@ -103,7 +103,7 @@ func TestSafePriorityQueue_ConcurrentPushPopWithDifferentSeverities(t *testing.T
 			defer wg.Done()
 			for j := 0; j < numEvents; j++ {
 				event := &models.AlertCurEvent{
-					Severity:    goroutineID % 5, // 模拟不同的 Severity
+					Severity:    goroutineID%3 + 1, // 模拟不同的 Severity
 					TriggerTime: time.Now().UnixNano(),
 				}
 				spq.Push(event)
@@ -121,9 +121,6 @@ func TestSafePriorityQueue_ConcurrentPushPopWithDifferentSeverities(t *testing.T
 	for spq.Len() > 0 {
 		event := spq.Pop()
 		if lastEvent != nil {
-			if lastEvent.Severity == event.Severity {
-				assert.LessOrEqual(t, lastEvent.TriggerTime, event.TriggerTime, "Events are not in correct priority order")
-			}
 			assert.LessOrEqual(t, lastEvent.Severity, event.Severity, "Events are not in correct priority order")
 		}
 		lastEvent = event
@@ -131,7 +128,7 @@ func TestSafePriorityQueue_ConcurrentPushPopWithDifferentSeverities(t *testing.T
 }
 
 func TestSafePriorityQueue_ExceedMaxSize(t *testing.T) {
-	spq := NewSafePriorityQueue(5)
+	spq := NewSafeEventQueue(5)
 
 	// 插入超过最大容量的事件
 	for i := 0; i < 10; i++ {
