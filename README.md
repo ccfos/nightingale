@@ -38,6 +38,7 @@
 - 👉 [文档中心](https://flashcat.cloud/docs/) | [下载中心](https://flashcat.cloud/download/nightingale/)
 - ❤️ [报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=&projects=&template=question.yml)
 - ℹ️ 为了提供更快速的访问体验，上述文档和下载站点托管于 [FlashcatCloud](https://flashcat.cloud)
+- 💡 前后端代码分离，前端代码仓库：[https://github.com/n9e/fe](https://github.com/n9e/fe)
 
 ## 功能特点
 
