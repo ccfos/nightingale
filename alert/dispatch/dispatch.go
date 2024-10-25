@@ -139,6 +139,11 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	if rule == nil {
 		return
 	}
+
+	if e.blockEventNotify(rule, event) {
+		return
+	}
+
 	fillUsers(event, e.userCache, e.userGroupCache)
 
 	var (
@@ -173,6 +178,25 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	if !isSubscribe {
 		e.handleSubs(event)
 	}
+}
+
+func (e *Dispatch) blockEventNotify(rule *models.AlertRule, event *models.AlertCurEvent) bool {
+	ruleType := rule.GetRuleType()
+
+	// 若为机器则先看机器是否删除
+	if ruleType == models.HOST {
+		host, ok := e.targetCache.Get(event.TagsMap["ident"])
+		if !ok || host == nil {
+			return true
+		}
+	}
+
+	// 规则配置是否改变
+	if event.RuleHash != rule.Hash() {
+		return true
+	}
+
+	return false
 }
 
 func (e *Dispatch) handleSubs(event *models.AlertCurEvent) {

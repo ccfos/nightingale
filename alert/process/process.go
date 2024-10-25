@@ -138,6 +138,9 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		return
 	}
 
+	// 在 rule 变化之前取到 ruleHash
+	ruleHash := p.rule.Hash()
+
 	p.rule = cachedRule
 	now := time.Now().Unix()
 	alertingKeys := map[string]struct{}{}
@@ -145,7 +148,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	// 根据 event 的 tag 将 events 分组，处理告警抑制的情况
 	eventsMap := make(map[string][]*models.AlertCurEvent)
 	for _, anomalyPoint := range anomalyPoints {
-		event := p.BuildEvent(anomalyPoint, from, now)
+		event := p.BuildEvent(anomalyPoint, from, now, ruleHash)
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
@@ -175,7 +178,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	}
 }
 
-func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
+func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
 	p.fillTags(anomalyPoint)
 	p.mayHandleIdent()
 	hash := Hash(p.rule.Id, p.datasourceId, anomalyPoint)
@@ -214,6 +217,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
+	event.RuleHash = ruleHash
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
