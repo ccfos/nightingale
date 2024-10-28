@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -108,7 +109,7 @@ func (h HTTP) ParseUrl() (target *url.URL, err error) {
 			continue
 		}
 
-		if _, err = http.NewRequest("GET", urls[i], nil); err == nil {
+		if _, err = httplib.Get(urls[i]).SetTimeout(time.Duration(h.Timeout) * time.Millisecond).Response(); err == nil {
 			return
 		}
 	}
