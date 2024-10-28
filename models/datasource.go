@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -50,6 +51,7 @@ type HTTP struct {
 	TLS                 TLS               `json:"tls"`
 	MaxIdleConnsPerHost int               `json:"max_idle_conns_per_host"`
 	Url                 string            `json:"url"`
+	Urls                []string          `json:"urls"`
 	Headers             map[string]string `json:"headers"`
 }
 
@@ -66,6 +68,32 @@ func (h HTTP) IsLoki() bool {
 	}
 
 	return false
+}
+
+func (h HTTP) GetUrls() []string {
+	if len(h.Urls) == 0 {
+		return []string{h.Url}
+	}
+	return h.Urls
+}
+
+func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
+	for _, url := range h.GetUrls() {
+		if req, err = http.NewRequest("GET", url, nil); err == nil {
+			*reqUrl = url
+			return
+		}
+	}
+	return
+}
+
+func (h HTTP) ParseUrl() (target *url.URL, err error) {
+	for _, u := range h.GetUrls() {
+		if target, err = url.Parse(u); err == nil {
+			return
+		}
+	}
+	return
 }
 
 type TLS struct {
@@ -298,6 +326,10 @@ func (ds *Datasource) DB2FE() error {
 
 	if ds.HTTPJson.MaxIdleConnsPerHost == 0 {
 		ds.HTTPJson.MaxIdleConnsPerHost = 100
+	}
+
+	if ds.PluginType == ELASTICSEARCH && len(ds.HTTPJson.Urls) == 0 {
+		ds.HTTPJson.Urls = []string{ds.HTTPJson.Url}
 	}
 
 	if ds.Auth != "" {
