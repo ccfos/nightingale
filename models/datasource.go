@@ -72,36 +72,45 @@ func (h HTTP) IsLoki() bool {
 }
 
 func (h HTTP) GetUrls() []string {
+	var urls []string
 	if len(h.Urls) == 0 {
-		return []string{h.Url}
+		urls = []string{h.Url}
+	} else {
+		// 复制切片以避免修改原始数据
+		urls = make([]string, len(h.Urls))
+		copy(urls, h.Urls)
 	}
-	return h.Urls
+
+	// 使用 Fisher-Yates 洗牌算法随机打乱顺序
+	for i := len(urls) - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		urls[i], urls[j] = urls[j], urls[i]
+	}
+
+	return urls
 }
 
 func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
 	urls := h.GetUrls()
-	i := rand.Intn(len(urls))
-	for fc := 0; fc < len(urls); fc++ {
+	for i := 0; i < len(urls); i++ {
 		if req, err = http.NewRequest("GET", urls[i], nil); err == nil {
 			*reqUrl = urls[i]
 			return
 		}
-		i = rand.Intn(len(urls))
 	}
 	return
 }
 
 func (h HTTP) ParseUrl() (target *url.URL, err error) {
 	urls := h.GetUrls()
-	i := rand.Intn(len(urls))
-	for fc := 0; fc < len(urls); fc++ {
+	for i := 0; i < len(urls); i++ {
 		if target, err = url.Parse(urls[i]); err != nil {
 			continue
 		}
+
 		if _, err = http.NewRequest("GET", urls[i], nil); err == nil {
 			return
 		}
-		i = rand.Intn(len(urls))
 	}
 	return
 }
