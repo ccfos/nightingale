@@ -45,6 +45,11 @@ func (spq *SafeEventQueue) len() int {
 func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
 	spq.lock.Lock()
 	defer spq.lock.Unlock()
+
+	for spq.len() > spq.maxSize {
+		return false
+	}
+
 	switch event.Severity {
 	case High:
 		spq.queueHigh.PushBack(event)
@@ -56,15 +61,6 @@ func (spq *SafeEventQueue) Push(event *models.AlertCurEvent) bool {
 		return false
 	}
 
-	for spq.len() > spq.maxSize {
-		if spq.queueLow.Len() > 0 {
-			spq.queueLow.Remove(spq.queueLow.Front())
-		} else if spq.queueMiddle.Len() > 0 {
-			spq.queueMiddle.Remove(spq.queueMiddle.Front())
-		} else {
-			spq.queueHigh.Remove(spq.queueHigh.Front())
-		}
-	}
 	return true
 }
 
