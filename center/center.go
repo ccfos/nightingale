@@ -48,6 +48,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	cconf.MergeOperationConf()
 
+	if config.Alert.Heartbeat.EngineName == "" {
+		config.Alert.Heartbeat.EngineName = "default"
+	}
+
 	logxClean, err := logx.Init(config.Log)
 	if err != nil {
 		return nil, err
