@@ -195,8 +195,8 @@ func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.
 
 	if queue == nil {
 		queue = &WebhookQueue{
-			list:    NewSafeListLimited(QueueMaxSize),
-			closeCh: make(chan struct{}),
+			eventQueue: NewSafeEventQueue(QueueMaxSize),
+			closeCh:    make(chan struct{}),
 		}
 
 		CallbackEventQueueLock.Lock()
@@ -206,8 +206,8 @@ func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.
 		StartConsumer(ctx, queue, webhook.Batch, webhook, stats)
 	}
 
-	succ := queue.list.PushFront(event)
+	succ := queue.eventQueue.Push(event)
 	if !succ {
-		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.list.Len(), event)
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.eventQueue.Len(), event)
 	}
 }
