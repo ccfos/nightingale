@@ -170,6 +170,12 @@ type Join struct {
 	On       []string `json:"on"`
 }
 
+type DatasourceQuery struct {
+	MatchType int      `json:"match_type"`
+	Op        string   `json:"op"`
+	Values    []string `json:"values"`
+}
+
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 	var query []map[string]interface{}
 	for _, q := range queries {
