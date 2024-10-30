@@ -91,8 +91,13 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	return false, string(body), nil
 }
 
-func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, callbacks map[string]struct{},
+	event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
+		if _, ok := callbacks[conf.Url]; ok && event.OverrideGlobalWebhook() {
+			logger.Info("override global webhook, skip.")
+			continue
+		}
 		retryCount := 0
 		for retryCount < 3 {
 			needRetry, res, err := sendWebhook(conf, event, stats)
@@ -106,8 +111,13 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *mod
 	}
 }
 
-func BatchSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func BatchSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, callbacks map[string]struct{},
+	event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
+		if _, ok := callbacks[conf.Url]; ok && event.OverrideGlobalWebhook() {
+			logger.Info("override global webhook, skip.")
+			continue
+		}
 		logger.Infof("push event:%+v to queue:%v", event, conf)
 		PushEvent(ctx, conf, event, stats)
 	}

@@ -76,6 +76,10 @@ func (s *NotifyTarget) ToCallbackList() []string {
 	return callbacks
 }
 
+func (s *NotifyTarget) GetCallbackMap() map[string]struct{} {
+	return s.callbacks
+}
+
 func (s *NotifyTarget) ToWebhookList() []*models.Webhook {
 	webhooks := make([]*models.Webhook, 0, len(s.webhooks))
 	for _, wh := range s.webhooks {

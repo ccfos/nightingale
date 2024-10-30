@@ -17,59 +17,59 @@ import (
 )
 
 type AlertCurEvent struct {
-	Id                 int64             `json:"id" gorm:"primaryKey"`
-	Cate               string            `json:"cate"`
-	Cluster            string            `json:"cluster"`
-	DatasourceId       int64             `json:"datasource_id"`
-	GroupId            int64             `json:"group_id"`   // busi group id
-	GroupName          string            `json:"group_name"` // busi group name
-	Hash               string            `json:"hash"`       // rule_id + vector_key
-	RuleId             int64             `json:"rule_id"`
-	RuleName           string            `json:"rule_name"`
-	RuleNote           string            `json:"rule_note"`
-	RuleProd           string            `json:"rule_prod"`
-	RuleAlgo           string            `json:"rule_algo"`
-	Severity           int               `json:"severity"`
-	PromForDuration    int               `json:"prom_for_duration"`
-	PromQl             string            `json:"prom_ql"`
-	RuleConfig         string            `json:"-" gorm:"rule_config"` // rule config
-	RuleConfigJson     interface{}       `json:"rule_config" gorm:"-"` // rule config for fe
-	PromEvalInterval   int               `json:"prom_eval_interval"`
-	Callbacks          string            `json:"-"`                  // for db
-	CallbacksJSON      []string          `json:"callbacks" gorm:"-"` // for fe
-	RunbookUrl         string            `json:"runbook_url"`
-	NotifyRecovered    int               `json:"notify_recovered"`
-	NotifyChannels     string            `json:"-"`                          // for db
-	NotifyChannelsJSON []string          `json:"notify_channels" gorm:"-"`   // for fe
-	NotifyGroups       string            `json:"-"`                          // for db
-	NotifyGroupsJSON   []string          `json:"notify_groups" gorm:"-"`     // for fe
-	NotifyGroupsObj    []*UserGroup      `json:"notify_groups_obj" gorm:"-"` // for fe
-	TargetIdent        string            `json:"target_ident"`
-	TargetNote         string            `json:"target_note"`
-	TriggerTime        int64             `json:"trigger_time"`
-	TriggerValue       string            `json:"trigger_value"`
-	TriggerValues      string            `json:"trigger_values" gorm:"-"`
-	Tags               string            `json:"-"`                         // for db
-	TagsJSON           []string          `json:"tags" gorm:"-"`             // for fe
-	TagsMap            map[string]string `json:"tags_map" gorm:"-"`         // for internal usage
-	OriginalTags       string            `json:"-"`                         // for db
-	OriginalTagsJSON   []string          `json:"original_tags" gorm:"-"`    // for fe
-	Annotations        string            `json:"-"`                         //
-	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"`      // for fe
-	IsRecovered        bool              `json:"is_recovered" gorm:"-"`     // for notify.py
-	NotifyUsersObj     []*User           `json:"notify_users_obj" gorm:"-"` // for notify.py
-	LastEvalTime       int64             `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
-	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
-	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
-	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
-	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
-	Status             int               `json:"status" gorm:"-"`
-	Claimant           string            `json:"claimant" gorm:"-"`
-	SubRuleId          int64             `json:"sub_rule_id" gorm:"-"`
-	ExtraInfo          []string          `json:"extra_info" gorm:"-"`
-	Target             *Target           `json:"target" gorm:"-"`
-	RecoverConfig      RecoverConfig     `json:"recover_config" gorm:"-"`
-	RuleHash           string            `json:"rule_hash" gorm:"-"`
+	Id                 int64               `json:"id" gorm:"primaryKey"`
+	Cate               string              `json:"cate"`
+	Cluster            string              `json:"cluster"`
+	DatasourceId       int64               `json:"datasource_id"`
+	GroupId            int64               `json:"group_id"`   // busi group id
+	GroupName          string              `json:"group_name"` // busi group name
+	Hash               string              `json:"hash"`       // rule_id + vector_key
+	RuleId             int64               `json:"rule_id"`
+	RuleName           string              `json:"rule_name"`
+	RuleNote           string              `json:"rule_note"`
+	RuleProd           string              `json:"rule_prod"`
+	RuleAlgo           string              `json:"rule_algo"`
+	Severity           int                 `json:"severity"`
+	PromForDuration    int                 `json:"prom_for_duration"`
+	PromQl             string              `json:"prom_ql"`
+	RuleConfig         string              `json:"-" gorm:"rule_config"` // rule config
+	RuleConfigJson     interface{}         `json:"rule_config" gorm:"-"` // rule config for fe
+	PromEvalInterval   int                 `json:"prom_eval_interval"`
+	Callbacks          string              `json:"-"`                  // for db
+	CallbacksJSON      []string            `json:"callbacks" gorm:"-"` // for fe
+	RunbookUrl         string              `json:"runbook_url"`
+	NotifyRecovered    int                 `json:"notify_recovered"`
+	NotifyChannels     string              `json:"-"`                          // for db
+	NotifyChannelsJSON []string            `json:"notify_channels" gorm:"-"`   // for fe
+	NotifyGroups       string              `json:"-"`                          // for db
+	NotifyGroupsJSON   []string            `json:"notify_groups" gorm:"-"`     // for fe
+	NotifyGroupsObj    []*UserGroup        `json:"notify_groups_obj" gorm:"-"` // for fe
+	TargetIdent        string              `json:"target_ident"`
+	TargetNote         string              `json:"target_note"`
+	TriggerTime        int64               `json:"trigger_time"`
+	TriggerValue       string              `json:"trigger_value"`
+	TriggerValues      string              `json:"trigger_values" gorm:"-"`
+	Tags               string              `json:"-"`                         // for db
+	TagsJSON           []string            `json:"tags" gorm:"-"`             // for fe
+	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`         // for internal usage
+	OriginalTags       string              `json:"-"`                         // for db
+	OriginalTagsJSON   []string            `json:"original_tags" gorm:"-"`    // for fe
+	Annotations        string              `json:"-"`                         //
+	AnnotationsJSON    map[string]string   `json:"annotations" gorm:"-"`      // for fe
+	IsRecovered        bool                `json:"is_recovered" gorm:"-"`     // for notify.py
+	NotifyUsersObj     []*User             `json:"notify_users_obj" gorm:"-"` // for notify.py
+	LastEvalTime       int64               `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
+	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`   // 上次发送时间
+	NotifyCurNumber    int                 `json:"notify_cur_number"`         // notify: current number
+	FirstTriggerTime   int64               `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
+	Status             int                 `json:"status" gorm:"-"`
+	Claimant           string              `json:"claimant" gorm:"-"`
+	SubRuleId          int64               `json:"sub_rule_id" gorm:"-"`
+	ExtraInfo          []string            `json:"extra_info" gorm:"-"`
+	Target             *Target             `json:"target" gorm:"-"`
+	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
+	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 }
 
@@ -357,6 +357,15 @@ func (e *AlertCurEvent) DB2Mem() {
 	if e.FirstTriggerTime == 0 {
 		e.FirstTriggerTime = e.TriggerTime
 	}
+}
+
+func (e *AlertCurEvent) OverrideGlobalWebhook() bool {
+	var rc RuleConfig
+	if err := json.Unmarshal([]byte(e.RuleConfig), &rc); err != nil {
+		logger.Warningf("failed to unmarshal rule config: %v", err)
+		return false
+	}
+	return rc.OverrideGlobalWebhook
 }
 
 func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bool) {

@@ -291,9 +291,9 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 
 	// handle global webhooks
 	if e.alerting.WebhookBatchSend {
-		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), notifyTarget.GetCallbackMap(), event, e.Astats)
 	} else {
-		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), notifyTarget.GetCallbackMap(), event, e.Astats)
 	}
 
 	// handle plugin call
@@ -307,7 +307,6 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 }
 
 func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTarget, event *models.AlertCurEvent) {
-
 	uids := notifyTarget.ToUidList()
 	urls := notifyTarget.ToCallbackList()
 	whMap := notifyTarget.ToWebhookMap()
@@ -318,7 +317,7 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 
 		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
 
-		if wh, ok := whMap[cbCtx.CallBackURL]; ok && wh.Enable {
+		if wh, ok := whMap[cbCtx.CallBackURL]; ok && wh.Enable && !event.OverrideGlobalWebhook() {
 			logger.Debugf("SendCallbacks: webhook[%s] is in global conf.", cbCtx.CallBackURL)
 			continue
 		}
