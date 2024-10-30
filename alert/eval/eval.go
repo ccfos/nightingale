@@ -379,7 +379,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			targets := arw.processor.TargetCache.Gets(missTargets)
 			for _, target := range targets {
 				m := make(map[string]string)
-				target.FillTagsMap()
 				for k, v := range target.TagsMap {
 					m[k] = v
 				}
@@ -426,7 +425,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				m := make(map[string]string)
 				target, exists := arw.processor.TargetCache.Get(host)
 				if exists {
-					target.FillTagsMap()
 					for k, v := range target.TagsMap {
 						m[k] = v
 					}
