@@ -52,6 +52,7 @@ var TemplateFuncMap = template.FuncMap{
 	"externalURL":               ExternalURL,
 	"parseDuration":             ParseDuration,
 	"printf":                    Printf,
+	"query":                     Query,
 }
 
 // ReplaceTemplateUseHtml replaces variables in a template string with values.
