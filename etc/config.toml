@@ -141,7 +141,7 @@ ForceUseServerTS = true
 
 [[Pushgw.Writers]] 
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://127.0.0.1:9090/api/v1/write"
+Url = "http://127.0.0.1:19876/api/v1/write"
 # Basic auth username
 BasicAuthUser = ""
 # Basic auth password

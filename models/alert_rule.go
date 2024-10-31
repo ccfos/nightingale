@@ -48,6 +48,8 @@ type AlertRule struct {
 	Cate                  string                 `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`       // datasource ids
 	DatasourceIdsJson     []int64                `json:"datasource_ids" gorm:"-"`       // for fe
+	DatasourceQueries     string                 `json:"-" gorm:"datasource_queries"`   // datasource queries
+	DatasourceQueriesJson []interface{}          `json:"datasource_quries" gorm:"-"`    // for fe
 	Cluster               string                 `json:"cluster"`                       // take effect by clusters, seperated by space
 	Name                  string                 `json:"name"`                          // rule name
 	Note                  string                 `json:"note"`                          // will sent in notify
@@ -506,6 +508,14 @@ func (ar *AlertRule) FillDatasourceIds() error {
 	return nil
 }
 
+func (ar *AlertRule) FillDatasourceQueries() error {
+	if ar.DatasourceQueries != "" {
+		json.Unmarshal([]byte(ar.DatasourceQueries), &ar.DatasourceQueriesJson)
+		return nil
+	}
+	return nil
+}
+
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
 		var rule RuleQuery
@@ -628,6 +638,14 @@ func (ar *AlertRule) FE2DB() error {
 		ar.DatasourceIds = string(idsByte)
 	}
 
+	if len(ar.DatasourceQueriesJson) > 0 {
+		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
+		if err != nil {
+			return fmt.Errorf("marshal datasource_queries err:%v", err)
+		}
+		ar.DatasourceQueries = string(queriesByte)
+	}
+
 	if ar.RuleConfigJson == nil {
 		query := PromQuery{
 			PromQl:   ar.PromQl,
@@ -700,7 +718,14 @@ func (ar *AlertRule) DB2FE() error {
 	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
 	err := ar.FillDatasourceIds()
-	return err
+	if err != nil {
+		return err
+	}
+	err = ar.FillDatasourceQueries()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
