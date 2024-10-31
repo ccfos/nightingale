@@ -52,7 +52,15 @@ var TemplateFuncMap = template.FuncMap{
 	"externalURL":               ExternalURL,
 	"parseDuration":             ParseDuration,
 	"printf":                    Printf,
-	"query":                     Query,
+}
+
+// NewTemplateFuncMap copy on write for TemplateFuncMap
+func NewTemplateFuncMap() template.FuncMap {
+	m := template.FuncMap{}
+	for k, v := range TemplateFuncMap {
+		m[k] = v
+	}
+	return m
 }
 
 // ReplaceTemplateUseHtml replaces variables in a template string with values.

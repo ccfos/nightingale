@@ -106,8 +106,17 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 				"{{$value := .TriggerValue}}",
 			}
 
+			m := tplx.NewTemplateFuncMap()
+			m["query"] = func(promql string, param ...int64) string {
+				datasourceId := e.DatasourceId
+				if len(param) > 0 {
+					datasourceId = param[0]
+				}
+				return tplx.Query(datasourceId, promql)
+			}
+
 			text := strings.Join(append(defs, f), "")
-			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(m).Parse(text)
 			if err != nil {
 				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
 				continue
