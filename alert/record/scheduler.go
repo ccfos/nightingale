@@ -67,7 +67,7 @@ func (s *Scheduler) syncRecordRules() {
 			continue
 		}
 
-		datasourceIds := s.promClients.Hit(rule.DatasourceQueriesJson)
+		datasourceIds := s.promClients.Hit(rule.DatasourceQueries)
 		for _, dsId := range datasourceIds {
 			if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
 				continue

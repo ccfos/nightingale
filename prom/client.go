@@ -1,15 +1,11 @@
 package prom
 
 import (
-	"encoding/json"
-	"strconv"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
-
-	"github.com/tidwall/match"
 )
 
 type PromClientMap struct {
@@ -69,73 +65,10 @@ func (pc *PromClientMap) IsNil(datasourceId int64) bool {
 }
 
 // Hit 根据当前有效的 datasourceId 和规则的 datasourceId 配置计算有效的cluster列表
-func (pc *PromClientMap) Hit(datasourceQueriesJson []interface{}) []int64 {
+func (pc *PromClientMap) Hit(datasourceQueries []models.DatasourceQuery) []int64 {
 	pc.RLock()
 	defer pc.RUnlock()
-
-	dsIDs := make(map[int64]struct{})
-	for i := range datasourceQueriesJson {
-		var q models.DatasourceQuery
-		bytes, err := json.Marshal(datasourceQueriesJson[i])
-		if err != nil {
-			continue
-		}
-
-		if err = json.Unmarshal(bytes, &q); err != nil {
-			continue
-		}
-
-		if q.MatchType == 0 {
-			value := make([]int64, 0, len(q.Values))
-			for v := range q.Values {
-				val, err := strconv.Atoi(q.Values[v])
-				if err != nil {
-					continue
-				}
-				value = append(value, int64(val))
-			}
-			if q.Op == "in" {
-				if len(value) == 1 && value[0] == models.DatasourceIdAll {
-					for c := range pc.ReaderClients {
-						dsIDs[c] = struct{}{}
-					}
-					continue
-				}
-				for v := range value {
-					dsIDs[value[v]] = struct{}{}
-				}
-			} else if q.Op == "not in" {
-				for v := range value {
-					delete(dsIDs, value[v])
-				}
-			}
-		} else if q.MatchType == 1 {
-			if q.Op == "in" {
-				for dsName := range pc.DatasourceNameToID {
-					for v := range q.Values {
-						if match.Match(dsName, q.Values[v]) {
-							dsIDs[pc.DatasourceNameToID[dsName]] = struct{}{}
-						}
-					}
-				}
-			} else if q.Op == "not in" {
-				for dsName := range pc.DatasourceNameToID {
-					for v := range q.Values {
-						if match.Match(dsName, q.Values[v]) {
-							dsIDs[pc.DatasourceNameToID[dsName]] = struct{}{}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	dsIds := make([]int64, 0, len(dsIDs))
-	for c := range dsIDs {
-		dsIds = append(dsIds, c)
-	}
-
-	return dsIds
+	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, pc.ReaderClients, pc.DatasourceNameToID)
 }
 
 func (pc *PromClientMap) Reset() {

@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/match"
 	"strconv"
 	"strings"
 	"time"
@@ -44,56 +45,55 @@ const (
 
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
-	GroupId               int64                  `json:"group_id"`                      // busi group id
-	Cate                  string                 `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
-	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`       // datasource ids
-	DatasourceQueries     string                 `json:"-" gorm:"datasource_queries"`   // datasource queries
-	DatasourceQueriesJson []interface{}          `json:"datasource_quries" gorm:"-"`    // for fe
-	Cluster               string                 `json:"cluster"`                       // take effect by clusters, seperated by space
-	Name                  string                 `json:"name"`                          // rule name
-	Note                  string                 `json:"note"`                          // will sent in notify
-	Prod                  string                 `json:"prod"`                          // product empty means n9e
-	Algorithm             string                 `json:"algorithm"`                     // algorithm (''|holtwinters), empty means threshold
-	AlgoParams            string                 `json:"-" gorm:"algo_params"`          // params algorithm need
-	AlgoParamsJson        interface{}            `json:"algo_params" gorm:"-"`          // for fe
-	Delay                 int                    `json:"delay"`                         // Time (in seconds) to delay evaluation
-	Severity              int                    `json:"severity"`                      // 1: Emergency 2: Warning 3: Notice
-	Severities            []int                  `json:"severities" gorm:"-"`           // 1: Emergency 2: Warning 3: Notice
-	Disabled              int                    `json:"disabled"`                      // 0: enabled, 1: disabled
-	PromForDuration       int                    `json:"prom_for_duration"`             // prometheus for, unit:s
-	PromQl                string                 `json:"prom_ql"`                       // just one ql
-	RuleConfig            string                 `json:"-" gorm:"rule_config"`          // rule config
-	RuleConfigJson        interface{}            `json:"rule_config" gorm:"-"`          // rule config for fe
-	EventRelabelConfig    []*pconf.RelabelConfig `json:"event_relabel_config" gorm:"-"` // event relabel config
-	PromEvalInterval      int                    `json:"prom_eval_interval"`            // unit:s
-	EnableStime           string                 `json:"-"`                             // split by space: "00:00 10:00 12:00"
-	EnableStimeJSON       string                 `json:"enable_stime" gorm:"-"`         // for fe
-	EnableStimesJSON      []string               `json:"enable_stimes" gorm:"-"`        // for fe
-	EnableEtime           string                 `json:"-"`                             // split by space: "00:00 10:00 12:00"
-	EnableEtimeJSON       string                 `json:"enable_etime" gorm:"-"`         // for fe
-	EnableEtimesJSON      []string               `json:"enable_etimes" gorm:"-"`        // for fe
-	EnableDaysOfWeek      string                 `json:"-"`                             // eg: "0 1 2 3 4 5 6 ; 0 1 2"
-	EnableDaysOfWeekJSON  []string               `json:"enable_days_of_week" gorm:"-"`  // for fe
-	EnableDaysOfWeeksJSON [][]string             `json:"enable_days_of_weeks" gorm:"-"` // for fe
-	EnableInBG            int                    `json:"enable_in_bg"`                  // 0: global 1: enable one busi-group
-	NotifyRecovered       int                    `json:"notify_recovered"`              // whether notify when recovery
-	NotifyChannels        string                 `json:"-"`                             // split by space: sms voice email dingtalk wecom
-	NotifyChannelsJSON    []string               `json:"notify_channels" gorm:"-"`      // for fe
-	NotifyGroups          string                 `json:"-"`                             // split by space: 233 43
-	NotifyGroupsObj       []UserGroup            `json:"notify_groups_obj" gorm:"-"`    // for fe
-	NotifyGroupsJSON      []string               `json:"notify_groups" gorm:"-"`        // for fe
-	NotifyRepeatStep      int                    `json:"notify_repeat_step"`            // notify repeat interval, unit: min
-	NotifyMaxNumber       int                    `json:"notify_max_number"`             // notify: max number
-	RecoverDuration       int64                  `json:"recover_duration"`              // unit: s
-	Callbacks             string                 `json:"-"`                             // split by space: http://a.com/api/x http://a.com/api/y'
-	CallbacksJSON         []string               `json:"callbacks" gorm:"-"`            // for fe
-	RunbookUrl            string                 `json:"runbook_url"`                   // sop url
-	AppendTags            string                 `json:"-"`                             // split by space: service=n9e mod=api
-	AppendTagsJSON        []string               `json:"append_tags" gorm:"-"`          // for fe
-	Annotations           string                 `json:"-"`                             //
-	AnnotationsJSON       map[string]string      `json:"annotations" gorm:"-"`          // for fe
-	ExtraConfig           string                 `json:"-" gorm:"extra_config"`         // extra config
-	ExtraConfigJSON       interface{}            `json:"extra_config" gorm:"-"`         // for fe
+	GroupId               int64                  `json:"group_id"`                                                               // busi group id
+	Cate                  string                 `json:"cate"`                                                                   // alert rule cate (prometheus|elasticsearch)
+	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`                                                // datasource ids
+	DatasourceQueries     []DatasourceQuery      `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
+	Cluster               string                 `json:"cluster"`                                                                // take effect by clusters, seperated by space
+	Name                  string                 `json:"name"`                                                                   // rule name
+	Note                  string                 `json:"note"`                                                                   // will sent in notify
+	Prod                  string                 `json:"prod"`                                                                   // product empty means n9e
+	Algorithm             string                 `json:"algorithm"`                                                              // algorithm (''|holtwinters), empty means threshold
+	AlgoParams            string                 `json:"-" gorm:"algo_params"`                                                   // params algorithm need
+	AlgoParamsJson        interface{}            `json:"algo_params" gorm:"-"`                                                   // for fe
+	Delay                 int                    `json:"delay"`                                                                  // Time (in seconds) to delay evaluation
+	Severity              int                    `json:"severity"`                                                               // 1: Emergency 2: Warning 3: Notice
+	Severities            []int                  `json:"severities" gorm:"-"`                                                    // 1: Emergency 2: Warning 3: Notice
+	Disabled              int                    `json:"disabled"`                                                               // 0: enabled, 1: disabled
+	PromForDuration       int                    `json:"prom_for_duration"`                                                      // prometheus for, unit:s
+	PromQl                string                 `json:"prom_ql"`                                                                // just one ql
+	RuleConfig            string                 `json:"-" gorm:"rule_config"`                                                   // rule config
+	RuleConfigJson        interface{}            `json:"rule_config" gorm:"-"`                                                   // rule config for fe
+	EventRelabelConfig    []*pconf.RelabelConfig `json:"event_relabel_config" gorm:"-"`                                          // event relabel config
+	PromEvalInterval      int                    `json:"prom_eval_interval"`                                                     // unit:s
+	EnableStime           string                 `json:"-"`                                                                      // split by space: "00:00 10:00 12:00"
+	EnableStimeJSON       string                 `json:"enable_stime" gorm:"-"`                                                  // for fe
+	EnableStimesJSON      []string               `json:"enable_stimes" gorm:"-"`                                                 // for fe
+	EnableEtime           string                 `json:"-"`                                                                      // split by space: "00:00 10:00 12:00"
+	EnableEtimeJSON       string                 `json:"enable_etime" gorm:"-"`                                                  // for fe
+	EnableEtimesJSON      []string               `json:"enable_etimes" gorm:"-"`                                                 // for fe
+	EnableDaysOfWeek      string                 `json:"-"`                                                                      // eg: "0 1 2 3 4 5 6 ; 0 1 2"
+	EnableDaysOfWeekJSON  []string               `json:"enable_days_of_week" gorm:"-"`                                           // for fe
+	EnableDaysOfWeeksJSON [][]string             `json:"enable_days_of_weeks" gorm:"-"`                                          // for fe
+	EnableInBG            int                    `json:"enable_in_bg"`                                                           // 0: global 1: enable one busi-group
+	NotifyRecovered       int                    `json:"notify_recovered"`                                                       // whether notify when recovery
+	NotifyChannels        string                 `json:"-"`                                                                      // split by space: sms voice email dingtalk wecom
+	NotifyChannelsJSON    []string               `json:"notify_channels" gorm:"-"`                                               // for fe
+	NotifyGroups          string                 `json:"-"`                                                                      // split by space: 233 43
+	NotifyGroupsObj       []UserGroup            `json:"notify_groups_obj" gorm:"-"`                                             // for fe
+	NotifyGroupsJSON      []string               `json:"notify_groups" gorm:"-"`                                                 // for fe
+	NotifyRepeatStep      int                    `json:"notify_repeat_step"`                                                     // notify repeat interval, unit: min
+	NotifyMaxNumber       int                    `json:"notify_max_number"`                                                      // notify: max number
+	RecoverDuration       int64                  `json:"recover_duration"`                                                       // unit: s
+	Callbacks             string                 `json:"-"`                                                                      // split by space: http://a.com/api/x http://a.com/api/y'
+	CallbacksJSON         []string               `json:"callbacks" gorm:"-"`                                                     // for fe
+	RunbookUrl            string                 `json:"runbook_url"`                                                            // sop url
+	AppendTags            string                 `json:"-"`                                                                      // split by space: service=n9e mod=api
+	AppendTagsJSON        []string               `json:"append_tags" gorm:"-"`                                                   // for fe
+	Annotations           string                 `json:"-"`                                                                      //
+	AnnotationsJSON       map[string]string      `json:"annotations" gorm:"-"`                                                   // for fe
+	ExtraConfig           string                 `json:"-" gorm:"extra_config"`                                                  // extra config
+	ExtraConfigJSON       interface{}            `json:"extra_config" gorm:"-"`                                                  // for fe
 	CreateAt              int64                  `json:"create_at"`
 	CreateBy              string                 `json:"create_by"`
 	UpdateAt              int64                  `json:"update_at"`
@@ -175,6 +175,63 @@ type DatasourceQuery struct {
 	MatchType int      `json:"match_type"`
 	Op        string   `json:"op"`
 	Values    []string `json:"values"`
+}
+
+func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQuery, idMap map[int64]T, nameMap map[string]int64) []int64 {
+	dsIDs := make(map[int64]struct{})
+	for i := range datasourceQueries {
+		q := datasourceQueries[i]
+		if q.MatchType == 0 {
+			value := make([]int64, 0, len(q.Values))
+			for v := range q.Values {
+				val, err := strconv.Atoi(q.Values[v])
+				if err != nil {
+					continue
+				}
+				value = append(value, int64(val))
+			}
+			if q.Op == "in" {
+				if len(value) == 1 && value[0] == DatasourceIdAll {
+					for c := range idMap {
+						dsIDs[c] = struct{}{}
+					}
+					continue
+				}
+				for v := range value {
+					dsIDs[value[v]] = struct{}{}
+				}
+			} else if q.Op == "not in" {
+				for v := range value {
+					delete(dsIDs, value[v])
+				}
+			}
+		} else if q.MatchType == 1 {
+			if q.Op == "in" {
+				for dsName := range nameMap {
+					for v := range q.Values {
+						if match.Match(dsName, q.Values[v]) {
+							dsIDs[nameMap[dsName]] = struct{}{}
+						}
+					}
+				}
+			} else if q.Op == "not in" {
+				for dsName := range nameMap {
+					for v := range q.Values {
+						if match.Match(dsName, q.Values[v]) {
+							dsIDs[nameMap[dsName]] = struct{}{}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	dsIds := make([]int64, 0, len(dsIDs))
+	for c := range dsIDs {
+		dsIds = append(dsIds, c)
+	}
+
+	return dsIds
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
@@ -517,26 +574,23 @@ func (ar *AlertRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfa
 //}
 
 func (ar *AlertRule) FillDatasourceQueries() error {
-	if ar.DatasourceQueries != "" {
-		json.Unmarshal([]byte(ar.DatasourceQueries), &ar.DatasourceQueriesJson)
-		return nil
-	}
 	// 兼容旧逻辑，将 datasourceIds 转换为 datasourceQueries
-	datasourceQueries := DatasourceQuery{
-		MatchType: 0,
-		Op:        "in",
-		Values:    make([]string, 0),
-	}
-	var values []int
-	if ar.DatasourceIds != "" {
-		json.Unmarshal([]byte(ar.DatasourceIds), &values)
+	if len(ar.DatasourceQueries) == 0 && len(ar.DatasourceIds) != 0 {
+		datasourceQueries := DatasourceQuery{
+			MatchType: 0,
+			Op:        "in",
+			Values:    make([]string, 0),
+		}
+		var values []int
+		if ar.DatasourceIds != "" {
+			json.Unmarshal([]byte(ar.DatasourceIds), &values)
 
+		}
+		for i := range values {
+			datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
+		}
+		ar.DatasourceQueries = []DatasourceQuery{datasourceQueries}
 	}
-	for i := range values {
-		datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
-	}
-	bytes, _ := json.Marshal(&[]DatasourceQuery{datasourceQueries})
-	json.Unmarshal(bytes, &ar.DatasourceQueriesJson)
 	return nil
 }
 
@@ -653,30 +707,6 @@ func (ar *AlertRule) FE2DB() error {
 		return fmt.Errorf("marshal algo_params err:%v", err)
 	}
 	ar.AlgoParams = string(algoParamsByte)
-
-	if len(ar.DatasourceQueriesJson) > 0 {
-		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
-		if err != nil {
-			return fmt.Errorf("marshal datasource_queries err:%v", err)
-		}
-		ar.DatasourceQueries = string(queriesByte)
-	}
-
-	if len(ar.DatasourceQueriesJson) > 0 {
-		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
-		if err != nil {
-			return fmt.Errorf("marshal datasource_queries err:%v", err)
-		}
-		ar.DatasourceIds = string(queriesByte)
-	}
-
-	if len(ar.DatasourceQueriesJson) > 0 {
-		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
-		if err != nil {
-			return fmt.Errorf("marshal datasource_queries err:%v", err)
-		}
-		ar.DatasourceQueries = string(queriesByte)
-	}
 
 	if ar.RuleConfigJson == nil {
 		query := PromQuery{

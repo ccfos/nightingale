@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -84,8 +83,7 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 		Op:        "in",
 		Values:    dsIDs,
 	}
-	dsqBytes, _ := json.Marshal(dsq)
-	ar.DatasourceQueriesJson = []interface{}{dsqBytes}
+	ar.DatasourceQueries = []DatasourceQuery{dsq}
 
 	return ar
 }

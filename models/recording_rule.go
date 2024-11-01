@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,26 +17,25 @@ import (
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
-	Id                    int64         `json:"id" gorm:"primaryKey"`
-	GroupId               int64         `json:"group_id"`                    // busi group id
-	DatasourceIds         string        `json:"-" gorm:"datasource_ids"`     // datasource ids
-	DatasourceQueries     string        `json:"-" gorm:"datasource_queries"` // datasource queries
-	DatasourceQueriesJson []interface{} `json:"datasource_quries" gorm:"-"`  // for fe
-	Cluster               string        `json:"cluster"`                     // take effect by cluster, seperated by space
-	Name                  string        `json:"name"`                        // new metric name
-	Disabled              int           `json:"disabled"`                    // 0: enabled, 1: disabled
-	PromQl                string        `json:"prom_ql"`                     // just one ql for promql
-	QueryConfigs          string        `json:"-" gorm:"query_configs"`      // query_configs
-	QueryConfigsJson      []QueryConfig `json:"query_configs" gorm:"-"`      // query_configs for fe
-	PromEvalInterval      int           `json:"prom_eval_interval"`          // unit:s
-	CronPattern           string        `json:"cron_pattern"`
-	AppendTags            string        `json:"-"`                    // split by space: service=n9e mod=api
-	AppendTagsJSON        []string      `json:"append_tags" gorm:"-"` // for fe
-	Note                  string        `json:"note"`                 // note
-	CreateAt              int64         `json:"create_at"`
-	CreateBy              string        `json:"create_by"`
-	UpdateAt              int64         `json:"update_at"`
-	UpdateBy              string        `json:"update_by"`
+	Id                int64             `json:"id" gorm:"primaryKey"`
+	GroupId           int64             `json:"group_id"`                                                               // busi group id
+	DatasourceIds     string            `json:"-" gorm:"datasource_ids"`                                                // datasource ids
+	DatasourceQueries []DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
+	Cluster           string            `json:"cluster"`                                                                // take effect by cluster, seperated by space
+	Name              string            `json:"name"`                                                                   // new metric name
+	Disabled          int               `json:"disabled"`                                                               // 0: enabled, 1: disabled
+	PromQl            string            `json:"prom_ql"`                                                                // just one ql for promql
+	QueryConfigs      string            `json:"-" gorm:"query_configs"`                                                 // query_configs
+	QueryConfigsJson  []QueryConfig     `json:"query_configs" gorm:"-"`                                                 // query_configs for fe
+	PromEvalInterval  int               `json:"prom_eval_interval"`                                                     // unit:s
+	CronPattern       string            `json:"cron_pattern"`
+	AppendTags        string            `json:"-"`                    // split by space: service=n9e mod=api
+	AppendTagsJSON    []string          `json:"append_tags" gorm:"-"` // for fe
+	Note              string            `json:"note"`                 // note
+	CreateAt          int64             `json:"create_at"`
+	CreateBy          string            `json:"create_by"`
+	UpdateAt          int64             `json:"update_at"`
+	UpdateBy          string            `json:"update_by"`
 }
 
 type QueryConfig struct {
@@ -58,8 +58,6 @@ func (re *RecordingRule) TableName() string {
 
 func (re *RecordingRule) FE2DB() {
 	re.AppendTags = strings.Join(re.AppendTagsJSON, " ")
-	datasourceQueriesByte, _ := json.Marshal(re.DatasourceQueriesJson)
-	re.DatasourceQueries = string(datasourceQueriesByte)
 
 	queryConfigsByte, _ := json.Marshal(re.QueryConfigsJson)
 	re.QueryConfigs = string(queryConfigsByte)
@@ -80,24 +78,23 @@ func (re *RecordingRule) DB2FE() error {
 }
 
 func (re *RecordingRule) FillDatasourceQueries() error {
-	if re.DatasourceQueries != "" {
-		json.Unmarshal([]byte(re.DatasourceQueries), &re.DatasourceQueriesJson)
-		return nil
-	}
+	// 兼容旧逻辑，将 datasourceIds 转换为 datasourceQueries
+	if len(re.DatasourceQueries) == 0 && len(re.DatasourceIds) != 0 {
+		datasourceQueries := DatasourceQuery{
+			MatchType: 0,
+			Op:        "in",
+			Values:    make([]string, 0),
+		}
+		var values []int
+		if re.DatasourceIds != "" {
+			json.Unmarshal([]byte(re.DatasourceIds), &values)
 
-	datasourceQueries := DatasourceQuery{
-		MatchType: 0,
-		Op:        "in",
+		}
+		for i := range values {
+			datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
+		}
+		re.DatasourceQueries = []DatasourceQuery{datasourceQueries}
 	}
-	var values []string
-	if re.DatasourceIds != "" {
-		json.Unmarshal([]byte(re.DatasourceIds), &values)
-		return nil
-	}
-	datasourceQueries.Values = values
-
-	bytes, _ := json.Marshal(&datasourceQueries)
-	json.Unmarshal(bytes, &re.DatasourceQueriesJson)
 	return nil
 }
 
