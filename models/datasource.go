@@ -310,13 +310,13 @@ func (ds *Datasource) DB2FE() error {
 	return nil
 }
 
-func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
+func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, map[string]int64, error) {
 	var lst []*Datasource
 	var err error
 	if !ctx.IsCenter {
 		lst, err = poster.GetByUrls[[]*Datasource](ctx, "/v1/n9e/datasources")
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for i := 0; i < len(lst); i++ {
 			lst[i].FE2DB()
@@ -324,7 +324,7 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 	} else {
 		err := DB(ctx).Find(&lst).Error
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for i := 0; i < len(lst); i++ {
@@ -336,12 +336,14 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		}
 	}
 
-	ret := make(map[int64]*Datasource)
+	ds := make(map[int64]*Datasource)
+	dsNameTOID := make(map[string]int64)
 	for i := 0; i < len(lst); i++ {
-		ret[lst[i].Id] = lst[i]
+		ds[lst[i].Id] = lst[i]
+		dsNameTOID[lst[i].Name] = lst[i].Id
 	}
 
-	return ret, nil
+	return ds, dsNameTOID, nil
 }
 
 func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {

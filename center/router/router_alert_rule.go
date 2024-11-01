@@ -623,7 +623,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 			newRule.CreateAt = now
 			newRule.RuleConfig = alertRules[i].RuleConfig
 
-			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.DatasourceIdsJson, newRule.Name)
+			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.Name)
 			if err != nil {
 				errMsg[f.IdentList[j]] = err.Error()
 				continue

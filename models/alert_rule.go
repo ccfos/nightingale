@@ -47,7 +47,6 @@ type AlertRule struct {
 	GroupId               int64                  `json:"group_id"`                      // busi group id
 	Cate                  string                 `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`       // datasource ids
-	DatasourceIdsJson     []int64                `json:"datasource_ids" gorm:"-"`       // for fe
 	DatasourceQueries     string                 `json:"-" gorm:"datasource_queries"`   // datasource queries
 	DatasourceQueriesJson []interface{}          `json:"datasource_quries" gorm:"-"`    // for fe
 	Cluster               string                 `json:"cluster"`                       // take effect by clusters, seperated by space
@@ -276,9 +275,9 @@ func (ar *AlertRule) Verify() error {
 		return fmt.Errorf("GroupId(%d) invalid", ar.GroupId)
 	}
 
-	if IsAllDatasource(ar.DatasourceIdsJson) {
-		ar.DatasourceIdsJson = []int64{0}
-	}
+	//if IsAllDatasource(ar.DatasourceIdsJson) {
+	//	ar.DatasourceIdsJson = []int64{0}
+	//}
 
 	if str.Dangerous(ar.Name) {
 		return errors.New("Name has invalid characters")
@@ -332,7 +331,7 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 		return err
 	}
 
-	exists, err := AlertRuleExists(ctx, 0, ar.GroupId, ar.DatasourceIdsJson, ar.Name)
+	exists, err := AlertRuleExists(ctx, 0, ar.GroupId, ar.Name)
 	if err != nil {
 		return err
 	}
@@ -350,7 +349,7 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 
 func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
 	if ar.Name != arf.Name {
-		exists, err := AlertRuleExists(ctx, ar.Id, ar.GroupId, ar.DatasourceIdsJson, arf.Name)
+		exists, err := AlertRuleExists(ctx, ar.Id, ar.GroupId, arf.Name)
 		if err != nil {
 			return err
 		}
@@ -500,19 +499,44 @@ func (ar *AlertRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfa
 }
 
 // for v5 rule
-func (ar *AlertRule) FillDatasourceIds() error {
-	if ar.DatasourceIds != "" {
-		json.Unmarshal([]byte(ar.DatasourceIds), &ar.DatasourceIdsJson)
-		return nil
-	}
-	return nil
-}
+//func (ar *AlertRule) FillDatasourceIds() error {
+//	datasourceQueries := DatasourceQuery{
+//		MatchType: 0,
+//		Op:        "in",
+//	}
+//	var values []string
+//	if ar.DatasourceIds != "" {
+//		json.Unmarshal([]byte(ar.DatasourceIds), &values)
+//		return nil
+//	}
+//	datasourceQueries.Values = values
+//
+//	bytes, _ := json.Marshal(&datasourceQueries)
+//	json.Unmarshal(bytes, &ar.DatasourceQueriesJson)
+//	return nil
+//}
 
 func (ar *AlertRule) FillDatasourceQueries() error {
 	if ar.DatasourceQueries != "" {
 		json.Unmarshal([]byte(ar.DatasourceQueries), &ar.DatasourceQueriesJson)
 		return nil
 	}
+	// 兼容旧逻辑，将 datasourceIds 转换为 datasourceQueries
+	datasourceQueries := DatasourceQuery{
+		MatchType: 0,
+		Op:        "in",
+		Values:    make([]string, 0),
+	}
+	var values []int
+	if ar.DatasourceIds != "" {
+		json.Unmarshal([]byte(ar.DatasourceIds), &values)
+
+	}
+	for i := range values {
+		datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
+	}
+	bytes, _ := json.Marshal(&[]DatasourceQuery{datasourceQueries})
+	json.Unmarshal(bytes, &ar.DatasourceQueriesJson)
 	return nil
 }
 
@@ -630,12 +654,20 @@ func (ar *AlertRule) FE2DB() error {
 	}
 	ar.AlgoParams = string(algoParamsByte)
 
-	if len(ar.DatasourceIdsJson) > 0 {
-		idsByte, err := json.Marshal(ar.DatasourceIdsJson)
+	if len(ar.DatasourceQueriesJson) > 0 {
+		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
 		if err != nil {
-			return fmt.Errorf("marshal datasource_ids err:%v", err)
+			return fmt.Errorf("marshal datasource_queries err:%v", err)
 		}
-		ar.DatasourceIds = string(idsByte)
+		ar.DatasourceQueries = string(queriesByte)
+	}
+
+	if len(ar.DatasourceQueriesJson) > 0 {
+		queriesByte, err := json.Marshal(ar.DatasourceQueriesJson)
+		if err != nil {
+			return fmt.Errorf("marshal datasource_queries err:%v", err)
+		}
+		ar.DatasourceIds = string(queriesByte)
 	}
 
 	if len(ar.DatasourceQueriesJson) > 0 {
@@ -717,14 +749,11 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
 	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
-	err := ar.FillDatasourceIds()
+	err := ar.FillDatasourceQueries()
 	if err != nil {
 		return err
 	}
-	err = ar.FillDatasourceQueries()
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -748,7 +777,7 @@ func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
 	return nil
 }
 
-func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64, name string) (bool, error) {
+func AlertRuleExists(ctx *ctx.Context, id, groupId int64, name string) (bool, error) {
 	session := DB(ctx).Where("id <> ? and group_id = ? and name = ?", id, groupId, name)
 
 	var lst []AlertRule
@@ -761,14 +790,14 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, datasourceIds []int64,
 	}
 
 	// match cluster
-	for _, r := range lst {
-		r.FillDatasourceIds()
-		for _, id := range r.DatasourceIdsJson {
-			if MatchDatasource(datasourceIds, id) {
-				return true, nil
-			}
-		}
-	}
+	//for _, r := range lst {
+	//	r.FillDatasourceIds()
+	//	for _, id := range r.DatasourceIdsJson {
+	//		if MatchDatasource(datasourceIds, id) {
+	//			return true, nil
+	//		}
+	//	}
+	//}
 	return false, nil
 }
 

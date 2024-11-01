@@ -59,7 +59,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
-		&models.TargetBusiGroup{}}
+		&models.TargetBusiGroup{}, &models.AlertRule{}, &models.RecordingRule{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
 		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {

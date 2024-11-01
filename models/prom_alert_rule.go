@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -53,16 +54,15 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 		}
 	}
 
-	return AlertRule{
-		Name:              rule.Alert,
-		Severity:          severity,
-		DatasourceIdsJson: datasouceIds,
-		Disabled:          disabled,
-		PromForDuration:   convertInterval(rule.For),
-		PromQl:            rule.Expr,
-		PromEvalInterval:  convertInterval(interval),
-		EnableStimeJSON:   "00:00",
-		EnableEtimeJSON:   "23:59",
+	ar := AlertRule{
+		Name:             rule.Alert,
+		Severity:         severity,
+		Disabled:         disabled,
+		PromForDuration:  convertInterval(rule.For),
+		PromQl:           rule.Expr,
+		PromEvalInterval: convertInterval(interval),
+		EnableStimeJSON:  "00:00",
+		EnableEtimeJSON:  "23:59",
 		EnableDaysOfWeekJSON: []string{
 			"1", "2", "3", "4", "5", "6", "0",
 		},
@@ -73,6 +73,21 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 		AnnotationsJSON:  annotations,
 		AppendTagsJSON:   appendTags,
 	}
+
+	dsIDs := make([]string, 0, len(datasouceIds))
+	for _, id := range datasouceIds {
+		dsIDs = append(dsIDs, fmt.Sprintf("%d", id))
+	}
+
+	dsq := DatasourceQuery{
+		MatchType: 0,
+		Op:        "in",
+		Values:    dsIDs,
+	}
+	dsqBytes, _ := json.Marshal(dsq)
+	ar.DatasourceQueriesJson = []interface{}{dsqBytes}
+
+	return ar
 }
 
 func DealPromGroup(promRule []PromRuleGroup, dataSourceIds []int64, disabled int) []AlertRule {

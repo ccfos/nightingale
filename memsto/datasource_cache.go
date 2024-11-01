@@ -1,7 +1,9 @@
 package memsto
 
 import (
+	"encoding/json"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/pkg/errors"
+	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -23,7 +26,8 @@ type DatasourceCacheType struct {
 	DatasourceFilter    func([]*models.Datasource, *models.User) []*models.Datasource
 
 	sync.RWMutex
-	ds map[int64]*models.Datasource // key: id
+	ds         map[int64]*models.Datasource // key: id
+	dsNameToID map[string]int64
 }
 
 func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
@@ -33,11 +37,78 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 		ctx:                 ctx,
 		stats:               stats,
 		ds:                  make(map[int64]*models.Datasource),
+		dsNameToID:          make(map[string]int64),
 		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 		DatasourceFilter:    func(ds []*models.Datasource, user *models.User) []*models.Datasource { return ds },
 	}
 	ds.SyncDatasources()
 	return ds
+}
+
+func (d *DatasourceCacheType) GetIDsByDsQueries(datasourceQueriesJson []interface{}) []int64 {
+	dsIDs := make(map[int64]struct{})
+	for i := range datasourceQueriesJson {
+		var q models.DatasourceQuery
+		bytes, err := json.Marshal(datasourceQueriesJson[i])
+		if err != nil {
+			continue
+		}
+
+		if err = json.Unmarshal(bytes, &q); err != nil {
+			continue
+		}
+
+		if q.MatchType == 0 {
+			value := make([]int64, 0, len(q.Values))
+			for v := range q.Values {
+				val, err := strconv.Atoi(q.Values[v])
+				if err != nil {
+					continue
+				}
+				value = append(value, int64(val))
+			}
+			if q.Op == "in" {
+				if len(value) == 1 && value[0] == models.DatasourceIdAll {
+					for c := range d.ds {
+						dsIDs[c] = struct{}{}
+					}
+					continue
+				}
+
+				for v := range value {
+					dsIDs[value[v]] = struct{}{}
+				}
+
+			} else if q.Op == "not in" {
+				for v := range value {
+					delete(dsIDs, value[v])
+				}
+			}
+		} else if q.MatchType == 1 {
+			if q.Op == "in" {
+				for dsName := range d.dsNameToID {
+					for v := range q.Values {
+						if match.Match(dsName, q.Values[v]) {
+							dsIDs[d.dsNameToID[dsName]] = struct{}{}
+						}
+					}
+				}
+			} else if q.Op == "not in" {
+				for dsName := range d.dsNameToID {
+					for v := range q.Values {
+						if match.Match(dsName, q.Values[v]) {
+							dsIDs[d.dsNameToID[dsName]] = struct{}{}
+						}
+					}
+				}
+			}
+		}
+	}
+	ids := make([]int64, 0, len(dsIDs))
+	for c := range dsIDs {
+		ids = append(ids, c)
+	}
+	return ids
 }
 
 func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -48,9 +119,10 @@ func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
 	return true
 }
 
-func (d *DatasourceCacheType) Set(ds map[int64]*models.Datasource, total, lastUpdated int64) {
+func (d *DatasourceCacheType) Set(ds map[int64]*models.Datasource, dsNameToID map[string]int64, total, lastUpdated int64) {
 	d.Lock()
 	d.ds = ds
+	d.dsNameToID = dsNameToID
 	d.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -99,20 +171,20 @@ func (d *DatasourceCacheType) syncDatasources() error {
 		return nil
 	}
 
-	m, err := models.DatasourceGetMap(d.ctx)
+	ds, dsNameToID, err := models.DatasourceGetMap(d.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call DatasourceGetMap")
 	}
 
-	d.Set(m, stat.Total, stat.LastUpdated)
+	d.Set(ds, dsNameToID, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(float64(ms))
-	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(m)))
+	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(ds)))
 
-	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(m))
-	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(m), "success")
+	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(ds))
+	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(ds), "success")
 
 	return nil
 }
