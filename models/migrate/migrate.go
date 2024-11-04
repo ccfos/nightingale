@@ -59,7 +59,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
-		&models.TargetBusiGroup{}, &models.AlertRule{}, &models.RecordingRule{}}
+		&models.TargetBusiGroup{}}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
 		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
@@ -186,7 +186,8 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig string `gorm:"type:text;column:extra_config"` // extra config
+	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`                                          // extra config
+	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertSubscribe struct {
@@ -203,9 +204,10 @@ type AlertMute struct {
 }
 
 type RecordingRule struct {
-	QueryConfigs  string `gorm:"type:text;not null;column:query_configs"` // query_configs
-	DatasourceIds string `gorm:"column:datasource_ids;type:varchar(255);default:'';comment:datasource ids"`
-	CronPattern   string `gorm:"column:cron_pattern;type:varchar(255);default:'';comment:cron pattern"`
+	QueryConfigs      string                   `gorm:"type:text;not null;column:query_configs"` // query_configs
+	DatasourceIds     string                   `gorm:"column:datasource_ids;type:varchar(255);default:'';comment:datasource ids"`
+	CronPattern       string                   `gorm:"column:cron_pattern;type:varchar(255);default:'';comment:cron pattern"`
+	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertingEngines struct {

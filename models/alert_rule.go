@@ -183,57 +183,83 @@ type DatasourceQuery struct {
 	Values    []string `json:"values"`
 }
 
+// GetDatasourceIDsByDatasourceQueries 从 datasourceQueries 中获取 datasourceIDs
+// 查询分为精确\模糊匹配，逻辑有 in 与 not in
+// idMap 为当前 datasourceQueries 对应的数据源全集
+// nameMap 为所有 datasource 的 name 到 id 的映射，用于名称的模糊匹配
 func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQuery, idMap map[int64]T, nameMap map[string]int64) []int64 {
-	dsIDs := make(map[int64]struct{})
+	if len(datasourceQueries) == 0 {
+		return nil
+	}
+
+	// 所有 query 取交集，初始集合为全集
+	curIDs := make(map[int64]struct{})
+	for id, _ := range idMap {
+		curIDs[id] = struct{}{}
+	}
+
 	for i := range datasourceQueries {
+		// 每次 query 都在 curIDs 的基础上得到 dsIDs
+		dsIDs := make(map[int64]struct{})
 		q := datasourceQueries[i]
 		if q.MatchType == 0 {
-			value := make([]int64, 0, len(q.Values))
+			// 精确匹配转为 id 匹配
+			idValues := make([]int64, 0, len(q.Values))
 			for v := range q.Values {
 				val, err := strconv.Atoi(q.Values[v])
 				if err != nil {
 					continue
 				}
-				value = append(value, int64(val))
+				idValues = append(idValues, int64(val))
 			}
+
 			if q.Op == "in" {
-				if len(value) == 1 && value[0] == DatasourceIdAll {
-					for c := range idMap {
-						dsIDs[c] = struct{}{}
+				if len(idValues) == 1 && idValues[0] == DatasourceIdAll {
+					for id := range curIDs {
+						dsIDs[id] = struct{}{}
 					}
-					continue
-				}
-				for idx := range value {
-					dsIDs[value[idx]] = struct{}{}
-				}
-			} else if q.Op == "not in" {
-				for idx := range value {
-					delete(dsIDs, value[idx])
-				}
-			}
-		} else if q.MatchType == 1 {
-			if q.Op == "in" {
-				for dsName := range nameMap {
-					for idx := range q.Values {
-						if match.Match(dsName, q.Values[idx]) {
-							dsIDs[nameMap[dsName]] = struct{}{}
+				} else {
+					for idx := range idValues {
+						if _, exist := curIDs[idValues[idx]]; exist {
+							dsIDs[idValues[idx]] = struct{}{}
 						}
 					}
 				}
 			} else if q.Op == "not in" {
-				for dsName := range nameMap {
+				for idx := range idValues {
+					delete(dsIDs, idValues[idx])
+				}
+			}
+		} else if q.MatchType == 1 {
+			// 模糊匹配使用 datasource name
+			if q.Op == "in" {
+				for dsName, dsID := range nameMap {
+					if _, exist := curIDs[dsID]; exist {
+						for idx := range q.Values {
+							if match.Match(dsName, q.Values[idx]) {
+								dsIDs[nameMap[dsName]] = struct{}{}
+							}
+						}
+					}
+				}
+			} else if q.Op == "not in" {
+				for dsName, _ := range nameMap {
 					for idx := range q.Values {
 						if match.Match(dsName, q.Values[idx]) {
-							dsIDs[nameMap[dsName]] = struct{}{}
+							delete(dsIDs, nameMap[dsName])
 						}
 					}
 				}
 			}
 		}
+		curIDs = dsIDs
+		if len(curIDs) == 0 {
+			break
+		}
 	}
 
-	dsIds := make([]int64, 0, len(dsIDs))
-	for c := range dsIDs {
+	dsIds := make([]int64, 0, len(curIDs))
+	for c := range curIDs {
 		dsIds = append(dsIds, c)
 	}
 
