@@ -245,15 +245,23 @@ func TimeFormat(src APIResponse, timeFormat string) APIResponse {
 	tsIdx := -1
 	for colIndex, colData := range src.ColumnMeta {
 		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
-		colType, ok := colData[1].(string)
-		if !ok {
+		// 处理v2版本数字类型和v3版本字符串类型
+		switch t := colData[1].(type) {
+		case float64:
+			// v2版本数字类型映射
+			if int(t) == 9 { // TIMESTAMP type in v2
+				tsIdx = colIndex
+				break
+			}
+		case string:
+			// v3版本直接使用字符串类型
+			if t == "TIMESTAMP" {
+				tsIdx = colIndex
+				break
+			}
+		default:
 			logger.Warningf("unexpected column type: %v", colData[1])
-			return src
-		}
-
-		if colType == "TIMESTAMP" {
-			tsIdx = colIndex
-			break
+			continue
 		}
 	}
 
@@ -262,21 +270,91 @@ func TimeFormat(src APIResponse, timeFormat string) APIResponse {
 	}
 
 	for i := range src.Data {
-		ts, ok := src.Data[i][tsIdx].(string)
-		if !ok {
-			logger.Warningf("unexpected timestamp type: %v", src.Data[i][tsIdx])
-			continue
-		}
+		var t time.Time
+		var err error
 
-		t, err := time.Parse(time.RFC3339Nano, ts)
-		if err != nil {
-			logger.Warningf("parse %v timestamp failed: %v", src.Data[i], err)
+		switch tsVal := src.Data[i][tsIdx].(type) {
+		case string:
+			// 尝试解析不同格式的时间字符串
+			t, err = parseTimeString(tsVal)
+			if err != nil {
+				logger.Warningf("parse timestamp string failed: %v, value: %v", err, tsVal)
+				continue
+			}
+		default:
+			logger.Warningf("unexpected timestamp type: %T, value: %v", tsVal, tsVal)
 			continue
 		}
 
 		src.Data[i][tsIdx] = t.In(time.Local).Format(timeFormat)
 	}
 	return src
+}
+
+func parseTimeString(ts string) (time.Time, error) {
+	// 尝试不同的时间格式
+	formats := []string{
+		// 标准格式
+		time.Layout,      // "01/02 03:04:05PM '06 -0700"
+		time.ANSIC,       // "Mon Jan _2 15:04:05 2006"
+		time.UnixDate,    // "Mon Jan _2 15:04:05 MST 2006"
+		time.RubyDate,    // "Mon Jan 02 15:04:05 -0700 2006"
+		time.RFC822,      // "02 Jan 06 15:04 MST"
+		time.RFC822Z,     // "02 Jan 06 15:04 -0700"
+		time.RFC850,      // "Monday, 02-Jan-06 15:04:05 MST"
+		time.RFC1123,     // "Mon, 02 Jan 2006 15:04:05 MST"
+		time.RFC1123Z,    // "Mon, 02 Jan 2006 15:04:05 -0700"
+		time.RFC3339,     // "2006-01-02T15:04:05Z07:00"
+		time.RFC3339Nano, // "2006-01-02T15:04:05.999999999Z07:00"
+		time.Kitchen,     // "3:04PM"
+
+		// 实用时间戳格式
+		time.Stamp,      // "Jan _2 15:04:05"
+		time.StampMilli, // "Jan _2 15:04:05.000"
+		time.StampMicro, // "Jan _2 15:04:05.000000"
+		time.StampNano,  // "Jan _2 15:04:05.000000000"
+		time.DateTime,   // "2006-01-02 15:04:05"
+		time.DateOnly,   // "2006-01-02"
+		time.TimeOnly,   // "15:04:05"
+
+		// 常用自定义格式
+		"2006-01-02T15:04:05", // 无时区的ISO格式
+		"2006-01-02T15:04:05.000Z",
+		"2006-01-02T15:04:05Z",
+		"2006-01-02 15:04:05.999999999", // 纳秒
+		"2006-01-02 15:04:05.999999",    // 微秒
+		"2006-01-02 15:04:05.999",       // 毫秒
+		"2006/01/02",
+		"20060102",
+		"01/02/2006",
+		"2006年01月02日",
+		"2006年01月02日 15:04:05",
+	}
+
+	var lastErr error
+	for _, format := range formats {
+		t, err := time.Parse(format, ts)
+		if err == nil {
+			return t, nil
+		}
+		lastErr = err
+	}
+
+	// 尝试解析 Unix 时间戳
+	if timestamp, err := strconv.ParseInt(ts, 10, 64); err == nil {
+		switch len(ts) {
+		case 10: // 秒
+			return time.Unix(timestamp, 0), nil
+		case 13: // 毫秒
+			return time.Unix(timestamp/1000, (timestamp%1000)*1000000), nil
+		case 16: // 微秒
+			return time.Unix(timestamp/1000000, (timestamp%1000000)*1000), nil
+		case 19: // 纳秒
+			return time.Unix(timestamp/1000000000, timestamp%1000000000), nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("failed to parse time with any format: %v", lastErr)
 }
 
 func (tc *tdengineClient) Query(query interface{}) ([]models.DataResp, error) {
@@ -368,9 +446,45 @@ func (tc *tdengineClient) GetColumns(database, table string) ([]Column, error) {
 		return columns, err
 	}
 	for _, row := range data.ColumnMeta {
+		var colType string
+		switch t := row[1].(type) {
+		case float64:
+			// v2版本数字类型映射
+			switch int(t) {
+			case 1:
+				colType = "BOOL"
+			case 2:
+				colType = "TINYINT"
+			case 3:
+				colType = "SMALLINT"
+			case 4:
+				colType = "INT"
+			case 5:
+				colType = "BIGINT"
+			case 6:
+				colType = "FLOAT"
+			case 7:
+				colType = "DOUBLE"
+			case 8:
+				colType = "BINARY"
+			case 9:
+				colType = "TIMESTAMP"
+			case 10:
+				colType = "NCHAR"
+			default:
+				colType = "UNKNOWN"
+			}
+		case string:
+			// v3版本直接使用字符串类型
+			colType = t
+		default:
+			logger.Warningf("unexpected column type format: %v", row[1])
+			colType = "UNKNOWN"
+		}
+
 		column := Column{
 			Name: row[0].(string),
-			Type: row[1].(string),
+			Type: colType,
 			Size: int(row[2].(float64)),
 		}
 		columns = append(columns, column)
@@ -454,9 +568,44 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]models.DataResp,
 
 	tsIdx := -1
 	for colIndex, colData := range src.ColumnMeta {
-		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
 		colName := colData[0].(string)
-		colType := colData[1].(string)
+		var colType string
+		// 处理v2版本数字类型和v3版本字符串类型
+		switch t := colData[1].(type) {
+		case float64:
+			// v2版本数字类型映射
+			switch int(t) {
+			case 1:
+				colType = "BOOL"
+			case 2:
+				colType = "TINYINT"
+			case 3:
+				colType = "SMALLINT"
+			case 4:
+				colType = "INT"
+			case 5:
+				colType = "BIGINT"
+			case 6:
+				colType = "FLOAT"
+			case 7:
+				colType = "DOUBLE"
+			case 8:
+				colType = "BINARY"
+			case 9:
+				colType = "TIMESTAMP"
+			case 10:
+				colType = "NCHAR"
+			default:
+				colType = "UNKNOWN"
+			}
+		case string:
+			// v3版本直接使用字符串类型
+			colType = t
+		default:
+			logger.Warningf("unexpected column type format: %v", colData[1])
+			continue
+		}
+
 		switch colType {
 		case "TIMESTAMP":
 			tsIdx = colIndex
@@ -470,7 +619,6 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]models.DataResp,
 			} else {
 				metricIdxMap[colName] = colIndex
 			}
-
 		default:
 			if len(labelMap) > 0 {
 				if _, ok := labelMap[colName]; !ok {
@@ -505,7 +653,7 @@ func ConvertToTStData(src APIResponse, key Keys, ref string) ([]models.DataResp,
 			metric[model.MetricNameLabel] = model.LabelValue(metricName)
 
 			// transfer 2022-06-29T05:52:16.603Z to unix timestamp
-			t, err := time.Parse(time.RFC3339, row[tsIdx].(string))
+			t, err := parseTimeString(row[tsIdx].(string))
 			if err != nil {
 				logger.Warningf("parse %v timestamp failed: %v", row, err)
 				continue
