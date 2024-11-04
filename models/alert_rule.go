@@ -227,8 +227,9 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 				}
 			} else if q.Op == "not in" {
 				for idx := range idValues {
-					delete(dsIDs, idValues[idx])
+					delete(curIDs, idValues[idx])
 				}
+				dsIDs = curIDs
 			}
 		} else if q.MatchType == 1 {
 			// 模糊匹配使用 datasource name
@@ -246,10 +247,11 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 				for dsName, _ := range nameMap {
 					for idx := range q.Values {
 						if match.Match(dsName, q.Values[idx]) {
-							delete(dsIDs, nameMap[dsName])
+							delete(curIDs, nameMap[dsName])
 						}
 					}
 				}
+				dsIDs = curIDs
 			}
 		}
 		curIDs = dsIDs
