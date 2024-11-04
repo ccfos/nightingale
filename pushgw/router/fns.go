@@ -20,6 +20,12 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 
 	for key, value := range target.TagsMap {
 		if index, has := labelKeys[key]; has {
+			// e.g. busigroup=cloud
+			if _, has := labelKeys[rt.Pushgw.BusiGroupLabelKey]; has {
+				// busigroup key already exists, skip
+				continue
+			}
+
 			// overwrite labels
 			if rt.Pushgw.LabelRewrite {
 				pt.Labels[index].Value = value
