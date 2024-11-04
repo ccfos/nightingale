@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tidwall/match"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -171,6 +171,12 @@ type Join struct {
 	On       []string `json:"on"`
 }
 
+var DataSourceQueryAll = DatasourceQuery{
+	MatchType: 0,
+	Op:        "in",
+	Values:    []string{strconv.Itoa(DatasourceIdAll)},
+}
+
 type DatasourceQuery struct {
 	MatchType int      `json:"match_type"`
 	Op        string   `json:"op"`
@@ -197,27 +203,27 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 					}
 					continue
 				}
-				for v := range value {
-					dsIDs[value[v]] = struct{}{}
+				for idx := range value {
+					dsIDs[value[idx]] = struct{}{}
 				}
 			} else if q.Op == "not in" {
-				for v := range value {
-					delete(dsIDs, value[v])
+				for idx := range value {
+					delete(dsIDs, value[idx])
 				}
 			}
 		} else if q.MatchType == 1 {
 			if q.Op == "in" {
 				for dsName := range nameMap {
-					for v := range q.Values {
-						if match.Match(dsName, q.Values[v]) {
+					for idx := range q.Values {
+						if match.Match(dsName, q.Values[idx]) {
 							dsIDs[nameMap[dsName]] = struct{}{}
 						}
 					}
 				}
 			} else if q.Op == "not in" {
 				for dsName := range nameMap {
-					for v := range q.Values {
-						if match.Match(dsName, q.Values[v]) {
+					for idx := range q.Values {
+						if match.Match(dsName, q.Values[idx]) {
 							dsIDs[nameMap[dsName]] = struct{}{}
 						}
 					}
@@ -555,24 +561,6 @@ func (ar *AlertRule) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfa
 	return DB(ctx).Model(ar).Updates(fields).Error
 }
 
-// for v5 rule
-//func (ar *AlertRule) FillDatasourceIds() error {
-//	datasourceQueries := DatasourceQuery{
-//		MatchType: 0,
-//		Op:        "in",
-//	}
-//	var values []string
-//	if ar.DatasourceIds != "" {
-//		json.Unmarshal([]byte(ar.DatasourceIds), &values)
-//		return nil
-//	}
-//	datasourceQueries.Values = values
-//
-//	bytes, _ := json.Marshal(&datasourceQueries)
-//	json.Unmarshal(bytes, &ar.DatasourceQueriesJson)
-//	return nil
-//}
-
 func (ar *AlertRule) FillDatasourceQueries() error {
 	// 兼容旧逻辑，将 datasourceIds 转换为 datasourceQueries
 	if len(ar.DatasourceQueries) == 0 && len(ar.DatasourceIds) != 0 {
@@ -819,15 +807,6 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, name string) (bool, er
 		return false, nil
 	}
 
-	// match cluster
-	//for _, r := range lst {
-	//	r.FillDatasourceIds()
-	//	for _, id := range r.DatasourceIdsJson {
-	//		if MatchDatasource(datasourceIds, id) {
-	//			return true, nil
-	//		}
-	//	}
-	//}
 	return false, nil
 }
 

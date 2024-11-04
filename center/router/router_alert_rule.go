@@ -157,6 +157,14 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
+	for i := range lst {
+		if len(lst[i].DatasourceQueries) == 0 {
+			lst[i].DatasourceQueries = []models.DatasourceQuery{
+				models.DataSourceQueryAll,
+			}
+		}
+	}
+
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
@@ -394,6 +402,16 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
+				continue
+			}
+		}
+
+		if f.Action == "datasource_change" {
+			// 修改数据源
+			if datasourceQueries, has := f.Fields["datasource_queries"]; has {
+				bytes, err := json.Marshal(datasourceQueries)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"datasource_queries": bytes}))
 				continue
 			}
 		}
