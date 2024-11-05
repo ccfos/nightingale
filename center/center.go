@@ -120,7 +120,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
-	go models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
+	go func() {
+		if models.CanMigrateBg(ctx) {
+			models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
+		}
+	}()
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
