@@ -185,11 +185,23 @@ func (tc *tdengineClient) QueryTable(query string) (APIResponse, error) {
 	}
 	defer resp.Body.Close()
 
+	// 限制响应体大小为10MB
+	maxSize := int64(10 * 1024 * 1024) // 10MB
+	limitedReader := http.MaxBytesReader(nil, resp.Body, maxSize)
+
 	if resp.StatusCode != http.StatusOK {
 		return apiResp, fmt.Errorf("HTTP error, status: %s", resp.Status)
 	}
-	err = json.NewDecoder(resp.Body).Decode(&apiResp)
-	return apiResp, err
+
+	err = json.NewDecoder(limitedReader).Decode(&apiResp)
+	if err != nil {
+		if strings.Contains(err.Error(), "http: request body too large") {
+			return apiResp, fmt.Errorf("response body exceeds 10MB limit")
+		}
+		return apiResp, err
+	}
+
+	return apiResp, nil
 }
 
 func (tc *tdengineClient) QueryLog(query interface{}) (APIResponse, error) {
@@ -357,7 +369,7 @@ func parseTimeString(ts string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("failed to parse time with any format: %v", lastErr)
 }
 
-func (tc *tdengineClient) Query(query interface{}) ([]models.DataResp, error) {
+func (tc *tdengineClient) Query(query interface{}, delay int) ([]models.DataResp, error) {
 	b, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
@@ -374,9 +386,9 @@ func (tc *tdengineClient) Query(query interface{}) ([]models.DataResp, error) {
 
 	if q.From == "" {
 		// 2023-09-21T05:37:30.000Z format
-		to := time.Now().Unix()
+		to := time.Now().Unix() - int64(delay)
 		q.To = time.Unix(to, 0).UTC().Format(time.RFC3339)
-		from := to - q.Interval
+		from := to - q.Interval - int64(delay)
 		q.From = time.Unix(from, 0).UTC().Format(time.RFC3339)
 	}
 

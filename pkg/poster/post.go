@@ -80,14 +80,15 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	var dataResp DataResponse[T]
 	err = json.Unmarshal(body, &dataResp)
 	if err != nil {
-		return dat, fmt.Errorf("failed to decode response: %w", err)
+		return dat, fmt.Errorf("failed to decode:%s response: %w", string(body), err)
 	}
 
 	if dataResp.Err != "" {
 		return dat, fmt.Errorf("error from server: %s", dataResp.Err)
 	}
 
-	logger.Debugf("get data from %s, data: %+v", url, dataResp.Dat)
+	prettyData, _ := json.Marshal(dataResp.Dat)
+	logger.Debugf("get data from %s, data: %s", url, string(prettyData))
 	return dataResp.Dat, nil
 }
 
@@ -176,9 +177,9 @@ func PostByUrl[T any](url string, cfg conf.CenterApi, v interface{}) (t T, err e
 		return t, fmt.Errorf("error from server: %s", dataResp.Err)
 	}
 
-	logger.Debugf("get data from %s, data: %+v", url, dataResp.Dat)
+	prettyData, _ := json.Marshal(dataResp.Dat)
+	logger.Debugf("get data from %s, data: %s", url, string(prettyData))
 	return dataResp.Dat, nil
-
 }
 
 func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) (response []byte, code int, err error) {
