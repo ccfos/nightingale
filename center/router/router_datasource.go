@@ -92,10 +92,12 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var err error
 	var count int64
 
-	err = DatasourceCheck(req)
-	if err != nil {
-		Dangerous(c, err)
-		return
+	if !req.ForceSave {
+		err = DatasourceCheck(req)
+		if err != nil {
+			Dangerous(c, err)
+			return
+		}
 	}
 
 	if req.Id == 0 {

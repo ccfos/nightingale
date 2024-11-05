@@ -4,6 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"golang.org/x/exp/slices"
 )
 

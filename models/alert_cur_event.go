@@ -342,7 +342,7 @@ func (e *AlertCurEvent) DB2Mem() {
 			continue
 		}
 
-		arr := strings.Split(pair, "=")
+		arr := strings.SplitN(pair, "=", 2)
 		if len(arr) != 2 {
 			continue
 		}
@@ -419,7 +419,8 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, dsIds []int64, cates []string, ruleId int64, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -442,6 +443,10 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 
 	if len(cates) > 0 {
 		session = session.Where("cate in ?", cates)
+	}
+
+	if ruleId > 0 {
+		session = session.Where("rule_id = ?", ruleId)
 	}
 
 	if query != "" {
@@ -455,7 +460,9 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, dsIds []int64, cates []string, ruleId int64, query string, limit, offset int) (
+	[]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -478,6 +485,10 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 
 	if len(cates) > 0 {
 		session = session.Where("cate in ?", cates)
+	}
+
+	if ruleId > 0 {
+		session = session.Where("rule_id = ?", ruleId)
 	}
 
 	if query != "" {
@@ -498,6 +509,26 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 	}
 
 	return lst, err
+}
+
+func AlertCurEventCountByRuleId(ctx *ctx.Context, rids []int64, stime, etime int64) map[int64]int64 {
+	type Row struct {
+		RuleId int64
+		Cnt    int64
+	}
+	var rows []Row
+	err := DB(ctx).Model(&AlertCurEvent{}).Select("rule_id, count(*) as cnt").
+		Where("trigger_time between ? and ?", stime, etime).Group("rule_id").Find(&rows).Error
+	if err != nil {
+		logger.Errorf("Failed to count group by rule_id: %v", err)
+		return nil
+	}
+
+	curEventTotalByRid := make(map[int64]int64, len(rids))
+	for _, r := range rows {
+		curEventTotalByRid[r.RuleId] = r.Cnt
+	}
+	return curEventTotalByRid
 }
 
 func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {

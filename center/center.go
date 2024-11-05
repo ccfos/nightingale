@@ -72,7 +72,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
+	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
@@ -110,9 +110,12 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex, cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
+	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
+		cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
+
+	go models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

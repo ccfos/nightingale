@@ -363,6 +363,7 @@ CREATE TABLE `target` (
     `ident` varchar(191) not null comment 'target id',
     `note` varchar(255) not null default '' comment 'append to alert event as field',
     `tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
+    `host_tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
     `host_ip` varchar(15) default '' COMMENT 'IPv4 string',
     `agent_version` varchar(255) default '' COMMENT 'agent version',
     `engine_name` varchar(255) default '' COMMENT 'engine_name',
@@ -453,7 +454,7 @@ CREATE TABLE `alert_cur_event` (
     `target_note` varchar(191) not null default '' comment 'target note',
     `first_trigger_time` bigint,
     `trigger_time` bigint not null,
-    `trigger_value` varchar(2048) not null,
+    `trigger_value` text not null,
     `annotations` text not null comment 'annotations',
     `rule_config` text not null comment 'annotations',
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
@@ -493,7 +494,7 @@ CREATE TABLE `alert_his_event` (
     `target_note` varchar(191) not null default '' comment 'target note',
     `first_trigger_time` bigint,
     `trigger_time` bigint not null,
-    `trigger_value` varchar(2048) not null,
+    `trigger_value` text not null,
     `recover_time` bigint not null default 0,
     `last_eval_time` bigint not null default 0 comment 'for time filter',
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
@@ -723,6 +724,15 @@ CREATE TABLE `metric_filter` (
   `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
   PRIMARY KEY (`id`),
   KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `target_busi_group` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `target_ident` varchar(191) NOT NULL,
+  `group_id` bigint NOT NULL,
+  `update_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_meta`

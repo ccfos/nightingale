@@ -82,29 +82,35 @@ func (s *SsoClient) UserGetAll() (map[string]*models.User, error) {
 	}
 	defer conn.Close()
 
-	sr, err := lc.ldapReq(conn, lc.UserFilter)
+	srs, err := lc.ldapReq(conn, lc.UserFilter)
 	if err != nil {
 		return nil, fmt.Errorf("ldap.error: ldap search fail: %v", err)
 	}
 
-	res := make(map[string]*models.User, len(sr.Entries))
-	for _, entry := range sr.Entries {
-		attrs := lc.Attributes
-		username := entry.GetAttributeValue(attrs.Username)
-		nickname := entry.GetAttributeValue(attrs.Nickname)
-		email := entry.GetAttributeValue(attrs.Email)
-		phone := entry.GetAttributeValue(attrs.Phone)
+	res := make(map[string]*models.User)
 
-		// Gets the roles and teams for this entry
-		roleTeamMapping := lc.GetUserRolesAndTeams(entry)
-		if len(roleTeamMapping.Roles) == 0 {
-			// No role mapping is configured, the configured default role is used
-			roleTeamMapping.Roles = lc.DefaultRoles
+	for i := range srs {
+		if srs[i] == nil {
+			continue
 		}
-		user := new(models.User)
-		user.FullSsoFieldsWithTeams("ldap", username, nickname, phone, email, roleTeamMapping.Roles, roleTeamMapping.Teams)
+		for _, entry := range srs[i].Entries {
+			attrs := lc.Attributes
+			username := entry.GetAttributeValue(attrs.Username)
+			nickname := entry.GetAttributeValue(attrs.Nickname)
+			email := entry.GetAttributeValue(attrs.Email)
+			phone := entry.GetAttributeValue(attrs.Phone)
 
-		res[entry.GetAttributeValue(attrs.Username)] = user
+			// Gets the roles and teams for this entry
+			roleTeamMapping := lc.GetUserRolesAndTeams(entry)
+			if len(roleTeamMapping.Roles) == 0 {
+				// No role mapping is configured, the configured default role is used
+				roleTeamMapping.Roles = lc.DefaultRoles
+			}
+			user := new(models.User)
+			user.FullSsoFieldsWithTeams("ldap", username, nickname, phone, email, roleTeamMapping.Roles, roleTeamMapping.Teams)
+
+			res[entry.GetAttributeValue(attrs.Username)] = user
+		}
 	}
 
 	return res, nil
@@ -172,13 +178,20 @@ func (s *SsoClient) UserExist(username string) (bool, error) {
 	}
 	defer conn.Close()
 
-	sr, err := lc.ldapReq(conn, "(&(%s=%s))", lc.Attributes.Username, username)
+	srs, err := lc.ldapReq(conn, "(&(%s=%s))", lc.Attributes.Username, username)
 	if err != nil {
 		return false, err
 	}
 
-	if len(sr.Entries) > 0 {
-		return true, nil
+	for i := range srs {
+		if srs[i] == nil {
+			continue
+		}
+
+		if len(srs[i].Entries) > 0 {
+			return true, nil
+		}
+
 	}
 
 	return false, nil

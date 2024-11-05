@@ -296,6 +296,34 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 	return lst[0], nil
 }
 
+func UsersGet(ctx *ctx.Context, where string, args ...interface{}) ([]*User, error) {
+	var lst []*User
+	err := DB(ctx).Where(where, args...).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range lst {
+		user.RolesLst = strings.Fields(user.Roles)
+		user.Admin = user.IsAdmin()
+	}
+
+	return lst, nil
+}
+
+func UserMapGet(ctx *ctx.Context, where string, args ...interface{}) map[string]*User {
+	lst, err := UsersGet(ctx, where, args...)
+	if err != nil {
+		logger.Errorf("UsersGet err: %v", err)
+		return nil
+	}
+	um := make(map[string]*User, len(lst))
+	for _, user := range lst {
+		um[user.Username] = user
+	}
+	return um
+}
+
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
 }
@@ -704,7 +732,10 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 	}
 
 	var allowedIdents []string
-	err = DB(ctx).Model(&Target{}).Where("group_id in ?", bgids).Pluck("ident", &allowedIdents).Error
+	sub := DB(ctx).Model(&Target{}).Distinct("target.ident").
+		Joins("join target_busi_group on target.ident = target_busi_group.target_ident").
+		Where("target_busi_group.group_id in (?)", bgids)
+	err = DB(ctx).Model(&Target{}).Where("ident in (?)", sub).Pluck("ident", &allowedIdents).Error
 	if err != nil {
 		return []string{}, err
 	}
@@ -736,7 +767,11 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 				return lst, nil
 			}
 
-			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
+			t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
+			if err != nil {
+				return nil, err
+			}
+			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 
 		return lst, err
@@ -768,8 +803,12 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
-		if t != nil && slice.ContainsInt64(busiGroupIds, t.GroupId) {
-			err = DB(ctx).Order("name").Limit(limit).Where("id=?", t.GroupId).Find(&lst).Error
+		t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
+		if err != nil {
+			return nil, err
+		}
+		if t != nil && t.MatchGroupId(busiGroupIds...) {
+			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 	}
 

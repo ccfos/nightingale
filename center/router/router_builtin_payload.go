@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -159,6 +160,14 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
 		} else {
+			if lst[i].Type == "collect" {
+				c := make(map[string]interface{})
+				if _, err := toml.Decode(lst[i].Content, &c); err != nil {
+					reterr[lst[i].Name] = err.Error()
+					continue
+				}
+			}
+
 			if err := lst[i].Add(rt.Ctx, username); err != nil {
 				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 			}
@@ -230,6 +239,11 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 
 		req.Name = dashboard.Name
 		req.Tags = dashboard.Tags
+	} else if req.Type == "collect" {
+		c := make(map[string]interface{})
+		if _, err := toml.Decode(req.Content, &c); err != nil {
+			ginx.Bomb(http.StatusBadRequest, err.Error())
+		}
 	}
 
 	username := Username(c)
@@ -245,4 +259,16 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 	req.Verify()
 
 	ginx.NewRender(c).Message(models.BuiltinPayloadDels(rt.Ctx, req.Ids))
+}
+
+func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
+	uuid := ginx.QueryInt64(c, "uuid", 0)
+	// 优先以 uuid 为准
+	if uuid != 0 {
+		ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid))
+		return
+	}
+
+	id := ginx.QueryInt64(c, "id", 0)
+	ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "id = ?", id))
 }

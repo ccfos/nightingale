@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,16 +81,48 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 	identSet.MSet(items)
 
 	if target, has := targetCache.Get(req.Hostname); has && target != nil {
-		gid := ginx.QueryInt64(c, "gid", 0)
+		gidsStr := ginx.QueryStr(c, "gid", "")
+		overwriteGids := ginx.QueryBool(c, "overwrite_gids", false)
 		hostIp := strings.TrimSpace(req.HostIp)
+		gids := strings.Split(gidsStr, ",")
+
+		if overwriteGids {
+			groupIds := make([]int64, 0)
+			for i := range gids {
+				if gids[i] == "" {
+					continue
+				}
+				groupId, err := strconv.ParseInt(gids[i], 10, 64)
+				if err != nil {
+					logger.Warningf("update target:%s group ids failed, err: %v", req.Hostname, err)
+					continue
+				}
+				groupIds = append(groupIds, groupId)
+			}
+
+			err := models.TargetOverrideBgids(ctx, []string{target.Ident}, groupIds)
+			if err != nil {
+				logger.Warningf("update target:%s group ids failed, err: %v", target.Ident, err)
+			}
+		} else if gidsStr != "" {
+			for i := range gids {
+				groupId, err := strconv.ParseInt(gids[i], 10, 64)
+				if err != nil {
+					logger.Warningf("update target:%s group ids failed, err: %v", req.Hostname, err)
+					continue
+				}
+
+				if !target.MatchGroupId(groupId) {
+					err := models.TargetBindBgids(ctx, []string{target.Ident}, []int64{groupId})
+					if err != nil {
+						logger.Warningf("update target:%s group ids failed, err: %v", target.Ident, err)
+					}
+				}
+			}
+		}
 
 		newTarget := models.Target{}
 		targetNeedUpdate := false
-		if gid != 0 && gid != target.GroupId {
-			newTarget.GroupId = gid
-			targetNeedUpdate = true
-		}
-
 		if hostIp != "" && hostIp != target.HostIp {
 			newTarget.HostIp = hostIp
 			targetNeedUpdate = true

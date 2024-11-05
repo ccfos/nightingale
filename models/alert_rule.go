@@ -98,6 +98,19 @@ type AlertRule struct {
 	UpdateAt              int64                  `json:"update_at"`
 	UpdateBy              string                 `json:"update_by"`
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
+	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
+	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
+}
+
+type ParamNode struct {
+	Val           map[string]string     `json:"val"`
+	Param         map[string]ParamQuery `json:"param"`
+	SubParamNodes []ParamNode           `json:"sub_param_nodes"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // Host、Device、Enum 三种类型
+	Query     interface{} `json:"query"`
 }
 
 type VarConfig struct {
@@ -173,10 +186,12 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
+	JoinRef  string `json:"join_ref"`
 }
 
 type Join struct {
 	JoinType string   `json:"join_type"`
+	Ref      string   `json:"ref"`
 	On       []string `json:"on"`
 }
 
@@ -188,9 +203,10 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
-				m["group_id in (?)"] = ids
+				m["target_busi_group.group_id in (?)"] = ids
 			} else {
-				m["group_id not in (?)"] = ids
+				m["target.ident not in (select target_ident "+
+					"from target_busi_group where group_id in (?))"] = ids
 			}
 		case "tags":
 			lst := []string{}
@@ -830,7 +846,8 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	return lst, nil
 }
 
-func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string, cates []string, disabled int) ([]*AlertRule, error) {
+func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string,
+	cates []string, disabled int) ([]*AlertRule, error) {
 	session := DB(ctx)
 
 	if len(prods) > 0 {

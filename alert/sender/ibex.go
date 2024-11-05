@@ -108,7 +108,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 			continue
 		}
 
-		arr := strings.Split(pair, "=")
+		arr := strings.SplitN(pair, "=", 2)
 		if len(arr) != 2 {
 			continue
 		}
@@ -181,7 +181,7 @@ func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *m
 		return false, nil
 	}
 
-	return target.GroupId == tpl.GroupId, nil
+	return target.MatchGroupId(tpl.GroupId), nil
 }
 
 func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {

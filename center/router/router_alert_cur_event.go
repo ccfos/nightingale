@@ -65,7 +65,8 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	// 最多获取50000个，获取太多也没啥意义
-	list, err := models.AlertCurEventGets(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query, 50000, 0)
+	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
+		cates, 0, query, 50000, 0)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -162,13 +163,17 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
+	ruleId := ginx.QueryInt64(c, "rid", 0)
+
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
-	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query)
+	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
+		cates, ruleId, query)
 	ginx.Dangerous(err)
 
-	list, err := models.AlertCurEventGets(rt.Ctx, prods, bgids, stime, etime, severity, dsIds, cates, query, limit, ginx.Offset(c, limit))
+	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
+		cates, ruleId, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -201,7 +206,9 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 	for i := 0; i < len(ids); i++ {
 		event, err := models.AlertCurEventGetById(rt.Ctx, ids[i])
 		ginx.Dangerous(err)
-
+		if event == nil {
+			continue
+		}
 		if _, has := set[event.GroupId]; !has {
 			rt.bgrwCheck(c, event.GroupId)
 			set[event.GroupId] = struct{}{}
@@ -227,6 +234,7 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 		event.RuleConfigJson = ruleConfig
 	}
 
+	event.LastEvalTime = event.TriggerTime
 	ginx.NewRender(c).Data(event, nil)
 }
 

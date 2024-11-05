@@ -34,7 +34,7 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 			continue
 		}
 
-		arr := strings.Split(pair, "=")
+		arr := strings.SplitN(pair, "=", 2)
 		if len(arr) != 2 {
 			continue
 		}

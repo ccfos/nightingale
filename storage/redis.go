@@ -17,7 +17,6 @@ type RedisConfig struct {
 	Username string
 	Password string
 	DB       int
-	UseTLS   bool
 	tlsx.ClientConfig
 	RedisType        string
 	MasterName       string

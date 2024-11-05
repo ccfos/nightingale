@@ -37,6 +37,18 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
+func getAlertCueEventTimeRange(c *gin.Context) (stime, etime int64) {
+	stime = ginx.QueryInt64(c, "stime", 0)
+	etime = ginx.QueryInt64(c, "etime", 0)
+	if etime == 0 {
+		etime = time.Now().Unix()
+	}
+	if stime == 0 || stime >= etime {
+		stime = etime - 30*24*int64(time.Hour.Seconds())
+	}
+	return
+}
+
 func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
 	if len(gids) > 0 {
@@ -60,9 +72,30 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	ars, err := models.AlertRuleGetsByBGIds(rt.Ctx, gids)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
+		rids := make([]int64, 0, len(ars))
+		names := make([]string, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
+			rids = append(rids, ars[i].Id)
+			names = append(names, ars[i].UpdateBy)
+		}
+
+		stime, etime := getAlertCueEventTimeRange(c)
+		cnt := models.AlertCurEventCountByRuleId(rt.Ctx, rids, stime, etime)
+		if cnt != nil {
+			for i := 0; i < len(ars); i++ {
+				ars[i].CurEventCount = cnt[ars[i].Id]
+			}
+		}
+
+		users := models.UserMapGet(rt.Ctx, "username in (?)", names)
+		if users != nil {
+			for i := 0; i < len(ars); i++ {
+				if user, exist := users[ars[i].UpdateBy]; exist {
+					ars[i].UpdateByNickname = user.Nickname
+				}
+			}
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -492,7 +525,7 @@ func (rt *Router) relabelTest(c *gin.Context) {
 
 	labels := make([]prompb.Label, len(f.Tags))
 	for i, tag := range f.Tags {
-		label := strings.Split(tag, "=")
+		label := strings.SplitN(tag, "=", 2)
 		if len(label) != 2 {
 			ginx.Bomb(http.StatusBadRequest, "tag:%s format error", tag)
 		}
@@ -529,6 +562,15 @@ type identListForm struct {
 	IdentList []string `json:"ident_list"`
 }
 
+func containsIdentOperator(s string) bool {
+	pattern := `ident\s*(!=|!~|=~)`
+	matched, err := regexp.MatchString(pattern, s)
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
 func (rt *Router) cloneToMachine(c *gin.Context) {
 	var f identListForm
 	ginx.BindJSON(c, &f)
@@ -558,7 +600,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 			continue
 		}
 
-		if !strings.Contains(alertRules[i].RuleConfig, "ident") {
+		if containsIdentOperator(alertRules[i].RuleConfig) {
 			errMsg["all"] = "promql is missing ident"
 			reterr[alertRules[i].Name] = errMsg
 			continue

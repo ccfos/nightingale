@@ -65,6 +65,23 @@ func queryDatasourceIds(c *gin.Context) []int64 {
 	return ids
 }
 
+func queryStrListField(c *gin.Context, fieldName string, sep ...string) []string {
+	str := ginx.QueryStr(c, fieldName, "")
+	if str == "" {
+		return nil
+	}
+
+	lst := []string{str}
+	for _, s := range sep {
+		var newLst []string
+		for _, str := range lst {
+			newLst = append(newLst, strings.Split(str, s)...)
+		}
+		lst = newLst
+	}
+	return lst
+}
+
 type idsForm struct {
 	Ids               []int64 `json:"ids"`
 	IsSyncToFlashDuty bool    `json:"is_sync_to_flashduty"`
