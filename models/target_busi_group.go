@@ -17,7 +17,7 @@ type TargetBusiGroup struct {
 }
 
 func (t *TargetBusiGroup) TableName() string {
-	return "target_busi_group"
+	return "target_busi_group CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
 }
 
 func TargetBusiGroupsGetAll(ctx *ctx.Context) (map[string][]int64, error) {
