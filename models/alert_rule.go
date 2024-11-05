@@ -102,14 +102,13 @@ type AlertRule struct {
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 }
 
-type ParamNode struct {
-	Val           map[string]string     `json:"val"`
-	Param         map[string]ParamQuery `json:"param"`
-	SubParamNodes []ParamNode           `json:"sub_param_nodes"`
+type VarConfig struct {
+	ParamVal        map[string]ParamQuery `json:"param_val"`
+	ChildVarConfigs []VarConfig           `json:"child_var_configs"`
 }
 
 type ParamQuery struct {
-	ParamType string      `json:"param_type"` // Host、Device、Enum 三种类型
+	ParamType string      `json:"param_type"` // host、device、enum、threshold 三种类型
 	Query     interface{} `json:"query"`
 }
 
@@ -146,9 +145,10 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl    string    `json:"prom_ql"`
-	Severity  int       `json:"severity"`
-	ParamNode ParamNode `json:"param_node"`
+	PromQl     string    `json:"prom_ql"`
+	Severity   int       `json:"severity"`
+	VarEnabled bool      `json:"var_enabled"`
+	VarConfig  VarConfig `json:"var_config"`
 }
 
 type HostTrigger struct {
