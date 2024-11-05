@@ -215,8 +215,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 
 		readerClient := arw.PromClients.GetCli(arw.DatasourceId)
 
-		hasVariable := strings.Index(query.PromQl, "$") != -1
-		if hasVariable {
+		if query.VarEnabled {
 			anomalyPoints := arw.VarFilling(query, readerClient)
 			for _, v := range anomalyPoints {
 				lst = append(lst, v)
@@ -283,25 +282,36 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	anomalyPoints := make(map[string]common.AnomalyPoint)
 	// 使用一个统一的参数变量顺序
 	var ParamKeys []string
-	for key := range query.ParamNode.Param {
-		ParamKeys = append(ParamKeys, key)
+	for val, valQuery := range query.VarConfig.ParamVal {
+		if valQuery.ParamType == "threshold" {
+			continue
+		}
+		ParamKeys = append(ParamKeys, val)
 	}
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
 	// 广度优先遍历，每个节点先查询无参数变量的 query 得到满足值变量的所有结果，然后判断哪些参数值符合条件
 	queue := list.New()
-	queue.PushBack(query.ParamNode)
+	queue.PushBack(query.VarConfig)
 	for queue.Len() != 0 {
 		// curQuery 当前节点的无参数 query，用于时序库查询
 		curQuery := fullQuery
 		// realQuery 当前节点产生异常点的 query，用于告警展示
 		realQuery := query.PromQl
 
-		node := queue.Front().Value.(models.ParamNode)
+		node := queue.Front().Value.(models.VarConfig)
 		queue.Remove(queue.Front())
 
-		for key, val := range node.Val {
+		// 取出值变量
+		valMap := make(map[string]string)
+		for val, valQuery := range node.ParamVal {
+			if valQuery.ParamType == "threshold" {
+				valMap[val] = valQuery.Query.(string)
+			}
+		}
+		// 替换值变量
+		for key, val := range valMap {
 			curQuery = strings.Replace(curQuery, fmt.Sprintf("$%s", key), val, -1)
 			realQuery = strings.Replace(realQuery, fmt.Sprintf("$%s", key), val, -1)
 		}
@@ -346,8 +356,8 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 			delete(anomalyPoints, k)
 		}
 
-		for i := range node.SubParamNodes {
-			queue.PushBack(node.SubParamNodes[i])
+		for i := range node.ChildVarConfigs {
+			queue.PushBack(node.ChildVarConfigs[i])
 		}
 	}
 	return anomalyPoints
@@ -387,90 +397,75 @@ func getSamples(value model.Value) []sample {
 	return seqVals
 }
 
+// removeVal 去除 promql 中的参数变量
+// mem{test1=\"$test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"$test4\"} > $val2
+// ==> mem{test2=\"test2\"} > $val1 and mem{test3=\"test3\"} > $val2
 func removeVal(promql string) string {
-
-	split := strings.Split(promql, ",")
-	n := len(split)
-	if n <= 1 {
-		return promql
-	}
-
 	sb := strings.Builder{}
-
-	first := true
-
-	firstSplits := strings.Split(split[0], "{")
-	sb.WriteString(firstSplits[0] + "{")
-	if len(firstSplits) > 1 && !isVal(firstSplits[1]) {
-		sb.WriteString(firstSplits[1])
-		first = false
-	}
-
-	for i := 1; i < n-1; i++ {
-		if !isVal(split[i]) {
-			if !first {
-				sb.WriteString(",")
+	n := len(promql)
+	start := false
+	lastIdx := 0
+	curIdx := 0
+	isVar := false
+	for curIdx < n {
+		if !start {
+			if promql[curIdx] == '{' {
+				start = true
+				lastIdx = curIdx
 			}
-			sb.WriteString(split[i])
-			first = false
+			sb.WriteRune(rune(promql[curIdx]))
+		} else {
+			if promql[curIdx] == '$' {
+				isVar = true
+			}
+			if promql[curIdx] == ',' || promql[curIdx] == '}' {
+				if !isVar {
+					if sb.String()[sb.Len()-1] == '{' {
+						lastIdx++
+					}
+					sb.WriteString(promql[lastIdx:curIdx])
+				}
+				isVar = false
+				if promql[curIdx] == '}' {
+					start = false
+					sb.WriteRune(rune(promql[curIdx]))
+				}
+				lastIdx = curIdx
+			}
 		}
+		curIdx++
 	}
 
-	lastSplits := strings.Split(split[n-1], "}")
-	if len(lastSplits) > 1 && !isVal(lastSplits[0]) {
-		if !first {
-			sb.WriteString(",")
-		}
-		sb.WriteString(lastSplits[0])
-	}
-	sb.WriteString("}" + lastSplits[1])
 	return sb.String()
 }
 
-func isVal(str string) bool {
-	for _, c := range str {
-		if c == '$' {
-			return true
-		}
-	}
-	return false
-}
-
 // 获取参数变量的所有组合
-func (arw *AlertRuleWorker) getParamPermutation(node models.ParamNode, paramKeys []string) (map[string]struct{}, error) {
+func (arw *AlertRuleWorker) getParamPermutation(node models.VarConfig, paramKeys []string) (map[string]struct{}, error) {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
 	for _, paramKey := range paramKeys {
 		var params []string
-		paramQuery, ok := node.Param[paramKey]
+		paramQuery, ok := node.ParamVal[paramKey]
 		if !ok {
 			return nil, fmt.Errorf("param key not found: %s", paramKey)
 		}
 		switch paramQuery.ParamType {
-		case "Host":
-			if paramKey != "ident" {
-				logger.Errorf("rule_eval:%s, param key : %s not support for HostQuery", arw.Key(), paramKey)
-				break
-			}
+		case "host":
 			hostIdents, err := arw.getHostIdents(paramQuery)
 			if err != nil {
 				logger.Errorf("rule_eval:%s, fail to get host idents, error:%v", arw.Key(), err)
 				break
 			}
 			params = hostIdents
-		case "Device":
-			if paramKey != "ident" {
-				logger.Errorf("rule_eval:%s, param key : %s not support for DeviceQuery", arw.Key(), paramKey)
-				break
-			}
+		case "device":
 			deviceIdents, err := arw.getDeviceIdents(paramQuery)
 			if err != nil {
 				logger.Errorf("rule_eval:%s, fail to get device idents, error:%v", arw.Key(), err)
 				break
 			}
 			params = deviceIdents
-		case "Enum":
+		case "enum":
 			q, _ := json.Marshal(paramQuery.Query)
 			var query []string
 			err := json.Unmarshal(q, &query)

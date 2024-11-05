@@ -4,9 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-
 	"golang.org/x/exp/slices"
 )
 
@@ -288,125 +285,6 @@ func allValueDeepEqualOmitOrder(got, want []string) bool {
 	return true
 }
 
-func Test_paramFilling(t *testing.T) {
-	type args struct {
-		ctx   *ctx.Context
-		query models.PromQuery
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-		{
-			name: "param getParamPermutation",
-			args: args{
-				query: models.PromQuery{
-					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
-					ParamNode: models.ParamNode{
-						Val: map[string]string{
-							"val": "3",
-						},
-						Param: map[string]models.ParamQuery{
-							"test1": {
-								ParamType: "Test1",
-							},
-							"test2": {
-								ParamType: "Test2",
-							},
-						},
-						SubParamNodes: []models.ParamNode{
-							{
-								Val: map[string]string{
-									"val": "5",
-								},
-								Param: map[string]models.ParamQuery{
-									"test1": {
-										ParamType: "Test3",
-									},
-									"test2": {
-										ParamType: "Test3",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			want: []string{
-				"mem{test1=\"test11\",test2=\"test21\"} > \"3\"",
-				"mem{test1=\"test12\",test2=\"test21\"} > \"3\"",
-				"mem{test1=\"test12\",test2=\"test22\"} > \"3\"",
-				"mem{test1=\"test11\",test2=\"test11\"} > \"5\"",
-				"mem{test1=\"test11\",test2=\"test22\"} > \"5\"",
-				"mem{test1=\"test22\",test2=\"test11\"} > \"5\"",
-				"mem{test1=\"test22\",test2=\"test22\"} > \"5\"",
-			},
-			wantErr: false,
-		},
-		{
-			name: "param getParamPermutation",
-			args: args{
-				query: models.PromQuery{
-					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
-					ParamNode: models.ParamNode{
-						Val: map[string]string{
-							"val": "3",
-						},
-						Param: map[string]models.ParamQuery{
-							"test1": {
-								ParamType: "Test",
-							},
-							"test2": {
-								ParamType: "Test2",
-							},
-						},
-					},
-				},
-			},
-			want:    []string{},
-			wantErr: false,
-		},
-		{
-			name: "param getParamPermutation",
-			args: args{
-				query: models.PromQuery{
-					PromQl: "mem{test1=\"$test1\",test2=\"$test2\"} > \"$val\"",
-					ParamNode: models.ParamNode{
-						Val: map[string]string{
-							"val": "3",
-						},
-						Param: map[string]models.ParamQuery{
-							"test1": {
-								ParamType: "Test4",
-							},
-							"test2": {
-								ParamType: "Test2",
-							},
-						},
-					},
-				},
-			},
-			want:    []string{},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			//got, _, err := paramFilling(tt.args.Ctx, tt.args.query)
-			//if (err != nil) != tt.wantErr {
-			//	t.Errorf("paramFilling() error = %v, wantErr %v", err, tt.wantErr)
-			//	return
-			//}
-			//if !allValueDeepEqualOmitOrder(got, tt.want) {
-			//	t.Errorf("paramFilling() got = %v, want %v", got, tt.want)
-			//}
-		})
-	}
-}
-
 func Test_removeVal(t *testing.T) {
 	type args struct {
 		promql string
@@ -472,6 +350,34 @@ func Test_removeVal(t *testing.T) {
 				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
 			},
 			want: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal9",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal10",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal11",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal12",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"$test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\"} > $val2",
 		},
 	}
 	for _, tt := range tests {
