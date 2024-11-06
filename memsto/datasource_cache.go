@@ -45,6 +45,7 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 func (d *DatasourceCacheType) GetIDsByDsQueries(cate string, datasourceQueries []models.DatasourceQuery) []int64 {
 	d.Lock()
 	defer d.Unlock()
+	// 先确定 DatasourceQueries 所对应的数据源范围
 	idMap := make(map[int64]struct{})
 	NameMap := make(map[string]int64)
 	for id, ds := range d.ds {
