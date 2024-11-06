@@ -15,10 +15,9 @@ import (
 
 func NewTdengineClient(ctx *ctx.Context, heartbeat aconf.HeartbeatConfig) *TdengineClientMap {
 	pc := &TdengineClientMap{
-		ReaderClients:      make(map[int64]*tdengineClient),
-		DatasourceNameToID: make(map[string]int64),
-		heartbeat:          heartbeat,
-		ctx:                ctx,
+		ReaderClients: make(map[int64]*tdengineClient),
+		heartbeat:     heartbeat,
+		ctx:           ctx,
 	}
 	pc.InitReader()
 	return pc
@@ -57,7 +56,6 @@ func (pc *TdengineClientMap) loadFromDatabase() {
 	newCluster := make(map[int64]struct{})
 	for _, ds := range datasources {
 		dsId := ds.Id
-		dsName := ds.Name
 		var header []string
 		for k, v := range ds.HTTPJson.Headers {
 			header = append(header, k)
@@ -92,7 +90,7 @@ func (pc *TdengineClientMap) loadFromDatabase() {
 		newCluster[dsId] = struct{}{}
 		if pc.IsNil(dsId) {
 			// first time
-			if err = pc.setClientFromTdengineOption(dsName, dsId, po); err != nil {
+			if err = pc.setClientFromTdengineOption(dsId, po); err != nil {
 				logger.Errorf("failed to setClientFromTdengineOption po:%+v err:%v", po, err)
 				continue
 			}
@@ -104,7 +102,7 @@ func (pc *TdengineClientMap) loadFromDatabase() {
 
 		localPo, has := TdengineOptions.Get(dsId)
 		if !has || !localPo.Equal(po) {
-			if err = pc.setClientFromTdengineOption(dsName, dsId, po); err != nil {
+			if err = pc.setClientFromTdengineOption(dsId, po); err != nil {
 				logger.Errorf("failed to setClientFromTdengineOption: %v", err)
 				continue
 			}
@@ -124,7 +122,7 @@ func (pc *TdengineClientMap) loadFromDatabase() {
 	}
 }
 
-func (pc *TdengineClientMap) setClientFromTdengineOption(datasourceName string, datasourceId int64, po TdengineOption) error {
+func (pc *TdengineClientMap) setClientFromTdengineOption(datasourceId int64, po TdengineOption) error {
 	if datasourceId < 0 {
 		return fmt.Errorf("argument clusterName is blank")
 	}
@@ -136,7 +134,7 @@ func (pc *TdengineClientMap) setClientFromTdengineOption(datasourceName string, 
 	reader := newTdengine(po)
 
 	logger.Debugf("setClientFromTdengineOption: %d, %+v", datasourceId, po)
-	pc.Set(datasourceName, datasourceId, reader)
+	pc.Set(datasourceId, reader)
 
 	return nil
 }

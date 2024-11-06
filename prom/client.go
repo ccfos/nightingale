@@ -3,20 +3,18 @@ package prom
 import (
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 )
 
 type PromClientMap struct {
 	sync.RWMutex
-	ctx                *ctx.Context
-	ReaderClients      map[int64]prom.API
-	WriterClients      map[int64]prom.WriterType
-	DatasourceNameToID map[string]int64
+	ctx           *ctx.Context
+	ReaderClients map[int64]prom.API
+	WriterClients map[int64]prom.WriterType
 }
 
-func (pc *PromClientMap) Set(datasourceName string, datasourceId int64, r prom.API, w prom.WriterType) {
+func (pc *PromClientMap) Set(datasourceId int64, r prom.API, w prom.WriterType) {
 	if r == nil {
 		return
 	}
@@ -24,7 +22,6 @@ func (pc *PromClientMap) Set(datasourceName string, datasourceId int64, r prom.A
 	defer pc.Unlock()
 	pc.ReaderClients[datasourceId] = r
 	pc.WriterClients[datasourceId] = w
-	pc.DatasourceNameToID[datasourceName] = datasourceId
 }
 
 func (pc *PromClientMap) GetDatasourceIds() []int64 {
@@ -62,13 +59,6 @@ func (pc *PromClientMap) IsNil(datasourceId int64) bool {
 	}
 
 	return c == nil
-}
-
-// Hit 根据当前有效的 datasourceId 和规则的 datasourceId 配置计算有效的cluster列表
-func (pc *PromClientMap) Hit(datasourceQueries []models.DatasourceQuery) []int64 {
-	pc.RLock()
-	defer pc.RUnlock()
-	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, pc.ReaderClients, pc.DatasourceNameToID)
 }
 
 func (pc *PromClientMap) Reset() {

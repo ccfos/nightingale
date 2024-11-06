@@ -18,10 +18,9 @@ import (
 
 func NewPromClient(ctx *ctx.Context) *PromClientMap {
 	pc := &PromClientMap{
-		ReaderClients:      make(map[int64]prom.API),
-		WriterClients:      make(map[int64]prom.WriterType),
-		DatasourceNameToID: map[string]int64{},
-		ctx:                ctx,
+		ReaderClients: make(map[int64]prom.API),
+		WriterClients: make(map[int64]prom.WriterType),
+		ctx:           ctx,
 	}
 	pc.InitReader()
 	return pc
@@ -72,7 +71,6 @@ func (pc *PromClientMap) loadFromDatabase() {
 	newCluster := make(map[int64]struct{})
 	for _, ds := range datasources {
 		dsId := ds.Id
-		dsName := ds.Name
 		var header []string
 		for k, v := range ds.HTTPJson.Headers {
 			header = append(header, k)
@@ -114,7 +112,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 		newCluster[dsId] = struct{}{}
 		if pc.IsNil(dsId) {
 			// first time
-			if err = pc.setClientFromPromOption(dsName, dsId, po); err != nil {
+			if err = pc.setClientFromPromOption(dsId, po); err != nil {
 				logger.Errorf("failed to setClientFromPromOption po:%+v err:%v", po, err)
 				continue
 			}
@@ -126,7 +124,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 
 		localPo, has := PromOptions.Get(dsId)
 		if !has || !localPo.Equal(po) {
-			if err = pc.setClientFromPromOption(dsName, dsId, po); err != nil {
+			if err = pc.setClientFromPromOption(dsId, po); err != nil {
 				logger.Errorf("failed to setClientFromPromOption: %v", err)
 				continue
 			}
@@ -180,7 +178,7 @@ func (pc *PromClientMap) newWriterClientFromPromOption(po PromOption) (api.Clien
 	})
 }
 
-func (pc *PromClientMap) setClientFromPromOption(datasourceName string, datasourceId int64, po PromOption) error {
+func (pc *PromClientMap) setClientFromPromOption(datasourceId int64, po PromOption) error {
 	if datasourceId < 0 {
 		return fmt.Errorf("argument clusterName is blank")
 	}
@@ -213,7 +211,7 @@ func (pc *PromClientMap) setClientFromPromOption(datasourceName string, datasour
 	})
 
 	logger.Debugf("setClientFromPromOption: %d, %+v", datasourceId, po)
-	pc.Set(datasourceName, datasourceId, reader, w)
+	pc.Set(datasourceId, reader, w)
 
 	return nil
 }

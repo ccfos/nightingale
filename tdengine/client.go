@@ -36,20 +36,18 @@ type Keys struct {
 
 type TdengineClientMap struct {
 	sync.RWMutex
-	ctx                *ctx.Context
-	heartbeat          aconf.HeartbeatConfig
-	ReaderClients      map[int64]*tdengineClient
-	DatasourceNameToID map[string]int64
+	ctx           *ctx.Context
+	heartbeat     aconf.HeartbeatConfig
+	ReaderClients map[int64]*tdengineClient
 }
 
-func (pc *TdengineClientMap) Set(datasourceName string, datasourceId int64, r *tdengineClient) {
+func (pc *TdengineClientMap) Set(datasourceId int64, r *tdengineClient) {
 	if r == nil {
 		return
 	}
 	pc.Lock()
 	defer pc.Unlock()
 	pc.ReaderClients[datasourceId] = r
-	pc.DatasourceNameToID[datasourceName] = datasourceId
 }
 
 func (pc *TdengineClientMap) GetDatasourceIds() []int64 {
@@ -80,13 +78,6 @@ func (pc *TdengineClientMap) IsNil(datasourceId int64) bool {
 	}
 
 	return c == nil
-}
-
-// Hit 根据当前有效的 datasourceId 和规则的 datasourceId 配置计算有效的cluster列表
-func (pc *TdengineClientMap) Hit(datasourceQueries []models.DatasourceQuery) []int64 {
-	pc.RLock()
-	defer pc.RUnlock()
-	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, pc.ReaderClients, pc.DatasourceNameToID)
 }
 
 func (pc *TdengineClientMap) Reset() {
