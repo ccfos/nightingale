@@ -24,8 +24,8 @@ type DatasourceCacheType struct {
 
 	sync.RWMutex
 	ds          map[int64]*models.Datasource            // key: id value: datasource
-	cateToIDs   map[string]map[int64]*models.Datasource // key1: cate key2: id value: datasource
-	cateToNames map[string]map[string]int64             // key1: cate key2: name value: id
+	CateToIDs   map[string]map[int64]*models.Datasource // key1: cate key2: id value: datasource
+	CateToNames map[string]map[string]int64             // key1: cate key2: name value: id
 }
 
 func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
@@ -35,8 +35,8 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 		ctx:                 ctx,
 		stats:               stats,
 		ds:                  make(map[int64]*models.Datasource),
-		cateToIDs:           make(map[string]map[int64]*models.Datasource),
-		cateToNames:         make(map[string]map[string]int64),
+		CateToIDs:           make(map[string]map[int64]*models.Datasource),
+		CateToNames:         make(map[string]map[string]int64),
 		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 		DatasourceFilter:    func(ds []*models.Datasource, user *models.User) []*models.Datasource { return ds },
 	}
@@ -47,7 +47,7 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 func (d *DatasourceCacheType) GetIDsByDsCateAndQueries(cate string, datasourceQueries []models.DatasourceQuery) []int64 {
 	d.Lock()
 	defer d.Unlock()
-	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, d.cateToIDs[cate], d.cateToNames[cate])
+	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, d.CateToIDs[cate], d.CateToNames[cate])
 }
 
 func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -72,9 +72,9 @@ func (d *DatasourceCacheType) Set(ds map[int64]*models.Datasource, total, lastUp
 		cateToNames[datasource.PluginType][datasource.Name] = datasource.Id
 	}
 	d.Lock()
-	d.cateToIDs = cateToDs
+	d.CateToIDs = cateToDs
 	d.ds = ds
-	d.cateToNames = cateToNames
+	d.CateToNames = cateToNames
 	d.Unlock()
 
 	// only one goroutine used, so no need lock
