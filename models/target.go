@@ -585,9 +585,9 @@ func CanMigrateBg(ctx *ctx.Context) bool {
 	}
 
 	if maxGroupId == 0 {
-		log.Println("migration bgid has been completed.")
 		return false
 	}
+
 	return true
 }
 
