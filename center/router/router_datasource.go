@@ -249,3 +249,36 @@ func (rt *Router) getDatasourceIds(c *gin.Context) {
 
 	ginx.NewRender(c).Data(datasourceIds, err)
 }
+
+type datasourceQueryForm struct {
+	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries"`
+}
+
+type datasourceQueryResp struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+func (rt *Router) datasourceQuery(c *gin.Context) {
+	var dsf datasourceQueryForm
+	ginx.BindJSON(c, &dsf)
+	datasources, err := models.GetDatasources(rt.Ctx)
+	ginx.Dangerous(err)
+
+	nameToID := make(map[string]int64)
+	IDToName := make(map[int64]string)
+	for _, ds := range datasources {
+		nameToID[ds.Name] = ds.Id
+		IDToName[ds.Id] = ds.Name
+	}
+
+	ids := models.GetDatasourceIDsByDatasourceQueries(dsf.DatasourceQueries, IDToName, nameToID)
+	var req []datasourceQueryResp
+	for _, id := range ids {
+		req = append(req, datasourceQueryResp{
+			ID:   id,
+			Name: IDToName[id],
+		})
+	}
+	ginx.NewRender(c).Data(req, err)
+}
