@@ -251,6 +251,7 @@ func (rt *Router) getDatasourceIds(c *gin.Context) {
 }
 
 type datasourceQueryForm struct {
+	Cate              string                   `json:"cate"`
 	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries"`
 }
 
@@ -262,7 +263,7 @@ type datasourceQueryResp struct {
 func (rt *Router) datasourceQuery(c *gin.Context) {
 	var dsf datasourceQueryForm
 	ginx.BindJSON(c, &dsf)
-	datasources, err := models.GetDatasources(rt.Ctx)
+	datasources, err := models.GetDatasourcesGetsByTypes(rt.Ctx, []string{dsf.Cate})
 	ginx.Dangerous(err)
 
 	nameToID := make(map[string]int64)

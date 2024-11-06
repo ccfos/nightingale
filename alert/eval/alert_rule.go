@@ -133,7 +133,7 @@ func (s *Scheduler) syncAlertRules() {
 		} else {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
 			// if rule is not processed by prometheus engine, create it as externalRule
-			dsIds := s.datasourceCache.GetIDsByDsQueries(rule.DatasourceQueries)
+			dsIds := s.datasourceCache.GetIDsByDsQueries(rule.Cate, rule.DatasourceQueries)
 			for _, dsId := range dsIds {
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {

@@ -42,10 +42,19 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 	return ds
 }
 
-func (d *DatasourceCacheType) GetIDsByDsQueries(datasourceQueries []models.DatasourceQuery) []int64 {
+func (d *DatasourceCacheType) GetIDsByDsQueries(cate string, datasourceQueries []models.DatasourceQuery) []int64 {
 	d.Lock()
 	defer d.Unlock()
-	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, d.ds, d.dsNameToID)
+	idMap := make(map[int64]struct{})
+	NameMap := make(map[string]int64)
+	for id, ds := range d.ds {
+		if ds.PluginType != cate {
+			continue
+		}
+		idMap[id] = struct{}{}
+		NameMap[ds.Name] = id
+	}
+	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, idMap, NameMap)
 }
 
 func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
