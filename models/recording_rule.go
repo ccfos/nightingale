@@ -47,9 +47,10 @@ type QueryConfig struct {
 }
 
 type Query struct {
-	DatasourceIds []int64     `json:"datasource_ids"`
-	Cate          string      `json:"cate"`
-	Config        interface{} `json:"config"`
+	DatasourceIds     []int64           `json:"datasource_ids"`
+	DatasourceQueries []DatasourceQuery `json:"datasource_queries"`
+	Cate              string            `json:"cate"`
+	Config            interface{}       `json:"config"`
 }
 
 func (re *RecordingRule) TableName() string {
@@ -69,6 +70,24 @@ func (re *RecordingRule) DB2FE() error {
 	re.FillDatasourceQueries()
 
 	json.Unmarshal([]byte(re.QueryConfigs), &re.QueryConfigsJson)
+	// 存量数据规则不包含 DatasourceQueries 字段，将 DatasourceIds 转换为 DatasourceQueries 字段
+	for i := range re.QueryConfigsJson {
+		for j := range re.QueryConfigsJson[i].Queries {
+			if len(re.QueryConfigsJson[i].Queries[j].DatasourceQueries) == 0 {
+				values := make([]string, 0, len(re.QueryConfigsJson[i].Queries[j].DatasourceIds))
+				for _, dsID := range re.QueryConfigsJson[i].Queries[j].DatasourceIds {
+					values = append(values, strconv.Itoa(int(dsID)))
+				}
+				re.QueryConfigsJson[i].Queries[j].DatasourceQueries = []DatasourceQuery{
+					{
+						MatchType: 0,
+						Op:        "in",
+						Values:    values,
+					},
+				}
+			}
+		}
+	}
 
 	if re.CronPattern == "" && re.PromEvalInterval != 0 {
 		re.CronPattern = fmt.Sprintf("@every %ds", re.PromEvalInterval)
