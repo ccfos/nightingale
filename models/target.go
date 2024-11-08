@@ -563,6 +563,32 @@ func (m *Target) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}
 	return DB(ctx).Model(m).Updates(fields).Error
 }
 
+func CanMigrateBg(ctx *ctx.Context) bool {
+	// 1.1 检查 target 表是否为空
+	var cnt int64
+	if err := DB(ctx).Model(&Target{}).Count(&cnt).Error; err != nil {
+		log.Println("failed to get target table count, err:", err)
+		return false
+	}
+	if cnt == 0 {
+		log.Println("target table is empty, skip migration.")
+		return false
+	}
+
+	// 1.2 判断是否已经完成迁移
+	var maxGroupId int64
+	if err := DB(ctx).Model(&Target{}).Select("MAX(group_id)").Scan(&maxGroupId).Error; err != nil {
+		log.Println("failed to get max group_id from target table, err:", err)
+		return false
+	}
+
+	if maxGroupId == 0 {
+		log.Println("migration bgid has been completed.")
+		return false
+	}
+	return true
+}
+
 func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
 	// 1. 判断是否已经完成迁移
 	var maxGroupId int64
