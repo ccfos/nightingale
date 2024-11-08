@@ -218,6 +218,8 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
 	event.RuleHash = ruleHash
+	// todo 当前只取了 text，其他信息也可以放进去？
+	event.TriggerValue = ValueFormatter(anomalyPoint.Uint, 2, anomalyPoint.Value).Text
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {

@@ -19,6 +19,7 @@ type AnomalyPoint struct {
 	Query         string               `json:"query"`
 	Values        string               `json:"values"`
 	RecoverConfig models.RecoverConfig `json:"recover_config"`
+	Uint          string               `json:"uint"`
 }
 
 func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {
