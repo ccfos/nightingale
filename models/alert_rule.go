@@ -24,8 +24,9 @@ const (
 	HOST   = "host"
 	LOKI   = "loki"
 
-	PROMETHEUS = "prometheus"
-	TDENGINE   = "tdengine"
+	PROMETHEUS    = "prometheus"
+	TDENGINE      = "tdengine"
+	ELASTICSEARCH = "elasticsearch"
 )
 
 const (
@@ -129,6 +130,19 @@ type PromRuleConfig struct {
 	AlgoParams interface{} `json:"algo_params"`
 }
 
+type RecoverJudge int
+
+const (
+	Origin             RecoverJudge = 0
+	RecoverWithoutData RecoverJudge = 1
+	RecoverOnCondition RecoverJudge = 2
+)
+
+type RecoverConfig struct {
+	JudgeType  RecoverJudge `json:"judge_type"`
+	RecoverExp string       `json:"recover_exp"`
+}
+
 type HostRuleConfig struct {
 	Queries  []HostQuery   `json:"queries"`
 	Triggers []HostTrigger `json:"triggers"`
@@ -136,8 +150,9 @@ type HostRuleConfig struct {
 }
 
 type PromQuery struct {
-	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"`
+	PromQl        string        `json:"prom_ql"`
+	Severity      int           `json:"severity"`
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type HostTrigger struct {
@@ -164,10 +179,13 @@ type Trigger struct {
 	Duration int    `json:"duration,omitempty"`
 	Percent  int    `json:"percent,omitempty"`
 	Joins    []Join `json:"joins"`
+	JoinRef  string `json:"join_ref"`
+	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
 type Join struct {
 	JoinType string   `json:"join_type"`
+	Ref      string   `json:"ref"`
 	On       []string `json:"on"`
 }
 
@@ -1205,4 +1223,8 @@ func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
 		return nil
 	}
 	return DB(ctx).Create(ars).Error
+}
+
+func (ar *AlertRule) Hash() string {
+	return str.MD5(fmt.Sprintf("%d_%s_%s", ar.Id, ar.DatasourceIds, ar.RuleConfig))
 }

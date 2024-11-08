@@ -138,6 +138,9 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		return
 	}
 
+	// 在 rule 变化之前取到 ruleHash
+	ruleHash := p.rule.Hash()
+
 	p.rule = cachedRule
 	now := time.Now().Unix()
 	alertingKeys := map[string]struct{}{}
@@ -145,7 +148,7 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	// 根据 event 的 tag 将 events 分组，处理告警抑制的情况
 	eventsMap := make(map[string][]*models.AlertCurEvent)
 	for _, anomalyPoint := range anomalyPoints {
-		event := p.BuildEvent(anomalyPoint, from, now)
+		event := p.BuildEvent(anomalyPoint, from, now, ruleHash)
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
@@ -170,10 +173,12 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		p.handleEvent(events)
 	}
 
-	p.HandleRecover(alertingKeys, now, inhibit)
+	if from == "inner" {
+		p.HandleRecover(alertingKeys, now, inhibit)
+	}
 }
 
-func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64) *models.AlertCurEvent {
+func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
 	p.fillTags(anomalyPoint)
 	p.mayHandleIdent()
 	hash := Hash(p.rule.Id, p.datasourceId, anomalyPoint)
@@ -211,9 +216,12 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.Severity = anomalyPoint.Severity
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
+	event.RecoverConfig = anomalyPoint.RecoverConfig
+	event.RuleHash = ruleHash
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {
+			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
 			event.Target = pt
 		} else {
 			logger.Infof("Target[ident: %s] doesn't exist in cache.", p.target)
@@ -290,7 +298,7 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 	}
 
 	hashArr := make([]string, 0, len(alertingKeys))
-	for hash := range p.fires.GetAll() {
+	for hash, _ := range p.fires.GetAll() {
 		if _, has := alertingKeys[hash]; has {
 			continue
 		}
@@ -309,7 +317,7 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 
 	if !inhibit {
 		for _, hash := range hashArr {
-			p.RecoverSingle(hash, now, nil)
+			p.RecoverSingle(false, hash, now, nil)
 		}
 		return
 	}
@@ -337,11 +345,11 @@ func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool
 	}
 
 	for _, event := range eventMap {
-		p.RecoverSingle(event.Hash, now, nil)
+		p.RecoverSingle(false, event.Hash, now, nil)
 	}
 }
 
-func (p *Processor) RecoverSingle(hash string, now int64, value *string, values ...string) {
+func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value *string, values ...string) {
 	cachedRule := p.rule
 	if cachedRule == nil {
 		return
@@ -365,6 +373,12 @@ func (p *Processor) RecoverSingle(hash string, now int64, value *string, values 
 			logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
 			return
 		}
+	}
+
+	// 如果设置了恢复条件，则不能在此处恢复，必须依靠 recoverPoint 来恢复
+	if event.RecoverConfig.JudgeType != models.Origin && !byRecover {
+		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+		return
 	}
 
 	if value != nil {
@@ -529,6 +543,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		event.DB2Mem()
 		target, exists := p.TargetCache.Get(event.TargetIdent)
 		if exists {
+			target.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(target.GroupIds)
 			event.Target = target
 		}
 

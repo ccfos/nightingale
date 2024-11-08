@@ -202,7 +202,11 @@ func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 			}
 
 			for _, to := range m.mail.GetHeader("To") {
-				NotifyRecord(ctx, m.event, models.Email, to, "", err)
+				msg := ""
+				if err == nil {
+					msg = "ok"
+				}
+				NotifyRecord(ctx, m.event, models.Email, to, msg, err)
 			}
 
 			size++

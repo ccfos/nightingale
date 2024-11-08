@@ -363,6 +363,7 @@ CREATE TABLE `target` (
     `ident` varchar(191) not null comment 'target id',
     `note` varchar(255) not null default '' comment 'append to alert event as field',
     `tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
+    `host_tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
     `host_ip` varchar(15) default '' COMMENT 'IPv4 string',
     `agent_version` varchar(255) default '' COMMENT 'agent version',
     `engine_name` varchar(255) default '' COMMENT 'engine_name',
@@ -723,6 +724,15 @@ CREATE TABLE `metric_filter` (
   `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
   PRIMARY KEY (`id`),
   KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `target_busi_group` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `target_ident` varchar(191) NOT NULL,
+  `group_id` bigint NOT NULL,
+  `update_at` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_meta`

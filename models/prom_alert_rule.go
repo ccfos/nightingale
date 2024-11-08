@@ -36,6 +36,7 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 	appendTags := []string{}
 	severity := 2
 
+	ruleName := rule.Alert
 	if len(rule.Labels) > 0 {
 		for k, v := range rule.Labels {
 			if k != "severity" {
@@ -49,6 +50,7 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 				case "info":
 					severity = 3
 				}
+				ruleName += "-" + v
 			}
 		}
 	}

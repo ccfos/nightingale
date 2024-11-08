@@ -34,15 +34,16 @@ type Target struct {
 	OS           string            `json:"os" gorm:"column:os"`
 	HostTags     []string          `json:"host_tags" gorm:"serializer:json"`
 
-	UnixTime   int64   `json:"unixtime" gorm:"-"`
-	Offset     int64   `json:"offset" gorm:"-"`
-	TargetUp   float64 `json:"target_up" gorm:"-"`
-	MemUtil    float64 `json:"mem_util" gorm:"-"`
-	CpuNum     int     `json:"cpu_num" gorm:"-"`
-	CpuUtil    float64 `json:"cpu_util" gorm:"-"`
-	Arch       string  `json:"arch" gorm:"-"`
-	RemoteAddr string  `json:"remote_addr" gorm:"-"`
-	GroupIds   []int64 `json:"group_ids" gorm:"-"`
+	UnixTime   int64    `json:"unixtime" gorm:"-"`
+	Offset     int64    `json:"offset" gorm:"-"`
+	TargetUp   float64  `json:"target_up" gorm:"-"`
+	MemUtil    float64  `json:"mem_util" gorm:"-"`
+	CpuNum     int      `json:"cpu_num" gorm:"-"`
+	CpuUtil    float64  `json:"cpu_util" gorm:"-"`
+	Arch       string   `json:"arch" gorm:"-"`
+	RemoteAddr string   `json:"remote_addr" gorm:"-"`
+	GroupIds   []int64  `json:"group_ids" gorm:"-"`
+	GroupNames []string `json:"group_names" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -564,7 +565,18 @@ func (m *Target) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}
 }
 
 func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
-	// 1. 判断是否已经完成迁移
+	// 检查 target 表是否为空
+	var cnt int64
+	if err := DB(ctx).Model(&Target{}).Count(&cnt).Error; err != nil {
+		log.Println("failed to get target table count, err:", err)
+		return
+	}
+	if cnt == 0 {
+		log.Println("target table is empty, skip migration.")
+		return
+	}
+
+	// 判断是否已经完成迁移
 	var maxGroupId int64
 	if err := DB(ctx).Model(&Target{}).Select("MAX(group_id)").Scan(&maxGroupId).Error; err != nil {
 		log.Println("failed to get max group_id from target table, err:", err)

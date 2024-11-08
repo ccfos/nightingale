@@ -554,6 +554,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
 			service.GET("/config", rt.configGetByKey)
+			service.GET("/all-configs", rt.configGetAll)
 			service.PUT("/configs", rt.configsPut)
 			service.POST("/configs", rt.configsPost)
 			service.DELETE("/configs", rt.configsDel)

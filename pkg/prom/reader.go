@@ -697,6 +697,18 @@ func (h *httpAPI) LabelValues(ctx context.Context, label string, matchs []string
 }
 
 func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error) {
+	for i := 0; i < 3; i++ {
+		value, warnings, err := h.query(ctx, query, ts)
+		if err == nil {
+			return value, warnings, nil
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+	return nil, nil, errors.New("query failed")
+}
+
+func (h *httpAPI) query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error) {
 	u := h.client.URL(epQuery, nil)
 	q := u.Query()
 
