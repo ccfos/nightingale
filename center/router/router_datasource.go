@@ -253,7 +253,7 @@ func (rt *Router) getDatasourceIds(c *gin.Context) {
 }
 
 type datasourceQueryForm struct {
-	Cate              string                   `json:"cate"`
+	Cate              string                   `json:"datasource_cate"`
 	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries"`
 }
 

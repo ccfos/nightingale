@@ -175,11 +175,11 @@ type Trigger struct {
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
 
-	Type     string `json:"type,omitempty"`
-	Duration int    `json:"duration,omitempty"`
-	Percent  int    `json:"percent,omitempty"`
-	Joins    []Join `json:"joins"`
-	JoinRef  string `json:"join_ref"`
+	Type          string        `json:"type,omitempty"`
+	Duration      int           `json:"duration,omitempty"`
+	Percent       int           `json:"percent,omitempty"`
+	Joins         []Join        `json:"joins"`
+	JoinRef       string        `json:"join_ref"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
@@ -271,7 +271,13 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 				}
 				dsIDs = curIDs
 			}
+		} else if q.MatchType == 2 {
+			// 全部数据源
+			for id := range curIDs {
+				dsIDs[id] = struct{}{}
+			}
 		}
+
 		curIDs = dsIDs
 		if len(curIDs) == 0 {
 			break
