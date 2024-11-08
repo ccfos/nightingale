@@ -385,7 +385,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = target.Ident
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity, trigger.Unit))
 			}
 		case "offset":
 			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
@@ -432,7 +432,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = host
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity, trigger.Unit))
 			}
 		case "pct_target_miss":
 			t := now - int64(trigger.Duration)
@@ -453,7 +453,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			logger.Debugf("rule_eval:%s missTargets:%v", arw.Key(), missTargets)
 			pct := float64(len(missTargets)) / float64(len(idents)) * 100
 			if pct >= float64(trigger.Percent) {
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity, trigger.Unit))
 			}
 		}
 	}
@@ -530,6 +530,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				Triggered:     isTriggered,
 				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
 				RecoverConfig: trigger.RecoverConfig,
+				Uint:          trigger.Unit,
 			}
 
 			if sample.Query != "" {

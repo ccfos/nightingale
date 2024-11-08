@@ -22,7 +22,7 @@ type AnomalyPoint struct {
 	Uint          string               `json:"uint"`
 }
 
-func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {
+func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int, unit string) AnomalyPoint {
 	anomalyPointLabels := make(model.Metric)
 	for k, v := range labels {
 		anomalyPointLabels[model.LabelName(k)] = model.LabelValue(v)
@@ -34,6 +34,7 @@ func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float
 		Timestamp: ts,
 		Value:     value,
 		Severity:  severity,
+		Uint:      unit,
 	}
 }
 

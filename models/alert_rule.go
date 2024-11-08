@@ -160,6 +160,7 @@ type HostTrigger struct {
 	Duration int    `json:"duration"`
 	Percent  int    `json:"percent"`
 	Severity int    `json:"severity"`
+	Unit     string `json:"unit"`
 }
 
 type RuleQuery struct {
@@ -181,6 +182,7 @@ type Trigger struct {
 	Joins         []Join        `json:"joins"`
 	JoinRef       string        `json:"join_ref"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
+	Unit          string        `json:"unit"`
 }
 
 type Join struct {
