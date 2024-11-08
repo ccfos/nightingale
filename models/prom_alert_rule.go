@@ -75,9 +75,9 @@ func ConvertAlert(rule PromRule, interval string, datasouceIds []int64, disabled
 		AppendTagsJSON:   appendTags,
 	}
 
-	dsIDs := make([]string, 0, len(datasouceIds))
+	dsIDs := make([]interface{}, 0, len(datasouceIds))
 	for _, id := range datasouceIds {
-		dsIDs = append(dsIDs, fmt.Sprintf("%d", id))
+		dsIDs = append(dsIDs, id)
 	}
 
 	dsq := DatasourceQuery{

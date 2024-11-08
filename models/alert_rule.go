@@ -190,15 +190,15 @@ type Join struct {
 }
 
 var DataSourceQueryAll = DatasourceQuery{
-	MatchType: 0,
+	MatchType: 2,
 	Op:        "in",
-	Values:    []string{strconv.Itoa(DatasourceIdAll)},
+	Values:    []interface{}{DatasourceIdAll},
 }
 
 type DatasourceQuery struct {
-	MatchType int      `json:"match_type"`
-	Op        string   `json:"op"`
-	Values    []string `json:"values"`
+	MatchType int           `json:"match_type"`
+	Op        string        `json:"op"`
+	Values    []interface{} `json:"values"`
 }
 
 // GetDatasourceIDsByDatasourceQueries 从 datasourceQueries 中获取 datasourceIDs
@@ -224,8 +224,8 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 			// 精确匹配转为 id 匹配
 			idValues := make([]int64, 0, len(q.Values))
 			for v := range q.Values {
-				val, err := strconv.Atoi(q.Values[v])
-				if err != nil {
+				val, ok := q.Values[v].(int64)
+				if !ok {
 					continue
 				}
 				idValues = append(idValues, int64(val))
@@ -255,7 +255,11 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 				for dsName, dsID := range nameMap {
 					if _, exist := curIDs[dsID]; exist {
 						for idx := range q.Values {
-							if match.Match(dsName, q.Values[idx]) {
+							if _, ok := q.Values[idx].(string); !ok {
+								continue
+							}
+
+							if match.Match(dsName, q.Values[idx].(string)) {
 								dsIDs[nameMap[dsName]] = struct{}{}
 							}
 						}
@@ -264,7 +268,11 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 			} else if q.Op == "not in" {
 				for dsName, _ := range nameMap {
 					for idx := range q.Values {
-						if match.Match(dsName, q.Values[idx]) {
+						if _, ok := q.Values[idx].(string); !ok {
+							continue
+						}
+
+						if match.Match(dsName, q.Values[idx].(string)) {
 							delete(curIDs, nameMap[dsName])
 						}
 					}
@@ -619,15 +627,16 @@ func (ar *AlertRule) FillDatasourceQueries() error {
 		datasourceQueries := DatasourceQuery{
 			MatchType: 0,
 			Op:        "in",
-			Values:    make([]string, 0),
+			Values:    make([]interface{}, 0),
 		}
+
 		var values []int
 		if ar.DatasourceIds != "" {
 			json.Unmarshal([]byte(ar.DatasourceIds), &values)
 
 		}
 		for i := range values {
-			datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
+			datasourceQueries.Values = append(datasourceQueries.Values, values[i])
 		}
 		ar.DatasourceQueries = []DatasourceQuery{datasourceQueries}
 	}

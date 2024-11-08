@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -74,9 +73,9 @@ func (re *RecordingRule) DB2FE() error {
 	for i := range re.QueryConfigsJson {
 		for j := range re.QueryConfigsJson[i].Queries {
 			if len(re.QueryConfigsJson[i].Queries[j].DatasourceQueries) == 0 {
-				values := make([]string, 0, len(re.QueryConfigsJson[i].Queries[j].DatasourceIds))
+				values := make([]interface{}, 0, len(re.QueryConfigsJson[i].Queries[j].DatasourceIds))
 				for _, dsID := range re.QueryConfigsJson[i].Queries[j].DatasourceIds {
-					values = append(values, strconv.Itoa(int(dsID)))
+					values = append(values, dsID)
 				}
 				re.QueryConfigsJson[i].Queries[j].DatasourceQueries = []DatasourceQuery{
 					{
@@ -102,15 +101,16 @@ func (re *RecordingRule) FillDatasourceQueries() error {
 		datasourceQueries := DatasourceQuery{
 			MatchType: 0,
 			Op:        "in",
-			Values:    make([]string, 0),
+			Values:    make([]interface{}, 0),
 		}
-		var values []int
+
+		var values []int64
 		if re.DatasourceIds != "" {
 			json.Unmarshal([]byte(re.DatasourceIds), &values)
-
 		}
+
 		for i := range values {
-			datasourceQueries.Values = append(datasourceQueries.Values, strconv.Itoa(values[i]))
+			datasourceQueries.Values = append(datasourceQueries.Values, values[i])
 		}
 		re.DatasourceQueries = []DatasourceQuery{datasourceQueries}
 	}
