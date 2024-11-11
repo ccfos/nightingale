@@ -46,9 +46,10 @@ const (
 
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
-	GroupId               int64                  `json:"group_id"`                                                               // busi group id
-	Cate                  string                 `json:"cate"`                                                                   // alert rule cate (prometheus|elasticsearch)
-	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`                                                // datasource ids
+	GroupId               int64                  `json:"group_id"` // busi group id
+	Cate                  string                 `json:"cate"`     // alert rule cate (prometheus|elasticsearch)
+	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`
+	DatasourceIdsJson     []int64                `json:"datasource_ids" gorm:"-"`                                                // alert rule list page use this field
 	DatasourceQueries     []DatasourceQuery      `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	Cluster               string                 `json:"cluster"`                                                                // take effect by clusters, seperated by space
 	Name                  string                 `json:"name"`                                                                   // rule name

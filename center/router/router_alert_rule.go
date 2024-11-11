@@ -77,6 +77,11 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
+
+			if len(ars[i].DatasourceQueries) != 0 {
+				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
+			}
+
 			rids = append(rids, ars[i].Id)
 			names = append(names, ars[i].UpdateBy)
 		}
