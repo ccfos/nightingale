@@ -231,6 +231,16 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 					val = v
 				case int:
 					val = int64(v)
+				case float64:
+					val = int64(v)
+				case float32:
+					val = int64(v)
+				case int8:
+					val = int64(v)
+				case int16:
+					val = int64(v)
+				case int32:
+					val = int64(v)
 				default:
 					continue
 				}
