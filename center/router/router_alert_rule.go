@@ -177,9 +177,9 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 }
 
 type promRuleForm struct {
-	Payload       string  `json:"payload" binding:"required"`
-	DatasourceIds []int64 `json:"datasource_ids" binding:"required"`
-	Disabled      int     `json:"disabled" binding:"gte=0,lte=1"`
+	Payload           string                   `json:"payload" binding:"required"`
+	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" binding:"required"`
+	Disabled          int                      `json:"disabled" binding:"gte=0,lte=1"`
 }
 
 func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
@@ -198,7 +198,7 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
 	}
 
-	lst := models.DealPromGroup(pr.Groups, f.DatasourceIds, f.Disabled)
+	lst := models.DealPromGroup(pr.Groups, f.DatasourceQueries, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
