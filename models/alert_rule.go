@@ -225,8 +225,13 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 			// 精确匹配转为 id 匹配
 			idValues := make([]int64, 0, len(q.Values))
 			for v := range q.Values {
-				val, ok := q.Values[v].(int64)
-				if !ok {
+				var val int64
+				switch v := q.Values[v].(type) {
+				case int64:
+					val = v
+				case int:
+					val = int64(v)
+				default:
 					continue
 				}
 				idValues = append(idValues, int64(val))
