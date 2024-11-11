@@ -635,7 +635,13 @@ func (ar *AlertRule) FillDatasourceQueries() error {
 			json.Unmarshal([]byte(ar.DatasourceIds), &values)
 
 		}
+
 		for i := range values {
+			if values[i] == 0 {
+				// 0 表示所有数据源
+				datasourceQueries.MatchType = 2
+				break
+			}
 			datasourceQueries.Values = append(datasourceQueries.Values, values[i])
 		}
 		ar.DatasourceQueries = []DatasourceQuery{datasourceQueries}

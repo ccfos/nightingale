@@ -110,8 +110,14 @@ func (re *RecordingRule) FillDatasourceQueries() error {
 		}
 
 		for i := range values {
+			if values[i] == 0 {
+				// 0 表示所有数据源
+				datasourceQueries.MatchType = 2
+				break
+			}
 			datasourceQueries.Values = append(datasourceQueries.Values, values[i])
 		}
+
 		re.DatasourceQueries = []DatasourceQuery{datasourceQueries}
 	}
 	return nil
