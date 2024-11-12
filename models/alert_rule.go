@@ -101,6 +101,7 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
+	CronPattern           string                 `json:"cron_pattern"`
 }
 
 type Tpl struct {
@@ -174,11 +175,11 @@ type Trigger struct {
 	Exp         string      `json:"exp"`
 	Severity    int         `json:"severity"`
 
-	Type     string `json:"type,omitempty"`
-	Duration int    `json:"duration,omitempty"`
-	Percent  int    `json:"percent,omitempty"`
-	Joins    []Join `json:"joins"`
-	JoinRef  string `json:"join_ref"`
+	Type          string        `json:"type,omitempty"`
+	Duration      int           `json:"duration,omitempty"`
+	Percent       int           `json:"percent,omitempty"`
+	Joins         []Join        `json:"joins"`
+	JoinRef       string        `json:"join_ref"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
 }
 
@@ -712,6 +713,13 @@ func (ar *AlertRule) DB2FE() error {
 	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
 
 	err := ar.FillDatasourceIds()
+
+	// 兼容旧逻辑填充 cron_pattern
+	if ar.CronPattern == "" {
+		if ar.PromEvalInterval != 0 {
+			ar.CronPattern = fmt.Sprintf("@every %ds", ar.PromEvalInterval)
+		}
+	}
 	return err
 }
 
