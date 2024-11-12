@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/robfig/cron/v3"
 	"math"
 	"reflect"
 	"sort"
@@ -22,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
+	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
