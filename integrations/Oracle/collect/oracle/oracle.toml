@@ -139,3 +139,11 @@ timeout = "3s"
 request = '''
 select METRIC_NAME,VALUE from v$sysmetric where group_id=2
 '''
+
+[[metrics]]
+mesurement = "applylag"
+metric_fields = [ "value" ]
+timeout = "3s"
+request = '''
+SELECT TO_NUMBER(EXTRACT(SECOND FROM TO_DSINTERVAL (value))) as value FROM v$dataguard_stats WHERE name = 'apply lag'
+'''
