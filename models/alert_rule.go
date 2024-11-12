@@ -49,7 +49,7 @@ type AlertRule struct {
 	GroupId               int64                  `json:"group_id"` // busi group id
 	Cate                  string                 `json:"cate"`     // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string                 `json:"-" gorm:"datasource_ids"`
-	DatasourceIdsJson     []int64                `json:"datasource_ids" gorm:"-"`                                                // alert rule list page use this field
+	DatasourceIdsJson     []int64                `json:"datasource_ids,omitempty" gorm:"-"`                                      // alert rule list page use this field
 	DatasourceQueries     []DatasourceQuery      `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	Cluster               string                 `json:"cluster"`                                                                // take effect by clusters, seperated by space
 	Name                  string                 `json:"name"`                                                                   // rule name
@@ -869,7 +869,7 @@ func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
 			return ret.Error
 		}
 
-		// 说明确实删掉了，把相关的活跃告警也删了，这些告警永远都不会恢复了，而且策略都没了，说明没人关心了
+		// 说明确实删掉了，把相关的活跃告警也删了，这些告警永远都不会恢复了，而且策略都没了，说明没���关心了
 		if ret.RowsAffected > 0 {
 			DB(ctx).Where("rule_id = ?", ids[i]).Delete(new(AlertCurEvent))
 		}

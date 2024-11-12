@@ -18,7 +18,7 @@ import (
 type RecordingRule struct {
 	Id                int64             `json:"id" gorm:"primaryKey"`
 	GroupId           int64             `json:"group_id"`                                                               // busi group id
-	DatasourceIds     string            `json:"-" gorm:"datasource_ids"`                                                // datasource ids
+	DatasourceIds     string            `json:"-" gorm:"datasource_ids,omitempty"`                                      // datasource ids
 	DatasourceQueries []DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	Cluster           string            `json:"cluster"`                                                                // take effect by cluster, seperated by space
 	Name              string            `json:"name"`                                                                   // new metric name

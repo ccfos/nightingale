@@ -128,6 +128,10 @@ func (rt *Router) alertRulesGetByService(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
+
+			if len(ars[i].DatasourceQueries) != 0 {
+				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
+			}
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -438,6 +442,10 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	if ar == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
 		return
+	}
+
+	if len(ar.DatasourceQueries) != 0 {
+		ar.DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ar.Cate, ar.DatasourceQueries)
 	}
 
 	err = ar.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
