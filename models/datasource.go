@@ -388,12 +388,12 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		}
 	}
 
-	ret := make(map[int64]*Datasource)
+	ds := make(map[int64]*Datasource)
 	for i := 0; i < len(lst); i++ {
-		ret[lst[i].Id] = lst[i]
+		ds[lst[i].Id] = lst[i]
 	}
 
-	return ret, nil
+	return ds, nil
 }
 
 func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {
