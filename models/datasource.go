@@ -109,7 +109,7 @@ func (h HTTP) ParseUrl() (target *url.URL, err error) {
 			continue
 		}
 
-		if _, err = httplib.Get(urls[i]).SetTimeout(time.Duration(h.Timeout) * time.Millisecond).Response(); err == nil {
+		if _, err = httplib.Get(urls[i]).SetTimeout(time.Duration(h.Timeout) * time.Millisecond).Bytes(); err == nil {
 			return
 		}
 	}
