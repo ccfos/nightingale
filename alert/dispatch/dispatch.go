@@ -141,6 +141,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	if e.blockEventNotify(rule, event) {
+		logger.Infof("block event notify: rule_id:%d event:%+v", rule.Id, event)
 		return
 	}
 
@@ -191,8 +192,8 @@ func (e *Dispatch) blockEventNotify(rule *models.AlertRule, event *models.AlertC
 		}
 	}
 
-	// 规则配置是否改变
-	if event.RuleHash != rule.Hash() {
+	// 恢复通知，检测规则配置是否改变
+	if event.IsRecovered && event.RuleHash != rule.Hash() {
 		return true
 	}
 
