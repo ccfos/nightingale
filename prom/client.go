@@ -3,7 +3,6 @@ package prom
 import (
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 )
@@ -60,29 +59,6 @@ func (pc *PromClientMap) IsNil(datasourceId int64) bool {
 	}
 
 	return c == nil
-}
-
-// Hit 根据当前有效的 datasourceId 和规则的 datasourceId 配置计算有效的cluster列表
-func (pc *PromClientMap) Hit(datasourceIds []int64) []int64 {
-	pc.RLock()
-	defer pc.RUnlock()
-	dsIds := make([]int64, 0, len(pc.ReaderClients))
-	if len(datasourceIds) == 1 && datasourceIds[0] == models.DatasourceIdAll {
-		for c := range pc.ReaderClients {
-			dsIds = append(dsIds, c)
-		}
-		return dsIds
-	}
-
-	for dsId := range pc.ReaderClients {
-		for _, id := range datasourceIds {
-			if id == dsId {
-				dsIds = append(dsIds, id)
-				continue
-			}
-		}
-	}
-	return dsIds
 }
 
 func (pc *PromClientMap) Reset() {

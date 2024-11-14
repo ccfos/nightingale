@@ -208,7 +208,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange token: %s", err)
 	}
-	userInfo, err := s.getUserInfo(s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
+	userInfo, err := s.getUserInfo(s.Config.ClientID, s.UserInfoAddr, oauth2Token.AccessToken, s.TranTokenMethod)
 	if err != nil {
 		logger.Errorf("failed to get user info: %s", err)
 		return nil, fmt.Errorf("failed to get user info: %s", err)
@@ -223,10 +223,10 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	}, nil
 }
 
-func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
+func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, TranTokenMethod string) ([]byte, error) {
 	var req *http.Request
 	if TranTokenMethod == "formdata" {
-		body := bytes.NewBuffer([]byte("access_token=" + accessToken))
+		body := bytes.NewBuffer([]byte("access_token=" + accessToken + "&client_id=" + ClientId))
 		r, err := http.NewRequest("POST", UserInfoAddr, body)
 		if err != nil {
 			return nil, err
@@ -234,7 +234,7 @@ func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMetho
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		req = r
 	} else if TranTokenMethod == "querystring" {
-		r, err := http.NewRequest("GET", UserInfoAddr+"?access_token="+accessToken, nil)
+		r, err := http.NewRequest("GET", UserInfoAddr+"?access_token="+accessToken+"&client_id="+ClientId, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -246,6 +246,7 @@ func (s *SsoClient) getUserInfo(UserInfoAddr, accessToken string, TranTokenMetho
 			return nil, err
 		}
 		r.Header.Add("Authorization", "Bearer "+accessToken)
+		r.Header.Add("client_id", ClientId)
 		req = r
 	}
 

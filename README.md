@@ -38,6 +38,7 @@
 - 👉 [文档中心](https://flashcat.cloud/docs/) | [下载中心](https://flashcat.cloud/download/nightingale/)
 - ❤️ [报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=&projects=&template=question.yml)
 - ℹ️ 为了提供更快速的访问体验，上述文档和下载站点托管于 [FlashcatCloud](https://flashcat.cloud)
+- 💡 前后端代码分离，前端代码仓库：[https://github.com/n9e/fe](https://github.com/n9e/fe)
 
 ## 功能特点
 
@@ -90,7 +91,7 @@
 - 推荐搜索关注夜莺公众号，第一时间获取社区动态：`夜莺监控Nightingale`
 - 日常问题交流：
   - QQ群：730841964
-  - [加入微信群](https://download.flashcat.cloud/ulric/20241008153952.png)，如果二维码过期了，可以联系我（我的微信：`picobyte`）拉群，备注： `夜莺互助群`
+  - [加入微信群](https://download.flashcat.cloud/ulric/20241022141621.png)，如果二维码过期了，可以联系我（我的微信：`picobyte`）拉群，备注： `夜莺互助群`
 
 ## 广受关注
 [![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)

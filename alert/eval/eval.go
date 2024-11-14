@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -48,7 +49,7 @@ type AlertRuleWorker struct {
 
 const (
 	GET_RULE_CONFIG = "get_rule_config"
-	GET_PROCESSOR   = "get_processor"
+	GET_Processor   = "get_Processor"
 	CHECK_QUERY     = "check_query_config"
 	GET_CLIENT      = "get_client"
 	QUERY_DATA      = "query_data"
@@ -62,12 +63,12 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		DatasourceId: datasourceId,
 		Quit:         make(chan struct{}),
 		Rule:         rule,
-		Processor:    processor,
+		Processor:    Processor,
 
 		PromClients:             promClients,
 		TdengineClients:         tdengineClients,
@@ -129,18 +130,26 @@ func (arw *AlertRuleWorker) Eval() {
 	arw.HostAndDeviceIdentCache.Clear()
 
 	typ := cachedRule.GetRuleType()
-	var anomalyPoints []common.AnomalyPoint
-	var recoverPoints []common.AnomalyPoint
+	var (
+		anomalyPoints []common.AnomalyPoint
+		recoverPoints []common.AnomalyPoint
+		err           error
+	)
 	switch typ {
 	case models.PROMETHEUS:
-		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints, err = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	case models.HOST:
-		anomalyPoints = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints, err = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
 	case models.TDENGINE:
-		anomalyPoints, recoverPoints = arw.GetTdengineAnomalyPoint(cachedRule, arw.Processor.DatasourceId())
+		anomalyPoints, recoverPoints, err = arw.GetTdengineAnomalyPoint(cachedRule, arw.Processor.DatasourceId())
 	case models.LOKI:
-		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints, err = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
+		return
+	}
+
+	if err != nil {
+		logger.Errorf("rule_eval:%s get anomaly point err:%s", arw.Key(), err.Error())
 		return
 	}
 
@@ -173,13 +182,13 @@ func (arw *AlertRuleWorker) Eval() {
 		now := time.Now().Unix()
 		for _, point := range pointsMap {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.Processor.RecoverSingle(process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
+			arw.Processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
 		}
 	} else {
 		now := time.Now().Unix()
 		for _, point := range recoverPoints {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.Processor.RecoverSingle(process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
+			arw.Processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
 		}
 	}
 
@@ -191,7 +200,7 @@ func (arw *AlertRuleWorker) Stop() {
 	close(arw.Quit)
 }
 
-func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.AnomalyPoint {
+func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {
 	var lst []common.AnomalyPoint
 	var severity int
 
@@ -199,13 +208,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return lst
+		return lst, err
 	}
 
 	if rule == nil {
-		logger.Errorf("rule_eval:%s rule_config:%s, error:Rule is nil", arw.Key(), ruleConfig)
+		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return lst
+		return lst, errors.New("rule is nil")
 	}
 
 	arw.Inhibit = rule.Inhibit
@@ -243,7 +252,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 				logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
 				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA).Inc()
-				continue
+				return lst, err
 			}
 
 			if len(warnings) > 0 {
@@ -261,7 +270,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 			lst = append(lst, points...)
 		}
 	}
-	return lst
+	return lst, nil
 }
 
 type sample struct {
@@ -560,7 +569,7 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 	}
 }
 
-func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]common.AnomalyPoint, []common.AnomalyPoint) {
+func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]common.AnomalyPoint, []common.AnomalyPoint, error) {
 	// 获取查询和规则判断条件
 	points := []common.AnomalyPoint{}
 	recoverPoints := []common.AnomalyPoint{}
@@ -568,7 +577,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	if ruleConfig == "" {
 		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return points, recoverPoints
+		return points, recoverPoints, errors.New("rule config is nil")
 	}
 
 	var ruleQuery models.RuleQuery
@@ -577,7 +586,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId())).Inc()
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return points, recoverPoints
+		return points, recoverPoints, err
 	}
 
 	arw.Inhibit = ruleQuery.Inhibit
@@ -604,7 +613,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
 				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA).Inc()
-				continue
+				return points, recoverPoints, err
 			}
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
@@ -621,10 +630,10 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		points, recoverPoints = GetAnomalyPoint(rule.Id, ruleQuery, seriesTagIndexes, seriesStore)
 	}
 
-	return points, recoverPoints
+	return points, recoverPoints, nil
 }
 
-func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.AnomalyPoint {
+func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {
 	var lst []common.AnomalyPoint
 	var severity int
 
@@ -632,13 +641,13 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return lst
+		return lst, err
 	}
 
 	if rule == nil {
-		logger.Errorf("rule_eval:%s rule_config:%s, error:Rule is nil", arw.Key(), ruleConfig)
+		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG).Inc()
-		return lst
+		return lst, errors.New("rule is nil")
 	}
 
 	arw.Inhibit = rule.Inhibit
@@ -686,7 +695,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			targets := arw.Processor.TargetCache.Gets(missTargets)
 			for _, target := range targets {
 				m := make(map[string]string)
-				target.FillTagsMap()
 				for k, v := range target.TagsMap {
 					m[k] = v
 				}
@@ -733,7 +741,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 				m := make(map[string]string)
 				target, exists := arw.Processor.TargetCache.Get(host)
 				if exists {
-					target.FillTagsMap()
 					for k, v := range target.TagsMap {
 						m[k] = v
 					}
@@ -765,7 +772,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 			}
 		}
 	}
-	return lst
+	return lst, nil
 }
 
 func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
@@ -829,23 +836,37 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 			}
 
 			point := common.AnomalyPoint{
-				Key:       sample.MetricName(),
-				Labels:    sample.Metric,
-				Timestamp: int64(ts),
-				Value:     value,
-				Values:    values,
-				Severity:  trigger.Severity,
-				Triggered: isTriggered,
-				Query:     fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				Key:           sample.MetricName(),
+				Labels:        sample.Metric,
+				Timestamp:     int64(ts),
+				Value:         value,
+				Values:        values,
+				Severity:      trigger.Severity,
+				Triggered:     isTriggered,
+				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+				RecoverConfig: trigger.RecoverConfig,
 			}
 
 			if sample.Query != "" {
 				point.Query = sample.Query
 			}
-
+			// 恢复条件判断经过讨论是只在表达式模式下支持，表达式模式会通过 isTriggered 判断是告警点还是恢复点
+			// 1. 不设置恢复判断，满足恢复条件产生 recoverPoint 恢复，无数据不产生 anomalyPoint 恢复
+			// 2. 设置满足条件才恢复，仅可通过产生 recoverPoint 恢复，不能通过不产生 anomalyPoint 恢复
+			// 3. 设置无数据不恢复，仅可通过产生 recoverPoint 恢复，不产生 anomalyPoint 恢复
 			if isTriggered {
 				points = append(points, point)
 			} else {
+				switch trigger.RecoverConfig.JudgeType {
+				case models.Origin:
+					// 对齐原实现 do nothing
+				case models.RecoverOnCondition:
+					// 额外判断恢复条件，满足才恢复
+					fulfill := parser.Calc(trigger.RecoverConfig.RecoverExp, m)
+					if !fulfill {
+						continue
+					}
+				}
 				recoverPoints = append(recoverPoints, point)
 			}
 		}

@@ -114,6 +114,11 @@ func (s *AlertSubscribe) Verify() error {
 		return errors.New("severities is required")
 	}
 
+	if s.UserGroupIds != "" && s.NewChannels == "" {
+		// 如果指定了用户组，那么新告警的通知渠道必须指定，否则容易出现告警规则中没有指定通知渠道，导致订阅通知时，没有通知渠道
+		return errors.New("new_channels is required")
+	}
+
 	ugids := strings.Fields(s.UserGroupIds)
 	for i := 0; i < len(ugids); i++ {
 		if _, err := strconv.ParseInt(ugids[i], 10, 64); err != nil {

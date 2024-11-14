@@ -80,7 +80,7 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 	var dataResp DataResponse[T]
 	err = json.Unmarshal(body, &dataResp)
 	if err != nil {
-		return dat, fmt.Errorf("failed to decode response: %w", err)
+		return dat, fmt.Errorf("failed to decode:%s response: %w", string(body), err)
 	}
 
 	if dataResp.Err != "" {

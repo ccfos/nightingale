@@ -77,6 +77,11 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
+
+			if len(ars[i].DatasourceQueries) != 0 {
+				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
+			}
+
 			rids = append(rids, ars[i].Id)
 			names = append(names, ars[i].UpdateBy)
 		}
@@ -123,6 +128,10 @@ func (rt *Router) alertRulesGetByService(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
+
+			if len(ars[i].DatasourceQueries) != 0 {
+				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
+			}
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -157,6 +166,14 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
+	for i := range lst {
+		if len(lst[i].DatasourceQueries) == 0 {
+			lst[i].DatasourceQueries = []models.DatasourceQuery{
+				models.DataSourceQueryAll,
+			}
+		}
+	}
+
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
@@ -164,9 +181,9 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 }
 
 type promRuleForm struct {
-	Payload       string  `json:"payload" binding:"required"`
-	DatasourceIds []int64 `json:"datasource_ids" binding:"required"`
-	Disabled      int     `json:"disabled" binding:"gte=0,lte=1"`
+	Payload           string                   `json:"payload" binding:"required"`
+	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" binding:"required"`
+	Disabled          int                      `json:"disabled" binding:"gte=0,lte=1"`
 }
 
 func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
@@ -185,7 +202,7 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
 	}
 
-	lst := models.DealPromGroup(pr.Groups, f.DatasourceIds, f.Disabled)
+	lst := models.DealPromGroup(pr.Groups, f.DatasourceQueries, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
@@ -398,6 +415,16 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			}
 		}
 
+		if f.Action == "datasource_change" {
+			// 修改数据源
+			if datasourceQueries, has := f.Fields["datasource_queries"]; has {
+				bytes, err := json.Marshal(datasourceQueries)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"datasource_queries": bytes}))
+				continue
+			}
+		}
+
 		for k, v := range f.Fields {
 			ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
 		}
@@ -415,6 +442,10 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	if ar == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
 		return
+	}
+
+	if len(ar.DatasourceQueries) != 0 {
+		ar.DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ar.Cate, ar.DatasourceQueries)
 	}
 
 	err = ar.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
@@ -623,7 +654,7 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 			newRule.CreateAt = now
 			newRule.RuleConfig = alertRules[i].RuleConfig
 
-			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.DatasourceIdsJson, newRule.Name)
+			exist, err := models.AlertRuleExists(rt.Ctx, 0, newRule.GroupId, newRule.Name)
 			if err != nil {
 				errMsg[f.IdentList[j]] = err.Error()
 				continue

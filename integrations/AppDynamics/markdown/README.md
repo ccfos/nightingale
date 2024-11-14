@@ -1,6 +1,6 @@
-## Appdynamics
+## AppDynamics
 
-Appdynamics 采集插件， 采集 Appdynamics 数据
+AppDynamics 采集插件， 采集 AppDynamics 数据
 
 ## Configuration
 
