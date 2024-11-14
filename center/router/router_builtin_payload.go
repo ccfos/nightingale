@@ -144,6 +144,12 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				dashboard.UUID = time.Now().UnixNano()
 			}
 
+			contentBytes, err := json.Marshal(dashboard)
+			if err != nil {
+				reterr[dashboard.Name] = err.Error()
+				continue
+			}
+
 			bp := models.BuiltinPayload{
 				Type:        lst[i].Type,
 				ComponentID: lst[i].ComponentID,
@@ -151,7 +157,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Name:        dashboard.Name,
 				Tags:        dashboard.Tags,
 				UUID:        dashboard.UUID,
-				Content:     lst[i].Content,
+				Content:     string(contentBytes),
 				CreatedBy:   username,
 				UpdatedBy:   username,
 			}
