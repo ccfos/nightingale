@@ -48,10 +48,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, stats)
 	targetCache := memsto.NewTargetCache(ctx, stats, nil)
+	configCvalCache := memsto.NewCvalCache(ctx, stats)
 
 	writers := writer.NewWriters(config.Pushgw)
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
 

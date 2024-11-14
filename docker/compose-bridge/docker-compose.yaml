@@ -1,5 +1,3 @@
-version: "3.7"
-
 networks:
   nightingale:
     driver: bridge
