@@ -196,13 +196,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 	var rule *models.PromRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return lst, err
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return lst, errors.New("rule is nil")
 	}
 
@@ -215,13 +215,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 		promql := strings.TrimSpace(query.PromQl)
 		if promql == "" {
 			logger.Warningf("rule_eval:%s promql is blank", arw.Key())
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), CHECK_QUERY, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 			continue
 		}
 
 		if arw.promClients.IsNil(arw.datasourceId) {
 			logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 			continue
 		}
 
@@ -233,14 +233,14 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 		if err != nil {
 			logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
 			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 			return lst, err
 		}
 
 		if len(warnings) > 0 {
 			logger.Errorf("rule_eval:%s promql:%s, warnings:%v", arw.Key(), promql, warnings)
 			arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+			arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		}
 
 		logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
@@ -261,7 +261,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	ruleConfig := strings.TrimSpace(rule.RuleConfig)
 	if ruleConfig == "" {
 		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return points, recoverPoints, errors.New("rule config is nil")
 	}
 
@@ -271,7 +271,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
 		// todo 这一行是不是多余了？
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId())).Inc()
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return points, recoverPoints, err
 	}
 
@@ -289,7 +289,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			if cli == nil {
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				continue
 			}
 
@@ -298,7 +298,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				return points, recoverPoints, err
 			}
 			//  此条日志很重要，是告警判断的现场值
@@ -307,7 +307,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			ref, err := GetQueryRef(query)
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query ref error: %v query:%+v", rule.Id, err, query)
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				continue
 			}
 			seriesTagIndexes[ref] = seriesTagIndex
@@ -326,13 +326,13 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 	var rule *models.HostRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return lst, err
 	}
 
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return lst, errors.New("rule is nil")
 	}
 
@@ -354,7 +354,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				missEngineIdents, exists = arw.processor.TargetsOfAlertRuleCache.Get("", arw.rule.Id)
 				if !exists {
 					logger.Debugf("rule_eval:%s targets not found engineName:%s", arw.Key(), arw.processor.EngineName)
-					arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+					arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				}
 			}
 			idents = append(idents, missEngineIdents...)
@@ -362,7 +362,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			engineIdents, exists = arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
 			if !exists {
 				logger.Warningf("rule_eval:%s targets not found engineName:%s", arw.Key(), arw.processor.EngineName)
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 			}
 			idents = append(idents, engineIdents...)
 
@@ -392,7 +392,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
 			if !exists {
 				logger.Warningf("rule_eval:%s targets not found", arw.Key())
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				continue
 			}
 
@@ -440,7 +440,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
 			if !exists {
 				logger.Warningf("rule_eval:%s targets not found", arw.Key())
-				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetByBusiGroupId(arw.rule.GroupId).Name, fmt.Sprintf("%v", arw.rule.Id)).Inc()
+				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), QUERY_DATA, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 				continue
 			}
 
