@@ -715,10 +715,8 @@ func (ar *AlertRule) DB2FE() error {
 	err := ar.FillDatasourceIds()
 
 	// 兼容旧逻辑填充 cron_pattern
-	if ar.CronPattern == "" {
-		if ar.PromEvalInterval != 0 {
-			ar.CronPattern = fmt.Sprintf("@every %ds", ar.PromEvalInterval)
-		}
+	if ar.CronPattern == "" && ar.PromEvalInterval != 0 {
+		ar.CronPattern = fmt.Sprintf("@every %ds", ar.PromEvalInterval)
 	}
 	return err
 }
