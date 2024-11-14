@@ -182,13 +182,13 @@ func (arw *AlertRuleWorker) Eval() {
 		now := time.Now().Unix()
 		for _, point := range pointsMap {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.Processor.RecoverSingle(process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
+			arw.Processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
 		}
 	} else {
 		now := time.Now().Unix()
 		for _, point := range recoverPoints {
 			str := fmt.Sprintf("%v", point.Value)
-			arw.Processor.RecoverSingle(process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
+			arw.Processor.RecoverSingle(true, process.Hash(cachedRule.Id, arw.Processor.DatasourceId(), point), now, &str)
 		}
 	}
 
@@ -1131,4 +1131,3 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 		combine(paramKeys, paraMap, index+1, current, result)
 	}
 }
-
