@@ -112,15 +112,16 @@ type Tpl struct {
 }
 
 type RuleConfig struct {
-	Version            string                 `json:"version,omitempty"`
-	EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config,omitempty"`
-	TaskTpls           []*Tpl                 `json:"task_tpls,omitempty"`
-	Queries            interface{}            `json:"queries,omitempty"`
-	Triggers           []Trigger              `json:"triggers,omitempty"`
-	Inhibit            bool                   `json:"inhibit,omitempty"`
-	PromQl             string                 `json:"prom_ql,omitempty"`
-	Severity           int                    `json:"severity,omitempty"`
-	AlgoParams         interface{}            `json:"algo_params,omitempty"`
+	Version               string                 `json:"version,omitempty"`
+	EventRelabelConfig    []*pconf.RelabelConfig `json:"event_relabel_config,omitempty"`
+	TaskTpls              []*Tpl                 `json:"task_tpls,omitempty"`
+	Queries               interface{}            `json:"queries,omitempty"`
+	Triggers              []Trigger              `json:"triggers,omitempty"`
+	Inhibit               bool                   `json:"inhibit,omitempty"`
+	PromQl                string                 `json:"prom_ql,omitempty"`
+	Severity              int                    `json:"severity,omitempty"`
+	AlgoParams            interface{}            `json:"algo_params,omitempty"`
+	OverrideGlobalWebhook bool                   `json:"override_global_webhook,omitempty"`
 }
 
 type PromRuleConfig struct {
