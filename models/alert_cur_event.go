@@ -365,6 +365,15 @@ func (e *AlertCurEvent) DB2Mem() {
 	}
 }
 
+func (e *AlertCurEvent) OverrideGlobalWebhook() bool {
+	var rc RuleConfig
+	if err := json.Unmarshal([]byte(e.RuleConfig), &rc); err != nil {
+		logger.Warningf("failed to unmarshal rule config: %v", err)
+		return false
+	}
+	return rc.OverrideGlobalWebhook
+}
+
 func FillRuleConfigTplName(ctx *ctx.Context, ruleConfig string) (interface{}, bool) {
 	var config RuleConfig
 	err := json.Unmarshal([]byte(ruleConfig), &config)

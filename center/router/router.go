@@ -184,6 +184,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.datasourceBriefs)
+			pages.POST("/datasource/query", rt.datasourceQuery)
 
 			pages.POST("/ds-query", rt.QueryData)
 			pages.POST("/logs-query", rt.QueryLog)
@@ -197,6 +198,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
 			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
+			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
 			pages.POST("/ds-query", rt.auth(), rt.QueryData)
 			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
