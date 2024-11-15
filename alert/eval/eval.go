@@ -269,8 +269,6 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	err := json.Unmarshal([]byte(ruleConfig), &ruleQuery)
 	if err != nil {
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
-		// todo 这一行是不是多余了？
-		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId())).Inc()
 		arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_RULE_CONFIG, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()
 		return points, recoverPoints, err
 	}
