@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -104,14 +103,13 @@ func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
 
 func (h HTTP) ParseUrl() (target *url.URL, err error) {
 	urls := h.GetUrls()
-	for i := 0; i < len(urls); i++ {
-		if target, err = url.Parse(urls[i]); err != nil {
-			continue
-		}
+	if len(urls) == 0 {
+		return nil, errors.New("no urls")
+	}
 
-		if _, err = httplib.Get(urls[i]).SetTimeout(time.Duration(h.Timeout) * time.Millisecond).Bytes(); err == nil {
-			return
-		}
+	target, err = url.Parse(urls[0])
+	if err != nil {
+		return nil, err
 	}
 	return
 }
