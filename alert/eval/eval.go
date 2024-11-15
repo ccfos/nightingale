@@ -477,7 +477,6 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 	}
 
 	unitMap := make(map[string]string)
-	valuesUnitMap := make(map[string]unit.FormattedValue)
 	for _, query := range ruleQuery.Queries {
 		ref, unit, err := GetQueryRefAndUnit(query)
 		if err != nil {
@@ -491,6 +490,8 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 		seriesTagIndex := ProcessJoins(ruleId, trigger, seriesTagIndexes, seriesStore)
 
 		for _, seriesHash := range seriesTagIndex {
+			valuesUnitMap := make(map[string]unit.FormattedValue)
+
 			sort.Slice(seriesHash, func(i, j int) bool {
 				return seriesHash[i] < seriesHash[j]
 			})
