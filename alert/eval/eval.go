@@ -290,9 +290,20 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPoints := make(map[string]common.AnomalyPoint)
+	// 统一变量配置格式
+	VarConfigForCalc := models.VarConfigRecursion{
+		ParamVal:        make(map[string]models.ParamQuery),
+		ChildVarConfigs: query.VarConfig.ChildVarConfigs,
+	}
+	for _, p := range query.VarConfig.ParamVal {
+		VarConfigForCalc.ParamVal[p.Name] = models.ParamQuery{
+			ParamType: p.ParamType,
+			Query:     p.Query,
+		}
+	}
 	// 使用一个统一的参数变量顺序
 	var ParamKeys []string
-	for val, valQuery := range query.VarConfig.ParamVal {
+	for val, valQuery := range VarConfigForCalc.ParamVal {
 		if valQuery.ParamType == "threshold" {
 			continue
 		}
@@ -303,14 +314,14 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	})
 	// 广度优先遍历，每个节点先查询无参数变量的 query 得到满足值变量的所有结果，然后判断哪些参数值符合条件
 	queue := list.New()
-	queue.PushBack(query.VarConfig)
+	queue.PushBack(VarConfigForCalc)
 	for queue.Len() != 0 {
 		// curQuery 当前节点的无参数 query，用于时序库查询
 		curQuery := fullQuery
 		// realQuery 当前节点产生异常点的 query，用于告警展示
 		realQuery := query.PromQl
 
-		node := queue.Front().Value.(models.VarConfig)
+		node := queue.Front().Value.(models.VarConfigRecursion)
 		queue.Remove(queue.Front())
 
 		// 取出值变量
@@ -450,7 +461,7 @@ func removeVal(promql string) string {
 }
 
 // 获取参数变量的所有组合
-func (arw *AlertRuleWorker) getParamPermutation(node models.VarConfig, paramKeys []string) (map[string]struct{}, error) {
+func (arw *AlertRuleWorker) getParamPermutation(node models.VarConfigRecursion, paramKeys []string) (map[string]struct{}, error) {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
