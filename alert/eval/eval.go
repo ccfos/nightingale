@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 	"github.com/ccfos/nightingale/v6/pkg/parser"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
@@ -247,8 +248,11 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
 			points[i].Query = promql
-			points[i].Uint = query.Unit
+			points[i].ValuesUnit = map[string]unit.FormattedValue{
+				"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
+			}
 		}
+
 		lst = append(lst, points...)
 	}
 	return lst, nil
@@ -385,7 +389,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = target.Ident
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity, trigger.Unit))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
 			idents, exists := arw.processor.TargetsOfAlertRuleCache.Get(arw.processor.EngineName, arw.rule.Id)
@@ -432,7 +436,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = host
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity, trigger.Unit))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":
 			t := now - int64(trigger.Duration)
@@ -453,7 +457,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			logger.Debugf("rule_eval:%s missTargets:%v", arw.Key(), missTargets)
 			pct := float64(len(missTargets)) / float64(len(idents)) * 100
 			if pct >= float64(trigger.Percent) {
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity, trigger.Unit))
+				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
 			}
 		}
 	}
@@ -470,6 +474,16 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 
 	if len(seriesTagIndexes) == 0 {
 		return points, recoverPoints
+	}
+
+	unitMap := make(map[string]string)
+	valuesUnitMap := make(map[string]unit.FormattedValue)
+	for _, query := range ruleQuery.Queries {
+		ref, unit, err := GetQueryRefAndUnit(query)
+		if err != nil {
+			continue
+		}
+		unitMap[ref] = unit
 	}
 
 	for _, trigger := range ruleQuery.Triggers {
@@ -502,6 +516,10 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 					continue
 				}
 
+				if u, exists := unitMap[series.Ref]; exists {
+					valuesUnitMap[series.Ref] = unit.ValueFormatter(u, 2, v)
+				}
+
 				m["$"+series.Ref] = v
 				m["$"+series.Ref+"."+series.MetricName()] = v
 				ts = int64(t)
@@ -530,7 +548,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				Triggered:     isTriggered,
 				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
 				RecoverConfig: trigger.RecoverConfig,
-				Uint:          trigger.Unit,
+				ValuesUnit:    valuesUnitMap,
 			}
 
 			if sample.Query != "" {
@@ -816,4 +834,19 @@ func GetQueryRef(query interface{}) (string, error) {
 	}
 
 	return refField.String(), nil
+}
+
+func GetQueryRefAndUnit(query interface{}) (string, string, error) {
+	type Query struct {
+		Ref  string `json:"ref"`
+		Unit string `json:"unit"`
+	}
+
+	queryMap := Query{}
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return "", "", err
+	}
+	json.Unmarshal(queryBytes, &queryMap)
+	return queryMap.Ref, queryMap.Unit, nil
 }

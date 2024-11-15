@@ -18,7 +18,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
 	"github.com/prometheus/prometheus/prompb"
@@ -205,6 +204,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
 	event.TriggerValues = anomalyPoint.Values
+	event.TriggerValuesJson = models.EventTriggerValues{ValuesWithUnit: anomalyPoint.ValuesUnit}
 	event.TagsJSON = p.tagsArr
 	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
@@ -219,8 +219,6 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
 	event.RuleHash = ruleHash
-	// todo 当前只取了 text，其他信息也可以放进去？
-	event.TriggerValue = unit.ValueFormatter(anomalyPoint.Uint, 2, anomalyPoint.Value).Text
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {

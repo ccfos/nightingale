@@ -239,7 +239,7 @@ func formatPercent(value float64, decimals int, isUnit bool) FormattedValue {
 // formatNone 处理无单位格式化
 func formatNone(value float64, decimals int) FormattedValue {
 	return FormattedValue{
-		Value: roundFloat(value, decimals),
+		Value: value,
 		Unit:  "",
 		Text:  fmt.Sprintf("%.*f", decimals, value),
 		Stat:  value,

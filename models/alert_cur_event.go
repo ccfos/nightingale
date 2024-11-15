@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+	"github.com/ccfos/nightingale/v6/pkg/unit"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -49,6 +50,7 @@ type AlertCurEvent struct {
 	TriggerTime        int64               `json:"trigger_time"`
 	TriggerValue       string              `json:"trigger_value"`
 	TriggerValues      string              `json:"trigger_values" gorm:"-"`
+	TriggerValuesJson  EventTriggerValues  `json:"trigger_values_json" gorm:"-"`
 	Tags               string              `json:"-"`                         // for db
 	TagsJSON           []string            `json:"tags" gorm:"-"`             // for fe
 	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`         // for internal usage
@@ -71,6 +73,10 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
+}
+
+type EventTriggerValues struct {
+	ValuesWithUnit map[string]unit.FormattedValue `json:"values_with_unit"`
 }
 
 func (e *AlertCurEvent) TableName() string {
