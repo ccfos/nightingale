@@ -16,17 +16,17 @@ func TestValueFormatter(t *testing.T) {
 		// 字节测试
 		{
 			name:     "IEC字节测试",
-			unit:     "bytes(ICE)",
+			unit:     "bytes(IEC)",
 			decimals: 2,
 			value:    1024 * 1024,
-			want:     FormattedValue{Value: 1, Unit: "MB", Text: "1.00MB", Stat: 1024 * 1024},
+			want:     FormattedValue{Value: 1, Unit: "Mi", Text: "1.00Mi", Stat: 1024 * 1024},
 		},
 		{
 			name:     "SI字节测试",
 			unit:     "bytes(SI)",
 			decimals: 2,
 			value:    1000 * 1000,
-			want:     FormattedValue{Value: 1, Unit: "MB", Text: "1.00MB", Stat: 1000 * 1000},
+			want:     FormattedValue{Value: 1, Unit: "M", Text: "1.00M", Stat: 1000 * 1000},
 		},
 		// 时间单位测试
 		{
@@ -114,6 +114,129 @@ func TestValueFormatter(t *testing.T) {
 				Unit:  "",
 				Text:  "2023-05-08 12:00:00",
 				Stat:  1683518400000,
+			},
+		},
+		// 补充时间单位测试
+		{
+			name:     "纳秒测试",
+			unit:     "ns",
+			decimals: 2,
+			value:    1500,
+			want: FormattedValue{
+				Value: 1.50,
+				Unit:  "µs",
+				Text:  "1.50 µs",
+				Stat:  1500,
+			},
+		},
+		{
+			name:     "微秒测试",
+			unit:     "µs",
+			decimals: 2,
+			value:    1500,
+			want: FormattedValue{
+				Value: 1.50,
+				Unit:  "ms",
+				Text:  "1.50 ms",
+				Stat:  1500,
+			},
+		},
+		{
+			name:     "小时测试",
+			unit:     "h",
+			decimals: 1,
+			value:    2.5,
+			want: FormattedValue{
+				Value: 2.5,
+				Unit:  "h",
+				Text:  "2.5 h",
+				Stat:  2.5,
+			},
+		},
+		{
+			name:     "天数测试",
+			unit:     "d",
+			decimals: 1,
+			value:    1.5,
+			want: FormattedValue{
+				Value: 1.5,
+				Unit:  "d",
+				Text:  "1.5 d",
+				Stat:  1.5,
+			},
+		},
+		{
+			name:     "周数测试",
+			unit:     "w",
+			decimals: 1,
+			value:    1.5,
+			want: FormattedValue{
+				Value: 1.5,
+				Unit:  "w",
+				Text:  "1.5 w",
+				Stat:  1.5,
+			},
+		},
+		// 补充字节速率测试
+		{
+			name:     "IEC字节每秒",
+			unit:     "bytesSecIEC",
+			decimals: 2,
+			value:    1024 * 1024,
+			want: FormattedValue{
+				Value: 1,
+				Unit:  "MiB/s",
+				Text:  "1.00MiB/s",
+				Stat:  1024 * 1024,
+			},
+		},
+		{
+			name:     "IEC比特每秒",
+			unit:     "bitsSecIEC",
+			decimals: 2,
+			value:    1024 * 1024,
+			want: FormattedValue{
+				Value: 1,
+				Unit:  "Mib/s",
+				Text:  "1.00Mib/s",
+				Stat:  1024 * 1024,
+			},
+		},
+		{
+			name:     "SI字节每秒",
+			unit:     "bytesSecSI",
+			decimals: 2,
+			value:    1000 * 1000,
+			want: FormattedValue{
+				Value: 1,
+				Unit:  "MB/s",
+				Text:  "1.00MB/s",
+				Stat:  1000 * 1000,
+			},
+		},
+		{
+			name:     "SI比特每秒",
+			unit:     "bitsSecSI",
+			decimals: 2,
+			value:    1000 * 1000,
+			want: FormattedValue{
+				Value: 1,
+				Unit:  "Mb/s",
+				Text:  "1.00Mb/s",
+				Stat:  1000 * 1000,
+			},
+		},
+		// none 类型测试
+		{
+			name:     "无单位测试",
+			unit:     "none",
+			decimals: 2,
+			value:    1234.5678,
+			want: FormattedValue{
+				Value: 1234.5678,
+				Unit:  "",
+				Text:  "1234.57",
+				Stat:  1234.5678,
 			},
 		},
 	}

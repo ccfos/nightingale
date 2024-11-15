@@ -44,14 +44,14 @@ var (
 		IecExp int
 	}{
 		{0, "", "", 1},
-		{3, "k", "K", 10},
-		{6, "M", "M", 20},
-		{9, "G", "G", 30},
-		{12, "T", "T", 40},
-		{15, "P", "P", 50},
-		{18, "E", "E", 60},
-		{21, "Z", "Z", 70},
-		{24, "Y", "Y", 80},
+		{3, "k", "Ki", 10},
+		{6, "M", "Mi", 20},
+		{9, "G", "Gi", 30},
+		{12, "T", "Ti", 40},
+		{15, "P", "Pi", 50},
+		{18, "E", "Ei", 60},
+		{21, "Z", "Zi", 70},
+		{24, "Y", "Yi", 80},
 	}
 
 	baseUtilMap = map[string]string{
@@ -73,26 +73,74 @@ func ValueFormatter(unit string, decimals int, value float64) FormattedValue {
 
 	// 处理时间单位
 	switch unit {
-	case "ns", "µs", "ms", "s", "min", "h", "d", "w":
+	case "none":
+		return formatNone(value, decimals)
+	case "ns", "nanoseconds":
+		return formatDuration(value, "ns", decimals)
+	case "µs", "microseconds":
+		return formatDuration(value, "µs", decimals)
+	case "ms", "milliseconds":
+		return formatDuration(value, "ms", decimals)
+	case "s", "seconds":
+		return formatDuration(value, "s", decimals)
+	case "min", "h", "d", "w":
 		return formatDuration(value, unit, decimals)
 	case "percent":
 		return formatPercent(value, decimals, false)
 	case "percentUnit":
 		return formatPercent(value, decimals, true)
-	case "none":
-		return formatNone(value, decimals)
-	case "bytes(ICE)", "bits(ICE)", "bytes", "bits":
+	case "bytesIEC", "bytes(IEC)", "bitsIEC", "bits(IEC)":
+		base := unit
+		base = strings.TrimSuffix(base, "(IEC)")
+		base = strings.TrimSuffix(base, "IEC")
+		base = strings.TrimSuffix(base, "s")
 		opts := FormatOptions{
 			Type:     "iec",
-			Base:     strings.TrimSuffix(unit, "(ICE)"),
+			Base:     base,
 			Decimals: decimals,
 		}
 		return formatBytes(value, opts)
-	case "default", "sishort", "bytes(SI)", "bits(SI)":
+	case "bytesSI", "bytes(SI)", "bitsSI", "bits(SI)", "default", "sishort":
+		base := unit
+		base = strings.TrimSuffix(base, "(SI)")
+		base = strings.TrimSuffix(base, "SI")
+		base = strings.TrimSuffix(base, "s")
 		opts := FormatOptions{
 			Type:     "si",
-			Base:     strings.TrimSuffix(unit, "(SI)"),
+			Base:     base,
 			Decimals: decimals,
+		}
+		return formatBytes(value, opts)
+	case "bytesSecIEC":
+		opts := FormatOptions{
+			Type:     "iec",
+			Base:     "bytes",
+			Decimals: decimals,
+			Postfix:  "/s",
+		}
+		return formatBytes(value, opts)
+	case "bitsSecIEC":
+		opts := FormatOptions{
+			Type:     "iec",
+			Base:     "bits",
+			Decimals: decimals,
+			Postfix:  "/s",
+		}
+		return formatBytes(value, opts)
+	case "bytesSecSI":
+		opts := FormatOptions{
+			Type:     "si",
+			Base:     "bytes",
+			Decimals: decimals,
+			Postfix:  "/s",
+		}
+		return formatBytes(value, opts)
+	case "bitsSecSI":
+		opts := FormatOptions{
+			Type:     "si",
+			Base:     "bits",
+			Decimals: decimals,
+			Postfix:  "/s",
 		}
 		return formatBytes(value, opts)
 	case "datetimeSeconds", "datetimeMilliseconds":
