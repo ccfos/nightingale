@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 	"github.com/ccfos/nightingale/v6/pkg/parser"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
@@ -247,7 +248,11 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 		for i := 0; i < len(points); i++ {
 			points[i].Severity = query.Severity
 			points[i].Query = promql
+			points[i].ValuesUnit = map[string]unit.FormattedValue{
+				"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
+			}
 		}
+
 		lst = append(lst, points...)
 	}
 	return lst, nil
@@ -471,11 +476,22 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 		return points, recoverPoints
 	}
 
+	unitMap := make(map[string]string)
+	for _, query := range ruleQuery.Queries {
+		ref, unit, err := GetQueryRefAndUnit(query)
+		if err != nil {
+			continue
+		}
+		unitMap[ref] = unit
+	}
+
 	for _, trigger := range ruleQuery.Triggers {
 		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
 		seriesTagIndex := ProcessJoins(ruleId, trigger, seriesTagIndexes, seriesStore)
 
 		for _, seriesHash := range seriesTagIndex {
+			valuesUnitMap := make(map[string]unit.FormattedValue)
+
 			sort.Slice(seriesHash, func(i, j int) bool {
 				return seriesHash[i] < seriesHash[j]
 			})
@@ -499,6 +515,10 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				if !strings.Contains(trigger.Exp, "$"+series.Ref) {
 					// 表达式中不包含该变量
 					continue
+				}
+
+				if u, exists := unitMap[series.Ref]; exists {
+					valuesUnitMap[series.Ref] = unit.ValueFormatter(u, 2, v)
 				}
 
 				m["$"+series.Ref] = v
@@ -529,6 +549,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				Triggered:     isTriggered,
 				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
 				RecoverConfig: trigger.RecoverConfig,
+				ValuesUnit:    valuesUnitMap,
 			}
 
 			if sample.Query != "" {
@@ -814,4 +835,19 @@ func GetQueryRef(query interface{}) (string, error) {
 	}
 
 	return refField.String(), nil
+}
+
+func GetQueryRefAndUnit(query interface{}) (string, string, error) {
+	type Query struct {
+		Ref  string `json:"ref"`
+		Unit string `json:"unit"`
+	}
+
+	queryMap := Query{}
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return "", "", err
+	}
+	json.Unmarshal(queryBytes, &queryMap)
+	return queryMap.Ref, queryMap.Unit, nil
 }

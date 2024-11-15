@@ -155,6 +155,7 @@ type PromQuery struct {
 	PromQl        string        `json:"prom_ql"`
 	Severity      int           `json:"severity"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
+	Unit          string        `json:"unit"`
 }
 
 type HostTrigger struct {

@@ -204,6 +204,7 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
 	event.TriggerValues = anomalyPoint.Values
+	event.TriggerValuesJson = models.EventTriggerValues{ValuesWithUnit: anomalyPoint.ValuesUnit}
 	event.TagsJSON = p.tagsArr
 	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
