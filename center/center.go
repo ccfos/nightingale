@@ -121,7 +121,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	go func() {
-		if models.CanMigrateBg(ctx) {
+		if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
 			models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
 		}
 	}()

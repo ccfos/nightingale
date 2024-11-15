@@ -141,6 +141,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	if e.blockEventNotify(rule, event) {
+		logger.Infof("block event notify: rule_id:%d event:%+v", rule.Id, event)
 		return
 	}
 
@@ -191,8 +192,8 @@ func (e *Dispatch) blockEventNotify(rule *models.AlertRule, event *models.AlertC
 		}
 	}
 
-	// 规则配置是否改变
-	if event.RuleHash != rule.Hash() {
+	// 恢复通知，检测规则配置是否改变
+	if event.IsRecovered && event.RuleHash != rule.Hash() {
 		return true
 	}
 
@@ -290,10 +291,12 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	e.SendCallbacks(rule, notifyTarget, event)
 
 	// handle global webhooks
-	if e.alerting.WebhookBatchSend {
-		sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
-	} else {
-		sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+	if !event.OverrideGlobalWebhook() {
+		if e.alerting.WebhookBatchSend {
+			sender.BatchSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+		} else {
+			sender.SingleSendWebhooks(e.ctx, notifyTarget.ToWebhookList(), event, e.Astats)
+		}
 	}
 
 	// handle plugin call
@@ -307,10 +310,10 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 }
 
 func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTarget, event *models.AlertCurEvent) {
-
 	uids := notifyTarget.ToUidList()
 	urls := notifyTarget.ToCallbackList()
 	whMap := notifyTarget.ToWebhookMap()
+	ogw := event.OverrideGlobalWebhook()
 	for _, urlStr := range urls {
 		if len(urlStr) == 0 {
 			continue
@@ -318,7 +321,7 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 
 		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
 
-		if wh, ok := whMap[cbCtx.CallBackURL]; ok && wh.Enable {
+		if wh, ok := whMap[cbCtx.CallBackURL]; !ogw && ok && wh.Enable {
 			logger.Debugf("SendCallbacks: webhook[%s] is in global conf.", cbCtx.CallBackURL)
 			continue
 		}

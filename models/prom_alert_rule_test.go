@@ -21,7 +21,7 @@ func TestConvertAlert(t *testing.T) {
 		t.Errorf("Failed to Unmarshal, err: %s", err)
 	}
 	t.Logf("jobMissing: %+v", jobMissing[0])
-	convJobMissing := models.ConvertAlert(jobMissing[0], "30s", []int64{1}, 0)
+	convJobMissing := models.ConvertAlert(jobMissing[0], "30s", []models.DatasourceQuery{}, 0)
 	if convJobMissing.PromEvalInterval != 30 {
 		t.Errorf("PromEvalInterval is expected to be 30, but got %d",
 			convJobMissing.PromEvalInterval)
@@ -45,7 +45,7 @@ func TestConvertAlert(t *testing.T) {
       description: "Prometheus rule evaluation took more time than the scheduled interval. It indicates a slower storage backend access or too complex query.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 `), &ruleEvaluationSlow)
 	t.Logf("ruleEvaluationSlow: %+v", ruleEvaluationSlow[0])
-	convRuleEvaluationSlow := models.ConvertAlert(ruleEvaluationSlow[0], "1m", []int64{1}, 0)
+	convRuleEvaluationSlow := models.ConvertAlert(ruleEvaluationSlow[0], "1m", []models.DatasourceQuery{}, 0)
 	if convRuleEvaluationSlow.PromEvalInterval != 60 {
 		t.Errorf("PromEvalInterval is expected to be 60, but got %d",
 			convJobMissing.PromEvalInterval)
@@ -69,7 +69,7 @@ func TestConvertAlert(t *testing.T) {
       description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 `), &targetMissing)
 	t.Logf("targetMissing: %+v", targetMissing[0])
-	convTargetMissing := models.ConvertAlert(targetMissing[0], "1h", []int64{1}, 0)
+	convTargetMissing := models.ConvertAlert(targetMissing[0], "1h", []models.DatasourceQuery{}, 0)
 	if convTargetMissing.PromEvalInterval != 3600 {
 		t.Errorf("PromEvalInterval is expected to be 3600, but got %d",
 			convTargetMissing.PromEvalInterval)

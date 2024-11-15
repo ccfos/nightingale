@@ -1,0 +1,22 @@
+# doris_fe
+[[instances]]
+# 配置 fe metrics 服务地址
+urls = [
+     "http://127.0.0.1:8030/metrics"
+]
+
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+# 指定 fe 服务 group 和 job 标签，这里是仪表盘变量调用，可根据实际需求修改。
+labels = { group = "fe",job = "doris_cluster01"}
+
+# doris_be
+[[instances]]
+# 配置 be metrics 服务地址
+urls = [
+     "http://127.0.0.1:8040/metrics"
+]
+url_label_key = "instance"
+url_label_value = "{{.Host}}"
+# 指定 be 服务 group 和 job 标签，这里是仪表盘变量调用，可根据实际需求修改。
+labels = { group = "be",job = "doris_cluster01"}
