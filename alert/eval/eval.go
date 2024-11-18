@@ -205,6 +205,8 @@ func (arw *AlertRuleWorker) Eval() {
 func (arw *AlertRuleWorker) Stop() {
 	logger.Infof("rule_eval %s stopped", arw.Key())
 	close(arw.quit)
+	c := arw.scheduler.Stop()
+	<-c.Done()
 }
 
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {

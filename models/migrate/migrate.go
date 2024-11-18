@@ -187,7 +187,7 @@ func InsertPermPoints(db *gorm.DB) {
 
 type AlertRule struct {
 	ExtraConfig string `gorm:"type:text;column:extra_config"` // extra config
-	CronPattern string `gorm:"cron_pattern"`
+	CronPattern string `gorm:"type:varchar(64);cron_pattern"`
 }
 
 type AlertSubscribe struct {
