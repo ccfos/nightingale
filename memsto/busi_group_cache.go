@@ -124,3 +124,14 @@ func (c *BusiGroupCacheType) syncBusiGroups() error {
 
 	return nil
 }
+
+func (c *BusiGroupCacheType) GetNameByBusiGroupId(id int64) string {
+	c.RLock()
+	defer c.RUnlock()
+
+	busiGroup := c.ugs[id]
+	if busiGroup == nil {
+		return ""
+	}
+	return busiGroup.Name
+}
