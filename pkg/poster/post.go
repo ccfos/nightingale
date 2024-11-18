@@ -63,6 +63,10 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
 
+	if useProxy(url) {
+		client.Transport = ProxyTransporter
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return dat, fmt.Errorf("failed to fetch from url: %w", err)
@@ -143,6 +147,10 @@ func PostByUrl[T any](url string, cfg conf.CenterApi, v interface{}) (t T, err e
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
 
+	if useProxy(url) {
+		client.Transport = ProxyTransporter
+	}
+
 	req, err := http.NewRequest("POST", url, bf)
 	if err != nil {
 		return t, fmt.Errorf("failed to create request %q: %w", url, err)
@@ -187,7 +195,7 @@ var ProxyTransporter = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 }
 
-func ussProxy(url string) bool {
+func useProxy(url string) bool {
 	// N9E_PROXY_URL=oapi.dingtalk.com,feishu.com
 	patterns := os.Getenv("N9E_PROXY_URL")
 	if patterns != "" {
@@ -220,7 +228,7 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 		Timeout: timeout,
 	}
 
-	if ussProxy(url) {
+	if useProxy(url) {
 		client.Transport = ProxyTransporter
 	}
 
