@@ -113,19 +113,6 @@ func (arw *AlertRuleWorker) Prepare() {
 func (arw *AlertRuleWorker) Start() {
 	logger.Infof("eval:%s started", arw.Key())
 	arw.scheduler.Start()
-
-	//ticker := time.NewTicker(time.Duration(interval) * time.Second)
-	//go func() {
-	//	defer ticker.Stop()
-	//	for {
-	//		select {
-	//		case <-arw.quit:
-	//			return
-	//		case <-ticker.C:
-	//			arw.Eval()
-	//		}
-	//	}
-	//}()
 }
 
 func (arw *AlertRuleWorker) Eval() {
