@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -348,7 +349,7 @@ func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {
 	return users, nil
 }
 
-func InitRoot(ctx *ctx.Context) {
+func InitRoot(ctx *ctx.Context, config *conf.ConfigType) {
 	user, err := UserGetByUsername(ctx, "root")
 	if err != nil {
 		fmt.Println("failed to query user root:", err)
@@ -363,6 +364,8 @@ func InitRoot(ctx *ctx.Context) {
 		// already done before
 		return
 	}
+
+	fmt.Printf("please view n9e at  http://%v:%v\nusername/password: root/root.2020\n", config.Alert.Heartbeat.IP, config.HTTP.Port)
 
 	newPass, err := CryptoPass(ctx, user.Password)
 	if err != nil {

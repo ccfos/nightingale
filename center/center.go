@@ -67,7 +67,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
 	migrate.Migrate(db)
-	models.InitRoot(ctx)
+	models.InitRoot(ctx, config)
 
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
