@@ -1,6 +1,6 @@
 {
-    "name": "Redis Overview - categraf",
-    "tags": "Redis Prometheus",
+    "name": "Redis by instance",
+    "tags": "Redis Categraf",
     "ident": "",
     "configs": {
         "panels": [
