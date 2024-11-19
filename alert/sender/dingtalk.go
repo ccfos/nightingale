@@ -67,7 +67,7 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 			}
 		}
 
-		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Dingtalk, ctx.Stats, ctx.Events[0])
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Dingtalk, ctx.Stats, ctx.Events)
 	}
 }
 
@@ -97,8 +97,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		body.Markdown.Text = message
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body,
-		"callback", ctx.Stats, ctx.Events[0])
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 // extract urls and ats from Users
