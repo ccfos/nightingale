@@ -1,6 +1,6 @@
 [
     {
-        "name": "MySQL 仪表盘（使用 address 筛选）",
+        "name": "MySQL 仪表盘（使用 address 筛选，用于中心端 Categraf 采集远端多个 mysql 实例的场景）",
         "tags": "",
         "configs": {
             "panels": [

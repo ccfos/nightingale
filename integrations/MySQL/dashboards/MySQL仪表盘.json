@@ -1,5 +1,5 @@
 {
-    "name": "MySQL 仪表盘",
+    "name": "MySQL 仪表盘，适用于 Categraf 采集本机 MySQL 的场景",
     "tags": "",
     "ident": "",
     "configs": {
