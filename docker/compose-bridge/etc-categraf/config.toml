@@ -19,8 +19,8 @@ precision = "ms"
 # global collect interval
 interval = 15
 
-[global.labels]
-source="categraf"
+# [global.labels]
+# source="categraf"
 # region = "shanghai"
 # env = "localhost"
 
