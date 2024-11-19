@@ -1,0 +1,37 @@
+[[instances]]
+address = "redis:6379"
+username = ""
+password = ""
+# pool_size = 2
+
+## 是否开启slowlog 收集
+# gather_slowlog = true
+## 最多收集少条slowlog
+# slowlog_max_len = 100
+## 收集距离现在多少秒以内的slowlog
+## 注意插件的采集周期,该参数不要小于采集周期，否则会有slowlog查不到
+# slowlog_time_window=30
+
+# 指标
+# redis_slow_log{ident=dev-01 client_addr=127.0.0.1:56364 client_name= cmd="info ALL" log_id=983} 74 (单位微秒)
+
+# # Optional. Specify redis commands to retrieve values
+# commands = [
+#     {command = ["get", "sample-key1"], metric = "custom_metric_name1"},
+#     {command = ["get", "sample-key2"], metric = "custom_metric_name2"}
+# ]
+
+# # interval = global.interval * interval_times
+# interval_times = 1
+
+# important! use global unique string to specify instance
+labels = { instance="docker-compose-redis" }
+
+## Optional TLS Config
+# use_tls = false
+# tls_min_version = "1.2"
+# tls_ca = "/etc/categraf/ca.pem"
+# tls_cert = "/etc/categraf/cert.pem"
+# tls_key = "/etc/categraf/key.pem"
+## Use TLS but skip chain & host verification
+# insecure_skip_verify = true
