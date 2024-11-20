@@ -105,6 +105,28 @@ type AlertRule struct {
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 }
 
+type ChildVarConfig struct {
+	ParamVal        []map[string]ParamQuery `json:"param_val"`
+	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // host、device、enum、threshold 三种类型
+	Query     interface{} `json:"query"`
+}
+
+type VarConfig struct {
+	ParamVal        []ParamQueryForFirst `json:"param_val"`
+	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
+}
+
+// ParamQueryForFirst 同 ParamQuery，仅在第一层出现
+type ParamQueryForFirst struct {
+	Name      string      `json:"name"`
+	ParamType string      `json:"param_type"`
+	Query     interface{} `json:"query"`
+}
+
 type Tpl struct {
 	TplId   int64    `json:"tpl_id"`
 	TplName string   `json:"tpl_name"`
@@ -154,6 +176,8 @@ type HostRuleConfig struct {
 type PromQuery struct {
 	PromQl        string        `json:"prom_ql"`
 	Severity      int           `json:"severity"`
+	VarEnabled    bool          `json:"var_enabled"`
+	VarConfig     VarConfig     `json:"var_config"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
 	Unit          string        `json:"unit"`
 }
