@@ -1,7 +1,6 @@
 {
-    "name": "MySQL 仪表盘（使用 instance 筛选，需要采集时自行打上 instance 标签）",
+    "name": "MySQL 仪表盘（使用 address 筛选，用于中心端 Categraf 采集远端多个 mysql 实例的场景）",
     "tags": "",
-    "ident": "",
     "configs": {
         "panels": [
             {
@@ -107,8 +106,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "mysql_global_status_uptime{instance=~\"$instance\"}",
-                        "legend": "{{instance}}",
+                        "expr": "mysql_global_status_uptime{address=~\"$address\"}",
+                        "legend": "{{address}}",
                         "maxDataPoints": 240
                     }
                 ],
@@ -195,8 +194,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_queries{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_queries{address=~\"$address\"}[5m])",
+                        "legend": "{{address}}",
                         "maxDataPoints": 240
                     }
                 ],
@@ -253,8 +252,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "mysql_global_variables_innodb_buffer_pool_size{instance=~\"$instance\"}",
-                        "legend": "{{instance}}",
+                        "expr": "mysql_global_variables_innodb_buffer_pool_size{address=~\"$address\"}",
+                        "legend": "{{address}}",
                         "maxDataPoints": 240
                     }
                 ],
@@ -329,8 +328,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "increase(mysql_global_status_table_locks_waited{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}}",
+                        "expr": "increase(mysql_global_status_table_locks_waited{address=~\"$address\"}[5m])",
+                        "legend": "{{address}}",
                         "maxDataPoints": 240
                     }
                 ],
@@ -401,7 +400,7 @@
                 ],
                 "targets": [
                     {
-                        "expr": "mysql_slave_status_seconds_behind_master{instance=~\"$instance\"} - mysql_slave_status_sql_delay{instance=~\"$instance\"}",
+                        "expr": "mysql_slave_status_seconds_behind_master{address=~\"$address\"} - mysql_slave_status_sql_delay{address=~\"$address\"}",
                         "legend": "{{address}}",
                         "maxDataPoints": 240,
                         "refId": "A"
@@ -490,8 +489,8 @@
                 ],
                 "targets": [
                     {
-                        "expr": "mysql_global_status_threads_connected{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Connections",
+                        "expr": "mysql_global_status_threads_connected{address=~\"$address\"}",
+                        "legend": "{{address}} Connections",
                         "maxDataPoints": 240
                     }
                 ],
@@ -565,8 +564,8 @@
                 ],
                 "targets": [
                     {
-                        "expr": "mysql_global_status_threads_connected{instance=~\"$instance\"}/mysql_global_variables_max_connections{instance=~\"$instance\"}",
-                        "legend": "{{instance}}",
+                        "expr": "mysql_global_status_threads_connected{address=~\"$address\"}/mysql_global_variables_max_connections{address=~\"$address\"}",
+                        "legend": "{{address}}",
                         "maxDataPoints": 240
                     }
                 ],
@@ -638,8 +637,8 @@
                 ],
                 "targets": [
                     {
-                        "expr": "mysql_global_status_threads_running{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Threads Running",
+                        "expr": "mysql_global_status_threads_running{address=~\"$address\"}",
+                        "legend": "{{address}} Threads Running",
                         "maxDataPoints": 240
                     }
                 ],
@@ -711,13 +710,13 @@
                 ],
                 "targets": [
                     {
-                        "expr": "mysql_global_status_max_used_connections{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Max Used Connections",
+                        "expr": "mysql_global_status_max_used_connections{address=~\"$address\"}",
+                        "legend": "{{address}} Max Used Connections",
                         "maxDataPoints": 240
                     },
                     {
-                        "expr": "rate(mysql_global_status_aborted_connects{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Aborted Connections",
+                        "expr": "rate(mysql_global_status_aborted_connects{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Aborted Connections",
                         "maxDataPoints": 240
                     }
                 ],
@@ -779,16 +778,16 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_created_tmp_tables{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Created Tmp Tables"
+                        "expr": "rate(mysql_global_status_created_tmp_tables{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Created Tmp Tables"
                     },
                     {
-                        "expr": "rate(mysql_global_status_created_tmp_disk_tables{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Created Tmp Disk Tables"
+                        "expr": "rate(mysql_global_status_created_tmp_disk_tables{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Created Tmp Disk Tables"
                     },
                     {
-                        "expr": "rate(mysql_global_status_created_tmp_files{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Created Tmp Files"
+                        "expr": "rate(mysql_global_status_created_tmp_files{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Created Tmp Files"
                     }
                 ],
                 "type": "timeseries",
@@ -829,24 +828,24 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_select_full_join{ instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Select Full Join"
+                        "expr": "rate(mysql_global_status_select_full_join{ address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Select Full Join"
                     },
                     {
-                        "expr": "rate(mysql_global_status_select_full_range_join{ instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Select Full Range Join"
+                        "expr": "rate(mysql_global_status_select_full_range_join{ address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Select Full Range Join"
                     },
                     {
-                        "expr": "rate(mysql_global_status_select_range{ instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Select Range"
+                        "expr": "rate(mysql_global_status_select_range{ address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Select Range"
                     },
                     {
-                        "expr": "rate(mysql_global_status_select_range_check{ instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Select Range Check"
+                        "expr": "rate(mysql_global_status_select_range_check{ address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Select Range Check"
                     },
                     {
-                        "expr": "rate(mysql_global_status_select_scan{ instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Select Scan"
+                        "expr": "rate(mysql_global_status_select_scan{ address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Select Scan"
                     }
                 ],
                 "type": "timeseries",
@@ -887,20 +886,20 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_sort_rows{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Sort Rows"
+                        "expr": "rate(mysql_global_status_sort_rows{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Sort Rows"
                     },
                     {
-                        "expr": "rate(mysql_global_status_sort_range{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Sort Range"
+                        "expr": "rate(mysql_global_status_sort_range{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Sort Range"
                     },
                     {
-                        "expr": "rate(mysql_global_status_sort_merge_passes{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Sort Merge Passes"
+                        "expr": "rate(mysql_global_status_sort_merge_passes{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Sort Merge Passes"
                     },
                     {
-                        "expr": "rate(mysql_global_status_sort_scan{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Sort Scan"
+                        "expr": "rate(mysql_global_status_sort_scan{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Sort Scan"
                     }
                 ],
                 "type": "timeseries",
@@ -940,8 +939,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_slow_queries{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Slow Queries"
+                        "expr": "rate(mysql_global_status_slow_queries{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Slow Queries"
                     }
                 ],
                 "type": "timeseries",
@@ -1000,12 +999,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_bytes_received{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Inbound"
+                        "expr": "rate(mysql_global_status_bytes_received{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Inbound"
                     },
                     {
-                        "expr": "rate(mysql_global_status_bytes_sent{instance=~\"$instance\"}[5m])",
-                        "legend": "{{instance}} Outbound"
+                        "expr": "rate(mysql_global_status_bytes_sent{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} Outbound"
                     }
                 ],
                 "type": "timeseries",
@@ -1061,8 +1060,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "topk(10, rate(mysql_global_status_commands_total{instance=~\"$instance\"}[5m])>0)",
-                        "legend": "{{instance}} {{command}}"
+                        "expr": "topk(10, rate(mysql_global_status_commands_total{address=~\"$address\"}[5m])>0)",
+                        "legend": "{{address}} {{command}}"
                     }
                 ],
                 "type": "timeseries",
@@ -1103,8 +1102,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_commands_total{instance=~\"$instance\", command=\"select\"}[1m])",
-                        "legend": "{{instance}} "
+                        "expr": "rate(mysql_global_status_commands_total{address=~\"$address\", command=\"select\"}[1m])",
+                        "legend": "{{address}} "
                     }
                 ],
                 "type": "timeseries",
@@ -1145,8 +1144,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_commands_total{instance=~\"$instance\", command=~\"insert|update|delete\"}[1m])",
-                        "legend": "{{instance}} {{command}}"
+                        "expr": "rate(mysql_global_status_commands_total{address=~\"$address\", command=~\"insert|update|delete\"}[1m])",
+                        "legend": "{{address}} {{command}}"
                     }
                 ],
                 "type": "timeseries",
@@ -1201,8 +1200,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_commands_total{instance=~\"$instance\", command=~\"commit|rollback\"}[10m])",
-                        "legend": "{{instance}} {{command}}"
+                        "expr": "rate(mysql_global_status_commands_total{address=~\"$address\", command=~\"commit|rollback\"}[10m])",
+                        "legend": "{{address}} {{command}}"
                     }
                 ],
                 "type": "timeseries",
@@ -1245,8 +1244,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_handlers_total{instance=~\"$instance\", handler!~\"commit|rollback|savepoint.*|prepare\"}[5m])",
-                        "legend": "{{instance}} {{handler}}"
+                        "expr": "rate(mysql_global_status_handlers_total{address=~\"$address\", handler!~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{address}} {{handler}}"
                     }
                 ],
                 "type": "timeseries",
@@ -1286,8 +1285,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_handlers_total{instance=~\"$instance\", handler=~\"commit|rollback|savepoint.*|prepare\"}[5m])",
-                        "legend": "{{instance}} {{handler}}"
+                        "expr": "rate(mysql_global_status_handlers_total{address=~\"$address\", handler=~\"commit|rollback|savepoint.*|prepare\"}[5m])",
+                        "legend": "{{address}} {{handler}}"
                     }
                 ],
                 "type": "timeseries",
@@ -1342,12 +1341,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "mysql_global_variables_open_files_limit{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Open Files Limit"
+                        "expr": "mysql_global_variables_open_files_limit{address=~\"$address\"}",
+                        "legend": "{{address}} Open Files Limit"
                     },
                     {
-                        "expr": "mysql_global_status_open_files{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Open Files"
+                        "expr": "mysql_global_status_open_files{address=~\"$address\"}",
+                        "legend": "{{address}} Open Files"
                     }
                 ],
                 "type": "timeseries",
@@ -1405,8 +1404,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_table_open_cache_hits{instance=~\"$instance\"}[5m])\n/\n(\nrate(mysql_global_status_table_open_cache_hits{instance=~\"$instance\"}[5m])\n+\nrate(mysql_global_status_table_open_cache_misses{instance=~\"$instance\"}[5m])\n)",
-                        "legend": "{{instance}} Table Open Cache Hit Ratio"
+                        "expr": "rate(mysql_global_status_table_open_cache_hits{address=~\"$address\"}[5m])\n/\n(\nrate(mysql_global_status_table_open_cache_hits{address=~\"$address\"}[5m])\n+\nrate(mysql_global_status_table_open_cache_misses{address=~\"$address\"}[5m])\n)",
+                        "legend": "{{address}} Table Open Cache Hit Ratio"
                     }
                 ],
                 "type": "timeseries",
@@ -1447,12 +1446,12 @@
                 },
                 "targets": [
                     {
-                        "expr": "mysql_global_status_open_tables{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Open Tables"
+                        "expr": "mysql_global_status_open_tables{address=~\"$address\"}",
+                        "legend": "{{address}} Open Tables"
                     },
                     {
-                        "expr": "mysql_global_variables_table_open_cache{instance=~\"$instance\"}",
-                        "legend": "{{instance}} Table Open Cache"
+                        "expr": "mysql_global_variables_table_open_cache{address=~\"$address\"}",
+                        "legend": "{{address}} Table Open Cache"
                     }
                 ],
                 "type": "timeseries",
@@ -1507,8 +1506,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_innodb_buffer_pool_read_requests{instance=~\"$instance\"}[1m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_read_requests{address=~\"$address\"}[1m])",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1549,8 +1548,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_innodb_buffer_pool_reads{instance=~\"$instance\"}[1m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_innodb_buffer_pool_reads{address=~\"$address\"}[1m])",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1591,8 +1590,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "100 - increase(mysql_global_status_innodb_buffer_pool_reads{instance=~\"$instance\"}[5m])/increase(mysql_global_status_innodb_buffer_pool_read_requests{instance=~\"$instance\"}[5m]) * 100",
-                        "legend": "{{instance}}",
+                        "expr": "100 - increase(mysql_global_status_innodb_buffer_pool_reads{address=~\"$address\"}[5m])/increase(mysql_global_status_innodb_buffer_pool_read_requests{address=~\"$address\"}[5m]) * 100",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1633,8 +1632,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_innodb_row_lock_waits{instance=~\"$instance\"}[1m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_innodb_row_lock_waits{address=~\"$address\"}[1m])",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1675,8 +1674,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_innodb_row_lock_time{instance=~\"$instance\"}[1m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_innodb_row_lock_time{address=~\"$address\"}[1m])",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1717,8 +1716,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "rate(mysql_global_status_innodb_os_log_fsyncs{instance=~\"$instance\"}[1m])",
-                        "legend": "{{instance}}",
+                        "expr": "rate(mysql_global_status_innodb_os_log_fsyncs{address=~\"$address\"}[1m])",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1771,8 +1770,8 @@
                 },
                 "targets": [
                     {
-                        "expr": "mysql_global_status_buffer_pool_pages_utilization{instance=~\"$instance\"}",
-                        "legend": "{{instance}}",
+                        "expr": "mysql_global_status_buffer_pool_pages_utilization{address=~\"$address\"}",
+                        "legend": "{{address}}",
                         "refId": "A"
                     }
                 ],
@@ -1787,20 +1786,20 @@
                 "type": "datasource"
             },
             {
-                "name": "instance",
-                "type": "query",
-                "hide": false,
+                "allOption": true,
+                "allValue": ".*",
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(mysql_global_status_uptime, instance)",
+                "definition": "label_values(mysql_global_status_uptime, address)",
+                "hide": false,
                 "multi": true,
-                "allOption": true,
-                "allValue": ".*"
+                "name": "address",
+                "type": "query"
             }
         ],
         "version": "3.0.0"
     },
-    "uuid": 1717556328087995000
+    "uuid": 1731986330320000
 }

@@ -25,8 +25,8 @@ type EmailSender struct {
 }
 
 type EmailContext struct {
-	event *models.AlertCurEvent
-	mail  *gomail.Message
+	events []*models.AlertCurEvent
+	mail   *gomail.Message
 }
 
 func (es *EmailSender) Send(ctx MessageContext) {
@@ -42,7 +42,7 @@ func (es *EmailSender) Send(ctx MessageContext) {
 		subject = ctx.Events[0].RuleName
 	}
 	content := BuildTplMessage(models.Email, es.contentTpl, ctx.Events)
-	es.WriteEmail(subject, content, tos, ctx.Events[0])
+	es.WriteEmail(subject, content, tos, ctx.Events)
 
 	ctx.Stats.AlertNotifyTotal.WithLabelValues(models.Email).Add(float64(len(tos)))
 }
@@ -79,8 +79,7 @@ func SendEmail(subject, content string, tos []string, stmp aconf.SMTPConfig) err
 	return nil
 }
 
-func (es *EmailSender) WriteEmail(subject, content string, tos []string,
-	event *models.AlertCurEvent) {
+func (es *EmailSender) WriteEmail(subject, content string, tos []string, events []*models.AlertCurEvent) {
 	m := gomail.NewMessage()
 
 	m.SetHeader("From", es.smtp.From)
@@ -88,7 +87,7 @@ func (es *EmailSender) WriteEmail(subject, content string, tos []string,
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", content)
 
-	mailch <- &EmailContext{event, m}
+	mailch <- &EmailContext{events, m}
 }
 
 func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
@@ -206,7 +205,7 @@ func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 				if err == nil {
 					msg = "ok"
 				}
-				NotifyRecord(ctx, m.event, models.Email, to, msg, err)
+				NotifyRecord(ctx, m.events, models.Email, to, msg, err)
 			}
 
 			size++

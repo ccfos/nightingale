@@ -67,7 +67,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 	ctx := ctx.NewContext(context.Background(), db, true)
 	migrate.Migrate(db)
-	models.InitRoot(ctx)
+	isRootInit := models.InitRoot(ctx)
 
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
@@ -121,7 +121,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	go func() {
-		if models.CanMigrateBg(ctx) {
+		if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
 			models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
 		}
 	}()
@@ -139,6 +139,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	httpClean := httpx.Init(config.HTTP, r)
+
+	fmt.Printf("please view n9e at  http://%v:%v\n", config.Alert.Heartbeat.IP, config.HTTP.Port)
+	if isRootInit {
+		fmt.Println("username/password: root/root.2020")
+	}
 
 	return func() {
 		logxClean()
