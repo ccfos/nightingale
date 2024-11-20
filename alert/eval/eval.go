@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"container/list"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,6 +8,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -290,9 +290,21 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPoints := make(map[string]common.AnomalyPoint)
+	// 统一变量配置格式
+	VarConfigForCalc := &models.ChildVarConfig{
+		ParamVal:        make([]map[string]models.ParamQuery, 1),
+		ChildVarConfigs: query.VarConfig.ChildVarConfigs,
+	}
+	VarConfigForCalc.ParamVal[0] = make(map[string]models.ParamQuery)
+	for _, p := range query.VarConfig.ParamVal {
+		VarConfigForCalc.ParamVal[0][p.Name] = models.ParamQuery{
+			ParamType: p.ParamType,
+			Query:     p.Query,
+		}
+	}
 	// 使用一个统一的参数变量顺序
 	var ParamKeys []string
-	for val, valQuery := range query.VarConfig.ParamVal {
+	for val, valQuery := range VarConfigForCalc.ParamVal[0] {
 		if valQuery.ParamType == "threshold" {
 			continue
 		}
@@ -301,75 +313,70 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	// 广度优先遍历，每个节点先查询无参数变量的 query 得到满足值变量的所有结果，然后判断哪些参数值符合条件
-	queue := list.New()
-	queue.PushBack(query.VarConfig)
-	for queue.Len() != 0 {
-		// curQuery 当前节点的无参数 query，用于时序库查询
-		curQuery := fullQuery
-		// realQuery 当前节点产生异常点的 query，用于告警展示
-		realQuery := query.PromQl
-
-		node := queue.Front().Value.(models.VarConfig)
-		queue.Remove(queue.Front())
-
-		// 取出值变量
-		valMap := make(map[string]string)
-		for val, valQuery := range node.ParamVal {
-			if valQuery.ParamType == "threshold" {
-				valMap[val] = valQuery.Query.(string)
-			}
-		}
-		// 替换值变量
-		for key, val := range valMap {
-			curQuery = strings.Replace(curQuery, fmt.Sprintf("$%s", key), val, -1)
-			realQuery = strings.Replace(realQuery, fmt.Sprintf("$%s", key), val, -1)
-		}
-		// 得到满足值变量的所有结果
-		value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
-		if err != nil {
-			logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), curQuery, err)
-			continue
-		}
-		seqVals := getSamples(value)
-		// 得到参数变量的所有组合
-		paramPermutation, err := arw.getParamPermutation(node, ParamKeys)
-		if err != nil {
-			logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
-			continue
-		}
-		// 判断哪些参数值符合条件
-		for i := range seqVals {
-			curRealQuery := realQuery
-			var cur []string
-			for _, paramKey := range ParamKeys {
-				val := string(seqVals[i].Metric[model.LabelName(paramKey)])
-				cur = append(cur, val)
-				curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
-			}
-			if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
-				anomalyPoints[strings.Join(cur, "-")] = common.AnomalyPoint{
-					Key:       seqVals[i].Metric.String(),
-					Timestamp: seqVals[i].Timestamp.Unix(),
-					Value:     float64(seqVals[i].Value),
-					Labels:    seqVals[i].Metric,
-					Severity:  query.Severity,
-					Query:     curRealQuery,
+	// 遍历变量配置链表
+	curNode := VarConfigForCalc
+	for curNode != nil {
+		for _, param := range curNode.ParamVal {
+			// curQuery 当前节点的无参数 query，用于时序库查询
+			curQuery := fullQuery
+			// realQuery 当前节点产生异常点的 query，用于告警展示
+			realQuery := query.PromQl
+			// 取出阈值变量
+			valMap := make(map[string]string)
+			for val, valQuery := range param {
+				if valQuery.ParamType == "threshold" {
+					valMap[val] = getString(valQuery.Query)
 				}
-				// 生成异常点后，删除该参数组合
-				delete(paramPermutation, strings.Join(cur, "-"))
+			}
+			// 替换值变量
+			for key, val := range valMap {
+				curQuery = strings.Replace(curQuery, fmt.Sprintf("$%s", key), val, -1)
+				realQuery = strings.Replace(realQuery, fmt.Sprintf("$%s", key), val, -1)
+			}
+			// 得到满足值变量的所有结果
+			value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
+			if err != nil {
+				logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), curQuery, err)
+				continue
+			}
+			seqVals := getSamples(value)
+			// 得到参数变量的所有组合
+			paramPermutation, err := arw.getParamPermutation(param, ParamKeys)
+			if err != nil {
+				logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
+				continue
+			}
+			// 判断哪些参数值符合条件
+			for i := range seqVals {
+				curRealQuery := realQuery
+				var cur []string
+				for _, paramKey := range ParamKeys {
+					val := string(seqVals[i].Metric[model.LabelName(paramKey)])
+					cur = append(cur, val)
+					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
+				}
+				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
+					anomalyPoints[strings.Join(cur, "-")] = common.AnomalyPoint{
+						Key:       seqVals[i].Metric.String(),
+						Timestamp: seqVals[i].Timestamp.Unix(),
+						Value:     float64(seqVals[i].Value),
+						Labels:    seqVals[i].Metric,
+						Severity:  query.Severity,
+						Query:     curRealQuery,
+					}
+					// 生成异常点后，删除该参数组合
+					delete(paramPermutation, strings.Join(cur, "-"))
+				}
+			}
+
+			// 剩余的参数组合为本层筛选不产生异常点的组合，需要覆盖上层筛选中产生的异常点
+			for k, _ := range paramPermutation {
+				delete(anomalyPoints, k)
 			}
 		}
-
-		// 剩余的参数组合为本层筛选不产生异常点的组合，需要覆盖上层筛选中产生的异常点
-		for k, _ := range paramPermutation {
-			delete(anomalyPoints, k)
-		}
-
-		for i := range node.ChildVarConfigs {
-			queue.PushBack(node.ChildVarConfigs[i])
-		}
+		curNode = curNode.ChildVarConfigs
 	}
+
 	return anomalyPoints
 }
 
@@ -450,13 +457,13 @@ func removeVal(promql string) string {
 }
 
 // 获取参数变量的所有组合
-func (arw *AlertRuleWorker) getParamPermutation(node models.VarConfig, paramKeys []string) (map[string]struct{}, error) {
+func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.ParamQuery, paramKeys []string) (map[string]struct{}, error) {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
 	for _, paramKey := range paramKeys {
 		var params []string
-		paramQuery, ok := node.ParamVal[paramKey]
+		paramQuery, ok := paramVal[paramKey]
 		if !ok {
 			return nil, fmt.Errorf("param key not found: %s", paramKey)
 		}
@@ -516,13 +523,13 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		return params, nil
 	}
 
-	var query models.HostQuery
-	err := json.Unmarshal(q, &query)
+	var queries []models.HostQuery
+	err := json.Unmarshal(q, &queries)
 	if err != nil {
 		return nil, err
 	}
 
-	hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
+	hostsQuery := models.GetHostsQuery(queries)
 	session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
 	var lst []*models.Target
 	err = session.Find(&lst).Error
@@ -1130,4 +1137,16 @@ func GetQueryRef(query interface{}) (string, error) {
 	}
 
 	return refField.String(), nil
+}
+
+// query 可能是 string 或是 int int64 float64 等数字，全部转为 string
+func getString(query interface{}) string {
+	switch query.(type) {
+	case string:
+		return query.(string)
+	case float64:
+		return strconv.FormatFloat(query.(float64), 'f', -1, 64)
+	default:
+		return ""
+	}
 }
