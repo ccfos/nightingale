@@ -105,9 +105,9 @@ type AlertRule struct {
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 }
 
-type VarConfigRecursion struct {
-	ParamVal        map[string]ParamQuery `json:"param_val"`
-	ChildVarConfigs []VarConfigRecursion  `json:"child_var_configs"`
+type ChildVarConfig struct {
+	ParamVal        []map[string]ParamQuery `json:"param_val"`
+	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
 }
 
 type ParamQuery struct {
@@ -117,7 +117,7 @@ type ParamQuery struct {
 
 type VarConfig struct {
 	ParamVal        []ParamQueryForFirst `json:"param_val"`
-	ChildVarConfigs []VarConfigRecursion `json:"child_var_configs"`
+	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
 }
 
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现
