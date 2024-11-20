@@ -523,13 +523,13 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		return params, nil
 	}
 
-	var query models.HostQuery
-	err := json.Unmarshal(q, &query)
+	var queries []models.HostQuery
+	err := json.Unmarshal(q, &queries)
 	if err != nil {
 		return nil, err
 	}
 
-	hostsQuery := models.GetHostsQuery([]models.HostQuery{query})
+	hostsQuery := models.GetHostsQuery(queries)
 	session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
 	var lst []*models.Target
 	err = session.Find(&lst).Error
