@@ -2,6 +2,7 @@ package ormx
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -70,17 +71,28 @@ func (l *TKitLogger) Printf(s string, i ...interface{}) {
 	}
 }
 
-func createDatabase(c DBConfig, gconfig *gorm.Config) error{
+func createDatabase(c DBConfig, gconfig *gorm.Config) error {
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
 		return createMysqlDatabase(c.DSN, gconfig)
 	case "postgres":
 		return createPostgresDatabase(c.DSN, gconfig)
 	case "sqlite":
-		return fmt.Errorf("dialector(%s) not supported", c.DBType)
+		return createSqliteDatabase(c.DSN, gconfig)
 	default:
 		return fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
+}
+
+func createSqliteDatabase(dsn string, gconfig *gorm.Config) error {
+	tempDialector := sqlite.Open(dsn)
+
+	_, err := gorm.Open(tempDialector, gconfig)
+	if err != nil {
+		return fmt.Errorf("failed to open temporary connection: %v", err)
+	}
+
+	return nil
 }
 
 func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
@@ -89,7 +101,7 @@ func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
 	connectionWithoutDB := ""
 	for _, part := range dsnParts {
 		if strings.HasPrefix(part, "dbname=") {
-			dbName = part[strings.Index(part, "=") + 1:]
+			dbName = part[strings.Index(part, "=")+1:]
 		} else {
 			connectionWithoutDB += part
 			connectionWithoutDB += " "
@@ -155,11 +167,20 @@ func checkDatabaseExist(c DBConfig) (bool, error) {
 	case "postgres":
 		return checkPostgresDatabaseExist(c)
 	case "sqlite":
-		return false, nil
+		return checkSqliteDatabaseExist(c)
 	default:
 		return false, fmt.Errorf("dialector(%s) not supported", c.DBType)
 	}
 
+}
+
+func checkSqliteDatabaseExist(c DBConfig) (bool, error) {
+	if _, err := os.Stat(c.DSN); os.IsNotExist(err) {
+		fmt.Printf("sqlite file not exists: %s\n", c.DSN)
+		return false, nil
+	} else {
+		return true, nil
+	}
 }
 
 func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
@@ -168,7 +189,7 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	connectionWithoutDB := ""
 	for _, part := range dsnParts {
 		if strings.HasPrefix(part, "dbname=") {
-			dbName = part[strings.Index(part, "=") + 1:]
+			dbName = part[strings.Index(part, "=")+1:]
 		} else {
 			connectionWithoutDB += part
 			connectionWithoutDB += " "
@@ -176,7 +197,6 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	}
 
 	dialector := postgres.Open(connectionWithoutDB)
-
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -243,10 +263,10 @@ func checkMysqlDatabaseExist(c DBConfig) (bool, error) {
 	return exists, nil
 }
 
-func genQuery(c DBConfig) string{
+func genQuery(c DBConfig) string {
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
-		return  "SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = ?)"
+		return "SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = ?)"
 	case "postgres":
 		return "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = ?);"
 	case "sqlite":

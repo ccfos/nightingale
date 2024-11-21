@@ -1398,10 +1398,147 @@ func DataBaseInit(c DBConfig, db *gorm.DB) {
 	case "postgres":
 		postgresDataBaseInit(db)
 	case "sqlite":
-		return
+		sqliteDataBaseInit(db)
 	default:
 		return
 	}
+}
+
+func sqliteDataBaseInit(db *gorm.DB) {
+	db.AutoMigrate(
+		&InitTaskMeta{},
+		&InitTaskAction{},
+		&InitTaskScheduler{},
+		&InitTaskSchedulerHealth{},
+		&InitTaskHostDoing{},
+		&InitTaskHost{},
+		&InitBoardBusiGroup{},
+		&InitBuiltinComponent{},
+		&InitBuiltinPayload{},
+		&InitNotificationRecord{},
+		&InitTaskTpl{},
+		&InitTaskTplHost{},
+		&InitTaskRecord{},
+		&InitAlertingEngine{},
+		&InitDatasource{},
+		&InitBuiltinCate{},
+		&InitNotifyTpl{},
+		&InitSSOConfig{},
+		&InitESIndexPattern{},
+		&InitBuiltinMetric{},
+		&InitMetricFilter{},
+		&InitTargetBusiGroup{},
+		&InitAlertAggrView{},
+		&InitAlertCurEvent{},
+		&InitAlertHisEvent{},
+		&InitAlertMute{},
+		&InitAlertSubscribe{},
+		&InitTarget{},
+		&InitMetricView{},
+		&InitRecordingRule{},
+		&InitUser{},
+		&InitUserGroup{},
+		&InitUserGroupMember{},
+		&InitConfig{},
+		&InitRole{},
+		&InitRoleOperation{},
+		&InitBusiGroup{},
+		&InitBusiGroupMember{},
+		&InitBoard{},
+		&InitBoardPayload{},
+		&InitDashboard{},
+		&InitChartGroup{},
+		&InitChart{},
+		&InitChartShare{},
+		&InitAlertRule{})
+
+	for i := 1; i <= 99; i++ {
+		tableName := "task_host_" + strconv.Itoa(i)
+		db.Table(tableName).AutoMigrate(&InitTaskHost{})
+	}
+
+	roleOperations := []InitRoleOperation{
+		{RoleName: "Guest", Operation: "/metric/explorer"},
+		{RoleName: "Guest", Operation: "/object/explorer"},
+		{RoleName: "Guest", Operation: "/log/explorer"},
+		{RoleName: "Guest", Operation: "/trace/explorer"},
+		{RoleName: "Guest", Operation: "/help/version"},
+		{RoleName: "Guest", Operation: "/help/contact"},
+		{RoleName: "Standard", Operation: "/metric/explorer"},
+		{RoleName: "Standard", Operation: "/object/explorer"},
+		{RoleName: "Standard", Operation: "/log/explorer"},
+		{RoleName: "Standard", Operation: "/trace/explorer"},
+		{RoleName: "Standard", Operation: "/help/version"},
+		{RoleName: "Standard", Operation: "/help/contact"},
+		{RoleName: "Standard", Operation: "/help/servers"},
+		{RoleName: "Standard", Operation: "/help/migrate"},
+		{RoleName: "Standard", Operation: "/alert-rules-built-in"},
+		{RoleName: "Standard", Operation: "/dashboards-built-in"},
+		{RoleName: "Standard", Operation: "/trace/dependencies"},
+		{RoleName: "Admin", Operation: "/help/source"},
+		{RoleName: "Admin", Operation: "/help/sso"},
+		{RoleName: "Admin", Operation: "/help/notification-tpls"},
+		{RoleName: "Admin", Operation: "/help/notification-settings"},
+		{RoleName: "Standard", Operation: "/users"},
+		{RoleName: "Standard", Operation: "/user-groups"},
+		{RoleName: "Standard", Operation: "/user-groups/add"},
+		{RoleName: "Standard", Operation: "/user-groups/put"},
+		{RoleName: "Standard", Operation: "/user-groups/del"},
+		{RoleName: "Standard", Operation: "/busi-groups"},
+		{RoleName: "Standard", Operation: "/busi-groups/add"},
+		{RoleName: "Standard", Operation: "/busi-groups/put"},
+		{RoleName: "Standard", Operation: "/busi-groups/del"},
+		{RoleName: "Standard", Operation: "/targets"},
+		{RoleName: "Standard", Operation: "/targets/add"},
+		{RoleName: "Standard", Operation: "/targets/put"},
+		{RoleName: "Standard", Operation: "/targets/del"},
+		{RoleName: "Standard", Operation: "/dashboards"},
+		{RoleName: "Standard", Operation: "/dashboards/add"},
+		{RoleName: "Standard", Operation: "/dashboards/put"},
+		{RoleName: "Standard", Operation: "/dashboards/del"},
+		{RoleName: "Standard", Operation: "/alert-rules"},
+		{RoleName: "Standard", Operation: "/alert-rules/add"},
+		{RoleName: "Standard", Operation: "/alert-rules/put"},
+		{RoleName: "Standard", Operation: "/alert-rules/del"},
+		{RoleName: "Standard", Operation: "/alert-mutes"},
+		{RoleName: "Standard", Operation: "/alert-mutes/add"},
+		{RoleName: "Standard", Operation: "/alert-mutes/del"},
+		{RoleName: "Standard", Operation: "/alert-subscribes"},
+		{RoleName: "Standard", Operation: "/alert-subscribes/add"},
+		{RoleName: "Standard", Operation: "/alert-subscribes/put"},
+		{RoleName: "Standard", Operation: "/alert-subscribes/del"},
+		{RoleName: "Standard", Operation: "/alert-cur-events"},
+		{RoleName: "Standard", Operation: "/alert-cur-events/del"},
+		{RoleName: "Standard", Operation: "/alert-his-events"},
+		{RoleName: "Standard", Operation: "/job-tpls"},
+		{RoleName: "Standard", Operation: "/job-tpls/add"},
+		{RoleName: "Standard", Operation: "/job-tpls/put"},
+		{RoleName: "Standard", Operation: "/job-tpls/del"},
+		{RoleName: "Standard", Operation: "/job-tasks"},
+		{RoleName: "Standard", Operation: "/job-tasks/add"},
+		{RoleName: "Standard", Operation: "/job-tasks/put"},
+		{RoleName: "Standard", Operation: "/recording-rules"},
+		{RoleName: "Standard", Operation: "/recording-rules/add"},
+		{RoleName: "Standard", Operation: "/recording-rules/put"},
+		{RoleName: "Standard", Operation: "/recording-rules/del"},
+	}
+
+	db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"})
+	db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
+	db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1})
+	db.Create(&InitRole{Name: "Admin", Note: "Administrator role"})
+	db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"})
+	db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"})
+
+	for _, roleOperation := range roleOperations {
+		db.Create(&roleOperation)
+	}
+
+	db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
+	db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"})
+	db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`})
+	db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false})
+	db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false})
 }
 
 func mysqlDataBaseInit(db *gorm.DB) {
