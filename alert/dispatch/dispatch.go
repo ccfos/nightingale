@@ -192,10 +192,11 @@ func (e *Dispatch) blockEventNotify(rule *models.AlertRule, event *models.AlertC
 		}
 	}
 
-	// 恢复通知，检测规则配置是否改变
-	if event.IsRecovered && event.RuleHash != rule.Hash() {
-		return true
-	}
+	// 规则配置是否改变
+	// TODO: 这里后面加一个配置项控制，先注释掉
+	// if event.RuleHash != rule.Hash() {
+	// 	return true
+	// }
 
 	return false
 }
