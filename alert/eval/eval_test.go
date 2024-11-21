@@ -269,3 +269,122 @@ func allValueDeepEqual(got, want map[uint64][]uint64) bool {
 	}
 	return true
 }
+
+// allValueDeepEqualOmitOrder 判断两个字符串切片是否相等，不考虑顺序
+func allValueDeepEqualOmitOrder(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	slices.Sort(got)
+	slices.Sort(want)
+	for i := range got {
+		if got[i] != want[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func Test_removeVal(t *testing.T) {
+	type args struct {
+		promql string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+		{
+			name: "removeVal1",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"$test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{} > $val",
+		},
+		{
+			name: "removeVal2",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\"} > $val",
+		},
+		{
+			name: "removeVal3",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test2=\"test2\"} > $val",
+		},
+		{
+			name: "removeVal4",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"$test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal5",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test2=\"test2\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal6",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal7",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val",
+		},
+		{
+			name: "removeVal8",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\",test3=\"test3\"} > $val",
+		},
+		{
+			name: "removeVal9",
+			args: args{
+				promql: "mem{test1=\"$test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal10",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"$test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal11",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
+		},
+		{
+			name: "removeVal12",
+			args: args{
+				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\",test4=\"$test4\"} > $val2",
+			},
+			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"test3\"} > $val2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeVal(tt.args.promql); got != tt.want {
+				t.Errorf("removeVal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

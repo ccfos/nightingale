@@ -56,8 +56,7 @@ func (fs *LarkCardSender) CallBack(ctx CallBackContext) {
 	}
 	parsedURL.RawQuery = ""
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback",
-		ctx.Stats, ctx.Events[0])
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 func (fs *LarkCardSender) Send(ctx MessageContext) {
@@ -81,7 +80,7 @@ func (fs *LarkCardSender) Send(ctx MessageContext) {
 	body.Card.Elements[0].Text.Content = message
 	body.Card.Elements[2].Elements[0].Content = SendTitle
 	for i, url := range urls {
-		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.LarkCard, ctx.Stats, ctx.Events[0])
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.LarkCard, ctx.Stats, ctx.Events)
 	}
 }
 

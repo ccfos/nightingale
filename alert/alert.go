@@ -102,7 +102,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
 
 	writers := writer.NewWriters(pushgwc)
-	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats)
+	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats, datasourceCache)
 
 	eval.NewScheduler(alertc, externalProcessors, alertRuleCache, targetCache, targetsOfAlertRulesCache,
 		busiGroupCache, alertMuteCache, datasourceCache, promClients, tdendgineClients, naming, ctx, alertStats)

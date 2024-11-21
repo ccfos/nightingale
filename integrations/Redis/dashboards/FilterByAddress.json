@@ -1,0 +1,925 @@
+{
+    "name": "Redis by address",
+    "tags": "Redis Categraf",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "2ecb82c6-4d1a-41b5-8cdc-0284db16bd54",
+                "layout": {
+                    "h": 1,
+                    "i": "2ecb82c6-4d1a-41b5-8cdc-0284db16bd54",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Basic Info",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "alignItems": "center",
+                    "bgColor": "rgba(0, 0, 0, 0)",
+                    "content": "<img src=\"https://download.flashcat.cloud/ulric/redis.png\" width=128 />",
+                    "justifyContent": "center",
+                    "textColor": "#000000",
+                    "textDarkColor": "#FFFFFF",
+                    "textSize": 12
+                },
+                "id": "b5acc352-a2bd-4afc-b6cd-d6db0905f807",
+                "layout": {
+                    "h": 3,
+                    "i": "b5acc352-a2bd-4afc-b6cd-d6db0905f807",
+                    "isResizable": true,
+                    "w": 4,
+                    "x": 0,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "",
+                "type": "text",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "orientation": "vertical",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "5eb6fbcf-4260-40d0-ad6a-540e54a1f922",
+                "layout": {
+                    "h": 3,
+                    "i": "2a02e1d4-2ed3-4bd2-9fa0-69bb10f13888",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 4,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "Redis Uptime",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 600
+                            },
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 600
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "redis_uptime_in_seconds{address=~\"$address\"}",
+                        "legend": "{{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "orientation": "vertical",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "8ccada5e-02f3-4efc-9b36-2a367612e4cb",
+                "layout": {
+                    "h": 3,
+                    "i": "8ccada5e-02f3-4efc-9b36-2a367612e4cb",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 9,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "Connected Clients",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 500
+                            },
+                            "result": {
+                                "color": "rgba(63, 196, 83, 1)"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 500
+                            },
+                            "result": {
+                                "color": "rgba(255, 101, 107, 1)"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "redis_connected_clients{address=~\"$address\"}",
+                        "legend": "{{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "orientation": "vertical",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "716dc7e7-c9ec-4195-93f6-db1c572ae8b0",
+                "layout": {
+                    "h": 3,
+                    "i": "716dc7e7-c9ec-4195-93f6-db1c572ae8b0",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 14,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "Memory Used",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 128000000
+                            },
+                            "result": {
+                                "color": "#079e05"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 128000000
+                            },
+                            "result": {
+                                "color": "#f10909"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "redis_used_memory{address=~\"$address\"}",
+                        "legend": "{{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 0,
+                    "colorMode": "background",
+                    "graphMode": "none",
+                    "orientation": "vertical",
+                    "textMode": "valueAndName",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "c6948161-db07-42df-beb1-765ee9c071a9",
+                "layout": {
+                    "h": 3,
+                    "i": "c6948161-db07-42df-beb1-765ee9c071a9",
+                    "isResizable": true,
+                    "w": 5,
+                    "x": 19,
+                    "y": 1
+                },
+                "maxPerRow": 4,
+                "name": "Max Memory Limit",
+                "options": {
+                    "standardOptions": {
+                        "decimals": 1,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(63, 196, 83, 1)",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "redis_maxmemory{address=~\"$address\"}",
+                        "legend": "{{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "bd54cf4f-1abb-4945-8aab-f89aec16daef",
+                "layout": {
+                    "h": 1,
+                    "i": "bd54cf4f-1abb-4945-8aab-f89aec16daef",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 4
+                },
+                "name": "Commands",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "3d5f8c4e-0ddf-4d68-9f6d-2cc57d864a8e",
+                "layout": {
+                    "h": 5,
+                    "i": "3d5f8c4e-0ddf-4d68-9f6d-2cc57d864a8e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "Commands Executed / sec",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "rate(redis_total_commands_processed{address=~\"$address\"}[5m])",
+                        "legend": "{{address}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "noraml"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
+                "layout": {
+                    "h": 5,
+                    "i": "344a874d-c34d-4d2d-9bb4-46e0912cd9f5",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "Hits / Misses per Sec",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "irate(redis_keyspace_hits{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} hits",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "irate(redis_keyspace_misses{address=~\"$address\"}[5m])",
+                        "legend": "{{address}} misses",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "3c83cd35-585c-4070-a210-1f17345f13f4",
+                "layout": {
+                    "h": 5,
+                    "i": "3c83cd35-585c-4070-a210-1f17345f13f4",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 5
+                },
+                "maxPerRow": 4,
+                "name": "Top Commands",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "topk(5, irate(redis_cmdstat_calls{address=~\"$address\"}[1m]))",
+                        "legend": "{{address}} {{command}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "1ea61073-a46d-4d7c-b072-fcdcbc5ac084",
+                "layout": {
+                    "h": 1,
+                    "i": "1ea61073-a46d-4d7c-b072-fcdcbc5ac084",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 10
+                },
+                "name": "Keys",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "b2b4451c-4f8a-438a-8c48-69c95c68361e",
+                "layout": {
+                    "h": 5,
+                    "i": "b2b4451c-4f8a-438a-8c48-69c95c68361e",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 11
+                },
+                "maxPerRow": 4,
+                "name": "Total Items per DB",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(redis_keyspace_keys{address=~\"$address\"}) by (address, db)",
+                        "legend": "{{address}} {{db}}",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "894b9beb-e764-441c-ae04-13e5dbbb901d",
+                "layout": {
+                    "h": 5,
+                    "i": "894b9beb-e764-441c-ae04-13e5dbbb901d",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 11
+                },
+                "maxPerRow": 4,
+                "name": "Expired / Evicted",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(redis_expired_keys{address=~\"$address\"}[5m])) by (address)",
+                        "legend": "{{address}} expired",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "sum(rate(redis_evicted_keys{address=~\"$address\"}[5m])) by (address)",
+                        "legend": "{{address}} evicted",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "noraml"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "f721a641-28c7-4e82-a37c-ec17704a0c57",
+                "layout": {
+                    "h": 5,
+                    "i": "f721a641-28c7-4e82-a37c-ec17704a0c57",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 11
+                },
+                "maxPerRow": 4,
+                "name": "Expiring vs Not-Expiring Keys",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(redis_keyspace_keys{address=~\"$address\"}) - sum(redis_keyspace_expires{address=~\"$address\"}) ",
+                        "legend": "{{address}} not expiring",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "sum(redis_keyspace_expires{address=~\"$address\"}) ",
+                        "legend": "{{address}} expiring",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "60ff41ed-9d41-40ee-a13b-c968f3ca49d0",
+                "layout": {
+                    "h": 1,
+                    "i": "60ff41ed-9d41-40ee-a13b-c968f3ca49d0",
+                    "isResizable": false,
+                    "w": 24,
+                    "x": 0,
+                    "y": 16
+                },
+                "name": "Network",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "spanNulls": false,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "1841950c-e867-4a62-b846-78754dc0e34d",
+                "layout": {
+                    "h": 7,
+                    "i": "1841950c-e867-4a62-b846-78754dc0e34d",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17
+                },
+                "maxPerRow": 4,
+                "name": "Network I/O",
+                "options": {
+                    "legend": {
+                        "behaviour": "showItem",
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 2,
+                        "util": "bytesIEC"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#6C53B1",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ],
+                "targets": [
+                    {
+                        "expr": "sum(rate(redis_total_net_input_bytes{address=~\"$address\"}[5m]))",
+                        "legend": "input",
+                        "maxDataPoints": 240
+                    },
+                    {
+                        "expr": "sum(rate(redis_total_net_output_bytes{address=~\"$address\"}[5m]))",
+                        "legend": "output",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "timeseries",
+                "version": "3.0.0"
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            },
+            {
+                "allOption": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(redis_uptime_in_seconds,address)",
+                "hide": false,
+                "multi": true,
+                "name": "address",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    },
+    "uuid": 1732008163114399
+}

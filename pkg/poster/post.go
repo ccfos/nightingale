@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/conf"
@@ -59,6 +61,10 @@ func GetByUrl[T any](url string, cfg conf.CenterApi) (T, error) {
 
 	client := &http.Client{
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
+	}
+
+	if useProxy(url) {
+		client.Transport = ProxyTransporter
 	}
 
 	resp, err := client.Do(req)
@@ -141,6 +147,10 @@ func PostByUrl[T any](url string, cfg conf.CenterApi, v interface{}) (t T, err e
 		Timeout: time.Duration(cfg.Timeout) * time.Millisecond,
 	}
 
+	if useProxy(url) {
+		client.Transport = ProxyTransporter
+	}
+
 	req, err := http.NewRequest("POST", url, bf)
 	if err != nil {
 		return t, fmt.Errorf("failed to create request %q: %w", url, err)
@@ -181,6 +191,29 @@ func PostByUrl[T any](url string, cfg conf.CenterApi, v interface{}) (t T, err e
 
 }
 
+var ProxyTransporter = &http.Transport{
+	Proxy: http.ProxyFromEnvironment,
+}
+
+func useProxy(url string) bool {
+	// N9E_PROXY_URL=oapi.dingtalk.com,feishu.com
+	patterns := os.Getenv("N9E_PROXY_URL")
+	if patterns != "" {
+		// 说明要让某些 URL 走代理
+		for _, u := range strings.Split(patterns, ",") {
+			u = strings.TrimSpace(u)
+			if u == "" {
+				continue
+			}
+
+			if strings.Contains(url, u) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) (response []byte, code int, err error) {
 	var bs []byte
 
@@ -193,6 +226,10 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 
 	client := http.Client{
 		Timeout: timeout,
+	}
+
+	if useProxy(url) {
+		client.Transport = ProxyTransporter
 	}
 
 	req, err := http.NewRequest("POST", url, bf)

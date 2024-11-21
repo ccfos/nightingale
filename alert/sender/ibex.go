@@ -118,6 +118,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	// 附加告警级别  告警触发值标签
 	tagsMap["alert_severity"] = strconv.Itoa(event.Severity)
 	tagsMap["alert_trigger_value"] = event.TriggerValue
+	tagsMap["is_recovered"] = strconv.FormatBool(event.IsRecovered)
 
 	tags, err := json.Marshal(tagsMap)
 	if err != nil {

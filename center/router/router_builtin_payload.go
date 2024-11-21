@@ -43,7 +43,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 				for _, rule := range alertRules {
 					if rule.UUID == 0 {
-						rule.UUID = time.Now().UnixNano()
+						rule.UUID = time.Now().UnixMicro()
 					}
 
 					contentBytes, err := json.Marshal(rule)
@@ -78,7 +78,13 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if alertRule.UUID == 0 {
-				alertRule.UUID = time.Now().UnixNano()
+				alertRule.UUID = time.Now().UnixMicro()
+			}
+
+			contentBytes, err := json.Marshal(alertRule)
+			if err != nil {
+				reterr[alertRule.Name] = err.Error()
+				continue
 			}
 
 			bp := models.BuiltinPayload{
@@ -88,7 +94,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Name:        alertRule.Name,
 				Tags:        alertRule.AppendTags,
 				UUID:        alertRule.UUID,
-				Content:     lst[i].Content,
+				Content:     string(contentBytes),
 				CreatedBy:   username,
 				UpdatedBy:   username,
 			}
@@ -106,7 +112,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 				for _, dashboard := range dashboards {
 					if dashboard.UUID == 0 {
-						dashboard.UUID = time.Now().UnixNano()
+						dashboard.UUID = time.Now().UnixMicro()
 					}
 
 					contentBytes, err := json.Marshal(dashboard)
@@ -141,7 +147,13 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if dashboard.UUID == 0 {
-				dashboard.UUID = time.Now().UnixNano()
+				dashboard.UUID = time.Now().UnixMicro()
+			}
+
+			contentBytes, err := json.Marshal(dashboard)
+			if err != nil {
+				reterr[dashboard.Name] = err.Error()
+				continue
 			}
 
 			bp := models.BuiltinPayload{
@@ -151,7 +163,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Name:        dashboard.Name,
 				Tags:        dashboard.Tags,
 				UUID:        dashboard.UUID,
-				Content:     lst[i].Content,
+				Content:     string(contentBytes),
 				CreatedBy:   username,
 				UpdatedBy:   username,
 			}

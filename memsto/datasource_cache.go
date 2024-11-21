@@ -23,7 +23,9 @@ type DatasourceCacheType struct {
 	DatasourceFilter    func([]*models.Datasource, *models.User) []*models.Datasource
 
 	sync.RWMutex
-	ds map[int64]*models.Datasource // key: id
+	ds          map[int64]*models.Datasource            // key: id value: datasource
+	CateToIDs   map[string]map[int64]*models.Datasource // key1: cate key2: id value: datasource
+	CateToNames map[string]map[string]int64             // key1: cate key2: name value: id
 }
 
 func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
@@ -33,11 +35,19 @@ func NewDatasourceCache(ctx *ctx.Context, stats *Stats) *DatasourceCacheType {
 		ctx:                 ctx,
 		stats:               stats,
 		ds:                  make(map[int64]*models.Datasource),
+		CateToIDs:           make(map[string]map[int64]*models.Datasource),
+		CateToNames:         make(map[string]map[string]int64),
 		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 		DatasourceFilter:    func(ds []*models.Datasource, user *models.User) []*models.Datasource { return ds },
 	}
 	ds.SyncDatasources()
 	return ds
+}
+
+func (d *DatasourceCacheType) GetIDsByDsCateAndQueries(cate string, datasourceQueries []models.DatasourceQuery) []int64 {
+	d.Lock()
+	defer d.Unlock()
+	return models.GetDatasourceIDsByDatasourceQueries(datasourceQueries, d.CateToIDs[cate], d.CateToNames[cate])
 }
 
 func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -49,8 +59,22 @@ func (d *DatasourceCacheType) StatChanged(total, lastUpdated int64) bool {
 }
 
 func (d *DatasourceCacheType) Set(ds map[int64]*models.Datasource, total, lastUpdated int64) {
+	cateToDs := make(map[string]map[int64]*models.Datasource)
+	cateToNames := make(map[string]map[string]int64)
+	for _, datasource := range ds {
+		if _, exists := cateToDs[datasource.PluginType]; !exists {
+			cateToDs[datasource.PluginType] = make(map[int64]*models.Datasource)
+		}
+		cateToDs[datasource.PluginType][datasource.Id] = datasource
+		if _, exists := cateToNames[datasource.PluginType]; !exists {
+			cateToNames[datasource.PluginType] = make(map[string]int64)
+		}
+		cateToNames[datasource.PluginType][datasource.Name] = datasource.Id
+	}
 	d.Lock()
+	d.CateToIDs = cateToDs
 	d.ds = ds
+	d.CateToNames = cateToNames
 	d.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -99,20 +123,20 @@ func (d *DatasourceCacheType) syncDatasources() error {
 		return nil
 	}
 
-	m, err := models.DatasourceGetMap(d.ctx)
+	ds, err := models.DatasourceGetMap(d.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("datasources", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call DatasourceGetMap")
 	}
 
-	d.Set(m, stat.Total, stat.LastUpdated)
+	d.Set(ds, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(float64(ms))
-	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(m)))
+	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(ds)))
 
-	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(m))
-	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(m), "success")
+	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(ds))
+	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(ds), "success")
 
 	return nil
 }

@@ -1,5 +1,5 @@
 {
-    "name": "MySQL 仪表盘（远端）",
+    "name": "MySQL 仪表盘（使用 instance 筛选，需要采集时自行打上 instance 标签）",
     "tags": "",
     "ident": "",
     "configs": {
@@ -1802,5 +1802,5 @@
         ],
         "version": "3.0.0"
     },
-    "uuid": 1717556328087994322
+    "uuid": 1717556328087995000
 }

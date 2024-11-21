@@ -129,34 +129,39 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 		return
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, event, "callback", ctx.Stats, event)
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, event, "callback", ctx.Stats, ctx.Events)
 }
 
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
-	stats *astats.Stats, event *models.AlertCurEvent) {
+	stats *astats.Stats, events []*models.AlertCurEvent) {
 	res, err := doSend(url, body, channel, stats)
-	NotifyRecord(ctx, event, channel, token, res, err)
+	NotifyRecord(ctx, events, channel, token, res, err)
 }
 
-func NotifyRecord(ctx *ctx.Context, evt *models.AlertCurEvent, channel, target, res string, err error) {
-	noti := models.NewNotificationRecord(evt, channel, target)
-	if err != nil {
-		noti.SetStatus(models.NotiStatusFailure)
-		noti.SetDetails(err.Error())
-	} else if res != "" {
-		noti.SetDetails(string(res))
+func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, channel, target, res string, err error) {
+	// 一个通知可能对应多个 event，都需要记录
+	notis := make([]*models.NotificaitonRecord, 0, len(evts))
+	for _, evt := range evts {
+		noti := models.NewNotificationRecord(evt, channel, target)
+		if err != nil {
+			noti.SetStatus(models.NotiStatusFailure)
+			noti.SetDetails(err.Error())
+		} else if res != "" {
+			noti.SetDetails(string(res))
+		}
+		notis = append(notis, noti)
 	}
 
 	if !ctx.IsCenter {
-		_, err := poster.PostByUrlsWithResp[int64](ctx, "/v1/n9e/notify-record", noti)
+		_, err := poster.PostByUrlsWithResp[[]int64](ctx, "/v1/n9e/notify-record", notis)
 		if err != nil {
-			logger.Errorf("add noti:%v failed, err: %v", noti, err)
+			logger.Errorf("add notis:%v failed, err: %v", notis, err)
 		}
 		return
 	}
 
-	if err := noti.Add(ctx); err != nil {
-		logger.Errorf("add noti:%v failed, err: %v", noti, err)
+	if err := models.DB(ctx).CreateInBatches(notis, 100).Error; err != nil {
+		logger.Errorf("add notis:%v failed, err: %v", notis, err)
 	}
 }
 

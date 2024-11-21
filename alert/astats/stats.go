@@ -38,7 +38,7 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "rule_eval_error_total",
 		Help:      "Number of rule eval error.",
-	}, []string{"datasource", "stage"})
+	}, []string{"datasource", "stage", "busi_group", "rule_id"})
 
 	CounterQueryDataErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
