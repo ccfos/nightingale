@@ -21,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
 
+	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -38,6 +39,8 @@ type AlertRuleWorker struct {
 	promClients     *prom.PromClientMap
 	tdengineClients *tdengine.TdengineClientMap
 	ctx             *ctx.Context
+
+	scheduler *cron.Cron
 }
 
 const (
@@ -68,6 +71,25 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *p
 		ctx:             ctx,
 	}
 
+	interval := rule.PromEvalInterval
+	if interval <= 0 {
+		interval = 10
+	}
+
+	if rule.CronPattern == "" {
+		rule.CronPattern = fmt.Sprintf("@every %ds", interval)
+	}
+
+	arw.scheduler = cron.New(cron.WithSeconds())
+
+	_, err := arw.scheduler.AddFunc(rule.CronPattern, func() {
+		arw.Eval()
+	})
+
+	if err != nil {
+		logger.Errorf("alert rule %s add cron pattern error: %v", arw.Key(), err)
+	}
+
 	return arw
 }
 
@@ -76,9 +98,9 @@ func (arw *AlertRuleWorker) Key() string {
 }
 
 func (arw *AlertRuleWorker) Hash() string {
-	return str.MD5(fmt.Sprintf("%d_%d_%s_%d",
+	return str.MD5(fmt.Sprintf("%d_%s_%s_%d",
 		arw.rule.Id,
-		arw.rule.PromEvalInterval,
+		arw.rule.CronPattern,
 		arw.rule.RuleConfig,
 		arw.datasourceId,
 	))
@@ -90,23 +112,7 @@ func (arw *AlertRuleWorker) Prepare() {
 
 func (arw *AlertRuleWorker) Start() {
 	logger.Infof("eval:%s started", arw.Key())
-	interval := arw.rule.PromEvalInterval
-	if interval <= 0 {
-		interval = 10
-	}
-
-	ticker := time.NewTicker(time.Duration(interval) * time.Second)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-arw.quit:
-				return
-			case <-ticker.C:
-				arw.Eval()
-			}
-		}
-	}()
+	arw.scheduler.Start()
 }
 
 func (arw *AlertRuleWorker) Eval() {
@@ -186,6 +192,8 @@ func (arw *AlertRuleWorker) Eval() {
 func (arw *AlertRuleWorker) Stop() {
 	logger.Infof("rule_eval %s stopped", arw.Key())
 	close(arw.quit)
+	c := arw.scheduler.Stop()
+	<-c.Done()
 }
 
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {
