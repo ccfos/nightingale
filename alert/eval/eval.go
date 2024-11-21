@@ -25,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/tdengine"
 	"github.com/prometheus/common/model"
 
+	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -42,6 +43,8 @@ type AlertRuleWorker struct {
 	PromClients     *prom.PromClientMap
 	TdengineClients *tdengine.TdengineClientMap
 	Ctx             *ctx.Context
+
+	Scheduler *cron.Cron
 
 	HostAndDeviceIdentCache sync.Map
 
@@ -80,6 +83,25 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		},
 	}
 
+	interval := rule.PromEvalInterval
+	if interval <= 0 {
+		interval = 10
+	}
+
+	if rule.CronPattern == "" {
+		rule.CronPattern = fmt.Sprintf("@every %ds", interval)
+	}
+
+	arw.Scheduler = cron.New(cron.WithSeconds())
+
+	_, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
+		arw.Eval()
+	})
+
+	if err != nil {
+		logger.Errorf("alert rule %s add cron pattern error: %v", arw.Key(), err)
+	}
+
 	return arw
 }
 
@@ -88,9 +110,9 @@ func (arw *AlertRuleWorker) Key() string {
 }
 
 func (arw *AlertRuleWorker) Hash() string {
-	return str.MD5(fmt.Sprintf("%d_%d_%s_%d",
+	return str.MD5(fmt.Sprintf("%d_%s_%s_%d",
 		arw.Rule.Id,
-		arw.Rule.PromEvalInterval,
+		arw.Rule.CronPattern,
 		arw.Rule.RuleConfig,
 		arw.DatasourceId,
 	))
@@ -102,23 +124,7 @@ func (arw *AlertRuleWorker) Prepare() {
 
 func (arw *AlertRuleWorker) Start() {
 	logger.Infof("eval:%s started", arw.Key())
-	interval := arw.Rule.PromEvalInterval
-	if interval <= 0 {
-		interval = 10
-	}
-
-	ticker := time.NewTicker(time.Duration(interval) * time.Second)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-arw.Quit:
-				return
-			case <-ticker.C:
-				arw.Eval()
-			}
-		}
-	}()
+	arw.Scheduler.Start()
 }
 
 func (arw *AlertRuleWorker) Eval() {
@@ -200,6 +206,9 @@ func (arw *AlertRuleWorker) Eval() {
 func (arw *AlertRuleWorker) Stop() {
 	logger.Infof("rule_eval %s stopped", arw.Key())
 	close(arw.Quit)
+	c := arw.Scheduler.Stop()
+	<-c.Done()
+
 }
 
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {

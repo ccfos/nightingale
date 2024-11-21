@@ -103,6 +103,7 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
+	CronPattern           string                 `json:"cron_pattern"`
 }
 
 type ChildVarConfig struct {
@@ -875,6 +876,11 @@ func (ar *AlertRule) DB2FE() error {
 	}
 	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
 	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
+
+	// 兼容旧逻辑填充 cron_pattern
+	if ar.CronPattern == "" && ar.PromEvalInterval != 0 {
+		ar.CronPattern = fmt.Sprintf("@every %ds", ar.PromEvalInterval)
+	}
 
 	err := ar.FillDatasourceQueries()
 	if err != nil {
