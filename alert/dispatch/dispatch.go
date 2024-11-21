@@ -141,6 +141,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	if e.blockEventNotify(rule, event) {
+		logger.Infof("block event notify: rule_id:%d event:%+v", rule.Id, event)
 		return
 	}
 
