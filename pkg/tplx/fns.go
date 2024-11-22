@@ -27,6 +27,15 @@ type sample struct {
 	Value  float64
 }
 
+type QueryFunc func(int64, string) model.Value
+
+var queryFunc QueryFunc
+
+// RegisterQueryFunc 为了避免循环引用，通过外部注入的方式注册 queryFunc
+func RegisterQueryFunc(f QueryFunc) {
+	queryFunc = f
+}
+
 type queryResult []*sample
 
 type queryResultByLabelSorter struct {
@@ -563,4 +572,14 @@ func convertToFloat(i interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("can't convert %T to float", v)
 	}
+}
+
+func Query(datasourceID int64, promql string) model.Value {
+
+	value := queryFunc(datasourceID, promql)
+	if value != nil {
+		return value
+	}
+
+	return nil
 }

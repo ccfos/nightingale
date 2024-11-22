@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/alert/naming"
@@ -92,7 +91,7 @@ func (rt *Router) eventPersist(c *gin.Context) {
 
 type eventForm struct {
 	Alert         bool                  `json:"alert"`
-	AnomalyPoints []common.AnomalyPoint `json:"vectors"`
+	AnomalyPoints []models.AnomalyPoint `json:"vectors"`
 	RuleId        int64                 `json:"rule_id"`
 	DatasourceId  int64                 `json:"datasource_id"`
 	Inhibit       bool                  `json:"inhibit"`
