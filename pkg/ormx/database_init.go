@@ -243,8 +243,8 @@ func (InitBoard) TableOptions() string {
 
 type InitPostgresBoard struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex"`
-	Name     string `gorm:"size:191;not null;uniqueIndex"`
+	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex:idx_groupid_name"`
+	Name     string `gorm:"size:191;not null;uniqueIndex:idx_groupid_name"`
 	Ident    string `gorm:"size:200;not null;default:'';index"`
 	Tags     string `gorm:"size:255;not null;comment:split by space"`
 	Public   bool   `gorm:"type:boolean;not null;default:0;comment:0:false 1:true"`
@@ -292,8 +292,8 @@ func (InitPostgresBoardPayload) TableOptions() string {
 
 type InitDashboard struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex"`
-	Name     string `gorm:"size:191;not null;uniqueIndex"`
+	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex:idx_group_name"`
+	Name     string `gorm:"size:191;not null;uniqueIndex:idx_group_name"`
 	Tags     string `gorm:"size:255;not null;comment:split by space"`
 	Configs  string `gorm:"size:8192;comment:dashboard variables"`
 	CreateAt int64  `gorm:"not null;default:0"`
@@ -1199,8 +1199,8 @@ func (InitSSOConfig) TableOptions() string {
 
 type InitESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
 	AllowHideSystemIndices bool   `gorm:"type:tinyint(1);not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
@@ -1220,8 +1220,8 @@ func (InitESIndexPattern) TableOptions() string {
 
 type InitPostgresESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
-	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex"`
-	Name                   string `gorm:"size:191;not null;uniqueIndex"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
 	AllowHideSystemIndices bool   `gorm:"type:boolean;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
@@ -1376,8 +1376,8 @@ func (InitTaskHostDoing) TableOptions() string {
 
 type InitTaskHost struct {
 	II     uint64 `gorm:"primaryKey;autoIncrement"`
-	ID     uint64 `gorm:"not null;uniqueIndex"`
-	Host   string `gorm:"size:128;not null;uniqueIndex"`
+	ID     uint64 `gorm:"not null;uniqueIndex:id_host"`
+	Host   string `gorm:"size:128;not null;uniqueIndex:id_host"`
 	Status string `gorm:"size:32;not null"`
 	Stdout string `gorm:"type:text"`
 	Stderr string `gorm:"type:text"`
