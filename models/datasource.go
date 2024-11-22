@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -104,14 +103,13 @@ func (h HTTP) NewReq(reqUrl *string) (req *http.Request, err error) {
 
 func (h HTTP) ParseUrl() (target *url.URL, err error) {
 	urls := h.GetUrls()
-	for i := 0; i < len(urls); i++ {
-		if target, err = url.Parse(urls[i]); err != nil {
-			continue
-		}
+	if len(urls) == 0 {
+		return nil, errors.New("no urls")
+	}
 
-		if _, err = httplib.Get(urls[i]).SetTimeout(time.Duration(h.Timeout) * time.Millisecond).Response(); err == nil {
-			return
-		}
+	target, err = url.Parse(urls[0])
+	if err != nil {
+		return nil, err
 	}
 	return
 }
@@ -388,12 +386,12 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 		}
 	}
 
-	ret := make(map[int64]*Datasource)
+	ds := make(map[int64]*Datasource)
 	for i := 0; i < len(lst); i++ {
-		ret[lst[i].Id] = lst[i]
+		ds[lst[i].Id] = lst[i]
 	}
 
-	return ret, nil
+	return ds, nil
 }
 
 func DatasourceStatistics(ctx *ctx.Context) (*Statistics, error) {

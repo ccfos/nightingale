@@ -27,8 +27,7 @@ func (lk *LarkSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback",
-		ctx.Stats, ctx.Events[0])
+	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 func (lk *LarkSender) Send(ctx MessageContext) {
@@ -44,7 +43,7 @@ func (lk *LarkSender) Send(ctx MessageContext) {
 				Text: message,
 			},
 		}
-		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Lark, ctx.Stats, ctx.Events[0])
+		doSendAndRecord(ctx.Ctx, url, tokens[i], body, models.Lark, ctx.Stats, ctx.Events)
 	}
 }
 

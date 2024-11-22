@@ -1,5 +1,5 @@
 {
-    "name": "MySQL 仪表盘",
+    "name": "MySQL 仪表盘，适用于 Categraf 采集本机 MySQL 的场景",
     "tags": "",
     "ident": "",
     "configs": {
@@ -1798,5 +1798,5 @@
         ],
         "version": "3.0.0"
     },
-    "uuid": 1717556328087994321
+    "uuid": 1717556328087994000
 }

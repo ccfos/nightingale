@@ -43,7 +43,7 @@ func (ms *MmSender) Send(ctx MessageContext) {
 		Text:   message,
 		Tokens: urls,
 		Stats:  ctx.Stats,
-	}, ctx.Events[0], models.Mm)
+	}, ctx.Events, models.Mm)
 }
 
 func (ms *MmSender) CallBack(ctx CallBackContext) {
@@ -56,7 +56,7 @@ func (ms *MmSender) CallBack(ctx CallBackContext) {
 		Text:   message,
 		Tokens: []string{ctx.CallBackURL},
 		Stats:  ctx.Stats,
-	}, ctx.Events[0], "callback")
+	}, ctx.Events, "callback")
 }
 
 func (ms *MmSender) extract(users []*models.User) []string {
@@ -69,12 +69,12 @@ func (ms *MmSender) extract(users []*models.User) []string {
 	return tokens
 }
 
-func SendMM(ctx *ctx.Context, message MatterMostMessage, event *models.AlertCurEvent, channel string) {
+func SendMM(ctx *ctx.Context, message MatterMostMessage, events []*models.AlertCurEvent, channel string) {
 	for i := 0; i < len(message.Tokens); i++ {
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
 			logger.Errorf("mm_sender: failed to parse error=%v", err)
-			NotifyRecord(ctx, event, channel, message.Tokens[i], "", err)
+			NotifyRecord(ctx, events, channel, message.Tokens[i], "", err)
 			continue
 		}
 
@@ -103,7 +103,7 @@ func SendMM(ctx *ctx.Context, message MatterMostMessage, event *models.AlertCurE
 				Username: username,
 				Text:     txt + message.Text,
 			}
-			doSendAndRecord(ctx, ur, message.Tokens[i], body, channel, message.Stats, event)
+			doSendAndRecord(ctx, ur, message.Tokens[i], body, channel, message.Stats, events)
 		}
 	}
 }

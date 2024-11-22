@@ -35,11 +35,18 @@ type Record struct {
 
 // notificationRecordAdd
 func (rt *Router) notificationRecordAdd(c *gin.Context) {
-	var req models.NotificaitonRecord
+	var req []*models.NotificaitonRecord
 	ginx.BindJSON(c, &req)
-	err := req.Add(rt.Ctx)
+	err := models.DB(rt.Ctx).CreateInBatches(req, 100).Error
+	var ids []int64
+	if err == nil {
+		ids = make([]int64, len(req))
+		for i, noti := range req {
+			ids[i] = noti.Id
+		}
+	}
 
-	ginx.NewRender(c).Data(req.Id, err)
+	ginx.NewRender(c).Data(ids, err)
 }
 
 func (rt *Router) notificationRecordList(c *gin.Context) {

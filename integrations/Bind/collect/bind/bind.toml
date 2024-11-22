@@ -1,0 +1,8 @@
+[[instances]]
+urls = [
+    # "http://localhost:8053/xml/v3",
+]
+gather_memory_contexts = true
+gather_views = true
+timeout = "5s"
+# labels={app="bind"}
