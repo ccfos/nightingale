@@ -116,12 +116,13 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 			}
 
 			templateFuncMapCopy := tplx.NewTemplateFuncMap()
-			templateFuncMapCopy["query"] = func(promql string, param ...int64) string {
+			templateFuncMapCopy["query"] = func(promql string, param ...int64) []AnomalyPoint {
 				datasourceId := e.DatasourceId
 				if len(param) > 0 {
 					datasourceId = param[0]
 				}
-				return tplx.Query(datasourceId, promql)
+				value := tplx.Query(datasourceId, promql)
+				return ConvertAnomalyPoints(value)
 			}
 
 			text := strings.Join(append(defs, f), "")

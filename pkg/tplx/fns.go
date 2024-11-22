@@ -574,12 +574,12 @@ func convertToFloat(i interface{}) (float64, error) {
 	}
 }
 
-func Query(datasourceID int64, promql string) string {
+func Query(datasourceID int64, promql string) model.Value {
 
 	value := queryFunc(datasourceID, promql)
 	if value != nil {
-		return value.String()
+		return value
 	}
 
-	return ""
+	return nil
 }

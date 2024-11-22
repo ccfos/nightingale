@@ -138,8 +138,8 @@ func (arw *AlertRuleWorker) Eval() {
 
 	typ := cachedRule.GetRuleType()
 	var (
-		anomalyPoints []common.AnomalyPoint
-		recoverPoints []common.AnomalyPoint
+		anomalyPoints []models.AnomalyPoint
+		recoverPoints []models.AnomalyPoint
 		err           error
 	)
 
@@ -167,7 +167,7 @@ func (arw *AlertRuleWorker) Eval() {
 	}
 
 	if arw.Inhibit {
-		pointsMap := make(map[string]common.AnomalyPoint)
+		pointsMap := make(map[string]models.AnomalyPoint)
 		for _, point := range recoverPoints {
 			// 对于恢复的事件，合并处理
 			tagHash := process.TagHash(point)
@@ -211,8 +211,8 @@ func (arw *AlertRuleWorker) Stop() {
 
 }
 
-func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {
-	var lst []common.AnomalyPoint
+func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
+	var lst []models.AnomalyPoint
 	var severity int
 
 	var rule *models.PromRuleConfig
@@ -273,7 +273,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]common.Ano
 			}
 
 			logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
-			points := common.ConvertAnomalyPoints(value)
+			points := models.ConvertAnomalyPoints(value)
 			for i := 0; i < len(points); i++ {
 				points[i].Severity = query.Severity
 				points[i].Query = promql
@@ -301,10 +301,10 @@ type sample struct {
 // 每个节点先查询无参数的 query, 即 mem_used_percent > curVal, 得到满足值变量的所有结果
 // 结果中有满足本节点参数变量的值，加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
-func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient promsdk.API) map[string]common.AnomalyPoint {
+func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient promsdk.API) map[string]models.AnomalyPoint {
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
-	anomalyPoints := make(map[string]common.AnomalyPoint)
+	anomalyPoints := make(map[string]models.AnomalyPoint)
 	// 统一变量配置格式
 	VarConfigForCalc := &models.ChildVarConfig{
 		ParamVal:        make([]map[string]models.ParamQuery, 1),
@@ -371,7 +371,7 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
 				}
 				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
-					anomalyPoints[strings.Join(cur, "-")] = common.AnomalyPoint{
+					anomalyPoints[strings.Join(cur, "-")] = models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
 						Value:     float64(seqVals[i].Value),
@@ -591,10 +591,10 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 	}
 }
 
-func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]common.AnomalyPoint, []common.AnomalyPoint, error) {
+func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint, error) {
 	// 获取查询和规则判断条件
-	points := []common.AnomalyPoint{}
-	recoverPoints := []common.AnomalyPoint{}
+	points := []models.AnomalyPoint{}
+	recoverPoints := []models.AnomalyPoint{}
 	ruleConfig := strings.TrimSpace(rule.RuleConfig)
 	if ruleConfig == "" {
 		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
@@ -654,8 +654,8 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 	return points, recoverPoints, nil
 }
 
-func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.AnomalyPoint, error) {
-	var lst []common.AnomalyPoint
+func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
+	var lst []models.AnomalyPoint
 	var severity int
 
 	var rule *models.HostRuleConfig
@@ -721,7 +721,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = target.Ident
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
+				lst = append(lst, models.NewAnomalyPoint(trigger.Type, m, now, float64(now-target.UpdateAt), trigger.Severity))
 			}
 		case "offset":
 			idents, exists := arw.Processor.TargetsOfAlertRuleCache.Get(arw.Processor.EngineName, arw.Rule.Id)
@@ -768,7 +768,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 				}
 				m["ident"] = host
 
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
+				lst = append(lst, models.NewAnomalyPoint(trigger.Type, m, now, float64(offset), trigger.Severity))
 			}
 		case "pct_target_miss":
 			t := now - int64(trigger.Duration)
@@ -789,16 +789,16 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]common.Ano
 			logger.Debugf("rule_eval:%s missTargets:%v", arw.Key(), missTargets)
 			pct := float64(len(missTargets)) / float64(len(idents)) * 100
 			if pct >= float64(trigger.Percent) {
-				lst = append(lst, common.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
+				lst = append(lst, models.NewAnomalyPoint(trigger.Type, nil, now, pct, trigger.Severity))
 			}
 		}
 	}
 	return lst, nil
 }
 
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]common.AnomalyPoint, []common.AnomalyPoint) {
-	points := []common.AnomalyPoint{}
-	recoverPoints := []common.AnomalyPoint{}
+func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]models.AnomalyPoint, []models.AnomalyPoint) {
+	points := []models.AnomalyPoint{}
+	recoverPoints := []models.AnomalyPoint{}
 
 	if len(ruleQuery.Triggers) == 0 {
 		return points, recoverPoints
@@ -871,7 +871,7 @@ func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes 
 				values += fmt.Sprintf("%s:%v ", k, v)
 			}
 
-			point := common.AnomalyPoint{
+			point := models.AnomalyPoint{
 				Key:           sample.MetricName(),
 				Labels:        sample.Metric,
 				Timestamp:     int64(ts),

@@ -184,7 +184,7 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 		logger.Errorf("rule_eval:%s promql:%s, warnings:%v", getKey(event), promql, warnings)
 	}
 
-	anomalyPoints := common.ConvertAnomalyPoints(value)
+	anomalyPoints := models.ConvertAnomalyPoints(value)
 	if len(anomalyPoints) == 0 {
 		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
