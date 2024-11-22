@@ -220,8 +220,8 @@ func (InitBusiGroupMember) TableOptions() string {
 
 type InitBoard struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex"`
-	Name     string `gorm:"size:191;not null;uniqueIndex"`
+	GroupID  uint64 `gorm:"not null;default:0;comment:busi group id;uniqueIndex:idx_groupid_name"`
+	Name     string `gorm:"size:191;not null;uniqueIndex:idx_groupid_name"`
 	Ident    string `gorm:"size:200;not null;default:'';index"`
 	Tags     string `gorm:"size:255;not null;comment:split by space"`
 	Public   bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:false 1:true"`
