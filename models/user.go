@@ -804,6 +804,10 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 			return lst, err
 		}
 
+		if t == nil {
+			return lst, nil
+		}
+
 		t.GroupIds, err = TargetGroupIdsGetByIdent(ctx, t.Ident)
 		if err != nil {
 			return nil, err
