@@ -65,7 +65,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	promClients := prom.NewPromClient(ctx)
 	dispatch.InitRegisterQueryFunc(promClients)
-	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
 
