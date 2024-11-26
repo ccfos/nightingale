@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
+	"github.com/ccfos/nightingale/v6/ds/tdengine"
 	"math"
 	"reflect"
 	"sort"
@@ -20,7 +22,6 @@ import (
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/tdengine"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -36,9 +37,8 @@ type AlertRuleWorker struct {
 
 	processor *process.Processor
 
-	promClients     *prom.PromClientMap
-	tdengineClients *tdengine.TdengineClientMap
-	ctx             *ctx.Context
+	promClients *prom.PromClientMap
+	ctx         *ctx.Context
 }
 
 const (
@@ -57,16 +57,16 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		datasourceId: datasourceId,
 		quit:         make(chan struct{}),
 		rule:         rule,
 		processor:    processor,
 
-		promClients:     promClients,
-		tdengineClients: tdengineClients,
-		ctx:             ctx,
+		promClients: promClients,
+		// xub temp tdengineClients: tdengineClients,
+		ctx: ctx,
 	}
 
 	return arw
@@ -288,8 +288,10 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			seriesTagIndex := make(map[uint64][]uint64)
 
 			arw.processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
-			cli := arw.tdengineClients.GetCli(dsId)
-			if cli == nil {
+
+			ds, hit := datasource.DsCache.Get(tdengine.TDEngineType, dsId)
+			cli, ok := ds.(*tdengine.TDengine)
+			if !(hit && ok) {
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
 				arw.processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.datasourceId)).Inc()
 				arw.processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.processor.DatasourceId()), GET_CLIENT, arw.processor.BusiGroupCache.GetNameByBusiGroupId(arw.rule.GroupId), fmt.Sprintf("%v", arw.rule.Id)).Inc()

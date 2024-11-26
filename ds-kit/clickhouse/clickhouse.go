@@ -173,8 +173,8 @@ func (c *Clickhouse) ShowTables(ctx context.Context, database string) ([]string,
 	return res, nil
 }
 
-// DescTable describes the schema of a specified table in Clickhouse
-func (c *Clickhouse) DescTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
+// DescribeTable describes the schema of a specified table in Clickhouse
+func (c *Clickhouse) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
 	var (
 		ret []*types.ColumnProperty
 	)

@@ -5,7 +5,6 @@ import (
 	"github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/ds-kit/types"
-	"github.com/ccfos/nightingale/v6/ds/ck"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -93,11 +92,6 @@ func (rt *Router) DescribeTable(c *gin.Context) {
 		client := plug.(TableDescriber)
 		if len(f.Querys) > 0 {
 			columns, err = client.DescribeTable(c.Request.Context(), f.Querys[0])
-		}
-	case *ck.Clickhouse:
-		client := plug.(*ck.Clickhouse)
-		if len(f.Querys) > 0 {
-			columns, err = client.DescTable(c.Request.Context(), f.Querys[0])
 		}
 	default:
 		ginx.Bomb(200, "datasource not exists")

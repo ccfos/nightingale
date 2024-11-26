@@ -24,8 +24,6 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/tdengine"
-
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
 	"github.com/toolkits/pkg/ginx"
@@ -42,7 +40,6 @@ type Router struct {
 	DatasourceCache   *memsto.DatasourceCacheType
 	NotifyConfigCache *memsto.NotifyConfigCacheType
 	PromClients       *prom.PromClientMap
-	TdendgineClients  *tdengine.TdengineClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
 	IdentSet          *idents.Set
@@ -57,7 +54,7 @@ type Router struct {
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis,
+	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
 	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
 	return &Router{
@@ -69,7 +66,6 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		DatasourceCache:   ds,
 		NotifyConfigCache: ncc,
 		PromClients:       pc,
-		TdendgineClients:  tdendgineClients,
 		Redis:             redis,
 		MetaSet:           metaSet,
 		IdentSet:          idents,

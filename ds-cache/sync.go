@@ -59,6 +59,8 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context) {
 			} else if item.PluginType == "prometheus" || item.PluginType == "jaeger" {
 				// prometheus and jaeger 不走 n9e-plus 告警逻辑
 				continue
+			} else if item.PluginType == "tdengine" {
+				tdN9eToDatasourceInfo(&ds, item)
 			} else {
 				ds.Settings = make(map[string]interface{})
 				for k, v := range item.SettingsJson {
@@ -73,7 +75,20 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context) {
 	}
 }
 
-// xub todo tdengine
+func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
+	ds.Settings = make(map[string]interface{})
+	ds.Settings["td.datasource_name"] = item.Name
+	ds.Settings["td.url"] = item.HTTPJson.Url
+	ds.Settings["td.timeout"] = item.HTTPJson.Timeout
+	ds.Settings["td.dial_timeout"] = item.HTTPJson.DialTimeout
+	ds.Settings["td.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
+	ds.Settings["td.headers"] = item.HTTPJson.Headers
+
+	ds.Settings["td.basic_auth_user"] = item.AuthJson.BasicAuthUser
+	ds.Settings["td.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
+
+}
+
 func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
 	ds.Settings = make(map[string]interface{})
 	ds.Settings["es.nodes"] = []string{item.HTTPJson.Url}
