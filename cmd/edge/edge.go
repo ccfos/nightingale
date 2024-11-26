@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -60,6 +61,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	pushgwRouter.Config(r)
+	datasource.Init(ctx)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")

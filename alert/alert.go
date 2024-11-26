@@ -3,6 +3,7 @@ package alert
 import (
 	"context"
 	"fmt"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -69,6 +70,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	externalProcessors := process.NewExternalProcessors()
 
+	datasource.Init(ctx)
 	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,

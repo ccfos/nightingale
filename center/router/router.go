@@ -187,12 +187,25 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/datasource/query", rt.datasourceQuery)
 
 			pages.POST("/ds-query", rt.QueryData)
-			pages.POST("/logs-query", rt.QueryLog)
+			pages.POST("/logs-query", rt.QueryLogV2)
 
-			pages.POST("/tdengine-databases", rt.tdengineDatabases)
-			pages.POST("/tdengine-tables", rt.tdengineTables)
-			pages.POST("/tdengine-columns", rt.tdengineColumns)
+			// xub todo 统一至数据库元数据接口
+			//pages.POST("/tdengine-databases", rt.tdengineDatabases)
+			//pages.POST("/tdengine-tables", rt.tdengineTables)
+			//pages.POST("/tdengine-columns", rt.tdengineColumns)
 
+			pages.POST("/log-query-batch", rt.QueryLogBatch)
+
+			// 数据库元数据接口
+			pages.POST("/db-databases", rt.ShowDatabases)
+			pages.POST("/db-tables", rt.ShowTables)
+			pages.POST("/db-desc-table", rt.DescribeTable)
+
+			// es 专用接口
+			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
+			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
+			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
+			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
@@ -203,9 +216,23 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/ds-query", rt.auth(), rt.QueryData)
 			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
 
-			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
-			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
-			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			// xub todo 统一至数据库元数据接口
+			//pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
+			//pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
+			//pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+
+			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
+
+			// 数据库元数据接口
+			pages.POST("/db-databases", rt.auth(), rt.user(), rt.ShowDatabases)
+			pages.POST("/db-tables", rt.auth(), rt.user(), rt.ShowTables)
+			pages.POST("/db-desc-table", rt.auth(), rt.user(), rt.DescribeTable)
+
+			// es 专用接口
+			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
+			pages.POST("/es-variable", rt.QueryESVariable)
+			pages.POST("/fields", rt.QueryFields)
+			pages.POST("/log-query", rt.QueryLogV2)
 		}
 
 		pages.GET("/sql-template", rt.QuerySqlTemplate)
@@ -478,6 +505,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/del"), rt.builtinPayloadsDel)
 		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUIDOrID)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

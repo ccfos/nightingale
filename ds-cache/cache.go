@@ -1,24 +1,25 @@
-package datasource
+package ds_cache
 
 import (
+	"github.com/ccfos/nightingale/v6/ds"
 	"github.com/toolkits/pkg/logger"
 	"sync"
 )
 
 type Cache struct {
-	datas map[string]map[int64]Datasource
+	datas map[string]map[int64]datasource.Datasource
 	mutex *sync.RWMutex
 }
 
 var DsCache = Cache{
-	datas: make(map[string]map[int64]Datasource),
+	datas: make(map[string]map[int64]datasource.Datasource),
 	mutex: new(sync.RWMutex),
 }
 
-func (cs *Cache) Put(cate string, dsId int64, ds Datasource) {
+func (cs *Cache) Put(cate string, dsId int64, ds datasource.Datasource) {
 	cs.mutex.Lock()
 	if _, found := cs.datas[cate]; !found {
-		cs.datas[cate] = make(map[int64]Datasource)
+		cs.datas[cate] = make(map[int64]datasource.Datasource)
 	}
 
 	if _, found := cs.datas[cate][dsId]; found {
@@ -42,7 +43,7 @@ func (cs *Cache) Put(cate string, dsId int64, ds Datasource) {
 	cs.mutex.Unlock()
 }
 
-func (cs *Cache) Get(cate string, dsId int64) (Datasource, bool) {
+func (cs *Cache) Get(cate string, dsId int64) (datasource.Datasource, bool) {
 	cs.mutex.RLock()
 	defer cs.mutex.RUnlock()
 	if _, found := cs.datas[cate]; !found {

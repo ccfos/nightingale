@@ -19,6 +19,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// xub todo 迁移实现 datasource 接口
+
 type TdengineQuery struct {
 	From     string `json:"from"`
 	Interval int64  `json:"interval"`
@@ -34,6 +36,7 @@ type Keys struct {
 	TimeFormat string `json:"timeFormat"`
 }
 
+// xub todo 使用 TdengineClientMap 的地方都替换成 datasource Cache
 type TdengineClientMap struct {
 	sync.RWMutex
 	ctx           *ctx.Context

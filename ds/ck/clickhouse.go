@@ -3,12 +3,13 @@ package ck
 import (
 	"context"
 	"fmt"
+
 	"strings"
 
+	datasource "github.com/ccfos/nightingale/v6/ds"
+	ck "github.com/ccfos/nightingale/v6/ds-kit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
-	ck "github.com/flashcatcloud/fc-datasource-kit/clickhouse"
-	"github.com/flashcatcloud/n9e-plus/pkg/macros"
-	"github.com/flashcatcloud/n9e-plus/plus/datasource"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"

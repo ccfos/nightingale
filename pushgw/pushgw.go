@@ -3,6 +3,7 @@ package pushgw
 import (
 	"context"
 	"fmt"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
@@ -55,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
-
+	datasource.Init(ctx)
 	httpClean := httpx.Init(config.HTTP, r)
 
 	return func() {

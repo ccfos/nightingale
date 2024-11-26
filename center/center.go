@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -106,6 +107,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
+
+	datasource.Init(ctx)
 	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)

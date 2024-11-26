@@ -2,27 +2,22 @@ package router
 
 import (
 	"context"
+	"github.com/ccfos/nightingale/v6/ds-cache"
 
-	"github.com/flashcatcloud/n9e-plus/obj"
-	"github.com/flashcatcloud/n9e-plus/plus/cache"
-	"github.com/flashcatcloud/n9e-plus/plus/datasource/ck"
-	_ "github.com/flashcatcloud/n9e-plus/plus/datasource/doris"
-	_ "github.com/flashcatcloud/n9e-plus/plus/datasource/influxdb"
-	_ "github.com/flashcatcloud/n9e-plus/plus/datasource/mysql"
-	_ "github.com/flashcatcloud/n9e-plus/plus/datasource/postgresql"
-	_ "github.com/flashcatcloud/n9e-plus/plus/datasource/sqlserver"
+	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/ds/ck"
+	"github.com/ccfos/nightingale/v6/models"
 
-	"github.com/flashcatcloud/fc-datasource-kit/types"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) ShowDatabases(c *gin.Context) {
-	var f obj.QueryParam
+	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := cache.Datasources.Get(f.Cate, f.DatasourceId)
+	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
@@ -49,10 +44,10 @@ func (rt *Router) ShowDatabases(c *gin.Context) {
 }
 
 func (rt *Router) ShowTables(c *gin.Context) {
-	var f obj.QueryParam
+	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := cache.Datasources.Get(f.Cate, f.DatasourceId)
+	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
@@ -79,10 +74,10 @@ func (rt *Router) ShowTables(c *gin.Context) {
 }
 
 func (rt *Router) DescribeTable(c *gin.Context) {
-	var f obj.QueryParam
+	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := cache.Datasources.Get(f.Cate, f.DatasourceId)
+	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
