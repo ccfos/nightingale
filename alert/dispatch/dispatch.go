@@ -193,9 +193,9 @@ func (e *Dispatch) blockEventNotify(rule *models.AlertRule, event *models.AlertC
 	}
 
 	// 恢复通知，检测规则配置是否改变
-	if event.IsRecovered && event.RuleHash != rule.Hash() {
-		return true
-	}
+	// if event.IsRecovered && event.RuleHash != rule.Hash() {
+	// 	return true
+	// }
 
 	return false
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
+	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/metas"
@@ -73,7 +74,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		taskTplsCache := memsto.NewTaskTplCache(ctx)
 
 		promClients := prom.NewPromClient(ctx)
-		//tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
+
+		dispatch.InitRegisterQueryFunc(promClients)
+
 		externalProcessors := process.NewExternalProcessors()
 
 		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,

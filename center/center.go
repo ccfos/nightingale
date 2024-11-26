@@ -6,6 +6,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
+	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -102,6 +103,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
+
+	dispatch.InitRegisterQueryFunc(promClients)
 
 	externalProcessors := process.NewExternalProcessors()
 
