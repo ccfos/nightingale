@@ -33,7 +33,7 @@ type ClusterOptions struct {
 	MaxIdleConnsPerHost int
 }
 
-func Parse(fpath string, configPtr interface{}) error {
+func Parse(fpath string, configPtr *Config) error {
 	var (
 		tBuf []byte
 	)
