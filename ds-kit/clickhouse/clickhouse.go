@@ -2,9 +2,9 @@ package clickhouse
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-
 	"io"
 	"strings"
 	"time"
@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/ds-kit/sqlbase"
 	"github.com/ccfos/nightingale/v6/ds-kit/types"
 
-	"database/sql"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/net/httplib"

@@ -3,7 +3,6 @@ package alert
 import (
 	"context"
 	"fmt"
-	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -16,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/conf"
+	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"

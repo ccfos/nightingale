@@ -5,14 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
-	"github.com/ccfos/nightingale/v6/pkg/tlsx"
-	"github.com/mitchellh/mapstructure"
-	"github.com/toolkits/pkg/logger"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+	"github.com/mitchellh/mapstructure"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Tdengine struct {

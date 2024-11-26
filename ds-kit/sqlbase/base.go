@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/ccfos/nightingale/v6/ds-kit/types"
+
+	"gorm.io/gorm"
 )
 
 // NewDB creates a new Gorm DB instance based on the provided gorm.Dialector and configures the connection pool

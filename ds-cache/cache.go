@@ -1,9 +1,10 @@
 package ds_cache
 
 import (
+	"sync"
+
 	"github.com/ccfos/nightingale/v6/ds"
 	"github.com/toolkits/pkg/logger"
-	"sync"
 )
 
 type Cache struct {

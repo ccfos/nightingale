@@ -2,12 +2,14 @@ package router
 
 import (
 	"fmt"
+	"sort"
+
 	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 	"github.com/ccfos/nightingale/v6/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"sort"
 )
 
 func CheckDsPerm(c *gin.Context, dsId int64, cate string, q interface{}) bool {
