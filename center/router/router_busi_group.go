@@ -140,3 +140,12 @@ func (rt *Router) busiGroupGet(c *gin.Context) {
 	ginx.Dangerous(bg.FillUserGroups(rt.Ctx))
 	ginx.NewRender(c).Data(bg, nil)
 }
+
+func (rt *Router) busiGroupsGetTags(c *gin.Context) {
+	bgids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	targetIdents, err := models.TargetIndentsGetByBgids(rt.Ctx, bgids)
+	ginx.Dangerous(err)
+	tags, err := models.TargetGetTags(rt.Ctx, targetIdents, true, "busigroup")
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(tags, nil)
+}

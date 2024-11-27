@@ -169,7 +169,7 @@ func (rt *Router) targetGetTags(c *gin.Context) {
 	idents := ginx.QueryStr(c, "idents", "")
 	idents = strings.ReplaceAll(idents, ",", " ")
 	ignoreHostTag := ginx.QueryBool(c, "ignore_host_tag", false)
-	lst, err := models.TargetGetTags(rt.Ctx, strings.Fields(idents), ignoreHostTag)
+	lst, err := models.TargetGetTags(rt.Ctx, strings.Fields(idents), ignoreHostTag, "")
 	ginx.NewRender(c).Data(lst, err)
 }
 
@@ -397,6 +397,7 @@ type targetBgidsForm struct {
 	Idents  []string `json:"idents" binding:"required_without=HostIps"`
 	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
 	Bgids   []int64  `json:"bgids"`
+	Tags    []string `json:"tags"`
 	Action  string   `json:"action"` // add del reset
 }
 
@@ -452,11 +453,11 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 
 	switch f.Action {
 	case "add":
-		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids))
+		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	case "del":
 		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 	case "reset":
-		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids))
+		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid action")
 	}
@@ -478,7 +479,7 @@ func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, []int64{f.Bgid}))
+	ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, []int64{f.Bgid}, nil))
 }
 
 type identsForm struct {

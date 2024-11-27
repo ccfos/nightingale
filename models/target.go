@@ -409,7 +409,8 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 	return inexistence, identSet.ToSlice(), nil
 }
 
-func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool) ([]string, error) {
+func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool, bgLabelKey string) (
+	[]string, error) {
 	session := DB(ctx).Model(new(Target))
 
 	var arr []*Target
@@ -447,7 +448,22 @@ func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool) ([]str
 		ret = append(ret, key)
 	}
 
-	sort.Strings(ret)
+	if bgLabelKey != "" {
+		sort.Slice(ret, func(i, j int) bool {
+			if strings.HasPrefix(ret[i], bgLabelKey) && strings.HasPrefix(ret[j], bgLabelKey) {
+				return ret[i] < ret[j]
+			}
+			if strings.HasPrefix(ret[i], bgLabelKey) {
+				return true
+			}
+			if strings.HasPrefix(ret[j], bgLabelKey) {
+				return false
+			}
+			return ret[i] < ret[j]
+		})
+	} else {
+		sort.Strings(ret)
+	}
 
 	return ret, err
 }
@@ -626,7 +642,7 @@ func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 		}
 		err := DB(ctx).Transaction(func(tx *gorm.DB) error {
 			// 4.1 将 group_id 迁移至关联表
-			if err := TargetBindBgids(ctx, []string{t.Ident}, []int64{t.GroupId}); err != nil {
+			if err := TargetBindBgids(ctx, []string{t.Ident}, []int64{t.GroupId}, nil); err != nil {
 				return err
 			}
 			if err := TargetUpdateBgid(ctx, []string{t.Ident}, 0, false); err != nil {
