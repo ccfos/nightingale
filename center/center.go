@@ -108,7 +108,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	externalProcessors := process.NewExternalProcessors()
 
-	datasource.Init(ctx)
+	datasource.Init(ctx, false)
 	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)

@@ -117,7 +117,7 @@ func (td *TDengine) MakeTSQuery(ctx context.Context, query interface{}, eventTag
 }
 
 func (td *TDengine) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
-	return nil, nil
+	return td.Query(queryParam, 0)
 }
 
 func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {

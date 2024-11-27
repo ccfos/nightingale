@@ -14,64 +14,87 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func Init(ctx *ctx.Context) {
-	go getDatasourcesFromDBLoop(ctx)
+var FromAPIHook func()
+
+func Init(ctx *ctx.Context, fromAPI bool) {
+	go getDatasourcesFromDBLoop(ctx, fromAPI)
+}
+
+type ListInput struct {
+	Page       int    `json:"p"`
+	Limit      int    `json:"limit"`
+	Category   string `json:"category"`
+	PluginType string `json:"plugin_type"` // promethues
+	Status     string `json:"status"`
+}
+
+type DSReply struct {
+	RequestID string `json:"request_id"`
+	Data      struct {
+		Items []datasource.DatasourceInfo `json:"items"`
+	} `json:"data"`
+}
+
+type DSReplyEncrypt struct {
+	RequestID string `json:"request_id"`
+	Data      string `json:"data"`
 }
 
 var PromDefaultDatasourceId int64
 
-func getDatasourcesFromDBLoop(ctx *ctx.Context) {
+func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 	for {
-		items, err := models.GetDatasources(ctx)
-		if err != nil {
-			logger.Errorf("get datasource from database fail: %v", err)
-			//stat.CounterExternalErrorTotal.WithLabelValues("db", "get_cluster").Inc()
-			time.Sleep(time.Second * 2)
-			continue
-		}
-
-		var dss []datasource.DatasourceInfo
-		for _, item := range items {
-
-			if item.PluginType == "prometheus" && item.IsDefault {
-				atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
-			}
-
-			logger.Debugf("get datasource: %+v", item)
-			ds := datasource.DatasourceInfo{
-				Id:             item.Id,
-				Name:           item.Name,
-				Description:    item.Description,
-				Category:       item.Category,
-				PluginId:       item.PluginId,
-				Type:           item.PluginType,
-				PluginTypeName: item.PluginTypeName,
-				Settings:       item.SettingsJson,
-				HTTPJson:       item.HTTPJson,
-				AuthJson:       item.AuthJson,
-				Status:         item.Status,
-				IsDefault:      item.IsDefault,
-			}
-
-			if item.PluginType == "elasticsearch" {
-				esN9eToDatasourceInfo(&ds, item)
-			} else if item.PluginType == "opensearch" {
-				osN9eToDatasourceInfo(&ds, item)
-			} else if item.PluginType == "prometheus" || item.PluginType == "jaeger" {
-				// prometheus and jaeger 不走 n9e-plus 告警逻辑
+		if !fromAPI {
+			items, err := models.GetDatasources(ctx)
+			if err != nil {
+				logger.Errorf("get datasource from database fail: %v", err)
+				//stat.CounterExternalErrorTotal.WithLabelValues("db", "get_cluster").Inc()
+				time.Sleep(time.Second * 2)
 				continue
-			} else if item.PluginType == "tdengine" {
-				tdN9eToDatasourceInfo(&ds, item)
-			} else {
-				ds.Settings = make(map[string]interface{})
-				for k, v := range item.SettingsJson {
-					ds.Settings[k] = v
-				}
 			}
+			var dss []datasource.DatasourceInfo
+			for _, item := range items {
 
-			dss = append(dss, ds)
+				if item.PluginType == "prometheus" && item.IsDefault {
+					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
+				}
+
+				logger.Debugf("get datasource: %+v", item)
+				ds := datasource.DatasourceInfo{
+					Id:             item.Id,
+					Name:           item.Name,
+					Description:    item.Description,
+					Category:       item.Category,
+					PluginId:       item.PluginId,
+					Type:           item.PluginType,
+					PluginTypeName: item.PluginTypeName,
+					Settings:       item.SettingsJson,
+					HTTPJson:       item.HTTPJson,
+					AuthJson:       item.AuthJson,
+					Status:         item.Status,
+					IsDefault:      item.IsDefault,
+				}
+
+				if item.PluginType == "elasticsearch" {
+					esN9eToDatasourceInfo(&ds, item)
+				} else if item.PluginType == "opensearch" {
+					osN9eToDatasourceInfo(&ds, item)
+				} else if item.PluginType == "tdengine" {
+					tdN9eToDatasourceInfo(&ds, item)
+				} else {
+					ds.Settings = make(map[string]interface{})
+					for k, v := range item.SettingsJson {
+						ds.Settings[k] = v
+					}
+				}
+
+				dss = append(dss, ds)
+			}
 			PutDatasources(dss)
+		} else {
+			FromAPIHook()
 		}
+
 		time.Sleep(time.Second * 2)
 	}
 }
@@ -83,7 +106,7 @@ func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["td.timeout"] = item.HTTPJson.Timeout
 	ds.Settings["td.dial_timeout"] = item.HTTPJson.DialTimeout
 	ds.Settings["td.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
-	ds.Settings["td.headers"] = item.HTTPJson.Headers
+	//ds.Settings["td.headers"] = item.HTTPJson.Headers
 
 	ds.Settings["td.basic_auth_user"] = item.AuthJson.BasicAuthUser
 	ds.Settings["td.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
@@ -140,10 +163,10 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 			continue
 		}
 
-		if item.Type == "tdengine" || item.Type == "loki" {
-			// tdengine, loki 不走 n9e-plus 告警逻辑
-			continue
-		}
+		//if item.Type == "tdengine" || item.Type == "loki" {
+		//	// tdengine, loki 不走 n9e-plus 告警逻辑
+		//	continue
+		//}
 
 		if item.Name == "" {
 			logger.Warningf("cluster name is empty, ignore %+v", item)

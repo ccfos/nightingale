@@ -68,7 +68,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	externalProcessors := process.NewExternalProcessors()
 
-	datasource.Init(ctx)
+	datasource.Init(ctx, false)
 	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, userCache, userGroupCache)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,

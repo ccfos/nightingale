@@ -60,7 +60,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	pushgwRouter.Config(r)
-	datasource.Init(ctx)
+	datasource.Init(ctx, false)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
