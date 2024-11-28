@@ -294,6 +294,7 @@ CREATE TABLE `alert_rule` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `cron_pattern` varchar(64) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY (`group_id`),
     KEY (`update_at`)
