@@ -700,10 +700,16 @@ func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.
 	var err error
 	var warnings Warnings
 	var value model.Value
+	var statusCode int
 	for i := 0; i < 3; i++ {
-		value, warnings, err = h.query(ctx, query, ts)
+		value, warnings, statusCode, err = h.query(ctx, query, ts)
 		if err == nil {
 			return value, warnings, nil
+		}
+
+		// statusCode 4xx do not retry
+		if statusCode >= 400 && statusCode < 500 {
+			return nil, warnings, err
 		}
 
 		time.Sleep(100 * time.Millisecond)
@@ -711,7 +717,7 @@ func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.
 	return nil, warnings, err
 }
 
-func (h *httpAPI) query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error) {
+func (h *httpAPI) query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, int, error) {
 	u := h.client.URL(epQuery, nil)
 	q := u.Query()
 
@@ -722,15 +728,11 @@ func (h *httpAPI) query(ctx context.Context, query string, ts time.Time) (model.
 
 	resp, body, warnings, err := h.client.DoGetFallback(ctx, u, q)
 	if err != nil {
-		return nil, warnings, err
-	}
-
-	if resp.StatusCode > 200 {
-		fmt.Println("status code:", resp.StatusCode)
+		return nil, warnings, 0, err
 	}
 
 	var qres queryResult
-	return model.Value(qres.v), warnings, json.Unmarshal(body, &qres)
+	return model.Value(qres.v), warnings, resp.StatusCode, json.Unmarshal(body, &qres)
 }
 
 func (h *httpAPI) QueryRange(ctx context.Context, query string, r Range) (model.Value, Warnings, error) {
