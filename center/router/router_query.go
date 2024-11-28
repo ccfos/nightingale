@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	datasource "github.com/ccfos/nightingale/v6/ds-cache"
+	datasource "github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"

@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
 )

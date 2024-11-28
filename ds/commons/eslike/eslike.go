@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bitly/go-simplejson"
 	"github.com/ccfos/nightingale/v6/models"
+
+	"github.com/bitly/go-simplejson"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/common/model"

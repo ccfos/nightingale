@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 )
 
 func Test_Timeseries(t *testing.T) {

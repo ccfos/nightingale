@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ccfos/nightingale/v6/ds-kit/sqlbase"
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 )
 
 const (

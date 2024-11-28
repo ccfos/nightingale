@@ -1,4 +1,4 @@
-package ds_cache
+package dscache
 
 import (
 	"sync"

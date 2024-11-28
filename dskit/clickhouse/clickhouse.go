@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds-kit/sqlbase"
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/mitchellh/mapstructure"

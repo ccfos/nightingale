@@ -15,8 +15,8 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
-	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 	"github.com/ccfos/nightingale/v6/ds/tdengine"
+	datasource "github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -41,8 +41,8 @@ type AlertRuleWorker struct {
 
 	Processor *process.Processor
 
-	PromClients     *prom.PromClientMap
-	Ctx             *ctx.Context
+	PromClients *prom.PromClientMap
+	Ctx         *ctx.Context
 
 	Scheduler *cron.Cron
 

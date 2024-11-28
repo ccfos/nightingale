@@ -3,8 +3,8 @@ package router
 import (
 	"context"
 
-	"github.com/ccfos/nightingale/v6/ds-cache"
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +16,7 @@ func (rt *Router) ShowDatabases(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
+	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
@@ -46,7 +46,7 @@ func (rt *Router) ShowTables(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
+	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
@@ -76,7 +76,7 @@ func (rt *Router) DescribeTable(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
 
-	plug, exists := ds_cache.DsCache.Get(f.Cate, f.DatasourceId)
+	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
 		logger.Warningf("cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")

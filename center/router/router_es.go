@@ -1,8 +1,8 @@
 package router
 
 import (
-	datasource "github.com/ccfos/nightingale/v6/ds-cache"
 	"github.com/ccfos/nightingale/v6/ds/es"
+	datasource "github.com/ccfos/nightingale/v6/dscache"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"

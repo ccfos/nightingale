@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds-kit/types"
+	"github.com/ccfos/nightingale/v6/dskit/types"
 
 	"github.com/prometheus/common/model"
 	"gorm.io/gorm"

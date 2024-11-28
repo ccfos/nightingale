@@ -3,11 +3,10 @@ package ck
 import (
 	"context"
 	"fmt"
-
 	"strings"
 
 	datasource "github.com/ccfos/nightingale/v6/ds"
-	ck "github.com/ccfos/nightingale/v6/ds-kit/clickhouse"
+	ck "github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/macros"
 
@@ -167,7 +166,7 @@ func (c *Clickhouse) QueryData(ctx context.Context, query interface{}) ([]models
 
 	if strings.Contains(ckQueryParam.Sql, "$__") {
 		var err error
-		ckQueryParam.Sql, err = macros.ReplaceMacros(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
+		ckQueryParam.Sql, err = macros.Macro(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +206,7 @@ func (c *Clickhouse) QueryLog(ctx context.Context, query interface{}) ([]interfa
 
 	if strings.Contains(ckQueryParam.Sql, "$__") {
 		var err error
-		ckQueryParam.Sql, err = macros.ReplaceMacros(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
+		ckQueryParam.Sql, err = macros.Macro(ckQueryParam.Sql, ckQueryParam.From, ckQueryParam.To)
 		if err != nil {
 			return nil, 0, err
 		}

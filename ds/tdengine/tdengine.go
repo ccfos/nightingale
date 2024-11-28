@@ -12,7 +12,7 @@ import (
 	"time"
 
 	datasource "github.com/ccfos/nightingale/v6/ds"
-	td "github.com/ccfos/nightingale/v6/ds-kit/tdengine"
+	td "github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/mitchellh/mapstructure"
