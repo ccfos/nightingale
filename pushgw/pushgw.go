@@ -36,7 +36,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	var redis storage.Redis
 	if config.Redis.Address != "" {
-		redis, err = storage.NewRedis(config.Redis)
+		redis, err = storage.NewRedis(config.Redis, config.Global.RunMode)
 		if err != nil {
 			return nil, err
 		}

@@ -44,7 +44,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
 
 	var redis storage.Redis
-	redis, err = storage.NewRedis(config.Redis)
+	redis, err = storage.NewRedis(config.Redis, config.Global.RunMode)
 	if err != nil {
 		return nil, err
 	}

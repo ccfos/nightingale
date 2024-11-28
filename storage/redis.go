@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 	"github.com/redis/go-redis/v9"
 	"github.com/toolkits/pkg/logger"
@@ -26,8 +27,24 @@ type RedisConfig struct {
 
 type Redis redis.Cmdable
 
-func NewRedis(cfg RedisConfig) (Redis, error) {
+func NewRedis(cfg RedisConfig, mode string) (Redis, error) {
 	var redisClient Redis
+	if mode == "debug" {
+		s, err := miniredis.Run()
+		if err != nil {
+			return nil, err
+		}
+		redisClient = redis.NewClient(&redis.Options{
+			Addr: s.Addr(),
+		})
+
+		err = redisClient.Ping(context.Background()).Err()
+		if err != nil {
+			fmt.Println("failed to ping miniredis:", err)
+			os.Exit(1)
+		}
+		return redisClient, nil
+	}
 	switch cfg.RedisType {
 	case "standalone", "":
 		redisOptions := &redis.Options{
