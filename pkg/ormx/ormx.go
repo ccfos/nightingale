@@ -88,7 +88,6 @@ func New(c DBConfig) (*gorm.DB, error) {
 	}
 
 	gconfig := &gorm.Config{
-		SkipDefaultTransaction: true,
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix:   c.TablePrefix,
 			SingularTable: true,
