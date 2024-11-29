@@ -134,7 +134,7 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
-	arw.HostAndDeviceIdentCache.Clear()
+	arw.HostAndDeviceIdentCache = sync.Map{}
 
 	typ := cachedRule.GetRuleType()
 	var (
