@@ -16,8 +16,8 @@ import (
 
 var FromAPIHook func()
 
-func Init(ctx *ctx.Context, fromAPI bool) {
-	go getDatasourcesFromDBLoop(ctx, fromAPI)
+func Init(ctx *ctx.Context, fromAPI bool, isPlus bool) {
+	go getDatasourcesFromDBLoop(ctx, fromAPI, isPlus)
 }
 
 type ListInput struct {
@@ -42,7 +42,7 @@ type DSReplyEncrypt struct {
 
 var PromDefaultDatasourceId int64
 
-func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
+func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool, isPlus bool) {
 	for {
 		if !fromAPI {
 			items, err := models.GetDatasources(ctx)
@@ -54,7 +54,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 			}
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
-
 				if item.PluginType == "prometheus" && item.IsDefault {
 					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
 				}
@@ -87,10 +86,9 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 						ds.Settings[k] = v
 					}
 				}
-
 				dss = append(dss, ds)
 			}
-			PutDatasources(dss)
+			PutDatasources(dss, isPlus)
 		} else {
 			FromAPIHook()
 		}
@@ -101,15 +99,15 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
 	ds.Settings = make(map[string]interface{})
-	ds.Settings["td.datasource_name"] = item.Name
-	ds.Settings["td.url"] = item.HTTPJson.Url
-	ds.Settings["td.timeout"] = item.HTTPJson.Timeout
-	ds.Settings["td.dial_timeout"] = item.HTTPJson.DialTimeout
-	ds.Settings["td.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
+	ds.Settings["tdengine.datasource_name"] = item.Name
+	ds.Settings["tdengine.url"] = item.HTTPJson.Url
+	ds.Settings["tdengine.timeout"] = item.HTTPJson.Timeout
+	ds.Settings["tdengine.dial_timeout"] = item.HTTPJson.DialTimeout
+	ds.Settings["tdengine.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
 	//ds.Settings["td.headers"] = item.HTTPJson.Headers
 
-	ds.Settings["td.basic_auth_user"] = item.AuthJson.BasicAuthUser
-	ds.Settings["td.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
+	ds.Settings["tdengine.basic_auth_user"] = item.AuthJson.BasicAuthUser
+	ds.Settings["tdengine.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
 
 }
 
@@ -152,21 +150,17 @@ func osN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["os.max_shard"] = item.SettingsJson["max_shard"]
 }
 
-func PutDatasources(items []datasource.DatasourceInfo) {
+func PutDatasources(items []datasource.DatasourceInfo, isPlus bool) {
 	ids := make([]int64, 0)
 	for _, item := range items {
 		if item.Type == "prometheus" {
-			if item.IsDefault {
-				atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
-				logger.Debugf("prometheus default datasource id:%d", item.Id)
-			}
 			continue
 		}
 
-		//if item.Type == "tdengine" || item.Type == "loki" {
-		//	// tdengine, loki 不走 n9e-plus 告警逻辑
-		//	continue
-		//}
+		if isPlus && item.Type == "loki" {
+			// loki 不走 n9e-Plus 告警逻辑
+			continue
+		}
 
 		if item.Name == "" {
 			logger.Warningf("cluster name is empty, ignore %+v", item)

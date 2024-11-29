@@ -186,10 +186,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/ds-query", rt.QueryData)
 			pages.POST("/logs-query", rt.QueryLogV2)
 
-			// xub todo 统一至数据库元数据接口
-			//pages.POST("/tdengine-databases", rt.tdengineDatabases)
-			//pages.POST("/tdengine-tables", rt.tdengineTables)
-			//pages.POST("/tdengine-columns", rt.tdengineColumns)
+			pages.POST("/tdengine-databases", rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.tdengineColumns)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -213,10 +212,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/ds-query", rt.auth(), rt.QueryData)
 			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
 
-			// xub todo 统一至数据库元数据接口
-			//pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
-			//pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
-			//pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
+			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
+			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
 
 			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
 

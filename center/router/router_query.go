@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	datasource "github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
@@ -62,7 +61,7 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 			ginx.Bomb(200, "no permission")
 		}
 
-		plug, exists := datasource.DsCache.Get(q.DsCate, q.Did)
+		plug, exists := dscache.DsCache.Get(q.DsCate, q.Did)
 		if !exists {
 			logger.Warningf("cluster:%d not exists query:%+v", q.Did, q)
 			ginx.Bomb(200, "cluster not exists")
@@ -102,7 +101,7 @@ func (rt *Router) QueryData(c *gin.Context) {
 			ginx.Bomb(403, "no permission")
 		}
 
-		plug, exists := datasource.DsCache.Get(f.Cate, f.DatasourceId)
+		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 		if !exists {
 			logger.Warningf("cluster:%d not exists", f.DatasourceId)
 			ginx.Bomb(200, "cluster not exists")
@@ -142,7 +141,7 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 			ginx.Bomb(200, "no permission")
 		}
 
-		plug, exists := datasource.DsCache.Get(f.Cate, f.DatasourceId)
+		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 		if !exists {
 			logger.Warningf("cluster:%d not exists query:%+v", f.DatasourceId, f)
 			ginx.Bomb(200, "cluster not exists")
@@ -175,7 +174,7 @@ func (rt *Router) QueryLog(c *gin.Context) {
 			ginx.Bomb(200, "no permission")
 		}
 
-		plug, exists := datasource.DsCache.Get("elasticsearch", f.DatasourceId)
+		plug, exists := dscache.DsCache.Get("elasticsearch", f.DatasourceId)
 		if !exists {
 			logger.Warningf("cluster:%d not exists", f.DatasourceId)
 			ginx.Bomb(200, "cluster not exists")

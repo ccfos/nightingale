@@ -3,7 +3,7 @@ package pushgw
 import (
 	"context"
 	"fmt"
-	datasource "github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/pkg/macros"
 
 	"github.com/ccfos/nightingale/v6/center/metas"
@@ -58,7 +58,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
 	macros.RegisterMacro(macros.MacroInVain)
-	datasource.Init(ctx, false)
+	dscache.Init(ctx, false, false)
 	httpClean := httpx.Init(config.HTTP, r)
 
 	return func() {

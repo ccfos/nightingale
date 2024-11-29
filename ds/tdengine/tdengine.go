@@ -102,17 +102,14 @@ func (td *TDengine) Equal(other datasource.Datasource) bool {
 }
 
 func (td *TDengine) Validate(ctx context.Context) (err error) {
-	// xub todo
 	return nil
 }
 
 func (td *TDengine) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
-	// xub todo
 	return nil, nil
 }
 
 func (td *TDengine) MakeTSQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
-	// xub todo
 	return nil, nil
 }
 

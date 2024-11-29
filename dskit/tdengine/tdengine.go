@@ -13,23 +13,22 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
 )
 
 type Tdengine struct {
-	DatasourceName string `json:"td.datasource_name" mapstructure:"td.datasource_name"`
-	Url            string `json:"td.url" mapstructure:"td.url"`
-	BasicAuthUser  string `json:"td.basic_auth_user" mapstructure:"td.basic_auth_user"`
-	BasicAuthPass  string `json:"td.basic_auth_pass" mapstructure:"td.basic_auth_pass"`
-	Token          string `json:"td.token" mapstructure:"td.token"`
+	DatasourceName string `json:"tdengine.datasource_name" mapstructure:"tdengine.datasource_name"`
+	Url            string `json:"tdengine.url" mapstructure:"tdengine.url"`
+	BasicAuthUser  string `json:"tdengine.basic_auth_user" mapstructure:"tdengine.basic_auth_user"`
+	BasicAuthPass  string `json:"tdengine.basic_auth_pass" mapstructure:"tdengine.basic_auth_pass"`
+	Token          string `json:"tdengine.token" mapstructure:"tdengine.token"`
 
-	Timeout     int64 `json:"td.timeout" mapstructure:"td.timeout"`
-	DialTimeout int64 `json:"td.dial_timeout" mapstructure:"td.dial_timeout"`
+	Timeout     int64 `json:"tdengine.timeout" mapstructure:"tdengine.timeout"`
+	DialTimeout int64 `json:"tdengine.dial_timeout" mapstructure:"tdengine.dial_timeout"`
 
-	MaxIdleConnsPerHost int `json:"td.max_idle_conns_per_host" mapstructure:"td.max_idle_conns_per_host"`
+	MaxIdleConnsPerHost int `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
 
-	Headers []string `json:"td.headers" mapstructure:"td.headers"`
+	Headers []string `json:"tdengine.headers" mapstructure:"tdengine.headers"`
 
 	tlsx.ClientConfig
 
@@ -135,11 +134,7 @@ func (tc *Tdengine) ShowDatabases(context.Context) ([]string, error) {
 
 func (tc *Tdengine) ShowTables(ctx context.Context, database string) ([]string, error) {
 	var tables []string
-	sql := fmt.Sprintf("show %s.tables", database)
-	//if isStable {
-	//	sql = fmt.Sprintf("show %s.stables", database)
-	//}
-
+	sql := fmt.Sprintf("show %s", database)
 	data, err := tc.QueryTable(sql)
 	if err != nil {
 		return tables, err
@@ -153,11 +148,11 @@ func (tc *Tdengine) ShowTables(ctx context.Context, database string) ([]string, 
 
 func (tc *Tdengine) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
 	var columns []*types.ColumnProperty
-	tdQueryParam := new(QueryParam)
-	if err := mapstructure.Decode(query, tdQueryParam); err != nil {
-		return nil, err
+	queryMap, ok := query.(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("invalid query")
 	}
-	sql := fmt.Sprintf("select * from %s.%s limit 1", tdQueryParam.Database, tdQueryParam.Table)
+	sql := fmt.Sprintf("select * from %s.%s limit 1", queryMap["database"], queryMap["table"])
 	data, err := tc.QueryTable(sql)
 	if err != nil {
 		return columns, err
