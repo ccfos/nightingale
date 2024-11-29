@@ -260,7 +260,6 @@ CREATE TABLE `chart_share` (
 
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
-    `rule_ids` VARCHAR(1024) DEFAULT '' COMMENT 'rule_ids',
     `group_id` bigint not null default 0 comment 'busi group id',
     `cate` varchar(128) not null,
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
