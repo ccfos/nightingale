@@ -336,6 +336,7 @@ CREATE TABLE `alert_subscribe` (
     `cate` varchar(128) not null,
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
     `cluster` varchar(128) not null,
+    `rule_id` bigint not null default 0,
     `rule_ids` varchar(1024),
     `severities` varchar(32) not null default '',
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
