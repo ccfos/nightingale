@@ -56,14 +56,14 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE `configs` (
     `id` bigint unsigned not null auto_increment,
     `ckey` varchar(191) not null,
+    `note` varchar(1024) NOT NULL DEFAULT '' COMMENT 'note',
     `cval` text COMMENT 'config value',
-    `note` varchar(1024) DEFAULT '' COMMENT 'note',
-    `external` bigint DEFAULT 0 COMMENT '0 means built-in 1 means external',
+    `external` bigint NOT NULL DEFAULT 0 COMMENT '0 means built-in 1 means external',
     `encrypted` bigint DEFAULT 0 COMMENT '0 means plaintext 1 means ciphertext',
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default '',
+    `create_at` bigint DEFAULT 0 COMMENT 'create_at',
+    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'cerate_by',
+    `update_at` bigint DEFAULT 0 COMMENT 'update_at',
+    `update_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'update_by',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
@@ -336,7 +336,7 @@ CREATE TABLE `alert_subscribe` (
     `cate` varchar(128) not null,
     `datasource_ids` varchar(255) not null default '' comment 'datasource ids',
     `cluster` varchar(128) not null,
-    `rule_ids` varchar(1024) DEFAULT '',
+    `rule_ids` varchar(1024),
     `severities` varchar(32) not null default '',
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `redefine_severity` tinyint(1) default 0 comment 'is redefine severity?',
@@ -518,17 +518,18 @@ CREATE TABLE `board_busigroup` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `builtin_components` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
   `ident` varchar(191) NOT NULL,
-  `logo` varchar(191) NOT NULL COMMENT '''logo of component''',
+  `logo` mediumtext COMMENT '''logo of component''',
   `readme` text NOT NULL COMMENT '''readme of component''',
-  `created_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''create time''',
+  `created_at` bigint NOT NULL DEFAULT 0 COMMENT '''create time''',
   `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''creator''',
-  `updated_at` bigint(20) NOT NULL DEFAULT 0 COMMENT '''update time''',
+  `updated_at` bigint NOT NULL DEFAULT 0 COMMENT '''update time''',
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   PRIMARY KEY (`id`),
-  KEY `idx_ident` (`ident`)
+  UNIQUE KEY `idx_ident` (`ident`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
@@ -560,7 +561,7 @@ CREATE TABLE notification_record (
     `status` bigint COMMENT 'notification status',
     `target` varchar(1024) NOT NULL COMMENT 'notification target',
     `details` varchar(2048) DEFAULT '' COMMENT 'notification other info',
-    `created_at` BIGINT NOT NULL,
+    `created_at` bigint NOT NULL COMMENT 'create time',
     INDEX idx_evt (event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -705,9 +706,9 @@ CREATE TABLE `builtin_metrics` (
     `note` varchar(4096) NOT NULL COMMENT '''description of metric''',
     `expression` varchar(4096) NOT NULL COMMENT '''expression of metric''',
     `created_at` bigint NOT NULL DEFAULT 0 COMMENT '''create time''',
-    `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'creator',
-    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
-    `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
+    `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''creator''',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT '''update time''',
+    `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
     `uuid` bigint NOT NULL DEFAULT 0 COMMENT '''uuid''',
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
