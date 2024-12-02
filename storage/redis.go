@@ -27,9 +27,9 @@ type RedisConfig struct {
 
 type Redis redis.Cmdable
 
-func NewRedis(cfg RedisConfig, mode string) (Redis, error) {
+func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis
-	if mode == "debug" {
+	if cfg.RedisType == "miniredis" {
 		s, err := miniredis.Run()
 		if err != nil {
 			return nil, err
