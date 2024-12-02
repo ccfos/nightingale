@@ -60,10 +60,6 @@ func (InitPostgresUser) TableName() string {
 	return "users"
 }
 
-func (InitPostgresUser) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitUserGroup struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:128;not null;default:''"`
@@ -134,10 +130,6 @@ func (InitPostgresConfig) TableName() string {
 	return "configs"
 }
 
-func (InitPostgresConfig) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitRole struct {
 	ID   uint64 `gorm:"primaryKey;autoIncrement"`
 	Name string `gorm:"size:191;not null;default:'';uniqueIdx"`
@@ -200,10 +192,6 @@ func (InitPostgresBusiGroup) TableName() string {
 	return "busi_group"
 }
 
-func (InitPostgresBusiGroup) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitBusiGroupMember struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement"`
 	BusiGroupID int64  `gorm:"not null;comment:busi group id;index"`
@@ -261,10 +249,6 @@ func (InitPostgresBoard) TableName() string {
 	return "board"
 }
 
-func (InitPostgresBoard) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitBoardPayload struct {
 	ID      uint64 `gorm:"not null;comment:dashboard id"`
 	Payload string `gorm:"type:mediumtext;not null"`
@@ -285,10 +269,6 @@ type InitPostgresBoardPayload struct {
 
 func (InitPostgresBoardPayload) TableName() string {
 	return "board_payload"
-}
-
-func (InitPostgresBoardPayload) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
 type InitDashboard struct {
@@ -370,7 +350,7 @@ type InitAlertRule struct {
 	Algorithm        string `gorm:"size:255;not null;default:''"`
 	AlgoParams       string `gorm:"size:255"`
 	Delay            int32  `gorm:"not null;default:0"`
-	Severity         bool   `gorm:"type:tinyint(1);not null;comment:1:Emergency 2:Warning 3:Notice"`
+	Severity         int16   `gorm:"type:tinyint(1);not null;comment:1:Emergency 2:Warning 3:Notice"`
 	Disabled         bool   `gorm:"type:tinyint(1);not null;comment:0:enabled 1:disabled"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	RuleConfig       string `gorm:"type:text;not null;comment:rule_config"`
@@ -448,10 +428,6 @@ func (InitPostgresAlertRule) TableName() string {
 	return "alert_rule"
 }
 
-func (InitPostgresAlertRule) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitAlertMute struct {
 	ID            uint64 `gorm:"primaryKey;autoIncrement"`
 	GroupID       uint64 `gorm:"not null;default:0;comment:busi group id;index"`
@@ -508,10 +484,6 @@ func (InitPostgresAlertMute) TableName() string {
 	return "alert_mute"
 }
 
-func (InitPostgresAlertMute) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitAlertSubscribe struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
 	Name             string `gorm:"size:255;not null;default:''"`
@@ -524,9 +496,9 @@ type InitAlertSubscribe struct {
 	RuleID           int64  `gorm:"not null;default:0"`
 	Severities       string `gorm:"size:32;not null;default:''"`
 	Tags             string `gorm:"size:4096;not null;default:'';comment:json,map,tagkey->regexp|value"`
-	RedefineSeverity bool   `gorm:"type:tinyint(1);default:0;comment:is redefine severity?"`
-	NewSeverity      bool   `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
-	RedefineChannels bool   `gorm:"type:tinyint(1);default:0;comment:is redefine channels?"`
+	RedefineSeverity int16   `gorm:"type:tinyint(1);default:0;comment:is redefine severity?"`
+	NewSeverity      int16   `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
+	RedefineChannels int16   `gorm:"type:tinyint(1);default:0;comment:is redefine channels?"`
 	NewChannels      string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	UserGroupIDs     string `gorm:"size:250;not null;comment:split by space 1 34 5, notify cc to user_group_ids"`
 	BusiGroups       string `gorm:"size:4096;not null;default:'[]'"`
@@ -584,10 +556,6 @@ func (InitPostgresAlertSubscribe) TableName() string {
 	return "alert_subscribe"
 }
 
-func (InitPostgresAlertSubscribe) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitTarget struct {
 	ID           uint64 `gorm:"primaryKey;autoIncrement"`
 	GroupID      uint64 `gorm:"not null;default:0;comment:busi group id;index"`
@@ -642,10 +610,6 @@ func (InitPostgresMetricView) TableName() string {
 	return "metric_view"
 }
 
-func (InitPostgresMetricView) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitRecordingRule struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
 	GroupID          uint64 `gorm:"not null;default:0;comment:group_id;index"`
@@ -696,10 +660,6 @@ func (InitPostgresRecordingRule) TableName() string {
 	return "recording_rule"
 }
 
-func (InitPostgresRecordingRule) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitAlertAggrView struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:191;not null;default:''"`
@@ -732,10 +692,6 @@ func (InitPostgresAlertAggrView) TableName() string {
 	return "alert_aggr_view"
 }
 
-func (InitPostgresAlertAggrView) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitAlertCurEvent struct {
 	ID               uint64 `gorm:"primaryKey;NOT NULL;COMMENT:use alert_his_event.id"`
 	Cate             string `gorm:"size:128;not null"`
@@ -749,7 +705,7 @@ type InitAlertCurEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         bool   `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
@@ -792,7 +748,7 @@ type InitPostgresAlertCurEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         int16   `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
@@ -818,10 +774,6 @@ func (InitPostgresAlertCurEvent) TableName() string {
 	return "alert_cur_event"
 }
 
-func (InitPostgresAlertCurEvent) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitAlertHisEvent struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
 	IsRecovered      bool   `gorm:"type:tinyint(1);not null"`
@@ -836,7 +788,7 @@ type InitAlertHisEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         bool   `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:tinyint(1);not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
@@ -881,7 +833,7 @@ type InitPostgresAlertHisEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         int16   `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16  `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
@@ -906,10 +858,6 @@ type InitPostgresAlertHisEvent struct {
 
 func (InitPostgresAlertHisEvent) TableName() string {
 	return "alert_his_event"
-}
-
-func (InitPostgresAlertHisEvent) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
 type InitBoardBusiGroup struct {
@@ -962,10 +910,6 @@ type InitpostgresBuiltinPayload struct {
 
 func (InitpostgresBuiltinPayload) TableName() string {
 	return "builtin_payloads"
-}
-
-func (InitpostgresBuiltinPayload) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
 type InitBuiltinPayload struct {
@@ -1146,10 +1090,6 @@ func (InitPostgresDatasource) TableName() string {
 	return "datasource"
 }
 
-func (InitPostgresDatasource) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-}
-
 type InitBuiltinCate struct {
 	ID     uint64 `gorm:"primaryKey;autoIncrement"`
 	Name   string `gorm:"size:191;not null"`
@@ -1234,10 +1174,6 @@ type InitPostgresESIndexPattern struct {
 
 func (InitPostgresESIndexPattern) TableName() string {
 	return "es_index_pattern"
-}
-
-func (InitPostgresESIndexPattern) TableOptions() string {
-	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
 type InitBuiltinMetric struct {
