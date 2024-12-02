@@ -93,8 +93,8 @@ func (td *TDengine) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
-	for i := 0; i < len(td.Headers); i++ {
-		if td.Headers[i] != otherTD.Headers[i] {
+	for k, v := range td.Headers {
+		if otherV, ok := otherTD.Headers[k]; !ok || v != otherV {
 			return false
 		}
 	}

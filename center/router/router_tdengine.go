@@ -37,6 +37,12 @@ type tablesQueryForm struct {
 	IsStable     bool   `json:"is_stable"`
 }
 
+type Column struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Size int    `json:"size"`
+}
+
 // get tdengine tables
 func (rt *Router) tdengineTables(c *gin.Context) {
 	var f tablesQueryForm
@@ -80,7 +86,15 @@ func (rt *Router) tdengineColumns(c *gin.Context) {
 	}
 
 	columns, err := datasource.(*tdengine.TDengine).DescribeTable(rt.Ctx.Ctx, query)
-	ginx.NewRender(c).Data(columns, err)
+	// 对齐前端，后续可以将 tdEngine 的查数据的接口都统一
+	tdColumns := make([]Column, len(columns))
+	for i, column := range columns {
+		tdColumns[i] = Column{
+			Name: column.Field,
+			Type: column.Type,
+		}
+	}
+	ginx.NewRender(c).Data(tdColumns, err)
 }
 
 // query sql template

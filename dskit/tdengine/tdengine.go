@@ -28,7 +28,7 @@ type Tdengine struct {
 
 	MaxIdleConnsPerHost int `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
 
-	Headers []string `json:"tdengine.headers" mapstructure:"tdengine.headers"`
+	Headers map[string]string `json:"tdengine.headers" mapstructure:"tdengine.headers"`
 
 	tlsx.ClientConfig
 
@@ -68,12 +68,12 @@ func (tc *Tdengine) InitCli() {
 		"Connection": {"keep-alive"},
 	}
 
-	for _, v := range tc.Headers {
+	for k, v := range tc.Headers {
 		kv := strings.Split(v, ":")
 		if len(kv) != 2 {
 			continue
 		}
-		tc.header[kv[0]] = []string{kv[1]}
+		tc.header[k] = []string{v}
 	}
 
 	if tc.BasicAuthUser != "" {

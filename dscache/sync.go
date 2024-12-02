@@ -104,8 +104,7 @@ func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["tdengine.timeout"] = item.HTTPJson.Timeout
 	ds.Settings["tdengine.dial_timeout"] = item.HTTPJson.DialTimeout
 	ds.Settings["tdengine.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
-	//ds.Settings["td.headers"] = item.HTTPJson.Headers
-
+	ds.Settings["tdengine.headers"] = item.HTTPJson.Headers
 	ds.Settings["tdengine.basic_auth_user"] = item.AuthJson.BasicAuthUser
 	ds.Settings["tdengine.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
 
