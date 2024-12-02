@@ -374,7 +374,11 @@ CREATE TABLE `target` (
     `update_at` bigint not null default 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ident`),
-    KEY (`group_id`)
+    KEY (`group_id`),
+    INDEX `idx_host_ip` (`host_ip`),
+    INDEX `idx_agent_version` (`agent_version`),
+    INDEX `idx_engine_name` (`engine_name`),
+    INDEX `idx_os` (`os`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 
@@ -506,7 +510,7 @@ CREATE TABLE `alert_his_event` (
     `annotations` text not null comment 'annotations',
     `rule_config` text not null comment 'annotations',
     PRIMARY KEY (`id`),
-    KEY (`last_eval_time`),
+    INDEX `idx_last_eval_time` (`last_eval_time`),
     KEY (`hash`),
     KEY (`rule_id`),
     KEY (`trigger_time`, `group_id`)
@@ -617,7 +621,7 @@ CREATE TABLE `task_record`
     PRIMARY KEY (`id`),
     KEY (`create_at`, `group_id`),
     KEY (`create_by`),
-    KEY (`event_id`)
+    INDEX `idx_event_id` (`event_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `alerting_engines`
@@ -715,7 +719,7 @@ CREATE TABLE `builtin_metrics` (
     UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),
-    INDEX `idx_name` (`name`),
+    INDEX `idx_builtinmetric_name` (`name` ASC),
     INDEX `idx_lang` (`lang`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -729,7 +733,7 @@ CREATE TABLE `metric_filter` (
   `update_at` bigint NOT NULL DEFAULT 0 COMMENT '''update time''',
   `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   PRIMARY KEY (`id`),
-  KEY `idx_name` (`name`)
+  INDEX `idx_metricfilter_name` (`name` ASC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `target_busi_group` (
