@@ -3,8 +3,8 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -126,34 +126,34 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 
 func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 	r.NoRoute(func(c *gin.Context) {
-		arr := strings.Split(c.Request.URL.Path, ".")
-		suffix := arr[len(arr)-1]
-
-		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
+		SupportedStaticResourceExtensions := []string{"png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md"}
+		var isSupportedStaticResource bool
+		for _, ext := range SupportedStaticResourceExtensions {
+			if strings.HasSuffix(c.Request.URL.Path, ext) {
+				isSupportedStaticResource = true
+				break
+			}
+		}
+		// If it is a supported static resource type, download the corresponding file; if not, return index.html.
+		if isSupportedStaticResource {
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
-				cwdarr := []string{"/"}
-				if runtime.GOOS == "windows" {
-					cwdarr[0] = ""
-				}
-				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+				var cwdarr []string
+				// runner.Cwd uses "\" as the path separator on Windows.
+				cwdarr = append(cwdarr, strings.Split(runner.Cwd, string(os.PathSeparator))...)
 				cwdarr = append(cwdarr, "pub")
 				cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
 				c.File(path.Join(cwdarr...))
 			}
-		default:
+		} else {
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS("/", *fs)
 			} else {
-				cwdarr := []string{"/"}
-				if runtime.GOOS == "windows" {
-					cwdarr[0] = ""
-				}
-				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-				cwdarr = append(cwdarr, "pub")
-				cwdarr = append(cwdarr, "index.html")
+				var cwdarr []string
+				// runner.Cwd uses "\" as the path separator on Windows.
+				cwdarr = append(cwdarr, strings.Split(runner.Cwd, string(os.PathSeparator))...)
+				cwdarr = append(cwdarr, "pub", "index.html")
 				c.File(path.Join(cwdarr...))
 			}
 		}
