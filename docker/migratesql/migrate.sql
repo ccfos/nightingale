@@ -117,3 +117,7 @@ CREATE TABLE `target_busi_group` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* v7.7.2 2024-12-02 */
+ALTER TABLE alert_subscribe MODIFY COLUMN rule_ids varchar(1024);
+ALTER TABLE alert_subscribe MODIFY COLUMN busi_groups varchar(4096);

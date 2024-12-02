@@ -28,7 +28,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
-	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &TaskHostDoing{}, &imodels.TaskAction{}}
+	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
@@ -60,6 +60,10 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
 		&models.TargetBusiGroup{}}
+
+	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
+		dts = append(dts, &imodels.TaskSchedulerHealth{})
+	}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
 		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
@@ -186,17 +190,16 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig       string                   `gorm:"type:text;column:extra_config;not null;comment:extra_config"` // extra config
-	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"`                // datasource queries
+	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
+	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertSubscribe struct {
-	ExtraConfig string       `gorm:"type:text;column:extra_config;not null;comment:extra_config"` // extra config
+	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	RuleID      int64        `gorm:"type:bigint;not null;default:0"`
-	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024);"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;"`
+	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
 	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
 }
 
 type AlertMute struct {
@@ -246,8 +249,8 @@ type Configs struct {
 	Note string `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	Cval string `gorm:"column:cval;type:text;comment:config value"`
 	//mysql tinyint//postgresql smallint
-	External  int64  `gorm:"column:external;type:bigint;default:0;comment:0 means built-in 1 means external"`
-	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0 means plaintext 1 means ciphertext"`
+	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
+	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 	CreateAt  int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
 	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
 	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
