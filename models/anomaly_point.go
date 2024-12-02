@@ -1,11 +1,10 @@
-package common
+package models
 
 import (
 	"fmt"
 	"math"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/prometheus/common/model"
 )
@@ -20,7 +19,7 @@ type AnomalyPoint struct {
 	Query         string                         `json:"query"`
 	Values        string                         `json:"values"`
 	ValuesUnit    map[string]unit.FormattedValue `json:"values_unit"`
-	RecoverConfig models.RecoverConfig           `json:"recover_config"`
+	RecoverConfig RecoverConfig                  `json:"recover_config"`
 }
 
 func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {

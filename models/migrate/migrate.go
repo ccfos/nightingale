@@ -186,8 +186,9 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`                                          // extra config
-	DatasourceQueries []models.DatasourceQuery `json:"datasource_queries" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
+	ExtraConfig       string                   `gorm:"type:text;column:extra_config"` // extra config
+	CronPattern       string                   `gorm:"type:varchar(64);cron_pattern"`
+	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertSubscribe struct {

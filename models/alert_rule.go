@@ -103,6 +103,29 @@ type AlertRule struct {
 	UUID                  int64                  `json:"uuid" gorm:"-"` // tpl identifier
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
+	CronPattern           string                 `json:"cron_pattern"`
+}
+
+type ChildVarConfig struct {
+	ParamVal        []map[string]ParamQuery `json:"param_val"`
+	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
+}
+
+type ParamQuery struct {
+	ParamType string      `json:"param_type"` // host、device、enum、threshold 三种类型
+	Query     interface{} `json:"query"`
+}
+
+type VarConfig struct {
+	ParamVal        []ParamQueryForFirst `json:"param_val"`
+	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
+}
+
+// ParamQueryForFirst 同 ParamQuery，仅在第一层出现
+type ParamQueryForFirst struct {
+	Name      string      `json:"name"`
+	ParamType string      `json:"param_type"`
+	Query     interface{} `json:"query"`
 }
 
 type Tpl struct {
@@ -154,6 +177,8 @@ type HostRuleConfig struct {
 type PromQuery struct {
 	PromQl        string        `json:"prom_ql"`
 	Severity      int           `json:"severity"`
+	VarEnabled    bool          `json:"var_enabled"`
+	VarConfig     VarConfig     `json:"var_config"`
 	RecoverConfig RecoverConfig `json:"recover_config"`
 	Unit          string        `json:"unit"`
 }
@@ -851,6 +876,11 @@ func (ar *AlertRule) DB2FE() error {
 	}
 	json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
 	ar.EventRelabelConfig = ruleConfig.EventRelabelConfig
+
+	// 兼容旧逻辑填充 cron_pattern
+	if ar.CronPattern == "" && ar.PromEvalInterval != 0 {
+		ar.CronPattern = fmt.Sprintf("@every %ds", ar.PromEvalInterval)
+	}
 
 	err := ar.FillDatasourceQueries()
 	if err != nil {

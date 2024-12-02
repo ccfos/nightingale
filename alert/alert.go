@@ -65,6 +65,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx)
+	dispatch.InitRegisterQueryFunc(promClients)
 	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()

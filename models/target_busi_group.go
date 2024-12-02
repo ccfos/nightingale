@@ -20,6 +20,10 @@ func (t *TargetBusiGroup) TableName() string {
 	return "target_busi_group"
 }
 
+func (t *TargetBusiGroup) TableOptions() string {
+	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+}
+
 func TargetBusiGroupsGetAll(ctx *ctx.Context) (map[string][]int64, error) {
 	var lst []*TargetBusiGroup
 	err := DB(ctx).Find(&lst).Error

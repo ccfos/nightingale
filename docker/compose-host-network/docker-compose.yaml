@@ -25,7 +25,7 @@ services:
     network_mode: host
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:v2.55.1
     container_name: prometheus
     hostname: prometheus
     restart: always
