@@ -2,6 +2,7 @@ package ormx
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -46,9 +47,9 @@ type InitPostgresUser struct {
 	Portrait       string         `gorm:"size:255;not null;default:'';comment:portrait image url"`
 	Roles          string         `gorm:"size:255;not null;comment:Admin | Standard | Guest, split by space"`
 	Contacts       sql.NullString `gorm:"size:1024;default null;comment:json e.g. {wecom:xx, dingtalk_robot_token:yy}"`
-	Maintainer     int32          `gorm:"type:boolean;not null;default:0"`
+	Maintainer     int16          `gorm:"type:smallint;not null;default:0"`
 	Belong         string         `gorm:"size:16;not null;default:'';comment:belong"`
-	LastActiveTime int64          `gorm:"not null;default:0"`
+	LastActiveTime int64      	  `gorm:"not null;default:0"`
 	CreateAt       int64          `gorm:"not null;default:0"`
 	CreateBy       string         `gorm:"size:64;not null;default:''"`
 	UpdateAt       int64          `gorm:"not null;default:0"`
@@ -121,8 +122,8 @@ type InitPostgresConfig struct {
 	CKey      string `gorm:"column:ckey;size:191;not null"`
 	CVal      string `gorm:"column:cval;type:text;not null"`
 	Note      string `gorm:"size:1024;not null;default:''"`
-	External  int32  `gorm:"type:boolean;not null;default:0"`
-	Encrypted bool   `gorm:"type:boolean;not null;default:0"`
+	External  int16  `gorm:"type:smallint;not null;default:0"`
+	Encrypted int16   `gorm:"type:smallint;not null;default:0"`
 	CreateAt  int64  `gorm:"not null;default:0"`
 	CreateBy  string `gorm:"size:64;not null;default:''"`
 	UpdateAt  int64  `gorm:"not null;default:0"`
@@ -187,7 +188,7 @@ func (InitBusiGroup) TableOptions() string {
 type InitPostgresBusiGroup struct {
 	ID          uint64 `gorm:"primaryKey;autoIncrement"`
 	Name        string `gorm:"size:191;not null;uniqueIndex"`
-	LabelEnable bool   `gorm:"type:boolean;not null;default:0"`
+	LabelEnable int16   `gorm:"type:smallint;not null;default:0"`
 	LabelValue  string `gorm:"size:191;not null;default:'';comment:if label_enable: label_value can not be blank"`
 	CreateAt    int64  `gorm:"not null;default:0"`
 	CreateBy    string `gorm:"size:64;not null;default:''"`
@@ -247,9 +248,9 @@ type InitPostgresBoard struct {
 	Name     string `gorm:"size:191;not null;uniqueIndex:idx_groupid_name"`
 	Ident    string `gorm:"size:200;not null;default:'';index"`
 	Tags     string `gorm:"size:255;not null;comment:split by space"`
-	Public   bool   `gorm:"type:boolean;not null;default:0;comment:0:false 1:true"`
-	BuiltIn  bool   `gorm:"type:boolean;not null;default:0;comment:0:false 1:true"`
-	Hide     bool   `gorm:"type:boolean;not null;default:0;comment:0:false 1:true"`
+	Public   int16   `gorm:"type:smallint;not null;default:0;comment:0:false 1:true"`
+	BuiltIn  int16   `gorm:"type:smallint;not null;default:0;comment:0:false 1:true"`
+	Hide     int16   `gorm:"type:smallint;not null;default:0;comment:0:false 1:true"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy string `gorm:"size:64;not null;default:''"`
 	UpdateAt int64  `gorm:"not null;default:0"`
@@ -416,8 +417,8 @@ type InitPostgresAlertRule struct {
 	Algorithm        string `gorm:"size:255;not null;default:''"`
 	AlgoParams       string `gorm:"size:255"`
 	Delay            int32  `gorm:"not null;default:0"`
-	Severity         bool   `gorm:"type:boolean;not null;comment:1:Emergency 2:Warning 3:Notice"`
-	Disabled         bool   `gorm:"type:boolean;not null;comment:0:enabled 1:disabled"`
+	Severity         int16   `gorm:"type:smallint;not null;comment:1:Emergency 2:Warning 3:Notice"`
+	Disabled         int16   `gorm:"type:smallint;not null;comment:0:enabled 1:disabled"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	RuleConfig       string `gorm:"type:text;not null;comment:rule_config"`
 	PromQL           string `gorm:"type:text;not null;comment:promql"`
@@ -425,8 +426,8 @@ type InitPostgresAlertRule struct {
 	EnableStime      string `gorm:"size:255;not null;default:'00:00'"`
 	EnableEtime      string `gorm:"size:255;not null;default:'23:59'"`
 	EnableDaysOfWeek string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
-	EnableInBg       bool   `gorm:"type:boolean;not null;default:0;comment:1: only this bg 0: global"`
-	NotifyRecovered  bool   `gorm:"type:boolean;not null;comment:whether notify when recovery"`
+	EnableInBg       int16   `gorm:"type:smallint;not null;default:0;comment:1: only this bg 0: global"`
+	NotifyRecovered  int16   `gorm:"type:smallint;not null;comment:whether notify when recovery"`
 	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyRepeatStep int32  `gorm:"not null;default:0;comment:unit: min"`
@@ -493,8 +494,8 @@ type InitPostgresAlertMute struct {
 	Cause         string `gorm:"size:255;not null;default:''"`
 	BTime         int64  `gorm:"column:btime;not null;default:0;comment:begin time"`
 	ETime         int64  `gorm:"column:etime;not null;default:0;comment:end time"`
-	Disabled      bool   `gorm:"type:boolean;not null;default:0;comment:0:enabled 1:disabled"`
-	MuteTimeType  bool   `gorm:"type:boolean;not null;default:0"`
+	Disabled      int16   `gorm:"type:smallint;not null;default:0;comment:0:enabled 1:disabled"`
+	MuteTimeType  int16   `gorm:"type:smallint;not null;default:0"`
 	PeriodicMutes string `gorm:"size:4096;not null;default:''"`
 	Severities    string `gorm:"size:32;not null;default:''"`
 	CreateAt      int64  `gorm:"not null;default:0;index"`
@@ -552,7 +553,7 @@ func (InitAlertSubscribe) TableOptions() string {
 type InitPostgresAlertSubscribe struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
 	Name             string `gorm:"size:255;not null;default:''"`
-	Disabled         bool   `gorm:"type:boolean;not null;default:0;comment:0:enabled 1:disabled"`
+	Disabled         int16   `gorm:"type:smallint;not null;default:0;comment:0:enabled 1:disabled"`
 	GroupID          uint64 `gorm:"not null;default:0;comment:busi group id;index"`
 	Prod             string `gorm:"size:255;not null;default:''"`
 	Cate             string `gorm:"size:128;not null"`
@@ -561,9 +562,9 @@ type InitPostgresAlertSubscribe struct {
 	RuleID           int64  `gorm:"not null;default:0"`
 	Severities       string `gorm:"size:32;not null;default:''"`
 	Tags             string `gorm:"size:4096;not null;default:'';comment:json,map,tagkey->regexp|value"`
-	RedefineSeverity bool   `gorm:"type:boolean;default:0;comment:is redefine severity?"`
-	NewSeverity      bool   `gorm:"type:boolean;not null;comment:0:Emergency 1:Warning 2:Notice"`
-	RedefineChannels bool   `gorm:"type:boolean;default:0;comment:is redefine channels?"`
+	RedefineSeverity int16   `gorm:"type:smallint;default:0;comment:is redefine severity?"`
+	NewSeverity      int16   `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	RedefineChannels int16   `gorm:"type:smallint;default:0;comment:is redefine channels?"`
 	NewChannels      string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	UserGroupIDs     string `gorm:"size:250;not null;comment:split by space 1 34 5, notify cc to user_group_ids"`
 	BusiGroups       string `gorm:"size:4096;not null;default:'[]'"`
@@ -571,7 +572,7 @@ type InitPostgresAlertSubscribe struct {
 	RuleIDs          string `gorm:"size:1024;default:'';comment:rule_ids"`
 	Webhooks         string `gorm:"type:text;not null"`
 	ExtraConfig      string `gorm:"type:text;not null;comment:extra_config"`
-	RedefineWebhooks bool   `gorm:"type:boolean;default:0"`
+	RedefineWebhooks int16   `gorm:"type:smallint;default:0"`
 	ForDuration      int64  `gorm:"not null;default:0"`
 	CreateAt         int64  `gorm:"not null;default:0"`
 	CreateBy         string `gorm:"size:64;not null;default:''"`
@@ -630,7 +631,7 @@ func (InitMetricView) TableOptions() string {
 type InitPostgresMetricView struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:191;not null;default:''"`
-	Cate     bool   `gorm:"type:boolean;not null;comment:0: preset 1: custom"`
+	Cate     int16   `gorm:"type:smallint;not null;comment:0: preset 1: custom"`
 	Configs  string `gorm:"size:8192;not null;default:''"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy uint64 `gorm:"not null;default:0;comment:user id;index"`
@@ -679,7 +680,7 @@ type InitPostgresRecordingRule struct {
 	Cluster          string `gorm:"size:128;not null"`
 	Name             string `gorm:"size:255;not null;comment:new metric name"`
 	Note             string `gorm:"size:255;not null;comment:rule note"`
-	Disabled         bool   `gorm:"type:boolean;not null;default:0;comment:0:enabled 1:disabled"`
+	Disabled         int16   `gorm:"type:smallint;not null;default:0;comment:0:enabled 1:disabled"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
 	CronPattern      string `gorm:"size:255;default:'';comment:cron pattern"`
@@ -721,7 +722,7 @@ type InitPostgresAlertAggrView struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
 	Name     string `gorm:"size:191;not null;default:''"`
 	Rule     string `gorm:"size:2048;not null;default:''"`
-	Cate     bool   `gorm:"type:boolean;not null;comment:0: preset 1: custom"`
+	Cate     int16   `gorm:"type:smallint;not null;comment:0: preset 1: custom"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy int64  `gorm:"not null;default:0;comment:user id;index:create_by"`
 	UpdateAt int64  `gorm:"not null;default:0"`
@@ -791,13 +792,13 @@ type InitPostgresAlertCurEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         bool   `gorm:"type:boolean;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16   `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
 	Callbacks        string `gorm:"size:2048;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
 	RunbookURL       string `gorm:"size:255"`
-	NotifyRecovered  bool   `gorm:"type:boolean;not null;comment:whether notify when recovery"`
+	NotifyRecovered  int16   `gorm:"type:smallint;not null;comment:whether notify when recovery"`
 	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyRepeatNext int64  `gorm:"not null;default:0;comment:next timestamp to notify, get repeat settings from rule;index"`
@@ -868,7 +869,7 @@ func (InitAlertHisEvent) TableOptions() string {
 
 type InitPostgresAlertHisEvent struct {
 	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	IsRecovered      bool   `gorm:"type:boolean;not null"`
+	IsRecovered      int16   `gorm:"type:smallint;not null"`
 	Cate             string `gorm:"size:128;not null"`
 	DatasourceID     int64  `gorm:"not null;default:0;comment:datasource id"`
 	Cluster          string `gorm:"size:128;not null"`
@@ -880,13 +881,13 @@ type InitPostgresAlertHisEvent struct {
 	RuleNote         string `gorm:"size:2048;not null;default:'alert rule note'"`
 	RuleProd         string `gorm:"size:255;not null;default:''"`
 	RuleAlgo         string `gorm:"size:255;not null;default:''"`
-	Severity         bool   `gorm:"type:boolean;not null;comment:0:Emergency 1:Warning 2:Notice"`
+	Severity         int16   `gorm:"type:smallint;not null;comment:0:Emergency 1:Warning 2:Notice"`
 	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
 	PromQL           string `gorm:"size:8192;not null;comment:promql"`
 	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
 	Callbacks        string `gorm:"size:2048;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
 	RunbookURL       string `gorm:"size:255"`
-	NotifyRecovered  bool   `gorm:"type:boolean;not null;comment:whether notify when recovery"`
+	NotifyRecovered  int16   `gorm:"type:smallint;not null;comment:whether notify when recovery"`
 	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
 	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
 	NotifyCurNumber  int32  `gorm:"not null;default:0"`
@@ -1223,7 +1224,7 @@ type InitPostgresESIndexPattern struct {
 	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
 	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_datasource_name"`
 	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
-	AllowHideSystemIndices bool   `gorm:"type:boolean;not null;default:0"`
+	AllowHideSystemIndices int16  `gorm:"type:smallint;not null;default:0"`
 	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
 	CreateAt               int64  `gorm:"default:0"`
 	CreateBy               string `gorm:"size:64;default:''"`
@@ -1391,21 +1392,21 @@ func (InitTaskHost) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
-func DataBaseInit(c DBConfig, db *gorm.DB) {
+func DataBaseInit(c DBConfig, db *gorm.DB) error{
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
-		mysqlDataBaseInit(db)
+		return mysqlDataBaseInit(db)
 	case "postgres":
-		postgresDataBaseInit(db)
+		return postgresDataBaseInit(db)
 	case "sqlite":
-		sqliteDataBaseInit(db)
+		return sqliteDataBaseInit(db)
 	default:
-		return
+		return fmt.Errorf("unsupported database type: %s", c.DBType)
 	}
 }
 
-func sqliteDataBaseInit(db *gorm.DB) {
-	db.AutoMigrate(
+func sqliteDataBaseInit(db *gorm.DB) error {
+	dts := []interface{}{
 		&InitTaskMeta{},
 		&InitTaskAction{},
 		&InitTaskScheduler{},
@@ -1450,11 +1451,22 @@ func sqliteDataBaseInit(db *gorm.DB) {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
-		&InitAlertRule{})
+		&InitAlertRule{}}
+
+	for _, dt := range dts {
+		err := db.AutoMigrate(dt)
+		if err != nil {
+			fmt.Printf("sqliteDataBaseInit AutoMigrate error: %v\n", err)
+			return err
+		}
+	}
 
 	for i := 1; i <= 99; i++ {
 		tableName := "task_host_" + strconv.Itoa(i)
-		db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		if err != nil {
+			return err
+		}
 	}
 
 	roleOperations := []InitRoleOperation{
@@ -1523,26 +1535,35 @@ func sqliteDataBaseInit(db *gorm.DB) {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"})
-	db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1})
-	db.Create(&InitRole{Name: "Admin", Note: "Administrator role"})
-	db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"})
-	db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"})
+	errList := make([]error, 0)
+	errList = append(errList, db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
+	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
 
 	for _, roleOperation := range roleOperations {
-		db.Create(&roleOperation)
+		errList = append(errList, db.Create(&roleOperation).Error)
 	}
 
-	db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"})
-	db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`})
-	db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false})
-	db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false})
+	errList = append(errList, db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
+	errList = append(errList, db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
+	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false}).Error)
+	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false}).Error)
+
+	for _, e := range errList {
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }
 
-func mysqlDataBaseInit(db *gorm.DB) {
-	db.AutoMigrate(
+func mysqlDataBaseInit(db *gorm.DB) error {
+	dts := []interface{}{
 		&InitTaskMeta{},
 		&InitTaskAction{},
 		&InitTaskScheduler{},
@@ -1587,11 +1608,22 @@ func mysqlDataBaseInit(db *gorm.DB) {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
-		&InitAlertRule{})
+		&InitAlertRule{}}
+
+	for _, dt := range dts {
+		err := db.AutoMigrate(dt)
+		if err != nil {
+			fmt.Printf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
+			return err
+		}
+	}
 
 	for i := 1; i <= 99; i++ {
 		tableName := "task_host_" + strconv.Itoa(i)
-		db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		if err != nil {
+			return err
+		}
 	}
 
 	roleOperations := []InitRoleOperation{
@@ -1660,26 +1692,35 @@ func mysqlDataBaseInit(db *gorm.DB) {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"})
-	db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1})
-	db.Create(&InitRole{Name: "Admin", Note: "Administrator role"})
-	db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"})
-	db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"})
+	errList := make([]error, 0)
+	errList = append(errList, db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
+	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
 
 	for _, roleOperation := range roleOperations {
-		db.Create(&roleOperation)
+		errList = append(errList, db.Create(&roleOperation).Error)
 	}
 
-	db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"})
-	db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`})
-	db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false})
-	db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false})
+	errList = append(errList, db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
+	errList = append(errList, db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
+	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false}).Error)
+	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false}).Error)
+
+	for _, e := range errList {
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }
 
-func postgresDataBaseInit(db *gorm.DB) {
-	db.AutoMigrate(
+func postgresDataBaseInit(db *gorm.DB) error {
+	dts := []interface{}{
 		&InitTaskMeta{},
 		&InitTaskAction{},
 		&InitTaskScheduler{},
@@ -1724,11 +1765,22 @@ func postgresDataBaseInit(db *gorm.DB) {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
-		&InitPostgresAlertRule{})
+		&InitPostgresAlertRule{}}
+	
+	for _, dt := range dts {
+		err := db.AutoMigrate(dt)
+		if err != nil {
+			fmt.Printf("postgresDataBaseInit AutoMigrate error: %v\n", err)
+			return err
+		}
+	}
 
 	for i := 1; i <= 99; i++ {
 		tableName := "task_host_" + strconv.Itoa(i)
-		db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		if err != nil {
+			return err
+		}
 	}
 
 	roleOperations := []InitRoleOperation{
@@ -1797,20 +1849,29 @@ func postgresDataBaseInit(db *gorm.DB) {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"})
-	db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1})
-	db.Create(&InitRole{Name: "Admin", Note: "Administrator role"})
-	db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"})
-	db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"})
+	errList := make([]error, 0)
+	errList = append(errList, db.Create(&InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
+	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
+	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
 
 	for _, roleOperation := range roleOperations {
-		db.Create(&roleOperation)
+		errList = append(errList, db.Create(&roleOperation).Error)
 	}
 
-	db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"})
-	db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"})
-	db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`})
-	db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false})
-	db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false})
+	errList = append(errList, db.Create(&InitPostgresBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
+	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
+	errList = append(errList, db.Create(&InitPostgresMetricView{Name: "Host View", Cate: 0, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
+	errList = append(errList, db.Create(&InitPostgresAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: 0}).Error)
+	errList = append(errList, db.Create(&InitPostgresAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: 0}).Error)
+
+	for _, e := range errList {
+		if e != nil {
+			return e
+		}
+	}
+
+	return nil
 }

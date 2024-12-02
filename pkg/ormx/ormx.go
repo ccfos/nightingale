@@ -211,68 +211,89 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 		return false, fmt.Errorf("failed to open database: %v", err)
 	}
 
-	var exists bool
-	query := genQuery(c)
-	if err := db.Raw(query, dbName).Scan(&exists).Error; err != nil {
-		return false, fmt.Errorf("failed to query: %v", err)
-	}
+    var databases []string
+    query := genQuery(c)
+    if err := db.Raw(query).Scan(&databases).Error; err != nil {
+        return false, fmt.Errorf("failed to query: %v", err)
+    }
 
-	return exists, nil
+    for _, database := range databases {
+        if database == dbName {
+			fmt.Println("Database exist")
+            return true, nil
+        }
+    }
+
+    return false, nil
 }
 
 func checkMysqlDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.SplitN(c.DSN, "/", 2)
-	if len(dsnParts) != 2 {
-		return false, fmt.Errorf("failed to parse DSN: %s", c.DSN)
-	}
+    if len(dsnParts) != 2 {
+        return false, fmt.Errorf("failed to parse DSN: %s", c.DSN)
+    }
 
-	connectionInfo := dsnParts[0]
-	dbInfo := dsnParts[1]
-	dbName := dbInfo
+    connectionInfo := dsnParts[0]
+    dbInfo := dsnParts[1]
+    dbName := dbInfo
 
-	queryIndex := strings.Index(dbInfo, "?")
-	if queryIndex != -1 {
-		dbName = dbInfo[:queryIndex]
-	} else {
-		return false, fmt.Errorf("failed to parse database name from DSN: %s", c.DSN)
-	}
+    queryIndex := strings.Index(dbInfo, "?")
+    if queryIndex != -1 {
+        dbName = dbInfo[:queryIndex]
+    } else {
+        return false, fmt.Errorf("failed to parse database name from DSN: %s", c.DSN)
+    }
 
-	connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
+    connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
 
-	dialector := mysql.Open(connectionWithoutDB)
+    var dialector gorm.Dialector
+    switch strings.ToLower(c.DBType) {
+    case "mysql":
+        dialector = mysql.Open(connectionWithoutDB)
+    case "postgres":
+        dialector = postgres.Open(connectionWithoutDB)
+    default:
+        return false, fmt.Errorf("unsupported database type: %s", c.DBType)
+    }
 
-	gconfig := &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   c.TablePrefix,
-			SingularTable: true,
-		},
-		Logger: gormLogger,
-	}
+    gconfig := &gorm.Config{
+        NamingStrategy: schema.NamingStrategy{
+            TablePrefix:   c.TablePrefix,
+            SingularTable: true,
+        },
+        Logger: gormLogger,
+    }
 
-	db, err := gorm.Open(dialector, gconfig)
-	if err != nil {
-		return false, fmt.Errorf("failed to open database: %v", err)
-	}
+    db, err := gorm.Open(dialector, gconfig)
+    if err != nil {
+        return false, fmt.Errorf("failed to open database: %v", err)
+    }
 
-	var exists bool
-	query := genQuery(c)
-	if err := db.Raw(query, dbName).Scan(&exists).Error; err != nil {
-		return false, fmt.Errorf("failed to query: %v", err)
-	}
+    var databases []string
+    query := genQuery(c)
+    if err := db.Raw(query).Scan(&databases).Error; err != nil {
+        return false, fmt.Errorf("failed to query: %v", err)
+    }
 
-	return exists, nil
+    for _, database := range databases {
+        if database == dbName {
+            return true, nil
+        }
+    }
+
+    return false, nil
 }
 
 func genQuery(c DBConfig) string {
 	switch strings.ToLower(c.DBType) {
-	case "mysql":
-		return "SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = ?)"
-	case "postgres":
-		return "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = ?);"
-	case "sqlite":
-		return ""
-	default:
-		return ""
+    case "mysql":
+        return "SHOW DATABASES"
+    case "postgres":
+        return "SELECT datname FROM pg_database"
+    case "sqlite":
+        return ""
+    default:
+        return ""
 	}
 }
 
@@ -316,7 +337,10 @@ func New(c DBConfig) (*gorm.DB, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to reopen database after creation: %v", err)
 		}
-		DataBaseInit(c, db)
+		err = DataBaseInit(c, db)
+		if err != nil {
+			return nil, fmt.Errorf("failed to init database: %v", err)
+		}
 	}
 
 	db, err := gorm.Open(dialector, gconfig)
