@@ -21,6 +21,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -78,6 +79,9 @@ type Processor struct {
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
 	EventMuteHook          EventMuteHookFunc
+
+	ScheduleEntry cron.Entry
+	EvalStart     int64
 }
 
 func (p *Processor) Key() string {
@@ -89,9 +93,9 @@ func (p *Processor) DatasourceId() int64 {
 }
 
 func (p *Processor) Hash() string {
-	return str.MD5(fmt.Sprintf("%d_%d_%s_%d",
+	return str.MD5(fmt.Sprintf("%d_%s_%s_%d",
 		p.rule.Id,
-		p.rule.PromEvalInterval,
+		p.rule.CronPattern,
 		p.rule.RuleConfig,
 		p.datasourceId,
 	))
@@ -438,6 +442,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			preTriggerTime = event.TriggerTime
 		}
 
+		event.PromEvalInterval = int(p.ScheduleEntry.Schedule.Next(time.Unix(p.EvalStart, 0)).Unix() - p.EvalStart)
 		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
