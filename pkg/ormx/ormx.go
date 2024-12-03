@@ -91,6 +91,8 @@ func createSqliteDatabase(dsn string, gconfig *gorm.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to open temporary connection: %v", err)
 	}
+	
+	fmt.Println("sqlite file created")
 
 	return nil
 }

@@ -1159,6 +1159,23 @@ func (InitESIndexPattern) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
+type InitSqliteESIndexPattern struct {
+	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
+	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource"`
+	Name                   string `gorm:"size:191;not null;uniqueIndex:idx_name"`
+	TimeField              string `gorm:"size:128;not null;default:'@timestamp'"`
+	AllowHideSystemIndices bool   `gorm:"type:tinyint(1);not null;default:0"`
+	FieldsFormat           string `gorm:"size:4096;not null;default:''"`
+	CreateAt               int64  `gorm:"default:0"`
+	CreateBy               string `gorm:"size:64;default:''"`
+	UpdateAt               int64  `gorm:"default:0"`
+	UpdateBy               string `gorm:"size:64;default:''"`
+}
+
+func (InitSqliteESIndexPattern) TableName() string {
+	return "es_index_pattern"
+}
+
 type InitPostgresESIndexPattern struct {
 	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
 	DatasourceID           int64  `gorm:"not null;default:0;comment:datasource id;uniqueIndex:idx_datasource_name"`
@@ -1199,6 +1216,25 @@ func (InitBuiltinMetric) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
+type InitSqliteBuiltinMetric struct {
+	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
+	Collector  string `gorm:"size:191;not null;comment:type of collector;index:idx_collector;uniqueIndex:idx_collector_typ_name"`
+	Typ        string `gorm:"size:191;not null;comment:type of metric;index:idx_typ;uniqueIndex:idx_collector_typ_name"`
+	Name       string `gorm:"size:191;not null;comment:name of metric;index:idx_name_sqlite;uniqueIndex:idx_collector_typ_name"`
+	Unit       string `gorm:"size:191;not null;comment:unit of metric"`
+	Lang       string `gorm:"size:191;not null;default:'';comment:language of metric;index:idx_lang;uniqueIndex:idx_collector_typ_name"`
+	Note       string `gorm:"size:4096;not null;comment:description of metric in Chinese"`
+	Expression string `gorm:"size:4096;not null;comment:expression of metric"`
+	CreatedAt  int64  `gorm:"not null;default:0;comment:create time"`
+	CreatedBy  string `gorm:"size:191;not null;default:'';comment:creator"`
+	UpdatedAt  int64  `gorm:"not null;default:0;comment:update time"`
+	UpdatedBy  string `gorm:"size:191;not null;default:'';comment:updater"`
+}
+
+func (InitSqliteBuiltinMetric) TableName() string {
+	return "builtin_metrics"
+}
+
 type InitMetricFilter struct {
 	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
 	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_name"`
@@ -1216,6 +1252,21 @@ func (InitMetricFilter) TableName() string {
 
 func (InitMetricFilter) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+}
+
+type InitSqliteMetricFilter struct {
+	ID         uint64 `gorm:"primaryKey;autoIncrement;comment:unique identifier"`
+	Name       string `gorm:"size:191;not null;comment:name of metric filter;index:idx_name_metric_filter_sqlite"`
+	Configs    string `gorm:"size:4096;not null;comment:configuration of metric filter"`
+	GroupsPerm string `gorm:"type:text"`
+	CreateAt   int64  `gorm:"not null;default:0;comment:create time"`
+	CreateBy   string `gorm:"size:191;not null;default:'';comment:creator"`
+	UpdateAt   int64  `gorm:"not null;default:0;comment:update time"`
+	UpdateBy   string `gorm:"size:191;not null;default:'';comment:updater"`
+}
+
+func (InitSqliteMetricFilter) TableName() string {
+	return "metric_filter"
 }
 
 type InitTargetBusiGroup struct {
@@ -1328,6 +1379,19 @@ func (InitTaskHost) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
+type InitSqliteTaskHost struct {
+	II     uint64 `gorm:"primaryKey;autoIncrement"`
+	ID     uint64 `gorm:"not null;"`
+	Host   string `gorm:"size:128;not null;"`
+	Status string `gorm:"size:32;not null"`
+	Stdout string `gorm:"type:text"`
+	Stderr string `gorm:"type:text"`
+}
+
+func (InitSqliteTaskHost) TableName() string {
+	return "task_host_0"
+}
+
 func DataBaseInit(c DBConfig, db *gorm.DB) error{
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
@@ -1348,7 +1412,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		&InitTaskScheduler{},
 		&InitTaskSchedulerHealth{},
 		&InitTaskHostDoing{},
-		&InitTaskHost{},
+		&InitSqliteTaskHost{},
 		&InitBoardBusiGroup{},
 		&InitBuiltinComponent{},
 		&InitBuiltinPayload{},
@@ -1361,9 +1425,9 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		&InitBuiltinCate{},
 		&InitNotifyTpl{},
 		&InitSSOConfig{},
-		&InitESIndexPattern{},
-		&InitBuiltinMetric{},
-		&InitMetricFilter{},
+		&InitSqliteESIndexPattern{},
+		&InitSqliteBuiltinMetric{},
+		&InitSqliteMetricFilter{},
 		&InitTargetBusiGroup{},
 		&InitAlertAggrView{},
 		&InitAlertCurEvent{},
@@ -1399,7 +1463,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 
 	for i := 1; i <= 99; i++ {
 		tableName := "task_host_" + strconv.Itoa(i)
-		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
+		err := db.Table(tableName).AutoMigrate(&InitSqliteTaskHost{})
 		if err != nil {
 			return err
 		}

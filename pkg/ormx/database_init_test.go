@@ -53,7 +53,8 @@ func TestDataBaseInit(t *testing.T) {
 			}
 			db, err := gorm.Open(dialector, &gorm.Config{})
 			assert.NoError(t, err)
-			DataBaseInit(tt.config, db)
+			err = DataBaseInit(tt.config, db)
+			assert.NoError(t, err)
 		})
 	}
 }
