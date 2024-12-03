@@ -93,7 +93,8 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
     case "miniredis":
 		s, err := miniredis.Run()
 		if err != nil {
-			return nil, err
+			fmt.Println("failed to init miniredis:", err)
+			os.Exit(1)
 		}
 		redisClient = redis.NewClient(&redis.Options{
 			Addr: s.Addr(),
