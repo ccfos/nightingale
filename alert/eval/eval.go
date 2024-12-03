@@ -94,13 +94,15 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 
 	arw.Scheduler = cron.New(cron.WithSeconds())
 
-	_, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
+	entryID, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
 		arw.Eval()
 	})
 
 	if err != nil {
 		logger.Errorf("alert rule %s add cron pattern error: %v", arw.Key(), err)
 	}
+
+	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
 
 	return arw
 }
