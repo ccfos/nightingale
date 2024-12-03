@@ -442,8 +442,8 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			preTriggerTime = event.TriggerTime
 		}
 
-		nextEvalTime := p.ScheduleEntry.Schedule.Next(time.Unix(event.LastEvalTime, 0)).Unix()
-		if nextEvalTime-preTriggerTime >= int64(p.rule.PromForDuration) {
+		event.PromEvalInterval = int(p.ScheduleEntry.Schedule.Next(time.Unix(event.LastEvalTime, 0)).Unix() - event.LastEvalTime)
+		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
 				severity = event.Severity
