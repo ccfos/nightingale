@@ -29,22 +29,7 @@ type Redis redis.Cmdable
 
 func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis
-	if cfg.RedisType == "miniredis" {
-		s, err := miniredis.Run()
-		if err != nil {
-			return nil, err
-		}
-		redisClient = redis.NewClient(&redis.Options{
-			Addr: s.Addr(),
-		})
-
-		err = redisClient.Ping(context.Background()).Err()
-		if err != nil {
-			fmt.Println("failed to ping miniredis:", err)
-			os.Exit(1)
-		}
-		return redisClient, nil
-	}
+	
 	switch cfg.RedisType {
 	case "standalone", "":
 		redisOptions := &redis.Options{
@@ -104,6 +89,15 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 		}
 
 		redisClient = redis.NewFailoverClient(redisOptions)
+
+    case "miniredis":
+		s, err := miniredis.Run()
+		if err != nil {
+			return nil, err
+		}
+		redisClient = redis.NewClient(&redis.Options{
+			Addr: s.Addr(),
+		})
 
 	default:
 		fmt.Println("failed to init redis , redis type is illegal:", cfg.RedisType)
