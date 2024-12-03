@@ -100,7 +100,7 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 				groupIds = append(groupIds, groupId)
 			}
 
-			err := models.TargetOverrideBgids(ctx, []string{target.Ident}, groupIds)
+			err := models.TargetOverrideBgids(ctx, []string{target.Ident}, groupIds, nil)
 			if err != nil {
 				logger.Warningf("update target:%s group ids failed, err: %v", target.Ident, err)
 			}
@@ -113,7 +113,7 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 				}
 
 				if !target.MatchGroupId(groupId) {
-					err := models.TargetBindBgids(ctx, []string{target.Ident}, []int64{groupId})
+					err := models.TargetBindBgids(ctx, []string{target.Ident}, []int64{groupId}, nil)
 					if err != nil {
 						logger.Warningf("update target:%s group ids failed, err: %v", target.Ident, err)
 					}
