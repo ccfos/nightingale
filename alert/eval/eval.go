@@ -130,6 +130,7 @@ func (arw *AlertRuleWorker) Start() {
 }
 
 func (arw *AlertRuleWorker) Eval() {
+	arw.Processor.EvalStart = time.Now().Unix()
 	cachedRule := arw.Rule
 	if cachedRule == nil {
 		// logger.Errorf("rule_eval:%s Rule not found", arw.Key())
