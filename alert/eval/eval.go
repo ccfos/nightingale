@@ -240,10 +240,15 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		readerClient := arw.PromClients.GetCli(arw.DatasourceId)
 
 		if query.VarEnabled {
-			anomalyPoints := arw.VarFilling(query, readerClient)
-			for _, v := range anomalyPoints {
-				lst = append(lst, v)
+			var anomalyPoints []models.AnomalyPoint
+			if hasAggregateFunction(query) {
+				// 若有聚合函数则需要先填充变量然后查询，这个方式效率较低
+				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
+			} else {
+				// 先查询再过滤变量，效率较高，但无法处理有聚合函数的情况
+				anomalyPoints = arw.VarFillingAfterQuery(query, readerClient)
 			}
+			lst = append(lst, anomalyPoints...)
 		} else {
 			// 无变量
 			promql := strings.TrimSpace(query.PromQl)
@@ -297,17 +302,17 @@ type sample struct {
 	Timestamp model.Time
 }
 
-// VarFilling 填充变量
+// VarFillingAfterQuery 填充变量，先查询再填充变量
 // 公式: mem_used_percent{host="$host"} > $val 其中 $host 为参数变量，$val 为值变量
 // 实现步骤:
-// 广度优先遍历，保证同一参数变量的子筛选可以覆盖上一层筛选
-// 每个节点先查询无参数的 query, 即 mem_used_percent > curVal, 得到满足值变量的所有结果
+// 依次遍历参数配置节点，保证同一参数变量的子筛选可以覆盖上一层筛选
+// 每个节点先查询无参数的 query, 即 mem_used_percent{} > curVal, 得到满足值变量的所有结果
 // 结果中有满足本节点参数变量的值，加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
-func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient promsdk.API) map[string]models.AnomalyPoint {
+func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
-	anomalyPoints := make(map[string]models.AnomalyPoint)
+	anomalyPointsMap := make(map[string]models.AnomalyPoint)
 	// 统一变量配置格式
 	VarConfigForCalc := &models.ChildVarConfig{
 		ParamVal:        make([]map[string]models.ParamQuery, 1),
@@ -374,7 +379,7 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
 				}
 				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
-					anomalyPoints[strings.Join(cur, "-")] = models.AnomalyPoint{
+					anomalyPointsMap[strings.Join(cur, "-")] = models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
 						Value:     float64(seqVals[i].Value),
@@ -389,12 +394,16 @@ func (arw *AlertRuleWorker) VarFilling(query models.PromQuery, readerClient prom
 
 			// 剩余的参数组合为本层筛选不产生异常点的组合，需要覆盖上层筛选中产生的异常点
 			for k, _ := range paramPermutation {
-				delete(anomalyPoints, k)
+				delete(anomalyPointsMap, k)
 			}
 		}
 		curNode = curNode.ChildVarConfigs
 	}
 
+	anomalyPoints := make([]models.AnomalyPoint, 0)
+	for _, point := range anomalyPointsMap {
+		anomalyPoints = append(anomalyPoints, point)
+	}
 	return anomalyPoints
 }
 
@@ -1197,4 +1206,116 @@ func GetQueryRefAndUnit(query interface{}) (string, string, error) {
 	}
 	json.Unmarshal(queryBytes, &queryMap)
 	return queryMap.Ref, queryMap.Unit, nil
+}
+
+// VarFillingBeforeQuery 填充变量，先填充变量再查询，针对有聚合函数的情况
+// 公式: avg(mem_used_percent{host="$host"}) > $val 其中 $host 为参数变量，$val 为值变量
+// 实现步骤:
+// 依次遍历参数配置节点，保证同一参数变量的子筛选可以覆盖上一层筛选
+// 每个节点先填充参数再进行查询, 即先得到完整的 promql avg(mem_used_percent{host="127.0.0.1"}) > 5
+// 再查询得到满足值变量的所有结果加入异常点列表
+// 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
+func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
+	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
+	anomalyPointsMap := sync.Map{}
+	// 统一变量配置格式
+	VarConfigForCalc := &models.ChildVarConfig{
+		ParamVal:        make([]map[string]models.ParamQuery, 1),
+		ChildVarConfigs: query.VarConfig.ChildVarConfigs,
+	}
+	VarConfigForCalc.ParamVal[0] = make(map[string]models.ParamQuery)
+	for _, p := range query.VarConfig.ParamVal {
+		VarConfigForCalc.ParamVal[0][p.Name] = models.ParamQuery{
+			ParamType: p.ParamType,
+			Query:     p.Query,
+		}
+	}
+	// 使用一个统一的参数变量顺序
+	var ParamKeys []string
+	for val, valQuery := range VarConfigForCalc.ParamVal[0] {
+		if valQuery.ParamType == "threshold" {
+			continue
+		}
+		ParamKeys = append(ParamKeys, val)
+	}
+	sort.Slice(ParamKeys, func(i, j int) bool {
+		return ParamKeys[i] < ParamKeys[j]
+	})
+	// 遍历变量配置链表
+	curNode := VarConfigForCalc
+	for curNode != nil {
+		for _, param := range curNode.ParamVal {
+			curPromql := query.PromQl
+			// 取出阈值变量
+			valMap := make(map[string]string)
+			for val, valQuery := range param {
+				if valQuery.ParamType == "threshold" {
+					valMap[val] = getString(valQuery.Query)
+				}
+			}
+			// 替换阈值变量
+			for key, val := range valMap {
+				curPromql = strings.Replace(curPromql, fmt.Sprintf("$%s", key), val, -1)
+			}
+			// 得到参数变量的所有组合
+			paramPermutation, err := arw.getParamPermutation(param, ParamKeys)
+			if err != nil {
+				logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
+				continue
+			}
+
+			keyToPromql := make(map[string]string)
+			for paramPermutationKeys, _ := range paramPermutation {
+				realPromql := curPromql
+				split := strings.Split(paramPermutationKeys, "-")
+				for j := range ParamKeys {
+					realPromql = strings.Replace(realPromql, fmt.Sprintf("$%s", ParamKeys[j]), split[j], -1)
+				}
+				keyToPromql[paramPermutationKeys] = realPromql
+			}
+
+			// 并发查询
+			wg := sync.WaitGroup{}
+			for key, promql := range keyToPromql {
+				wg.Add(1)
+				go func(key, promql string) {
+					defer wg.Done()
+					value, _, err := readerClient.Query(context.Background(), promql, time.Now())
+					if err != nil {
+						logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), promql, err)
+						return
+					}
+
+					points := models.ConvertAnomalyPoints(value)
+					if len(points) == 0 {
+						anomalyPointsMap.Delete(key)
+						return
+					}
+					for i := 0; i < len(points); i++ {
+						points[i].Severity = query.Severity
+						points[i].Query = promql
+						points[i].ValuesUnit = map[string]unit.FormattedValue{
+							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
+						}
+					}
+					anomalyPointsMap.Store(key, points)
+				}(key, promql)
+			}
+			wg.Wait()
+		}
+		curNode = curNode.ChildVarConfigs
+	}
+	anomalyPoints := make([]models.AnomalyPoint, 0)
+	anomalyPointsMap.Range(func(key, value any) bool {
+		if points, ok := value.([]models.AnomalyPoint); ok {
+			anomalyPoints = append(anomalyPoints, points...)
+		}
+		return true
+	})
+	return anomalyPoints
+}
+
+// todo 判断 query 中是否有聚合函数
+func hasAggregateFunction(query models.PromQuery) bool {
+	return true
 }
