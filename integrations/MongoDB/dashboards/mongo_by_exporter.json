@@ -1,5 +1,5 @@
 {
-    "name": "MongoDB by instance",
+    "name": "MongoDB Overview by exporter",
     "tags": "Prometheus MongoDB",
     "ident": "",
     "configs": {
@@ -9,11 +9,11 @@
                 "id": "939298f2-b21f-4e2f-9142-c10946cc4032",
                 "layout": {
                     "h": 1,
+                    "i": "939298f2-b21f-4e2f-9142-c10946cc4032",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 0,
-                    "i": "939298f2-b21f-4e2f-9142-c10946cc4032",
-                    "isResizable": false
+                    "y": 0
                 },
                 "name": "Basic Info",
                 "type": "row"
@@ -32,12 +32,12 @@
                 "description": "instance count",
                 "id": "91970d24-3f04-4424-a1ed-73e7d28f5706",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "91970d24-3f04-4424-a1ed-73e7d28f5706",
+                    "isResizable": true,
                     "w": 6,
                     "x": 0,
-                    "y": 1,
-                    "i": "91970d24-3f04-4424-a1ed-73e7d28f5706",
-                    "isResizable": true
+                    "y": 1
                 },
                 "name": "Up",
                 "options": {
@@ -77,54 +77,39 @@
                 "version": "2.0.0"
             },
             {
-                "type": "stat",
-                "id": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
-                "layout": {
-                    "h": 4,
-                    "w": 6,
-                    "x": 6,
-                    "y": 1,
-                    "i": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
-                    "isResizable": true
-                },
-                "version": "3.0.0",
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
-                "targets": [
-                    {
-                        "expr": "mongodb_ss_uptime{instance=\"$instance\"}",
-                        "refId": "A",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Uptime",
-                "description": "Uptime",
-                "maxPerRow": 4,
                 "custom": {
-                    "textMode": "value",
-                    "graphMode": "none",
-                    "colorMode": "value",
                     "calc": "lastNotNull",
-                    "valueField": "Value",
                     "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
                     "textSize": {
                         "title": null
                     },
-                    "orientation": "auto"
+                    "valueField": "Value"
                 },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "Uptime",
+                "id": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
+                "layout": {
+                    "h": 7,
+                    "i": "c7b52e8e-b417-4c61-a15e-e2f186fccd67",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1
+                },
+                "name": "Uptime",
                 "options": {
+                    "standardOptions": {
+                        "util": "humantimeSeconds"
+                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#634CD9",
-                                "value": null,
-                                "type": "base"
+                                "type": "base",
+                                "value": null
                             }
                         ]
                     },
@@ -147,51 +132,34 @@
                             },
                             "type": "range"
                         }
-                    ],
-                    "standardOptions": {
-                        "util": "seconds",
-                        "decimals": 2
-                    }
+                    ]
                 },
-                "overrides": [
+                "targets": [
                     {
-                        "matcher": {
-                            "id": "byFrameRefID"
-                        },
-                        "properties": {
-                            "thresholds": {
-                                "steps": [
-                                    {
-                                        "color": "#6C53B1",
-                                        "value": null,
-                                        "type": "base"
-                                    }
-                                ]
-                            },
-                            "standardOptions": {
-                                "decimals": 0
-                            }
-                        }
+                        "expr": "mongodb_ss_uptime{instance=\"$instance\"}",
+                        "refId": "A"
                     }
-                ]
+                ],
+                "type": "stat",
+                "version": "2.0.0"
             },
             {
                 "type": "timeseries",
                 "id": "8446dded-9e11-4ee9-bdad-769b193ddf3e",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "8446dded-9e11-4ee9-bdad-769b193ddf3e",
+                    "isResizable": true,
                     "w": 6,
                     "x": 12,
-                    "y": 1,
-                    "i": "8446dded-9e11-4ee9-bdad-769b193ddf3e",
-                    "isResizable": true
+                    "y": 1
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "mongodb_ss_mem_resident * 1024 * 1024",
+                        "expr": "mongodb_ss_mem_resident{instance='$instance'} * 1024 * 1024",
                         "legend": "{{type}}",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -219,8 +187,7 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
+                        "util": "bytesIEC"
                     },
                     "thresholds": {
                         "steps": [
@@ -275,12 +242,12 @@
                 "description": "Page faults indicate that requests are processed from disk either because an index is missing or there is not enough memory for the data set. Consider increasing memory or sharding out.",
                 "id": "3eda28e7-2480-4ddc-b346-89ced1c33034",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "3eda28e7-2480-4ddc-b346-89ced1c33034",
+                    "isResizable": true,
                     "w": 6,
                     "x": 18,
-                    "y": 1,
-                    "i": "3eda28e7-2480-4ddc-b346-89ced1c33034",
-                    "isResizable": true
+                    "y": 1
                 },
                 "name": "Page Faults",
                 "options": {
@@ -333,12 +300,12 @@
                 "description": "Network traffic (bytes)",
                 "id": "528d0485-f947-470d-95f3-59eae157ebb6",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "528d0485-f947-470d-95f3-59eae157ebb6",
+                    "isResizable": true,
                     "w": 6,
                     "x": 0,
-                    "y": 5,
-                    "i": "528d0485-f947-470d-95f3-59eae157ebb6",
-                    "isResizable": true
+                    "y": 8
                 },
                 "name": "Network I/O",
                 "options": {
@@ -395,12 +362,12 @@
                 "description": "Number of connections Keep in mind the hard limit on the maximum number of connections set by your distribution.",
                 "id": "067e97c3-4e57-447f-a9dc-a49627b6ce18",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "067e97c3-4e57-447f-a9dc-a49627b6ce18",
+                    "isResizable": true,
                     "w": 6,
                     "x": 6,
-                    "y": 5,
-                    "i": "067e97c3-4e57-447f-a9dc-a49627b6ce18",
-                    "isResizable": true
+                    "y": 8
                 },
                 "name": "Connections",
                 "options": {
@@ -450,12 +417,12 @@
                 "description": "Number of assertion errors, Asserts are not important by themselves, but you can correlate spikes with other graphs.",
                 "id": "9e9b7356-cf0e-4e5f-95f5-00258c576bf4",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "9e9b7356-cf0e-4e5f-95f5-00258c576bf4",
+                    "isResizable": true,
                     "w": 6,
                     "x": 12,
-                    "y": 5,
-                    "i": "9e9b7356-cf0e-4e5f-95f5-00258c576bf4",
-                    "isResizable": true
+                    "y": 8
                 },
                 "name": "Assert Events",
                 "options": {
@@ -505,12 +472,12 @@
                 "description": "Number of operations waiting to acquire locks, Any number of queued operations for long periods of time is an indication of possible issues. Find the cause and fix it before requests get stuck in the queue.",
                 "id": "2698f0f8-a76a-499b-99cf-30504f0f4db6",
                 "layout": {
-                    "h": 4,
+                    "h": 7,
+                    "i": "2698f0f8-a76a-499b-99cf-30504f0f4db6",
+                    "isResizable": true,
                     "w": 6,
                     "x": 18,
-                    "y": 5,
-                    "i": "2698f0f8-a76a-499b-99cf-30504f0f4db6",
-                    "isResizable": true
+                    "y": 8
                 },
                 "name": "Lock Queue",
                 "options": {
@@ -547,11 +514,11 @@
                 "id": "2bdb8cc9-92f4-449e-8f70-a4c470a21604",
                 "layout": {
                     "h": 1,
+                    "i": "2bdb8cc9-92f4-449e-8f70-a4c470a21604",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 9,
-                    "i": "2bdb8cc9-92f4-449e-8f70-a4c470a21604",
-                    "isResizable": false
+                    "y": 15
                 },
                 "name": "Operation Info",
                 "type": "row"
@@ -574,12 +541,12 @@
                 "description": "Number of requests received Shows how many times a command is executed per second on average during the selected interval.",
                 "id": "c2819508-95e7-4c63-aeae-ce19f92469cd",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "c2819508-95e7-4c63-aeae-ce19f92469cd",
+                    "isResizable": true,
                     "w": 12,
                     "x": 0,
-                    "y": 10,
-                    "i": "c2819508-95e7-4c63-aeae-ce19f92469cd",
-                    "isResizable": true
+                    "y": 16
                 },
                 "name": "Command Operations",
                 "options": {
@@ -625,12 +592,12 @@
                 "type": "timeseries",
                 "id": "7030d97a-d69f-4916-a415-ec57503ab1ed",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "7030d97a-d69f-4916-a415-ec57503ab1ed",
+                    "isResizable": true,
                     "w": 12,
                     "x": 12,
-                    "y": 10,
-                    "i": "7030d97a-d69f-4916-a415-ec57503ab1ed",
-                    "isResizable": true
+                    "y": 16
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
@@ -704,19 +671,19 @@
                 "type": "timeseries",
                 "id": "1c3b73d5-c25c-449f-995d-26acc9c621e1",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "1c3b73d5-c25c-449f-995d-26acc9c621e1",
+                    "isResizable": true,
                     "w": 8,
                     "x": 0,
-                    "y": 15,
-                    "i": "1c3b73d5-c25c-449f-995d-26acc9c621e1",
-                    "isResizable": true
+                    "y": 23
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(mongodb_ss_opLatencies_latency{}[5m]) / rate(mongodb_ss_opLatencies_latency{}[5m]) / 1000",
+                        "expr": "rate(mongodb_ss_opLatencies_latency{instance='$instance'}[5m]) / rate(mongodb_ss_opLatencies_latency{instance='$instance'}[5m]) / 1000",
                         "legend": "{{op_type}}",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -799,12 +766,12 @@
                 "description": "",
                 "id": "e642183c-8ba2-4f60-abc6-c65de49e7577",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "e642183c-8ba2-4f60-abc6-c65de49e7577",
+                    "isResizable": true,
                     "w": 8,
                     "x": 8,
-                    "y": 15,
-                    "i": "e642183c-8ba2-4f60-abc6-c65de49e7577",
-                    "isResizable": true
+                    "y": 23
                 },
                 "name": "Query Efficiency",
                 "options": {
@@ -861,12 +828,12 @@
                 "description": "number of cursors Helps identify why connections are increasing. Shows active cursors compared to cursors being automatically killed after 10 minutes due to an application not closing the connection.",
                 "id": "8b5a4f44-3291-4822-ab73-f56be6c62674",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "8b5a4f44-3291-4822-ab73-f56be6c62674",
+                    "isResizable": true,
                     "w": 8,
                     "x": 16,
-                    "y": 15,
-                    "i": "8b5a4f44-3291-4822-ab73-f56be6c62674",
-                    "isResizable": true
+                    "y": 23
                 },
                 "name": "Cursors",
                 "options": {
@@ -903,11 +870,11 @@
                 "id": "06946b19-94b4-4f72-bd87-70f87989257d",
                 "layout": {
                     "h": 1,
+                    "i": "06946b19-94b4-4f72-bd87-70f87989257d",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 20,
-                    "i": "06946b19-94b4-4f72-bd87-70f87989257d",
-                    "isResizable": false
+                    "y": 30
                 },
                 "name": "Cache Info",
                 "panels": [],
@@ -917,19 +884,19 @@
                 "type": "timeseries",
                 "id": "bb0ae571-43a1-430b-8f63-256f6f1ebee6",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "bb0ae571-43a1-430b-8f63-256f6f1ebee6",
+                    "isResizable": true,
                     "w": 6,
                     "x": 0,
-                    "y": 21,
-                    "i": "bb0ae571-43a1-430b-8f63-256f6f1ebee6",
-                    "isResizable": true
+                    "y": 31
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "mongodb_ss_wt_cache_bytes_currently_in_the_cache{}",
+                        "expr": "mongodb_ss_wt_cache_bytes_currently_in_the_cache{instance='$instance'}",
                         "legend": "total",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -975,8 +942,7 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "util": "bytesIEC",
-                        "decimals": 2
+                        "util": "bytesIEC"
                     },
                     "thresholds": {
                         "steps": [
@@ -1017,19 +983,19 @@
                 "type": "timeseries",
                 "id": "f1ffd169-2a1a-42bc-9647-0e6621be0fef",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "f1ffd169-2a1a-42bc-9647-0e6621be0fef",
+                    "isResizable": true,
                     "w": 6,
                     "x": 6,
-                    "y": 21,
-                    "i": "f1ffd169-2a1a-42bc-9647-0e6621be0fef",
-                    "isResizable": true
+                    "y": 31
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(mongodb_ss_wt_cache_bytes_read_into_cache{}[5m])",
+                        "expr": "rate(mongodb_ss_wt_cache_bytes_read_into_cache{instance='$instance'}[5m])",
                         "legend": "read",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -1104,19 +1070,19 @@
                 "type": "timeseries",
                 "id": "43ee140d-ae6d-474a-9892-fa4743d7f97e",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "43ee140d-ae6d-474a-9892-fa4743d7f97e",
+                    "isResizable": true,
                     "w": 6,
                     "x": 12,
-                    "y": 21,
-                    "i": "43ee140d-ae6d-474a-9892-fa4743d7f97e",
-                    "isResizable": true
+                    "y": 31
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "100 * sum(mongodb_ss_wt_cache_tracked_dirty_pages_in_the_cache{}) / sum(mongodb_ss_wt_cache_pages_currently_held_in_the_cache{})",
+                        "expr": "100 * sum(mongodb_ss_wt_cache_tracked_dirty_pages_in_the_cache{instance='$instance'}) / sum(mongodb_ss_wt_cache_pages_currently_held_in_the_cache{instance='$instance'})",
                         "legend": "dirty rate",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -1185,19 +1151,19 @@
                 "type": "timeseries",
                 "id": "1a22c31a-859a-400c-af2a-ae83c308d0f2",
                 "layout": {
-                    "h": 5,
+                    "h": 7,
+                    "i": "1a22c31a-859a-400c-af2a-ae83c308d0f2",
+                    "isResizable": true,
                     "w": 6,
                     "x": 18,
-                    "y": 21,
-                    "i": "1a22c31a-859a-400c-af2a-ae83c308d0f2",
-                    "isResizable": true
+                    "y": 31
                 },
                 "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(mongodb_mongod_wiredtiger_cache_evicted_total{}[5m])",
+                        "expr": "rate(mongodb_mongod_wiredtiger_cache_evicted_total{instance='$instance'}[5m])",
                         "legend": "evicted pages",
                         "refId": "A",
                         "maxDataPoints": 240
@@ -1265,95 +1231,125 @@
                 "id": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
                 "layout": {
                     "h": 1,
+                    "i": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
+                    "isResizable": false,
                     "w": 24,
                     "x": 0,
-                    "y": 26,
-                    "i": "b0016f4a-c565-4276-a08d-bacdf94b6b5a",
-                    "isResizable": false
+                    "y": 45
                 },
                 "name": "ReplSet Info",
                 "type": "row"
             },
             {
-                "type": "timeseries",
-                "id": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
-                "layout": {
-                    "h": 5,
-                    "w": 12,
-                    "x": 0,
-                    "y": 27,
-                    "i": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
-                    "isResizable": true
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
                 },
-                "version": "3.0.0",
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
-                "targets": [
-                    {
-                        "expr": "mongodb_mongod_replset_member_replication_lag{instance=\"$instance\"}",
-                        "legend": "",
-                        "refId": "A",
-                        "maxDataPoints": 240
-                    }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "name": "Replset Lag Seconds",
-                "description": "replica set member master-slave synchronization delay",
-                "maxPerRow": 4,
+                "description": "",
+                "id": "6187ceee-7c25-43f2-be1b-c44ad612ab52",
+                "layout": {
+                    "h": 7,
+                    "i": "6187ceee-7c25-43f2-be1b-c44ad612ab52",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 46
+                },
+                "name": "Replset Election",
                 "options": {
-                    "tooltip": {
-                        "mode": "all",
-                        "sort": "none"
-                    },
-                    "legend": {
-                        "displayMode": "hidden",
-                        "heightInPercentage": 30,
-                        "placement": "bottom",
-                        "behaviour": "showItem",
-                        "selectMode": "single"
-                    },
                     "standardOptions": {
+                        "decimals": 1,
                         "util": "seconds"
                     },
                     "thresholds": {
                         "steps": [
                             {
-                                "color": "#6C53B1",
-                                "value": null,
-                                "type": "base"
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
                             }
                         ]
-                    }
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 1800
+                            },
+                            "result": {
+                                "color": "#f24526"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 1800
+                            },
+                            "result": {
+                                "color": "#53b503"
+                            },
+                            "type": "range"
+                        }
+                    ]
                 },
+                "targets": [
+                    {
+                        "expr": "time() - mongodb_mongod_replset_member_election_date",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
                 "custom": {
                     "drawStyle": "lines",
-                    "lineInterpolation": "smooth",
-                    "spanNulls": false,
-                    "lineWidth": 2,
                     "fillOpacity": 0.3,
                     "gradientMode": "opacity",
-                    "stack": "off",
-                    "scaleDistribution": {
-                        "type": "linear"
-                    },
-                    "showPoints": "none",
-                    "pointSize": 5
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
                 },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byFrameRefID"
-                        },
-                        "properties": {
-                            "rightYAxisDisplay": "off"
-                        }
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "replica set member master-slave synchronization delay",
+                "id": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
+                "layout": {
+                    "h": 7,
+                    "i": "f73fd0cd-ecbe-41f0-a2dc-4e02f7eaef1c",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 46
+                },
+                "name": "Replset Lag Seconds",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
                     }
-                ]
+                },
+                "targets": [
+                    {
+                        "expr": "mongodb_mongod_replset_member_replication_lag{instance=\"$instance\"}",
+                        "legend": "lag",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
             }
         ],
         "var": [
