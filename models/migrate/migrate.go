@@ -46,8 +46,8 @@ func MigrateIbexTables(db *gorm.DB) {
 }
 
 func isPostgres(db *gorm.DB) bool {
-    dialect := db.Dialector.Name()
-    return dialect == "postgres"
+	dialect := db.Dialector.Name()
+	return dialect == "postgres"
 }
 func MigrateTables(db *gorm.DB) error {
 	var tableOptions string
@@ -58,19 +58,16 @@ func MigrateTables(db *gorm.DB) error {
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
-	var dts []interface{}
+	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
+		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
+		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
+		&models.MetricFilter{}, &models.NotificaitonRecord{},
+		&models.TargetBusiGroup{}}
+
 	if isPostgres(db) {
-		dts = []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-			&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
-			&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-			&models.MetricFilter{}, &models.PostgresBuiltinComponent{}, &models.NotificaitonRecord{},
-			&models.TargetBusiGroup{}}
+		dts = append(dts, &models.PostgresBuiltinComponent{})
 	} else {
-		dts = []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-			&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
-			&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-			&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
-			&models.TargetBusiGroup{}}
+		dts = append(dts, &models.BuiltinComponent{})
 	}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
