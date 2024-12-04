@@ -270,7 +270,11 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
-			tx = tx.Or(k, v)
+			if strings.Count(k, "?") > 1 {
+				tx = tx.Or(k, v.([]interface{})...)
+			} else {
+				tx = tx.Or(k, v)
+			}
 		}
 		sub = sub.Where(tx)
 	}
