@@ -2,12 +2,12 @@ package ormx
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -1536,38 +1536,70 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	errList := make([]error, 0)
-	errList = append(errList, db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
-	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
-
-	for _, roleOperation := range roleOperations {
-		errList = append(errList, db.Create(&roleOperation).Error)
+	entries := []struct{
+		name string
+		entry interface{}
+	}{
+		{
+			name: "InitUser",
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+		},
+		{
+			name: "InitUserGroup",
+			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitUserGroupMember",
+			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
+		},
+		{
+			name: "InitBusiGroup",
+			entry: &InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitBusiGroupMember",
+			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
+		},
+		{
+			name: "InitMetricView",
+			entry: &InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false},
+		},
 	}
 
-	errList = append(errList, db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
-	errList = append(errList, db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
-	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false}).Error)
-	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false}).Error)
-
-	var errorMessages []string
-
-	for _, e := range errList {
-		if e != nil {
-			fmt.Printf("sqlite database init error: %v\n", e)
-			errorMessages = append(errorMessages, e.Error())
+	for _, roleOperation := range roleOperations {
+		err := db.Create(&roleOperation).Error
+		if err != nil {
+			logger.Errorf("[sqlite database init]create role operation error: %v", err)
 		}
 	}
 
-	if len(errorMessages) == 0 {
-		return nil
-	}
+	for _, entry := range entries {
+        if err := db.Create(entry.entry).Error; err != nil {
+            logger.Errorf("[sqlite database init]create %s error: %v", entry.name, err)
+        }
+    }
 
-	return errors.New(strings.Join(errorMessages, "; "))
+	return nil
 }
 
 func mysqlDataBaseInit(db *gorm.DB) error {
@@ -1700,38 +1732,71 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	errList := make([]error, 0)
-	errList = append(errList, db.Create(&InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
-	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
-
-	for _, roleOperation := range roleOperations {
-		errList = append(errList, db.Create(&roleOperation).Error)
+	entries := []struct{
+		name string
+		entry interface{}
+	}{
+		{
+			name: "InitUser",
+			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+		},
+		{
+			name: "InitUserGroup",
+			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitUserGroupMember",
+			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
+		},
+		{
+			name: "InitBusiGroup",
+			entry: &InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitBusiGroupMember",
+			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
+		},
+		{
+			name: "InitMetricView",
+			entry: &InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false},
+		},
 	}
 
-	errList = append(errList, db.Create(&InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
-	errList = append(errList, db.Create(&InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
-	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false}).Error)
-	errList = append(errList, db.Create(&InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false}).Error)
 
-	var errorMessages []string
-
-	for _, e := range errList {
-		if e != nil {
-			fmt.Printf("mysql database init error: %v\n", e)
-			errorMessages = append(errorMessages, e.Error())
+	for _, roleOperation := range roleOperations {
+		err := db.Create(&roleOperation).Error
+		if err != nil {
+			logger.Errorf("[mysql database init]create role operation error: %v", err)
 		}
 	}
 
-	if len(errorMessages) == 0 {
-		return nil
-	}
+	for _, entry := range entries {
+        if err := db.Create(entry.entry).Error; err != nil {
+            logger.Errorf("[mysql database init]create %s error: %v", entry.name, err)
+        }
+    }
 
-	return errors.New(strings.Join(errorMessages, "; "))
+	return nil
 }
 
 func postgresDataBaseInit(db *gorm.DB) error {
@@ -1863,37 +1928,70 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
+	
 
-	errList := make([]error, 0)
-	errList = append(errList, db.Create(&InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"}).Error)
-	errList = append(errList, db.Create(&InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitUserGroupMember{GroupID: 1, UserID: 1}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Admin", Note: "Administrator role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Standard", Note: "Ordinary user role"}).Error)
-	errList = append(errList, db.Create(&InitRole{Name: "Guest", Note: "Readonly user role"}).Error)
-
-	for _, roleOperation := range roleOperations {
-		errList = append(errList, db.Create(&roleOperation).Error)
+	entries := []struct{
+		name string
+		entry interface{}
+	}{
+		{
+			name: "InitUser",
+			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
+		},
+		{
+			name: "InitUserGroup",
+			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitUserGroupMember",
+			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
+		},
+		{
+			name: "InitRole",
+			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
+		},
+		{
+			name: "InitBusiGroup",
+			entry: &InitPostgresBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
+		},
+		{
+			name: "InitBusiGroupMember",
+			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
+		},
+		{
+			name: "InitMetricView",
+			entry: &InitPostgresMetricView{Name: "Host View", Cate: 0, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitPostgresAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: 0},
+		},
+		{
+			name: "InitAlertAggrView",
+			entry: &InitPostgresAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: 0},
+		},
 	}
 
-	errList = append(errList, db.Create(&InitPostgresBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"}).Error)
-	errList = append(errList, db.Create(&InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"}).Error)
-	errList = append(errList, db.Create(&InitPostgresMetricView{Name: "Host View", Cate: 0, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`}).Error)
-	errList = append(errList, db.Create(&InitPostgresAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: 0}).Error)
-	errList = append(errList, db.Create(&InitPostgresAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: 0}).Error)
-
-	var errorMessages []string
-
-	for _, e := range errList {
-		if e != nil {
-			fmt.Printf("postgres database init error: %v\n", e)
-			errorMessages = append(errorMessages, e.Error())
+	for _, roleOperation := range roleOperations {
+		err := db.Create(&roleOperation).Error
+		if err != nil {
+			logger.Errorf("[postgres database init]create role operation error: %v", err)
 		}
 	}
 
-	if len(errorMessages) == 0 {
-		return nil
-	}
+	for _, entry := range entries {
+        if err := db.Create(entry.entry).Error; err != nil {
+            logger.Errorf("[postgres database init]create %s error: %v", entry.name, err)
+        }
+    }
 
-	return errors.New(strings.Join(errorMessages, "; "))
+	return nil
 }
