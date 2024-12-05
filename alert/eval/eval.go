@@ -241,7 +241,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 		if query.VarEnabled {
 			var anomalyPoints []models.AnomalyPoint
-			if hasAggregateFunction(query) {
+			if hasLabelLossAggregator(query) {
 				// 若有聚合函数则需要先填充变量然后查询，这个方式效率较低
 				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
 			} else {
@@ -1315,7 +1315,22 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	return anomalyPoints
 }
 
-// todo 判断 query 中是否有聚合函数
-func hasAggregateFunction(query models.PromQuery) bool {
-	return true
+// 判断 query 中是否有会导致标签丢失的聚合函数
+func hasLabelLossAggregator(query models.PromQuery) bool {
+	noLabelAggregators := []string{
+		"sum", "min", "max", "avg",
+		"stddev", "stdvar",
+		"count", "quantile",
+		"group",
+	}
+	promql := strings.ToLower(query.PromQl)
+
+	for _, fn := range noLabelAggregators {
+		// 检查是否包含这些聚合函数，需要确保函数名后面跟着左括号
+		if strings.Contains(promql, fn+"(") {
+			return true
+		}
+	}
+
+	return false
 }
