@@ -185,8 +185,16 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 		if query != "" {
 			arr := strings.Fields(query)
 			for i := 0; i < len(arr); i++ {
-				q := "%" + arr[i] + "%"
-				session = session.Where("ident like ? or host_ip like ? or note like ? or tags like ? or host_tags like ? or os like ?", q, q, q, q, q, q)
+				if strings.HasPrefix(arr[i], "-") {
+					q := "%" + arr[i][1:] + "%"
+					session = session.Where("ident not like ? and host_ip not like ? and "+
+						"note not like ? and tags not like ? and (host_tags not like ? or "+
+						"host_tags is null) and os not like ?", q, q, q, q, q, q)
+				} else {
+					q := "%" + arr[i] + "%"
+					session = session.Where("ident like ? or host_ip like ? or note like ? or "+
+						"tags like ? or host_tags like ? or os like ?", q, q, q, q, q, q)
+				}
 			}
 		}
 		return session
@@ -197,6 +205,8 @@ func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if downtime > 0 {
 			session = session.Where("target.update_at < ?", time.Now().Unix()-downtime)
+		} else if downtime < 0 {
+			session = session.Where("target.update_at > ?", time.Now().Unix()+downtime)
 		}
 		return session
 	}
