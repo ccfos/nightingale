@@ -78,7 +78,7 @@ func MigrateTables(db *gorm.DB) error {
 
 			for _, dt := range asyncDts {
 				if err := db.AutoMigrate(dt); err != nil {
-					logger.Errorf("failed to migrate table: %v", err)
+					logger.Errorf("failed to migrate table %+v err:%v", dt, err)
 				}
 			}
 		}()
