@@ -310,6 +310,7 @@ type sample struct {
 // 结果中有满足本节点参数变量的值，加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
 func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
+	varToLabel := ExtractVarMapping(query.PromQl)
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPointsMap := make(map[string]models.AnomalyPoint)
@@ -374,10 +375,11 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 				curRealQuery := realQuery
 				var cur []string
 				for _, paramKey := range ParamKeys {
-					val := string(seqVals[i].Metric[model.LabelName(paramKey)])
+					val := string(seqVals[i].Metric[model.LabelName(varToLabel[paramKey])])
 					cur = append(cur, val)
-					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("$%s", paramKey), val, -1)
+					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
 				}
+
 				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
 					anomalyPointsMap[strings.Join(cur, "-")] = models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
@@ -1333,4 +1335,50 @@ func hasLabelLossAggregator(query models.PromQuery) bool {
 	}
 
 	return false
+}
+
+// ExtractVarMapping 从 promql 中提取变量映射关系，为了在 query 之后可以将标签正确的放回 promql
+// 输入: sum(rate(mem_used_percent{host="$my_host"})) by (instance) + avg(node_load1{region="$region"}) > $val
+// 输出: map[string]string{"my_host":"host", "region":"region"}
+func ExtractVarMapping(promql string) map[string]string {
+	varMapping := make(map[string]string)
+
+	// 遍历所有花括号对
+	for {
+		start := strings.Index(promql, "{")
+		if start == -1 {
+			break
+		}
+
+		end := strings.Index(promql, "}")
+		if end == -1 {
+			break
+		}
+
+		// 提取标签键值对
+		labels := promql[start+1 : end]
+		pairs := strings.Split(labels, ",")
+
+		for _, pair := range pairs {
+			// 分割键值对
+			kv := strings.Split(pair, "=")
+			if len(kv) != 2 {
+				continue
+			}
+
+			key := strings.TrimSpace(kv[0])
+			value := strings.Trim(strings.TrimSpace(kv[1]), "\"")
+
+			// 检查值是否为变量(以$开头)
+			if strings.HasPrefix(value, "$") {
+				varName := value[1:] // 去掉$前缀
+				varMapping[varName] = key
+			}
+		}
+
+		// 继续处理剩余部分
+		promql = promql[end+1:]
+	}
+
+	return varMapping
 }
