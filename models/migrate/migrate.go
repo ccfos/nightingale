@@ -45,6 +45,10 @@ func MigrateIbexTables(db *gorm.DB) {
 	}
 }
 
+func isPostgres(db *gorm.DB) bool {
+	dialect := db.Dialector.Name()
+	return dialect == "postgres"
+}
 func MigrateTables(db *gorm.DB) error {
 	var tableOptions string
 	switch db.Dialector.(type) {
@@ -54,13 +58,19 @@ func MigrateTables(db *gorm.DB) error {
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
-
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
+		&models.MetricFilter{}, &models.NotificaitonRecord{},
 		&models.TargetBusiGroup{}}
 
+
+	if isPostgres(db) {
+		dts = append(dts, &models.PostgresBuiltinComponent{})
+	} else {
+		dts = append(dts, &models.BuiltinComponent{})
+  }
+    
 	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
 		dts = append(dts, &imodels.TaskSchedulerHealth{})
 	}
