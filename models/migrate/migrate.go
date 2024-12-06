@@ -41,6 +41,15 @@ func MigrateIbexTables(db *gorm.DB) {
 		err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
 		if err != nil {
 			logger.Errorf("failed to migrate table:%s %v", tableName, err)
+			exists := db.Migrator().HasTable(tableName)
+			if exists {
+				continue
+			} else {
+				err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
+				if err != nil {
+					logger.Errorf("failed to migrate table:%s %v", tableName, err)
+				}
+			}
 		}
 	}
 }
@@ -64,13 +73,12 @@ func MigrateTables(db *gorm.DB) error {
 		&models.MetricFilter{}, &models.NotificaitonRecord{},
 		&models.TargetBusiGroup{}}
 
-
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
 	} else {
 		dts = append(dts, &models.BuiltinComponent{})
-  }
-    
+	}
+
 	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
 		dts = append(dts, &imodels.TaskSchedulerHealth{})
 	}
