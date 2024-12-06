@@ -20,6 +20,17 @@ type BuiltinComponent struct {
 	UpdatedBy string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
+type PostgresBuiltinComponent struct {
+	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	Ident     string `json:"ident" gorm:"type:varchar(191);not null;uniqueIndex:idx_ident,sort:asc;comment:'identifier of component'"`
+	Logo      string `json:"logo" gorm:"type:text;comment:'logo of component'"`
+	Readme    string `json:"readme" gorm:"type:text;not null;comment:'readme of component'"`
+	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+}
+
 func (bc *BuiltinComponent) TableName() string {
 	return "builtin_components"
 }
