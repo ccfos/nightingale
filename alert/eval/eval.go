@@ -377,7 +377,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 				for _, paramKey := range ParamKeys {
 					val := string(seqVals[i].Metric[model.LabelName(varToLabel[paramKey])])
 					cur = append(cur, val)
-					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
+					curRealQuery = fillVar(curRealQuery, paramKey, val)
 				}
 
 				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
@@ -1271,7 +1271,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				realPromql := curPromql
 				split := strings.Split(paramPermutationKeys, "-")
 				for j := range ParamKeys {
-					realPromql = strings.Replace(realPromql, fmt.Sprintf("$%s", ParamKeys[j]), split[j], -1)
+					realPromql = fillVar(realPromql, ParamKeys[j], split[j])
 				}
 				keyToPromql[paramPermutationKeys] = realPromql
 			}
@@ -1373,6 +1373,7 @@ func ExtractVarMapping(promql string) map[string]string {
 
 			key := strings.TrimSpace(kv[0])
 			value := strings.Trim(strings.TrimSpace(kv[1]), "\"")
+			value = strings.Trim(value, "'")
 
 			// 检查值是否为变量(以$开头)
 			if strings.HasPrefix(value, "$") {
@@ -1386,4 +1387,10 @@ func ExtractVarMapping(promql string) map[string]string {
 	}
 
 	return varMapping
+}
+
+func fillVar(curRealQuery string, paramKey string, val string) string {
+	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("'$%s'", paramKey), fmt.Sprintf("'%s'", val), -1)
+	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
+	return curRealQuery
 }
