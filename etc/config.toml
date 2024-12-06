@@ -99,7 +99,7 @@ Address = "127.0.0.1:6379"
 # UseTLS = false
 # TLSMinVersion = "1.2"
 # standalone cluster sentinel miniredis
-RedisType = "standalone"
+RedisType = "miniredis"
 # Mastername for sentinel type
 # MasterName = "mymaster"
 # SentinelUsername = ""
