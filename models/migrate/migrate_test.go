@@ -50,12 +50,11 @@ func TestInsertPermPoints(t *testing.T) {
 		Count     int
 	}
 
-	err = db.Raw(`
-		SELECT role_name, operation, COUNT(*)
-		FROM role_operation
-		GROUP BY role_name, operation
-		HAVING COUNT(*) > 0
-	`).Scan(&results).Error
+	err = db.Model(&models.RoleOperation{}).
+		Select("role_name, operation, COUNT(*) as count").
+		Group("role_name, operation").
+		Having("COUNT(*) > 0").
+		Scan(&results).Error
 
 	if err != nil {
 		fmt.Printf("query failed: %v\n", err)
@@ -80,6 +79,31 @@ func TestInsertPermPoints(t *testing.T) {
 			exists = true
 		}
 
+		fmt.Println("******************************************exists: ", exists)
+
+		if exists {
+			continue
+		}
+
+		if err != nil {
+			fmt.Printf("insert role operation failed, %v", err)
+		}
+	}
+
+	fmt.Println("use Model.Where.Count")
+	for _, op := range ops {
+
+		var count int64
+		err = db.Model(&models.RoleOperation{}).
+			Where("role_name = ? AND operation = ?", op.RoleName, op.Operation).
+			Count(&count).Error
+
+		if err != nil {
+			fmt.Printf("query failed: %v\n", err)
+			continue
+		}
+
+		exists := count > 0
 		fmt.Println("******************************************exists: ", exists)
 
 		if exists {
