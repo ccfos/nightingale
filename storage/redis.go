@@ -29,7 +29,7 @@ type Redis redis.Cmdable
 
 func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis
-	
+
 	switch cfg.RedisType {
 	case "standalone", "":
 		redisOptions := &redis.Options{
@@ -90,7 +90,7 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 
 		redisClient = redis.NewFailoverClient(redisOptions)
 
-    case "miniredis":
+	case "miniredis":
 		s, err := miniredis.Run()
 		if err != nil {
 			fmt.Println("failed to init miniredis:", err)
