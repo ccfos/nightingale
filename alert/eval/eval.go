@@ -1278,10 +1278,15 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 
 			// 并发查询
 			wg := sync.WaitGroup{}
+			semaphore := make(chan struct{}, 200)
 			for key, promql := range keyToPromql {
 				wg.Add(1)
+				semaphore <- struct{}{}
 				go func(key, promql string) {
-					defer wg.Done()
+					defer func() {
+						<-semaphore
+						wg.Done()
+					}()
 					value, _, err := readerClient.Query(context.Background(), promql, time.Now())
 					if err != nil {
 						logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), promql, err)
