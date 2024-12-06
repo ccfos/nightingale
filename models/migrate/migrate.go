@@ -177,13 +177,11 @@ func InsertPermPoints(db *gorm.DB) {
 			Count(&count).Error
 
 		if err != nil {
-			fmt.Printf("query failed: %v\n", err)
+			logger.Errorf("check role operation exists failed, %v", err)
 			continue
 		}
 
-		exists := count > 0
-
-		if exists {
+		if count > 0 {
 			continue
 		}
 
