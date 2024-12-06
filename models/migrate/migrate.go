@@ -174,14 +174,20 @@ func InsertPermPoints(db *gorm.DB) {
 	})
 
 	for _, op := range ops {
-		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
+		var count int64
+
+		err := db.Raw("SELECT COUNT(*) FROM role_operation WHERE operation = ? AND role_name = ?",
+			op.Operation, op.RoleName).Scan(&count).Error
+
 		if err != nil {
 			logger.Errorf("check role operation exists failed, %v", err)
 			continue
 		}
-		if exists {
+
+		if count > 0 {
 			continue
 		}
+
 		err = db.Create(&op).Error
 		if err != nil {
 			logger.Errorf("insert role operation failed, %v", err)
