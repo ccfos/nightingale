@@ -80,8 +80,8 @@ type Processor struct {
 	HandleRecoverEventHook HandleEventFunc
 	EventMuteHook          EventMuteHookFunc
 
-	ScheduleEntry cron.Entry
-	EvalStart     int64
+	ScheduleEntry    cron.Entry
+	PromEvalInterval int
 }
 
 func (p *Processor) Key() string {
@@ -442,7 +442,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			preTriggerTime = event.TriggerTime
 		}
 
-		event.PromEvalInterval = int(p.ScheduleEntry.Schedule.Next(time.Unix(p.EvalStart, 0)).Unix() - p.EvalStart)
+		event.PromEvalInterval = p.PromEvalInterval
 		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
