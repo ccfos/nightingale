@@ -169,15 +169,45 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/ibex-settings",
 	})
 
-	for _, op := range ops {
-		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
-		if err != nil {
-			logger.Errorf("check role operation exists failed, %v", err)
-			continue
+	var results []struct {
+		RoleName  string
+		Operation string
+		Count     int
+	}
+
+	err := db.Raw(`
+		SELECT role_name, operation, COUNT(*)
+		FROM role_operation
+		GROUP BY role_name, operation
+		HAVING COUNT(*) > 0
+	`).Scan(&results).Error
+
+	if err != nil {
+		logger.Errorf("query failed: %v\n", err)
+	}
+
+	roleOperationMap := make(map[models.RoleOperation]bool, len(results))
+
+	for _, result := range results {
+		if result.Count > 1 {
+			logger.Warningf("[role_operation count abnormal]RoleName: %s, Operation: %s, Count: %d\n", result.RoleName, result.Operation, result.Count)
 		}
+		roleOperationMap[models.RoleOperation{
+			RoleName:  result.RoleName,
+			Operation: result.Operation,
+		}] = true
+	}
+
+	for _, op := range ops {
+		exists := false
+		if _, ok := roleOperationMap[op]; ok {
+			exists = true
+		}
+
 		if exists {
 			continue
 		}
+
 		err = db.Create(&op).Error
 		if err != nil {
 			logger.Errorf("insert role operation failed, %v", err)
