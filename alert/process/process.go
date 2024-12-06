@@ -424,6 +424,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			p.pendingsUseByRecover.Set(event.Hash, event)
 		}
 
+		event.PromEvalInterval = p.PromEvalInterval
 		if p.rule.PromForDuration == 0 {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
@@ -442,7 +443,6 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			preTriggerTime = event.TriggerTime
 		}
 
-		event.PromEvalInterval = p.PromEvalInterval
 		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
