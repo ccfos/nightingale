@@ -340,7 +340,7 @@ func Test_removeVal(t *testing.T) {
 		{
 			name: "removeVal7",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3='$test3'} > $val",
 			},
 			want: "mem{test1=\"test1\",test2=\"test2\"} > $val",
 		},
@@ -361,16 +361,16 @@ func Test_removeVal(t *testing.T) {
 		{
 			name: "removeVal10",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"$test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+				promql: "mem{test1=\"test1\",test2='$test2'} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
 			},
 			want: "mem{test1=\"test1\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
 		},
 		{
 			name: "removeVal11",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
+				promql: "mem{test1='test1',test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
 			},
-			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
+			want: "mem{test1='test1',test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
 		},
 		{
 			name: "removeVal12",
