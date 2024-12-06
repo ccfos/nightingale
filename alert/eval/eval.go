@@ -104,7 +104,15 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 
 	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
 
+	Processor.PromEvalInterval = getPromEvalInterval(Processor.ScheduleEntry.Schedule)
 	return arw
+}
+
+func getPromEvalInterval(schedule cron.Schedule) int {
+	now := time.Now()
+	next1 := schedule.Next(now)
+	next2 := schedule.Next(next1)
+	return int(next2.Sub(next1).Seconds())
 }
 
 func (arw *AlertRuleWorker) Key() string {
@@ -130,7 +138,10 @@ func (arw *AlertRuleWorker) Start() {
 }
 
 func (arw *AlertRuleWorker) Eval() {
-	arw.Processor.EvalStart = time.Now().Unix()
+	if arw.Processor.PromEvalInterval == 0 {
+		arw.Processor.PromEvalInterval = getPromEvalInterval(arw.Processor.ScheduleEntry.Schedule)
+	}
+
 	cachedRule := arw.Rule
 	if cachedRule == nil {
 		// logger.Errorf("rule_eval:%s Rule not found", arw.Key())
