@@ -43,73 +43,25 @@ func TestInsertPermPoints(t *testing.T) {
 		RoleName:  "Standard",
 		Operation: "/ibex-settings",
 	})
-	//db = db.Debug()
-	var results []struct {
-		RoleName  string
-		Operation string
-		Count     int
-	}
 
-	err = db.Model(&models.RoleOperation{}).
-		Select("role_name, operation, COUNT(*) as count").
-		Group("role_name, operation").
-		Having("COUNT(*) > 0").
-		Scan(&results).Error
-
-	if err != nil {
-		fmt.Printf("query failed: %v\n", err)
-	}
-
-	roleOperationMap := make(map[models.RoleOperation]bool, len(results))
-
-	for _, result := range results {
-		if result.Count > 1 {
-			fmt.Printf("[role_operation count abnormal]RoleName: %s, Operation: %s, Count: %d\n", result.RoleName, result.Operation, result.Count)
-		}
-		roleOperationMap[models.RoleOperation{
-			RoleName:  result.RoleName,
-			Operation: result.Operation,
-		}] = true
-		fmt.Printf("RoleName: %s, Operation: %s, Count: %d\n", result.RoleName, result.Operation, result.Count)
-	}
-
+	db = db.Debug()
 	for _, op := range ops {
-		exists := false
-		if _, ok := roleOperationMap[op]; ok {
-			exists = true
-		}
-
-		fmt.Println("******************************************exists: ", exists)
-
-		if exists {
-			continue
-		}
-
-		if err != nil {
-			fmt.Printf("insert role operation failed, %v", err)
-		}
-	}
-
-	fmt.Println("use Model.Where.Count")
-	for _, op := range ops {
-
 		var count int64
-		err = db.Model(&models.RoleOperation{}).
-			Where("role_name = ? AND operation = ?", op.RoleName, op.Operation).
-			Count(&count).Error
+
+		err := db.Raw("SELECT COUNT(*) FROM role_operation WHERE operation = ? AND role_name = ?",
+			op.Operation, op.RoleName).Scan(&count).Error
+		fmt.Printf("count: %d\n", count)
 
 		if err != nil {
-			fmt.Printf("query failed: %v\n", err)
+			fmt.Printf("check role operation exists failed, %v", err)
 			continue
 		}
 
-		exists := count > 0
-		fmt.Println("******************************************exists: ", exists)
-
-		if exists {
+		if count > 0 {
 			continue
 		}
 
+		err = db.Create(&op).Error
 		if err != nil {
 			fmt.Printf("insert role operation failed, %v", err)
 		}
