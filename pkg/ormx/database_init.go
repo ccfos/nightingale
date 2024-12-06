@@ -1286,18 +1286,18 @@ func (InitTargetBusiGroup) TableOptions() string {
 }
 
 type InitTaskMeta struct {
-	ID        uint64 `gorm:"primaryKey;autoIncrement"`
-	Title     string `gorm:"size:255;not null;default:''"`
-	Account   string `gorm:"size:64;not null"`
-	Batch     uint   `gorm:"not null;default:0"`
-	Tolerance uint   `gorm:"not null;default:0"`
-	Timeout   uint   `gorm:"not null;default:0"`
-	Pause     string `gorm:"size:255;not null;default:''"`
-	Script    string `gorm:"type:text;not null"`
-	Args      string `gorm:"size:512;not null;default:''"`
-	Stdin     string `gorm:"size:1024;not null;default:''"`
-	Creator   string `gorm:"size:64;not null;default:'';index"`
-	Created   int64  `gorm:"autoCreateTime;index"`
+	ID        uint64    `gorm:"primaryKey;autoIncrement"`
+	Title     string    `gorm:"size:255;not null;default:''"`
+	Account   string    `gorm:"size:64;not null"`
+	Batch     uint      `gorm:"not null;default:0"`
+	Tolerance uint      `gorm:"not null;default:0"`
+	Timeout   uint      `gorm:"not null;default:0"`
+	Pause     string    `gorm:"size:255;not null;default:''"`
+	Script    string    `gorm:"type:text;not null"`
+	Args      string    `gorm:"size:512;not null;default:''"`
+	Stdin     string    `gorm:"size:1024;not null;default:''"`
+	Creator   string    `gorm:"size:64;not null;default:'';index"`
+	Created   time.Time `gorm:"column:created;not null;default:CURRENT_TIMESTAMP;type:timestamp;index" json:"created"`
 }
 
 func (InitTaskMeta) TableName() string {
@@ -1536,52 +1536,52 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	entries := []struct{
-		name string
+	entries := []struct {
+		name  string
 		entry interface{}
 	}{
 		{
-			name: "InitUser",
+			name:  "InitUser",
 			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
-			name: "InitUserGroup",
+			name:  "InitUserGroup",
 			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitUserGroupMember",
+			name:  "InitUserGroupMember",
 			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
 		},
 		{
-			name: "InitBusiGroup",
+			name:  "InitBusiGroup",
 			entry: &InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitBusiGroupMember",
+			name:  "InitBusiGroupMember",
 			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
 		},
 		{
-			name: "InitMetricView",
+			name:  "InitMetricView",
 			entry: &InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false},
 		},
 	}
@@ -1594,10 +1594,10 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 	}
 
 	for _, entry := range entries {
-        if err := db.Create(entry.entry).Error; err != nil {
-            logger.Errorf("[sqlite database init]create %s error: %v", entry.name, err)
-        }
-    }
+		if err := db.Create(entry.entry).Error; err != nil {
+			logger.Errorf("[sqlite database init]create %s error: %v", entry.name, err)
+		}
+	}
 
 	return nil
 }
@@ -1732,56 +1732,55 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
 
-	entries := []struct{
-		name string
+	entries := []struct {
+		name  string
 		entry interface{}
 	}{
 		{
-			name: "InitUser",
+			name:  "InitUser",
 			entry: &InitUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
-			name: "InitUserGroup",
+			name:  "InitUserGroup",
 			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitUserGroupMember",
+			name:  "InitUserGroupMember",
 			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
 		},
 		{
-			name: "InitBusiGroup",
+			name:  "InitBusiGroup",
 			entry: &InitBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitBusiGroupMember",
+			name:  "InitBusiGroupMember",
 			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
 		},
 		{
-			name: "InitMetricView",
+			name:  "InitMetricView",
 			entry: &InitMetricView{Name: "Host View", Cate: false, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: false},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: false},
 		},
 	}
-
 
 	for _, roleOperation := range roleOperations {
 		err := db.Create(&roleOperation).Error
@@ -1791,10 +1790,10 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	}
 
 	for _, entry := range entries {
-        if err := db.Create(entry.entry).Error; err != nil {
-            logger.Errorf("[mysql database init]create %s error: %v", entry.name, err)
-        }
-    }
+		if err := db.Create(entry.entry).Error; err != nil {
+			logger.Errorf("[mysql database init]create %s error: %v", entry.name, err)
+		}
+	}
 
 	return nil
 }
@@ -1928,54 +1927,53 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
 	}
-	
 
-	entries := []struct{
-		name string
+	entries := []struct {
+		name  string
 		entry interface{}
 	}{
 		{
-			name: "InitUser",
+			name:  "InitUser",
 			entry: &InitPostgresUser{ID: 1, Username: "root", Nickname: "超管", Password: "root.2020", Roles: "Admin", CreateAt: time.Now().Unix(), CreateBy: "system", UpdateAt: time.Now().Unix(), UpdateBy: "system"},
 		},
 		{
-			name: "InitUserGroup",
+			name:  "InitUserGroup",
 			entry: &InitUserGroup{ID: 1, Name: "demo-root-group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitUserGroupMember",
+			name:  "InitUserGroupMember",
 			entry: &InitUserGroupMember{GroupID: 1, UserID: 1},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Admin", Note: "Administrator role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Standard", Note: "Ordinary user role"},
 		},
 		{
-			name: "InitRole",
+			name:  "InitRole",
 			entry: &InitRole{Name: "Guest", Note: "Readonly user role"},
 		},
 		{
-			name: "InitBusiGroup",
+			name:  "InitBusiGroup",
 			entry: &InitPostgresBusiGroup{ID: 1, Name: "Default Busi Group", CreateAt: time.Now().Unix(), CreateBy: "root", UpdateAt: time.Now().Unix(), UpdateBy: "root"},
 		},
 		{
-			name: "InitBusiGroupMember",
+			name:  "InitBusiGroupMember",
 			entry: &InitBusiGroupMember{BusiGroupID: 1, UserGroupID: 1, PermFlag: "rw"},
 		},
 		{
-			name: "InitMetricView",
+			name:  "InitMetricView",
 			entry: &InitPostgresMetricView{Name: "Host View", Cate: 0, Configs: `{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}`},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitPostgresAlertAggrView{Name: "By BusiGroup, Severity", Rule: "field:group_name::field:severity", Cate: 0},
 		},
 		{
-			name: "InitAlertAggrView",
+			name:  "InitAlertAggrView",
 			entry: &InitPostgresAlertAggrView{Name: "By RuleName", Rule: "field:rule_name", Cate: 0},
 		},
 	}
@@ -1988,10 +1986,10 @@ func postgresDataBaseInit(db *gorm.DB) error {
 	}
 
 	for _, entry := range entries {
-        if err := db.Create(entry.entry).Error; err != nil {
-            logger.Errorf("[postgres database init]create %s error: %v", entry.name, err)
-        }
-    }
+		if err := db.Create(entry.entry).Error; err != nil {
+			logger.Errorf("[postgres database init]create %s error: %v", entry.name, err)
+		}
+	}
 
 	return nil
 }
