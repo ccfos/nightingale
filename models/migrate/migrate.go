@@ -28,7 +28,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
-	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &TaskHostDoing{}, &imodels.TaskAction{}}
+	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
@@ -64,10 +64,15 @@ func MigrateTables(db *gorm.DB) error {
 		&models.MetricFilter{}, &models.NotificaitonRecord{},
 		&models.TargetBusiGroup{}}
 
+
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
 	} else {
 		dts = append(dts, &models.BuiltinComponent{})
+  }
+    
+	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
+		dts = append(dts, &imodels.TaskSchedulerHealth{})
 	}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
@@ -195,17 +200,17 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig       string                   `gorm:"type:text;column:extra_config"` // extra config
-	CronPattern       string                   `gorm:"type:varchar(64);cron_pattern"`
+	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
+	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertSubscribe struct {
 	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
+	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
 	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
-	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024);default:'';comment:rule_ids"`
+	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
 }
 
 type AlertMute struct {

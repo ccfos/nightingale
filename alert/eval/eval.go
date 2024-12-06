@@ -94,13 +94,15 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 
 	arw.Scheduler = cron.New(cron.WithSeconds())
 
-	_, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
+	entryID, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
 		arw.Eval()
 	})
 
 	if err != nil {
 		logger.Errorf("alert rule %s add cron pattern error: %v", arw.Key(), err)
 	}
+
+	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
 
 	return arw
 }
@@ -128,13 +130,14 @@ func (arw *AlertRuleWorker) Start() {
 }
 
 func (arw *AlertRuleWorker) Eval() {
+	arw.Processor.EvalStart = time.Now().Unix()
 	cachedRule := arw.Rule
 	if cachedRule == nil {
 		// logger.Errorf("rule_eval:%s Rule not found", arw.Key())
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
-	arw.HostAndDeviceIdentCache.Clear()
+	arw.HostAndDeviceIdentCache = sync.Map{}
 
 	typ := cachedRule.GetRuleType()
 	var (
