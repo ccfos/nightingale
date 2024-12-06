@@ -377,7 +377,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 				for _, paramKey := range ParamKeys {
 					val := string(seqVals[i].Metric[model.LabelName(varToLabel[paramKey])])
 					cur = append(cur, val)
-					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
+					curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("'$%s'", paramKey), fmt.Sprintf("'%s'", val), -1)
 				}
 
 				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
@@ -1372,7 +1372,7 @@ func ExtractVarMapping(promql string) map[string]string {
 			}
 
 			key := strings.TrimSpace(kv[0])
-			value := strings.Trim(strings.TrimSpace(kv[1]), "\"")
+			value := strings.Trim(strings.TrimSpace(kv[1]), "'")
 
 			// 检查值是否为变量(以$开头)
 			if strings.HasPrefix(value, "$") {
