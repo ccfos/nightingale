@@ -73,14 +73,14 @@ DefaultRoles = ["Standard"]
 OpenRSA = false
 
 [DB]
+# mysql postgres sqlite
+DBType = "sqlite"
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 # postgres: DSN="host=127.0.0.1 port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
 # sqlite: DSN="/path/to/filename.db"
-DSN = "root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"
+DSN = "n9e.db"
 # enable debug mode or not
 Debug = false
-# mysql postgres sqlite
-DBType = "mysql"
 # unit: s
 MaxLifetime = 7200
 # max open connections

@@ -9,6 +9,7 @@
 *.o
 *.a
 *.so
+*.db
 *.sw[po]
 *.tar.gz
 *.[568vq]
