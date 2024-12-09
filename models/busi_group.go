@@ -157,10 +157,6 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 			errorMessage: "Some history alerts still in the BusiGroup",
 		},
 		{
-			entry: &BoardBusigroup{},
-			errorMessage: "Some board busigroups still in the BusiGroup",
-		},
-		{
 			entry: &TaskTpl{},
 			errorMessage: "Some recovery scripts still in the BusiGroup",
 		},
@@ -183,6 +179,15 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		if has {
 			return errors.New(e.errorMessage)
 		}
+	}
+
+	has, err := Exists(DB(ctx).Model(&BoardBusigroup{}).Where("busi_group_id=?", bg.Id))
+	if err != nil {
+		return err
+	}
+
+	if has {
+		return errors.New("Some board still in the BusiGroup")
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
