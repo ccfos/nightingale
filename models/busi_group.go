@@ -149,14 +149,6 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 			errorMessage: "Some recording rules still in the BusiGroup",
 		},
 		{
-			entry: &AlertCurEvent{},
-			errorMessage: "Some active alerts still in the BusiGroup",
-		},
-		{
-			entry: &AlertHisEvent{},
-			errorMessage: "Some history alerts still in the BusiGroup",
-		},
-		{
 			entry: &TaskTpl{},
 			errorMessage: "Some recovery scripts still in the BusiGroup",
 		},
