@@ -121,14 +121,6 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		errorMessage string
 	} {
 		{
-			entry: &Board{},
-			errorMessage: "Some dashboards still in the BusiGroup",
-		},
-		{
-			entry: &Chart{},
-			errorMessage: "Some charts still in the BusiGroup",
-		},
-		{
 			entry: &AlertRule{},
 			errorMessage: "Some alert rules still in the BusiGroup",
 		},
