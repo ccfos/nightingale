@@ -115,45 +115,45 @@ func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool,
 	return num > 0, err
 }
 
-func (bg *BusiGroup) Del(ctx *ctx.Context) error {
-	entries := [] struct{
-		entry interface{}
-		errorMessage string
-	} {
-		{
-			entry: &AlertRule{},
-			errorMessage: "Some alert rules still in the BusiGroup",
-		},
-		{
-			entry: &AlertMute{},
-			errorMessage: "Some alert mutes still in the BusiGroup",
-		},
-		{
-			entry: &AlertSubscribe{},
-			errorMessage: "Some alert subscribes still in the BusiGroup",
-		},
-		{
-			entry: &Target{},
-			errorMessage: "Some targets still in the BusiGroup",
-		},
-		{
-			entry: &RecordingRule{},
-			errorMessage: "Some recording rules still in the BusiGroup",
-		},
-		{
-			entry: &TaskTpl{},
-			errorMessage: "Some recovery scripts still in the BusiGroup",
-		},
-		{
-			entry: &TaskRecord{},
-			errorMessage: "Some Task Record records still in the BusiGroup",
-		},
-		{
-			entry: &TargetBusiGroup{},
-			errorMessage: "Some target busigroups still in the BusiGroup",
-		},
-	}
+var entries = []struct {
+	entry        interface{}
+	errorMessage string
+}{
+	{
+		entry:        &AlertRule{},
+		errorMessage: "Some alert rules still in the BusiGroup",
+	},
+	{
+		entry:        &AlertMute{},
+		errorMessage: "Some alert mutes still in the BusiGroup",
+	},
+	{
+		entry:        &AlertSubscribe{},
+		errorMessage: "Some alert subscribes still in the BusiGroup",
+	},
+	{
+		entry:        &Target{},
+		errorMessage: "Some targets still in the BusiGroup",
+	},
+	{
+		entry:        &RecordingRule{},
+		errorMessage: "Some recording rules still in the BusiGroup",
+	},
+	{
+		entry:        &TaskTpl{},
+		errorMessage: "Some recovery scripts still in the BusiGroup",
+	},
+	{
+		entry:        &TaskRecord{},
+		errorMessage: "Some Task Record records still in the BusiGroup",
+	},
+	{
+		entry:        &TargetBusiGroup{},
+		errorMessage: "Some target busigroups still in the BusiGroup",
+	},
+}
 
+func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 	for _, e := range entries {
 		has, err := Exists(DB(ctx).Model(e.entry).Where("group_id=?", bg.Id))
 		if err != nil {
@@ -163,15 +163,6 @@ func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 		if has {
 			return errors.New(e.errorMessage)
 		}
-	}
-
-	has, err := Exists(DB(ctx).Model(&BoardBusigroup{}).Where("busi_group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some board still in the BusiGroup")
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
