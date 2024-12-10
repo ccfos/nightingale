@@ -170,11 +170,13 @@ func metricCountTick (ws *WritersType) {
 		select {
 		case <- ws.ticker.C:
 			if ws != nil {
+				ws.RLock()
 				curMetricLen := 0
 				for _, q := range ws.queues {
 					curMetricLen += q.list.Len()
 				}
 				ws.count.Store(curMetricLen)
+				ws.RUnlock()
 			}
 		}
 	}
@@ -191,9 +193,6 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	}
 
 	writers.Init()
-	
-	writers.maxCount = pushgwConfig.MetricsMaxCount
-	writers.ticker = time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime))
 
 	go metricCountTick(writers)
 	go writers.CleanExpQueue()
