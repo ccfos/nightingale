@@ -21,13 +21,13 @@ type Pushgw struct {
 	DropSample          []map[string]string
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
-	MetricsMaxCount int
-	MetricRateFreshTime int
 }
 
 type WriterGlobalOpt struct {
-	QueueMaxSize int
-	QueuePopSize int
+	QueueMaxSize            int
+	QueuePopSize            int
+	AllQueueMaxSize         int
+	AllQueueMaxSizeInterval int
 }
 
 type WriterOptions struct {
@@ -77,6 +77,14 @@ func (p *Pushgw) PreCheck() {
 
 	if p.WriterOpt.QueuePopSize <= 0 {
 		p.WriterOpt.QueuePopSize = 1000
+	}
+
+	if p.WriterOpt.AllQueueMaxSize <= 0 {
+		p.WriterOpt.AllQueueMaxSize = 10000000
+	}
+
+	if p.WriterOpt.AllQueueMaxSizeInterval <= 0 {
+		p.WriterOpt.AllQueueMaxSizeInterval = 200
 	}
 
 	if p.WriteConcurrency <= 0 {
