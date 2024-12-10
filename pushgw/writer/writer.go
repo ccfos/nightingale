@@ -142,6 +142,9 @@ type WritersType struct {
 	pushgw   pconf.Pushgw
 	backends map[string]WriterType
 	queues   map[string]*IdentQueue
+	maxCount int
+	ticker *time.Ticker
+	count atomic.Value
 	sync.RWMutex
 }
 
@@ -162,17 +165,16 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 }
 
 
-func metricCountTick () {
+func metricCountTick (ws *WritersType) {
 	for {
 		select {
-		case <- MC.Ticker.C:
-			if MC.WS != nil {
+		case <- ws.ticker.C:
+			if ws != nil {
 				curMetricLen := 0
-				for _, q := range MC.WS.queues {
+				for _, q := range ws.queues {
 					curMetricLen += q.list.Len()
 				}
-	
-				atomic.StoreInt32(&MC.Count, int32(curMetricLen))
+				ws.count.Store(curMetricLen)
 			}
 		}
 	}
@@ -188,13 +190,12 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers.Init()
 
 	
-	MC.MaxCountPerMinute = pushgwConfig.MetricsMaxCount
-	MC.MetricRateFreshTime = pushgwConfig.MetricRateFreshTime
-	MC.Ticker = time.NewTicker(time.Millisecond * time.Duration(MC.MetricRateFreshTime))
-	MC.WS = writers
-	MC.Count = 0
+	
+	writers.maxCount = pushgwConfig.MetricsMaxCount
+	writers.ticker = time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime))
+	writers.count.Store(0)
 
-	go metricCountTick()
+	go metricCountTick(writers)
 	go writers.CleanExpQueue()
 	return writers
 }
@@ -224,25 +225,8 @@ func (ws *WritersType) CleanExpQueue() {
 	}
 }
 
-type MetricCount struct {
-	MaxCountPerMinute int32
-	Count int32
-	MetricRateFreshTime int
-	WS *WritersType
-	Ticker *time.Ticker
-}
-
-var MC *MetricCount = &MetricCount{
-	MaxCountPerMinute: 10000,
-	Count: 0,
-	WS: nil,
-}
 
 func (ws *WritersType) PushSample(ident string, v interface{}) {
-	if MC.WS == nil {
-		MC.WS = ws
-	}
-
 	ws.RLock()
 	identQueue := ws.queues[ident]
 	ws.RUnlock()
@@ -263,8 +247,8 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 
 	identQueue.ts = time.Now().Unix()
 
-	if MC.Count != 0 && MC.Count > MC.MaxCountPerMinute {
-		logger.Warningf("metric count per minute over limit: %d", MC.Count)
+	if ws.count.Load().(int) != 0 && ws.count.Load().(int) > ws.maxCount {
+		logger.Warningf("metric count per minute over limit: %d", ws.count.Load().(int))
 		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 	}
 
