@@ -21,6 +21,8 @@ type Pushgw struct {
 	DropSample          []map[string]string
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
+	MetricsMaxCount int32
+	MetricRateFreshTime int
 }
 
 type WriterGlobalOpt struct {
