@@ -185,13 +185,15 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 		backends: make(map[string]WriterType),
 		queues:   make(map[string]*IdentQueue),
 		pushgw:   pushgwConfig,
+		maxCount: pushgwConfig.MetricsMaxCount,
+		ticker: time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime)),
+		count: atomic.Value{},
 	}
 
 	writers.Init()
 	
 	writers.maxCount = pushgwConfig.MetricsMaxCount
 	writers.ticker = time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime))
-	writers.count.Store(0)
 
 	go metricCountTick(writers)
 	go writers.CleanExpQueue()
@@ -244,8 +246,8 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 
 	identQueue.ts = time.Now().Unix()
 
-	if ws.count.Load().(int) != 0 && ws.count.Load().(int) > ws.maxCount {
-		logger.Warningf("metric count per minute over limit: %d", ws.count.Load().(int))
+	if ws.count.Load().(int) > ws.maxCount {
+		logger.Warningf("Write channel(%s) full, metric count per minute over limit: %d", ident, ws.count.Load().(int))
 		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 		return
 	}
@@ -278,6 +280,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 
 func (ws *WritersType) Init() error {
 	opts := ws.pushgw.Writers
+	ws.count.Store(0)
 
 	for i := 0; i < len(opts); i++ {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()
