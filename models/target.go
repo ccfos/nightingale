@@ -185,8 +185,16 @@ func BuildTargetWhereWithQuery(query string) BuildTargetWhereOption {
 		if query != "" {
 			arr := strings.Fields(query)
 			for i := 0; i < len(arr); i++ {
-				q := "%" + arr[i] + "%"
-				session = session.Where("ident like ? or host_ip like ? or note like ? or tags like ? or host_tags like ? or os like ?", q, q, q, q, q, q)
+				if strings.HasPrefix(arr[i], "-") {
+					q := "%" + arr[i][1:] + "%"
+					session = session.Where("ident not like ? and host_ip not like ? and "+
+						"note not like ? and tags not like ? and (host_tags not like ? or "+
+						"host_tags is null) and os not like ?", q, q, q, q, q, q)
+				} else {
+					q := "%" + arr[i] + "%"
+					session = session.Where("ident like ? or host_ip like ? or note like ? or "+
+						"tags like ? or host_tags like ? or os like ?", q, q, q, q, q, q)
+				}
 			}
 		}
 		return session
@@ -197,6 +205,8 @@ func BuildTargetWhereWithDowntime(downtime int64) BuildTargetWhereOption {
 	return func(session *gorm.DB) *gorm.DB {
 		if downtime > 0 {
 			session = session.Where("target.update_at < ?", time.Now().Unix()-downtime)
+		} else if downtime < 0 {
+			session = session.Where("target.update_at > ?", time.Now().Unix()+downtime)
 		}
 		return session
 	}
@@ -270,7 +280,11 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
-			tx = tx.Or(k, v)
+			if strings.Count(k, "?") > 1 {
+				tx = tx.Or(k, v.([]interface{})...)
+			} else {
+				tx = tx.Or(k, v)
+			}
 		}
 		sub = sub.Where(tx)
 	}
@@ -409,7 +423,8 @@ func TargetsGetIdentsByIdentsAndHostIps(ctx *ctx.Context, idents, hostIps []stri
 	return inexistence, identSet.ToSlice(), nil
 }
 
-func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool) ([]string, error) {
+func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool, bgLabelKey string) (
+	[]string, error) {
 	session := DB(ctx).Model(new(Target))
 
 	var arr []*Target
@@ -447,7 +462,22 @@ func TargetGetTags(ctx *ctx.Context, idents []string, ignoreHostTag bool) ([]str
 		ret = append(ret, key)
 	}
 
-	sort.Strings(ret)
+	if bgLabelKey != "" {
+		sort.Slice(ret, func(i, j int) bool {
+			if strings.HasPrefix(ret[i], bgLabelKey) && strings.HasPrefix(ret[j], bgLabelKey) {
+				return ret[i] < ret[j]
+			}
+			if strings.HasPrefix(ret[i], bgLabelKey) {
+				return true
+			}
+			if strings.HasPrefix(ret[j], bgLabelKey) {
+				return false
+			}
+			return ret[i] < ret[j]
+		})
+	} else {
+		sort.Strings(ret)
+	}
 
 	return ret, err
 }
@@ -626,7 +656,7 @@ func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 		}
 		err := DB(ctx).Transaction(func(tx *gorm.DB) error {
 			// 4.1 将 group_id 迁移至关联表
-			if err := TargetBindBgids(ctx, []string{t.Ident}, []int64{t.GroupId}); err != nil {
+			if err := TargetBindBgids(ctx, []string{t.Ident}, []int64{t.GroupId}, nil); err != nil {
 				return err
 			}
 			if err := TargetUpdateBgid(ctx, []string{t.Ident}, 0, false); err != nil {

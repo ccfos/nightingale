@@ -28,7 +28,7 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
-	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &imodels.TaskSchedulerHealth{}, &TaskHostDoing{}, &imodels.TaskAction{}}
+	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
@@ -38,13 +38,22 @@ func MigrateIbexTables(db *gorm.DB) {
 
 	for i := 0; i < 100; i++ {
 		tableName := fmt.Sprintf("task_host_%d", i)
-		err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
-		if err != nil {
-			logger.Errorf("failed to migrate table:%s %v", tableName, err)
+		exists := db.Migrator().HasTable(tableName)
+		if exists {
+			continue
+		} else {
+			err := db.Table(tableName).AutoMigrate(&imodels.TaskHost{})
+			if err != nil {
+				logger.Errorf("failed to migrate table:%s %v", tableName, err)
+			}
 		}
 	}
 }
 
+func isPostgres(db *gorm.DB) bool {
+	dialect := db.Dialector.Name()
+	return dialect == "postgres"
+}
 func MigrateTables(db *gorm.DB) error {
 	var tableOptions string
 	switch db.Dialector.(type) {
@@ -54,12 +63,21 @@ func MigrateTables(db *gorm.DB) error {
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
-
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.BuiltinComponent{}, &models.NotificaitonRecord{},
+		&models.MetricFilter{}, &models.NotificaitonRecord{},
 		&models.TargetBusiGroup{}}
+
+	if isPostgres(db) {
+		dts = append(dts, &models.PostgresBuiltinComponent{})
+	} else {
+		dts = append(dts, &models.BuiltinComponent{})
+	}
+
+	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
+		dts = append(dts, &imodels.TaskSchedulerHealth{})
+	}
 
 	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
 		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
@@ -74,7 +92,7 @@ func MigrateTables(db *gorm.DB) error {
 
 			for _, dt := range asyncDts {
 				if err := db.AutoMigrate(dt); err != nil {
-					logger.Errorf("failed to migrate table: %v", err)
+					logger.Errorf("failed to migrate table %+v err:%v", dt, err)
 				}
 			}
 		}()
@@ -170,14 +188,20 @@ func InsertPermPoints(db *gorm.DB) {
 	})
 
 	for _, op := range ops {
-		exists, err := models.Exists(db.Model(&models.RoleOperation{}).Where("operation = ? and role_name = ?", op.Operation, op.RoleName))
+		var count int64
+
+		err := db.Raw("SELECT COUNT(*) FROM role_operation WHERE operation = ? AND role_name = ?",
+			op.Operation, op.RoleName).Scan(&count).Error
+
 		if err != nil {
 			logger.Errorf("check role operation exists failed, %v", err)
 			continue
 		}
-		if exists {
+
+		if count > 0 {
 			continue
 		}
+
 		err = db.Create(&op).Error
 		if err != nil {
 			logger.Errorf("insert role operation failed, %v", err)
@@ -186,17 +210,17 @@ func InsertPermPoints(db *gorm.DB) {
 }
 
 type AlertRule struct {
-	ExtraConfig       string                   `gorm:"type:text;column:extra_config"` // extra config
-	CronPattern       string                   `gorm:"type:varchar(64);cron_pattern"`
+	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
+	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 }
 
 type AlertSubscribe struct {
 	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
 	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
+	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
 	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
-	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024);default:'';comment:rule_ids"`
+	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
 }
 
 type AlertMute struct {

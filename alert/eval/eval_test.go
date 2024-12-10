@@ -340,7 +340,7 @@ func Test_removeVal(t *testing.T) {
 		{
 			name: "removeVal7",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"test2\",test3=\"$test3\"} > $val",
+				promql: "mem{test1=\"test1\",test2=\"test2\",test3='$test3'} > $val",
 			},
 			want: "mem{test1=\"test1\",test2=\"test2\"} > $val",
 		},
@@ -361,16 +361,16 @@ func Test_removeVal(t *testing.T) {
 		{
 			name: "removeVal10",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"$test2\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
+				promql: "mem{test1=\"test1\",test2='$test2'} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
 			},
 			want: "mem{test1=\"test1\"} > $val1 and mem{test3=\"test3\",test4=\"test4\"} > $val2",
 		},
 		{
 			name: "removeVal11",
 			args: args{
-				promql: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
+				promql: "mem{test1='test1',test2=\"test2\"} > $val1 and mem{test3=\"$test3\",test4=\"test4\"} > $val2",
 			},
-			want: "mem{test1=\"test1\",test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
+			want: "mem{test1='test1',test2=\"test2\"} > $val1 and mem{test4=\"test4\"} > $val2",
 		},
 		{
 			name: "removeVal12",
@@ -384,6 +384,74 @@ func Test_removeVal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := removeVal(tt.args.promql); got != tt.want {
 				t.Errorf("removeVal() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractVarMapping(t *testing.T) {
+	tests := []struct {
+		name   string
+		promql string
+		want   map[string]string
+	}{
+		{
+			name:   "单个花括号单个变量",
+			promql: `mem_used_percent{host="$my_host"} > $val`,
+			want:   map[string]string{"my_host": "host"},
+		},
+		{
+			name:   "单个花括号多个变量",
+			promql: `mem_used_percent{host="$my_host",region="$region",env="prod"} > $val`,
+			want:   map[string]string{"my_host": "host", "region": "region"},
+		},
+		{
+			name:   "多个花括号多个变量",
+			promql: `sum(rate(mem_used_percent{host="$my_host"})) by (instance) + avg(node_load1{region="$region"}) > $val`,
+			want:   map[string]string{"my_host": "host", "region": "region"},
+		},
+		{
+			name:   "相同变量出现多次",
+			promql: `sum(rate(mem_used_percent{host="$my_host"})) + avg(node_load1{host="$my_host"}) > $val`,
+			want:   map[string]string{"my_host": "host"},
+		},
+		{
+			name:   "没有变量",
+			promql: `mem_used_percent{host="localhost",region="cn"} > 80`,
+			want:   map[string]string{},
+		},
+		{
+			name:   "没有花括号",
+			promql: `80 > $val`,
+			want:   map[string]string{},
+		},
+		{
+			name:   "格式不规范的标签",
+			promql: `mem_used_percent{host=$my_host,region = $region} > $val`,
+			want:   map[string]string{"my_host": "host", "region": "region"},
+		},
+		{
+			name:   "空花括号",
+			promql: `mem_used_percent{} > $val`,
+			want:   map[string]string{},
+		},
+		{
+			name:   "不完整的花括号",
+			promql: `mem_used_percent{host="$my_host"`,
+			want:   map[string]string{},
+		},
+		{
+			name:   "复杂表达式",
+			promql: `sum(rate(http_requests_total{handler="$handler",code="$code"}[5m])) by (handler) / sum(rate(http_requests_total{handler="$handler"}[5m])) by (handler) * 100 > $threshold`,
+			want:   map[string]string{"handler": "handler", "code": "code"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ExtractVarMapping(tt.promql)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ExtractVarMapping() = %v, want %v", got, tt.want)
 			}
 		})
 	}

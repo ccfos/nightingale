@@ -115,68 +115,54 @@ func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool,
 	return num > 0, err
 }
 
+var entries = []struct {
+	entry        interface{}
+	errorMessage string
+}{
+	{
+		entry:        &AlertRule{},
+		errorMessage: "Some alert rules still in the BusiGroup",
+	},
+	{
+		entry:        &AlertMute{},
+		errorMessage: "Some alert mutes still in the BusiGroup",
+	},
+	{
+		entry:        &AlertSubscribe{},
+		errorMessage: "Some alert subscribes still in the BusiGroup",
+	},
+	{
+		entry:        &Target{},
+		errorMessage: "Some targets still in the BusiGroup",
+	},
+	{
+		entry:        &RecordingRule{},
+		errorMessage: "Some recording rules still in the BusiGroup",
+	},
+	{
+		entry:        &TaskTpl{},
+		errorMessage: "Some recovery scripts still in the BusiGroup",
+	},
+	{
+		entry:        &TaskRecord{},
+		errorMessage: "Some Task Record records still in the BusiGroup",
+	},
+	{
+		entry:        &TargetBusiGroup{},
+		errorMessage: "Some target busigroups still in the BusiGroup",
+	},
+}
+
 func (bg *BusiGroup) Del(ctx *ctx.Context) error {
-	has, err := Exists(DB(ctx).Model(&AlertMute{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
+	for _, e := range entries {
+		has, err := Exists(DB(ctx).Model(e.entry).Where("group_id=?", bg.Id))
+		if err != nil {
+			return err
+		}
 
-	if has {
-		return errors.New("Some alert mutes still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&AlertSubscribe{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some alert subscribes still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&TargetBusiGroup{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some targets still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&Board{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some dashboards still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&TaskTpl{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some recovery scripts still in the BusiGroup")
-	}
-
-	// hasCR, err := Exists(DB(ctx).Table("collect_rule").Where("group_id=?", bg.Id))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if hasCR {
-	// 	return errors.New("Some collect rules still in the BusiGroup")
-	// }
-
-	has, err = Exists(DB(ctx).Model(&AlertRule{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some alert rules still in the BusiGroup")
+		if has {
+			return errors.New(e.errorMessage)
+		}
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {

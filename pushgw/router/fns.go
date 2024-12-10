@@ -79,6 +79,10 @@ func (rt *Router) AppendLabels(pt *prompb.TimeSeries, target *models.Target, bgC
 // }
 
 func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
+	if v == nil {
+		return
+	}
+
 	filter := rt.Pushgw.DebugSample
 	if len(filter) == 0 {
 		return
@@ -164,6 +168,7 @@ func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSe
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
 	v = rt.BeforePush(clientIP, v)
+	rt.debugSample(clientIP, v)
 	if v == nil {
 		return
 	}
