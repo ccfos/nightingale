@@ -143,8 +143,8 @@ type WritersType struct {
 	backends map[string]WriterType
 	queues   map[string]*IdentQueue
 	maxCount int
-	ticker *time.Ticker
-	count atomic.Value
+	ticker   *time.Ticker
+	count    atomic.Value
 	sync.RWMutex
 }
 
@@ -164,11 +164,10 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 	}
 }
 
-
-func metricCountTick (ws *WritersType) {
+func metricCountTick(ws *WritersType) {
 	for {
 		select {
-		case <- ws.ticker.C:
+		case <-ws.ticker.C:
 			if ws != nil {
 				ws.RLock()
 				curMetricLen := 0
@@ -188,8 +187,8 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 		queues:   make(map[string]*IdentQueue),
 		pushgw:   pushgwConfig,
 		maxCount: pushgwConfig.MetricsMaxCount,
-		ticker: time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime)),
-		count: atomic.Value{},
+		ticker:   time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime)),
+		count:    atomic.Value{},
 	}
 
 	writers.Init()
@@ -244,7 +243,6 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	}
 
 	identQueue.ts = time.Now().Unix()
-
 	if ws.count.Load().(int) > ws.maxCount {
 		logger.Warningf("Write channel(%s) full, metric count per minute over limit: %d", ident, ws.count.Load().(int))
 		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
