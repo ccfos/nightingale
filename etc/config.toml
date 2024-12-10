@@ -130,6 +130,9 @@ LabelRewrite = true
 # # default busigroup key name
 # BusiGroupLabelKey = "busigroup"
 ForceUseServerTS = true
+MetricsMaxCount = 10000
+# fresh time, unit ms
+MetricRateFreshTime = 200
 
 # [Pushgw.DebugSample]
 # ident = "xx"

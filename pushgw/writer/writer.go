@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/fasttime"
@@ -141,6 +142,9 @@ type WritersType struct {
 	pushgw   pconf.Pushgw
 	backends map[string]WriterType
 	queues   map[string]*IdentQueue
+	maxCount int
+	ticker   *time.Ticker
+	count    atomic.Value
 	sync.RWMutex
 }
 
@@ -160,14 +164,36 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 	}
 }
 
+func metricCountTick(ws *WritersType) {
+	for {
+		select {
+		case <-ws.ticker.C:
+			if ws != nil {
+				ws.RLock()
+				curMetricLen := 0
+				for _, q := range ws.queues {
+					curMetricLen += q.list.Len()
+				}
+				ws.count.Store(curMetricLen)
+				ws.RUnlock()
+			}
+		}
+	}
+}
+
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
 		backends: make(map[string]WriterType),
 		queues:   make(map[string]*IdentQueue),
 		pushgw:   pushgwConfig,
+		maxCount: pushgwConfig.MetricsMaxCount,
+		ticker:   time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime)),
+		count:    atomic.Value{},
 	}
 
 	writers.Init()
+
+	go metricCountTick(writers)
 	go writers.CleanExpQueue()
 	return writers
 }
@@ -217,6 +243,12 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	}
 
 	identQueue.ts = time.Now().Unix()
+	if ws.count.Load().(int) > ws.maxCount {
+		logger.Warningf("Write channel(%s) full, metric count per minute over limit: %d", ident, ws.count.Load().(int))
+		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
+		return
+	}
+
 	succ := identQueue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
@@ -245,6 +277,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 
 func (ws *WritersType) Init() error {
 	opts := ws.pushgw.Writers
+	ws.count.Store(0)
 
 	for i := 0; i < len(opts); i++ {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()
