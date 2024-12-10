@@ -188,8 +188,6 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	}
 
 	writers.Init()
-
-	
 	
 	writers.maxCount = pushgwConfig.MetricsMaxCount
 	writers.ticker = time.NewTicker(time.Millisecond * time.Duration(pushgwConfig.MetricRateFreshTime))
@@ -225,7 +223,6 @@ func (ws *WritersType) CleanExpQueue() {
 	}
 }
 
-
 func (ws *WritersType) PushSample(ident string, v interface{}) {
 	ws.RLock()
 	identQueue := ws.queues[ident]
@@ -250,6 +247,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	if ws.count.Load().(int) != 0 && ws.count.Load().(int) > ws.maxCount {
 		logger.Warningf("metric count per minute over limit: %d", ws.count.Load().(int))
 		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
+		return
 	}
 
 	succ := identQueue.list.PushFront(v)
