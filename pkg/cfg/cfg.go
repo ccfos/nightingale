@@ -8,7 +8,6 @@ import (
 
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -23,7 +22,6 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	}
 
 	if !file.IsExist(configDir) {
-		logger.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
 		return fmt.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
 	}
 
@@ -55,7 +53,6 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	}
 
 	if !found {
-		logger.Errorf("fail to found config file, config dir path: %v\n", configDir)
 		return fmt.Errorf("fail to found config file, config dir path: %v", configDir)
 	}
 
