@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/koding/multiconfig"
@@ -34,40 +33,31 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 		return fmt.Errorf("failed to list files under: %s : %v", configDir, err)
 	}
 
-	var found bool
-	err = filepath.Walk(configDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			ext := filepath.Ext(path)
-			if ext == ".toml" || ext == ".yaml" || ext == ".json" {
-				found = true
-				return nil
-			}
-		}
-		return nil
-	})
-	if err != nil || !found {
-		logger.Errorf("fail to found config file, config dir path: %v and err is %v\n", configDir, err)
-		os.Exit(1)
-	}
+	found := false
 
 	s := NewFileScanner()
 	for _, fpath := range files {
 		switch {
 		case strings.HasSuffix(fpath, ".toml"):
+			found = true
 			s.Read(path.Join(configDir, fpath))
 			tBuf = append(tBuf, s.Data()...)
 			tBuf = append(tBuf, []byte("\n")...)
 		case strings.HasSuffix(fpath, ".json"):
+			found = true
 			loaders = append(loaders, &multiconfig.JSONLoader{Path: path.Join(configDir, fpath)})
 		case strings.HasSuffix(fpath, ".yaml") || strings.HasSuffix(fpath, ".yml"):
+			found = true
 			loaders = append(loaders, &multiconfig.YAMLLoader{Path: path.Join(configDir, fpath)})
 		}
 		if s.Err() != nil {
 			return s.Err()
 		}
+	}
+
+	if !found {
+		logger.Errorf("fail to found config file, config dir path: %v\n", configDir)
+		os.Exit(1)
 	}
 
 	if len(tBuf) != 0 {
