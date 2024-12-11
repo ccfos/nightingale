@@ -3,7 +3,6 @@ package cfg
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
@@ -25,7 +24,7 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 
 	if !file.IsExist(configDir) {
 		logger.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
-		os.Exit(1)
+		return fmt.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
 	}
 
 	files, err := file.FilesUnder(configDir)
@@ -57,7 +56,7 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 
 	if !found {
 		logger.Errorf("fail to found config file, config dir path: %v\n", configDir)
-		os.Exit(1)
+		return fmt.Errorf("fail to found config file, config dir path: %v\n", configDir)
 	}
 
 	if len(tBuf) != 0 {
