@@ -56,7 +56,7 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 
 	if !found {
 		logger.Errorf("fail to found config file, config dir path: %v\n", configDir)
-		return fmt.Errorf("fail to found config file, config dir path: %v\n", configDir)
+		return fmt.Errorf("fail to found config file, config dir path: %v", configDir)
 	}
 
 	if len(tBuf) != 0 {

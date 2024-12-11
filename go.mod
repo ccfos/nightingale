@@ -4,7 +4,6 @@ go 1.22
 
 require (
 	github.com/BurntSushi/toml v0.3.1
-	github.com/agiledragon/gomonkey/v2 v2.12.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
