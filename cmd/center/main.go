@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/osx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"
 )
@@ -36,7 +36,8 @@ func main() {
 
 	cleanFunc, err := center.Initialize(*configDir, *cryptoKey)
 	if err != nil {
-		log.Fatalln("failed to initialize:", err)
+		logger.Errorf("fail to initialize config file, config dir path: %v and err is %v\n", *configDir, err)
+		os.Exit(1)
 	}
 
 	code := 1
