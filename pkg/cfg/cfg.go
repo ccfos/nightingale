@@ -11,6 +11,7 @@ import (
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/runner"
 )
 
 func LoadConfigByDir(configDir string, configPtr interface{}) error {
@@ -24,7 +25,7 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	}
 
 	if !file.IsExist(configDir) {
-		logger.Errorf("dir %s not exist\n", configDir)
+		logger.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
 		os.Exit(1)
 	}
 
