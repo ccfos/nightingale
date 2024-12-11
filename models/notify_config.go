@@ -1,5 +1,12 @@
 package models
 
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/toolkits/pkg/str"
+)
+
 const WEBHOOKKEY = "webhook"
 const NOTIFYSCRIPT = "notify_script"
 const NOTIFYCHANNEL = "notify_channel"
@@ -24,6 +31,11 @@ type Webhook struct {
 	RetryCount    int               `json:"retry_count"`
 	RetryInterval int               `json:"retry_interval"`
 	Batch         int               `json:"batch"`
+	Client        *http.Client      `json:"-"`
+}
+
+func (w *Webhook) Hash() string {
+	return str.MD5(fmt.Sprintf("%d_%t_%s_%s_%s_%d_%v_%t_%s_%d_%d_%d", w.Type, w.Enable, w.Url, w.BasicAuthUser, w.BasicAuthPass, w.Timeout, w.HeaderMap, w.SkipVerify, w.Note, w.RetryCount, w.RetryInterval, w.Batch))
 }
 
 type NotifyScript struct {
