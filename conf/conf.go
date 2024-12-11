@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -15,7 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/logger"
 )
 
 type ConfigType struct {
@@ -55,30 +53,6 @@ type Output struct {
 }
 
 func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		logger.Errorf("dir %s not exist\n", configDir)
-		os.Exit(1)
-	}
-
-	var found bool
-	err := filepath.Walk(configDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			ext := filepath.Ext(path)
-			if ext == ".toml" || ext == ".yaml" || ext == ".json" {
-				found = true
-				return nil
-			}
-		}
-		return nil
-	})
-	if err != nil || !found {
-		logger.Errorf("fail to found config file, config dir path: %v and err is %v\n", configDir, err)
-		os.Exit(1)
-	}
-
 	var config = new(ConfigType)
 
 	if err := cfg.LoadConfigByDir(configDir, config); err != nil {
@@ -89,7 +63,7 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 	config.Alert.PreCheck(configDir)
 	config.Center.PreCheck()
 
-	err = decryptConfig(config, cryptoKey)
+	err := decryptConfig(config, cryptoKey)
 	if err != nil {
 		return nil, err
 	}

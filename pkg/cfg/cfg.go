@@ -3,12 +3,14 @@ package cfg
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/koding/multiconfig"
 	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/runner"
+	"github.com/toolkits/pkg/logger"
 )
 
 func LoadConfigByDir(configDir string, configPtr interface{}) error {
@@ -22,13 +24,34 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	}
 
 	if !file.IsExist(configDir) {
-		return fmt.Errorf("config directory: %s not exist. working directory: %s", configDir, runner.Cwd)
+		logger.Errorf("dir %s not exist\n", configDir)
+		os.Exit(1)
 	}
 
 	files, err := file.FilesUnder(configDir)
 	if err != nil {
 		return fmt.Errorf("failed to list files under: %s : %v", configDir, err)
 	}
+
+	var found bool
+	err = filepath.Walk(configDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			ext := filepath.Ext(path)
+			if ext == ".toml" || ext == ".yaml" || ext == ".json" {
+				found = true
+				return nil
+			}
+		}
+		return nil
+	})
+	if err != nil || !found {
+		logger.Errorf("fail to found config file, config dir path: %v and err is %v\n", configDir, err)
+		os.Exit(1)
+	}
+
 	s := NewFileScanner()
 	for _, fpath := range files {
 		switch {
