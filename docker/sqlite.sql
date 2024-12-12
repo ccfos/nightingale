@@ -185,7 +185,7 @@ CREATE TABLE board (
     create_by VARCHAR(64) NOT NULL DEFAULT '',
     update_at BIGINT NOT NULL DEFAULT 0,
     update_by VARCHAR(64) NOT NULL DEFAULT '',
-    public_cate BIGINT NOT NULL DEFAULT 0,
+    public_cate BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE UNIQUE INDEX idx_board_group_id_name ON `board` (group_id, name);
