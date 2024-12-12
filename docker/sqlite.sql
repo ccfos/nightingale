@@ -198,10 +198,10 @@ CREATE TABLE `board_payload` (
 );
 
 CREATE TABLE `chart` (
-    id integer primary key autoincrement,
-    group_id integer not null,
-    configs text,
-    weight integer not null default 0
+    `id` integer primary key autoincrement,
+    `group_id` integer not null,
+    `configs` text,
+    `weight` integer not null default 0
 );
 
 CREATE INDEX idx_chart_group_id ON `chart` (group_id);
@@ -227,12 +227,12 @@ CREATE TABLE `alert_rule` (
     `prod` varchar(255) not null default '',
     `algorithm` varchar(255) not null default '',
     `algo_params` varchar(255),
-    `delay integer` not null default 0,
+    `delay` integer not null default 0,
     `severity` tinyint(1) not null,
     `disabled` tinyint(1) not null,
     `prom_for_duration` integer not null,
     `rule_config` text not null,
-    `prom_ql text` not null,
+    `prom_ql` text not null,
     `prom_eval_interval` integer not null,
     `enable_stime` varchar(255) not null default '00:00',
     `enable_etime` varchar(255) not null default '23:59',
@@ -469,9 +469,9 @@ CREATE INDEX idx_rule_id ON alert_his_event (rule_id);
 CREATE INDEX idx_trigger_time_group_id ON alert_his_event (trigger_time, group_id);
 
 CREATE TABLE `board_busigroup` (
-  `busi_group_id` bigint(20) not null default '0',
-  `board_id` bigint(20) not null default '0',
-  primary key (`busi_group_id`, `board_id`)
+    `busi_group_id` bigint(20) not null default '0',
+    `board_id` bigint(20) not null default '0',
+    primary key (`busi_group_id`, `board_id`)
 );
 
 CREATE TABLE `builtin_components` (
