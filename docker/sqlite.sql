@@ -624,7 +624,7 @@ CREATE TABLE `sso_config` (
 
 CREATE UNIQUE INDEX idx_sso_config_name ON sso_config (name);
 
-CREATE TABLE `s_index_pattern` (
+CREATE TABLE `es_index_pattern` (
     `id` integer primary key autoincrement,
     `datasource_id` integer not null default 0,
     `name` varchar(191) not null,
