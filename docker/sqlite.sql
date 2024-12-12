@@ -1,23 +1,26 @@
-CREATE TABLE `users` (
-    `id` integer primary key autoincrement,
-    `username` varchar(64) not null unique,
-    `nickname` varchar(64) not null,
-    `password` varchar(128) not null default '',
-    `phone` varchar(16) not null default '',
-    `email` varchar(64) not null default '',
-    `portrait` varchar(255) not null default '',
-    `roles` varchar(255) not null,
-    `contacts` varchar(1024),
-    `maintainer` tinyint(1) not null default 0,
-    `belong` varchar(16) not null default '',
-    `last_active_time` bigint not null default 0,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default ''
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    nickname TEXT NOT NULL,
+    password TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    portrait TEXT NOT NULL DEFAULT '',
+    roles TEXT NOT NULL,
+    contacts TEXT,
+    maintainer INTEGER NOT NULL DEFAULT 0,
+    belong TEXT DEFAULT '',
+    last_active_time INTEGER DEFAULT 0,
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0,
+    update_by TEXT NOT NULL DEFAULT ''
 );
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
+CREATE UNIQUE INDEX idx_users_username ON users (username);
+
+INSERT INTO `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) 
+VALUES(1, 'root', '超管', 'root.2020', 'Admin', strftime('%s', 'now'), 'system', strftime('%s', 'now'), 'system');
 
 CREATE TABLE `user_group` (
     `id` integer primary key autoincrement,
@@ -44,16 +47,16 @@ CREATE INDEX `idx_user_group_member_user_id` ON `user_group_member` (`user_id` a
 insert into user_group_member(group_id, user_id) values(1, 1);
 
 CREATE TABLE `configs` (
-    `id` integer primary key autoincrement,
-    `ckey` varchar(191) not null,
-    `cval` text not null,
-    `note` varchar(1024) not null default '',
-    `external` tinyint(1) not null default 0,
-    `encrypted` tinyint(1) not null default 0,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default ''
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `ckey` TEXT NOT NULL,
+    `note` TEXT NOT NULL DEFAULT '',
+    `cval` TEXT,
+    `external` INTEGER DEFAULT 0,
+    `encrypted` INTEGER DEFAULT 0,
+    `create_at` INTEGER DEFAULT 0,
+    `create_by` TEXT NOT NULL DEFAULT '',
+    `update_at` INTEGER DEFAULT 0,
+    `update_by` TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE `role` (
@@ -170,27 +173,38 @@ insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1,
 
 -- for dashboard new version
 CREATE TABLE `board` (
-    `id` integer primary key autoincrement,
-    `group_id` bigint not null default 0,
-    `name` varchar(191) not null,
-    `ident` varchar(200) not null default '',
-    `tags` varchar(255) not null,
-    `public` tinyint(1) not null default 0,
-    `built_in` tinyint(1) not null default 0,
-    `hide` tinyint(1) not null default 0,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default '',
-    unique (`group_id`, `name`)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL DEFAULT 0,
+    name TEXT NOT NULL,
+    ident TEXT NOT NULL DEFAULT '',
+    tags TEXT NOT NULL,
+    public INTEGER NOT NULL DEFAULT 0,
+    built_in INTEGER NOT NULL DEFAULT 0,
+    hide INTEGER NOT NULL DEFAULT 0,
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0,
+    update_by TEXT NOT NULL DEFAULT '',
+    public_cate INTEGER NOT NULL DEFAULT 0
 );
-CREATE INDEX `idx_board_ident` ON `board` (`ident` asc);
+
+CREATE UNIQUE INDEX idx_board_group_id_name ON `board` (group_id, name);
+CREATE INDEX idx_board_ident ON `board` (ident);
 
 -- for dashboard new version
 CREATE TABLE `board_payload` (
     `id` bigint unsigned not null unique,
     `payload` mediumtext not null
 );
+
+CREATE TABLE `chart` (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL,
+    configs TEXT,
+    weight INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_chart_group_id ON `chart` (group_id);
 
 CREATE TABLE `chart_share` (
     `id` integer primary key autoincrement,
@@ -202,46 +216,49 @@ CREATE TABLE `chart_share` (
 );
 CREATE INDEX `idx_chart_share_create_at` ON `chart_share` (`create_at` asc);
 
-CREATE TABLE `alert_rule` (
-    `id` integer primary key autoincrement,
-    `group_id` bigint not null default 0,
-    `cate` varchar(128) not null,
-    `datasource_ids` varchar(255) not null default '',
-    `cluster` varchar(128) not null,
-    `name` varchar(255) not null,
-    `note` varchar(1024) not null default '',
-    `prod` varchar(255) not null default '',
-    `algorithm` varchar(255) not null default '',
-    `algo_params` varchar(255),
-    `delay` int not null default 0,
-    `severity` tinyint(1) not null,
-    `disabled` tinyint(1) not null,
-    `prom_for_duration` int not null,
-    `rule_config` text not null,
-    `prom_ql` text not null,
-    `prom_eval_interval` int not null,
-    `enable_stime` varchar(255) not null default '00:00',
-    `enable_etime` varchar(255) not null default '23:59',
-    `enable_days_of_week` varchar(255) not null default '',
-    `enable_in_bg` tinyint(1) not null default 0,
-    `notify_recovered` tinyint(1) not null,
-    `notify_channels` varchar(255) not null default '',
-    `notify_groups` varchar(255) not null default '',
-    `notify_repeat_step` int not null default 0,
-    `notify_max_number` int not null default 0,
-    `recover_duration` int not null default 0 ,
-    `callbacks` varchar(4096) not null default '',
-    `runbook_url` varchar(4096),
-    `append_tags` varchar(255) not null default '',
-    `annotations` text not null,
-    `extra_config` text not null,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default ''
+CREATE TABLE alert_rule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL DEFAULT 0,
+    cate TEXT NOT NULL,
+    datasource_ids TEXT NOT NULL DEFAULT '',
+    cluster TEXT NOT NULL,
+    name TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    prod TEXT NOT NULL DEFAULT '',
+    algorithm TEXT NOT NULL DEFAULT '',
+    algo_params TEXT,
+    delay INTEGER NOT NULL DEFAULT 0,
+    severity INTEGER NOT NULL,
+    disabled INTEGER NOT NULL,
+    prom_for_duration INTEGER NOT NULL,
+    rule_config TEXT NOT NULL,
+    prom_ql TEXT NOT NULL,
+    prom_eval_interval INTEGER NOT NULL,
+    enable_stime TEXT NOT NULL DEFAULT '00:00',
+    enable_etime TEXT NOT NULL DEFAULT '23:59',
+    enable_days_of_week TEXT NOT NULL DEFAULT '',
+    enable_in_bg INTEGER NOT NULL DEFAULT 0,
+    notify_recovered INTEGER NOT NULL,
+    notify_channels TEXT NOT NULL DEFAULT '',
+    notify_groups TEXT NOT NULL DEFAULT '',
+    notify_repeat_step INTEGER NOT NULL DEFAULT 0,
+    notify_max_number INTEGER NOT NULL DEFAULT 0,
+    recover_duration INTEGER NOT NULL DEFAULT 0,
+    callbacks TEXT NOT NULL DEFAULT '',
+    runbook_url TEXT,
+    append_tags TEXT NOT NULL DEFAULT '',
+    annotations TEXT NOT NULL,
+    extra_config TEXT,
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0,
+    update_by TEXT NOT NULL DEFAULT '',
+    cron_pattern TEXT,
+    datasource_queries TEXT
 );
-CREATE INDEX `idx_alert_rule_group_id` ON `alert_rule` (`group_id` asc);
-CREATE INDEX `idx_alert_rule_update_at` ON `alert_rule` (`update_at` asc);
+
+CREATE INDEX idx_alert_rule_group_id ON alert_rule (group_id);
+CREATE INDEX idx_alert_rule_update_at ON alert_rule (update_at);
 
 CREATE TABLE `alert_mute` (
     `id` integer primary key autoincrement,
@@ -268,51 +285,59 @@ CREATE INDEX `idx_alert_mute_create_at` ON `alert_mute` (`create_at` asc);
 CREATE INDEX `idx_alert_mute_group_id` ON `alert_mute` (`group_id` asc);
 
 CREATE TABLE `alert_subscribe` (
-    `id` integer primary key autoincrement,
-    `name` varchar(255) not null default '',
-    `disabled` tinyint(1) not null default 0,
-    `group_id` bigint not null default 0,
-    `prod` varchar(255) not null default '',
-    `cate` varchar(128) not null,
-    `datasource_ids` varchar(255) not null default '',
-    `cluster` varchar(128) not null,
-    `rule_id` bigint not null default 0,
-    `severities` varchar(32) not null default '',
-    `tags` varchar(4096) not null default '',
-    `redefine_severity` tinyint(1) default 0,
-    `new_severity` tinyint(1) not null,
-    `redefine_channels` tinyint(1) default 0,
-    `new_channels` varchar(255) not null default '',
-    `user_group_ids` varchar(250) not null,
-    `busi_groups` VARCHAR(4096) NOT NULL DEFAULT '[]',
-    `note` VARCHAR(1024) DEFAULT '',
-    `rule_ids` VARCHAR(1024) DEFAULT '',
-    `webhooks` text not null,
-    `extra_config` text not null,
-    `redefine_webhooks` tinyint(1) default 0,
-    `for_duration` bigint not null default 0,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default ''
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL DEFAULT '',
+    disabled INTEGER NOT NULL DEFAULT 0,
+    group_id INTEGER NOT NULL DEFAULT 0,
+    prod TEXT NOT NULL DEFAULT '',
+    cate TEXT NOT NULL,
+    datasource_ids TEXT NOT NULL DEFAULT '',
+    cluster TEXT NOT NULL,
+    rule_id INTEGER NOT NULL DEFAULT 0,
+    rule_ids TEXT,
+    severities TEXT NOT NULL DEFAULT '',
+    tags TEXT NOT NULL DEFAULT '',
+    redefine_severity INTEGER DEFAULT 0,
+    new_severity INTEGER NOT NULL,
+    redefine_channels INTEGER DEFAULT 0,
+    new_channels TEXT NOT NULL DEFAULT '',
+    user_group_ids TEXT NOT NULL,
+    busi_groups TEXT,
+    note TEXT DEFAULT '',
+    webhooks TEXT NOT NULL,
+    extra_config TEXT,
+    redefine_webhooks INTEGER DEFAULT 0,
+    for_duration INTEGER NOT NULL DEFAULT 0,
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0,
+    update_by TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX `idx_alert_subscribe_update_at` ON `alert_subscribe` (`update_at` asc);
-CREATE INDEX `idx_alert_subscribe_group_id` ON `alert_subscribe` (`group_id` asc);
 
+CREATE INDEX idx_alert_subscribe_update_at ON alert_subscribe (update_at);
+CREATE INDEX idx_alert_subscribe_group_id ON alert_subscribe (group_id);
 
-CREATE TABLE `target` (
-    `id` integer primary key autoincrement,
-    `group_id` bigint not null default 0,
-    `ident` varchar(191) not null unique,
-    `note` varchar(255) not null default '',
-    `tags` varchar(512) not null default '',
-    `host_ip` varchar(15) default '',
-    `agent_version` varchar(255) default '',
-    `engine_name` varchar(255) default '',
-    `update_at` bigint not null default 0
+CREATE TABLE target (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL DEFAULT 0,
+    ident TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    tags TEXT NOT NULL DEFAULT '',
+    host_tags TEXT,
+    host_ip TEXT DEFAULT '',
+    agent_version TEXT DEFAULT '',
+    engine_name TEXT DEFAULT '',
+    os TEXT DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0
 );
-CREATE INDEX `idx_target_group_id` ON `target` (`group_id` asc);
 
+CREATE UNIQUE INDEX idx_target_ident ON target (ident);
+
+CREATE INDEX idx_target_group_id ON target (group_id);
+CREATE INDEX idx_host_ip ON target (host_ip);
+CREATE INDEX idx_agent_version ON target (agent_version);
+CREATE INDEX idx_engine_name ON target (engine_name);
+CREATE INDEX idx_os ON target (os);
 
 CREATE TABLE `metric_view` (
     `id` integer primary key autoincrement,
@@ -327,25 +352,27 @@ CREATE INDEX `idx_metric_view_create_by` ON `metric_view` (`create_by` asc);
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
 
-CREATE TABLE `recording_rule` (
-    `id` integer primary key autoincrement,
-    `group_id` bigint not null default '0',
-    `datasource_ids` varchar(255) not null default '',
-    `cluster` varchar(128) not null,
-    `name` varchar(255) not null,
-    `note` varchar(255) not null,
-    `disabled` tinyint(1) not null default 0,
-    `prom_ql` varchar(8192) not null,
-    `prom_eval_interval` int not null,
-    `append_tags` varchar(255) default '',
-    `query_configs` text not null,
-    `create_at` bigint default '0',
-    `create_by` varchar(64) default '',
-    `update_at` bigint default '0',
-    `update_by` varchar(64) default ''
+CREATE TABLE recording_rule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL DEFAULT 0,
+    datasource_ids TEXT NOT NULL DEFAULT '',
+    cluster TEXT NOT NULL,
+    name TEXT NOT NULL,
+    note TEXT NOT NULL,
+    disabled INTEGER NOT NULL DEFAULT 0,
+    prom_ql TEXT NOT NULL,
+    prom_eval_interval INTEGER NOT NULL,
+    cron_pattern TEXT DEFAULT '',
+    append_tags TEXT DEFAULT '',
+    query_configs TEXT NOT NULL,
+    create_at INTEGER DEFAULT 0,
+    create_by TEXT DEFAULT '',
+    update_at INTEGER DEFAULT 0,
+    update_by TEXT DEFAULT '',
+    datasource_queries TEXT
 );
-CREATE INDEX `idx_recording_rule_group_id` ON `recording_rule` (`group_id` asc);
-CREATE INDEX `idx_recording_rule_update_at` ON `recording_rule` (`update_at` asc);
+CREATE INDEX idx_recording_rule_group_id ON recording_rule (group_id);
+CREATE INDEX idx_recording_rule_update_at ON recording_rule (update_at);
 
 CREATE TABLE `alert_aggr_view` (
     `id` integer primary key autoincrement,
@@ -399,45 +426,46 @@ CREATE INDEX `idx_alert_cur_event_rule_id` ON `alert_cur_event` (`rule_id` asc);
 CREATE INDEX `idx_alert_cur_event_trigger_time_group_id` ON `alert_cur_event` (`trigger_time`, `group_id` asc);
 CREATE INDEX `idx_alert_cur_event_notify_repeat_next` ON `alert_cur_event` (`notify_repeat_next` asc);
 
-CREATE TABLE `alert_his_event` (
-    `id` integer primary key autoincrement,
-    `is_recovered` tinyint(1) not null,
-    `cate` varchar(128) not null,
-    `datasource_id` bigint not null default 0,
-    `cluster` varchar(128) not null,
-    `group_id` bigint unsigned not null,
-    `group_name` varchar(255) not null default '',
-    `hash` varchar(64) not null,
-    `rule_id` bigint unsigned not null,
-    `rule_name` varchar(255) not null,
-    `rule_note` varchar(2048) not null default 'alert rule note',
-    `rule_prod` varchar(255) not null default '',
-    `rule_algo` varchar(255) not null default '',
-    `severity` tinyint(1) not null,
-    `prom_for_duration` int not null,
-    `prom_ql` varchar(8192) not null,
-    `prom_eval_interval` int not null,
-    `callbacks` varchar(255) not null default '',
-    `runbook_url` varchar(255),
-    `notify_recovered` tinyint(1) not null,
-    `notify_channels` varchar(255) not null default '',
-    `notify_groups` varchar(255) not null default '',
-    `notify_cur_number` int not null default 0,
-    `target_ident` varchar(191) not null default '',
-    `target_note` varchar(191) not null default '',
-    `first_trigger_time` bigint,
-    `trigger_time` bigint not null,
-    `trigger_value` varchar(2048) not null,
-    `recover_time` bigint not null default 0,
-    `last_eval_time` bigint not null default 0,
-    `tags` varchar(1024) not null default '',
-    `annotations` text not null,
-    `rule_config` text not null
+CREATE TABLE alert_his_event (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    is_recovered INTEGER NOT NULL,
+    cate TEXT NOT NULL,
+    datasource_id INTEGER NOT NULL DEFAULT 0,
+    cluster TEXT NOT NULL,
+    group_id INTEGER NOT NULL,
+    group_name TEXT NOT NULL DEFAULT '',
+    hash TEXT NOT NULL,
+    rule_id INTEGER NOT NULL,
+    rule_name TEXT NOT NULL,
+    rule_note TEXT NOT NULL DEFAULT 'alert rule note',
+    rule_prod TEXT NOT NULL DEFAULT '',
+    rule_algo TEXT NOT NULL DEFAULT '',
+    severity INTEGER NOT NULL,
+    prom_for_duration INTEGER NOT NULL,
+    prom_ql TEXT NOT NULL,
+    prom_eval_interval INTEGER NOT NULL,
+    callbacks TEXT NOT NULL DEFAULT '',
+    runbook_url TEXT,
+    notify_recovered INTEGER NOT NULL,
+    notify_channels TEXT NOT NULL DEFAULT '',
+    notify_groups TEXT NOT NULL DEFAULT '',
+    notify_cur_number INTEGER NOT NULL DEFAULT 0,
+    target_ident TEXT NOT NULL DEFAULT '',
+    target_note TEXT NOT NULL DEFAULT '',
+    first_trigger_time INTEGER,
+    trigger_time INTEGER NOT NULL,
+    trigger_value TEXT NOT NULL,
+    recover_time INTEGER NOT NULL DEFAULT 0,
+    last_eval_time INTEGER NOT NULL DEFAULT 0,
+    tags TEXT NOT NULL DEFAULT '',
+    original_tags TEXT,
+    annotations TEXT NOT NULL,
+    rule_config TEXT NOT NULL
 );
-CREATE INDEX `idx_alert_his_event_last_eval_time` ON `alert_his_event` (`last_eval_time` asc);
-CREATE INDEX `idx_alert_his_event_hash` ON `alert_his_event` (`hash` asc);
-CREATE INDEX `idx_alert_his_event_rule_id` ON `alert_his_event` (`rule_id` asc);
-CREATE INDEX `idx_alert_his_event_trigger_time_group_id` ON `alert_his_event` (`trigger_time`, `group_id` asc);
+CREATE INDEX idx_last_eval_time ON alert_his_event (last_eval_time);
+CREATE INDEX idx_hash ON alert_his_event (hash);
+CREATE INDEX idx_rule_id ON alert_his_event (rule_id);
+CREATE INDEX idx_trigger_time_group_id ON alert_his_event (trigger_time, group_id);
 
 CREATE TABLE `board_busigroup` (
   `busi_group_id` bigint(20) NOT NULL DEFAULT '0',
@@ -445,35 +473,51 @@ CREATE TABLE `board_busigroup` (
   primary key (`busi_group_id`, `board_id`)
 );
 
-CREATE TABLE `builtin_components` (
-  `id` integer primary key autoincrement,
-  `ident` varchar(191) not null,
-  `logo` varchar(191) not null,
-  `readme` text not null,
-  `created_at` bigint(20) not null default 0,
-  `created_by` varchar(191) not null default '',
-  `updated_at` bigint(20) not null default 0,
-  `updated_by` varchar(191) not null default ''
+CREATE TABLE builtin_components (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ident TEXT NOT NULL,
+    logo TEXT,
+    readme TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX `idx_builtin_components_ident` ON `builtin_components` (`ident` asc);
 
-CREATE TABLE `builtin_payloads` (
-  `id` integer primary key autoincrement,
-  `type` varchar(191) not null,
-  `component` varchar(191) not null,
-  `cate` varchar(191) not null,
-  `name` varchar(191) not null,
-  `tags` varchar(191) not null default '',
-  `content` longtext not null,
-  `created_at` bigint(20) not null default 0,
-  `created_by` varchar(191) not null default '',
-  `updated_at` bigint(20) not null default 0,
-  `updated_by` varchar(191) not null default ''
+CREATE UNIQUE INDEX idx_ident ON builtin_components (ident);
+
+CREATE TABLE builtin_payloads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    component_id INTEGER NOT NULL DEFAULT 0,
+    uuid INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    component TEXT NOT NULL,
+    cate TEXT NOT NULL,
+    name TEXT NOT NULL,
+    tags TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX `idx_builtin_payloads_component` ON `builtin_payloads` (`component` asc);
-CREATE INDEX `idx_builtin_payloads_name` ON `builtin_payloads` (`name` asc);
-CREATE INDEX `idx_builtin_payloads_cate` ON `builtin_payloads` (`cate` asc);
-CREATE INDEX `idx_builtin_payloads_type` ON `builtin_payloads` (`type` asc);
+CREATE INDEX idx_component ON builtin_payloads (component);
+CREATE INDEX idx_name ON builtin_payloads (name);
+CREATE INDEX idx_cate ON builtin_payloads (cate);
+CREATE INDEX idx_uuid ON builtin_payloads (uuid);
+CREATE INDEX idx_type ON builtin_payloads (type);
+
+CREATE TABLE notification_record (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    sub_id INTEGER,
+    channel TEXT NOT NULL,
+    status INTEGER,
+    target TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_evt ON notification_record (event_id);
 
 CREATE TABLE `task_tpl` (
     `id`        integer primary key autoincrement,
@@ -501,28 +545,27 @@ CREATE TABLE `task_tpl_host` (
 );
 CREATE INDEX `idx_task_tpl_host_id_host` ON `task_tpl_host` (`id`, `host` asc);
 
-CREATE TABLE `task_record` (
-    `id` integer primary key autoincrement,
-    `event_id` bigint not null default 0,
-    `group_id` bigint not null,
-    `ibex_address`   varchar(128) not null,
-    `ibex_auth_user` varchar(128) not null default '',
-    `ibex_auth_pass` varchar(128) not null default '',
-    `title`     varchar(255)    not null default '',
-    `account`   varchar(64)     not null,
-    `batch`     int unsigned    not null default 0,
-    `tolerance` int unsigned    not null default 0,
-    `timeout`   int unsigned    not null default 0,
-    `pause`     varchar(255)    not null default '',
-    `script`    text            not null,
-    `args`      varchar(512)    not null default '',
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default ''
+CREATE TABLE task_record (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL DEFAULT 0,
+    group_id INTEGER NOT NULL,
+    ibex_address TEXT NOT NULL,
+    ibex_auth_user TEXT NOT NULL DEFAULT '',
+    ibex_auth_pass TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    account TEXT NOT NULL,
+    batch INTEGER NOT NULL DEFAULT 0,
+    tolerance INTEGER NOT NULL DEFAULT 0,
+    timeout INTEGER NOT NULL DEFAULT 0,
+    pause TEXT NOT NULL DEFAULT '',
+    script TEXT NOT NULL,
+    args TEXT NOT NULL DEFAULT '',
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX `idx_task_record_create_at_group_id` ON `task_record` (`create_at`, `group_id` asc);
-CREATE INDEX `idx_task_record_create_by` ON `task_record` (`create_by` asc);
-CREATE INDEX `idx_task_record_event_id` ON `task_record` (`event_id` asc);
-
+CREATE INDEX idx_task_record_create_at_group_id ON task_record (create_at, group_id);
+CREATE INDEX idx_task_record_create_by ON task_record (create_by);
+CREATE INDEX idx_event_id ON task_record (event_id);
 
 CREATE TABLE `alerting_engines` (
     `id` integer primary key autoincrement,
@@ -532,26 +575,26 @@ CREATE TABLE `alerting_engines` (
     `clock` bigint not null
 );
 
-CREATE TABLE `datasource`
-(
-    `id` integer primary key autoincrement,
-    `name` varchar(191) not null default '' unique,
-    `description` varchar(255) not null default '',
-    `category` varchar(255) not null default '',
-    `plugin_id` int unsigned not null default 0,
-    `plugin_type` varchar(255) not null default '',
-    `plugin_type_name` varchar(255) not null default '',
-    `cluster_name` varchar(255) not null default '',
-    `settings` text not null,
-    `status` varchar(255) not null default '',
-    `http` varchar(4096) not null default '',
-    `auth` varchar(8192) not null default '',
-    `is_default` tinyint not null default 0,
-    `created_at` bigint not null default 0,
-    `created_by` varchar(64) not null default '',
-    `updated_at` bigint not null default 0,
-    `updated_by` varchar(64) not null default ''
+CREATE TABLE datasource (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT '',
+    plugin_id INTEGER NOT NULL DEFAULT 0,
+    plugin_type TEXT NOT NULL DEFAULT '',
+    plugin_type_name TEXT NOT NULL DEFAULT '',
+    cluster_name TEXT NOT NULL DEFAULT '',
+    settings TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT '',
+    http TEXT NOT NULL DEFAULT '',
+    auth TEXT NOT NULL DEFAULT '',
+    is_default BOOLEAN,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT ''
 );
+CREATE UNIQUE INDEX idx_datasource_name ON datasource (name);
 
 CREATE TABLE `builtin_cate` (
     `id` integer primary key autoincrement,
@@ -559,71 +602,84 @@ CREATE TABLE `builtin_cate` (
     `user_id` bigint not null default 0
 );
 
-CREATE TABLE `notify_tpl` (
-    `id` integer primary key autoincrement,
-    `channel` varchar(32) not null unique,
-    `name` varchar(255) not null,
-    `content` text not null,
-    `create_at` bigint not null default 0,
-    `create_by` varchar(64) not null default '',
-    `update_at` bigint not null default 0,
-    `update_by` varchar(64) not null default ''
+CREATE TABLE notify_tpl (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel TEXT NOT NULL,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    create_at INTEGER DEFAULT 0,
+    create_by TEXT DEFAULT '',
+    update_at INTEGER DEFAULT 0,
+    update_by TEXT DEFAULT ''
+);
+CREATE UNIQUE INDEX idx_notify_tpl_channel ON notify_tpl (channel);
+
+CREATE TABLE sso_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    update_at INTEGER DEFAULT 0
 );
 
-CREATE TABLE `sso_config` (
-    `id` integer primary key autoincrement,
-    `name` varchar(191) not null unique,
-    `content` text not null,
-    `update_at` bigint not null default 0
+CREATE UNIQUE INDEX idx_sso_config_name ON sso_config (name);
+
+CREATE TABLE es_index_pattern (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    datasource_id INTEGER NOT NULL DEFAULT 0,
+    name TEXT NOT NULL,
+    time_field TEXT NOT NULL DEFAULT '@timestamp',
+    allow_hide_system_indices INTEGER NOT NULL DEFAULT 0,
+    fields_format TEXT NOT NULL DEFAULT '',
+    create_at INTEGER DEFAULT 0,
+    create_by TEXT DEFAULT '',
+    update_at INTEGER DEFAULT 0,
+    update_by TEXT DEFAULT ''
+);
+CREATE UNIQUE INDEX idx_es_index_pattern_datasource_id_name ON es_index_pattern (datasource_id, name);
+
+CREATE TABLE builtin_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collector TEXT NOT NULL,
+    typ TEXT NOT NULL,
+    name TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    lang TEXT NOT NULL DEFAULT 'zh',
+    note TEXT NOT NULL,
+    expression TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL DEFAULT 0,
+    updated_by TEXT NOT NULL DEFAULT '',
+    uuid INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE `es_index_pattern` (
-    `id` integer primary key autoincrement,
-    `datasource_id` bigint not null default 0,
-    `name` varchar(191) not null,
-    `time_field` varchar(128) not null default '@timestamp',
-    `allow_hide_system_indices` tinyint(1) not null default 0,
-    `fields_format` varchar(4096) not null default '',
-    `create_at` bigint default '0',
-    `create_by` varchar(64) default '',
-    `update_at` bigint default '0',
-    `update_by` varchar(64) default '',
-    unique (`datasource_id`, `name`)
+CREATE UNIQUE INDEX idx_collector_typ_name ON builtin_metrics (lang, collector, typ, name);
+CREATE INDEX idx_collector ON builtin_metrics (collector);
+CREATE INDEX idx_typ ON builtin_metrics (typ);
+CREATE INDEX idx_builtinmetric_name ON builtin_metrics (name);
+CREATE INDEX idx_lang ON builtin_metrics (lang);
+
+CREATE TABLE metric_filter (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    configs TEXT NOT NULL,
+    groups_perm TEXT,
+    create_at INTEGER NOT NULL DEFAULT 0,
+    create_by TEXT NOT NULL DEFAULT '',
+    update_at INTEGER NOT NULL DEFAULT 0,
+    update_by TEXT NOT NULL DEFAULT ''
 );
 
-CREATE TABLE `builtin_metrics` (
-    `id` integer primary key autoincrement,
-    `collector` varchar(191) NOT NULL,
-    `typ` varchar(191) NOT NULL,
-    `name` varchar(191) NOT NULL,
-    `unit` varchar(191) NOT NULL,
-    `lang` varchar(191) NOT NULL DEFAULT '',
-    `note` varchar(4096) NOT NULL,
-    `expression` varchar(4096) NOT NULL,
-    `created_at` bigint NOT NULL DEFAULT 0,
-    `created_by` varchar(191) NOT NULL DEFAULT '',
-    `updated_at` bigint NOT NULL DEFAULT 0,
-    `updated_by` varchar(191) NOT NULL DEFAULT ''
+CREATE INDEX idx_metricfilter_name ON metric_filter (name ASC);
+
+CREATE TABLE target_busi_group (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    target_ident TEXT NOT NULL,
+    group_id INTEGER NOT NULL,
+    update_at INTEGER NOT NULL
 );
--- CREATE UNIQUE INDEX `idx_builtin_metrics_collector_typ_name` ON `builtin_metrics` (`lang`,`collector`, `typ`, `name` asc);
--- CREATE INDEX `idx_builtin_metrics_collector` ON `builtin_metrics` (`collector` asc);
--- CREATE INDEX `idx_builtin_metrics_typ` ON `builtin_metrics` (`typ` asc);
--- CREATE INDEX `idx_builtin_metrics_name` ON `builtin_metrics` (`name` asc);
--- CREATE INDEX `idx_builtin_metrics_lang` ON `builtin_metrics` (`lang` asc);
 
-
-CREATE TABLE `metric_filter` (
-  `id` integer primary key autoincrement,
-  `name` varchar(191) NOT NULL,
-  `configs` varchar(4096) NOT NULL,
-  `groups_perm` text,
-  `create_at` bigint NOT NULL DEFAULT '0',
-  `create_by` varchar(191) NOT NULL DEFAULT '',
-  `update_at` bigint NOT NULL DEFAULT '0',
-  `update_by` varchar(191) NOT NULL DEFAULT ''
-);
-CREATE INDEX `idx_metric_filter_name` ON `metric_filter` (`name` asc);
-
+CREATE UNIQUE INDEX idx_target_busi_group ON target_busi_group (target_ident, group_id);
 
 CREATE TABLE `task_meta`
 (
@@ -659,22 +715,21 @@ CREATE TABLE `task_scheduler`
 );
 CREATE INDEX `idx_task_scheduler_id_scheduler` ON `task_scheduler` (`id`, `scheduler` asc);
 
-CREATE TABLE `task_scheduler_health`
-(
-    `scheduler` varchar(128) not null unique,
-    `clock`     bigint       not null
+CREATE TABLE task_scheduler_health (
+    scheduler TEXT NOT NULL UNIQUE,
+    clock INTEGER NOT NULL
 );
-CREATE INDEX `idx_task_scheduler_health_clock` ON `task_scheduler_health` (`clock` asc);
+CREATE INDEX idx_task_scheduler_health_clock ON task_scheduler_health (clock);
 
-CREATE TABLE `task_host_doing`
-(
-    `id`     bigint unsigned not null,
-    `host`   varchar(128)    not null,
-    `clock`  bigint          not null default 0,
-    `action` varchar(16)     not null
+CREATE TABLE task_host_doing (
+    id INTEGER NOT NULL,
+    host TEXT NOT NULL,
+    clock INTEGER NOT NULL DEFAULT 0,
+    action TEXT NOT NULL
 );
-CREATE INDEX `idx_task_host_doing_id` ON `task_host_doing` (`id` asc);
-CREATE INDEX `idx_task_host_doing_host` ON `task_host_doing` (`host` asc);
+
+CREATE INDEX idx_task_host_doing_id ON task_host_doing (id);
+CREATE INDEX idx_task_host_doing_host ON task_host_doing (host);
 
 CREATE TABLE task_host_0
 (
