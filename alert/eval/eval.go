@@ -252,8 +252,8 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 		if query.VarEnabled {
 			var anomalyPoints []models.AnomalyPoint
-			if hasLabelLossAggregator(query) {
-				// 若有聚合函数则需要先填充变量然后查询，这个方式效率较低
+			if hasLabelLossAggregator(query) || notExactMatch(query) {
+				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低
 				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
 			} else {
 				// 先查询再过滤变量，效率较高，但无法处理有聚合函数的情况
@@ -1350,6 +1350,15 @@ func hasLabelLossAggregator(query models.PromQuery) bool {
 		}
 	}
 
+	return false
+}
+
+// 判断 query 中是否有 != =~ !~
+func notExactMatch(query models.PromQuery) bool {
+	promql := strings.ToLower(query.PromQl)
+	if strings.Contains(promql, "!=") || strings.Contains(promql, "=~") || strings.Contains(promql, "!~") {
+		return true
+	}
 	return false
 }
 
