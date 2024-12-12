@@ -36,7 +36,7 @@ func main() {
 
 	cleanFunc, err := center.Initialize(*configDir, *cryptoKey)
 	if err != nil {
-		log.Fatalln("failed to initialize:", err, "\nconfig dir is: ", *configDir)
+		log.Fatalln("failed to initialize:", err)
 	}
 
 	code := 1
