@@ -538,6 +538,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 			return nil, fmt.Errorf("param key: %s, params is empty", paramKey)
 		}
 
+		logger.Infof("rule_eval:%s paramKey: %s, params: %v", arw.Key(), paramKey, params)
 		paramMap[paramKey] = params
 	}
 
@@ -546,7 +547,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 
 	res := make(map[string]struct{})
 	for i := range permutation {
-		res[strings.Join(permutation[i], "-")] = struct{}{}
+		res[strings.Join(permutation[i], "@@")] = struct{}{}
 	}
 
 	return res, nil
@@ -1280,7 +1281,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			keyToPromql := make(map[string]string)
 			for paramPermutationKeys, _ := range paramPermutation {
 				realPromql := curPromql
-				split := strings.Split(paramPermutationKeys, "-")
+				split := strings.Split(paramPermutationKeys, "@@")
 				for j := range ParamKeys {
 					realPromql = fillVar(realPromql, ParamKeys[j], split[j])
 				}
@@ -1303,6 +1304,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), promql, err)
 						return
 					}
+					logger.Infof("rule_eval:%s, promql:%s, value:%+v", arw.Key(), promql, value)
 
 					points := models.ConvertAnomalyPoints(value)
 					if len(points) == 0 {
