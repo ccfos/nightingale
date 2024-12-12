@@ -29,21 +29,31 @@ func LoadConfigByDir(configDir string, configPtr interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to list files under: %s : %v", configDir, err)
 	}
+
+	found := false
+
 	s := NewFileScanner()
 	for _, fpath := range files {
 		switch {
 		case strings.HasSuffix(fpath, ".toml"):
+			found = true
 			s.Read(path.Join(configDir, fpath))
 			tBuf = append(tBuf, s.Data()...)
 			tBuf = append(tBuf, []byte("\n")...)
 		case strings.HasSuffix(fpath, ".json"):
+			found = true
 			loaders = append(loaders, &multiconfig.JSONLoader{Path: path.Join(configDir, fpath)})
 		case strings.HasSuffix(fpath, ".yaml") || strings.HasSuffix(fpath, ".yml"):
+			found = true
 			loaders = append(loaders, &multiconfig.YAMLLoader{Path: path.Join(configDir, fpath)})
 		}
 		if s.Err() != nil {
 			return s.Err()
 		}
+	}
+
+	if !found {
+		return fmt.Errorf("fail to found config file, config dir path: %v", configDir)
 	}
 
 	if len(tBuf) != 0 {
