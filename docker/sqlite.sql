@@ -578,22 +578,22 @@ CREATE TABLE `alerting_engines` (
 
 CREATE TABLE `datasource` (
     `id` integer primary key autoincrement,
-    `name` text not null default '',
-    `description` text not null default '',
-    `category` text not null default '',
+    `name` varchar(191) not null default '',
+    `description` varchar(255) not null default '',
+    `category` varchar(255) not null default '',
     `plugin_id` integer not null default 0,
-    `plugin_type` text not null default '',
-    `plugin_type_name` text not null default '',
-    `cluster_name` text not null default '',
+    `plugin_type` varchar(255) not null default '',
+    `plugin_type_name` varchar(255) not null default '',
+    `cluster_name` varchar(255) not null default '',
     `settings` text not null,
-    `status` text not null default '',
-    `http` text not null default '',
-    `auth` text not null default '',
+    `status` varchar(255) not null default '',
+    `http` varchar(4096) not null default '',
+    `auth` varchar(8192) not null default '',
     `is_default` boolean,
     `created_at` integer not null default 0,
-    `created_by` text not null default '',
+    `created_by` varchar(64) not null default '',
     `updated_at` integer not null default 0,
-    `updated_by` text not null default ''
+    `updated_by` varchar(64) not null default ''
 );
 CREATE UNIQUE INDEX idx_datasource_name ON datasource (name);
 
