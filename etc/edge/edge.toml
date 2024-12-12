@@ -54,7 +54,7 @@ Enable = true
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.APIForService]
-Enable = true 
+Enable = false
 [HTTP.APIForService.BasicAuth]
 user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
