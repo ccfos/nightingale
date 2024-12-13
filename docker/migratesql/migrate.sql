@@ -121,3 +121,7 @@ CREATE TABLE `target_busi_group` (
 /* v7.7.2 2024-12-02 */
 ALTER TABLE alert_subscribe MODIFY COLUMN rule_ids varchar(1024);
 ALTER TABLE alert_subscribe MODIFY COLUMN busi_groups varchar(4096);
+
+/* v8.0.0-beta.1 2024-12-13 */
+ALTER TABLE `alert_rule` ADD COLUMN `cron_pattern` VARCHAR(64);
+ALTER TABLE `builtin_components` MODIFY COLUMN `logo` mediumtext COMMENT '''logo of component''';
