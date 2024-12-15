@@ -248,8 +248,8 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 		if query.VarEnabled {
 			var anomalyPoints []models.AnomalyPoint
-			if hasLabelLossAggregator(query) {
-				// 若有聚合函数则需要先填充变量然后查询，这个方式效率较低
+			if hasLabelLossAggregator(query) || notExactMatch(query) {
+				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低
 				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
 			} else {
 				// 先查询再过滤变量，效率较高，但无法处理有聚合函数的情况
@@ -534,6 +534,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 			return nil, fmt.Errorf("param key: %s, params is empty", paramKey)
 		}
 
+		logger.Infof("rule_eval:%s paramKey: %s, params: %v", arw.Key(), paramKey, params)
 		paramMap[paramKey] = params
 	}
 
@@ -542,7 +543,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 
 	res := make(map[string]struct{})
 	for i := range permutation {
-		res[strings.Join(permutation[i], "-")] = struct{}{}
+		res[strings.Join(permutation[i], "@@")] = struct{}{}
 	}
 
 	return res, nil
@@ -1213,7 +1214,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			keyToPromql := make(map[string]string)
 			for paramPermutationKeys, _ := range paramPermutation {
 				realPromql := curPromql
-				split := strings.Split(paramPermutationKeys, "-")
+				split := strings.Split(paramPermutationKeys, "@@")
 				for j := range ParamKeys {
 					realPromql = fillVar(realPromql, ParamKeys[j], split[j])
 				}
@@ -1236,6 +1237,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), promql, err)
 						return
 					}
+					logger.Infof("rule_eval:%s, promql:%s, value:%+v", arw.Key(), promql, value)
 
 					points := models.ConvertAnomalyPoints(value)
 					if len(points) == 0 {
@@ -1283,6 +1285,15 @@ func hasLabelLossAggregator(query models.PromQuery) bool {
 		}
 	}
 
+	return false
+}
+
+// 判断 query 中是否有 != =~ !~
+func notExactMatch(query models.PromQuery) bool {
+	promql := strings.ToLower(query.PromQl)
+	if strings.Contains(promql, "!=") || strings.Contains(promql, "=~") || strings.Contains(promql, "!~") {
+		return true
+	}
 	return false
 }
 
