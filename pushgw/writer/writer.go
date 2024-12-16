@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/fasttime"
@@ -138,9 +139,10 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 }
 
 type WritersType struct {
-	pushgw   pconf.Pushgw
-	backends map[string]WriterType
-	queues   map[string]*IdentQueue
+	pushgw      pconf.Pushgw
+	backends    map[string]WriterType
+	queues      map[string]*IdentQueue
+	allQueueLen atomic.Value
 	sync.RWMutex
 }
 
@@ -160,14 +162,30 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 	}
 }
 
+func (ws *WritersType) SetAllQueueLen() {
+	for {
+		curMetricLen := 0
+		ws.RLock()
+		for _, q := range ws.queues {
+			curMetricLen += q.list.Len()
+		}
+		ws.RUnlock()
+		ws.allQueueLen.Store(curMetricLen)
+		time.Sleep(time.Duration(ws.pushgw.WriterOpt.AllQueueMaxSizeInterval) * time.Millisecond)
+	}
+}
+
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
-		backends: make(map[string]WriterType),
-		queues:   make(map[string]*IdentQueue),
-		pushgw:   pushgwConfig,
+		backends:    make(map[string]WriterType),
+		queues:      make(map[string]*IdentQueue),
+		pushgw:      pushgwConfig,
+		allQueueLen: atomic.Value{},
 	}
 
 	writers.Init()
+
+	go writers.SetAllQueueLen()
 	go writers.CleanExpQueue()
 	return writers
 }
@@ -217,6 +235,13 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	}
 
 	identQueue.ts = time.Now().Unix()
+	curLen := ws.allQueueLen.Load().(int)
+	if curLen > ws.pushgw.WriterOpt.AllQueueMaxSize {
+		logger.Warningf("Write %+v full, metric count over limit: %d", v, curLen)
+		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
+		return
+	}
+
 	succ := identQueue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
@@ -245,6 +270,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 
 func (ws *WritersType) Init() error {
 	opts := ws.pushgw.Writers
+	ws.allQueueLen.Store(0)
 
 	for i := 0; i < len(opts); i++ {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()

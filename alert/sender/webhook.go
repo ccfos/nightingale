@@ -59,17 +59,21 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	if webhook != nil {
 		insecureSkipVerify = webhook.SkipVerify
 	}
-	client := http.Client{
-		Timeout: time.Duration(conf.Timeout) * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-		},
+
+	if conf.Client == nil {
+		logger.Warningf("event_%s, event:%s, url: [%s], error: [%s]", channel, string(bs), conf.Url, "client is nil")
+		conf.Client = &http.Client{
+			Timeout: time.Duration(conf.Timeout) * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
+			},
+		}
 	}
 
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 	var resp *http.Response
 	var body []byte
-	resp, err = client.Do(req)
+	resp, err = conf.Client.Do(req)
 
 	if err != nil {
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
@@ -91,7 +95,7 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	return false, string(body), nil
 }
 
-func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
 		retryCount := 0
 		for retryCount < 3 {
@@ -106,7 +110,7 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *mod
 	}
 }
 
-func BatchSendWebhooks(ctx *ctx.Context, webhooks []*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
+func BatchSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
 		logger.Infof("push event:%+v to queue:%v", event, conf)
 		PushEvent(ctx, conf, event, stats)
