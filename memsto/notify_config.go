@@ -115,16 +115,16 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 			}
 
 			if webhooks[i].Client == nil {
-				webhooks[i].Client = &http.Client{
-					Timeout: time.Second * time.Duration(webhooks[i].Timeout),
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: webhooks[i].SkipVerify},
-						Proxy:           http.ProxyFromEnvironment,
-					},
+				transport := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: webhooks[i].SkipVerify},
 				}
-			}
-
-			if poster.UseProxy(webhooks[i].Url) {
+				if poster.UseProxy(webhooks[i].Url) {
+					transport.Proxy = http.ProxyFromEnvironment
+				}
+				webhooks[i].Client = &http.Client{
+					Timeout:   time.Second * time.Duration(webhooks[i].Timeout),
+					Transport: transport,
+				}
 			}
 
 			newWebhooks[webhooks[i].Url] = webhooks[i]
