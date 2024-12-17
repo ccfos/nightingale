@@ -65,3 +65,5 @@ queries.active
 
 /n9e-*
 n9e.sql
+
+!/datasource
