@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds"
-	"github.com/ccfos/nightingale/v6/ds/commons/eslike"
+	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 

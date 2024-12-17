@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	datasource "github.com/ccfos/nightingale/v6/ds"
+	datasource "github.com/ccfos/nightingale/v6/datasource"
 	td "github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 
