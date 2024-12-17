@@ -3,7 +3,7 @@ package dscache
 import (
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/ds"
+	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/toolkits/pkg/logger"
 )
 

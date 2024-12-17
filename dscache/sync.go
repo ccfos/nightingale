@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/ds"
-	"github.com/ccfos/nightingale/v6/ds/es"
+	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 

@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/ccfos/nightingale/v6/ds/es"
+	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/dscache"
 
 	"github.com/gin-gonic/gin"

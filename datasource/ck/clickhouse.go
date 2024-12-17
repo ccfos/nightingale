@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	datasource "github.com/ccfos/nightingale/v6/ds"
+	"github.com/ccfos/nightingale/v6/datasource"
 	ck "github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/macros"
