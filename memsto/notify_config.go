@@ -3,6 +3,7 @@ package memsto
 import (
 	"crypto/tls"
 	"encoding/json"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"net/http"
 	"strings"
 	"sync"
@@ -118,9 +119,14 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 					Timeout: time.Second * time.Duration(webhooks[i].Timeout),
 					Transport: &http.Transport{
 						TLSClientConfig: &tls.Config{InsecureSkipVerify: webhooks[i].SkipVerify},
+						Proxy:           http.ProxyFromEnvironment,
 					},
 				}
 			}
+
+			if poster.UseProxy(webhooks[i].Url) {
+			}
+
 			newWebhooks[webhooks[i].Url] = webhooks[i]
 		}
 
