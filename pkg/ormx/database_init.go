@@ -340,42 +340,43 @@ func (InitChartShare) TableOptions() string {
 }
 
 type InitAlertRule struct {
-	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID          uint64 `gorm:"not null;default:0;comment:busi group id;index"`
-	Cate             string `gorm:"size:128;not null"`
-	DatasourceIDs    string `gorm:"size:255;not null;default:'';comment:datasource ids"`
-	Cluster          string `gorm:"size:128;not null"`
-	Name             string `gorm:"size:255;not null"`
-	Note             string `gorm:"size:1024;not null;default:''"`
-	Prod             string `gorm:"size:255;not null;default:''"`
-	Algorithm        string `gorm:"size:255;not null;default:''"`
-	AlgoParams       string `gorm:"size:255"`
-	Delay            int32  `gorm:"not null;default:0"`
-	Severity         int16  `gorm:"type:tinyint(1);not null;comment:1:Emergency 2:Warning 3:Notice"`
-	Disabled         bool   `gorm:"type:tinyint(1);not null;comment:0:enabled 1:disabled"`
-	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
-	RuleConfig       string `gorm:"type:text;not null;comment:rule_config"`
-	PromQL           string `gorm:"type:text;not null;comment:promql"`
-	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
-	EnableStime      string `gorm:"size:255;not null;default:'00:00'"`
-	EnableEtime      string `gorm:"size:255;not null;default:'23:59'"`
-	EnableDaysOfWeek string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
-	EnableInBg       bool   `gorm:"type:tinyint(1);not null;default:0;comment:1: only this bg 0: global"`
-	NotifyRecovered  bool   `gorm:"type:tinyint(1);not null;comment:whether notify when recovery"`
-	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
-	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
-	NotifyRepeatStep int32  `gorm:"not null;default:0;comment:unit: min"`
-	NotifyMaxNumber  int32  `gorm:"not null;default:0"`
-	RecoverDuration  int32  `gorm:"not null;default:0;comment:unit: s"`
-	Callbacks        string `gorm:"size:4096;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
-	RunbookURL       string `gorm:"size:4096"`
-	AppendTags       string `gorm:"size:255;not null;default:'';comment:split by space: service=n9e mod=api"`
-	Annotations      string `gorm:"type:text;not null;comment:annotations"`
-	ExtraConfig      string `gorm:"type:text;not null;comment:extra_config"`
-	CreateAt         int64  `gorm:"not null;default:0"`
-	CreateBy         string `gorm:"size:64;not null;default:''"`
-	UpdateAt         int64  `gorm:"not null;default:0;index"`
-	UpdateBy         string `gorm:"size:64;not null;default:''"`
+	ID                uint64 `gorm:"primaryKey;autoIncrement"`
+	GroupID           uint64 `gorm:"not null;default:0;comment:busi group id;index"`
+	Cate              string `gorm:"size:128;not null"`
+	DatasourceIDs     string `gorm:"size:255;not null;default:'';comment:datasource ids"`
+	Cluster           string `gorm:"size:128;not null"`
+	Name              string `gorm:"size:255;not null"`
+	Note              string `gorm:"size:1024;not null;default:''"`
+	Prod              string `gorm:"size:255;not null;default:''"`
+	Algorithm         string `gorm:"size:255;not null;default:''"`
+	AlgoParams        string `gorm:"size:255"`
+	Delay             int32  `gorm:"not null;default:0"`
+	Severity          int16  `gorm:"type:tinyint(1);not null;comment:1:Emergency 2:Warning 3:Notice"`
+	Disabled          bool   `gorm:"type:tinyint(1);not null;comment:0:enabled 1:disabled"`
+	PromForDuration   int32  `gorm:"not null;comment:prometheus for, unit:s"`
+	RuleConfig        string `gorm:"type:text;not null;comment:rule_config"`
+	PromQL            string `gorm:"type:text;not null;comment:promql"`
+	PromEvalInterval  int32  `gorm:"not null;comment:evaluate interval"`
+	EnableStime       string `gorm:"size:255;not null;default:'00:00'"`
+	EnableEtime       string `gorm:"size:255;not null;default:'23:59'"`
+	EnableDaysOfWeek  string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
+	EnableInBg        bool   `gorm:"type:tinyint(1);not null;default:0;comment:1: only this bg 0: global"`
+	NotifyRecovered   bool   `gorm:"type:tinyint(1);not null;comment:whether notify when recovery"`
+	NotifyChannels    string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
+	NotifyGroups      string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
+	NotifyRepeatStep  int32  `gorm:"not null;default:0;comment:unit: min"`
+	NotifyMaxNumber   int32  `gorm:"not null;default:0"`
+	RecoverDuration   int32  `gorm:"not null;default:0;comment:unit: s"`
+	Callbacks         string `gorm:"size:4096;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
+	RunbookURL        string `gorm:"size:4096"`
+	AppendTags        string `gorm:"size:255;not null;default:'';comment:split by space: service=n9e mod=api"`
+	Annotations       string `gorm:"type:text;not null;comment:annotations"`
+	ExtraConfig       string `gorm:"type:text;not null;comment:extra_config"`
+	CreateAt          int64  `gorm:"not null;default:0"`
+	CreateBy          string `gorm:"size:64;not null;default:''"`
+	UpdateAt          int64  `gorm:"not null;default:0;index"`
+	UpdateBy          string `gorm:"size:64;not null;default:''"`
+	DatasourceQueries string `gorm:"column:datasource_queries"`
 }
 
 func (InitAlertRule) TableName() string {
@@ -387,42 +388,43 @@ func (InitAlertRule) TableOptions() string {
 }
 
 type InitPostgresAlertRule struct {
-	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID          uint64 `gorm:"not null;default:0;comment:busi group id;index"`
-	Cate             string `gorm:"size:128;not null"`
-	DatasourceIDs    string `gorm:"size:255;not null;default:'';comment:datasource ids"`
-	Cluster          string `gorm:"size:128;not null"`
-	Name             string `gorm:"size:255;not null"`
-	Note             string `gorm:"size:1024;not null;default:''"`
-	Prod             string `gorm:"size:255;not null;default:''"`
-	Algorithm        string `gorm:"size:255;not null;default:''"`
-	AlgoParams       string `gorm:"size:255"`
-	Delay            int32  `gorm:"not null;default:0"`
-	Severity         int16  `gorm:"type:smallint;not null;comment:1:Emergency 2:Warning 3:Notice"`
-	Disabled         int16  `gorm:"type:smallint;not null;comment:0:enabled 1:disabled"`
-	PromForDuration  int32  `gorm:"not null;comment:prometheus for, unit:s"`
-	RuleConfig       string `gorm:"type:text;not null;comment:rule_config"`
-	PromQL           string `gorm:"type:text;not null;comment:promql"`
-	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
-	EnableStime      string `gorm:"size:255;not null;default:'00:00'"`
-	EnableEtime      string `gorm:"size:255;not null;default:'23:59'"`
-	EnableDaysOfWeek string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
-	EnableInBg       int16  `gorm:"type:smallint;not null;default:0;comment:1: only this bg 0: global"`
-	NotifyRecovered  int16  `gorm:"type:smallint;not null;comment:whether notify when recovery"`
-	NotifyChannels   string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
-	NotifyGroups     string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
-	NotifyRepeatStep int32  `gorm:"not null;default:0;comment:unit: min"`
-	NotifyMaxNumber  int32  `gorm:"not null;default:0"`
-	RecoverDuration  int32  `gorm:"not null;default:0;comment:unit: s"`
-	Callbacks        string `gorm:"size:4096;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
-	RunbookURL       string `gorm:"size:4096"`
-	AppendTags       string `gorm:"size:255;not null;default:'';comment:split by space: service=n9e mod=api"`
-	Annotations      string `gorm:"type:text;not null;comment:annotations"`
-	ExtraConfig      string `gorm:"type:text;not null;comment:extra_config"`
-	CreateAt         int64  `gorm:"not null;default:0"`
-	CreateBy         string `gorm:"size:64;not null;default:''"`
-	UpdateAt         int64  `gorm:"not null;default:0;index"`
-	UpdateBy         string `gorm:"size:64;not null;default:''"`
+	ID                uint64 `gorm:"primaryKey;autoIncrement"`
+	GroupID           uint64 `gorm:"not null;default:0;comment:busi group id;index"`
+	Cate              string `gorm:"size:128;not null"`
+	DatasourceIDs     string `gorm:"size:255;not null;default:'';comment:datasource ids"`
+	Cluster           string `gorm:"size:128;not null"`
+	Name              string `gorm:"size:255;not null"`
+	Note              string `gorm:"size:1024;not null;default:''"`
+	Prod              string `gorm:"size:255;not null;default:''"`
+	Algorithm         string `gorm:"size:255;not null;default:''"`
+	AlgoParams        string `gorm:"size:255"`
+	Delay             int32  `gorm:"not null;default:0"`
+	Severity          int16  `gorm:"type:smallint;not null;comment:1:Emergency 2:Warning 3:Notice"`
+	Disabled          int16  `gorm:"type:smallint;not null;comment:0:enabled 1:disabled"`
+	PromForDuration   int32  `gorm:"not null;comment:prometheus for, unit:s"`
+	RuleConfig        string `gorm:"type:text;not null;comment:rule_config"`
+	PromQL            string `gorm:"type:text;not null;comment:promql"`
+	PromEvalInterval  int32  `gorm:"not null;comment:evaluate interval"`
+	EnableStime       string `gorm:"size:255;not null;default:'00:00'"`
+	EnableEtime       string `gorm:"size:255;not null;default:'23:59'"`
+	EnableDaysOfWeek  string `gorm:"size:255;not null;default:'';comment:split by space: 0 1 2 3 4 5 6"`
+	EnableInBg        int16  `gorm:"type:smallint;not null;default:0;comment:1: only this bg 0: global"`
+	NotifyRecovered   int16  `gorm:"type:smallint;not null;comment:whether notify when recovery"`
+	NotifyChannels    string `gorm:"size:255;not null;default:'';comment:split by space: sms voice email dingtalk wecom"`
+	NotifyGroups      string `gorm:"size:255;not null;default:'';comment:split by space: 233 43"`
+	NotifyRepeatStep  int32  `gorm:"not null;default:0;comment:unit: min"`
+	NotifyMaxNumber   int32  `gorm:"not null;default:0"`
+	RecoverDuration   int32  `gorm:"not null;default:0;comment:unit: s"`
+	Callbacks         string `gorm:"size:4096;not null;default:'';comment:split by space: http://a.com/api/x http://a.com/api/y"`
+	RunbookURL        string `gorm:"size:4096"`
+	AppendTags        string `gorm:"size:255;not null;default:'';comment:split by space: service=n9e mod=api"`
+	Annotations       string `gorm:"type:text;not null;comment:annotations"`
+	ExtraConfig       string `gorm:"type:text;not null;comment:extra_config"`
+	CreateAt          int64  `gorm:"not null;default:0"`
+	CreateBy          string `gorm:"size:64;not null;default:''"`
+	UpdateAt          int64  `gorm:"not null;default:0;index"`
+	UpdateBy          string `gorm:"size:64;not null;default:''"`
+	DatasourceQueries string `gorm:"column:datasource_queries"`
 }
 
 func (InitPostgresAlertRule) TableName() string {
@@ -612,22 +614,23 @@ func (InitPostgresMetricView) TableName() string {
 }
 
 type InitRecordingRule struct {
-	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID          uint64 `gorm:"not null;default:0;comment:group_id;index"`
-	DatasourceIDs    string `gorm:"size:255;not null;default:'';comment:datasource ids"`
-	Cluster          string `gorm:"size:128;not null"`
-	Name             string `gorm:"size:255;not null;comment:new metric name"`
-	Note             string `gorm:"size:255;not null;comment:rule note"`
-	Disabled         bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:enabled 1:disabled"`
-	PromQL           string `gorm:"size:8192;not null;comment:promql"`
-	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
-	CronPattern      string `gorm:"size:255;default:'';comment:cron pattern"`
-	AppendTags       string `gorm:"size:255;default:'';comment:split by space: service=n9e mod=api"`
-	QueryConfigs     string `gorm:"type:text;not null;comment:query configs"`
-	CreateAt         int64  `gorm:"default:0"`
-	CreateBy         string `gorm:"size:64;default:''"`
-	UpdateAt         int64  `gorm:"default:0;index"`
-	UpdateBy         string `gorm:"size:64;default:''"`
+	ID                uint64 `gorm:"primaryKey;autoIncrement"`
+	GroupID           uint64 `gorm:"not null;default:0;comment:group_id;index"`
+	DatasourceIDs     string `gorm:"size:255;not null;default:'';comment:datasource ids"`
+	Cluster           string `gorm:"size:128;not null"`
+	Name              string `gorm:"size:255;not null;comment:new metric name"`
+	Note              string `gorm:"size:255;not null;comment:rule note"`
+	Disabled          bool   `gorm:"type:tinyint(1);not null;default:0;comment:0:enabled 1:disabled"`
+	PromQL            string `gorm:"size:8192;not null;comment:promql"`
+	PromEvalInterval  int32  `gorm:"not null;comment:evaluate interval"`
+	CronPattern       string `gorm:"size:255;default:'';comment:cron pattern"`
+	AppendTags        string `gorm:"size:255;default:'';comment:split by space: service=n9e mod=api"`
+	QueryConfigs      string `gorm:"type:text;not null;comment:query configs"`
+	CreateAt          int64  `gorm:"default:0"`
+	CreateBy          string `gorm:"size:64;default:''"`
+	UpdateAt          int64  `gorm:"default:0;index"`
+	UpdateBy          string `gorm:"size:64;default:''"`
+	DatasourceQueries string `gorm:"column:datasource_queries"`
 }
 
 func (InitRecordingRule) TableName() string {
@@ -639,22 +642,23 @@ func (InitRecordingRule) TableOptions() string {
 }
 
 type InitPostgresRecordingRule struct {
-	ID               uint64 `gorm:"primaryKey;autoIncrement"`
-	GroupID          uint64 `gorm:"not null;default:0;comment:group_id;index"`
-	DatasourceIDs    string `gorm:"size:255;not null;default:'';comment:datasource ids"`
-	Cluster          string `gorm:"size:128;not null"`
-	Name             string `gorm:"size:255;not null;comment:new metric name"`
-	Note             string `gorm:"size:255;not null;comment:rule note"`
-	Disabled         int16  `gorm:"type:smallint;not null;default:0;comment:0:enabled 1:disabled"`
-	PromQL           string `gorm:"size:8192;not null;comment:promql"`
-	PromEvalInterval int32  `gorm:"not null;comment:evaluate interval"`
-	CronPattern      string `gorm:"size:255;default:'';comment:cron pattern"`
-	AppendTags       string `gorm:"size:255;default:'';comment:split by space: service=n9e mod=api"`
-	QueryConfigs     string `gorm:"type:text;not null;comment:query configs"`
-	CreateAt         int64  `gorm:"default:0"`
-	CreateBy         string `gorm:"size:64;default:''"`
-	UpdateAt         int64  `gorm:"default:0;index"`
-	UpdateBy         string `gorm:"size:64;default:''"`
+	ID                uint64 `gorm:"primaryKey;autoIncrement"`
+	GroupID           uint64 `gorm:"not null;default:0;comment:group_id;index"`
+	DatasourceIDs     string `gorm:"size:255;not null;default:'';comment:datasource ids"`
+	Cluster           string `gorm:"size:128;not null"`
+	Name              string `gorm:"size:255;not null;comment:new metric name"`
+	Note              string `gorm:"size:255;not null;comment:rule note"`
+	Disabled          int16  `gorm:"type:smallint;not null;default:0;comment:0:enabled 1:disabled"`
+	PromQL            string `gorm:"size:8192;not null;comment:promql"`
+	PromEvalInterval  int32  `gorm:"not null;comment:evaluate interval"`
+	CronPattern       string `gorm:"size:255;default:'';comment:cron pattern"`
+	AppendTags        string `gorm:"size:255;default:'';comment:split by space: service=n9e mod=api"`
+	QueryConfigs      string `gorm:"type:text;not null;comment:query configs"`
+	CreateAt          int64  `gorm:"default:0"`
+	CreateBy          string `gorm:"size:64;default:''"`
+	UpdateAt          int64  `gorm:"default:0;index"`
+	UpdateBy          string `gorm:"size:64;default:''"`
+	DatasourceQueries string `gorm:"column:datasource_queries"`
 }
 
 func (InitPostgresRecordingRule) TableName() string {
@@ -1207,6 +1211,7 @@ type InitBuiltinMetric struct {
 	CreatedBy  string `gorm:"size:191;not null;default:'';comment:creator"`
 	UpdatedAt  int64  `gorm:"not null;default:0;comment:update time"`
 	UpdatedBy  string `gorm:"size:191;not null;default:'';comment:updater"`
+	UUID       int64  `gorm:"column:uuid;not null;default:0;comment:'uuid'"`
 }
 
 func (InitBuiltinMetric) TableName() string {
@@ -1230,6 +1235,7 @@ type InitSqliteBuiltinMetric struct {
 	CreatedBy  string `gorm:"size:191;not null;default:'';comment:creator"`
 	UpdatedAt  int64  `gorm:"not null;default:0;comment:update time"`
 	UpdatedBy  string `gorm:"size:191;not null;default:'';comment:updater"`
+	UUID       int64  `gorm:"column:uuid;not null;default:0;comment:'uuid'"`
 }
 
 func (InitSqliteBuiltinMetric) TableName() string {

@@ -111,7 +111,7 @@ func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
 		}
 	}
 
-	createDBQuery := fmt.Sprintf("CREATE DATABASE %s ENCODING='UTF8' LC_COLLATE='en_US.UTF-8' LC_CTYPE='en_US.UTF-8';", dbName)
+	createDBQuery := fmt.Sprintf("CREATE DATABASE %s ENCODING='UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';", dbName)
 
 	tempDialector := postgres.Open(connectionWithoutDB)
 
