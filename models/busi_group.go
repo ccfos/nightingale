@@ -115,68 +115,75 @@ func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool,
 	return num > 0, err
 }
 
+// RegisterGroupDelCheckEntries 提供给外部注册删除 group 时需要检查的表
+func RegisterGroupDelCheckEntries(e []CheckEntry) {
+	entries = append(entries, e...)
+}
+
+type CheckEntry struct {
+	Entry        interface{}
+	ErrorMessage string
+	FieldName    string
+}
+
+var entries = []CheckEntry{
+	{
+		Entry:        &AlertRule{},
+		ErrorMessage: "Some alert rules still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &AlertMute{},
+		ErrorMessage: "Some alert mutes still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &AlertSubscribe{},
+		ErrorMessage: "Some alert subscribes still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &Board{},
+		ErrorMessage: "Some Board still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &Target{},
+		ErrorMessage: "Some targets still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &RecordingRule{},
+		ErrorMessage: "Some recording rules still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &TaskTpl{},
+		ErrorMessage: "Some recovery scripts still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &TaskRecord{},
+		ErrorMessage: "Some Task Record records still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &TargetBusiGroup{},
+		ErrorMessage: "Some target busigroups still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+}
+
 func (bg *BusiGroup) Del(ctx *ctx.Context) error {
-	has, err := Exists(DB(ctx).Model(&AlertMute{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
+	for _, e := range entries {
+		has, err := Exists(DB(ctx).Model(e.Entry).Where(fmt.Sprintf("%s=?", e.FieldName), bg.Id))
+		if err != nil {
+			return err
+		}
 
-	if has {
-		return errors.New("Some alert mutes still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&AlertSubscribe{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some alert subscribes still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&TargetBusiGroup{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some targets still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&Board{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some dashboards still in the BusiGroup")
-	}
-
-	has, err = Exists(DB(ctx).Model(&TaskTpl{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some recovery scripts still in the BusiGroup")
-	}
-
-	// hasCR, err := Exists(DB(ctx).Table("collect_rule").Where("group_id=?", bg.Id))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if hasCR {
-	// 	return errors.New("Some collect rules still in the BusiGroup")
-	// }
-
-	has, err = Exists(DB(ctx).Model(&AlertRule{}).Where("group_id=?", bg.Id))
-	if err != nil {
-		return err
-	}
-
-	if has {
-		return errors.New("Some alert rules still in the BusiGroup")
+		if has {
+			return errors.New(e.ErrorMessage)
+		}
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
