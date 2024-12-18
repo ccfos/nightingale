@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
+	log "github.com/toolkits/pkg/logger"
 	tklog "github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -188,21 +189,13 @@ func checkSqliteDatabaseExist(c DBConfig) (bool, error) {
 func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.Split(c.DSN, " ")
 	dbName := ""
-	connectionWithoutDB := ""
 	for _, part := range dsnParts {
 		if strings.HasPrefix(part, "dbname=") {
 			dbName = part[strings.Index(part, "=")+1:]
-			if c.DBType == "postgres" {
-				connectionWithoutDB += part
-				connectionWithoutDB += " "
-			}
-		} else {
-			connectionWithoutDB += part
-			connectionWithoutDB += " "
 		}
 	}
 
-	dialector := postgres.Open(connectionWithoutDB)
+	dialector := postgres.Open(c.DSN)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -214,6 +207,11 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 
 	db, err := gorm.Open(dialector, gconfig)
 	if err != nil {
+		errStr := err.Error()
+		if strings.HasPrefix(errStr, "failed to connect to") && strings.Contains(errStr, "database \"") {
+			log.Warningf("warning postgres database not exit, err: %v\n", err)
+			return false, nil
+		}
 		return false, fmt.Errorf("failed to open database: %v", err)
 	}
 
