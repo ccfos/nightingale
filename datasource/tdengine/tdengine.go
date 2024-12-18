@@ -118,7 +118,50 @@ func (td *TDengine) QueryData(ctx context.Context, queryParam interface{}) ([]mo
 }
 
 func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
-	return nil, 0, nil
+	b, err := json.Marshal(queryParam)
+	if err != nil {
+		return nil, 0, err
+	}
+	var q TdengineQuery
+	err = json.Unmarshal(b, &q)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if q.Interval == 0 {
+		q.Interval = 60
+	}
+
+	if q.From == "" {
+		// 2023-09-21T05:37:30.000Z format
+		to := time.Now().Unix()
+		q.To = time.Unix(to, 0).UTC().Format(time.RFC3339)
+		from := to - q.Interval
+		q.From = time.Unix(from, 0).UTC().Format(time.RFC3339)
+	}
+
+	replacements := map[string]string{
+		"$from":     fmt.Sprintf("'%s'", q.From),
+		"$to":       fmt.Sprintf("'%s'", q.To),
+		"$interval": fmt.Sprintf("%ds", q.Interval),
+	}
+
+	for key, val := range replacements {
+		q.Query = strings.ReplaceAll(q.Query, key, val)
+	}
+
+	if !strings.Contains(q.Query, "limit") {
+		q.Query = q.Query + " limit 200"
+	}
+
+	data, err := td.QueryTable(q.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	log := TimeFormat(data, q.Keys.TimeFormat)
+
+	return []interface{}{log}, int64(data.Rows), nil
 }
 
 func (td *TDengine) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
@@ -399,4 +442,63 @@ func parseTimeString(ts string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("failed to parse time with any format: %v", lastErr)
+}
+
+func TimeFormat(src td.APIResponse, timeFormat string) *td.APIResponse {
+	if timeFormat == "" {
+		return nil
+	}
+
+	tsIdx := -1
+	for colIndex, colData := range src.ColumnMeta {
+		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
+		// 处理v2版本数字类型和v3版本字符串类型
+		switch t := colData[1].(type) {
+		case float64:
+			// v2版本数字类型映射
+			if int(t) == 9 { // TIMESTAMP type in v2
+				tsIdx = colIndex
+				break
+			}
+		case string:
+			// v3版本直接使用字符串类型
+			if t == "TIMESTAMP" {
+				tsIdx = colIndex
+				break
+			}
+		default:
+			logger.Warningf("unexpected column type: %v", colData[1])
+			continue
+		}
+	}
+
+	if tsIdx == -1 {
+		return nil
+	}
+
+	type timeData struct {
+		ColumnMeta [][]interface{} `json:"column_meta"`
+		Data       [][]interface{} `json:"data"`
+	}
+
+	for i := range src.Data {
+		var t time.Time
+		var err error
+
+		switch tsVal := src.Data[i][tsIdx].(type) {
+		case string:
+			// 尝试解析不同格式的时间字符串
+			t, err = parseTimeString(tsVal)
+			if err != nil {
+				logger.Warningf("parse timestamp string failed: %v, value: %v", err, tsVal)
+				continue
+			}
+		default:
+			logger.Warningf("unexpected timestamp type: %T, value: %v", tsVal, tsVal)
+			continue
+		}
+
+		src.Data[i][tsIdx] = t.In(time.Local).Format(timeFormat)
+	}
+	return &src
 }
