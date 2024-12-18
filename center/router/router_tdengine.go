@@ -56,7 +56,7 @@ func (rt *Router) tdengineTables(c *gin.Context) {
 
 	database := fmt.Sprintf("%s.tables", f.Database)
 	if f.IsStable {
-		database = fmt.Sprintf("%s.stables", database)
+		database = fmt.Sprintf("%s.stables", f.Database)
 	}
 
 	tables, err := datasource.(*tdengine.TDengine).ShowTables(rt.Ctx.Ctx, database)
