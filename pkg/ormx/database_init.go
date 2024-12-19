@@ -376,7 +376,7 @@ type InitAlertRule struct {
 	CreateBy          string `gorm:"size:64;not null;default:''"`
 	UpdateAt          int64  `gorm:"not null;default:0;index"`
 	UpdateBy          string `gorm:"size:64;not null;default:''"`
-	DatasourceQueries string `gorm:"column:datasource_queries"`
+	DatasourceQueries string `gorm:"type:text"`
 }
 
 func (InitAlertRule) TableName() string {
@@ -424,7 +424,7 @@ type InitPostgresAlertRule struct {
 	CreateBy          string `gorm:"size:64;not null;default:''"`
 	UpdateAt          int64  `gorm:"not null;default:0;index"`
 	UpdateBy          string `gorm:"size:64;not null;default:''"`
-	DatasourceQueries string `gorm:"column:datasource_queries"`
+	DatasourceQueries string `gorm:"type:text"`
 }
 
 func (InitPostgresAlertRule) TableName() string {
@@ -630,7 +630,7 @@ type InitRecordingRule struct {
 	CreateBy          string `gorm:"size:64;default:''"`
 	UpdateAt          int64  `gorm:"default:0;index"`
 	UpdateBy          string `gorm:"size:64;default:''"`
-	DatasourceQueries string `gorm:"column:datasource_queries"`
+	DatasourceQueries string `gorm:"type:text"`
 }
 
 func (InitRecordingRule) TableName() string {
@@ -658,7 +658,7 @@ type InitPostgresRecordingRule struct {
 	CreateBy          string `gorm:"size:64;default:''"`
 	UpdateAt          int64  `gorm:"default:0;index"`
 	UpdateBy          string `gorm:"size:64;default:''"`
-	DatasourceQueries string `gorm:"column:datasource_queries"`
+	DatasourceQueries string `gorm:"type:text"`
 }
 
 func (InitPostgresRecordingRule) TableName() string {
