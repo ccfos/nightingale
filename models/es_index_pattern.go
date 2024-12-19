@@ -20,6 +20,7 @@ type EsIndexPattern struct {
 	CreateBy                   string `json:"create_by"`
 	UpdateAt                   int64  `json:"update_at"`
 	UpdateBy                   string `json:"update_by"`
+	CrossClusterEnabled        int    `json:"cross_cluster_enabled"`
 }
 
 func (t *EsIndexPattern) TableName() string {
