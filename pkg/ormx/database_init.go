@@ -1211,7 +1211,7 @@ type InitBuiltinMetric struct {
 	CreatedBy  string `gorm:"size:191;not null;default:'';comment:creator"`
 	UpdatedAt  int64  `gorm:"not null;default:0;comment:update time"`
 	UpdatedBy  string `gorm:"size:191;not null;default:'';comment:updater"`
-	UUID       int64  `gorm:"column:uuid;not null;default:0;comment:'uuid'"`
+	UUID       int64  `gorm:"not null;default:0;comment:'uuid'"`
 }
 
 func (InitBuiltinMetric) TableName() string {
@@ -1235,7 +1235,7 @@ type InitSqliteBuiltinMetric struct {
 	CreatedBy  string `gorm:"size:191;not null;default:'';comment:creator"`
 	UpdatedAt  int64  `gorm:"not null;default:0;comment:update time"`
 	UpdatedBy  string `gorm:"size:191;not null;default:'';comment:updater"`
-	UUID       int64  `gorm:"column:uuid;not null;default:0;comment:'uuid'"`
+	UUID       int64  `gorm:"not null;default:0;comment:'uuid'"`
 }
 
 func (InitSqliteBuiltinMetric) TableName() string {
