@@ -156,6 +156,12 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 		resp.List = append(resp.List, data...)
 		resp.Total += total
 	}
+
+	if errMsg != "" || len(resp.List) == 0 {
+		ginx.Bomb(200, errMsg)
+	}
+
+	ginx.NewRender(c).Data(resp, nil)
 }
 
 func (rt *Router) QueryLog(c *gin.Context) {
