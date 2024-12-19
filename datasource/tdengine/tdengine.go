@@ -159,9 +159,7 @@ func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]int
 		return nil, 0, err
 	}
 
-	log := TimeFormat(data, q.Keys.TimeFormat)
-
-	return []interface{}{log}, int64(data.Rows), nil
+	return ConvertToTable(data), int64(len(data.Data)), nil
 }
 
 func (td *TDengine) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
@@ -444,61 +442,15 @@ func parseTimeString(ts string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("failed to parse time with any format: %v", lastErr)
 }
 
-func TimeFormat(src td.APIResponse, timeFormat string) *td.APIResponse {
-	if timeFormat == "" {
-		return nil
-	}
-
-	tsIdx := -1
-	for colIndex, colData := range src.ColumnMeta {
-		//  类型参考 https://docs.taosdata.com/taos-sql/data-type/
-		// 处理v2版本数字类型和v3版本字符串类型
-		switch t := colData[1].(type) {
-		case float64:
-			// v2版本数字类型映射
-			if int(t) == 9 { // TIMESTAMP type in v2
-				tsIdx = colIndex
-				break
-			}
-		case string:
-			// v3版本直接使用字符串类型
-			if t == "TIMESTAMP" {
-				tsIdx = colIndex
-				break
-			}
-		default:
-			logger.Warningf("unexpected column type: %v", colData[1])
-			continue
-		}
-	}
-
-	if tsIdx == -1 {
-		return nil
-	}
-
-	type timeData struct {
-		ColumnMeta [][]interface{} `json:"column_meta"`
-		Data       [][]interface{} `json:"data"`
-	}
+func ConvertToTable(src td.APIResponse) []interface{} {
+	var resp []interface{}
 
 	for i := range src.Data {
-		var t time.Time
-		var err error
-
-		switch tsVal := src.Data[i][tsIdx].(type) {
-		case string:
-			// 尝试解析不同格式的时间字符串
-			t, err = parseTimeString(tsVal)
-			if err != nil {
-				logger.Warningf("parse timestamp string failed: %v, value: %v", err, tsVal)
-				continue
-			}
-		default:
-			logger.Warningf("unexpected timestamp type: %T, value: %v", tsVal, tsVal)
-			continue
+		cur := make(map[string]interface{})
+		for j := range src.Data[i] {
+			cur[src.ColumnMeta[j][0].(string)] = src.Data[i][j]
 		}
-
-		src.Data[i][tsIdx] = t.In(time.Local).Format(timeFormat)
+		resp = append(resp, cur)
 	}
-	return &src
+	return resp
 }
