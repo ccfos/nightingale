@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -59,11 +60,17 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	if webhook != nil {
 		insecureSkipVerify = webhook.SkipVerify
 	}
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
+	}
+	if poster.UseProxy(conf.Url) {
+		transport.Proxy = http.ProxyFromEnvironment
+	}
+
 	client := http.Client{
-		Timeout: time.Duration(conf.Timeout) * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-		},
+		Timeout:   time.Duration(conf.Timeout) * time.Second,
+		Transport: transport,
 	}
 
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
