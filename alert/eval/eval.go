@@ -20,6 +20,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 	"github.com/ccfos/nightingale/v6/pkg/parser"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
+	promql2 "github.com/ccfos/nightingale/v6/pkg/promql"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/tdengine"
@@ -57,6 +58,10 @@ const (
 	CHECK_QUERY     = "check_query_config"
 	GET_CLIENT      = "get_client"
 	QUERY_DATA      = "query_data"
+)
+
+const (
+	JoinMark = "@@"
 )
 
 type JoinType string
@@ -348,11 +353,11 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
-	if err != nil {
-		logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
-		return nil
-	}
+	//allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
+	//if err != nil {
+	//	logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
+	//	return nil
+	//}
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
@@ -381,7 +386,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 			}
 			seqVals := getSamples(value)
 			// 得到参数变量的所有组合
-			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, allParamsMap)
+			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, varToLabel, query.PromQl, readerClient)
 			if err != nil {
 				logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
 				continue
@@ -396,8 +401,8 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 					curRealQuery = fillVar(curRealQuery, paramKey, val)
 				}
 
-				if _, ok := paramPermutation[strings.Join(cur, "-")]; ok {
-					anomalyPointsMap[strings.Join(cur, "-")] = models.AnomalyPoint{
+				if _, ok := paramPermutation[strings.Join(cur, JoinMark)]; ok {
+					anomalyPointsMap[strings.Join(cur, JoinMark)] = models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
 						Value:     float64(seqVals[i].Value),
@@ -406,7 +411,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 						Query:     curRealQuery,
 					}
 					// 生成异常点后，删除该参数组合
-					delete(paramPermutation, strings.Join(cur, "-"))
+					delete(paramPermutation, strings.Join(cur, JoinMark))
 				}
 			}
 
@@ -502,7 +507,7 @@ func removeVal(promql string) string {
 }
 
 // 获取参数变量的所有组合
-func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.ParamQuery, paramKeys []string, allParamsMap map[string][]string) (map[string]struct{}, error) {
+func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.ParamQuery, paramKeys []string, varToLabel map[string]string, originPromql string, readerClient promsdk.API) (map[string]struct{}, error) {
 
 	// 参数变量查询，得到参数变量值
 	paramMap := make(map[string][]string)
@@ -535,7 +540,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 				logger.Errorf("query:%s fail to unmarshalling into string slice, error:%v", paramQuery.Query, err)
 			}
 			if len(query) == 0 {
-				params = allParamsMap[paramKey]
+				params, _ = getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient)
 			} else {
 				params = query
 			}
@@ -556,10 +561,63 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 
 	res := make(map[string]struct{})
 	for i := range permutation {
-		res[strings.Join(permutation[i], "@@")] = struct{}{}
+		res[strings.Join(permutation[i], JoinMark)] = struct{}{}
 	}
 
 	return res, nil
+}
+
+func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API) ([]string, error) {
+	labels, metricName, err := promql2.GetLabelsAndMetricNameWithReplace(promql, "$")
+	if err != nil {
+		logger.Errorf("rule_eval:%s, get labels error:%v", err)
+		return nil, nil
+	}
+	labelstrs := make([]string, 0)
+	for _, label := range labels {
+		if strings.HasPrefix(label.Value, "$") {
+			continue
+		}
+		labelstrs = append(labelstrs, label.Name+label.Op+label.Value)
+	}
+	pr := metricName + "{" + strings.Join(labelstrs, ",") + "}"
+
+	value, _, err := client.Query(context.Background(), pr, time.Now())
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	labelValuesMap := make(map[string]struct{})
+
+	switch value.Type() {
+	case model.ValVector:
+		vector := value.(model.Vector)
+		for _, sample := range vector {
+			for labelName, labelValue := range sample.Metric {
+				// 只处理ParamKeys中指定的label
+				if string(labelName) == paramKey {
+					labelValuesMap[string(labelValue)] = struct{}{}
+				}
+			}
+		}
+	case model.ValMatrix:
+		matrix := value.(model.Matrix)
+		for _, series := range matrix {
+			for labelName, labelValue := range series.Metric {
+				// 只处理ParamKeys中指定的label
+				if string(labelName) == paramKey {
+					labelValuesMap[string(labelValue)] = struct{}{}
+				}
+			}
+		}
+	}
+
+	result := make([]string, 0)
+	for labelValue, _ := range labelValuesMap {
+		result = append(result, labelValue)
+	}
+
+	return result, nil
 }
 
 func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]string, error) {
@@ -1239,6 +1297,7 @@ func GetQueryRefAndUnit(query interface{}) (string, string, error) {
 // 再查询得到满足值变量的所有结果加入异常点列表
 // 参数变量的值不满足的组合，需要覆盖上层筛选中产生的异常点
 func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
+	varToLabel := ExtractVarMapping(query.PromQl)
 	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPointsMap := sync.Map{}
 	// 统一变量配置格式
@@ -1264,11 +1323,12 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
-	if err != nil {
-		logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
-		return nil
-	}
+	//allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
+	//if err != nil {
+	//	logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
+	//	return nil
+	//}
+
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
@@ -1286,7 +1346,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				curPromql = strings.Replace(curPromql, fmt.Sprintf("$%s", key), val, -1)
 			}
 			// 得到参数变量的所有组合
-			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, allParamsMap)
+			paramPermutation, err := arw.getParamPermutation(param, ParamKeys, varToLabel, query.PromQl, readerClient)
 			if err != nil {
 				logger.Errorf("rule_eval:%s, paramPermutation error:%v", arw.Key(), err)
 				continue
@@ -1295,7 +1355,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			keyToPromql := make(map[string]string)
 			for paramPermutationKeys, _ := range paramPermutation {
 				realPromql := curPromql
-				split := strings.Split(paramPermutationKeys, "@@")
+				split := strings.Split(paramPermutationKeys, JoinMark)
 				for j := range ParamKeys {
 					realPromql = fillVar(realPromql, ParamKeys[j], split[j])
 				}
@@ -1429,62 +1489,4 @@ func fillVar(curRealQuery string, paramKey string, val string) string {
 	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("'$%s'", paramKey), fmt.Sprintf("'%s'", val), -1)
 	curRealQuery = strings.Replace(curRealQuery, fmt.Sprintf("\"$%s\"", paramKey), fmt.Sprintf("\"%s\"", val), -1)
 	return curRealQuery
-}
-
-func removeAllVal(promql string) string {
-	promql = removeVal(promql)
-	index := strings.Index(promql, "}")
-	if index == -1 {
-		return promql
-	}
-	return promql[:index+1]
-}
-
-// 获取所有标签的值
-func getAllLabels(promql string, ParamKeys []string, readerClient promsdk.API) (map[string][]string, error) {
-	promql = removeAllVal(promql)
-	value, _, err := readerClient.Query(context.Background(), promql, time.Now())
-	if err != nil {
-		return nil, err
-	}
-
-	labelValuesMap := make(map[string]map[string]struct{})
-
-	for _, key := range ParamKeys {
-		labelValuesMap[key] = make(map[string]struct{})
-	}
-
-	switch value.Type() {
-	case model.ValVector:
-		vector := value.(model.Vector)
-		for _, sample := range vector {
-			for labelName, labelValue := range sample.Metric {
-				// 只处理ParamKeys中指定的label
-				if _, exists := labelValuesMap[string(labelName)]; exists {
-					labelValuesMap[string(labelName)][string(labelValue)] = struct{}{}
-				}
-			}
-		}
-	case model.ValMatrix:
-		matrix := value.(model.Matrix)
-		for _, series := range matrix {
-			for labelName, labelValue := range series.Metric {
-				// 只处理ParamKeys中指定的label
-				if _, exists := labelValuesMap[string(labelName)]; exists {
-					labelValuesMap[string(labelName)][string(labelValue)] = struct{}{}
-				}
-			}
-		}
-	}
-
-	result := make(map[string][]string)
-	for labelName, valueMap := range labelValuesMap {
-		values := make([]string, 0, len(valueMap))
-		for value := range valueMap {
-			values = append(values, value)
-		}
-		result[labelName] = values
-	}
-
-	return result, nil
 }
