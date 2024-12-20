@@ -353,11 +353,6 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	//allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
-	//if err != nil {
-	//	logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
-	//	return nil
-	//}
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
@@ -1323,12 +1318,6 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	sort.Slice(ParamKeys, func(i, j int) bool {
 		return ParamKeys[i] < ParamKeys[j]
 	})
-	//allParamsMap, err := getAllLabels(query.PromQl, ParamKeys, readerClient)
-	//if err != nil {
-	//	logger.Errorf("rule_eval:%s, getAllLabels error:%v", arw.Key(), err)
-	//	return nil
-	//}
-
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
