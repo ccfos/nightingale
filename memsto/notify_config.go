@@ -8,13 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
-
-	"github.com/BurntSushi/toml"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
+	"github.com/BurntSushi/toml"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -114,13 +115,18 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 			}
 
 			if webhooks[i].Client == nil {
+				transport := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: webhooks[i].SkipVerify},
+				}
+				if poster.UseProxy(webhooks[i].Url) {
+					transport.Proxy = http.ProxyFromEnvironment
+				}
 				webhooks[i].Client = &http.Client{
-					Timeout: time.Second * time.Duration(webhooks[i].Timeout),
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: webhooks[i].SkipVerify},
-					},
+					Timeout:   time.Second * time.Duration(webhooks[i].Timeout),
+					Transport: transport,
 				}
 			}
+
 			newWebhooks[webhooks[i].Url] = webhooks[i]
 		}
 
