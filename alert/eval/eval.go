@@ -535,7 +535,11 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 				logger.Errorf("query:%s fail to unmarshalling into string slice, error:%v", paramQuery.Query, err)
 			}
 			if len(query) == 0 {
-				params, _ = getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient)
+				paramsKeyAllLabel, err := getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient)
+				if err != nil {
+					logger.Errorf("rule_eval:%s, fail to getParamKeyAllLabel, error:%v", arw.Key(), paramQuery.Query, err)
+				}
+				params = paramsKeyAllLabel
 			} else {
 				params = query
 			}
@@ -565,8 +569,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API) ([]string, error) {
 	labels, metricName, err := promql2.GetLabelsAndMetricNameWithReplace(promql, "$")
 	if err != nil {
-		logger.Errorf("rule_eval:%s, get labels error:%v", err)
-		return nil, nil
+		return nil, fmt.Errorf("promql:%s, get labels error:%v", promql, err)
 	}
 	labelstrs := make([]string, 0)
 	for _, label := range labels {
@@ -579,8 +582,7 @@ func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API) ([]
 
 	value, _, err := client.Query(context.Background(), pr, time.Now())
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("promql: %s query error: %v", pr, err)
 	}
 	labelValuesMap := make(map[string]struct{})
 
