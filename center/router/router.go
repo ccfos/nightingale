@@ -210,7 +210,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
 			pages.POST("/ds-query", rt.auth(), rt.QueryData)
-			pages.POST("/logs-query", rt.auth(), rt.QueryLog)
+			pages.POST("/logs-query", rt.auth(), rt.QueryLogV2)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
@@ -227,7 +227,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
 			pages.POST("/es-variable", rt.QueryESVariable)
 			pages.POST("/fields", rt.QueryFields)
-			pages.POST("/log-query", rt.QueryLogV2)
+			pages.POST("/log-query", rt.QueryLog)
 		}
 
 		pages.GET("/sql-template", rt.QuerySqlTemplate)

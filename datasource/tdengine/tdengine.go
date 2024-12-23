@@ -118,7 +118,48 @@ func (td *TDengine) QueryData(ctx context.Context, queryParam interface{}) ([]mo
 }
 
 func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
-	return nil, 0, nil
+	b, err := json.Marshal(queryParam)
+	if err != nil {
+		return nil, 0, err
+	}
+	var q TdengineQuery
+	err = json.Unmarshal(b, &q)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if q.Interval == 0 {
+		q.Interval = 60
+	}
+
+	if q.From == "" {
+		// 2023-09-21T05:37:30.000Z format
+		to := time.Now().Unix()
+		q.To = time.Unix(to, 0).UTC().Format(time.RFC3339)
+		from := to - q.Interval
+		q.From = time.Unix(from, 0).UTC().Format(time.RFC3339)
+	}
+
+	replacements := map[string]string{
+		"$from":     fmt.Sprintf("'%s'", q.From),
+		"$to":       fmt.Sprintf("'%s'", q.To),
+		"$interval": fmt.Sprintf("%ds", q.Interval),
+	}
+
+	for key, val := range replacements {
+		q.Query = strings.ReplaceAll(q.Query, key, val)
+	}
+
+	if !strings.Contains(q.Query, "limit") {
+		q.Query = q.Query + " limit 200"
+	}
+
+	data, err := td.QueryTable(q.Query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return ConvertToTable(data), int64(len(data.Data)), nil
 }
 
 func (td *TDengine) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
@@ -399,4 +440,17 @@ func parseTimeString(ts string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("failed to parse time with any format: %v", lastErr)
+}
+
+func ConvertToTable(src td.APIResponse) []interface{} {
+	var resp []interface{}
+
+	for i := range src.Data {
+		cur := make(map[string]interface{})
+		for j := range src.Data[i] {
+			cur[src.ColumnMeta[j][0].(string)] = src.Data[i][j]
+		}
+		resp = append(resp, cur)
+	}
+	return resp
 }
