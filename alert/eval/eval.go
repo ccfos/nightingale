@@ -15,6 +15,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -49,6 +50,8 @@ type AlertRuleWorker struct {
 	HostAndDeviceIdentCache sync.Map
 
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
+
+	TargetCache *memsto.TargetCacheType
 }
 
 const (
@@ -67,7 +70,7 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(ctx *ctx.Context, rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, targetCache *memsto.TargetCacheType) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		DatasourceId: datasourceId,
 		Quit:         make(chan struct{}),
@@ -81,6 +84,7 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
+		TargetCache: targetCache,
 	}
 
 	interval := rule.PromEvalInterval
@@ -570,15 +574,9 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		return nil, err
 	}
 
-	hostsQuery := models.GetHostsQuery(queries)
-	session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
-	var lst []*models.Target
-	err = session.Find(&lst).Error
-	if err != nil {
-		return nil, err
-	}
-	for i := range lst {
-		params = append(params, lst[i].Ident)
+	hosts := arw.TargetCache.GetHostIdentsQuery(queries)
+	for i := range hosts {
+		params = append(params, hosts[i].Ident)
 	}
 	arw.HostAndDeviceIdentCache.Store(cacheKey, params)
 	return params, nil
