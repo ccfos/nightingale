@@ -402,12 +402,19 @@ type targetBgidsForm struct {
 	Action  string   `json:"action"` // add del reset
 }
 
-func isNeverGrouped(ctx *ctx.Context, idents []string) (bool, error) {
-	bgids, err := models.TargetGroupIdsGetByIdents(ctx, idents)
-	if err != nil {
-		return false, err
+func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
+	for _, ident := range idents {
+		bgids, err := models.TargetGroupIdsGetByIdents(ctx, []string{ident})
+		if err != nil {
+			return false, err
+		}
+		
+		if len(bgids) <= 0 {
+			return true, nil
+		}	
 	}
-	return len(bgids) <= 0, nil
+
+	return false, nil
 }
 
 
@@ -453,7 +460,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
 			}
 		}
-		isNeverGrouped, checkErr := isNeverGrouped(rt.Ctx, f.Idents)
+		isNeverGrouped, checkErr := haveNeverGroupedIdent(rt.Ctx, f.Idents)
 		ginx.Dangerous(checkErr)
 
 		if isNeverGrouped {
