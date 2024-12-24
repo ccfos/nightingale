@@ -49,7 +49,7 @@ type AlertRuleWorker struct {
 
 	HostAndDeviceIdentCache sync.Map
 
-	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
+	DeviceIdentHook func(paramQuery models.ParamQuery) ([]string, error)
 
 	TargetCache *memsto.TargetCacheType
 }
@@ -81,7 +81,7 @@ func NewAlertRuleWorker(ctx *ctx.Context, rule *models.AlertRule, datasourceId i
 		TdengineClients:         tdengineClients,
 		Ctx:                     ctx,
 		HostAndDeviceIdentCache: sync.Map{},
-		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
+		DeviceIdentHook: func(paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
 		TargetCache: targetCache,
@@ -583,7 +583,7 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 }
 
 func (arw *AlertRuleWorker) getDeviceIdents(paramQuery models.ParamQuery) ([]string, error) {
-	return arw.DeviceIdentHook(arw, paramQuery)
+	return arw.DeviceIdentHook(paramQuery)
 }
 
 // 生成所有排列组合
