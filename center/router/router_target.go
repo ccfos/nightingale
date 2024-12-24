@@ -404,7 +404,7 @@ type targetBgidsForm struct {
 
 func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
 	for _, ident := range idents {
-		bgids, err := models.TargetGroupIdsGetByIdents(ctx, []string{ident})
+		bgids, err := models.TargetGroupIdsGetByIdent(ctx, ident)
 		if err != nil {
 			return false, err
 		}
