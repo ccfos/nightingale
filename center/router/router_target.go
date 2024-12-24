@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
@@ -401,8 +402,8 @@ type targetBgidsForm struct {
 	Action  string   `json:"action"` // add del reset
 }
 
-func (rt *Router)isNeverGrouped(idents []string) (bool, error) {
-	bgids, err := models.TargetGroupIdsGetByIdents(rt.Ctx, idents)
+func isNeverGrouped(ctx *ctx.Context, idents []string) (bool, error) {
+	bgids, err := models.TargetGroupIdsGetByIdents(ctx, idents)
 	if err != nil {
 		return false, err
 	}
@@ -452,7 +453,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
 			}
 		}
-		isNeverGrouped, checkErr := rt.isNeverGrouped(f.Idents)
+		isNeverGrouped, checkErr := isNeverGrouped(rt.Ctx, f.Idents)
 		ginx.Dangerous(checkErr)
 
 		if isNeverGrouped {
