@@ -93,10 +93,12 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var count int64
 
 	if !req.ForceSave {
-		err = DatasourceCheck(req)
-		if err != nil {
-			Dangerous(c, err)
-			return
+		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE {
+			err = DatasourceCheck(req)
+			if err != nil {
+				Dangerous(c, err)
+				return
+			}
 		}
 	}
 
