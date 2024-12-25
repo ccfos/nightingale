@@ -400,20 +400,20 @@ func (tc *TargetCacheType) getHostIdentsByTagsWithoutLock(tags []string) []strin
 
 func (tc *TargetCacheType) getHostIdentsExcludeTagsWithoutLock(tags []string) []string {
 	var targetIdents []string
-	exclude := make(map[string]struct{})
-	for _, tag := range tags {
-		exclude[tag] = struct{}{}
-	}
 
 	for ident, target := range tc.targets {
-		has := false
+		exclude := false
+		curTags := make(map[string]struct{})
 		for _, tag := range target.TagsJSON {
-			if _, ok := exclude[tag]; ok {
-				has = true
+			curTags[tag] = struct{}{}
+		}
+		for _, tag := range tags {
+			if _, ok := curTags[tag]; ok {
+				exclude = true
 				break
 			}
 		}
-		if !has {
+		if !exclude {
 			targetIdents = append(targetIdents, ident)
 		}
 	}
