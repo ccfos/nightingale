@@ -122,7 +122,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 }
 
 func DatasourceCheck(ds models.Datasource) error {
-	if ds.PluginType != models.ELASTICSEARCH {
+	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE {
 		if ds.HTTPJson.Url == "" {
 			return fmt.Errorf("url is empty")
 		}
