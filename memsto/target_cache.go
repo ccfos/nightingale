@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -156,13 +157,14 @@ func (tc *TargetCacheType) syncTargets() error {
 		return nil
 	}
 
-	lst, groupToIdents, err := models.TargetGetsAll(tc.ctx)
+	lst, err := models.TargetGetsAll(tc.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call TargetGetsAll")
 	}
 
 	m := make(map[string]*models.Target)
+	groupToIdents := make(map[int64][]string)
 
 	metaMap := tc.GetHostMetas(lst)
 	if len(metaMap) > 0 {
@@ -175,6 +177,9 @@ func (tc *TargetCacheType) syncTargets() error {
 
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
+		for _, groupID := range lst[i].GroupIds {
+			groupToIdents[groupID] = append(groupToIdents[groupID], lst[i].Ident)
+		}
 	}
 
 	tc.Set(m, groupToIdents, stat.Total, stat.LastUpdated)
@@ -306,8 +311,8 @@ func (tc *TargetCacheType) getAllHostIdentsWithoutLock() []string {
 
 func (tc *TargetCacheType) getHostIdentsByGroupIdsWithoutLock(groupIDs []int64) []string {
 	var targetIdents []string
-	for _, id := range groupIDs {
-		if idents, has := tc.groupToIdents[id]; has {
+	for _, groupID := range groupIDs {
+		if idents, has := tc.groupToIdents[groupID]; has {
 			targetIdents = append(targetIdents, idents...)
 		}
 	}
@@ -360,11 +365,12 @@ func (tc *TargetCacheType) getHostIdentsExcludeIdentsWithoutLock(idents []string
 	return targetIdents
 }
 
-func (tc *TargetCacheType) getHostIdentsMatchIdentsWithoutLock(idents []string) []string {
+func (tc *TargetCacheType) getHostIdentsMatchIdentsWithoutLock(identPatterns []string) []string {
 	var targetIdents []string
 	for ident, _ := range tc.targets {
-		for _, id := range idents {
-			if strings.Contains(ident, id) {
+		for _, identPattern := range identPatterns {
+			// 模糊匹配转正则
+			if ok, _ := regexp.Match(strings.Replace(identPattern, "*", ".*", -1), []byte(ident)); ok {
 				targetIdents = append(targetIdents, ident)
 				break
 			}
@@ -375,9 +381,15 @@ func (tc *TargetCacheType) getHostIdentsMatchIdentsWithoutLock(idents []string) 
 
 func (tc *TargetCacheType) getHostIdentsByTagsWithoutLock(tags []string) []string {
 	var targetIdents []string
+
+	tagMap := make(map[string]struct{})
+	for _, tag := range tags {
+		tagMap[tag] = struct{}{}
+	}
+
 	for ident, target := range tc.targets {
-		for _, tag := range tags {
-			if strings.Contains(target.Tags, tag) {
+		for _, tag := range target.TagsJSON {
+			if _, ok := tagMap[tag]; ok {
 				targetIdents = append(targetIdents, ident)
 				break
 			}
@@ -388,35 +400,44 @@ func (tc *TargetCacheType) getHostIdentsByTagsWithoutLock(tags []string) []strin
 
 func (tc *TargetCacheType) getHostIdentsExcludeTagsWithoutLock(tags []string) []string {
 	var targetIdents []string
+	exclude := make(map[string]struct{})
+	for _, tag := range tags {
+		exclude[tag] = struct{}{}
+	}
+
 	for ident, target := range tc.targets {
-		hasTag := false
-		for _, tag := range tags {
-			if strings.Contains(target.Tags, tag) {
-				hasTag = true
+		has := false
+		for _, tag := range target.TagsJSON {
+			if _, ok := exclude[tag]; ok {
+				has = true
 				break
 			}
 		}
-		if !hasTag {
+		if !has {
 			targetIdents = append(targetIdents, ident)
 		}
 	}
 	return targetIdents
 }
 
-func (tc *TargetCacheType) getHostIdentsMatchExcludeIdentsWithoutLock(idents []string) []string {
+func (tc *TargetCacheType) getHostIdentsMatchExcludeIdentsWithoutLock(identPatterns []string) []string {
 	var targetIdents []string
 	exclude := make(map[string]struct{})
-	for _, id := range idents {
+	for _, id := range identPatterns {
 		exclude[id] = struct{}{}
 	}
 
 	for ident, _ := range tc.targets {
-		for _, id := range idents {
-			if strings.Contains(ident, id) {
-				continue
+		has := false
+		for _, identPattern := range identPatterns {
+			if ok, _ := regexp.Match(strings.Replace(identPattern, "*", ".*", -1), []byte(ident)); ok {
+				has = true
+				break
 			}
 		}
-		targetIdents = append(targetIdents, ident)
+		if !has {
+			targetIdents = append(targetIdents, ident)
+		}
 	}
 	return targetIdents
 }

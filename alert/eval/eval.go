@@ -47,8 +47,6 @@ type AlertRuleWorker struct {
 
 	Scheduler *cron.Cron
 
-	HostAndDeviceIdentCache sync.Map
-
 	DeviceIdentHook func(paramQuery models.ParamQuery) ([]string, error)
 
 	TargetCache *memsto.TargetCacheType
@@ -77,10 +75,9 @@ func NewAlertRuleWorker(ctx *ctx.Context, rule *models.AlertRule, datasourceId i
 		Rule:         rule,
 		Processor:    Processor,
 
-		PromClients:             promClients,
-		TdengineClients:         tdengineClients,
-		Ctx:                     ctx,
-		HostAndDeviceIdentCache: sync.Map{},
+		PromClients:     promClients,
+		TdengineClients: tdengineClients,
+		Ctx:             ctx,
 		DeviceIdentHook: func(paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
@@ -152,7 +149,6 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
-	arw.HostAndDeviceIdentCache = sync.Map{}
 
 	typ := cachedRule.GetRuleType()
 	var (
@@ -561,13 +557,6 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	var params []string
 	q, _ := json.Marshal(paramQuery.Query)
 
-	cacheKey := "Host_" + string(q)
-	value, hit := arw.HostAndDeviceIdentCache.Load(cacheKey)
-	if idents, ok := value.([]string); hit && ok {
-		params = idents
-		return params, nil
-	}
-
 	var queries []models.HostQuery
 	err := json.Unmarshal(q, &queries)
 	if err != nil {
@@ -578,7 +567,6 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	for i := range hosts {
 		params = append(params, hosts[i].Ident)
 	}
-	arw.HostAndDeviceIdentCache.Store(cacheKey, params)
 	return params, nil
 }
 

@@ -298,21 +298,21 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 	return session
 }
 
-func TargetGetsAll(ctx *ctx.Context) ([]*Target, map[int64][]string, error) {
+func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
-		return lst, nil, err
+		return lst, err
 	}
 
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
 	if err != nil {
-		return lst, nil, err
+		return lst, err
 	}
 
 	tgs, err := TargetBusiGroupsGetAll(ctx)
 	if err != nil {
-		return lst, nil, err
+		return lst, err
 	}
 
 	for i := 0; i < len(lst); i++ {
@@ -320,15 +320,7 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, map[int64][]string, error) {
 		lst[i].GroupIds = tgs[lst[i].Ident]
 	}
 
-	groupToIdents := make(map[int64][]string)
-
-	for ident, groups := range tgs {
-		for i := range groups {
-			groupToIdents[groups[i]] = append(groupToIdents[groups[i]], ident)
-		}
-	}
-
-	return lst, groupToIdents, err
+	return lst, err
 }
 
 func TargetUpdateNote(ctx *ctx.Context, idents []string, note string) error {
@@ -641,7 +633,7 @@ func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
 
 func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 	// 2. 获取全量 target
-	targets, _, err := TargetGetsAll(ctx)
+	targets, err := TargetGetsAll(ctx)
 	if err != nil {
 		return err
 	}

@@ -163,7 +163,7 @@ func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
 }
 
 func (rt *Router) targetGetsByService(c *gin.Context) {
-	lst, _, err := models.TargetGetsAll(rt.Ctx)
+	lst, err := models.TargetGetsAll(rt.Ctx)
 	ginx.NewRender(c).Data(lst, err)
 }
 
