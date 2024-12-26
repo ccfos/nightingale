@@ -15,6 +15,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -46,9 +47,9 @@ type AlertRuleWorker struct {
 
 	Scheduler *cron.Cron
 
-	HostAndDeviceIdentCache sync.Map
+	DeviceIdentHook func(paramQuery models.ParamQuery) ([]string, error)
 
-	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
+	TargetCache *memsto.TargetCacheType
 }
 
 const (
@@ -67,20 +68,20 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(ctx *ctx.Context, rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, targetCache *memsto.TargetCacheType) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		DatasourceId: datasourceId,
 		Quit:         make(chan struct{}),
 		Rule:         rule,
 		Processor:    Processor,
 
-		PromClients:             promClients,
-		TdengineClients:         tdengineClients,
-		Ctx:                     ctx,
-		HostAndDeviceIdentCache: sync.Map{},
-		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
+		PromClients:     promClients,
+		TdengineClients: tdengineClients,
+		Ctx:             ctx,
+		DeviceIdentHook: func(paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
+		TargetCache: targetCache,
 	}
 
 	interval := rule.PromEvalInterval
@@ -148,7 +149,6 @@ func (arw *AlertRuleWorker) Eval() {
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
-	arw.HostAndDeviceIdentCache = sync.Map{}
 
 	typ := cachedRule.GetRuleType()
 	var (
@@ -557,35 +557,21 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 	var params []string
 	q, _ := json.Marshal(paramQuery.Query)
 
-	cacheKey := "Host_" + string(q)
-	value, hit := arw.HostAndDeviceIdentCache.Load(cacheKey)
-	if idents, ok := value.([]string); hit && ok {
-		params = idents
-		return params, nil
-	}
-
 	var queries []models.HostQuery
 	err := json.Unmarshal(q, &queries)
 	if err != nil {
 		return nil, err
 	}
 
-	hostsQuery := models.GetHostsQuery(queries)
-	session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
-	var lst []*models.Target
-	err = session.Find(&lst).Error
-	if err != nil {
-		return nil, err
+	hosts := arw.TargetCache.GetHostIdentsQuery(queries)
+	for i := range hosts {
+		params = append(params, hosts[i].Ident)
 	}
-	for i := range lst {
-		params = append(params, lst[i].Ident)
-	}
-	arw.HostAndDeviceIdentCache.Store(cacheKey, params)
 	return params, nil
 }
 
 func (arw *AlertRuleWorker) getDeviceIdents(paramQuery models.ParamQuery) ([]string, error) {
-	return arw.DeviceIdentHook(arw, paramQuery)
+	return arw.DeviceIdentHook(paramQuery)
 }
 
 // 生成所有排列组合

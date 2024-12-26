@@ -28,17 +28,19 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 	var f TargetQuery
 	ginx.BindJSON(c, &f)
 
-	query := models.GetHostsQuery(f.Filters)
-
-	hosts, err := models.TargetGetsByFilter(rt.Ctx, query, f.Limit, (f.P-1)*f.Limit)
-	ginx.Dangerous(err)
-
-	total, err := models.TargetCountByFilter(rt.Ctx, query)
-	ginx.Dangerous(err)
+	// todo 这里也走缓存吗？有 limit 和 offset
+	hosts := rt.TargetCache.GetHostIdentsQuery(f.Filters)
+	//query := models.GetHostsQuery(f.Filters)
+	//
+	//hosts, err := models.TargetGetsByFilter(rt.Ctx, query, f.Limit, (f.P-1)*f.Limit)
+	//ginx.Dangerous(err)
+	//
+	//total, err := models.TargetCountByFilter(rt.Ctx, query)
+	//ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  hosts,
-		"total": total,
+		"total": len(hosts),
 	}, nil)
 }
 
@@ -537,7 +539,7 @@ func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
 
 func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	engineName := ginx.QueryStr(c, "engine_name", "")
-	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName)
+	m, err := models.GetTargetsOfHostAlertRule(rt.Ctx, engineName, rt.TargetCache.GetHostIdentsQuery)
 	ret := make(map[string]map[int64][]string)
 	for en, v := range m {
 		if en != engineName {

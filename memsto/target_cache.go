@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,7 +29,8 @@ type TargetCacheType struct {
 	redis           storage.Redis
 
 	sync.RWMutex
-	targets map[string]*models.Target // key: ident
+	targets       map[string]*models.Target // key: ident
+	groupToIdents map[int64][]string        // key: group_id
 }
 
 func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
@@ -61,9 +64,10 @@ func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
 	return true
 }
 
-func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated int64) {
+func (tc *TargetCacheType) Set(m map[string]*models.Target, groupToIdents map[int64][]string, total, lastUpdated int64) {
 	tc.Lock()
 	tc.targets = m
+	tc.groupToIdents = groupToIdents
 	tc.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -160,6 +164,7 @@ func (tc *TargetCacheType) syncTargets() error {
 	}
 
 	m := make(map[string]*models.Target)
+	groupToIdents := make(map[int64][]string)
 
 	metaMap := tc.GetHostMetas(lst)
 	if len(metaMap) > 0 {
@@ -172,9 +177,12 @@ func (tc *TargetCacheType) syncTargets() error {
 
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
+		for _, groupID := range lst[i].GroupIds {
+			groupToIdents[groupID] = append(groupToIdents[groupID], lst[i].Ident)
+		}
 	}
 
-	tc.Set(m, stat.Total, stat.LastUpdated)
+	tc.Set(m, groupToIdents, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(float64(ms))
@@ -291,4 +299,215 @@ func (tc *TargetCacheType) GetHostMetas(targets []*models.Target) map[string]*mo
 	}
 
 	return metaMap
+}
+
+func (tc *TargetCacheType) getAllHostIdentsWithoutLock() []string {
+	var idents []string
+	for ident, _ := range tc.targets {
+		idents = append(idents, ident)
+	}
+	return idents
+}
+
+func (tc *TargetCacheType) getHostIdentsByGroupIdsWithoutLock(groupIDs []int64) []string {
+	var targetIdents []string
+	for _, groupID := range groupIDs {
+		if idents, has := tc.groupToIdents[groupID]; has {
+			targetIdents = append(targetIdents, idents...)
+		}
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostIdentsExcludeGroupIdsWithoutLock(groupIDs []int64) []string {
+	var targetIdents []string
+	exclude := make(map[string]struct{})
+	for _, id := range groupIDs {
+		if idents, has := tc.groupToIdents[id]; has {
+			for _, ident := range idents {
+				exclude[ident] = struct{}{}
+			}
+		}
+	}
+
+	for ident, _ := range tc.targets {
+		if _, ok := exclude[ident]; ok {
+			continue
+		}
+		targetIdents = append(targetIdents, ident)
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostsByIdentsWithoutLock(idents []string) []*models.Target {
+	var targets []*models.Target
+	for _, ident := range idents {
+		if target, has := tc.targets[ident]; has {
+			targets = append(targets, target)
+		}
+	}
+	return targets
+}
+
+func (tc *TargetCacheType) getHostIdentsExcludeIdentsWithoutLock(idents []string) []string {
+	var targetIdents []string
+	exclude := make(map[string]struct{})
+	for _, id := range idents {
+		exclude[id] = struct{}{}
+	}
+
+	for ident, _ := range tc.targets {
+		if _, ok := exclude[ident]; ok {
+			continue
+		}
+		targetIdents = append(targetIdents, ident)
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostIdentsMatchIdentsWithoutLock(identPatterns []string) []string {
+	var targetIdents []string
+	for ident, _ := range tc.targets {
+		for _, identPattern := range identPatterns {
+			// 模糊匹配转正则
+			if ok, _ := regexp.Match(strings.Replace(identPattern, "*", ".*", -1), []byte(ident)); ok {
+				targetIdents = append(targetIdents, ident)
+				break
+			}
+		}
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostIdentsByTagsWithoutLock(tags []string) []string {
+	var targetIdents []string
+
+	tagMap := make(map[string]struct{})
+	for _, tag := range tags {
+		tagMap[tag] = struct{}{}
+	}
+
+	for ident, target := range tc.targets {
+		for _, tag := range target.TagsJSON {
+			if _, ok := tagMap[tag]; ok {
+				targetIdents = append(targetIdents, ident)
+				break
+			}
+		}
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostIdentsExcludeTagsWithoutLock(tags []string) []string {
+	var targetIdents []string
+
+	for ident, target := range tc.targets {
+		exclude := false
+		curTags := make(map[string]struct{})
+		for _, tag := range target.TagsJSON {
+			curTags[tag] = struct{}{}
+		}
+		for _, tag := range tags {
+			if _, ok := curTags[tag]; ok {
+				exclude = true
+				break
+			}
+		}
+		if !exclude {
+			targetIdents = append(targetIdents, ident)
+		}
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) getHostIdentsMatchExcludeIdentsWithoutLock(identPatterns []string) []string {
+	var targetIdents []string
+	exclude := make(map[string]struct{})
+	for _, id := range identPatterns {
+		exclude[id] = struct{}{}
+	}
+
+	for ident, _ := range tc.targets {
+		has := false
+		for _, identPattern := range identPatterns {
+			if ok, _ := regexp.Match(strings.Replace(identPattern, "*", ".*", -1), []byte(ident)); ok {
+				has = true
+				break
+			}
+		}
+		if !has {
+			targetIdents = append(targetIdents, ident)
+		}
+	}
+	return targetIdents
+}
+
+func (tc *TargetCacheType) GetHostIdentsQuery(queries []models.HostQuery) []*models.Target {
+	tc.Lock()
+	defer tc.Unlock()
+
+	targetIdents := tc.getAllHostIdentsWithoutLock()
+
+	for _, q := range queries {
+		var cur []string
+		switch q.Key {
+		case "group_ids":
+			ids := models.ParseInt64(q.Values)
+			if q.Op == "==" {
+				cur = tc.getHostIdentsByGroupIdsWithoutLock(ids)
+			} else {
+				cur = tc.getHostIdentsExcludeGroupIdsWithoutLock(ids)
+			}
+		case "tags":
+			var tags []string
+			for _, v := range q.Values {
+				if v == nil {
+					continue
+				}
+				tags = append(tags, v.(string))
+			}
+			if q.Op == "==" {
+				cur = tc.getHostIdentsByTagsWithoutLock(tags)
+			} else {
+				cur = tc.getHostIdentsExcludeTagsWithoutLock(tags)
+			}
+		case "hosts":
+			var idents []string
+			for _, v := range q.Values {
+				if v == nil {
+					continue
+				}
+				idents = append(idents, v.(string))
+			}
+			if q.Op == "==" {
+				cur = idents
+			} else if q.Op == "!=" {
+				cur = tc.getHostIdentsExcludeIdentsWithoutLock(idents)
+			} else if q.Op == "=~" {
+				cur = tc.getHostIdentsMatchIdentsWithoutLock(idents)
+			} else if q.Op == "!~" {
+				cur = tc.getHostIdentsMatchExcludeIdentsWithoutLock(idents)
+			}
+		default:
+			// all_hosts 与其他未知条件不改变已有集合
+			cur = targetIdents
+		}
+		targetIdents = intersection(targetIdents, cur)
+	}
+	return tc.getHostsByIdentsWithoutLock(targetIdents)
+}
+
+func intersection(a, b []string) []string {
+	m := make(map[string]struct{})
+	for _, v := range a {
+		m[v] = struct{}{}
+	}
+
+	var c []string
+	for _, v := range b {
+		if _, ok := m[v]; ok {
+			c = append(c, v)
+		}
+	}
+	return c
 }

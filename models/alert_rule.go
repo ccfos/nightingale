@@ -1231,7 +1231,7 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 	return nil
 }
 
-func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]map[int64][]string, error) {
+func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string, getTargetFunc func(queries []HostQuery) []*Target) (map[string]map[int64][]string, error) {
 	if !ctx.IsCenter {
 		m, err := poster.GetByUrls[map[string]map[int64][]string](ctx, "/v1/n9e/targets-of-alert-rule?engine_name="+engineName)
 		return m, err
@@ -1255,16 +1255,9 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 			continue
 		}
 
-		query := GetHostsQuery(rule.Queries)
-		session := TargetFilterQueryBuild(ctx, query, 0, 0)
-		var lst []*Target
-		err := session.Find(&lst).Error
-		if err != nil {
-			logger.Errorf("failed to query targets: %v", err)
-			continue
-		}
+		hosts := getTargetFunc(rule.Queries)
 
-		for _, target := range lst {
+		for _, target := range hosts {
 			if _, exists := m[target.EngineName]; !exists {
 				m[target.EngineName] = make(map[int64][]string)
 			}
