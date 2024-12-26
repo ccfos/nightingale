@@ -161,13 +161,15 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		if isMuted {
 			mutes, exist := p.alertMuteCache.Gets(event.GroupId)
 			if exist {
-				for _, mute := range mutes {
-					p.Stats.CounterMuteTotal.WithLabelValues(
-						fmt.Sprintf("%v", event.GroupName),
-						fmt.Sprintf("%v", p.rule.Id),
-						fmt.Sprintf("%v", mute.Id),
-						fmt.Sprintf("%v", p.datasourceId),
-					).Inc()
+				for _, m := range mutes {
+					if mute.MatchMute(event, m) {
+						p.Stats.CounterMuteTotal.WithLabelValues(
+							fmt.Sprintf("%v", event.GroupName),
+							fmt.Sprintf("%v", p.rule.Id),
+							fmt.Sprintf("%v", m.Id),
+							fmt.Sprintf("%v", p.datasourceId),
+						).Inc()
+					}
 				}
 			}
 			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
