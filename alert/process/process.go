@@ -159,13 +159,13 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		alertingKeys[hash] = struct{}{}
 		isMuted, detail := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			mute_ids, exist := p.alertMuteCache.Gets(event.GroupId)
+			mutes, exist := p.alertMuteCache.Gets(event.GroupId)
 			if exist {
-				for _, mute_id := range mute_ids {
+				for _, mute := range mutes {
 					p.Stats.CounterMuteTotal.WithLabelValues(
 						fmt.Sprintf("%v", event.GroupName),
 						fmt.Sprintf("%v", p.rule.Id),
-						fmt.Sprintf("%v", mute_id),
+						fmt.Sprintf("%v", mute.Id),
 						fmt.Sprintf("%v", p.datasourceId),
 					).Inc()
 				}
