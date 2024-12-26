@@ -27,6 +27,8 @@ const (
 	PROMETHEUS    = "prometheus"
 	TDENGINE      = "tdengine"
 	ELASTICSEARCH = "elasticsearch"
+
+	CLICKHOUSE = "ck"
 )
 
 const (
@@ -1122,6 +1124,14 @@ func (ar *AlertRule) GetRuleType() string {
 	}
 
 	return ar.Prod
+}
+
+func (ar *AlertRule) IsClickHouseRule() bool {
+	return ar.Cate == CLICKHOUSE
+}
+
+func (ar *AlertRule) IsElasticSearch() bool {
+	return ar.Cate == ELASTICSEARCH
 }
 
 func (ar *AlertRule) GenerateNewEvent(ctx *ctx.Context) *AlertCurEvent {
