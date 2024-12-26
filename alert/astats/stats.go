@@ -23,6 +23,8 @@ type Stats struct {
 	CounterRuleEvalErrorTotal   *prometheus.CounterVec
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
 	CounterSubEventTotal        *prometheus.CounterVec
+	CounterQueryCurveCount      *prometheus.CounterVec
+	CounterMuteEventCount       *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
@@ -119,6 +121,20 @@ func NewSyncStats() *Stats {
 		Help:      "Number of heartbeat error.",
 	}, []string{})
 
+	CounterQueryCurveCount := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "query_curve_count",
+		Help:      "Number of curves retrieved from data source after query.",
+	}, []string{"rule_id", "datasource_id"})
+
+	CounterMuteEventCount := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "mute_event_count",
+		Help:      "Number of alert events muted in a cycle.",
+	}, []string{"rule_id", "mute_rule_id", "datasource_id"})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -133,6 +149,8 @@ func NewSyncStats() *Stats {
 		CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal,
 		CounterSubEventTotal,
+		CounterQueryCurveCount,
+		CounterMuteEventCount,
 	)
 
 	return &Stats{
@@ -149,5 +167,7 @@ func NewSyncStats() *Stats {
 		CounterRuleEvalErrorTotal:   CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
 		CounterSubEventTotal:        CounterSubEventTotal,
+		CounterQueryCurveCount:      CounterQueryCurveCount,
+		CounterMuteEventCount:       CounterMuteEventCount,
 	}
 }

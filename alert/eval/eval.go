@@ -304,6 +304,12 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			lst = append(lst, points...)
 		}
 	}
+
+	arw.Processor.Stats.CounterQueryCurveCount.WithLabelValues(
+		fmt.Sprintf("%v", arw.Rule.Id),
+		fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+	).Add(float64(len(lst)))
+
 	return lst, nil
 }
 
@@ -645,7 +651,6 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 		for _, query := range ruleQuery.Queries {
 			seriesTagIndex := make(map[uint64][]uint64)
 
-			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 			cli := arw.TdengineClients.GetCli(dsId)
 			if cli == nil {
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
@@ -662,6 +667,12 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
 				return points, recoverPoints, err
 			}
+
+			arw.Processor.Stats.CounterQueryCurveCount.WithLabelValues(
+				fmt.Sprintf("%v", arw.Rule.Id),
+				fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+			).Add(float64(len(series)))
+
 			//  此条日志很重要，是告警判断的现场值
 			logger.Debugf("rule_eval rid:%d req:%+v resp:%+v", rule.Id, query, series)
 			MakeSeriesMap(series, seriesTagIndex, seriesStore)
