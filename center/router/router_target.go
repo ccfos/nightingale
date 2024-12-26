@@ -273,11 +273,9 @@ func (rt *Router) validateTags(tags []string) error {
 }
 
 func (rt *Router) addTagsToTarget(target *models.Target, tags []string) error {
-	hostTagsMap := target.GetHostTagsMap()
 	for _, tag := range tags {
 		tagKey := strings.Split(tag, "=")[0]
-		if _, ok := hostTagsMap[tagKey]; ok ||
-			strings.Contains(target.Tags, tagKey+"=") {
+		if _, exist := target.TagsMap[tagKey]; exist {
 			return fmt.Errorf("duplicate tagkey(%s)", tagKey)
 		}
 	}
