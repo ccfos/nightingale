@@ -2,6 +2,7 @@ package process
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"sort"
@@ -235,7 +236,6 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	event.Callbacks = p.rule.Callbacks
 	event.CallbacksJSON = p.rule.CallbacksJSON
 	event.Annotations = p.rule.Annotations
-	event.AnnotationsJSON = make(map[string]string)
 	event.RuleConfig = p.rule.RuleConfig
 	event.RuleConfigJson = p.rule.RuleConfigJson
 	event.Severity = anomalyPoint.Severity
@@ -243,6 +243,11 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
 	event.RuleHash = ruleHash
+
+	if err := json.Unmarshal([]byte(p.rule.Annotations), &event.AnnotationsJSON); err != nil {
+		event.AnnotationsJSON = make(map[string]string) // 解析失败时使用空 map
+		logger.Warningf("unmarshal annotations json failed: %v, rule: %d", err, p.rule.Id)
+	}
 
 	if p.target != "" {
 		if pt, exist := p.TargetCache.Get(p.target); exist {

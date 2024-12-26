@@ -130,9 +130,9 @@ func (rt *Router) User() gin.HandlerFunc {
 
 func (rt *Router) user() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userid := c.MustGet("userid").(int64)
+		username := c.MustGet("username").(string)
 
-		user, err := models.UserGetById(rt.Ctx, userid)
+		user, err := models.UserGetByUsername(rt.Ctx, username)
 		if err != nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 		}

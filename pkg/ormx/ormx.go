@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/glebarez/sqlite"
 	tklog "github.com/toolkits/pkg/logger"
-    "github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -91,7 +91,7 @@ func createSqliteDatabase(dsn string, gconfig *gorm.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to open temporary connection: %v", err)
 	}
-	
+
 	fmt.Println("sqlite file created")
 
 	return nil
@@ -110,7 +110,7 @@ func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
 		}
 	}
 
-	createDBQuery := fmt.Sprintf("CREATE DATABASE %s ENCODING='UTF8' LC_COLLATE='en_US.UTF-8' LC_CTYPE='en_US.UTF-8';", dbName)
+	createDBQuery := fmt.Sprintf("CREATE DATABASE %s ENCODING='UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';", dbName)
 
 	tempDialector := postgres.Open(connectionWithoutDB)
 
@@ -187,18 +187,16 @@ func checkSqliteDatabaseExist(c DBConfig) (bool, error) {
 
 func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.Split(c.DSN, " ")
-	dbName := ""
-	connectionWithoutDB := ""
-	for _, part := range dsnParts {
-		if strings.HasPrefix(part, "dbname=") {
-			dbName = part[strings.Index(part, "=")+1:]
-		} else {
-			connectionWithoutDB += part
-			connectionWithoutDB += " "
-		}
-	}
-
-	dialector := postgres.Open(connectionWithoutDB)
+    dbName := ""
+    dbpair := ""
+    for _, part := range dsnParts {
+        if strings.HasPrefix(part, "dbname=") {
+            dbName = part[strings.Index(part, "=")+1:]
+            dbpair = part
+        }
+    }
+    connectionStr := strings.Replace(c.DSN, dbpair, "dbname=postgres", 1)
+    dialector := postgres.Open(connectionStr)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -213,89 +211,89 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 		return false, fmt.Errorf("failed to open database: %v", err)
 	}
 
-    var databases []string
-    query := genQuery(c)
-    if err := db.Raw(query).Scan(&databases).Error; err != nil {
-        return false, fmt.Errorf("failed to query: %v", err)
-    }
+	var databases []string
+	query := genQuery(c)
+	if err := db.Raw(query).Scan(&databases).Error; err != nil {
+		return false, fmt.Errorf("failed to query: %v", err)
+	}
 
-    for _, database := range databases {
-        if database == dbName {
+	for _, database := range databases {
+		if database == dbName {
 			fmt.Println("Database exist")
-            return true, nil
-        }
-    }
+			return true, nil
+		}
+	}
 
-    return false, nil
+	return false, nil
 }
 
 func checkMysqlDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.SplitN(c.DSN, "/", 2)
-    if len(dsnParts) != 2 {
-        return false, fmt.Errorf("failed to parse DSN: %s", c.DSN)
-    }
+	if len(dsnParts) != 2 {
+		return false, fmt.Errorf("failed to parse DSN: %s", c.DSN)
+	}
 
-    connectionInfo := dsnParts[0]
-    dbInfo := dsnParts[1]
-    dbName := dbInfo
+	connectionInfo := dsnParts[0]
+	dbInfo := dsnParts[1]
+	dbName := dbInfo
 
-    queryIndex := strings.Index(dbInfo, "?")
-    if queryIndex != -1 {
-        dbName = dbInfo[:queryIndex]
-    } else {
-        return false, fmt.Errorf("failed to parse database name from DSN: %s", c.DSN)
-    }
+	queryIndex := strings.Index(dbInfo, "?")
+	if queryIndex != -1 {
+		dbName = dbInfo[:queryIndex]
+	} else {
+		return false, fmt.Errorf("failed to parse database name from DSN: %s", c.DSN)
+	}
 
-    connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
+	connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
 
-    var dialector gorm.Dialector
-    switch strings.ToLower(c.DBType) {
-    case "mysql":
-        dialector = mysql.Open(connectionWithoutDB)
-    case "postgres":
-        dialector = postgres.Open(connectionWithoutDB)
-    default:
-        return false, fmt.Errorf("unsupported database type: %s", c.DBType)
-    }
+	var dialector gorm.Dialector
+	switch strings.ToLower(c.DBType) {
+	case "mysql":
+		dialector = mysql.Open(connectionWithoutDB)
+	case "postgres":
+		dialector = postgres.Open(connectionWithoutDB)
+	default:
+		return false, fmt.Errorf("unsupported database type: %s", c.DBType)
+	}
 
-    gconfig := &gorm.Config{
-        NamingStrategy: schema.NamingStrategy{
-            TablePrefix:   c.TablePrefix,
-            SingularTable: true,
-        },
-        Logger: gormLogger,
-    }
+	gconfig := &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   c.TablePrefix,
+			SingularTable: true,
+		},
+		Logger: gormLogger,
+	}
 
-    db, err := gorm.Open(dialector, gconfig)
-    if err != nil {
-        return false, fmt.Errorf("failed to open database: %v", err)
-    }
+	db, err := gorm.Open(dialector, gconfig)
+	if err != nil {
+		return false, fmt.Errorf("failed to open database: %v", err)
+	}
 
-    var databases []string
-    query := genQuery(c)
-    if err := db.Raw(query).Scan(&databases).Error; err != nil {
-        return false, fmt.Errorf("failed to query: %v", err)
-    }
+	var databases []string
+	query := genQuery(c)
+	if err := db.Raw(query).Scan(&databases).Error; err != nil {
+		return false, fmt.Errorf("failed to query: %v", err)
+	}
 
-    for _, database := range databases {
-        if database == dbName {
-            return true, nil
-        }
-    }
+	for _, database := range databases {
+		if database == dbName {
+			return true, nil
+		}
+	}
 
-    return false, nil
+	return false, nil
 }
 
 func genQuery(c DBConfig) string {
 	switch strings.ToLower(c.DBType) {
-    case "mysql":
-        return "SHOW DATABASES"
-    case "postgres":
-        return "SELECT datname FROM pg_database"
-    case "sqlite":
-        return ""
-    default:
-        return ""
+	case "mysql":
+		return "SHOW DATABASES"
+	case "postgres":
+		return "SELECT datname FROM pg_database"
+	case "sqlite":
+		return ""
+	default:
+		return ""
 	}
 }
 
