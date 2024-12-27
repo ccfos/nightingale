@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"fmt"
+
 	"github.com/ccfos/nightingale/v6/dscache"
 
 	"github.com/ccfos/nightingale/v6/alert"
@@ -110,7 +111,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	externalProcessors := process.NewExternalProcessors()
 
 	macros.RegisterMacro(macros.MacroInVain)
-	dscache.Init(ctx, false, false)
+	dscache.Init(ctx, false)
 	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)

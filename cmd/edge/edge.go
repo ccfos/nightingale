@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/ccfos/nightingale/v6/dscache"
 
 	"github.com/ccfos/nightingale/v6/alert"
@@ -62,7 +63,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	pushgwRouter.Config(r)
 	macros.RegisterMacro(macros.MacroInVain)
-	dscache.Init(ctx, false, false)
+	dscache.Init(ctx, false)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")

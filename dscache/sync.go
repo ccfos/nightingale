@@ -17,8 +17,8 @@ import (
 
 var FromAPIHook func()
 
-func Init(ctx *ctx.Context, fromAPI bool, isPlus bool) {
-	go getDatasourcesFromDBLoop(ctx, fromAPI, isPlus)
+func Init(ctx *ctx.Context, fromAPI bool) {
+	go getDatasourcesFromDBLoop(ctx, fromAPI)
 }
 
 type ListInput struct {
@@ -43,7 +43,7 @@ type DSReplyEncrypt struct {
 
 var PromDefaultDatasourceId int64
 
-func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool, isPlus bool) {
+func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 	for {
 		if !fromAPI {
 			items, err := models.GetDatasources(ctx)
@@ -89,7 +89,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool, isPlus bool) {
 				}
 				dss = append(dss, ds)
 			}
-			PutDatasources(dss, isPlus)
+			PutDatasources(dss)
 		} else {
 			FromAPIHook()
 		}
@@ -150,14 +150,14 @@ func osN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["os.max_shard"] = item.SettingsJson["max_shard"]
 }
 
-func PutDatasources(items []datasource.DatasourceInfo, isPlus bool) {
+func PutDatasources(items []datasource.DatasourceInfo) {
 	ids := make([]int64, 0)
 	for _, item := range items {
 		if item.Type == "prometheus" {
 			continue
 		}
 
-		if isPlus && item.Type == "loki" {
+		if item.Type == "loki" {
 			// loki 不走 n9e-Plus 告警逻辑
 			continue
 		}
