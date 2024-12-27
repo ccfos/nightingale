@@ -125,3 +125,5 @@ ALTER TABLE alert_subscribe MODIFY COLUMN busi_groups varchar(4096);
 /* v8.0.0-beta.1 2024-12-13 */
 ALTER TABLE `alert_rule` ADD COLUMN `cron_pattern` VARCHAR(64);
 ALTER TABLE `builtin_components` MODIFY COLUMN `logo` mediumtext COMMENT '''logo of component''';
+
+ALTER TABLE builtin_components ADD COLUMN disabled INT NOT NULL DEFAULT 0 COMMENT 'is disabled or not';
