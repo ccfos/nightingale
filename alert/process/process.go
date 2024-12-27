@@ -159,38 +159,42 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		alertingKeys[hash] = struct{}{}
 		isMuted, detail := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
+			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
 			mutes, exist := p.alertMuteCache.Gets(event.GroupId)
-			if exist {
-				for _, m := range mutes {
-					if mute.MatchMute(event, m) {
-						p.Stats.CounterMuteTotal.WithLabelValues(
-							fmt.Sprintf("%v", event.GroupName),
-							fmt.Sprintf("%v", p.rule.Id),
-							fmt.Sprintf("%v", m.Id),
-							fmt.Sprintf("%v", p.datasourceId),
-						).Inc()
-					}
+			if !exist {
+				continue
+			}
+			for _, m := range mutes {
+				if mute.MatchMute(event, m) {
+					p.Stats.CounterMuteTotal.WithLabelValues(
+						fmt.Sprintf("%v", event.GroupName),
+						fmt.Sprintf("%v", p.rule.Id),
+						fmt.Sprintf("%v", m.Id),
+						fmt.Sprintf("%v", p.datasourceId),
+					).Inc()
+					break
 				}
 			}
-			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
 			continue
 		}
 
 		if p.EventMuteHook(event) {
+			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
 			mutes, exist := p.alertMuteCache.Gets(event.GroupId)
-			if exist {
-				for _, m := range mutes {
-					if mute.MatchMute(event, m) {
-						p.Stats.CounterMuteTotal.WithLabelValues(
-							fmt.Sprintf("%v", event.GroupName),
-							fmt.Sprintf("%v", p.rule.Id),
-							fmt.Sprintf("%v", m.Id),
-							fmt.Sprintf("%v", p.datasourceId),
-						).Inc()
-					}
+			if !exist {
+				continue
+			}
+			for _, m := range mutes {
+				if mute.MatchMute(event, m) {
+					p.Stats.CounterMuteTotal.WithLabelValues(
+						fmt.Sprintf("%v", event.GroupName),
+						fmt.Sprintf("%v", p.rule.Id),
+						fmt.Sprintf("%v", m.Id),
+						fmt.Sprintf("%v", p.datasourceId),
+					).Inc()
+					break
 				}
 			}
-			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
 			continue
 		}
 
