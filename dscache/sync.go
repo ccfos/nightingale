@@ -158,7 +158,6 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 		}
 
 		if item.Type == "loki" {
-			// loki 不走 n9e-Plus 告警逻辑
 			continue
 		}
 

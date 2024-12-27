@@ -12,20 +12,8 @@ import (
 )
 
 func CheckDsPerm(c *gin.Context, dsId int64, cate string, q interface{}) bool {
-	user := c.MustGet("user").(*models.User)
-
-	//switch cate {
-	//case "elasticsearch.logging", "elasticsearch":
-	//	param := new(eslike.Query)
-	//	if err := mapstructure.Decode(q, param); err != nil {
-	//		logger.Warningf("decode es query param error: %v", err)
-	//		return user.IsAdmin()
-	//	}
-	//	return memsto.DatasourcePermCache.ESIndexHasPerm(dsId, user.Id, param.Index) || user.IsAdmin()
-	//default:
-	//	return true
-	//}
-	return user.IsAdmin()
+	// todo: 后续需要根据 cate 判断是否需要权限
+	return true
 }
 
 type QueryFrom struct {
