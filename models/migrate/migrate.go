@@ -67,7 +67,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{},
-		&models.TargetBusiGroup{}}
+		&models.TargetBusiGroup{}, &EsIndexPatternMigrate{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -318,4 +318,12 @@ type TaskHostDoing struct {
 
 func (TaskHostDoing) TableName() string {
 	return "task_host_doing"
+}
+
+type EsIndexPatternMigrate struct {
+	CrossClusterEnabled int `gorm:"column:cross_cluster_enabled;type:int;default:0"`
+}
+
+func (EsIndexPatternMigrate) TableName() string {
+	return "es_index_pattern"
 }

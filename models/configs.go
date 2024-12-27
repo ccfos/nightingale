@@ -130,7 +130,7 @@ func ConfigsGetAll(ctx *ctx.Context) ([]*Configs, error) { // select built-in ty
 	}
 
 	var lst []*Configs
-	err := DB(ctx).Model(&Configs{}).Select("ckey, cval").
+	err := DB(ctx).Model(&Configs{}).Select("id, ckey, cval").
 		Where("ckey!='' and external=? ", 0).Find(&lst).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to query configs")

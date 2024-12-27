@@ -693,6 +693,7 @@ CREATE TABLE `es_index_pattern` (
     `time_field` varchar(128) not null default '@timestamp',
     `allow_hide_system_indices` tinyint(1) not null default 0,
     `fields_format` varchar(4096) not null default '',
+    `cross_cluster_enabled` int not null default 0,
     `create_at` bigint default '0',
     `create_by` varchar(64) default '',
     `update_at` bigint default '0',

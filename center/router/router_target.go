@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
@@ -272,11 +273,9 @@ func (rt *Router) validateTags(tags []string) error {
 }
 
 func (rt *Router) addTagsToTarget(target *models.Target, tags []string) error {
-	hostTagsMap := target.GetHostTagsMap()
 	for _, tag := range tags {
 		tagKey := strings.Split(tag, "=")[0]
-		if _, ok := hostTagsMap[tagKey]; ok ||
-			strings.Contains(target.Tags, tagKey+"=") {
+		if _, exist := target.TagsMap[tagKey]; exist {
 			return fmt.Errorf("duplicate tagkey(%s)", tagKey)
 		}
 	}
@@ -401,6 +400,22 @@ type targetBgidsForm struct {
 	Action  string   `json:"action"` // add del reset
 }
 
+func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
+	for _, ident := range idents {
+		bgids, err := models.TargetGroupIdsGetByIdent(ctx, ident)
+		if err != nil {
+			return false, err
+		}
+		
+		if len(bgids) <= 0 {
+			return true, nil
+		}	
+	}
+
+	return false, nil
+}
+
+
 func (rt *Router) targetBindBgids(c *gin.Context) {
 	var f targetBgidsForm
 	var err error
@@ -443,11 +458,15 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
 			}
 		}
+		isNeverGrouped, checkErr := haveNeverGroupedIdent(rt.Ctx, f.Idents)
+		ginx.Dangerous(checkErr)
 
-		can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
-		ginx.Dangerous(err)
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+		if isNeverGrouped {
+			can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
+			ginx.Dangerous(err)
+			if !can {
+				ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+			}
 		}
 	}
 

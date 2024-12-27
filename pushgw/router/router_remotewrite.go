@@ -114,7 +114,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 
 	var (
 		ignoreIdent = ginx.QueryBool(c, "ignore_ident", false)
-		ignoreHost  = ginx.QueryBool(c, "ignore_host", false)
+		ignoreHost  = ginx.QueryBool(c, "ignore_host", true) // 默认值改成 true，要不然答疑成本太高。发版的时候通知 telegraf 用户，让他们设置 ignore_host=false
 		ids         = make(map[string]struct{})
 	)
 

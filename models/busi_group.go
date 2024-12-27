@@ -115,53 +115,74 @@ func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool,
 	return num > 0, err
 }
 
-var entries = []struct {
-	entry        interface{}
-	errorMessage string
-}{
+// RegisterGroupDelCheckEntries 提供给外部注册删除 group 时需要检查的表
+func RegisterGroupDelCheckEntries(e []CheckEntry) {
+	entries = append(entries, e...)
+}
+
+type CheckEntry struct {
+	Entry        interface{}
+	ErrorMessage string
+	FieldName    string
+}
+
+var entries = []CheckEntry{
 	{
-		entry:        &AlertRule{},
-		errorMessage: "Some alert rules still in the BusiGroup",
+		Entry:        &AlertRule{},
+		ErrorMessage: "Some alert rules still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &AlertMute{},
-		errorMessage: "Some alert mutes still in the BusiGroup",
+		Entry:        &AlertMute{},
+		ErrorMessage: "Some alert mutes still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &AlertSubscribe{},
-		errorMessage: "Some alert subscribes still in the BusiGroup",
+		Entry:        &AlertSubscribe{},
+		ErrorMessage: "Some alert subscribes still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &Target{},
-		errorMessage: "Some targets still in the BusiGroup",
+		Entry:        &Board{},
+		ErrorMessage: "Some Board still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &RecordingRule{},
-		errorMessage: "Some recording rules still in the BusiGroup",
+		Entry:        &Target{},
+		ErrorMessage: "Some targets still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &TaskTpl{},
-		errorMessage: "Some recovery scripts still in the BusiGroup",
+		Entry:        &RecordingRule{},
+		ErrorMessage: "Some recording rules still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &TaskRecord{},
-		errorMessage: "Some Task Record records still in the BusiGroup",
+		Entry:        &TaskTpl{},
+		ErrorMessage: "Some recovery scripts still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 	{
-		entry:        &TargetBusiGroup{},
-		errorMessage: "Some target busigroups still in the BusiGroup",
+		Entry:        &TaskRecord{},
+		ErrorMessage: "Some Task Record records still in the BusiGroup",
+		FieldName:    "group_id",
+	},
+	{
+		Entry:        &TargetBusiGroup{},
+		ErrorMessage: "Some target busigroups still in the BusiGroup",
+		FieldName:    "group_id",
 	},
 }
 
 func (bg *BusiGroup) Del(ctx *ctx.Context) error {
 	for _, e := range entries {
-		has, err := Exists(DB(ctx).Model(e.entry).Where("group_id=?", bg.Id))
+		has, err := Exists(DB(ctx).Model(e.Entry).Where(fmt.Sprintf("%s=?", e.FieldName), bg.Id))
 		if err != nil {
 			return err
 		}
 
 		if has {
-			return errors.New(e.errorMessage)
+			return errors.New(e.ErrorMessage)
 		}
 	}
 
