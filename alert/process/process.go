@@ -226,7 +226,7 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	if err := json.Unmarshal([]byte(p.rule.Annotations), &event.AnnotationsJSON); err != nil {
 		event.AnnotationsJSON = make(map[string]string) // 解析失败时使用空 map
-		logger.Warningf("unmarshal annotations json failed: %v, rule: %d", err, p.rule.Id)
+		logger.Warningf("unmarshal annotations json failed:%v, rule:%d annotations:%s", err, p.rule.Id, p.rule.Annotations)
 	}
 
 	if p.target != "" {
