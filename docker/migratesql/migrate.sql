@@ -126,4 +126,7 @@ ALTER TABLE alert_subscribe MODIFY COLUMN busi_groups varchar(4096);
 ALTER TABLE `alert_rule` ADD COLUMN `cron_pattern` VARCHAR(64);
 ALTER TABLE `builtin_components` MODIFY COLUMN `logo` mediumtext COMMENT '''logo of component''';
 
+/* v8.0.0-beta.2 2024-12-26 */
+ALTER TABLE `es_index_pattern` ADD COLUMN `cross_cluster_enabled` int not null default 0;
+
 ALTER TABLE builtin_components ADD COLUMN disabled INT NOT NULL DEFAULT 0 COMMENT 'is disabled or not';
