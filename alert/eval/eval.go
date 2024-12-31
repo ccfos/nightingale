@@ -305,7 +305,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		}
 	}
 
-	arw.Processor.Stats.CounterQueryCurveCount.WithLabelValues(
+	arw.Processor.Stats.CounterQuerySeriesCount.WithLabelValues(
 		fmt.Sprintf("%v", arw.Rule.Id),
 		fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 	).Add(float64(len(lst)))
@@ -668,7 +668,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				return points, recoverPoints, err
 			}
 
-			arw.Processor.Stats.CounterQueryCurveCount.WithLabelValues(
+			arw.Processor.Stats.CounterQuerySeriesCount.WithLabelValues(
 				fmt.Sprintf("%v", arw.Rule.Id),
 				fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 			).Add(float64(len(series)))
