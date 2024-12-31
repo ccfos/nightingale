@@ -129,7 +129,7 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 	}
 
 	for i := 0; i < len(mutes); i++ {
-		if MatchMute(event, mutes[i]) {
+		if matchMute(event, mutes[i]) {
 			return true, mutes[i]
 		}
 	}
@@ -138,7 +138,7 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 }
 
 // matchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
-func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
+func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
 	if mute.Disabled == 1 {
 		return false
 	}
