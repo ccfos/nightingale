@@ -103,11 +103,14 @@ func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinComponent)).Error
 }
 
-func BuiltinComponentGets(ctx *ctx.Context, query string) ([]*BuiltinComponent, error) {
+func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*BuiltinComponent, error) {
 	session := DB(ctx)
 	if query != "" {
 		queryPattern := "%" + query + "%"
 		session = session.Where("ident LIKE ?", queryPattern)
+	}
+	if disabled == 0 || disabled == 1 {
+		session = session.Where("disabled = ?", disabled)
 	}
 
 	var lst []*BuiltinComponent

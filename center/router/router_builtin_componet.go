@@ -36,8 +36,9 @@ func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 
 func (rt *Router) builtinComponentsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
+	disabled := ginx.QueryInt(c, "disabled", -1)
 
-	bc, err := models.BuiltinComponentGets(rt.Ctx, query)
+	bc, err := models.BuiltinComponentGets(rt.Ctx, query, disabled)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(bc, nil)
