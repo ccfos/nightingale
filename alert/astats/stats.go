@@ -23,7 +23,7 @@ type Stats struct {
 	CounterRuleEvalErrorTotal   *prometheus.CounterVec
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
 	CounterSubEventTotal        *prometheus.CounterVec
-	CounterQuerySeriesCount      *prometheus.CounterVec
+	CounterQuerySeriesCount     *prometheus.CounterVec
 }
 
 func NewSyncStats() *Stats {
@@ -123,7 +123,7 @@ func NewSyncStats() *Stats {
 	CounterQuerySeriesCount := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "query_series_count ",
+		Name:      "query_series_count",
 		Help:      "Number of curves retrieved from data source after query.",
 	}, []string{"rule_id", "datasource_id"})
 
@@ -158,6 +158,6 @@ func NewSyncStats() *Stats {
 		CounterRuleEvalErrorTotal:   CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
 		CounterSubEventTotal:        CounterSubEventTotal,
-		CounterQuerySeriesCount:      CounterQuerySeriesCount,
+		CounterQuerySeriesCount:     CounterQuerySeriesCount,
 	}
 }
