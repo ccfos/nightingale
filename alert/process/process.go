@@ -157,17 +157,13 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
-		isMuted, detail, hitMute := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
+		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
 			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
-			if hitMute == nil {
-				continue
-			}
-
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
-				fmt.Sprintf("%v", hitMute),
+				fmt.Sprintf("%v", muteId),
 				fmt.Sprintf("%v", p.datasourceId),
 			).Inc()
 			continue
@@ -175,14 +171,12 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 
 		if p.EventMuteHook(event) {
 			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
-			if isMuted && hitMute != nil {
-				p.Stats.CounterMuteTotal.WithLabelValues(
-					fmt.Sprintf("%v", event.GroupName),
-					fmt.Sprintf("%v", p.rule.Id),
-					fmt.Sprintf("%v", hitMute.Id),
-					fmt.Sprintf("%v", p.datasourceId),
-				).Inc()
-			}
+			p.Stats.CounterMuteTotal.WithLabelValues(
+				fmt.Sprintf("%v", event.GroupName),
+				fmt.Sprintf("%v", p.rule.Id),
+				fmt.Sprintf("%v", 0),
+				fmt.Sprintf("%v", p.datasourceId),
+			).Inc()
 			continue
 		}
 

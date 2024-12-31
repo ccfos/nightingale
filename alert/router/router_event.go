@@ -40,8 +40,8 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 		event.TagsMap[arr[0]] = arr[1]
 	}
-	hit, hitMute :=  mute.EventMuteStrategy(event, rt.AlertMuteCache)
-	if hit && hitMute != nil{
+	hit, muteId :=  mute.EventMuteStrategy(event, rt.AlertMuteCache)
+	if hit && muteId != -1{
 		logger.Infof("event_muted: rule_id=%d %s", event.RuleId, event.Hash)
 		ginx.NewRender(c).Message(nil)
 		return

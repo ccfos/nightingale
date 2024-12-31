@@ -12,29 +12,29 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string, *models.AlertMute) {
+func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *memsto.TargetCacheType, alertMuteCache *memsto.AlertMuteCacheType) (bool, string, int64) {
 	if rule.Disabled == 1 {
-		return true, "rule disabled", nil
+		return true, "rule disabled", 0
 	}
 
 	if TimeSpanMuteStrategy(rule, event) {
-		return true, "rule is not effective for period of time", nil
+		return true, "rule is not effective for period of time", 0
 	}
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
-		return true, "ident not exists mute", nil
+		return true, "ident not exists mute", 0
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true, "bg not match mute", nil
+		return true, "bg not match mute", 0
 	}
 
-	hit, mute := EventMuteStrategy(event, alertMuteCache)
+	hit, muteId := EventMuteStrategy(event, alertMuteCache)
 	if hit {
-		return true, "match mute rule", mute
+		return true, "match mute rule", muteId
 	}
 
-	return false, "", nil
+	return false, "", 0
 }
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
@@ -122,19 +122,19 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	return false
 }
 
-func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType) (bool, *models.AlertMute) {
+func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.AlertMuteCacheType) (bool, int64) {
 	mutes, has := alertMuteCache.Gets(event.GroupId)
 	if !has || len(mutes) == 0 {
-		return false, nil
+		return false, -1
 	}
 
 	for i := 0; i < len(mutes); i++ {
 		if matchMute(event, mutes[i]) {
-			return true, mutes[i]
+			return true, mutes[i].Id
 		}
 	}
 
-	return false, nil
+	return false, -1
 }
 
 // matchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
