@@ -168,7 +168,7 @@ func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error
 func InitBuiltinPayloads(ctx *ctx.Context) error {
 	var lst []*BuiltinPayload
 
-	components, err := BuiltinComponentGets(ctx, "")
+	components, err := BuiltinComponentGets(ctx, "", -1)
 	if err != nil {
 		return err
 	}

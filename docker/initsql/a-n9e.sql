@@ -531,6 +531,7 @@ CREATE TABLE `builtin_components` (
   `created_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''creator''',
   `updated_at` bigint NOT NULL DEFAULT 0 COMMENT '''update time''',
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
+  `disabled` int NOT NULL DEFAULT 0 COMMENT '''is disabled or not''',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_ident` (`ident`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
