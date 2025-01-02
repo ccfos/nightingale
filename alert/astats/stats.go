@@ -123,7 +123,7 @@ func NewSyncStats() *Stats {
 	CounterQuerySeriesCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "query_series_count",
+		Name:      "query_series_Gauge",
 		Help:      "Number of curves retrieved from data source after query.",
 	}, []string{"rule_id", "datasource_id"})
 
