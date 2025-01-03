@@ -888,3 +888,19 @@ CREATE INDEX idx_component ON builtin_payloads (component);
 CREATE INDEX idx_builtin_payloads_name ON builtin_payloads (name);
 CREATE INDEX idx_cate ON builtin_payloads (cate);
 CREATE INDEX idx_type ON builtin_payloads (type);
+
+
+CREATE TABLE dash_annotation (
+    id bigserial PRIMARY KEY,
+    dashboard_id bigint not null,
+    panel_id bigint not null,
+    tags text,
+    description text,
+    config text,
+    time_start bigint not null default 0,
+    time_end bigint not null default 0,
+    create_at bigint not null default 0,
+    create_by varchar(64) not null default '',
+    update_at bigint not null default 0,
+    update_by varchar(64) not null default ''
+);

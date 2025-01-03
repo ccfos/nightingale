@@ -322,6 +322,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/share-charts", rt.chartShareGets)
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
 
+		pages.POST("/dash-annotations", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationAdd)
+		pages.GET("/dash-annotations", rt.dashAnnotationGets)
+		pages.PUT("/dash-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationPut)
+		pages.DELETE("/dash-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/del"), rt.dashAnnotationDel)
+
 		// pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
 		// pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 		pages.GET("/alert-rules/callbacks", rt.auth(), rt.user(), rt.alertRuleCallbacks)
@@ -479,6 +484,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/built-in-components/del"), rt.builtinPayloadsDel)
 		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUIDOrID)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
