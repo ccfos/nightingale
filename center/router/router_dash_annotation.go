@@ -13,7 +13,7 @@ import (
 )
 
 func checkAnnotationPermission(c *gin.Context, ctx *ctx.Context, dashboardId int64) {
-	dashboard, err := models.DashboardGet(ctx, "id = ?", dashboardId)
+	dashboard, err := models.BoardGetByID(ctx, dashboardId)
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "failed to get dashboard: %v", err)
 	}

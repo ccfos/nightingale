@@ -322,10 +322,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/share-charts", rt.chartShareGets)
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
 
-		pages.POST("/dash-annotations", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationAdd)
-		pages.GET("/dash-annotations", rt.dashAnnotationGets)
-		pages.PUT("/dash-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationPut)
-		pages.DELETE("/dash-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/del"), rt.dashAnnotationDel)
+		pages.POST("/dashboard-annotations", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationAdd)
+		pages.GET("/dashboard-annotations", rt.dashAnnotationGets)
+		pages.PUT("/dashboard-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.dashAnnotationPut)
+		pages.DELETE("/dashboard-annotation/:id", rt.auth(), rt.user(), rt.perm("/dashboards/del"), rt.dashAnnotationDel)
 
 		// pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
 		// pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
