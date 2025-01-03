@@ -23,12 +23,12 @@ func (rt *Router) operationOfRole(c *gin.Context) {
 		for _, ops := range cconf.Operations.Ops {
 			lst = append(lst, ops.Ops...)
 		}
-		ginx.NewRender(c).Data(lst, nil)
+		ginx.NewRender(c).Data(cconf.TransformNames(lst, cconf.CnameToName), nil)
 		return
 	}
 
 	ops, err := models.OperationsOfRole(rt.Ctx, []string{role.Name})
-	ginx.NewRender(c).Data(ops, err)
+	ginx.NewRender(c).Data(cconf.TransformNames(ops, cconf.CnameToName), err)
 }
 
 func (rt *Router) roleBindOperation(c *gin.Context) {
@@ -46,13 +46,14 @@ func (rt *Router) roleBindOperation(c *gin.Context) {
 	var ops []string
 	ginx.BindJSON(c, &ops)
 
-	ginx.NewRender(c).Message(models.RoleOperationBind(rt.Ctx, role.Name, ops))
+	ginx.NewRender(c).Message(models.RoleOperationBind(rt.Ctx, role.Name, cconf.TransformNames(ops, cconf.NameToCname)))
 }
 
 func (rt *Router) operations(c *gin.Context) {
 	var ops []cconf.Ops
 	for _, v := range rt.Operations.Ops {
 		v.Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Cname)
+		v.Ops = cconf.TransformNames(v.Ops, cconf.CnameToName)
 		ops = append(ops, v)
 	}
 
