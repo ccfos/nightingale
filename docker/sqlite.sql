@@ -688,7 +688,7 @@ CREATE UNIQUE INDEX idx_target_busi_group ON target_busi_group (target_ident, gr
 CREATE TABLE `dash_annotation` (
     `id` integer primary key autoincrement,
     `dashboard_id` bigint not null,
-    `panel_id` bigint not null,
+    `panel_id` varchar(191) not null,
     `tags` text,
     `description` text,
     `config` text,

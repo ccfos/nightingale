@@ -9,7 +9,7 @@ import (
 type DashAnnotation struct {
 	Id          int64    `json:"id" gorm:"primaryKey"`
 	DashboardId int64    `json:"dashboard_id"`
-	PanelId     int64    `json:"panel_id"`
+	PanelId     string   `json:"panel_id"`
 	Tags        string   `json:"-"`
 	TagsJSON    []string `json:"tags" gorm:"-"`
 	Description string   `json:"description"`

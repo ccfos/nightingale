@@ -331,7 +331,7 @@ func (EsIndexPatternMigrate) TableName() string {
 type DashAnnotation struct {
 	Id          int64  `gorm:"column:id;primaryKey;autoIncrement"`
 	DashboardId int64  `gorm:"column:dashboard_id;not null"`
-	PanelId     int64  `gorm:"column:panel_id;not null"`
+	PanelId     string `gorm:"column:panel_id;type:varchar(191);not null"`
 	Tags        string `gorm:"column:tags;type:text"`
 	Description string `gorm:"column:description;type:text"`
 	Config      string `gorm:"column:config;type:text"`

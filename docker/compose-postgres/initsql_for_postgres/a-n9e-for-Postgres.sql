@@ -893,7 +893,7 @@ CREATE INDEX idx_type ON builtin_payloads (type);
 CREATE TABLE dash_annotation (
     id bigserial PRIMARY KEY,
     dashboard_id bigint not null,
-    panel_id bigint not null,
+    panel_id varchar(191) not null,
     tags text,
     description text,
     config text,

@@ -135,7 +135,7 @@ ALTER TABLE `builtin_components` ADD COLUMN `disabled` INT NOT NULL DEFAULT 0 CO
 CREATE TABLE `dash_annotation` (
     `id` bigint unsigned not null auto_increment,
     `dashboard_id` bigint not null comment 'dashboard id',
-    `panel_id` bigint not null comment 'panel id',
+    `panel_id` varchar(191) not null comment 'panel id',
     `tags` text comment 'tags array json string',
     `description` text comment 'annotation description',
     `config` text comment 'annotation config',
