@@ -23,7 +23,7 @@ type Stats struct {
 	CounterRuleEvalErrorTotal   *prometheus.CounterVec
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
 	CounterSubEventTotal        *prometheus.CounterVec
-	CounterQuerySeries     	 	*prometheus.GaugeVec
+	GaugeQuerySeries     	 	*prometheus.GaugeVec
 }
 
 func NewSyncStats() *Stats {
@@ -120,7 +120,7 @@ func NewSyncStats() *Stats {
 		Help:      "Number of heartbeat error.",
 	}, []string{})
 
-	CounterQuerySeries := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeQuerySeries := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "query_series",
@@ -141,7 +141,7 @@ func NewSyncStats() *Stats {
 		CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal,
 		CounterSubEventTotal,
-		CounterQuerySeries,
+		GaugeQuerySeries,
 	)
 
 	return &Stats{
@@ -158,6 +158,6 @@ func NewSyncStats() *Stats {
 		CounterRuleEvalErrorTotal:   CounterRuleEvalErrorTotal,
 		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
 		CounterSubEventTotal:        CounterSubEventTotal,
-		CounterQuerySeries:     	 CounterQuerySeries,
+		GaugeQuerySeries:     	 	 GaugeQuerySeries,
 	}
 }

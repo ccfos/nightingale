@@ -233,7 +233,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:%v", arw.Key(), ruleConfig, err)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-		arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+		arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 			fmt.Sprintf("%v", arw.Rule.Id),
 			fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 		).Set(-1)
@@ -243,7 +243,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 	if rule == nil {
 		logger.Errorf("rule_eval:%s rule_config:%s, error:rule is nil", arw.Key(), ruleConfig)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-		arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+		arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 			fmt.Sprintf("%v", arw.Rule.Id),
 			fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 		).Set(-1)
@@ -290,7 +290,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 				logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
 				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-				arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+				arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 				).Set(-1)
@@ -317,7 +317,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		}
 	}
 
-	arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+	arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 		fmt.Sprintf("%v", arw.Rule.Id),
 		fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 	).Set(float64(len(lst)))
@@ -668,7 +668,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				logger.Warningf("rule_eval:%d tdengine client is nil", rule.Id)
 				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_CLIENT, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-				arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+				arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 				).Set(-1)
@@ -681,7 +681,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
 				arw.Processor.Stats.CounterQueryDataErrorTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-				arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+				arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 				).Set(-1)
@@ -695,7 +695,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query ref error: %v query:%+v", rule.Id, err, query)
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-				arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+				arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 					fmt.Sprintf("%v", arw.Rule.Id),
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 				).Set(-1)
@@ -704,7 +704,7 @@ func (arw *AlertRuleWorker) GetTdengineAnomalyPoint(rule *models.AlertRule, dsId
 			
 			seriesTagIndexes[ref] = seriesTagIndex
 			
-			arw.Processor.Stats.CounterQuerySeries.WithLabelValues(
+			arw.Processor.Stats.GaugeQuerySeries.WithLabelValues(
 				fmt.Sprintf("%v", arw.Rule.Id),
 				fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 			).Set(float64(len(series)))
