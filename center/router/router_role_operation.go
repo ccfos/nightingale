@@ -11,24 +11,40 @@ import (
 )
 
 func (rt *Router) operationOfRole(c *gin.Context) {
+	var (
+		role           *models.Role
+		err            error
+		res            []cconf.SingleOp
+		roleOperations []string
+	)
+
 	id := ginx.UrlParamInt64(c, "id")
-	role, err := models.RoleGet(rt.Ctx, "id=?", id)
+	role, err = models.RoleGet(rt.Ctx, "id=?", id)
 	ginx.Dangerous(err)
 	if role == nil {
 		ginx.Bomb(http.StatusOK, "role not found")
 	}
 
 	if role.Name == "Admin" {
-		var lst []string
 		for _, ops := range cconf.Operations.Ops {
-			lst = append(lst, ops.Ops...)
+			for i := range ops.Ops {
+				res = append(res, cconf.SingleOp{
+					Cname: i18n.Sprintf(c.GetHeader("X-Language"), ops.Ops[i].Name),
+					Name:  ops.Ops[i].Name,
+				})
+			}
 		}
-		ginx.NewRender(c).Data(cconf.TransformNames(lst, cconf.CnameToName), nil)
-		return
+	} else {
+		roleOperations, err = models.OperationsOfRole(rt.Ctx, []string{role.Name})
+		for i := range roleOperations {
+			res = append(res, cconf.SingleOp{
+				Cname: i18n.Sprintf(c.GetHeader("X-Language"), roleOperations[i]),
+				Name:  roleOperations[i],
+			})
+		}
 	}
 
-	ops, err := models.OperationsOfRole(rt.Ctx, []string{role.Name})
-	ginx.NewRender(c).Data(cconf.TransformNames(ops, cconf.CnameToName), err)
+	ginx.NewRender(c).Data(res, err)
 }
 
 func (rt *Router) roleBindOperation(c *gin.Context) {
@@ -46,14 +62,16 @@ func (rt *Router) roleBindOperation(c *gin.Context) {
 	var ops []string
 	ginx.BindJSON(c, &ops)
 
-	ginx.NewRender(c).Message(models.RoleOperationBind(rt.Ctx, role.Name, cconf.TransformNames(ops, cconf.NameToCname)))
+	ginx.NewRender(c).Message(models.RoleOperationBind(rt.Ctx, role.Name, ops))
 }
 
 func (rt *Router) operations(c *gin.Context) {
 	var ops []cconf.Ops
 	for _, v := range rt.Operations.Ops {
-		v.Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Cname)
-		v.Ops = cconf.TransformNames(v.Ops, cconf.CnameToName)
+		v.Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Name)
+		for i := range v.Ops {
+			v.Ops[i].Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Ops[i].Name)
+		}
 		ops = append(ops, v)
 	}
 

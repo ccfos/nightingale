@@ -10,33 +10,17 @@ import (
 
 var Operations = Operation{}
 
-// CnameToName 用于读接口转换成易读形式
-var CnameToName = make(map[string]string)
-
-// NameToCname 用于写接口转换成 url 形式
-var NameToCname = make(map[string]string)
-
 type Operation struct {
 	Ops []Ops `yaml:"ops"`
 }
 
 type Ops struct {
-	Name  string   `json:"name"`
-	Cname string   `json:"cname"`
-	Ops   []string `json:"ops"`
+	Name  string     `yaml:"name" json:"name"`
+	Cname string     `yaml:"cname" json:"cname"`
+	Ops   []SingleOp `yaml:"ops" json:"ops"`
 }
 
-// OperationHelper 用于解析内置的信息
-type OperationHelper struct {
-	Ops []OpsHelper `yaml:"ops"`
-}
-
-type OpsHelper struct {
-	Name  string     `yaml:"name"`
-	Cname string     `yaml:"cname"`
-	Ops   []SingleOp `yaml:"ops"`
-}
-
+// SingleOp Name 为 op 名称；Cname 为展示名称，默认中文
 type SingleOp struct {
 	Name  string `yaml:"name"`
 	Cname string `yaml:"cname"`
@@ -71,8 +55,8 @@ func LoadOpsYaml(configDir string, opsYamlFile string) error {
 	return file.ReadYaml(fp, &Operations)
 }
 
-func GetAllOps(ops []Ops) []string {
-	var ret []string
+func GetAllOps(ops []Ops) []SingleOp {
+	var ret []SingleOp
 	for _, op := range ops {
 		ret = append(ret, op.Ops...)
 	}
@@ -80,26 +64,11 @@ func GetAllOps(ops []Ops) []string {
 }
 
 func MergeOperationConf() error {
-	var operationHelper OperationHelper
-	err := yaml.Unmarshal([]byte(builtInOps), &operationHelper)
+	var opsBuiltIn Operation
+	err := yaml.Unmarshal([]byte(builtInOps), &opsBuiltIn)
 	if err != nil {
 		return fmt.Errorf("cannot parse builtInOps: %s", err.Error())
 	}
-
-	opsBuiltIn := Operation{}
-	for i := range operationHelper.Ops {
-		op := Ops{
-			Name:  operationHelper.Ops[i].Name,
-			Cname: operationHelper.Ops[i].Cname,
-		}
-		for j := range operationHelper.Ops[i].Ops {
-			op.Ops = append(op.Ops, operationHelper.Ops[i].Ops[j].Cname)
-			CnameToName[operationHelper.Ops[i].Ops[j].Cname] = operationHelper.Ops[i].Ops[j].Name
-			NameToCname[operationHelper.Ops[i].Ops[j].Name] = operationHelper.Ops[i].Ops[j].Cname
-		}
-		opsBuiltIn.Ops = append(opsBuiltIn.Ops, op)
-	}
-
 	configOpsMap := make(map[string]struct{})
 	for _, op := range Operations.Ops {
 		configOpsMap[op.Name] = struct{}{}
@@ -119,205 +88,205 @@ ops:
 - name: dashboards
   cname: 仪表盘
   ops:
-    - name: 读取仪表盘信息
-      cname: "/dashboards"
-    - name: 添加仪表盘
-      cname: "/dashboards/add"
-    - name: 修改仪表盘
-      cname: "/dashboards/put"
-    - name: 删除仪表盘
-      cname: "/dashboards/del"
-    - name: 修改嵌入仪表盘
-      cname: "/embedded-dashboards/put"
-    - name: 查看嵌入仪表盘
-      cname: "/embedded-dashboards"
-    - name: 查看公开仪表盘
-      cname: "/public-dashboards"
+    - name: "/dashboards"
+      cname: 读取仪表盘信息
+    - name: "/dashboards/add"
+      cname: 添加仪表盘
+    - name: "/dashboards/put"
+      cname: 修改仪表盘
+    - name: "/dashboards/del"
+      cname: 删除仪表盘
+    - name: "/embedded-dashboards/put"
+      cname: 修改嵌入仪表盘
+    - name: "/embedded-dashboards"
+      cname: 查看嵌入仪表盘
+    - name: "/public-dashboards"
+      cname: 查看公开仪表盘
 
 - name: alert
   cname: 告警规则
   ops:
-    - name: 查看告警规则
-      cname: "/alert-rules"
-    - name: 添加告警规则
-      cname: "/alert-rules/add"
-    - name: 修改告警规则
-      cname: "/alert-rules/put"
-    - name: 删除告警规则
-      cname: "/alert-rules/del"
+    - name: "/alert-rules"
+      cname: 查看告警规则
+    - name: "/alert-rules/add"
+      cname: 添加告警规则
+    - name: "/alert-rules/put"
+      cname: 修改告警规则
+    - name: "/alert-rules/del"
+      cname: 删除告警规则
 
 - name: alert-mutes
   cname: 告警静默管理
   ops:
-    - name: 查看告警静默
-      cname: "/alert-mutes"
-    - name: 添加告警静默
-      cname: "/alert-mutes/add"
-    - name: 修改告警静默
-      cname: "/alert-mutes/put"
-    - name: 删除告警静默
-      cname: "/alert-mutes/del"
+    - name: "/alert-mutes"
+      cname: 查看告警静默
+    - name: "/alert-mutes/add"
+      cname: 添加告警静默
+    - name: "/alert-mutes/put"
+      cname: 修改告警静默
+    - name: "/alert-mutes/del"
+      cname: 删除告警静默
   
 - name: alert-subscribes
   cname: 告警订阅管理
   ops:
-    - name: 查看告警订阅
-      cname: "/alert-subscribes"
-    - name: 添加告警订阅
-      cname: "/alert-subscribes/add"
-    - name: 修改告警订阅
-      cname: "/alert-subscribes/put"
-    - name: 删除告警订阅
-      cname: "/alert-subscribes/del"
+    - name: "/alert-subscribes"
+      cname: 查看告警订阅
+    - name: "/alert-subscribes/add"
+      cname: 添加告警订阅
+    - name: "/alert-subscribes/put"
+      cname: 修改告警订阅
+    - name: "/alert-subscribes/del"
+      cname: 删除告警订阅
 
 - name: alert-events  
   cname: 告警事件管理
   ops:
-    - name: 查看当前告警
-      cname: "/alert-cur-events"
-    - name: 删除当前告警
-      cname: "/alert-cur-events/del"
-    - name: 查看历史告警
-      cname: "/alert-his-events"
+    - name: "/alert-cur-events"
+      cname: 查看当前告警
+    - name: "/alert-cur-events/del"
+      cname: 删除当前告警
+    - name: "/alert-his-events"
+      cname: 查看历史告警
 
 - name: recording-rules
   cname: 记录规则管理
   ops:
-    - name: 查看记录规则
-      cname: "/recording-rules"
-    - name: 添加记录规则
-      cname: "/recording-rules/add"
-    - name: 修改记录规则
-      cname: "/recording-rules/put"
-    - name: 删除记录规则
-      cname: "/recording-rules/del"
+    - name: "/recording-rules"
+      cname: 查看记录规则
+    - name: "/recording-rules/add"
+      cname: 添加记录规则
+    - name: "/recording-rules/put"
+      cname: 修改记录规则
+    - name: "/recording-rules/del"
+      cname: 删除记录规则
 
 - name: metric
   cname: 时序指标
   ops:
-    - name: 查看指标数据
-      cname: "/metric/explorer"
-    - name: 查看对象数据
-      cname: "/object/explorer"
+    - name: "/metric/explorer"
+      cname: 查看指标数据
+    - name: "/object/explorer"
+      cname: 查看对象数据
 
 - name: log
   cname: 日志分析
   ops:
-    - name: 查看日志
-      cname: "/log/explorer"
-    - name: 查看索引模式
-      cname: "/log/index-patterns"
+    - name: "/log/explorer"
+      cname: 查看日志
+    - name: "/log/index-patterns"
+      cname: 查看索引模式
 
 - name: targets
   cname: 基础设施
   ops:
-    - name: 查看对象
-      cname: "/targets"
-    - name: 添加对象
-      cname: "/targets/add"
-    - name: 修改对象
-      cname: "/targets/put"
-    - name: 删除对象
-      cname: "/targets/del"
-    - name: 绑定对象
-      cname: "/targets/bind"
+    - name: "/targets"
+      cname: 查看对象
+    - name: "/targets/add"
+      cname: 添加对象
+    - name: "/targets/put"
+      cname: 修改对象
+    - name: "/targets/del"
+      cname: 删除对象
+    - name: "/targets/bind"
+      cname: 绑定对象
 
 - name: job
   cname: 任务管理
   ops:
-    - name: 查看任务模板
-      cname: "/job-tpls"
-    - name: 添加任务模板
-      cname: "/job-tpls/add"
-    - name: 修改任务模板
-      cname: "/job-tpls/put"
-    - name: 删除任务模板
-      cname: "/job-tpls/del"
-    - name: 查看任务实例
-      cname: "/job-tasks"
-    - name: 添加任务实例
-      cname: "/job-tasks/add"
-    - name: 修改任务实例
-      cname: "/job-tasks/put"
-    - name: 查看任务设置
-      cname: "/ibex-settings"
+    - name: "/job-tpls"
+      cname: 查看任务模板
+    - name: "/job-tpls/add"
+      cname: 添加任务模板
+    - name: "/job-tpls/put"
+      cname: 修改任务模板
+    - name: "/job-tpls/del"
+      cname: 删除任务模板
+    - name: "/job-tasks"
+      cname: 查看任务实例
+    - name: "/job-tasks/add"
+      cname: 添加任务实例
+    - name: "/job-tasks/put"
+      cname: 修改任务实例
+    - name: "/ibex-settings"
+      cname: 查看任务设置
 
 - name: user
   cname: 用户管理
   ops:
-    - name: 查看用户列表
-      cname: "/users"
-    - name: 查看用户组
-      cname: "/user-groups"
-    - name: 添加用户组
-      cname: "/user-groups/add"
-    - name: 修改用户组
-      cname: "/user-groups/put"
-    - name: 删除用户组
-      cname: "/user-groups/del"
+    - name: "/users"
+      cname: 查看用户列表
+    - name: "/user-groups"
+      cname: 查看用户组
+    - name: "/user-groups/add"
+      cname: 添加用户组
+    - name: "/user-groups/put"
+      cname: 修改用户组
+    - name: "/user-groups/del"
+      cname: 删除用户组
 
 - name: permissions
   cname: 权限管理
   ops:
-    - name: 查看权限配置
-      cname: "/permissions"
+    - name: "/permissions"
+      cname: 查看权限配置
 
 - name: busi-groups
   cname: 业务分组管理
   ops:
-    - name: 查看业务分组
-      cname: "/busi-groups"
-    - name: 添加业务分组
-      cname: "/busi-groups/add"
-    - name: 修改业务分组
-      cname: "/busi-groups/put"
-    - name: 删除业务分组
-      cname: "/busi-groups/del"
+    - name: "/busi-groups"
+      cname: 查看业务分组
+    - name: "/busi-groups/add"
+      cname: 添加业务分组
+    - name: "/busi-groups/put"
+      cname: 修改业务分组
+    - name: "/busi-groups/del"
+      cname: 删除业务分组
 
 - name: builtin-metrics
   cname: 指标视图
   ops:
-    - name: 查看内置指标
-      cname: "/metrics-built-in"
-    - name: 添加内置指标
-      cname: "/builtin-metrics/add"
-    - name: 修改内置指标
-      cname: "/builtin-metrics/put"
-    - name: 删除内置指标
-      cname: "/builtin-metrics/del"
+    - name: "/metrics-built-in"
+      cname: 查看内置指标
+    - name: "/builtin-metrics/add"
+      cname: 添加内置指标
+    - name: "/builtin-metrics/put"
+      cname: 修改内置指标
+    - name: "/builtin-metrics/del"
+      cname: 删除内置指标
 
 - name: built-in-components
   cname: 模版中心
   ops:
-    - name: 查看内置组件
-      cname: "/built-in-components"
-    - name: 添加内置组件
-      cname: "/built-in-components/add"
-    - name: 修改内置组件
-      cname: "/built-in-components/put"
-    - name: 删除内置组件
-      cname: "/built-in-components/del"
+    - name: "/built-in-components"
+      cname: 查看内置组件
+    - name: "/built-in-components/add"
+      cname: 添加内置组件
+    - name: "/built-in-components/put"
+      cname: 修改内置组件
+    - name: "/built-in-components/del"
+      cname: 删除内置组件
 
 - name: system
   cname: 系统信息
   ops:
-    - name: 查看变量配置
-      cname: "/help/variable-configs"
-    - name: 查看版本信息
-      cname: "/help/version"
-    - name: 查看服务器信息
-      cname: "/help/servers"
-    - name: 查看数据源配置
-      cname: "/help/source"
-    - name: 查看SSO配置
-      cname: "/help/sso"
-    - name: 查看通知模板
-      cname: "/help/notification-tpls"
-    - name: 查看通知设置
-      cname: "/help/notification-settings"
-    - name: 查看迁移配置
-      cname: "/help/migrate"
-    - name: 查看站点设置
-      cname: "/site-settings"
+    - name: "/help/variable-configs"
+      cname: 查看变量配置
+    - name: "/help/version"
+      cname: 查看版本信息
+    - name: "/help/servers"
+      cname: 查看服务器信息
+    - name: "/help/source"
+      cname: 查看数据源配置
+    - name: "/help/sso"
+      cname: 查看SSO配置
+    - name: "/help/notification-tpls"
+      cname: 查看通知模板
+    - name: "/help/notification-settings"
+      cname: 查看通知设置
+    - name: "/help/migrate"
+      cname: 查看迁移配置
+    - name: "/site-settings"
+      cname: 查看站点设置
 `
 )
