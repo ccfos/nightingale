@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ccfos/nightingale/v6/dscache"
+
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -17,13 +19,12 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/tdengine"
-
 	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
@@ -61,6 +62,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	pushgwRouter.Config(r)
+	macros.RegisterMacro(macros.MacroInVain)
+	dscache.Init(ctx, false)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
@@ -77,11 +80,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 		dispatch.InitRegisterQueryFunc(promClients)
 
-		tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
 		externalProcessors := process.NewExternalProcessors()
 
 		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,
-			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+			alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, userCache, userGroupCache)
 
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 

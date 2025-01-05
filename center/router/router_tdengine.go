@@ -1,14 +1,14 @@
 package router
 
 import (
-	"net/http"
-
+	"fmt"
 	"github.com/ccfos/nightingale/v6/center/cconf"
+	"github.com/ccfos/nightingale/v6/datasource/tdengine"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
+	"net/http"
 )
 
 type databasesQueryForm struct {
@@ -20,13 +20,13 @@ func (rt *Router) tdengineDatabases(c *gin.Context) {
 	var f databasesQueryForm
 	ginx.BindJSON(c, &f)
 
-	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
-	if tdClient == nil {
+	datasource, hit := dscache.DsCache.Get(f.Cate, f.DatasourceId)
+	if _, ok := datasource.(*tdengine.TDengine); !hit || !ok {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such datasource")
 		return
 	}
 
-	databases, err := tdClient.GetDatabases()
+	databases, err := datasource.(*tdengine.TDengine).ShowDatabases(rt.Ctx.Ctx)
 	ginx.NewRender(c).Data(databases, err)
 }
 
@@ -37,18 +37,29 @@ type tablesQueryForm struct {
 	IsStable     bool   `json:"is_stable"`
 }
 
+type Column struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Size int    `json:"size"`
+}
+
 // get tdengine tables
 func (rt *Router) tdengineTables(c *gin.Context) {
 	var f tablesQueryForm
 	ginx.BindJSON(c, &f)
 
-	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
-	if tdClient == nil {
+	datasource, hit := dscache.DsCache.Get(f.Cate, f.DatasourceId)
+	if _, ok := datasource.(*tdengine.TDengine); !hit || !ok {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such datasource")
 		return
 	}
 
-	tables, err := tdClient.GetTables(f.Database, f.IsStable)
+	database := fmt.Sprintf("%s.tables", f.Database)
+	if f.IsStable {
+		database = fmt.Sprintf("%s.stables", f.Database)
+	}
+
+	tables, err := datasource.(*tdengine.TDengine).ShowTables(rt.Ctx.Ctx, database)
 	ginx.NewRender(c).Data(tables, err)
 }
 
@@ -59,50 +70,31 @@ type columnsQueryForm struct {
 	Table        string `json:"table"`
 }
 
-// get tdengine columns
 func (rt *Router) tdengineColumns(c *gin.Context) {
 	var f columnsQueryForm
 	ginx.BindJSON(c, &f)
 
-	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
-	if tdClient == nil {
+	datasource, hit := dscache.DsCache.Get(f.Cate, f.DatasourceId)
+	if _, ok := datasource.(*tdengine.TDengine); !hit || !ok {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such datasource")
 		return
 	}
 
-	columns, err := tdClient.GetColumns(f.Database, f.Table)
-	ginx.NewRender(c).Data(columns, err)
-}
-
-func (rt *Router) QueryData(c *gin.Context) {
-	var f models.QueryParam
-	ginx.BindJSON(c, &f)
-
-	var resp []models.DataResp
-	var err error
-	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
-	for _, q := range f.Querys {
-		datas, err := tdClient.Query(q)
-		ginx.Dangerous(err)
-		resp = append(resp, datas...)
+	query := map[string]string{
+		"database": f.Database,
+		"table":    f.Table,
 	}
 
-	ginx.NewRender(c).Data(resp, err)
-}
-
-func (rt *Router) QueryLog(c *gin.Context) {
-	var f models.QueryParam
-	ginx.BindJSON(c, &f)
-
-	tdClient := rt.TdendgineClients.GetCli(f.DatasourceId)
-	if len(f.Querys) == 0 {
-		ginx.Bomb(200, "querys is empty")
-		return
+	columns, err := datasource.(*tdengine.TDengine).DescribeTable(rt.Ctx.Ctx, query)
+	// 对齐前端，后续可以将 tdEngine 的查数据的接口都统一
+	tdColumns := make([]Column, len(columns))
+	for i, column := range columns {
+		tdColumns[i] = Column{
+			Name: column.Field,
+			Type: column.Type,
+		}
 	}
-
-	data, err := tdClient.QueryLog(f.Querys[0])
-	logger.Debugf("tdengine query:%s result: %+v", f.Querys[0], data)
-	ginx.NewRender(c).Data(data, err)
+	ginx.NewRender(c).Data(tdColumns, err)
 }
 
 // query sql template
