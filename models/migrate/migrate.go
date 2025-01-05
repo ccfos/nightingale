@@ -67,7 +67,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{},
-		&models.TargetBusiGroup{}, &EsIndexPatternMigrate{}}
+		&models.TargetBusiGroup{}, &EsIndexPatternMigrate{}, &DashAnnotation{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -326,4 +326,23 @@ type EsIndexPatternMigrate struct {
 
 func (EsIndexPatternMigrate) TableName() string {
 	return "es_index_pattern"
+}
+
+type DashAnnotation struct {
+	Id          int64  `gorm:"column:id;primaryKey;autoIncrement"`
+	DashboardId int64  `gorm:"column:dashboard_id;not null"`
+	PanelId     string `gorm:"column:panel_id;type:varchar(191);not null"`
+	Tags        string `gorm:"column:tags;type:text"`
+	Description string `gorm:"column:description;type:text"`
+	Config      string `gorm:"column:config;type:text"`
+	TimeStart   int64  `gorm:"column:time_start;not null;default:0"`
+	TimeEnd     int64  `gorm:"column:time_end;not null;default:0"`
+	CreateAt    int64  `gorm:"column:create_at;not null;default:0"`
+	CreateBy    string `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt    int64  `gorm:"column:update_at;not null;default:0"`
+	UpdateBy    string `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (DashAnnotation) TableName() string {
+	return "dash_annotation"
 }

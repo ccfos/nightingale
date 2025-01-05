@@ -129,4 +129,22 @@ ALTER TABLE `builtin_components` MODIFY COLUMN `logo` mediumtext COMMENT '''logo
 /* v8.0.0-beta.2 2024-12-26 */
 ALTER TABLE `es_index_pattern` ADD COLUMN `cross_cluster_enabled` int not null default 0;
 
-ALTER TABLE builtin_components ADD COLUMN disabled INT NOT NULL DEFAULT 0 COMMENT 'is disabled or not';
+/* v8.0.0-beta.3 2024-01-03 */
+ALTER TABLE `builtin_components` ADD COLUMN `disabled` INT NOT NULL DEFAULT 0 COMMENT 'is disabled or not';
+        
+CREATE TABLE `dash_annotation` (
+    `id` bigint unsigned not null auto_increment,
+    `dashboard_id` bigint not null comment 'dashboard id',
+    `panel_id` varchar(191) not null comment 'panel id',
+    `tags` text comment 'tags array json string',
+    `description` text comment 'annotation description',
+    `config` text comment 'annotation config',
+    `time_start` bigint not null default 0 comment 'start timestamp',
+    `time_end` bigint not null default 0 comment 'end timestamp',
+    `create_at` bigint not null default 0 comment 'create time',
+    `create_by` varchar(64) not null default '' comment 'creator',
+    `update_at` bigint not null default 0 comment 'update time',
+    `update_by` varchar(64) not null default '' comment 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_dashboard_id` (`dashboard_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
