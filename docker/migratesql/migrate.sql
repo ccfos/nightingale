@@ -128,3 +128,5 @@ ALTER TABLE `builtin_components` MODIFY COLUMN `logo` mediumtext COMMENT '''logo
 
 /* v8.0.0-beta.2 2024-12-26 */
 ALTER TABLE `es_index_pattern` ADD COLUMN `cross_cluster_enabled` int not null default 0;
+
+ALTER TABLE builtin_components ADD COLUMN disabled INT NOT NULL DEFAULT 0 COMMENT 'is disabled or not';

@@ -860,6 +860,7 @@ CREATE TABLE builtin_components (
   ident VARCHAR(191) NOT NULL,
   logo VARCHAR(191) NOT NULL,
   readme TEXT NOT NULL,
+  disabled INT NOT NULL DEFAULT 0,
   created_at BIGINT NOT NULL DEFAULT 0,
   created_by VARCHAR(191) NOT NULL DEFAULT '',
   updated_at BIGINT NOT NULL DEFAULT 0,
