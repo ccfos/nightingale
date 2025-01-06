@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/common/model"
-	"github.com/toolkits/pkg/logger"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	td "github.com/ccfos/nightingale/v6/dskit/tdengine"
@@ -61,7 +62,8 @@ func (td *TDengine) Equal(other datasource.Datasource) bool {
 	if !ok {
 		return false
 	}
-	if td.Url != otherTD.Url {
+
+	if td.Addr != otherTD.Addr {
 		return false
 	}
 

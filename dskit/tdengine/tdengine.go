@@ -18,7 +18,7 @@ import (
 
 type Tdengine struct {
 	DatasourceName string `json:"tdengine.datasource_name" mapstructure:"tdengine.datasource_name"`
-	Url            string `json:"tdengine.url" mapstructure:"tdengine.url"`
+	Addr           string `json:"tdengine.addr" mapstructure:"tdengine.addr"`
 	BasicAuthUser  string `json:"tdengine.basic_auth_user" mapstructure:"tdengine.basic_auth_user"`
 	BasicAuthPass  string `json:"tdengine.basic_auth_pass" mapstructure:"tdengine.basic_auth_pass"`
 	Token          string `json:"tdengine.token" mapstructure:"tdengine.token"`
@@ -84,7 +84,7 @@ func (tc *Tdengine) InitCli() {
 
 func (tc *Tdengine) QueryTable(query string) (APIResponse, error) {
 	var apiResp APIResponse
-	req, err := http.NewRequest("POST", tc.Url+"/rest/sql", strings.NewReader(query))
+	req, err := http.NewRequest("POST", tc.Addr+"/rest/sql", strings.NewReader(query))
 	if err != nil {
 		return apiResp, err
 	}
