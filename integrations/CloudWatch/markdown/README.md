@@ -71,18 +71,14 @@ See the [CONFIGURATION.md][CONFIGURATION.md] for more details.
   ## Note that if a period is configured that is smaller than the minimum for a
   ## particular metric, that metric will not be returned by the CloudWatch API
   ## and will not be collected by Categraf.
-  #
-  ## Requested CloudWatch aggregation Period (required)
-  ## Must be a multiple of 60s.
-  period = "5m"
-
+   
   ## Collection Delay (required)
   ## Must account for metrics availability via CloudWatch API
   delay = "5m"
 
-  ## Recommended: use metric 'interval' that is a multiple of 'period' to avoid
-  ## gaps or overlap in pulled data
-  interval = "5m"
+  ## Requested CloudWatch aggregation Period (required)
+  ## Must be a multiple of 60s.
+  period = "5m"
 
   ## Recommended if "delay" and "period" are both within 3 hours of request
   ## time. Invalid values will be ignored. Recently Active feature will only
