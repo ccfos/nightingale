@@ -20,7 +20,7 @@ type Ops struct {
 	Ops   []SingleOp `yaml:"ops" json:"ops"`
 }
 
-// SingleOp Name 为 op 名称；Cname 为展示名称，默认中文
+// SingleOp Name 为 op 名称；Cname 为展示名称，默认英文
 type SingleOp struct {
 	Name  string `yaml:"name"`
 	Cname string `yaml:"cname"`
@@ -86,207 +86,207 @@ const (
 	builtInOps = `
 ops:
 - name: dashboards
-  cname: 仪表盘
+  cname: Dashboards
   ops:
     - name: "/dashboards"
-      cname: 读取仪表盘信息
+      cname: View Dashboards
     - name: "/dashboards/add"
-      cname: 添加仪表盘
+      cname: Add Dashboard
     - name: "/dashboards/put"
-      cname: 修改仪表盘
+      cname: Modify Dashboard
     - name: "/dashboards/del"
-      cname: 删除仪表盘
+      cname: Delete Dashboard
     - name: "/embedded-dashboards/put"
-      cname: 修改嵌入仪表盘
+      cname: Modify Embedded Dashboard
     - name: "/embedded-dashboards"
-      cname: 查看嵌入仪表盘
+      cname: View Embedded Dashboard
     - name: "/public-dashboards"
-      cname: 查看公开仪表盘
+      cname: View Public Dashboard
 
 - name: alert
-  cname: 告警规则
+  cname: Alert Rules
   ops:
     - name: "/alert-rules"
-      cname: 查看告警规则
+      cname: View Alert Rules
     - name: "/alert-rules/add"
-      cname: 添加告警规则
+      cname: Add Alert Rule
     - name: "/alert-rules/put"
-      cname: 修改告警规则
+      cname: Modify Alert Rule
     - name: "/alert-rules/del"
-      cname: 删除告警规则
+      cname: Delete Alert Rule
 
 - name: alert-mutes
-  cname: 告警静默管理
+  cname: Alert Silence Management
   ops:
     - name: "/alert-mutes"
-      cname: 查看告警静默
+      cname: View Alert Silences
     - name: "/alert-mutes/add"
-      cname: 添加告警静默
+      cname: Add Alert Silence
     - name: "/alert-mutes/put"
-      cname: 修改告警静默
+      cname: Modify Alert Silence
     - name: "/alert-mutes/del"
-      cname: 删除告警静默
+      cname: Delete Alert Silence
   
 - name: alert-subscribes
-  cname: 告警订阅管理
+  cname: Alert Subscription Management
   ops:
     - name: "/alert-subscribes"
-      cname: 查看告警订阅
+      cname: View Alert Subscriptions
     - name: "/alert-subscribes/add"
-      cname: 添加告警订阅
+      cname: Add Alert Subscription
     - name: "/alert-subscribes/put"
-      cname: 修改告警订阅
+      cname: Modify Alert Subscription
     - name: "/alert-subscribes/del"
-      cname: 删除告警订阅
+      cname: Delete Alert Subscription
 
 - name: alert-events  
-  cname: 告警事件管理
+  cname: Alert Event Management
   ops:
     - name: "/alert-cur-events"
-      cname: 查看当前告警
+      cname: View Current Alerts
     - name: "/alert-cur-events/del"
-      cname: 删除当前告警
+      cname: Delete Current Alert
     - name: "/alert-his-events"
-      cname: 查看历史告警
+      cname: View Historical Alerts
 
 - name: recording-rules
-  cname: 记录规则管理
+  cname: Recording Rule Management
   ops:
     - name: "/recording-rules"
-      cname: 查看记录规则
+      cname: View Recording Rules
     - name: "/recording-rules/add"
-      cname: 添加记录规则
+      cname: Add Recording Rule
     - name: "/recording-rules/put"
-      cname: 修改记录规则
+      cname: Modify Recording Rule
     - name: "/recording-rules/del"
-      cname: 删除记录规则
+      cname: Delete Recording Rule
 
 - name: metric
-  cname: 时序指标
+  cname: Time Series Metrics
   ops:
     - name: "/metric/explorer"
-      cname: 查看指标数据
+      cname: View Metric Data
     - name: "/object/explorer"
-      cname: 查看对象数据
+      cname: View Object Data
 
 - name: log
-  cname: 日志分析
+  cname: Log Analysis
   ops:
     - name: "/log/explorer"
-      cname: 查看日志
+      cname: View Logs
     - name: "/log/index-patterns"
-      cname: 查看索引模式
+      cname: View Index Patterns
 
 - name: targets
-  cname: 基础设施
+  cname: Infrastructure
   ops:
     - name: "/targets"
-      cname: 查看对象
+      cname: View Objects
     - name: "/targets/add"
-      cname: 添加对象
+      cname: Add Object
     - name: "/targets/put"
-      cname: 修改对象
+      cname: Modify Object
     - name: "/targets/del"
-      cname: 删除对象
+      cname: Delete Object
     - name: "/targets/bind"
-      cname: 绑定对象
+      cname: Bind Object
 
 - name: job
-  cname: 任务管理
+  cname: Task Management
   ops:
     - name: "/job-tpls"
-      cname: 查看任务模板
+      cname: View Task Templates
     - name: "/job-tpls/add"
-      cname: 添加任务模板
+      cname: Add Task Template
     - name: "/job-tpls/put"
-      cname: 修改任务模板
+      cname: Modify Task Template
     - name: "/job-tpls/del"
-      cname: 删除任务模板
+      cname: Delete Task Template
     - name: "/job-tasks"
-      cname: 查看任务实例
+      cname: View Task Instances
     - name: "/job-tasks/add"
-      cname: 添加任务实例
+      cname: Add Task Instance
     - name: "/job-tasks/put"
-      cname: 修改任务实例
+      cname: Modify Task Instance
     - name: "/ibex-settings"
-      cname: 查看任务设置
+      cname: View Task Settings
 
 - name: user
-  cname: 用户管理
+  cname: User Management
   ops:
     - name: "/users"
-      cname: 查看用户列表
+      cname: View User List
     - name: "/user-groups"
-      cname: 查看用户组
+      cname: View User Groups
     - name: "/user-groups/add"
-      cname: 添加用户组
+      cname: Add User Group
     - name: "/user-groups/put"
-      cname: 修改用户组
+      cname: Modify User Group
     - name: "/user-groups/del"
-      cname: 删除用户组
+      cname: Delete User Group
 
 - name: permissions
-  cname: 权限管理
+  cname: Permission Management
   ops:
     - name: "/permissions"
-      cname: 查看权限配置
+      cname: View Permission Settings
 
 - name: busi-groups
-  cname: 业务分组管理
+  cname: Business Group Management
   ops:
     - name: "/busi-groups"
-      cname: 查看业务分组
+      cname: View Business Groups
     - name: "/busi-groups/add"
-      cname: 添加业务分组
+      cname: Add Business Group
     - name: "/busi-groups/put"
-      cname: 修改业务分组
+      cname: Modify Business Group
     - name: "/busi-groups/del"
-      cname: 删除业务分组
+      cname: Delete Business Group
 
 - name: builtin-metrics
-  cname: 指标视图
+  cname: Metric Views
   ops:
     - name: "/metrics-built-in"
-      cname: 查看内置指标
+      cname: View Built-in Metrics
     - name: "/builtin-metrics/add"
-      cname: 添加内置指标
+      cname: Add Built-in Metric
     - name: "/builtin-metrics/put"
-      cname: 修改内置指标
+      cname: Modify Built-in Metric
     - name: "/builtin-metrics/del"
-      cname: 删除内置指标
+      cname: Delete Built-in Metric
 
 - name: built-in-components
-  cname: 模版中心
+  cname: Template Center
   ops:
     - name: "/built-in-components"
-      cname: 查看内置组件
+      cname: View Built-in Components
     - name: "/built-in-components/add"
-      cname: 添加内置组件
+      cname: Add Built-in Component
     - name: "/built-in-components/put"
-      cname: 修改内置组件
+      cname: Modify Built-in Component
     - name: "/built-in-components/del"
-      cname: 删除内置组件
+      cname: Delete Built-in Component
 
 - name: system
-  cname: 系统信息
+  cname: System Information
   ops:
     - name: "/help/variable-configs"
-      cname: 查看变量配置
+      cname: View Variable Configuration
     - name: "/help/version"
-      cname: 查看版本信息
+      cname: View Version Information
     - name: "/help/servers"
-      cname: 查看服务器信息
+      cname: View Server Information
     - name: "/help/source"
-      cname: 查看数据源配置
+      cname: View Data Source Configuration
     - name: "/help/sso"
-      cname: 查看SSO配置
+      cname: View SSO Configuration
     - name: "/help/notification-tpls"
-      cname: 查看通知模板
+      cname: View Notification Templates
     - name: "/help/notification-settings"
-      cname: 查看通知设置
+      cname: View Notification Settings
     - name: "/help/migrate"
-      cname: 查看迁移配置
+      cname: View Migration Configuration
     - name: "/site-settings"
-      cname: 查看站点设置
+      cname: View Site Settings
 `
 )

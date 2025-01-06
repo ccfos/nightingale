@@ -14,7 +14,7 @@ func (rt *Router) operationOfRole(c *gin.Context) {
 	var (
 		role           *models.Role
 		err            error
-		res            []cconf.SingleOp
+		res            []string
 		roleOperations []string
 	)
 
@@ -28,20 +28,12 @@ func (rt *Router) operationOfRole(c *gin.Context) {
 	if role.Name == "Admin" {
 		for _, ops := range cconf.Operations.Ops {
 			for i := range ops.Ops {
-				res = append(res, cconf.SingleOp{
-					Cname: i18n.Sprintf(c.GetHeader("X-Language"), ops.Ops[i].Name),
-					Name:  ops.Ops[i].Name,
-				})
+				res = append(res, ops.Ops[i].Name)
 			}
 		}
 	} else {
 		roleOperations, err = models.OperationsOfRole(rt.Ctx, []string{role.Name})
-		for i := range roleOperations {
-			res = append(res, cconf.SingleOp{
-				Cname: i18n.Sprintf(c.GetHeader("X-Language"), roleOperations[i]),
-				Name:  roleOperations[i],
-			})
-		}
+		res = roleOperations
 	}
 
 	ginx.NewRender(c).Data(res, err)
