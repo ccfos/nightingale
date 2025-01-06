@@ -17,7 +17,6 @@ import (
 )
 
 type Tdengine struct {
-	DatasourceName      string             `json:"tdengine.datasource_name" mapstructure:"tdengine.datasource_name"`
 	Addr                string             `json:"tdengine.addr" mapstructure:"tdengine.addr"`
 	Basic               *TDengineBasicAuth `json:"tdengine.basic"`
 	Token               string             `json:"tdengine.token" mapstructure:"tdengine.token"`
@@ -26,7 +25,6 @@ type Tdengine struct {
 	MaxIdleConnsPerHost int                `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
 	Headers             map[string]string  `json:"tdengine.headers" mapstructure:"tdengine.headers"`
 	SkipTlsVerify       bool               `json:"tdengine.skip_tls_verify"`
-	ClusterName         string             `json:"tdengine.cluster_name"`
 
 	tlsx.ClientConfig
 
