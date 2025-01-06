@@ -18,13 +18,13 @@ import (
 
 type Tdengine struct {
 	Addr                string             `json:"tdengine.addr" mapstructure:"tdengine.addr"`
-	Basic               *TDengineBasicAuth `json:"tdengine.basic"`
+	Basic               *TDengineBasicAuth `json:"tdengine.basic" mapstructure:"tdengine.basic"`
 	Token               string             `json:"tdengine.token" mapstructure:"tdengine.token"`
 	Timeout             int64              `json:"tdengine.timeout" mapstructure:"tdengine.timeout"`
 	DialTimeout         int64              `json:"tdengine.dial_timeout" mapstructure:"tdengine.dial_timeout"`
 	MaxIdleConnsPerHost int                `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
 	Headers             map[string]string  `json:"tdengine.headers" mapstructure:"tdengine.headers"`
-	SkipTlsVerify       bool               `json:"tdengine.skip_tls_verify"`
+	SkipTlsVerify       bool               `json:"tdengine.skip_tls_verify" mapstructure:"tdengine.skip_tls_verify"`
 
 	tlsx.ClientConfig
 
@@ -33,9 +33,9 @@ type Tdengine struct {
 }
 
 type TDengineBasicAuth struct {
-	User      string `json:"tdengine.user"`
-	Password  string `json:"tdengine.password"`
-	IsEncrypt bool   `json:"tdengine.is_encrypt"`
+	User      string `json:"tdengine.user" mapstructure:"tdengine.user"`
+	Password  string `json:"tdengine.password" mapstructure:"tdengine.password"`
+	IsEncrypt bool   `json:"tdengine.is_encrypt" mapstructure:"tdengine.is_encrypt"`
 }
 
 type APIResponse struct {
