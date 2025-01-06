@@ -17,23 +17,27 @@ import (
 )
 
 type Tdengine struct {
-	DatasourceName string `json:"tdengine.datasource_name" mapstructure:"tdengine.datasource_name"`
-	Addr           string `json:"tdengine.addr" mapstructure:"tdengine.addr"`
-	BasicAuthUser  string `json:"tdengine.basic_auth_user" mapstructure:"tdengine.basic_auth_user"`
-	BasicAuthPass  string `json:"tdengine.basic_auth_pass" mapstructure:"tdengine.basic_auth_pass"`
-	Token          string `json:"tdengine.token" mapstructure:"tdengine.token"`
-
-	Timeout     int64 `json:"tdengine.timeout" mapstructure:"tdengine.timeout"`
-	DialTimeout int64 `json:"tdengine.dial_timeout" mapstructure:"tdengine.dial_timeout"`
-
-	MaxIdleConnsPerHost int `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
-
-	Headers map[string]string `json:"tdengine.headers" mapstructure:"tdengine.headers"`
+	DatasourceName      string             `json:"tdengine.datasource_name" mapstructure:"tdengine.datasource_name"`
+	Addr                string             `json:"tdengine.addr" mapstructure:"tdengine.addr"`
+	Basic               *TDengineBasicAuth `json:"tdengine.basic"`
+	Token               string             `json:"tdengine.token" mapstructure:"tdengine.token"`
+	Timeout             int64              `json:"tdengine.timeout" mapstructure:"tdengine.timeout"`
+	DialTimeout         int64              `json:"tdengine.dial_timeout" mapstructure:"tdengine.dial_timeout"`
+	MaxIdleConnsPerHost int                `json:"tdengine.max_idle_conns_per_host" mapstructure:"tdengine.max_idle_conns_per_host"`
+	Headers             map[string]string  `json:"tdengine.headers" mapstructure:"tdengine.headers"`
+	SkipTlsVerify       bool               `json:"tdengine.skip_tls_verify"`
+	ClusterName         string             `json:"tdengine.cluster_name"`
 
 	tlsx.ClientConfig
 
 	header map[string][]string `json:"-"`
 	client *http.Client        `json:"-"`
+}
+
+type TDengineBasicAuth struct {
+	User      string `json:"tdengine.user"`
+	Password  string `json:"tdengine.password"`
+	IsEncrypt bool   `json:"tdengine.is_encrypt"`
 }
 
 type APIResponse struct {
@@ -76,8 +80,8 @@ func (tc *Tdengine) InitCli() {
 		tc.header[k] = []string{v}
 	}
 
-	if tc.BasicAuthUser != "" {
-		basic := base64.StdEncoding.EncodeToString([]byte(tc.BasicAuthUser + ":" + tc.BasicAuthPass))
+	if tc.Basic != nil {
+		basic := base64.StdEncoding.EncodeToString([]byte(tc.Basic.User + ":" + tc.Basic.Password))
 		tc.header["Authorization"] = []string{fmt.Sprintf("Basic %s", basic)}
 	}
 }

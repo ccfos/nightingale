@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource"
 	_ "github.com/ccfos/nightingale/v6/datasource/ck"
 	"github.com/ccfos/nightingale/v6/datasource/es"
+	"github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -100,15 +101,16 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
 	ds.Settings = make(map[string]interface{})
-	ds.Settings["tdengine.datasource_name"] = item.Name
-	ds.Settings["tdengine.url"] = item.HTTPJson.Url
+	ds.Settings["tdengine.cluster_name"] = item.Name
+	ds.Settings["tdengine.addr"] = item.HTTPJson.Url
 	ds.Settings["tdengine.timeout"] = item.HTTPJson.Timeout
 	ds.Settings["tdengine.dial_timeout"] = item.HTTPJson.DialTimeout
 	ds.Settings["tdengine.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
 	ds.Settings["tdengine.headers"] = item.HTTPJson.Headers
-	ds.Settings["tdengine.basic_auth_user"] = item.AuthJson.BasicAuthUser
-	ds.Settings["tdengine.basic_auth_pass"] = item.AuthJson.BasicAuthPassword
-
+	ds.Settings["tdengine.basic"] = tdengine.TDengineBasicAuth{
+		User:     item.AuthJson.BasicAuthUser,
+		Password: item.AuthJson.BasicAuthPassword,
+	}
 }
 
 func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {

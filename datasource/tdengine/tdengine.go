@@ -67,12 +67,14 @@ func (td *TDengine) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
-	if td.BasicAuthUser != otherTD.BasicAuthUser {
-		return false
-	}
+	if td.Basic != nil && otherTD.Basic != nil {
+		if td.Basic.User != otherTD.Basic.User {
+			return false
+		}
 
-	if td.BasicAuthPass != otherTD.BasicAuthPass {
-		return false
+		if td.Basic.Password != otherTD.Basic.Password {
+			return false
+		}
 	}
 
 	if td.Token != otherTD.Token {
