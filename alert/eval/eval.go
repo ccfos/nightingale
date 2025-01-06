@@ -25,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/prometheus/common/model"
+	"golang.org/x/exp/rand"
 
 	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
@@ -136,7 +137,10 @@ func (arw *AlertRuleWorker) Prepare() {
 }
 
 func (arw *AlertRuleWorker) Start() {
-	logger.Infof("eval:%s started", arw.Key())
+	randomWait := time.Duration(rand.Intn(60000)) * time.Millisecond
+	time.Sleep(randomWait)
+
+	logger.Infof("eval:%s started after waiting %d ms", arw.Key(), randomWait)
 	arw.Scheduler.Start()
 }
 
