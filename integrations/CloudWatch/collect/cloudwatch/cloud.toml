@@ -1,3 +1,4 @@
+interval="5m"
 [[instances]]
   ## Amazon Region
   # list of region and endpoint, see https://docs.aws.amazon.com/general/latest/gr/cw_region.html
