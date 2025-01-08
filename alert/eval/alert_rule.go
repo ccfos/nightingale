@@ -149,6 +149,7 @@ func (s *Scheduler) syncAlertRules() {
 	for hash, rule := range alertRuleWorkers {
 		if _, has := s.alertRules[hash]; !has {
 			rule.Prepare()
+			time.Sleep(time.Duration(20) * time.Millisecond)
 			rule.Start()
 			s.alertRules[hash] = rule
 		}
