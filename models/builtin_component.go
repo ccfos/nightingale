@@ -11,7 +11,7 @@ import (
 // BuiltinComponent represents a builtin component along with its metadata.
 type BuiltinComponent struct {
 	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Ident     string `json:"ident" gorm:"type:varchar(191);not null"`
+	Ident     string `json:"ident" gorm:"type:varchar(191);not null;index:idx_ident"`
 	Logo      string `json:"logo" gorm:"type:mediumtext;comment:'logo of component'"`
 	Readme    string `json:"readme" gorm:"type:text;not null;comment:'readme of component'"`
 	Disabled  int    `json:"disabled" gorm:"type:int;not null;default:0;comment:'is disabled or not'"`
@@ -23,7 +23,7 @@ type BuiltinComponent struct {
 
 type PostgresBuiltinComponent struct {
 	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Ident     string `json:"ident" gorm:"type:varchar(191);not null;comment:'identifier of component'"`
+	Ident     string `json:"ident" gorm:"type:varchar(191);not null;index:idx_ident;comment:'identifier of component'"`
 	Logo      string `json:"logo" gorm:"type:text;comment:'logo of component'"`
 	Readme    string `json:"readme" gorm:"type:text;not null;comment:'readme of component'"`
 	Disabled  int    `json:"disabled" gorm:"type:int;not null;default:0;comment:'is disabled or not'"`
