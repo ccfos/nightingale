@@ -1485,14 +1485,17 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 			if len(arw.LastSeriesStore) > 0 {
 				// 遍历上次的曲线数据
 				for hash, lastSeries := range arw.LastSeriesStore {
-					lastTs, _, exists := lastSeries.Last()
-					if !exists {
-						continue
-					}
 
-					// 检查是否超过 resolve_after 时间
-					if now-int64(lastTs) > int64(ruleQuery.NodataTrigger.ResolveAfter)*60 {
-						continue
+					if ruleQuery.NodataTrigger.ResolveAfterEnable {
+						lastTs, _, exists := lastSeries.Last()
+						if !exists {
+							continue
+						}
+
+						// 检查是否超过 resolve_after 时间
+						if now-int64(lastTs) > int64(ruleQuery.NodataTrigger.ResolveAfter)*60 {
+							continue
+						}
 					}
 
 					// 检查是否在本次查询结果中存在

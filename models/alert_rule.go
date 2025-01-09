@@ -203,9 +203,10 @@ type RuleQuery struct {
 }
 
 type NodataTrigger struct {
-	Enable       bool `json:"enable"`
-	Severity     int  `json:"severity"`
-	ResolveAfter int  `json:"resolve_after"` // 单位分钟
+	Enable             bool `json:"enable"`
+	Severity           int  `json:"severity"`
+	ResolveAfterEnable bool `json:"resolve_after_enable"`
+	ResolveAfter       int  `json:"resolve_after"` // 单位分钟
 }
 
 type Trigger struct {
