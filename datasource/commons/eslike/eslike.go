@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/models"
-
+	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/common/model"
@@ -139,6 +140,20 @@ func GetQueryString(filter string, q *elastic.RangeQuery) *elastic.BoolQuery {
 	return queryString
 }
 
+func getUnixTs(timeStr string) int64 {
+	ts, err := strconv.ParseInt(timeStr, 10, 64)
+	if err == nil {
+		return ts
+	}
+
+	parsedTime, err := dateparse.ParseAny(timeStr)
+	if err != nil {
+		logger.Error("failed to ParseAny: ", err)
+		return 0
+	}
+	return parsedTime.UnixMilli()
+}
+
 func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *MetricPtr, labels string, ts int64, f string) {
 	var err error
 	bucketsKey := ""
@@ -149,18 +164,19 @@ func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *Metri
 	newlabels := ""
 	for i := 0; i < len(arr); i++ {
 		tmp := arr[i].(map[string]interface{})
+		keyAsString, getTs := tmp["key_as_string"]
+		if getTs {
+			ts = getUnixTs(keyAsString.(string))
+		}
 		keyValue := tmp["key"]
 		switch keyValue.(type) {
-		case json.Number:
-			ts, err = keyValue.(json.Number).Int64()
-			if err != nil {
-				logger.Warningf("labelKey:%s get ts error:%v", labelKey, err)
-			}
-		case string:
-			if labels != "" {
-				newlabels = fmt.Sprintf("%s--%s=%s", labels, labelKey, keyValue.(string))
-			} else {
-				newlabels = fmt.Sprintf("%s=%s", labelKey, keyValue.(string))
+		case json.Number, string:
+			if !getTs {
+				if labels != "" {
+					newlabels = fmt.Sprintf("%s--%s=%v", labels, labelKey, keyValue)
+				} else {
+					newlabels = fmt.Sprintf("%s=%v", labelKey, keyValue)
+				}
 			}
 		default:
 			continue

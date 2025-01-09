@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/ClickHouse/clickhouse-go/v2 v2.23.2
 	github.com/VictoriaMetrics/metricsql v0.81.1
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/bitly/go-simplejson v0.5.1
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
