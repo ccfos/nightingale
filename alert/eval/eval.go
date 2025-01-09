@@ -48,6 +48,8 @@ type AlertRuleWorker struct {
 
 	HostAndDeviceIdentCache sync.Map
 
+	LastSeriesStore map[uint64]models.DataResp
+
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
 }
 
@@ -84,6 +86,7 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
+		LastSeriesStore: make(map[uint64]models.DataResp),
 	}
 
 	interval := rule.PromEvalInterval
@@ -533,7 +536,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 			if len(query) == 0 {
 				paramsKeyAllLabel, err := getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient)
 				if err != nil {
-					logger.Errorf("rule_eval:%s, fail to getParamKeyAllLabel, error:%v", arw.Key(), paramQuery.Query, err)
+					logger.Errorf("rule_eval:%s, fail to getParamKeyAllLabel, error:%v query:%s", arw.Key(), err, paramQuery.Query)
 				}
 				params = paramsKeyAllLabel
 			} else {
@@ -817,122 +820,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 		}
 	}
 	return lst, nil
-}
-
-func GetAnomalyPoint(ruleId int64, ruleQuery models.RuleQuery, seriesTagIndexes map[string]map[uint64][]uint64, seriesStore map[uint64]models.DataResp) ([]models.AnomalyPoint, []models.AnomalyPoint) {
-	points := []models.AnomalyPoint{}
-	recoverPoints := []models.AnomalyPoint{}
-
-	if len(ruleQuery.Triggers) == 0 {
-		return points, recoverPoints
-	}
-
-	if len(seriesTagIndexes) == 0 {
-		return points, recoverPoints
-	}
-
-	unitMap := make(map[string]string)
-	for _, query := range ruleQuery.Queries {
-		ref, unit, err := GetQueryRefAndUnit(query)
-		if err != nil {
-			continue
-		}
-		unitMap[ref] = unit
-	}
-
-	for _, trigger := range ruleQuery.Triggers {
-		// seriesTagIndex 的 key 仅做分组使用，value 为每组 series 的 hash
-		seriesTagIndex := ProcessJoins(ruleId, trigger, seriesTagIndexes, seriesStore)
-
-		for _, seriesHash := range seriesTagIndex {
-			valuesUnitMap := make(map[string]unit.FormattedValue)
-
-			sort.Slice(seriesHash, func(i, j int) bool {
-				return seriesHash[i] < seriesHash[j]
-			})
-
-			m := make(map[string]interface{})
-			var ts int64
-			var sample models.DataResp
-			var value float64
-			for _, serieHash := range seriesHash {
-				series, exists := seriesStore[serieHash]
-				if !exists {
-					logger.Warningf("rule_eval rid:%d series:%+v not found", ruleId, series)
-					continue
-				}
-				t, v, exists := series.Last()
-				if !exists {
-					logger.Warningf("rule_eval rid:%d series:%+v value not found", ruleId, series)
-					continue
-				}
-
-				if !strings.Contains(trigger.Exp, "$"+series.Ref) {
-					// 表达式中不包含该变量
-					continue
-				}
-
-				if u, exists := unitMap[series.Ref]; exists {
-					valuesUnitMap[series.Ref] = unit.ValueFormatter(u, 2, v)
-				}
-
-				m["$"+series.Ref] = v
-				m["$"+series.Ref+"."+series.MetricName()] = v
-				ts = int64(t)
-				sample = series
-				value = v
-			}
-			isTriggered := parser.Calc(trigger.Exp, m)
-			//  此条日志很重要，是告警判断的现场值
-			logger.Infof("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", ruleId, trigger, trigger.Exp, isTriggered, m)
-
-			var values string
-			for k, v := range m {
-				if !strings.Contains(k, ".") {
-					continue
-				}
-				values += fmt.Sprintf("%s:%v ", k, v)
-			}
-
-			point := models.AnomalyPoint{
-				Key:           sample.MetricName(),
-				Labels:        sample.Metric,
-				Timestamp:     int64(ts),
-				Value:         value,
-				Values:        values,
-				Severity:      trigger.Severity,
-				Triggered:     isTriggered,
-				Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
-				RecoverConfig: trigger.RecoverConfig,
-				ValuesUnit:    valuesUnitMap,
-			}
-
-			if sample.Query != "" {
-				point.Query = sample.Query
-			}
-			// 恢复条件判断经过讨论是只在表达式模式下支持，表达式模式会通过 isTriggered 判断是告警点还是恢复点
-			// 1. 不设置恢复判断，满足恢复条件产生 recoverPoint 恢复，无数据不产生 anomalyPoint 恢复
-			// 2. 设置满足条件才恢复，仅可通过产生 recoverPoint 恢复，不能通过不产生 anomalyPoint 恢复
-			// 3. 设置无数据不恢复，仅可通过产生 recoverPoint 恢复，不产生 anomalyPoint 恢复
-			if isTriggered {
-				points = append(points, point)
-			} else {
-				switch trigger.RecoverConfig.JudgeType {
-				case models.Origin:
-					// 对齐原实现 do nothing
-				case models.RecoverOnCondition:
-					// 额外判断恢复条件，满足才恢复
-					fulfill := parser.Calc(trigger.RecoverConfig.RecoverExp, m)
-					if !fulfill {
-						continue
-					}
-				}
-				recoverPoints = append(recoverPoints, point)
-			}
-		}
-	}
-
-	return points, recoverPoints
 }
 
 func flatten(rehashed map[uint64][][]uint64) map[uint64][]uint64 {
@@ -1588,6 +1475,49 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					recoverPoints = append(recoverPoints, point)
 				}
 			}
+		}
+
+		if ruleQuery.NodataTrigger.Enable {
+
+			now := time.Now().Unix()
+
+			// 使用 arw.LastSeriesStore 检查上次查询结果
+			if len(arw.LastSeriesStore) > 0 {
+				// 遍历上次的曲线数据
+				for hash, lastSeries := range arw.LastSeriesStore {
+					lastTs, _, exists := lastSeries.Last()
+					if !exists {
+						continue
+					}
+
+					// 检查是否超过 resolve_after 时间
+					if now-int64(lastTs) > int64(ruleQuery.NodataTrigger.ResolveAfter)*60 {
+						continue
+					}
+
+					// 检查是否在本次查询结果中存在
+					if _, exists := seriesStore[hash]; !exists {
+						// 生成无数据告警点
+						point := models.AnomalyPoint{
+							Key:       lastSeries.MetricName(),
+							Labels:    lastSeries.Metric,
+							Timestamp: now,
+							Value:     0,
+							Values:    fmt.Sprintf("nodata since %v", time.Unix(now, 0).Format("2006-01-02 15:04:05")),
+							Severity:  ruleQuery.NodataTrigger.Severity,
+							Triggered: true,
+							Query:     fmt.Sprintf("nodata check for %s", lastSeries.LabelsString()),
+						}
+						points = append(points, point)
+					}
+				}
+
+				// 更新 arw.LastSeriesStore
+				for hash, series := range seriesStore {
+					arw.LastSeriesStore[hash] = series
+				}
+			}
+
 		}
 	}
 

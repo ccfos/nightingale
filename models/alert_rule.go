@@ -194,10 +194,18 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
-	Version  string        `json:"version"`
-	Inhibit  bool          `json:"inhibit"`
-	Queries  []interface{} `json:"queries"`
-	Triggers []Trigger     `json:"triggers"`
+	Version           string        `json:"version"`
+	Inhibit           bool          `json:"inhibit"`
+	Queries           []interface{} `json:"queries"`
+	ExpTriggerDisable bool          `json:"exp_trigger_disable"`
+	Triggers          []Trigger     `json:"triggers"`
+	NodataTrigger     NodataTrigger `json:"nodata_trigger"`
+}
+
+type NodataTrigger struct {
+	Enable       bool `json:"enable"`
+	Severity     int  `json:"severity"`
+	ResolveAfter int  `json:"resolve_after"` // 单位分钟
 }
 
 type Trigger struct {
