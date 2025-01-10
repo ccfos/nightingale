@@ -163,11 +163,6 @@ var entries = []CheckEntry{
 		FieldName:    "group_id",
 	},
 	{
-		Entry:        &TaskRecord{},
-		ErrorMessage: "Some Task Record records still in the BusiGroup",
-		FieldName:    "group_id",
-	},
-	{
 		Entry:        &TargetBusiGroup{},
 		ErrorMessage: "Some target busigroups still in the BusiGroup",
 		FieldName:    "group_id",
