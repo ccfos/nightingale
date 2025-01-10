@@ -52,7 +52,7 @@ var (
 	CounterPushQueueOverLimitTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "push_queue_over_limit_total",
+		Name:      "push_queue_over_limit_error_total",
 		Help:      "Number of push queue over limit.",
 	})
 )
