@@ -5,6 +5,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
+	"github.com/ccfos/nightingale/v6/tool"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -81,4 +82,54 @@ func (rt *Router) selfPasswordPut(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, oldPassWord, newPassWord))
+}
+
+type tokenForm struct {
+	Token string `json:"token"`
+}
+
+func (rt *Router) getToken(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+
+	ginx.NewRender(c).Data(tokens, nil)
+}
+
+func (rt *Router) addToken(c *gin.Context) {
+
+	username := c.MustGet("username").(string)
+	tokenCount, err := models.CountToken(rt.Ctx, username)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	if tokenCount >= 2 {
+		ginx.NewRender(c).Message("token count exceeds the limit 2")
+		return
+	}
+
+	token, err := models.AddToken(rt.Ctx, username, tool.GenToken(username))
+	ginx.NewRender(c).Data(token, err)
+}
+
+func (rt *Router) deleteToken(c *gin.Context) {
+	var f tokenForm
+	ginx.BindJSON(c, &f)
+
+	username := c.MustGet("username").(string)
+	tokenCount, err := models.CountToken(rt.Ctx, username)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	if tokenCount <= 1 {
+		ginx.NewRender(c).Message("cannot delete the last token")
+		return
+	}
+
+	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, f.Token))
 }
