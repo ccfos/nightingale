@@ -85,7 +85,8 @@ func (rt *Router) selfPasswordPut(c *gin.Context) {
 }
 
 type tokenForm struct {
-	Token string `json:"token"`
+	TokenName string `json:"token_name"`
+	Token     string `json:"token"`
 }
 
 func (rt *Router) getToken(c *gin.Context) {
@@ -100,19 +101,29 @@ func (rt *Router) getToken(c *gin.Context) {
 }
 
 func (rt *Router) addToken(c *gin.Context) {
+	var f tokenForm
+	ginx.BindJSON(c, &f)
 
 	username := c.MustGet("username").(string)
-	tokenCount, err := models.CountToken(rt.Ctx, username)
+
+	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
 	if err != nil {
 		ginx.NewRender(c).Message(err)
 		return
 	}
-	if tokenCount >= 2 {
+	if len(tokens) >= 2 {
 		ginx.NewRender(c).Message("token count exceeds the limit 2")
 		return
 	}
 
-	token, err := models.AddToken(rt.Ctx, username, tool.GenToken(username))
+	for _, token := range tokens {
+		if token.TokenName == f.TokenName {
+			ginx.NewRender(c).Message("token name already exists")
+			return
+		}
+	}
+
+	token, err := models.AddToken(rt.Ctx, username, tool.GenToken(username), f.TokenName)
 	ginx.NewRender(c).Data(token, err)
 }
 

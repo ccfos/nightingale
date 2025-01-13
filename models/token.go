@@ -5,9 +5,10 @@ import (
 )
 
 type Token struct {
-	Id       int64  `json:"id" gorm:"primaryKey"`
-	Username string `json:"username"`
-	Token    string `json:"token" gorm:"type:varchar(255);uniqueIndex"`
+	Id        int64  `json:"id" gorm:"primaryKey"`
+	Username  string `json:"username"`
+	TokenName string `json:"token_name" gorm:"type:varchar(255)"`
+	Token     string `json:"token" gorm:"type:varchar(255);uniqueIndex"`
 }
 
 func (Token) TableName() string {
@@ -20,10 +21,11 @@ func CountToken(ctx *ctx.Context, username string) (int64, error) {
 	return count, err
 }
 
-func AddToken(ctx *ctx.Context, username string, token string) (*Token, error) {
+func AddToken(ctx *ctx.Context, username, token, tokenName string) (*Token, error) {
 	newToken := Token{
-		Username: username,
-		Token:    token,
+		TokenName: tokenName,
+		Username:  username,
+		Token:     token,
 	}
 
 	err := Insert(ctx, &newToken)
