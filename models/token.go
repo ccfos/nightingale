@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-type Token struct {
+type UserToken struct {
 	Id        int64  `json:"id" gorm:"primaryKey"`
-	Username  string `json:"username"`
+	Username  string `json:"username" gorm:"type:varchar(255)"`
 	TokenName string `json:"token_name" gorm:"type:varchar(255)"`
 	Token     string `json:"token" gorm:"type:varchar(255);uniqueIndex"`
 }
 
-func (Token) TableName() string {
-	return "token"
+func (UserToken) TableName() string {
+	return "user_token"
 }
 
 var TokenToUser sync.Map
@@ -34,12 +34,12 @@ func init() {
 
 func CountToken(ctx *ctx.Context, username string) (int64, error) {
 	var count int64
-	err := DB(ctx).Model(&Token{}).Where("username = ?", username).Count(&count).Error
+	err := DB(ctx).Model(&UserToken{}).Where("username = ?", username).Count(&count).Error
 	return count, err
 }
 
-func AddToken(ctx *ctx.Context, username, token, tokenName string) (*Token, error) {
-	newToken := Token{
+func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, error) {
+	newToken := UserToken{
 		TokenName: tokenName,
 		Username:  username,
 		Token:     token,
@@ -50,15 +50,15 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*Token, erro
 }
 
 func DeleteToken(ctx *ctx.Context, token string) error {
-	err := DB(ctx).Where("token = ?", token).Delete(&Token{}).Error
+	err := DB(ctx).Where("token = ?", token).Delete(&UserToken{}).Error
 	if err == nil {
 		TokenToUser.Delete(token)
 	}
 	return err
 }
 
-func GetTokensByUsername(ctx *ctx.Context, username string) ([]Token, error) {
-	var tokens []Token
+func GetTokensByUsername(ctx *ctx.Context, username string) ([]UserToken, error) {
+	var tokens []UserToken
 	err := DB(ctx).Where("username = ?", username).Find(&tokens).Error
 	return tokens, err
 }

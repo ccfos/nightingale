@@ -148,3 +148,12 @@ CREATE TABLE `dash_annotation` (
     PRIMARY KEY (`id`),
     KEY `idx_dashboard_id` (`dashboard_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user_token
+(
+    id         bigint auto_increment primary key,
+    username   varchar(255) null,
+    token_name varchar(255) null,
+    token      varchar(255) null,
+    constraint idx_user_token_token unique (token)
+);
