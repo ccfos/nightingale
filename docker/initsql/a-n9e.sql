@@ -533,9 +533,8 @@ CREATE TABLE `builtin_components` (
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   `disabled` int NOT NULL DEFAULT 0 COMMENT '''is disabled or not''',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_ident` (`ident`) USING BTREE
+  UNIQUE KEY `idx_ident` (`ident`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 CREATE TABLE `builtin_payloads` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '''unique identifier''',
@@ -745,6 +744,24 @@ CREATE TABLE `target_busi_group` (
   `update_at` bigint NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `dash_annotation` (
+    `id` bigint unsigned not null auto_increment,
+    `dashboard_id` bigint not null comment 'dashboard id',
+    `panel_id` varchar(191) not null comment 'panel id',
+    `tags` text comment 'tags array json string',
+    `description` text comment 'annotation description',
+    `config` text comment 'annotation config',
+    `time_start` bigint not null default 0 comment 'start timestamp',
+    `time_end` bigint not null default 0 comment 'end timestamp',
+    `create_at` bigint not null default 0 comment 'create time',
+    `create_by` varchar(64) not null default '' comment 'creator',
+    `update_at` bigint not null default 0 comment 'update time',
+    `update_by` varchar(64) not null default '' comment 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_dashboard_id` (`dashboard_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_meta`

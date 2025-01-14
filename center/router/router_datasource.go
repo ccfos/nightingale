@@ -93,10 +93,12 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var count int64
 
 	if !req.ForceSave {
-		err = DatasourceCheck(req)
-		if err != nil {
-			Dangerous(c, err)
-			return
+		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE {
+			err = DatasourceCheck(req)
+			if err != nil {
+				Dangerous(c, err)
+				return
+			}
 		}
 	}
 
@@ -122,7 +124,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 }
 
 func DatasourceCheck(ds models.Datasource) error {
-	if ds.PluginType != models.ELASTICSEARCH {
+	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE {
 		if ds.HTTPJson.Url == "" {
 			return fmt.Errorf("url is empty")
 		}

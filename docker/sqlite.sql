@@ -684,6 +684,22 @@ CREATE TABLE `target_busi_group` (
 
 CREATE UNIQUE INDEX idx_target_busi_group ON target_busi_group (target_ident, group_id);
 
+
+CREATE TABLE `dash_annotation` (
+    `id` integer primary key autoincrement,
+    `dashboard_id` bigint not null,
+    `panel_id` varchar(191) not null,
+    `tags` text,
+    `description` text,
+    `config` text,
+    `time_start` bigint not null default 0,
+    `time_end` bigint not null default 0,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default ''
+);
+
 CREATE TABLE `task_meta`
 (
     `id`          integer primary key autoincrement,

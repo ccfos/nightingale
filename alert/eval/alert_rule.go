@@ -13,8 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/tdengine"
-
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -33,8 +31,7 @@ type Scheduler struct {
 	alertMuteCache          *memsto.AlertMuteCacheType
 	datasourceCache         *memsto.DatasourceCacheType
 
-	promClients     *prom.PromClientMap
-	tdengineClients *tdengine.TdengineClientMap
+	promClients *prom.PromClientMap
 
 	naming *naming.Naming
 
@@ -45,7 +42,7 @@ type Scheduler struct {
 func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcessorsType, arc *memsto.AlertRuleCacheType,
 	targetCache *memsto.TargetCacheType, toarc *memsto.TargetsOfAlertRuleCacheType,
 	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType,
-	promClients *prom.PromClientMap, tdengineClients *tdengine.TdengineClientMap, naming *naming.Naming, ctx *ctx.Context, stats *astats.Stats) *Scheduler {
+	promClients *prom.PromClientMap, naming *naming.Naming, ctx *ctx.Context, stats *astats.Stats) *Scheduler {
 	scheduler := &Scheduler{
 		aconf:      aconf,
 		alertRules: make(map[string]*AlertRuleWorker),
@@ -59,9 +56,8 @@ func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcess
 		alertMuteCache:          alertMuteCache,
 		datasourceCache:         datasourceCache,
 
-		promClients:     promClients,
-		tdengineClients: tdengineClients,
-		naming:          naming,
+		promClients: promClients,
+		naming:      naming,
 
 		ctx:   ctx,
 		stats: stats,
@@ -95,7 +91,7 @@ func (s *Scheduler) syncAlertRules() {
 		}
 
 		ruleType := rule.GetRuleType()
-		if rule.IsPrometheusRule() || rule.IsLokiRule() || rule.IsTdengineRule() {
+		if rule.IsPrometheusRule() || rule.IsLokiRule() || rule.IsTdengineRule() || rule.IsClickHouseRule() || rule.IsElasticSearch() {
 			datasourceIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
 			for _, dsId := range datasourceIds {
 				if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
@@ -118,7 +114,7 @@ func (s *Scheduler) syncAlertRules() {
 				}
 				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
 
-				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.tdengineClients, s.ctx)
+				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
 		} else if rule.IsHostRule() {
@@ -127,7 +123,7 @@ func (s *Scheduler) syncAlertRules() {
 				continue
 			}
 			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
-			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.tdengineClients, s.ctx)
+			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
@@ -153,6 +149,7 @@ func (s *Scheduler) syncAlertRules() {
 	for hash, rule := range alertRuleWorkers {
 		if _, has := s.alertRules[hash]; !has {
 			rule.Prepare()
+			time.Sleep(time.Duration(20) * time.Millisecond)
 			rule.Start()
 			s.alertRules[hash] = rule
 		}
