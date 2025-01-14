@@ -20,11 +20,12 @@ import (
 )
 
 type NotifyConfigCacheType struct {
-	ctx         *ctx.Context
-	ConfigCache *ConfigCache
-	webhooks    map[string]*models.Webhook
-	smtp        aconf.SMTPConfig
-	script      models.NotifyScript
+	ctx                 *ctx.Context
+	ConfigCache         *ConfigCache
+	webhooks            map[string]*models.Webhook
+	smtp                aconf.SMTPConfig
+	script              models.NotifyScript
+	HiddenNotifyChannel map[string]bool
 
 	sync.RWMutex
 }
@@ -182,6 +183,31 @@ func (w *NotifyConfigCacheType) syncNotifyConfigs() error {
 	}
 
 	dumper.PutSyncRecord("notify_script", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_script:\n"+cval)
+
+	start = time.Now()
+	cval, err = models.ConfigsGet(w.ctx, models.NOTIFYCHANNEL)
+	if err != nil {
+		dumper.PutSyncRecord("notify_channel", start.Unix(), -1, -1, "failed to query configs.notify_channel: "+err.Error())
+		return err
+	}
+
+	if strings.TrimSpace(cval) != "" {
+		var notifyChannels []models.NotifyChannel
+		err = json.Unmarshal([]byte(cval), &notifyChannels)
+		if err != nil {
+			dumper.PutSyncRecord("notify_channel", start.Unix(), -1, -1, "failed to unmarshal configs.notify_channel: "+err.Error())
+			logger.Errorf("failed to unmarshal notify channel:%s error:%v", cval, err)
+		}
+		newHiddenNotifyChannel := make(map[string]bool)
+		for _, v := range notifyChannels {
+			if v.Hide {
+				newHiddenNotifyChannel[v.Ident] = true
+			}
+		}
+		w.HiddenNotifyChannel = newHiddenNotifyChannel
+	}
+
+	dumper.PutSyncRecord("notify_channel", start.Unix(), time.Since(start).Milliseconds(), 1, "success, notify_channel:\n"+cval)
 
 	return nil
 }
