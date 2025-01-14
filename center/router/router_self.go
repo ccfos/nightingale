@@ -5,7 +5,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/tool"
+	"github.com/ccfos/nightingale/v6/pkg/tool"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -92,12 +92,7 @@ type tokenForm struct {
 func (rt *Router) getToken(c *gin.Context) {
 	username := c.MustGet("username").(string)
 	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-
-	ginx.NewRender(c).Data(tokens, nil)
+	ginx.NewRender(c).Data(tokens, err)
 }
 
 func (rt *Router) addToken(c *gin.Context) {
@@ -107,10 +102,8 @@ func (rt *Router) addToken(c *gin.Context) {
 	username := c.MustGet("username").(string)
 
 	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
+
 	if len(tokens) >= 2 {
 		ginx.NewRender(c).Message("token count exceeds the limit 2")
 		return

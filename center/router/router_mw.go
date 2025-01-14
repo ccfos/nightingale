@@ -71,19 +71,23 @@ func (rt *Router) proxyAuth() gin.HandlerFunc {
 func (rt *Router) tokenAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 先验证固定 token
-		tokenKey := rt.HTTP.Token.HeaderUserTokenKey
-		if tokenKey == "" {
-			tokenKey = DefaultTokenKey
+		if rt.HTTP.Token.Enable {
+			tokenKey := rt.HTTP.Token.HeaderUserTokenKey
+			if tokenKey == "" {
+				tokenKey = DefaultTokenKey
+			}
+			token := c.GetHeader(tokenKey)
+			if token != "" {
+				user, err := models.GetUserByToken(rt.Ctx, token)
+				if err == nil && user != nil && user.Username != "" {
+					c.Set("userid", user.Id)
+					c.Set("username", user.Username)
+					c.Next()
+					return
+				}
+			}
 		}
-		token := c.GetHeader(tokenKey)
 
-		user, err := models.GetUserByToken(rt.Ctx, token)
-		if err == nil && user != nil && user.Username != "" {
-			c.Set("userid", user.Id)
-			c.Set("username", user.Username)
-			c.Next()
-			return
-		}
 		// 再验证 jwt token
 		metadata, err := rt.extractTokenMetadata(c.Request)
 		if err != nil {
