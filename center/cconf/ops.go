@@ -103,6 +103,46 @@ ops:
     - name: "/public-dashboards"
       cname: View Public Dashboard
 
+- name: metric
+  cname: Time Series Metrics
+  ops:
+    - name: "/metric/explorer"
+      cname: View Metric Data
+    - name: "/object/explorer"
+      cname: View Object Data
+
+- name: builtin-metrics
+  cname: Metric Views
+  ops:
+    - name: "/metrics-built-in"
+      cname: View Built-in Metrics
+    - name: "/builtin-metrics/add"
+      cname: Add Built-in Metric
+    - name: "/builtin-metrics/put"
+      cname: Modify Built-in Metric
+    - name: "/builtin-metrics/del"
+      cname: Delete Built-in Metric
+
+- name: recording-rules
+  cname: Recording Rule Management
+  ops:
+    - name: "/recording-rules"
+      cname: View Recording Rules
+    - name: "/recording-rules/add"
+      cname: Add Recording Rule
+    - name: "/recording-rules/put"
+      cname: Modify Recording Rule
+    - name: "/recording-rules/del"
+      cname: Delete Recording Rule
+
+- name: log
+  cname: Log Analysis
+  ops:
+    - name: "/log/explorer"
+      cname: View Logs
+    - name: "/log/index-patterns"
+      cname: View Index Patterns
+
 - name: alert
   cname: Alert Rules
   ops:
@@ -149,47 +189,13 @@ ops:
     - name: "/alert-his-events"
       cname: View Historical Alerts
 
-- name: recording-rules
-  cname: Recording Rule Management
+- name: notification
+  cname: Alert Notification
   ops:
-    - name: "/recording-rules"
-      cname: View Recording Rules
-    - name: "/recording-rules/add"
-      cname: Add Recording Rule
-    - name: "/recording-rules/put"
-      cname: Modify Recording Rule
-    - name: "/recording-rules/del"
-      cname: Delete Recording Rule
-
-- name: metric
-  cname: Time Series Metrics
-  ops:
-    - name: "/metric/explorer"
-      cname: View Metric Data
-    - name: "/object/explorer"
-      cname: View Object Data
-
-- name: log
-  cname: Log Analysis
-  ops:
-    - name: "/log/explorer"
-      cname: View Logs
-    - name: "/log/index-patterns"
-      cname: View Index Patterns
-
-- name: targets
-  cname: Infrastructure
-  ops:
-    - name: "/targets"
-      cname: View Objects
-    - name: "/targets/add"
-      cname: Add Object
-    - name: "/targets/put"
-      cname: Modify Object
-    - name: "/targets/del"
-      cname: Delete Object
-    - name: "/targets/bind"
-      cname: Bind Object
+    - name: "/help/notification-settings"
+      cname: View Notification Settings
+    - name: "/help/notification-tpls"
+      cname: View Notification Templates
 
 - name: job
   cname: Task Management
@@ -211,6 +217,20 @@ ops:
     - name: "/ibex-settings"
       cname: View Task Settings
 
+- name: targets
+  cname: Infrastructure
+  ops:
+    - name: "/targets"
+      cname: View Objects
+    - name: "/targets/add"
+      cname: Add Object
+    - name: "/targets/put"
+      cname: Modify Object
+    - name: "/targets/del"
+      cname: Delete Object
+    - name: "/targets/bind"
+      cname: Bind Object
+
 - name: user
   cname: User Management
   ops:
@@ -225,12 +245,6 @@ ops:
     - name: "/user-groups/del"
       cname: Delete User Group
 
-- name: permissions
-  cname: Permission Management
-  ops:
-    - name: "/permissions"
-      cname: View Permission Settings
-
 - name: busi-groups
   cname: Business Group Management
   ops:
@@ -243,17 +257,11 @@ ops:
     - name: "/busi-groups/del"
       cname: Delete Business Group
 
-- name: builtin-metrics
-  cname: Metric Views
+- name: permissions
+  cname: Permission Management
   ops:
-    - name: "/metrics-built-in"
-      cname: View Built-in Metrics
-    - name: "/builtin-metrics/add"
-      cname: Add Built-in Metric
-    - name: "/builtin-metrics/put"
-      cname: Modify Built-in Metric
-    - name: "/builtin-metrics/del"
-      cname: Delete Built-in Metric
+    - name: "/permissions"
+      cname: View Permission Settings
 
 - name: built-in-components
   cname: Template Center
@@ -267,6 +275,12 @@ ops:
     - name: "/built-in-components/del"
       cname: Delete Built-in Component
 
+- name: datasource
+  cname: Data Source Management
+  ops:
+    - name: "/help/source"
+      cname: View Data Source Configuration
+
 - name: system
   cname: System Information
   ops:
@@ -276,14 +290,8 @@ ops:
       cname: View Version Information
     - name: "/help/servers"
       cname: View Server Information
-    - name: "/help/source"
-      cname: View Data Source Configuration
     - name: "/help/sso"
       cname: View SSO Configuration
-    - name: "/help/notification-tpls"
-      cname: View Notification Templates
-    - name: "/help/notification-settings"
-      cname: View Notification Settings
     - name: "/help/migrate"
       cname: View Migration Configuration
     - name: "/site-settings"
