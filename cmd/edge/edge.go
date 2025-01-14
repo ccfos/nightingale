@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ccfos/nightingale/v6/dscache"
-
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -14,8 +12,10 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
@@ -96,6 +96,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	dumper.ConfigRouter(r)
 	httpClean := httpx.Init(config.HTTP, r)
+
+	models.SyncTokenToUser(ctx)
 
 	return func() {
 		logxClean()

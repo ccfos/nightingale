@@ -17,19 +17,44 @@ func (UserToken) TableName() string {
 	return "user_token"
 }
 
-var TokenToUser sync.Map
+var TokenToUser map[string]*User
+var lock sync.RWMutex
 
-func init() {
-	// 定时清空缓存
+func SyncTokenToUser(ctx *ctx.Context) {
+	syncTokenToUser(ctx)
+	// 定时同步 token
 	tick := time.Tick(1 * time.Minute)
 	go func() {
 		for {
 			select {
 			case <-tick:
-				TokenToUser = sync.Map{}
+				syncTokenToUser(ctx)
 			}
 		}
 	}()
+}
+
+func syncTokenToUser(ctx *ctx.Context) {
+	var tokens []struct {
+		Id       int64  `json:"id" gorm:"id"`
+		Username string `json:"username" gorm:"username"`
+		Token    string `json:"token" gorm:"token"`
+	}
+	err := DB(ctx).Table("users").
+		Select("users.id, users.username, t.token").
+		Joins("JOIN user_token t ON t.username = users.username").
+		Scan(&tokens).Error
+	if err != nil {
+		return
+	}
+	tokenToUser := make(map[string]*User)
+	for _, token := range tokens {
+		tokenToUser[token.Token] = &User{
+			Id:       token.Id,
+			Username: token.Username,
+		}
+	}
+	TokenToUser = tokenToUser
 }
 
 func CountToken(ctx *ctx.Context, username string) (int64, error) {
@@ -46,13 +71,22 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, 
 	}
 
 	err := Insert(ctx, &newToken)
+	if err == nil {
+		lock.Lock()
+		TokenToUser[token] = &User{
+			Username: username,
+		}
+		lock.Unlock()
+	}
 	return &newToken, err
 }
 
 func DeleteToken(ctx *ctx.Context, token string) error {
 	err := DB(ctx).Where("token = ?", token).Delete(&UserToken{}).Error
 	if err == nil {
-		TokenToUser.Delete(token)
+		lock.Lock()
+		delete(TokenToUser, token)
+		lock.Unlock()
 	}
 	return err
 }
@@ -63,17 +97,8 @@ func GetTokensByUsername(ctx *ctx.Context, username string) ([]UserToken, error)
 	return tokens, err
 }
 
-func GetUserByToken(ctx *ctx.Context, token string) (*User, error) {
-	val, hit := TokenToUser.Load(token)
-	if user, ok := val.(*User); hit && ok {
-		return user, nil
-	}
-	var user User
-	err := DB(ctx).Select("users.id, users.username").
-		Joins("JOIN token t ON t.username = users.username").
-		Where("t.token = ?", token).First(&user).Debug().Error
-	if user.Username != "" {
-		TokenToUser.Store(token, &user)
-	}
-	return &user, err
+func GetUserByToken(ctx *ctx.Context, token string) *User {
+	lock.RLock()
+	defer lock.RUnlock()
+	return TokenToUser[token]
 }

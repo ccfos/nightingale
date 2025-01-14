@@ -78,8 +78,8 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			}
 			token := c.GetHeader(tokenKey)
 			if token != "" {
-				user, err := models.GetUserByToken(rt.Ctx, token)
-				if err == nil && user != nil && user.Username != "" {
+				user := models.GetUserByToken(rt.Ctx, token)
+				if user != nil && user.Username != "" {
 					c.Set("userid", user.Id)
 					c.Set("username", user.Username)
 					c.Next()
