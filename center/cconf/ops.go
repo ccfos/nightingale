@@ -22,8 +22,8 @@ type Ops struct {
 
 // SingleOp Name 为 op 名称；Cname 为展示名称，默认英文
 type SingleOp struct {
-	Name  string `yaml:"name"`
-	Cname string `yaml:"cname"`
+	Name  string `yaml:"name" json:"name"`
+	Cname string `yaml:"cname" json:"cname"`
 }
 
 func TransformNames(name []string, nameToName map[string]string) []string {
