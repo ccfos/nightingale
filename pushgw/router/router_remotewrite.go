@@ -1,15 +1,18 @@
 package router
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func extractMetricFromTimeSeries(s *prompb.TimeSeries) string {
@@ -99,6 +102,15 @@ func duplicateLabelKey(series *prompb.TimeSeries) bool {
 }
 
 func (rt *Router) remoteWrite(c *gin.Context) {
+	curLen := rt.Writers.AllQueueLen.Load().(int)
+	if curLen > rt.Pushgw.WriterOpt.AllQueueMaxSize {
+		err := fmt.Errorf("write queue full, metric count over limit: %d", curLen)
+		logger.Warning(err)
+		writer.CounterPushQueueOverLimitTotal.Inc()
+		c.String(rt.Pushgw.WriterOpt.OverLimitStatusCode, err.Error())
+		return
+	}
+
 	req, err := DecodeWriteRequest(c.Request.Body)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
@@ -153,6 +165,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 
 	CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
 	rt.IdentSet.MSet(ids)
+
+	c.String(200, "")
 }
 
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling

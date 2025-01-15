@@ -28,6 +28,13 @@ var (
 		}, []string{"host_ident"},
 	)
 
+	GaugeAllQueueSize = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "all_queue_size",
+		Help:      "The size of all queue.",
+	})
+
 	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -65,5 +72,6 @@ func init() {
 		CounterPushQueueErrorTotal,
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,
+		GaugeAllQueueSize,
 	)
 }
