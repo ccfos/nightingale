@@ -1315,8 +1315,14 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						points[i].ValuesUnit = map[string]unit.FormattedValue{
 							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
 						}
+						// 每个异常点都需要生成 key，子筛选使用 key 覆盖上层筛选
+						var cur []string
+						for _, paramKey := range ParamKeys {
+							val := string(points[i].Labels[model.LabelName(varToLabel[paramKey])])
+							cur = append(cur, val)
+						}
+						anomalyPointsMap.Store(strings.Join(cur, JoinMark), points[i])
 					}
-					anomalyPointsMap.Store(key, points)
 				}(key, promql)
 			}
 			wg.Wait()
@@ -1325,8 +1331,8 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	}
 	anomalyPoints := make([]models.AnomalyPoint, 0)
 	anomalyPointsMap.Range(func(key, value any) bool {
-		if points, ok := value.([]models.AnomalyPoint); ok {
-			anomalyPoints = append(anomalyPoints, points...)
+		if point, ok := value.(models.AnomalyPoint); ok {
+			anomalyPoints = append(anomalyPoints, point)
 		}
 		return true
 	})
@@ -1386,7 +1392,16 @@ func ExtractVarMapping(promql string) map[string]string {
 
 		for _, pair := range pairs {
 			// 分割键值对
-			kv := strings.Split(pair, "=")
+			var kv []string
+			if strings.Contains(pair, "!=") {
+				kv = strings.Split(pair, "!=")
+			} else if strings.Contains(pair, "=~") {
+				kv = strings.Split(pair, "=~")
+			} else if strings.Contains(pair, "!~") {
+				kv = strings.Split(pair, "!~")
+			} else {
+				kv = strings.Split(pair, "=")
+			}
 			if len(kv) != 2 {
 				continue
 			}
