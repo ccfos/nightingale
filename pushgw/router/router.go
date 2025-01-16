@@ -1,6 +1,9 @@
 package router
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
 
@@ -28,6 +31,20 @@ type Router struct {
 	Ctx            *ctx.Context
 	HandleTS       HandleTSFunc
 	HeartbeartApi  string
+}
+
+func stat() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+
+		code := fmt.Sprintf("%d", c.Writer.Status())
+		method := c.Request.Method
+		labels := []string{"pushgw", code, c.FullPath(), method}
+
+		RequestCounter.WithLabelValues(labels...).Inc()
+		RequestDuration.WithLabelValues(labels...).Observe(float64(time.Since(start).Seconds()))
+	}
 }
 
 func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType,
@@ -61,6 +78,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	registerMetrics()
 	go rt.ReportIdentStats()
 
+	r.Use(stat())
 	// datadog url: http://n9e-pushgw.foo.com/datadog
 	// use apiKey not basic auth
 	r.POST("/datadog/api/v1/series", rt.datadogSeries)

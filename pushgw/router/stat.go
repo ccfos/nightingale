@@ -8,6 +8,8 @@ const (
 )
 
 var (
+	labels = []string{"service", "code", "path", "method"}
+
 	CounterSampleTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -28,6 +30,24 @@ var (
 		Name:      "sample_received_by_ident",
 		Help:      "Number of sample push by ident.",
 	}, []string{"host_ident"})
+
+	RequestCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "http_request_count_total",
+			Help:      "Total number of HTTP requests made.",
+		}, labels,
+	)
+
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "http_request_duration_seconds",
+			Help:      "HTTP request latencies in seconds.",
+		}, labels,
+	)
 )
 
 func registerMetrics() {
@@ -35,5 +55,7 @@ func registerMetrics() {
 		CounterSampleTotal,
 		CounterDropSampleTotal,
 		CounterSampleReceivedByIdent,
+		RequestCounter,
+		RequestDuration,
 	)
 }
