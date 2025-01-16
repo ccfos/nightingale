@@ -15,7 +15,6 @@ import (
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
@@ -96,8 +95,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	dumper.ConfigRouter(r)
 	httpClean := httpx.Init(config.HTTP, r)
-
-	models.SyncTokenToUser(ctx)
 
 	return func() {
 		logxClean()

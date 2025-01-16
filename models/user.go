@@ -257,6 +257,10 @@ func (u *User) Del(ctx *ctx.Context) error {
 			return err
 		}
 
+		if err := tx.Where("username=?", u.Username).Delete(&UserToken{}).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
 }

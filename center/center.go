@@ -102,6 +102,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
+	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -123,7 +124,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	go func() {
@@ -150,8 +151,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if isRootInit {
 		fmt.Println("username/password: root/root.2020")
 	}
-
-	models.SyncTokenToUser(ctx)
 
 	return func() {
 		logxClean()
