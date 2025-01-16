@@ -151,6 +151,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		fmt.Println("username/password: root/root.2020")
 	}
 
+	models.SyncTokenToUser(ctx)
+
 	return func() {
 		logxClean()
 		httpClean()

@@ -177,14 +177,14 @@ func (rt *Router) refreshPost(c *gin.Context) {
 			return
 		}
 
-		// Delete the previous Refresh Token
+		// Delete the previous Refresh UserToken
 		err = rt.deleteAuth(c.Request.Context(), refreshUuid)
 		if err != nil {
 			ginx.NewRender(c, http.StatusUnauthorized).Message(http.StatusText(http.StatusInternalServerError))
 			return
 		}
 
-		// Delete previous Access Token
+		// Delete previous Access UserToken
 		rt.deleteAuth(c.Request.Context(), strings.Split(refreshUuid, "++")[0])
 
 		// Create new pairs of refresh and access tokens

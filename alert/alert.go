@@ -87,6 +87,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	httpClean := httpx.Init(config.HTTP, r)
 
+	models.SyncTokenToUser(ctx)
+
 	return func() {
 		logxClean()
 		httpClean()
