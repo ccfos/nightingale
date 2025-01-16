@@ -161,7 +161,7 @@ type WritersType struct {
 	pushgw      pconf.Pushgw
 	backends    map[string]WriterType
 	queues      map[string]*IdentQueue
-	allQueueLen atomic.Value
+	AllQueueLen atomic.Value
 	sync.RWMutex
 }
 
@@ -178,6 +178,8 @@ func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (i
 		if count > ws.pushgw.IdentStatsThreshold {
 			GaugeSampleQueueSize.WithLabelValues(ident).Set(float64(count))
 		}
+
+		GaugeAllQueueSize.Set(float64(ws.AllQueueLen.Load().(int)))
 	}
 }
 
@@ -189,7 +191,7 @@ func (ws *WritersType) SetAllQueueLen() {
 			curMetricLen += q.list.Len()
 		}
 		ws.RUnlock()
-		ws.allQueueLen.Store(curMetricLen)
+		ws.AllQueueLen.Store(curMetricLen)
 		time.Sleep(time.Duration(ws.pushgw.WriterOpt.AllQueueMaxSizeInterval) * time.Millisecond)
 	}
 }
@@ -199,7 +201,7 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 		backends:    make(map[string]WriterType),
 		queues:      make(map[string]*IdentQueue),
 		pushgw:      pushgwConfig,
-		allQueueLen: atomic.Value{},
+		AllQueueLen: atomic.Value{},
 	}
 
 	writers.Init()
@@ -254,7 +256,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) error {
 	}
 
 	identQueue.ts = time.Now().Unix()
-	curLen := ws.allQueueLen.Load().(int)
+	curLen := ws.AllQueueLen.Load().(int)
 	if curLen > ws.pushgw.WriterOpt.AllQueueMaxSize {
 		err := fmt.Errorf("write queue full, metric count over limit: %d", curLen)
 		logger.Warning(err)
@@ -291,7 +293,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 
 func (ws *WritersType) Init() error {
 	opts := ws.pushgw.Writers
-	ws.allQueueLen.Store(0)
+	ws.AllQueueLen.Store(0)
 
 	for i := 0; i < len(opts); i++ {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()
