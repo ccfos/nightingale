@@ -54,23 +54,23 @@
 
 你可以在页面的右上角，切换语言和主题，目前我们支持英语、简体中文、繁体中文。
 
-![语言切换](https://download.flashcat.cloud/ulric/n9e-switch-i18n.png)
+![语言切换](doc/img/readme/n9e-switch-i18n.png)
 
 即时查询，类似 Prometheus 内置的查询分析页面，做 ad-hoc 查询，夜莺做了一些 UI 优化，同时提供了一些内置 promql 指标，让不太了解 promql 的用户也可以快速查询。
 
-![即时查询](https://download.flashcat.cloud/ulric/20240513103305.png)
+![即时查询](doc/img/readme/20240513103305.png)
 
 当然，也可以直接通过指标视图查看，有了指标视图，即时查询基本可以不用了，或者只有高端玩家使用即时查询，普通用户直接通过指标视图查询即可。
 
-![指标视图](https://download.flashcat.cloud/ulric/20240513103530.png)
+![指标视图](doc/img/readme/20240513103530.png)
 
 夜莺内置了常用仪表盘，可以直接导入使用。也可以导入 Grafana 仪表盘，不过只能兼容 Grafana 基本图表，如果已经习惯了 Grafana 建议继续使用 Grafana 看图，把夜莺作为一个告警引擎使用。
 
-![内置仪表盘](https://download.flashcat.cloud/ulric/20240513103628.png)
+![内置仪表盘](doc/img/readme/20240513103628.png)
 
 除了内置的仪表盘，也内置了很多告警规则，开箱即用。
 
-![内置告警规则](https://download.flashcat.cloud/ulric/20240513103825.png)
+![内置告警规则](doc/img/readme/20240513103825.png)
 
 
 
@@ -78,11 +78,11 @@
 
 社区使用夜莺最多的场景就是使用夜莺做告警引擎，对接多套时序库，统一告警规则管理。绘图仍然使用 Grafana 居多。作为一个告警引擎，夜莺的产品架构如下：
 
-![产品架构](https://download.flashcat.cloud/ulric/20240221152601.png)
+![产品架构](doc/img/readme/20240221152601.png)
 
 对于个别边缘机房，如果和中心夜莺服务端网络链路不好，希望提升告警可用性，我们也提供边缘机房告警引擎下沉部署模式，这个模式下，即便网络割裂，告警功能也不受影响。
 
-![边缘部署模式](https://download.flashcat.cloud/ulric/20240222102119.png)
+![边缘部署模式](doc/img/readme/20240222102119.png)
 
 
 ## 交流渠道

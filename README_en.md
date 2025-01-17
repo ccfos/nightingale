@@ -53,31 +53,31 @@ Originally developed and open-sourced by Didi, Nightingale was donated to the Ch
 
 You can switch languages and themes in the top right corner. We now support English, Simplified Chinese, and Traditional Chinese. 
 
-![18n switch](https://download.flashcat.cloud/ulric/n9e-switch-i18n.png)
+![18n switch](doc/img/readme/n9e-switch-i18n.png)
 
 ### Instant Query
 
 Similar to the built-in query analysis page in Prometheus, Nightingale offers an ad-hoc query feature with UI enhancements. It also provides built-in PromQL metrics, allowing users unfamiliar with PromQL to quickly perform queries.
 
-![Instant Query](https://download.flashcat.cloud/ulric/20240513103305.png)
+![Instant Query](doc/img/readme/20240513103305.png)
 
 ### Metric View
 
 Alternatively, you can use the Metric View to access data. With this feature, Instant Query becomes less necessary, as it caters more to advanced users. Regular users can easily perform queries using the Metric View.
 
-![Metric View](https://download.flashcat.cloud/ulric/20240513103530.png)
+![Metric View](doc/img/readme/20240513103530.png)
 
 ### Built-in Dashboards
 
 Nightingale includes commonly used dashboards that can be imported and used directly. You can also import Grafana dashboards, although compatibility is limited to basic Grafana charts. If you’re accustomed to Grafana, it’s recommended to continue using it for visualization, with Nightingale serving as an alerting engine.
 
-![Built-in Dashboards](https://download.flashcat.cloud/ulric/20240513103628.png)
+![Built-in Dashboards](doc/img/readme/20240513103628.png)
 
 ### Built-in Alert Rules
 
 In addition to the built-in dashboards, Nightingale also comes with numerous alert rules that are ready to use out of the box.
 
-![Built-in Alert Rules](https://download.flashcat.cloud/ulric/20240513103825.png)
+![Built-in Alert Rules](doc/img/readme/20240513103825.png)
 
 
 
@@ -85,11 +85,11 @@ In addition to the built-in dashboards, Nightingale also comes with numerous ale
 
 In most community scenarios, Nightingale is primarily used as an alert engine, integrating with multiple time-series databases to unify alert rule management. Grafana remains the preferred tool for visualization. As an alert engine, the product architecture of Nightingale is as follows:
 
-![Product Architecture](https://download.flashcat.cloud/ulric/20240221152601.png)
+![Product Architecture](doc/img/readme/20240221152601.png)
 
 For certain edge data centers with poor network connectivity to the central Nightingale server, we offer a distributed deployment mode for the alert engine. In this mode, even if the network is disconnected, the alerting functionality remains unaffected.
 
-![Edge Deployment Mode](https://download.flashcat.cloud/ulric/20240222102119.png)
+![Edge Deployment Mode](doc/img/readme/20240222102119.png)
 
 
 ## Communication Channels
