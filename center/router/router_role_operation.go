@@ -60,12 +60,19 @@ func (rt *Router) roleBindOperation(c *gin.Context) {
 func (rt *Router) operations(c *gin.Context) {
 	var ops []cconf.Ops
 	for _, v := range rt.Operations.Ops {
-		v.Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Cname)
-		for i := range v.Ops {
-			v.Ops[i].Cname = i18n.Sprintf(c.GetHeader("X-Language"), v.Ops[i].Cname)
+		newOp := cconf.Ops{
+			Name:  v.Name,
+			Cname: i18n.Sprintf(c.GetHeader("X-Language"), v.Cname),
+			Ops:   []cconf.SingleOp{},
 		}
-		ops = append(ops, v)
+		for i := range v.Ops {
+			op := cconf.SingleOp{
+				Name:  v.Ops[i].Name,
+				Cname: i18n.Sprintf(c.GetHeader("X-Language"), v.Ops[i].Cname),
+			}
+			newOp.Ops = append(newOp.Ops, op)
+		}
+		ops = append(ops, newOp)
 	}
-
 	ginx.NewRender(c).Data(ops, nil)
 }
