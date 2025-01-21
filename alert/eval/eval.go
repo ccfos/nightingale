@@ -1494,6 +1494,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 
 						// 检查是否超过 resolve_after 时间
 						if now-int64(lastTs) > int64(ruleQuery.NodataTrigger.ResolveAfter) {
+							logger.Infof("rule_eval rid:%d series:%+v resolve after %d seconds", rule.Id, lastSeries, ruleQuery.NodataTrigger.ResolveAfter)
 							delete(arw.LastSeriesStore, hash)
 							continue
 						}
@@ -1513,15 +1514,16 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 							Query:     fmt.Sprintf("nodata check for %s", lastSeries.LabelsString()),
 						}
 						points = append(points, point)
+						logger.Infof("rule_eval rid:%d nodata point:%+v", rule.Id, point)
 					}
 				}
 
-				// 更新 arw.LastSeriesStore
-				for hash, series := range seriesStore {
-					arw.LastSeriesStore[hash] = series
-				}
 			}
 
+			// 更新 arw.LastSeriesStore
+			for hash, series := range seriesStore {
+				arw.LastSeriesStore[hash] = series
+			}
 		}
 	}
 
