@@ -1373,106 +1373,107 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 			unitMap[ref] = unit
 		}
 
-		// 判断
-		for _, trigger := range ruleQuery.Triggers {
-			seriesTagIndex := ProcessJoins(rule.Id, trigger, seriesTagIndexes, seriesStore)
-			for _, seriesHash := range seriesTagIndex {
-				valuesUnitMap := make(map[string]unit.FormattedValue)
+		if !ruleQuery.ExpTriggerDisable {
+			for _, trigger := range ruleQuery.Triggers {
+				seriesTagIndex := ProcessJoins(rule.Id, trigger, seriesTagIndexes, seriesStore)
+				for _, seriesHash := range seriesTagIndex {
+					valuesUnitMap := make(map[string]unit.FormattedValue)
 
-				sort.Slice(seriesHash, func(i, j int) bool {
-					return seriesHash[i] < seriesHash[j]
-				})
+					sort.Slice(seriesHash, func(i, j int) bool {
+						return seriesHash[i] < seriesHash[j]
+					})
 
-				m := make(map[string]interface{})
-				var ts int64
-				var sample models.DataResp
-				var value float64
-				for _, serieHash := range seriesHash {
-					series, exists := seriesStore[serieHash]
-					if !exists {
-						logger.Warningf("rule_eval rid:%d series:%+v not found", rule.Id, series)
-						continue
-					}
-					t, v, exists := series.Last()
-					if !exists {
-						logger.Warningf("rule_eval rid:%d series:%+v value not found", rule.Id, series)
-						continue
-					}
-
-					if !strings.Contains(trigger.Exp, "$"+series.Ref) {
-						// 表达式中不包含该变量
-						continue
-					}
-
-					m["$"+series.Ref] = v
-					m["$"+series.Ref+"."+series.MetricName()] = v
-					for k, v := range series.Metric {
-						if k == "__name__" {
+					m := make(map[string]interface{})
+					var ts int64
+					var sample models.DataResp
+					var value float64
+					for _, serieHash := range seriesHash {
+						series, exists := seriesStore[serieHash]
+						if !exists {
+							logger.Warningf("rule_eval rid:%d series:%+v not found", rule.Id, series)
+							continue
+						}
+						t, v, exists := series.Last()
+						if !exists {
+							logger.Warningf("rule_eval rid:%d series:%+v value not found", rule.Id, series)
 							continue
 						}
 
-						if !strings.Contains(trigger.Exp, "$"+series.Ref+"."+string(k)) {
-							// 过滤掉表达式中不包含的标签
+						if !strings.Contains(trigger.Exp, "$"+series.Ref) {
+							// 表达式中不包含该变量
 							continue
 						}
 
-						m["$"+series.Ref+"."+string(k)] = string(v)
+						m["$"+series.Ref] = v
+						m["$"+series.Ref+"."+series.MetricName()] = v
+						for k, v := range series.Metric {
+							if k == "__name__" {
+								continue
+							}
+
+							if !strings.Contains(trigger.Exp, "$"+series.Ref+"."+string(k)) {
+								// 过滤掉表达式中不包含的标签
+								continue
+							}
+
+							m["$"+series.Ref+"."+string(k)] = string(v)
+						}
+
+						if u, exists := unitMap[series.Ref]; exists {
+							valuesUnitMap["$"+series.Ref+"."+series.MetricName()] = unit.ValueFormatter(u, 2, v)
+						}
+
+						ts = int64(t)
+						sample = series
+						value = v
+						logger.Infof("rule_eval rid:%d origin series labels:%+v", rule.Id, series.Metric)
 					}
 
-					if u, exists := unitMap[series.Ref]; exists {
-						valuesUnitMap["$"+series.Ref+"."+series.MetricName()] = unit.ValueFormatter(u, 2, v)
-					}
+					isTriggered := parser.CalcWithRid(trigger.Exp, m, rule.Id)
+					//  此条日志很重要，是告警判断的现场值
+					logger.Infof("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", rule.Id, trigger, trigger.Exp, isTriggered, m)
 
-					ts = int64(t)
-					sample = series
-					value = v
-					logger.Infof("rule_eval rid:%d origin series labels:%+v", rule.Id, series.Metric)
-				}
-
-				isTriggered := parser.CalcWithRid(trigger.Exp, m, rule.Id)
-				//  此条日志很重要，是告警判断的现场值
-				logger.Infof("rule_eval rid:%d trigger:%+v exp:%s res:%v m:%v", rule.Id, trigger, trigger.Exp, isTriggered, m)
-
-				var values string
-				for k, v := range m {
-					if !strings.Contains(k, ".") {
-						continue
-					}
-
-					switch v.(type) {
-					case float64:
-						values += fmt.Sprintf("%s:%.3f ", k, v)
-					case string:
-						values += fmt.Sprintf("%s:%s ", k, v)
-					}
-				}
-
-				point := models.AnomalyPoint{
-					Key:           sample.MetricName(),
-					Labels:        sample.Metric,
-					Timestamp:     int64(ts),
-					Value:         value,
-					Values:        values,
-					Severity:      trigger.Severity,
-					Triggered:     isTriggered,
-					Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
-					RecoverConfig: trigger.RecoverConfig,
-					ValuesUnit:    valuesUnitMap,
-				}
-
-				if isTriggered {
-					points = append(points, point)
-				} else {
-					switch trigger.RecoverConfig.JudgeType {
-					case models.Origin:
-						// do nothing
-					case models.RecoverOnCondition:
-						fulfill := parser.CalcWithRid(trigger.RecoverConfig.RecoverExp, m, rule.Id)
-						if !fulfill {
+					var values string
+					for k, v := range m {
+						if !strings.Contains(k, ".") {
 							continue
 						}
+
+						switch v.(type) {
+						case float64:
+							values += fmt.Sprintf("%s:%.3f ", k, v)
+						case string:
+							values += fmt.Sprintf("%s:%s ", k, v)
+						}
 					}
-					recoverPoints = append(recoverPoints, point)
+
+					point := models.AnomalyPoint{
+						Key:           sample.MetricName(),
+						Labels:        sample.Metric,
+						Timestamp:     int64(ts),
+						Value:         value,
+						Values:        values,
+						Severity:      trigger.Severity,
+						Triggered:     isTriggered,
+						Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+						RecoverConfig: trigger.RecoverConfig,
+						ValuesUnit:    valuesUnitMap,
+					}
+
+					if isTriggered {
+						points = append(points, point)
+					} else {
+						switch trigger.RecoverConfig.JudgeType {
+						case models.Origin:
+							// do nothing
+						case models.RecoverOnCondition:
+							fulfill := parser.CalcWithRid(trigger.RecoverConfig.RecoverExp, m, rule.Id)
+							if !fulfill {
+								continue
+							}
+						}
+						recoverPoints = append(recoverPoints, point)
+					}
 				}
 			}
 		}
