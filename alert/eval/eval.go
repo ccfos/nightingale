@@ -1505,14 +1505,15 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					if _, exists := seriesStore[hash]; !exists {
 						// 生成无数据告警点
 						point := models.AnomalyPoint{
-							Key:       lastSeries.MetricName(),
-							Labels:    lastSeries.Metric,
-							Timestamp: now,
-							Value:     0,
-							Values:    fmt.Sprintf("nodata since %v", time.Unix(now, 0).Format("2006-01-02 15:04:05")),
-							Severity:  ruleQuery.NodataTrigger.Severity,
-							Triggered: true,
-							Query:     fmt.Sprintf("nodata check for %s", lastSeries.LabelsString()),
+							Key:         lastSeries.MetricName(),
+							Labels:      lastSeries.Metric,
+							Timestamp:   now,
+							Value:       0,
+							Values:      fmt.Sprintf("nodata since %v", time.Unix(now, 0).Format("2006-01-02 15:04:05")),
+							Severity:    ruleQuery.NodataTrigger.Severity,
+							Triggered:   true,
+							Query:       fmt.Sprintf("nodata check for %s", lastSeries.LabelsString()),
+							TriggerType: models.TriggerTypeNodata,
 						}
 						points = append(points, point)
 						logger.Infof("rule_eval rid:%d nodata point:%+v", rule.Id, point)

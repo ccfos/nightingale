@@ -148,6 +148,7 @@ type RuleConfig struct {
 	Severity              int                    `json:"severity,omitempty"`
 	AlgoParams            interface{}            `json:"algo_params,omitempty"`
 	OverrideGlobalWebhook bool                   `json:"override_global_webhook,omitempty"`
+	TriggerType           TriggerType            `json:"trigger_type,omitempty"`
 }
 
 type PromRuleConfig struct {
