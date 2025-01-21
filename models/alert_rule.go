@@ -161,9 +161,9 @@ type PromRuleConfig struct {
 type RecoverJudge int
 
 const (
-	Origin             RecoverJudge = 0
-	RecoverWithoutData RecoverJudge = 1
-	RecoverOnCondition RecoverJudge = 2
+	Origin               RecoverJudge = 0
+	NotRecoverWhenNoData RecoverJudge = 1
+	RecoverOnCondition   RecoverJudge = 2
 )
 
 type RecoverConfig struct {
@@ -194,10 +194,20 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
-	Version  string        `json:"version"`
-	Inhibit  bool          `json:"inhibit"`
-	Queries  []interface{} `json:"queries"`
-	Triggers []Trigger     `json:"triggers"`
+	Version           string        `json:"version"`
+	Inhibit           bool          `json:"inhibit"`
+	Queries           []interface{} `json:"queries"`
+	ExpTriggerDisable bool          `json:"exp_trigger_disable"`
+	Triggers          []Trigger     `json:"triggers"`
+	NodataTrigger     NodataTrigger `json:"nodata_trigger"`
+	TriggerType       TriggerType   `json:"trigger_type,omitempty"`
+}
+
+type NodataTrigger struct {
+	Enable             bool `json:"enable"`
+	Severity           int  `json:"severity"`
+	ResolveAfterEnable bool `json:"resolve_after_enable"`
+	ResolveAfter       int  `json:"resolve_after"` // 单位秒
 }
 
 type Trigger struct {
@@ -1175,8 +1185,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.RuleProd = ar.Prod
 	event.RuleAlgo = ar.Algorithm
 	event.PromForDuration = ar.PromForDuration
-	event.RuleConfig = ar.RuleConfig
-	event.RuleConfigJson = ar.RuleConfigJson
 	event.Callbacks = ar.Callbacks
 	event.CallbacksJSON = ar.CallbacksJSON
 	event.RunbookUrl = ar.RunbookUrl
