@@ -226,9 +226,9 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	if anomalyPoint.TriggerType == models.TriggerTypeNodata {
 		event.TriggerValue = "nodata"
-		ruleConfig := models.RuleConfig{}
+		ruleConfig := models.RuleQuery{}
 		json.Unmarshal([]byte(p.rule.RuleConfig), &ruleConfig)
-		ruleConfig.TriggerType = models.TriggerTypeNodata
+		ruleConfig.TriggerType = anomalyPoint.TriggerType
 		b, _ := json.Marshal(ruleConfig)
 		event.RuleConfig = string(b)
 	}
