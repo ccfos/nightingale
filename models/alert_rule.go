@@ -161,9 +161,9 @@ type PromRuleConfig struct {
 type RecoverJudge int
 
 const (
-	Origin             RecoverJudge = 0
-	RecoverWithoutData RecoverJudge = 1
-	RecoverOnCondition RecoverJudge = 2
+	Origin               RecoverJudge = 0
+	NotRecoverWhenNoData RecoverJudge = 1
+	RecoverOnCondition   RecoverJudge = 2
 )
 
 type RecoverConfig struct {

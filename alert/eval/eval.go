@@ -1495,7 +1495,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 
 						// 检查是否超过 resolve_after 时间
 						if now-int64(lastTs) > int64(ruleQuery.NodataTrigger.ResolveAfter) {
-							logger.Infof("rule_eval rid:%d series:%+v resolve after %d seconds", rule.Id, lastSeries, ruleQuery.NodataTrigger.ResolveAfter)
+							logger.Infof("rule_eval rid:%d series:%+v resolve after %d seconds now:%d lastTs:%d", rule.Id, lastSeries, ruleQuery.NodataTrigger.ResolveAfter, now, int64(lastTs))
 							delete(arw.LastSeriesStore, hash)
 							continue
 						}
