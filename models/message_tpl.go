@@ -2,10 +2,11 @@ package models
 
 // MessageTemplate 消息模板结构
 type MessageTemplate struct {
-	ID      uint              `json:"id" gorm:"primarykey"`
-	Name    string            `json:"name"`    // 模板名称
-	Ident   string            `json:"ident"`   // 模板标识
-	Content map[string]string `json:"content"` // 模板内容
+	ID           uint              `json:"id" gorm:"primarykey"`
+	Name         string            `json:"name"`    // 模板名称
+	Ident        string            `json:"ident"`   // 模板标识
+	Content      map[string]string `json:"content"` // 模板内容
+	UserGroupIds []int64           `json:"user_group_ids"`
 }
 
 type HTTPConfig struct {
