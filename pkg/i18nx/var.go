@@ -137,7 +137,19 @@ var I18N = `{
     "View Server Information": "查看告警引擎列表",
     "View SSO Configuration": "单点登录管理",
     "View Migration Configuration": "查看迁移配置",
-    "View Site Settings": "查看站点设置"
+    "View Site Settings": "查看站点设置",
+    "View Message Templates": "查看消息模板",
+    "Add Message Templates": "添加消息模板",
+    "Modify Message Templates": "修改消息模板",
+    "Delete Message Templates": "删除消息模板",
+    "View Notify Rules": "查看通知规则",
+    "Add Notify Rules": "添加通知规则",
+    "Modify Notify Rules": "修改通知规则",
+    "Delete Notify Rules": "删除通知规则",
+    "View Notify Channels": "查看通知媒介",
+    "Add Notify Channels": "添加通知媒介",
+    "Modify Notify Channels": "修改通知媒介",
+    "Delete Notify Channels": "删除通知媒介"
   },
   "zh_CN": {
     "Username or password invalid": "用户名或密码错误",
@@ -275,7 +287,19 @@ var I18N = `{
     "View Server Information": "查看告警引擎列表",
     "View SSO Configuration": "单点登录管理",
     "View Migration Configuration": "查看迁移配置",
-    "View Site Settings": "查看站点设置"
+    "View Site Settings": "查看站点设置",
+    "View Message Templates": "查看消息模板",
+    "Add Message Templates": "添加消息模板",
+    "Modify Message Templates": "修改消息模板",
+    "Delete Message Templates": "删除消息模板",
+    "View Notify Rules": "查看通知规则",
+    "Add Notify Rules": "添加通知规则",
+    "Modify Notify Rules": "修改通知规则",
+    "Delete Notify Rules": "删除通知规则",
+    "View Notify Channels": "查看通知媒介",
+    "Add Notify Channels": "添加通知媒介",
+    "Modify Notify Channels": "修改通知媒介",
+    "Delete Notify Channels": "删除通知媒介"
   },
   "zh_HK": {
     "Username or password invalid": "用戶名或密碼錯誤",
@@ -424,7 +448,19 @@ var I18N = `{
     "View Server Information": "查看告警引擎列表",
     "View SSO Configuration": "單點登錄管理",
     "View Migration Configuration": "查看遷移配置",
-    "View Site Settings": "查看站點設置"
+    "View Site Settings": "查看站點設置",
+    "View Message Templates": "查看訊息範本",
+    "Add Message Templates": "新增訊息範本",
+    "Modify Message Templates": "修改訊息範本",
+    "Delete Message Templates": "刪除訊息範本",
+    "View Notify Rules": "查看通知規則",
+    "Add Notify Rules": "新增通知規則",
+    "Modify Notify Rules": "修改通知規則",
+    "Delete Notify Rules": "刪除通知規則",
+    "View Notify Channels": "查看通知媒介",
+    "Add Notify Channels": "新增通知媒介",
+    "Modify Notify Channels": "修改通知媒介",
+    "Delete Notify Channels": "刪除通知媒介"
   },
   "ja_JP": {
     "Username or password invalid": "ユーザー名またはパスワードが無効です",
@@ -562,6 +598,18 @@ var I18N = `{
     "View Server Information": "アラートエンジン一覧",
     "View SSO Configuration": "シングルサインオン管理",
     "View Migration Configuration": "移行設定の表示",
-    "View Site Settings": "サイト設定の表示"
+    "View Site Settings": "サイト設定の表示",
+    "View Message Templates": "メッセージテンプレートを表示",
+    "Add Message Templates": "メッセージテンプレートを追加する",
+    "Modify Message Templates": "メッセージテンプレートを変更する",
+    "Delete Message Templates": "メッセージテンプレートの削除",
+    "View Notify Rules": "通知ルールを表示",
+    "Add Notify Rules": "通知ルールを追加する",
+    "Modify Notify Rules": "通知ルールを変更する",
+    "Delete Notify Rules": "通知ルールの削除",
+    "View Notify Channels": "通知媒体を表示",
+    "Add Notify Channels": "通知媒体を追加",
+    "Modify Notify Channels": "通知媒体を変更する",
+    "Delete Notify Channels": "通知媒体を削除する"
   }
 }`
