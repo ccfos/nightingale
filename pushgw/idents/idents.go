@@ -96,7 +96,7 @@ type TargetUpdate struct {
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
 	err := updateTargetsUpdateTs(lst, now, s.redis)
-	if err != nil {
+	if err != nil && s.ctx.IsCenter {
 		logger.Errorf("failed to update targets:%v update_ts: %v", lst, err)
 	}
 
