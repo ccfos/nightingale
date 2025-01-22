@@ -2,6 +2,7 @@ package dscache
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -60,7 +61,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
 				}
 
-				logger.Debugf("get datasource: %+v", item)
+				DsCache.SetStatus(item.Name, fmt.Sprintf("%s get datasource: %+v", time.Now().Format("2006-01-02 15:04:05"), item))
 				ds := datasource.DatasourceInfo{
 					Id:             item.Id,
 					Name:           item.Name,
@@ -153,7 +154,6 @@ func osN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 }
 
 func PutDatasources(items []datasource.DatasourceInfo) {
-	ids := make([]int64, 0)
 	for _, item := range items {
 		if item.Type == "prometheus" {
 			continue
@@ -164,27 +164,25 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 		}
 
 		if item.Name == "" {
-			logger.Warningf("cluster name is empty, ignore %+v", item)
+			DsCache.SetStatus(item.Name, fmt.Sprintf("%s cluster name is empty, ignore %+v", time.Now().Format("2006-01-02 15:04:05"), item))
 			continue
 		}
+
 		typ := strings.ReplaceAll(item.Type, ".logging", "")
 
 		ds, err := datasource.GetDatasourceByType(typ, item.Settings)
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			DsCache.SetStatus(item.Name, fmt.Sprintf("%s get plugin:%+v fail: %v", time.Now().Format("2006-01-02 15:04:05"), item, err))
 			continue
 		}
 
 		err = ds.Validate(context.Background())
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			DsCache.SetStatus(item.Name, fmt.Sprintf("%s get plugin:%+v fail: %v", time.Now().Format("2006-01-02 15:04:05"), item, err))
 			continue
 		}
-		ids = append(ids, item.Id)
 
 		// 异步初始化 client 不然数据源同步的会很慢
-		go DsCache.Put(typ, item.Id, ds)
+		go DsCache.Put(typ, item.Id, item.Name, ds)
 	}
-
-	logger.Debugf("get plugin by type success Ids:%v", ids)
 }

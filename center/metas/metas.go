@@ -92,7 +92,6 @@ func (s *Set) updateMeta(items map[string]models.HostMeta) {
 
 func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	if s.redis == nil {
-		logger.Warningf("redis is nil")
 		return nil
 	}
 
