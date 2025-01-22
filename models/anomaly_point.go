@@ -20,7 +20,15 @@ type AnomalyPoint struct {
 	Values        string                         `json:"values"`
 	ValuesUnit    map[string]unit.FormattedValue `json:"values_unit"`
 	RecoverConfig RecoverConfig                  `json:"recover_config"`
+	TriggerType   TriggerType                    `json:"trigger_type"`
 }
+
+type TriggerType string
+
+const (
+	TriggerTypeNormal TriggerType = "normal"
+	TriggerTypeNodata TriggerType = "nodata"
+)
 
 func NewAnomalyPoint(key string, labels map[string]string, ts int64, value float64, severity int) AnomalyPoint {
 	anomalyPointLabels := make(model.Metric)

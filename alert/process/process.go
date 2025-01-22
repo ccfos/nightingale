@@ -224,6 +224,15 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	event.RecoverConfig = anomalyPoint.RecoverConfig
 	event.RuleHash = ruleHash
 
+	if anomalyPoint.TriggerType == models.TriggerTypeNodata {
+		event.TriggerValue = "nodata"
+		ruleConfig := models.RuleQuery{}
+		json.Unmarshal([]byte(p.rule.RuleConfig), &ruleConfig)
+		ruleConfig.TriggerType = anomalyPoint.TriggerType
+		b, _ := json.Marshal(ruleConfig)
+		event.RuleConfig = string(b)
+	}
+
 	if err := json.Unmarshal([]byte(p.rule.Annotations), &event.AnnotationsJSON); err != nil {
 		event.AnnotationsJSON = make(map[string]string) // 解析失败时使用空 map
 		logger.Warningf("unmarshal annotations json failed: %v, rule: %d", err, p.rule.Id)
