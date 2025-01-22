@@ -32,7 +32,7 @@ type UserInfoParam struct {
 
 // FlashDutyParam flashduty 类型的参数配置
 type FlashDutyParam struct {
-	ChannelID int64 `json:"channel_id"`
+	ChannelIds []int64 `json:"channel_ids"`
 }
 
 // CustomParam custom 类型的参数配置
@@ -48,10 +48,13 @@ type ParamItem struct {
 }
 
 type SMTPRequestConfig struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Host               string `json:"host"`
+	Port               int    `json:"port"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	From               string `json:"from"`
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+	Batch              int    `json:"batch"`
 }
 
 type ScriptRequestConfig struct {

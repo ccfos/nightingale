@@ -7,12 +7,6 @@ type NotifyRule struct {
 	Enable       bool    `json:"enable"`         // 启用状态
 	UserGroupIds []int64 `json:"user_group_ids"` // 告警组ID
 
-	// 事件处理
-	// Handlers []Handler `json:"handlers"` // 处理器列表
-
-	// 聚合配置
-	// AggregateConfig AggregateConfig `json:"aggregate_config"`
-
 	// 通知配置
 	NotifyConfigs []NotifyConfig `json:"notify_configs"`
 }
@@ -37,33 +31,4 @@ type LabelFilter struct {
 	Key   string `json:"key"`
 	Op    string `json:"op"` // == != in not in =~ !~
 	Value string `json:"value"`
-}
-
-type AggregateConfig struct {
-	CriticalInterval string   `json:"critical_interval"` // Critical级别聚合时间
-	WarningInterval  string   `json:"warning_interval"`  // Warning级别聚合时间
-	InfoInterval     string   `json:"info_interval"`     // Info级别聚合时间
-	LabelKeys        []string `json:"label_keys"`        // 根据标签
-}
-
-// 处理器定义
-type Handler struct {
-	Type   string `json:"type"` // 处理器类型(Relabel/Enrich/Mute/Inhibit)
-	Config struct {
-		// Relabel处理器配置
-		Action string `json:"action,omitempty"` // labelkeep等
-		Regex  string `json:"regex,omitempty"`
-
-		// Enrich处理器配置
-		Source string `json:"source,omitempty"`
-		Target string `json:"target,omitempty"`
-
-		// Mute处理器配置
-		Expression string `json:"expression,omitempty"` // 匹配表达式
-
-		// Inhibit处理器配置
-		SourceLabel string `json:"source_label,omitempty"`
-		TargetLabel string `json:"target_label,omitempty"`
-		Equal       string `json:"equal,omitempty"`
-	} `json:"config"`
 }
