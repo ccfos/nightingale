@@ -145,6 +145,8 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		return
 	}
 
+	e.removeHiddenNotifyChannel(event)
+
 	fillUsers(event, e.userCache, e.userGroupCache)
 
 	var (
@@ -446,4 +448,14 @@ func mapKeys(m map[int64]struct{}) []int64 {
 		lst = append(lst, k)
 	}
 	return lst
+}
+
+func (e *Dispatch) removeHiddenNotifyChannel(event *models.AlertCurEvent) {
+	workingNotifyChannels := make([]string, 0)
+	for _, channel := range event.NotifyChannelsJSON {
+		if !e.notifyConfigCache.HiddenNotifyChannel[channel] {
+			workingNotifyChannels = append(workingNotifyChannels, channel)
+		}
+	}
+	event.NotifyChannelsJSON = workingNotifyChannels
 }
