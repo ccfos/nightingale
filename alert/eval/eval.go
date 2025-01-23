@@ -1335,7 +1335,8 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 				continue
 			}
 
-			series, err := plug.QueryData(context.Background(), query)
+			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
+			series, err := plug.QueryData(ctx, query)
 			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
