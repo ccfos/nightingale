@@ -29,10 +29,11 @@ type HeartbeatConfig struct {
 }
 
 type Alerting struct {
-	Timeout           int64
-	TemplatesDir      string
-	NotifyConcurrency int
-	WebhookBatchSend  bool
+	Timeout             int64
+	TemplatesDir        string
+	NotifyConcurrency   int
+	WebhookBatchSend    bool
+	DisableNotifyRecord bool
 }
 
 type CallPlugin struct {

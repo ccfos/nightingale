@@ -88,7 +88,7 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		eventType = "recovery"
 	}
 
-	e.dispatch.Astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
+	e.dispatch.Astats.CounterConsumeAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
 
 	if err := event.ParseRule("rule_name"); err != nil {
 		logger.Warningf("ruleid:%d failed to parse rule name: %v", event.RuleId, err)
