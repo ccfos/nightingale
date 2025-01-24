@@ -11,6 +11,7 @@ const (
 
 type Stats struct {
 	AlertNotifyTotal            *prometheus.CounterVec
+	CounterConsumeAlertsTotal   *prometheus.CounterVec
 	AlertNotifyErrorTotal       *prometheus.CounterVec
 	CounterAlertsTotal          *prometheus.CounterVec
 	GaugeAlertQueueSize         prometheus.Gauge
@@ -90,6 +91,13 @@ func NewSyncStats() *Stats {
 		Help:      "Total number alert events.",
 	}, []string{"cluster", "type", "busi_group"})
 
+	CounterConsumeAlertsTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "consume_alerts_total",
+		Help:      "Total number alert events consume.",
+	}, []string{"cluster", "type", "busi_group"})
+
 	// 内存中的告警事件队列的长度
 	GaugeAlertQueueSize := prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -121,6 +129,7 @@ func NewSyncStats() *Stats {
 
 	prometheus.MustRegister(
 		CounterAlertsTotal,
+		CounterConsumeAlertsTotal,
 		GaugeAlertQueueSize,
 		AlertNotifyTotal,
 		AlertNotifyErrorTotal,
@@ -137,6 +146,7 @@ func NewSyncStats() *Stats {
 
 	return &Stats{
 		CounterAlertsTotal:          CounterAlertsTotal,
+		CounterConsumeAlertsTotal:   CounterConsumeAlertsTotal,
 		GaugeAlertQueueSize:         GaugeAlertQueueSize,
 		AlertNotifyTotal:            AlertNotifyTotal,
 		AlertNotifyErrorTotal:       AlertNotifyErrorTotal,

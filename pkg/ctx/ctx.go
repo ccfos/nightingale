@@ -9,23 +9,25 @@ import (
 )
 
 type Context struct {
-	DB        *gorm.DB
-	CenterApi conf.CenterApi
-	Ctx       context.Context
-	IsCenter  bool
+	DB                  *gorm.DB
+	CenterApi           conf.CenterApi
+	Ctx                 context.Context
+	IsCenter            bool
+	DisableNotifyRecord bool
 }
 
-func NewContext(ctx context.Context, db *gorm.DB, isCenter bool, centerApis ...conf.CenterApi) *Context {
+func NewContext(ctx context.Context, db *gorm.DB, isCenter bool, disableNotifyRecord bool, centerApis ...conf.CenterApi) *Context {
 	var api conf.CenterApi
 	if len(centerApis) > 0 {
 		api = centerApis[0]
 	}
 
 	return &Context{
-		Ctx:       ctx,
-		DB:        db,
-		CenterApi: api,
-		IsCenter:  isCenter,
+		Ctx:                 ctx,
+		DB:                  db,
+		CenterApi:           api,
+		IsCenter:            isCenter,
+		DisableNotifyRecord: disableNotifyRecord,
 	}
 }
 

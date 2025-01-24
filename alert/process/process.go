@@ -522,6 +522,14 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 	}
 
 	dispatch.LogEvent(e, "push_queue")
+
+	eventType := "alert"
+	if e.IsRecovered {
+		eventType = "recovery"
+	}
+
+	p.Stats.CounterAlertsTotal.WithLabelValues(e.Cluster, eventType, e.GroupName).Inc()
+
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()

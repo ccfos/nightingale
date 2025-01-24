@@ -41,7 +41,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if len(config.CenterApi.Addrs) < 1 {
 		return nil, errors.New("failed to init config: the CenterApi configuration is missing")
 	}
-	ctx := ctx.NewContext(context.Background(), nil, false, config.CenterApi)
+	ctx := ctx.NewContext(context.Background(), nil, false, config.Alert.Alerting.DisableNotifyRecord, config.CenterApi)
 
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
