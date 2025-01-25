@@ -29,7 +29,7 @@
 
 ## What is Nightingale
 
-Nightingale aims to combine the advantages of Prometheus and Grafana. It manages alert rules and visualizes metrics, logs, traces in a beautiful WebUI.
+Nightingale is an open-source project focused on alerting. Similar to Grafana's data source integration approach, Nightingale also connects with various existing data sources. However, while Grafana focuses on visualization, Nightingale focuses alerting engines.
 
 Originally developed and open-sourced by Didi, Nightingale was donated to the China Computer Federation Open Source Development Committee (CCF ODC) on May 11, 2022, becoming the first open-source project accepted by the CCF ODC after its establishment. 
 
