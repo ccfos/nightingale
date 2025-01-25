@@ -4,6 +4,7 @@ import (
 	"log"
 	"regexp"
 
+	"github.com/IBM/sarama"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
 	"github.com/prometheus/common/model"
@@ -21,6 +22,7 @@ type Pushgw struct {
 	DropSample          []map[string]string
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
+	KafkaWriters        []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -54,6 +56,15 @@ type WriterOptions struct {
 	WriteRelabels []*RelabelConfig
 
 	tlsx.ClientConfig
+}
+
+type KafkaWriterOptions struct {
+	Typ     string
+	Brokers []string
+	Topic   string
+	*sarama.Config
+
+	WriteRelabels []*RelabelConfig
 }
 
 type RelabelConfig struct {
