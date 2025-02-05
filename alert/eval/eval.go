@@ -1315,7 +1315,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						points[i].ValuesUnit = map[string]unit.FormattedValue{
 							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
 						}
-						// 每个异常点都需要生成 key，子筛选使用 key 覆盖上层筛选
+						// 每个异常点都需要生成 key，子筛选使用 key 覆盖上层筛选，解决 issue https://github.com/ccfos/nightingale/issues/2433 提的问题
 						var cur []string
 						for _, paramKey := range ParamKeys {
 							val := string(points[i].Labels[model.LabelName(varToLabel[paramKey])])
