@@ -421,7 +421,7 @@ func (rt *Router) createTokens(signingKey, userIdentity string) (*TokenDetails, 
 	td.RefreshUuid = td.AccessUuid + "++" + userIdentity
 
 	var err error
-	// Creating Access UserToken
+	// Creating Access Token
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["access_uuid"] = td.AccessUuid
@@ -433,7 +433,7 @@ func (rt *Router) createTokens(signingKey, userIdentity string) (*TokenDetails, 
 		return nil, err
 	}
 
-	// Creating Refresh UserToken
+	// Creating Refresh Token
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUuid
 	rtClaims["user_identity"] = userIdentity

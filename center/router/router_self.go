@@ -131,10 +131,8 @@ func (rt *Router) deleteToken(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 	tokenCount, err := models.CountToken(rt.Ctx, username)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
+
 	if tokenCount <= 1 {
 		ginx.NewRender(c).Message("cannot delete the last token")
 		return
