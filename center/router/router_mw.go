@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	DefaultTokenKey = "X-User-UserToken"
+	DefaultTokenKey = "X-User-Token"
 )
 
 type AccessDetails struct {
@@ -71,8 +71,8 @@ func (rt *Router) proxyAuth() gin.HandlerFunc {
 func (rt *Router) tokenAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 先验证固定 token
-		if rt.HTTP.Token.Enable {
-			tokenKey := rt.HTTP.Token.HeaderUserTokenKey
+		if rt.HTTP.TokenAuth.Enable {
+			tokenKey := rt.HTTP.TokenAuth.HeaderUserTokenKey
 			if tokenKey == "" {
 				tokenKey = DefaultTokenKey
 			}

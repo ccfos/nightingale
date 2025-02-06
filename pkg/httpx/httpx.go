@@ -37,7 +37,7 @@ type Config struct {
 	APIForAgent      BasicAuths
 	APIForService    BasicAuths
 	RSA              RSAConfig
-	Token            Token
+	TokenAuth        TokenAuth
 }
 
 type RSAConfig struct {
@@ -69,6 +69,11 @@ type JWTAuth struct {
 	AccessExpired  int64
 	RefreshExpired int64
 	RedisKeyPrefix string
+}
+
+type TokenAuth struct {
+	Enable             bool
+	HeaderUserTokenKey string
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},
@@ -161,9 +166,4 @@ func Init(cfg Config, handler http.Handler) func() {
 			fmt.Println("http server stopped")
 		}
 	}
-}
-
-type Token struct {
-	Enable             bool
-	HeaderUserTokenKey string
 }
