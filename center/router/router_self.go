@@ -1,6 +1,12 @@
 package router
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"math/rand"
+	"strconv"
+	"time"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -81,4 +87,64 @@ func (rt *Router) selfPasswordPut(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, oldPassWord, newPassWord))
+}
+
+type tokenForm struct {
+	TokenName string `json:"token_name"`
+	Token     string `json:"token"`
+}
+
+func (rt *Router) getToken(c *gin.Context) {
+	username := c.MustGet("username").(string)
+	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
+	ginx.NewRender(c).Data(tokens, err)
+}
+
+func (rt *Router) addToken(c *gin.Context) {
+	var f tokenForm
+	ginx.BindJSON(c, &f)
+
+	username := c.MustGet("username").(string)
+
+	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
+	ginx.Dangerous(err)
+
+	if len(tokens) >= 2 {
+		ginx.NewRender(c).Message("token count exceeds the limit 2")
+		return
+	}
+
+	for _, token := range tokens {
+		if token.TokenName == f.TokenName {
+			ginx.NewRender(c).Message("token name already exists")
+			return
+		}
+	}
+
+	token, err := models.AddToken(rt.Ctx, username, genToken(username), f.TokenName)
+	ginx.NewRender(c).Data(token, err)
+}
+
+func (rt *Router) deleteToken(c *gin.Context) {
+	var f tokenForm
+	ginx.BindJSON(c, &f)
+
+	username := c.MustGet("username").(string)
+	tokenCount, err := models.CountToken(rt.Ctx, username)
+	ginx.Dangerous(err)
+
+	if tokenCount <= 1 {
+		ginx.NewRender(c).Message("cannot delete the last token")
+		return
+	}
+
+	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, f.Token))
+}
+
+func genToken(username string) string {
+	data := username + strconv.Itoa(int(time.Now().Nanosecond())) + strconv.Itoa(rand.Int())
+	hash := sha256.New()
+	hash.Write([]byte(data))
+	hash.Sum(nil)
+	return base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }
