@@ -1,14 +1,18 @@
 package models
 
 import (
+	"time"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
 type UserToken struct {
 	Id        int64  `json:"id" gorm:"primaryKey"`
-	Username  string `json:"username" gorm:"type:varchar(255)"`
-	TokenName string `json:"token_name" gorm:"type:varchar(255)"`
-	Token     string `json:"token" gorm:"type:varchar(255);uniqueIndex"`
+	Username  string `json:"username" gorm:"type:varchar(255) not null default ''"`
+	TokenName string `json:"token_name" gorm:"type:varchar(255) not null default ''"`
+	Token     string `json:"token" gorm:"type:varchar(255) not null default ''"`
+	CreateAt  int64  `json:"create_at" gorm:"type:bigint not null default 0"`
+	LastUsed  int64  `json:"last_used" gorm:"type:bigint not null default 0"`
 }
 
 func (UserToken) TableName() string {
@@ -26,6 +30,7 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, 
 		TokenName: tokenName,
 		Username:  username,
 		Token:     token,
+		CreateAt:  time.Now().Unix(),
 	}
 
 	err := Insert(ctx, &newToken)

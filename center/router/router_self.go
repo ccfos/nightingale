@@ -1,11 +1,16 @@
 package router
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"math/rand"
+	"strconv"
+	"time"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/tool"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -116,7 +121,7 @@ func (rt *Router) addToken(c *gin.Context) {
 		}
 	}
 
-	token, err := models.AddToken(rt.Ctx, username, tool.GenToken(username), f.TokenName)
+	token, err := models.AddToken(rt.Ctx, username, genToken(username), f.TokenName)
 	ginx.NewRender(c).Data(token, err)
 }
 
@@ -136,4 +141,12 @@ func (rt *Router) deleteToken(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, f.Token))
+}
+
+func genToken(username string) string {
+	data := username + strconv.Itoa(int(time.Now().Nanosecond())) + strconv.Itoa(rand.Int())
+	hash := sha256.New()
+	hash.Write([]byte(data))
+	hash.Sum(nil)
+	return base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }

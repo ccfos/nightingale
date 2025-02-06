@@ -764,6 +764,16 @@ CREATE TABLE `dash_annotation` (
     KEY `idx_dashboard_id` (`dashboard_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `user_token` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `username` varchar(255) NOT NULL DEFAULT '',
+    `token_name` varchar(255) NOT NULL DEFAULT '',
+    `token` varchar(255) NOT NULL DEFAULT '',
+    `create_at` bigint NOT NULL DEFAULT 0,
+    `last_used` bigint NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `task_meta`
 (
     `id`          bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -2121,12 +2131,3 @@ CREATE TABLE task_host_99
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
-
-CREATE TABLE user_token
-(
-    id         bigint auto_increment primary key,
-    username   varchar(255) null,
-    token_name varchar(255) null,
-    token      varchar(255) null,
-    constraint idx_user_token_token unique (token)
-);
