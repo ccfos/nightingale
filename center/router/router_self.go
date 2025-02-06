@@ -126,9 +126,7 @@ func (rt *Router) addToken(c *gin.Context) {
 }
 
 func (rt *Router) deleteToken(c *gin.Context) {
-	var f tokenForm
-	ginx.BindJSON(c, &f)
-
+	id := ginx.UrlParamInt64(c, "id")
 	username := c.MustGet("username").(string)
 	tokenCount, err := models.CountToken(rt.Ctx, username)
 	ginx.Dangerous(err)
@@ -138,7 +136,7 @@ func (rt *Router) deleteToken(c *gin.Context) {
 		return
 	}
 
-	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, f.Token))
+	ginx.NewRender(c).Message(models.DeleteToken(rt.Ctx, id))
 }
 
 func genToken(username string) string {

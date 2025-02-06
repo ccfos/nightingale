@@ -37,8 +37,8 @@ func AddToken(ctx *ctx.Context, username, token, tokenName string) (*UserToken, 
 	return &newToken, err
 }
 
-func DeleteToken(ctx *ctx.Context, token string) error {
-	err := DB(ctx).Where("token = ?", token).Delete(&UserToken{}).Error
+func DeleteToken(ctx *ctx.Context, id int64) error {
+	err := DB(ctx).Where("id = ?", id).Delete(&UserToken{}).Error
 	return err
 }
 
