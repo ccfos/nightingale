@@ -54,14 +54,8 @@ func UserTokenGetAll(ctx *ctx.Context) ([]*UserToken, error) {
 	return lst, err
 }
 
-func UserTokenStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&UserToken{}).Select("count(*) as total", "max(update_at) as last_updated")
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return stats[0], nil
+func UserTokenTotal(ctx *ctx.Context) (int64, error) {
+	var total int64
+	err := DB(ctx).Model(&UserToken{}).Count(&total).Error
+	return total, err
 }

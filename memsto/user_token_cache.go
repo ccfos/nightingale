@@ -25,30 +25,28 @@ type UserTokenCacheType struct {
 
 func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
 	utc := &UserTokenCacheType{
-		statTotal:       -1,
-		statLastUpdated: -1,
-		ctx:             ctx,
-		stats:           stats,
-		tokens:          make(map[string]*models.User),
+		statTotal: -1,
+		ctx:       ctx,
+		stats:     stats,
+		tokens:    make(map[string]*models.User),
 	}
 	utc.SyncUserTokens()
 	return utc
 }
 
-func (utc *UserTokenCacheType) StatChanged(total, lastUpdated int64) bool {
-	if utc.statTotal == total && utc.statLastUpdated == lastUpdated {
+func (utc *UserTokenCacheType) StatChanged(total int64) bool {
+	if utc.statTotal == total {
 		return false
 	}
 	return true
 }
 
-func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total, lastUpdated int64) {
+func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total int64) {
 	utc.Lock()
 	utc.tokens = tokenUsers
 	utc.Unlock()
 
 	utc.statTotal = total
-	utc.statLastUpdated = lastUpdated
 }
 
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
@@ -81,13 +79,13 @@ func (utc *UserTokenCacheType) loopSyncUserTokens() {
 func (utc *UserTokenCacheType) syncUserTokens() error {
 	start := time.Now()
 
-	stat, err := models.UserTokenStatistics(utc.ctx)
+	total, err := models.UserTokenTotal(utc.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec UserTokenStatistics")
 	}
 
-	if !utc.StatChanged(stat.Total, stat.LastUpdated) {
+	if !utc.StatChanged(total) {
 		utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(0)
 		utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(0)
 		dumper.PutSyncRecord("user_tokens", start.Unix(), -1, -1, "not changed")
@@ -121,7 +119,7 @@ func (utc *UserTokenCacheType) syncUserTokens() error {
 		tokenUsers[token.Token] = user
 	}
 
-	utc.Set(tokenUsers, stat.Total, stat.LastUpdated)
+	utc.Set(tokenUsers, total)
 
 	ms := time.Since(start).Milliseconds()
 	utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(float64(ms))
