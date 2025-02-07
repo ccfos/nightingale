@@ -200,7 +200,8 @@ type RuleQuery struct {
 	ExpTriggerDisable bool          `json:"exp_trigger_disable"`
 	Triggers          []Trigger     `json:"triggers"`
 	NodataTrigger     NodataTrigger `json:"nodata_trigger"`
-	TriggerType       TriggerType   `json:"trigger_type,omitempty"`
+	AnomalyTrigger    interface{}   `json:"anomaly_trigger"`
+	TriggerType       TriggerType   `json:"trigger_type,omitempty"` // 在告警事件中使用
 }
 
 type NodataTrigger struct {

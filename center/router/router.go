@@ -50,8 +50,10 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
-	HeartbeatHook     HeartbeatHookFunc
-	TargetDeleteHook  models.TargetDeleteHookFunc
+
+	HeartbeatHook       HeartbeatHookFunc
+	TargetDeleteHook    models.TargetDeleteHookFunc
+	AlertRuleModifyHook AlertRuleModifyHookFunc
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
