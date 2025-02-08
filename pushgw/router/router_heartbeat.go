@@ -30,6 +30,10 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	}
 
 	ret, err := poster.PostByUrlsWithResp[map[string]interface{}](rt.Ctx, fmt.Sprintf("%s?gid=%s&overwrite_gids=%t", api, gid, overwriteGids), req)
+	if err != nil {
+		logger.Warningf("req:%v heartbeat failed to post to center, api:%s err:%v", req, api, err)
+	}
+
 	ginx.NewRender(c).Data(ret, err)
 }
 
