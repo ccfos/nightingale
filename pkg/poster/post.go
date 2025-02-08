@@ -108,7 +108,7 @@ func PostByUrls(ctx *ctx.Context, path string, v interface{}) (err error) {
 		if err == nil {
 			return
 		}
-		logger.Warningf("failed to post data to center, url: %s, err: %v", url, err)
+		logger.Warningf("failed to post data to center, url: %s addrs: %v err: %v", url, addrs, err)
 	}
 
 	if len(addrs) < 1 {
