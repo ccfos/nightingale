@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type TargetDeleteHookFunc func(ctx *ctx.Context, idents []string) error
+type TargetDeleteHookFunc func(tx *gorm.DB, idents []string) error
 
 type Target struct {
 	Id           int64             `json:"id" gorm:"primaryKey"`
@@ -130,11 +130,11 @@ func TargetDel(ctx *ctx.Context, idents []string, deleteHook TargetDeleteHookFun
 		if txErr != nil {
 			return txErr
 		}
-		txErr = deleteHook(ctx, idents)
+		txErr = deleteHook(tx, idents)
 		if txErr != nil {
 			return txErr
 		}
-		txErr = TargetDeleteBgids(ctx, idents)
+		txErr = TargetDeleteBgids(tx, idents)
 		if txErr != nil {
 			return txErr
 		}

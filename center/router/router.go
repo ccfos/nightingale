@@ -24,6 +24,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -80,13 +81,9 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserTokenCache:      utc,
 		Ctx:                 ctx,
 		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    emptyDeleteHook,
+		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
 		AlertRuleModifyHook: func(ar *models.AlertRule) {},
 	}
-}
-
-func emptyDeleteHook(ctx *ctx.Context, idents []string) error {
-	return nil
 }
 
 func stat() gin.HandlerFunc {
