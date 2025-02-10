@@ -20,7 +20,8 @@ type UserTokenCacheType struct {
 	stats           *Stats
 
 	sync.RWMutex
-	tokens map[string]*models.User
+	tokens         map[string]*models.User
+	tokensLastUsed map[string]int64
 }
 
 func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
@@ -50,8 +51,9 @@ func (utc *UserTokenCacheType) Set(tokenUsers map[string]*models.User, total int
 }
 
 func (utc *UserTokenCacheType) GetByToken(token string) *models.User {
-	utc.RLock()
-	defer utc.RUnlock()
+	utc.Lock()
+	defer utc.Unlock()
+	utc.tokensLastUsed[token] = time.Now().Unix()
 
 	return utc.tokens[token]
 }
@@ -64,6 +66,17 @@ func (utc *UserTokenCacheType) SyncUserTokens() {
 	}
 
 	go utc.loopSyncUserTokens()
+	go utc.loopUpdateUserTokenLastUsedTime()
+}
+
+func (utc *UserTokenCacheType) loopUpdateUserTokenLastUsedTime() {
+	duration := time.Duration(10) * time.Minute
+	for {
+		time.Sleep(duration)
+		if err := utc.updateUserTokenLastUsedTime(); err != nil {
+			logger.Warning("failed to update user token last used time:", err)
+		}
+	}
 }
 
 func (utc *UserTokenCacheType) loopSyncUserTokens() {
@@ -74,6 +87,37 @@ func (utc *UserTokenCacheType) loopSyncUserTokens() {
 			logger.Warning("failed to sync user tokens:", err)
 		}
 	}
+}
+
+func (utc *UserTokenCacheType) updateUserTokenLastUsedTime() error {
+	tokenLastUsedMap := make(map[string]int64)
+	now := time.Now().Unix()
+
+	utc.Lock()
+	for token, lastUsedTime := range utc.tokensLastUsed {
+		if now-lastUsedTime > 1800 {
+			// 如果 token 已经 30 分钟没有使用，则将 token 的 lastUsedTime 设置为 0, 不再更新数据库
+			utc.tokensLastUsed[token] = 0
+			continue
+		}
+
+		if lastUsedTime == 0 {
+			continue
+		}
+
+		tokenLastUsedMap[token] = lastUsedTime
+	}
+	utc.Unlock()
+
+	for token, lastUsedTime := range tokenLastUsedMap {
+		err := models.UserTokenUpdateLastUsedTime(utc.ctx, token, lastUsedTime)
+		if err != nil {
+			logger.Warning("failed to update user token last used time:", err)
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (utc *UserTokenCacheType) syncUserTokens() error {

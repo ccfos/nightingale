@@ -59,3 +59,7 @@ func UserTokenTotal(ctx *ctx.Context) (int64, error) {
 	err := DB(ctx).Model(&UserToken{}).Count(&total).Error
 	return total, err
 }
+
+func UserTokenUpdateLastUsedTime(ctx *ctx.Context, token string, lastUsedTime int64) error {
+	return DB(ctx).Model(&UserToken{}).Where("token = ?", token).Update("last_used", lastUsedTime).Error
+}
