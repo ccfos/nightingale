@@ -14,10 +14,9 @@ import (
 )
 
 type UserTokenCacheType struct {
-	statTotal       int64
-	statLastUpdated int64
-	ctx             *ctx.Context
-	stats           *Stats
+	statTotal int64
+	ctx       *ctx.Context
+	stats     *Stats
 
 	sync.RWMutex
 	tokens         map[string]*models.User
@@ -26,10 +25,11 @@ type UserTokenCacheType struct {
 
 func NewUserTokenCache(ctx *ctx.Context, stats *Stats) *UserTokenCacheType {
 	utc := &UserTokenCacheType{
-		statTotal: -1,
-		ctx:       ctx,
-		stats:     stats,
-		tokens:    make(map[string]*models.User),
+		statTotal:      -1,
+		ctx:            ctx,
+		stats:          stats,
+		tokens:         make(map[string]*models.User),
+		tokensLastUsed: make(map[string]int64),
 	}
 	utc.SyncUserTokens()
 	return utc
@@ -95,13 +95,13 @@ func (utc *UserTokenCacheType) updateUserTokenLastUsedTime() error {
 
 	utc.Lock()
 	for token, lastUsedTime := range utc.tokensLastUsed {
-		if now-lastUsedTime > 1800 {
-			// 如果 token 已经 30 分钟没有使用，则将 token 的 lastUsedTime 设置为 0, 不再更新数据库
-			utc.tokensLastUsed[token] = 0
+		if lastUsedTime == 0 {
 			continue
 		}
 
-		if lastUsedTime == 0 {
+		if now-lastUsedTime > 1800 {
+			// 如果 token 已经 30 分钟没有使用，不再更新数据库
+			delete(utc.tokensLastUsed, token)
 			continue
 		}
 
