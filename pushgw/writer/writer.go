@@ -362,6 +362,7 @@ func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
 	}
 }
 
+
 func (ws *WritersType) initKafkaWriters() error {
 	opts := ws.pushgw.KafkaWriters
 

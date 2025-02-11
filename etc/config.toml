@@ -189,7 +189,6 @@ MaxIdleConnsPerHost = 100
 # Handshake = true
 # AuthIdentity = ""
 
-
 [Ibex]
 Enable = false
 RPCListen = "0.0.0.0:20090"
