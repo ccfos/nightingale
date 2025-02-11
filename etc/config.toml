@@ -178,6 +178,16 @@ MaxIdleConnsPerHost = 100
 # Typ = "sync"
 # Brokers = ["127.0.0.1:9092"]
 # Topic = "test"
+# Version = "3.7.2"
+# Timeout = 10
+# [Pushgw.KafkaWriters.SASL]
+# Enable = true
+# User = "admin"
+# Password = "admin"
+# Mechanism = "PLAIN"
+# Version = 1
+# Handshake = true
+# AuthIdentity = ""
 
 [Ibex]
 Enable = false

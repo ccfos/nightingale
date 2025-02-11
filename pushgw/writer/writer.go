@@ -350,13 +350,35 @@ func (ws *WritersType) initWriters() error {
 	return nil
 }
 
+func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
+	if opt.SASL != nil && opt.SASL.Enable {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.User = opt.SASL.User
+		cfg.Net.SASL.Password = opt.SASL.Password
+		cfg.Net.SASL.Mechanism = sarama.SASLMechanism(opt.SASL.Mechanism)
+		cfg.Net.SASL.Version = opt.SASL.Version
+		cfg.Net.SASL.Handshake = opt.SASL.Handshake
+		cfg.Net.SASL.AuthIdentity = opt.SASL.AuthIdentity
+	}
+}
+
+
 func (ws *WritersType) initKafkaWriters() error {
 	opts := ws.pushgw.KafkaWriters
 
 	for i := 0; i < len(opts); i++ {
-		cfg := opts[i].Config
-		if cfg == nil {
-			cfg = sarama.NewConfig()
+		cfg := sarama.NewConfig()
+		initKakfaSASL(cfg, opts[i])
+		if opts[i].Timeout != 0 {
+			cfg.Producer.Timeout = time.Duration(opts[i].Timeout) * time.Second
+		}
+		if opts[i].Version != "" {
+			kafkaVersion, err := sarama.ParseKafkaVersion(opts[i].Version)
+			if err != nil {
+				logger.Warningf("parse kafka version got error: %v", err)
+			} else {
+				cfg.Version = kafkaVersion
+			}
 		}
 		producer, err := kafka.New(opts[i].Typ, opts[i].Brokers, cfg)
 		if err != nil {

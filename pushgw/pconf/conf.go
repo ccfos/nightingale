@@ -58,11 +58,24 @@ type WriterOptions struct {
 	tlsx.ClientConfig
 }
 
+type SASLConfig struct {
+	Enable       bool
+	User         string
+	Password     string
+	Mechanism    string
+	Version      int16
+	Handshake    bool
+	AuthIdentity string
+}
+
 type KafkaWriterOptions struct {
 	Typ     string
 	Brokers []string
 	Topic   string
-	*sarama.Config
+	Version string
+	Timeout int64
+
+	SASL *SASLConfig
 
 	WriteRelabels []*RelabelConfig
 }
