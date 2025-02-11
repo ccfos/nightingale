@@ -109,11 +109,6 @@ func (rt *Router) addToken(c *gin.Context) {
 	tokens, err := models.GetTokensByUsername(rt.Ctx, username)
 	ginx.Dangerous(err)
 
-	if len(tokens) >= 2 {
-		ginx.NewRender(c).Message("token count exceeds the limit 2")
-		return
-	}
-
 	for _, token := range tokens {
 		if token.TokenName == f.TokenName {
 			ginx.NewRender(c).Message("token name already exists")

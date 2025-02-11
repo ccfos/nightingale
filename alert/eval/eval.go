@@ -254,6 +254,12 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 		readerClient := arw.PromClients.GetCli(arw.DatasourceId)
 
+		if readerClient == nil {
+			logger.Warningf("rule_eval:%s error reader client is nil", arw.Key())
+			arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_CLIENT, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
+			continue
+		}
+
 		if query.VarEnabled {
 			var anomalyPoints []models.AnomalyPoint
 			if hasLabelLossAggregator(query) || notExactMatch(query) {
