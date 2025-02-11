@@ -151,7 +151,7 @@ func (re *RecordingRule) Verify() error {
 	}
 
 	if re.CronPattern == "" {
-		re.CronPattern = "@every 60s"
+		re.CronPattern = fmt.Sprintf("@every %ds", re.PromEvalInterval)
 	}
 
 	re.AppendTags = strings.TrimSpace(re.AppendTags)
