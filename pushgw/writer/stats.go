@@ -19,6 +19,16 @@ var (
 		}, []string{"url"},
 	)
 
+	ForwardKafkaDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.1, 1, 10},
+			Name:      "forward_kafka_duration_seconds",
+			Help:      "Forward samples to Kafka. latencies in seconds.",
+		}, []string{"brokers_topic"},
+	)
+
 	GaugeSampleQueueSize = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
@@ -67,6 +77,7 @@ var (
 func init() {
 	prometheus.MustRegister(
 		ForwardDuration,
+		ForwardKafkaDuration,
 		CounterWirteTotal,
 		CounterWirteErrorTotal,
 		CounterPushQueueErrorTotal,
