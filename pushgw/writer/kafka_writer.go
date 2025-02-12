@@ -28,7 +28,12 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 		return
 	}
 
-	data, err := beforeWrite(key, items, w.ForceUseServerTS, ForwardKafkaDuration)
+	start := time.Now()
+	defer func() {
+		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+	}()
+
+	data, err := beforeWrite(key, items, w.ForceUseServerTS, "json")
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
 		return

@@ -3,6 +3,7 @@ package writer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,7 +20,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/api"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
 )
@@ -32,13 +32,9 @@ type WriterType struct {
 	RetryInterval    int64 // 单位秒
 }
 
-func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool,
-	forwardDuration *prometheus.HistogramVec) ([]byte, error) {
+func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
 	CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
-	start := time.Now()
-	defer func() {
-		forwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
-	}()
+
 	if forceUseServerTS {
 		ts := int64(fasttime.UnixTimestamp()) * 1000
 		for i := 0; i < len(items); i++ {
@@ -49,11 +45,15 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool,
 		}
 	}
 
-	req := &prompb.WriteRequest{
-		Timeseries: items,
+	if encodeType == "proto" {
+		req := &prompb.WriteRequest{
+			Timeseries: items,
+		}
+
+		return proto.Marshal(req)
 	}
 
-	return proto.Marshal(req)
+	return json.Marshal(items)
 }
 
 func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
@@ -66,7 +66,12 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 		return
 	}
 
-	data, err := beforeWrite(key, items, w.ForceUseServerTS, ForwardDuration)
+	start := time.Now()
+	defer func() {
+		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+	}()
+
+	data, err := beforeWrite(key, items, w.ForceUseServerTS, "proto")
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
 		return
