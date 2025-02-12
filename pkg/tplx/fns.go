@@ -1,6 +1,7 @@
 package tplx
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -582,4 +583,51 @@ func Query(datasourceID int64, promql string) model.Value {
 	}
 
 	return nil
+}
+
+type DingTalkAtBody struct {
+	IsAtAll   bool     `json:"isAtAll"`
+	AtMobiles []string `json:"atMobiles"`
+	AtUserIds []string `json:"atUserIds"`
+}
+
+func DingTalkAt(all bool, phones string, userIDs string) template.HTML {
+	dt := DingTalkAtBody{
+		IsAtAll:   all,
+		AtMobiles: mySplit(phones),
+		AtUserIds: mySplit(userIDs),
+	}
+	bytes, _ := json.Marshal(dt)
+	return template.HTML(bytes)
+}
+
+func mySplit(s string) []string {
+	strs := strings.FieldsFunc(s, func(r rune) bool {
+		return r == ',' || r == ';'
+	})
+	m := make(map[string]struct{})
+	for _, str := range strs {
+		m[strings.TrimSpace(str)] = struct{}{}
+	}
+	var res []string
+	for k := range m {
+		res = append(res, k)
+	}
+	return res
+}
+
+func AddPrefix(s, prefix string) string {
+	return prefix + s
+}
+
+func AddSuffix(s, suffix string) string {
+	return s + suffix
+}
+
+func ManipulateStr(str, split, prefix, suffix, join string) string {
+	strs := strings.Split(str, split)
+	for i, s := range strs {
+		strs[i] = prefix + s + suffix
+	}
+	return strings.Join(strs, join)
 }

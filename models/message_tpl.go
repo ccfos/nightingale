@@ -1,8 +1,13 @@
 package models
 
+import (
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+)
+
 // MessageTemplate 消息模板结构
 type MessageTemplate struct {
-	ID           uint              `json:"id" gorm:"primarykey"`
+	ID           int64             `json:"id" gorm:"primarykey"`
 	Name         string            `json:"name"`    // 模板名称
 	Ident        string            `json:"ident"`   // 模板标识
 	Content      map[string]string `json:"content"` // 模板内容
@@ -34,4 +39,36 @@ type HTTPConfig struct {
 	// 请求体配置
 	EnableBody bool   `json:"enableBody"` // 启用Body
 	Body       string `json:"body"`       // 请求体内容
+}
+
+func MessageTemplateStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=message_template")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&MessageTemplate{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func MessageTemplateGetsAll(ctx *ctx.Context) ([]*MessageTemplate, error) {
+	if !ctx.IsCenter {
+		templates, err := poster.GetByUrls[[]*MessageTemplate](ctx, "/v1/n9e/message-templates")
+		return templates, err
+	}
+
+	var templates []*MessageTemplate
+	err := DB(ctx).Find(&templates).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
 }
