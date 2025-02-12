@@ -175,11 +175,8 @@ MaxIdleConnsPerHost = 100
 # TargetLabel = "__address__"
 
 # [[Pushgw.KafkaWriters]]
-# Typ = "sync"
 # Brokers = ["127.0.0.1:9092"]
-# Topic = "test"
-# Version = "3.7.2"
-# Timeout = 10
+# Topic = "n9e-metrics"
 # [Pushgw.KafkaWriters.SASL]
 # Enable = true
 # User = "admin"

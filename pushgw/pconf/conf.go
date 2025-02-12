@@ -4,7 +4,6 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/IBM/sarama"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
 	"github.com/prometheus/common/model"

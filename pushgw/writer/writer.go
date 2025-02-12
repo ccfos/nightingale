@@ -362,7 +362,6 @@ func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
 	}
 }
 
-
 func (ws *WritersType) initKafkaWriters() error {
 	opts := ws.pushgw.KafkaWriters
 
@@ -380,6 +379,11 @@ func (ws *WritersType) initKafkaWriters() error {
 				cfg.Version = kafkaVersion
 			}
 		}
+
+		if opts[i].Typ == "" {
+			opts[i].Typ = kafka.AsyncProducer
+		}
+
 		producer, err := kafka.New(opts[i].Typ, opts[i].Brokers, cfg)
 		if err != nil {
 			logger.Warningf("new kafka producer got error: %v", err)
