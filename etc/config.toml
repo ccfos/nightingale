@@ -42,10 +42,10 @@ WriteTimeout = 40
 IdleTimeout = 120
 
 [HTTP.ShowCaptcha]
-Enable = false 
+Enable = false
 
 [HTTP.APIForAgent]
-Enable = true 
+Enable = true
 # [HTTP.APIForAgent.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
@@ -187,5 +187,5 @@ MaxIdleConnsPerHost = 100
 # AuthIdentity = ""
 
 [Ibex]
-Enable = false
+Enable = true
 RPCListen = "0.0.0.0:20090"
