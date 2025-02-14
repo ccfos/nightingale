@@ -8,9 +8,7 @@ import (
 )
 
 type NotifyRule struct {
-	ID uint `json:"id" gorm:"primarykey"`
-
-	// 基本配置
+	ID           int64   `json:"id" gorm:"primarykey"`
 	Name         string  `json:"name"`                                  // 名称
 	Description  string  `json:"description"`                           // 备注
 	Enable       bool    `json:"enable"`                                // 启用状态
@@ -26,8 +24,8 @@ type NotifyRule struct {
 }
 
 type NotifyConfig struct {
-	ChannelID  uint        `json:"channel_id"`  // 通知媒介(如：阿里云短信)
-	TemplateID uint        `json:"template_id"` // 通知模板
+	ChannelID  int64       `json:"channel_id"`  // 通知媒介(如：阿里云短信)
+	TemplateID int64       `json:"template_id"` // 通知模板
 	Params     interface{} `json:"params"`      // 通知参数
 
 	Severities []int         `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
@@ -168,12 +166,12 @@ type NotifyRuleChecker interface {
 	IfUsed(*NotifyRule) bool
 }
 
-func UsedByNotifyRule(ctx *ctx.Context, nrc NotifyRuleChecker) ([]uint, error) {
+func UsedByNotifyRule(ctx *ctx.Context, nrc NotifyRuleChecker) ([]int64, error) {
 	notifyRules, err := NotifyRulesGet(ctx, "", nil)
 	if err != nil {
 		return nil, err
 	}
-	ids := make([]uint, 0)
+	ids := make([]int64, 0)
 	for _, nr := range notifyRules {
 		if nrc.IfUsed(nr) {
 			ids = append(ids, nr.ID)

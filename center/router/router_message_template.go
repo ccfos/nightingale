@@ -42,7 +42,7 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 	}
 
 	ginx.Dangerous(models.DB(rt.Ctx).CreateInBatches(lst, 100).Error)
-	ids := make([]uint, 0, len(lst))
+	ids := make([]int64, 0, len(lst))
 	for _, tpl := range lst {
 		ids = append(ids, tpl.ID)
 	}
