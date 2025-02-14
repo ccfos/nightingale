@@ -61,6 +61,10 @@ AccessExpired = 1500
 RefreshExpired = 10080
 RedisKeyPrefix = "/jwt/"
 
+[HTTP.TokenAuth]
+Enable = false
+HeaderUserTokenKey = "X-User-Token"
+
 [HTTP.ProxyAuth]
 # if proxy auth enabled, jwt auth is disabled
 Enable = false
