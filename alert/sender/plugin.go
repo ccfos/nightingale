@@ -85,7 +85,13 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), "", buildErr(err, isTimeout))
+
+	res := buf.String()
+	if len(res) > 512 {
+		res = res[:512] + "..."
+	}
+
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), res, buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
