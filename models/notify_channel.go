@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"html/template"
 	"net"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/satori/go.uuid"
@@ -76,10 +78,6 @@ type NotifyChannelConfig struct {
 
 func (c *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
-}
-
-func (ncc *NotifyChannelConfig) TableName() string {
-	return "notify_channel_config"
 }
 
 // NotifyParamConfig 参数配置

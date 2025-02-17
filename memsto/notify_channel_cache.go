@@ -188,7 +188,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 	return nil
 }
 
-func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTPRequestConfig, ch chan *models.EmailContext, quitCh chan struct{}) {
+func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMTPRequestConfig, ch chan *models.EmailContext, quitCh chan struct{}) {
 	conf := smtp
 	if conf.Host == "" || conf.Port == 0 {
 		logger.Warning("SMTP configurations invalid")

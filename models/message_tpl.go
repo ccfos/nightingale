@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
-  "github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -21,10 +21,6 @@ type MessageTemplate struct {
 	CreateBy     string            `json:"create_by"`
 	UpdateAt     int64             `json:"update_at"`
 	UpdateBy     string            `json:"update_by"`
-}
-
-func (m *MessageTemplate) TableName() string {
-	return "message_template"
 }
 
 func MessageTemplateStatistics(ctx *ctx.Context) (*Statistics, error) {
