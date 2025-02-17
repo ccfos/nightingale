@@ -296,5 +296,41 @@ ops:
       cname: View Migration Configuration
     - name: "/site-settings"
       cname: View Site Settings
+
+- name: message-templates
+  cname: Message Templates
+  ops:
+    - name: "/message-templates"
+      cname: View Message Templates
+    - name: "/message-templates/add"
+      cname: Add Message Templates
+    - name: "/message-templates/put"
+      cname: Modify Message Templates
+    - name: "/message-templates/del"
+      cname: Delete Message Templates
+
+- name: notify-rules
+  cname: Notify Rules
+  ops:
+    - name: "/notify-rules"
+      cname: View Notify Rules
+    - name: "/notify-rules/add"
+      cname: Add Notify Rules
+    - name: "/notify-rules/put"
+      cname: Modify Notify Rules
+    - name: "/notify-rules/del"
+      cname: Delete Notify Rules
+
+- name: notify-channels
+  cname: Notify Channels
+  ops:
+    - name: "/notify-channels"
+      cname: View Notify Channels
+    - name: "/notify-channels/add"
+      cname: Add Notify Channels
+    - name: "/notify-channels/put"
+      cname: Modify Notify Channels
+    - name: "/notify-channels/del"
+      cname: Delete Notify Channels
 `
 )

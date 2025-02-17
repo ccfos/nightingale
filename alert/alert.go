@@ -104,6 +104,8 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	targetsOfAlertRulesCache := memsto.NewTargetOfAlertRuleCache(ctx, alertc.Heartbeat.EngineName, syncStats)
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
+	go models.InitNotifyChannel(ctx)
+	go models.InitMessageTemplate(ctx)
 
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
 
