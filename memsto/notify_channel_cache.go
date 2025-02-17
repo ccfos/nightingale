@@ -60,11 +60,18 @@ func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 }
 
 func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, httpClient map[int64]*http.Client,
-	smtpCh map[int64]chan *models.EmailContext, total, lastUpdated int64) {
+	smtpCh map[int64]chan *models.EmailContext, quitCh map[int64]chan struct{}, total, lastUpdated int64) {
 	ncc.Lock()
 	ncc.channels = m
 	ncc.httpClient = httpClient
 	ncc.smtpCh = smtpCh
+
+	for i := range ncc.smtpQuitCh {
+		close(ncc.smtpQuitCh[i])
+	}
+
+	ncc.smtpQuitCh = quitCh
+
 	ncc.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -151,6 +158,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 
 	httpClient := make(map[int64]*http.Client)
 	smtpCh := make(map[int64]chan *models.EmailContext)
+	quitCh := make(map[int64]chan struct{})
 
 	for i := range lst {
 		// todo 优化变更粒度
@@ -161,13 +169,15 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 			httpClient[lst[i].ID] = cli
 		case "smtp":
 			ch := make(chan *models.EmailContext)
-			ncc.startEmailSender(lst[i].ID, lst[i].SMTPRequestConfig, ch)
+			quit := make(chan struct{})
+			go ncc.startEmailSender(lst[i].ID, lst[i].SMTPRequestConfig, ch, quit)
 			smtpCh[lst[i].ID] = ch
+			quitCh[lst[i].ID] = quit
 		default:
 		}
 	}
 
-	ncc.Set(m, httpClient, smtpCh, stat.Total, stat.LastUpdated)
+	ncc.Set(m, httpClient, smtpCh, quitCh, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	ncc.stats.GaugeCronDuration.WithLabelValues("sync_notify_channels").Set(float64(ms))
@@ -178,7 +188,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 	return nil
 }
 
-func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTPRequestConfig, ch chan *models.EmailContext) {
+func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTPRequestConfig, ch chan *models.EmailContext, quitCh chan struct{}) {
 	conf := smtp
 	if conf.Host == "" || conf.Port == 0 {
 		logger.Warning("SMTP configurations invalid")
@@ -196,13 +206,14 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTP
 	var size int
 	for {
 		select {
+		case <-quitCh:
+			return
 		case m, ok := <-ch:
 			if !ok {
 				return
 			}
-
 			if !open {
-				s = ncc.dialSmtp(chID, d)
+				s = ncc.dialSmtp(quitCh, d)
 				if s == nil {
 					// Indicates that the dialing failed and exited the current goroutine directly,
 					// but put the Message back in the mailch
@@ -220,7 +231,7 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTP
 					logger.Warningf("email_sender: failed to close smtp connection: %s", err)
 				}
 
-				s = ncc.dialSmtp(chID, d)
+				s = ncc.dialSmtp(quitCh, d)
 				if s == nil {
 					// Indicates that the dialing failed and exited the current goroutine directly,
 					// but put the Message back in the mailch
@@ -268,10 +279,10 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp models.SMTP
 	}
 }
 
-func (ncc *NotifyChannelCacheType) dialSmtp(chID int64, d *gomail.Dialer) gomail.SendCloser {
+func (ncc *NotifyChannelCacheType) dialSmtp(quitCh chan struct{}, d *gomail.Dialer) gomail.SendCloser {
 	for {
 		select {
-		case <-ncc.smtpQuitCh[chID]:
+		case <-quitCh:
 			// Note that Sendcloser is not obtained below,
 			// and the outgoing signal (with configuration changes) exits the current dial
 			return nil

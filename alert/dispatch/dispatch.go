@@ -214,6 +214,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 				}
 			}
 
+			// xub todo 拼接符
 			if notifyChannel.ParamConfig.BatchSend {
 				val = append(val, strings.Join(origin, ","))
 			} else {
@@ -227,6 +228,13 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 			}
 		}
 	case "flashduty":
+		if p, ok := notifyConfig.Params.([]string); ok {
+			param := make(map[string]string)
+			for _, i := range p {
+				param["channel_id"] = i
+			}
+			params = append(params, param)
+		}
 
 	case "custom":
 		if p, ok := notifyConfig.Params.(models.CustomParams); ok {
@@ -240,11 +248,18 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 
 	switch notifyChannel.RequestType {
 	case "http":
-		notifyChannel.SendHTTP(content, params, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+		if err := notifyChannel.SendHTTP(events, content, params, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+			logger.Errorf("send http error: %v", err)
+		}
+
 	case "email":
-		notifyChannel.SendEmail(events, content, params, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
+		if err := notifyChannel.SendEmail(events, content, params, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+			logger.Errorf("send email error: %v", err)
+		}
 	case "script":
-		notifyChannel.SendScript(events, content, params)
+		if err := notifyChannel.SendScript(events, content, params); err != nil {
+			logger.Errorf("send script error: %v", err)
+		}
 	default:
 	}
 }

@@ -82,7 +82,11 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 			name: "flash duty",
 			notifyParam: []map[string]string{
 				{
-					"ids":        "1,2",
+					"channel_id": "1",
+					"title_rule": "test",
+				},
+				{
+					"channel_id": "2",
 					"title_rule": "test",
 				},
 			},
@@ -94,8 +98,7 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 					Request: RequestDetail{
 						Parameters: map[string]string{
 							"integration_key": "-",
-							// todo 协作空间
-							//"id": "",
+							"channel_id":      "$channel_id",
 						},
 						Body: `{"event_status": "Warning","alert_key": "1","description": "{{ .tpl.description }}","title_rule": "{{ .title_rule }}","event_time": 1706614721,"labels": {"name":"guguji5","env":"prod"}}`,
 					},
@@ -109,6 +112,9 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 						Params: []ParamItem{
 							{
 								Key: "title_rule",
+							},
+							{
+								Key: "channel_id",
 							},
 						},
 					},

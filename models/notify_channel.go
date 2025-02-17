@@ -8,16 +8,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/sys"
-	"gopkg.in/gomail.v2"
 	"html/template"
 	"net"
 	"net/http"
-	"net/smtp"
 	"net/url"
 	"os"
 	"os/exec"
@@ -26,7 +19,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/satori/go.uuid"
+	"github.com/toolkits/pkg/file"
+	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/sys"
+	"gopkg.in/gomail.v2"
 )
 
 const AliSortQuery string = "AccessKeyId=%s" +
@@ -66,6 +67,10 @@ type NotifyChannelConfig struct {
 	HTTPRequestConfig   HTTPRequestConfig   `json:"http_request_config"`
 	SMTPRequestConfig   SMTPRequestConfig   `json:"smtp_request_config"`
 	ScriptRequestConfig ScriptRequestConfig `json:"script_request_config"`
+}
+
+func (ncc *NotifyChannelConfig) TableName() string {
+	return "notify_channel_config"
 }
 
 // NotifyParamConfig 参数配置
@@ -178,6 +183,31 @@ func NotifyChannelGetsAll(ctx *ctx.Context) ([]*NotifyChannelConfig, error) {
 	return channels, nil
 }
 
+func NotifyChannelGets(ctx *ctx.Context, id int64, name, ident string, enabled int) ([]*NotifyChannelConfig, error) {
+	session := DB(ctx)
+
+	if id != 0 {
+		session = session.Where("id = ?", id)
+	}
+
+	if name != "" {
+		session = session.Where("name = ?", name)
+	}
+
+	if ident != "" {
+		session = session.Where("ident = ?", ident)
+	}
+
+	if enabled != -1 {
+		session = session.Where("enable = ?", enabled)
+	}
+
+	var channels []*NotifyChannelConfig
+	err := session.Find(&channels).Error
+
+	return channels, err
+}
+
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	// 设置代理
 	var proxyFunc func(*http.Request) (*url.URL, error)
@@ -189,7 +219,7 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		proxyFunc = http.ProxyURL(proxyURL)
 	}
 
-	// 设置 TLS 配置
+	// xub todo 设置 TLS 配置
 	tlsConfig := &tls.Config{
 		//InsecureSkipVerify: nc.HTTPRequestConfig.TLS != nil && nc.HTTPRequestConfig.TLS.SkipVerify,
 		InsecureSkipVerify: true,
@@ -211,37 +241,7 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
-func GetSMTPClient(nc *NotifyChannelConfig) (*smtp.Client, error) {
-	// 连接到 SMTP 服务器
-	addr := fmt.Sprintf("%s:%d", nc.SMTPRequestConfig.Host, nc.SMTPRequestConfig.Port)
-	client, err := smtp.Dial(addr)
-	if err != nil {
-		fmt.Println(err)
-		return nil, fmt.Errorf("failed to connect to SMTP server: %v", err)
-	}
-
-	// 如果服务器支持 STARTTLS，则升级到 TLS
-	if ok, _ := client.Extension("STARTTLS"); ok {
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: nc.SMTPRequestConfig.InsecureSkipVerify,
-			ServerName:         nc.SMTPRequestConfig.Host,
-		}
-		if err = client.StartTLS(tlsConfig); err != nil {
-			return nil, fmt.Errorf("failed to start TLS: %v", err)
-		}
-	}
-
-	// 进行身份验证
-	auth := smtp.PlainAuth("", nc.SMTPRequestConfig.Username, nc.SMTPRequestConfig.Password, nc.SMTPRequestConfig.Host)
-	if err := client.Auth(auth); err != nil {
-		fmt.Println(err)
-		return nil, fmt.Errorf("failed to authenticate: %v", err)
-	}
-
-	return client, nil
-}
-
-func (ncc *NotifyChannelConfig) SendHTTP(content map[string]string, params []map[string]string, client *http.Client) error {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, params []map[string]string, client *http.Client) error {
 
 	if client == nil {
 		return fmt.Errorf("http client not found")
@@ -252,6 +252,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(content map[string]string, params []map
 		// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
 		body, err := ncc.parseRequestBody(content, param)
 		if err != nil {
+			logger.Errorf("failed to parse request body: %v", err)
 			continue
 		}
 
@@ -260,6 +261,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(content map[string]string, params []map
 
 		req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.URL, bytes.NewBuffer(body))
 		if err != nil {
+			logger.Errorf("failed to create request: %v", err)
 			continue
 		}
 
@@ -310,8 +312,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(content map[string]string, params []map
 				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
 			}
 		}
-
-		//return fmt.Errorf("failed to receive a successful response after %d retries", ncc.HTTPRequestConfig.RetryTimes)
+		logger.Errorf("failed to send request: %v", req)
 	}
 
 	return nil
@@ -411,6 +412,7 @@ func (ncc *NotifyChannelConfig) parseRequestBody(content map[string]string, para
 	return body.Bytes(), err
 }
 
+// xub todo go模版渲染
 func (ncc *NotifyChannelConfig) replaceVariables(param map[string]string) {
 	for k, v := range param {
 		ncc.HTTPRequestConfig.URL = strings.Replace(ncc.HTTPRequestConfig.URL, "$"+k, v, -1)
@@ -435,17 +437,11 @@ func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[s
 
 	for i := range params {
 		param := params[i]
-		var to []string
-		if ncc.ParamConfig.BatchSend {
-			to = strings.Split(param[ncc.ParamConfig.UserInfo.ContactKey], ",")
-		} else {
-			to = []string{param[ncc.ParamConfig.UserInfo.ContactKey]}
-		}
-
+		to := strings.Split(param[ncc.ParamConfig.UserInfo.ContactKey], ",")
 		m := gomail.NewMessage()
-
 		m.SetHeader("From", ncc.SMTPRequestConfig.From)
 		m.SetHeader("To", strings.Join(to, ","))
+		// xub todo tpl.subject
 		m.SetHeader("Subject", "Test Email")
 		m.SetBody("text/html", getMessageTpl(events, content))
 
