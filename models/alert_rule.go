@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/robfig/cron/v3"
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
@@ -491,6 +492,27 @@ func (ar *AlertRule) Verify() error {
 		if _, err := strconv.ParseInt(gids[i], 10, 64); err != nil {
 			return fmt.Errorf("NotifyGroups(%s) invalid", ar.NotifyGroups)
 		}
+	}
+
+	if err := ar.validateCronPattern(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ar *AlertRule) validateCronPattern() error {
+	if ar.CronPattern == "" {
+		return nil
+	}
+
+	// 创建一个临时的 cron scheduler 来验证表达式
+	scheduler := cron.New(cron.WithSeconds())
+
+	// 尝试添加一个空函数来验证 cron 表达式
+	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
+	if err != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
 	}
 
 	return nil
