@@ -11,16 +11,19 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// 通知记录队列，最大长度 1000000
 var NotifyRecordQueue = list.NewSafeListLimited(1000000)
 
+// 每秒上报通知记录队列大小
 func ReportNotifyRecordQueueSize(stats *astats.Stats) {
 	for {
 		time.Sleep(time.Second)
-
 		stats.GaugeNotifyRecordQueueSize.Set(float64(NotifyRecordQueue.Len()))
 	}
 }
 
+// 推送通知记录到队列
+// 若队列满 则返回 error
 func PushNotifyRecords(records []*models.NotificaitonRecord) error {
 	for _, record := range records {
 		if ok := NotifyRecordQueue.PushFront(record); !ok {
@@ -42,6 +45,7 @@ func NewNotifyRecordConsumer(ctx *ctx.Context) *NotifyRecordConsumer {
 	}
 }
 
+// 消费通知记录队列 每 100ms 检测一次队列是否为空
 func (c *NotifyRecordConsumer) LoopConsume() {
 	duration := time.Duration(100) * time.Millisecond
 	for {
@@ -51,6 +55,7 @@ func (c *NotifyRecordConsumer) LoopConsume() {
 			continue
 		}
 
+		// 类型转换，不然 CreateInBatches 会报错
 		notis := make([]*models.NotificaitonRecord, 0, len(inotis))
 		for _, inoti := range inotis {
 			notis = append(notis, inoti.(*models.NotificaitonRecord))
