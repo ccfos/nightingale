@@ -10,7 +10,7 @@ import (
 
 // MessageTemplate 消息模板结构
 type MessageTemplate struct {
-	ID           uint              `json:"id" gorm:"primarykey"`
+	ID           int64             `json:"id" gorm:"primarykey"`
 	Name         string            `json:"name"`                           // 模板名称
 	Ident        string            `json:"ident"`                          // 模板标识
 	Content      map[string]string `json:"content" gorm:"serializer:json"` // 模板内容
@@ -125,8 +125,8 @@ func MessageTemplatesGet(ctx *ctx.Context, where string, args ...interface{}) ([
 
 type MsgTplList []*MessageTemplate
 
-func (t MsgTplList) GetIdentSet() map[uint]struct{} {
-	idents := make(map[uint]struct{}, len(t))
+func (t MsgTplList) GetIdentSet() map[int64]struct{} {
+	idents := make(map[int64]struct{}, len(t))
 	for _, tpl := range t {
 		idents[tpl.ID] = struct{}{}
 	}

@@ -12,8 +12,7 @@ import (
 
 // NotifyRule 通知规则结构体
 type NotifyChannelConfig struct {
-	ID uint `json:"id" gorm:"primarykey"`
-	// 基础配置
+	ID          int64  `json:"id" gorm:"primarykey"`
 	Name        string `json:"name"`        // 媒介名称
 	Ident       string `json:"ident"`       // 媒介标识
 	Description string `json:"description"` // 媒介描述
@@ -280,8 +279,8 @@ func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 
 type NotiChList []*NotifyChannelConfig
 
-func (c NotiChList) GetIdentSet() map[uint]struct{} {
-	idents := make(map[uint]struct{}, len(c))
+func (c NotiChList) GetIdentSet() map[int64]struct{} {
+	idents := make(map[int64]struct{}, len(c))
 	for _, tpl := range c {
 		idents[tpl.ID] = struct{}{}
 	}
