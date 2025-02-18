@@ -11,7 +11,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-var NotifyRecordQueue = list.NewSafeListLimited(100000)
+var NotifyRecordQueue = list.NewSafeListLimited(1000000)
 
 func ReportNotifyRecordQueueSize(stats *astats.Stats) {
 	for {
