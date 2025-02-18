@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-  "github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 )
 
 type NotifyRule struct {
@@ -28,6 +28,10 @@ type NotifyConfig struct {
 	ChannelID  int64       `json:"channel_id"`  // 通知媒介(如：阿里云短信)
 	TemplateID int64       `json:"template_id"` // 通知模板
 	Params     interface{} `json:"params"`      // 通知参数
+
+	UserInfoParams  UserInfoParams  `json:"user_info_params"`  // 通知对象
+	CustomParams    CustomParams    `json:"custom_params"`     // 自定义参数
+	FlashDutyParams FlashDutyParams `json:"flash_duty_params"` // flash_duty 参数
 
 	Severities []int         `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
 	TimeRanges []TimeRanges  `json:"time_ranges"` // 适用时段
@@ -56,7 +60,6 @@ type LabelFilter struct {
 	Op    string `json:"op"` // == != in not in =~ !~
 	Value string `json:"value"`
 }
-
 
 var NotifyRuleCache struct {
 }

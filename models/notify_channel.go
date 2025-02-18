@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"html/template"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -226,10 +227,8 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		proxyFunc = http.ProxyURL(proxyURL)
 	}
 
-	// xub todo 设置 TLS 配置
 	tlsConfig := &tls.Config{
-		//InsecureSkipVerify: nc.HTTPRequestConfig.TLS != nil && nc.HTTPRequestConfig.TLS.SkipVerify,
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: nc.HTTPRequestConfig.TLS != nil && nc.HTTPRequestConfig.TLS.SkipVerify,
 	}
 
 	transport := &http.Transport{
@@ -248,81 +247,109 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, params []map[string]string, client *http.Client) error {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, flashDutyChannelID int64, client *http.Client) error {
 
 	if client == nil {
 		return fmt.Errorf("http client not found")
 	}
 
-	for _, param := range params {
+	// MessageTemplate
+	fullTpl := make(map[string]interface{})
+	fullTpl["tpl"] = content
+	// 用户信息
+	token := make([]string, 0)
+	for _, userInfo := range userInfos {
+		var t string
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
+			t = userInfo.Phone
 
-		// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
-		body, err := ncc.parseRequestBody(content, param)
-		if err != nil {
-			logger.Errorf("failed to parse request body: %v", err)
-			continue
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
+			t = userInfo.Email
+
+		} else {
+			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
 		}
 
-		// 替换 URL Header Parameters 中的变量
-		ncc.replaceVariables(param)
-
-		req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.URL, bytes.NewBuffer(body))
-		if err != nil {
-			logger.Errorf("failed to create request: %v", err)
-			continue
+		if t != "" {
+			token = append(token, t)
 		}
-
-		// 设置请求头
-		for key, value := range ncc.HTTPRequestConfig.Headers {
-			req.Header.Set(key, value)
-		}
-
-		// 设置 URL 参数
-		query := req.URL.Query()
-		for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
-			query.Add(key, value)
-		}
-
-		// 阿里云短信特殊处理
-		if ncc.Ident == "ali-sms" {
-			query = ncc.getAliQuery(content)
-		}
-
-		req.URL.RawQuery = query.Encode()
-
-		// 重试机制
-		for i := 0; i <= ncc.HTTPRequestConfig.RetryTimes; i++ {
-			resp, err := client.Do(req)
-			if err != nil {
-				if i < ncc.HTTPRequestConfig.RetryTimes {
-					time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
-					continue
-				}
-				return fmt.Errorf("failed to send request: %v", err)
-			}
-			defer resp.Body.Close()
-
-			//// 读取响应
-			//body, err := ioutil.ReadAll(resp.Body)
-			//if err != nil {
-			//	fmt.Println("Error reading response:", err)
-			//}
-			//
-			//// 打印响应
-			//fmt.Println("Response:", string(body))
-
-			if resp.StatusCode == http.StatusOK {
-				continue
-			}
-
-			if i < ncc.HTTPRequestConfig.RetryTimes {
-				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
-			}
-		}
-		logger.Errorf("failed to send request: %v", req)
+	}
+	u := map[string][]string{
+		ncc.ParamConfig.UserInfo.ContactKey: token,
+	}
+	fullTpl["user_info"] = u
+	// flashDutyChannelIDs
+	fullTpl["flash_duty_channel_ID"] = flashDutyChannelID
+	// 自定义参数
+	for key, value := range param {
+		fullTpl[key] = value
 	}
 
-	return nil
+	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
+	body, err := ncc.parseRequestBody(fullTpl)
+	if err != nil {
+		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
+		return err
+	}
+
+	// 替换 URL Header Parameters 中的变量
+	ncc.replaceVariables(fullTpl, param)
+
+	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.URL, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v, event: %v", err, events)
+		return err
+	}
+
+	// 设置请求头
+	for key, value := range ncc.HTTPRequestConfig.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// 设置 URL 参数
+	query := req.URL.Query()
+	for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
+		query.Add(key, value)
+	}
+
+	// 阿里云短信特殊处理
+	if ncc.Ident == "ali-sms" {
+		query = ncc.getAliQuery(content)
+	}
+
+	req.URL.RawQuery = query.Encode()
+
+	// 重试机制
+	for i := 0; i <= ncc.HTTPRequestConfig.RetryTimes; i++ {
+		resp, err := client.Do(req)
+		if err != nil {
+			if i < ncc.HTTPRequestConfig.RetryTimes {
+				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+				continue
+			}
+			return fmt.Errorf("failed to send request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response:", err)
+		}
+
+		// 打印响应
+		fmt.Println("Response:", string(body))
+
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+
+		if i < ncc.HTTPRequestConfig.RetryTimes {
+			time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+		}
+	}
+
+	return errors.New("failed to send request")
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
@@ -403,13 +430,7 @@ func encode_local(encode_str string) string {
 	return urlencode
 }
 
-func (ncc *NotifyChannelConfig) parseRequestBody(content map[string]string, params map[string]string) ([]byte, error) {
-	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
-	bodyTpl := make(map[string]interface{})
-	bodyTpl["tpl"] = content
-	for key, value := range params {
-		bodyTpl[key] = value
-	}
+func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{}) ([]byte, error) {
 	tpl, err := template.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Body)
 	if err != nil {
 		return nil, err
@@ -419,42 +440,56 @@ func (ncc *NotifyChannelConfig) parseRequestBody(content map[string]string, para
 	return body.Bytes(), err
 }
 
-// xub todo go模版渲染
-func (ncc *NotifyChannelConfig) replaceVariables(param map[string]string) {
-	for k, v := range param {
-		ncc.HTTPRequestConfig.URL = strings.Replace(ncc.HTTPRequestConfig.URL, "$"+k, v, -1)
+func getParsedString(name, tplStr string, tplData map[string]interface{}) string {
+	tpl, err := template.New(name).Funcs(tplx.TemplateFuncMap).Parse(tplStr)
+	if err != nil {
+		return ""
+	}
+	var body bytes.Buffer
+	err = tpl.Execute(&body, tplData)
+
+	return body.String()
+}
+
+func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}, param map[string]string) {
+	if needsTemplateRendering(ncc.HTTPRequestConfig.URL) {
+		ncc.HTTPRequestConfig.URL = getParsedString("url", ncc.HTTPRequestConfig.URL, tpl)
 	}
 
 	for key, value := range ncc.HTTPRequestConfig.Headers {
-		if !strings.HasPrefix(value, "$") {
-			continue
+		if needsTemplateRendering(value) {
+			ncc.HTTPRequestConfig.Headers[key] = getParsedString(key, value, tpl)
 		}
-		ncc.HTTPRequestConfig.Headers[key] = param[value[1:]]
 	}
 
 	for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
-		if !strings.HasPrefix(value, "$") {
-			continue
+		if needsTemplateRendering(value) {
+			ncc.HTTPRequestConfig.Request.Parameters[key] = getParsedString(key, value, tpl)
 		}
-		ncc.HTTPRequestConfig.Request.Parameters[key] = param[value[1:]]
 	}
 }
 
-func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, params []map[string]string, ch chan *EmailContext) error {
+// needsTemplateRendering 检查字符串是否包含模板语法
+func needsTemplateRendering(s string) bool {
+	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
+}
 
-	for i := range params {
-		param := params[i]
-		to := strings.Split(param[ncc.ParamConfig.UserInfo.ContactKey], ",")
-		m := gomail.NewMessage()
-		m.SetHeader("From", ncc.SMTPRequestConfig.From)
-		m.SetHeader("To", strings.Join(to, ","))
-		// xub todo tpl.subject
-		m.SetHeader("Subject", "Test Email")
-		m.SetBody("text/html", getMessageTpl(events, content))
+func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, ch chan *EmailContext) error {
 
-		ch <- &EmailContext{events, m}
-
+	var to []string
+	for _, userInfo := range userInfos {
+		if userInfo.Email != "" {
+			to = append(to, userInfo.Email)
+		}
 	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", ncc.SMTPRequestConfig.From)
+	m.SetHeader("To", strings.Join(to, ","))
+	m.SetHeader("Subject", content["subject"])
+	m.SetBody("text/html", getMessageTpl(events, content))
+
+	ch <- &EmailContext{events, m}
+
 	return nil
 }
 
@@ -474,7 +509,7 @@ func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
 	return string(jsonBytes)
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, params []map[string]string) error {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string) error {
 
 	config := ncc.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
@@ -513,41 +548,32 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		fpath = path.Join(cur, fpath)
 	}
 
-	for i := range params {
+	cmd := exec.Command(fpath)
+	cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, param))
 
-		cmd := exec.Command(fpath)
-		cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, params[i]))
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
 
-		var buf bytes.Buffer
-		cmd.Stdout = &buf
-		cmd.Stderr = &buf
-
-		err := startCmd(cmd)
-		if err != nil {
-			fmt.Printf("event_script_notify_fail: run cmd err: %v\n", err)
-			continue
-		}
-
-		err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-
-		if isTimeout {
-			if err == nil {
-				fmt.Printf("event_script_notify_fail: timeout and killed process %s", fpath)
-			}
-
-			if err != nil {
-				fmt.Printf("event_script_notify_fail: kill process %s occur error %v", fpath, err)
-			}
-			continue
-		}
-
-		if err != nil {
-			fmt.Printf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
-
-			continue
-		}
-		fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
+	err := startCmd(cmd)
+	if err != nil {
+		return err
 	}
+
+	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
+
+	if isTimeout {
+		if err == nil {
+			return errors.New("timeout and killed process")
+		}
+
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 
 	return nil
 }

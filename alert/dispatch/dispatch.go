@@ -185,79 +185,52 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 	}
 
 	// notifyConfig 中配置的参数统一到 params 中供发送时替换使用
-	params := make([]map[string]string, 0)
-	switch notifyChannel.ParamConfig.ParamType {
-	case "user_info":
-		if p, ok := notifyConfig.Params.(models.UserInfoParams); ok {
-			users := e.userCache.GetByUserIds(p.UserIDs)
-			userGroups := e.userGroupCache.GetByUserGroupIds(p.UserGroupIDs)
-			var origin []string
-			var val []string
-			if notifyChannel.ParamConfig.UserInfo.ContactKey == "phone" {
-				for _, user := range users {
-					origin = append(origin, user.Phone)
-				}
-				for _, userGroup := range userGroups {
-					for _, user := range userGroup.Users {
-						origin = append(origin, user.Phone)
-					}
-				}
 
-			} else if notifyChannel.ParamConfig.UserInfo.ContactKey == "email" {
-				for _, user := range users {
-					origin = append(origin, user.Email)
-				}
-				for _, userGroup := range userGroups {
-					for _, user := range userGroup.Users {
-						origin = append(origin, user.Email)
-					}
-				}
-			}
+	userInfos := make([]*models.User, 0)
+	users := e.userCache.GetByUserIds(notifyConfig.UserInfoParams.UserIDs)
+	userInfos = append(userInfos, users...)
+	userGroups := e.userGroupCache.GetByUserGroupIds(notifyConfig.UserInfoParams.UserGroupIDs)
 
-			// xub todo 拼接符
-			if notifyChannel.ParamConfig.BatchSend {
-				val = append(val, strings.Join(origin, ","))
-			} else {
-				val = origin
-			}
-
-			for i := range val {
-				param := make(map[string]string)
-				param[notifyChannel.ParamConfig.UserInfo.ContactKey] = val[i]
-				params = append(params, param)
-			}
-		}
-	case "flashduty":
-		if p, ok := notifyConfig.Params.([]string); ok {
-			param := make(map[string]string)
-			for _, i := range p {
-				param["channel_id"] = i
-			}
-			params = append(params, param)
-		}
-
-	case "custom":
-		if p, ok := notifyConfig.Params.(models.CustomParams); ok {
-			param := make(map[string]string)
-			for k, v := range p {
-				param[k] = v
-			}
-			params = append(params, param)
+	for _, userGroup := range userGroups {
+		for _, user := range userGroup.Users {
+			userInfos = append(userInfos, &user)
 		}
 	}
 
+	flashDutyChannelIDs := notifyConfig.FlashDutyParams.IDs
+
+	customParams := notifyConfig.CustomParams
+
 	switch notifyChannel.RequestType {
 	case "http":
-		if err := notifyChannel.SendHTTP(events, content, params, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
-			logger.Errorf("send http error: %v", err)
+
+		if notifyChannel.ParamConfig.ParamType == "flashduty" {
+			for i := range flashDutyChannelIDs {
+				if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
+			return
+		}
+
+		if notifyChannel.ParamConfig.BatchSend {
+			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
+		} else {
+			for i := range userInfos {
+				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
 		}
 
 	case "email":
-		if err := notifyChannel.SendEmail(events, content, params, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+		if err := notifyChannel.SendEmail(events, content, customParams, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
 			logger.Errorf("send email error: %v", err)
 		}
 	case "script":
-		if err := notifyChannel.SendScript(events, content, params); err != nil {
+		if err := notifyChannel.SendScript(events, content, customParams); err != nil {
 			logger.Errorf("send script error: %v", err)
 		}
 	default:
