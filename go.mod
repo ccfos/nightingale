@@ -38,6 +38,7 @@ require (
 	github.com/prometheus/prometheus v0.47.1
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
+	github.com/satori/go.uuid v1.2.0
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tidwall/gjson v1.14.2

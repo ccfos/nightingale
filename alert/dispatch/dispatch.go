@@ -3,6 +3,7 @@ package dispatch
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"html/template"
 	"net/url"
 	"strconv"
@@ -30,6 +31,10 @@ type Dispatch struct {
 	notifyConfigCache   *memsto.NotifyConfigCacheType
 	taskTplsCache       *memsto.TaskTplCache
 
+	notifyRuleCache      *memsto.NotifyRuleCacheType
+	notifyChannelCache   *memsto.NotifyChannelCacheType
+	messageTemplateCache *memsto.MessageTemplateCacheType
+
 	alerting aconf.Alerting
 
 	Senders          map[string]sender.Sender
@@ -47,15 +52,19 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	taskTplsCache *memsto.TaskTplCache, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
+	messageTemplateCache *memsto.MessageTemplateCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
-		alertRuleCache:      alertRuleCache,
-		userCache:           userCache,
-		userGroupCache:      userGroupCache,
-		alertSubscribeCache: alertSubscribeCache,
-		targetCache:         targetCache,
-		notifyConfigCache:   notifyConfigCache,
-		taskTplsCache:       taskTplsCache,
+		alertRuleCache:       alertRuleCache,
+		userCache:            userCache,
+		userGroupCache:       userGroupCache,
+		alertSubscribeCache:  alertSubscribeCache,
+		targetCache:          targetCache,
+		notifyConfigCache:    notifyConfigCache,
+		taskTplsCache:        taskTplsCache,
+		notifyRuleCache:      notifyRuleCache,
+		notifyChannelCache:   notifyChannelCache,
+		messageTemplateCache: messageTemplateCache,
 
 		alerting: alerting,
 
@@ -129,6 +138,103 @@ func (e *Dispatch) relaodTpls() error {
 	e.CallBacks = callbacks
 	e.RwLock.Unlock()
 	return nil
+}
+
+func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe bool) {
+
+	if len(event.NotifyRuleIDs) > 0 {
+		for _, notifyRuleId := range event.NotifyRuleIDs {
+			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
+			if notifyRule == nil {
+				continue
+			}
+
+			for i := range notifyRule.NotifyConfigs {
+				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
+				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
+				if notifyChannel == nil || messageTemplate == nil {
+					continue
+				}
+				// todo go send
+				// todo 聚合 event
+				e.sendV2([]*models.AlertCurEvent{event}, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+			}
+		}
+	}
+}
+
+func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
+	// event 内容渲染到 messageTemplate
+	content := make(map[string]string)
+	for key, msgTpl := range messageTemplate.Content {
+		var defs = []string{
+			"{{$labels := .TagsMap}}",
+			"{{$value := .TriggerValue}}",
+		}
+		text := strings.Join(append(defs, msgTpl), "")
+		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+		if err != nil {
+			continue
+		}
+
+		var body bytes.Buffer
+		if err = tpl.Execute(&body, events); err != nil {
+			continue
+		}
+		content[key] = body.String()
+	}
+
+	// notifyConfig 中配置的参数统一到 params 中供发送时替换使用
+
+	userInfos := make([]*models.User, 0)
+	users := e.userCache.GetByUserIds(notifyConfig.UserInfoParams.UserIDs)
+	userInfos = append(userInfos, users...)
+	userGroups := e.userGroupCache.GetByUserGroupIds(notifyConfig.UserInfoParams.UserGroupIDs)
+
+	for _, userGroup := range userGroups {
+		for _, user := range userGroup.Users {
+			userInfos = append(userInfos, &user)
+		}
+	}
+
+	flashDutyChannelIDs := notifyConfig.FlashDutyParams.IDs
+
+	customParams := notifyConfig.CustomParams
+
+	switch notifyChannel.RequestType {
+	case "http":
+
+		if notifyChannel.ParamConfig.ParamType == "flashduty" {
+			for i := range flashDutyChannelIDs {
+				if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
+			return
+		}
+
+		if notifyChannel.ParamConfig.BatchSend {
+			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
+		} else {
+			for i := range userInfos {
+				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
+		}
+
+	case "email":
+		if err := notifyChannel.SendEmail(events, content, customParams, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+			logger.Errorf("send email error: %v", err)
+		}
+	case "script":
+		if err := notifyChannel.SendScript(events, content, customParams); err != nil {
+			logger.Errorf("send script error: %v", err)
+		}
+	default:
+	}
 }
 
 // HandleEventNotify 处理event事件的主逻辑

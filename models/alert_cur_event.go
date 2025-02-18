@@ -73,6 +73,7 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
+	NotifyRuleIDs      []int64             `json:"notify_rule_ids" gorm:"notify_rule_ids"`
 }
 
 type EventTriggerValues struct {
