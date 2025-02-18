@@ -85,7 +85,15 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), "", buildErr(err, isTimeout))
+
+	res := buf.String()
+	
+	// 截断超出长度的输出
+	if len(res) > 512 {
+		res = res[:512] + "..."
+	}
+
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), res, buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
@@ -100,12 +108,12 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	}
 
 	if err != nil {
-		logger.Errorf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
+		logger.Errorf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, res)
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 		return
 	}
 
-	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
+	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, res)
 }
 
 func buildErr(err error, isTimeout bool) error {
