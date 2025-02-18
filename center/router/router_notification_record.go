@@ -39,7 +39,8 @@ func (rt *Router) notificationRecordAdd(c *gin.Context) {
 	var req []*models.NotificaitonRecord
 	ginx.BindJSON(c, &req)
 	err := sender.PushNotifyRecords(req)
-
+	ginx.Dangerous(err, 429)
+	
 	ginx.NewRender(c).Data(nil, err)
 }
 
