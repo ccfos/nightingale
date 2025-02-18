@@ -160,9 +160,7 @@ func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, channel, targe
 		return
 	}
 
-	if err := models.DB(ctx).CreateInBatches(notis, 100).Error; err != nil {
-		logger.Errorf("add notis:%v failed, err: %v", notis, err)
-	}
+	PushNotifyRecords(notis)
 }
 
 func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
