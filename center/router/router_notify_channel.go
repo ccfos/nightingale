@@ -1,7 +1,10 @@
 package router
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -89,8 +92,8 @@ func (rt *Router) notifyChannelPut(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelGet(c *gin.Context) {
-	tid := ginx.UrlParamInt64(c, "id")
-	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", tid)
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
 	ginx.Dangerous(err)
 	if nc == nil {
 		ginx.Bomb(http.StatusNotFound, "notify channel not found")
@@ -116,4 +119,48 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 		})
 	}
 	ginx.NewRender(c).Data(newLst, nil)
+}
+
+type flushDutyChannelsResponse struct {
+	Error struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+	Data struct {
+		Items []struct {
+			ChannelID   int    `json:"channel_id"`
+			ChannelName string `json:"channel_name"`
+			Status      string `json:"status"`
+		} `json:"items"`
+		Total int `json:"total"`
+	} `json:"data"`
+}
+
+func (rt *Router) flushDutyNotifyChannelsGet(c *gin.Context) {
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	me := c.MustGet("user").(*models.User)
+	jsonData := []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`,
+		me.Username, me.Email, me.Phone))
+
+	url := nc.ParamConfig.FlashDuty.IntegrationUrl
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	ginx.Dangerous(err)
+
+	req.Header.Set("Content-Type", "application/json")
+	httpResp, err := (&http.Client{}).Do(req)
+	ginx.Dangerous(err)
+	defer httpResp.Body.Close()
+
+	body, err := io.ReadAll(httpResp.Body)
+	ginx.Dangerous(err)
+
+	var res flushDutyChannelsResponse
+	ginx.Dangerous(json.Unmarshal(body, &res))
+	ginx.NewRender(c).Data(res.Data.Items, res.Error.Message)
 }

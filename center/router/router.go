@@ -525,6 +525,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-channel/:id", rt.auth(), rt.user(), rt.perm("/notify-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notify-channels"), rt.notifyChannelsGet)
 		pages.GET("/simplified-notify-channels", rt.notifyChannelsGetForNormalUser)
+		pages.GET("/flushduty-notify-channels/:id", rt.auth(), rt.user(), rt.flushDutyNotifyChannelsGet)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
