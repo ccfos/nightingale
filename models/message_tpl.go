@@ -10,16 +10,17 @@ import (
 
 // MessageTemplate 消息模板结构
 type MessageTemplate struct {
-	ID           int64             `json:"id" gorm:"primarykey"`
-	Name         string            `json:"name"`                           // 模板名称
-	Ident        string            `json:"ident"`                          // 模板标识
-	Content      map[string]string `json:"content" gorm:"serializer:json"` // 模板内容
-	UserGroupIds []int64           `json:"user_group_ids" gorm:"serializer:json"`
-	Private      int               `json:"private"` // 0-公开 1-私有
-	CreateAt     int64             `json:"create_at"`
-	CreateBy     string            `json:"create_by"`
-	UpdateAt     int64             `json:"update_at"`
-	UpdateBy     string            `json:"update_by"`
+	ID              int64             `json:"id" gorm:"primarykey"`
+	Name            string            `json:"name"`                           // 模板名称
+	Ident           string            `json:"ident"`                          // 模板标识
+	Content         map[string]string `json:"content" gorm:"serializer:json"` // 模板内容
+	UserGroupIds    []int64           `json:"user_group_ids" gorm:"serializer:json"`
+	NotifyChannelID int64             `json:"notify_channel_id"` // 通知媒介 ID
+	Private         int               `json:"private"`           // 0-公开 1-私有
+	CreateAt        int64             `json:"create_at"`
+	CreateBy        string            `json:"create_by"`
+	UpdateAt        int64             `json:"update_at"`
+	UpdateBy        string            `json:"update_by"`
 }
 
 type HTTPConfig struct {
@@ -62,9 +63,9 @@ func (t *MessageTemplate) Verify() error {
 		return errors.New("template identifier cannot be empty")
 	}
 
-	if len(t.Content) == 0 {
-		return errors.New("template content cannot be empty")
-	}
+	// if len(t.Content) == 0 {
+	// 	return errors.New("template content cannot be empty")
+	// }
 
 	for key, value := range t.Content {
 		if key == "" || value == "" {
@@ -114,6 +115,20 @@ func MessageTemplatesGet(ctx *ctx.Context, where string, args ...interface{}) ([
 	session := DB(ctx)
 	if where != "" && len(args) > 0 {
 		session = session.Where(where, args...)
+	}
+
+	err := session.Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	return lst, nil
+}
+
+func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIds []int64) ([]*MessageTemplate, error) {
+	lst := make([]*MessageTemplate, 0)
+	session := DB(ctx)
+	if len(notifyChannelIds) > 0 {
+		session = session.Where("notify_channel_id IN (?)", notifyChannelIds)
 	}
 
 	err := session.Find(&lst).Error

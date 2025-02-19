@@ -23,6 +23,10 @@ type NotifyRule struct {
 	UpdateBy string `json:"update_by"`
 }
 
+func (r *NotifyRule) TableName() string {
+	return "notify_rule"
+}
+
 type NotifyConfig struct {
 	ChannelID  int64       `json:"channel_id"`  // 通知媒介(如：阿里云短信)
 	TemplateID int64       `json:"template_id"` // 通知模板
@@ -36,7 +40,7 @@ type NotifyConfig struct {
 type TimeRanges struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
-	Week  string `json:"week"`
+	Week  []int  `json:"week"`
 }
 
 type LabelFilter struct {

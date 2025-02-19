@@ -511,7 +511,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/message-templates", rt.auth(), rt.user(), rt.perm("/message-templates/del"), rt.messageTemplatesDel)
 		pages.PUT("/message-template/:id", rt.auth(), rt.user(), rt.perm("/message-templates/put"), rt.messageTemplatePut)
 		pages.GET("/message-template/:id", rt.auth(), rt.user(), rt.perm("/message-templates"), rt.messageTemplateGet)
-		pages.GET("/message-templates", rt.messageTemplatesGet)
+		pages.GET("/message-templates", rt.auth(), rt.user(), rt.messageTemplatesGet)
+		pages.POST("/events-message", rt.auth(), rt.user(), rt.eventsMessage)
 
 		pages.POST("/notify-rules", rt.auth(), rt.user(), rt.perm("/notify-rules/add"), rt.notifyRulesAdd)
 		pages.DELETE("/notify-rules", rt.auth(), rt.user(), rt.perm("/notify-rules/del"), rt.notifyRulesDel)
@@ -519,13 +520,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-rule/:id", rt.auth(), rt.user(), rt.perm("/notify-rules"), rt.notifyRuleGet)
 		pages.GET("/notify-rules", rt.auth(), rt.user(), rt.perm("/notify-rules"), rt.notifyRulesGet)
 
-		pages.POST("/notify-channels", rt.auth(), rt.user(), rt.perm("/notify-channels/add"), rt.notifyChannelsAdd)
-		pages.DELETE("/notify-channels", rt.auth(), rt.user(), rt.perm("/notify-channels/del"), rt.notifyChannelsDel)
-		pages.PUT("/notify-channel/:id", rt.auth(), rt.user(), rt.perm("/notify-channels/put"), rt.notifyChannelPut)
-		pages.GET("/notify-channel/:id", rt.auth(), rt.user(), rt.perm("/notify-channels"), rt.notifyChannelGet)
+		pages.POST("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notify-channels/add"), rt.notifyChannelsAdd)
+		pages.DELETE("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notify-channels/del"), rt.notifyChannelsDel)
+		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notify-channels/put"), rt.notifyChannelPut)
+		pages.GET("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notify-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notify-channels"), rt.notifyChannelsGet)
-		pages.GET("/simplified-notify-channels", rt.notifyChannelsGetForNormalUser)
-		pages.GET("/flushduty-notify-channels/:id", rt.auth(), rt.user(), rt.flushDutyNotifyChannelsGet)
+		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
+		pages.GET("/flushduty-channel-list/:id", rt.auth(), rt.user(), rt.flushDutyNotifyChannelsGet)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

@@ -16,6 +16,7 @@ type NotifyChannelConfig struct {
 	Name        string `json:"name"`        // 媒介名称
 	Ident       string `json:"ident"`       // 媒介标识
 	Description string `json:"description"` // 媒介描述
+	Enable      bool   `json:"enable"`      // 是否启用
 
 	// 用户参数配置
 	ParamConfig *NotifyParamConfig `json:"param_config,omitempty" gorm:"serializer:json"`
@@ -47,6 +48,7 @@ type NotifyParamConfig struct {
 // UserInfoParam user_info 类型的参数配置
 type UserInfoParam struct {
 	ContactKey string `json:"contact_key"` // phone, email, dingtalk_robot_token 等
+	Batch      bool   `json:"batch"`       // 是否批量发送
 }
 
 // FlashDutyParam flashduty 类型的参数配置
@@ -73,7 +75,6 @@ type SMTPRequestConfig struct {
 	Password           string `json:"password"`
 	From               string `json:"from"`
 	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
-	Batch              int    `json:"batch"`
 }
 
 type ScriptRequestConfig struct {
@@ -348,7 +349,6 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			Password:           "your-password",
 			From:               "your-email",
 			InsecureSkipVerify: true,
-			Batch:              10,
 		}},
 }
 
