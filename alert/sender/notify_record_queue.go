@@ -49,9 +49,12 @@ func NewNotifyRecordConsumer(ctx *ctx.Context) *NotifyRecordConsumer {
 func (c *NotifyRecordConsumer) LoopConsume() {
 	duration := time.Duration(100) * time.Millisecond
 	for {
+		// 无论队列是否为空 都需要等待
+		time.Sleep(duration)
+
 		inotis := NotifyRecordQueue.PopBackBy(100)
+
 		if len(inotis) == 0 {
-			time.Sleep(duration)
 			continue
 		}
 
