@@ -168,8 +168,10 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 	content := make(map[string]string)
 	for key, msgTpl := range messageTemplate.Content {
 		var defs = []string{
-			"{{$labels := .TagsMap}}",
-			"{{$value := .TriggerValue}}",
+			"{{ $events :=  . }}",
+			"{{ $event :=  index $events 0 }}",
+			"{{ $labels := $event.TagsMap }}",
+			"{{ $value := $event.TriggerValue }}",
 		}
 		text := strings.Join(append(defs, msgTpl), "")
 		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
@@ -184,29 +186,49 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 		content[key] = body.String()
 	}
 
-	// notifyConfig 中配置的参数统一到 params 中供发送时替换使用
+	var (
+		userInfos           []*models.User
+		flashDutyChannelIDs []int64
+		customParams        map[string]string
+	)
 
-	userInfos := make([]*models.User, 0)
-	users := e.userCache.GetByUserIds(notifyConfig.UserInfoParams.UserIDs)
-	userInfos = append(userInfos, users...)
-	userGroups := e.userGroupCache.GetByUserGroupIds(notifyConfig.UserInfoParams.UserGroupIDs)
-
-	for _, userGroup := range userGroups {
-		for _, user := range userGroup.Users {
-			userInfos = append(userInfos, &user)
+	switch notifyConfig.Params.(type) {
+	case models.UserInfoParams:
+		visited := make(map[int64]bool)
+		userInfoParams := notifyConfig.Params.(models.UserInfoParams)
+		users := e.userCache.GetByUserIds(userInfoParams.UserIDs)
+		for _, user := range users {
+			if visited[user.Id] {
+				continue
+			}
+			visited[user.Id] = true
+			userInfos = append(userInfos, user)
 		}
+		userGroups := e.userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
+		for _, userGroup := range userGroups {
+			for _, user := range userGroup.Users {
+				if visited[user.Id] {
+					continue
+				}
+				visited[user.Id] = true
+				userInfos = append(userInfos, &user)
+			}
+		}
+	case models.FlashDutyParams:
+		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
+	case models.CustomParams:
+		customParams = notifyConfig.Params.(models.CustomParams)
+	default:
+		logger.Errorf("unknown notify config params: %v", notifyConfig.Params)
+		return
 	}
-
-	flashDutyChannelIDs := notifyConfig.FlashDutyParams.IDs
-
-	customParams := notifyConfig.CustomParams
 
 	switch notifyChannel.RequestType {
 	case "http":
 
 		if notifyChannel.ParamConfig.ParamType == "flashduty" {
 			for i := range flashDutyChannelIDs {
-				if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				if err := notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
 			}
@@ -214,23 +236,23 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 		}
 
 		if notifyChannel.ParamConfig.BatchSend {
-			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
 				logger.Errorf("send http error: %v,  events: %v", err, events)
 			}
 		} else {
 			for i := range userInfos {
-				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, 0, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
 			}
 		}
 
 	case "email":
-		if err := notifyChannel.SendEmail(events, content, customParams, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+		if err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
 			logger.Errorf("send email error: %v", err)
 		}
 	case "script":
-		if err := notifyChannel.SendScript(events, content, customParams); err != nil {
+		if err := notifyChannel.SendScript(events, content, customParams, userInfos); err != nil {
 			logger.Errorf("send script error: %v", err)
 		}
 	default:

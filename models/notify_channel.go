@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -247,7 +248,68 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, flashDutyChannelID int64, client *http.Client) error {
+func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) error {
+
+	if client == nil {
+		return fmt.Errorf("http client not found")
+	}
+
+	// MessageTemplate
+	fullTpl := make(map[string]interface{})
+	fullTpl["tpl"] = content
+
+	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
+	body, err := ncc.parseRequestBody(fullTpl)
+	if err != nil {
+		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
+		return err
+	}
+
+	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.ParamConfig.FlashDuty.IntegrationUrl, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v, event: %v", err, events)
+		return err
+	}
+
+	// 设置 URL 参数
+	query := req.URL.Query()
+	query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
+	req.URL.RawQuery = query.Encode()
+
+	// 重试机制
+	for i := 0; i <= ncc.HTTPRequestConfig.RetryTimes; i++ {
+		resp, err := client.Do(req)
+		if err != nil {
+			if i < ncc.HTTPRequestConfig.RetryTimes {
+				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+				continue
+			}
+			return fmt.Errorf("failed to send request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response:", err)
+		}
+
+		// 打印响应
+		fmt.Println("Response:", string(body))
+
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+
+		if i < ncc.HTTPRequestConfig.RetryTimes {
+			time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+		}
+	}
+
+	return errors.New("failed to send request")
+}
+
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, client *http.Client) error {
 
 	if client == nil {
 		return fmt.Errorf("http client not found")
@@ -278,8 +340,6 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 		ncc.ParamConfig.UserInfo.ContactKey: token,
 	}
 	fullTpl["user_info"] = u
-	// flashDutyChannelIDs
-	fullTpl["flash_duty_channel_ID"] = flashDutyChannelID
 	// 自定义参数
 	for key, value := range param {
 		fullTpl[key] = value
@@ -474,7 +534,7 @@ func needsTemplateRendering(s string) bool {
 	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }
 
-func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, ch chan *EmailContext) error {
+func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, userInfos []*User, ch chan *EmailContext) error {
 
 	var to []string
 	for _, userInfo := range userInfos {
@@ -486,7 +546,7 @@ func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[s
 	m.SetHeader("From", ncc.SMTPRequestConfig.From)
 	m.SetHeader("To", strings.Join(to, ","))
 	m.SetHeader("Subject", content["subject"])
-	m.SetBody("text/html", getMessageTpl(events, content))
+	m.SetBody("text/html", content["content"])
 
 	ch <- &EmailContext{events, m}
 
@@ -509,7 +569,7 @@ func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
 	return string(jsonBytes)
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string) error {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) error {
 
 	config := ncc.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
@@ -548,8 +608,27 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		fpath = path.Join(cur, fpath)
 	}
 
+	// 用户信息
+	token := make([]string, 0)
+	for _, userInfo := range userInfos {
+		var t string
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
+			t = userInfo.Phone
+
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
+			t = userInfo.Email
+
+		} else {
+			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
+		}
+
+		if t != "" {
+			token = append(token, t)
+		}
+	}
+
 	cmd := exec.Command(fpath)
-	cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, param))
+	cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, param, ncc.ParamConfig.UserInfo.ContactKey, token))
 
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
@@ -578,12 +657,13 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 	return nil
 }
 
-func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string) []byte {
+func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string, contactKey string, token []string) []byte {
 	// 创建一个 map 来存储所有数据
 	data := map[string]interface{}{
 		"events":  events,
 		"content": content,
 		"param":   param,
+		"contact": token,
 	}
 
 	// 将数据序列化为 JSON 字节数组

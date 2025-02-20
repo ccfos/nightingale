@@ -29,10 +29,6 @@ type NotifyConfig struct {
 	TemplateID int64       `json:"template_id"` // 通知模板
 	Params     interface{} `json:"params"`      // 通知参数
 
-	UserInfoParams  UserInfoParams  `json:"user_info_params"`  // 通知对象
-	CustomParams    CustomParams    `json:"custom_params"`     // 自定义参数
-	FlashDutyParams FlashDutyParams `json:"flash_duty_params"` // flash_duty 参数
-
 	Severities []int         `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
 	TimeRanges []TimeRanges  `json:"time_ranges"` // 适用时段
 	LabelKeys  []LabelFilter `json:"label_keys"`  // 适用标签

@@ -71,9 +71,6 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 							},
 						},
 					},
-					UserInfo: UserInfoParam{
-						ContactKey: "phone",
-					},
 				},
 			},
 			flashDutyIDs: []int64{0},
@@ -84,44 +81,6 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 			},
 			notifyTemplate: map[string]string{
 				"test": "here is a test message",
-			},
-		},
-		{
-			name: "flash duty",
-			notifyParam: map[string]string{
-				"integration_key": "-",
-				"title_rule":      "test",
-			},
-			notifyChannel: &NotifyChannelConfig{
-				HTTPRequestConfig: &HTTPRequestConfig{
-					Method:  "POST",
-					URL:     "https://api.flashcat.cloud/event/push/alert/standard",
-					Timeout: 10,
-					Request: RequestDetail{
-						Parameters: map[string]string{
-							"integration_key": "{{ .integration_key }}",
-							"channel_id":      "{{ .flash_duty_channel_id }}",
-						},
-						Body: `{"event_status": "Warning","alert_key": "1","description": "{{ .tpl.description }}","title_rule": "{{ .title_rule }}","event_time": 1706614721,"labels": {"name":"guguji5","env":"prod"}}`,
-					},
-					Headers: map[string]string{
-						"Content-Type": "application/json",
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					ParamType: "custom",
-					Custom: CustomParam{
-						Params: []ParamItem{
-							{
-								Key: "title_rule",
-							},
-						},
-					},
-				},
-			},
-			flashDutyIDs: []int64{4344322009498},
-			notifyTemplate: map[string]string{
-				"description": "here is a test msg",
 			},
 		},
 		{
@@ -276,12 +235,112 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 				"code": "123456",
 			},
 		},
+		{
+			name: "tx-sms",
+			notifyParam: map[string]string{
+				"access_key_id":     "-",
+				"access_key_secret": "-",
+			},
+			flashDutyIDs: []int64{0},
+			notifyChannel: &NotifyChannelConfig{
+				Ident: "ali-sms",
+				HTTPRequestConfig: &HTTPRequestConfig{
+					Method:  "POST",
+					URL:     "http://dysmsapi.aliyuncs.com",
+					Timeout: 10,
+					Request: RequestDetail{
+						Parameters: map[string]string{
+							"access_key_id":     "{{ .access_key_id }}",
+							"access_key_secret": "{{ .access_key_secret }}",
+							"sign_name":         "n9e",
+							"template_code":     "SMS_478575599",
+							"phone_numbers":     `{{ join .user_info.phone "," }}`,
+							"template_param":    `{"code":"{{ .tpl.code }}"}`,
+						},
+					},
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+					},
+				},
+				ParamConfig: &NotifyParamConfig{
+					ParamType: "user_info",
+					UserInfo: UserInfoParam{
+						ContactKey: "phone",
+					},
+				},
+			},
+			userInfos: []*User{
+				{
+					Phone: "18021015257",
+				},
+			},
+			notifyTemplate: map[string]string{
+				"code": "123456",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, _ := GetHTTPClient(tt.notifyChannel)
-			if err := tt.notifyChannel.SendHTTP(tt.events, tt.notifyTemplate, tt.notifyParam, tt.userInfos, tt.flashDutyIDs[0], client); (err != nil) != tt.wantErr {
+			if err := tt.notifyChannel.SendHTTP(tt.events, tt.notifyTemplate, tt.notifyParam, tt.userInfos, client); (err != nil) != tt.wantErr {
+				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestNotifyChannelConfig_SendFlashDuty(t *testing.T) {
+	type args struct {
+		content map[string]string
+		client  *http.Client
+	}
+	tests := []struct {
+		name           string
+		events         []*AlertCurEvent
+		notifyParam    map[string]string
+		notifyChannel  *NotifyChannelConfig
+		notifyTemplate map[string]string
+		userInfos      []*User
+		flashDutyIDs   []int64
+		wantErr        bool
+	}{
+		{
+			name: "flash duty",
+			notifyChannel: &NotifyChannelConfig{
+				HTTPRequestConfig: &HTTPRequestConfig{
+					Method:  "POST",
+					URL:     "",
+					Timeout: 10,
+					Request: RequestDetail{
+						Parameters: map[string]string{
+							"integration_key": "{{ .integration_key }}",
+							"channel_id":      "{{ .flash_duty_channel_id }}",
+						},
+						Body: `{"event_status": "Warning","alert_key": "1","description": "{{ .tpl.description }}","title_rule": "test","event_time": 1706614721,"labels": {"name":"guguji5","env":"prod"}}`,
+					},
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+					},
+				},
+				ParamConfig: &NotifyParamConfig{
+					ParamType: "flashduty",
+					FlashDuty: FlashDutyParam{
+						IntegrationUrl: "https://api.flashcat.cloud/event/push/alert/standard",
+					},
+				},
+			},
+			flashDutyIDs: []int64{4344322009498},
+			notifyTemplate: map[string]string{
+				"description": "here is a test msg",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client, _ := GetHTTPClient(tt.notifyChannel)
+			if err := tt.notifyChannel.SendFlashDuty(tt.events, tt.notifyTemplate, tt.flashDutyIDs[0], client); (err != nil) != tt.wantErr {
 				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -357,6 +416,7 @@ func TestNotifyChannelConfig_SendScript(t *testing.T) {
 		notifyChannel  *NotifyChannelConfig
 		notifyTemplate map[string]string
 		wantErr        bool
+		userInfos      []*User
 	}{
 		{
 			name: "script",
@@ -429,7 +489,7 @@ func TestNotifyChannelConfig_SendScript(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.notifyChannel.SendScript([]*AlertCurEvent{}, tt.notifyTemplate, tt.notifyParam[0]); (err != nil) != tt.wantErr {
+			if err := tt.notifyChannel.SendScript([]*AlertCurEvent{}, tt.notifyTemplate, tt.notifyParam[0], tt.userInfos); (err != nil) != tt.wantErr {
 				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
