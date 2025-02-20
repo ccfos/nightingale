@@ -48,6 +48,15 @@ var (
 			Help:      "HTTP request latencies in seconds.",
 		}, labels,
 	)
+
+	SourceCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "source_count_total",
+			Help:      "Total number of metrics from source.",
+		}, []string{"source"},
+	)
 )
 
 func registerMetrics() {
@@ -57,5 +66,6 @@ func registerMetrics() {
 		CounterSampleReceivedByIdent,
 		RequestCounter,
 		RequestDuration,
+		SourceCounter,
 	)
 }
