@@ -138,6 +138,9 @@ func (c *NotifyChannelConfig) Verify() error {
 				c.ParamConfig.FlashDuty.IntegrationUrl, "?integration_key=")) {
 				return errors.New("flashduty param must have valid integration_url")
 			}
+
+			// duty 不校验 http 相关配置
+			return nil
 		case "custom":
 			if len(c.ParamConfig.Custom.Params) == 0 {
 				return errors.New("custom param must have valid params")
