@@ -1,5 +1,8 @@
 package router
 
+// source_state.go 用于上报超过采样阈值的 source ip 统计数据
+// 同时清理不再更新，或恢复正常的 source ip 统计数据
+
 import (
 	"math"
 	"sync"
@@ -19,10 +22,12 @@ type reportItemEntry struct {
 	lastUpdateTs int64
 }
 
+// 更新上报时间
 func (re *reportItemEntry) Report(ts int64) {
 	re.lastReportTs = ts
 }
 
+// 更新最后更新时间
 func (re *reportItemEntry) Update(ts int64) {
 	re.lastUpdateTs = ts
 }
@@ -31,6 +36,7 @@ func init() {
 	SourceStats = memsto.NewSourceCountCache()
 }
 
+// 启动上报 source ip 统计数据
 func (r *Router) ReportSourceStats() {
 	if !r.Pushgw.EnableSourceStats {
 		return

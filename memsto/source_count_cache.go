@@ -1,5 +1,7 @@
 package memsto
 
+// SourceCountCache 用于缓存 source ip 在一定时间内的上报次数
+
 import (
 	"sync"
 )
@@ -25,6 +27,7 @@ func (s *SourceCountCache) Increase(source string) {
 	s.sourceMetricsStats[source]++
 }
 
+// 获取缓存 map 并清空
 func (s *SourceCountCache) GetAndFlush() map[string]int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
