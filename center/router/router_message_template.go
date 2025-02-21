@@ -163,7 +163,10 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 	for k, v := range req.Tpl.Content {
 		text := strings.Join(append(defs, v), "")
 		tpl, err := template.New(k).Funcs(tplx.TemplateFuncMap).Parse(text)
-		ginx.Dangerous(err)
+		if err != nil {
+			ret[k] = err.Error()
+			continue
+		}
 
 		var buf bytes.Buffer
 		ginx.Dangerous(tpl.Execute(&buf, events))
