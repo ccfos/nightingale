@@ -176,7 +176,12 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 		}
 
 		var buf bytes.Buffer
-		ginx.Dangerous(tpl.Execute(&buf, events))
+		err = tpl.Execute(&buf, events)
+		if err != nil {
+			ret[k] = err.Error()
+			continue
+		}
+
 		ret[k] = buf.String()
 	}
 	ginx.NewRender(c).Data(ret, nil)
