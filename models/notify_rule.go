@@ -145,6 +145,15 @@ func (r *NotifyRule) Update(ctx *ctx.Context, ref NotifyRule) error {
 	return DB(ctx).Model(r).Select("*").Updates(ref).Error
 }
 
+func (r *NotifyRule) DB2FE() {
+	if r.UserGroupIds == nil {
+		r.UserGroupIds = make([]int64, 0)
+	}
+	if r.NotifyConfigs == nil {
+		r.NotifyConfigs = make([]NotifyConfig, 0)
+	}
+}
+
 func NotifyRuleGet(ctx *ctx.Context, where string, args ...interface{}) (*NotifyRule, error) {
 	lst, err := NotifyRulesGet(ctx, where, args...)
 	if err != nil || len(lst) == 0 {
@@ -162,6 +171,9 @@ func NotifyRulesGet(ctx *ctx.Context, where string, args ...interface{}) ([]*Not
 	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
+	}
+	for _, r := range lst {
+		r.DB2FE()
 	}
 	return lst, nil
 }

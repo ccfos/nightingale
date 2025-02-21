@@ -102,6 +102,17 @@ func (rt *Router) notifyChannelGet(c *gin.Context) {
 	ginx.NewRender(c).Data(nc, nil)
 }
 
+func (rt *Router) notifyChannelGetBy(c *gin.Context) {
+	ident := ginx.QueryStr(c, "ident")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "ident = ?", ident)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	ginx.NewRender(c).Data(nc, nil)
+}
+
 func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
 	ginx.NewRender(c).Data(lst, err)
@@ -136,7 +147,7 @@ type flushDutyChannelsResponse struct {
 	} `json:"data"`
 }
 
-func (rt *Router) flushDutyNotifyChannelsGet(c *gin.Context) {
+func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	cid := ginx.UrlParamInt64(c, "id")
 	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
 	ginx.Dangerous(err)
@@ -162,5 +173,6 @@ func (rt *Router) flushDutyNotifyChannelsGet(c *gin.Context) {
 
 	var res flushDutyChannelsResponse
 	ginx.Dangerous(json.Unmarshal(body, &res))
-	ginx.NewRender(c).Data(res.Data.Items, res.Error.Message)
+	ginx.Dangerous(res.Error.Message)
+	ginx.NewRender(c).Data(res.Data.Items, nil)
 }

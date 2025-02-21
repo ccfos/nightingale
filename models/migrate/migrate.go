@@ -348,17 +348,17 @@ func (DashAnnotation) TableName() string {
 }
 
 type MessageTemplate struct {
-	ID              int64             `gorm:"column:id;primaryKey;autoIncrement"`
-	Name            string            `gorm:"column:name;type:varchar(255);not null"`
-	Ident           string            `gorm:"column:ident;type:varchar(255);not null;unique"`
-	Content         map[string]string `gorm:"column:content;type:text"`
-	UserGroupIds    []int64           `gorm:"column:user_group_ids;type:varchar(255)"`
-	NotifyChannelID int64             `gorm:"column:notify_channel_id"`
-	Private         int               `gorm:"column:private;type:int;not null;default:0"`
-	CreateAt        int64             `gorm:"column:create_at;not null;default:0"`
-	CreateBy        string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
-	UpdateAt        int64             `gorm:"column:update_at;not null;default:0"`
-	UpdateBy        string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	ID                 int64             `gorm:"column:id;primaryKey;autoIncrement"`
+	Name               string            `gorm:"column:name;type:varchar(64);not null"`
+	Ident              string            `gorm:"column:ident;type:varchar(64);not null"`
+	Content            map[string]string `gorm:"column:content;type:text"`
+	UserGroupIds       []int64           `gorm:"column:user_group_ids;type:varchar(64)"`
+	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
+	Private            int               `gorm:"column:private;type:int;not null;default:0"`
+	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
+	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`
+	UpdateBy           string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
 func (t *MessageTemplate) TableName() string {

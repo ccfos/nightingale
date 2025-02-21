@@ -134,8 +134,8 @@ func (c *NotifyChannelConfig) Verify() error {
 				return errors.New("user_info param must have a valid contact_key")
 			}
 		case "flashduty":
-			if str.IsValidURL(c.ParamConfig.FlashDuty.IntegrationUrl) && strings.Contains(
-				c.ParamConfig.FlashDuty.IntegrationUrl, "?integration_key=") {
+			if !(str.IsValidURL(c.ParamConfig.FlashDuty.IntegrationUrl) && strings.Contains(
+				c.ParamConfig.FlashDuty.IntegrationUrl, "?integration_key=")) {
 				return errors.New("flashduty param must have valid integration_url")
 			}
 		case "custom":
@@ -353,7 +353,12 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
 	for channel, notiCh := range NotiChMap {
+		notiCh.Enable = true
 		notiCh.CreateBy = "system"
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
