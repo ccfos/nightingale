@@ -526,7 +526,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelsGet)
 		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
-		pages.GET("/flushduty-channel-list/:id", rt.auth(), rt.user(), rt.flushDutyNotifyChannelsGet)
+		pages.GET("/flushduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelGetBy)
 	}
 
