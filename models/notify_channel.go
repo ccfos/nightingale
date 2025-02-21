@@ -353,7 +353,12 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
 	for channel, notiCh := range NotiChMap {
+		notiCh.Enable = true
 		notiCh.CreateBy = "system"
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"

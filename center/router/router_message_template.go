@@ -13,7 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) messageTemplatesAdd(c *gin.Context) {
@@ -123,12 +122,15 @@ func (rt *Router) messageTemplateGet(c *gin.Context) {
 }
 
 func (rt *Router) messageTemplatesGet(c *gin.Context) {
-	notifyChannelIds := str.IdsInt64(ginx.QueryStr(c, "notify_channel_ids", ""))
+	var notifyChannelIdents []string
+	if tmp := ginx.QueryStr(c, "notify_channel_idents", ""); tmp != "" {
+		notifyChannelIdents = strings.Split(tmp, ",")
+	}
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
 
-	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIds)
+	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIdents)
 	ginx.Dangerous(err)
 
 	res := make([]*models.MessageTemplate, 0)
