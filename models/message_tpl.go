@@ -10,16 +10,17 @@ import (
 
 // MessageTemplate 消息模板结构
 type MessageTemplate struct {
-	ID           int64             `json:"id" gorm:"primarykey"`
-	Name         string            `json:"name"`                           // 模板名称
-	Ident        string            `json:"ident"`                          // 模板标识
-	Content      map[string]string `json:"content" gorm:"serializer:json"` // 模板内容
-	UserGroupIds []int64           `json:"user_group_ids" gorm:"serializer:json"`
-	Private      int               `json:"private"` // 0-公开 1-私有
-	CreateAt     int64             `json:"create_at"`
-	CreateBy     string            `json:"create_by"`
-	UpdateAt     int64             `json:"update_at"`
-	UpdateBy     string            `json:"update_by"`
+	ID                 int64             `json:"id" gorm:"primarykey"`
+	Name               string            `json:"name"`                           // 模板名称
+	Ident              string            `json:"ident"`                          // 模板标识
+	Content            map[string]string `json:"content" gorm:"serializer:json"` // 模板内容
+	UserGroupIds       []int64           `json:"user_group_ids" gorm:"serializer:json"`
+	NotifyChannelIdent string            `json:"notify_channel_ident"` // 通知媒介 Ident
+	Private            int               `json:"private"`              // 0-公开 1-私有
+	CreateAt           int64             `json:"create_at"`
+	CreateBy           string            `json:"create_by"`
+	UpdateAt           int64             `json:"update_at"`
+	UpdateBy           string            `json:"update_by"`
 }
 
 type HTTPConfig struct {
@@ -62,9 +63,9 @@ func (t *MessageTemplate) Verify() error {
 		return errors.New("template identifier cannot be empty")
 	}
 
-	if len(t.Content) == 0 {
-		return errors.New("template content cannot be empty")
-	}
+	// if len(t.Content) == 0 {
+	// 	return errors.New("template content cannot be empty")
+	// }
 
 	for key, value := range t.Content {
 		if key == "" || value == "" {
@@ -101,6 +102,12 @@ func (t *MessageTemplate) Update(ctx *ctx.Context, ref MessageTemplate) error {
 	return DB(ctx).Model(t).Select("*").Updates(ref).Error
 }
 
+func (t *MessageTemplate) DB2FE() {
+	if t.UserGroupIds == nil {
+		t.UserGroupIds = make([]int64, 0)
+	}
+}
+
 func MessageTemplateGet(ctx *ctx.Context, where string, args ...interface{}) (*MessageTemplate, error) {
 	lst, err := MessageTemplatesGet(ctx, where, args...)
 	if err != nil || len(lst) == 0 {
@@ -119,6 +126,26 @@ func MessageTemplatesGet(ctx *ctx.Context, where string, args ...interface{}) ([
 	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
+	}
+	for _, t := range lst {
+		t.DB2FE()
+	}
+	return lst, nil
+}
+
+func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*MessageTemplate, error) {
+	lst := make([]*MessageTemplate, 0)
+	session := DB(ctx)
+	if len(notifyChannelIdents) > 0 {
+		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
+	}
+
+	err := session.Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range lst {
+		t.DB2FE()
 	}
 	return lst, nil
 }
@@ -156,15 +183,20 @@ var MsgTplMap = map[string]map[string]string{
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
 	for channel, content := range MsgTplMap {
 		msgTpl := MessageTemplate{
-			Name:     channel,
-			Ident:    channel,
-			Content:  content,
-			CreateBy: "system",
-			CreateAt: time.Now().Unix(),
-			UpdateBy: "system",
-			UpdateAt: time.Now().Unix(),
+			Name:               channel,
+			Ident:              channel,
+			Content:            content,
+			NotifyChannelIdent: channel,
+			CreateBy:           "system",
+			CreateAt:           time.Now().Unix(),
+			UpdateBy:           "system",
+			UpdateAt:           time.Now().Unix(),
 		}
 
 		err := msgTpl.Upsert(ctx, channel)

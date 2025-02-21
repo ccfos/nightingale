@@ -23,6 +23,10 @@ type NotifyRule struct {
 	UpdateBy string `json:"update_by"`
 }
 
+func (r *NotifyRule) TableName() string {
+	return "notify_rule"
+}
+
 type NotifyConfig struct {
 	ChannelID  int64       `json:"channel_id"`  // 通知媒介(如：阿里云短信)
 	TemplateID int64       `json:"template_id"` // 通知模板
@@ -36,7 +40,7 @@ type NotifyConfig struct {
 type TimeRanges struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
-	Week  string `json:"week"`
+	Week  []int  `json:"week"`
 }
 
 type LabelFilter struct {
@@ -141,6 +145,15 @@ func (r *NotifyRule) Update(ctx *ctx.Context, ref NotifyRule) error {
 	return DB(ctx).Model(r).Select("*").Updates(ref).Error
 }
 
+func (r *NotifyRule) DB2FE() {
+	if r.UserGroupIds == nil {
+		r.UserGroupIds = make([]int64, 0)
+	}
+	if r.NotifyConfigs == nil {
+		r.NotifyConfigs = make([]NotifyConfig, 0)
+	}
+}
+
 func NotifyRuleGet(ctx *ctx.Context, where string, args ...interface{}) (*NotifyRule, error) {
 	lst, err := NotifyRulesGet(ctx, where, args...)
 	if err != nil || len(lst) == 0 {
@@ -158,6 +171,9 @@ func NotifyRulesGet(ctx *ctx.Context, where string, args ...interface{}) ([]*Not
 	err := session.Find(&lst).Error
 	if err != nil {
 		return nil, err
+	}
+	for _, r := range lst {
+		r.DB2FE()
 	}
 	return lst, nil
 }

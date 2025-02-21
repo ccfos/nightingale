@@ -67,7 +67,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&EsIndexPatternMigrate{}, &DashAnnotation{}, &MessageTemplate{}, &NotifyRule{}, &NotifyChannel{}}
+		&EsIndexPatternMigrate{}, &DashAnnotation{}, &MessageTemplate{}, &NotifyRule{}, &NotifyChannelConfig{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -348,16 +348,21 @@ func (DashAnnotation) TableName() string {
 }
 
 type MessageTemplate struct {
-	ID           uint              `gorm:"column:id;primaryKey;autoIncrement"`
-	Name         string            `gorm:"column:name;type:varchar(255);not null"`
-	Ident        string            `gorm:"column:ident;type:varchar(255);not null;unique"`
-	Content      map[string]string `gorm:"column:content;type:text"`
-	UserGroupIds []int64           `gorm:"column:user_group_ids;type:varchar(255)"`
-	Private      int               `gorm:"column:private;type:int;not null;default:0"`
-	CreateAt     int64             `gorm:"column:create_at;not null;default:0"`
-	CreateBy     string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
-	UpdateAt     int64             `gorm:"column:update_at;not null;default:0"`
-	UpdateBy     string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	ID                 int64             `gorm:"column:id;primaryKey;autoIncrement"`
+	Name               string            `gorm:"column:name;type:varchar(64);not null"`
+	Ident              string            `gorm:"column:ident;type:varchar(64);not null"`
+	Content            map[string]string `gorm:"column:content;type:text"`
+	UserGroupIds       []int64           `gorm:"column:user_group_ids;type:varchar(64)"`
+	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
+	Private            int               `gorm:"column:private;type:int;not null;default:0"`
+	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
+	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`
+	UpdateBy           string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (t *MessageTemplate) TableName() string {
+	return "message_template"
 }
 
 type NotifyRule struct {
@@ -373,11 +378,16 @@ type NotifyRule struct {
 	UpdateBy      string                `gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
-type NotifyChannel struct {
-	ID                  uint                       `gorm:"column:id;primaryKey;autoIncrement"`
+func (r *NotifyRule) TableName() string {
+	return "notify_rule"
+}
+
+type NotifyChannelConfig struct {
+	ID                  int64                      `gorm:"column:id;primaryKey;autoIncrement"`
 	Name                string                     `gorm:"column:name;type:varchar(255);not null"`
 	Ident               string                     `gorm:"column:ident;type:varchar(255);not null"`
 	Description         string                     `gorm:"column:description;type:text"`
+	Enable              bool                       `gorm:"column:enable;not null;default:false"`
 	ParamConfig         models.NotifyParamConfig   `gorm:"column:param_config;type:text"`
 	RequestType         string                     `gorm:"column:request_type;type:varchar(50);not null"`
 	HTTPRequestConfig   models.HTTPRequestConfig   `gorm:"column:http_request_config;type:text"`
@@ -387,4 +397,8 @@ type NotifyChannel struct {
 	CreateBy            string                     `gorm:"column:create_by;type:varchar(64);not null;default:''"`
 	UpdateAt            int64                      `gorm:"column:update_at;not null;default:0"`
 	UpdateBy            string                     `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (c *NotifyChannelConfig) TableName() string {
+	return "notify_channel"
 }

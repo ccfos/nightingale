@@ -1,12 +1,16 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -35,7 +39,7 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 		tpl.UpdateBy = me.Username
 		tpl.UpdateAt = time.Now().Unix()
 	}
-	lstWithSameId, err := models.NotifyChannelsGet(rt.Ctx, "ident IN ?", idents)
+	lstWithSameId, err := models.MessageTemplatesGet(rt.Ctx, "ident IN ?", idents)
 	ginx.Dangerous(err)
 	if len(lstWithSameId) > 0 {
 		ginx.Bomb(http.StatusBadRequest, "ident already exists")
@@ -118,11 +122,15 @@ func (rt *Router) messageTemplateGet(c *gin.Context) {
 }
 
 func (rt *Router) messageTemplatesGet(c *gin.Context) {
+	var notifyChannelIdents []string
+	if tmp := ginx.QueryStr(c, "notify_channel_idents", ""); tmp != "" {
+		notifyChannelIdents = strings.Split(tmp, ",")
+	}
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
 
-	lst, err := models.MessageTemplatesGet(rt.Ctx, "", nil)
+	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIdents)
 	ginx.Dangerous(err)
 
 	res := make([]*models.MessageTemplate, 0)
@@ -132,4 +140,34 @@ func (rt *Router) messageTemplatesGet(c *gin.Context) {
 		}
 	}
 	ginx.NewRender(c).Data(res, nil)
+}
+
+type evtMsgReq struct {
+	EventIds []int64 `json:"event_ids"`
+	Tpl      struct {
+		Content map[string]string `json:"content"`
+	} `json:"tpl"`
+}
+
+func (rt *Router) eventsMessage(c *gin.Context) {
+	var req evtMsgReq
+	ginx.BindJSON(c, &req)
+
+	events, err := models.AlertCurEventGetByIds(rt.Ctx, req.EventIds)
+	ginx.Dangerous(err)
+	var defs = []string{
+		"{{$events := .}}",
+		"{{$event := index . 0}}",
+	}
+	ret := make(map[string]string, len(req.Tpl.Content))
+	for k, v := range req.Tpl.Content {
+		text := strings.Join(append(defs, v), "")
+		tpl, err := template.New(k).Funcs(tplx.TemplateFuncMap).Parse(text)
+		ginx.Dangerous(err)
+
+		var buf bytes.Buffer
+		ginx.Dangerous(tpl.Execute(&buf, events))
+		ret[k] = buf.String()
+	}
+	ginx.NewRender(c).Data(ret, nil)
 }

@@ -102,6 +102,17 @@ func (rt *Router) notifyChannelGet(c *gin.Context) {
 	ginx.NewRender(c).Data(nc, nil)
 }
 
+func (rt *Router) notifyChannelGetBy(c *gin.Context) {
+	ident := ginx.QueryStr(c, "ident")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "ident = ?", ident)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	ginx.NewRender(c).Data(nc, nil)
+}
+
 func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
 	ginx.NewRender(c).Data(lst, err)
