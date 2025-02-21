@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	SourceStats *memsto.SourceCountCache
+	SourceStats                   *memsto.SourceCountCache
 	loopReportSourceStatsInterval = time.Second * 60
-	reportcache = sync.Map{}
+	reportcache                   = sync.Map{}
 )
 
 type reportItemEntry struct {
@@ -26,7 +26,6 @@ func (re *reportItemEntry) Report(ts int64) {
 func (re *reportItemEntry) Update(ts int64) {
 	re.lastUpdateTs = ts
 }
-
 
 func init() {
 	SourceStats = memsto.NewSourceCountCache()
@@ -43,10 +42,9 @@ func (r *Router) ReportSourceStats() {
 
 // 上报 source ip 统计数据
 func (r *Router) loopReportSourceStats() {
-	ticker := time.NewTicker(loopReportSourceStatsInterval)
-	defer ticker.Stop()
+	for {
+		time.Sleep(loopReportSourceStatsInterval)
 
-	for range ticker.C {
 		currentStats := SourceStats.GetAndFlush()
 		now := time.Now().Unix()
 
@@ -97,11 +95,11 @@ func (r *Router) loopReportSourceStats() {
 
 // 循环检测，若超过一定时间超过阈值则删除
 func (r *Router) loopCleanSourceStats() {
-	ticker := time.NewTicker(time.Minute * 5)
+	looptime := time.Minute * 5
 	cleantime := time.Minute * 10
-	defer ticker.Stop()
 
-	for range ticker.C {
+	for {
+		time.Sleep(looptime)
 		now := time.Now().Unix()
 
 		reportcache.Range(func(key, value interface{}) bool {
