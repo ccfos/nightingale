@@ -51,7 +51,7 @@ func (r *Router) loopReportSourceStats() {
 		for source, count := range currentStats {
 			overThreshold := false
 			if count >= r.Pushgw.SourceStatsThreshold {
-				SourceCounter.WithLabelValues(source).Set(float64(count))
+				CounterSampleReceivedBySource.WithLabelValues(source).Set(float64(count))
 				overThreshold = true
 			}
 
@@ -66,7 +66,7 @@ func (r *Router) loopReportSourceStats() {
 					re.Report(now)
 				} else {
 					// 虽然没到阈值，但是之前上报过，仍需要上报一段时间
-					SourceCounter.WithLabelValues(source).Set(float64(count))
+					CounterSampleReceivedBySource.WithLabelValues(source).Set(float64(count))
 				}
 
 			} else if overThreshold {
@@ -85,7 +85,7 @@ func (r *Router) loopReportSourceStats() {
 			source := key.(string)
 			re := value.(*reportItemEntry)
 			if now-re.lastUpdateTs > int64(loopReportSourceStatsInterval.Seconds()) {
-				SourceCounter.WithLabelValues(source).Set(math.NaN())
+				CounterSampleReceivedBySource.WithLabelValues(source).Set(math.NaN())
 				reportcache.Delete(source)
 			}
 			return true
@@ -106,7 +106,7 @@ func (r *Router) loopCleanSourceStats() {
 			source := key.(string)
 			re := value.(*reportItemEntry)
 			if now-re.lastReportTs > int64(cleantime.Seconds())+int64(loopReportSourceStatsInterval.Seconds()) {
-				SourceCounter.WithLabelValues(source).Set(math.NaN())
+				CounterSampleReceivedBySource.WithLabelValues(source).Set(math.NaN())
 				reportcache.Delete(source)
 			}
 			return true

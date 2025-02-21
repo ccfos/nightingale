@@ -49,12 +49,12 @@ var (
 		}, labels,
 	)
 
-	SourceCounter = prometheus.NewGaugeVec(
+	CounterSampleReceivedBySource = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "source_count_total",
-			Help:      "Total number of metrics from source.",
+			Name:      "sample_received_by_source",
+			Help:      "Number of sample push by source.",
 		}, []string{"source"},
 	)
 )
@@ -66,6 +66,6 @@ func registerMetrics() {
 		CounterSampleReceivedByIdent,
 		RequestCounter,
 		RequestDuration,
-		SourceCounter,
+		CounterSampleReceivedBySource,
 	)
 }
