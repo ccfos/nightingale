@@ -22,7 +22,7 @@ func (r *Router) ReportSourceStats() {
 
 // 上报 source ip 统计数据
 func (r *Router) loopReportSrorceStats() {
-	ticker := time.NewTicker(time.Second*10)
+	ticker := time.NewTicker(time.Second*60)
 	defer ticker.Stop()
 
 	for range ticker.C {
