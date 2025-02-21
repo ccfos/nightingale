@@ -18,7 +18,7 @@ func NewSourceCountCache() *SourceCountCache {
 }
 
 // 将 source ip 记录到 SourceMetricsStats 中，若存在则数量加一
-func (s *SourceCountCache) Record(source string) {
+func (s *SourceCountCache) Increase(source string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

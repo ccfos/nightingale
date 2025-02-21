@@ -151,7 +151,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 
 		if rt.Pushgw.EnableSourceStats {
-			SourceStats.Record(c.ClientIP())
+			SourceStats.Increase(c.ClientIP())
 		}
 
 		var err error

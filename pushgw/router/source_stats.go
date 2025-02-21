@@ -1,12 +1,32 @@
 package router
 
 import (
+	"math"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/memsto"
 )
 
-var SourceStats *memsto.SourceCountCache
+var (
+	SourceStats *memsto.SourceCountCache
+	loopReportSourceStatsInterval = time.Second * 60
+	reportcache = sync.Map{}
+)
+
+type reportItemEntry struct {
+	lastReportTs int64
+	lastUpdateTs int64
+}
+
+func (re *reportItemEntry) Report(ts int64) {
+	re.lastReportTs = ts
+}
+
+func (re *reportItemEntry) Update(ts int64) {
+	re.lastUpdateTs = ts
+}
+
 
 func init() {
 	SourceStats = memsto.NewSourceCountCache()
@@ -17,21 +37,81 @@ func (r *Router) ReportSourceStats() {
 		return
 	}
 
-	go r.loopReportSrorceStats()
+	go r.loopReportSourceStats()
+	go r.loopCleanSourceStats()
 }
 
 // 上报 source ip 统计数据
-func (r *Router) loopReportSrorceStats() {
-	ticker := time.NewTicker(time.Second*60)
+func (r *Router) loopReportSourceStats() {
+	ticker := time.NewTicker(loopReportSourceStatsInterval)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		currentStats := SourceStats.GetAndFlush()
+		now := time.Now().Unix()
 
 		for source, count := range currentStats {
+			overThreshold := false
 			if count >= r.Pushgw.SourceStatsThreshold {
 				SourceCounter.WithLabelValues(source).Set(float64(count))
+				overThreshold = true
+			}
+
+			// 更新提交时间与更新时间
+			var re *reportItemEntry
+			if item, ok := reportcache.Load(source); ok {
+				// 本身就在上报缓存中 更新时间
+				re = item.(*reportItemEntry)
+
+				re.Update(now)
+				if overThreshold {
+					re.Report(now)
+				} else {
+					// 虽然没到阈值，但是之前上报过，仍需要上报一段时间
+					SourceCounter.WithLabelValues(source).Set(float64(count))
+				}
+
+			} else if overThreshold {
+				// 不在上报缓存中，且需要上报，添加到上报缓存
+				re = &reportItemEntry{
+					lastReportTs: now,
+					lastUpdateTs: now,
+				}
+
+				reportcache.Store(source, re)
 			}
 		}
+
+		// 立刻删除不再更新的 source
+		reportcache.Range(func(key, value interface{}) bool {
+			source := key.(string)
+			re := value.(*reportItemEntry)
+			if now-re.lastUpdateTs > int64(loopReportSourceStatsInterval.Seconds()) {
+				SourceCounter.WithLabelValues(source).Set(math.NaN())
+				reportcache.Delete(source)
+			}
+			return true
+		})
+	}
+}
+
+// 循环检测，若超过一定时间超过阈值则删除
+func (r *Router) loopCleanSourceStats() {
+	ticker := time.NewTicker(time.Minute * 5)
+	cleantime := time.Minute * 10
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := time.Now().Unix()
+
+		reportcache.Range(func(key, value interface{}) bool {
+			source := key.(string)
+			re := value.(*reportItemEntry)
+			if now-re.lastReportTs > int64(cleantime.Seconds())+int64(loopReportSourceStatsInterval.Seconds()) {
+				SourceCounter.WithLabelValues(source).Set(math.NaN())
+				reportcache.Delete(source)
+			}
+			return true
+		})
 	}
 }
