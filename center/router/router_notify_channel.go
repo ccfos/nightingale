@@ -147,7 +147,7 @@ type flushDutyChannelsResponse struct {
 	} `json:"data"`
 }
 
-func (rt *Router) flushDutyNotifyChannelsGet(c *gin.Context) {
+func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	cid := ginx.UrlParamInt64(c, "id")
 	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
 	ginx.Dangerous(err)
@@ -173,5 +173,6 @@ func (rt *Router) flushDutyNotifyChannelsGet(c *gin.Context) {
 
 	var res flushDutyChannelsResponse
 	ginx.Dangerous(json.Unmarshal(body, &res))
-	ginx.NewRender(c).Data(res.Data.Items, res.Error.Message)
+	ginx.Dangerous(res.Error.Message)
+	ginx.NewRender(c).Data(res.Data.Items, nil)
 }
