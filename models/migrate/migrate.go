@@ -377,6 +377,7 @@ type NotifyChannel struct {
 	ID                  uint                       `gorm:"column:id;primaryKey;autoIncrement"`
 	Name                string                     `gorm:"column:name;type:varchar(255);not null"`
 	Ident               string                     `gorm:"column:ident;type:varchar(255);not null"`
+	Enable              bool                       `gorm:"column:enable;not null;default:false"`
 	Description         string                     `gorm:"column:description;type:text"`
 	ParamConfig         models.NotifyParamConfig   `gorm:"column:param_config;type:text"`
 	RequestType         string                     `gorm:"column:request_type;type:varchar(50);not null"`

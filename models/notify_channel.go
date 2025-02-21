@@ -179,7 +179,7 @@ func NotifyChannelStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func NotifyChannelGetsAll(ctx *ctx.Context) ([]*NotifyChannelConfig, error) {
 	if !ctx.IsCenter {
-		channels, err := poster.GetByUrls[[]*NotifyChannelConfig](ctx, "/v1/n9e/notify-channels")
+		channels, err := poster.GetByUrls[[]*NotifyChannelConfig](ctx, "/v1/n9e/notify-channels-v2")
 		return channels, err
 	}
 
