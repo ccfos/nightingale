@@ -300,37 +300,37 @@ ops:
 - name: message-templates
   cname: Message Templates
   ops:
-    - name: "/message-templates"
+    - name: "/notification-templates"
       cname: View Message Templates
-    - name: "/message-templates/add"
+    - name: "/notification-templates/add"
       cname: Add Message Templates
-    - name: "/message-templates/put"
+    - name: "/notification-templates/put"
       cname: Modify Message Templates
-    - name: "/message-templates/del"
+    - name: "/notification-templates/del"
       cname: Delete Message Templates
 
 - name: notify-rules
   cname: Notify Rules
   ops:
-    - name: "/notify-rules"
+    - name: "/notification-rules"
       cname: View Notify Rules
-    - name: "/notify-rules/add"
+    - name: "/notification-rules/add"
       cname: Add Notify Rules
-    - name: "/notify-rules/put"
+    - name: "/notification-rules/put"
       cname: Modify Notify Rules
-    - name: "/notify-rules/del"
+    - name: "/notification-rules/del"
       cname: Delete Notify Rules
 
 - name: notify-channels
   cname: Notify Channels
   ops:
-    - name: "/notify-channels"
+    - name: "/notification-channels"
       cname: View Notify Channels
-    - name: "/notify-channels/add"
+    - name: "/notification-channels/add"
       cname: Add Notify Channels
-    - name: "/notify-channels/put"
+    - name: "/notification-channels/put"
       cname: Modify Notify Channels
-    - name: "/notify-channels/del"
+    - name: "/notification-channels/del"
       cname: Delete Notify Channels
 `
 )

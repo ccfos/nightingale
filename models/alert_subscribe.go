@@ -49,6 +49,7 @@ type AlertSubscribe struct {
 	BusiGroups        ormx.JSONArr `json:"busi_groups"`
 	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups
 	RuleIds           []int64      `json:"rule_ids" gorm:"serializer:json"`
+	NotifyRuleIds     []int64      `json:"notify_rule_ids" gorm:"serializer:json"`
 	RuleNames         []string     `json:"rule_names" gorm:"-"`
 }
 

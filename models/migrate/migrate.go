@@ -213,14 +213,16 @@ type AlertRule struct {
 	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
 	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
+	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 }
 
 type AlertSubscribe struct {
-	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
-	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
-	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
-	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
+	ExtraConfig   string       `gorm:"type:text;column:extra_config"` // extra config
+	Severities    string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	BusiGroups    ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
+	Note          string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	RuleIds       []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
+	NotifyRuleIds []int64      `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 }
 
 type AlertMute struct {
