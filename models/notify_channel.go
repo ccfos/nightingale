@@ -99,6 +99,7 @@ type UserInfoParam struct {
 
 // FlashDutyParam flashduty 类型的参数配置
 type FlashDutyParam struct {
+	Proxy          string `json:"proxy"`
 	IntegrationUrl string `json:"integration_url"`
 }
 

@@ -428,7 +428,15 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		}
 
 		for k, v := range f.Fields {
-			ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+			// 检查 v 是否为切片类型
+			if slice, ok := v.([]interface{}); ok {
+				// 将切片转换为 JSON 字符串
+				bytes, err := json.Marshal(slice)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, string(bytes)))
+			} else {
+				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+			}
 		}
 	}
 
