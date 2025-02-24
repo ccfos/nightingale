@@ -453,6 +453,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/notify-tpl", rt.auth(), rt.user(), rt.notifyTplAdd)
 		pages.DELETE("/notify-tpl/:id", rt.auth(), rt.user(), rt.notifyTplDel)
 		pages.POST("/notify-tpl/preview", rt.auth(), rt.user(), rt.notifyTplPreview)
+		pages.GET("/message-templates-v2", rt.auth(), rt.user(), rt.messageTemplateGets)
 
 		pages.GET("/sso-configs", rt.auth(), rt.admin(), rt.ssoConfigGets)
 		pages.PUT("/sso-config", rt.auth(), rt.admin(), rt.ssoConfigUpdate)
@@ -472,6 +473,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-config", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyConfigGet)
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 		pages.PUT("/smtp-config-test", rt.auth(), rt.admin(), rt.attemptSendEmail)
+
+		pages.GET("/notify-channels-v2", rt.auth(), rt.user(), rt.notifyChannelConfigGets)
 
 		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
 		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)

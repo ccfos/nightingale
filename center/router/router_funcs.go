@@ -49,6 +49,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		statistics, err = models.ConfigCvalStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)
 		return
+	case "message_template":
+		statistics, err = models.MessageTemplateStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid name")
 	}

@@ -3,6 +3,7 @@ package dispatch
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"html/template"
 	"net/url"
 	"strconv"
@@ -30,6 +31,10 @@ type Dispatch struct {
 	notifyConfigCache   *memsto.NotifyConfigCacheType
 	taskTplsCache       *memsto.TaskTplCache
 
+	notifyRuleCache      *memsto.NotifyRuleCacheType
+	notifyChannelCache   *memsto.NotifyChannelCacheType
+	messageTemplateCache *memsto.MessageTemplateCacheType
+
 	alerting aconf.Alerting
 
 	Senders          map[string]sender.Sender
@@ -47,15 +52,19 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	taskTplsCache *memsto.TaskTplCache, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
+	messageTemplateCache *memsto.MessageTemplateCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
-		alertRuleCache:      alertRuleCache,
-		userCache:           userCache,
-		userGroupCache:      userGroupCache,
-		alertSubscribeCache: alertSubscribeCache,
-		targetCache:         targetCache,
-		notifyConfigCache:   notifyConfigCache,
-		taskTplsCache:       taskTplsCache,
+		alertRuleCache:       alertRuleCache,
+		userCache:            userCache,
+		userGroupCache:       userGroupCache,
+		alertSubscribeCache:  alertSubscribeCache,
+		targetCache:          targetCache,
+		notifyConfigCache:    notifyConfigCache,
+		taskTplsCache:        taskTplsCache,
+		notifyRuleCache:      notifyRuleCache,
+		notifyChannelCache:   notifyChannelCache,
+		messageTemplateCache: messageTemplateCache,
 
 		alerting: alerting,
 
@@ -129,6 +138,125 @@ func (e *Dispatch) relaodTpls() error {
 	e.CallBacks = callbacks
 	e.RwLock.Unlock()
 	return nil
+}
+
+func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe bool) {
+
+	if len(event.NotifyRuleIDs) > 0 {
+		for _, notifyRuleId := range event.NotifyRuleIDs {
+			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
+			if notifyRule == nil {
+				continue
+			}
+
+			for i := range notifyRule.NotifyConfigs {
+				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
+				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
+				if notifyChannel == nil || messageTemplate == nil {
+					continue
+				}
+				// todo go send
+				// todo 聚合 event
+				e.sendV2([]*models.AlertCurEvent{event}, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+			}
+		}
+	}
+}
+
+func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
+	// event 内容渲染到 messageTemplate
+	content := make(map[string]string)
+	for key, msgTpl := range messageTemplate.Content {
+		var defs = []string{
+			"{{ $events :=  . }}",
+			"{{ $event :=  index $events 0 }}",
+			"{{ $labels := $event.TagsMap }}",
+			"{{ $value := $event.TriggerValue }}",
+		}
+		text := strings.Join(append(defs, msgTpl), "")
+		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+		if err != nil {
+			continue
+		}
+
+		var body bytes.Buffer
+		if err = tpl.Execute(&body, events); err != nil {
+			continue
+		}
+		content[key] = body.String()
+	}
+
+	var (
+		userInfos           []*models.User
+		flashDutyChannelIDs []int64
+		customParams        map[string]string
+	)
+
+	switch notifyConfig.Params.(type) {
+	case models.UserInfoParams:
+		visited := make(map[int64]bool)
+		userInfoParams := notifyConfig.Params.(models.UserInfoParams)
+		users := e.userCache.GetByUserIds(userInfoParams.UserIDs)
+		for _, user := range users {
+			if visited[user.Id] {
+				continue
+			}
+			visited[user.Id] = true
+			userInfos = append(userInfos, user)
+		}
+		userGroups := e.userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
+		for _, userGroup := range userGroups {
+			for _, user := range userGroup.Users {
+				if visited[user.Id] {
+					continue
+				}
+				visited[user.Id] = true
+				userInfos = append(userInfos, &user)
+			}
+		}
+	case models.FlashDutyParams:
+		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
+	case models.CustomParams:
+		customParams = notifyConfig.Params.(models.CustomParams)
+	default:
+		logger.Errorf("unknown notify config params: %v", notifyConfig.Params)
+		return
+	}
+
+	switch notifyChannel.RequestType {
+	case "http":
+
+		if notifyChannel.ParamConfig.ParamType == "flashduty" {
+			for i := range flashDutyChannelIDs {
+				if err := notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
+			return
+		}
+
+		if notifyChannel.ParamConfig.BatchSend {
+			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
+		} else {
+			for i := range userInfos {
+				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+					logger.Errorf("send http error: %v,  events: %v", err, events)
+				}
+			}
+		}
+
+	case "email":
+		if err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+			logger.Errorf("send email error: %v", err)
+		}
+	case "script":
+		if err := notifyChannel.SendScript(events, content, customParams, userInfos); err != nil {
+			logger.Errorf("send script error: %v", err)
+		}
+	default:
+	}
 }
 
 // HandleEventNotify 处理event事件的主逻辑

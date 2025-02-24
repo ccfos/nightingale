@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
@@ -23,31 +24,57 @@ type MessageTemplate struct {
 	UpdateBy           string            `json:"update_by"`
 }
 
-type HTTPConfig struct {
-	Type     string `json:"type"`
-	IsGlobal bool   `json:"is_global"`
-	Name     string `json:"name"`
-	Ident    string `json:"ident"`
-	Note     string `json:"note"` // 备注
+func MessageTemplateStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=message_template")
+		return s, err
+	}
 
-	Enabled     bool              `json:"enabled"`     // 是否启用
-	URL         string            `json:"url"`         // 回调URL
-	Method      string            `json:"method"`      // HTTP方法
-	Headers     map[string]string `json:"headers"`     // 请求头
-	Timeout     int               `json:"timeout"`     // 超时时间(毫秒)
-	Concurrency int               `json:"concurrency"` // 并发度
-	RetryTimes  int               `json:"retryTimes"`  // 重试次数
-	RetryDelay  int               `json:"retryDelay"`  // 重试间隔(毫秒)
-	SkipVerify  bool              `json:"skipVerify"`  // 跳过SSL校验
-	Proxy       string            `json:"proxy"`       // 代理地址
+	session := DB(ctx).Model(&MessageTemplate{}).Select("count(*) as total", "max(update_at) as last_updated")
 
-	// 请求参数配置
-	EnableParams bool              `json:"enableParams"` // 启用Params参数
-	Params       map[string]string `json:"params"`       // URL参数
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
 
-	// 请求体配置
-	EnableBody bool   `json:"enableBody"` // 启用Body
-	Body       string `json:"body"`       // 请求体内容
+	return stats[0], nil
+}
+
+func MessageTemplateGetsAll(ctx *ctx.Context) ([]*MessageTemplate, error) {
+	if !ctx.IsCenter {
+		templates, err := poster.GetByUrls[[]*MessageTemplate](ctx, "/v1/n9e/message-templates-v2")
+		return templates, err
+	}
+
+	var templates []*MessageTemplate
+	err := DB(ctx).Find(&templates).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
+}
+
+func MessageTemplateGets(ctx *ctx.Context, id int64, name, ident string) ([]*MessageTemplate, error) {
+	session := DB(ctx)
+
+	if id != 0 {
+		session = session.Where("id = ?", id)
+	}
+
+	if name != "" {
+		session = session.Where("name = ?", name)
+	}
+
+	if ident != "" {
+		session = session.Where("ident = ?", ident)
+	}
+
+	var templates []*MessageTemplate
+	err := session.Find(&templates).Error
+
+	return templates, err
 }
 
 func (t *MessageTemplate) TableName() string {
