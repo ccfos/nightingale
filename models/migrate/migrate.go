@@ -214,6 +214,7 @@ type AlertRule struct {
 	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
+	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
 }
 
 type AlertSubscribe struct {
@@ -223,6 +224,7 @@ type AlertSubscribe struct {
 	Note          string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
 	RuleIds       []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
 	NotifyRuleIds []int64      `gorm:"column:notify_rule_ids;type:varchar(1024)"`
+	NotifyVersion int          `gorm:"column:notify_version;type:int;default:0"`
 }
 
 type AlertMute struct {
