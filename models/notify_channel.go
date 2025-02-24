@@ -110,6 +110,7 @@ type NotifyParamConfig struct {
 // UserInfoParam user_info 类型的参数配置
 type UserInfoParam struct {
 	ContactKey string `json:"contact_key"` // phone, email, dingtalk_robot_token 等
+	Batch      bool   `json:"batch"`       // 是否批量发送
 }
 
 // FlashDutyParam flashduty 类型的参数配置
@@ -136,7 +137,6 @@ type SMTPRequestConfig struct {
 	Password           string `json:"password"`
 	From               string `json:"from"`
 	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
-	Batch              int    `json:"batch"`
 }
 
 type ScriptRequestConfig struct {
@@ -770,9 +770,13 @@ func (ncc *NotifyChannelConfig) Verify() error {
 				return errors.New("user_info param must have a valid contact_key")
 			}
 		case "flashduty":
-			if ncc.ParamConfig.FlashDuty.IntegrationUrl == "" {
+			if !(str.IsValidURL(ncc.ParamConfig.FlashDuty.IntegrationUrl) && strings.Contains(
+				ncc.ParamConfig.FlashDuty.IntegrationUrl, "?integration_key=")) {
 				return errors.New("flashduty param must have valid integration_url")
 			}
+
+			// duty 不校验 http 相关配置
+			return nil
 		case "custom":
 			if len(ncc.ParamConfig.Custom.Params) == 0 {
 				return errors.New("custom param must have valid params")
@@ -984,12 +988,16 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			Password:           "your-password",
 			From:               "your-email",
 			InsecureSkipVerify: true,
-			Batch:              10,
 		}},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
 	for channel, notiCh := range NotiChMap {
+		notiCh.Enable = true
 		notiCh.CreateBy = "system"
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"

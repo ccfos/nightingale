@@ -107,6 +107,8 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
+	NotifyVersion         int                    `json:"notify_version"`
 }
 
 type ChildVarConfig struct {
