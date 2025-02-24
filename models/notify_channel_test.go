@@ -193,11 +193,7 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "ali-sms",
-			notifyParam: map[string]string{
-				"access_key_id":     "-",
-				"access_key_secret": "-",
-			},
+			name:         "ali-sms",
 			flashDutyIDs: []int64{0},
 			notifyChannel: &NotifyChannelConfig{
 				Ident: "ali-sms",
@@ -207,12 +203,20 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 					Timeout: 10,
 					Request: RequestDetail{
 						Parameters: map[string]string{
-							"access_key_id":     "{{ .access_key_id }}",
-							"access_key_secret": "{{ .access_key_secret }}",
-							"sign_name":         "n9e",
-							"template_code":     "SMS_478575599",
-							"phone_numbers":     `{{ join .user_info.phone "," }}`,
-							"template_param":    `{"code":"{{ .tpl.code }}"}`,
+							"AccessKeyId":     "-",
+							"AccessKeySecret": "-",
+
+							"Action":           "SendSms",
+							"Format":           "JSON",
+							"OutId":            "123",
+							"PhoneNumbers":     `{{ join .user_info.phone "," }}`,
+							"RegionId":         "cn-hangzhou",
+							"SignName":         "n9e",
+							"SignatureMethod":  "HMAC-SHA1",
+							"SignatureVersion": "1.0",
+							"TemplateCode":     "SMS_478575599",
+							"TemplateParam":    `{"code":"{{ .tpl.code }}"}`,
+							"Version":          "2017-05-25",
 						},
 					},
 					Headers: map[string]string{
@@ -236,26 +240,30 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "tx-sms",
-			notifyParam: map[string]string{
-				"access_key_id":     "-",
-				"access_key_secret": "-",
-			},
+			name:         "ali-voice",
 			flashDutyIDs: []int64{0},
 			notifyChannel: &NotifyChannelConfig{
-				Ident: "ali-sms",
+				Ident: "ali-voice",
 				HTTPRequestConfig: &HTTPRequestConfig{
 					Method:  "POST",
-					URL:     "http://dysmsapi.aliyuncs.com",
+					URL:     "http://dyvmsapi.aliyuncs.com",
 					Timeout: 10,
 					Request: RequestDetail{
 						Parameters: map[string]string{
-							"access_key_id":     "{{ .access_key_id }}",
-							"access_key_secret": "{{ .access_key_secret }}",
-							"sign_name":         "n9e",
-							"template_code":     "SMS_478575599",
-							"phone_numbers":     `{{ join .user_info.phone "," }}`,
-							"template_param":    `{"code":"{{ .tpl.code }}"}`,
+							"Action":   "SingleCallByTts",
+							"Version":  "2017-05-25",
+							"Format":   "JSON",
+							"OutId":    "123",
+							"RegionId": "cn-hangzhou",
+
+							"SignatureMethod":  "HMAC-SHA1",
+							"SignatureVersion": "1.0",
+
+							"AccessKeyId":     "-",
+							"AccessKeySecret": "-",
+							"TtsCode":         "TTS_282205058",
+							"CalledNumber":    `{{ index .user_info.phone 0 }}`,
+							"TtsParam":        `{"alert_name":"test"}`,
 						},
 					},
 					Headers: map[string]string{
@@ -272,6 +280,86 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 			userInfos: []*User{
 				{
 					Phone: "18021015257",
+				},
+			},
+			notifyTemplate: map[string]string{
+				"code": "123456",
+			},
+		},
+		{
+			name:         "tx-sms",
+			notifyParam:  map[string]string{},
+			flashDutyIDs: []int64{0},
+			notifyChannel: &NotifyChannelConfig{
+				Ident: "tx-sms",
+				HTTPRequestConfig: &HTTPRequestConfig{
+					Method:  "POST",
+					URL:     "https://sms.tencentcloudapi.com",
+					Timeout: 10,
+					Request: RequestDetail{
+						Body: `{"PhoneNumberSet":[{{range $index, $element := .user_info.phone}}{{if $index}},{{end}}"{{$element}}"{{end}}],"SignName":"快猫星云","SmsSdkAppId":"1400682772","TemplateId":"1584300","TemplateParamSet":["测试"]}`,
+					},
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+						"Host":         "sms.tencentcloudapi.com",
+						"X-TC-Action":  "SendSms",
+						"X-TC-Version": "2021-01-11",
+						"X-TC-Region":  "ap-guangzhou",
+						"Service":      "sms",
+						"Secret_ID":    "-",
+						"Secret_Key":   "-",
+					},
+				},
+				ParamConfig: &NotifyParamConfig{
+					ParamType: "user_info",
+					UserInfo: UserInfoParam{
+						ContactKey: "phone",
+					},
+				},
+			},
+			userInfos: []*User{
+				{
+					Phone: "+8618021015257",
+				},
+			},
+			notifyTemplate: map[string]string{
+				"code": "123456",
+			},
+		},
+		{
+			name:         "tx-voice",
+			notifyParam:  map[string]string{},
+			flashDutyIDs: []int64{0},
+			notifyChannel: &NotifyChannelConfig{
+				Ident: "tx-voice",
+				HTTPRequestConfig: &HTTPRequestConfig{
+					Method:  "POST",
+					URL:     "https://vms.tencentcloudapi.com",
+					Timeout: 10,
+					Request: RequestDetail{
+						Body: `{"CalledNumber":"{{ index .user_info.phone 0 }}","VoiceSdkAppid":"1400655317","TemplateId":"1475778","TemplateParamSet":["测试"]}`,
+					},
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+						"Host":         "vms.tencentcloudapi.com",
+						"X-TC-Action":  "SendTtsVoice",
+						"X-TC-Version": "2020-09-02",
+						"X-TC-Region":  "ap-beijing",
+						"Service":      "vms",
+						"Secret_ID":    "-",
+						"Secret_Key":   "-",
+					},
+				},
+				ParamConfig: &NotifyParamConfig{
+					ParamType: "user_info",
+					UserInfo: UserInfoParam{
+						ContactKey: "phone",
+					},
+				},
+			},
+			userInfos: []*User{
+				{
+					Phone: "+8618021015257",
 				},
 			},
 			notifyTemplate: map[string]string{
