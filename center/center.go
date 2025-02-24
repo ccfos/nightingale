@@ -105,6 +105,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	notifyRuleCache := memsto.NewNotifyRuleCache(ctx, syncStats)
 	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
 	messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
+	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -126,7 +127,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	go func() {

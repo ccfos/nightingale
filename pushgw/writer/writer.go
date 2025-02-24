@@ -3,6 +3,7 @@ package writer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,7 +12,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/ccfos/nightingale/v6/pkg/fasttime"
+	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 
 	"github.com/golang/protobuf/proto"
@@ -29,36 +32,10 @@ type WriterType struct {
 	RetryInterval    int64 // 单位秒
 }
 
-func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries {
-	ritems := make([]prompb.TimeSeries, 0, len(items))
-	for _, item := range items {
-		lbls := Process(item.Labels, w.Opts.WriteRelabels...)
-		if len(lbls) == 0 {
-			continue
-		}
-		item.Labels = lbls
-		ritems = append(ritems, item)
-	}
-	return ritems
-}
-
-func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
-	if len(items) == 0 {
-		return
-	}
-
-	items = w.writeRelabel(items)
-	if len(items) == 0 {
-		return
-	}
-
+func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
 	CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
-	start := time.Now()
-	defer func() {
-		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
-	}()
 
-	if w.ForceUseServerTS {
+	if forceUseServerTS {
 		ts := int64(fasttime.UnixTimestamp()) * 1000
 		for i := 0; i < len(items); i++ {
 			if len(items[i].Samples) == 0 {
@@ -68,11 +45,33 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 		}
 	}
 
-	req := &prompb.WriteRequest{
-		Timeseries: items,
+	if encodeType == "proto" {
+		req := &prompb.WriteRequest{
+			Timeseries: items,
+		}
+
+		return proto.Marshal(req)
 	}
 
-	data, err := proto.Marshal(req)
+	return json.Marshal(items)
+}
+
+func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
+	if len(items) == 0 {
+		return
+	}
+
+	items = Relabel(items, w.Opts.WriteRelabels)
+	if len(items) == 0 {
+		return
+	}
+
+	start := time.Now()
+	defer func() {
+		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+	}()
+
+	data, err := beforeWrite(key, items, w.ForceUseServerTS, "proto")
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
 		return
@@ -159,7 +158,7 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 
 type WritersType struct {
 	pushgw      pconf.Pushgw
-	backends    map[string]WriterType
+	backends    map[string]Writer
 	queues      map[string]*IdentQueue
 	AllQueueLen atomic.Value
 	sync.RWMutex
@@ -198,7 +197,7 @@ func (ws *WritersType) SetAllQueueLen() {
 
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
-		backends:    make(map[string]WriterType),
+		backends:    make(map[string]Writer),
 		queues:      make(map[string]*IdentQueue),
 		pushgw:      pushgwConfig,
 		AllQueueLen: atomic.Value{},
@@ -211,7 +210,7 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	return writers
 }
 
-func (ws *WritersType) Put(name string, writer WriterType) {
+func (ws *WritersType) Put(name string, writer Writer) {
 	ws.backends[name] = writer
 }
 
@@ -272,6 +271,10 @@ func (ws *WritersType) PushSample(ident string, v interface{}) error {
 	return nil
 }
 
+type Writer interface {
+	Write(string, []prompb.TimeSeries, ...map[string]string)
+}
+
 func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 	for {
 		select {
@@ -292,8 +295,17 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 }
 
 func (ws *WritersType) Init() error {
-	opts := ws.pushgw.Writers
 	ws.AllQueueLen.Store(0)
+
+	if err := ws.initWriters(); err != nil {
+		return err
+	}
+
+	return ws.initKafkaWriters()
+}
+
+func (ws *WritersType) initWriters() error {
+	opts := ws.pushgw.Writers
 
 	for i := 0; i < len(opts); i++ {
 		tlsConf, err := opts[i].ClientConfig.TLSConfig()
@@ -338,6 +350,59 @@ func (ws *WritersType) Init() error {
 		}
 
 		ws.Put(opts[i].Url, writer)
+	}
+
+	return nil
+}
+
+func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
+	if opt.SASL != nil && opt.SASL.Enable {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.User = opt.SASL.User
+		cfg.Net.SASL.Password = opt.SASL.Password
+		cfg.Net.SASL.Mechanism = sarama.SASLMechanism(opt.SASL.Mechanism)
+		cfg.Net.SASL.Version = opt.SASL.Version
+		cfg.Net.SASL.Handshake = opt.SASL.Handshake
+		cfg.Net.SASL.AuthIdentity = opt.SASL.AuthIdentity
+	}
+}
+
+func (ws *WritersType) initKafkaWriters() error {
+	opts := ws.pushgw.KafkaWriters
+
+	for i := 0; i < len(opts); i++ {
+		cfg := sarama.NewConfig()
+		initKakfaSASL(cfg, opts[i])
+		if opts[i].Timeout != 0 {
+			cfg.Producer.Timeout = time.Duration(opts[i].Timeout) * time.Second
+		}
+		if opts[i].Version != "" {
+			kafkaVersion, err := sarama.ParseKafkaVersion(opts[i].Version)
+			if err != nil {
+				logger.Warningf("parse kafka version got error: %v", err)
+			} else {
+				cfg.Version = kafkaVersion
+			}
+		}
+
+		if opts[i].Typ == "" {
+			opts[i].Typ = kafka.AsyncProducer
+		}
+
+		producer, err := kafka.New(opts[i].Typ, opts[i].Brokers, cfg)
+		if err != nil {
+			logger.Warningf("new kafka producer got error: %v", err)
+			return err
+		}
+
+		writer := KafkaWriterType{
+			Opts:             opts[i],
+			ForceUseServerTS: ws.pushgw.ForceUseServerTS,
+			Client:           producer,
+			RetryCount:       ws.pushgw.WriterOpt.RetryCount,
+			RetryInterval:    ws.pushgw.WriterOpt.RetryInterval,
+		}
+		ws.Put(fmt.Sprintf("%v_%s", opts[i].Brokers, opts[i].Topic), writer)
 	}
 
 	return nil

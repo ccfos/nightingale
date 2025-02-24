@@ -23,6 +23,8 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
+type AlertRuleModifyHookFunc func(ar *models.AlertRule)
+
 // Return all, front-end search and paging
 func (rt *Router) alertRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
@@ -451,6 +453,7 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	err = ar.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
 	ginx.Dangerous(err)
 
+	rt.AlertRuleModifyHook(ar)
 	ginx.NewRender(c).Data(ar, err)
 }
 

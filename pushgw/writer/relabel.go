@@ -37,6 +37,19 @@ func Process(labels []prompb.Label, cfgs ...*pconf.RelabelConfig) []prompb.Label
 	return labels
 }
 
+func Relabel(items []prompb.TimeSeries, rc []*pconf.RelabelConfig) []prompb.TimeSeries {
+	ritems := make([]prompb.TimeSeries, 0, len(items))
+	for _, item := range items {
+		lbls := Process(item.Labels, rc...)
+		if len(lbls) == 0 {
+			continue
+		}
+		item.Labels = lbls
+		ritems = append(ritems, item)
+	}
+	return ritems
+}
+
 func getValue(ls []prompb.Label, name model.LabelName) string {
 	for _, l := range ls {
 		if l.Name == string(name) {

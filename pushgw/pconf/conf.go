@@ -21,6 +21,7 @@ type Pushgw struct {
 	DropSample          []map[string]string
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
+	KafkaWriters        []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -54,6 +55,28 @@ type WriterOptions struct {
 	WriteRelabels []*RelabelConfig
 
 	tlsx.ClientConfig
+}
+
+type SASLConfig struct {
+	Enable       bool
+	User         string
+	Password     string
+	Mechanism    string
+	Version      int16
+	Handshake    bool
+	AuthIdentity string
+}
+
+type KafkaWriterOptions struct {
+	Typ     string
+	Brokers []string
+	Topic   string
+	Version string
+	Timeout int64
+
+	SASL *SASLConfig
+
+	WriteRelabels []*RelabelConfig
 }
 
 type RelabelConfig struct {

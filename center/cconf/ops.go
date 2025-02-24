@@ -214,8 +214,6 @@ ops:
       cname: Add Task Instance
     - name: "/job-tasks/put"
       cname: Modify Task Instance
-    - name: "/ibex-settings"
-      cname: View Task Settings
 
 - name: targets
   cname: Infrastructure
@@ -292,8 +290,6 @@ ops:
       cname: View Server Information
     - name: "/help/sso"
       cname: View SSO Configuration
-    - name: "/help/migrate"
-      cname: View Migration Configuration
     - name: "/site-settings"
       cname: View Site Settings
 

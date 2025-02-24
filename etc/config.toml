@@ -42,10 +42,10 @@ WriteTimeout = 40
 IdleTimeout = 120
 
 [HTTP.ShowCaptcha]
-Enable = false 
+Enable = false
 
 [HTTP.APIForAgent]
-Enable = true 
+Enable = true
 # [HTTP.APIForAgent.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
@@ -174,6 +174,18 @@ MaxIdleConnsPerHost = 100
 # Replacement = "$1:80"
 # TargetLabel = "__address__"
 
+# [[Pushgw.KafkaWriters]]
+# Brokers = ["127.0.0.1:9092"]
+# Topic = "n9e-metrics"
+# [Pushgw.KafkaWriters.SASL]
+# Enable = true
+# User = "admin"
+# Password = "admin"
+# Mechanism = "PLAIN"
+# Version = 1
+# Handshake = true
+# AuthIdentity = ""
+
 [Ibex]
-Enable = false
+Enable = true
 RPCListen = "0.0.0.0:20090"

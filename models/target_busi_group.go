@@ -109,8 +109,8 @@ func TargetUnbindBgids(ctx *ctx.Context, idents []string, bgids []int64) error {
 		idents, bgids).Delete(&TargetBusiGroup{}).Error
 }
 
-func TargetDeleteBgids(ctx *ctx.Context, idents []string) error {
-	return DB(ctx).Where("target_ident in ?", idents).Delete(&TargetBusiGroup{}).Error
+func TargetDeleteBgids(tx *gorm.DB, idents []string) error {
+	return tx.Where("target_ident in ?", idents).Delete(&TargetBusiGroup{}).Error
 }
 
 func TargetOverrideBgids(ctx *ctx.Context, idents []string, bgids []int64, tags []string) error {

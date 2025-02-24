@@ -24,6 +24,7 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -48,40 +49,41 @@ type Router struct {
 	Sso               *sso.SsoClient
 	UserCache         *memsto.UserCacheType
 	UserGroupCache    *memsto.UserGroupCacheType
+	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
-	HeartbeatHook     HeartbeatHookFunc
-	TargetDeleteHook  models.TargetDeleteHookFunc
+
+	HeartbeatHook       HeartbeatHookFunc
+	TargetDeleteHook    models.TargetDeleteHookFunc
+	AlertRuleModifyHook AlertRuleModifyHookFunc
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType) *Router {
 	return &Router{
-		HTTP:              httpConfig,
-		Center:            center,
-		Alert:             alert,
-		Ibex:              ibex,
-		Operations:        operations,
-		DatasourceCache:   ds,
-		NotifyConfigCache: ncc,
-		PromClients:       pc,
-		Redis:             redis,
-		MetaSet:           metaSet,
-		IdentSet:          idents,
-		TargetCache:       tc,
-		Sso:               sso,
-		UserCache:         uc,
-		UserGroupCache:    ugc,
-		Ctx:               ctx,
-		HeartbeatHook:     func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:  emptyDeleteHook,
+		HTTP:                httpConfig,
+		Center:              center,
+		Alert:               alert,
+		Ibex:                ibex,
+		Operations:          operations,
+		DatasourceCache:     ds,
+		NotifyConfigCache:   ncc,
+		PromClients:         pc,
+		Redis:               redis,
+		MetaSet:             metaSet,
+		IdentSet:            idents,
+		TargetCache:         tc,
+		Sso:                 sso,
+		UserCache:           uc,
+		UserGroupCache:      ugc,
+		UserTokenCache:      utc,
+		Ctx:                 ctx,
+		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
+		AlertRuleModifyHook: func(ar *models.AlertRule) {},
 	}
-}
-
-func emptyDeleteHook(ctx *ctx.Context, idents []string) error {
-	return nil
 }
 
 func stat() gin.HandlerFunc {
@@ -258,6 +260,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
+		pages.GET("/self/token", rt.auth(), rt.user(), rt.getToken)
+		pages.POST("/self/token", rt.auth(), rt.user(), rt.addToken)
+		pages.DELETE("/self/token/:id", rt.auth(), rt.user(), rt.deleteToken)
 
 		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)

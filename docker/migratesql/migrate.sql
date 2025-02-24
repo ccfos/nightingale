@@ -118,6 +118,10 @@ CREATE TABLE `target_busi_group` (
   UNIQUE KEY `idx_target_group` (`target_ident`,`group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+/* v7.7.0 2024-11-13 */
+ALTER TABLE `recording_rule` ADD COLUMN `datasource_queries` TEXT;
+ALTER TABLE `alert_rule` ADD COLUMN `datasource_queries` TEXT;
+
 /* v7.7.2 2024-12-02 */
 ALTER TABLE alert_subscribe MODIFY COLUMN rule_ids varchar(1024);
 ALTER TABLE alert_subscribe MODIFY COLUMN busi_groups varchar(4096);
@@ -147,4 +151,15 @@ CREATE TABLE `dash_annotation` (
     `update_by` varchar(64) not null default '' comment 'updater',
     PRIMARY KEY (`id`),
     KEY `idx_dashboard_id` (`dashboard_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* v8.0.0-beta.5 2025-02-05 */
+CREATE TABLE `user_token` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `username` varchar(255) NOT NULL DEFAULT '',
+    `token_name` varchar(255) NOT NULL DEFAULT '',
+    `token` varchar(255) NOT NULL DEFAULT '',
+    `create_at` bigint NOT NULL DEFAULT 0,
+    `last_used` bigint NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
