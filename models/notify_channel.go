@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"html/template"
 	"io/ioutil"
 	"net"
@@ -27,7 +26,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
-	"github.com/satori/go.uuid"
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/sys"
@@ -121,6 +121,7 @@ type SMTPRequestConfig struct {
 	Password           string `json:"password"`
 	From               string `json:"from"`
 	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+	Batch              int    `json:"batch"`
 }
 
 type ScriptRequestConfig struct {
