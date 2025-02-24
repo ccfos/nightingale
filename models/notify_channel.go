@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -432,55 +433,40 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
-
-	query := url.Values{}
-	query.Add("Action", ncc.HTTPRequestConfig.Request.Parameters["Action"])
-	query.Add("Format", ncc.HTTPRequestConfig.Request.Parameters["Format"])
-	query.Add("OutId", ncc.HTTPRequestConfig.Request.Parameters["OutId"])
-	query.Add("Version", ncc.HTTPRequestConfig.Request.Parameters["Version"])
-	query.Add("RegionId", ncc.HTTPRequestConfig.Request.Parameters["RegionId"])
-	query.Add("SignatureMethod", ncc.HTTPRequestConfig.Request.Parameters["SignatureMethod"])
-	query.Add("SignatureVersion", ncc.HTTPRequestConfig.Request.Parameters["SignatureVersion"])
-
-	Timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
-	query.Add("Timestamp", Timestamp)
-
-	AccessKeyId := ncc.HTTPRequestConfig.Request.Parameters["AccessKeyId"]
-	query.Add("AccessKeyId", AccessKeyId)
-
-	var numberKey string
+	// 渲染 param
+	var paramKey string
 	if ncc.Ident == "ali-sms" {
-		numberKey = "PhoneNumbers"
+		paramKey = "TemplateParam"
 	} else {
-		numberKey = "CalledNumber"
+		paramKey = "TtsParam"
 	}
-	number := ncc.HTTPRequestConfig.Request.Parameters[numberKey]
-	query.Add(numberKey, number)
-
-	SignName := ncc.HTTPRequestConfig.Request.Parameters["SignName"]
-	query.Add("SignName", SignName)
-
-	SignatureNonce := uuid.NewV4().String()
-	query.Add("SignatureNonce", SignatureNonce)
-
-	TemplateCode := ncc.HTTPRequestConfig.Request.Parameters["TemplateCode"]
-	query.Add("TemplateCode", TemplateCode)
-
 	bodyTpl := make(map[string]interface{})
 	bodyTpl["tpl"] = content
 	for _, param := range ncc.ParamConfig.Custom.Params {
 		bodyTpl[param.Key] = param.CName
 	}
-	tpl, _ := template.New("TemplateParam").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Parameters["TemplateParam"])
-
+	tpl, _ := template.New(paramKey).Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Parameters[paramKey])
 	var body bytes.Buffer
 	_ = tpl.Execute(&body, bodyTpl)
+	param := body.String()
 
-	TemplateParam := body.String()
-	query.Add("TemplateParam", TemplateParam)
+	query := url.Values{}
+	for k, v := range ncc.HTTPRequestConfig.Request.Parameters {
+		if k == "AccessKeySecret" || k == paramKey {
+			continue
+		}
+		query.Add(k, v)
+	}
 
-	AccessKeySecret := ncc.HTTPRequestConfig.Request.Parameters["AccessKeySecret"]
-	signature := aliSignature(ncc.HTTPRequestConfig.Method, AccessKeyId, AccessKeySecret, number, SignName, SignatureNonce, TemplateCode, TemplateParam, Timestamp)
+	query.Add(paramKey, param)
+
+	Timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	query.Add("Timestamp", Timestamp)
+
+	SignatureNonce := uuid.NewV4().String()
+	query.Add("SignatureNonce", SignatureNonce)
+
+	signature := aliSignature(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.Request.Parameters["AccessKeySecret"], query)
 	query.Add("Signature", signature)
 	return query
 }
@@ -546,21 +532,18 @@ func sign(key []byte, msg string) []byte {
 	return h.Sum(nil)
 }
 
-func aliSignature(method, accessKeyId, accessKeySecret, phoneNumbers, signName, signatureNonce, templateCode, templateParam, timestamp string) string {
-	sortQueryString := fmt.Sprintf(AliSmsSortQuery,
-		accessKeyId,
-		url.QueryEscape(phoneNumbers),
-		url.QueryEscape(signName),
-		url.QueryEscape(signatureNonce),
-		templateCode,
-		url.QueryEscape(templateParam),
-		url.QueryEscape(timestamp),
-	)
+func aliSignature(method, accessSecret string, query url.Values) string {
+	queryStrs := make([]string, 0, len(query))
+	for k, v := range query {
+		queryStrs = append(queryStrs, fmt.Sprintf("%s=%s", url.QueryEscape(k), url.QueryEscape(v[0])))
+	}
 
-	urlencode := encode_local(sortQueryString)
+	sort.Strings(queryStrs)
+
+	urlencode := encode_local(strings.Join(queryStrs, "&"))
 	sign_str := fmt.Sprintf("%s&%%2F&%s", method, urlencode)
 
-	key := []byte(accessKeySecret + "&")
+	key := []byte(accessSecret + "&")
 	mac := hmac.New(sha1.New, key)
 	mac.Write([]byte(sign_str))
 	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
