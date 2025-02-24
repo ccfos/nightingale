@@ -20,7 +20,24 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"bytes"
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
 	"strings"
+	"syscall"
 	"syscall"
 	"text/template"
 	"time"
@@ -30,41 +47,17 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
+	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/toolkits/pkg/file"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/satori/go.uuid"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/sys"
 	"gopkg.in/gomail.v2"
 )
-
-const AliSmsSortQuery string = "AccessKeyId=%s" +
-	"&Action=SendSms" +
-	"&Format=JSON" +
-	"&OutId=123" +
-	"&PhoneNumbers=%s" +
-	"&RegionId=cn-hangzhou" +
-	"&SignName=%s" +
-	"&SignatureMethod=HMAC-SHA1" +
-	"&SignatureNonce=%s" +
-	"&SignatureVersion=1.0" +
-	"&TemplateCode=%s" +
-	"&TemplateParam=%s" +
-	"&Timestamp=%s" +
-	"&Version=2017-05-25"
-
-const AliVoiceSortQuery string = "AccessKeyId=%s" +
-	"&Action=SingleCallByTts" +
-	"&CalledNumber=%s" +
-	"&Format=JSON" +
-	"&OutId=123" +
-	"&RegionId=cn-hangzhou" +
-	"&SignatureMethod=HMAC-SHA1" +
-	"&SignatureNonce=%s" +
-	"&SignatureVersion=1.0" +
-	"&TtsCode=%s" +
-	"&TtsParam=%s" +
-	"&Timestamp=%s" +
-	"&Version=2017-05-25"
 
 type EmailContext struct {
 	Events []*AlertCurEvent
@@ -138,6 +131,7 @@ type SMTPRequestConfig struct {
 	Password           string `json:"password"`
 	From               string `json:"from"`
 	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
+	Batch              int    `json:"batch"`
 }
 
 type ScriptRequestConfig struct {
@@ -175,6 +169,526 @@ type RequestDetail struct {
 	Parameters map[string]string `json:"parameters"` // URL 参数
 	Form       string            `json:"form"`       // 来源
 	Body       string            `json:"body"`       // 请求体
+}
+
+func NotifyChannelStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=notify_channel")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&NotifyChannelConfig{}).Select("count(*) as total", "max(update_at) as last_updated").Where("enable = ?", true)
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func NotifyChannelGetsAll(ctx *ctx.Context) ([]*NotifyChannelConfig, error) {
+	if !ctx.IsCenter {
+		channels, err := poster.GetByUrls[[]*NotifyChannelConfig](ctx, "/v1/n9e/notify-channels-v2")
+		return channels, err
+	}
+
+	var channels []*NotifyChannelConfig
+	err := DB(ctx).Where("enable = ?", true).Find(&channels).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return channels, nil
+}
+
+func NotifyChannelGets(ctx *ctx.Context, id int64, name, ident string, enabled int) ([]*NotifyChannelConfig, error) {
+	session := DB(ctx)
+
+	if id != 0 {
+		session = session.Where("id = ?", id)
+	}
+
+	if name != "" {
+		session = session.Where("name = ?", name)
+	}
+
+	if ident != "" {
+		session = session.Where("ident = ?", ident)
+	}
+
+	if enabled != -1 {
+		session = session.Where("enable = ?", enabled)
+	}
+
+	var channels []*NotifyChannelConfig
+	err := session.Find(&channels).Error
+
+	return channels, err
+}
+
+func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
+	// 设置代理
+	var proxyFunc func(*http.Request) (*url.URL, error)
+	if nc.HTTPRequestConfig.Proxy != "" {
+		proxyURL, err := url.Parse(nc.HTTPRequestConfig.Proxy)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy URL: %v", err)
+		}
+		proxyFunc = http.ProxyURL(proxyURL)
+	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: nc.HTTPRequestConfig.TLS != nil && nc.HTTPRequestConfig.TLS.SkipVerify,
+	}
+
+	transport := &http.Transport{
+		Proxy:           proxyFunc,
+		TLSClientConfig: tlsConfig,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(nc.HTTPRequestConfig.Timeout) * time.Second,
+		}).DialContext,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   time.Duration(nc.HTTPRequestConfig.Timeout) * time.Second,
+	}
+
+	return client, nil
+}
+
+func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) error {
+
+	if client == nil {
+		return fmt.Errorf("http client not found")
+	}
+
+	// MessageTemplate
+	fullTpl := make(map[string]interface{})
+	fullTpl["tpl"] = content
+
+	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
+	body, err := ncc.parseRequestBody(fullTpl)
+	if err != nil {
+		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
+		return err
+	}
+
+	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.ParamConfig.FlashDuty.IntegrationUrl, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v, event: %v", err, events)
+		return err
+	}
+
+	// 设置 URL 参数
+	query := req.URL.Query()
+	query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
+	req.URL.RawQuery = query.Encode()
+
+	// 重试机制
+	for i := 0; i <= ncc.HTTPRequestConfig.RetryTimes; i++ {
+		resp, err := client.Do(req)
+		if err != nil {
+			if i < ncc.HTTPRequestConfig.RetryTimes {
+				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+				continue
+			}
+			return fmt.Errorf("failed to send request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response:", err)
+		}
+
+		// 打印响应
+		fmt.Println("Response:", string(body))
+
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+
+		if i < ncc.HTTPRequestConfig.RetryTimes {
+			time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+		}
+	}
+
+	return errors.New("failed to send request")
+}
+
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, client *http.Client) error {
+
+	if client == nil {
+		return fmt.Errorf("http client not found")
+	}
+
+	// MessageTemplate
+	fullTpl := make(map[string]interface{})
+	fullTpl["tpl"] = content
+	// 用户信息
+	token := make([]string, 0)
+	for _, userInfo := range userInfos {
+		var t string
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
+			t = userInfo.Phone
+
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
+			t = userInfo.Email
+
+		} else {
+			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
+		}
+
+		if t != "" {
+			token = append(token, t)
+		}
+	}
+	u := map[string][]string{
+		ncc.ParamConfig.UserInfo.ContactKey: token,
+	}
+	fullTpl["user_info"] = u
+	// 自定义参数
+	for key, value := range param {
+		fullTpl[key] = value
+	}
+
+	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
+	body, err := ncc.parseRequestBody(fullTpl)
+	if err != nil {
+		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
+		return err
+	}
+
+	// 替换 URL Header Parameters 中的变量
+	ncc.replaceVariables(fullTpl, param)
+
+	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.URL, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v, event: %v", err, events)
+		return err
+	}
+
+	// 设置请求头
+	for key, value := range ncc.HTTPRequestConfig.Headers {
+		req.Header.Set(key, value)
+	}
+
+	// 设置 URL 参数
+	query := req.URL.Query()
+	for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
+		query.Add(key, value)
+	}
+
+	// 阿里云短信特殊处理
+	if ncc.Ident == "ali-sms" {
+		query = ncc.getAliQuery(content)
+	}
+
+	req.URL.RawQuery = query.Encode()
+
+	// 重试机制
+	for i := 0; i <= ncc.HTTPRequestConfig.RetryTimes; i++ {
+		resp, err := client.Do(req)
+		if err != nil {
+			if i < ncc.HTTPRequestConfig.RetryTimes {
+				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+				continue
+			}
+			return fmt.Errorf("failed to send request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response:", err)
+		}
+
+		// 打印响应
+		fmt.Println("Response:", string(body))
+
+		if resp.StatusCode == http.StatusOK {
+			return nil
+		}
+
+		if i < ncc.HTTPRequestConfig.RetryTimes {
+			time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
+		}
+	}
+
+	return errors.New("failed to send request")
+}
+
+func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
+
+	query := url.Values{}
+	query.Add("Action", "SendSms")
+	query.Add("Format", "JSON")
+	query.Add("OutId", "123")
+	query.Add("Version", "2017-05-25")
+	query.Add("RegionId", "cn-hangzhou")
+	query.Add("SignatureMethod", "HMAC-SHA1")
+	query.Add("SignatureVersion", "1.0")
+
+	Timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	query.Add("Timestamp", Timestamp)
+
+	AccessKeyId := ncc.HTTPRequestConfig.Request.Parameters["access_key_id"]
+	query.Add("AccessKeyId", AccessKeyId)
+
+	PhoneNumbers := ncc.HTTPRequestConfig.Request.Parameters["phone_numbers"]
+	query.Add("PhoneNumbers", PhoneNumbers)
+
+	SignName := ncc.HTTPRequestConfig.Request.Parameters["sign_name"]
+	query.Add("SignName", SignName)
+
+	SignatureNonce := uuid.NewV4().String()
+	query.Add("SignatureNonce", SignatureNonce)
+
+	TemplateCode := ncc.HTTPRequestConfig.Request.Parameters["template_code"]
+	query.Add("TemplateCode", TemplateCode)
+
+	bodyTpl := make(map[string]interface{})
+	bodyTpl["tpl"] = content
+	for _, param := range ncc.ParamConfig.Custom.Params {
+		bodyTpl[param.Key] = param.CName
+	}
+	tpl, _ := template.New("template_parma").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Parameters["template_param"])
+
+	var body bytes.Buffer
+	_ = tpl.Execute(&body, bodyTpl)
+
+	TemplateParam := body.String()
+	query.Add("TemplateParam", TemplateParam)
+
+	AccessKeySecret := ncc.HTTPRequestConfig.Request.Parameters["access_key_secret"]
+	signature := aliSignature(ncc.HTTPRequestConfig.Method, AccessKeyId, AccessKeySecret, PhoneNumbers, SignName, SignatureNonce, TemplateCode, TemplateParam, Timestamp)
+	query.Add("Signature", signature)
+	return query
+}
+
+func aliSignature(method, accessKeyId, accessKeySecret, phoneNumbers, signName, signatureNonce, templateCode, templateParam, timestamp string) string {
+	sortQueryString := fmt.Sprintf(AliSortQuery,
+		accessKeyId,
+		url.QueryEscape(phoneNumbers),
+		url.QueryEscape(signName),
+		url.QueryEscape(signatureNonce),
+		templateCode,
+		url.QueryEscape(templateParam),
+		url.QueryEscape(timestamp),
+	)
+
+	urlencode := encode_local(sortQueryString)
+	sign_str := fmt.Sprintf("%s&%%2F&%s", method, urlencode)
+
+	key := []byte(accessKeySecret + "&")
+	mac := hmac.New(sha1.New, key)
+	mac.Write([]byte(sign_str))
+	signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	return signature
+}
+
+func encode_local(encode_str string) string {
+	urlencode := url.QueryEscape(encode_str)
+	urlencode = strings.Replace(urlencode, "+", "%%20", -1)
+	urlencode = strings.Replace(urlencode, "*", "%2A", -1)
+	urlencode = strings.Replace(urlencode, "%%7E", "~", -1)
+	urlencode = strings.Replace(urlencode, "/", "%%2F", -1)
+	return urlencode
+}
+
+func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{}) ([]byte, error) {
+	tpl, err := template.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Body)
+	if err != nil {
+		return nil, err
+	}
+	var body bytes.Buffer
+	err = tpl.Execute(&body, bodyTpl)
+	return body.Bytes(), err
+}
+
+func getParsedString(name, tplStr string, tplData map[string]interface{}) string {
+	tpl, err := template.New(name).Funcs(tplx.TemplateFuncMap).Parse(tplStr)
+	if err != nil {
+		return ""
+	}
+	var body bytes.Buffer
+	err = tpl.Execute(&body, tplData)
+
+	return body.String()
+}
+
+func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}, param map[string]string) {
+	if needsTemplateRendering(ncc.HTTPRequestConfig.URL) {
+		ncc.HTTPRequestConfig.URL = getParsedString("url", ncc.HTTPRequestConfig.URL, tpl)
+	}
+
+	for key, value := range ncc.HTTPRequestConfig.Headers {
+		if needsTemplateRendering(value) {
+			ncc.HTTPRequestConfig.Headers[key] = getParsedString(key, value, tpl)
+		}
+	}
+
+	for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
+		if needsTemplateRendering(value) {
+			ncc.HTTPRequestConfig.Request.Parameters[key] = getParsedString(key, value, tpl)
+		}
+	}
+}
+
+// needsTemplateRendering 检查字符串是否包含模板语法
+func needsTemplateRendering(s string) bool {
+	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
+}
+
+func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, userInfos []*User, ch chan *EmailContext) error {
+
+	var to []string
+	for _, userInfo := range userInfos {
+		if userInfo.Email != "" {
+			to = append(to, userInfo.Email)
+		}
+	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", ncc.SMTPRequestConfig.From)
+	m.SetHeader("To", strings.Join(to, ","))
+	m.SetHeader("Subject", content["subject"])
+	m.SetBody("text/html", content["content"])
+
+	ch <- &EmailContext{events, m}
+
+	return nil
+}
+
+func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
+	// 创建一个 map 来存储所有数据
+	data := map[string]interface{}{
+		"events":  events,
+		"content": content,
+	}
+
+	// 将数据序列化为 JSON 字节数组
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+
+	return string(jsonBytes)
+}
+
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) error {
+
+	config := ncc.ScriptRequestConfig
+	if config.Script == "" && config.Path == "" {
+		return nil
+	}
+
+	fpath := ".notify_scriptt"
+	if ncc.ScriptRequestConfig.Path != "" {
+		fpath = ncc.ScriptRequestConfig.Path
+	} else {
+		rewrite := true
+		if file.IsExist(fpath) {
+			oldContent, err := file.ToString(fpath)
+			if err != nil {
+				return err
+			}
+
+			if oldContent == ncc.ScriptRequestConfig.Script {
+				rewrite = false
+			}
+		}
+
+		if rewrite {
+			_, err := file.WriteString(fpath, ncc.ScriptRequestConfig.Script)
+			if err != nil {
+				return err
+			}
+
+			err = os.Chmod(fpath, 0777)
+			if err != nil {
+				return err
+			}
+		}
+
+		cur, _ := os.Getwd()
+		fpath = path.Join(cur, fpath)
+	}
+
+	// 用户信息
+	token := make([]string, 0)
+	for _, userInfo := range userInfos {
+		var t string
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
+			t = userInfo.Phone
+
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
+			t = userInfo.Email
+
+		} else {
+			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
+		}
+
+		if t != "" {
+			token = append(token, t)
+		}
+	}
+
+	cmd := exec.Command(fpath)
+	cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, param, ncc.ParamConfig.UserInfo.ContactKey, token))
+
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+
+	err := startCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
+
+	if isTimeout {
+		if err == nil {
+			return errors.New("timeout and killed process")
+		}
+
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
+
+	return nil
+}
+
+func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string, contactKey string, token []string) []byte {
+	// 创建一个 map 来存储所有数据
+	data := map[string]interface{}{
+		"events":  events,
+		"content": content,
+		"param":   param,
+		"contact": token,
+	}
+
+	// 将数据序列化为 JSON 字节数组
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil
+	}
+
+	return jsonBytes
+}
+
+func startCmd(c *exec.Cmd) error {
+	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	return c.Start()
 }
 
 func NotifyChannelStatistics(ctx *ctx.Context) (*Statistics, error) {
