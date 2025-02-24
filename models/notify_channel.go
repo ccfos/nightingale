@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"html/template"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -34,7 +36,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-const AliSortQuery string = "AccessKeyId=%s" +
+const AliSmsSortQuery string = "AccessKeyId=%s" +
 	"&Action=SendSms" +
 	"&Format=JSON" +
 	"&OutId=123" +
@@ -46,6 +48,20 @@ const AliSortQuery string = "AccessKeyId=%s" +
 	"&SignatureVersion=1.0" +
 	"&TemplateCode=%s" +
 	"&TemplateParam=%s" +
+	"&Timestamp=%s" +
+	"&Version=2017-05-25"
+
+const AliVoiceSortQuery string = "AccessKeyId=%s" +
+	"&Action=SingleCallByTts" +
+	"&CalledNumber=%s" +
+	"&Format=JSON" +
+	"&OutId=123" +
+	"&RegionId=cn-hangzhou" +
+	"&SignatureMethod=HMAC-SHA1" +
+	"&SignatureNonce=%s" +
+	"&SignatureVersion=1.0" +
+	"&TtsCode=%s" +
+	"&TtsParam=%s" +
 	"&Timestamp=%s" +
 	"&Version=2017-05-25"
 
@@ -78,7 +94,7 @@ type NotifyChannelConfig struct {
 	UpdateBy string `json:"update_by"`
 }
 
-func (c *NotifyChannelConfig) TableName() string {
+func (ncc *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
 }
 
@@ -361,20 +377,23 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 		return err
 	}
 
-	// 设置请求头
-	for key, value := range ncc.HTTPRequestConfig.Headers {
-		req.Header.Set(key, value)
+	// 设置请求头 腾讯云短信、语音特殊处理
+	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
+		ncc.setTxHeader(req, body)
+	} else {
+		for key, value := range ncc.HTTPRequestConfig.Headers {
+			req.Header.Set(key, value)
+		}
 	}
 
-	// 设置 URL 参数
+	// 设置 URL 参数 阿里云短信、语音特殊处理
 	query := req.URL.Query()
-	for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
-		query.Add(key, value)
-	}
-
-	// 阿里云短信特殊处理
-	if ncc.Ident == "ali-sms" {
+	if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
 		query = ncc.getAliQuery(content)
+	} else {
+		for key, value := range ncc.HTTPRequestConfig.Request.Parameters {
+			query.Add(key, value)
+		}
 	}
 
 	req.URL.RawQuery = query.Encode()
@@ -415,30 +434,36 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
 
 	query := url.Values{}
-	query.Add("Action", "SendSms")
-	query.Add("Format", "JSON")
-	query.Add("OutId", "123")
-	query.Add("Version", "2017-05-25")
-	query.Add("RegionId", "cn-hangzhou")
-	query.Add("SignatureMethod", "HMAC-SHA1")
-	query.Add("SignatureVersion", "1.0")
+	query.Add("Action", ncc.HTTPRequestConfig.Request.Parameters["Action"])
+	query.Add("Format", ncc.HTTPRequestConfig.Request.Parameters["Format"])
+	query.Add("OutId", ncc.HTTPRequestConfig.Request.Parameters["OutId"])
+	query.Add("Version", ncc.HTTPRequestConfig.Request.Parameters["Version"])
+	query.Add("RegionId", ncc.HTTPRequestConfig.Request.Parameters["RegionId"])
+	query.Add("SignatureMethod", ncc.HTTPRequestConfig.Request.Parameters["SignatureMethod"])
+	query.Add("SignatureVersion", ncc.HTTPRequestConfig.Request.Parameters["SignatureVersion"])
 
 	Timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	query.Add("Timestamp", Timestamp)
 
-	AccessKeyId := ncc.HTTPRequestConfig.Request.Parameters["access_key_id"]
+	AccessKeyId := ncc.HTTPRequestConfig.Request.Parameters["AccessKeyId"]
 	query.Add("AccessKeyId", AccessKeyId)
 
-	PhoneNumbers := ncc.HTTPRequestConfig.Request.Parameters["phone_numbers"]
-	query.Add("PhoneNumbers", PhoneNumbers)
+	var numberKey string
+	if ncc.Ident == "ali-sms" {
+		numberKey = "PhoneNumbers"
+	} else {
+		numberKey = "CalledNumber"
+	}
+	number := ncc.HTTPRequestConfig.Request.Parameters[numberKey]
+	query.Add(numberKey, number)
 
-	SignName := ncc.HTTPRequestConfig.Request.Parameters["sign_name"]
+	SignName := ncc.HTTPRequestConfig.Request.Parameters["SignName"]
 	query.Add("SignName", SignName)
 
 	SignatureNonce := uuid.NewV4().String()
 	query.Add("SignatureNonce", SignatureNonce)
 
-	TemplateCode := ncc.HTTPRequestConfig.Request.Parameters["template_code"]
+	TemplateCode := ncc.HTTPRequestConfig.Request.Parameters["TemplateCode"]
 	query.Add("TemplateCode", TemplateCode)
 
 	bodyTpl := make(map[string]interface{})
@@ -446,7 +471,7 @@ func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Value
 	for _, param := range ncc.ParamConfig.Custom.Params {
 		bodyTpl[param.Key] = param.CName
 	}
-	tpl, _ := template.New("template_parma").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Parameters["template_param"])
+	tpl, _ := template.New("TemplateParam").Funcs(tplx.TemplateFuncMap).Parse(ncc.HTTPRequestConfig.Request.Parameters["TemplateParam"])
 
 	var body bytes.Buffer
 	_ = tpl.Execute(&body, bodyTpl)
@@ -454,14 +479,75 @@ func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Value
 	TemplateParam := body.String()
 	query.Add("TemplateParam", TemplateParam)
 
-	AccessKeySecret := ncc.HTTPRequestConfig.Request.Parameters["access_key_secret"]
-	signature := aliSignature(ncc.HTTPRequestConfig.Method, AccessKeyId, AccessKeySecret, PhoneNumbers, SignName, SignatureNonce, TemplateCode, TemplateParam, Timestamp)
+	AccessKeySecret := ncc.HTTPRequestConfig.Request.Parameters["AccessKeySecret"]
+	signature := aliSignature(ncc.HTTPRequestConfig.Method, AccessKeyId, AccessKeySecret, number, SignName, SignatureNonce, TemplateCode, TemplateParam, Timestamp)
 	query.Add("Signature", signature)
 	return query
 }
 
+func (ncc *NotifyChannelConfig) setTxHeader(req *http.Request, payloadBytes []byte) {
+
+	timestamp := time.Now().Unix()
+
+	authorization := ncc.getTxSignature(string(payloadBytes), timestamp)
+
+	req.Header.Set("Content-Type", ncc.HTTPRequestConfig.Headers["Content-Type"])
+	req.Header.Set("Host", ncc.HTTPRequestConfig.Headers["Host"])
+	req.Header.Set("X-TC-Action", ncc.HTTPRequestConfig.Headers["X-TC-Action"])
+	req.Header.Set("X-TC-Version", ncc.HTTPRequestConfig.Headers["X-TC-Version"])
+	req.Header.Set("X-TC-Region", ncc.HTTPRequestConfig.Headers["X-TC-Region"])
+
+	req.Header.Set("X-TC-Timestamp", fmt.Sprintf("%d", timestamp))
+
+	req.Header.Set("Authorization", authorization)
+}
+
+func (ncc *NotifyChannelConfig) getTxSignature(payloadStr string, timestamp int64) string {
+
+	canonicalHeaders := fmt.Sprintf("content-type:application/json\nhost:%s\nx-tc-action:%s\n",
+		ncc.HTTPRequestConfig.Headers["Host"], strings.ToLower(ncc.HTTPRequestConfig.Headers["X-TC-Action"]))
+
+	hasher := sha256.New()
+	hasher.Write([]byte(payloadStr))
+	hashedRequestPayload := hex.EncodeToString(hasher.Sum(nil))
+	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+		ncc.HTTPRequestConfig.Method,
+		"/",
+		"",
+		canonicalHeaders,
+		"content-type;host;x-tc-action",
+		hashedRequestPayload)
+
+	// 1. 生成日期
+	date := time.Unix(timestamp, 0).UTC().Format("2006-01-02")
+	// 2. 拼接待签名字符串
+	credentialScope := fmt.Sprintf("%s/%s/tc3_request", date, ncc.HTTPRequestConfig.Headers["Service"])
+	hasher = sha256.New()
+	hasher.Write([]byte(canonicalRequest))
+	hashedCanonicalRequest := hex.EncodeToString(hasher.Sum(nil))
+	stringToSign := fmt.Sprintf("TC3-HMAC-SHA256\n%d\n%s\n%s",
+		timestamp,
+		credentialScope,
+		hashedCanonicalRequest)
+	// 3. 计算签名
+	secretDate := sign([]byte("TC3"+ncc.HTTPRequestConfig.Headers["Secret_Key"]), date)
+	secretService := sign(secretDate, ncc.HTTPRequestConfig.Headers["Service"])
+	secretSigning := sign(secretService, "tc3_request")
+	signature := hex.EncodeToString(sign(secretSigning, stringToSign))
+	// 4. 组织Authorization
+	authorization := fmt.Sprintf("TC3-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+		ncc.HTTPRequestConfig.Headers["Secret_ID"], credentialScope, "content-type;host;x-tc-action", signature)
+	return authorization
+}
+
+func sign(key []byte, msg string) []byte {
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(msg))
+	return h.Sum(nil)
+}
+
 func aliSignature(method, accessKeyId, accessKeySecret, phoneNumbers, signName, signatureNonce, templateCode, templateParam, timestamp string) string {
-	sortQueryString := fmt.Sprintf(AliSortQuery,
+	sortQueryString := fmt.Sprintf(AliSmsSortQuery,
 		accessKeyId,
 		url.QueryEscape(phoneNumbers),
 		url.QueryEscape(signName),
@@ -551,22 +637,6 @@ func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[s
 	ch <- &EmailContext{events, m}
 
 	return nil
-}
-
-func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
-	// 创建一个 map 来存储所有数据
-	data := map[string]interface{}{
-		"events":  events,
-		"content": content,
-	}
-
-	// 将数据序列化为 JSON 字节数组
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return ""
-	}
-
-	return string(jsonBytes)
 }
 
 func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) error {
@@ -680,35 +750,35 @@ func startCmd(c *exec.Cmd) error {
 	return c.Start()
 }
 
-func (c *NotifyChannelConfig) Verify() error {
-	if c.Name == "" {
+func (ncc *NotifyChannelConfig) Verify() error {
+	if ncc.Name == "" {
 		return errors.New("channel name cannot be empty")
 	}
 
-	if c.Ident == "" {
+	if ncc.Ident == "" {
 		return errors.New("channel identifier cannot be empty")
 	}
 
-	if c.RequestType != "http" && c.RequestType != "smtp" && c.RequestType != "script" {
+	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" {
 		return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
 	}
 
-	if c.ParamConfig != nil {
-		switch c.ParamConfig.ParamType {
+	if ncc.ParamConfig != nil {
+		switch ncc.ParamConfig.ParamType {
 		case "user_info":
-			if c.ParamConfig.UserInfo.ContactKey == "" {
+			if ncc.ParamConfig.UserInfo.ContactKey == "" {
 				return errors.New("user_info param must have a valid contact_key")
 			}
 		case "flashduty":
-			if c.ParamConfig.FlashDuty.IntegrationUrl == "" {
+			if ncc.ParamConfig.FlashDuty.IntegrationUrl == "" {
 				return errors.New("flashduty param must have valid integration_url")
 			}
 		case "custom":
-			if len(c.ParamConfig.Custom.Params) == 0 {
+			if len(ncc.ParamConfig.Custom.Params) == 0 {
 				return errors.New("custom param must have valid params")
 			}
 			// 校验每个自定义参数项
-			for _, param := range c.ParamConfig.Custom.Params {
+			for _, param := range ncc.ParamConfig.Custom.Params {
 				if param.Key == "" || param.CName == "" || param.Type == "" {
 					return errors.New("custom param items must have valid key, cname and type")
 				}
@@ -719,17 +789,17 @@ func (c *NotifyChannelConfig) Verify() error {
 	}
 
 	// 校验 Request 配置
-	switch c.RequestType {
+	switch ncc.RequestType {
 	case "http":
-		if err := c.ValidateHTTPRequestConfig(); err != nil {
+		if err := ncc.ValidateHTTPRequestConfig(); err != nil {
 			return err
 		}
 	case "smtp":
-		if err := c.ValidateSMTPRequestConfig(); err != nil {
+		if err := ncc.ValidateSMTPRequestConfig(); err != nil {
 			return err
 		}
 	case "script":
-		if err := c.ValidateScriptRequestConfig(); err != nil {
+		if err := ncc.ValidateScriptRequestConfig(); err != nil {
 			return err
 		}
 	}
@@ -737,11 +807,11 @@ func (c *NotifyChannelConfig) Verify() error {
 	return nil
 }
 
-func (c *NotifyChannelConfig) ValidateHTTPRequestConfig() error {
-	if c.HTTPRequestConfig == nil {
+func (ncc *NotifyChannelConfig) ValidateHTTPRequestConfig() error {
+	if ncc.HTTPRequestConfig == nil {
 		return errors.New("http request config cannot be nil")
 	}
-	return c.HTTPRequestConfig.Verify()
+	return ncc.HTTPRequestConfig.Verify()
 }
 
 func (c *HTTPRequestConfig) Verify() error {
@@ -761,11 +831,11 @@ func (c *HTTPRequestConfig) Verify() error {
 	return nil
 }
 
-func (c *NotifyChannelConfig) ValidateSMTPRequestConfig() error {
-	if c.SMTPRequestConfig == nil {
+func (ncc *NotifyChannelConfig) ValidateSMTPRequestConfig() error {
+	if ncc.SMTPRequestConfig == nil {
 		return errors.New("smtp request config cannot be nil")
 	}
-	return c.SMTPRequestConfig.Verify()
+	return ncc.SMTPRequestConfig.Verify()
 }
 
 func (c *SMTPRequestConfig) Verify() error {
@@ -788,36 +858,36 @@ func (c *SMTPRequestConfig) Verify() error {
 	return nil
 }
 
-func (c *NotifyChannelConfig) ValidateScriptRequestConfig() error {
-	if c.ScriptRequestConfig == nil {
+func (ncc *NotifyChannelConfig) ValidateScriptRequestConfig() error {
+	if ncc.ScriptRequestConfig == nil {
 		return errors.New("script request config cannot be nil")
 	}
-	if !(c.ScriptRequestConfig.ScriptType == "script" || c.ScriptRequestConfig.ScriptType == "path") {
+	if !(ncc.ScriptRequestConfig.ScriptType == "script" || ncc.ScriptRequestConfig.ScriptType == "path") {
 		return errors.New("script type must be 'script' or 'path'")
 	}
-	if c.ScriptRequestConfig.Script == "" && c.ScriptRequestConfig.Path == "" {
+	if ncc.ScriptRequestConfig.Script == "" && ncc.ScriptRequestConfig.Path == "" {
 		return errors.New("either script content or script path must be provided")
 	}
 
 	return nil
 }
 
-func (c *NotifyChannelConfig) Update(ctx *ctx.Context, ref NotifyChannelConfig) error {
+func (ncc *NotifyChannelConfig) Update(ctx *ctx.Context, ref NotifyChannelConfig) error {
 	// ref.FE2DB()
-	if c.Ident != ref.Ident {
+	if ncc.Ident != ref.Ident {
 		return errors.New("cannot update ident")
 	}
 
-	ref.ID = c.ID
-	ref.CreateAt = c.CreateAt
-	ref.CreateBy = c.CreateBy
+	ref.ID = ncc.ID
+	ref.CreateAt = ncc.CreateAt
+	ref.CreateBy = ncc.CreateBy
 	ref.UpdateAt = time.Now().Unix()
 
 	err := ref.Verify()
 	if err != nil {
 		return err
 	}
-	return DB(ctx).Model(c).Select("*").Updates(ref).Error
+	return DB(ctx).Model(ncc).Select("*").Updates(ref).Error
 }
 
 func NotifyChannelGet(ctx *ctx.Context, where string, args ...interface{}) (
@@ -931,17 +1001,17 @@ func InitNotifyChannel(ctx *ctx.Context) {
 	}
 }
 
-func (c *NotifyChannelConfig) Upsert(ctx *ctx.Context, ident string) error {
+func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context, ident string) error {
 	ch, err := NotifyChannelGet(ctx, "ident = ?", ident)
 	if err != nil {
 		return errors.WithMessage(err, "failed to get message tpl")
 	}
 	if ch == nil {
-		return Insert(ctx, c)
+		return Insert(ctx, ncc)
 	}
 
 	if ch.UpdateBy != "" && ch.UpdateBy != "system" {
 		return nil
 	}
-	return ch.Update(ctx, *c)
+	return ch.Update(ctx, *ncc)
 }
