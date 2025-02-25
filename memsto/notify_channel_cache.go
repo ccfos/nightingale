@@ -3,10 +3,11 @@ package memsto
 import (
 	"crypto/tls"
 	"fmt"
-	"gopkg.in/gomail.v2"
 	"net/http"
 	"sync"
 	"time"
+
+	"gopkg.in/gomail.v2"
 
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
@@ -174,14 +175,14 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 		case "http":
 			cli, _ := models.GetHTTPClient(lst[i])
 			httpClient[lst[i].ID] = cli
-			httpConcurrency[lst[i].ID] = make(chan struct{}, lst[i].HTTPRequestConfig.Concurrency)
-			for j := 0; j < lst[i].HTTPRequestConfig.Concurrency; j++ {
+			httpConcurrency[lst[i].ID] = make(chan struct{}, lst[i].RequestConfig.HTTPRequestConfig.Concurrency)
+			for j := 0; j < lst[i].RequestConfig.HTTPRequestConfig.Concurrency; j++ {
 				httpConcurrency[lst[i].ID] <- struct{}{}
 			}
 		case "smtp":
 			ch := make(chan *models.EmailContext)
 			quit := make(chan struct{})
-			go ncc.startEmailSender(lst[i].ID, lst[i].SMTPRequestConfig, ch, quit)
+			go ncc.startEmailSender(lst[i].ID, lst[i].RequestConfig.SMTPRequestConfig, ch, quit)
 			smtpCh[lst[i].ID] = ch
 			quitCh[lst[i].ID] = quit
 		default:

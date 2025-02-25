@@ -3,13 +3,14 @@ package dispatch
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"html/template"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -227,43 +228,34 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	defer e.Astats.GaugeNotifyRecordQueueSize.Dec()
 
 	switch notifyChannel.RequestType {
+	case "flashduty":
+		for i := range flashDutyChannelIDs {
+			respBody, err := notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			if err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, respBody, err)
+		}
+		return
 	case "http":
 		var (
 			respBody string
 			err      error
 		)
-
 		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
 			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
 		}
+		if notifyChannel.ParamConfig.UserContactKey != "" {
+			// todo 补充自定义参数
 
-		if notifyChannel.ParamConfig.ParamType == "flashduty" {
-			for i := range flashDutyChannelIDs {
-				respBody, err = notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-				if err != nil {
-					logger.Errorf("send http error: %v,  events: %v", err, events)
-				}
-				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
-			}
-			return
-		}
-
-		if notifyChannel.ParamConfig.ParamType == "user_info" && !notifyChannel.ParamConfig.BatchSend {
 			for i := range userInfos {
 				respBody, err = notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
-				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
+				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 			}
-		} else {
-			respBody, err = notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			if err != nil {
-				logger.Errorf("send http error: %v,  events: %v", err, events)
-			}
-			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
 		}
-
 	case "email":
 		err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
 		if err != nil {

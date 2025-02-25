@@ -159,7 +159,7 @@ func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	jsonData := []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`,
 		me.Username, me.Email, me.Phone))
 
-	url := nc.ParamConfig.FlashDuty.IntegrationUrl
+	url := nc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	ginx.Dangerous(err)
 
