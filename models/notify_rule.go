@@ -38,12 +38,11 @@ type NotifyConfig struct {
 	LabelKeys  []LabelFilter `json:"label_keys"`  // 适用标签
 }
 
-type UserInfoParams struct {
-	UserIDs      []int64 `json:"user_ids"`
-	UserGroupIDs []int64 `json:"user_group_ids"`
+type CustomParams struct {
+	UserIDs      []int64           `json:"user_ids"`
+	UserGroupIDs []int64           `json:"user_group_ids"`
+	CustomParams map[string]string `json:"custom_params"`
 }
-
-type CustomParams = map[string]string
 
 type FlashDutyParams struct {
 	IDs []int64 `json:"ids"`

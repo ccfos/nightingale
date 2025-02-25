@@ -10,7 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -142,23 +142,7 @@ type RequestDetail struct {
 	Body       string            `json:"body"`       // 请求体
 }
 
-func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
-	// 创建一个 map 来存储所有数据
-	data := map[string]interface{}{
-		"events":  events,
-		"content": content,
-	}
-
-	// 将数据序列化为 JSON 字节数组
-	jsonBytes, err := json.Marshal(data)
-	if err != nil {
-		return ""
-	}
-
-	return string(jsonBytes)
-}
-
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) (string, string, error) {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfos []*User) (string, string, error) {
 
 	config := ncc.RequestConfig.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
@@ -198,26 +182,23 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 	}
 
 	// 用户信息
-	token := make([]string, 0)
+	sendtos := make([]string, 0)
 	for _, userInfo := range userInfos {
-		var t string
+		var sendto string
 		if ncc.ParamConfig.UserContactKey == "phone" {
-			t = userInfo.Phone
-
+			sendto = userInfo.Phone
 		} else if ncc.ParamConfig.UserContactKey == "email" {
-			t = userInfo.Email
-
+			sendto = userInfo.Email
 		} else {
-			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
+			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
 		}
-
-		if t != "" {
-			token = append(token, t)
+		if sendto != "" {
+			sendtos = append(sendtos, sendto)
 		}
 	}
 
 	cmd := exec.Command(fpath)
-	cmd.Stdin = bytes.NewReader(getStdinBytes(events, content, param, token))
+	cmd.Stdin = bytes.NewReader(getStdinBytes(events, tpl, params, sendtos))
 
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
@@ -263,13 +244,13 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 	return cmd.String(), res, nil
 }
 
-func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string, token []string) []byte {
+func getStdinBytes(events []*AlertCurEvent, tpl map[string]string, params map[string]string, sendtos []string) []byte {
 	// 创建一个 map 来存储所有数据
 	data := map[string]interface{}{
-		"events":  events,
-		"content": content,
-		"param":   param,
-		"contact": token,
+		"events": events,
+		"tpl":    tpl,
+		"params": params,
+		"sendto": sendtos,
 	}
 
 	// 将数据序列化为 JSON 字节数组
@@ -377,21 +358,15 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 }
 
 func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) (string, error) {
+	// todo 每一个 channel 批量发送事件
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
 
-	// MessageTemplate
-	fullTpl := make(map[string]interface{})
-	fullTpl["tpl"] = content
-
-	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
-	body, err := ncc.parseRequestBody(fullTpl)
+	body, err := json.Marshal(events)
 	if err != nil {
-		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
 		return "", err
 	}
-
 	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
@@ -413,7 +388,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 		defer resp.Body.Close()
 
 		// 读取响应
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			logger.Errorf("failed to read response: %v, event: %v", err, events)
 		}
@@ -421,17 +396,13 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 		if resp.StatusCode == http.StatusOK {
 			return string(body), nil
 		}
-
-		if i < 3 {
-			time.Sleep(time.Duration(100) * time.Millisecond)
-		}
+		time.Sleep(time.Duration(100) * time.Millisecond)
 	}
 
 	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, client *http.Client) (string, error) {
-
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfos []*User, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
@@ -440,34 +411,28 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 
 	// MessageTemplate
 	fullTpl := make(map[string]interface{})
-	fullTpl["tpl"] = content
+
 	// 用户信息
-	token := make([]string, 0)
+	sendtos := make([]string, 0)
 	for _, userInfo := range userInfos {
-		var t string
+		var sendto string
 		if ncc.ParamConfig.UserContactKey == "phone" {
-			t = userInfo.Phone
-
+			sendto = userInfo.Phone
 		} else if ncc.ParamConfig.UserContactKey == "email" {
-			t = userInfo.Email
-
+			sendto = userInfo.Email
 		} else {
-			t, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
+			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
 		}
 
-		if t != "" {
-			token = append(token, t)
+		if sendto != "" {
+			sendtos = append(sendtos, sendto)
 		}
 	}
 
-	u := map[string][]string{
-		ncc.ParamConfig.UserContactKey: token,
-	}
-	fullTpl["user_info"] = u
-	// 自定义参数
-	for key, value := range param {
-		fullTpl[key] = value
-	}
+	fullTpl["sendto"] = sendtos // 发送对象
+	fullTpl["params"] = params  // 自定义参数
+	fullTpl["tpl"] = tpl
+	fullTpl["events"] = events
 
 	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
 	body, err := ncc.parseRequestBody(fullTpl)
@@ -477,7 +442,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 	}
 
 	// 替换 URL Header Parameters 中的变量
-	ncc.replaceVariables(fullTpl, param)
+	ncc.replaceVariables(fullTpl)
 
 	req, err := http.NewRequest(httpConfig.Method, httpConfig.URL, bytes.NewBuffer(body))
 	if err != nil {
@@ -497,7 +462,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 	// 设置 URL 参数 阿里云短信、语音特殊处理
 	query := req.URL.Query()
 	if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		query = ncc.getAliQuery(content)
+		query = ncc.getAliQuery(tpl)
 	} else {
 		for key, value := range httpConfig.Request.Parameters {
 			query.Add(key, value)
@@ -510,16 +475,13 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
 		resp, err := client.Do(req)
 		if err != nil {
-			if i < httpConfig.RetryTimes {
-				time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
-				continue
-			}
-			return "", fmt.Errorf("failed to send request: %v", err)
+			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
+			continue
 		}
 		defer resp.Body.Close()
 
 		// 读取响应
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("Error reading response:", err)
 		}
@@ -528,15 +490,13 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 			return string(body), nil
 		}
 
-		if i < httpConfig.RetryTimes {
-			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
-		}
+		time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
 	}
 
 	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
+func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Values {
 	// 渲染 param
 	var paramKey string
 	if ncc.Ident == "ali-sms" {
@@ -544,8 +504,9 @@ func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Value
 	} else {
 		paramKey = "TtsParam"
 	}
+
 	bodyTpl := make(map[string]interface{})
-	bodyTpl["tpl"] = content
+	bodyTpl["tpl"] = tplContent
 	for _, param := range ncc.ParamConfig.Params {
 		bodyTpl[param.Key] = param.CName
 	}
@@ -680,11 +641,14 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	}
 	var body bytes.Buffer
 	err = tpl.Execute(&body, tplData)
+	if err != nil {
+		return fmt.Sprintf("failed to parse template: %v data: %v", err, tplData)
+	}
 
 	return body.String()
 }
 
-func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}, param map[string]string) {
+func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) {
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
 
 	if needsTemplateRendering(httpConfig.URL) {
@@ -709,7 +673,7 @@ func needsTemplateRendering(s string) bool {
 	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }
 
-func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[string]string, userInfos []*User, ch chan *EmailContext) error {
+func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, tpl map[string]string, userInfos []*User, ch chan *EmailContext) error {
 
 	var to []string
 	for _, userInfo := range userInfos {
@@ -720,8 +684,8 @@ func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, content map[s
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
 	m.SetHeader("To", strings.Join(to, ","))
-	m.SetHeader("Subject", content["subject"])
-	m.SetBody("text/html", content["content"])
+	m.SetHeader("Subject", tpl["subject"])
+	m.SetBody("text/html", tpl["content"])
 
 	ch <- &EmailContext{events, m}
 

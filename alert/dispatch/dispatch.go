@@ -166,7 +166,7 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 
 func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	// event 内容渲染到 messageTemplate
-	content := make(map[string]string)
+	tplContent := make(map[string]string)
 	for key, msgTpl := range messageTemplate.Content {
 		var defs = []string{
 			"{{ $events :=  . }}",
@@ -184,7 +184,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		if err = tpl.Execute(&body, events); err != nil {
 			continue
 		}
-		content[key] = body.String()
+		tplContent[key] = body.String()
 	}
 
 	var (
@@ -194,9 +194,9 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	)
 
 	switch notifyConfig.Params.(type) {
-	case models.UserInfoParams:
+	case models.CustomParams:
 		visited := make(map[int64]bool)
-		userInfoParams := notifyConfig.Params.(models.UserInfoParams)
+		userInfoParams := notifyConfig.Params.(models.CustomParams)
 		users := e.userCache.GetByUserIds(userInfoParams.UserIDs)
 		for _, user := range users {
 			if visited[user.Id] {
@@ -215,10 +215,9 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 				userInfos = append(userInfos, &user)
 			}
 		}
+		customParams = userInfoParams.CustomParams
 	case models.FlashDutyParams:
 		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
-	case models.CustomParams:
-		customParams = notifyConfig.Params.(models.CustomParams)
 	default:
 		logger.Errorf("unknown notify config params: %v", notifyConfig.Params)
 		return
@@ -230,7 +229,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	switch notifyChannel.RequestType {
 	case "flashduty":
 		for i := range flashDutyChannelIDs {
-			respBody, err := notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody, err := notifyChannel.SendFlashDuty(events, tplContent, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			if err != nil {
 				logger.Errorf("send http error: %v,  events: %v", err, events)
 			}
@@ -238,26 +237,28 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		}
 		return
 	case "http":
-		var (
-			respBody string
-			err      error
-		)
 		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
 			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
 		}
-		if notifyChannel.ParamConfig.UserContactKey != "" {
-			// todo 补充自定义参数
 
+		if notifyChannel.ParamConfig.UserContactKey != "" && len(userInfos) > 0 {
 			for i := range userInfos {
-				respBody, err = notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
 				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 			}
+		} else {
+			respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, []*models.User{}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			if err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 		}
+
 	case "email":
-		err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
+		err := notifyChannel.SendEmail(events, tplContent, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
 		if err != nil {
 			logger.Errorf("send email error: %v", err)
 		}
@@ -266,10 +267,12 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			if err == nil {
 				msg = "ok"
 			}
+
+			// todo 这里的通知记录需要调整
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, userInfos[i].Email, msg, err)
 		}
 	case "script":
-		target, res, err := notifyChannel.SendScript(events, content, customParams, userInfos)
+		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
 		if err != nil {
 			logger.Errorf("send script error: %v", err)
 
