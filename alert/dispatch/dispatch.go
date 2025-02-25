@@ -157,13 +157,13 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 				}
 				// todo go send
 				// todo 聚合 event
-				e.sendV2([]*models.AlertCurEvent{event}, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+				go e.sendV2([]*models.AlertCurEvent{event}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
 			}
 		}
 	}
 }
 
-func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
+func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	// event 内容渲染到 messageTemplate
 	content := make(map[string]string)
 	for key, msgTpl := range messageTemplate.Content {
@@ -225,38 +225,67 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyConfig *models.N
 
 	switch notifyChannel.RequestType {
 	case "http":
+		var (
+			respBody string
+			err      error
+		)
+
+		e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID)
+		e.Astats.GaugeNotifyRecordQueueSize.Inc()
+		defer func() {
+			e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
+			e.Astats.GaugeNotifyRecordQueueSize.Dec()
+		}()
 
 		if notifyChannel.ParamConfig.ParamType == "flashduty" {
 			for i := range flashDutyChannelIDs {
-				if err := notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				respBody, err = notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
+
 				}
 			}
 			return
 		}
 
-		if notifyChannel.ParamConfig.BatchSend {
-			if err := notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
-				logger.Errorf("send http error: %v,  events: %v", err, events)
-			}
-		} else {
+		if notifyChannel.ParamConfig.ParamType == "user_info" && !notifyChannel.ParamConfig.BatchSend {
 			for i := range userInfos {
-				if err := notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID)); err != nil {
+				respBody, err = notifyChannel.SendHTTP(events, content, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
 			}
+		} else {
+			respBody, err = notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			if err != nil {
+				logger.Errorf("send http error: %v,  events: %v", err, events)
+			}
 		}
 
+		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
+
 	case "email":
-		if err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID)); err != nil {
+		err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
+		if err != nil {
 			logger.Errorf("send email error: %v", err)
 		}
-	case "script":
-		if err := notifyChannel.SendScript(events, content, customParams, userInfos); err != nil {
-			logger.Errorf("send script error: %v", err)
+		for i := range userInfos {
+			msg := ""
+			if err == nil {
+				msg = "ok"
+			}
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, userInfos[i].Email, msg, err)
 		}
+	case "script":
+		target, err := notifyChannel.SendScript(events, content, customParams, userInfos)
+		if err != nil {
+			logger.Errorf("send script error: %v", err)
+
+		}
+		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, "", err)
 	default:
 	}
+
 }
 
 // HandleEventNotify 处理event事件的主逻辑

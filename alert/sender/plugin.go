@@ -87,13 +87,13 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
 
 	res := buf.String()
-	
+
 	// 截断超出长度的输出
 	if len(res) > 512 {
 		res = res[:512] + "..."
 	}
 
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), res, buildErr(err, isTimeout))
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, channel, cmd.String(), res, buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
