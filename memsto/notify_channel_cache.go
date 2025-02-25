@@ -64,6 +64,9 @@ func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, httpConcurrency map[int64]chan struct{}, httpClient map[int64]*http.Client,
 	smtpCh map[int64]chan *models.EmailContext, quitCh map[int64]chan struct{}, total, lastUpdated int64) {
 	ncc.Lock()
+	for _, k := range ncc.httpConcurrency {
+		close(k)
+	}
 	ncc.httpConcurrency = httpConcurrency
 	ncc.channels = m
 	ncc.httpClient = httpClient
@@ -172,6 +175,9 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 			cli, _ := models.GetHTTPClient(lst[i])
 			httpClient[lst[i].ID] = cli
 			httpConcurrency[lst[i].ID] = make(chan struct{}, lst[i].HTTPRequestConfig.Concurrency)
+			for j := 0; j < lst[i].HTTPRequestConfig.Concurrency; j++ {
+				httpConcurrency[lst[i].ID] <- struct{}{}
+			}
 		case "smtp":
 			ch := make(chan *models.EmailContext)
 			quit := make(chan struct{})
@@ -302,14 +308,21 @@ func (ncc *NotifyChannelCacheType) dialSmtp(quitCh chan struct{}, d *gomail.Dial
 	}
 }
 
-func (ncc *NotifyChannelCacheType) HttpConcurrencyAdd(channelId int64) {
+func (ncc *NotifyChannelCacheType) HttpConcurrencyAdd(channelId int64) bool {
 	ncc.RLock()
 	defer ncc.RUnlock()
-	ncc.httpConcurrency[channelId] <- struct{}{}
+	if _, ok := ncc.httpConcurrency[channelId]; !ok {
+		return false
+	}
+	_, ok := <-ncc.httpConcurrency[channelId]
+	return ok
 }
 
 func (ncc *NotifyChannelCacheType) HttpConcurrencyDone(channelId int64) {
 	ncc.RLock()
 	defer ncc.RUnlock()
-	<-ncc.httpConcurrency[channelId]
+	if _, ok := ncc.httpConcurrency[channelId]; !ok {
+		return
+	}
+	ncc.httpConcurrency[channelId] <- struct{}{}
 }

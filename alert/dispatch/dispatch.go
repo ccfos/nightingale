@@ -233,16 +233,17 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			err      error
 		)
 
-		e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID)
-		defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
+		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
+			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
+		}
 
 		if notifyChannel.ParamConfig.ParamType == "flashduty" {
 			for i := range flashDutyChannelIDs {
 				respBody, err = notifyChannel.SendFlashDuty(events, content, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
-
 				}
+				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
 			}
 			return
 		}
@@ -253,15 +254,15 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
+				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
 			}
 		} else {
 			respBody, err = notifyChannel.SendHTTP(events, content, customParams, userInfos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			if err != nil {
 				logger.Errorf("send http error: %v,  events: %v", err, events)
 			}
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
 		}
-
-		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.HTTPRequestConfig.URL, respBody, err)
 
 	case "email":
 		err := notifyChannel.SendEmail(events, content, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
@@ -276,12 +277,12 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, userInfos[i].Email, msg, err)
 		}
 	case "script":
-		target, err := notifyChannel.SendScript(events, content, customParams, userInfos)
+		target, res, err := notifyChannel.SendScript(events, content, customParams, userInfos)
 		if err != nil {
 			logger.Errorf("send script error: %v", err)
 
 		}
-		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, "", err)
+		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:
 	}
 

@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -166,11 +167,11 @@ func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
 	return string(jsonBytes)
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) (string, error) {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) (string, string, error) {
 
 	config := ncc.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
-		return "", nil
+		return "", "", nil
 	}
 
 	fpath := ".notify_scriptt"
@@ -181,7 +182,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		if file.IsExist(fpath) {
 			oldContent, err := file.ToString(fpath)
 			if err != nil {
-				return "", err
+				return "", "", nil
 			}
 
 			if oldContent == ncc.ScriptRequestConfig.Script {
@@ -192,12 +193,12 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		if rewrite {
 			_, err := file.WriteString(fpath, ncc.ScriptRequestConfig.Script)
 			if err != nil {
-				return "", err
+				return "", "", nil
 			}
 
 			err = os.Chmod(fpath, 0777)
 			if err != nil {
-				return "", err
+				return "", "", err
 			}
 		}
 
@@ -233,25 +234,42 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 
 	err := startCmd(cmd)
 	if err != nil {
-		return "", err
+		return "", "", err
+	}
+
+	res := buf.String()
+
+	// 截断超出长度的输出
+	if len(res) > 512 {
+		// 确保在有效的UTF-8字符边界处截断
+		validLen := 0
+		for i := 0; i < 512 && i < len(res); {
+			_, size := utf8.DecodeRuneInString(res[i:])
+			if i+size > 512 {
+				break
+			}
+			i += size
+			validLen = i
+		}
+		res = res[:validLen] + "..."
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
 
 	if isTimeout {
 		if err == nil {
-			return "", errors.New("timeout and killed process")
+			return cmd.String(), res, errors.New("timeout and killed process")
 		}
 
-		return "", err
+		return cmd.String(), res, err
 	}
 
 	if err != nil {
-		return "", err
+		return cmd.String(), res, err
 	}
 	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 
-	return cmd.String(), nil
+	return cmd.String(), res, nil
 }
 
 func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string, contactKey string, token []string) []byte {
