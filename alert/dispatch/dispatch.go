@@ -165,6 +165,10 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 }
 
 func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
+	if len(events) == 0 {
+		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
+		return
+	}
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]string)
 	for key, msgTpl := range messageTemplate.Content {
