@@ -329,6 +329,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
+	go e.HandleEventNotifyV2(event, isSubscribe)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
