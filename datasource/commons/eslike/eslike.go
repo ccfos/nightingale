@@ -10,6 +10,7 @@ import (
 
 	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
@@ -18,18 +19,20 @@ import (
 )
 
 type Query struct {
-	Ref        string     `json:"ref" mapstructure:"ref"`
-	Index      string     `json:"index" mapstructure:"index"`
-	Filter     string     `json:"filter" mapstructure:"filter"`
-	MetricAggr MetricAggr `json:"value" mapstructure:"value"`
-	GroupBy    []GroupBy  `json:"group_by" mapstructure:"group_by"`
-	DateField  string     `json:"date_field" mapstructure:"date_field"`
-	Interval   int64      `json:"interval" mapstructure:"interval"`
-	Start      int64      `json:"start" mapstructure:"start"`
-	End        int64      `json:"end" mapstructure:"end"`
-	P          int        `json:"page" mapstructure:"page"`           // 页码
-	Limit      int        `json:"limit" mapstructure:"limit"`         // 每页个数
-	Ascending  bool       `json:"ascending" mapstructure:"ascending"` // 按照DataField排序
+	Ref          string     `json:"ref" mapstructure:"ref"`
+	IndexType    string     `json:"index_type" mapstructure:"index_type"` // 普通索引:index 索引模式:index_pattern
+	Index        string     `json:"index" mapstructure:"index"`
+	IndexPattern string     `json:"index_pattern" mapstructure:"index_pattern"`
+	Filter       string     `json:"filter" mapstructure:"filter"`
+	MetricAggr   MetricAggr `json:"value" mapstructure:"value"`
+	GroupBy      []GroupBy  `json:"group_by" mapstructure:"group_by"`
+	DateField    string     `json:"date_field" mapstructure:"date_field"`
+	Interval     int64      `json:"interval" mapstructure:"interval"`
+	Start        int64      `json:"start" mapstructure:"start"`
+	End          int64      `json:"end" mapstructure:"end"`
+	P            int        `json:"page" mapstructure:"page"`           // 页码
+	Limit        int        `json:"limit" mapstructure:"limit"`         // 每页个数
+	Ascending    bool       `json:"ascending" mapstructure:"ascending"` // 按照DataField排序
 
 	Timeout  int `json:"timeout" mapstructure:"timeout"`
 	MaxShard int `json:"max_shard" mapstructure:"max_shard"`
@@ -307,6 +310,16 @@ func MakeTSQuery(ctx context.Context, query interface{}, eventTags []string, sta
 	return param, nil
 }
 
+var esIndexPatternCache *memsto.EsIndexPatternCacheType
+
+func SetEsIndexPatternCacheType(c *memsto.EsIndexPatternCacheType) {
+	esIndexPatternCache = c
+}
+
+func GetEsIndexPatternCacheType() *memsto.EsIndexPatternCacheType {
+	return esIndexPatternCache
+}
+
 func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, version string, search SearchFunc) ([]models.DataResp, error) {
 	param := new(Query)
 	if err := mapstructure.Decode(queryParam, param); err != nil {
@@ -329,7 +342,15 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		param.DateField = "@timestamp"
 	}
 
-	indexArr := strings.Split(param.Index, ",")
+	var indexArr []string
+	if param.IndexType == "index_pattern" {
+		indexArr = []string{param.IndexPattern}
+		if ip, ok := GetEsIndexPatternCacheType().Get(param.IndexPattern); ok {
+			param.DateField = ip.TimeField
+		}
+	} else {
+		indexArr = strings.Split(param.Index, ",")
+	}
 	q := elastic.NewRangeQuery(param.DateField)
 	now := time.Now().Unix()
 	var start, end int64

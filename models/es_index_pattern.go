@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 )
@@ -84,6 +85,10 @@ func (feIndexPatten *EsIndexPattern) FE2DB() {
 }
 
 func EsIndexPatternGets(ctx *ctx.Context, where string, args ...interface{}) ([]*EsIndexPattern, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*EsIndexPattern](ctx, "/v1/n9e/es-index-pattern-list")
+		return lst, err
+	}
 	var objs []*EsIndexPattern
 	err := DB(ctx).Where(where, args...).Find(&objs).Error
 	if err != nil {

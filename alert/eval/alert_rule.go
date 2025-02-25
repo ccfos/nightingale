@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/alert/process"
+	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/prom"
@@ -62,6 +63,7 @@ func NewScheduler(aconf aconf.Alert, externalProcessors *process.ExternalProcess
 		ctx:   ctx,
 		stats: stats,
 	}
+	eslike.SetEsIndexPatternCacheType(memsto.NewEsIndexPatternCacheType(ctx))
 
 	go scheduler.LoopSyncRules(context.Background())
 	return scheduler

@@ -611,6 +611,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-cur-events-del-by-hash", rt.alertCurEventDelByHash)
 
 			service.POST("/center/heartbeat", rt.heartbeat)
+
+			service.GET("/es-index-pattern-list", rt.esIndexPatternGetList)
 		}
 	}
 
