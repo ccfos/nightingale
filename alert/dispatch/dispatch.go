@@ -223,6 +223,9 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		return
 	}
 
+	e.Astats.GaugeNotifyRecordQueueSize.Inc()
+	defer e.Astats.GaugeNotifyRecordQueueSize.Dec()
+
 	switch notifyChannel.RequestType {
 	case "http":
 		var (
@@ -231,11 +234,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		)
 
 		e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID)
-		e.Astats.GaugeNotifyRecordQueueSize.Inc()
-		defer func() {
-			e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
-			e.Astats.GaugeNotifyRecordQueueSize.Dec()
-		}()
+		defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
 
 		if notifyChannel.ParamConfig.ParamType == "flashduty" {
 			for i := range flashDutyChannelIDs {
