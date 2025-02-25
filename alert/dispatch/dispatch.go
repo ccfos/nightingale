@@ -229,7 +229,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	switch notifyChannel.RequestType {
 	case "flashduty":
 		for i := range flashDutyChannelIDs {
-			respBody, err := notifyChannel.SendFlashDuty(events, tplContent, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			if err != nil {
 				logger.Errorf("send http error: %v,  events: %v", err, events)
 			}
@@ -243,14 +243,14 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 
 		if notifyChannel.ParamConfig.UserContactKey != "" && len(userInfos) > 0 {
 			for i := range userInfos {
-				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, []*models.User{userInfos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 				if err != nil {
 					logger.Errorf("send http error: %v,  events: %v", err, events)
 				}
 				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 			}
 		} else {
-			respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, []*models.User{}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, nil, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			if err != nil {
 				logger.Errorf("send http error: %v,  events: %v", err, events)
 			}

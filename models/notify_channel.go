@@ -357,7 +357,7 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
-func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) (string, error) {
+func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
 	// todo 每一个 channel 批量发送事件
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
@@ -402,7 +402,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfos []*User, client *http.Client) (string, error) {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfo *User, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
@@ -413,9 +413,8 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	fullTpl := make(map[string]interface{})
 
 	// 用户信息
-	sendtos := make([]string, 0)
-	for _, userInfo := range userInfos {
-		var sendto string
+	var sendto string
+	if userInfo != nil {
 		if ncc.ParamConfig.UserContactKey == "phone" {
 			sendto = userInfo.Phone
 		} else if ncc.ParamConfig.UserContactKey == "email" {
@@ -423,14 +422,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		} else {
 			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
 		}
-
-		if sendto != "" {
-			sendtos = append(sendtos, sendto)
-		}
 	}
 
-	fullTpl["sendto"] = sendtos // 发送对象
-	fullTpl["params"] = params  // 自定义参数
+	fullTpl["sendto"] = sendto // 发送对象
+	fullTpl["params"] = params // 自定义参数
 	fullTpl["tpl"] = tpl
 	fullTpl["events"] = events
 
@@ -625,17 +620,34 @@ func encode_local(encode_str string) string {
 }
 
 func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{}) ([]byte, error) {
-	tpl, err := template.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(ncc.RequestConfig.HTTPRequestConfig.Request.Body)
+	var defs = []string{
+		"{{$tpl := .tpl}}",
+		"{{$sendto := .sendto}}",
+		"{{$params := .params}}",
+		"{{$events := .events}}",
+	}
+
+	text := strings.Join(append(defs, ncc.RequestConfig.HTTPRequestConfig.Request.Body), "")
+	tpl, err := template.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return nil, err
 	}
+
 	var body bytes.Buffer
 	err = tpl.Execute(&body, bodyTpl)
 	return body.Bytes(), err
 }
 
 func getParsedString(name, tplStr string, tplData map[string]interface{}) string {
-	tpl, err := template.New(name).Funcs(tplx.TemplateFuncMap).Parse(tplStr)
+	var defs = []string{
+		"{{$tpl := .tpl}}",
+		"{{$sendto := .sendto}}",
+		"{{$params := .params}}",
+		"{{$events := .events}}",
+	}
+
+	text := strings.Join(append(defs, tplStr), "")
+	tpl, err := template.New(name).Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return ""
 	}

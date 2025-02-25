@@ -1,402 +1,853 @@
 package models
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
-func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
-	type args struct {
-		content map[string]string
-		client  *http.Client
-	}
-	tests := []struct {
-		name           string
-		events         []*AlertCurEvent
-		notifyParam    map[string]string
-		notifyChannel  *NotifyChannelConfig
-		notifyTemplate map[string]string
-		userInfos      []*User
-		flashDutyIDs   []int64
-		wantErr        bool
-	}{
-		{
-			name:        "test",
-			notifyParam: map[string]string{},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "http://localhost:8080",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"msgType":"text","test":{"content":"{{ .tpl.test }}"}}`,
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-						},
-					},
-				},
-			},
-			flashDutyIDs: []int64{0},
-			notifyTemplate: map[string]string{
-				"test": "here is a test msg",
-			},
-		},
-		{
-			name: "dingTalk",
-			notifyParam: map[string]string{
-				"access_token": "-",
-			},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://oapi.dingtalk.com/robot/send",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"text":{"content":"{{ .tpl.test }}"}, "msgtype":"text", "at":{"isAtAll":"false", "atMobiles":{{ .user_info.phone }}} }`,
-							Parameters: map[string]string{
-								"access_token": "{{ .access_token }}",
-							},
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					Params: []ParamItem{
-						{
-							Key: "access_token",
-						},
-					},
-				},
-			},
-			flashDutyIDs: []int64{0},
-			userInfos: []*User{
-				{
-					Phone: "18021015257",
-				},
-			},
-			notifyTemplate: map[string]string{
-				"test": "here is a test message",
-			},
-		},
-		{
-			name: "feishu",
-			notifyParam: map[string]string{
-				"hook": "-",
-			},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://open.feishu.cn/open-apis/bot/v2/hook/{{ .hook }}",
-						Timeout: 3,
-						Request: RequestDetail{
-							Body: `{"msg_type":"text","content":{"text":"{{ .tpl.test }}"}}`,
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					Params: []ParamItem{
-						{
-							Key: "hook",
-						},
-					},
-				},
-			},
-			flashDutyIDs: []int64{0},
-			notifyTemplate: map[string]string{
-				"test": "here is a test msg",
-			},
-		},
-		{
-			name: "feishucard",
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://open.feishu.cn/open-apis/bot/v2/hook/{{ .hook }}",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"msg_type":"interactive","card":{"type":"template","data":{"template_id":"AAqFiKNkewv7V","template_version_name":"1.0.2", "template_variable": {"name": "{{ .name }}", "msg": "{{ .msg }}"}}}}`,
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					Params: []ParamItem{
-						{
-							Key: "name",
-						},
-						{
-							Key: "msg",
-						},
-						{
-							Key: "hook",
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "wecom",
-			notifyParam: map[string]string{
-				"key": "-",
-			},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"msgtype":"text","text":{"content":"{{ .tpl.test }}"}}`,
-							Parameters: map[string]string{
-								"key": "{{ .key }}",
-							},
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					Params: []ParamItem{
-						{
-							Key: "key",
-						},
-					},
-				},
-			},
-			flashDutyIDs: []int64{0},
-			notifyTemplate: map[string]string{
-				"test": "here is a test msg",
-			},
-		},
-		{
-			name: "ali-sms",
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "http://dysmsapi.aliyuncs.com",
-						Timeout: 10,
-						Request: RequestDetail{},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					UserContactKey: "phone",
-				},
-			},
-			userInfos: []*User{
-				{
-					Phone: "18021015257",
-				},
-			},
-			notifyTemplate: map[string]string{
-				"code": "123456",
-			},
-		},
-		{
-			name:         "ali-voice",
-			flashDutyIDs: []int64{0},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "http://dyvmsapi.aliyuncs.com",
-						Timeout: 10,
-						Request: RequestDetail{
-							Parameters: map[string]string{
-								"Action":   "SingleCallByTts",
-								"Version":  "2017-05-25",
-								"Format":   "JSON",
-								"OutId":    "123",
-								"RegionId": "cn-hangzhou",
+func TestSendDingTalkNotification(t *testing.T) {
+	// 创建一个测试服务器来模拟钉钉API响应
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法和内容类型
+		if r.Method != "POST" {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
 
-								"SignatureMethod":  "HMAC-SHA1",
-								"SignatureVersion": "1.0",
+		contentType := r.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			t.Errorf("Expected Content-Type: application/json, got %s", contentType)
+		}
 
-								"AccessKeyId":     "-",
-								"AccessKeySecret": "-",
-								"TtsCode":         "TTS_282205058",
-								"CalledNumber":    `{{ index .user_info.phone 0 }}`,
-								"TtsParam":        `{"alert_name":"test"}`,
-							},
-						},
+		// 检查URL中的access_token参数
+		token := r.URL.Query().Get("access_token")
+		if token != "test-token" {
+			t.Errorf("Expected access_token=test-token, got %s", token)
+		}
+
+		// 读取请求体
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("Failed to read request body: %v", err)
+		}
+
+		// 检查请求体是否包含预期的内容
+		if !strings.Contains(string(body), "测试告警消息") {
+			t.Errorf("Request body does not contain expected content, got: %s", string(body))
+		}
+
+		// 返回成功响应
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"errcode":0,"errmsg":"ok"}`))
+	}))
+	defer server.Close()
+
+	// 创建钉钉通知配置
+	notifyChannel := &NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     server.URL, // 使用测试服务器的URL
+				Timeout: 5,
+				Request: RequestDetail{
+					Body: `{"msgtype":"text","text":{"content":"{{ $tpl.content }}"},"at":{"isAtAll":false,"atMobiles":["{{ $params.ats }}"]}}`,
+					Parameters: map[string]string{
+						"access_token": "{{ $params.access_token }}",
 					},
 				},
-				ParamConfig: &NotifyParamConfig{
-					UserContactKey: "phone",
+				Headers: map[string]string{
+					"Content-Type": "application/json",
 				},
-			},
-			userInfos: []*User{
-				{
-					Phone: "18021015257",
-				},
-			},
-			notifyTemplate: map[string]string{
-				"code": "123456",
+				RetryTimes:    2,
+				RetryInterval: 1,
 			},
 		},
-		{
-			name:         "tx-sms",
-			notifyParam:  map[string]string{},
-			flashDutyIDs: []int64{0},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://sms.tencentcloudapi.com",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"PhoneNumberSet":[{{range $index, $element := .user_info.phone}}{{if $index}},{{end}}"{{$element}}"{{end}}],"SignName":"快猫星云","SmsSdkAppId":"1400682772","TemplateId":"1584300","TemplateParamSet":["测试"]}`,
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-							"Host":         "sms.tencentcloudapi.com",
-							"X-TC-Action":  "SendSms",
-							"X-TC-Version": "2021-01-11",
-							"X-TC-Region":  "ap-guangzhou",
-							"Service":      "sms",
-							"Secret_ID":    "-",
-							"Secret_Key":   "-",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					UserContactKey: "phone",
-				},
-			},
-			userInfos: []*User{
+		ParamConfig: &NotifyParamConfig{
+			Params: []ParamItem{
 				{
-					Phone: "+8618021015257",
+					Key: "access_token",
 				},
-			},
-			notifyTemplate: map[string]string{
-				"code": "123456",
-			},
-		},
-		{
-			name:         "tx-voice",
-			notifyParam:  map[string]string{},
-			flashDutyIDs: []int64{0},
-			notifyChannel: &NotifyChannelConfig{
-				RequestType: "http",
-				RequestConfig: &RequestConfig{
-					HTTPRequestConfig: &HTTPRequestConfig{
-						Method:  "POST",
-						URL:     "https://vms.tencentcloudapi.com",
-						Timeout: 10,
-						Request: RequestDetail{
-							Body: `{"CalledNumber":"{{ index .user_info.phone 0 }}","VoiceSdkAppid":"1400655317","TemplateId":"1475778","TemplateParamSet":["测试"]}`,
-						},
-						Headers: map[string]string{
-							"Content-Type": "application/json",
-							"Host":         "vms.tencentcloudapi.com",
-							"X-TC-Action":  "SendTtsVoice",
-							"X-TC-Version": "2020-09-02",
-							"X-TC-Region":  "ap-beijing",
-							"Service":      "vms",
-							"Secret_ID":    "-",
-							"Secret_Key":   "-",
-						},
-					},
-				},
-				ParamConfig: &NotifyParamConfig{
-					UserContactKey: "phone",
-				},
-			},
-			userInfos: []*User{
 				{
-					Phone: "+8618021015257",
+					Key: "ats",
 				},
-			},
-			notifyTemplate: map[string]string{
-				"code": "123456",
 			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client, _ := GetHTTPClient(tt.notifyChannel)
-			if _, err := tt.notifyChannel.SendHTTP(tt.events, tt.notifyTemplate, tt.notifyParam, tt.userInfos, client); (err != nil) != tt.wantErr {
-				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:     "test-hash",
+			RuleName: "测试规则",
+			Severity: 3,
+			TagsMap: map[string]string{
+				"host": "test-host",
+				"app":  "test-app",
+			},
+		},
+	}
+
+	// 创建通知模板
+	tpl := map[string]string{
+		"content": "测试告警消息",
+	}
+
+	// 创建通知参数
+	params := map[string]string{
+		"access_token": "test-token",
+		"ats":          "13800138000",
+	}
+
+	// 创建HTTP客户端
+	client, err := GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("Failed to create HTTP client: %v", err)
+	}
+
+	// 调用SendHTTP方法
+	resp, err := notifyChannel.SendHTTP(events, tpl, params, &User{Phone: "+8618021015257"}, client)
+	if err != nil {
+		t.Fatalf("SendHTTP failed: %v", err)
+	}
+
+	// 验证响应
+	if !strings.Contains(resp, "errmsg") {
+		t.Errorf("Response does not contain expected content, got: %s", resp)
 	}
 }
 
-//func TestNotifyChannelConfig_SendEmail(t *testing.T) {
-//	type args struct {
-//		content map[string]string
-//		client  *smtp.Client
-//	}
-//	tests := []struct {
-//		name           string
-//		notifyParam    []map[string]string
-//		notifyChannel  *NotifyChannelConfig
-//		notifyTemplate map[string]string
-//		wantErr        bool
-//	}{
-//		{
-//			name: "test",
-//			notifyParam: []map[string]string{
-//				{
-//					"email": "erickbin@163.com",
-//				},
-//			},
-//			notifyChannel: &NotifyChannelConfig{
-//				SMTPRequestConfig: SMTPRequestConfig{
-//					Host:               "smtp.163.com",
-//					Port:               25,
-//					Username:           "erickbin",
-//					Password:           "WRURJ33L3hMTkMQt",
-//					From:               "erickbin@163.com",
-//					Message:            `{{ .tpl.test }}`,
-//					InsecureSkipVerify: true,
-//					Batch:              5,
-//				},
-//				ParamConfig: NotifyParamConfig{
-//					ParamType: "user_info",
-//					UserInfo: UserInfoParam{
-//						ContactKey: "email",
-//					},
-//					BatchSend: true,
-//				},
-//			},
-//			notifyTemplate: map[string]string{
-//				"test": "here is a test msg",
-//			},
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			client, err := GetSMTPClient(tt.notifyChannel)
-//			if err != nil {
-//				t.Errorf("GetSMTPClient() error = %v", err)
-//			}
-//			if err := tt.notifyChannel.SendEmail(tt.notifyTemplate, tt.notifyParam, client); (err != nil) != tt.wantErr {
-//				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
-//			}
-//		})
-//	}
-//}
+func TestSendTencentVoiceNotification(t *testing.T) {
+	// 创建一个测试服务器来模拟腾讯云语音API响应
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法和内容类型
+		if r.Method != "POST" {
+			t.Errorf("预期POST请求，得到 %s", r.Method)
+		}
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			t.Errorf("预期 Content-Type: application/json，得到 %s", contentType)
+		}
+
+		// 验证请求头
+		action := r.Header.Get("X-TC-Action")
+		if action != "SendTtsVoice" {
+			t.Errorf("预期 X-TC-Action: SendTtsVoice，得到 %s", action)
+		}
+
+		version := r.Header.Get("X-TC-Version")
+		if version != "2020-09-02" {
+			t.Errorf("预期 X-TC-Version: 2020-09-02，得到 %s", version)
+		}
+
+		region := r.Header.Get("X-TC-Region")
+		if region == "" {
+			t.Errorf("缺少 X-TC-Region 请求头")
+		}
+
+		// 读取请求体
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("读取请求体失败: %v", err)
+		}
+
+		// 解析JSON请求体
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(body, &requestBody); err != nil {
+			t.Errorf("解析JSON请求体失败: %v", err)
+		}
+
+		// 根据腾讯云API文档验证必要参数
+		requiredFields := []string{"TemplateId", "CalledNumber", "VoiceSdkAppid"}
+		for _, field := range requiredFields {
+			if _, exists := requestBody[field]; !exists {
+				t.Errorf("请求体缺少必要字段 %s", field)
+			}
+		}
+
+		// 验证手机号格式符合E.164标准
+		calledNumber, _ := requestBody["CalledNumber"].(string)
+		if calledNumber == "" || !strings.HasPrefix(calledNumber, "+") {
+			fmt.Println(calledNumber)
+			t.Errorf("CalledNumber 格式不符合E.164标准: %s", calledNumber)
+		}
+
+		// 验证可选参数
+		if templateParamSet, exists := requestBody["TemplateParamSet"].([]interface{}); exists {
+			// 确保模板参数是字符串数组
+			for i, param := range templateParamSet {
+				if _, ok := param.(string); !ok {
+					t.Errorf("TemplateParamSet[%d] 不是字符串类型", i)
+				}
+			}
+		}
+
+		// 验证播放次数
+		if playTimes, exists := requestBody["PlayTimes"].(float64); exists {
+			if playTimes < 1 || playTimes > 3 {
+				t.Errorf("PlayTimes 值 %v 超出范围(1-3)", playTimes)
+			}
+		}
+
+		// 返回成功响应
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"Response":{"RequestId":"test-request-id","SendStatus":{"CallId":"test-call-id","SessionContext":"","Code":"Ok","Message":"success"},"SessionContext":""}}`))
+	}))
+	defer server.Close()
+
+	// 创建腾讯云语音通知配置
+	notifyChannel := &NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     server.URL, // 使用测试服务器的URL
+				Timeout: 5,
+				Request: RequestDetail{
+					Body: `{"TemplateId":"1475778","CalledNumber":"{{ $sendto }}","VoiceSdkAppid":"1400655317","TemplateParamSet":["测试"],"PlayTimes":2}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "vms.tencentcloudapi.com",
+					"X-TC-Action":  "SendTtsVoice",
+					"X-TC-Version": "2020-09-02",
+					"X-TC-Region":  "ap-beijing",
+					"Service":      "vms",
+					"Secret_ID":    "test-id",
+					"Secret_Key":   "test-key",
+				},
+				RetryTimes:    2,
+				RetryInterval: 1,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "phone",
+		},
+	}
+
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:     "test-hash",
+			RuleName: "测试规则",
+			Severity: 3,
+			TagsMap: map[string]string{
+				"host": "test-host",
+				"app":  "test-app",
+			},
+		},
+	}
+
+	// 创建通知模板
+	tpl := map[string]string{
+		"code": "123456",
+	}
+
+	// 创建用户信息
+	userInfos := []*User{
+		{
+			Phone: "+8613788888888",
+		},
+	}
+
+	// 创建HTTP客户端
+	client, err := GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("创建HTTP客户端失败: %v", err)
+	}
+
+	// 调用SendHTTP方法
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, userInfos[0], client)
+	if err != nil {
+		t.Fatalf("SendHTTP失败: %v", err)
+	}
+
+	// 验证响应
+	if !strings.Contains(resp, "RequestId") || !strings.Contains(resp, "SendStatus") {
+		t.Errorf("响应不包含预期内容，得到: %s", resp)
+	}
+}
+
+func TestSendTencentSMSNotification(t *testing.T) {
+	// 创建一个测试服务器来模拟腾讯云短信API响应
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法和内容类型
+		if r.Method != "POST" {
+			t.Errorf("预期POST请求，得到 %s", r.Method)
+		}
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			t.Errorf("预期 Content-Type: application/json，得到 %s", contentType)
+		}
+
+		// 验证请求头
+		action := r.Header.Get("X-TC-Action")
+		if action != "SendSms" {
+			t.Errorf("预期 X-TC-Action: SendSms，得到 %s", action)
+		}
+
+		version := r.Header.Get("X-TC-Version")
+		if version != "2021-01-11" {
+			t.Errorf("预期 X-TC-Version: 2021-01-11，得到 %s", version)
+		}
+
+		region := r.Header.Get("X-TC-Region")
+		if region != "ap-guangzhou" {
+			t.Errorf("预期 X-TC-Region: ap-guangzhou，得到 %s", region)
+		}
+
+		// 读取请求体
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("读取请求体失败: %v", err)
+		}
+
+		// 检查请求体是否包含预期的内容和格式
+		bodyStr := string(body)
+		if !strings.Contains(bodyStr, "PhoneNumberSet") || !strings.Contains(bodyStr, "SmsSdkAppId") {
+			t.Errorf("请求体不包含预期内容，得到: %s", bodyStr)
+		}
+
+		// 新增：验证更多腾讯云短信API必要字段
+		expectedFields := []string{
+			"TemplateId",
+			"SignName",
+			"TemplateParamSet",
+		}
+
+		for _, field := range expectedFields {
+			if !strings.Contains(bodyStr, field) {
+				t.Errorf("请求体缺少必要字段 %s，得到: %s", field, bodyStr)
+			}
+		}
+
+		// 新增：解析JSON并验证字段值
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(body, &requestBody); err != nil {
+			t.Errorf("解析请求体JSON失败: %v", err)
+		} else {
+			// 验证PhoneNumberSet正确性
+			phoneNumbers, ok := requestBody["PhoneNumberSet"].([]interface{})
+			if !ok || len(phoneNumbers) == 0 {
+				t.Errorf("PhoneNumberSet格式不正确或为空")
+			} else {
+				// 验证手机号格式是否符合E.164标准 (+国家码手机号)
+				phoneStr, _ := phoneNumbers[0].(string)
+				fmt.Println(phoneStr)
+			}
+
+			// 验证SmsSdkAppId不为空
+			if appId, ok := requestBody["SmsSdkAppId"].(string); !ok || appId == "" {
+				t.Errorf("SmsSdkAppId不存在或为空")
+			}
+
+			// 验证TemplateId不为空
+			if templateId, ok := requestBody["TemplateId"].(string); !ok || templateId == "" {
+				t.Errorf("TemplateId不存在或为空")
+			}
+		}
+
+		// 返回成功响应
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"Response":{"RequestId":"test-request-id","SendStatusSet":[{"SerialNo":"2023011100001111","PhoneNumber":"+8618021015257","Fee":1,"SessionContext":"","Code":"Ok","Message":"send success","IsoCode":"CN"}]}}`))
+	}))
+	defer server.Close()
+
+	// 创建腾讯云短信通知配置
+	notifyChannel := &NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     server.URL, // 使用测试服务器的URL
+				Timeout: 5,
+				Request: RequestDetail{
+					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"测试签名","SmsSdkAppId":"1400000000","TemplateId":"1000000","TemplateParamSet":["测试"]}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "sms.tencentcloudapi.com",
+					"X-TC-Action":  "SendSms",
+					"X-TC-Version": "2021-01-11",
+					"X-TC-Region":  "ap-guangzhou",
+					"Service":      "sms",
+					"Secret_ID":    "test-id",
+					"Secret_Key":   "test-key",
+				},
+				RetryTimes:    2,
+				RetryInterval: 1,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "phone",
+		},
+	}
+
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:     "test-hash",
+			RuleName: "测试规则",
+			Severity: 3,
+			TagsMap: map[string]string{
+				"host": "test-host",
+				"app":  "test-app",
+			},
+		},
+	}
+
+	// 创建通知模板
+	tpl := map[string]string{
+		"code": "123456",
+	}
+
+	// 创建用户信息
+	userInfos := []*User{
+		{
+			Phone: "+8618021015257",
+		},
+		{
+			Phone: "+8618021015258",
+		},
+	}
+
+	// 创建HTTP客户端
+	client, err := GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("创建HTTP客户端失败: %v", err)
+	}
+
+	// 调用SendHTTP方法
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, userInfos[0], client)
+	if err != nil {
+		t.Fatalf("SendHTTP失败: %v", err)
+	}
+
+	// 验证响应
+	if !strings.Contains(resp, "RequestId") || !strings.Contains(resp, "SendStatusSet") {
+		t.Errorf("响应不包含预期内容，得到: %s", resp)
+	}
+}
+
+func TestSendAliYunVoiceNotification(t *testing.T) {
+	// 创建一个测试服务器来模拟阿里云语音API响应
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法
+		if r.Method != "POST" {
+			t.Errorf("预期POST请求，得到 %s", r.Method)
+		}
+
+		// 解析请求参数
+		err := r.ParseForm()
+		if err != nil {
+			t.Errorf("解析请求参数失败: %v", err)
+		}
+
+		// 验证必要的参数
+		requiredParams := []string{
+			"Action", "Version", "Format", "RegionId",
+			"SignatureMethod", "SignatureVersion", "AccessKeyId",
+			"CalledNumber", "VoiceCode",
+		}
+
+		for _, param := range requiredParams {
+			if r.FormValue(param) == "" {
+				t.Errorf("缺少必要参数: %s", param)
+			}
+		}
+
+		// 验证Action参数值
+		action := r.FormValue("Action")
+		if action != "SingleCallByVoice" {
+			t.Errorf("预期Action为SingleCallByVoice，得到 %s", action)
+		}
+
+		// 验证版本参数
+		version := r.FormValue("Version")
+		if version != "2017-05-25" {
+			t.Errorf("预期Version为2017-05-25，得到 %s", version)
+		}
+
+		// 验证被叫号码
+		calledNumber := r.FormValue("CalledNumber")
+		if calledNumber == "" || calledNumber != "18021015257" {
+			t.Errorf("被叫号码不正确，得到: %s", calledNumber)
+		}
+
+		// 验证语音ID
+		voiceCode := r.FormValue("VoiceCode")
+		if voiceCode == "" || voiceCode != "test-voice-code" {
+			t.Errorf("语音ID不正确，得到: %s", voiceCode)
+		}
+
+		// 验证播放次数
+		playTimes := r.FormValue("PlayTimes")
+		if playTimes != "2" {
+			t.Errorf("播放次数不正确，期望为2，得到: %s", playTimes)
+		}
+
+		// 返回成功响应
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"Code": "OK",
+			"Message": "OK",
+			"RequestId": "E50FFA85-0B79-4421-A7BD-00B0A271966F",
+			"CallId": "116004767703^102806****"
+		}`))
+	}))
+	defer server.Close()
+
+	// 创建阿里云语音通知配置
+	notifyChannel := &NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     server.URL, // 使用测试服务器的URL
+				Timeout: 10,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"Action":   "SingleCallByVoice",
+						"Version":  "2017-05-25",
+						"Format":   "JSON",
+						"OutId":    "test-out-id",
+						"RegionId": "cn-hangzhou",
+
+						"SignatureMethod":  "HMAC-SHA1",
+						"SignatureVersion": "1.0",
+
+						"AccessKeyId":     "test-access-key-id",
+						"AccessKeySecret": "test-access-key-secret",
+						"VoiceCode":       "test-voice-code",
+						"CalledNumber":    `{{ $sendto }}`,
+						"PlayTimes":       "2",
+						"Volume":          "100",
+					},
+				},
+				RetryTimes:    2,
+				RetryInterval: 1,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "phone",
+		},
+	}
+
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:     "test-hash",
+			RuleName: "测试规则",
+			Severity: 3,
+			TagsMap: map[string]string{
+				"host": "test-host",
+				"app":  "test-app",
+			},
+		},
+	}
+
+	// 创建通知模板
+	tpl := map[string]string{
+		"code": "123456",
+	}
+
+	// 创建用户信息
+	user := &User{
+		Phone: "18021015257",
+	}
+
+	// 创建HTTP客户端
+	client, err := GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("创建HTTP客户端失败: %v", err)
+	}
+
+	// 调用SendHTTP方法
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, user, client)
+	if err != nil {
+		t.Fatalf("SendHTTP失败: %v", err)
+	}
+
+	// 验证响应
+	if !strings.Contains(resp, "RequestId") || !strings.Contains(resp, "CallId") {
+		t.Errorf("响应不包含预期内容，得到: %s", resp)
+	}
+}
+
+func TestSendAliYunSMSNotification(t *testing.T) {
+	// 创建一个测试服务器来模拟阿里云短信API响应
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法
+		if r.Method != "POST" {
+			t.Errorf("预期POST请求，得到 %s", r.Method)
+		}
+
+		// 验证内容类型
+		contentType := r.Header.Get("Content-Type")
+		if contentType != "application/x-www-form-urlencoded" && contentType != "application/json" {
+			t.Errorf("预期 Content-Type: application/x-www-form-urlencoded 或 application/json，得到 %s", contentType)
+		}
+
+		// 解析请求参数
+		err := r.ParseForm()
+		if err != nil {
+			t.Errorf("解析请求参数失败: %v", err)
+		}
+
+		// 验证必要的参数
+		requiredParams := []string{
+			"PhoneNumbers", "SignName", "TemplateCode", "Action", "Version", "Format",
+		}
+
+		for _, param := range requiredParams {
+			value := r.FormValue(param)
+			if value == "" {
+				t.Errorf("缺少必要参数: %s", param)
+			}
+		}
+
+		// 验证手机号码
+		phoneNumbers := r.FormValue("PhoneNumbers")
+		if phoneNumbers != "18021015257" {
+			t.Errorf("手机号码不正确，期望为18021015257，得到: %s", phoneNumbers)
+		}
+
+		// 验证签名
+		signName := r.FormValue("SignName")
+		if signName != "测试签名" {
+			t.Errorf("签名不正确，期望为测试签名，得到: %s", signName)
+		}
+
+		// 验证模板代码
+		templateCode := r.FormValue("TemplateCode")
+		if templateCode != "SMS_123456789" {
+			t.Errorf("模板代码不正确，期望为SMS_123456789，得到: %s", templateCode)
+		}
+
+		// 验证模板参数
+		templateParam := r.FormValue("TemplateParam")
+		if !strings.Contains(templateParam, "code") || !strings.Contains(templateParam, "123456") {
+			t.Errorf("模板参数不正确，期望包含code和123456，得到: %s", templateParam)
+		}
+
+		// 验证API版本
+		version := r.FormValue("Version")
+		if version != "2017-05-25" {
+			t.Errorf("API版本不正确，期望为2017-05-25，得到: %s", version)
+		}
+
+		// 验证Action
+		action := r.FormValue("Action")
+		if action != "SendSms" {
+			t.Errorf("Action不正确，期望为SendSms，得到: %s", action)
+		}
+
+		// 返回成功响应
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"Code": "OK",
+			"Message": "OK",
+			"BizId": "900619746936498477",
+			"RequestId": "F655A8D5-B967-440B-8683-DAD6FF8DE990"
+		}`))
+	}))
+	defer server.Close()
+
+	// 创建阿里云短信通知配置
+	notifyChannel := &NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     server.URL, // 使用测试服务器的URL
+				Timeout: 10,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"Action":           "SendSms",
+						"Version":          "2017-05-25",
+						"Format":           "JSON",
+						"RegionId":         "cn-hangzhou",
+						"PhoneNumbers":     "{{ $sendto }}",
+						"SignName":         "测试签名",
+						"TemplateCode":     "SMS_123456789",
+						"TemplateParam":    `{"code":"{{ $tpl.code }}"}`,
+						"AccessKeyId":      "test-access-key-id",
+						"SignatureNonce":   "test-signature-nonce",
+						"Timestamp":        "2023-01-01T12:00:00Z",
+						"SignatureMethod":  "HMAC-SHA1",
+						"SignatureVersion": "1.0",
+					},
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/x-www-form-urlencoded",
+				},
+				RetryTimes:    2,
+				RetryInterval: 1,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "phone",
+		},
+	}
+
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:     "test-hash",
+			RuleName: "测试规则",
+			Severity: 3,
+			TagsMap: map[string]string{
+				"host": "test-host",
+				"app":  "test-app",
+			},
+		},
+	}
+
+	// 创建通知模板
+	tpl := map[string]string{
+		"code": "123456",
+	}
+
+	// 创建用户信息
+	user := &User{
+		Phone: "18021015257",
+	}
+
+	// 创建HTTP客户端
+	client, err := GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("创建HTTP客户端失败: %v", err)
+	}
+
+	// 调用SendHTTP方法
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, user, client)
+	if err != nil {
+		t.Fatalf("SendHTTP失败: %v", err)
+	}
+
+	// 验证响应
+	if !strings.Contains(resp, "BizId") || !strings.Contains(resp, "RequestId") {
+		t.Errorf("响应不包含预期内容，得到: %s", resp)
+	}
+}
+
+func TestSendFlashDuty(t *testing.T) {
+	// 创建一个模拟HTTP服务器
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 验证请求方法
+		if r.Method != "POST" {
+			t.Errorf("预期POST请求，得到 %s", r.Method)
+		}
+
+		// 验证请求URL参数
+		channelID := r.URL.Query().Get("channel_id")
+		if channelID != "4344322009498" {
+			t.Errorf("预期channel_id=4344322009498，得到 %s", channelID)
+		}
+
+		// 读取并验证请求体
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("读取请求体失败: %v", err)
+		}
+
+		// 尝试解析事件数据
+		var events []*AlertCurEvent
+		err = json.Unmarshal(body, &events)
+		if err != nil {
+			t.Errorf("解析事件数据失败: %v", err)
+		}
+
+		if len(events) == 0 {
+			t.Errorf("请求体不包含事件数据")
+		} else if events[0].RuleName != "测试告警规则" {
+			t.Errorf("事件规则名称不匹配，预期'测试告警规则'，得到'%s'", events[0].RuleName)
+		}
+
+		// 返回成功响应
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"code": 200, "message": "success", "data": {"id": "123456"}}`))
+	}))
+	defer server.Close()
+
+	// 创建NotifyChannelConfig对象
+	notifyChannel := &NotifyChannelConfig{
+		ID:          1,
+		Name:        "FlashDuty测试",
+		Ident:       "flashduty-test",
+		RequestType: "flashduty",
+		RequestConfig: &RequestConfig{
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: server.URL,
+			},
+		},
+	}
+
+	// 创建测试事件
+	events := []*AlertCurEvent{
+		{
+			Hash:         "test-hash-123",
+			RuleId:       123,
+			RuleName:     "测试告警规则",
+			Severity:     2,
+			GroupId:      1,
+			GroupName:    "测试团队",
+			TriggerTime:  time.Now().Unix(),
+			TriggerValue: "90.5",
+			LastEvalTime: time.Now().Unix(),
+			Status:       1,
+			TagsMap: map[string]string{
+				"host":    "test-host",
+				"service": "test-service",
+			},
+		},
+	}
+
+	// 创建HTTP客户端
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	// 调用SendFlashDuty方法
+	flashDutyChannelID := int64(4344322009498)
+	resp, err := notifyChannel.SendFlashDuty(events, flashDutyChannelID, client)
+
+	// 验证结果
+	if err != nil {
+		t.Errorf("SendFlashDuty返回错误: %v", err)
+	}
+
+	// 验证响应内容
+	if !strings.Contains(resp, "success") {
+		t.Errorf("响应内容不包含预期的'success'字符串, 得到: %s", resp)
+	}
+
+	// 测试无效的客户端情况
+	_, err = notifyChannel.SendFlashDuty(events, flashDutyChannelID, nil)
+	if err == nil || !strings.Contains(err.Error(), "http client not found") {
+		t.Errorf("预期错误'http client not found'，但得到: %v", err)
+	}
+
+	// 测试请求失败的情况
+	invalidNotifyChannel := &NotifyChannelConfig{
+		RequestType: "flashduty",
+		RequestConfig: &RequestConfig{
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: "http://invalid-url-that-does-not-exist",
+			},
+		},
+	}
+
+	_, err = invalidNotifyChannel.SendFlashDuty(events, flashDutyChannelID, client)
+	if err == nil {
+		t.Errorf("预期请求失败，但未返回错误")
+	}
+}
