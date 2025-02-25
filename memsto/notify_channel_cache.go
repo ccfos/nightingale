@@ -25,6 +25,8 @@ type NotifyChannelCacheType struct {
 	sync.RWMutex
 	channels map[int64]*models.NotifyChannelConfig // key: channel id
 
+	httpConcurrency map[int64]chan struct{}
+
 	httpClient map[int64]*http.Client
 	smtpCh     map[int64]chan *models.EmailContext
 	smtpQuitCh map[int64]chan struct{}
@@ -59,9 +61,13 @@ func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 	return true
 }
 
-func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, httpClient map[int64]*http.Client,
+func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, httpConcurrency map[int64]chan struct{}, httpClient map[int64]*http.Client,
 	smtpCh map[int64]chan *models.EmailContext, quitCh map[int64]chan struct{}, total, lastUpdated int64) {
 	ncc.Lock()
+	for _, k := range ncc.httpConcurrency {
+		close(k)
+	}
+	ncc.httpConcurrency = httpConcurrency
 	ncc.channels = m
 	ncc.httpClient = httpClient
 	ncc.smtpCh = smtpCh
@@ -156,6 +162,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 		m[lst[i].ID] = lst[i]
 	}
 
+	httpConcurrency := make(map[int64]chan struct{})
 	httpClient := make(map[int64]*http.Client)
 	smtpCh := make(map[int64]chan *models.EmailContext)
 	quitCh := make(map[int64]chan struct{})
@@ -167,6 +174,10 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 		case "http":
 			cli, _ := models.GetHTTPClient(lst[i])
 			httpClient[lst[i].ID] = cli
+			httpConcurrency[lst[i].ID] = make(chan struct{}, lst[i].HTTPRequestConfig.Concurrency)
+			for j := 0; j < lst[i].HTTPRequestConfig.Concurrency; j++ {
+				httpConcurrency[lst[i].ID] <- struct{}{}
+			}
 		case "smtp":
 			ch := make(chan *models.EmailContext)
 			quit := make(chan struct{})
@@ -177,7 +188,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 		}
 	}
 
-	ncc.Set(m, httpClient, smtpCh, quitCh, stat.Total, stat.LastUpdated)
+	ncc.Set(m, httpConcurrency, httpClient, smtpCh, quitCh, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	ncc.stats.GaugeCronDuration.WithLabelValues("sync_notify_channels").Set(float64(ms))
@@ -295,4 +306,23 @@ func (ncc *NotifyChannelCacheType) dialSmtp(quitCh chan struct{}, d *gomail.Dial
 			time.Sleep(time.Second)
 		}
 	}
+}
+
+func (ncc *NotifyChannelCacheType) HttpConcurrencyAdd(channelId int64) bool {
+	ncc.RLock()
+	defer ncc.RUnlock()
+	if _, ok := ncc.httpConcurrency[channelId]; !ok {
+		return false
+	}
+	_, ok := <-ncc.httpConcurrency[channelId]
+	return ok
+}
+
+func (ncc *NotifyChannelCacheType) HttpConcurrencyDone(channelId int64) {
+	ncc.RLock()
+	defer ncc.RUnlock()
+	if _, ok := ncc.httpConcurrency[channelId]; !ok {
+		return
+	}
+	ncc.httpConcurrency[channelId] <- struct{}{}
 }

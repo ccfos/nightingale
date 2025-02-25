@@ -371,7 +371,7 @@ func TestNotifyChannelConfig_SendHTTP(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, _ := GetHTTPClient(tt.notifyChannel)
-			if err := tt.notifyChannel.SendHTTP(tt.events, tt.notifyTemplate, tt.notifyParam, tt.userInfos, client); (err != nil) != tt.wantErr {
+			if _, err := tt.notifyChannel.SendHTTP(tt.events, tt.notifyTemplate, tt.notifyParam, tt.userInfos, client); (err != nil) != tt.wantErr {
 				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -428,7 +428,7 @@ func TestNotifyChannelConfig_SendFlashDuty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, _ := GetHTTPClient(tt.notifyChannel)
-			if err := tt.notifyChannel.SendFlashDuty(tt.events, tt.notifyTemplate, tt.flashDutyIDs[0], client); (err != nil) != tt.wantErr {
+			if _, err := tt.notifyChannel.SendFlashDuty(tt.events, tt.notifyTemplate, tt.flashDutyIDs[0], client); (err != nil) != tt.wantErr {
 				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -577,7 +577,7 @@ func TestNotifyChannelConfig_SendScript(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.notifyChannel.SendScript([]*AlertCurEvent{}, tt.notifyTemplate, tt.notifyParam[0], tt.userInfos); (err != nil) != tt.wantErr {
+			if _, _, err := tt.notifyChannel.SendScript([]*AlertCurEvent{}, tt.notifyTemplate, tt.notifyParam[0], tt.userInfos); (err != nil) != tt.wantErr {
 				t.Errorf("SendHTTP() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

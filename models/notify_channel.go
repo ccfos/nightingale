@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -166,11 +167,11 @@ func getMessageTpl(events []*AlertCurEvent, content map[string]string) string {
 	return string(jsonBytes)
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) error {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User) (string, string, error) {
 
 	config := ncc.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
-		return nil
+		return "", "", nil
 	}
 
 	fpath := ".notify_scriptt"
@@ -181,7 +182,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		if file.IsExist(fpath) {
 			oldContent, err := file.ToString(fpath)
 			if err != nil {
-				return err
+				return "", "", nil
 			}
 
 			if oldContent == ncc.ScriptRequestConfig.Script {
@@ -192,12 +193,12 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 		if rewrite {
 			_, err := file.WriteString(fpath, ncc.ScriptRequestConfig.Script)
 			if err != nil {
-				return err
+				return "", "", nil
 			}
 
 			err = os.Chmod(fpath, 0777)
 			if err != nil {
-				return err
+				return "", "", err
 			}
 		}
 
@@ -233,25 +234,42 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, content map[
 
 	err := startCmd(cmd)
 	if err != nil {
-		return err
+		return "", "", err
+	}
+
+	res := buf.String()
+
+	// 截断超出长度的输出
+	if len(res) > 512 {
+		// 确保在有效的UTF-8字符边界处截断
+		validLen := 0
+		for i := 0; i < 512 && i < len(res); {
+			_, size := utf8.DecodeRuneInString(res[i:])
+			if i+size > 512 {
+				break
+			}
+			i += size
+			validLen = i
+		}
+		res = res[:validLen] + "..."
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
 
 	if isTimeout {
 		if err == nil {
-			return errors.New("timeout and killed process")
+			return cmd.String(), res, errors.New("timeout and killed process")
 		}
 
-		return err
+		return cmd.String(), res, err
 	}
 
 	if err != nil {
-		return err
+		return cmd.String(), res, err
 	}
 	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 
-	return nil
+	return cmd.String(), res, nil
 }
 
 func getStdinBytes(events []*AlertCurEvent, content map[string]string, param map[string]string, contactKey string, token []string) []byte {
@@ -365,10 +383,10 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
-func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) error {
+func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content map[string]string, flashDutyChannelID int64, client *http.Client) (string, error) {
 
 	if client == nil {
-		return fmt.Errorf("http client not found")
+		return "", fmt.Errorf("http client not found")
 	}
 
 	// MessageTemplate
@@ -379,13 +397,13 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 	body, err := ncc.parseRequestBody(fullTpl)
 	if err != nil {
 		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
-		return err
+		return "", err
 	}
 
 	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.ParamConfig.FlashDuty.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
-		return err
+		return "", err
 	}
 
 	// 设置 URL 参数
@@ -401,7 +419,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
 				continue
 			}
-			return fmt.Errorf("failed to send request: %v", err)
+			return "", fmt.Errorf("failed to send request: %v", err)
 		}
 		defer resp.Body.Close()
 
@@ -411,11 +429,8 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 			fmt.Println("Error reading response:", err)
 		}
 
-		// 打印响应
-		fmt.Println("Response:", string(body))
-
 		if resp.StatusCode == http.StatusOK {
-			return nil
+			return string(body), nil
 		}
 
 		if i < ncc.HTTPRequestConfig.RetryTimes {
@@ -423,13 +438,13 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, content m
 		}
 	}
 
-	return errors.New("failed to send request")
+	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, client *http.Client) error {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[string]string, param map[string]string, userInfos []*User, client *http.Client) (string, error) {
 
 	if client == nil {
-		return fmt.Errorf("http client not found")
+		return "", fmt.Errorf("http client not found")
 	}
 
 	// MessageTemplate
@@ -466,7 +481,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 	body, err := ncc.parseRequestBody(fullTpl)
 	if err != nil {
 		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
-		return err
+		return "", err
 	}
 
 	// 替换 URL Header Parameters 中的变量
@@ -475,7 +490,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 	req, err := http.NewRequest(ncc.HTTPRequestConfig.Method, ncc.HTTPRequestConfig.URL, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
-		return err
+		return "", err
 	}
 
 	// 设置请求头 腾讯云短信、语音特殊处理
@@ -507,7 +522,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 				time.Sleep(time.Duration(ncc.HTTPRequestConfig.RetryInterval) * time.Second)
 				continue
 			}
-			return fmt.Errorf("failed to send request: %v", err)
+			return "", fmt.Errorf("failed to send request: %v", err)
 		}
 		defer resp.Body.Close()
 
@@ -517,11 +532,8 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 			fmt.Println("Error reading response:", err)
 		}
 
-		// 打印响应
-		fmt.Println("Response:", string(body))
-
 		if resp.StatusCode == http.StatusOK {
-			return nil
+			return string(body), nil
 		}
 
 		if i < ncc.HTTPRequestConfig.RetryTimes {
@@ -529,7 +541,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, content map[st
 		}
 	}
 
-	return errors.New("failed to send request")
+	return "", errors.New("failed to send request")
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
