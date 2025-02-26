@@ -203,10 +203,10 @@ const (
 )
 
 var MsgTplMap = map[string]map[string]string{
-	Dingtalk:   {"title": DingtalkTitle, "body": TplMap[Dingtalk]},
-	Email:      {"title": TplMap[EmailSubject], "body": TplMap[Email]},
-	FeishuCard: {"title": FeishuCardTitle, "body": TplMap[FeishuCard]},
-	Feishu:     {"body": TplMap[Feishu]}, Wecom: {"body": TplMap[Wecom]},
+	Dingtalk:   {"title": DingtalkTitle, "content": TplMap[Dingtalk]},
+	Email:      {"title": TplMap[EmailSubject], "content": TplMap[Email]},
+	FeishuCard: {"title": FeishuCardTitle, "content": TplMap[FeishuCard]},
+	Feishu:     {"title": TplMap[Feishu]}, Wecom: {"content": TplMap[Wecom]},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
