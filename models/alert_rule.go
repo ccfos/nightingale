@@ -902,6 +902,10 @@ func (ar *AlertRule) DB2FE() error {
 		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
 	}
 
+	if ar.NotifyRuleIds == nil {
+		ar.NotifyRuleIds = make([]int64, 0)
+	}
+
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
 	ar.NotifyGroupsJSON = strings.Fields(ar.NotifyGroups)
 	ar.CallbacksJSON = strings.Fields(ar.Callbacks)

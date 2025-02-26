@@ -890,9 +890,16 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Parameters: map[string]string{"access_token": "your-access-token"},
-					Body:       "This is a Dingtalk notification.",
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
 				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "access_token",
+			Params: []ParamItem{
+				{Key: "access_token", CName: "access_token", Type: "string"},
+				{Key: "ats", CName: "ats", Type: "string"},
 			},
 		},
 	},
@@ -904,8 +911,15 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Body: "This is a FeiShu notification.",
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}`,
 				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "access_token",
+			Params: []ParamItem{
+				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
 	},
@@ -917,8 +931,15 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Body: "This is a FeiShuCard notification.",
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
 				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "access_token",
+			Params: []ParamItem{
+				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
 	},
@@ -930,8 +951,15 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Body: "This is a Wecom notification.",
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msgtype": "text", "text": {"content": "{{$tpl.content}}"}}`,
 				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "access_token",
+			Params: []ParamItem{
+				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
 	},
@@ -946,6 +974,9 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				From:               "your-email",
 				InsecureSkipVerify: true,
 			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserContactKey: "email",
 		},
 	},
 }
