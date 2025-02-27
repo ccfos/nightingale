@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/tplx"
-
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
@@ -151,6 +149,9 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 			}
 
 			for i := range notifyRule.NotifyConfigs {
+				if !notifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
+					continue
+				}
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil || messageTemplate == nil {
@@ -164,32 +165,71 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 	}
 }
 
+func notifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
+	tm := time.Unix(event.TriggerTime, 0)
+	triggerTime := tm.Format("15:04")
+	triggerWeek := int(tm.Weekday())
+
+	timeMatch := false
+	for j := range notifyConfig.TimeRanges {
+		if timeMatch {
+			break
+		}
+		enableStime := notifyConfig.TimeRanges[j].Start
+		enableEtime := notifyConfig.TimeRanges[j].End
+		enableDaysOfWeek := notifyConfig.TimeRanges[j].Week
+		length := len(enableDaysOfWeek)
+		// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+		for i := 0; i < length; i++ {
+			if enableDaysOfWeek[i] != triggerWeek {
+				continue
+			}
+
+			if enableStime < enableEtime {
+				if enableEtime == "23:59" {
+					// 02:00-23:59，这种情况做个特殊处理，相当于左闭右闭区间了
+					if triggerTime < enableStime {
+						// mute, 即没生效
+						continue
+					}
+				} else {
+					// 02:00-04:00 或者 02:00-24:00
+					if triggerTime < enableStime || triggerTime >= enableEtime {
+						// mute, 即没生效
+						continue
+					}
+				}
+			} else if enableStime[i] > enableEtime[i] {
+				// 21:00-09:00
+				if triggerTime < enableStime && triggerTime >= enableEtime {
+					// mute, 即没生效
+					continue
+				}
+			}
+
+			// 到这里说明当前时刻在告警规则的某组生效时间范围内，即没有 mute，直接返回 false
+			timeMatch = true
+			break
+		}
+	}
+
+	severityMatch := false
+	for i := range notifyConfig.Severities {
+		if notifyConfig.Severities[i] == event.Severity {
+			severityMatch = true
+		}
+	}
+
+	return timeMatch && severityMatch
+}
+
 func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	if len(events) == 0 {
 		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
 		return
 	}
-	// event 内容渲染到 messageTemplate
-	tplContent := make(map[string]string)
-	for key, msgTpl := range messageTemplate.Content {
-		var defs = []string{
-			"{{ $events :=  . }}",
-			"{{ $event :=  index $events 0 }}",
-			"{{ $labels := $event.TagsMap }}",
-			"{{ $value := $event.TriggerValue }}",
-		}
-		text := strings.Join(append(defs, msgTpl), "")
-		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
-		if err != nil {
-			continue
-		}
 
-		var body bytes.Buffer
-		if err = tpl.Execute(&body, events); err != nil {
-			continue
-		}
-		tplContent[key] = body.String()
-	}
+	tplContent := messageTemplate.RenderEvent(events)
 
 	var (
 		userInfos           []*models.User
