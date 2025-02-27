@@ -163,7 +163,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
-		if notifyChannel.ParamConfig.UserContactKey != "" && len(userInfos) > 0 {
+		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
 			for i := range userInfos {
 				_, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
 				if err != nil {
