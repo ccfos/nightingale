@@ -198,60 +198,362 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 }
 
 const (
-	DingtalkTitle   = `{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}: {{.RuleName}} {{.TagsJSON}}`
-	FeishuCardTitle = `🔔 {{.RuleName}}`
-	LarkCardTitle   = `🔔 {{.RuleName}}`
+	DingtalkTitle   = `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`
+	FeishuCardTitle = `🔔 {{$event.RuleName}}`
+	LarkCardTitle   = `🔔 {{$event.RuleName}}`
 )
 
-var ExtraTplMap = map[string]string{
-	"ali-voice": `{"alert_name":"{{.RuleName}},级别状态 S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}"}`,
-	"ali-sms":   `{"name":"级别状态 S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{.RuleName}}"`,
-	"tx-voice":  `S{{.Severity}}{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}{{.RuleName}}`,
-	"tx-sms": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}
-规则名称: {{.RuleName}}`,
-	"pingmesh": `{{ if .IsRecovered }}   
-**级别状态:** S{{.Severity}} Recovered   
-**告警集群:** {{.Cluster}}
-**告警名称:** {{.RuleName}}
-{{- range .TagsJSON -}}
-{{if contains . "sidc"}}
-**源机房:**{{reReplaceAll "sidc=" "" .}}{{- end -}} {{if contains . "snet_ident"}}   **源机柜:**{{reReplaceAll "snet_ident=" "" .}}{{- end -}}
-{{if contains . "tidc"}}
-**目标机房:**{{reReplaceAll "tidc=" "" .}}{{- end -}} {{if contains . "tnet_ident"}}  **目标机柜:**{{reReplaceAll "tnet_ident=" "" .}}{{- end -}}
-{{end}}
-**恢复时值:** {{.TriggerValue}} 
-**恢复时间:** {{timeformat .LastEvalTime}}   
-**告警描述:** **服务已恢复**   
+var NewTplMap = map[string]string{
+	"ali-voice": `{"alert_name":"{{$event.RuleName}},级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}"}`,
+	"ali-sms":   `{"name":"级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{$event.RuleName}}"`,
+	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
+	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+---
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+- **告警级别**: {{$event.Severity}}级
+{{- if $event.RuleNote}}
+	- **规则备注**: {{$event.RuleNote}}
+{{- end}}
+{{- if not $event.IsRecovered}}
+- **当次触发时值**: {{$event.TriggerValue}}
+- **当次触发时间**: {{timeformat $event.TriggerTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
 {{- else}}
-**级别状态:** S{{.Severity}} Triggered  
-**告警集群:** {{.Cluster}}
-**告警名称:** {{.RuleName}}
-{{- range .TagsJSON -}}
-{{if contains . "sidc"}}
-**源机房:**{{reReplaceAll "sidc=" "" .}}{{- end -}} {{if contains . "snet_ident"}}   **源机柜:**{{reReplaceAll "snet_ident=" "" .}}{{- end -}}
-{{if contains . "tidc"}}
-**目标机房:**{{reReplaceAll "tidc=" "" .}}{{- end -}} {{if contains . "tnet_ident"}}  **目标机柜:**{{reReplaceAll "tnet_ident=" "" .}}{{- end -}}
-{{end}}
-**触发时值:** {{.TriggerValue}}  
-**触发时间:** {{timeformat .TriggerTime}}   
-**发送时间:** {{timestamp}}    
-{{if .RuleNote }}**告警描述:** **{{.RuleNote}}**{{end}}   
-{{- end -}}`,
+{{- if $event.AnnotationsJSON.recovery_value}}
+- **恢复时值**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **恢复时间**: {{timeformat $event.LastEvalTime}}
+- **告警持续时长**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **告警事件标签**:
+{{- range $key, $val := $event.TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	Email: `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>夜莺告警通知</title>
+		<style type="text/css">
+			.wrapper {
+				background-color: #f8f8f8;
+				padding: 15px;
+				height: 100%;
+			}
+			.main {
+				width: 600px;
+				padding: 30px;
+				margin: 0 auto;
+				background-color: #fff;
+				font-size: 12px;
+				font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono';
+			}
+			header {
+				border-radius: 2px 2px 0 0;
+			}
+			header .title {
+				font-size: 14px;
+				color: #333333;
+				margin: 0;
+			}
+			header .sub-desc {
+				color: #333;
+				font-size: 14px;
+				margin-top: 6px;
+				margin-bottom: 0;
+			}
+			hr {
+				margin: 20px 0;
+				height: 0;
+				border: none;
+				border-top: 1px solid #e5e5e5;
+			}
+			em {
+				font-weight: 600;
+			}
+			table {
+				margin: 20px 0;
+				width: 100%;
+			}
+	
+			table tbody tr{
+				font-weight: 200;
+				font-size: 12px;
+				color: #666;
+				height: 32px;
+			}
+	
+			.succ {
+				background-color: green;
+				color: #fff;
+			}
+	
+			.fail {
+				background-color: red;
+				color: #fff;
+			}
+	
+			.succ th, .succ td, .fail th, .fail td {
+				color: #fff;
+			}
+	
+			table tbody tr th {
+				width: 80px;
+				text-align: right;
+			}
+			.text-right {
+				text-align: right;
+			}
+			.body {
+				margin-top: 24px;
+			}
+			.body-text {
+				color: #666666;
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra {
+				-webkit-font-smoothing: antialiased;
+			}
+			.body-extra.text-right a {
+				text-decoration: none;
+				color: #333;
+			}
+			.body-extra.text-right a:hover {
+				color: #666;
+			}
+			.button {
+				width: 200px;
+				height: 50px;
+				margin-top: 20px;
+				text-align: center;
+				border-radius: 2px;
+				background: #2D77EE;
+				line-height: 50px;
+				font-size: 20px;
+				color: #FFFFFF;
+				cursor: pointer;
+			}
+			.button:hover {
+				background: rgb(25, 115, 255);
+				border-color: rgb(25, 115, 255);
+				color: #fff;
+			}
+			footer {
+				margin-top: 10px;
+				text-align: right;
+			}
+			.footer-logo {
+				text-align: right;
+			}
+			.footer-logo-image {
+				width: 108px;
+				height: 27px;
+				margin-right: 10px;
+			}
+			.copyright {
+				margin-top: 10px;
+				font-size: 12px;
+				text-align: right;
+				color: #999;
+				-webkit-font-smoothing: antialiased;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{$event.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+	
+			<hr>
+	
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if $event.IsRecovered}}
+					<tr class="succ">
+						<th>级别状态：</th>
+						<td>S{{$event.Severity}} Recovered</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>级别状态：</th>
+						<td>S{{$event.Severity}} Triggered</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>策略备注：</th>
+						<td>{{$event.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>设备备注：</th>
+						<td>{{$event.TargetNote}}</td>
+					</tr>
+					{{if not $event.IsRecovered}}
+					<tr>
+						<th>触发时值：</th>
+						<td>{{$event.TriggerValue}}</td>
+					</tr>
+					{{end}}
+	
+					{{if $event.TargetIdent}}
+					<tr>
+						<th>监控对象：</th>
+						<td>{{$event.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>监控指标：</th>
+						<td>{{$event.TagsJSON}}</td>
+					</tr>
+	
+					{{if $event.IsRecovered}}
+					<tr>
+						<th>恢复时间：</th>
+						<td>{{timeformat $event.LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>触发时间：</th>
+						<td>
+							{{timeformat $event.TriggerTime}}
+						</td>
+					</tr>
+					{{end}}
+	
+					<tr>
+						<th>发送时间：</th>
+						<td>
+							{{timestamp}}
+						</td>
+					</tr>
+					</tbody>
+				</table>
+	
+				<hr>
+	
+				<footer>
+					<div class="copyright" style="font-style: italic">
+						报警太多？使用 <a href="https://flashcat.cloud/product/flashduty/" target="_blank">FlashDuty</a> 做告警聚合降噪、排班OnCall！
+					</div>
+				</footer>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	Feishu: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
+规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
+规则备注: {{$event.RuleNote}}{{end}}   
+监控指标: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}
+触发时值: {{$event.TriggerValue}}{{end}}
+发送时间: {{timestamp}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+事件详情: {{$domain}}/alert-his-events/{{$event.Id}}
+屏蔽1小时: {{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}`,
+	FeishuCard: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	EmailSubject: `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
+	Mm: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
+规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
+规则备注: {{$event.RuleNote}}{{end}}   
+监控指标: {{$event.TagsJSON}}   
+{{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}   
+触发时值: {{$event.TriggerValue}}{{end}}   
+发送时间: {{timestamp}}`,
+	Telegram: `**级别状态**: {{if $event.IsRecovered}}<font color="info">S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">S{{$event.Severity}} Triggered</font>{{end}}   
+**规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
+**规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+**监控对象**: {{$event.TargetIdent}}{{end}}   
+**监控指标**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+**触发时值**: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
+**发送时间**: {{timestamp}}`,
+	Wecom: `**级别状态**: {{if $event.IsRecovered}}<font color="info">S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">S{{$event.Severity}} Triggered</font>{{end}}   
+**规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
+**规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+**监控对象**: {{$event.TargetIdent}}{{end}}   
+**监控指标**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+**触发时值**: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
+**发送时间**: {{timestamp}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	Lark: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
+规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
+规则备注: {{$event.RuleNote}}{{end}}   
+监控指标: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}
+触发时值: {{$event.TriggerValue}}{{end}}
+发送时间: {{timestamp}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+事件详情: {{$domain}}/alert-his-events/{{$event.Id}}
+屏蔽1小时: {{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}`,
+	LarkCard: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
 var MsgTplMap = map[string]map[string]string{
-	Dingtalk:    {"title": DingtalkTitle, "content": TplMap[Dingtalk]},
-	Email:       {"subject": TplMap[EmailSubject], "content": TplMap[Email]},
-	FeishuCard:  {"title": FeishuCardTitle, "content": TplMap[FeishuCard]},
-	Feishu:      {"content": TplMap[Feishu]},
-	Wecom:       {"content": TplMap[Wecom]},
-	Lark:        {"content": TplMap[Lark]},
-	LarkCard:    {"title": LarkCardTitle, "content": TplMap[LarkCard]},
-	Telegram:    {"content": TplMap[Telegram]},
-	"ali-voice": {"content": ExtraTplMap["ali-voice"]},
-	"ali-sms":   {"content": ExtraTplMap["ali-sms"]},
-	"tx-voice":  {"content": ExtraTplMap["tx-voice"]},
-	"tx-sms":    {"content": ExtraTplMap["tx-sms"]},
+	Dingtalk:    {"title": DingtalkTitle, "content": NewTplMap[Dingtalk]},
+	Email:       {"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]},
+	FeishuCard:  {"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]},
+	Feishu:      {"content": NewTplMap[Feishu]},
+	Wecom:       {"content": NewTplMap[Wecom]},
+	Lark:        {"content": NewTplMap[Lark]},
+	LarkCard:    {"title": LarkCardTitle, "content": NewTplMap[LarkCard]},
+	Telegram:    {"content": NewTplMap[Telegram]},
+	"ali-voice": {"content": NewTplMap["ali-voice"]},
+	"ali-sms":   {"content": NewTplMap["ali-sms"]},
+	"tx-voice":  {"content": NewTplMap["tx-voice"]},
+	"tx-sms":    {"content": NewTplMap["tx-sms"]},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {

@@ -258,7 +258,6 @@ func getNotifyTpl(tplDir string) map[string]string {
 
 var TplMap = map[string]string{
 	Dingtalk: `#### {{if .IsRecovered}}<font color="#008800">💚{{.RuleName}}</font>{{else}}<font color="#FF0000">💔{{.RuleName}}</font>{{end}}
-
 ---
 {{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}
 - **告警级别**: {{.Severity}}级
