@@ -200,13 +200,18 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 const (
 	DingtalkTitle   = `{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}: {{.RuleName}} {{.TagsJSON}}`
 	FeishuCardTitle = `🔔 {{.RuleName}}`
+	LarkCardTitle   = `🔔 {{.RuleName}}`
 )
 
 var MsgTplMap = map[string]map[string]string{
 	Dingtalk:   {"title": DingtalkTitle, "content": TplMap[Dingtalk]},
-	Email:      {"title": TplMap[EmailSubject], "content": TplMap[Email]},
+	Email:      {"subject": TplMap[EmailSubject], "content": TplMap[Email]},
 	FeishuCard: {"title": FeishuCardTitle, "content": TplMap[FeishuCard]},
-	Feishu:     {"title": TplMap[Feishu]}, Wecom: {"content": TplMap[Wecom]},
+	Feishu:     {"content": TplMap[Feishu]},
+	Wecom:      {"content": TplMap[Wecom]},
+	Lark:       {"content": TplMap[Lark]},
+	LarkCard:   {"title": LarkCardTitle, "content": TplMap[LarkCard]},
+	Telegram:   {"content": TplMap[Telegram]},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {

@@ -997,6 +997,82 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
+
+	Telegram: &NotifyChannelConfig{
+		Name: Telegram, Ident: Telegram, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
+				Method:  "POST",
+				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
+					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "token", Type: "string"},
+					{Key: "chat_id", CName: "chat_id", Type: "string"},
+				},
+			},
+		},
+	},
+
+	Lark: &NotifyChannelConfig{
+		Name: Lark, Ident: Lark, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "token", Type: "string"},
+				},
+			},
+		},
+	},
+
+	LarkCard: &NotifyChannelConfig{
+		Name: LarkCard, Ident: LarkCard, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}"}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "token", Type: "string"},
+				},
+			},
+		},
+	},
+
+	"flashduty": &NotifyChannelConfig{
+		Name: "flashduty", Ident: "flashduty", RequestType: "flashduty",
+		RequestConfig: &RequestConfig{
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: "flashduty integration url",
+			},
+		},
+	},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
