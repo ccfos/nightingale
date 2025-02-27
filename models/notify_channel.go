@@ -78,8 +78,12 @@ type RequestConfig struct {
 
 // NotifyParamConfig 参数配置
 type NotifyParamConfig struct {
-	UserInfo     *UserInfo   `json:"user_info,omitempty"`
-	CustomParams []ParamItem `json:"custom"` // 自定义参数配置
+	UserInfo *UserInfo `json:"user_info,omitempty"`
+	Custom   Params    `json:"custom"` // 自定义参数配置
+}
+
+type Params struct {
+	Params []ParamItem `json:"params"`
 }
 
 type UserInfo struct {
@@ -510,7 +514,7 @@ func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Va
 
 	bodyTpl := make(map[string]interface{})
 	bodyTpl["tpl"] = tplContent
-	for _, param := range ncc.ParamConfig.CustomParams {
+	for _, param := range ncc.ParamConfig.Custom.Params {
 		bodyTpl[param.Key] = param.CName
 	}
 
@@ -726,7 +730,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 	}
 
 	if ncc.ParamConfig != nil {
-		for _, param := range ncc.ParamConfig.CustomParams {
+		for _, param := range ncc.ParamConfig.Custom.Params {
 			if param.Key != "" && param.CName == "" {
 				return errors.New("param items must have valid cname")
 			}
@@ -904,9 +908,11 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			CustomParams: []ParamItem{
-				{Key: "access_token", CName: "access_token", Type: "string"},
-				{Key: "ats", CName: "ats", Type: "string"},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "access_token", Type: "string"},
+					{Key: "ats", CName: "ats", Type: "string"},
+				},
 			},
 		},
 	},
@@ -924,8 +930,10 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			CustomParams: []ParamItem{
-				{Key: "access_token", CName: "access_token", Type: "string"},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "access_token", Type: "string"},
+				},
 			},
 		},
 	},
@@ -943,8 +951,10 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			CustomParams: []ParamItem{
-				{Key: "access_token", CName: "access_token", Type: "string"},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "access_token", Type: "string"},
+				},
 			},
 		},
 	},
@@ -962,8 +972,10 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			CustomParams: []ParamItem{
-				{Key: "access_token", CName: "access_token", Type: "string"},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "access_token", Type: "string"},
+				},
 			},
 		},
 	},

@@ -69,12 +69,14 @@ func TestSendDingTalkNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			CustomParams: []ParamItem{
-				{
-					Key: "access_token",
-				},
-				{
-					Key: "ats",
+			Custom: Params{
+				Params: []ParamItem{
+					{
+						Key: "access_token",
+					},
+					{
+						Key: "ats",
+					},
 				},
 			},
 		},
