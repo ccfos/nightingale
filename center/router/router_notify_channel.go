@@ -160,7 +160,8 @@ func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "failed to get flashduty app key")
 	}
-	var jsonData []byte
+
+	jsonData := []byte("{}")
 	if len(configs) > 0 {
 		me := c.MustGet("user").(*models.User)
 		jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
