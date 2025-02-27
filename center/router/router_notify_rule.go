@@ -5,8 +5,11 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
+
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 )
 
@@ -112,4 +115,116 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 		}
 	}
 	ginx.NewRender(c).Data(res, nil)
+}
+
+type NotifyTestForm struct {
+	EventIDs     []int64             `json:"event_ids" binding:"required"`
+	NotifyConfig models.NotifyConfig `json:"notify_config" binding:"required"`
+}
+
+func (rt *Router) notifyTest(c *gin.Context) {
+	var f NotifyTestForm
+	ginx.BindJSON(c, &f)
+
+	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
+	ginx.Dangerous(err)
+	events := make([]*models.AlertCurEvent, len(hisEvents))
+	for i, he := range hisEvents {
+		events[i] = he.ToCur()
+	}
+	messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
+	ginx.Dangerous(err)
+	if len(messageTemplates) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "message template not found")
+	}
+	tplContent := messageTemplates[0].RenderEvent(events)
+
+	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, f.NotifyConfig.ChannelID, "", "", -1)
+	ginx.Dangerous(err)
+	if len(notifyChannels) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "notify channel not found")
+	}
+	notifyChannel := notifyChannels[0]
+
+	userInfos, flashDutyChannelIDs, customParams, err := getParams(rt.Ctx, &f.NotifyConfig)
+	ginx.Dangerous(err)
+
+	switch notifyChannel.RequestType {
+	case "flashduty":
+		client, err := models.GetHTTPClient(notifyChannel)
+		ginx.Dangerous(err)
+		for i := range flashDutyChannelIDs {
+			_, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
+			if err != nil {
+				break
+			}
+		}
+		ginx.NewRender(c).Message(err)
+	case "http":
+		client, err := models.GetHTTPClient(notifyChannel)
+		ginx.Dangerous(err)
+		if notifyChannel.ParamConfig.UserContactKey != "" && len(userInfos) > 0 {
+			for i := range userInfos {
+				_, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
+				if err != nil {
+					break
+				}
+			}
+		} else {
+			_, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
+		}
+		ginx.NewRender(c).Message(err)
+	case "email":
+		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
+		ginx.NewRender(c).Message(err)
+	case "script":
+		_, _, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
+		ginx.NewRender(c).Message(err)
+	default:
+		ginx.NewRender(c).Message(errors.New("unsupported request type"))
+	}
+}
+
+func getParams(c *ctx.Context, notifyConfig *models.NotifyConfig) ([]*models.User, []int64, map[string]string, error) {
+	var (
+		userInfos           []*models.User
+		flashDutyChannelIDs []int64
+		customParams        map[string]string
+	)
+
+	switch notifyConfig.Params.(type) {
+	case models.CustomParams:
+		visited := make(map[int64]bool)
+		userInfoParams := notifyConfig.Params.(models.CustomParams)
+		users, err := models.UserGetsByIds(c, userInfoParams.UserIDs)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, user := range users {
+			if visited[user.Id] {
+				continue
+			}
+			visited[user.Id] = true
+			userInfos = append(userInfos, &user)
+		}
+		userGroups, err := models.UserGroupGetByIds(c, userInfoParams.UserGroupIDs)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, userGroup := range userGroups {
+			for _, user := range userGroup.Users {
+				if visited[user.Id] {
+					continue
+				}
+				visited[user.Id] = true
+				userInfos = append(userInfos, &user)
+			}
+		}
+		customParams = userInfoParams.CustomParams
+	case models.FlashDutyParams:
+		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
+	default:
+
+	}
+	return userInfos, flashDutyChannelIDs, customParams, nil
 }

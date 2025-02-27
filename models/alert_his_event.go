@@ -341,3 +341,58 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 
 	return nil
 }
+
+func AlertHisEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertHisEvent, error) {
+	var lst []*AlertHisEvent
+
+	if len(ids) == 0 {
+		return lst, nil
+	}
+
+	err := DB(ctx).Where("id in ?", ids).Order("trigger_time desc").Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+func (e *AlertHisEvent) ToCur() *AlertCurEvent {
+	return &AlertCurEvent{
+		Cate:             e.Cate,
+		Cluster:          e.Cluster,
+		DatasourceId:     e.DatasourceId,
+		GroupId:          e.GroupId,
+		GroupName:        e.GroupName,
+		Hash:             e.Hash,
+		RuleId:           e.RuleId,
+		RuleName:         e.RuleName,
+		RuleProd:         e.RuleProd,
+		RuleAlgo:         e.RuleAlgo,
+		RuleNote:         e.RuleNote,
+		Severity:         e.Severity,
+		PromForDuration:  e.PromForDuration,
+		PromQl:           e.PromQl,
+		PromEvalInterval: e.PromEvalInterval,
+		RuleConfig:       e.RuleConfig,
+		RuleConfigJson:   e.RuleConfigJson,
+		Callbacks:        e.Callbacks,
+		RunbookUrl:       e.RunbookUrl,
+		NotifyRecovered:  e.NotifyRecovered,
+		NotifyChannels:   e.NotifyChannels,
+		NotifyGroups:     e.NotifyGroups,
+		Annotations:      e.Annotations,
+		AnnotationsJSON:  e.AnnotationsJSON,
+		TargetIdent:      e.TargetIdent,
+		TargetNote:       e.TargetNote,
+		TriggerTime:      e.TriggerTime,
+		TriggerValue:     e.TriggerValue,
+		Tags:             e.Tags,
+		OriginalTags:     e.OriginalTags,
+		LastEvalTime:     e.LastEvalTime,
+		NotifyCurNumber:  e.NotifyCurNumber,
+		FirstTriggerTime: e.FirstTriggerTime,
+	}
+}

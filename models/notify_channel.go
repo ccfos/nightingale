@@ -716,6 +716,31 @@ func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, tpl map[strin
 	return nil
 }
 
+func (ncc *NotifyChannelConfig) SendEmail2(events []*AlertCurEvent, tpl map[string]string, userInfos []*User) error {
+
+	d := gomail.NewDialer(ncc.RequestConfig.SMTPRequestConfig.Host, ncc.RequestConfig.SMTPRequestConfig.Port, ncc.RequestConfig.SMTPRequestConfig.Username, ncc.RequestConfig.SMTPRequestConfig.Password)
+	if ncc.RequestConfig.SMTPRequestConfig.InsecureSkipVerify {
+		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	s, err := d.Dial()
+	if err != nil {
+		logger.Errorf("email_sender: failed to dial: %s", err)
+	}
+
+	var to []string
+	for _, userInfo := range userInfos {
+		if userInfo.Email != "" {
+			to = append(to, userInfo.Email)
+		}
+	}
+	m := gomail.NewMessage()
+	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
+	m.SetHeader("To", strings.Join(to, ","))
+	m.SetHeader("Subject", tpl["subject"])
+	m.SetBody("text/html", tpl["content"])
+	return gomail.Send(s, m)
+}
+
 func (ncc *NotifyChannelConfig) Verify() error {
 	if ncc.Name == "" {
 		return errors.New("channel name cannot be empty")

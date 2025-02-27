@@ -1,10 +1,15 @@
 package models
 
 import (
+	"bytes"
+	"strings"
+	"text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
@@ -593,4 +598,29 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 		return nil
 	}
 	return tpl.Update(ctx, *t)
+}
+
+func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string {
+	// event 内容渲染到 messageTemplate
+	tplContent := make(map[string]string)
+	for key, msgTpl := range t.Content {
+		var defs = []string{
+			"{{ $events := . }}",
+			"{{ $event := index $events 0 }}",
+			"{{ $labels := $event.TagsMap }}",
+			"{{ $value := $event.TriggerValue }}",
+		}
+		text := strings.Join(append(defs, msgTpl), "")
+		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+		if err != nil {
+			continue
+		}
+
+		var body bytes.Buffer
+		if err = tpl.Execute(&body, events); err != nil {
+			continue
+		}
+		tplContent[key] = body.String()
+	}
+	return tplContent
 }
