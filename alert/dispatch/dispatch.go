@@ -199,7 +199,7 @@ func notifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 						continue
 					}
 				}
-			} else if enableStime[i] > enableEtime[i] {
+			} else if enableStime > enableEtime {
 				// 21:00-09:00
 				if triggerTime < enableStime && triggerTime >= enableEtime {
 					// mute, 即没生效

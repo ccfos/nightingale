@@ -258,6 +258,8 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string
 	tplContent := make(map[string]string)
 	for key, msgTpl := range t.Content {
 		var defs = []string{
+			"{{ $events := . }}",
+			"{{ $event := index $events 0 }}",
 			"{{ $labels := $event.TagsMap }}",
 			"{{ $value := $event.TriggerValue }}",
 		}
