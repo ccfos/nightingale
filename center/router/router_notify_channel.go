@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -155,24 +156,84 @@ func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "notify channel not found")
 	}
 
-	me := c.MustGet("user").(*models.User)
-	jsonData := []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`,
-		me.Username, me.Email, me.Phone))
+	appKey, err := models.ConfigsGetFlashDutyAppKey(rt.Ctx)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "failed to get flashduty app key")
+	}
 
-	url := nc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	var jsonData []byte
+	if appKey != "" {
+		me := c.MustGet("user").(*models.User)
+		jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
+	}
+
+	items, err := getFlashDutyChannels(nc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, jsonData)
 	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(items, nil)
+}
+
+// getFlashDutyChannels 从FlashDuty API获取频道列表
+func getFlashDutyChannels(integrationUrl string, jsonData []byte) ([]struct {
+	ChannelID   int    `json:"channel_id"`
+	ChannelName string `json:"channel_name"`
+	Status      string `json:"status"`
+}, error) {
+	// 解析URL，提取baseUrl和参数
+	baseUrl, integrationKey, err := parseIntegrationUrl(integrationUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	if integrationKey == "" {
+		return nil, fmt.Errorf("integration_key not found in URL")
+	}
+
+	// 构建新的API URL，保持原始路径
+	url := fmt.Sprintf("%s/channel/list-by-integration?integration_key=%s", baseUrl, integrationKey)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 	httpResp, err := (&http.Client{}).Do(req)
-	ginx.Dangerous(err)
+	if err != nil {
+		return nil, err
+	}
 	defer httpResp.Body.Close()
 
 	body, err := io.ReadAll(httpResp.Body)
-	ginx.Dangerous(err)
+	if err != nil {
+		return nil, err
+	}
 
 	var res flushDutyChannelsResponse
-	ginx.Dangerous(json.Unmarshal(body, &res))
-	ginx.Dangerous(res.Error.Message)
-	ginx.NewRender(c).Data(res.Data.Items, nil)
+	if err := json.Unmarshal(body, &res); err != nil {
+		return nil, err
+	}
+
+	if res.Error.Message != "" {
+		return nil, fmt.Errorf(res.Error.Message)
+	}
+
+	return res.Data.Items, nil
+}
+
+// parseIntegrationUrl 从URL中提取baseUrl和参数
+func parseIntegrationUrl(urlStr string) (baseUrl string, integrationKey string, err error) {
+	// 解析URL
+	parsedUrl, err := url.Parse(urlStr)
+	if err != nil {
+		return "", "", err
+	}
+
+	host := fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Host)
+
+	// 提取查询参数
+	queryParams := parsedUrl.Query()
+	integrationKey = queryParams.Get("integration_key")
+
+	return host, integrationKey, nil
 }
