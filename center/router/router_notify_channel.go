@@ -156,13 +156,12 @@ func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "notify channel not found")
 	}
 
-	appKey, err := models.ConfigsGetFlashDutyAppKey(rt.Ctx)
+	configs, err := models.ConfigsSelectByCkey(rt.Ctx, "flashduty_app_key")
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "failed to get flashduty app key")
 	}
-
 	var jsonData []byte
-	if appKey != "" {
+	if len(configs) > 0 {
 		me := c.MustGet("user").(*models.User)
 		jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
 	}
