@@ -245,7 +245,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
 		}
 
-		if notifyChannel.ParamConfig.UserContactKey != "" && len(userInfos) > 0 {
+		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
 			for i := range userInfos {
 				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 				if err != nil {

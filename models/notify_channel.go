@@ -78,8 +78,12 @@ type RequestConfig struct {
 
 // NotifyParamConfig 参数配置
 type NotifyParamConfig struct {
-	UserContactKey string      `json:"user_contact_key"` // phone, email, dingtalk_robot_token 等
-	Params         []ParamItem `json:"params"`           // params 类型的参数配置
+	UserInfo     *UserInfo   `json:"user_info,omitempty"`
+	CustomParams []ParamItem `json:"custom"` // 自定义参数配置
+}
+
+type UserInfo struct {
+	ContactKey string `json:"contact_key"` // phone, email, dingtalk_robot_token 等
 }
 
 // FlashDutyParam flashduty 类型的参数配置
@@ -185,12 +189,16 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	sendtos := make([]string, 0)
 	for _, userInfo := range userInfos {
 		var sendto string
-		if ncc.ParamConfig.UserContactKey == "phone" {
+		if ncc.ParamConfig.UserInfo == nil {
+			continue
+		}
+
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
 			sendto = userInfo.Phone
-		} else if ncc.ParamConfig.UserContactKey == "email" {
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
 			sendto = userInfo.Email
 		} else {
-			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
+			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
 		}
 		if sendto != "" {
 			sendtos = append(sendtos, sendto)
@@ -414,13 +422,13 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 	// 用户信息
 	var sendto string
-	if userInfo != nil {
-		if ncc.ParamConfig.UserContactKey == "phone" {
+	if userInfo != nil && ncc.ParamConfig.UserInfo != nil {
+		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
 			sendto = userInfo.Phone
-		} else if ncc.ParamConfig.UserContactKey == "email" {
+		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
 			sendto = userInfo.Email
 		} else {
-			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserContactKey)
+			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
 		}
 	}
 
@@ -502,7 +510,7 @@ func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Va
 
 	bodyTpl := make(map[string]interface{})
 	bodyTpl["tpl"] = tplContent
-	for _, param := range ncc.ParamConfig.Params {
+	for _, param := range ncc.ParamConfig.CustomParams {
 		bodyTpl[param.Key] = param.CName
 	}
 
@@ -718,7 +726,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 	}
 
 	if ncc.ParamConfig != nil {
-		for _, param := range ncc.ParamConfig.Params {
+		for _, param := range ncc.ParamConfig.CustomParams {
 			if param.Key != "" && param.CName == "" {
 				return errors.New("param items must have valid cname")
 			}
@@ -896,8 +904,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "access_token",
-			Params: []ParamItem{
+			CustomParams: []ParamItem{
 				{Key: "access_token", CName: "access_token", Type: "string"},
 				{Key: "ats", CName: "ats", Type: "string"},
 			},
@@ -917,8 +924,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "access_token",
-			Params: []ParamItem{
+			CustomParams: []ParamItem{
 				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
@@ -937,8 +943,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "access_token",
-			Params: []ParamItem{
+			CustomParams: []ParamItem{
 				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
@@ -957,8 +962,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "access_token",
-			Params: []ParamItem{
+			CustomParams: []ParamItem{
 				{Key: "access_token", CName: "access_token", Type: "string"},
 			},
 		},
@@ -976,7 +980,9 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "email",
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
 		},
 	},
 }

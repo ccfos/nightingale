@@ -69,7 +69,7 @@ func TestSendDingTalkNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			Params: []ParamItem{
+			CustomParams: []ParamItem{
 				{
 					Key: "access_token",
 				},
@@ -227,7 +227,9 @@ func TestSendTencentVoiceNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "phone",
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
 		},
 	}
 
@@ -386,7 +388,9 @@ func TestSendTencentSMSNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "phone",
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
 		},
 	}
 
@@ -536,7 +540,9 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "phone",
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
 		},
 	}
 
@@ -693,7 +699,9 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
-			UserContactKey: "phone",
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
 		},
 	}
 
