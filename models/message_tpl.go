@@ -203,15 +203,55 @@ const (
 	LarkCardTitle   = `🔔 {{.RuleName}}`
 )
 
+var ExtraTplMap = map[string]string{
+	"ali-voice": `{"alert_name":"{{.RuleName}},级别状态 S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}"}`,
+	"ali-sms":   `{"name":"级别状态 S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{.RuleName}}"`,
+	"tx-voice":  `S{{.Severity}}{{if .IsRecovered}}Recovered{{else}}Triggered{{end}}{{.RuleName}}`,
+	"tx-sms": `级别状态: S{{.Severity}} {{if .IsRecovered}}Recovered{{else}}Triggered{{end}}
+规则名称: {{.RuleName}}`,
+	"pingmesh": `{{ if .IsRecovered }}   
+**级别状态:** S{{.Severity}} Recovered   
+**告警集群:** {{.Cluster}}
+**告警名称:** {{.RuleName}}
+{{- range .TagsJSON -}}
+{{if contains . "sidc"}}
+**源机房:**{{reReplaceAll "sidc=" "" .}}{{- end -}} {{if contains . "snet_ident"}}   **源机柜:**{{reReplaceAll "snet_ident=" "" .}}{{- end -}}
+{{if contains . "tidc"}}
+**目标机房:**{{reReplaceAll "tidc=" "" .}}{{- end -}} {{if contains . "tnet_ident"}}  **目标机柜:**{{reReplaceAll "tnet_ident=" "" .}}{{- end -}}
+{{end}}
+**恢复时值:** {{.TriggerValue}} 
+**恢复时间:** {{timeformat .LastEvalTime}}   
+**告警描述:** **服务已恢复**   
+{{- else}}
+**级别状态:** S{{.Severity}} Triggered  
+**告警集群:** {{.Cluster}}
+**告警名称:** {{.RuleName}}
+{{- range .TagsJSON -}}
+{{if contains . "sidc"}}
+**源机房:**{{reReplaceAll "sidc=" "" .}}{{- end -}} {{if contains . "snet_ident"}}   **源机柜:**{{reReplaceAll "snet_ident=" "" .}}{{- end -}}
+{{if contains . "tidc"}}
+**目标机房:**{{reReplaceAll "tidc=" "" .}}{{- end -}} {{if contains . "tnet_ident"}}  **目标机柜:**{{reReplaceAll "tnet_ident=" "" .}}{{- end -}}
+{{end}}
+**触发时值:** {{.TriggerValue}}  
+**触发时间:** {{timeformat .TriggerTime}}   
+**发送时间:** {{timestamp}}    
+{{if .RuleNote }}**告警描述:** **{{.RuleNote}}**{{end}}   
+{{- end -}}`,
+}
+
 var MsgTplMap = map[string]map[string]string{
-	Dingtalk:   {"title": DingtalkTitle, "content": TplMap[Dingtalk]},
-	Email:      {"subject": TplMap[EmailSubject], "content": TplMap[Email]},
-	FeishuCard: {"title": FeishuCardTitle, "content": TplMap[FeishuCard]},
-	Feishu:     {"content": TplMap[Feishu]},
-	Wecom:      {"content": TplMap[Wecom]},
-	Lark:       {"content": TplMap[Lark]},
-	LarkCard:   {"title": LarkCardTitle, "content": TplMap[LarkCard]},
-	Telegram:   {"content": TplMap[Telegram]},
+	Dingtalk:    {"title": DingtalkTitle, "content": TplMap[Dingtalk]},
+	Email:       {"subject": TplMap[EmailSubject], "content": TplMap[Email]},
+	FeishuCard:  {"title": FeishuCardTitle, "content": TplMap[FeishuCard]},
+	Feishu:      {"content": TplMap[Feishu]},
+	Wecom:       {"content": TplMap[Wecom]},
+	Lark:        {"content": TplMap[Lark]},
+	LarkCard:    {"title": LarkCardTitle, "content": TplMap[LarkCard]},
+	Telegram:    {"content": TplMap[Telegram]},
+	"ali-voice": {"content": ExtraTplMap["ali-voice"]},
+	"ali-sms":   {"content": ExtraTplMap["ali-sms"]},
+	"tx-voice":  {"content": ExtraTplMap["tx-voice"]},
+	"tx-sms":    {"content": ExtraTplMap["tx-sms"]},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {

@@ -900,7 +900,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
 				Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
 					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
@@ -922,7 +922,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/your-feishu-token",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
 					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}`,
@@ -943,7 +943,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/your-feishu-token",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
 					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
@@ -964,7 +964,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
 					Body:       `{"msgtype": "text", "text": {"content": "{{$tpl.content}}"}}`,
@@ -1004,7 +1004,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
 				Method:  "POST",
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
 					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
@@ -1027,7 +1027,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"token": "{{$params.token}}"},
 					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
@@ -1049,7 +1049,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"token": "{{$params.token}}"},
 					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}"}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
@@ -1070,6 +1070,132 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		RequestConfig: &RequestConfig{
 			FlashDutyRequestConfig: &FlashDutyRequestConfig{
 				IntegrationUrl: "flashduty integration url",
+			},
+		},
+	},
+
+	"tx-sms": &NotifyChannelConfig{
+		Name: "tx-sms", Ident: "tx-sms", RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://sms.tencentcloudapi.com",
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "sms.tencentcloudapi.com",
+					"X-TC-Action":  "SendSms",
+					"X-TC-Version": "2021-01-11",
+					"X-TC-Region":  "需要改为实际的region",
+					"Service":      "sms",
+					"Secret_ID":    "需要改为实际的secret_id",
+					"Secret_Key":   "需要改为实际的secret_key",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+
+	"tx-voice": &NotifyChannelConfig{
+		Name: "tx-voice", Ident: "tx-voice", RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://vms.tencentcloudapi.com",
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "vms.tencentcloudapi.com",
+					"X-TC-Action":  "SendTtsVoice",
+					"X-TC-Version": "2020-09-02",
+					"X-TC-Region":  "需要改为实际的region",
+					"Service":      "vms",
+					"Secret_ID":    "需要改为实际的secret_id",
+					"Secret_Key":   "需要改为实际的secret_key",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+
+	"ali-sms": &NotifyChannelConfig{
+		Name: "ali-sms", Ident: "ali-sms", RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://dysmsapi.aliyuncs.com",
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"PhoneNumbers":  "{{ $sendto }}",
+						"SignName":      "需要改为实际的签名",
+						"TemplateCode":  "需要改为实际的模板id",
+						"TemplateParam": `{"code":"{{ $tpl.code }}"}`,
+					},
+				},
+				Headers: map[string]string{
+					"Content-Type":     "application/json",
+					"Host":             "dysmsapi.aliyuncs.com",
+					"Action":           "SendSms",
+					"Version":          "2017-05-25",
+					"Format":           "JSON",
+					"RegionId":         "cn-hangzhou",
+					"AccessKeyId":      "需要改为实际的access_key_id",
+					"SignatureNonce":   "需要改为实际的signature_nonce",
+					"Timestamp":        "2023-01-01T12:00:00Z",
+					"SignatureMethod":  "HMAC-SHA1",
+					"SignatureVersion": "1.0",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+
+	"ali-voice": &NotifyChannelConfig{
+		Name: "ali-voice", Ident: "ali-voice", RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://dyvms.aliyuncs.com",
+				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"VoiceCode":    "需要改为实际的voice_code",
+						"CalledNumber": `{{ $sendto }}`,
+					},
+				},
+
+				Headers: map[string]string{
+					"Content-Type":     "application/json",
+					"Host":             "dyvms.aliyuncs.com",
+					"Action":           "SingleCallByVoice",
+					"Version":          "2017-05-25",
+					"Format":           "JSON",
+					"RegionId":         "cn-hangzhou",
+					"SignatureMethod":  "HMAC-SHA1",
+					"SignatureVersion": "1.0",
+
+					"AccessKeyId":     "需要改为实际的access_key_id",
+					"AccessKeySecret": "需要改为实际的access_key_secret",
+				},
 			},
 		},
 	},
