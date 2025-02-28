@@ -255,7 +255,8 @@ type AlertHisEvent struct {
 }
 
 type AlertCurEvent struct {
-	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	NotifyRuleIDs []int64 `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 }
 
 type Target struct {
@@ -387,20 +388,18 @@ func (r *NotifyRule) TableName() string {
 }
 
 type NotifyChannelConfig struct {
-	ID                  int64                      `gorm:"column:id;primaryKey;autoIncrement"`
-	Name                string                     `gorm:"column:name;type:varchar(255);not null"`
-	Ident               string                     `gorm:"column:ident;type:varchar(255);not null"`
-	Description         string                     `gorm:"column:description;type:text"`
-	Enable              bool                       `gorm:"column:enable;not null;default:false"`
-	ParamConfig         models.NotifyParamConfig   `gorm:"column:param_config;type:text"`
-	RequestType         string                     `gorm:"column:request_type;type:varchar(50);not null"`
-	HTTPRequestConfig   models.HTTPRequestConfig   `gorm:"column:http_request_config;type:text"`
-	SMTPRequestConfig   models.SMTPRequestConfig   `gorm:"column:smtp_request_config;type:text"`
-	ScriptRequestConfig models.ScriptRequestConfig `gorm:"column:script_request_config;type:text"`
-	CreateAt            int64                      `gorm:"column:create_at;not null;default:0"`
-	CreateBy            string                     `gorm:"column:create_by;type:varchar(64);not null;default:''"`
-	UpdateAt            int64                      `gorm:"column:update_at;not null;default:0"`
-	UpdateBy            string                     `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	ID            int64                    `gorm:"column:id;primaryKey;autoIncrement"`
+	Name          string                   `gorm:"column:name;type:varchar(255);not null"`
+	Ident         string                   `gorm:"column:ident;type:varchar(255);not null"`
+	Description   string                   `gorm:"column:description;type:text"`
+	Enable        bool                     `gorm:"column:enable;not null;default:false"`
+	ParamConfig   models.NotifyParamConfig `gorm:"column:param_config;type:text"`
+	RequestType   string                   `gorm:"column:request_type;type:varchar(50);not null"`
+	RequestConfig *models.RequestConfig    `gorm:"column:request_config;type:text"`
+	CreateAt      int64                    `gorm:"column:create_at;not null;default:0"`
+	CreateBy      string                   `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt      int64                    `gorm:"column:update_at;not null;default:0"`
+	UpdateBy      string                   `gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
 func (c *NotifyChannelConfig) TableName() string {
