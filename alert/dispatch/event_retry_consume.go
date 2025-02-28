@@ -15,14 +15,14 @@ type EventRetryComsumer struct {
 	ctx   *ctx.Context
 	redis storage.Redis
 
-	interval time.Duration
+	retryinterval time.Duration
 }
 
 func NewEventRetryComsumer(ctx *ctx.Context, redis storage.Redis) *EventRetryComsumer {
 	return &EventRetryComsumer{
 		ctx:      ctx,
 		redis:    redis,
-		interval: 5 * time.Second,
+		retryinterval: 5 * time.Second,
 	}
 }
 
@@ -66,7 +66,7 @@ func (erc *EventRetryComsumer) loopComsume() {
 			var sendErr error
 			if event.Id, sendErr = poster.PostByUrlsWithResp[int64](erc.ctx, "/v1/n9e/event-persist", &event); sendErr != nil {
 				logger.Errorf("failed to send event: %v", sendErr)
-				time.Sleep(erc.interval)
+				time.Sleep(erc.retryinterval)
 				continue
 			}
 
