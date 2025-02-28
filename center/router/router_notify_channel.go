@@ -120,7 +120,7 @@ func (rt *Router) notifyChannelsGet(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
-	lst, err := models.NotifyChannelsGet(rt.Ctx, "enable = ?", "true")
+	lst, err := models.NotifyChannelsGet(rt.Ctx, "")
 	ginx.Dangerous(err)
 
 	newLst := make([]*models.NotifyChannelConfig, 0, len(lst))
