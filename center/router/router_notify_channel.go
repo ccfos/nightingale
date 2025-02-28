@@ -128,6 +128,7 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 		newLst = append(newLst, &models.NotifyChannelConfig{
 			Name:        c.Name,
 			Ident:       c.Ident,
+			Enable:      c.Enable,
 			ParamConfig: c.ParamConfig,
 		})
 	}

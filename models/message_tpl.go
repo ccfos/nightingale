@@ -95,13 +95,9 @@ func (t *MessageTemplate) Verify() error {
 		return errors.New("template identifier cannot be empty")
 	}
 
-	// if len(t.Content) == 0 {
-	// 	return errors.New("template content cannot be empty")
-	// }
-
-	for key, value := range t.Content {
-		if key == "" || value == "" {
-			return errors.New("template content cannot have empty keys or values")
+	for key := range t.Content {
+		if key == "" {
+			return errors.New("template content cannot have empty keys")
 		}
 	}
 
