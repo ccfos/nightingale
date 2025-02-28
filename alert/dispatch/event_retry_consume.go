@@ -15,14 +15,19 @@ type EventRetryComsumer struct {
 	ctx   *ctx.Context
 	redis storage.Redis
 
-	retryinterval time.Duration
+	retryinterval  time.Duration
+	reportinterval time.Duration
+
+	dispatch *Dispatch
 }
 
-func NewEventRetryComsumer(ctx *ctx.Context, redis storage.Redis) *EventRetryComsumer {
+func NewEventRetryComsumer(ctx *ctx.Context, redis storage.Redis, dp *Dispatch) *EventRetryComsumer {
 	return &EventRetryComsumer{
-		ctx:      ctx,
-		redis:    redis,
-		retryinterval: 5 * time.Second,
+		ctx:            ctx,
+		redis:          redis,
+		retryinterval:  5 * time.Second,
+		reportinterval: 5 * time.Second,
+		dispatch:       dp,
 	}
 }
 
@@ -32,6 +37,7 @@ func (erc *EventRetryComsumer) Start() {
 	}
 
 	go erc.loopComsume()
+	go erc.loopReport()
 }
 
 func (erc *EventRetryComsumer) loopComsume() {
@@ -72,5 +78,20 @@ func (erc *EventRetryComsumer) loopComsume() {
 
 			break
 		}
+	}
+}
+
+func (erc *EventRetryComsumer) loopReport() {
+	for {
+		time.Sleep(erc.reportinterval)
+
+		// 汇报当前队列长度
+		length, err := erc.redis.LLen(erc.ctx.Ctx, "failed_event_queue").Result()
+		if err != nil {
+			logger.Errorf("failed to get failed_event_queue length: %v", err)
+			continue
+		}
+
+		erc.dispatch.Astats.GuageEventRetryQueueSize.Set(float64(length))
 	}
 }
