@@ -480,7 +480,8 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 	// 重试机制
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
-		resp, err := client.Do(req)
+		var resp *http.Response
+		resp, err = client.Do(req)
 		if err != nil {
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
 			continue
@@ -497,10 +498,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 			return string(body), nil
 		}
 
-		time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
+		return "", fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	return "", errors.New("failed to send request")
+	return "", err
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Values {
