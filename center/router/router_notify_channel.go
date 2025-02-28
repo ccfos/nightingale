@@ -130,6 +130,7 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 			Name:        c.Name,
 			Ident:       c.Ident,
 			Enable:      c.Enable,
+			RequestType: c.RequestType,
 			ParamConfig: c.ParamConfig,
 		})
 	}
