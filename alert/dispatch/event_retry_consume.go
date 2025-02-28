@@ -1,5 +1,9 @@
 package dispatch
 
+// EventRetryComsumer 会尝试重新发送失败的事件
+// 从 redis 中获取失败的事件
+// 循环重新发送，直到发送成功
+
 import (
 	"encoding/json"
 	"time"
@@ -15,11 +19,12 @@ type EventRetryComsumer struct {
 	ctx   *ctx.Context
 	redis storage.Redis
 
-	retryinterval  time.Duration
-	reportinterval time.Duration
+	retryinterval  time.Duration // 重试间隔
+	reportinterval time.Duration // 上报队列长度间隔
 
 	dispatch *Dispatch
 }
+
 
 func NewEventRetryComsumer(ctx *ctx.Context, redis storage.Redis, dp *Dispatch) *EventRetryComsumer {
 	return &EventRetryComsumer{
@@ -40,6 +45,7 @@ func (erc *EventRetryComsumer) Start() {
 	go erc.loopReport()
 }
 
+// 循环重发失败的事件
 func (erc *EventRetryComsumer) loopComsume() {
 	for {
 		time.Sleep(100 * time.Millisecond)
@@ -81,6 +87,8 @@ func (erc *EventRetryComsumer) loopComsume() {
 	}
 }
 
+
+// 循环上报队列长度
 func (erc *EventRetryComsumer) loopReport() {
 	for {
 		time.Sleep(erc.reportinterval)
