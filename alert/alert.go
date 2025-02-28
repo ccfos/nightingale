@@ -111,8 +111,8 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 		busiGroupCache, alertMuteCache, datasourceCache, promClients, naming, ctx, alertStats)
 
 	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, taskTplsCache, alertc.Alerting, ctx, alertStats)
-	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp, promClients, redis)
 	eventrRetryConsumer := dispatch.NewEventRetryComsumer(ctx, redis, dp)
+	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp, promClients, eventrRetryConsumer)
 
 	notifyRecordComsumer := sender.NewNotifyRecordConsumer(ctx)
 

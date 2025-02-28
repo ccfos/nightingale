@@ -16,7 +16,6 @@ import (
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/concurrent/semaphore"
@@ -30,7 +29,7 @@ type Consumer struct {
 	dispatch    *Dispatch
 	promClients *prom.PromClientMap
 
-	rc storage.Redis
+	eventRetryConsumer *EventRetryComsumer
 }
 
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
@@ -46,13 +45,14 @@ func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 }
 
 // 创建一个 Consumer 实例
-func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap, rc storage.Redis) *Consumer {
+func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap, erc *EventRetryComsumer) *Consumer {
 	return &Consumer{
 		alerting:    alerting,
 		ctx:         ctx,
 		dispatch:    dispatch,
 		promClients: promClients,
-		rc:          rc,
+
+		eventRetryConsumer: erc,
 	}
 }
 
@@ -133,14 +133,8 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 		if err != nil {
 			logger.Errorf("event:%+v persist err:%v", event, err)
 
-			// 序列化后推入 redis
-			if data, err := json.Marshal(event); err == nil {
-				if err := e.rc.LPush(e.ctx.Ctx, "failed_event_queue", data); err != nil {
-					logger.Errorf("event:%+v push failed_event_queue err:%v", event, err)
-				}
-			} else {
-				logger.Errorf("event:%+v marshal failed err:%v", event, err)
-			}
+			// 将失败的事件放入重试队列
+			e.eventRetryConsumer.PushEventToQueue(event)
 
 			e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()
 		}

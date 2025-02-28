@@ -23,16 +23,36 @@ type EventRetryComsumer struct {
 	reportinterval time.Duration // 上报队列长度间隔
 
 	dispatch *Dispatch
-}
 
+	maxlen int // 队列最大长度
+	curlen int
+}
 
 func NewEventRetryComsumer(ctx *ctx.Context, redis storage.Redis, dp *Dispatch) *EventRetryComsumer {
 	return &EventRetryComsumer{
 		ctx:            ctx,
 		redis:          redis,
 		retryinterval:  5 * time.Second,
-		reportinterval: 5 * time.Second,
+		reportinterval: 1 * time.Second,
 		dispatch:       dp,
+		maxlen:         100000,
+	}
+}
+
+func (erc *EventRetryComsumer) PushEventToQueue(event *models.AlertCurEvent) {
+	// 检查队列长度
+	if erc.curlen >= erc.maxlen {
+		logger.Errorf("failed to push event to queue: queue is full")
+		return
+	}
+
+	// 序列化后推入 redis
+	if data, err := json.Marshal(event); err == nil {
+		if err := erc.redis.LPush(erc.ctx.Ctx, "failed_event_queue", data); err != nil {
+			logger.Errorf("event:%+v push failed_event_queue err:%v", event, err)
+		}
+	} else {
+		logger.Errorf("event:%+v marshal failed err:%v", event, err)
 	}
 }
 
@@ -87,7 +107,6 @@ func (erc *EventRetryComsumer) loopComsume() {
 	}
 }
 
-
 // 循环上报队列长度
 func (erc *EventRetryComsumer) loopReport() {
 	for {
@@ -100,6 +119,7 @@ func (erc *EventRetryComsumer) loopReport() {
 			continue
 		}
 
+		erc.curlen = int(length)
 		erc.dispatch.Astats.GuageEventRetryQueueSize.Set(float64(length))
 	}
 }
