@@ -124,13 +124,13 @@ func (r *NotifyRule) Verify() error {
 		return errors.New("name cannot be empty")
 	}
 
-	if len(r.UserGroupIds) == 0 {
-		return errors.New("user group ids cannot be empty")
-	}
+	// if len(r.UserGroupIds) == 0 {
+	// 	return errors.New("user group ids cannot be empty")
+	// }
 
-	if len(r.NotifyConfigs) == 0 {
-		return errors.New("notify configs cannot be empty")
-	}
+	// if len(r.NotifyConfigs) == 0 {
+	// 	return errors.New("notify configs cannot be empty")
+	// }
 
 	for _, config := range r.NotifyConfigs {
 		if err := config.Verify(); err != nil {
