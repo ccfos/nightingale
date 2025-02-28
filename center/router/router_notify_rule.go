@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -146,7 +147,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 	notifyChannel := notifyChannels[0]
 
-	userInfos, flashDutyChannelIDs, customParams, err := getParams(rt.Ctx, &f.NotifyConfig)
+	userInfos, flashDutyChannelIDs, customParams, err := getParams(rt.Ctx, &f.NotifyConfig, notifyChannel)
 	ginx.Dangerous(err)
 
 	switch notifyChannel.RequestType {
@@ -185,21 +186,37 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 }
 
-func getParams(c *ctx.Context, notifyConfig *models.NotifyConfig) ([]*models.User, []int64, map[string]string, error) {
+func getParams(c *ctx.Context, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig) ([]*models.User, []int64, map[string]string, error) {
+
+	paramsBytes, err := json.Marshal(notifyConfig.Params)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	var (
 		userInfos           []*models.User
 		flashDutyChannelIDs []int64
 		customParams        map[string]string
 	)
 
-	switch notifyConfig.Params.(type) {
-	case models.CustomParams:
-		visited := make(map[int64]bool)
-		userInfoParams := notifyConfig.Params.(models.CustomParams)
+	if notifyChannel.RequestType == "flashduty" {
+		var flashDutyParams models.FlashDutyParams
+		err := json.Unmarshal(paramsBytes, &flashDutyParams)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		flashDutyChannelIDs = flashDutyParams.IDs
+	} else {
+		var userInfoParams models.CustomParams
+		err := json.Unmarshal(paramsBytes, &userInfoParams)
+		if err != nil {
+			return nil, nil, nil, err
+		}
 		users, err := models.UserGetsByIds(c, userInfoParams.UserIDs)
 		if err != nil {
 			return nil, nil, nil, err
 		}
+		visited := make(map[int64]bool)
 		for _, user := range users {
 			if visited[user.Id] {
 				continue
@@ -221,10 +238,6 @@ func getParams(c *ctx.Context, notifyConfig *models.NotifyConfig) ([]*models.Use
 			}
 		}
 		customParams = userInfoParams.CustomParams
-	case models.FlashDutyParams:
-		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
-	default:
-
 	}
 	return userInfos, flashDutyChannelIDs, customParams, nil
 }
