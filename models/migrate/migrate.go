@@ -255,8 +255,7 @@ type AlertHisEvent struct {
 }
 
 type AlertCurEvent struct {
-	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
-	NotifyRuleIDs []int64 `gorm:"column:notify_rule_ids;type:varchar(1024)"`
+	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
 }
 
 type Target struct {
