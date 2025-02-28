@@ -126,6 +126,7 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 	newLst := make([]*models.NotifyChannelConfig, 0, len(lst))
 	for _, c := range lst {
 		newLst = append(newLst, &models.NotifyChannelConfig{
+			ID:          c.ID,
 			Name:        c.Name,
 			Ident:       c.Ident,
 			Enable:      c.Enable,
