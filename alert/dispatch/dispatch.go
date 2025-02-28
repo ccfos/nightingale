@@ -229,6 +229,12 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		return
 	}
 
+	paramsBytes, err := json.Marshal(notifyConfig.Params)
+	if err != nil {
+		logger.Errorf("json marshal error: %v", err)
+		return
+	}
+
 	tplContent := messageTemplate.RenderEvent(events)
 
 	var (
@@ -237,11 +243,23 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		customParams        map[string]string
 	)
 
-	switch notifyConfig.Params.(type) {
-	case models.CustomParams:
-		visited := make(map[int64]bool)
-		userInfoParams := notifyConfig.Params.(models.CustomParams)
+	if notifyChannel.RequestType == "flashduty" {
+		var flashDutyParams models.FlashDutyParams
+		err := json.Unmarshal(paramsBytes, &flashDutyParams)
+		if err != nil {
+			logger.Errorf("json unmarshal error: %v", err)
+			return
+		}
+		flashDutyChannelIDs = flashDutyParams.IDs
+	} else {
+		var userInfoParams models.CustomParams
+		err := json.Unmarshal(paramsBytes, &userInfoParams)
+		if err != nil {
+			logger.Errorf("json unmarshal error: %v", err)
+			return
+		}
 		users := e.userCache.GetByUserIds(userInfoParams.UserIDs)
+		visited := make(map[int64]bool)
 		for _, user := range users {
 			if visited[user.Id] {
 				continue
@@ -260,11 +278,6 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			}
 		}
 		customParams = userInfoParams.CustomParams
-	case models.FlashDutyParams:
-		flashDutyChannelIDs = notifyConfig.Params.(models.FlashDutyParams).IDs
-	default:
-		logger.Errorf("unknown notify config params: %v", notifyConfig.Params)
-		return
 	}
 
 	e.Astats.GaugeNotifyRecordQueueSize.Inc()
