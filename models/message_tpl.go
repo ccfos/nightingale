@@ -199,7 +199,7 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 }
 
 const (
-	DingtalkTitle   = `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`
+	DingtalkTitle   = `{{if $event.IsRecovered}} Recovered {{else}}Triggered{{end}}: {{$event.RuleName}}`
 	FeishuCardTitle = `🔔 {{$event.RuleName}}`
 	LarkCardTitle   = `🔔 {{$event.RuleName}}`
 )
@@ -209,7 +209,7 @@ var NewTplMap = map[string]string{
 	"ali-sms":   `{"name":"级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{$event.RuleName}}"`,
 	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
 	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
-	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+	Dingtalk: `#### {{if $event.IsRecovered}}💚{{$event.RuleName}}{{else}}💔{{$event.RuleName}}{{end}}
 ---
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
 - **告警级别**: {{$event.Severity}}级
@@ -616,7 +616,9 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string
 		if err = tpl.Execute(&body, events); err != nil {
 			continue
 		}
-		tplContent[key] = body.String()
+
+		content := strings.ReplaceAll(body.String(), "\n", " \\n")
+		tplContent[key] = content
 	}
 	return tplContent
 }

@@ -361,6 +361,7 @@ func AlertHisEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertHisEvent, err
 
 func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 	return &AlertCurEvent{
+		Id:               e.Id,
 		Cate:             e.Cate,
 		Cluster:          e.Cluster,
 		DatasourceId:     e.DatasourceId,

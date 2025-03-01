@@ -143,6 +143,7 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 
 	if len(event.NotifyRuleIDs) > 0 {
 		for _, notifyRuleId := range event.NotifyRuleIDs {
+			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, event)
 			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
 			if notifyRule == nil {
 				continue
@@ -223,62 +224,63 @@ func notifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 	return timeMatch && severityMatch
 }
 
+func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]*models.User, []int64, map[string]string) {
+	customParams := make(map[string]string)
+	var userInfos []*models.User
+	var flashDutyChannelIDs []int64
+	var userInfoParams models.CustomParams
+
+	for key, value := range notifyConfig.Params {
+		switch key {
+		case "user_ids", "user_group_ids", "ids":
+			if data, err := json.Marshal(value); err == nil {
+				var ids []int64
+				if json.Unmarshal(data, &ids) == nil {
+					if key == "user_ids" {
+						userInfoParams.UserIDs = ids
+					} else if key == "user_group_ids" {
+						userInfoParams.UserGroupIDs = ids
+					} else if key == "ids" {
+						flashDutyChannelIDs = ids
+					}
+				}
+			}
+		default:
+			customParams[key] = value.(string)
+		}
+	}
+
+	users := userCache.GetByUserIds(userInfoParams.UserIDs)
+	visited := make(map[int64]bool)
+	for _, user := range users {
+		if visited[user.Id] {
+			continue
+		}
+		visited[user.Id] = true
+		userInfos = append(userInfos, user)
+	}
+	userGroups := userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
+	for _, userGroup := range userGroups {
+		for _, user := range userGroup.Users {
+			if visited[user.Id] {
+				continue
+			}
+			visited[user.Id] = true
+			userInfos = append(userInfos, &user)
+		}
+	}
+
+	return userInfos, flashDutyChannelIDs, customParams
+}
+
 func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	if len(events) == 0 {
 		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
 		return
 	}
 
-	paramsBytes, err := json.Marshal(notifyConfig.Params)
-	if err != nil {
-		logger.Errorf("json marshal error: %v", err)
-		return
-	}
-
 	tplContent := messageTemplate.RenderEvent(events)
-
-	var (
-		userInfos           []*models.User
-		flashDutyChannelIDs []int64
-		customParams        map[string]string
-	)
-
-	if notifyChannel.RequestType == "flashduty" {
-		var flashDutyParams models.FlashDutyParams
-		err := json.Unmarshal(paramsBytes, &flashDutyParams)
-		if err != nil {
-			logger.Errorf("json unmarshal error: %v", err)
-			return
-		}
-		flashDutyChannelIDs = flashDutyParams.IDs
-	} else {
-		var userInfoParams models.CustomParams
-		err := json.Unmarshal(paramsBytes, &userInfoParams)
-		if err != nil {
-			logger.Errorf("json unmarshal error: %v", err)
-			return
-		}
-		users := e.userCache.GetByUserIds(userInfoParams.UserIDs)
-		visited := make(map[int64]bool)
-		for _, user := range users {
-			if visited[user.Id] {
-				continue
-			}
-			visited[user.Id] = true
-			userInfos = append(userInfos, user)
-		}
-		userGroups := e.userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
-		for _, userGroup := range userGroups {
-			for _, user := range userGroup.Users {
-				if visited[user.Id] {
-					continue
-				}
-				visited[user.Id] = true
-				userInfos = append(userInfos, &user)
-			}
-		}
-		customParams = userInfoParams.CustomParams
-	}
+	userInfos, flashDutyChannelIDs, customParams := GetNotifyConfigParams(notifyConfig, e.userCache, e.userGroupCache)
 
 	e.Astats.GaugeNotifyRecordQueueSize.Inc()
 	defer e.Astats.GaugeNotifyRecordQueueSize.Dec()

@@ -173,6 +173,11 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 
 		switch lst[i].RequestType {
 		case "http":
+			if lst[i].RequestConfig == nil || lst[i].RequestConfig.HTTPRequestConfig == nil {
+				logger.Warningf("notify channel %+v http request config not found", lst[i])
+				continue
+			}
+
 			cli, _ := models.GetHTTPClient(lst[i])
 			httpClient[lst[i].ID] = cli
 			httpConcurrency[lst[i].ID] = make(chan struct{}, lst[i].RequestConfig.HTTPRequestConfig.Concurrency)

@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -21,7 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"text/template"
 	"time"
 	"unicode/utf8"
 
@@ -337,6 +337,10 @@ func NotifyChannelGets(ctx *ctx.Context, id int64, name, ident string, enabled i
 }
 
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
+	if nc.RequestConfig == nil || nc.RequestConfig.HTTPRequestConfig == nil {
+		return nil, fmt.Errorf("%+v http request config not found", nc)
+	}
+
 	httpConfig := nc.RequestConfig.HTTPRequestConfig
 
 	// 设置代理
@@ -419,6 +423,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		return "", fmt.Errorf("http client not found")
 	}
 
+	if len(events) == 0 {
+		return "", fmt.Errorf("events is empty")
+	}
+
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
 
 	// MessageTemplate
@@ -440,6 +448,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	fullTpl["params"] = params // 自定义参数
 	fullTpl["tpl"] = tpl
 	fullTpl["events"] = events
+	fullTpl["event"] = events[0]
 
 	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
 	body, err := ncc.parseRequestBody(fullTpl)
@@ -482,8 +491,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
 		var resp *http.Response
 		resp, err = client.Do(req)
+		logger.Debugf("send http request: %+v, response: %+v", req, resp)
 		if err != nil {
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
+			logger.Errorf("failed to send http notify: %v", err)
 			continue
 		}
 		defer resp.Body.Close()
@@ -491,7 +502,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		// 读取响应
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("Error reading response:", err)
+			logger.Errorf("failed to send http notify: %v", err)
 		}
 
 		if resp.StatusCode == http.StatusOK {
@@ -502,6 +513,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	}
 
 	return "", err
+
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Values {
@@ -638,6 +650,7 @@ func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{})
 		"{{$sendto := .sendto}}",
 		"{{$params := .params}}",
 		"{{$events := .events}}",
+		"{{$event := .event}}",
 	}
 
 	text := strings.Join(append(defs, ncc.RequestConfig.HTTPRequestConfig.Request.Body), "")
@@ -677,6 +690,7 @@ func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) {
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
 
 	if needsTemplateRendering(httpConfig.URL) {
+		logger.Infof("replace variables url: %s tpl: %+v", httpConfig.URL, tpl)
 		httpConfig.URL = getParsedString("url", httpConfig.URL, tpl)
 	}
 
@@ -929,7 +943,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n@{{$params.ats}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
 				},
 			},
 		},
@@ -946,12 +960,11 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		Name: Feishu, Ident: Feishu, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/your-feishu-token",
+				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}`,
+					Body: `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
 				},
 			},
 		},
@@ -967,12 +980,11 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		Name: FeishuCard, Ident: FeishuCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/your-feishu-token",
+				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
+					Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
 				},
 			},
 		},

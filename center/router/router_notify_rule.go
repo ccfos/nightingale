@@ -1,17 +1,17 @@
 package router
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) notifyRulesAdd(c *gin.Context) {
@@ -145,10 +145,9 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	if len(notifyChannels) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "notify channel not found")
 	}
-	notifyChannel := notifyChannels[0]
 
-	userInfos, flashDutyChannelIDs, customParams, err := getParams(rt.Ctx, &f.NotifyConfig, notifyChannel)
-	ginx.Dangerous(err)
+	notifyChannel := notifyChannels[0]
+	userInfos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&f.NotifyConfig, rt.UserCache, rt.UserGroupCache)
 
 	switch notifyChannel.RequestType {
 	case "flashduty":
@@ -168,13 +167,18 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			for i := range userInfos {
 				_, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
 				if err != nil {
+					logger.Errorf("failed to send http notify: %v", err)
+					ginx.NewRender(c).Message(err)
 					break
 				}
 			}
 		} else {
 			_, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
+			if err != nil {
+				logger.Errorf("failed to send http notify: %v", err)
+			}
+			ginx.NewRender(c).Message(err)
 		}
-		ginx.NewRender(c).Message(err)
 	case "email":
 		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
 		ginx.NewRender(c).Message(err)
@@ -184,60 +188,4 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	default:
 		ginx.NewRender(c).Message(errors.New("unsupported request type"))
 	}
-}
-
-func getParams(c *ctx.Context, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig) ([]*models.User, []int64, map[string]string, error) {
-
-	paramsBytes, err := json.Marshal(notifyConfig.Params)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	var (
-		userInfos           []*models.User
-		flashDutyChannelIDs []int64
-		customParams        map[string]string
-	)
-
-	if notifyChannel.RequestType == "flashduty" {
-		var flashDutyParams models.FlashDutyParams
-		err := json.Unmarshal(paramsBytes, &flashDutyParams)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		flashDutyChannelIDs = flashDutyParams.IDs
-	} else {
-		var userInfoParams models.CustomParams
-		err := json.Unmarshal(paramsBytes, &userInfoParams)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		users, err := models.UserGetsByIds(c, userInfoParams.UserIDs)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		visited := make(map[int64]bool)
-		for _, user := range users {
-			if visited[user.Id] {
-				continue
-			}
-			visited[user.Id] = true
-			userInfos = append(userInfos, &user)
-		}
-		userGroups, err := models.UserGroupGetByIds(c, userInfoParams.UserGroupIDs)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		for _, userGroup := range userGroups {
-			for _, user := range userGroup.Users {
-				if visited[user.Id] {
-					continue
-				}
-				visited[user.Id] = true
-				userInfos = append(userInfos, &user)
-			}
-		}
-		customParams = userInfoParams.CustomParams
-	}
-	return userInfos, flashDutyChannelIDs, customParams, nil
 }
