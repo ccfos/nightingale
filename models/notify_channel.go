@@ -475,6 +475,9 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		}
 	}
 
+	// 记录完整的请求信息
+	logger.Debugf("URL: %s, Method: %s, Headers: %+v, Body: %s", req.URL.String(), req.Method, req.Header, string(body))
+
 	// 设置 URL 参数 阿里云短信、语音特殊处理
 	query := req.URL.Query()
 	if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
@@ -491,16 +494,17 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
 		var resp *http.Response
 		resp, err = client.Do(req)
-		logger.Debugf("send http request: %+v, response: %+v", req, resp)
 		if err != nil {
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
-			logger.Errorf("failed to send http notify: %v", err)
+			logger.Errorf("send http request failed to send http notify: %v", err)
 			continue
 		}
 		defer resp.Body.Close()
 
 		// 读取响应
 		body, err := io.ReadAll(resp.Body)
+		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(body))
+
 		if err != nil {
 			logger.Errorf("failed to send http notify: %v", err)
 		}
@@ -1149,14 +1153,14 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				URL:     "https://vms.tencentcloudapi.com",
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
+					Body: `{"CalledNumber":"+86{{ $sendto }}","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"],"VoiceSdkAppid":"需要改为实际的appid"}`,
 				},
 				Headers: map[string]string{
 					"Content-Type": "application/json",
 					"Host":         "vms.tencentcloudapi.com",
 					"X-TC-Action":  "SendTtsVoice",
 					"X-TC-Version": "2020-09-02",
-					"X-TC-Region":  "需要改为实际的region",
+					"X-TC-Region":  "ap-beijing",
 					"Service":      "vms",
 					"Secret_ID":    "需要改为实际的secret_id",
 					"Secret_Key":   "需要改为实际的secret_key",

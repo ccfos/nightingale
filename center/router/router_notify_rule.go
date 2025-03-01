@@ -182,6 +182,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 					ginx.NewRender(c).Message(err)
 					break
 				}
+				ginx.NewRender(c).Message(err)
 			}
 		} else {
 			_, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
