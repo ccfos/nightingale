@@ -129,10 +129,21 @@ func (rt *Router) notifyTest(c *gin.Context) {
 
 	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, f.EventIDs)
 	ginx.Dangerous(err)
+
+	if len(hisEvents) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "event not found")
+	}
+
+	ginx.Dangerous(err)
 	events := make([]*models.AlertCurEvent, len(hisEvents))
 	for i, he := range hisEvents {
 		events[i] = he.ToCur()
 	}
+
+	if !dispatch.NotifyRuleApplicable(&f.NotifyConfig, events[0]) {
+		ginx.Bomb(http.StatusBadRequest, "event not applicable")
+	}
+
 	messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
 	ginx.Dangerous(err)
 	if len(messageTemplates) == 0 {

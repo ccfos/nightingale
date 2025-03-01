@@ -33,9 +33,9 @@ type NotifyConfig struct {
 	TemplateID int64                  `json:"template_id"` // 通知模板
 	Params     map[string]interface{} `json:"params"`      // 通知参数
 
-	Severities []int         `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
-	TimeRanges []TimeRanges  `json:"time_ranges"` // 适用时段
-	LabelKeys  []LabelFilter `json:"label_keys"`  // 适用标签
+	Severities []int        `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
+	TimeRanges []TimeRanges `json:"time_ranges"` // 适用时段
+	LabelKeys  []TagFilter  `json:"label_keys"`  // 适用标签
 }
 
 type CustomParams struct {
@@ -48,12 +48,6 @@ type TimeRanges struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
 	Week  []int  `json:"week"`
-}
-
-type LabelFilter struct {
-	Key   string `json:"key"`
-	Op    string `json:"op"` // == != in not in =~ !~
-	Value string `json:"value"`
 }
 
 var NotifyRuleCache struct {
@@ -176,23 +170,6 @@ func (t *TimeRanges) Verify() error {
 
 	// 进一步校验时间格式或检查时间段的合理性
 
-	return nil
-}
-
-func (l *LabelFilter) Verify() error {
-	if l.Key == "" {
-		return errors.New("label key cannot be empty")
-	}
-	if l.Op == "" {
-		return errors.New("operation cannot be empty")
-	}
-	if l.Op != "==" && l.Op != "!=" && l.Op != "in" && l.Op != "not in" &&
-		l.Op != "=~" && l.Op != "!~" {
-		return errors.New("invalid operation")
-	}
-	if l.Value == "" {
-		return errors.New("value cannot be empty")
-	}
 	return nil
 }
 

@@ -150,7 +150,7 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 			}
 
 			for i := range notifyRule.NotifyConfigs {
-				if !notifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
+				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
 					continue
 				}
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
@@ -166,12 +166,16 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 	}
 }
 
-func notifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
+func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := int(tm.Weekday())
 
 	timeMatch := false
+
+	if len(notifyConfig.TimeRanges) == 0 {
+		timeMatch = true
+	}
 	for j := range notifyConfig.TimeRanges {
 		if timeMatch {
 			break
@@ -221,7 +225,17 @@ func notifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		}
 	}
 
-	return timeMatch && severityMatch
+	tagMatch := true
+	if len(notifyConfig.LabelKeys) > 0 {
+		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
+		if err != nil {
+			logger.Errorf("failed to parse tag filter: %v", err)
+			return false
+		}
+		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	return timeMatch && severityMatch && tagMatch
 }
 
 func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]*models.User, []int64, map[string]string) {

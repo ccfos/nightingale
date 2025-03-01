@@ -1004,15 +1004,15 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
-					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msgtype": "text", "text": {"content": "{{$tpl.content}}"}}`,
+					Parameters: map[string]string{"key": "{{$params.key}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
 				},
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "access_token", CName: "access_token", Type: "string"},
+					{Key: "key", CName: "key", Type: "string"},
 				},
 			},
 		},
@@ -1090,7 +1090,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
 				Request: RequestDetail{
 					Parameters: map[string]string{"token": "{{$params.token}}"},
-					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}"}, "elements": [{"tag": "div", "text": {"content": "{{$tpl.content}}"}}]}}`,
+					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
 				},
 			},
 		},
