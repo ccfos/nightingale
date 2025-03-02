@@ -201,3 +201,27 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		ginx.NewRender(c).Message(errors.New("unsupported request type"))
 	}
 }
+
+func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
+	notifyChannelID := ginx.UrlParamInt64(c, "notify_channel_id")
+
+	me := c.MustGet("user").(*models.User)
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+
+	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
+	ginx.Dangerous(err)
+
+	res := make([]map[string]interface{}, 0)
+	for _, nr := range lst {
+		if slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
+			for _, nc := range nr.NotifyConfigs {
+				if nc.ChannelID == notifyChannelID {
+					res = append(res, nc.Params)
+				}
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(res, nil)
+}

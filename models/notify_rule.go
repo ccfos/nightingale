@@ -36,6 +36,7 @@ type NotifyConfig struct {
 	Severities []int        `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
 	TimeRanges []TimeRanges `json:"time_ranges"` // 适用时段
 	LabelKeys  []TagFilter  `json:"label_keys"`  // 适用标签
+	Attributes []TagFilter  `json:"attributes"`  // 适用属性
 }
 
 type CustomParams struct {
