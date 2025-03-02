@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -361,13 +362,13 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		Proxy:           proxyFunc,
 		TLSClientConfig: tlsConfig,
 		DialContext: (&net.Dialer{
-			Timeout: time.Duration(httpConfig.Timeout) * time.Second,
+			Timeout: time.Duration(httpConfig.Timeout) * time.Millisecond,
 		}).DialContext,
 	}
 
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(httpConfig.Timeout) * time.Second,
+		Timeout:   time.Duration(httpConfig.Timeout) * time.Millisecond,
 	}
 
 	return client, nil
@@ -493,7 +494,9 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	// 重试机制
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
 		var resp *http.Response
-		resp, err = client.Do(req)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(httpConfig.Timeout)*time.Millisecond)
+		resp, err = client.Do(req.WithContext(ctx))
+		cancel() // 确保释放资源
 		if err != nil {
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
 			logger.Errorf("send http request failed to send http notify: %v", err)
