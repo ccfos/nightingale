@@ -444,98 +444,27 @@ func TestSendTencentSMSNotification(t *testing.T) {
 }
 
 func TestSendAliYunVoiceNotification(t *testing.T) {
-	// 创建一个测试服务器来模拟阿里云语音API响应
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 验证请求方法
-		if r.Method != "POST" {
-			t.Errorf("预期POST请求，得到 %s", r.Method)
-		}
-
-		// 解析请求参数
-		err := r.ParseForm()
-		if err != nil {
-			t.Errorf("解析请求参数失败: %v", err)
-		}
-
-		// 验证必要的参数
-		requiredParams := []string{
-			"Action", "Version", "Format", "RegionId",
-			"SignatureMethod", "SignatureVersion", "AccessKeyId",
-			"CalledNumber", "VoiceCode",
-		}
-
-		for _, param := range requiredParams {
-			if r.FormValue(param) == "" {
-				t.Errorf("缺少必要参数: %s", param)
-			}
-		}
-
-		// 验证Action参数值
-		action := r.FormValue("Action")
-		if action != "SingleCallByVoice" {
-			t.Errorf("预期Action为SingleCallByVoice，得到 %s", action)
-		}
-
-		// 验证版本参数
-		version := r.FormValue("Version")
-		if version != "2017-05-25" {
-			t.Errorf("预期Version为2017-05-25，得到 %s", version)
-		}
-
-		// 验证被叫号码
-		calledNumber := r.FormValue("CalledNumber")
-		if calledNumber == "" || calledNumber != "18021015257" {
-			t.Errorf("被叫号码不正确，得到: %s", calledNumber)
-		}
-
-		// 验证语音ID
-		voiceCode := r.FormValue("VoiceCode")
-		if voiceCode == "" || voiceCode != "test-voice-code" {
-			t.Errorf("语音ID不正确，得到: %s", voiceCode)
-		}
-
-		// 验证播放次数
-		playTimes := r.FormValue("PlayTimes")
-		if playTimes != "2" {
-			t.Errorf("播放次数不正确，期望为2，得到: %s", playTimes)
-		}
-
-		// 返回成功响应
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
-			"Code": "OK",
-			"Message": "OK",
-			"RequestId": "E50FFA85-0B79-4421-A7BD-00B0A271966F",
-			"CallId": "116004767703^102806****"
-		}`))
-	}))
-	defer server.Close()
+	data, err := readKeyValueFromJsonFile("/tmp/aliyun.json")
+	if err != nil {
+		t.Fatalf("读取JSON文件失败: %v", err)
+	}
 
 	// 创建阿里云语音通知配置
 	notifyChannel := &NotifyChannelConfig{
+		Ident:       "ali-voice",
 		RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
-				URL:     server.URL, // 使用测试服务器的URL
+				URL:     "http://dyvmsapi.aliyuncs.com",
 				Timeout: 10,
 				Request: RequestDetail{
 					Parameters: map[string]string{
-						"Action":   "SingleCallByVoice",
-						"Version":  "2017-05-25",
-						"Format":   "JSON",
-						"OutId":    "test-out-id",
-						"RegionId": "cn-hangzhou",
-
-						"SignatureMethod":  "HMAC-SHA1",
-						"SignatureVersion": "1.0",
-
-						"AccessKeyId":     "test-access-key-id",
-						"AccessKeySecret": "test-access-key-secret",
-						"VoiceCode":       "test-voice-code",
+						"AccessKeyId":     data["AccessKeyId"],
+						"AccessKeySecret": data["AccessKeySecret"],
+						"TtsCode":         data["TtsCode"],
 						"CalledNumber":    `{{ $sendto }}`,
-						"PlayTimes":       "2",
-						"Volume":          "100",
+						"TtsParam":        `{"alert_name":"test"}`,
 					},
 				},
 				RetryTimes:    2,
@@ -569,7 +498,7 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 
 	// 创建用户信息
 	user := &User{
-		Phone: "18021015257",
+		Phone: data["Phone"],
 	}
 
 	// 创建HTTP客户端
@@ -608,17 +537,16 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 				Timeout: 10000,
 				Request: RequestDetail{
 					Parameters: map[string]string{
-						"PhoneNumbers":  "{{ $sendto }}",
-						"SignName":      data["SignName"],
-						"TemplateCode":  data["TemplateCode"],
-						"TemplateParam": `{"code":"{{ $tpl.code }}"}`,
+						"PhoneNumbers":    "{{ $sendto }}",
+						"SignName":        data["SignName"],
+						"TemplateCode":    data["TemplateCode"],
+						"TemplateParam":   `{"name":"text","tag":"text"}`,
+						"AccessKeyId":     data["AccessKeyId"],
+						"AccessKeySecret": data["AccessKeySecret"],
 					},
 				},
 				Headers: map[string]string{
-					"Host":            "dysmsapi.aliyuncs.com",
-					"Content-Type":    "application/json",
-					"AccessKeyId":     data["AccessKeyId"],
-					"AccessKeySecret": data["AccessKeySecret"],
+					"Content-Type": "application/json",
 				},
 				RetryTimes:    2,
 				RetryInterval: 1,
