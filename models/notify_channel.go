@@ -29,9 +29,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/sys"
@@ -466,26 +466,29 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		return "", err
 	}
 
+	query := req.URL.Query()
 	// 设置请求头 腾讯云短信、语音特殊处理
 	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
 		ncc.setTxHeader(req, body)
+	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
+		headers := ncc.getAliAuthorization()
+		for key, value := range headers {
+			req.Header[key] = []string{value}
+		}
+		query = ncc.getAliQuery(tpl)
+
 	} else {
 		for key, value := range httpConfig.Headers {
-			req.Header.Set(key, value)
+			req.Header.Add(key, value)
 		}
 	}
 
 	// 记录完整的请求信息
-	logger.Debugf("URL: %s, Method: %s, Headers: %+v, Body: %s", req.URL.String(), req.Method, req.Header, string(body))
+	logger.Debugf("URL: %s, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL.String(), req.Method, req.Header, query, string(body))
 
 	// 设置 URL 参数 阿里云短信、语音特殊处理
-	query := req.URL.Query()
-	if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		query = ncc.getAliQuery(tpl)
-	} else {
-		for key, value := range httpConfig.Request.Parameters {
-			query.Add(key, value)
-		}
+	for key, value := range httpConfig.Request.Parameters {
+		query.Add(key, value)
 	}
 
 	req.URL.RawQuery = query.Encode()
@@ -521,13 +524,24 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 }
 
 func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Values {
-	// 渲染 param
+	query := url.Values{}
+
 	var paramKey string
 	if ncc.Ident == "ali-sms" {
 		paramKey = "TemplateParam"
+		query.Add("Action", "SendSms")
+		query.Add("Format", "JSON")
+		query.Add("RegionId", "cn-hangzhou")
 	} else {
 		paramKey = "TtsParam"
+		query.Add("Action", "SendVoice")
+		query.Add("Format", "JSON")
+		query.Add("RegionId", "cn-hangzhou")
 	}
+
+	query.Add("SignatureMethod", "HMAC-SHA1")
+	query.Add("SignatureVersion", "1.0")
+	query.Add("Version", "2017-05-25")
 
 	bodyTpl := make(map[string]interface{})
 	bodyTpl["tpl"] = tplContent
@@ -542,7 +556,6 @@ func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Va
 	_ = tpl.Execute(&body, bodyTpl)
 	param := body.String()
 
-	query := url.Values{}
 	for k, v := range httpConfig.Request.Parameters {
 		if k == "AccessKeySecret" || k == paramKey {
 			continue
@@ -555,12 +568,137 @@ func (ncc *NotifyChannelConfig) getAliQuery(tplContent map[string]string) url.Va
 	Timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	query.Add("Timestamp", Timestamp)
 
-	SignatureNonce := uuid.NewV4().String()
-	query.Add("SignatureNonce", SignatureNonce)
+	query.Add("SignatureNonce", uuid.NewV4().String())
 
-	signature := aliSignature(httpConfig.Method, httpConfig.Request.Parameters["AccessKeySecret"], query)
+	logger.Debugf("----------------> %+v", httpConfig.Headers["AccessKeySecret"])
+
+	signature := aliSignature(httpConfig.Method, httpConfig.Headers["AccessKeySecret"], query)
 	query.Add("Signature", signature)
+
 	return query
+}
+
+func (ncc *NotifyChannelConfig) getAliAuthorization() map[string]string {
+	httpConfig := ncc.RequestConfig.HTTPRequestConfig
+
+	// 获取必要的认证信息
+	accessKeyId := httpConfig.Headers["AccessKeyId"]
+	accessKeySecret := httpConfig.Headers["AccessKeySecret"]
+	host := httpConfig.Headers["Host"]
+	action := httpConfig.Headers["Action"]
+	version := httpConfig.Headers["Version"]
+	format := httpConfig.Headers["Format"]
+	regionId := httpConfig.Headers["RegionId"]
+
+	if ncc.Ident == "ali-sms" {
+		action = "SendSms"
+		version = "2017-05-25"
+		format = "JSON"
+	} else if ncc.Ident == "ali-voice" {
+		action = "SendVoice"
+		version = "2017-05-25"
+		format = "JSON"
+	}
+	// 构建规范请求串的头部信息
+	headers := map[string]string{
+		"host":                    host,
+		"x-acs-version":           version,
+		"x-acs-action":            action,
+		"x-acs-date":              time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		"x-acs-signature-method":  "HMAC-SHA1",
+		"x-acs-signature-version": "1.0",
+		"x-acs-region-id":         regionId,
+		"x-acs-accesskey-id":      accessKeyId,
+		"x-acs-format":            format,
+		"content-type":            "application/json",
+	}
+
+	// 构建规范请求串
+	canonicalHeaders := ""
+	signedHeaders := ""
+	headerKeys := make([]string, 0, len(headers))
+	// 深度拷贝 headers
+	headersCopy := make(map[string]string)
+	for k, v := range headers {
+		headersCopy[k] = v
+	}
+
+	for k := range headersCopy {
+		headerKeys = append(headerKeys, strings.ToLower(k))
+	}
+	sort.Strings(headerKeys)
+
+	for _, k := range headerKeys {
+		canonicalHeaders += k + ":" + headersCopy[k] + "\n"
+		signedHeaders += k + ";"
+	}
+	signedHeaders = strings.TrimSuffix(signedHeaders, ";")
+
+	// 计算请求体哈希
+	var hashedRequestPayload string
+	if httpConfig.Request.Body != "" {
+		h := sha256.New()
+		h.Write([]byte(httpConfig.Request.Body))
+		hashedRequestPayload = hex.EncodeToString(h.Sum(nil))
+	} else {
+		hashedRequestPayload = sha256Hex([]byte(""))
+	}
+
+	// 构建规范请求串
+	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+		httpConfig.Method,
+		"/",
+		"", // canonicalQueryString 为空，因为参数会在后面单独处理
+		canonicalHeaders,
+		signedHeaders,
+		hashedRequestPayload,
+	)
+
+	// 构建待签名字符串
+	date := time.Now().UTC().Format("20060102")
+	credentialScope := fmt.Sprintf("%s/%s/acs/v1", date, regionId)
+	stringToSign := fmt.Sprintf("ACS3-HMAC-SHA256\n%s\n%s\n%s",
+		headers["x-acs-date"],
+		credentialScope,
+		sha256Hex([]byte(canonicalRequest)),
+	)
+
+	// 计算签名密钥
+	kDate := hmacSHA256(accessKeySecret, date)
+	kRegion := hmacSHA256(string(kDate), regionId)
+	kService := hmacSHA256(string(kRegion), "acs")
+	kSigning := hmacSHA256(string(kService), "v1")
+
+	// 计算签名
+	signature := hex.EncodeToString([]byte(hmacSHA256(string(kSigning), stringToSign)))
+
+	// 构建授权头
+	authorization := fmt.Sprintf("ACS3-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s",
+		accessKeyId,
+		credentialScope,
+		signedHeaders,
+		signature,
+	)
+
+	headers["Authorization"] = authorization
+	headers["AccessKeyId"] = accessKeyId
+	headers["AccessKeySecret"] = accessKeySecret
+	logger.Debugf("----------------> ali authorization: %+v", headers)
+	return headers
+}
+
+// 辅助函数：计算字符串的 SHA256 哈希值
+func sha256Hex(data []byte) string {
+	h := sha256.New()
+	h.Write(data)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// 辅助函数：使用 HMAC-SHA256 计算签名
+func hmacSHA256(secret string, data string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (ncc *NotifyChannelConfig) setTxHeader(req *http.Request, payloadBytes []byte) {
@@ -1190,17 +1328,10 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 					},
 				},
 				Headers: map[string]string{
-					"Content-Type":     "application/json",
-					"Host":             "dysmsapi.aliyuncs.com",
-					"Action":           "SendSms",
-					"Version":          "2017-05-25",
-					"Format":           "JSON",
-					"RegionId":         "cn-hangzhou",
-					"AccessKeyId":      "需要改为实际的access_key_id",
-					"SignatureNonce":   "需要改为实际的signature_nonce",
-					"Timestamp":        "2023-01-01T12:00:00Z",
-					"SignatureMethod":  "HMAC-SHA1",
-					"SignatureVersion": "1.0",
+					"Content-Type":    "application/json",
+					"Host":            "dysmsapi.aliyuncs.com",
+					"AccessKeyId":     "需要改为实际的access_key_id",
+					"AccessKeySecret": "需要改为实际的access_key_secret",
 				},
 			},
 		},

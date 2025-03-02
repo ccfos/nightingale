@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -590,111 +591,34 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 }
 
 func TestSendAliYunSMSNotification(t *testing.T) {
-	// 创建一个测试服务器来模拟阿里云短信API响应
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 验证请求方法
-		if r.Method != "POST" {
-			t.Errorf("预期POST请求，得到 %s", r.Method)
-		}
+	data, err := readKeyValueFromJsonFile("/tmp/aliyun.json")
+	if err != nil {
+		t.Fatalf("读取JSON文件失败: %v", err)
+	}
 
-		// 验证内容类型
-		contentType := r.Header.Get("Content-Type")
-		if contentType != "application/x-www-form-urlencoded" && contentType != "application/json" {
-			t.Errorf("预期 Content-Type: application/x-www-form-urlencoded 或 application/json，得到 %s", contentType)
-		}
+	fmt.Println(data)
 
-		// 解析请求参数
-		err := r.ParseForm()
-		if err != nil {
-			t.Errorf("解析请求参数失败: %v", err)
-		}
-
-		// 验证必要的参数
-		requiredParams := []string{
-			"PhoneNumbers", "SignName", "TemplateCode", "Action", "Version", "Format",
-		}
-
-		for _, param := range requiredParams {
-			value := r.FormValue(param)
-			if value == "" {
-				t.Errorf("缺少必要参数: %s", param)
-			}
-		}
-
-		// 验证手机号码
-		phoneNumbers := r.FormValue("PhoneNumbers")
-		if phoneNumbers != "18021015257" {
-			t.Errorf("手机号码不正确，期望为18021015257，得到: %s", phoneNumbers)
-		}
-
-		// 验证签名
-		signName := r.FormValue("SignName")
-		if signName != "测试签名" {
-			t.Errorf("签名不正确，期望为测试签名，得到: %s", signName)
-		}
-
-		// 验证模板代码
-		templateCode := r.FormValue("TemplateCode")
-		if templateCode != "SMS_123456789" {
-			t.Errorf("模板代码不正确，期望为SMS_123456789，得到: %s", templateCode)
-		}
-
-		// 验证模板参数
-		templateParam := r.FormValue("TemplateParam")
-		if !strings.Contains(templateParam, "code") || !strings.Contains(templateParam, "123456") {
-			t.Errorf("模板参数不正确，期望包含code和123456，得到: %s", templateParam)
-		}
-
-		// 验证API版本
-		version := r.FormValue("Version")
-		if version != "2017-05-25" {
-			t.Errorf("API版本不正确，期望为2017-05-25，得到: %s", version)
-		}
-
-		// 验证Action
-		action := r.FormValue("Action")
-		if action != "SendSms" {
-			t.Errorf("Action不正确，期望为SendSms，得到: %s", action)
-		}
-
-		// 返回成功响应
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
-			"Code": "OK",
-			"Message": "OK",
-			"BizId": "900619746936498477",
-			"RequestId": "F655A8D5-B967-440B-8683-DAD6FF8DE990"
-		}`))
-	}))
-	defer server.Close()
-
-	// 创建阿里云短信通知配置
 	notifyChannel := &NotifyChannelConfig{
+		Ident:       "ali-sms",
 		RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
-				URL:     server.URL, // 使用测试服务器的URL
-				Timeout: 10,
+				URL:     "https://dysmsapi.aliyuncs.com",
+				Timeout: 10000,
 				Request: RequestDetail{
 					Parameters: map[string]string{
-						"Action":           "SendSms",
-						"Version":          "2017-05-25",
-						"Format":           "JSON",
-						"RegionId":         "cn-hangzhou",
-						"PhoneNumbers":     "{{ $sendto }}",
-						"SignName":         "测试签名",
-						"TemplateCode":     "SMS_123456789",
-						"TemplateParam":    `{"code":"{{ $tpl.code }}"}`,
-						"AccessKeyId":      "test-access-key-id",
-						"SignatureNonce":   "test-signature-nonce",
-						"Timestamp":        "2023-01-01T12:00:00Z",
-						"SignatureMethod":  "HMAC-SHA1",
-						"SignatureVersion": "1.0",
+						"PhoneNumbers":  "{{ $sendto }}",
+						"SignName":      data["SignName"],
+						"TemplateCode":  data["TemplateCode"],
+						"TemplateParam": `{"code":"{{ $tpl.code }}"}`,
 					},
 				},
 				Headers: map[string]string{
-					"Content-Type": "application/x-www-form-urlencoded",
+					"Host":            "dysmsapi.aliyuncs.com",
+					"Content-Type":    "application/json",
+					"AccessKeyId":     data["AccessKeyId"],
+					"AccessKeySecret": data["AccessKeySecret"],
 				},
 				RetryTimes:    2,
 				RetryInterval: 1,
@@ -727,7 +651,7 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 
 	// 创建用户信息
 	user := &User{
-		Phone: "18021015257",
+		Phone: data["Phone"],
 	}
 
 	// 创建HTTP客户端
@@ -860,4 +784,17 @@ func TestSendFlashDuty(t *testing.T) {
 	if err == nil {
 		t.Errorf("预期请求失败，但未返回错误")
 	}
+}
+
+// read key value from json file
+func readKeyValueFromJsonFile(filePath string) (map[string]string, error) {
+	jsonFile, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer jsonFile.Close()
+
+	var data map[string]string
+	err = json.NewDecoder(jsonFile).Decode(&data)
+	return data, err
 }
