@@ -384,6 +384,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	if err != nil {
 		return "", err
 	}
+
 	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)

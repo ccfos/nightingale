@@ -212,6 +212,12 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 }
 
+type paramList struct {
+	Name  string      `json:"name"`
+	CName string      `json:"cname"`
+	Value interface{} `json:"value"`
+}
+
 func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	notifyChannelID := ginx.QueryInt64(c, "notify_channel_id")
 
@@ -230,20 +236,26 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
 	ginx.Dangerous(err)
 
-	res := make([]map[string]interface{}, 0)
+	res := make([]paramList, 0)
 	for _, nr := range lst {
-		if slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
-			for _, nc := range nr.NotifyConfigs {
-				if nc.ChannelID == notifyChannelID {
-					params := make(map[string]interface{})
-					for key, value := range nc.Params {
-						// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
-						cname, exsits := keyMap[key]
-						if exsits {
-							params[cname] = value
-						}
-					}
-					res = append(res, params)
+		if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
+			continue
+		}
+
+		for _, nc := range nr.NotifyConfigs {
+			if nc.ChannelID != notifyChannelID {
+				continue
+			}
+
+			for key, value := range nc.Params {
+				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
+				cname, exsits := keyMap[key]
+				if exsits {
+					res = append(res, paramList{
+						Name:  key,
+						CName: cname,
+						Value: value,
+					})
 				}
 			}
 		}
