@@ -229,6 +229,11 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	keyMap := make(map[string]string)
+	if notifyChannel.ParamConfig == nil {
+		ginx.NewRender(c).Data([][]paramList{}, nil)
+		return
+	}
+
 	for _, param := range notifyChannel.ParamConfig.Custom.Params {
 		keyMap[param.Key] = param.CName
 	}
@@ -236,7 +241,7 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
 	ginx.Dangerous(err)
 
-	res := make([]paramList, 0)
+	res := make([][]paramList, 0)
 	for _, nr := range lst {
 		if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
 			continue
@@ -247,17 +252,19 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 				continue
 			}
 
+			list := make([]paramList, 0)
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
 				cname, exsits := keyMap[key]
 				if exsits {
-					res = append(res, paramList{
+					list = append(list, paramList{
 						Name:  key,
 						CName: cname,
 						Value: value,
 					})
 				}
 			}
+			res = append(res, list)
 		}
 	}
 
