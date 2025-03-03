@@ -399,6 +399,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	for i := 0; i <= 3; i++ {
 		resp, err := client.Do(req)
 		if err != nil {
+			logger.Errorf("send flashduty req:%+v err:%v", req, err)
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			continue
 		}
@@ -410,6 +411,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 			logger.Errorf("failed to read response: %v, event: %v", err, events)
 		}
 
+		logger.Infof("send flashduty req:%+v resp:%+v body:%+v err:%v", req, resp, string(body), err)
 		if resp.StatusCode == http.StatusOK {
 			return string(body), nil
 		}
