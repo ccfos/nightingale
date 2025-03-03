@@ -217,6 +217,8 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 		if slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
 			for _, nc := range nr.NotifyConfigs {
 				if nc.ChannelID == notifyChannelID {
+					delete(nc.Params, "user_group_ids")
+					delete(nc.Params, "user_ids")
 					res = append(res, nc.Params)
 				}
 			}
