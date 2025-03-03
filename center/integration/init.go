@@ -22,6 +22,14 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		return
 	}
 
+	if res, err := models.ConfigsSelectByCkey(ctx, "disable_integration_init"); err != nil {
+		logger.Error("fail to get value 'disable_integration_init' from configs", err)
+		return
+	} else if len(res) != 0 {
+		logger.Info("disable_integration_init is set, skip integration init")
+		return
+	}
+
 	fp := builtinIntegrationsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "integrations")
