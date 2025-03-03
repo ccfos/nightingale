@@ -30,6 +30,10 @@ type Dispatch struct {
 	notifyConfigCache   *memsto.NotifyConfigCacheType
 	taskTplsCache       *memsto.TaskTplCache
 
+	notifyRuleCache      *memsto.NotifyRuleCacheType
+	notifyChannelCache   *memsto.NotifyChannelCacheType
+	messageTemplateCache *memsto.MessageTemplateCacheType
+
 	alerting aconf.Alerting
 
 	Senders          map[string]sender.Sender
@@ -47,15 +51,19 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	taskTplsCache *memsto.TaskTplCache, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
+	messageTemplateCache *memsto.MessageTemplateCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
-		alertRuleCache:      alertRuleCache,
-		userCache:           userCache,
-		userGroupCache:      userGroupCache,
-		alertSubscribeCache: alertSubscribeCache,
-		targetCache:         targetCache,
-		notifyConfigCache:   notifyConfigCache,
-		taskTplsCache:       taskTplsCache,
+		alertRuleCache:       alertRuleCache,
+		userCache:            userCache,
+		userGroupCache:       userGroupCache,
+		alertSubscribeCache:  alertSubscribeCache,
+		targetCache:          targetCache,
+		notifyConfigCache:    notifyConfigCache,
+		taskTplsCache:        taskTplsCache,
+		notifyRuleCache:      notifyRuleCache,
+		notifyChannelCache:   notifyChannelCache,
+		messageTemplateCache: messageTemplateCache,
 
 		alerting: alerting,
 
@@ -131,6 +139,237 @@ func (e *Dispatch) relaodTpls() error {
 	return nil
 }
 
+func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe bool) {
+
+	if len(event.NotifyRuleIDs) > 0 {
+		for _, notifyRuleId := range event.NotifyRuleIDs {
+			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, event)
+			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
+			if notifyRule == nil {
+				continue
+			}
+
+			for i := range notifyRule.NotifyConfigs {
+				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
+					continue
+				}
+				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
+				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
+				if notifyChannel == nil {
+					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, event, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
+					continue
+				}
+
+				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
+					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, event, notifyRule.NotifyConfigs[i].TemplateID)
+					continue
+				}
+
+				// todo go send
+				// todo 聚合 event
+				go e.sendV2([]*models.AlertCurEvent{event}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+			}
+		}
+	}
+}
+
+func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
+	tm := time.Unix(event.TriggerTime, 0)
+	triggerTime := tm.Format("15:04")
+	triggerWeek := int(tm.Weekday())
+
+	timeMatch := false
+
+	if len(notifyConfig.TimeRanges) == 0 {
+		timeMatch = true
+	}
+	for j := range notifyConfig.TimeRanges {
+		if timeMatch {
+			break
+		}
+		enableStime := notifyConfig.TimeRanges[j].Start
+		enableEtime := notifyConfig.TimeRanges[j].End
+		enableDaysOfWeek := notifyConfig.TimeRanges[j].Week
+		length := len(enableDaysOfWeek)
+		// enableStime,enableEtime,enableDaysOfWeek三者长度肯定相同，这里循环一个即可
+		for i := 0; i < length; i++ {
+			if enableDaysOfWeek[i] != triggerWeek {
+				continue
+			}
+
+			if enableStime < enableEtime {
+				if enableEtime == "23:59" {
+					// 02:00-23:59，这种情况做个特殊处理，相当于左闭右闭区间了
+					if triggerTime < enableStime {
+						// mute, 即没生效
+						continue
+					}
+				} else {
+					// 02:00-04:00 或者 02:00-24:00
+					if triggerTime < enableStime || triggerTime >= enableEtime {
+						// mute, 即没生效
+						continue
+					}
+				}
+			} else if enableStime > enableEtime {
+				// 21:00-09:00
+				if triggerTime < enableStime && triggerTime >= enableEtime {
+					// mute, 即没生效
+					continue
+				}
+			}
+
+			// 到这里说明当前时刻在告警规则的某组生效时间范围内，即没有 mute，直接返回 false
+			timeMatch = true
+			break
+		}
+	}
+
+	severityMatch := false
+	for i := range notifyConfig.Severities {
+		if notifyConfig.Severities[i] == event.Severity {
+			severityMatch = true
+		}
+	}
+
+	tagMatch := true
+	if len(notifyConfig.LabelKeys) > 0 {
+		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
+		if err != nil {
+			logger.Errorf("failed to parse tag filter: %v", err)
+			return false
+		}
+		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	attributesMatch := true
+	if len(notifyConfig.Attributes) > 0 {
+		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
+		if err != nil {
+			logger.Errorf("failed to parse tag filter: %v", err)
+			return false
+		}
+
+		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
+	}
+
+	return timeMatch && severityMatch && tagMatch && attributesMatch
+}
+
+func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]*models.User, []int64, map[string]string) {
+	customParams := make(map[string]string)
+	var userInfos []*models.User
+	var flashDutyChannelIDs []int64
+	var userInfoParams models.CustomParams
+
+	for key, value := range notifyConfig.Params {
+		switch key {
+		case "user_ids", "user_group_ids", "ids":
+			if data, err := json.Marshal(value); err == nil {
+				var ids []int64
+				if json.Unmarshal(data, &ids) == nil {
+					if key == "user_ids" {
+						userInfoParams.UserIDs = ids
+					} else if key == "user_group_ids" {
+						userInfoParams.UserGroupIDs = ids
+					} else if key == "ids" {
+						flashDutyChannelIDs = ids
+					}
+				}
+			}
+		default:
+			customParams[key] = value.(string)
+		}
+	}
+
+	users := userCache.GetByUserIds(userInfoParams.UserIDs)
+	visited := make(map[int64]bool)
+	for _, user := range users {
+		if visited[user.Id] {
+			continue
+		}
+		visited[user.Id] = true
+		userInfos = append(userInfos, user)
+	}
+
+	userGroups := userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
+	for _, userGroup := range userGroups {
+		for _, user := range userGroup.Users {
+			if visited[user.Id] {
+				continue
+			}
+			visited[user.Id] = true
+			userInfos = append(userInfos, &user)
+		}
+	}
+
+	return userInfos, flashDutyChannelIDs, customParams
+}
+
+func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
+	if len(events) == 0 {
+		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
+		return
+	}
+
+	tplContent := make(map[string]string)
+	if notifyChannel.RequestType != "flashduty" {
+		tplContent = messageTemplate.RenderEvent(events)
+	}
+
+	userInfos, flashDutyChannelIDs, customParams := GetNotifyConfigParams(notifyConfig, e.userCache, e.userGroupCache)
+
+	e.Astats.GaugeNotifyRecordQueueSize.Inc()
+	defer e.Astats.GaugeNotifyRecordQueueSize.Dec()
+
+	switch notifyChannel.RequestType {
+	case "flashduty":
+		for i := range flashDutyChannelIDs {
+			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, respBody, err)
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, respBody, err)
+		}
+		return
+	case "http":
+		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
+			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
+		}
+
+		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
+			for i := range userInfos {
+				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, userInfos[i], respBody, err)
+				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
+			}
+		} else {
+			respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, nil, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, respBody, err)
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
+		}
+
+	case "smtp":
+		err := notifyChannel.SendEmail(events, tplContent, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
+		if err != nil {
+			logger.Errorf("send email error: %v", err)
+		}
+		for i := range userInfos {
+			msg := ""
+			if err == nil {
+				msg = "ok"
+			}
+
+			// todo 这里的通知记录需要调整
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, userInfos[i].Email, msg, err)
+		}
+	case "script":
+		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
+		logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
+		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
+	default:
+		logger.Warningf("notify_id: %d, channel_name: %v, event:%+v send type not found", notifyRuleId, notifyChannel.Name, events[0])
+	}
+}
+
 // HandleEventNotify 处理event事件的主逻辑
 // event: 告警/恢复事件
 // isSubscribe: 告警事件是否由subscribe的配置产生
@@ -173,6 +412,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
+	go e.HandleEventNotifyV2(event, isSubscribe)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event

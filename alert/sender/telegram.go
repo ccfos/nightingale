@@ -72,7 +72,7 @@ func SendTelegram(ctx *ctx.Context, message TelegramMessage, events []*models.Al
 	for i := 0; i < len(message.Tokens); i++ {
 		if !strings.Contains(message.Tokens[i], "/") && !strings.HasPrefix(message.Tokens[i], "https://") {
 			logger.Errorf("telegram_sender: result=fail invalid token=%s", message.Tokens[i])
-			NotifyRecord(ctx, events, channel, message.Tokens[i], "", errors.New("invalid token"))
+			NotifyRecord(ctx, events, 0, channel, message.Tokens[i], "", errors.New("invalid token"))
 			continue
 		}
 		var url string

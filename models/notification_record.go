@@ -12,23 +12,25 @@ const (
 )
 
 type NotificaitonRecord struct {
-	Id        int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`
-	EventId   int64  `json:"event_id" gorm:"type:bigint;not null;index:idx_evt,priority:1;comment:event history id"`
-	SubId     int64  `json:"sub_id" gorm:"type:bigint;comment:subscribed rule id"`
-	Channel   string `json:"channel" gorm:"type:varchar(255);not null;comment:notification channel name"`
-	Status    int    `json:"status" gorm:"type:int;comment:notification status"` // 1-成功，2-失败
-	Target    string `json:"target" gorm:"type:varchar(1024);not null;comment:notification target"`
-	Details   string `json:"details" gorm:"type:varchar(2048);default:'';comment:notification other info"`
-	CreatedAt int64  `json:"created_at" gorm:"type:bigint;not null;comment:create time"`
+	Id           int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`
+	NotifyRuleID int64  `json:"notify_rule_id" gorm:"type:bigint;comment:notify rule id"`
+	EventId      int64  `json:"event_id" gorm:"type:bigint;not null;index:idx_evt,priority:1;comment:event history id"`
+	SubId        int64  `json:"sub_id" gorm:"type:bigint;comment:subscribed rule id"`
+	Channel      string `json:"channel" gorm:"type:varchar(255);not null;comment:notification channel name"`
+	Status       int    `json:"status" gorm:"type:int;comment:notification status"` // 1-成功，2-失败
+	Target       string `json:"target" gorm:"type:varchar(1024);not null;comment:notification target"`
+	Details      string `json:"details" gorm:"type:varchar(2048);default:'';comment:notification other info"`
+	CreatedAt    int64  `json:"created_at" gorm:"type:bigint;not null;comment:create time"`
 }
 
-func NewNotificationRecord(event *AlertCurEvent, channel, target string) *NotificaitonRecord {
+func NewNotificationRecord(event *AlertCurEvent, notifyRuleID int64, channel, target string) *NotificaitonRecord {
 	return &NotificaitonRecord{
-		EventId: event.Id,
-		SubId:   event.SubRuleId,
-		Channel: channel,
-		Status:  NotiStatusSuccess,
-		Target:  target,
+		NotifyRuleID: notifyRuleID,
+		EventId:      event.Id,
+		SubId:        event.SubRuleId,
+		Channel:      channel,
+		Status:       NotiStatusSuccess,
+		Target:       target,
 	}
 }
 

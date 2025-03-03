@@ -74,7 +74,7 @@ func SendMM(ctx *ctx.Context, message MatterMostMessage, events []*models.AlertC
 		u, err := url.Parse(message.Tokens[i])
 		if err != nil {
 			logger.Errorf("mm_sender: failed to parse error=%v", err)
-			NotifyRecord(ctx, events, channel, message.Tokens[i], "", err)
+			NotifyRecord(ctx, events, 0, channel, message.Tokens[i], "", err)
 			continue
 		}
 

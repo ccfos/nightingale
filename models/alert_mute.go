@@ -23,6 +23,38 @@ type TagFilter struct {
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
 
+func (t *TagFilter) Verify() error {
+	if t.Key == "" {
+		return errors.New("tag key cannot be empty")
+	}
+
+	if t.Func != "==" && t.Func != "!=" && t.Func != "in" && t.Func != "not in" &&
+		t.Func != "=~" && t.Func != "!~" {
+		return errors.New("invalid operation")
+	}
+
+	return nil
+}
+
+func ParseTagFilter(bFilters []TagFilter) ([]TagFilter, error) {
+	var err error
+	for i := 0; i < len(bFilters); i++ {
+		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
+			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			if err != nil {
+				return nil, err
+			}
+		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
+			arr := strings.Fields(bFilters[i].Value)
+			bFilters[i].Vset = make(map[string]struct{})
+			for j := 0; j < len(arr); j++ {
+				bFilters[i].Vset[arr[j]] = struct{}{}
+			}
+		}
+	}
+	return bFilters, nil
+}
+
 func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	if jsonArr == nil || len([]byte(jsonArr)) == 0 {
 		return []TagFilter{}, nil

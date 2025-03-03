@@ -226,3 +226,14 @@ func (rt *Router) attemptSendEmail(c *gin.Context) {
 	ginx.NewRender(c).Message(sender.SendEmail("Email test", "email content", []string{f.Email}, smtp))
 
 }
+
+func (rt *Router) notifyChannelConfigGets(c *gin.Context) {
+
+	id := ginx.QueryInt64(c, "id", 0)
+	name := ginx.QueryStr(c, "name", "")
+	ident := ginx.QueryStr(c, "ident", "")
+	eabled := ginx.QueryInt(c, "eabled", -1)
+
+	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, id, name, ident, eabled)
+	ginx.NewRender(c).Data(notifyChannels, err)
+}

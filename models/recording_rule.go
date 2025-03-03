@@ -17,16 +17,17 @@ import (
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
 	Id                int64             `json:"id" gorm:"primaryKey"`
-	GroupId           int64             `json:"group_id"`                                                                         // busi group id
-	DatasourceIds     string            `json:"-" gorm:"datasource_ids,omitempty"`                                                // datasource ids
-	DatasourceQueries []DatasourceQuery `json:"datasource_queries,omitempty" gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
-	Cluster           string            `json:"cluster"`                                                                          // take effect by cluster, seperated by space
-	Name              string            `json:"name"`                                                                             // new metric name
-	Disabled          int               `json:"disabled"`                                                                         // 0: enabled, 1: disabled
-	PromQl            string            `json:"prom_ql"`                                                                          // just one ql for promql
-	QueryConfigs      string            `json:"-" gorm:"query_configs"`                                                           // query_configs
-	QueryConfigsJson  []QueryConfig     `json:"query_configs" gorm:"-"`                                                           // query_configs for fe
-	PromEvalInterval  int               `json:"prom_eval_interval"`                                                               // unit:s
+	GroupId           int64             `json:"group_id"` // busi group id
+	DatasourceIds     string            `json:"-" gorm:"datasource_ids,omitempty"`
+	DatasourceIdsJson []int64           `json:"datasource_ids" gorm:"-"`                             // for open source fe
+	DatasourceQueries []DatasourceQuery `json:"datasource_queries,omitempty" gorm:"serializer:json"` // datasource queries
+	Cluster           string            `json:"cluster"`                                             // take effect by cluster, seperated by space
+	Name              string            `json:"name"`                                                // new metric name
+	Disabled          int               `json:"disabled"`                                            // 0: enabled, 1: disabled
+	PromQl            string            `json:"prom_ql"`                                             // just one ql for promql
+	QueryConfigs      string            `json:"-" gorm:"query_configs"`                              // query_configs
+	QueryConfigsJson  []QueryConfig     `json:"query_configs" gorm:"-"`                              // query_configs for fe
+	PromEvalInterval  int               `json:"prom_eval_interval"`                                  // unit:s
 	CronPattern       string            `json:"cron_pattern"`
 	AppendTags        string            `json:"-"`                    // split by space: service=n9e mod=api
 	AppendTagsJSON    []string          `json:"append_tags" gorm:"-"` // for fe
@@ -58,6 +59,8 @@ func (re *RecordingRule) TableName() string {
 
 func (re *RecordingRule) FE2DB() {
 	re.AppendTags = strings.Join(re.AppendTagsJSON, " ")
+	idsByte, _ := json.Marshal(re.DatasourceIdsJson)
+	re.DatasourceIds = string(idsByte)
 
 	queryConfigsByte, _ := json.Marshal(re.QueryConfigsJson)
 	re.QueryConfigs = string(queryConfigsByte)
@@ -65,6 +68,7 @@ func (re *RecordingRule) FE2DB() {
 
 func (re *RecordingRule) DB2FE() error {
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
+	json.Unmarshal([]byte(re.DatasourceIds), &re.DatasourceIdsJson)
 
 	re.FillDatasourceQueries()
 
