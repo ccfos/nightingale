@@ -107,6 +107,8 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
+	NotifyVersion         int                    `json:"notify_version"` // 0: old, 1: new
 }
 
 type ChildVarConfig struct {
@@ -511,6 +513,14 @@ func (ar *AlertRule) Verify() error {
 		return err
 	}
 
+	if len(ar.NotifyRuleIds) > 0 {
+		ar.NotifyVersion = 1
+		ar.NotifyChannelsJSON = []string{}
+		ar.NotifyGroupsJSON = []string{}
+		ar.NotifyChannels = ""
+		ar.NotifyGroups = ""
+	}
+
 	return nil
 }
 
@@ -694,6 +704,16 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 			return err
 		}
 		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
+	}
+
+	if column == "notify_rule_ids" {
+		updates := map[string]interface{}{
+			"notify_version":  1,
+			"notify_channels": "",
+			"notify_groups":   "",
+			"notify_rule_ids": value,
+		}
+		return DB(ctx).Model(ar).Updates(updates).Error
 	}
 
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
@@ -898,6 +918,10 @@ func (ar *AlertRule) DB2FE() error {
 	}
 	if len(ar.EnableDaysOfWeeksJSON) > 0 {
 		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
+	}
+
+	if ar.NotifyRuleIds == nil {
+		ar.NotifyRuleIds = make([]int64, 0)
 	}
 
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)

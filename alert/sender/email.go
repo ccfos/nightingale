@@ -205,7 +205,7 @@ func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 				if err == nil {
 					msg = "ok"
 				}
-				NotifyRecord(ctx, m.events, models.Email, to, msg, err)
+				NotifyRecord(ctx, m.events, 0, models.Email, to, msg, err)
 			}
 
 			size++

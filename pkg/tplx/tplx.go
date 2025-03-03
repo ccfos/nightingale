@@ -52,6 +52,13 @@ var TemplateFuncMap = template.FuncMap{
 	"externalURL":               ExternalURL,
 	"parseDuration":             ParseDuration,
 	"printf":                    Printf,
+	"split":                     strings.Split,
+	"join":                      strings.Join,
+	"addPrefix":                 AddPrefix,
+	"addSuffix":                 AddSuffix,
+	"manipulateStr":             ManipulateStr,
+
+	"dingTalkAt": DingTalkAt,
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap

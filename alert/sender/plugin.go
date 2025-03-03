@@ -104,7 +104,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 		res = res[:validLen] + "..."
 	}
 
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), res, buildErr(err, isTimeout))
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, channel, cmd.String(), res, buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
