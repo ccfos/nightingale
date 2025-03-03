@@ -965,8 +965,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "access_token", CName: "access_token", Type: "string"},
-					{Key: "ats", CName: "ats", Type: "string"},
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -986,7 +986,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "access_token", CName: "access_token", Type: "string"},
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1006,7 +1007,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "access_token", CName: "access_token", Type: "string"},
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1027,7 +1029,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "key", CName: "key", Type: "string"},
+					{Key: "key", CName: "Key", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1067,8 +1070,9 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "token", CName: "token", Type: "string"},
-					{Key: "chat_id", CName: "chat_id", Type: "string"},
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "chat_id", CName: "Chat Id", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1090,7 +1094,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "token", CName: "token", Type: "string"},
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1112,7 +1117,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "token", CName: "token", Type: "string"},
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
