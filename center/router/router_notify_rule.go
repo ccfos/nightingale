@@ -144,13 +144,6 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "event not applicable")
 	}
 
-	messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
-	ginx.Dangerous(err)
-	if len(messageTemplates) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "message template not found")
-	}
-	tplContent := messageTemplates[0].RenderEvent(events)
-
 	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, f.NotifyConfig.ChannelID, "", "", -1)
 	ginx.Dangerous(err)
 	if len(notifyChannels) == 0 {
@@ -158,25 +151,40 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 
 	notifyChannel := notifyChannels[0]
+
+	tplContent := make(map[string]string)
+	if notifyChannel.RequestType != "flashtudy" {
+		messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
+		ginx.Dangerous(err)
+		if len(messageTemplates) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "message template not found")
+		}
+		tplContent = messageTemplates[0].RenderEvent(events)
+	}
+
 	userInfos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&f.NotifyConfig, rt.UserCache, rt.UserGroupCache)
 
+	var resp string
 	switch notifyChannel.RequestType {
 	case "flashduty":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
+
 		for i := range flashDutyChannelIDs {
-			_, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
+			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
 			if err != nil {
 				break
 			}
 		}
+		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		ginx.NewRender(c).Message(err)
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
 		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
 			for i := range userInfos {
-				_, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
+				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
+				logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, userInfos[i], resp, err)
 				if err != nil {
 					logger.Errorf("failed to send http notify: %v", err)
 					ginx.NewRender(c).Message(err)
@@ -185,7 +193,8 @@ func (rt *Router) notifyTest(c *gin.Context) {
 				ginx.NewRender(c).Message(err)
 			}
 		} else {
-			_, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
+			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
+			logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 			if err != nil {
 				logger.Errorf("failed to send http notify: %v", err)
 			}
@@ -195,7 +204,8 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
 		ginx.NewRender(c).Message(err)
 	case "script":
-		_, _, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
+		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
+		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		ginx.NewRender(c).Message(err)
 	default:
 		ginx.NewRender(c).Message(errors.New("unsupported request type"))

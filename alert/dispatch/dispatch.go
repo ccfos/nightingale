@@ -155,9 +155,16 @@ func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe 
 				}
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
-				if notifyChannel == nil || messageTemplate == nil {
+				if notifyChannel == nil {
+					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, event, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
 					continue
 				}
+
+				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
+					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, event, notifyRule.NotifyConfigs[i].TemplateID)
+					continue
+				}
+
 				// todo go send
 				// todo 聚合 event
 				go e.sendV2([]*models.AlertCurEvent{event}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
