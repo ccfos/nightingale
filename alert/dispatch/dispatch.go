@@ -235,7 +235,18 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
 	}
 
-	return timeMatch && severityMatch && tagMatch
+	attributesMatch := true
+	if len(notifyConfig.Attributes) > 0 {
+		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
+		if err != nil {
+			logger.Errorf("failed to parse tag filter: %v", err)
+			return false
+		}
+
+		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
+	}
+
+	return timeMatch && severityMatch && tagMatch && attributesMatch
 }
 
 func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]*models.User, []int64, map[string]string) {
