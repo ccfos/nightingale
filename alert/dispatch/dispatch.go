@@ -294,6 +294,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	}
 
 	tplContent := messageTemplate.RenderEvent(events)
+
 	userInfos, flashDutyChannelIDs, customParams := GetNotifyConfigParams(notifyConfig, e.userCache, e.userGroupCache)
 
 	e.Astats.GaugeNotifyRecordQueueSize.Inc()
@@ -303,9 +304,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 	case "flashduty":
 		for i := range flashDutyChannelIDs {
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			if err != nil {
-				logger.Errorf("send http error: %v,  events: %v", err, events)
-			}
+			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, respBody, err)
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, respBody, err)
 		}
 		return
@@ -317,16 +316,12 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
 			for i := range userInfos {
 				respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-				if err != nil {
-					logger.Errorf("send http error: %v,  events: %v", err, events)
-				}
+				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, userInfos[i], respBody, err)
 				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 			}
 		} else {
 			respBody, err := notifyChannel.SendHTTP(events, tplContent, customParams, nil, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			if err != nil {
-				logger.Errorf("send http error: %v,  events: %v", err, events)
-			}
+			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, respBody, err)
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 		}
 
@@ -346,14 +341,11 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		}
 	case "script":
 		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
-		if err != nil {
-			logger.Errorf("send script error: %v", err)
-
-		}
+		logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
 		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:
+		logger.Warningf("notify_id: %d, channel_name: %v, event:%+v send type not found", notifyRuleId, notifyChannel.Name, events[0])
 	}
-
 }
 
 // HandleEventNotify 处理event事件的主逻辑
