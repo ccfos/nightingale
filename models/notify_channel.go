@@ -343,6 +343,19 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	}
 
 	httpConfig := nc.RequestConfig.HTTPRequestConfig
+	if httpConfig.Timeout == 0 {
+		httpConfig.Timeout = 10000
+	}
+	if httpConfig.Concurrency == 0 {
+		httpConfig.Concurrency = 5
+	}
+
+	if httpConfig.RetryTimes == 0 {
+		httpConfig.RetryTimes = 3
+	}
+	if httpConfig.RetryInterval == 0 {
+		httpConfig.RetryInterval = 100
+	}
 
 	// 设置代理
 	var proxyFunc func(*http.Request) (*url.URL, error)
@@ -385,6 +398,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 		return "", err
 	}
 
+	logger.Infof("send flashduty req:%+v body:%+v", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, string(body))
 	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
@@ -1130,6 +1144,9 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	"flashduty": &NotifyChannelConfig{
 		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
 		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+			},
 			FlashDutyRequestConfig: &FlashDutyRequestConfig{
 				IntegrationUrl: "flashduty integration url",
 			},
