@@ -955,7 +955,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
 				Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
 					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n@{{$params.ats}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
@@ -977,7 +977,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Body: `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
 				},
@@ -997,7 +997,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
 				},
@@ -1017,7 +1017,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"key": "{{$params.key}}"},
 					Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
@@ -1057,7 +1057,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
 				Method:  "POST",
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
 					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
@@ -1080,7 +1080,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"token": "{{$params.token}}"},
 					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
@@ -1102,7 +1102,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"token": "{{$params.token}}"},
 					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
@@ -1133,7 +1133,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
 				URL:     "https://sms.tencentcloudapi.com",
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
 				},
@@ -1162,7 +1162,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
 				URL:     "https://vms.tencentcloudapi.com",
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Body: `{"CalledNumber":"+86{{ $sendto }}","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"],"VoiceSdkAppid":"需要改为实际的appid"}`,
 				},
@@ -1191,7 +1191,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
 				URL:     "https://dysmsapi.aliyuncs.com",
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{
 						"PhoneNumbers":    "{{ $sendto }}",
@@ -1221,7 +1221,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
 				URL:     "https://dyvms.aliyuncs.com",
-				Timeout: 1000, Concurrency: 5, RetryTimes: 3, RetryInterval: 5,
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{
 						"TtsCode":         "需要改为实际的voice_code",
