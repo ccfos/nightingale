@@ -597,6 +597,9 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 }
 
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string {
+	if t == nil {
+		return nil
+	}
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]string)
 	for key, msgTpl := range t.Content {

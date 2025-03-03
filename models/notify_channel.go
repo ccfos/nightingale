@@ -409,6 +409,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	query := req.URL.Query()
 	query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
 	req.URL.RawQuery = query.Encode()
+	req.Header.Add("Content-Type", "application/json")
 
 	// 重试机制
 	for i := 0; i <= 3; i++ {
@@ -1146,6 +1147,9 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
 			},
 			FlashDutyRequestConfig: &FlashDutyRequestConfig{
 				IntegrationUrl: "flashduty integration url",
