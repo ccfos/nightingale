@@ -950,7 +950,7 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 
 var NotiChMap = map[string]*NotifyChannelConfig{
 	Dingtalk: &NotifyChannelConfig{
-		Name: Dingtalk, Ident: Dingtalk, RequestType: "http",
+		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
@@ -972,7 +972,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		},
 	},
 	Feishu: &NotifyChannelConfig{
-		Name: Feishu, Ident: Feishu, RequestType: "http",
+		Name: "Feishu", Ident: Feishu, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -992,7 +992,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		},
 	},
 	FeishuCard: &NotifyChannelConfig{
-		Name: FeishuCard, Ident: FeishuCard, RequestType: "http",
+		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -1012,7 +1012,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		},
 	},
 	Wecom: &NotifyChannelConfig{
-		Name: Wecom, Ident: Wecom, RequestType: "http",
+		Name: "Wecom", Ident: Wecom, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
@@ -1033,7 +1033,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		},
 	},
 	Email: &NotifyChannelConfig{
-		Name: Email, Ident: Email, RequestType: "smtp",
+		Name: "Email", Ident: Email, RequestType: "smtp",
 		RequestConfig: &RequestConfig{
 			SMTPRequestConfig: &SMTPRequestConfig{
 				Host:               "smtp.host",
@@ -1052,7 +1052,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	Telegram: &NotifyChannelConfig{
-		Name: Telegram, Ident: Telegram, RequestType: "http",
+		Name: "Telegram", Ident: Telegram, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
@@ -1075,7 +1075,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	Lark: &NotifyChannelConfig{
-		Name: Lark, Ident: Lark, RequestType: "http",
+		Name: "Lark", Ident: Lark, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1097,7 +1097,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	LarkCard: &NotifyChannelConfig{
-		Name: LarkCard, Ident: LarkCard, RequestType: "http",
+		Name: "Lark Card", Ident: LarkCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1119,7 +1119,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	"flashduty": &NotifyChannelConfig{
-		Name: "flashduty", Ident: "flashduty", RequestType: "flashduty",
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
 		RequestConfig: &RequestConfig{
 			FlashDutyRequestConfig: &FlashDutyRequestConfig{
 				IntegrationUrl: "flashduty integration url",
@@ -1128,7 +1128,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	"tx-sms": &NotifyChannelConfig{
-		Name: "tx-sms", Ident: "tx-sms", RequestType: "http",
+		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1157,7 +1157,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	"tx-voice": &NotifyChannelConfig{
-		Name: "tx-voice", Ident: "tx-voice", RequestType: "http",
+		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1186,7 +1186,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	"ali-sms": &NotifyChannelConfig{
-		Name: "ali-sms", Ident: "ali-sms", RequestType: "http",
+		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1216,7 +1216,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 	},
 
 	"ali-voice": &NotifyChannelConfig{
-		Name: "ali-voice", Ident: "ali-voice", RequestType: "http",
+		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
