@@ -617,8 +617,12 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string
 			continue
 		}
 
-		content := strings.ReplaceAll(body.String(), "\n", " \\n")
-		tplContent[key] = content
+		if t.NotifyChannelIdent != "email" {
+			content := strings.ReplaceAll(body.String(), "\n", " \\n")
+			tplContent[key] = content
+		} else {
+			tplContent[key] = body.String()
+		}
 	}
 	return tplContent
 }

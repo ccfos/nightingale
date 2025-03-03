@@ -200,7 +200,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			}
 			ginx.NewRender(c).Message(err)
 		}
-	case "email":
+	case "smtp":
 		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
 		ginx.NewRender(c).Message(err)
 	case "script":
@@ -208,6 +208,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		ginx.NewRender(c).Message(err)
 	default:
+		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
 		ginx.NewRender(c).Message(errors.New("unsupported request type"))
 	}
 }
