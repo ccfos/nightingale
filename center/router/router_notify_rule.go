@@ -203,7 +203,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 }
 
 func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
-	notifyChannelID := ginx.UrlParamInt64(c, "notify_channel_id")
+	notifyChannelID := ginx.QueryInt64(c, "notify_channel_id")
 
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
