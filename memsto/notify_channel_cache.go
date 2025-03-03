@@ -172,7 +172,7 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 		// todo 优化变更粒度
 
 		switch lst[i].RequestType {
-		case "http":
+		case "http", "flashduty":
 			if lst[i].RequestConfig == nil || lst[i].RequestConfig.HTTPRequestConfig == nil {
 				logger.Warningf("notify channel %+v http request config not found", lst[i])
 				continue

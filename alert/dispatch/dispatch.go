@@ -291,6 +291,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, userCache *memsto.
 		visited[user.Id] = true
 		userInfos = append(userInfos, user)
 	}
+
 	userGroups := userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
 	for _, userGroup := range userGroups {
 		for _, user := range userGroup.Users {
@@ -311,7 +312,10 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		return
 	}
 
-	tplContent := messageTemplate.RenderEvent(events)
+	tplContent := make(map[string]string)
+	if notifyChannel.RequestType != "flashduty" {
+		tplContent = messageTemplate.RenderEvent(events)
+	}
 
 	userInfos, flashDutyChannelIDs, customParams := GetNotifyConfigParams(notifyConfig, e.userCache, e.userGroupCache)
 
@@ -343,7 +347,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, notifyChannel.RequestConfig.HTTPRequestConfig.URL, respBody, err)
 		}
 
-	case "email":
+	case "smtp":
 		err := notifyChannel.SendEmail(events, tplContent, userInfos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
 		if err != nil {
 			logger.Errorf("send email error: %v", err)
