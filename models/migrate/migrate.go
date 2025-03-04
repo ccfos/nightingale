@@ -187,6 +187,46 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/ibex-settings",
 	})
 
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/del",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/del",
+	})
+
 	for _, op := range ops {
 		var count int64
 

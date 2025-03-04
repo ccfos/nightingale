@@ -148,7 +148,10 @@ var I18N = `{
     "View Notify Channels": "查看通知媒介",
     "Add Notify Channels": "添加通知媒介",
     "Modify Notify Channels": "修改通知媒介",
-    "Delete Notify Channels": "删除通知媒介"
+    "Delete Notify Channels": "删除通知媒介",
+    "Notify Channels": "通知媒介",
+    "Notify Rules": "通知规则", 
+    "Message Templates": "消息模板"
   },
   "zh_CN": {
     "Username or password invalid": "用户名或密码错误",
@@ -297,7 +300,10 @@ var I18N = `{
     "View Notify Channels": "查看通知媒介",
     "Add Notify Channels": "添加通知媒介",
     "Modify Notify Channels": "修改通知媒介",
-    "Delete Notify Channels": "删除通知媒介"
+    "Delete Notify Channels": "删除通知媒介",
+    "Notify Channels": "通知媒介",
+    "Notify Rules": "通知规则", 
+    "Message Templates": "消息模板"
   },
   "zh_HK": {
     "Username or password invalid": "用戶名或密碼錯誤",
@@ -458,7 +464,10 @@ var I18N = `{
     "View Notify Channels": "查看通知媒介",
     "Add Notify Channels": "新增通知媒介",
     "Modify Notify Channels": "修改通知媒介",
-    "Delete Notify Channels": "刪除通知媒介"
+    "Delete Notify Channels": "刪除通知媒介",
+    "Notify Channels": "通知媒介",
+    "Notify Rules": "通知規則", 
+    "Message Templates": "訊息範本"
   },
   "ja_JP": {
     "Username or password invalid": "ユーザー名またはパスワードが無効です",
@@ -608,6 +617,9 @@ var I18N = `{
     "View Notify Channels": "通知媒体を表示",
     "Add Notify Channels": "通知媒体を追加",
     "Modify Notify Channels": "通知媒体を変更する",
-    "Delete Notify Channels": "通知媒体を削除する"
+    "Delete Notify Channels": "通知媒体を削除する",
+    "Notify Channels": "通知媒体",
+    "Notify Rules": "通知ルール", 
+    "Message Templates": "メッセージテンプレート"
   }
 }`
