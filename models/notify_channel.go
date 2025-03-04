@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -796,6 +797,10 @@ func (ncc *NotifyChannelConfig) Verify() error {
 
 	if ncc.Ident == "" {
 		return errors.New("channel identifier cannot be empty")
+	}
+
+	if !regexp.MustCompile("^[a-zA-Z0-9_]+$").MatchString(ncc.Ident) {
+		return errors.New("channel identifier must be alphanumeric and underscore")
 	}
 
 	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" {
