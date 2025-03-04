@@ -97,7 +97,8 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 	if nr == nil {
 		ginx.Bomb(http.StatusNotFound, "notify rule not found")
 	}
-	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
+
+	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) && !me.IsAdmin() {
 		ginx.Bomb(http.StatusForbidden, "no permission")
 	}
 
