@@ -1,7 +1,9 @@
 package memsto
 
 import (
+	"encoding/json"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,9 +21,18 @@ type TargetsOfAlertRuleCacheType struct {
 
 	sync.RWMutex
 	targets map[string]map[int64][]string // key: ident
+
+	targetcache *TargetCacheType
+	rulecache   *AlertRuleCacheType
+
+	targetGroupIdMap map[int64][]*models.Target
+	targetIndentMap  map[string][]*models.Target
+	targetHostTagMap map[string][]*models.Target
+	targetTagMap     map[string][]*models.Target
+	targetMapLock    sync.RWMutex
 }
 
-func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats) *TargetsOfAlertRuleCacheType {
+func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats, targetcache *TargetCacheType, rulecache *AlertRuleCacheType) *TargetsOfAlertRuleCacheType {
 	tc := &TargetsOfAlertRuleCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
@@ -29,6 +40,13 @@ func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats
 		engineName:      engineName,
 		stats:           stats,
 		targets:         make(map[string]map[int64][]string),
+		targetcache:     targetcache,
+		rulecache:       rulecache,
+
+		targetGroupIdMap: make(map[int64][]*models.Target),
+		targetIndentMap:  make(map[string][]*models.Target),
+		targetHostTagMap: make(map[string][]*models.Target),
+		targetTagMap:     make(map[string][]*models.Target),
 	}
 
 	tc.SyncTargets()
@@ -86,15 +104,215 @@ func (tc *TargetsOfAlertRuleCacheType) loopSyncTargets() {
 }
 
 func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
-	m, err := models.GetTargetsOfHostAlertRule(tc.ctx, tc.engineName)
-	if err != nil {
-		return err
+	// 从缓存获取所有 targetmap
+	tc.updateTargetMaps()
+	m := make(map[string]map[int64][]string)
+
+	// 从缓存获取所有 host alert rule
+	rules := tc.rulecache.GetAll()
+	hostrules := make(map[int64]*models.AlertRule)
+	for k, v := range rules {
+		if v.Prod == "host" {
+			hostrules[k] = v
+		}
 	}
-	logger.Debugf("get_targets_of_alert_rule total: %d engine_name:%s", len(m), tc.engineName)
-	for k, v := range m {
-		logger.Debugf("get_targets_of_alert_rule key:%s value:%v", k, v)
+
+	tc.targetMapLock.RLock()
+
+	targetGroupIdMap := tc.targetGroupIdMap
+	targetIndentMap := tc.targetIndentMap
+	targetHostTagMap := tc.targetHostTagMap
+	targetTagMap := tc.targetTagMap
+
+	tc.targetMapLock.RUnlock()
+
+	for i := range rules {
+		var rule *models.HostRuleConfig
+		if err := json.Unmarshal([]byte(hostrules[i].RuleConfig), &rule); err != nil {
+			logger.Errorf("rule:%d rule_config:%s, error:%v", hostrules[i].Id, hostrules[i].RuleConfig, err)
+			continue
+		}
+
+		if rule == nil {
+			logger.Errorf("rule:%d rule_config:%s, error:rule is nil", hostrules[i].Id, hostrules[i].RuleConfig)
+			continue
+		}
+
+		tagfilter := false // 是否有 tag 过滤条件
+
+		targets := make([]*models.Target, 0)
+		for _, q := range rule.Queries {
+			switch q.Key {
+			case "group_ids":
+				targetGroupIdMap = filterMap(targetGroupIdMap, q, func(v interface{}) (int64, bool) {
+					if id, ok := v.(int64); ok {
+						return id, true
+					}
+					return 0, false
+				})
+			case "tags":
+				tagfilter = true
+
+				// 这里需要匹配 host_tags 和 tags
+				targetHostTagMap = filterMap(targetHostTagMap, q, func(v interface{}) (string, bool) {
+					if tag, ok := v.(string); ok {
+						return tag, true
+					}
+					return "", false
+				})
+
+				targetTagMap = filterMap(targetTagMap, q, func(v interface{}) (string, bool) {
+					if tag, ok := v.(string); ok {
+						return tag, true
+					}
+					return "", false
+				})
+			case "hosts":
+				targetIndentMap = filterMap(targetIndentMap, q, func(v interface{}) (string, bool) {
+					if ident, ok := v.(string); ok {
+						return ident, true
+					}
+					return "", false
+				})
+			}
+		}
+
+		filteredTargetsCount := make(map[*models.Target]int)
+
+		// group_ids，indent 都需要匹配
+		for _, ts := range targetGroupIdMap {
+			for _, target := range ts {
+				// 计数器 +1
+				filteredTargetsCount[target] = 1
+			}
+
+			for _, ts := range targetIndentMap {
+				for _, target := range ts {
+					if _, exists := filteredTargetsCount[target]; exists {
+						// 如果存在的话，这里必然是2 (group_ids 和 indent 都匹配) 其它可以直接丢弃
+						filteredTargetsCount[target] = 2
+					}
+				}
+			}
+
+			if tagfilter {
+				// tag 过滤条件，需要匹配 host_tags 和 tags 有一个匹配即可
+				for _, ts := range targetTagMap {
+					for _, target := range ts {
+						if count, exists := filteredTargetsCount[target]; exists {
+							if count == 2 {
+								filteredTargetsCount[target] = 3
+							}
+						}
+					}
+				}
+
+				for _, ts := range targetHostTagMap {
+					for count, target := range ts {
+						if count == 2 {
+							filteredTargetsCount[target] = 3
+						}
+					}
+				}
+			}
+
+			var targetcount int // 目标数量，取决于是否需要过滤 tag
+			if tagfilter {
+				targetcount = 3
+			} else {
+				targetcount = 2
+			}
+
+			for target, count := range filteredTargetsCount {
+				if count == targetcount {
+					targets = append(targets, target)
+				}
+			}
+
+			for _, target := range targets {
+				if _, exists := m[target.EngineName]; !exists {
+					m[target.EngineName] = make(map[int64][]string)
+				}
+
+				if _, exists := m[target.EngineName][hostrules[i].Id]; !exists {
+					m[target.EngineName][hostrules[i].Id] = make([]string, 0)
+				}
+
+				m[target.EngineName][hostrules[i].Id] = append(m[target.EngineName][hostrules[i].Id], target.Ident)
+			}
+		}
 	}
 
 	tc.Set(m, 0, 0)
 	return nil
+}
+
+// 更新 target 相关的 map，根据不同的 key，包括 targetGroupIdMap, targetIndentMap, targetHostTagMap, targetTagMap
+func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
+	alltargets := tc.targetcache.GetAll()
+
+	tc.targetMapLock.Lock()
+	defer tc.targetMapLock.Unlock()
+
+	for _, target := range alltargets {
+		if _, exists := tc.targetGroupIdMap[target.GroupId]; !exists {
+			tc.targetGroupIdMap[target.GroupId] = make([]*models.Target, 0)
+		}
+		tc.targetGroupIdMap[target.GroupId] = append(tc.targetGroupIdMap[target.GroupId], target)
+
+		if _, exists := tc.targetIndentMap[target.Ident]; !exists {
+			tc.targetIndentMap[target.Ident] = make([]*models.Target, 0)
+		}
+		tc.targetIndentMap[target.Ident] = append(tc.targetIndentMap[target.Ident], target)
+
+		for _, tag := range target.HostTags {
+			if _, exists := tc.targetHostTagMap[tag]; !exists {
+				tc.targetHostTagMap[tag] = make([]*models.Target, 0)
+			}
+			tc.targetHostTagMap[tag] = append(tc.targetHostTagMap[tag], target)
+		}
+
+		tags := strings.Split(target.Tags, " ")
+		for _, tag := range tags {
+			if tag == "" {
+				continue
+			}
+
+			if _, exists := tc.targetTagMap[tag]; !exists {
+				tc.targetTagMap[tag] = make([]*models.Target, 0)
+			}
+		}
+
+	}
+}
+
+
+// 根据 query 过滤 map 中的 indent，返回新的 map
+func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) map[T][]*models.Target {
+	if q.Op == "==" {
+		newMap := make(map[T][]*models.Target)
+		// 遍历 q.Values，将符合条件的 target 都放到新 map 中
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+			if targets, exists := targetMap[key]; exists {
+				newMap[key] = append(newMap[key], targets...)
+			}
+		}
+
+		return newMap
+	} else {
+		// 直接从 targetMap 中删除对应的 key
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+			delete(targetMap, key)
+		}
+
+		return targetMap
+	}
 }
