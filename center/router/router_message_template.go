@@ -28,6 +28,7 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 	idents := make([]string, 0, len(lst))
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
+	now := time.Now().Unix()
 	for _, tpl := range lst {
 		ginx.Dangerous(tpl.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, tpl.UserGroupIds) {
@@ -36,19 +37,22 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 		idents = append(idents, tpl.Ident)
 
 		tpl.CreateBy = me.Username
-		tpl.CreateAt = time.Now().Unix()
+		tpl.CreateAt = now
 		tpl.UpdateBy = me.Username
-		tpl.UpdateAt = time.Now().Unix()
+		tpl.UpdateAt = now
 	}
+
 	lstWithSameId, err := models.MessageTemplatesGet(rt.Ctx, "ident IN ?", idents)
 	ginx.Dangerous(err)
 	if len(lstWithSameId) > 0 {
 		ginx.Bomb(http.StatusBadRequest, "ident already exists")
 	}
 
-	ginx.Dangerous(models.DB(rt.Ctx).CreateInBatches(lst, 100).Error)
 	ids := make([]int64, 0, len(lst))
 	for _, tpl := range lst {
+		err := models.Insert(rt.Ctx, tpl)
+		ginx.Dangerous(err)
+
 		ids = append(ids, tpl.ID)
 	}
 	ginx.NewRender(c).Data(ids, nil)
@@ -165,7 +169,7 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 	var req evtMsgReq
 	ginx.BindJSON(c, &req)
 
-	events, err := models.AlertCurEventGetByIds(rt.Ctx, req.EventIds)
+	events, err := models.AlertHisEventGetByIds(rt.Ctx, req.EventIds)
 	ginx.Dangerous(err)
 	var defs = []string{
 		"{{$events := .}}",

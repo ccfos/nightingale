@@ -36,15 +36,18 @@ func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 		tpl.UpdateBy = me.Username
 		tpl.UpdateAt = time.Now().Unix()
 	}
+
 	lstWithSameId, err := models.NotifyChannelsGet(rt.Ctx, "ident IN ?", idents)
 	ginx.Dangerous(err)
 	if len(lstWithSameId) > 0 {
 		ginx.Bomb(http.StatusBadRequest, "ident already exists")
 	}
 
-	ginx.Dangerous(models.DB(rt.Ctx).CreateInBatches(lst, 100).Error)
 	ids := make([]int64, 0, len(lst))
 	for _, tpl := range lst {
+		err := models.Insert(rt.Ctx, tpl)
+		ginx.Dangerous(err)
+
 		ids = append(ids, tpl.ID)
 	}
 	ginx.NewRender(c).Data(ids, nil)

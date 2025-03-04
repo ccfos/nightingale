@@ -25,6 +25,8 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 	isAdmin := me.IsAdmin()
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
+
+	now := time.Now().Unix()
 	for _, nr := range lst {
 		ginx.Dangerous(nr.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, nr.UserGroupIds) {
@@ -32,12 +34,13 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 		}
 
 		nr.CreateBy = me.Username
-		nr.CreateAt = time.Now().Unix()
+		nr.CreateAt = now
 		nr.UpdateBy = me.Username
-		nr.UpdateAt = time.Now().Unix()
-	}
+		nr.UpdateAt = now
 
-	ginx.Dangerous(models.DB(rt.Ctx).CreateInBatches(lst, 100).Error)
+		err := models.Insert(rt.Ctx, nr)
+		ginx.Dangerous(err)
+	}
 	ginx.NewRender(c).Data(lst, nil)
 }
 
