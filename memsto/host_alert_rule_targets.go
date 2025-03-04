@@ -126,15 +126,15 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 
 	tc.targetMapLock.RUnlock()
 
-	for i := range hostrules {
+	for _, hr := range hostrules {
 		var rule *models.HostRuleConfig
-		if err := json.Unmarshal([]byte(hostrules[i].RuleConfig), &rule); err != nil {
-			logger.Errorf("rule:%d rule_config:%s, error:%v", hostrules[i].Id, hostrules[i].RuleConfig, err)
+		if err := json.Unmarshal([]byte(hr.RuleConfig), &rule); err != nil {
+			logger.Errorf("rule:%d rule_config:%s, error:%v", hr.Id, hr.RuleConfig, err)
 			continue
 		}
 
 		if rule == nil {
-			logger.Errorf("rule:%d rule_config:%s, error:rule is nil", hostrules[i].Id, hostrules[i].RuleConfig)
+			logger.Errorf("rule:%d rule_config:%s, error:rule is nil", hr.Id, hr.RuleConfig)
 			continue
 		}
 
@@ -234,11 +234,11 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					m[target.EngineName] = make(map[int64][]string)
 				}
 
-				if _, exists := m[target.EngineName][hostrules[i].Id]; !exists {
-					m[target.EngineName][hostrules[i].Id] = make([]string, 0)
+				if _, exists := m[target.EngineName][hr.Id]; !exists {
+					m[target.EngineName][hr.Id] = make([]string, 0)
 				}
 
-				m[target.EngineName][hostrules[i].Id] = append(m[target.EngineName][hostrules[i].Id], target.Ident)
+				m[target.EngineName][hr.Id] = append(m[target.EngineName][hr.Id], target.Ident)
 			}
 		}
 	}
@@ -251,25 +251,27 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 	alltargets := tc.targetcache.GetAll()
 
-	tc.targetMapLock.Lock()
-	defer tc.targetMapLock.Unlock()
+	targetGroupIdMap := make(map[int64][]*models.Target)
+	targetIndentMap := make(map[string][]*models.Target)
+	targetHostTagMap := make(map[string][]*models.Target)
+	targetTagMap := make(map[string][]*models.Target)
 
 	for _, target := range alltargets {
-		if _, exists := tc.targetGroupIdMap[target.GroupId]; !exists {
-			tc.targetGroupIdMap[target.GroupId] = make([]*models.Target, 0)
+		if _, exists := targetGroupIdMap[target.GroupId]; !exists {
+			targetGroupIdMap[target.GroupId] = make([]*models.Target, 0)
 		}
-		tc.targetGroupIdMap[target.GroupId] = append(tc.targetGroupIdMap[target.GroupId], target)
+		targetGroupIdMap[target.GroupId] = append(targetGroupIdMap[target.GroupId], target)
 
-		if _, exists := tc.targetIndentMap[target.Ident]; !exists {
-			tc.targetIndentMap[target.Ident] = make([]*models.Target, 0)
+		if _, exists := targetIndentMap[target.Ident]; !exists {
+			targetIndentMap[target.Ident] = make([]*models.Target, 0)
 		}
-		tc.targetIndentMap[target.Ident] = append(tc.targetIndentMap[target.Ident], target)
+		targetIndentMap[target.Ident] = append(targetIndentMap[target.Ident], target)
 
 		for _, tag := range target.HostTags {
-			if _, exists := tc.targetHostTagMap[tag]; !exists {
-				tc.targetHostTagMap[tag] = make([]*models.Target, 0)
+			if _, exists := targetHostTagMap[tag]; !exists {
+				targetHostTagMap[tag] = make([]*models.Target, 0)
 			}
-			tc.targetHostTagMap[tag] = append(tc.targetHostTagMap[tag], target)
+			targetHostTagMap[tag] = append(targetHostTagMap[tag], target)
 		}
 
 		tags := strings.Split(target.Tags, " ")
@@ -278,14 +280,22 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 				continue
 			}
 
-			if _, exists := tc.targetTagMap[tag]; !exists {
-				tc.targetTagMap[tag] = make([]*models.Target, 0)
+			if _, exists := targetTagMap[tag]; !exists {
+				targetTagMap[tag] = make([]*models.Target, 0)
 			}
 
-			tc.targetTagMap[tag] = append(tc.targetTagMap[tag], target)
+			targetTagMap[tag] = append(targetTagMap[tag], target)
 		}
 
 	}
+
+	tc.targetMapLock.Lock()
+	defer tc.targetMapLock.Unlock()
+
+	tc.targetGroupIdMap = targetGroupIdMap
+	tc.targetIndentMap = targetIndentMap
+	tc.targetHostTagMap = targetHostTagMap
+	tc.targetTagMap = targetTagMap
 }
 
 
