@@ -48,7 +48,7 @@ func MessageTemplateStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func MessageTemplateGetsAll(ctx *ctx.Context) ([]*MessageTemplate, error) {
 	if !ctx.IsCenter {
-		templates, err := poster.GetByUrls[[]*MessageTemplate](ctx, "/v1/n9e/message-templates-v2")
+		templates, err := poster.GetByUrls[[]*MessageTemplate](ctx, "/v1/n9e/message-templates")
 		return templates, err
 	}
 

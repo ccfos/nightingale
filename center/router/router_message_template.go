@@ -169,8 +169,19 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 	var req evtMsgReq
 	ginx.BindJSON(c, &req)
 
-	events, err := models.AlertHisEventGetByIds(rt.Ctx, req.EventIds)
+	hisEvents, err := models.AlertHisEventGetByIds(rt.Ctx, req.EventIds)
 	ginx.Dangerous(err)
+
+	if len(hisEvents) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "event not found")
+	}
+
+	ginx.Dangerous(err)
+	events := make([]*models.AlertCurEvent, len(hisEvents))
+	for i, he := range hisEvents {
+		events[i] = he.ToCur()
+	}
+
 	var defs = []string{
 		"{{$events := .}}",
 		"{{$event := index . 0}}",

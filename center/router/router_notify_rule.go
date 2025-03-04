@@ -104,6 +104,10 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 	ginx.NewRender(c).Data(nr, nil)
 }
 
+func (rt *Router) notifyRulesGetByService(c *gin.Context) {
+	ginx.NewRender(c).Data(models.NotifyRulesGet(rt.Ctx, "", nil))
+}
+
 func (rt *Router) notifyRulesGet(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)

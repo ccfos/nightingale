@@ -36,6 +36,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.User{}
 	case "user_group":
 		model = models.UserGroup{}
+	case "notify_rule":
+		model = models.NotifyRule{}
+	case "notify_channel":
+		model = models.NotifyChannel{}
 	case "datasource":
 		// datasource update_at is different from others
 		statistics, err = models.DatasourceStatistics(rt.Ctx)
