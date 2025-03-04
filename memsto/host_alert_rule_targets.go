@@ -126,7 +126,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 
 	tc.targetMapLock.RUnlock()
 
-	for i := range rules {
+	for i := range hostrules {
 		var rule *models.HostRuleConfig
 		if err := json.Unmarshal([]byte(hostrules[i].RuleConfig), &rule); err != nil {
 			logger.Errorf("rule:%d rule_config:%s, error:%v", hostrules[i].Id, hostrules[i].RuleConfig, err)
@@ -281,6 +281,8 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 			if _, exists := tc.targetTagMap[tag]; !exists {
 				tc.targetTagMap[tag] = make([]*models.Target, 0)
 			}
+
+			tc.targetTagMap[tag] = append(tc.targetTagMap[tag], target)
 		}
 
 	}
