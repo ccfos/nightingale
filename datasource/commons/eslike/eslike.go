@@ -550,7 +550,17 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 		param.Timeout = int(timeout)
 	}
 
-	indexArr := strings.Split(param.Index, ",")
+	var indexArr []string
+	if param.IndexType == "index_pattern" {
+		if ip, ok := GetEsIndexPatternCacheType().Get(param.IndexPatternId); ok {
+			param.DateField = ip.TimeField
+			indexArr = []string{ip.Name}
+		} else {
+			return nil, 0, fmt.Errorf("index pattern:%d not found", param.IndexPatternId)
+		}
+	} else {
+		indexArr = strings.Split(param.Index, ",")
+	}
 
 	now := time.Now().Unix()
 	var start, end int64

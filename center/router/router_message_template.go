@@ -140,6 +140,11 @@ func (rt *Router) messageTemplatesGet(c *gin.Context) {
 	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIdents)
 	ginx.Dangerous(err)
 
+	if me.IsAdmin() {
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
+
 	res := make([]*models.MessageTemplate, 0)
 	for _, t := range lst {
 		if slice.HaveIntersection[int64](gids, t.UserGroupIds) || t.Private == 0 {

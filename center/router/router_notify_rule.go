@@ -75,7 +75,7 @@ func (rt *Router) notifyRulePut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
-	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
+	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) && !me.IsAdmin() {
 		ginx.Bomb(http.StatusForbidden, "no permission")
 	}
 
@@ -108,6 +108,10 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 
 	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
 	ginx.Dangerous(err)
+	if me.IsAdmin() {
+		ginx.NewRender(c).Data(lst, nil)
+		return
+	}
 
 	res := make([]*models.NotifyRule, 0)
 	for _, nr := range lst {
