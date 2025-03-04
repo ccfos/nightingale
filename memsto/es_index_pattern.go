@@ -14,13 +14,13 @@ type EsIndexPatternCacheType struct {
 	ctx *ctx.Context
 
 	sync.RWMutex
-	indexPattern map[string]*models.EsIndexPattern // key: name
+	indexPattern map[int64]*models.EsIndexPattern // key: name
 }
 
 func NewEsIndexPatternCacheType(ctx *ctx.Context) *EsIndexPatternCacheType {
 	ipc := &EsIndexPatternCacheType{
 		ctx:          ctx,
-		indexPattern: make(map[string]*models.EsIndexPattern),
+		indexPattern: make(map[int64]*models.EsIndexPattern),
 	}
 
 	ipc.SyncEsIndexPattern()
@@ -31,20 +31,20 @@ func (p *EsIndexPatternCacheType) Reset() {
 	p.Lock()
 	defer p.Unlock()
 
-	p.indexPattern = make(map[string]*models.EsIndexPattern)
+	p.indexPattern = make(map[int64]*models.EsIndexPattern)
 }
 
-func (p *EsIndexPatternCacheType) Set(m map[string]*models.EsIndexPattern) {
+func (p *EsIndexPatternCacheType) Set(m map[int64]*models.EsIndexPattern) {
 	p.Lock()
 	p.indexPattern = m
 	p.Unlock()
 }
 
-func (p *EsIndexPatternCacheType) Get(name string) (*models.EsIndexPattern, bool) {
+func (p *EsIndexPatternCacheType) Get(id int64) (*models.EsIndexPattern, bool) {
 	p.RLock()
 	defer p.RUnlock()
 
-	ip, has := p.indexPattern[name]
+	ip, has := p.indexPattern[id]
 	return ip, has
 }
 
@@ -72,9 +72,10 @@ func (p *EsIndexPatternCacheType) syncEsIndexPattern() error {
 	if err != nil {
 		return err
 	}
-	m := make(map[string]*models.EsIndexPattern, len(lst))
+
+	m := make(map[int64]*models.EsIndexPattern, len(lst))
 	for _, p := range lst {
-		m[p.Name] = p
+		m[p.Id] = p
 	}
 	p.Set(m)
 
