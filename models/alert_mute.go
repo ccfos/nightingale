@@ -18,6 +18,7 @@ import (
 type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
 	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
+	Op     string              `json:"op"`    // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Value  string              `json:"value"` // tag value
 	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
@@ -26,6 +27,10 @@ type TagFilter struct {
 func (t *TagFilter) Verify() error {
 	if t.Key == "" {
 		return errors.New("tag key cannot be empty")
+	}
+
+	if t.Func == "" {
+		t.Func = t.Op
 	}
 
 	if t.Func != "==" && t.Func != "!=" && t.Func != "in" && t.Func != "not in" &&

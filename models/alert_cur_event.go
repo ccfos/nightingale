@@ -77,6 +77,23 @@ type AlertCurEvent struct {
 	NotifyRuleIDs      []int64             `json:"notify_rule_ids" gorm:"-"`
 }
 
+func (e *AlertCurEvent) SetTagsMap() {
+	e.TagsMap = make(map[string]string)
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+}
+
 func (e *AlertCurEvent) JsonTagsAndValue() map[string]string {
 	v := reflect.ValueOf(e).Elem()
 	t := v.Type()

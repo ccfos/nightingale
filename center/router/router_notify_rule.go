@@ -146,13 +146,17 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 
 	ginx.Dangerous(err)
-	events := make([]*models.AlertCurEvent, len(hisEvents))
-	for i, he := range hisEvents {
-		events[i] = he.ToCur()
+	events := []*models.AlertCurEvent{}
+	for _, he := range hisEvents {
+		event := he.ToCur()
+		event.SetTagsMap()
+		if dispatch.NotifyRuleApplicable(&f.NotifyConfig, event) {
+			events = append(events, event)
+		}
 	}
 
-	if !dispatch.NotifyRuleApplicable(&f.NotifyConfig, events[0]) {
-		ginx.Bomb(http.StatusBadRequest, "event not applicable")
+	if len(events) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "not events applicable")
 	}
 
 	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, f.NotifyConfig.ChannelID, "", "", -1)

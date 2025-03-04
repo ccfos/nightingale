@@ -301,7 +301,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), QUERY_DATA, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
 			}
 
-			logger.Debugf("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
+			logger.Infof("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
 			points := models.ConvertAnomalyPoints(value)
 			for i := 0; i < len(points); i++ {
 				points[i].Severity = query.Severity

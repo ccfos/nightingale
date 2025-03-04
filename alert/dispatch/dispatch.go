@@ -234,9 +234,15 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 
 	tagMatch := true
 	if len(notifyConfig.LabelKeys) > 0 {
+		for i := range notifyConfig.LabelKeys {
+			if notifyConfig.LabelKeys[i].Func == "" {
+				notifyConfig.LabelKeys[i].Func = notifyConfig.LabelKeys[i].Op
+			}
+		}
+
 		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
 		if err != nil {
-			logger.Errorf("failed to parse tag filter: %v", err)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v", err, event, notifyConfig)
 			return false
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
@@ -246,13 +252,13 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 	if len(notifyConfig.Attributes) > 0 {
 		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
 		if err != nil {
-			logger.Errorf("failed to parse tag filter: %v", err)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v err:%v", tagFilters, event, notifyConfig, err)
 			return false
 		}
 
 		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
 	}
-
+	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%+v notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event, notifyConfig)
 	return timeMatch && severityMatch && tagMatch && attributesMatch
 }
 
