@@ -139,13 +139,17 @@ func (e *Dispatch) relaodTpls() error {
 	return nil
 }
 
-func (e *Dispatch) HandleEventNotifyV2(event *models.AlertCurEvent, isSubscribe bool) {
+func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubscribe bool) {
 
 	if len(event.NotifyRuleIDs) > 0 {
 		for _, notifyRuleId := range event.NotifyRuleIDs {
 			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, event)
 			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
 			if notifyRule == nil {
+				continue
+			}
+
+			if !notifyRule.Enable {
 				continue
 			}
 
@@ -422,7 +426,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
-	go e.HandleEventNotifyV2(event, isSubscribe)
+	go e.HandleEventWithNotifyRule(event, isSubscribe)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
