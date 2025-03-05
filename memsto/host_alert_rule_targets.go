@@ -143,7 +143,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					if targetHostTagMapResult == nil {
 						targetHostTagMapResult = tinmap
 					} else {
-						for k, _ := range targetHostTagMapResult {
+						for k := range targetHostTagMapResult {
 							if _, exists := tinmap[k]; !exists {
 								delete(targetHostTagMapResult, k)
 							}
