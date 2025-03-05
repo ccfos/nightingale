@@ -260,6 +260,12 @@ ops:
   ops:
     - name: "/permissions"
       cname: View Permission Settings
+    
+- name: contacts
+  cname: User Contact Management
+  ops:
+    - name: "/contacts"
+      cname: User Contact Management
 
 - name: built-in-components
   cname: Template Center

@@ -151,7 +151,8 @@ var I18N = `{
     "Delete Notify Channels": "删除通知媒介",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知规则", 
-    "Message Templates": "消息模板"
+    "Message Templates": "消息模板",
+    "User Contact Management": "用户联系方式管理"
   },
   "zh_CN": {
     "Username or password invalid": "用户名或密码错误",
@@ -303,7 +304,8 @@ var I18N = `{
     "Delete Notify Channels": "删除通知媒介",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知规则", 
-    "Message Templates": "消息模板"
+    "Message Templates": "消息模板",
+    "User Contact Management": "用户联系方式管理"
   },
   "zh_HK": {
     "Username or password invalid": "用戶名或密碼錯誤",
@@ -467,7 +469,8 @@ var I18N = `{
     "Delete Notify Channels": "刪除通知媒介",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知規則", 
-    "Message Templates": "訊息範本"
+    "Message Templates": "訊息範本",
+    "User Contact Management": "用戶聯絡方式管理"
   },
   "ja_JP": {
     "Username or password invalid": "ユーザー名またはパスワードが無効です",
@@ -620,6 +623,7 @@ var I18N = `{
     "Delete Notify Channels": "通知媒体を削除する",
     "Notify Channels": "通知媒体",
     "Notify Rules": "通知ルール", 
-    "Message Templates": "メッセージテンプレート"
+    "Message Templates": "メッセージテンプレート",
+    "User Contact Management": "ユーザー連絡先管理"
   }
 }`
