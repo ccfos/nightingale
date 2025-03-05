@@ -106,7 +106,7 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 }
 
 func (rt *Router) notifyRulesGetByService(c *gin.Context) {
-	ginx.NewRender(c).Data(models.NotifyRulesGet(rt.Ctx, "", nil))
+	ginx.NewRender(c).Data(models.NotifyRulesGet(rt.Ctx, "enable = ?", "true"))
 }
 
 func (rt *Router) notifyRulesGet(c *gin.Context) {
@@ -193,7 +193,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			}
 		}
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		ginx.NewRender(c).Message(err)
+		ginx.NewRender(c).Data(resp, err)
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
@@ -214,7 +214,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			if err != nil {
 				logger.Errorf("failed to send http notify: %v", err)
 			}
-			ginx.NewRender(c).Message(err)
+			ginx.NewRender(c).Data(resp, err)
 		}
 	case "smtp":
 		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
@@ -222,7 +222,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	case "script":
 		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		ginx.NewRender(c).Message(err)
+		ginx.NewRender(c).Data(resp, err)
 	default:
 		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
 		ginx.NewRender(c).Message(errors.New("unsupported request type"))
