@@ -267,7 +267,7 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 	tc.targetTagMap = targetTagMap
 }
 
-// 根据 query 过滤 map 中的 indent，返回新的 map
+// 根据 query 过滤 map 中的 indent，返回新的 map，针对一个 target 对应一个 key 的情况
 func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) map[T][]*models.Target {
 	if q.Op == "==" {
 		newMap := make(map[T][]*models.Target)
@@ -297,19 +297,23 @@ func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuer
 	}
 }
 
+// 针对 tags 过滤，返回两个 map，一个是符合条件的 target，一个是不符合条件的 target
+// 因为同一个 target 可能存在多个 tag，所以不能简单的将 tag 的 key 移除，而是需要知道具体的 target 是否需要移除
+// 当 q.Op == "==" 时，返回的 inmap 中包含所有符合条件的 target
+// 当 q.Op == "!=" 时，返回的 notinmap 中包含所有不符合条件的 target，这时 inmap 为 nil
+// 上级可根据 inmap 是否为 nil 来判断是是 == 还是 !=
 func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
-	inmap = make(map[int64]struct{})
-	notinmap = make(map[int64]struct{})
-
 	if q.Op == "==" {
-		// 遍历 q.Values，将符合条件的 target 都放到新 map 中
+		inmap = make(map[int64]struct{})
+		notinmap = make(map[int64]struct{})
 		for _, v := range q.Values {
 			key, ok := convert(v)
 			if !ok {
 				continue
 			}
 			if targets, exists := targetMap[key]; exists {
-				for _, target := range targets {
+				// 筛选出符合条件的 target
+				for _, target := range targets {		
 					inmap[target.Id] = struct{}{}
 				}
 			}
@@ -317,6 +321,7 @@ func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.Host
 	} else {
 		// 直接从 targetMap 中删除对应的 key
 		inmap = nil
+		notinmap = make(map[int64]struct{})
 		for _, v := range q.Values {
 			key, ok := convert(v)
 			if !ok {
@@ -324,6 +329,7 @@ func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.Host
 			}
 
 			if targets, exists := targetMap[key]; exists {
+				// 筛选出不符合条件的 target
 				for _, target := range targets {
 					notinmap[target.Id] = struct{}{}
 				}
