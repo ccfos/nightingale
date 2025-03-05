@@ -106,7 +106,7 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 }
 
 func (rt *Router) notifyRulesGetByService(c *gin.Context) {
-	ginx.NewRender(c).Data(models.NotifyRulesGet(rt.Ctx, "", nil))
+	ginx.NewRender(c).Data(models.NotifyRulesGet(rt.Ctx, "enable = ?", "true"))
 }
 
 func (rt *Router) notifyRulesGet(c *gin.Context) {

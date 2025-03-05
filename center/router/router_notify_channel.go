@@ -114,6 +114,9 @@ func (rt *Router) notifyChannelGetBy(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "notify channel not found")
 	}
 
+	nc.ParamConfig = &models.NotifyParamConfig{}
+	nc.RequestConfig = &models.RequestConfig{}
+
 	ginx.NewRender(c).Data(nc, nil)
 }
 
