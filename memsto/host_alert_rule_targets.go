@@ -129,8 +129,6 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 			continue
 		}
 
-		tagfilter := false // 是否有 tag 过滤条件
-
 		tc.targetMapLock.RLock()
 
 		targetGroupIdMap := tc.targetGroupIdMap
@@ -147,22 +145,9 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 		for _, q := range rule.Queries {
 			switch q.Key {
 			case "group_ids":
-				targetGroupIdMap = filterMap(targetGroupIdMap, q, func(v interface{}) (int64, bool) {
-					if id, ok := v.(int64); ok {
-						return id, true
-					}
-					return 0, false
-				})
+				targetGroupIdMap = filterMap(targetGroupIdMap, q, int64convert)
 			case "tags":
-				tagfilter = true
-
-				tinmap, tnotinmap := filteHostrMap(targetTagMap, q, func(v interface{}) (string, bool) {
-					if tag, ok := v.(string); ok {
-						return tag, true
-					}
-					return "", false
-				})
-
+				tinmap, tnotinmap := filterHostMap(targetTagMap, q, stringconvert)
 				if tinmap != nil {
 					if targetHostTagMapResult == nil {
 						targetHostTagMapResult = tinmap
@@ -179,12 +164,8 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					notintargets[k] = struct{}{}
 				}
 
-				htinmap, htnotinmap := filteHostrMap(targetHostTagMap, q, func(v interface{}) (string, bool) {
-					if tag, ok := v.(string); ok {
-						return tag, true
-					}
-					return "", false
-				})
+
+				htinmap, htnotinmap := filterHostMap(targetHostTagMap, q, stringconvert)
 
 				if htinmap != nil {
 					if targetTagMapResult == nil {
@@ -203,12 +184,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 				}
 
 			case "hosts":
-				targetIndentMap = filterMap(targetIndentMap, q, func(v interface{}) (string, bool) {
-					if ident, ok := v.(string); ok {
-						return ident, true
-					}
-					return "", false
-				})
+				targetIndentMap = filterMap(targetIndentMap, q, stringconvert)
 			}
 		}
 
@@ -220,7 +196,8 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					continue
 				}
 
-				if tagfilter {
+				// 检测是否有 tags 过滤，执行了一次就不会是 nil
+				if targetHostTagMapResult != nil {
 					// 检测是否在 notintargets 中
 					if _, exists := notintargets[target.Id]; exists {
 						continue
@@ -333,7 +310,7 @@ func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuer
 	}
 }
 
-func filteHostrMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
+func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
 	inmap = make(map[int64]struct{})
 	notinmap = make(map[int64]struct{})
 
@@ -368,4 +345,18 @@ func filteHostrMap[T comparable](targetMap map[T][]*models.Target, q models.Host
 	}
 
 	return inmap, notinmap
+}
+
+func int64convert(v interface{}) (int64, bool) {
+	if id, ok := v.(int64); ok {
+		return id, true
+	}
+	return 0, false
+}
+
+func stringconvert(v interface{}) (string, bool) {
+	if tag, ok := v.(string); ok {
+		return tag, true
+	}
+	return "", false
 }
