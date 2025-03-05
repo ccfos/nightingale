@@ -29,7 +29,6 @@ type TargetsOfAlertRuleCacheType struct {
 	targetIndentMap  map[string][]*models.Target
 	targetHostTagMap map[string][]*models.Target
 	targetTagMap     map[string][]*models.Target
-	targetMapLock    sync.RWMutex
 }
 
 func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats, targetcache *TargetCacheType, rulecache *AlertRuleCacheType) *TargetsOfAlertRuleCacheType {
@@ -42,11 +41,6 @@ func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats
 		targets:         make(map[string]map[int64][]string),
 		targetcache:     targetcache,
 		rulecache:       rulecache,
-
-		targetGroupIdMap: make(map[int64][]*models.Target),
-		targetIndentMap:  make(map[string][]*models.Target),
-		targetHostTagMap: make(map[string][]*models.Target),
-		targetTagMap:     make(map[string][]*models.Target),
 	}
 
 	tc.SyncTargets()
@@ -129,14 +123,10 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 			continue
 		}
 
-		tc.targetMapLock.RLock()
-
 		targetGroupIdMap := tc.targetGroupIdMap
 		targetIndentMap := tc.targetIndentMap
 		targetHostTagMap := tc.targetHostTagMap
 		targetTagMap := tc.targetTagMap
-
-		tc.targetMapLock.RUnlock()
 
 		var targetHostTagMapResult map[int64]struct{}
 		targetTagMapResult := make(map[int64]struct{})
@@ -148,6 +138,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 				targetGroupIdMap = filterMap(targetGroupIdMap, q, int64convert)
 			case "tags":
 				tinmap, tnotinmap := filterHostMap(targetTagMap, q, stringconvert)
+				
 				if tinmap != nil {
 					if targetHostTagMapResult == nil {
 						targetHostTagMapResult = tinmap
@@ -160,7 +151,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					}
 				}
 
-				for k, _ := range tnotinmap {
+				for k := range tnotinmap {
 					notintargets[k] = struct{}{}
 				}
 
@@ -171,7 +162,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					if targetTagMapResult == nil {
 						targetTagMapResult = htinmap
 					} else {
-						for k, _ := range targetTagMapResult {
+						for k := range targetTagMapResult {
 							if _, exists := htinmap[k]; !exists {
 								delete(targetTagMapResult, k)
 							}
@@ -179,7 +170,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					}
 				}
 
-				for k, _ := range htnotinmap {
+				for k := range htnotinmap {
 					notintargets[k] = struct{}{}
 				}
 
@@ -209,7 +200,6 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 							continue
 						}
 					}
-
 				}
 
 				if _, exists := m[target.EngineName]; !exists {
@@ -270,9 +260,6 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 		}
 
 	}
-
-	tc.targetMapLock.Lock()
-	defer tc.targetMapLock.Unlock()
 
 	tc.targetGroupIdMap = targetGroupIdMap
 	tc.targetIndentMap = targetIndentMap
