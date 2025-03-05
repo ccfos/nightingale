@@ -235,15 +235,15 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 
 				}
 
-				if _, exists := m[tc.engineName]; !exists {
-					m[tc.engineName] = make(map[int64][]string)
+				if _, exists := m[target.EngineName]; !exists {
+					m[target.EngineName] = make(map[int64][]string)
 				}
 
-				if _, exists := m[tc.engineName][hr.Id]; !exists {
-					m[tc.engineName][hr.Id] = make([]string, 0)
+				if _, exists := m[target.EngineName][hr.Id]; !exists {
+					m[target.EngineName][hr.Id] = make([]string, 0)
 				}
 
-				m[tc.engineName][hr.Id] = append(m[tc.engineName][hr.Id], target.Ident)
+				m[target.EngineName][hr.Id] = append(m[target.EngineName][hr.Id], target.Ident)
 			}
 		}
 	}
