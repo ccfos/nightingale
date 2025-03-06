@@ -25,6 +25,7 @@ const (
 	Dingtalk     = "dingtalk"
 	Wecom        = "wecom"
 	Feishu       = "feishu"
+	Slack        = "slack"
 	FeishuCard   = "feishucard"
 	Mm           = "mm"
 	Telegram     = "telegram"

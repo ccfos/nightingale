@@ -1015,6 +1015,29 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
+	Slack: &NotifyChannelConfig{
+		Name: "Slack", Ident: Slack, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://hooks.slack.com/services/{{$params.team_id}}/{{$params.channel_id}}/{{$params.webhook_token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "channel": "{{$params.channel}}", " webhook_token": "{{$params.webhook_token}}"},
+					Body:       `{"text": "{{tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "team_id", CName: "TimeId", Type: "string"},
+					{Key: "channel_id", CName: "ChannelId", Type: "string"},
+					{Key: "webhook_token", CName: "Token", Type: "string"},
+				},
+			},
+		},
+	},
 	FeishuCard: &NotifyChannelConfig{
 		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
