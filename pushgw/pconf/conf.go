@@ -21,6 +21,7 @@ type Pushgw struct {
 	DropSample          []map[string]string
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
+	KafkaWriters        []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -28,6 +29,9 @@ type WriterGlobalOpt struct {
 	QueuePopSize            int
 	AllQueueMaxSize         int
 	AllQueueMaxSizeInterval int
+	RetryCount              int
+	RetryInterval           int64
+	OverLimitStatusCode     int
 }
 
 type WriterOptions struct {
@@ -51,6 +55,28 @@ type WriterOptions struct {
 	WriteRelabels []*RelabelConfig
 
 	tlsx.ClientConfig
+}
+
+type SASLConfig struct {
+	Enable       bool
+	User         string
+	Password     string
+	Mechanism    string
+	Version      int16
+	Handshake    bool
+	AuthIdentity string
+}
+
+type KafkaWriterOptions struct {
+	Typ     string
+	Brokers []string
+	Topic   string
+	Version string
+	Timeout int64
+
+	SASL *SASLConfig
+
+	WriteRelabels []*RelabelConfig
 }
 
 type RelabelConfig struct {
@@ -80,11 +106,23 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.WriterOpt.AllQueueMaxSize <= 0 {
-		p.WriterOpt.AllQueueMaxSize = 10000000
+		p.WriterOpt.AllQueueMaxSize = 5000000
 	}
 
 	if p.WriterOpt.AllQueueMaxSizeInterval <= 0 {
 		p.WriterOpt.AllQueueMaxSizeInterval = 200
+	}
+
+	if p.WriterOpt.RetryCount <= 0 {
+		p.WriterOpt.RetryCount = 1000
+	}
+
+	if p.WriterOpt.RetryInterval <= 0 {
+		p.WriterOpt.RetryInterval = 1
+	}
+
+	if p.WriterOpt.OverLimitStatusCode <= 0 {
+		p.WriterOpt.OverLimitStatusCode = 499
 	}
 
 	if p.WriteConcurrency <= 0 {

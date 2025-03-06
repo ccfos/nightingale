@@ -162,56 +162,6 @@ func InitNotifyConfig(c *ctx.Context, tplDir string) {
 		}
 	}
 
-	// init notify contact
-	cval, err = ConfigsGet(c, NOTIFYCONTACT)
-	if err != nil {
-		logger.Errorf("failed to get notify contact config: %v", err)
-		return
-	}
-
-	if cval == "" {
-		var notifyContacts []NotifyContact
-		for _, contact := range DefaultContacts {
-			notifyContacts = append(notifyContacts, NotifyContact{Ident: contact, Name: contact, BuiltIn: true})
-		}
-
-		data, _ := json.Marshal(notifyContacts)
-		err = ConfigsSet(c, NOTIFYCONTACT, string(data))
-		if err != nil {
-			logger.Errorf("failed to set notify contact config: %v", err)
-			return
-		}
-	} else {
-		var contacts []NotifyContact
-		if err = json.Unmarshal([]byte(cval), &contacts); err != nil {
-			logger.Errorf("failed to unmarshal notify channel config: %v", err)
-			return
-		}
-		contactMap := make(map[string]struct{})
-		for _, contact := range contacts {
-			contactMap[contact.Ident] = struct{}{}
-		}
-
-		var newContacts []NotifyContact
-		for _, contact := range DefaultContacts {
-			if _, ok := contactMap[contact]; !ok {
-				newContacts = append(newContacts, NotifyContact{Ident: contact, Name: contact, BuiltIn: true})
-			}
-		}
-		if len(newContacts) > 0 {
-			contacts = append(contacts, newContacts...)
-			data, err := json.Marshal(contacts)
-			if err != nil {
-				logger.Errorf("failed to marshal contacts: %v", err)
-				return
-			}
-			if err = ConfigsSet(c, NOTIFYCONTACT, string(data)); err != nil {
-				logger.Errorf("failed to set notify contact config: %v", err)
-				return
-			}
-		}
-	}
-
 	// init notify tpl
 	tplMap := getNotifyTpl(tplDir)
 	for channel, content := range tplMap {
@@ -258,7 +208,6 @@ func getNotifyTpl(tplDir string) map[string]string {
 
 var TplMap = map[string]string{
 	Dingtalk: `#### {{if .IsRecovered}}<font color="#008800">💚{{.RuleName}}</font>{{else}}<font color="#FF0000">💔{{.RuleName}}</font>{{end}}
-
 ---
 {{$time_duration := sub now.Unix .FirstTriggerTime }}{{if .IsRecovered}}{{$time_duration = sub .LastEvalTime .FirstTriggerTime }}{{end}}
 - **告警级别**: {{.Severity}}级

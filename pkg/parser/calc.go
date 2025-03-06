@@ -97,3 +97,13 @@ func between(target float64, arr []interface{}) bool {
 
 	return target >= min && target <= max
 }
+
+func CalcWithRid(s string, data map[string]interface{}, rid int64) bool {
+	v, err := MathCalc(s, data)
+	if err != nil {
+		logger.Errorf("rid:%d exp:%s data:%v error: %v", rid, s, data, err)
+		return false
+	}
+
+	return v > 0
+}

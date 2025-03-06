@@ -18,9 +18,46 @@ import (
 type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
 	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
+	Op     string              `json:"op"`    // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Value  string              `json:"value"` // tag value
 	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
+}
+
+func (t *TagFilter) Verify() error {
+	if t.Key == "" {
+		return errors.New("tag key cannot be empty")
+	}
+
+	if t.Func == "" {
+		t.Func = t.Op
+	}
+
+	if t.Func != "==" && t.Func != "!=" && t.Func != "in" && t.Func != "not in" &&
+		t.Func != "=~" && t.Func != "!~" {
+		return errors.New("invalid operation")
+	}
+
+	return nil
+}
+
+func ParseTagFilter(bFilters []TagFilter) ([]TagFilter, error) {
+	var err error
+	for i := 0; i < len(bFilters); i++ {
+		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
+			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			if err != nil {
+				return nil, err
+			}
+		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
+			arr := strings.Fields(bFilters[i].Value)
+			bFilters[i].Vset = make(map[string]struct{})
+			for j := 0; j < len(arr); j++ {
+				bFilters[i].Vset[arr[j]] = struct{}{}
+			}
+		}
+	}
+	return bFilters, nil
 }
 
 func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {

@@ -21,7 +21,9 @@ func (rt *Router) permsGets(c *gin.Context) {
 	if user.IsAdmin() {
 		var lst []string
 		for _, ops := range cconf.Operations.Ops {
-			lst = append(lst, ops.Ops...)
+			for _, op := range ops.Ops {
+				lst = append(lst, op.Name)
+			}
 		}
 		ginx.NewRender(c).Data(lst, nil)
 		return

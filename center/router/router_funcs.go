@@ -36,6 +36,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.User{}
 	case "user_group":
 		model = models.UserGroup{}
+	case "notify_rule":
+		model = models.NotifyRule{}
+	case "notify_channel":
+		model = models.NotifyChannel{}
 	case "datasource":
 		// datasource update_at is different from others
 		statistics, err = models.DatasourceStatistics(rt.Ctx)
@@ -47,6 +51,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		return
 	case "cval":
 		statistics, err = models.ConfigCvalStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
+	case "message_template":
+		statistics, err = models.MessageTemplateStatistics(rt.Ctx)
 		ginx.NewRender(c).Data(statistics, err)
 		return
 	default:

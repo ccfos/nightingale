@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/robfig/cron/v3"
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
@@ -27,6 +28,8 @@ const (
 	PROMETHEUS    = "prometheus"
 	TDENGINE      = "tdengine"
 	ELASTICSEARCH = "elasticsearch"
+
+	CLICKHOUSE = "ck"
 )
 
 const (
@@ -104,6 +107,8 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
+	NotifyVersion         int                    `json:"notify_version"` // 0: old, 1: new
 }
 
 type ChildVarConfig struct {
@@ -158,9 +163,9 @@ type PromRuleConfig struct {
 type RecoverJudge int
 
 const (
-	Origin             RecoverJudge = 0
-	RecoverWithoutData RecoverJudge = 1
-	RecoverOnCondition RecoverJudge = 2
+	Origin               RecoverJudge = 0
+	NotRecoverWhenNoData RecoverJudge = 1
+	RecoverOnCondition   RecoverJudge = 2
 )
 
 type RecoverConfig struct {
@@ -191,10 +196,21 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
-	Version  string        `json:"version"`
-	Inhibit  bool          `json:"inhibit"`
-	Queries  []interface{} `json:"queries"`
-	Triggers []Trigger     `json:"triggers"`
+	Version           string        `json:"version"`
+	Inhibit           bool          `json:"inhibit"`
+	Queries           []interface{} `json:"queries"`
+	ExpTriggerDisable bool          `json:"exp_trigger_disable"`
+	Triggers          []Trigger     `json:"triggers"`
+	NodataTrigger     NodataTrigger `json:"nodata_trigger"`
+	AnomalyTrigger    interface{}   `json:"anomaly_trigger"`
+	TriggerType       TriggerType   `json:"trigger_type,omitempty"` // 在告警事件中使用
+}
+
+type NodataTrigger struct {
+	Enable             bool `json:"enable"`
+	Severity           int  `json:"severity"`
+	ResolveAfterEnable bool `json:"resolve_after_enable"`
+	ResolveAfter       int  `json:"resolve_after"` // 单位秒
 }
 
 type Trigger struct {
@@ -493,6 +509,35 @@ func (ar *AlertRule) Verify() error {
 		}
 	}
 
+	if err := ar.validateCronPattern(); err != nil {
+		return err
+	}
+
+	if len(ar.NotifyRuleIds) > 0 {
+		ar.NotifyVersion = 1
+		ar.NotifyChannelsJSON = []string{}
+		ar.NotifyGroupsJSON = []string{}
+		ar.NotifyChannels = ""
+		ar.NotifyGroups = ""
+	}
+
+	return nil
+}
+
+func (ar *AlertRule) validateCronPattern() error {
+	if ar.CronPattern == "" {
+		return nil
+	}
+
+	// 创建一个临时的 cron scheduler 来验证表达式
+	scheduler := cron.New(cron.WithSeconds())
+
+	// 尝试添加一个空函数来验证 cron 表达式
+	_, err := scheduler.AddFunc(ar.CronPattern, func() {})
+	if err != nil {
+		return fmt.Errorf("invalid cron pattern: %s, error: %v", ar.CronPattern, err)
+	}
+
 	return nil
 }
 
@@ -659,6 +704,16 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 			return err
 		}
 		return DB(ctx).Model(ar).UpdateColumn("annotations", string(b)).Error
+	}
+
+	if column == "notify_rule_ids" {
+		updates := map[string]interface{}{
+			"notify_version":  1,
+			"notify_channels": "",
+			"notify_groups":   "",
+			"notify_rule_ids": value,
+		}
+		return DB(ctx).Model(ar).Updates(updates).Error
 	}
 
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
@@ -863,6 +918,10 @@ func (ar *AlertRule) DB2FE() error {
 	}
 	if len(ar.EnableDaysOfWeeksJSON) > 0 {
 		ar.EnableDaysOfWeekJSON = ar.EnableDaysOfWeeksJSON[0]
+	}
+
+	if ar.NotifyRuleIds == nil {
+		ar.NotifyRuleIds = make([]int64, 0)
 	}
 
 	ar.NotifyChannelsJSON = strings.Fields(ar.NotifyChannels)
@@ -1124,6 +1183,14 @@ func (ar *AlertRule) GetRuleType() string {
 	return ar.Prod
 }
 
+func (ar *AlertRule) IsClickHouseRule() bool {
+	return ar.Cate == CLICKHOUSE
+}
+
+func (ar *AlertRule) IsElasticSearch() bool {
+	return ar.Cate == ELASTICSEARCH
+}
+
 func (ar *AlertRule) GenerateNewEvent(ctx *ctx.Context) *AlertCurEvent {
 	event := &AlertCurEvent{}
 	ar.UpdateEvent(event)
@@ -1143,8 +1210,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.RuleProd = ar.Prod
 	event.RuleAlgo = ar.Algorithm
 	event.PromForDuration = ar.PromForDuration
-	event.RuleConfig = ar.RuleConfig
-	event.RuleConfigJson = ar.RuleConfigJson
 	event.Callbacks = ar.Callbacks
 	event.CallbacksJSON = ar.CallbacksJSON
 	event.RunbookUrl = ar.RunbookUrl

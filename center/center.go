@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ccfos/nightingale/v6/dscache"
+
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -27,14 +29,13 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/tdengine"
-
 	"github.com/flashcatcloud/ibex/src/cmd/ibex"
 )
 
@@ -101,16 +102,21 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 	taskTplCache := memsto.NewTaskTplCache(ctx)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
+	notifyRuleCache := memsto.NewNotifyRuleCache(ctx, syncStats)
+	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
+	messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
+	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
 
 	dispatch.InitRegisterQueryFunc(promClients)
 
-	tdengineClients := tdengine.NewTdengineClient(ctx, config.Alert.Heartbeat)
-
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache)
+
+	macros.RegisterMacro(macros.MacroInVain)
+	dscache.Init(ctx, false)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
@@ -120,8 +126,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
-		cconf.Operations, dsCache, notifyConfigCache, promClients, tdengineClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache)
+		cconf.Operations, dsCache, notifyConfigCache, promClients,
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	go func() {

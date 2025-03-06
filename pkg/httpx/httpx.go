@@ -37,6 +37,7 @@ type Config struct {
 	APIForAgent      BasicAuths
 	APIForService    BasicAuths
 	RSA              RSAConfig
+	TokenAuth        TokenAuth
 }
 
 type RSAConfig struct {
@@ -68,6 +69,11 @@ type JWTAuth struct {
 	AccessExpired  int64
 	RefreshExpired int64
 	RedisKeyPrefix string
+}
+
+type TokenAuth struct {
+	Enable             bool
+	HeaderUserTokenKey string
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},

@@ -162,10 +162,10 @@ func (rt *Router) notifyTplAdd(c *gin.Context) {
 	var f models.NotifyTpl
 	ginx.BindJSON(c, &f)
 
-        user := c.MustGet("user").(*models.User)
-        f.CreateBy = user.Username
-	
-        f.Channel = strings.TrimSpace(f.Channel)
+	user := c.MustGet("user").(*models.User)
+	f.CreateBy = user.Username
+
+	f.Channel = strings.TrimSpace(f.Channel)
 	ginx.Dangerous(templateValidate(f))
 
 	count, err := models.Count(models.DB(rt.Ctx).Model(&models.NotifyTpl{}).Where("channel = ? or name = ?", f.Channel, f.Name))
@@ -174,7 +174,7 @@ func (rt *Router) notifyTplAdd(c *gin.Context) {
 		ginx.Bomb(200, "Refuse to create duplicate channel(unique)")
 	}
 
-        f.CreateAt = time.Now().Unix()
+	f.CreateAt = time.Now().Unix()
 	ginx.NewRender(c).Message(f.Create(rt.Ctx))
 }
 
@@ -192,4 +192,14 @@ func (rt *Router) notifyTplDel(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(f.NotifyTplDelete(rt.Ctx, id))
+}
+
+func (rt *Router) messageTemplateGets(c *gin.Context) {
+	id := ginx.QueryInt64(c, "id", 0)
+	name := ginx.QueryStr(c, "name", "")
+	ident := ginx.QueryStr(c, "ident", "")
+
+	tpls, err := models.MessageTemplateGets(rt.Ctx, id, name, ident)
+
+	ginx.NewRender(c).Data(tpls, err)
 }

@@ -66,8 +66,8 @@ func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.NotificaitonRecord{},
-		&models.TargetBusiGroup{}, &EsIndexPatternMigrate{}}
+		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -187,6 +187,46 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/ibex-settings",
 	})
 
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-templates/del",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/notification-rules/del",
+	})
+
 	for _, op := range ops {
 		var count int64
 
@@ -213,14 +253,18 @@ type AlertRule struct {
 	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
 	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
+	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
+	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
 }
 
 type AlertSubscribe struct {
-	ExtraConfig string       `gorm:"type:text;column:extra_config"` // extra config
-	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
-	Note        string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
-	RuleIds     []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
+	ExtraConfig   string       `gorm:"type:text;column:extra_config"` // extra config
+	Severities    string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
+	BusiGroups    ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096)"`
+	Note          string       `gorm:"column:note;type:varchar(1024);default:'';comment:note"`
+	RuleIds       []int64      `gorm:"column:rule_ids;type:varchar(1024)"`
+	NotifyRuleIds []int64      `gorm:"column:notify_rule_ids;type:varchar(1024)"`
+	NotifyVersion int          `gorm:"column:notify_version;type:int;default:0"`
 }
 
 type AlertMute struct {
@@ -326,4 +370,77 @@ type EsIndexPatternMigrate struct {
 
 func (EsIndexPatternMigrate) TableName() string {
 	return "es_index_pattern"
+}
+
+type DashAnnotation struct {
+	Id          int64  `gorm:"column:id;primaryKey;autoIncrement"`
+	DashboardId int64  `gorm:"column:dashboard_id;not null"`
+	PanelId     string `gorm:"column:panel_id;type:varchar(191);not null"`
+	Tags        string `gorm:"column:tags;type:text"`
+	Description string `gorm:"column:description;type:text"`
+	Config      string `gorm:"column:config;type:text"`
+	TimeStart   int64  `gorm:"column:time_start;not null;default:0"`
+	TimeEnd     int64  `gorm:"column:time_end;not null;default:0"`
+	CreateAt    int64  `gorm:"column:create_at;not null;default:0"`
+	CreateBy    string `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt    int64  `gorm:"column:update_at;not null;default:0"`
+	UpdateBy    string `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (DashAnnotation) TableName() string {
+	return "dash_annotation"
+}
+
+type MessageTemplate struct {
+	ID                 int64             `gorm:"column:id;primaryKey;autoIncrement"`
+	Name               string            `gorm:"column:name;type:varchar(64);not null"`
+	Ident              string            `gorm:"column:ident;type:varchar(64);not null"`
+	Content            map[string]string `gorm:"column:content;type:text"`
+	UserGroupIds       []int64           `gorm:"column:user_group_ids;type:varchar(64)"`
+	NotifyChannelIdent string            `gorm:"column:notify_channel_ident;type:varchar(64);not null;default:''"`
+	Private            int               `gorm:"column:private;type:int;not null;default:0"`
+	CreateAt           int64             `gorm:"column:create_at;not null;default:0"`
+	CreateBy           string            `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt           int64             `gorm:"column:update_at;not null;default:0"`
+	UpdateBy           string            `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (t *MessageTemplate) TableName() string {
+	return "message_template"
+}
+
+type NotifyRule struct {
+	ID            int64                 `gorm:"column:id;primaryKey;autoIncrement"`
+	Name          string                `gorm:"column:name;type:varchar(255);not null"`
+	Description   string                `gorm:"column:description;type:text"`
+	Enable        bool                  `gorm:"column:enable;not null;default:false"`
+	UserGroupIds  []int64               `gorm:"column:user_group_ids;type:varchar(255)"`
+	NotifyConfigs []models.NotifyConfig `gorm:"column:notify_configs;type:text"`
+	CreateAt      int64                 `gorm:"column:create_at;not null;default:0"`
+	CreateBy      string                `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt      int64                 `gorm:"column:update_at;not null;default:0"`
+	UpdateBy      string                `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (r *NotifyRule) TableName() string {
+	return "notify_rule"
+}
+
+type NotifyChannelConfig struct {
+	ID            int64                    `gorm:"column:id;primaryKey;autoIncrement"`
+	Name          string                   `gorm:"column:name;type:varchar(255);not null"`
+	Ident         string                   `gorm:"column:ident;type:varchar(255);not null"`
+	Description   string                   `gorm:"column:description;type:text"`
+	Enable        bool                     `gorm:"column:enable;not null;default:false"`
+	ParamConfig   models.NotifyParamConfig `gorm:"column:param_config;type:text"`
+	RequestType   string                   `gorm:"column:request_type;type:varchar(50);not null"`
+	RequestConfig *models.RequestConfig    `gorm:"column:request_config;type:text"`
+	CreateAt      int64                    `gorm:"column:create_at;not null;default:0"`
+	CreateBy      string                   `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt      int64                    `gorm:"column:update_at;not null;default:0"`
+	UpdateBy      string                   `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+}
+
+func (c *NotifyChannelConfig) TableName() string {
+	return "notify_channel"
 }

@@ -23,6 +23,8 @@ import (
 	"github.com/toolkits/pkg/str"
 )
 
+type AlertRuleModifyHookFunc func(ar *models.AlertRule)
+
 // Return all, front-end search and paging
 func (rt *Router) alertRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
@@ -426,7 +428,16 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		}
 
 		for k, v := range f.Fields {
-			ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+			// 检查 v 是否为各种切片类型
+			switch v.(type) {
+			case []interface{}, []int64, []int, []string:
+				// 将切片转换为 JSON 字符串
+				bytes, err := json.Marshal(v)
+				ginx.Dangerous(err)
+				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, string(bytes)))
+			default:
+				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
+			}
 		}
 	}
 
@@ -451,6 +462,7 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	err = ar.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
 	ginx.Dangerous(err)
 
+	rt.AlertRuleModifyHook(ar)
 	ginx.NewRender(c).Data(ar, err)
 }
 

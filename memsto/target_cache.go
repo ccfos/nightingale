@@ -226,6 +226,7 @@ func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 
 
 		err := json.Unmarshal(value, &hostUpdateTime)
 		if err != nil {
+			logger.Warningf("failed to unmarshal host err:%v value:%s", err, string(value))
 			continue
 		}
 		metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime

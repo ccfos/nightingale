@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -73,6 +74,82 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
+	NotifyRuleIDs      []int64             `json:"notify_rule_ids" gorm:"-"`
+}
+
+func (e *AlertCurEvent) SetTagsMap() {
+	e.TagsMap = make(map[string]string)
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+}
+
+func (e *AlertCurEvent) JsonTagsAndValue() map[string]string {
+	v := reflect.ValueOf(e).Elem()
+	t := v.Type()
+	tags := make(map[string]string)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		// 获取 json tag
+		tag := field.Tag.Get("json")
+		if tag == "" {
+			continue
+		}
+
+		// 处理类似 `json:",omitempty"` 或 `json:"-"` 的特殊情况
+		tagParts := strings.Split(tag, ",")
+		if tagParts[0] == "-" {
+			continue
+		}
+
+		// 获取字段值并转换为字符串
+		fieldValue := v.Field(i).Interface()
+		var strValue string
+
+		switch v := fieldValue.(type) {
+		case string:
+			strValue = v
+		case int, int8, int16, int32, int64:
+			strValue = fmt.Sprintf("%d", v)
+		case float32, float64:
+			strValue = fmt.Sprintf("%f", v)
+		case bool:
+			strValue = fmt.Sprintf("%v", v)
+		case []string:
+			b, _ := json.Marshal(v)
+			strValue = string(b)
+		case map[string]string:
+			b, _ := json.Marshal(v)
+			strValue = string(b)
+		default:
+			// 对于其他类型，尝试 JSON 序列化
+			if b, err := json.Marshal(v); err == nil {
+				strValue = string(b)
+			} else {
+				strValue = fmt.Sprintf("%v", v)
+			}
+		}
+
+		// 如果没有指定 tag 名称，使用字段名作为 key
+		if tagParts[0] == "" {
+			tags[field.Name] = strValue
+		} else {
+			tags[tagParts[0]] = strValue
+		}
+	}
+	return tags
 }
 
 type EventTriggerValues struct {
@@ -633,7 +710,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 		return lst, nil
 	}
 
-	err := DB(ctx).Where("id in ?", ids).Order("trigger_time desc").Find(&lst).Error
+	err := DB(ctx).Model(&AlertCurEvent{}).Where("id in ?", ids).Order("trigger_time desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()

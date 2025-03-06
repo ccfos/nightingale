@@ -135,14 +135,14 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
 	stats *astats.Stats, events []*models.AlertCurEvent) {
 	res, err := doSend(url, body, channel, stats)
-	NotifyRecord(ctx, events, channel, token, res, err)
+	NotifyRecord(ctx, events, 0, channel, token, res, err)
 }
 
-func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, channel, target, res string, err error) {
+func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID int64, channel, target, res string, err error) {
 	// 一个通知可能对应多个 event，都需要记录
 	notis := make([]*models.NotificaitonRecord, 0, len(evts))
 	for _, evt := range evts {
-		noti := models.NewNotificationRecord(evt, channel, target)
+		noti := models.NewNotificationRecord(evt, notifyRuleID, channel, target)
 		if err != nil {
 			noti.SetStatus(models.NotiStatusFailure)
 			noti.SetDetails(err.Error())
@@ -153,16 +153,14 @@ func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, channel, targe
 	}
 
 	if !ctx.IsCenter {
-		_, err := poster.PostByUrlsWithResp[[]int64](ctx, "/v1/n9e/notify-record", notis)
+		err := poster.PostByUrls(ctx, "/v1/n9e/notify-record", notis)
 		if err != nil {
 			logger.Errorf("add notis:%v failed, err: %v", notis, err)
 		}
 		return
 	}
 
-	if err := models.DB(ctx).CreateInBatches(notis, 100).Error; err != nil {
-		logger.Errorf("add notis:%v failed, err: %v", notis, err)
-	}
+	PushNotifyRecords(notis)
 }
 
 func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {

@@ -154,6 +154,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 	eventsMap := make(map[string][]*models.AlertCurEvent)
 	for _, anomalyPoint := range anomalyPoints {
 		event := p.BuildEvent(anomalyPoint, from, now, ruleHash)
+		event.NotifyRuleIDs = cachedRule.NotifyRuleIds
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
@@ -233,6 +234,15 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	event.PromQl = anomalyPoint.Query
 	event.RecoverConfig = anomalyPoint.RecoverConfig
 	event.RuleHash = ruleHash
+
+	if anomalyPoint.TriggerType == models.TriggerTypeNodata {
+		event.TriggerValue = "nodata"
+		ruleConfig := models.RuleQuery{}
+		json.Unmarshal([]byte(p.rule.RuleConfig), &ruleConfig)
+		ruleConfig.TriggerType = anomalyPoint.TriggerType
+		b, _ := json.Marshal(ruleConfig)
+		event.RuleConfig = string(b)
+	}
 
 	if err := json.Unmarshal([]byte(p.rule.Annotations), &event.AnnotationsJSON); err != nil {
 		event.AnnotationsJSON = make(map[string]string) // 解析失败时使用空 map

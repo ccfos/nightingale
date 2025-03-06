@@ -102,9 +102,29 @@ func (rt *Router) builtinMetricsDefaultTypes(c *gin.Context) {
 func (rt *Router) builtinMetricsTypes(c *gin.Context) {
 	collector := ginx.QueryStr(c, "collector", "")
 	query := ginx.QueryStr(c, "query", "")
+	disabled := ginx.QueryInt(c, "disabled", -1)
 	lang := c.GetHeader("X-Language")
 
-	ginx.NewRender(c).Data(models.BuiltinMetricTypes(rt.Ctx, lang, collector, query))
+	metricTypeList, err := models.BuiltinMetricTypes(rt.Ctx, lang, collector, query)
+	ginx.Dangerous(err)
+
+	componentList, err := models.BuiltinComponentGets(rt.Ctx, "", disabled)
+	ginx.Dangerous(err)
+
+	// 创建一个 map 来存储 componentList 中的类型
+	componentTypes := make(map[string]struct{})
+	for _, comp := range componentList {
+		componentTypes[comp.Ident] = struct{}{}
+	}
+
+	filteredMetricTypeList := make([]string, 0)
+	for _, metricType := range metricTypeList {
+		if _, exists := componentTypes[metricType]; exists {
+			filteredMetricTypeList = append(filteredMetricTypeList, metricType)
+		}
+	}
+
+	ginx.NewRender(c).Data(filteredMetricTypeList, nil)
 }
 
 func (rt *Router) builtinMetricsCollectors(c *gin.Context) {

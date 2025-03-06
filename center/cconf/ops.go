@@ -15,9 +15,25 @@ type Operation struct {
 }
 
 type Ops struct {
-	Name  string   `yaml:"name" json:"name"`
-	Cname string   `yaml:"cname" json:"cname"`
-	Ops   []string `yaml:"ops" json:"ops"`
+	Name  string     `yaml:"name" json:"name"`
+	Cname string     `yaml:"cname" json:"cname"`
+	Ops   []SingleOp `yaml:"ops" json:"ops"`
+}
+
+// SingleOp Name 为 op 名称；Cname 为展示名称，默认英文
+type SingleOp struct {
+	Name  string `yaml:"name" json:"name"`
+	Cname string `yaml:"cname" json:"cname"`
+}
+
+func TransformNames(name []string, nameToName map[string]string) []string {
+	var ret []string
+	for _, n := range name {
+		if v, has := nameToName[n]; has {
+			ret = append(ret, v)
+		}
+	}
+	return ret
 }
 
 func LoadOpsYaml(configDir string, opsYamlFile string) error {
@@ -39,8 +55,8 @@ func LoadOpsYaml(configDir string, opsYamlFile string) error {
 	return file.ReadYaml(fp, &Operations)
 }
 
-func GetAllOps(ops []Ops) []string {
-	var ret []string
+func GetAllOps(ops []Ops) []SingleOp {
+	var ret []SingleOp
 	for _, op := range ops {
 		ret = append(ret, op.Ops...)
 	}
@@ -48,7 +64,7 @@ func GetAllOps(ops []Ops) []string {
 }
 
 func MergeOperationConf() error {
-	opsBuiltIn := Operation{}
+	var opsBuiltIn Operation
 	err := yaml.Unmarshal([]byte(builtInOps), &opsBuiltIn)
 	if err != nil {
 		return fmt.Errorf("cannot parse builtInOps: %s", err.Error())
@@ -70,137 +86,253 @@ const (
 	builtInOps = `
 ops:
 - name: dashboards
-  cname: 仪表盘
+  cname: Dashboards
   ops:
-    - "/dashboards"
-    - "/dashboards/add"
-    - "/dashboards/put"
-    - "/dashboards/del"
-    - "/embedded-dashboards/put"
-    - "/embedded-dashboards"
-    - "/public-dashboards"
-
-- name: alert
-  cname: 告警规则
-  ops:
-    - "/alert-rules"
-    - "/alert-rules/add"
-    - "/alert-rules/put"
-    - "/alert-rules/del"
-
-- name: alert-mutes
-  cname: 告警静默管理
-  ops:
-    - "/alert-mutes"
-    - "/alert-mutes/add"
-    - "/alert-mutes/put"
-    - "/alert-mutes/del"
-  
-- name: alert-subscribes
-  cname: 告警订阅管理
-  ops:
-    - "/alert-subscribes"
-    - "/alert-subscribes/add"
-    - "/alert-subscribes/put"
-    - "/alert-subscribes/del"
-
-- name: alert-events  
-  cname: 告警事件管理
-  ops:
-    - "/alert-cur-events"
-    - "/alert-cur-events/del"
-    - "/alert-his-events" 
-
-- name: recording-rules
-  cname: 记录规则管理
-  ops:
-    - "/recording-rules"
-    - "/recording-rules/add"
-    - "/recording-rules/put"
-    - "/recording-rules/del"
+    - name: "/dashboards"
+      cname: View Dashboards
+    - name: "/dashboards/add"
+      cname: Add Dashboard
+    - name: "/dashboards/put"
+      cname: Modify Dashboard
+    - name: "/dashboards/del"
+      cname: Delete Dashboard
+    - name: "/embedded-dashboards/put"
+      cname: Modify Embedded Dashboard
+    - name: "/embedded-dashboards"
+      cname: View Embedded Dashboard
+    - name: "/public-dashboards"
+      cname: View Public Dashboard
 
 - name: metric
-  cname: 时序指标
+  cname: Time Series Metrics
   ops:
-  - "/metric/explorer"
-  - "/object/explorer"
-
-- name: log
-  cname: 日志分析
-  ops:
-  - "/log/explorer"
-  - "/log/index-patterns"
-
-- name: targets
-  cname: 基础设施
-  ops:
-    - "/targets"
-    - "/targets/add"
-    - "/targets/put"
-    - "/targets/del"
-    - "/targets/bind"
-
-- name: job
-  cname: 任务管理
-  ops:
-    - "/job-tpls"
-    - "/job-tpls/add"
-    - "/job-tpls/put"
-    - "/job-tpls/del"
-    - "/job-tasks"
-    - "/job-tasks/add"
-    - "/job-tasks/put"
-    - "/ibex-settings"
-
-- name: user
-  cname: 用户管理
-  ops:
-  - "/users"
-  - "/user-groups"
-  - "/user-groups/add"
-  - "/user-groups/put"
-  - "/user-groups/del"
-
-- name: permissions
-  cname: 权限管理
-  ops:
-  - "/permissions"
-
-- name: busi-groups
-  cname: 业务分组管理
-  ops:
-  - "/busi-groups"
-  - "/busi-groups/add"
-  - "/busi-groups/put"
-  - "/busi-groups/del"
+    - name: "/metric/explorer"
+      cname: View Metric Data
+    - name: "/object/explorer"
+      cname: View Object Data
 
 - name: builtin-metrics
-  cname: 指标视图
+  cname: Metric Views
   ops:
-    - "/metrics-built-in"
-    - "/builtin-metrics/add"
-    - "/builtin-metrics/put"
-    - "/builtin-metrics/del"
+    - name: "/metrics-built-in"
+      cname: View Built-in Metrics
+    - name: "/builtin-metrics/add"
+      cname: Add Built-in Metric
+    - name: "/builtin-metrics/put"
+      cname: Modify Built-in Metric
+    - name: "/builtin-metrics/del"
+      cname: Delete Built-in Metric
+
+- name: recording-rules
+  cname: Recording Rule Management
+  ops:
+    - name: "/recording-rules"
+      cname: View Recording Rules
+    - name: "/recording-rules/add"
+      cname: Add Recording Rule
+    - name: "/recording-rules/put"
+      cname: Modify Recording Rule
+    - name: "/recording-rules/del"
+      cname: Delete Recording Rule
+
+- name: log
+  cname: Log Analysis
+  ops:
+    - name: "/log/explorer"
+      cname: View Logs
+    - name: "/log/index-patterns"
+      cname: View Index Patterns
+
+- name: alert
+  cname: Alert Rules
+  ops:
+    - name: "/alert-rules"
+      cname: View Alert Rules
+    - name: "/alert-rules/add"
+      cname: Add Alert Rule
+    - name: "/alert-rules/put"
+      cname: Modify Alert Rule
+    - name: "/alert-rules/del"
+      cname: Delete Alert Rule
+
+- name: alert-mutes
+  cname: Alert Silence Management
+  ops:
+    - name: "/alert-mutes"
+      cname: View Alert Silences
+    - name: "/alert-mutes/add"
+      cname: Add Alert Silence
+    - name: "/alert-mutes/put"
+      cname: Modify Alert Silence
+    - name: "/alert-mutes/del"
+      cname: Delete Alert Silence
+  
+- name: alert-subscribes
+  cname: Alert Subscription Management
+  ops:
+    - name: "/alert-subscribes"
+      cname: View Alert Subscriptions
+    - name: "/alert-subscribes/add"
+      cname: Add Alert Subscription
+    - name: "/alert-subscribes/put"
+      cname: Modify Alert Subscription
+    - name: "/alert-subscribes/del"
+      cname: Delete Alert Subscription
+
+- name: alert-events  
+  cname: Alert Event Management
+  ops:
+    - name: "/alert-cur-events"
+      cname: View Current Alerts
+    - name: "/alert-cur-events/del"
+      cname: Delete Current Alert
+    - name: "/alert-his-events"
+      cname: View Historical Alerts
+
+- name: notification
+  cname: Alert Notification
+  ops:
+    - name: "/help/notification-settings"
+      cname: View Notification Settings
+    - name: "/help/notification-tpls"
+      cname: View Notification Templates
+
+- name: job
+  cname: Task Management
+  ops:
+    - name: "/job-tpls"
+      cname: View Task Templates
+    - name: "/job-tpls/add"
+      cname: Add Task Template
+    - name: "/job-tpls/put"
+      cname: Modify Task Template
+    - name: "/job-tpls/del"
+      cname: Delete Task Template
+    - name: "/job-tasks"
+      cname: View Task Instances
+    - name: "/job-tasks/add"
+      cname: Add Task Instance
+    - name: "/job-tasks/put"
+      cname: Modify Task Instance
+
+- name: targets
+  cname: Infrastructure
+  ops:
+    - name: "/targets"
+      cname: View Objects
+    - name: "/targets/add"
+      cname: Add Object
+    - name: "/targets/put"
+      cname: Modify Object
+    - name: "/targets/del"
+      cname: Delete Object
+    - name: "/targets/bind"
+      cname: Bind Object
+
+- name: user
+  cname: User Management
+  ops:
+    - name: "/users"
+      cname: View User List
+    - name: "/user-groups"
+      cname: View User Groups
+    - name: "/user-groups/add"
+      cname: Add User Group
+    - name: "/user-groups/put"
+      cname: Modify User Group
+    - name: "/user-groups/del"
+      cname: Delete User Group
+
+- name: busi-groups
+  cname: Business Group Management
+  ops:
+    - name: "/busi-groups"
+      cname: View Business Groups
+    - name: "/busi-groups/add"
+      cname: Add Business Group
+    - name: "/busi-groups/put"
+      cname: Modify Business Group
+    - name: "/busi-groups/del"
+      cname: Delete Business Group
+
+- name: permissions
+  cname: Permission Management
+  ops:
+    - name: "/permissions"
+      cname: View Permission Settings
+    
+- name: contacts
+  cname: User Contact Management
+  ops:
+    - name: "/contacts"
+      cname: User Contact Management
 
 - name: built-in-components
-  cname: 模版中心
+  cname: Template Center
   ops:
-    - "/built-in-components"
-    - "/built-in-components/add"
-    - "/built-in-components/put"
-    - "/built-in-components/del"
+    - name: "/built-in-components"
+      cname: View Built-in Components
+    - name: "/built-in-components/add"
+      cname: Add Built-in Component
+    - name: "/built-in-components/put"
+      cname: Modify Built-in Component
+    - name: "/built-in-components/del"
+      cname: Delete Built-in Component
+
+- name: datasource
+  cname: Data Source Management
+  ops:
+    - name: "/help/source"
+      cname: View Data Source Configuration
 
 - name: system
-  cname: 系统信息
+  cname: System Information
   ops:
-  - "/help/variable-configs"
-  - "/help/version"
-  - "/help/servers"
-  - "/help/source"
-  - "/help/sso"
-  - "/help/notification-tpls"
-  - "/help/notification-settings"
-  - "/help/migrate"
-  - "/site-settings"
+    - name: "/help/variable-configs"
+      cname: View Variable Configuration
+    - name: "/help/version"
+      cname: View Version Information
+    - name: "/help/servers"
+      cname: View Server Information
+    - name: "/help/sso"
+      cname: View SSO Configuration
+    - name: "/site-settings"
+      cname: View Site Settings
+
+- name: message-templates
+  cname: Message Templates
+  ops:
+    - name: "/notification-templates"
+      cname: View Message Templates
+    - name: "/notification-templates/add"
+      cname: Add Message Templates
+    - name: "/notification-templates/put"
+      cname: Modify Message Templates
+    - name: "/notification-templates/del"
+      cname: Delete Message Templates
+
+- name: notify-rules
+  cname: Notify Rules
+  ops:
+    - name: "/notification-rules"
+      cname: View Notify Rules
+    - name: "/notification-rules/add"
+      cname: Add Notify Rules
+    - name: "/notification-rules/put"
+      cname: Modify Notify Rules
+    - name: "/notification-rules/del"
+      cname: Delete Notify Rules
+
+- name: notify-channels
+  cname: Notify Channels
+  ops:
+    - name: "/notification-channels"
+      cname: View Notify Channels
+    - name: "/notification-channels/add"
+      cname: Add Notify Channels
+    - name: "/notification-channels/put"
+      cname: Modify Notify Channels
+    - name: "/notification-channels/del"
+      cname: Delete Notify Channels
 `
 )

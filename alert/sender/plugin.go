@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
@@ -85,7 +86,25 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, channel, cmd.String(), "", buildErr(err, isTimeout))
+
+	res := buf.String()
+
+	// 截断超出长度的输出
+	if len(res) > 512 {
+		// 确保在有效的UTF-8字符边界处截断
+		validLen := 0
+		for i := 0; i < 512 && i < len(res); {
+			_, size := utf8.DecodeRuneInString(res[i:])
+			if i+size > 512 {
+				break
+			}
+			i += size
+			validLen = i
+		}
+		res = res[:validLen] + "..."
+	}
+
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, channel, cmd.String(), res, buildErr(err, isTimeout))
 
 	if isTimeout {
 		if err == nil {
@@ -100,12 +119,12 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	}
 
 	if err != nil {
-		logger.Errorf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, buf.String())
+		logger.Errorf("event_script_notify_fail: exec script %s occur error: %v, output: %s", fpath, err, res)
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
 		return
 	}
 
-	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
+	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, res)
 }
 
 func buildErr(err error, isTimeout bool) error {
