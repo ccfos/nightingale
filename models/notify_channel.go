@@ -1044,7 +1044,8 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					Body: `{"content": "{{tpl.content}}"}`,
+					Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "webhook_token": "{{$params.webhook_token}}"},
+					Body:       `{"content": "{{tpl.content}}"}`,
 				},
 			},
 		},
