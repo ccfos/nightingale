@@ -545,67 +545,27 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
-	Discord: `{
-  "embeds": [
-    {
-      "title": "📢 事件通知",
-      "color": {{if eq $event.Severity "S1"}}16711680{{else if eq $event.Severity "S2"}}16753920{{else if eq $event.Severity "S3"}}16776960{{else}}65280{{end}},
-      "fields": [
-        {
-          "name": "级别状态",
-          "value": "**S{{$event.Severity}}** - {{if $event.IsRecovered}}✅ Recovered{{else}}⚠️ Triggered{{end}}",
-          "inline": true
-        },
-        {
-          "name": "规则名称",
-          "value": "**{{$event.RuleName}}**",
-          "inline": true
-        }{{if $event.RuleNote}},
-        {
-          "name": "规则备注",
-          "value": "{{$event.RuleNote}}",
-          "inline": false
-        }{{end}},
-        {
-          "name": "监控指标",
-          "value": "{{$event.TagsJSON}}",
-          "inline": false
-        }{{if $event.IsRecovered}},
-        {
-          "name": "恢复时间",
-          "value": "{{timeformat $event.LastEvalTime}}",
-          "inline": true
-        }{{else}},
-        {
-          "name": "触发时间",
-          "value": "{{timeformat $event.TriggerTime}}",
-          "inline": true
-        },
-        {
-          "name": "触发时值",
-          "value": "{{$event.TriggerValue}}",
-          "inline": true
-        }{{end}},
-        {
-          "name": "发送时间",
-          "value": "{{timestamp}}",
-          "inline": false
-        },
-        {
-          "name": "🔍 事件详情",
-          "value": "[点击查看]({{$domain}}/alert-his-events/{{$event.Id}})",
-          "inline": false
-        },
-        {
-          "name": "⏳ 屏蔽 1 小时",
-          "value": "[点击屏蔽]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})",
-          "inline": false
-        }
-      ]
-    }
-  ]
-}
-`,
+	Discord: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
 var MsgTplMap = map[string]map[string]string{

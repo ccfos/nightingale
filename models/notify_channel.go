@@ -1040,20 +1040,18 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		Name: "Discord", Ident: Discord, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://discord.com/api/webhooks/{{$params.webhook_id}}/{{$params.webhook_token}}",
+				URL:    "{{$params.webhook_url}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					//Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "webhook_token": "{{$params.webhook_token}}"},
-					Body: `{"content": "⚠️ 事件告警：{{$event.RuleName}} - {{$event.TriggerValue}}"}`,
+					Body: `{"content": "{{$tpl.content}}"}`,
 				},
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "webhook_id", CName: "Webhook", Type: "string"},
-					{Key: "webhook_token", CName: "Token", Type: "string"},
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
 				},
 			},
 		},

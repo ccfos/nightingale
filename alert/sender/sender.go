@@ -47,9 +47,6 @@ func NewSender(key string, tpls map[string]*template.Template, smtp ...aconf.SMT
 		return &LarkSender{tpl: tpls[models.Lark]}
 	case models.LarkCard:
 		return &LarkCardSender{tpl: tpls[models.LarkCard]}
-	case models.Discord:
-		//return &DiscordSender{tpl: tpls[models.Discord]}
-
 	}
 	return nil
 }
