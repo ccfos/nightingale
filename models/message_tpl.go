@@ -173,7 +173,7 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
 	}
 
-	err := session.Find(&lst).Error
+	err := session.Order("id desc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -582,6 +582,7 @@ var MsgTplMap = map[string]map[string]string{
 	"ali-sms":   {"content": NewTplMap["ali-sms"]},
 	"tx-voice":  {"content": NewTplMap["tx-voice"]},
 	"tx-sms":    {"content": NewTplMap["tx-sms"]},
+
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -589,19 +590,19 @@ func InitMessageTemplate(ctx *ctx.Context) {
 		return
 	}
 
-	for channel, content := range MsgTplMap {
+	for _, tpl := range MsgTplMap {
 		msgTpl := MessageTemplate{
-			Name:               channel,
-			Ident:              channel,
-			Content:            content,
-			NotifyChannelIdent: channel,
+			Name:               tpl.Name,
+			Ident:              tpl.Ident,
+			Content:            tpl.Content,
+			NotifyChannelIdent: tpl.Ident,
 			CreateBy:           "system",
 			CreateAt:           time.Now().Unix(),
 			UpdateBy:           "system",
 			UpdateAt:           time.Now().Unix(),
 		}
 
-		err := msgTpl.Upsert(ctx, channel)
+		err := msgTpl.Upsert(ctx, msgTpl.Ident)
 		if err != nil {
 			logger.Warningf("failed to upsert msg tpls %v", err)
 		}
