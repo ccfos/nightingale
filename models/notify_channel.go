@@ -944,7 +944,7 @@ func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 	if where != "" && len(args) > 0 {
 		session = session.Where(where, args...)
 	}
-	err := session.Find(&lst).Error
+	err := session.Order("id asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -971,8 +971,40 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 	return false
 }
 
-var NotiChMap = map[string]*NotifyChannelConfig{
-	Dingtalk: &NotifyChannelConfig{
+var NotiChMap = []*NotifyChannelConfig{
+	{
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			},
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: "flashduty integration url",
+			},
+		},
+	},
+	{
+		Name: "Email", Ident: Email, RequestType: "smtp",
+		RequestConfig: &RequestConfig{
+			SMTPRequestConfig: &SMTPRequestConfig{
+				Host:               "smtp.host",
+				Port:               25,
+				Username:           "your-username",
+				Password:           "your-password",
+				From:               "your-email",
+				InsecureSkipVerify: true,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
+		},
+	},
+	{
 		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -994,7 +1026,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-	Feishu: &NotifyChannelConfig{
+	{
 		Name: "Feishu", Ident: Feishu, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1015,7 +1047,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-	FeishuCard: &NotifyChannelConfig{
+	{
 		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1036,7 +1068,51 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-	Wecom: &NotifyChannelConfig{
+	{
+		Name: "Lark", Ident: Lark, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Lark Card", Ident: LarkCard, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "Wecom", Ident: Wecom, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1058,26 +1134,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-	Email: &NotifyChannelConfig{
-		Name: "Email", Ident: Email, RequestType: "smtp",
-		RequestConfig: &RequestConfig{
-			SMTPRequestConfig: &SMTPRequestConfig{
-				Host:               "smtp.host",
-				Port:               25,
-				Username:           "your-username",
-				Password:           "your-password",
-				From:               "your-email",
-				InsecureSkipVerify: true,
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "email",
-			},
-		},
-	},
-
-	Telegram: &NotifyChannelConfig{
+	{
 		Name: "Telegram", Ident: Telegram, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1100,69 +1157,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-
-	Lark: &NotifyChannelConfig{
-		Name: "Lark", Ident: Lark, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"token": "{{$params.token}}"},
-					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "token", CName: "Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-
-	LarkCard: &NotifyChannelConfig{
-		Name: "Lark Card", Ident: LarkCard, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"token": "{{$params.token}}"},
-					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "token", CName: "Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-
-	"flashduty": &NotifyChannelConfig{
-		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-				},
-			},
-			FlashDutyRequestConfig: &FlashDutyRequestConfig{
-				IntegrationUrl: "flashduty integration url",
-			},
-		},
-	},
-
-	"tx-sms": &NotifyChannelConfig{
+	{
 		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1190,8 +1185,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-
-	"tx-voice": &NotifyChannelConfig{
+	{
 		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1219,8 +1213,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-
-	"ali-sms": &NotifyChannelConfig{
+	{
 		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1249,8 +1242,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 			},
 		},
 	},
-
-	"ali-voice": &NotifyChannelConfig{
+	{
 		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1279,13 +1271,13 @@ func InitNotifyChannel(ctx *ctx.Context) {
 		return
 	}
 
-	for channel, notiCh := range NotiChMap {
+	for _, notiCh := range NotiChMap {
 		notiCh.Enable = true
 		notiCh.CreateBy = "system"
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
 		notiCh.UpdateAt = time.Now().Unix()
-		err := notiCh.Upsert(ctx, channel)
+		err := notiCh.Upsert(ctx, notiCh.Ident)
 		if err != nil {
 			logger.Warningf("failed to upsert notify channels %v", err)
 		}
