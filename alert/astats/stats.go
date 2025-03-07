@@ -124,8 +124,8 @@ func NewSyncStats() *Stats {
 	GaugeQuerySeriesCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
-		Name:      "query_series_count",
-		Help:      "Number of curves retrieved from data source after query.",
+		Name:      "eval_query_series_count",
+		Help:      "Number of series retrieved from data source after query.",
 	}, []string{"rule_id", "datasource_id", "ref"})
 	// 通知记录队列的长度
 	GaugeNotifyRecordQueueSize := prometheus.NewGauge(prometheus.GaugeOpts{
