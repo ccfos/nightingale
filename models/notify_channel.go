@@ -1045,7 +1045,7 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					//Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "webhook_token": "{{$params.webhook_token}}"},
-					Body: `{"content": "{{tpl.content}}"}`,
+					Body: `{"content": "⚠️ 事件告警：{{$event.RuleName}} - {{$event.TriggerValue}}"}`,
 				},
 			},
 		},

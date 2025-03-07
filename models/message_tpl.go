@@ -617,6 +617,7 @@ var MsgTplMap = map[string]map[string]string{
 	Lark:        {"content": NewTplMap[Lark]},
 	LarkCard:    {"title": LarkCardTitle, "content": NewTplMap[LarkCard]},
 	Telegram:    {"content": NewTplMap[Telegram]},
+	Discord:     {"content": NewTplMap[Discord]},
 	"ali-voice": {"content": NewTplMap["ali-voice"]},
 	"ali-sms":   {"content": NewTplMap["ali-sms"]},
 	"tx-voice":  {"content": NewTplMap["tx-voice"]},
