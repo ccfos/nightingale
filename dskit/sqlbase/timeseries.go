@@ -162,7 +162,7 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 	return dataResps
 }
 
-// parseFloat64Value attempts to convert an interface{} to float64 using reflection
+// ParseFloat64Value attempts to convert an interface{} to float64 using reflection
 func ParseFloat64Value(val interface{}) (float64, error) {
 	v := reflect.ValueOf(val)
 	switch v.Kind() {
