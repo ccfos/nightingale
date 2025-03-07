@@ -1057,7 +1057,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
-	Discord: &NotifyChannelConfig{
+	{
 		Name: "Discord", Ident: Discord, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
