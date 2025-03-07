@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 	"text/template"
@@ -96,8 +97,8 @@ func (t *MessageTemplate) Verify() error {
 		return errors.New("template identifier cannot be empty")
 	}
 
-	if !regexp.MustCompile("^[a-zA-Z0-9_]+$").MatchString(t.Ident) {
-		return errors.New("template identifier must be alphanumeric and underscore")
+	if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(t.Ident) {
+		return fmt.Errorf("template identifier must be ^[a-zA-Z0-9_-]+$, current: %s", t.Ident)
 	}
 
 	for key := range t.Content {

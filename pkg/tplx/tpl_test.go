@@ -1,6 +1,7 @@
 package tplx
 
 import (
+	"html/template"
 	"testing"
 )
 
@@ -30,7 +31,7 @@ func TestBatchContactJsonMarshal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := BatchContactsJsonMarshal(tt.input)
-			if result != tt.expected {
+			if result != template.HTML(tt.expected) {
 				t.Errorf("期望得到 %v，实际得到 %v", tt.expected, result)
 			}
 		})

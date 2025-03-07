@@ -1,7 +1,6 @@
 package tplx
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -601,39 +600,24 @@ func MappingAndJoin(arr interface{}, prefix, suffix, join string) string {
 		}
 	}
 
-	for i, s := range result {
-		result[i] = prefix + s + suffix
+	var res []string
+	for _, s := range result {
+		if s == "" {
+			continue
+		}
+		res = append(res, prefix+s+suffix)
 	}
-	return strings.Join(result, join)
+
+	if len(res) == 0 {
+		return ""
+	}
+
+	return strings.Join(res, join)
 }
 
 func StrMappingAndJoin(str, split, prefix, suffix, join string) string {
 	arr := strings.Split(str, split)
 	return MappingAndJoin(arr, prefix, suffix, join)
-}
-
-func MappingAndJsonMarshal(arr interface{}, prefix, suffix, join string) string {
-	var result []string
-
-	switch v := arr.(type) {
-	case []int:
-		for _, item := range v {
-			result = append(result, fmt.Sprintf("%v", item))
-		}
-	case []string:
-		result = v
-	case []interface{}:
-		for _, item := range v {
-			result = append(result, fmt.Sprintf("%v", item))
-		}
-	}
-
-	for i, s := range result {
-		result[i] = prefix + s + suffix
-	}
-
-	bytes, _ := json.Marshal(result)
-	return string(bytes)
 }
 
 func Ats(str string) string {
@@ -654,8 +638,8 @@ func BatchContactsAts(arr interface{}) string {
 	return MappingAndJoin(arr, "@", "", " ")
 }
 
-func BatchContactsJsonMarshal(arr interface{}) string {
-	return MappingAndJsonMarshal(arr, "", "", ",")
+func BatchContactsJsonMarshal(arr interface{}) template.HTML {
+	return template.HTML("[" + MappingAndJoin(arr, "\"", "\"", ",") + "]")
 }
 
 func BatchContactsJoinComma(arr interface{}) string {

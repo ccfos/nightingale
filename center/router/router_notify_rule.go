@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -274,6 +275,7 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	res := make([][]paramList, 0)
+	filter := make(map[string]struct{})
 	for _, nr := range lst {
 		if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
 			continue
@@ -285,6 +287,7 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 			}
 
 			list := make([]paramList, 0)
+			filterKey := ""
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
 				cname, exsits := keyMap[key]
@@ -295,7 +298,12 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 						Value: value,
 					})
 				}
+				filterKey += fmt.Sprintf("%s:%s,", key, value)
 			}
+			if _, ok := filter[filterKey]; ok {
+				continue
+			}
+			filter[filterKey] = struct{}{}
 			res = append(res, list)
 		}
 	}

@@ -654,6 +654,7 @@ func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{})
 	var defs = []string{
 		"{{$tpl := .tpl}}",
 		"{{$sendto := .sendto}}",
+		"{{$sendtos := .sendtos}}",
 		"{{$params := .params}}",
 		"{{$events := .events}}",
 		"{{$event := .event}}",
@@ -674,8 +675,10 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	var defs = []string{
 		"{{$tpl := .tpl}}",
 		"{{$sendto := .sendto}}",
+		"{{$sendtos := .sendtos}}",
 		"{{$params := .params}}",
 		"{{$events := .events}}",
+		"{{$event := .event}}",
 	}
 
 	text := strings.Join(append(defs, tplStr), "")
@@ -756,7 +759,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 	}
 
 	if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(ncc.Ident) {
-		return errors.New("channel identifier must be alphanumeric and underscore")
+		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
 	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" {
@@ -1175,7 +1178,7 @@ var NotiChMap = []*NotifyChannelConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n@{{$params.ats}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
 				},
 			},
 		},
