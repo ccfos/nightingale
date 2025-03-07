@@ -799,7 +799,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return errors.New("channel identifier cannot be empty")
 	}
 
-	if !regexp.MustCompile("^[a-zA-Z0-9_]+$").MatchString(ncc.Ident) {
+	if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(ncc.Ident) {
 		return errors.New("channel identifier must be alphanumeric and underscore")
 	}
 
