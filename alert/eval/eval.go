@@ -339,12 +339,13 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 			lst = append(lst, points...)
 		}
-	}
 
-	arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
-		fmt.Sprintf("%v", arw.Rule.Id),
-		fmt.Sprintf("%v", arw.Processor.DatasourceId()),
-	).Set(float64(len(lst)))
+		arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
+			fmt.Sprintf("%v", arw.Rule.Id),
+			fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+			fmt.Sprintf("%v", i),
+		).Set(float64(len(lst)))
+	}
 
 	return lst, nil
 }
