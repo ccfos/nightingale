@@ -54,11 +54,10 @@ var TemplateFuncMap = template.FuncMap{
 	"printf":                    Printf,
 	"split":                     strings.Split,
 	"join":                      strings.Join,
-	"addPrefix":                 AddPrefix,
-	"addSuffix":                 AddSuffix,
-	"manipulateStr":             ManipulateStr,
-
-	"dingTalkAt": DingTalkAt,
+	"ats":                       Ats,
+	"batchContactsJsonMarshal":  BatchContactsJsonMarshal,
+	"batchContactsJoinComma":    BatchContactsJoinComma,
+	"batchContactsAts":          BatchContactsAts,
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap
