@@ -1040,12 +1040,12 @@ var NotiChMap = map[string]*NotifyChannelConfig{
 		Name: "Discord", Ident: Discord, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://hooks.slack.com/services/{{$params.team_id}}/{{$params.channel_id}}/{{$params.webhook_token}}",
+				URL:    "https://discord.com/api/webhooks/{{$params.webhook_id}}/{{$params.webhook_token}}",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "webhook_token": "{{$params.webhook_token}}"},
-					Body:       `{"content": "{{tpl.content}}"}`,
+					//Parameters: map[string]string{"webhook_id": "{{$params.webhook_id}}", "webhook_token": "{{$params.webhook_token}}"},
+					Body: `{"content": "{{tpl.content}}"}`,
 				},
 			},
 		},
