@@ -3,9 +3,10 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"regexp"
 	"strings"
-	"text/template"
+	texttemplate "text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -215,7 +216,7 @@ var NewTplMap = map[string]string{
 	"ali-sms":   `{"name":"级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{$event.RuleName}}"`,
 	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
 	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
-	Dingtalk: `#### {{if $event.IsRecovered}}💚{{$event.RuleName}}{{else}}💔{{$event.RuleName}}{{end}}
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
 ---
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
 - **告警级别**: {{$event.Severity}}级
@@ -239,8 +240,14 @@ var NewTplMap = map[string]string{
 	- {{$key}}: {{$val}}
 {{- end}}
 {{- end}}
-{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+
+{{$domain := "http://127.0.0.1:17000" }}
+{{$mutelink := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}
+{{- range $key, $value := $event.TagsMap}}
+{{- $encodedValue := $value | urlquery }}
+{{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
+{{- end}}
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$mutelink}}) | [查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -602,12 +609,12 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
-func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string {
+func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
 	// event 内容渲染到 messageTemplate
-	tplContent := make(map[string]string)
+	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
 		var defs = []string{
 			"{{ $events := . }}",
@@ -615,23 +622,41 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]string
 			"{{ $labels := $event.TagsMap }}",
 			"{{ $value := $event.TriggerValue }}",
 		}
+
+		var body bytes.Buffer
+		if t.NotifyChannelIdent == "email" {
+			text := strings.Join(append(defs, msgTpl), "")
+			tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+			if err != nil {
+				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				continue
+			}
+
+			var body bytes.Buffer
+			if err = tpl.Execute(&body, events); err != nil {
+				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				continue
+			}
+			tplContent[key] = body.String()
+			continue
+		}
+
 		text := strings.Join(append(defs, msgTpl), "")
 		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
+			logger.Errorf("failed to parse template: %v events: %v", err, events)
 			continue
 		}
 
-		var body bytes.Buffer
 		if err = tpl.Execute(&body, events); err != nil {
+			logger.Errorf("failed to execute template: %v events: %v", err, events)
 			continue
 		}
 
-		if t.NotifyChannelIdent != "email" {
-			content := strings.ReplaceAll(body.String(), "\n", " \\n")
-			tplContent[key] = content
-		} else {
-			tplContent[key] = body.String()
-		}
+		escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
+		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+		tplContent[key] = template.HTML(escaped)
 	}
 	return tplContent
 }

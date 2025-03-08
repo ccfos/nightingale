@@ -345,7 +345,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		return
 	}
 
-	tplContent := make(map[string]string)
+	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashduty" {
 		tplContent = messageTemplate.RenderEvent(events)
 	}
