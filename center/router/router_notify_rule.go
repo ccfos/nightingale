@@ -169,7 +169,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 
 	notifyChannel := notifyChannels[0]
 
-	tplContent := make(map[string]string)
+	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashtudy" {
 		messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
 		ginx.Dangerous(err)

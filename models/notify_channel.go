@@ -153,7 +153,7 @@ type RequestDetail struct {
 	Body       string            `json:"body"`       // 请求体
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[string]string, params map[string]string, sendtos []string) (string, string, error) {
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) (string, string, error) {
 	config := ncc.RequestConfig.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
 		return "", "", fmt.Errorf("script or path is empty")
@@ -238,7 +238,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	return cmd.String(), res, nil
 }
 
-func getStdinBytes(events []*AlertCurEvent, tpl map[string]string, params map[string]string, sendtos []string) []byte {
+func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) []byte {
 	// 创建一个 map 来存储所有数据
 	data := map[string]interface{}{
 		"events": events,
@@ -418,7 +418,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]string, params map[string]string, sendtos []string, client *http.Client) (string, error) {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
@@ -514,7 +514,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 }
 
-func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
+func (ncc *NotifyChannelConfig) getAliQuery(content map[string]interface{}) url.Values {
 	// 渲染 param
 	var paramKey string
 	query := url.Values{}
@@ -721,16 +721,16 @@ func needsTemplateRendering(s string) bool {
 	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }
 
-func (ncc *NotifyChannelConfig) SendEmail(notifyRuleId int64, events []*AlertCurEvent, tpl map[string]string, sendtos []string, ch chan *EmailContext) {
+func (ncc *NotifyChannelConfig) SendEmail(notifyRuleId int64, events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string, ch chan *EmailContext) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
 	m.SetHeader("To", strings.Join(sendtos, ","))
-	m.SetHeader("Subject", tpl["subject"])
-	m.SetBody("text/html", tpl["content"])
+	m.SetHeader("Subject", tpl["subject"].(string))
+	m.SetBody("text/html", tpl["content"].(string))
 	ch <- &EmailContext{notifyRuleId, events, m}
 }
 
-func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[string]string, sendtos []string) error {
+func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string) error {
 
 	d := gomail.NewDialer(ncc.RequestConfig.SMTPRequestConfig.Host, ncc.RequestConfig.SMTPRequestConfig.Port, ncc.RequestConfig.SMTPRequestConfig.Username, ncc.RequestConfig.SMTPRequestConfig.Password)
 	if ncc.RequestConfig.SMTPRequestConfig.InsecureSkipVerify {
@@ -744,8 +744,8 @@ func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[st
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
 	m.SetHeader("To", strings.Join(sendtos, ","))
-	m.SetHeader("Subject", tpl["subject"])
-	m.SetBody("text/html", tpl["content"])
+	m.SetHeader("Subject", tpl["subject"].(string))
+	m.SetBody("text/html", tpl["content"].(string))
 	return gomail.Send(s, m)
 }
 
