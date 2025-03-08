@@ -114,7 +114,7 @@ func TestSendDingTalkNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := notifyChannel.SendHTTP(events, tpl, params, &User{Phone: "+8618021015257"}, client)
+	resp, err := notifyChannel.SendHTTP(events, tpl, params, []string{"+8618021015257"}, client)
 	if err != nil {
 		t.Fatalf("SendHTTP failed: %v", err)
 	}
@@ -254,13 +254,6 @@ func TestSendTencentVoiceNotification(t *testing.T) {
 		"code": "123456",
 	}
 
-	// 创建用户信息
-	userInfos := []*User{
-		{
-			Phone: "+8613788888888",
-		},
-	}
-
 	// 创建HTTP客户端
 	client, err := GetHTTPClient(notifyChannel)
 	if err != nil {
@@ -268,7 +261,7 @@ func TestSendTencentVoiceNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, userInfos[0], client)
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, []string{"+8618021015257"}, client)
 	if err != nil {
 		t.Fatalf("SendHTTP失败: %v", err)
 	}
@@ -415,16 +408,6 @@ func TestSendTencentSMSNotification(t *testing.T) {
 		"code": "123456",
 	}
 
-	// 创建用户信息
-	userInfos := []*User{
-		{
-			Phone: "+8618021015257",
-		},
-		{
-			Phone: "+8618021015258",
-		},
-	}
-
 	// 创建HTTP客户端
 	client, err := GetHTTPClient(notifyChannel)
 	if err != nil {
@@ -432,7 +415,7 @@ func TestSendTencentSMSNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, userInfos[0], client)
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, []string{"+8618021015257"}, client)
 	if err != nil {
 		t.Fatalf("SendHTTP失败: %v", err)
 	}
@@ -496,11 +479,6 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 		"code": "123456",
 	}
 
-	// 创建用户信息
-	user := &User{
-		Phone: data["Phone"],
-	}
-
 	// 创建HTTP客户端
 	client, err := GetHTTPClient(notifyChannel)
 	if err != nil {
@@ -508,7 +486,7 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, user, client)
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, []string{"+8618021015257"}, client)
 	if err != nil {
 		t.Fatalf("SendHTTP失败: %v", err)
 	}
@@ -577,11 +555,6 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 		"code": "123456",
 	}
 
-	// 创建用户信息
-	user := &User{
-		Phone: data["Phone"],
-	}
-
 	// 创建HTTP客户端
 	client, err := GetHTTPClient(notifyChannel)
 	if err != nil {
@@ -589,7 +562,7 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, user, client)
+	resp, err := notifyChannel.SendHTTP(events, tpl, map[string]string{}, []string{"+8618021015257"}, client)
 	if err != nil {
 		t.Fatalf("SendHTTP失败: %v", err)
 	}

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -178,7 +179,12 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		tplContent = messageTemplates[0].RenderEvent(events)
 	}
 
-	userInfos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&f.NotifyConfig, rt.UserCache, rt.UserGroupCache)
+	var contactKey string
+	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
+		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+	}
+
+	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&f.NotifyConfig, contactKey, rt.UserCache, rt.UserGroupCache)
 
 	var resp string
 	switch notifyChannel.RequestType {
@@ -197,30 +203,40 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
-		if notifyChannel.ParamConfig.UserInfo != nil && len(userInfos) > 0 {
-			for i := range userInfos {
-				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, userInfos[i], client)
-				logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, userInfos[i], resp, err)
-				if err != nil {
-					logger.Errorf("failed to send http notify: %v", err)
-					ginx.NewRender(c).Message(err)
-					break
-				}
-				ginx.NewRender(c).Message(err)
-			}
-		} else {
-			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, nil, client)
-			logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+
+		if notifyChannel.RequestConfig == nil {
+			ginx.Bomb(http.StatusBadRequest, "request config not found")
+		}
+
+		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
+			ginx.Bomb(http.StatusBadRequest, "http request config not found")
+		}
+
+		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
+			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
+			logger.Infof("channel_name: %v, event:%+v, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], sendtos, tplContent, customParams, resp, err)
 			if err != nil {
 				logger.Errorf("failed to send http notify: %v", err)
 			}
 			ginx.NewRender(c).Data(resp, err)
+		} else {
+			for i := range sendtos {
+				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
+				logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
+				if err != nil {
+					logger.Errorf("failed to send http notify: %v", err)
+					ginx.NewRender(c).Message(err)
+					return
+				}
+			}
+			ginx.NewRender(c).Message(err)
 		}
+
 	case "smtp":
-		err := notifyChannel.SendEmail2(events, tplContent, userInfos)
+		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
 		ginx.NewRender(c).Message(err)
 	case "script":
-		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, userInfos)
+		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		ginx.NewRender(c).Data(resp, err)
 	default:
@@ -259,6 +275,7 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	res := make([][]paramList, 0)
+	filter := make(map[string]struct{})
 	for _, nr := range lst {
 		if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) {
 			continue
@@ -270,6 +287,7 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 			}
 
 			list := make([]paramList, 0)
+			filterKey := ""
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
 				cname, exsits := keyMap[key]
@@ -280,7 +298,12 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 						Value: value,
 					})
 				}
+				filterKey += fmt.Sprintf("%s:%s,", key, value)
 			}
+			if _, ok := filter[filterKey]; ok {
+				continue
+			}
+			filter[filterKey] = struct{}{}
 			res = append(res, list)
 		}
 	}
