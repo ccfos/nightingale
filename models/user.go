@@ -26,6 +26,7 @@ const (
 	Wecom        = "wecom"
 	Feishu       = "feishu"
 	FeishuCard   = "feishucard"
+	Discord      = "discord"
 	Mm           = "mm"
 	Telegram     = "telegram"
 	Email        = "email"
