@@ -406,7 +406,7 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 
 func NeedBatchContacts(requestConfig *models.HTTPRequestConfig) bool {
 	b, _ := json.Marshal(requestConfig)
-	return strings.Contains(string(b), "batch")
+	return strings.Contains(string(b), "batchContacts")
 }
 
 // HandleEventNotify 处理event事件的主逻辑

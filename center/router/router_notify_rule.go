@@ -214,7 +214,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 
 		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
 			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
-			logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+			logger.Infof("channel_name: %v, event:%+v, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], sendtos, tplContent, customParams, resp, err)
 			if err != nil {
 				logger.Errorf("failed to send http notify: %v", err)
 			}
@@ -222,14 +222,14 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		} else {
 			for i := range sendtos {
 				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
-				logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
+				logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
 				if err != nil {
 					logger.Errorf("failed to send http notify: %v", err)
 					ginx.NewRender(c).Message(err)
-					break
+					return
 				}
-				ginx.NewRender(c).Message(err)
 			}
+			ginx.NewRender(c).Message(err)
 		}
 
 	case "smtp":

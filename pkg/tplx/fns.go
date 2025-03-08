@@ -645,3 +645,11 @@ func BatchContactsJsonMarshal(arr interface{}) template.HTML {
 func BatchContactsJoinComma(arr interface{}) string {
 	return MappingAndJoin(arr, "", "", ",")
 }
+
+func BatchContactsAtsInFeishuEmail(arr interface{}) template.HTML {
+	return template.HTML(MappingAndJoin(arr, "<at email=\\\"", "\\\"></at>", " "))
+}
+
+func BatchContactsAtsInFeishuId(arr interface{}) template.HTML {
+	return template.HTML(MappingAndJoin(arr, "<at id=\"", "\"></at>", " "))
+}
