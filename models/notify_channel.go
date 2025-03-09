@@ -29,7 +29,6 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
-	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	uuid "github.com/satori/go.uuid"
 
@@ -815,9 +814,6 @@ func (c *HTTPRequestConfig) Verify() error {
 		return errors.New("http request method must be GET, POST or PUT")
 	}
 
-	if !str.IsValidURL(c.URL) {
-		return errors.New("invalid URL format")
-	}
 	return nil
 }
 

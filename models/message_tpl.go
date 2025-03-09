@@ -553,30 +553,27 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
-	Discord: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Recovered   
-**告警名称:** {{$event.RuleName}}   
-**恢复时间:** {{timeformat $event.LastEvalTime}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
-**告警描述:** **服务已恢复**   
-{{- else }}
-{{- if ne $event.Cate "host"}}   
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Triggered   
-**告警名称:** {{$event.RuleName}}   
-**触发时间:** {{timeformat $event.TriggerTime}}   
-**发送时间:** {{timestamp}}   
-**触发时值:** {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
-{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
-{{- end -}}
-{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
+**Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
+**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+**Monitor Target**: {{$event.TargetIdent}}{{end}}   
+**Metrics**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+**Trigger Value**: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Time Since First Alert**: {{humanizeDurationInterface $time_duration}}
+**Send Time**: {{timestamp}}
+
+{{$domain := "http://127.0.0.1:17000" }}
+{{$mutelink := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}
+{{- range $key, $value := $event.TagsMap}}
+{{- $encodedValue := $value | urlquery }}
+{{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
+{{- end}}
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
 }
 
 var MsgTplMap = []MessageTemplate{
+	{Name: "Discord", Ident: Discord, Content: map[string]string{"content": NewTplMap[Discord]}},
 	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"content": NewTplMap["ali-voice"]}},
 	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"content": NewTplMap["ali-sms"]}},
 	{Name: "Tencent Voice", Ident: "tx-voice", Content: map[string]string{"content": NewTplMap["tx-voice"]}},
