@@ -137,9 +137,6 @@ func (c *NotifyConfig) Verify() error {
 		return errors.New("invalid channel id")
 	}
 
-	if len(c.Severities) == 0 {
-		return errors.New("severities cannot be empty")
-	}
 	for _, severity := range c.Severities {
 		if severity < 1 || severity > 3 {
 			return errors.New("invalid severity level")
