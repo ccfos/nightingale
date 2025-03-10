@@ -173,7 +173,7 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
 	}
 
-	err := session.Find(&lst).Error
+	err := session.Order("id desc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -547,19 +547,19 @@ var NewTplMap = map[string]string{
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
-var MsgTplMap = map[string]map[string]string{
-	Dingtalk:    {"title": DingtalkTitle, "content": NewTplMap[Dingtalk]},
-	Email:       {"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]},
-	FeishuCard:  {"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]},
-	Feishu:      {"content": NewTplMap[Feishu]},
-	Wecom:       {"content": NewTplMap[Wecom]},
-	Lark:        {"content": NewTplMap[Lark]},
-	LarkCard:    {"title": LarkCardTitle, "content": NewTplMap[LarkCard]},
-	Telegram:    {"content": NewTplMap[Telegram]},
-	"ali-voice": {"content": NewTplMap["ali-voice"]},
-	"ali-sms":   {"content": NewTplMap["ali-sms"]},
-	"tx-voice":  {"content": NewTplMap["tx-voice"]},
-	"tx-sms":    {"content": NewTplMap["tx-sms"]},
+var MsgTplMap = []MessageTemplate{
+	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"content": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"content": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice", Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms", Content: map[string]string{"content": NewTplMap["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram, Content: map[string]string{"content": NewTplMap[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
+	{Name: "Lark", Ident: Lark, Content: map[string]string{"content": NewTplMap[Lark]}},
+	{Name: "Feishu", Ident: Feishu, Content: map[string]string{"content": NewTplMap[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -567,19 +567,19 @@ func InitMessageTemplate(ctx *ctx.Context) {
 		return
 	}
 
-	for channel, content := range MsgTplMap {
+	for _, tpl := range MsgTplMap {
 		msgTpl := MessageTemplate{
-			Name:               channel,
-			Ident:              channel,
-			Content:            content,
-			NotifyChannelIdent: channel,
+			Name:               tpl.Name,
+			Ident:              tpl.Ident,
+			Content:            tpl.Content,
+			NotifyChannelIdent: tpl.Ident,
 			CreateBy:           "system",
 			CreateAt:           time.Now().Unix(),
 			UpdateBy:           "system",
 			UpdateAt:           time.Now().Unix(),
 		}
 
-		err := msgTpl.Upsert(ctx, channel)
+		err := msgTpl.Upsert(ctx, msgTpl.Ident)
 		if err != nil {
 			logger.Warningf("failed to upsert msg tpls %v", err)
 		}
