@@ -578,9 +578,9 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}*告警描述:* *{{$event.RuleNote}}*{{end}}
 {{- end -}}
 
-{{$domain := "http://Please contact the administrator to modify the notification template and replace the domain name with the actual domain name" }}   
-<{{$domain}}/alert-his-events/{{$event.Id}}|Event Details>
-<{{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}|Block for 1 hour>
+{{$domain := "http://127.0.0.1:17000" }}   
+<{{$domain}}/alert-his-events/{{$event.Id}}|Event Details> 
+<{{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}|Block for 1 hour> 
 <{{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}|View Curve>`,
 	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
@@ -705,6 +705,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 		escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
 		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
 		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+		escaped = strings.ReplaceAll(escaped, "&lt;", "<")
 		tplContent[key] = template.HTML(escaped)
 	}
 	return tplContent
