@@ -1,7 +1,6 @@
 package tplx
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -585,49 +584,72 @@ func Query(datasourceID int64, promql string) model.Value {
 	return nil
 }
 
-type DingTalkAtBody struct {
-	IsAtAll   bool     `json:"isAtAll"`
-	AtMobiles []string `json:"atMobiles"`
-	AtUserIds []string `json:"atUserIds"`
-}
+func MappingAndJoin(arr interface{}, prefix, suffix, join string) string {
+	var result []string
 
-func DingTalkAt(all bool, phones string, userIDs string) template.HTML {
-	dt := DingTalkAtBody{
-		IsAtAll:   all,
-		AtMobiles: mySplit(phones),
-		AtUserIds: mySplit(userIDs),
+	switch v := arr.(type) {
+	case []int:
+		for _, item := range v {
+			result = append(result, fmt.Sprintf("%v", item))
+		}
+	case []string:
+		result = v
+	case []interface{}:
+		for _, item := range v {
+			result = append(result, fmt.Sprintf("%v", item))
+		}
 	}
-	bytes, _ := json.Marshal(dt)
-	return template.HTML(bytes)
-}
 
-func mySplit(s string) []string {
-	strs := strings.FieldsFunc(s, func(r rune) bool {
-		return r == ',' || r == ';'
-	})
-	m := make(map[string]struct{})
-	for _, str := range strs {
-		m[strings.TrimSpace(str)] = struct{}{}
-	}
 	var res []string
-	for k := range m {
-		res = append(res, k)
+	for _, s := range result {
+		if s == "" {
+			continue
+		}
+		res = append(res, prefix+s+suffix)
 	}
-	return res
-}
 
-func AddPrefix(s, prefix string) string {
-	return prefix + s
-}
-
-func AddSuffix(s, suffix string) string {
-	return s + suffix
-}
-
-func ManipulateStr(str, split, prefix, suffix, join string) string {
-	strs := strings.Split(str, split)
-	for i, s := range strs {
-		strs[i] = prefix + s + suffix
+	if len(res) == 0 {
+		return ""
 	}
-	return strings.Join(strs, join)
+
+	return strings.Join(res, join)
+}
+
+func StrMappingAndJoin(str, split, prefix, suffix, join string) string {
+	arr := strings.Split(str, split)
+	return MappingAndJoin(arr, prefix, suffix, join)
+}
+
+func Ats(str string) string {
+	if strings.Contains(str, ",") {
+		arr := strings.Split(str, ",")
+		return MappingAndJoin(arr, "@", "", " ")
+	}
+
+	if strings.Contains(str, " ") {
+		arr := strings.Split(str, " ")
+		return MappingAndJoin(arr, "@", "", " ")
+	}
+	return str
+}
+
+// BatchContactsAts
+func BatchContactsAts(arr interface{}) string {
+	return MappingAndJoin(arr, "@", "", " ")
+}
+
+func BatchContactsJsonMarshal(arr interface{}) template.HTML {
+	return template.HTML("[" + MappingAndJoin(arr, "\"", "\"", ",") + "]")
+}
+
+func BatchContactsJoinComma(arr interface{}) string {
+	return MappingAndJoin(arr, "", "", ",")
+}
+
+func BatchContactsAtsInFeishuEmail(arr interface{}) template.HTML {
+	return template.HTML(MappingAndJoin(arr, "<at email=\\\"", "\\\"></at>", " "))
+}
+
+func BatchContactsAtsInFeishuId(arr interface{}) template.HTML {
+	return template.HTML(MappingAndJoin(arr, "<at id=\"", "\"></at>", " "))
 }

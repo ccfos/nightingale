@@ -29,7 +29,6 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
-	"github.com/ccfos/nightingale/v6/pkg/str"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	uuid "github.com/satori/go.uuid"
 
@@ -41,8 +40,9 @@ import (
 )
 
 type EmailContext struct {
-	Events []*AlertCurEvent
-	Mail   *gomail.Message
+	NotifyRuleId int64
+	Events       []*AlertCurEvent
+	Mail         *gomail.Message
 }
 
 // NotifyChannelConfig 通知媒介
@@ -152,11 +152,10 @@ type RequestDetail struct {
 	Body       string            `json:"body"`       // 请求体
 }
 
-func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfos []*User) (string, string, error) {
-
+func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) (string, string, error) {
 	config := ncc.RequestConfig.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {
-		return "", "", nil
+		return "", "", fmt.Errorf("script or path is empty")
 	}
 
 	fpath := ".notify_scriptt"
@@ -167,7 +166,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 		if file.IsExist(fpath) {
 			oldContent, err := file.ToString(fpath)
 			if err != nil {
-				return "", "", nil
+				return "", "", fmt.Errorf("failed to read script file: %v", err)
 			}
 
 			if oldContent == config.Script {
@@ -178,37 +177,17 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 		if rewrite {
 			_, err := file.WriteString(fpath, config.Script)
 			if err != nil {
-				return "", "", nil
+				return "", "", fmt.Errorf("failed to write script file: %v", err)
 			}
 
 			err = os.Chmod(fpath, 0777)
 			if err != nil {
-				return "", "", err
+				return "", "", fmt.Errorf("failed to chmod script file: %v", err)
 			}
 		}
 
 		cur, _ := os.Getwd()
 		fpath = path.Join(cur, fpath)
-	}
-
-	// 用户信息
-	sendtos := make([]string, 0)
-	for _, userInfo := range userInfos {
-		var sendto string
-		if ncc.ParamConfig.UserInfo == nil {
-			continue
-		}
-
-		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
-			sendto = userInfo.Phone
-		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
-			sendto = userInfo.Email
-		} else {
-			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
-		}
-		if sendto != "" {
-			sendtos = append(sendtos, sendto)
-		}
 	}
 
 	cmd := exec.Command(fpath)
@@ -220,7 +199,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 
 	err := startCmd(cmd)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("failed to start script: %v", err)
 	}
 
 	res := buf.String()
@@ -251,14 +230,14 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	}
 
 	if err != nil {
-		return cmd.String(), res, err
+		return cmd.String(), res, fmt.Errorf("failed to execute script: %v", err)
 	}
 	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 
 	return cmd.String(), res, nil
 }
 
-func getStdinBytes(events []*AlertCurEvent, tpl map[string]string, params map[string]string, sendtos []string) []byte {
+func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) []byte {
 	// 创建一个 map 来存储所有数据
 	data := map[string]interface{}{
 		"events": events,
@@ -438,7 +417,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	return "", errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]string, params map[string]string, userInfo *User, client *http.Client) (string, error) {
+func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
@@ -452,23 +431,15 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	// MessageTemplate
 	fullTpl := make(map[string]interface{})
 
-	// 用户信息
-	var sendto string
-	if userInfo != nil && ncc.ParamConfig.UserInfo != nil {
-		if ncc.ParamConfig.UserInfo.ContactKey == "phone" {
-			sendto = userInfo.Phone
-		} else if ncc.ParamConfig.UserInfo.ContactKey == "email" {
-			sendto = userInfo.Email
-		} else {
-			sendto, _ = userInfo.ExtractToken(ncc.ParamConfig.UserInfo.ContactKey)
-		}
-	}
-
-	fullTpl["sendto"] = sendto // 发送对象
-	fullTpl["params"] = params // 自定义参数
+	fullTpl["sendtos"] = sendtos // 发送对象
+	fullTpl["params"] = params   // 自定义参数
 	fullTpl["tpl"] = tpl
 	fullTpl["events"] = events
 	fullTpl["event"] = events[0]
+
+	if len(sendtos) > 0 {
+		fullTpl["sendto"] = sendtos[0]
+	}
 
 	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
 	body, err := ncc.parseRequestBody(fullTpl)
@@ -542,7 +513,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 }
 
-func (ncc *NotifyChannelConfig) getAliQuery(content map[string]string) url.Values {
+func (ncc *NotifyChannelConfig) getAliQuery(content map[string]interface{}) url.Values {
 	// 渲染 param
 	var paramKey string
 	query := url.Values{}
@@ -682,6 +653,7 @@ func (ncc *NotifyChannelConfig) parseRequestBody(bodyTpl map[string]interface{})
 	var defs = []string{
 		"{{$tpl := .tpl}}",
 		"{{$sendto := .sendto}}",
+		"{{$sendtos := .sendtos}}",
 		"{{$params := .params}}",
 		"{{$events := .events}}",
 		"{{$event := .event}}",
@@ -702,8 +674,10 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	var defs = []string{
 		"{{$tpl := .tpl}}",
 		"{{$sendto := .sendto}}",
+		"{{$sendtos := .sendtos}}",
 		"{{$params := .params}}",
 		"{{$events := .events}}",
+		"{{$event := .event}}",
 	}
 
 	text := strings.Join(append(defs, tplStr), "")
@@ -746,26 +720,16 @@ func needsTemplateRendering(s string) bool {
 	return strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }
 
-func (ncc *NotifyChannelConfig) SendEmail(events []*AlertCurEvent, tpl map[string]string, userInfos []*User, ch chan *EmailContext) error {
-
-	var to []string
-	for _, userInfo := range userInfos {
-		if userInfo.Email != "" {
-			to = append(to, userInfo.Email)
-		}
-	}
+func (ncc *NotifyChannelConfig) SendEmail(notifyRuleId int64, events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string, ch chan *EmailContext) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(to, ","))
-	m.SetHeader("Subject", tpl["subject"])
-	m.SetBody("text/html", tpl["content"])
-
-	ch <- &EmailContext{events, m}
-
-	return nil
+	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("Subject", tpl["subject"].(string))
+	m.SetBody("text/html", tpl["content"].(string))
+	ch <- &EmailContext{notifyRuleId, events, m}
 }
 
-func (ncc *NotifyChannelConfig) SendEmail2(events []*AlertCurEvent, tpl map[string]string, userInfos []*User) error {
+func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string) error {
 
 	d := gomail.NewDialer(ncc.RequestConfig.SMTPRequestConfig.Host, ncc.RequestConfig.SMTPRequestConfig.Port, ncc.RequestConfig.SMTPRequestConfig.Username, ncc.RequestConfig.SMTPRequestConfig.Password)
 	if ncc.RequestConfig.SMTPRequestConfig.InsecureSkipVerify {
@@ -776,17 +740,11 @@ func (ncc *NotifyChannelConfig) SendEmail2(events []*AlertCurEvent, tpl map[stri
 		logger.Errorf("email_sender: failed to dial: %s", err)
 	}
 
-	var to []string
-	for _, userInfo := range userInfos {
-		if userInfo.Email != "" {
-			to = append(to, userInfo.Email)
-		}
-	}
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(to, ","))
-	m.SetHeader("Subject", tpl["subject"])
-	m.SetBody("text/html", tpl["content"])
+	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("Subject", tpl["subject"].(string))
+	m.SetBody("text/html", tpl["content"].(string))
 	return gomail.Send(s, m)
 }
 
@@ -800,7 +758,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 	}
 
 	if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(ncc.Ident) {
-		return errors.New("channel identifier must be alphanumeric and underscore")
+		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
 	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" {
@@ -856,9 +814,6 @@ func (c *HTTPRequestConfig) Verify() error {
 		return errors.New("http request method must be GET, POST or PUT")
 	}
 
-	if !str.IsValidURL(c.URL) {
-		return errors.New("invalid URL format")
-	}
 	return nil
 }
 
@@ -1100,6 +1055,27 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "Discord", Ident: Discord, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"content": "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+				},
+			},
+		},
+	},
+
+	{
 		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1261,7 +1237,7 @@ var NotiChMap = []*NotifyChannelConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n@{{$params.ats}}"}, "at": {"atMobiles": ["{{$params.ats}}"]}}`,
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
 				},
 			},
 		},

@@ -28,6 +28,7 @@ const (
 	Slack        = "slack"
 	SlackBot     = "slackbot"
 	FeishuCard   = "feishucard"
+	Discord      = "discord"
 	Mm           = "mm"
 	Telegram     = "telegram"
 	Email        = "email"

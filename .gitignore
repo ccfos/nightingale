@@ -67,3 +67,5 @@ queries.active
 n9e.sql
 
 !/datasource
+
+.env.json
