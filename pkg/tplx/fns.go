@@ -1,6 +1,7 @@
 package tplx
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -652,4 +653,12 @@ func BatchContactsAtsInFeishuEmail(arr interface{}) template.HTML {
 
 func BatchContactsAtsInFeishuId(arr interface{}) template.HTML {
 	return template.HTML(MappingAndJoin(arr, "<at id=\"", "\"></at>", " "))
+}
+
+func JsonMarshal(v interface{}) template.HTML {
+	json, err := json.Marshal(v)
+	if err != nil {
+		return template.HTML("")
+	}
+	return template.HTML(string(json))
 }
