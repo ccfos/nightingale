@@ -240,10 +240,11 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) []byte {
 	// 创建一个 map 来存储所有数据
 	data := map[string]interface{}{
-		"events": events,
-		"tpl":    tpl,
-		"params": params,
-		"sendto": sendtos,
+		"events":  events,
+		"tpl":     tpl,
+		"params":  params,
+		"sendto":  sendtos,
+		"sendtos": sendtos,
 	}
 
 	// 将数据序列化为 JSON 字节数组

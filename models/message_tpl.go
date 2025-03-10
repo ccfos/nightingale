@@ -646,13 +646,15 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			text := strings.Join(append(defs, msgTpl), "")
 			tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 			if err != nil {
-				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				logger.Errorf("failed to parse template: %v", err)
+				tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
 				continue
 			}
 
 			var body bytes.Buffer
 			if err = tpl.Execute(&body, events); err != nil {
-				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				logger.Errorf("failed to execute template: %v", err)
+				tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 				continue
 			}
 			tplContent[key] = body.String()
@@ -663,11 +665,13 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
 			logger.Errorf("failed to parse template: %v events: %v", err, events)
+			tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
 			continue
 		}
 
 		if err = tpl.Execute(&body, events); err != nil {
 			logger.Errorf("failed to execute template: %v events: %v", err, events)
+			tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 			continue
 		}
 
