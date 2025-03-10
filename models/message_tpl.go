@@ -212,8 +212,8 @@ const (
 )
 
 var NewTplMap = map[string]string{
-	"ali-voice": `{"alert_name":"{{$event.RuleName}},级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}"}`,
-	"ali-sms":   `{"name":"级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{$event.RuleName}}"`,
+	"ali-voice": `{"incident":"{{$event.RuleName}}"}`,
+	"ali-sms":   `{"incident":"{{$event.RuleName}}"`,
 	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
 	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
 	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
