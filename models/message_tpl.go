@@ -545,6 +545,28 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+
+	Slack: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
 var MsgTplMap = []MessageTemplate{
@@ -560,6 +582,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	{Name: "slack", Ident: Slack, Content: map[string]string{"content": NewTplMap[Slack]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {

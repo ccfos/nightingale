@@ -1029,6 +1029,26 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "Slack", Ident: Slack, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"text": "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
