@@ -295,7 +295,17 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 		return []string{}, flashDutyChannelIDs, customParams
 	}
 
-	users := userCache.GetByUserIds(userInfoParams.UserIDs)
+	userIds := make([]int64, 0)
+	userIds = append(userIds, userInfoParams.UserIDs...)
+
+	if len(userInfoParams.UserGroupIDs) > 0 {
+		userGroups := userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
+		for _, userGroup := range userGroups {
+			userIds = append(userIds, userGroup.UserIds...)
+		}
+	}
+
+	users := userCache.GetByUserIds(userIds)
 	visited := make(map[int64]bool)
 	sendtos := make([]string, 0)
 	for _, user := range users {
@@ -313,27 +323,6 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 
 		sendtos = append(sendtos, sendto)
 		visited[user.Id] = true
-	}
-
-	userGroups := userGroupCache.GetByUserGroupIds(userInfoParams.UserGroupIDs)
-	for _, userGroup := range userGroups {
-		for _, user := range userGroup.Users {
-			if visited[user.Id] {
-				continue
-			}
-
-			var sendto string
-			if contactKey == "phone" {
-				sendto = user.Phone
-			} else if contactKey == "email" {
-				sendto = user.Email
-			} else {
-				sendto, _ = user.ExtractToken(contactKey)
-			}
-
-			sendtos = append(sendtos, sendto)
-			visited[user.Id] = true
-		}
 	}
 
 	return sendtos, flashDutyChannelIDs, customParams
@@ -416,10 +405,6 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	rule := e.alertRuleCache.Get(event.RuleId)
 	if rule == nil {
 		return
-	}
-
-	if len(rule.NotifyRuleIds) > 0 {
-		event.NotifyRuleIDs = rule.NotifyRuleIds
 	}
 
 	if e.blockEventNotify(rule, event) {

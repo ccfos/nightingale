@@ -111,7 +111,7 @@ func (rt *Router) notifyChannelPuts(c *gin.Context) {
 }
 
 func (rt *Router) notifyContactGets(c *gin.Context) {
-	var notifyContacts []models.NotifyContact
+	notifyContacts := []models.NotifyContact{}
 	cval, err := models.ConfigsGet(rt.Ctx, models.NOTIFYCONTACT)
 	ginx.Dangerous(err)
 	if cval == "" {
@@ -120,26 +120,13 @@ func (rt *Router) notifyContactGets(c *gin.Context) {
 	}
 
 	err = json.Unmarshal([]byte(cval), &notifyContacts)
+
 	ginx.NewRender(c).Data(notifyContacts, err)
 }
 
 func (rt *Router) notifyContactPuts(c *gin.Context) {
 	var notifyContacts []models.NotifyContact
 	ginx.BindJSON(c, &notifyContacts)
-
-	keys := []string{models.DingtalkKey, models.WecomKey, models.FeishuKey, models.MmKey,
-		models.TelegramKey, models.LarkKey}
-
-	m := make(map[string]struct{})
-	for _, v := range notifyContacts {
-		m[v.Ident] = struct{}{}
-	}
-
-	for _, v := range keys {
-		if _, ok := m[v]; !ok {
-			ginx.Bomb(200, "contact %s ident can not modify", v)
-		}
-	}
 
 	data, err := json.Marshal(notifyContacts)
 	ginx.Dangerous(err)

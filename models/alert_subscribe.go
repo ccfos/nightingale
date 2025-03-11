@@ -407,6 +407,12 @@ func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
 		event.CallbacksJSON = []string{}
 	}
 
+	if len(s.NotifyRuleIds) > 0 {
+		event.NotifyRuleIDs = s.NotifyRuleIds
+	} else {
+		event.NotifyRuleIDs = []int64{}
+	}
+
 	event.NotifyGroups = s.UserGroupIds
 	event.NotifyGroupsJSON = strings.Fields(s.UserGroupIds)
 }

@@ -212,8 +212,8 @@ const (
 )
 
 var NewTplMap = map[string]string{
-	"ali-voice": `{"alert_name":"{{$event.RuleName}},级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}"}`,
-	"ali-sms":   `{"name":"级别状态 S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则名称 {{$event.RuleName}}"`,
+	"ali-voice": `{{$event.RuleName}}`,
+	"ali-sms":   `{{$event.RuleName}}`,
 	"tx-voice":  `S{{$event.Severity}}{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}{{$event.RuleName}}`,
 	"tx-sms":    `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}规则名称: {{$event.RuleName}}`,
 	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
@@ -603,8 +603,8 @@ var NewTplMap = map[string]string{
 
 var MsgTplMap = []MessageTemplate{
 	{Name: "Discord", Ident: Discord, Content: map[string]string{"content": NewTplMap[Discord]}},
-	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"content": NewTplMap["ali-voice"]}},
-	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"content": NewTplMap["ali-sms"]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
 	{Name: "Tencent Voice", Ident: "tx-voice", Content: map[string]string{"content": NewTplMap["tx-voice"]}},
 	{Name: "Tencent SMS", Ident: "tx-sms", Content: map[string]string{"content": NewTplMap["tx-sms"]}},
 	{Name: "Telegram", Ident: Telegram, Content: map[string]string{"content": NewTplMap[Telegram]}},
@@ -677,13 +677,15 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			text := strings.Join(append(defs, msgTpl), "")
 			tpl, err := texttemplate.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 			if err != nil {
-				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				logger.Errorf("failed to parse template: %v", err)
+				tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
 				continue
 			}
 
 			var body bytes.Buffer
 			if err = tpl.Execute(&body, events); err != nil {
-				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				logger.Errorf("failed to execute template: %v", err)
+				tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 				continue
 			}
 			tplContent[key] = body.String()
@@ -713,11 +715,13 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 		tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 		if err != nil {
 			logger.Errorf("failed to parse template: %v events: %v", err, events)
+			tplContent[key] = fmt.Sprintf("failed to parse template: %v", err)
 			continue
 		}
 
 		if err = tpl.Execute(&body, events); err != nil {
 			logger.Errorf("failed to execute template: %v events: %v", err, events)
+			tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 			continue
 		}
 
