@@ -32,6 +32,7 @@ const (
 	Mm           = "mm"
 	Telegram     = "telegram"
 	Email        = "email"
+	Phone        = "phone"
 	EmailSubject = "mailsubject"
 	Lark         = "lark"
 	LarkCard     = "larkcard"
@@ -881,28 +882,13 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	}
 
 	switch key {
-	case Dingtalk:
-		ret := gjson.GetBytes(bs, DingtalkKey)
-		return ret.String(), ret.Exists()
-	case Wecom:
-		ret := gjson.GetBytes(bs, WecomKey)
-		return ret.String(), ret.Exists()
-	case Feishu, FeishuCard:
-		ret := gjson.GetBytes(bs, FeishuKey)
-		return ret.String(), ret.Exists()
-	case Mm:
-		ret := gjson.GetBytes(bs, MmKey)
-		return ret.String(), ret.Exists()
-	case Telegram:
-		ret := gjson.GetBytes(bs, TelegramKey)
-		return ret.String(), ret.Exists()
 	case Email:
 		return u.Email, u.Email != ""
-	case Lark, LarkCard:
-		ret := gjson.GetBytes(bs, LarkKey)
-		return ret.String(), ret.Exists()
+	case Phone:
+		return u.Phone, u.Phone != ""
 	default:
-		return "", false
+		ret := gjson.GetBytes(bs, key)
+		return ret.String(), ret.Exists()
 	}
 }
 

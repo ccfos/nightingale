@@ -563,6 +563,12 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	fireMap := make(map[string]*models.AlertCurEvent)
 	pendingsUseByRecoverMap := make(map[string]*models.AlertCurEvent)
 	for _, event := range curEvents {
+		alertRule := p.alertRuleCache.Get(event.RuleId)
+		if alertRule == nil {
+			continue
+		}
+		event.NotifyRuleIDs = alertRule.NotifyRuleIds
+
 		if event.Cate == models.HOST {
 			target, exists := p.TargetCache.Get(event.TargetIdent)
 			if exists && target.EngineName != p.EngineName && !(p.ctx.IsCenter && target.EngineName == "") {
