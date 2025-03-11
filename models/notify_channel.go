@@ -1059,7 +1059,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Slack", Ident: Slack, RequestType: "http",
+		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "{{$params.webhook_url}}",
@@ -1074,6 +1074,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},
@@ -1083,7 +1084,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://slack.com/api/chat.postMessage",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer {{$params.token}}"},
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you slack bot token>"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Body: `{"channel": "#{{$params.channel}}", "text":  "{{$tpl.content}}", "mrkdwn": true}`,
@@ -1094,7 +1095,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "channel", CName: "channel", Type: "string"},
-					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
 				},
 			},
 		},

@@ -554,7 +554,7 @@ var NewTplMap = map[string]string{
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 
-	Slack: `{{ if $event.IsRecovered }}
+	SlackWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 *告警集群:* {{$event.Cluster}}{{end}}
 *级别状态:* S{{$event.Severity}} Recovered
@@ -615,8 +615,8 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
-	{Name: "Slack", Ident: Slack, Content: map[string]string{"content": NewTplMap[Slack]}},
-	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[Slack]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -690,7 +690,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			}
 			tplContent[key] = body.String()
 			continue
-		} else if t.NotifyChannelIdent == "slack" || t.NotifyChannelIdent == "slackbot" {
+		} else if t.NotifyChannelIdent == "slackwebhook" || t.NotifyChannelIdent == "slackbot" {
 			text := strings.Join(append(defs, msgTpl), "")
 			tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
 			if err != nil {

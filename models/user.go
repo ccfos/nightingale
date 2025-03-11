@@ -25,7 +25,7 @@ const (
 	Dingtalk     = "dingtalk"
 	Wecom        = "wecom"
 	Feishu       = "feishu"
-	Slack        = "slack"
+	SlackWebhook = "slackwebhook"
 	SlackBot     = "slackbot"
 	FeishuCard   = "feishucard"
 	Discord      = "discord"
