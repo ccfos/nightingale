@@ -1328,14 +1328,14 @@ func InitNotifyChannel(ctx *ctx.Context) {
 		notiCh.UpdateAt = time.Now().Unix()
 		err := notiCh.Upsert(ctx, notiCh.ChannelIdent)
 		if err != nil {
-			logger.Warningf("failed to upsert notify channels %v", err)
+			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
 		}
 	}
 
 	// 找到 channel_ident 为空且 update_by 是 system 的数据
-	lst, err := NotifyChannelsGet(ctx, "channel_ident = '' and update_by = 'system'")
+	lst, err := NotifyChannelsGet(ctx, "channel_ident = ? and update_by = ?", "", "system")
 	if err != nil {
-		logger.Warningf("failed to get notify channels %v", err)
+		logger.Warningf("notify channel init failed to get notify channels %v", err)
 		return
 	}
 
@@ -1345,7 +1345,7 @@ func InitNotifyChannel(ctx *ctx.Context) {
 
 	notifyRules, err := NotifyRulesGet(ctx, "enable = ?", true)
 	if err != nil {
-		logger.Warningf("failed to get notify rules %v", err)
+		logger.Warningf("notify channel init failed to get notify rules %v", err)
 		return
 	}
 
@@ -1366,14 +1366,16 @@ func InitNotifyChannel(ctx *ctx.Context) {
 
 		if !found {
 			err := DB(ctx).Delete(&NotifyChannelConfig{}, "id = ?", item.ID).Error
+			logger.Infof("notify channel init delete notify channels %+v", item)
 			if err != nil {
-				logger.Warningf("failed to delete notify channels %v", err)
+				logger.Warningf("notify channel init failed to delete notify channels %v", err)
 			}
 		} else {
 			item.ChannelIdent = item.Ident
-			err := DB(ctx).Model(&NotifyChannelConfig{}).Where("id = ?", item.ID).Update("channel_ident", item.ChannelIdent).Error
+
+			err := DB(ctx).Model(&NotifyChannelConfig{}).Where("id = ?", item.ID).Updates(map[string]interface{}{"channel_ident": item.ChannelIdent, "name": item.Name + " old"}).Error
 			if err != nil {
-				logger.Warningf("failed to update notify channels %+v %v", item, err)
+				logger.Warningf("notify channel init failed to update notify channels %+v %v", item, err)
 			}
 		}
 	}
@@ -1382,8 +1384,9 @@ func InitNotifyChannel(ctx *ctx.Context) {
 func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context, channelIdent string) error {
 	ch, err := NotifyChannelGet(ctx, "channel_ident = ?", channelIdent)
 	if err != nil {
-		return errors.WithMessage(err, "failed to get message tpl")
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
 	}
+
 	if ch == nil {
 		return Insert(ctx, ncc)
 	}

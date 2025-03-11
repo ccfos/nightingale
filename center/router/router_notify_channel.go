@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -166,6 +167,8 @@ func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
 	for ident := range idents {
 		lst = append(lst, ident)
 	}
+
+	sort.Strings(lst)
 
 	ginx.NewRender(c).Data(lst, nil)
 }
