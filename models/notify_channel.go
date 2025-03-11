@@ -1095,7 +1095,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "channel", CName: "channel", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+					{Key: "channel_name", CName: "Channel Name", Type: "string"},
 				},
 			},
 		},
