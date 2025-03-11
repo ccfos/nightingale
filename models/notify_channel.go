@@ -454,6 +454,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 	// 替换 URL Header Parameters 中的变量
 	url, headers, parameters := ncc.replaceVariables(fullTpl)
+	logger.Infof("url: %v, headers: %v, parameters: %v", url, headers, parameters)
 
 	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
 	if err != nil {
@@ -756,11 +757,15 @@ func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) (st
 	if needsTemplateRendering(httpConfig.URL) {
 		logger.Infof("replace variables url: %s tpl: %+v", httpConfig.URL, tpl)
 		url = getParsedString("url", httpConfig.URL, tpl)
+	} else {
+		url = httpConfig.URL
 	}
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
 			headers[key] = getParsedString(key, value, tpl)
+		} else {
+			headers[key] = value
 		}
 	}
 

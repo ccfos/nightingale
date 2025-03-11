@@ -512,7 +512,7 @@ var NewTplMap = map[string]string{
 {{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}`,
-	Wecom: `**级别状态**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
+	Wecom: `**级别状态**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">💔S{{$event.Severity}} Triggered</font>{{end}}       
 **规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
 **监控对象**: {{$event.TargetIdent}}{{end}}   
