@@ -382,7 +382,6 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 		return "", err
 	}
 
-	logger.Infof("send flashduty req:%+v body:%+v", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, string(body))
 	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
@@ -397,6 +396,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 
 	// 重试机制
 	for i := 0; i <= 3; i++ {
+		logger.Infof("send flashduty req:%+v body:%+v", req, string(body))
 		resp, err := client.Do(req)
 		if err != nil {
 			logger.Errorf("send flashduty req:%+v err:%v", req, err)
@@ -453,21 +453,20 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	}
 
 	// 替换 URL Header Parameters 中的变量
-	ncc.replaceVariables(fullTpl)
+	url, headers, parameters := ncc.replaceVariables(fullTpl)
 
-	req, err := http.NewRequest(httpConfig.Method, httpConfig.URL, bytes.NewBuffer(body))
+	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
 		return "", err
 	}
 
 	query := req.URL.Query()
-	var headers map[string]string
 	// 设置请求头 腾讯云短信、语音特殊处理
 	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
 		ncc.setTxHeader(req, body)
 	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		req, err = http.NewRequest(httpConfig.Method, httpConfig.URL, nil)
+		req, err = http.NewRequest(httpConfig.Method, url, nil)
 		if err != nil {
 			return "", err
 		}
@@ -477,21 +476,20 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 			req.Header.Set(key, value)
 		}
 	} else {
-		for key, value := range httpConfig.Headers {
+		for key, value := range headers {
 			req.Header.Add(key, value)
 		}
 	}
 
-	// 记录完整的请求信息
-	logger.Debugf("URL: %s, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL.String(), req.Method, req.Header, query, string(body))
-
 	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-		for key, value := range httpConfig.Request.Parameters {
+		for key, value := range parameters {
 			query.Add(key, value)
 		}
 	}
 
 	req.URL.RawQuery = query.Encode()
+	// 记录完整的请求信息
+	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
 
 	// 重试机制
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
@@ -749,25 +747,32 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	return body.String()
 }
 
-func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) {
+func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) (string, map[string]string, map[string]string) {
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
+	url := ""
+	headers := make(map[string]string)
+	parameters := make(map[string]string)
 
 	if needsTemplateRendering(httpConfig.URL) {
 		logger.Infof("replace variables url: %s tpl: %+v", httpConfig.URL, tpl)
-		httpConfig.URL = getParsedString("url", httpConfig.URL, tpl)
+		url = getParsedString("url", httpConfig.URL, tpl)
 	}
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
-			httpConfig.Headers[key] = getParsedString(key, value, tpl)
+			headers[key] = getParsedString(key, value, tpl)
 		}
 	}
 
 	for key, value := range httpConfig.Request.Parameters {
 		if needsTemplateRendering(value) {
-			httpConfig.Request.Parameters[key] = getParsedString(key, value, tpl)
+			parameters[key] = getParsedString(key, value, tpl)
+		} else {
+			parameters[key] = value
 		}
 	}
+
+	return url, headers, parameters
 }
 
 // needsTemplateRendering 检查字符串是否包含模板语法
