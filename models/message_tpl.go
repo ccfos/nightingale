@@ -688,6 +688,25 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			}
 			tplContent[key] = body.String()
 			continue
+		} else if t.NotifyChannelIdent == "slack" || t.NotifyChannelIdent == "slackbot" {
+			text := strings.Join(append(defs, msgTpl), "")
+			tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+			if err != nil {
+				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				continue
+			}
+
+			if err = tpl.Execute(&body, events); err != nil {
+				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				continue
+			}
+
+			escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
+			escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+			escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+			escaped = strings.ReplaceAll(escaped, "&lt;", "<")
+			tplContent[key] = template.HTML(escaped)
+			continue
 		}
 
 		text := strings.Join(append(defs, msgTpl), "")
@@ -705,7 +724,6 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 		escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
 		escaped = strings.ReplaceAll(escaped, "\n", "\\n")
 		escaped = strings.ReplaceAll(escaped, "\r", "\\r")
-		escaped = strings.ReplaceAll(escaped, "&lt;", "<")
 		tplContent[key] = template.HTML(escaped)
 	}
 	return tplContent
