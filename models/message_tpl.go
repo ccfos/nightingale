@@ -562,8 +562,8 @@ var NewTplMap = map[string]string{
 *Recovery time:* {{timeformat $event.LastEvalTime}}
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}
 {{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
-*持续时长*: {{humanizeDurationInterface $time_duration}}
-*告警描述:* *服务已恢复*
+*Duration*: {{humanizeDurationInterface $time_duration}}
+*Alarm description:* *Service has been restored*
 {{- else }}
 {{- if ne $event.Cate "host"}}
 *Alarm cluster:* {{$event.Cluster}}{{end}}
@@ -575,7 +575,7 @@ var NewTplMap = map[string]string{
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}
 {{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
 *Duration*: {{humanizeDurationInterface $time_duration}}
-{{if $event.RuleNote }}*告警描述:* *{{$event.RuleNote}}*{{end}}
+{{if $event.RuleNote }}*Alarm description:* *{{$event.RuleNote}}*{{end}}
 {{- end -}}
 
 {{$domain := "http://127.0.0.1:17000" }}   
