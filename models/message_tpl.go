@@ -577,7 +577,7 @@ var NewTplMap = map[string]string{
 **Alarm name:** {{$event.RuleName}}   
 **Recovery time:** {{timeformat $event.LastEvalTime}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
-**告警描述:** **服务已恢复**   
+**Alarm description:** **Service has been restored**   
 {{- else }}
 {{- if ne $event.Cate "host"}}   
 **Alarm cluster:** {{$event.Cluster}}{{end}}   
@@ -587,10 +587,10 @@ var NewTplMap = map[string]string{
 **Sending time:** {{timestamp}}   
 **Trigger time value:** {{$event.TriggerValue}}
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
-{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
-{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+{{$domain := "http://127.0.0.1:17000" }}   
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[View Curve]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
 var MsgTplMap = []MessageTemplate{
