@@ -572,20 +572,20 @@ var NewTplMap = map[string]string{
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
 	MattermostWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Recovered   
-**告警名称:** {{$event.RuleName}}   
-**恢复时间:** {{timeformat $event.LastEvalTime}}   
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Recovered   
+**Alarm name:** {{$event.RuleName}}   
+**Recovery time:** {{timeformat $event.LastEvalTime}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
 **告警描述:** **服务已恢复**   
 {{- else }}
 {{- if ne $event.Cate "host"}}   
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Triggered   
-**告警名称:** {{$event.RuleName}}   
-**触发时间:** {{timeformat $event.TriggerTime}}   
-**发送时间:** {{timestamp}}   
-**触发时值:** {{$event.TriggerValue}}
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Triggered   
+**Alarm name:** {{$event.RuleName}}   
+**Trigger time:** {{timeformat $event.TriggerTime}}   
+**Sending time:** {{timestamp}}   
+**Trigger time value:** {{$event.TriggerValue}}
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
