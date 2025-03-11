@@ -556,6 +556,35 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+
+	SlackWebhook: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+*Alarm cluster:* {{$event.Cluster}}{{end}}
+*Level Status:* S{{$event.Severity}} Recovered
+*Alarm name:* {{$event.RuleName}}
+*Recovery time:* {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
+{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+*Duration*: {{humanizeDurationInterface $time_duration}}
+*Alarm description:* *Service has been restored*
+{{- else }}
+{{- if ne $event.Cate "host"}}
+*Alarm cluster:* {{$event.Cluster}}{{end}}
+*Level Status:* S{{$event.Severity}} Triggered
+*Alarm name:* {{$event.RuleName}}
+*Trigger time:* {{timeformat $event.TriggerTime}}
+*Sending time:* {{timestamp}}
+*Trigger time value:* {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
+{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+*Duration*: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}*Alarm description:* *{{$event.RuleNote}}*{{end}}
+{{- end -}}
+
+{{$domain := "http://127.0.0.1:17000" }}   
+<{{$domain}}/alert-his-events/{{$event.Id}}|Event Details> 
+<{{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}|Block for 1 hour> 
+<{{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}|View Curve>`,
 	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
@@ -589,6 +618,8 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -661,6 +692,25 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 				continue
 			}
 			tplContent[key] = body.String()
+			continue
+		} else if t.NotifyChannelIdent == "slackwebhook" || t.NotifyChannelIdent == "slackbot" {
+			text := strings.Join(append(defs, msgTpl), "")
+			tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+			if err != nil {
+				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				continue
+			}
+
+			if err = tpl.Execute(&body, events); err != nil {
+				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				continue
+			}
+
+			escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
+			escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+			escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+			escaped = strings.ReplaceAll(escaped, "&lt;", "<")
+			tplContent[key] = template.HTML(escaped)
 			continue
 		}
 
