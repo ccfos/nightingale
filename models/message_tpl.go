@@ -576,7 +576,7 @@ var NewTplMap = map[string]string{
 **Level Status:** S{{$event.Severity}} Recovered   
 **Alarm name:** {{$event.RuleName}}   
 **Recovery time:** {{timeformat $event.LastEvalTime}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
 **Alarm description:** **Service has been restored**   
 {{- else }}
 {{- if ne $event.Cate "host"}}   
@@ -586,7 +586,7 @@ var NewTplMap = map[string]string{
 **Trigger time:** {{timeformat $event.TriggerTime}}   
 **Sending time:** {{timestamp}}   
 **Trigger time value:** {{$event.TriggerValue}}
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 {{$domain := "http://127.0.0.1:17000" }}   

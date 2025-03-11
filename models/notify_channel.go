@@ -1059,7 +1059,7 @@ var NotiChMap = []*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you slack bot token>"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					Body: `{"channel": "{{$params.channel}}", "text":  "{{$tpl.content}}"}`,
+					Body: `{"channel_id": "{{$params.channel_id}}", "message":  "{{$tpl.content}}"}`,
 				},
 			},
 		},
@@ -1067,7 +1067,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "mattermost_url", CName: "Mattermost Url", Type: "string"},
-					{Key: "channel", CName: "channel ID", Type: "string"},
+					{Key: "channel_id", CName: "channel ID", Type: "string"},
 					{Key: "channel_name", CName: "Channel Name", Type: "string"},
 				},
 			},
