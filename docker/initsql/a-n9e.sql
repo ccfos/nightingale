@@ -774,6 +774,53 @@ CREATE TABLE `user_token` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE `notify_rule` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null,
+    `description` text,
+    `enable` tinyint(1) not null default 0,
+    `user_group_ids` varchar(255) not null default '',
+    `notify_configs` text,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `notify_channel` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null,
+    `ident` varchar(255) not null,
+    `channel_ident` varchar(255) not null default '',
+    `description` text, 
+    `enable` tinyint(1) not null default 0,
+    `param_config` text,
+    `request_type` varchar(50) not null,
+    `request_config` text,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `message_template` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(64) not null,
+    `ident` varchar(64) not null,
+    `content` text,
+    `user_group_ids` varchar(64),
+    `notify_channel_ident` varchar(64) not null default '',
+    `private` int not null default 0,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `task_meta`
 (
     `id`          bigint unsigned NOT NULL AUTO_INCREMENT,

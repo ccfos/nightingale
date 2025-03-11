@@ -262,6 +262,11 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	keyMap := make(map[string]string)
+	if notifyChannel == nil {
+		ginx.NewRender(c).Data([][]paramList{}, nil)
+		return
+	}
+
 	if notifyChannel.ParamConfig == nil {
 		ginx.NewRender(c).Data([][]paramList{}, nil)
 		return
