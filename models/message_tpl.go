@@ -471,22 +471,23 @@ var NewTplMap = map[string]string{
 监控指标: {{$event.TagsJSON}}
 {{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}
 触发时值: {{$event.TriggerValue}}{{end}}
-发送时间: {{timestamp}}
-{{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-事件详情: {{$domain}}/alert-his-events/{{$event.Id}}
-屏蔽1小时: {{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}`,
+发送时间: {{timestamp}}{{$domain := "http://127.0.0.1:17000" }}   
+事件详情: {{$domain}}/alert-his-events/{{$event.Id}}{{$muteUrl := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}{{range $key, $value := $event.TagsMap}}{{$muteUrl = print $muteUrl "&tags=" $key "%3D" $value}}{{end}}   
+屏蔽1小时: {{ unescaped $muteUrl }}`,
 	FeishuCard: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Recovered   
-**告警名称:** {{$event.RuleName}}   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
 **恢复时间:** {{timeformat $event.LastEvalTime}}   
 **告警描述:** **服务已恢复**   
 {{- else }}
 {{- if ne $event.Cate "host"}}   
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Triggered   
-**告警名称:** {{$event.RuleName}}   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
 **触发时间:** {{timeformat $event.TriggerTime}}   
 **发送时间:** {{timestamp}}   
 **触发时值:** {{$event.TriggerValue}}   
@@ -537,6 +538,7 @@ var NewTplMap = map[string]string{
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Recovered   
 **告警名称:** {{$event.RuleName}}   
+**事件标签:** {{$event.TagsJSON}}   
 **恢复时间:** {{timeformat $event.LastEvalTime}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**持续时长**: {{humanizeDurationInterface $time_duration}}   
 **告警描述:** **服务已恢复**   
@@ -545,6 +547,7 @@ var NewTplMap = map[string]string{
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Triggered   
 **告警名称:** {{$event.RuleName}}   
+**事件标签:** {{$event.TagsJSON}}   
 **触发时间:** {{timeformat $event.TriggerTime}}   
 **发送时间:** {{timestamp}}   
 **触发时值:** {{$event.TriggerValue}}
