@@ -1068,7 +1068,7 @@ var NotiChMap = []*NotifyChannelConfig{
 				Params: []ParamItem{
 					{Key: "mattermost_url", CName: "Mattermost Url", Type: "string"},
 					{Key: "channel", CName: "channel ID", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+					{Key: "channel_name", CName: "Channel Name", Type: "string"},
 				},
 			},
 		},
