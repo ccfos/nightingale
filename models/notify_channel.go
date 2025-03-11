@@ -47,11 +47,10 @@ type EmailContext struct {
 type NotifyChannelConfig struct {
 	ID int64 `json:"id" gorm:"primaryKey"`
 	// 基础配置
-	Name         string `json:"name"`          // 媒介名称
-	Ident        string `json:"ident"`         // 媒介类型
-	ChannelIdent string `json:"channel_ident"` // 媒介ident
-	Description  string `json:"description"`   // 媒介描述
-	Enable       bool   `json:"enable"`        // 是否启用
+	Name        string `json:"name"`        // 媒介名称
+	Ident       string `json:"ident"`       // 媒介类型
+	Description string `json:"description"` // 媒介描述
+	Enable      bool   `json:"enable"`      // 是否启用
 
 	// 用户参数配置
 	ParamConfig *NotifyParamConfig `json:"param_config,omitempty" gorm:"serializer:json"`
@@ -994,7 +993,7 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 
 var NotiChMap = []*NotifyChannelConfig{
 	{
-		Name: "Discord", Ident: Discord, ChannelIdent: Discord, RequestType: "http",
+		Name: "Discord", Ident: Discord, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "{{$params.webhook_url}}",
@@ -1014,7 +1013,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Tencent SMS", Ident: "tx-sms", ChannelIdent: "tx-sms", RequestType: "http",
+		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1042,7 +1041,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Tencent Voice", Ident: "tx-voice", ChannelIdent: "tx-voice", RequestType: "http",
+		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1070,7 +1069,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Aliyun SMS", Ident: "ali-sms", ChannelIdent: "ali-sms", RequestType: "http",
+		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1100,7 +1099,7 @@ var NotiChMap = []*NotifyChannelConfig{
 	},
 
 	{
-		Name: "Aliyun Voice", Ident: "ali-voice", ChannelIdent: "ali-voice", RequestType: "http",
+		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1129,7 +1128,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Telegram", Ident: Telegram, ChannelIdent: Telegram, RequestType: "http",
+		Name: "Telegram", Ident: Telegram, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
@@ -1152,7 +1151,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Lark", Ident: Lark, ChannelIdent: Lark, RequestType: "http",
+		Name: "Lark", Ident: Lark, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1174,7 +1173,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Lark Card", Ident: LarkCard, ChannelIdent: LarkCard, RequestType: "http",
+		Name: "Lark Card", Ident: LarkCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1196,7 +1195,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Feishu", Ident: Feishu, ChannelIdent: Feishu, RequestType: "http",
+		Name: "Feishu", Ident: Feishu, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -1217,7 +1216,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Feishu Card", Ident: FeishuCard, ChannelIdent: FeishuCard, RequestType: "http",
+		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -1238,7 +1237,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Wecom", Ident: Wecom, ChannelIdent: Wecom, RequestType: "http",
+		Name: "Wecom", Ident: Wecom, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
@@ -1260,7 +1259,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Dingtalk", Ident: Dingtalk, ChannelIdent: Dingtalk, RequestType: "http",
+		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
@@ -1282,7 +1281,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Email", Ident: Email, ChannelIdent: Email, RequestType: "smtp",
+		Name: "Email", Ident: Email, RequestType: "smtp",
 		RequestConfig: &RequestConfig{
 			SMTPRequestConfig: &SMTPRequestConfig{
 				Host:               "smtp.host",
@@ -1300,7 +1299,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "FlashDuty", Ident: "flashduty", ChannelIdent: "flashduty", RequestType: "flashduty",
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
@@ -1326,63 +1325,15 @@ func InitNotifyChannel(ctx *ctx.Context) {
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
 		notiCh.UpdateAt = time.Now().Unix()
-		err := notiCh.Upsert(ctx, notiCh.ChannelIdent)
+		err := notiCh.Upsert(ctx)
 		if err != nil {
 			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
 		}
 	}
-
-	// 找到 channel_ident 为空且 update_by 是 system 的数据
-	lst, err := NotifyChannelsGet(ctx, "channel_ident = ? and update_by = ?", "", "system")
-	if err != nil {
-		logger.Warningf("notify channel init failed to get notify channels %v", err)
-		return
-	}
-
-	if len(lst) == 0 {
-		return
-	}
-
-	notifyRules, err := NotifyRulesGet(ctx, "enable = ?", true)
-	if err != nil {
-		logger.Warningf("notify channel init failed to get notify rules %v", err)
-		return
-	}
-
-	for _, item := range lst {
-		found := false
-		for _, nr := range notifyRules {
-			for _, nc := range nr.NotifyConfigs {
-				if nc.ChannelID == item.ID {
-					found = true
-					break
-				}
-			}
-
-			if found {
-				break
-			}
-		}
-
-		if !found {
-			err := DB(ctx).Delete(&NotifyChannelConfig{}, "id = ?", item.ID).Error
-			logger.Infof("notify channel init delete notify channels %+v", item)
-			if err != nil {
-				logger.Warningf("notify channel init failed to delete notify channels %v", err)
-			}
-		} else {
-			item.ChannelIdent = item.Ident
-
-			err := DB(ctx).Model(&NotifyChannelConfig{}).Where("id = ?", item.ID).Updates(map[string]interface{}{"channel_ident": item.ChannelIdent, "name": item.Name + " old"}).Error
-			if err != nil {
-				logger.Warningf("notify channel init failed to update notify channels %+v %v", item, err)
-			}
-		}
-	}
 }
 
-func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context, channelIdent string) error {
-	ch, err := NotifyChannelGet(ctx, "channel_ident = ?", channelIdent)
+func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
 	if err != nil {
 		return errors.WithMessage(err, "notify channel init failed to get message tpl")
 	}

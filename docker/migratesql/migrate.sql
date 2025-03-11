@@ -183,7 +183,6 @@ CREATE TABLE `notify_channel` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(255) not null,
     `ident` varchar(255) not null,
-    `channel_ident` varchar(255) not null default '',
     `description` text, 
     `enable` tinyint(1) not null default 0,
     `param_config` text,
