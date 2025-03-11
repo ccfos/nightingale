@@ -391,7 +391,7 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		TriggerTime:        e.TriggerTime,
 		TriggerValue:       e.TriggerValue,
 		Tags:               e.Tags,
-		TagsJSON:           strings.Fields(e.Tags),
+		TagsJSON:           strings.Split(e.Tags, ",,"),
 		OriginalTags:       e.OriginalTags,
 		LastEvalTime:       e.LastEvalTime,
 		NotifyCurNumber:    e.NotifyCurNumber,
