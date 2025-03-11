@@ -1011,7 +1011,6 @@ var NotiChMap = []*NotifyChannelConfig{
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer {{$params.token}}"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					//Parameters: map[string]string{"channel": "{{$params.channel}}"},
 					Body: `{"channel": "#{{$params.channel}}", "text":  "{{$tpl.content}}", "mrkdwn": true}`,
 				},
 			},
