@@ -69,5 +69,3 @@ n9e.sql
 !/datasource
 
 .env.json
-
-front/statik/statik.go

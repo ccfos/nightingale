@@ -149,6 +149,27 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 	ginx.NewRender(c).Data(newLst, nil)
 }
 
+func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
+	// 获取所有通知渠道
+	channels, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
+	ginx.Dangerous(err)
+
+	// ident 去重
+	idents := make(map[string]struct{})
+	for _, channel := range channels {
+		if channel.Ident != "" {
+			idents[channel.Ident] = struct{}{}
+		}
+	}
+
+	lst := make([]string, 0, len(idents))
+	for ident := range idents {
+		lst = append(lst, ident)
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 type flushDutyChannelsResponse struct {
 	Error struct {
 		Code    string `json:"code"`
