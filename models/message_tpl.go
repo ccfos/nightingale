@@ -474,8 +474,8 @@ var NewTplMap = map[string]string{
 发送时间: {{timestamp}}{{$domain := "http://127.0.0.1:17000" }}   
 事件详情: {{$domain}}/alert-his-events/{{$event.Id}}{{$muteUrl := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}{{range $key, $value := $event.TagsMap}}{{$muteUrl = print $muteUrl "&tags=" $key "%3D" $value}}{{end}}   
 屏蔽1小时: {{ unescaped $muteUrl }}`,
-	FeishuCard: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Recovered   
 **告警名称:** {{$event.RuleName}}  
