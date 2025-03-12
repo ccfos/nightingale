@@ -1055,7 +1055,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		Name: "MattermostBot", Ident: MattermostBot, RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "{{$params.mattermost_url}}/api/v4/posts",
+				URL:    "<your mattermost url>/api/v4/posts",
 				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you mattermost bot token>"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
@@ -1066,8 +1066,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "mattermost_url", CName: "Mattermost Url", Type: "string"},
-					{Key: "channel_id", CName: "channel ID", Type: "string"},
+					{Key: "channel_id", CName: "Channel ID", Type: "string"},
 					{Key: "channel_name", CName: "Channel Name", Type: "string"},
 				},
 			},
