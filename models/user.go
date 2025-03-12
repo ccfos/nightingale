@@ -29,12 +29,15 @@ const (
 	Discord           = "discord"
 	MattermostWebhook = "mattermostwebhook"
 	MattermostBot     = "mattermostbot"
+  SlackWebhook = "slackwebhook"
+	SlackBot     = "slackbot"
 	Mm                = "mm"
 	Telegram          = "telegram"
 	Email             = "email"
 	EmailSubject      = "mailsubject"
 	Lark              = "lark"
 	LarkCard          = "larkcard"
+
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
