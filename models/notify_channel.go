@@ -465,14 +465,17 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	query := req.URL.Query()
 	// 设置请求头 腾讯云短信、语音特殊处理
 	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-		ncc.setTxHeader(req, body)
+		headers = ncc.setTxHeader(headers, body)
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
 	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
 		req, err = http.NewRequest(httpConfig.Method, url, nil)
 		if err != nil {
 			return "", err
 		}
 
-		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"])
+		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
 		for key, value := range headers {
 			req.Header.Set(key, value)
 		}
@@ -525,10 +528,9 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 }
 
 // getAliQuery 获取阿里云API的查询参数和请求头
-func (ncc *NotifyChannelConfig) getAliQuery(ident string, query url.Values, ak, sk string) (url.Values, map[string]string) {
+func (ncc *NotifyChannelConfig) getAliQuery(ident string, query url.Values, ak, sk string, params map[string]string) (url.Values, map[string]string) {
 	// 获取基础配置
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
-	params := httpConfig.Request.Parameters
 
 	httpMethod := "POST"
 	canonicalURI := "/"
@@ -645,17 +647,14 @@ func percentEncode(str string) string {
 	return encoded
 }
 
-func (ncc *NotifyChannelConfig) setTxHeader(req *http.Request, payloadBytes []byte) {
-	httpConfig := ncc.RequestConfig.HTTPRequestConfig
+func (ncc *NotifyChannelConfig) setTxHeader(headers map[string]string, payloadBytes []byte) map[string]string {
 	timestamp := time.Now().Unix()
 
 	authorization := ncc.getTxSignature(string(payloadBytes), timestamp)
+	headers["X-TC-Timestamp"] = fmt.Sprintf("%d", timestamp)
+	headers["Authorization"] = authorization
 
-	for key, value := range httpConfig.Headers {
-		req.Header.Set(key, value)
-	}
-	req.Header.Set("X-TC-Timestamp", fmt.Sprintf("%d", timestamp))
-	req.Header.Set("Authorization", authorization)
+	return headers
 }
 
 func (ncc *NotifyChannelConfig) getTxSignature(payloadStr string, timestamp int64) string {

@@ -3,6 +3,8 @@ package dispatch
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
 	"net/url"
 	"strconv"
@@ -160,12 +162,15 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil {
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
 					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, event, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
 					continue
 				}
 
 				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
 					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, event, notifyRule.NotifyConfigs[i].TemplateID)
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
+
 					continue
 				}
 
@@ -321,6 +326,9 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 			sendto, _ = user.ExtractToken(contactKey)
 		}
 
+		if sendto == "" {
+			continue
+		}
 		sendtos = append(sendtos, sendto)
 		visited[user.Id] = true
 	}
