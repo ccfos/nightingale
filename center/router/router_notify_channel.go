@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -26,29 +27,29 @@ func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
-	idents := make([]string, 0, len(lst))
-	for _, tpl := range lst {
-		ginx.Dangerous(tpl.Verify())
-		idents = append(idents, tpl.Ident)
+	names := make([]string, 0, len(lst))
+	for i := range lst {
+		ginx.Dangerous(lst[i].Verify())
+		names = append(names, lst[i].Name)
 
-		tpl.CreateBy = me.Username
-		tpl.CreateAt = time.Now().Unix()
-		tpl.UpdateBy = me.Username
-		tpl.UpdateAt = time.Now().Unix()
+		lst[i].CreateBy = me.Username
+		lst[i].CreateAt = time.Now().Unix()
+		lst[i].UpdateBy = me.Username
+		lst[i].UpdateAt = time.Now().Unix()
 	}
 
-	lstWithSameId, err := models.NotifyChannelsGet(rt.Ctx, "ident IN ?", idents)
+	lstWithSameName, err := models.NotifyChannelsGet(rt.Ctx, "name IN ?", names)
 	ginx.Dangerous(err)
-	if len(lstWithSameId) > 0 {
-		ginx.Bomb(http.StatusBadRequest, "ident already exists")
+	if len(lstWithSameName) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "name already exists")
 	}
 
 	ids := make([]int64, 0, len(lst))
-	for _, tpl := range lst {
-		err := models.Insert(rt.Ctx, tpl)
+	for _, item := range lst {
+		err := models.Insert(rt.Ctx, item)
 		ginx.Dangerous(err)
 
-		ids = append(ids, tpl.ID)
+		ids = append(ids, item.ID)
 	}
 	ginx.NewRender(c).Data(ids, nil)
 }
@@ -84,6 +85,12 @@ func (rt *Router) notifyChannelPut(c *gin.Context) {
 
 	var f models.NotifyChannelConfig
 	ginx.BindJSON(c, &f)
+
+	lstWithSameName, err := models.NotifyChannelsGet(rt.Ctx, "name = ? and id <> ?", f.Name, f.ID)
+	ginx.Dangerous(err)
+	if len(lstWithSameName) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "name already exists")
+	}
 
 	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", ginx.UrlParamInt64(c, "id"))
 	ginx.Dangerous(err)
@@ -141,6 +148,29 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 		})
 	}
 	ginx.NewRender(c).Data(newLst, nil)
+}
+
+func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
+	// 获取所有通知渠道
+	channels, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
+	ginx.Dangerous(err)
+
+	// ident 去重
+	idents := make(map[string]struct{})
+	for _, channel := range channels {
+		if channel.Ident != "" {
+			idents[channel.Ident] = struct{}{}
+		}
+	}
+
+	lst := make([]string, 0, len(idents))
+	for ident := range idents {
+		lst = append(lst, ident)
+	}
+
+	sort.Strings(lst)
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 type flushDutyChannelsResponse struct {

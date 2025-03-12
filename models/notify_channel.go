@@ -48,7 +48,7 @@ type NotifyChannelConfig struct {
 	ID int64 `json:"id" gorm:"primaryKey"`
 	// 基础配置
 	Name        string `json:"name"`        // 媒介名称
-	Ident       string `json:"ident"`       // 媒介标识
+	Ident       string `json:"ident"`       // 媒介类型
 	Description string `json:"description"` // 媒介描述
 	Enable      bool   `json:"enable"`      // 是否启用
 
@@ -1325,18 +1325,19 @@ func InitNotifyChannel(ctx *ctx.Context) {
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
 		notiCh.UpdateAt = time.Now().Unix()
-		err := notiCh.Upsert(ctx, notiCh.Ident)
+		err := notiCh.Upsert(ctx)
 		if err != nil {
-			logger.Warningf("failed to upsert notify channels %v", err)
+			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
 		}
 	}
 }
 
-func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context, ident string) error {
-	ch, err := NotifyChannelGet(ctx, "ident = ?", ident)
+func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
 	if err != nil {
-		return errors.WithMessage(err, "failed to get message tpl")
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
 	}
+
 	if ch == nil {
 		return Insert(ctx, ncc)
 	}
