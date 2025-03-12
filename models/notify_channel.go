@@ -246,7 +246,6 @@ func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params m
 		"events":  events,
 		"tpl":     tpl,
 		"params":  params,
-		"sendto":  sendtos,
 		"sendtos": sendtos,
 	}
 
