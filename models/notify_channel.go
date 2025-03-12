@@ -1031,6 +1031,48 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"text":  "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "MattermostBot", Ident: MattermostBot, RequestType: "http",
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "<your mattermost url>/api/v4/posts",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you mattermost bot token>"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"channel_id": "{{$params.channel_id}}", "message":  "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "channel_id", CName: "Channel ID", Type: "string"},
+					{Key: "channel_name", CName: "Channel Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http",
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{

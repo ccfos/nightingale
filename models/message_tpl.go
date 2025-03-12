@@ -602,9 +602,34 @@ var NewTplMap = map[string]string{
 {{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
 {{- end}}
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
+	MattermostWebhook: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Recovered   
+**Alarm name:** {{$event.RuleName}}   
+**Recovery time:** {{timeformat $event.LastEvalTime}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
+**Alarm description:** **Service has been restored**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Triggered   
+**Alarm name:** {{$event.RuleName}}   
+**Trigger time:** {{timeformat $event.TriggerTime}}   
+**Sending time:** {{timestamp}}   
+**Trigger time value:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
+{{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://127.0.0.1:17000" }}   
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[View Curve]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 }
 
 var MsgTplMap = []MessageTemplate{
+  {Name: "MattermostWebhook", Ident: MattermostWebhook, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
 	{Name: "Discord", Ident: Discord, Content: map[string]string{"content": NewTplMap[Discord]}},
 	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
 	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
@@ -618,8 +643,6 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
-	{Name: "SlackWebhook", Ident: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
-	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
