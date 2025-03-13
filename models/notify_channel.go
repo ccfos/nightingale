@@ -1253,10 +1253,10 @@ def send_feishu_app(payload) -> None:
         # 提取必要参数
         app_id = payload.get('params', {}).get('feishuapp_id')
         app_secret = payload.get('params', {}).get('feishuapp_secret')
-        domain_url = payload.get('params', {}).get('domain_url', 'https://example.com')
+        domain_url = "https://your-n9e-addr.com"
         
         # 从sendto获取通知人列表
-        sendtos = payload.get('sendto', [])
+        sendtos = payload.get('sendtos', [])
         if isinstance(sendtos, str):
             # 如果sendto是字符串，按逗号分割
             sendtos = [s.strip() for s in sendtos.split(',') if s.strip()]
@@ -1464,7 +1464,6 @@ if __name__ == "__main__":
 				Params: []ParamItem{
 					{Key: "feishuapp_id", CName: "FeiShuAppID", Type: "string"},
 					{Key: "feishuapp_secret", CName: "FeiShuAppSecret", Type: "string"},
-					{Key: "domain_url", CName: "访问地址", Type: "string"},
 				},
 			},
 		},
