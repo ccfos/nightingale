@@ -231,7 +231,7 @@ func (arw *AlertRuleWorker) Stop() {
 
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
-	var severity int
+	severity := models.SeverityLowest
 
 	var rule *models.PromRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -260,6 +260,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 	for i, query := range rule.Queries {
 		if query.Severity < severity {
 			arw.Severity = query.Severity
+			severity = query.Severity
 		}
 
 		readerClient := arw.PromClients.GetCli(arw.DatasourceId)
@@ -721,7 +722,7 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 
 func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
-	var severity int
+	severity := models.SeverityLowest
 
 	var rule *models.HostRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -751,6 +752,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 	for _, trigger := range rule.Triggers {
 		if trigger.Severity < severity {
 			arw.Severity = trigger.Severity
+			severity = trigger.Severity
 		}
 
 		switch trigger.Type {
