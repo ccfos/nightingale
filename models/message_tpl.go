@@ -208,6 +208,7 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 const (
 	DingtalkTitle   = `{{if $event.IsRecovered}} Recovered {{else}}Triggered{{end}}: {{$event.RuleName}}`
 	FeishuCardTitle = `🔔 {{$event.RuleName}}`
+	FeishuAppTitle  = `{{- if $event.IsRecovered }}🔔 ﹝恢复﹞ {{$event.RuleName}}{{- else }}🔔 ﹝告警﹞ {{$event.RuleName}}{{- end -}}`
 	LarkCardTitle   = `🔔 {{$event.RuleName}}`
 )
 
@@ -573,6 +574,25 @@ var NewTplMap = map[string]string{
 {{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
 {{- end}}
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
+	FeishuApp: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}`,
 }
 
 var MsgTplMap = []MessageTemplate{
@@ -586,6 +606,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Lark", Ident: Lark, Content: map[string]string{"content": NewTplMap[Lark]}},
 	{Name: "Feishu", Ident: Feishu, Content: map[string]string{"content": NewTplMap[Feishu]}},
 	{Name: "FeishuCard", Ident: FeishuCard, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+	{Name: "FeishuApp", Ident: FeishuApp, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
