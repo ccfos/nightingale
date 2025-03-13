@@ -3,6 +3,7 @@ package memsto
 import (
 	"encoding/json"
 	"log"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -126,7 +127,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 		targetIndentMap := tc.targetIndentMap
 		targetTagMap := tc.targetTagMap
 
-		var targetTagMapResult map[int64]struct{} // 用于筛选 == 的情况
+		var targetTagMapResult map[int64]struct{}           // 用于筛选 == 的情况
 		notInTargetTagMapResult := make(map[int64]struct{}) // 用于筛选 != 的情况
 
 		// 遍历 rule 的 queries，根据不同的 key 过滤 targetGroupIdMap, targetIndentMap, targetTagMap，得到符合条件的三组 map
@@ -135,8 +136,8 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 			case "group_ids":
 				targetGroupIdMap = filterMap(targetGroupIdMap, q, int64convert)
 			case "tags":
-				tagInMap, tagNotInMap := filterHostMap(targetTagMap, q, stringconvert)
-				
+				tagInMap, tagNotInMap := filterTagMap(targetTagMap, q, stringconvert)
+
 				if tagInMap != nil {
 					if targetTagMapResult == nil {
 						targetTagMapResult = tagInMap
@@ -153,7 +154,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 					notInTargetTagMapResult[k] = struct{}{}
 				}
 			case "hosts":
-				targetIndentMap = filterMap(targetIndentMap, q, stringconvert)
+				targetIndentMap = filterHostMap(targetIndentMap, q)
 			}
 		}
 
@@ -278,7 +279,7 @@ func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuer
 // 当 q.Op == "==" 时，返回的 inmap 中包含所有符合条件的 target
 // 当 q.Op == "!=" 时，返回的 notinmap 中包含所有不符合条件的 target，这时 inmap 为 nil
 // 上级可根据 inmap 是否为 nil 来判断是 == 还是 !=
-func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
+func filterTagMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
 	if q.Op == "==" {
 		inmap = make(map[int64]struct{})
 		notinmap = make(map[int64]struct{})
@@ -289,7 +290,7 @@ func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.Host
 			}
 			if targets, exists := targetMap[key]; exists {
 				// 筛选出符合条件的 target
-				for _, target := range targets {		
+				for _, target := range targets {
 					inmap[target.Id] = struct{}{}
 				}
 			}
@@ -316,6 +317,79 @@ func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.Host
 	return inmap, notinmap
 }
 
+// 根据 query 过滤 map 中的 indent，返回新的 map，增加 =~、 !~ 的情况
+// 在 ~ 的情况下，value 可能为通配符 * 或 %
+func filterHostMap(targetMap map[string][]*models.Target, q models.HostQuery) map[string][]*models.Target {
+	if q.Op == "==" {
+		newMap := make(map[string][]*models.Target)
+		// 遍历 q.Values，将符合条件的 target 都放到新 map 中
+		for _, v := range q.Values {
+			key, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+			if targets, exists := targetMap[key]; exists {
+				newMap[key] = targets
+			}
+		}
+
+		return newMap
+	} else if q.Op == "!=" {
+		// 直接从 targetMap 中删除对应的 key
+		for _, v := range q.Values {
+			key, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+			delete(targetMap, key)
+		}
+
+		return targetMap
+	} else if q.Op == "=~" {
+		for _, v := range q.Values {
+			pattern, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+
+			regex := likePatternToRegex(pattern)
+			re, err := regexp.Compile(regex)
+			if err != nil {
+				logger.Errorf("failed to compile regex:%s error:%v", regex, err)
+				continue
+			}
+
+			for key := range targetMap {
+				if !re.MatchString(key) {
+					delete(targetMap, key)
+				}
+			}
+		}
+	} else if q.Op == "!~" {
+		for _, v := range q.Values {
+			pattern, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+
+			regex := likePatternToRegex(pattern)
+			re, err := regexp.Compile(regex)
+			if err != nil {
+				logger.Errorf("failed to compile regex:%s error:%v", regex, err)
+				continue
+			}
+
+			for key := range targetMap {
+				if re.MatchString(key) {
+					delete(targetMap, key)
+				}
+			}
+		}
+	}
+
+	return targetMap
+}
+
 func int64convert(v interface{}) (int64, bool) {
 	if id, ok := v.(int64); ok {
 		return id, true
@@ -328,4 +402,29 @@ func stringconvert(v interface{}) (string, bool) {
 		return tag, true
 	}
 	return "", false
+}
+
+// 将 like 模式转换为正则表达式
+// % * 匹配任意个字符
+func likePatternToRegex(pattern string) string {
+	var sb strings.Builder
+	// 添加正则表达式起始标记
+	sb.WriteString("^")
+	for _, ch := range pattern {
+		switch ch {
+		case '%':
+		case '*':
+			// % 匹配任意个字符
+			sb.WriteString(".*")
+		default:
+			// 对于其他特殊正则字符，需要转义
+			if strings.ContainsRune(`.+?()|[]{}^$\\`, ch) {
+				sb.WriteString("\\")
+			}
+			sb.WriteRune(ch)
+		}
+	}
+	// 添加正则表达式结束标记
+	sb.WriteString("$")
+	return sb.String()
 }
