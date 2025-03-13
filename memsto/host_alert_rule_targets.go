@@ -27,7 +27,6 @@ type TargetsOfAlertRuleCacheType struct {
 
 	targetGroupIdMap map[int64][]*models.Target
 	targetIndentMap  map[string][]*models.Target
-	targetHostTagMap map[string][]*models.Target
 	targetTagMap     map[string][]*models.Target
 }
 
@@ -125,61 +124,47 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 
 		targetGroupIdMap := tc.targetGroupIdMap
 		targetIndentMap := tc.targetIndentMap
-		targetHostTagMap := tc.targetHostTagMap
 		targetTagMap := tc.targetTagMap
 
-		var targetHostTagMapResult map[int64]struct{}
-		targetTagMapResult := make(map[int64]struct{})
+		var targetTagMapResult map[int64]struct{} // 用于筛选 == 的情况
+		notInTargetTagMapResult := make(map[int64]struct{}) // 用于筛选 != 的情况
 
-		notintargets := make(map[int64]struct{}) // 用于筛选 != 的情况
+		// 遍历 rule 的 queries，根据不同的 key 过滤 targetGroupIdMap, targetIndentMap, targetTagMap，得到符合条件的三组 map
 		for _, q := range rule.Queries {
 			switch q.Key {
 			case "group_ids":
 				targetGroupIdMap = filterMap(targetGroupIdMap, q, int64convert)
 			case "tags":
-				tinmap, tnotinmap := filterHostMap(targetTagMap, q, stringconvert)
+				tagInMap, tagNotInMap := filterHostMap(targetTagMap, q, stringconvert)
 				
-				if tinmap != nil {
-					if targetHostTagMapResult == nil {
-						targetHostTagMapResult = tinmap
-					} else {
-						for k := range targetHostTagMapResult {
-							if _, exists := tinmap[k]; !exists {
-								delete(targetHostTagMapResult, k)
-							}
-						}
-					}
-				}
-
-				for k := range tnotinmap {
-					notintargets[k] = struct{}{}
-				}
-
-
-				htinmap, htnotinmap := filterHostMap(targetHostTagMap, q, stringconvert)
-
-				if htinmap != nil {
+				if tagInMap != nil {
 					if targetTagMapResult == nil {
-						targetTagMapResult = htinmap
+						targetTagMapResult = tagInMap
 					} else {
-						for k := range targetTagMapResult {
-							if _, exists := htinmap[k]; !exists {
+						for k := range tagInMap {
+							if _, exists := tagInMap[k]; !exists {
 								delete(targetTagMapResult, k)
 							}
 						}
 					}
 				}
 
-				for k := range htnotinmap {
-					notintargets[k] = struct{}{}
+				for k := range tagNotInMap {
+					notInTargetTagMapResult[k] = struct{}{}
 				}
-
 			case "hosts":
 				targetIndentMap = filterMap(targetIndentMap, q, stringconvert)
 			}
 		}
 
-		// group_ids，indent 都需要匹配
+		// 移除在 notInTargetTagMapResult 中的 target
+		for targetId := range targetTagMapResult {
+			if _, exists := notInTargetTagMapResult[targetId]; exists {
+				delete(targetTagMapResult, targetId)
+			}
+		}
+
+		// 根据 targetGroupIdMap, targetIndentMap, targetTagMap，进行交集操作，得到最终的 target map
 		for _, ts := range targetGroupIdMap {
 			for _, target := range ts {
 				// 检测是否在 targetIndentMap 中
@@ -188,17 +173,9 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 				}
 
 				// 检测是否有 tags 过滤，执行了一次就不会是 nil
-				if targetHostTagMapResult != nil {
-					// 检测是否在 notintargets 中
-					if _, exists := notintargets[target.Id]; exists {
+				if targetTagMapResult != nil {
+					if _, exists := targetTagMapResult[target.Id]; !exists {
 						continue
-					}
-
-					// 检测是否在 targetHostTagMapResult 或 targetTagMapResult 中
-					if _, exists := targetHostTagMapResult[target.Id]; !exists {
-						if _, exists := targetTagMapResult[target.Id]; !exists {
-							continue
-						}
 					}
 				}
 
@@ -225,7 +202,6 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 
 	targetGroupIdMap := make(map[int64][]*models.Target)
 	targetIndentMap := make(map[string][]*models.Target)
-	targetHostTagMap := make(map[string][]*models.Target)
 	targetTagMap := make(map[string][]*models.Target)
 
 	for _, target := range alltargets {
@@ -239,11 +215,12 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 		}
 		targetIndentMap[target.Ident] = append(targetIndentMap[target.Ident], target)
 
+		// 将 hosttags 和 tags 都放到 targetTagMap 中
 		for _, tag := range target.HostTags {
-			if _, exists := targetHostTagMap[tag]; !exists {
-				targetHostTagMap[tag] = make([]*models.Target, 0)
+			if _, exists := targetTagMap[tag]; !exists {
+				targetTagMap[tag] = make([]*models.Target, 0)
 			}
-			targetHostTagMap[tag] = append(targetHostTagMap[tag], target)
+			targetTagMap[tag] = append(targetTagMap[tag], target)
 		}
 
 		tags := strings.Split(target.Tags, " ")
@@ -263,7 +240,6 @@ func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 
 	tc.targetGroupIdMap = targetGroupIdMap
 	tc.targetIndentMap = targetIndentMap
-	tc.targetHostTagMap = targetHostTagMap
 	tc.targetTagMap = targetTagMap
 }
 
@@ -301,7 +277,7 @@ func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuer
 // 因为同一个 target 可能存在多个 tag，所以不能简单的将 tag 的 key 移除，而是需要知道具体的 target 是否需要移除
 // 当 q.Op == "==" 时，返回的 inmap 中包含所有符合条件的 target
 // 当 q.Op == "!=" 时，返回的 notinmap 中包含所有不符合条件的 target，这时 inmap 为 nil
-// 上级可根据 inmap 是否为 nil 来判断是是 == 还是 !=
+// 上级可根据 inmap 是否为 nil 来判断是 == 还是 !=
 func filterHostMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inmap map[int64]struct{}, notinmap map[int64]struct{}) {
 	if q.Op == "==" {
 		inmap = make(map[int64]struct{})
