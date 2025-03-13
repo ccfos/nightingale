@@ -1,7 +1,10 @@
 package memsto
 
 import (
+	"encoding/json"
 	"log"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,9 +22,16 @@ type TargetsOfAlertRuleCacheType struct {
 
 	sync.RWMutex
 	targets map[string]map[int64][]string // key: ident
+
+	targetCache *TargetCacheType
+	ruleCache   *AlertRuleCacheType
+
+	targetsByGroup map[int64][]*models.Target
+	targetsByIdent map[string][]*models.Target
+	targetsByTag   map[string][]*models.Target
 }
 
-func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats) *TargetsOfAlertRuleCacheType {
+func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats, targetCache *TargetCacheType, ruleCache *AlertRuleCacheType) *TargetsOfAlertRuleCacheType {
 	tc := &TargetsOfAlertRuleCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
@@ -29,6 +39,8 @@ func NewTargetOfAlertRuleCache(ctx *ctx.Context, engineName string, stats *Stats
 		engineName:      engineName,
 		stats:           stats,
 		targets:         make(map[string]map[int64][]string),
+		targetCache:     targetCache,
+		ruleCache:       ruleCache,
 	}
 
 	tc.SyncTargets()
@@ -86,15 +98,333 @@ func (tc *TargetsOfAlertRuleCacheType) loopSyncTargets() {
 }
 
 func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
-	m, err := models.GetTargetsOfHostAlertRule(tc.ctx, tc.engineName)
-	if err != nil {
-		return err
+	// 从缓存获取所有 targetmap
+	tc.updateTargetMaps()
+	m := make(map[string]map[int64][]string)
+
+	// 从缓存获取所有 host alert rule
+	rules := tc.ruleCache.GetAll()
+	hostrules := make(map[int64]*models.AlertRule)
+	for k, v := range rules {
+		if v.Prod == "host" {
+			hostrules[k] = v
+		}
 	}
-	logger.Debugf("get_targets_of_alert_rule total: %d engine_name:%s", len(m), tc.engineName)
-	for k, v := range m {
-		logger.Debugf("get_targets_of_alert_rule key:%s value:%v", k, v)
+
+	for _, hr := range hostrules {
+		var rule *models.HostRuleConfig
+		if err := json.Unmarshal([]byte(hr.RuleConfig), &rule); err != nil {
+			logger.Errorf("rule:%d rule_config:%s, error:%v", hr.Id, hr.RuleConfig, err)
+			continue
+		}
+
+		if rule == nil {
+			logger.Errorf("rule:%d rule_config:%s, error:rule is nil", hr.Id, hr.RuleConfig)
+			continue
+		}
+
+		targetsByGroup := tc.targetsByGroup
+		targetsByIdent := tc.targetsByIdent
+		targetsByTag := tc.targetsByTag
+
+		var targetsByTagResult map[int64]struct{}           // 用于筛选 == 的情况
+		notInTargetTagMapResult := make(map[int64]struct{}) // 用于筛选 != 的情况
+
+		// 遍历 rule 的 queries，根据不同的 key 过滤 targetsByGroup, targetsByIdent, targetsByTag，得到符合条件的三组 map
+		for _, q := range rule.Queries {
+			switch q.Key {
+			case "group_ids":
+				targetsByGroup = filterMap(targetsByGroup, q, int64convert)
+			case "tags":
+				tagInMap, tagNotInMap := filterTagMap(targetsByTag, q, stringconvert)
+
+				if tagInMap != nil {
+					if targetsByTagResult == nil {
+						targetsByTagResult = tagInMap
+					} else {
+						for k := range tagInMap {
+							if _, exists := tagInMap[k]; !exists {
+								delete(targetsByTagResult, k)
+							}
+						}
+					}
+				}
+
+				for k := range tagNotInMap {
+					notInTargetTagMapResult[k] = struct{}{}
+				}
+			case "hosts":
+				targetsByIdent = filterHostMap(targetsByIdent, q)
+			}
+		}
+
+		// 移除在 notInTargetTagMapResult 中的 target
+		for targetId := range targetsByTagResult {
+			if _, exists := notInTargetTagMapResult[targetId]; exists {
+				delete(targetsByTagResult, targetId)
+			}
+		}
+
+		// 根据 targetsByGroup, targetsByIdent, targetsByTag，进行交集操作，得到最终的 target map
+		for _, ts := range targetsByGroup {
+			for _, target := range ts {
+				// 检测是否在 targetsByIdent 中
+				if _, exists := targetsByIdent[target.Ident]; !exists {
+					continue
+				}
+
+				// 检测是否有 tags 过滤，执行了一次就不会是 nil
+				if targetsByTagResult != nil {
+					if _, exists := targetsByTagResult[target.Id]; !exists {
+						continue
+					}
+				}
+
+				if _, exists := m[target.EngineName]; !exists {
+					m[target.EngineName] = make(map[int64][]string)
+				}
+
+				if _, exists := m[target.EngineName][hr.Id]; !exists {
+					m[target.EngineName][hr.Id] = make([]string, 0)
+				}
+
+				m[target.EngineName][hr.Id] = append(m[target.EngineName][hr.Id], target.Ident)
+			}
+		}
 	}
 
 	tc.Set(m, 0, 0)
 	return nil
+}
+
+// 更新 target 相关的 map，根据不同的 key，包括 targetsByGroup, targetsByIdent, targetHostTagMap, targetsByTag
+func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
+	allTargets := tc.targetCache.GetAll()
+
+	targetsByGroup := make(map[int64][]*models.Target)
+	targetsByIdent := make(map[string][]*models.Target)
+	targetsByTag := make(map[string][]*models.Target)
+
+	for _, target := range allTargets {
+		if _, exists := targetsByGroup[target.GroupId]; !exists {
+			targetsByGroup[target.GroupId] = make([]*models.Target, 0)
+		}
+		targetsByGroup[target.GroupId] = append(targetsByGroup[target.GroupId], target)
+
+		if _, exists := targetsByIdent[target.Ident]; !exists {
+			targetsByIdent[target.Ident] = make([]*models.Target, 0)
+		}
+		targetsByIdent[target.Ident] = append(targetsByIdent[target.Ident], target)
+
+		// 将 hosttags 和 tags 都放到 targetsByTag 中
+		for _, tag := range target.HostTags {
+			if _, exists := targetsByTag[tag]; !exists {
+				targetsByTag[tag] = make([]*models.Target, 0)
+			}
+			targetsByTag[tag] = append(targetsByTag[tag], target)
+		}
+
+		tags := strings.Split(target.Tags, " ")
+		for _, tag := range tags {
+			if tag == "" {
+				continue
+			}
+
+			if _, exists := targetsByTag[tag]; !exists {
+				targetsByTag[tag] = make([]*models.Target, 0)
+			}
+
+			targetsByTag[tag] = append(targetsByTag[tag], target)
+		}
+
+	}
+
+	tc.targetsByGroup = targetsByGroup
+	tc.targetsByIdent = targetsByIdent
+	tc.targetsByTag = targetsByTag
+}
+
+// 根据 query 过滤 map 中的 indent，返回新的 map，针对一个 target 对应一个 key 的情况
+func filterMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) map[T][]*models.Target {
+	if q.Op == "==" {
+		newMap := make(map[T][]*models.Target)
+		// 遍历 q.Values，将符合条件的 target 都放到新 map 中
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+			if targets, exists := targetMap[key]; exists {
+				newMap[key] = targets
+			}
+		}
+
+		return newMap
+	} else {
+		// 直接从 targetMap 中删除对应的 key
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+			delete(targetMap, key)
+		}
+
+		return targetMap
+	}
+}
+
+// 针对 tags 过滤，返回两个 map，一个是符合条件的 target，一个是不符合条件的 target
+// 因为同一个 target 可能存在多个 tag，所以不能简单的将 tag 的 key 移除，而是需要知道具体的 target 是否需要移除
+// 当 q.Op == "==" 时，返回的 inMap 中包含所有符合条件的 target
+// 当 q.Op == "!=" 时，返回的 notInMap 中包含所有不符合条件的 target，这时 inMap 为 nil
+// 上级可根据 inMap 是否为 nil 来判断是 == 还是 !=
+func filterTagMap[T comparable](targetMap map[T][]*models.Target, q models.HostQuery, convert func(interface{}) (T, bool)) (inMap map[int64]struct{}, notInMap map[int64]struct{}) {
+	if q.Op == "==" {
+		inMap = make(map[int64]struct{})
+		notInMap = make(map[int64]struct{})
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+			if targets, exists := targetMap[key]; exists {
+				// 筛选出符合条件的 target
+				for _, target := range targets {
+					inMap[target.Id] = struct{}{}
+				}
+			}
+		}
+	} else {
+		// 直接从 targetMap 中删除对应的 key
+		inMap = nil
+		notInMap = make(map[int64]struct{})
+		for _, v := range q.Values {
+			key, ok := convert(v)
+			if !ok {
+				continue
+			}
+
+			if targets, exists := targetMap[key]; exists {
+				// 筛选出不符合条件的 target
+				for _, target := range targets {
+					notInMap[target.Id] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return inMap, notInMap
+}
+
+// 根据 query 过滤 map 中的 indent，返回新的 map，增加 =~、 !~ 的情况
+// 在 ~ 的情况下，value 可能为通配符 * 或 %
+func filterHostMap(targetMap map[string][]*models.Target, q models.HostQuery) map[string][]*models.Target {
+	if q.Op == "==" {
+		newMap := make(map[string][]*models.Target)
+		// 遍历 q.Values，将符合条件的 target 都放到新 map 中
+		for _, v := range q.Values {
+			key, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+			if targets, exists := targetMap[key]; exists {
+				newMap[key] = targets
+			}
+		}
+
+		return newMap
+	} else if q.Op == "!=" {
+		// 直接从 targetMap 中删除对应的 key
+		for _, v := range q.Values {
+			key, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+			delete(targetMap, key)
+		}
+
+		return targetMap
+	} else if q.Op == "=~" {
+		for _, v := range q.Values {
+			pattern, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+
+			regex := likePatternToRegex(pattern)
+			re, err := regexp.Compile(regex)
+			if err != nil {
+				logger.Errorf("failed to compile regex:%s error:%v", regex, err)
+				continue
+			}
+
+			for key := range targetMap {
+				if !re.MatchString(key) {
+					delete(targetMap, key)
+				}
+			}
+		}
+	} else if q.Op == "!~" {
+		for _, v := range q.Values {
+			pattern, ok := stringconvert(v)
+			if !ok {
+				continue
+			}
+
+			regex := likePatternToRegex(pattern)
+			re, err := regexp.Compile(regex)
+			if err != nil {
+				logger.Errorf("failed to compile regex:%s error:%v", regex, err)
+				continue
+			}
+
+			for key := range targetMap {
+				if re.MatchString(key) {
+					delete(targetMap, key)
+				}
+			}
+		}
+	}
+
+	return targetMap
+}
+
+func int64convert(v interface{}) (int64, bool) {
+	if id, ok := v.(int64); ok {
+		return id, true
+	}
+	return 0, false
+}
+
+func stringconvert(v interface{}) (string, bool) {
+	if tag, ok := v.(string); ok {
+		return tag, true
+	}
+	return "", false
+}
+
+// 将 like 模式转换为正则表达式
+// % * 匹配任意个字符
+func likePatternToRegex(pattern string) string {
+	var sb strings.Builder
+	// 添加正则表达式起始标记
+	sb.WriteString("^")
+	for _, ch := range pattern {
+		switch ch {
+		case '%':
+		case '*':
+			// % 匹配任意个字符
+			sb.WriteString(".*")
+		default:
+			// 对于其他特殊正则字符，需要转义
+			if strings.ContainsRune(`.+?()|[]{}^$\\`, ch) {
+				sb.WriteString("\\")
+			}
+			sb.WriteRune(ch)
+		}
+	}
+	// 添加正则表达式结束标记
+	sb.WriteString("$")
+	return sb.String()
 }

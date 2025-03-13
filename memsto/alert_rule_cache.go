@@ -81,6 +81,13 @@ func (arc *AlertRuleCacheType) GetRuleIds() []int64 {
 	return list
 }
 
+// GetAll returns all alert rules
+func (arc *AlertRuleCacheType) GetAll() map[int64]*models.AlertRule {
+	arc.RLock()
+	defer arc.RUnlock()
+	return arc.rules
+}
+
 func (arc *AlertRuleCacheType) SyncAlertRules() {
 	err := arc.syncAlertRules()
 	if err != nil {
