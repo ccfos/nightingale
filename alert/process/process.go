@@ -436,8 +436,8 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 
 func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 	var fireEvents []*models.AlertCurEvent
-	// severity 初始为 4, 一定为遇到比自己优先级高的事件
-	severity := 4
+	// severity 初始为最低优先级, 一定为遇到比自己优先级高的事件
+	severity := models.SeverityLowest
 	for _, event := range events {
 		if event == nil {
 			continue

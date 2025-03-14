@@ -47,6 +47,13 @@ const (
 	AlertRuleRecoverDuration0Sec = 0
 )
 
+const (
+	SeverityEmergency = 1
+	SeverityWarning   = 2
+	SeverityNotice    = 3
+	SeverityLowest    = 4
+)
+
 type AlertRule struct {
 	Id                    int64                  `json:"id" gorm:"primaryKey"`
 	GroupId               int64                  `json:"group_id"` // busi group id
