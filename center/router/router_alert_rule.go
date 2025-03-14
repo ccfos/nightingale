@@ -687,3 +687,49 @@ func (rt *Router) cloneToMachine(c *gin.Context) {
 
 	ginx.NewRender(c).Data(reterr, models.InsertAlertRule(rt.Ctx, newRules))
 }
+
+type alertBatchCloneForm struct {
+	RuleIds []int64 `json:"rule_ids"`
+	Bgids   []int64 `json:"bgids"`
+}
+
+// 批量克隆告警规则
+func (rt *Router) batchAlertRuleClone(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+
+	var f alertBatchCloneForm
+	ginx.BindJSON(c, &f)
+
+	// 校验 bgids 操作权限
+	for _, bgid := range f.Bgids {
+		rt.bgrwCheck(c, bgid)
+	}
+
+	reterr := make(map[string]string, len(f.RuleIds))
+	lang := c.GetHeader("X-Language")
+
+	for _, arid := range f.RuleIds {
+		ar, err := models.AlertRuleGetById(rt.Ctx, arid)
+		for _, bgid := range f.Bgids {
+			// 为了让 bgid 和 arid 对应，将上面的 err 放到这里处理
+			if err != nil {
+				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = i18n.Sprintf(lang, err.Error())
+				continue
+			}
+
+			if ar == nil {
+				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = i18n.Sprintf(lang, "alert rule not found")
+				continue
+			}
+
+			newAr := ar.Clone(me.Username, bgid)
+			err = newAr.Add(rt.Ctx)
+			if err != nil {
+				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = i18n.Sprintf(lang, err.Error())
+				continue
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(reterr, nil)
+}

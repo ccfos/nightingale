@@ -1365,3 +1365,17 @@ func InsertAlertRule(ctx *ctx.Context, ars []*AlertRule) error {
 func (ar *AlertRule) Hash() string {
 	return str.MD5(fmt.Sprintf("%d_%s_%s", ar.Id, ar.DatasourceIds, ar.RuleConfig))
 }
+
+func (ar *AlertRule) Clone(operatorName string, newBgid int64) *AlertRule {
+	newAr := ar
+
+	newAr.Id = 0
+	newAr.GroupId = newBgid
+	newAr.Name = ar.Name
+	newAr.UpdateBy = operatorName
+	newAr.UpdateAt = time.Now().Unix()
+	newAr.CreateBy = operatorName
+	newAr.CreateAt = time.Now().Unix()
+
+	return newAr
+}
