@@ -1,6 +1,9 @@
 package router
 
 import (
+	"fmt"
+	"hash/fnv"
+
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -174,6 +177,10 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 		return nil
 	}
 
+	if len(metric) == 0 {
+		return fmt.Errorf("metric is empty")
+	}
+
 	IdentStats.Increment(metric, 1)
 	if rt.DropSample(v) {
 		CounterDropSampleTotal.WithLabelValues(metric).Inc()
@@ -181,10 +188,12 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	}
 
 	var hashkey string
-	if len(metric) >= 2 {
-		hashkey = metric[0:2]
+	if len(metric) <= 2 {
+		hashkey = metric
 	} else {
-		hashkey = metric[0:1]
+		fnv64 := fnv.New64a()
+		fnv64.Write([]byte(metric[2:]))
+		hashkey = metric[0:2] + fmt.Sprint(fnv64.Sum64()%rt.Pushgw.QueueSizeOfMetricPrefix)
 	}
 
 	return rt.Writers.PushSample(hashkey, *v)
