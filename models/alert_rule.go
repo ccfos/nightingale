@@ -1366,6 +1366,7 @@ func (ar *AlertRule) Hash() string {
 	return str.MD5(fmt.Sprintf("%d_%s_%s", ar.Id, ar.DatasourceIds, ar.RuleConfig))
 }
 
+// 复制告警策略，需要提供操作者名称和新的业务组ID
 func (ar *AlertRule) Clone(operatorName string, newBgid int64) *AlertRule {
 	newAr := ar
 
