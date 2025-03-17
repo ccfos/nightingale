@@ -647,6 +647,7 @@ var NewTplMap = map[string]string{
 }
 
 var MsgTplMap = []MessageTemplate{
+	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "SlackWebhook", Ident: SlackWebhook, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},

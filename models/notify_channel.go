@@ -992,7 +992,28 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 
 var NotiChMap = []*NotifyChannelConfig{
 	{
-		Name: "Discord", Ident: Discord, RequestType: "http", Weight: 16,
+		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.callback_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{ jsonMarshal $events }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "callback_url", CName: "Callback Url", Type: "string"},
+					{Key: "note", CName: "Note", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Discord", Ident: Discord, RequestType: "http", Weight: 16, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "{{$params.webhook_url}}",
@@ -1012,7 +1033,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: "http", Weight: 15,
+		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: "http", Weight: 15, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "{{$params.webhook_url}}",
@@ -1033,7 +1054,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "MattermostBot", Ident: MattermostBot, RequestType: "http", Weight: 14,
+		Name: "MattermostBot", Ident: MattermostBot, RequestType: "http", Weight: 14, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "<your mattermost url>/api/v4/posts",
@@ -1054,7 +1075,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: "http", Weight: 13,
+		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: "http", Weight: 13, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "{{$params.webhook_url}}",
@@ -1075,7 +1096,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "SlackBot", Ident: SlackBot, RequestType: "http", Weight: 12,
+		Name: "SlackBot", Ident: SlackBot, RequestType: "http", Weight: 12, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://slack.com/api/chat.postMessage",
@@ -1096,7 +1117,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http", Weight: 11,
+		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http", Weight: 11, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1124,7 +1145,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http", Weight: 10,
+		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http", Weight: 10, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1152,7 +1173,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http", Weight: 9,
+		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http", Weight: 9, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1181,7 +1202,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http", Weight: 8,
+		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http", Weight: 8, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Method:  "POST",
@@ -1210,7 +1231,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Telegram", Ident: Telegram, RequestType: "http", Weight: 7,
+		Name: "Telegram", Ident: Telegram, RequestType: "http", Weight: 7, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
@@ -1233,7 +1254,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Lark", Ident: Lark, RequestType: "http", Weight: 6,
+		Name: "Lark", Ident: Lark, RequestType: "http", Weight: 6, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1256,7 +1277,7 @@ var NotiChMap = []*NotifyChannelConfig{
 	},
 
 	{
-		Name: "Lark Card", Ident: LarkCard, RequestType: "http", Weight: 6,
+		Name: "Lark Card", Ident: LarkCard, RequestType: "http", Weight: 6, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
@@ -1278,7 +1299,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "FeishuApp", Ident: FeishuApp, RequestType: "script", Weight: 5,
+		Name: "FeishuApp", Ident: FeishuApp, RequestType: "script", Weight: 5, Enable: false,
 		RequestConfig: &RequestConfig{
 			ScriptRequestConfig: &ScriptRequestConfig{
 				Timeout:    10000,
@@ -1299,7 +1320,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Feishu", Ident: Feishu, RequestType: "http", Weight: 5,
+		Name: "Feishu", Ident: Feishu, RequestType: "http", Weight: 5, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -1320,7 +1341,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http", Weight: 5,
+		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http", Weight: 5, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -1341,7 +1362,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Wecom", Ident: Wecom, RequestType: "http", Weight: 4,
+		Name: "Wecom", Ident: Wecom, RequestType: "http", Weight: 4, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
@@ -1363,7 +1384,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http", Weight: 3,
+		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http", Weight: 3, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
@@ -1385,7 +1406,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "Email", Ident: Email, RequestType: "smtp", Weight: 2,
+		Name: "Email", Ident: Email, RequestType: "smtp", Weight: 2, Enable: true,
 		RequestConfig: &RequestConfig{
 			SMTPRequestConfig: &SMTPRequestConfig{
 				Host:               "smtp.host",
@@ -1403,7 +1424,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1,
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
@@ -1424,7 +1445,6 @@ func InitNotifyChannel(ctx *ctx.Context) {
 	}
 
 	for _, notiCh := range NotiChMap {
-		notiCh.Enable = true
 		notiCh.CreateBy = "system"
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
