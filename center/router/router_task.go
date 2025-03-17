@@ -117,6 +117,14 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	f.Creator = user.Username
 
+	// 检测 host 是否存在
+	for _, host := range f.Hosts {
+		if _, ok := rt.TargetCache.Get(host); !ok {
+			ginx.NewRender(c).Message("host not exists: %s", host)
+			return
+		}
+	}
+
 	err := f.Verify()
 	ginx.Dangerous(err)
 
