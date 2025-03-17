@@ -372,6 +372,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/alert-rule/validate", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRuleValidation)
 		pages.POST("/relabel-test", rt.auth(), rt.user(), rt.relabelTest)
 		pages.POST("/busi-group/:id/alert-rules/clone", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.cloneToMachine)
+		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -535,6 +536,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
 		pages.GET("/flashduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
+		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

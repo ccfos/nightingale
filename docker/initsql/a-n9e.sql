@@ -631,7 +631,9 @@ CREATE TABLE `alerting_engines`
     `datasource_id` bigint not null default 0 comment 'datasource id',
     `engine_cluster` varchar(128) not null default '' comment 'n9e-alert cluster',
     `clock` bigint not null,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_inst` (`instance`),
+    INDEX `idx_clock` (`clock`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `datasource`
@@ -702,6 +704,7 @@ CREATE TABLE `es_index_pattern` (
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+
 CREATE TABLE `builtin_metrics` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
     `collector` varchar(191) NOT NULL COMMENT '''type of collector''',
@@ -718,6 +721,7 @@ CREATE TABLE `builtin_metrics` (
     `uuid` bigint NOT NULL DEFAULT 0 COMMENT '''uuid''',
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
+    INDEX `idx_uuid` (`uuid`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),
     INDEX `idx_builtinmetric_name` (`name` ASC),
@@ -773,6 +777,52 @@ CREATE TABLE `user_token` (
     `last_used` bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `notify_rule` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null,
+    `description` text,
+    `enable` tinyint(1) not null default 0,
+    `user_group_ids` varchar(255) not null default '',
+    `notify_configs` text,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `notify_channel` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null,
+    `ident` varchar(255) not null,
+    `description` text, 
+    `enable` tinyint(1) not null default 0,
+    `param_config` text,
+    `request_type` varchar(50) not null,
+    `request_config` text,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `message_template` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(64) not null,
+    `ident` varchar(64) not null,
+    `content` text,
+    `user_group_ids` varchar(64),
+    `notify_channel_ident` varchar(64) not null default '',
+    `private` int not null default 0,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `task_meta`
 (

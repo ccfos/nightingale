@@ -208,6 +208,7 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 const (
 	DingtalkTitle   = `{{if $event.IsRecovered}} Recovered {{else}}Triggered{{end}}: {{$event.RuleName}}`
 	FeishuCardTitle = `🔔 {{$event.RuleName}}`
+	FeishuAppTitle  = `{{- if $event.IsRecovered }}🔔 ﹝恢复﹞ {{$event.RuleName}}{{- else }}🔔 ﹝告警﹞ {{$event.RuleName}}{{- end -}}`
 	LarkCardTitle   = `🔔 {{$event.RuleName}}`
 )
 
@@ -474,8 +475,8 @@ var NewTplMap = map[string]string{
 发送时间: {{timestamp}}{{$domain := "http://127.0.0.1:17000" }}   
 事件详情: {{$domain}}/alert-his-events/{{$event.Id}}{{$muteUrl := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}{{range $key, $value := $event.TagsMap}}{{$muteUrl = print $muteUrl "&tags=" $key "%3D" $value}}{{end}}   
 屏蔽1小时: {{ unescaped $muteUrl }}`,
-	FeishuCard: `{{ if $event.IsRecovered }}
-{{- if ne $event.Cate "host"}}
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
 **告警集群:** {{$event.Cluster}}{{end}}   
 **级别状态:** S{{$event.Severity}} Recovered   
 **告警名称:** {{$event.RuleName}}  
@@ -512,7 +513,7 @@ var NewTplMap = map[string]string{
 {{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}`,
-	Wecom: `**级别状态**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
+	Wecom: `**级别状态**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">💔S{{$event.Severity}} Triggered</font>{{end}}       
 **规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
 **监控对象**: {{$event.TargetIdent}}{{end}}   
@@ -556,7 +557,6 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
-
 	SlackWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 *Alarm cluster:* {{$event.Cluster}}{{end}}
@@ -602,6 +602,7 @@ var NewTplMap = map[string]string{
 {{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
 {{- end}}
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
+
 	MattermostWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 **Alarm cluster:** {{$event.Cluster}}{{end}}   
@@ -623,6 +624,25 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://127.0.0.1:17000" }}   
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[View Curve]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	FeishuApp: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Recovered   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
+**恢复时间:** {{timeformat $event.LastEvalTime}}   
+**告警描述:** **服务已恢复**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**告警集群:** {{$event.Cluster}}{{end}}   
+**级别状态:** S{{$event.Severity}} Triggered   
+**告警名称:** {{$event.RuleName}}  
+**事件标签:** {{$event.TagsJSON}}   
+**触发时间:** {{timeformat $event.TriggerTime}}   
+**发送时间:** {{timestamp}}   
+**触发时值:** {{$event.TriggerValue}}   
+{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}`,
 }
 
 var MsgTplMap = []MessageTemplate{
@@ -640,6 +660,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Lark", Ident: Lark, Content: map[string]string{"content": NewTplMap[Lark]}},
 	{Name: "Feishu", Ident: Feishu, Content: map[string]string{"content": NewTplMap[Feishu]}},
 	{Name: "FeishuCard", Ident: FeishuCard, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+	{Name: "FeishuApp", Ident: FeishuApp, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
 	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},

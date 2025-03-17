@@ -89,7 +89,13 @@ func (rt *Router) messageTemplatePut(c *gin.Context) {
 	var f models.MessageTemplate
 	ginx.BindJSON(c, &f)
 
-	mt, err := models.MessageTemplateGet(rt.Ctx, "id = ?", ginx.UrlParamInt64(c, "id"))
+	mt, err := models.MessageTemplateGet(rt.Ctx, "id <> ? and ident = ?", ginx.UrlParamInt64(c, "id"), f.Ident)
+	ginx.Dangerous(err)
+	if mt != nil {
+		ginx.Bomb(http.StatusBadRequest, "message template ident already exists")
+	}
+
+	mt, err = models.MessageTemplateGet(rt.Ctx, "id = ?", ginx.UrlParamInt64(c, "id"))
 	ginx.Dangerous(err)
 	if mt == nil {
 		ginx.Bomb(http.StatusNotFound, "message template not found")

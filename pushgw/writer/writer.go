@@ -265,7 +265,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) error {
 
 	succ := identQueue.list.PushFront(v)
 	if !succ {
-		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
+		logger.Warningf("Write channel(%s) full, current channel size: %d, item: %+v", ident, identQueue.list.Len(), v)
 		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 	}
 	return nil

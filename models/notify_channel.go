@@ -48,7 +48,7 @@ type NotifyChannelConfig struct {
 	ID int64 `json:"id" gorm:"primaryKey"`
 	// 基础配置
 	Name        string `json:"name"`        // 媒介名称
-	Ident       string `json:"ident"`       // 媒介标识
+	Ident       string `json:"ident"`       // 媒介类型
 	Description string `json:"description"` // 媒介描述
 	Enable      bool   `json:"enable"`      // 是否启用
 
@@ -115,7 +115,7 @@ type SMTPRequestConfig struct {
 
 type ScriptRequestConfig struct {
 	ScriptType string `json:"script_type"` // 脚本类型，目前支持 python, shell
-	Timeout    int    `json:"timeout"`     // 超时时间（秒）
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	Script     string `json:"script"`      // 脚本内容
 	Path       string `json:"path"`        // 脚本路径
 }
@@ -126,10 +126,10 @@ type HTTPRequestConfig struct {
 	Method        string            `json:"method"` // GET, POST, PUT
 	Headers       map[string]string `json:"headers"`
 	Proxy         string            `json:"proxy"`
-	Timeout       int               `json:"timeout"`        // 超时时间（秒）
+	Timeout       int               `json:"timeout"`        // 超时时间（毫秒）
 	Concurrency   int               `json:"concurrency"`    // 并发数
 	RetryTimes    int               `json:"retry_times"`    // 重试次数
-	RetryInterval int               `json:"retry_interval"` // 重试间隔（秒）
+	RetryInterval int               `json:"retry_interval"` // 重试间隔（毫秒）
 	TLS           *TLSConfig        `json:"tls,omitempty"`
 	Request       RequestDetail     `json:"request"`
 }
@@ -246,7 +246,6 @@ func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params m
 		"events":  events,
 		"tpl":     tpl,
 		"params":  params,
-		"sendto":  sendtos,
 		"sendtos": sendtos,
 	}
 
@@ -382,7 +381,6 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 		return "", err
 	}
 
-	logger.Infof("send flashduty req:%+v body:%+v", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, string(body))
 	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
@@ -397,6 +395,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 
 	// 重试机制
 	for i := 0; i <= 3; i++ {
+		logger.Infof("send flashduty req:%+v body:%+v", req, string(body))
 		resp, err := client.Do(req)
 		if err != nil {
 			logger.Errorf("send flashduty req:%+v err:%v", req, err)
@@ -453,45 +452,47 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	}
 
 	// 替换 URL Header Parameters 中的变量
-	ncc.replaceVariables(fullTpl)
+	url, headers, parameters := ncc.replaceVariables(fullTpl)
+	logger.Infof("url: %v, headers: %v, parameters: %v", url, headers, parameters)
 
-	req, err := http.NewRequest(httpConfig.Method, httpConfig.URL, bytes.NewBuffer(body))
+	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
 	if err != nil {
 		logger.Errorf("failed to create request: %v, event: %v", err, events)
 		return "", err
 	}
 
 	query := req.URL.Query()
-	var headers map[string]string
 	// 设置请求头 腾讯云短信、语音特殊处理
 	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-		ncc.setTxHeader(req, body)
+		headers = ncc.setTxHeader(headers, body)
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
 	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		req, err = http.NewRequest(httpConfig.Method, httpConfig.URL, nil)
+		req, err = http.NewRequest(httpConfig.Method, url, nil)
 		if err != nil {
 			return "", err
 		}
 
-		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"])
+		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
 		for key, value := range headers {
 			req.Header.Set(key, value)
 		}
 	} else {
-		for key, value := range httpConfig.Headers {
+		for key, value := range headers {
 			req.Header.Add(key, value)
 		}
 	}
 
-	// 记录完整的请求信息
-	logger.Debugf("URL: %s, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL.String(), req.Method, req.Header, query, string(body))
-
 	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-		for key, value := range httpConfig.Request.Parameters {
+		for key, value := range parameters {
 			query.Add(key, value)
 		}
 	}
 
 	req.URL.RawQuery = query.Encode()
+	// 记录完整的请求信息
+	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
 
 	// 重试机制
 	for i := 0; i <= httpConfig.RetryTimes; i++ {
@@ -526,10 +527,9 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 }
 
 // getAliQuery 获取阿里云API的查询参数和请求头
-func (ncc *NotifyChannelConfig) getAliQuery(ident string, query url.Values, ak, sk string) (url.Values, map[string]string) {
+func (ncc *NotifyChannelConfig) getAliQuery(ident string, query url.Values, ak, sk string, params map[string]string) (url.Values, map[string]string) {
 	// 获取基础配置
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
-	params := httpConfig.Request.Parameters
 
 	httpMethod := "POST"
 	canonicalURI := "/"
@@ -646,17 +646,14 @@ func percentEncode(str string) string {
 	return encoded
 }
 
-func (ncc *NotifyChannelConfig) setTxHeader(req *http.Request, payloadBytes []byte) {
-	httpConfig := ncc.RequestConfig.HTTPRequestConfig
+func (ncc *NotifyChannelConfig) setTxHeader(headers map[string]string, payloadBytes []byte) map[string]string {
 	timestamp := time.Now().Unix()
 
 	authorization := ncc.getTxSignature(string(payloadBytes), timestamp)
+	headers["X-TC-Timestamp"] = fmt.Sprintf("%d", timestamp)
+	headers["Authorization"] = authorization
 
-	for key, value := range httpConfig.Headers {
-		req.Header.Set(key, value)
-	}
-	req.Header.Set("X-TC-Timestamp", fmt.Sprintf("%d", timestamp))
-	req.Header.Set("Authorization", authorization)
+	return headers
 }
 
 func (ncc *NotifyChannelConfig) getTxSignature(payloadStr string, timestamp int64) string {
@@ -749,25 +746,36 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	return body.String()
 }
 
-func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) {
+func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) (string, map[string]string, map[string]string) {
 	httpConfig := ncc.RequestConfig.HTTPRequestConfig
+	url := ""
+	headers := make(map[string]string)
+	parameters := make(map[string]string)
 
 	if needsTemplateRendering(httpConfig.URL) {
 		logger.Infof("replace variables url: %s tpl: %+v", httpConfig.URL, tpl)
-		httpConfig.URL = getParsedString("url", httpConfig.URL, tpl)
+		url = getParsedString("url", httpConfig.URL, tpl)
+	} else {
+		url = httpConfig.URL
 	}
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
-			httpConfig.Headers[key] = getParsedString(key, value, tpl)
+			headers[key] = getParsedString(key, value, tpl)
+		} else {
+			headers[key] = value
 		}
 	}
 
 	for key, value := range httpConfig.Request.Parameters {
 		if needsTemplateRendering(value) {
-			httpConfig.Request.Parameters[key] = getParsedString(key, value, tpl)
+			parameters[key] = getParsedString(key, value, tpl)
+		} else {
+			parameters[key] = value
 		}
 	}
+
+	return url, headers, parameters
 }
 
 // needsTemplateRendering 检查字符串是否包含模板语法
@@ -982,6 +990,482 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 }
 
 var NotiChMap = []*NotifyChannelConfig{
+	{
+		Name: "FeishuApp", Ident: FeishuApp, RequestType: "script",
+		RequestConfig: &RequestConfig{
+			ScriptRequestConfig: &ScriptRequestConfig{
+				Timeout:    10000,
+				ScriptType: "script",
+				Script: `#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+import sys
+import json
+import requests
+import logging
+import re
+import traceback
+import os
+import copy
+from typing import Dict, Any, Optional
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# 常量
+RECOVERED = "recovered"
+TRIGGERED = "triggered"
+
+
+def get_access_token(app_id: str, app_secret: str) -> str:
+    """获取飞书访问令牌"""
+    logger.info(f"正在获取飞书访问令牌... AppID: {app_id}")
+    
+    url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+    data = {
+        "app_id": app_id,
+        "app_secret": app_secret
+    }
+    
+    try:
+        logger.info(f"发送请求到 {url}")
+        response = requests.post(
+            url, 
+            json=data,
+            timeout=30,
+            headers={"Content-Type": "application/json"}
+        )
+        
+        logger.info(f"收到响应: 状态码={response.status_code}")
+        if response.status_code != 200:
+            logger.error(f"获取令牌失败，状态码: {response.status_code}")
+            logger.error(f"响应内容: {response.text}")
+            return ""
+        
+        resp_json = response.json()
+        
+        if resp_json.get("msg") != "ok":
+            logger.error(f"飞书获取AccessToken失败: error={resp_json.get('msg')}")
+            logger.error(f"完整响应: {resp_json}")
+            return ""
+        else:
+            token = resp_json.get("tenant_access_token", "")
+            logger.info(f"飞书获取AccessToken成功，Token长度: {len(token)}")
+            return token
+            
+    except Exception as e:
+        logger.error(f"飞书获取AccessToken异常: error={e}")
+        logger.error(f"错误详情: {traceback.format_exc()}")
+        return ""
+
+
+def get_user_info(token: str, emails: list) -> dict:
+    """从飞书API获取用户信息"""
+    url = "https://open.feishu.cn/open-apis/contact/v3/users/batch_get_id?user_id_type=user_id"
+    data = {"emails": emails}
+    
+    try:
+        response = requests.post(
+            url,
+            json=data,
+            timeout=30,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
+        )
+        return response.json()
+    except Exception as e:
+        logger.error(f"获取用户信息失败: {e}")
+        return {}
+
+
+def send_urgent_app(message_id: str, user_id: str, title: str, token: str) -> Optional[Exception]:
+    """发送紧急应用通知"""
+    if not message_id:
+        return Exception("消息ID为空")
+    
+    if not user_id:
+        return Exception("用户ID为空")
+    
+    user_body = {
+        "user_id_list": [user_id],
+        "content": {
+            "text": f"紧急告警: {title}",
+            "type": "text"
+        }
+    }
+    
+    url = f"https://open.feishu.cn/open-apis/im/v1/messages/{message_id}/urgent_app?user_id_type=user_id"
+    
+    try:
+        response = requests.patch(
+            url,
+            json=user_body,
+            timeout=30,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
+        )
+        res = response.json()
+        
+        if response.status_code != 200:
+            return Exception(f"请求失败，状态码 {response.status_code}")
+        
+        if res.get("code", -1) != 0:
+            return Exception(f"飞书拒绝请求: {res.get('msg')}")
+        
+        return None
+            
+    except Exception as e:
+        return e
+
+
+def create_feishu_app_body(title: str, content: str, color: str, event_url: str) -> dict:
+    """创建飞书应用卡片消息体
+    直接使用传入的模板内容，确保使用markdown解析
+    """
+    # 修复双重转义的换行符问题
+    # 1. 将 \\n 转换为真正的换行符
+    markdown_content = content.replace('\\n', '\n')
+    
+    # 2. 处理HTML转义字符
+    markdown_content = markdown_content.replace('&#34;', '"').replace('&gt;', '>')
+    
+    # 3. 修复特殊格式问题
+    # 处理可能导致错误的大括号表达式
+    markdown_content = markdown_content.replace('{map[', '{ map[')
+    markdown_content = markdown_content.replace('map[v:{', 'map[v:{ ')
+    
+    # 创建消息卡片
+    app_body = {
+        "config": {
+            "wide_screen_mode": True,
+            "enable_forward": True
+        },
+        "header": {
+            "title": {
+                "tag": "plain_text",
+                "content": title
+            },
+            "template": color
+        },
+        "elements": [
+            {
+                "tag": "markdown",
+                "content": markdown_content
+            },
+            {
+                "tag": "hr"
+            },
+            {
+                "tag": "action",
+                "actions": [
+                    {
+                        "tag": "button",
+                        "text": {
+                            "content": "告警详情",
+                            "tag": "plain_text"
+                        },
+                        "type": "primary",
+                        "url": event_url
+                    }
+                ]
+            },
+            {
+                "tag": "hr"
+            },
+            {
+                "tag": "note",
+                "elements": [
+                    {
+                        "tag": "lark_md",
+                        "content": title
+                    }
+                ]
+            }
+        ]
+    }
+    
+    # 记录修复后的内容
+    logger.info(f"飞书卡片标题: {title}")
+    logger.info(f"飞书卡片颜色: {color}")
+    logger.info(f"修复后的内容预览: {markdown_content[:100]}...")
+    
+    return app_body
+
+
+def extract_data_from_string(stdin_data):
+    """从字符串中提取关键数据，返回构建的payload"""
+    payload = {"tpl": {}, "params": {}, "sendto": []}
+    
+    # 提取tplContent
+    content_match = re.search(r'tplContent:map\[content:(.*?) title:(.*?)\]', stdin_data)
+    if content_match:
+        payload["tpl"]["content"] = content_match.group(1)
+        payload["tpl"]["title"] = content_match.group(2)
+    
+    # 提取customParams
+    params_match = re.search(r'customParams:map\[(.*?)\]', stdin_data)
+    if params_match:
+        params_str = params_match.group(1)
+        
+        # 提取domain_url
+        domain_match = re.search(r'domain_url:(.*?)(?: |$)', params_str)
+        if domain_match:
+            payload["params"]["domain_url"] = domain_match.group(1)
+        
+        # 提取feishuapp_id
+        app_id_match = re.search(r'feishuapp_id:(.*?)(?: |$)', params_str)
+        if app_id_match:
+            payload["params"]["feishuapp_id"] = app_id_match.group(1)
+        
+        # 提取feishuapp_secret
+        secret_match = re.search(r'feishuapp_secret:(.*?)(?:\s|$)', params_str)
+        if secret_match:
+            payload["params"]["feishuapp_secret"] = secret_match.group(1)
+    
+    # 检查是否有err字段
+    err_match = re.search(r'err:(.*?)(?:,|\s|$)', stdin_data)
+    if err_match:
+        error_msg = err_match.group(1)
+        logger.error(f"检测到脚本错误: {error_msg}")
+    
+    # 不设置默认发送目标，允许为空
+    return payload
+
+
+def send_feishu_app(payload) -> None:
+    """
+    发送飞书应用通知
+    
+    Args:
+        payload: 包含告警信息的字典
+    """
+    try:
+        # 提取必要参数
+        app_id = payload.get('params', {}).get('feishuapp_id')
+        app_secret = payload.get('params', {}).get('feishuapp_secret')
+        domain_url = "https://your-n9e-addr.com"
+        
+        # 从sendto获取通知人列表
+        sendtos = payload.get('sendtos', [])
+        if isinstance(sendtos, str):
+            # 如果sendto是字符串，按逗号分割
+            sendtos = [s.strip() for s in sendtos.split(',') if s.strip()]
+        
+        # 检查必要参数
+        if not app_id or not app_secret:
+            logger.error("未提供有效的飞书应用凭证 (app_id 或 app_secret)")
+            return
+            
+        # 检查发送目标，如果为空则直接返回
+        if not sendtos:
+            logger.warning("未提供发送目标，无法发送消息")
+            return
+        
+        logger.info(f"发送目标: {sendtos}")    
+        
+        # 提取事件信息 - 优先使用单个event，如果没有则使用events中的第一个
+        event = payload.get('event', {})
+        if not event and payload.get('events') and len(payload.get('events', [])) > 0:
+            event = payload.get('events')[0]
+            
+        # 获取通知内容 - 使用已渲染的模板内容
+        content = payload.get('tpl', {}).get('content', '未找到告警内容')
+        title = payload.get('tpl', {}).get('title', '告警通知')
+            
+        # 获取访问令牌
+        token = get_access_token(app_id, app_secret)
+        if not token:
+            logger.error("获取飞书访问令牌失败，无法继续")
+            return
+            
+        # 获取用户信息
+        user_info = get_user_info(token, sendtos)
+        
+        # 创建邮箱到用户ID的映射
+        user_id_map = {}
+        if user_info and "data" in user_info and "user_list" in user_info["data"]:
+            for user in user_info["data"]["user_list"]:
+                if user.get("email"):
+                    user_id_map[user["email"]] = user.get("user_id", "")
+        
+        # 提取事件信息
+        event_id = event.get('id', 0)
+        rule_name = event.get('rule_name', title)
+        severity = event.get('severity', 1)  # 默认为严重级别
+            
+        # 设置颜色和标题 - 根据事件是否已恢复或严重性级别
+        color = "red"  # 默认严重告警使用红色
+        send_title = title
+            
+        # 根据事件状态确定颜色
+        if "Recovered" in content:
+            color = "green"  # 已恢复告警使用绿色
+        elif severity == 1:  
+            color = "red"    # 严重告警
+        elif severity == 2:  
+            color = "orange" # 警告
+        elif severity == 3:  
+            color = "blue"   # 信息
+        
+        event_url = f"{domain_url}/alert-his-events/{event_id}"
+        
+        # 为每个接收者发送消息
+        for recipient in sendtos:
+            if not recipient:
+                continue
+                
+            # 确定receive_id_type
+            if recipient.startswith("ou_"):
+                receive_type = "open_id"
+            elif recipient.startswith("on_"):
+                receive_type = "union_id"
+            elif recipient.startswith("oc_"):
+                receive_type = "chat_id"
+            elif "@" in recipient:
+                receive_type = "email"
+            else:
+                receive_type = "user_id"
+            
+            fs_url = f"https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type={receive_type}"
+            
+            # 创建卡片消息体 - 直接使用模板生成的内容，在create_feishu_app_body中处理转义问题
+            app_body = create_feishu_app_body(send_title, content, color, event_url)
+            content_str = json.dumps(app_body)
+            
+            body = {
+                "msg_type": "interactive",
+                "receive_id": recipient,
+                "content": content_str
+            }
+            
+            # 发送消息
+            try:
+                response = requests.post(
+                    fs_url,
+                    json=body,
+                    timeout=30,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {token}"
+                    }
+                )
+                
+                send_res = response.json()
+                
+                if response.status_code != 200 or send_res.get("code", -1) != 0:
+                    logger.error(f"飞书消息发送失败: 状态码={response.status_code}, 错误={send_res.get('msg', '未知错误')}")
+                    continue
+                
+                message_id = send_res.get("data", {}).get("message_id", "")
+                logger.info(f"发送成功 → {recipient} [消息ID: {message_id}]")
+                
+                # 如果是高严重性，发送紧急消息
+                if severity == 1 and "Recovered" not in content:
+                    user_id = user_id_map.get(recipient, "")
+                    if user_id:
+                        err = send_urgent_app(message_id, user_id, send_title, token)
+                        if err:
+                            logger.error(f"加急通知失败: {err}")
+                        else:
+                            logger.info(f"已发送加急通知 → {recipient}")
+                    else:
+                        logger.warning(f"无法发送加急: 未找到用户ID (email={recipient})")
+                
+            except Exception as e:
+                logger.error(f"发送异常: {e}")
+                logger.error(f"错误详情: {traceback.format_exc()}")
+                
+    except Exception as e:
+        logger.error(f"处理异常: {e}")
+        logger.error(f"错误详情: {traceback.format_exc()}")
+
+
+def main():
+    """主函数：读取输入数据，解析并发送飞书通知"""
+    try:
+        logger.info("开始执行飞书应用告警脚本")
+        payload = None
+        
+        # 读取标准输入
+        try:
+            stdin_data = sys.stdin.read()
+            
+            # 保存安全处理后的原始输入
+            try:
+                with open(".raw_input", 'w') as f:
+                    sanitized_data = stdin_data.replace(r'feishuapp_secret:[^ ]*', 'feishuapp_secret:[REDACTED]')
+                    f.write(sanitized_data)
+            except:
+                pass
+            
+            # 优先尝试解析JSON
+            try:
+                payload = json.loads(stdin_data)
+            except json.JSONDecodeError:
+                # JSON解析失败，尝试字符串提取
+                if "tplContent" in stdin_data:
+                    payload = extract_data_from_string(stdin_data)
+                    logger.info("从原始文本提取数据成功")
+                else:
+                    logger.error("无法识别的数据格式")
+                    payload = {
+                        "tpl": {"content": "无法解析输入数据", "title": "告警通知"},
+                        "params": {},
+                        "sendto": []
+                    }
+        except Exception as e:
+            logger.error(f"读取输入失败: {e}")
+            payload = {
+                "tpl": {"content": "读取输入失败", "title": "告警通知"},
+                "params": {},
+                "sendto": []
+            }
+        
+        # 保存处理后的payload，隐藏敏感信息
+        try:
+            with open(".payload", 'w') as f:
+                safe_payload = copy.deepcopy(payload)
+                if 'params' in safe_payload and 'feishuapp_secret' in safe_payload['params']:
+                    safe_payload['params']['feishuapp_secret'] = '[REDACTED]'
+                f.write(json.dumps(safe_payload, indent=4))
+        except:
+            pass
+        
+        # 处理发送
+        send_feishu_app(payload)
+            
+    except Exception as e:
+        logger.error(f"处理异常: {e}")
+        logger.error(f"错误详情: {traceback.format_exc()}")
+        sys.exit(1)  # 确保错误状态正确传递
+
+
+# 脚本入口点 - 只有一个入口点
+if __name__ == "__main__":
+    main()
+				`,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "feishuapp_id", CName: "FeiShuAppID", Type: "string"},
+					{Key: "feishuapp_secret", CName: "FeiShuAppSecret", Type: "string"},
+				},
+			},
+		},
+	},
 	{
 		Name: "Discord", Ident: Discord, RequestType: "http",
 		RequestConfig: &RequestConfig{
@@ -1399,18 +1883,19 @@ func InitNotifyChannel(ctx *ctx.Context) {
 		notiCh.CreateAt = time.Now().Unix()
 		notiCh.UpdateBy = "system"
 		notiCh.UpdateAt = time.Now().Unix()
-		err := notiCh.Upsert(ctx, notiCh.Ident)
+		err := notiCh.Upsert(ctx)
 		if err != nil {
-			logger.Warningf("failed to upsert notify channels %v", err)
+			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
 		}
 	}
 }
 
-func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context, ident string) error {
-	ch, err := NotifyChannelGet(ctx, "ident = ?", ident)
+func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
 	if err != nil {
-		return errors.WithMessage(err, "failed to get message tpl")
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
 	}
+
 	if ch == nil {
 		return Insert(ctx, ncc)
 	}

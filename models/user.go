@@ -26,18 +26,18 @@ const (
 	Wecom             = "wecom"
 	Feishu            = "feishu"
 	FeishuCard        = "feishucard"
+  FeishuApp         = "feishuapp"
 	Discord           = "discord"
 	MattermostWebhook = "mattermostwebhook"
 	MattermostBot     = "mattermostbot"
-  SlackWebhook = "slackwebhook"
-	SlackBot     = "slackbot"
+  SlackWebhook      = "slackwebhook"
+	SlackBot          = "slackbot"
 	Mm                = "mm"
 	Telegram          = "telegram"
 	Email             = "email"
 	EmailSubject      = "mailsubject"
 	Lark              = "lark"
 	LarkCard          = "larkcard"
-
 
 	DingtalkKey = "dingtalk_robot_token"
 	WecomKey    = "wecom_robot_token"
@@ -904,8 +904,11 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	case Lark, LarkCard:
 		ret := gjson.GetBytes(bs, LarkKey)
 		return ret.String(), ret.Exists()
+	case Phone:
+		return u.Phone, u.Phone != ""
 	default:
-		return "", false
+		ret := gjson.GetBytes(bs, key)
+		return ret.String(), ret.Exists()
 	}
 }
 
