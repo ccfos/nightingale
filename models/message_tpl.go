@@ -26,6 +26,7 @@ type MessageTemplate struct {
 	UserGroupIds       []int64           `json:"user_group_ids" gorm:"serializer:json"`
 	NotifyChannelIdent string            `json:"notify_channel_ident"` // 通知媒介 Ident
 	Private            int               `json:"private"`              // 0-公开 1-私有
+	Weight             int               `json:"weight"`               // 权重，根据此字段对内置模板进行排序
 	CreateAt           int64             `json:"create_at"`
 	CreateBy           string            `json:"create_by"`
 	UpdateAt           int64             `json:"update_at"`
@@ -175,7 +176,7 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
 	}
 
-	err := session.Order("id desc").Find(&lst).Error
+	err := session.Order("weight asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -646,24 +647,24 @@ var NewTplMap = map[string]string{
 }
 
 var MsgTplMap = []MessageTemplate{
-  {Name: "MattermostWebhook", Ident: MattermostWebhook, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
-	{Name: "MattermostBot", Ident: MattermostBot, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
-	{Name: "SlackWebhook", Ident: SlackWebhook, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
-	{Name: "SlackBot", Ident: SlackBot, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
-	{Name: "Discord", Ident: Discord, Content: map[string]string{"content": NewTplMap[Discord]}},
-	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
-	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
-	{Name: "Tencent Voice", Ident: "tx-voice", Content: map[string]string{"content": NewTplMap["tx-voice"]}},
-	{Name: "Tencent SMS", Ident: "tx-sms", Content: map[string]string{"content": NewTplMap["tx-sms"]}},
-	{Name: "Telegram", Ident: Telegram, Content: map[string]string{"content": NewTplMap[Telegram]}},
-	{Name: "LarkCard", Ident: LarkCard, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
-	{Name: "Lark", Ident: Lark, Content: map[string]string{"content": NewTplMap[Lark]}},
-	{Name: "Feishu", Ident: Feishu, Content: map[string]string{"content": NewTplMap[Feishu]}},
-	{Name: "FeishuCard", Ident: FeishuCard, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
-	{Name: "FeishuApp", Ident: FeishuApp, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
-	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
-	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
-	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "Discord", Ident: Discord, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice", Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms", Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice", Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms", Weight: 7, Content: map[string]string{"content": NewTplMap["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram, Weight: 6, Content: map[string]string{"content": NewTplMap[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
+	{Name: "Lark", Ident: Lark, Weight: 5, Content: map[string]string{"content": NewTplMap[Lark]}},
+	{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+	{Name: "FeishuApp", Ident: FeishuApp, Weight: 4, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
+	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -681,6 +682,7 @@ func InitMessageTemplate(ctx *ctx.Context) {
 			CreateAt:           time.Now().Unix(),
 			UpdateBy:           "system",
 			UpdateAt:           time.Now().Unix(),
+			Weight:             tpl.Weight,
 		}
 
 		err := msgTpl.Upsert(ctx, msgTpl.Ident)
