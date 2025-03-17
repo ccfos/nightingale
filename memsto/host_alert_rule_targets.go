@@ -134,7 +134,9 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 			resmap[target.Id] = target
 		}
 
-		// 遍历 rule 的 queries，根据不同的 key 过滤 targetsByGroup, targetsByIdent, targetsByTag，得到符合条件的三组 map
+		// 遍历 rule 的 queries，根据不同的 key 进行过滤
+		// inMap 为符合条件的 target，notInMap 为不符合条件的 target
+		// inMap 和 notInMap 可能都为 nil，表示不需要过滤
 		for _, q := range rule.Queries {
 			var inMap map[int64]struct{}
 			var notInMap map[int64]struct{}
@@ -151,7 +153,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 			handleTargetFilterMap(resmap, inMap, notInMap)
 		}
 
-		// 根据 targetsByGroup, targetsByIdent, targetsByTag，进行交集操作，得到最终的 target map
+		// 将过滤后的结果放到 m 中
 		for _, target := range resmap {
 			if _, exists := m[target.EngineName]; !exists {
 				m[target.EngineName] = make(map[int64][]string)
@@ -169,7 +171,7 @@ func (tc *TargetsOfAlertRuleCacheType) syncTargets() error {
 	return nil
 }
 
-// 更新 target 相关的 map，根据不同的 key，包括 targetsByGroup, targetsByIdent, targetHostTagMap, targetsByTag
+// 更新 target 相关的 map，根据不同的 key，包括 targetsByGroup, targetsByIdent, targetsByTag
 func (tc *TargetsOfAlertRuleCacheType) updateTargetMaps() {
 	allTargets := tc.targetCache.GetAll()
 
@@ -287,8 +289,12 @@ func filterTagMap(targetMap map[string][]*models.Target, q models.HostQuery) (in
 	return inMap, notInMap
 }
 
-// 根据 query 过滤 map 中的 indent，返回新的 map，增加 =~、 !~ 的情况
-// 在 ~ 的情况下，value 可能为通配符 * 或 %
+// // 根据 query 过滤 host map 中 符合条件和不符合条件的 target，分别存放在 inMap 和 notInMap 中
+// 当 q.Op == "==" 时，返回的 inMap 中包含所有符合条件的 target
+// 当 q.Op == "!=" 时，返回的 notInMap 中包含所有不符合条件的 target
+// 当 q.Op == "=~" 时，模糊过滤，返回的 inMap 中包含所有符合条件的 target
+// 当 q.Op == "!~" 时，模糊过滤，返回的 notInMap 中包含所有不符合条件的 target
+// 在 ~ 的情况下，value 可能为通配符 * 或 %，支持模糊匹配
 func filterHostMap(targetMap map[string][]*models.Target, q models.HostQuery) (inMap map[int64]struct{}, notInMap map[int64]struct{}) {
 	if q.Op == "==" {
 		inMap = make(map[int64]struct{})
