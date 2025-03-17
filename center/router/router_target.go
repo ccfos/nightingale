@@ -570,3 +570,14 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 
 	ginx.NewRender(c).Data(ret, err)
 }
+
+func checkTargetsExistByIndent(ctx *ctx.Context, idents []string) {
+	for _, ident := range idents {
+		ok, err := models.TargetExistsByIndent(ctx, ident)
+		ginx.Dangerous(err)
+
+		if !ok {
+			ginx.Bomb(http.StatusBadRequest, "target not exists: %s", ident)
+		}
+	}
+}

@@ -130,13 +130,7 @@ func (rt *Router) taskTplAdd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
 
-	// 检测 host 是否存在
-	for _, host := range f.Hosts {
-		if _, ok := rt.TargetCache.Get(host); !ok {
-			ginx.NewRender(c).Message("host not exists: %s", host)
-			return
-		}
-	}
+	checkTargetsExistByIndent(rt.Ctx, f.Hosts)
 
 	sort.Strings(f.Tags)
 
@@ -176,13 +170,7 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 	var f taskTplForm
 	ginx.BindJSON(c, &f)
 
-	// 检测 host 是否存在
-	for _, host := range f.Hosts {
-		if _, ok := rt.TargetCache.Get(host); !ok {
-			ginx.NewRender(c).Message("host not exists: %s", host)
-			return
-		}
-	}
+	checkTargetsExistByIndent(rt.Ctx, f.Hosts)
 
 	sort.Strings(f.Tags)
 
