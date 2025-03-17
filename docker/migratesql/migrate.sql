@@ -209,3 +209,8 @@ CREATE TABLE `message_template` (
     `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+
+/* v8.0.0-beta.9 2025-03-17 */
+ALTER TABLE `message_template` ADD COLUMN `weight` int not null default 0;
+ALTER TABLE `notify_channel` ADD COLUMN `weight` int not null default 0;

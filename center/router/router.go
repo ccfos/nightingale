@@ -372,6 +372,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/alert-rule/validate", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRuleValidation)
 		pages.POST("/relabel-test", rt.auth(), rt.user(), rt.relabelTest)
 		pages.POST("/busi-group/:id/alert-rules/clone", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.cloneToMachine)
+		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -577,6 +578,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
 			service.PUT("/targets/note", rt.targetUpdateNoteByService)
 			service.PUT("/targets/bgid", rt.targetUpdateBgidByService)
+
+			service.POST("/targets-of-host-query", rt.targetsOfHostQuery)
 
 			service.POST("/alert-rules", rt.alertRuleAddByService)
 			service.POST("/alert-rule-add", rt.alertRuleAddOneByService)

@@ -59,6 +59,7 @@ type NotifyChannelConfig struct {
 	RequestType   string         `json:"request_type"` // http, stmp, script, flashduty
 	RequestConfig *RequestConfig `json:"request_config,omitempty" gorm:"serializer:json"`
 
+	Weight   int    `json:"weight"` // 权重，根据此字段对内置模板进行排序
 	CreateAt int64  `json:"create_at"`
 	CreateBy string `json:"create_by"`
 	UpdateAt int64  `json:"update_at"`
@@ -786,7 +787,7 @@ func needsTemplateRendering(s string) bool {
 func (ncc *NotifyChannelConfig) SendEmail(notifyRuleId int64, events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string, ch chan *EmailContext) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("To", sendtos...)
 	m.SetHeader("Subject", tpl["subject"].(string))
 	m.SetBody("text/html", tpl["content"].(string))
 	ch <- &EmailContext{notifyRuleId, events, m}
@@ -805,7 +806,7 @@ func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[st
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("To", sendtos...)
 	m.SetHeader("Subject", tpl["subject"].(string))
 	m.SetBody("text/html", tpl["content"].(string))
 	return gomail.Send(s, m)
@@ -962,7 +963,7 @@ func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 	if where != "" && len(args) > 0 {
 		session = session.Where(where, args...)
 	}
-	err := session.Order("id desc").Find(&lst).Error
+	err := session.Order("weight asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -991,12 +992,487 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 
 var NotiChMap = []*NotifyChannelConfig{
 	{
-		Name: "FeishuApp", Ident: FeishuApp, RequestType: "script",
+		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.callback_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{ jsonMarshal $events }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "callback_url", CName: "Callback Url", Type: "string"},
+					{Key: "note", CName: "Note", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Discord", Ident: Discord, RequestType: "http", Weight: 16, Enable: false,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"content": "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "MattermostWebhook", Ident: MattermostWebhook, RequestType: "http", Weight: 15, Enable: false,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"text":  "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "MattermostBot", Ident: MattermostBot, RequestType: "http", Weight: 14, Enable: false,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "<your mattermost url>/api/v4/posts",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you mattermost bot token>"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"channel_id": "{{$params.channel_id}}", "message":  "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "channel_id", CName: "Channel ID", Type: "string"},
+					{Key: "channel_name", CName: "Channel Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "SlackWebhook", Ident: SlackWebhook, RequestType: "http", Weight: 13, Enable: false,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.webhook_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"text":  "{{$tpl.content}}", "mrkdwn": true}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "SlackBot", Ident: SlackBot, RequestType: "http", Weight: 12, Enable: false,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://slack.com/api/chat.postMessage",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you slack bot token>"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"channel": "#{{$params.channel}}", "text":  "{{$tpl.content}}", "mrkdwn": true}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "channel", CName: "channel", Type: "string"},
+					{Key: "channel_name", CName: "Channel Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http", Weight: 11, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://sms.tencentcloudapi.com",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "sms.tencentcloudapi.com",
+					"X-TC-Action":  "SendSms",
+					"X-TC-Version": "2021-01-11",
+					"X-TC-Region":  "需要改为实际的region",
+					"Service":      "sms",
+					"Secret_ID":    "需要改为实际的secret_id",
+					"Secret_Key":   "需要改为实际的secret_key",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+	{
+		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http", Weight: 10, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://vms.tencentcloudapi.com",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"CalledNumber":"+86{{ $sendto }}","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"],"VoiceSdkAppid":"需要改为实际的appid"}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "vms.tencentcloudapi.com",
+					"X-TC-Action":  "SendTtsVoice",
+					"X-TC-Version": "2020-09-02",
+					"X-TC-Region":  "ap-beijing",
+					"Service":      "vms",
+					"Secret_ID":    "需要改为实际的secret_id",
+					"Secret_Key":   "需要改为实际的secret_key",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+	{
+		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http", Weight: 9, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://dysmsapi.aliyuncs.com",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"PhoneNumbers":    "{{ $sendto }}",
+						"SignName":        "需要改为实际的签名",
+						"TemplateCode":    "需要改为实际的模板id",
+						"TemplateParam":   `{"incident":"故障{{$tpl.incident}}，请及时处理"}`,
+						"AccessKeyId":     "需要改为实际的access_key_id",
+						"AccessKeySecret": "需要改为实际的access_key_secret",
+					},
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "dysmsapi.aliyuncs.com",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+	{
+		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http", Weight: 8, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://dyvmsapi.aliyuncs.com",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{
+						"TtsCode":          "需要改为实际的voice_code",
+						"TtsParam":         `{"incident":"故障{{$tpl.incident}}，一键认领请按1"}`,
+						"CalledNumber":     `{{ $sendto }}`,
+						"CalledShowNumber": `需要改为实际的show_number, 如果为空则不显示`,
+						"AccessKeyId":      "需要改为实际的access_key_id",
+						"AccessKeySecret":  "需要改为实际的access_key_secret",
+					},
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Host":         "dyvmsapi.aliyuncs.com",
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "phone",
+			},
+		},
+	},
+	{
+		Name: "Telegram", Ident: Telegram, RequestType: "http", Weight: 7, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
+				Method:  "POST",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
+					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "chat_id", CName: "Chat Id", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Lark", Ident: Lark, RequestType: "http", Weight: 6, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+
+	{
+		Name: "Lark Card", Ident: LarkCard, RequestType: "http", Weight: 6, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"token": "{{$params.token}}"},
+					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "token", CName: "Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "FeishuApp", Ident: FeishuApp, RequestType: "script", Weight: 5, Enable: false,
 		RequestConfig: &RequestConfig{
 			ScriptRequestConfig: &ScriptRequestConfig{
 				Timeout:    10000,
 				ScriptType: "script",
-				Script: `#!/usr/bin/env python
+				Script:     FeishuAppBody,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "feishuapp_id", CName: "FeiShuAppID", Type: "string"},
+					{Key: "feishuapp_secret", CName: "FeiShuAppSecret", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Feishu", Ident: Feishu, RequestType: "http", Weight: 5, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http", Weight: 5, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Wecom", Ident: Wecom, RequestType: "http", Weight: 4, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"key": "{{$params.key}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "key", CName: "Key", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http", Weight: 3, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
+				Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Email", Ident: Email, RequestType: "smtp", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			SMTPRequestConfig: &SMTPRequestConfig{
+				Host:               "smtp.host",
+				Port:               25,
+				Username:           "your-username",
+				Password:           "your-password",
+				From:               "your-email",
+				InsecureSkipVerify: true,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
+		},
+	},
+	{
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			},
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: "flashduty integration url",
+			},
+		},
+	},
+}
+
+func InitNotifyChannel(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
+	for _, notiCh := range NotiChMap {
+		notiCh.CreateBy = "system"
+		notiCh.CreateAt = time.Now().Unix()
+		notiCh.UpdateBy = "system"
+		notiCh.UpdateAt = time.Now().Unix()
+		err := notiCh.Upsert(ctx)
+		if err != nil {
+			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
+		}
+	}
+}
+
+func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
+	if err != nil {
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
+	}
+
+	if ch == nil {
+		return Insert(ctx, ncc)
+	}
+
+	if ch.UpdateBy != "" && ch.UpdateBy != "system" {
+		return nil
+	}
+	return ch.Update(ctx, *ncc)
+}
+
+var FeishuAppBody = `#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 import sys
@@ -1451,373 +1927,4 @@ def main():
 # 脚本入口点 - 只有一个入口点
 if __name__ == "__main__":
     main()
-				`,
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "email",
-			},
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "feishuapp_id", CName: "FeiShuAppID", Type: "string"},
-					{Key: "feishuapp_secret", CName: "FeiShuAppSecret", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Discord", Ident: Discord, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "{{$params.webhook_url}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{"content": "{{$tpl.content}}"}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Tencent SMS", Ident: "tx-sms", RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Method:  "POST",
-				URL:     "https://sms.tencentcloudapi.com",
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
-				},
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-					"Host":         "sms.tencentcloudapi.com",
-					"X-TC-Action":  "SendSms",
-					"X-TC-Version": "2021-01-11",
-					"X-TC-Region":  "需要改为实际的region",
-					"Service":      "sms",
-					"Secret_ID":    "需要改为实际的secret_id",
-					"Secret_Key":   "需要改为实际的secret_key",
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "phone",
-			},
-		},
-	},
-	{
-		Name: "Tencent Voice", Ident: "tx-voice", RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Method:  "POST",
-				URL:     "https://vms.tencentcloudapi.com",
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{"CalledNumber":"+86{{ $sendto }}","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"],"VoiceSdkAppid":"需要改为实际的appid"}`,
-				},
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-					"Host":         "vms.tencentcloudapi.com",
-					"X-TC-Action":  "SendTtsVoice",
-					"X-TC-Version": "2020-09-02",
-					"X-TC-Region":  "ap-beijing",
-					"Service":      "vms",
-					"Secret_ID":    "需要改为实际的secret_id",
-					"Secret_Key":   "需要改为实际的secret_key",
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "phone",
-			},
-		},
-	},
-	{
-		Name: "Aliyun SMS", Ident: "ali-sms", RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Method:  "POST",
-				URL:     "https://dysmsapi.aliyuncs.com",
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{
-						"PhoneNumbers":    "{{ $sendto }}",
-						"SignName":        "需要改为实际的签名",
-						"TemplateCode":    "需要改为实际的模板id",
-						"TemplateParam":   `{"incident":"故障{{$tpl.incident}}，请及时处理"}`,
-						"AccessKeyId":     "需要改为实际的access_key_id",
-						"AccessKeySecret": "需要改为实际的access_key_secret",
-					},
-				},
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-					"Host":         "dysmsapi.aliyuncs.com",
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "phone",
-			},
-		},
-	},
-
-	{
-		Name: "Aliyun Voice", Ident: "ali-voice", RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Method:  "POST",
-				URL:     "https://dyvmsapi.aliyuncs.com",
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{
-						"TtsCode":          "需要改为实际的voice_code",
-						"TtsParam":         `{"incident":"故障{{$tpl.incident}}，一键认领请按1"}`,
-						"CalledNumber":     `{{ $sendto }}`,
-						"CalledShowNumber": `需要改为实际的show_number, 如果为空则不显示`,
-						"AccessKeyId":      "需要改为实际的access_key_id",
-						"AccessKeySecret":  "需要改为实际的access_key_secret",
-					},
-				},
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-					"Host":         "dyvmsapi.aliyuncs.com",
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "phone",
-			},
-		},
-	},
-	{
-		Name: "Telegram", Ident: Telegram, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
-				Method:  "POST",
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
-					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "token", CName: "Token", Type: "string"},
-					{Key: "chat_id", CName: "Chat Id", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Lark", Ident: Lark, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"token": "{{$params.token}}"},
-					Body:       `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "token", CName: "Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Lark Card", Ident: LarkCard, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"token": "{{$params.token}}"},
-					Body:       `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "token", CName: "Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Feishu", Ident: Feishu, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "access_token", CName: "Access Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "div", "text": {"tag": "lark_md","content": "{{$tpl.content}}"}}]}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "access_token", CName: "Access Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Wecom", Ident: Wecom, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"key": "{{$params.key}}"},
-					Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "key", CName: "Key", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
-				Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "access_token", CName: "Access Token", Type: "string"},
-					{Key: "bot_name", CName: "Bot Name", Type: "string"},
-				},
-			},
-		},
-	},
-	{
-		Name: "Email", Ident: Email, RequestType: "smtp",
-		RequestConfig: &RequestConfig{
-			SMTPRequestConfig: &SMTPRequestConfig{
-				Host:               "smtp.host",
-				Port:               25,
-				Username:           "your-username",
-				Password:           "your-password",
-				From:               "your-email",
-				InsecureSkipVerify: true,
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			UserInfo: &UserInfo{
-				ContactKey: "email",
-			},
-		},
-	},
-	{
-		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty",
-		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-				},
-			},
-			FlashDutyRequestConfig: &FlashDutyRequestConfig{
-				IntegrationUrl: "flashduty integration url",
-			},
-		},
-	},
-}
-
-func InitNotifyChannel(ctx *ctx.Context) {
-	if !ctx.IsCenter {
-		return
-	}
-
-	for _, notiCh := range NotiChMap {
-		notiCh.Enable = true
-		notiCh.CreateBy = "system"
-		notiCh.CreateAt = time.Now().Unix()
-		notiCh.UpdateBy = "system"
-		notiCh.UpdateAt = time.Now().Unix()
-		err := notiCh.Upsert(ctx)
-		if err != nil {
-			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
-		}
-	}
-}
-
-func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
-	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
-	if err != nil {
-		return errors.WithMessage(err, "notify channel init failed to get message tpl")
-	}
-
-	if ch == nil {
-		return Insert(ctx, ncc)
-	}
-
-	if ch.UpdateBy != "" && ch.UpdateBy != "system" {
-		return nil
-	}
-	return ch.Update(ctx, *ncc)
-}
+				`

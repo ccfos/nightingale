@@ -10,18 +10,19 @@ import (
 )
 
 type Pushgw struct {
-	BusiGroupLabelKey   string
-	IdentMetrics        []string
-	IdentStatsThreshold int
-	IdentDropThreshold  int
-	WriteConcurrency    int
-	LabelRewrite        bool
-	ForceUseServerTS    bool
-	DebugSample         map[string]string
-	DropSample          []map[string]string
-	WriterOpt           WriterGlobalOpt
-	Writers             []WriterOptions
-	KafkaWriters        []KafkaWriterOptions
+	BusiGroupLabelKey       string
+	IdentMetrics            []string
+	IdentStatsThreshold     int
+	IdentDropThreshold      int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
+	WriteConcurrency        int
+	LabelRewrite            bool
+	ForceUseServerTS        bool
+	QueueSizeOfMetricPrefix uint64 // 对于没有 ident 的监控数据，使用 metric 划分队列，第一版是使用 metric 前俩字符，第二版是 metric 前俩字符 + hash(metric后面字符) % QueueSizeOfMetricPrefix
+	DebugSample             map[string]string
+	DropSample              []map[string]string
+	WriterOpt               WriterGlobalOpt
+	Writers                 []WriterOptions
+	KafkaWriters            []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -135,6 +136,10 @@ func (p *Pushgw) PreCheck() {
 
 	if p.IdentDropThreshold <= 0 {
 		p.IdentDropThreshold = 5000000
+	}
+
+	if p.QueueSizeOfMetricPrefix <= 0 {
+		p.QueueSizeOfMetricPrefix = 100
 	}
 
 	for _, writer := range p.Writers {

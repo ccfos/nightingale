@@ -571,6 +571,7 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, err)
 }
 
+
 func checkTargetsExistByIndent(ctx *ctx.Context, idents []string) {
 	for _, ident := range idents {
 		ok, err := models.TargetExistsByIndent(ctx, ident)
@@ -581,3 +582,19 @@ func checkTargetsExistByIndent(ctx *ctx.Context, idents []string) {
 		}
 	}
 }
+
+func (rt *Router) targetsOfHostQuery(c *gin.Context) {
+	var queries []models.HostQuery
+	ginx.BindJSON(c, &queries)
+
+	hostsQuery := models.GetHostsQuery(queries)
+	session := models.TargetFilterQueryBuild(rt.Ctx, hostsQuery, 0, 0)
+	var lst []*models.Target
+	err := session.Find(&lst).Error
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, err.Error())
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+

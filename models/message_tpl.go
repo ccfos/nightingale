@@ -26,6 +26,7 @@ type MessageTemplate struct {
 	UserGroupIds       []int64           `json:"user_group_ids" gorm:"serializer:json"`
 	NotifyChannelIdent string            `json:"notify_channel_ident"` // 通知媒介 Ident
 	Private            int               `json:"private"`              // 0-公开 1-私有
+	Weight             int               `json:"weight"`               // 权重，根据此字段对内置模板进行排序
 	CreateAt           int64             `json:"create_at"`
 	CreateBy           string            `json:"create_by"`
 	UpdateAt           int64             `json:"update_at"`
@@ -175,7 +176,7 @@ func MessageTemplatesGetBy(ctx *ctx.Context, notifyChannelIdents []string) ([]*M
 		session = session.Where("notify_channel_ident IN (?)", notifyChannelIdents)
 	}
 
-	err := session.Order("id desc").Find(&lst).Error
+	err := session.Order("weight asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -557,6 +558,34 @@ var NewTplMap = map[string]string{
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+	SlackWebhook: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+*Alarm cluster:* {{$event.Cluster}}{{end}}
+*Level Status:* S{{$event.Severity}} Recovered
+*Alarm name:* {{$event.RuleName}}
+*Recovery time:* {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
+{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+*Duration*: {{humanizeDurationInterface $time_duration}}
+*Alarm description:* *Service has been restored*
+{{- else }}
+{{- if ne $event.Cate "host"}}
+*Alarm cluster:* {{$event.Cluster}}{{end}}
+*Level Status:* S{{$event.Severity}} Triggered
+*Alarm name:* {{$event.RuleName}}
+*Trigger time:* {{timeformat $event.TriggerTime}}
+*Sending time:* {{timestamp}}
+*Trigger time value:* {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}
+{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+*Duration*: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}*Alarm description:* *{{$event.RuleNote}}*{{end}}
+{{- end -}}
+
+{{$domain := "http://127.0.0.1:17000" }}   
+<{{$domain}}/alert-his-events/{{$event.Id}}|Event Details> 
+<{{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}}|Block for 1 hour> 
+<{{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}|View Curve>`,
 	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
@@ -574,6 +603,28 @@ var NewTplMap = map[string]string{
 {{- $mutelink = print $mutelink "&tags=" $key "%3D" $encodedValue}}
 {{- end}}
 [Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$mutelink}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
+
+	MattermostWebhook: `{{ if $event.IsRecovered }}
+{{- if ne $event.Cate "host"}}
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Recovered   
+**Alarm name:** {{$event.RuleName}}   
+**Recovery time:** {{timeformat $event.LastEvalTime}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
+**Alarm description:** **Service has been restored**   
+{{- else }}
+{{- if ne $event.Cate "host"}}   
+**Alarm cluster:** {{$event.Cluster}}{{end}}   
+**Level Status:** S{{$event.Severity}} Triggered   
+**Alarm name:** {{$event.RuleName}}   
+**Trigger time:** {{timeformat $event.TriggerTime}}   
+**Sending time:** {{timestamp}}   
+**Trigger time value:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}   
+{{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
+{{- end -}}
+{{$domain := "http://127.0.0.1:17000" }}   
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[View Curve]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 	FeishuApp: `{{- if $event.IsRecovered -}}
 {{- if ne $event.Cate "host" -}}
 **告警集群:** {{$event.Cluster}}{{end}}   
@@ -596,20 +647,25 @@ var NewTplMap = map[string]string{
 }
 
 var MsgTplMap = []MessageTemplate{
-	{Name: "Discord", Ident: Discord, Content: map[string]string{"content": NewTplMap[Discord]}},
-	{Name: "Aliyun Voice", Ident: "ali-voice", Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
-	{Name: "Aliyun SMS", Ident: "ali-sms", Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
-	{Name: "Tencent Voice", Ident: "tx-voice", Content: map[string]string{"content": NewTplMap["tx-voice"]}},
-	{Name: "Tencent SMS", Ident: "tx-sms", Content: map[string]string{"content": NewTplMap["tx-sms"]}},
-	{Name: "Telegram", Ident: Telegram, Content: map[string]string{"content": NewTplMap[Telegram]}},
-	{Name: "LarkCard", Ident: LarkCard, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
-	{Name: "Lark", Ident: Lark, Content: map[string]string{"content": NewTplMap[Lark]}},
-	{Name: "Feishu", Ident: Feishu, Content: map[string]string{"content": NewTplMap[Feishu]}},
-	{Name: "FeishuCard", Ident: FeishuCard, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
-	{Name: "FeishuApp", Ident: FeishuApp, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
-	{Name: "Wecom", Ident: Wecom, Content: map[string]string{"content": NewTplMap[Wecom]}},
-	{Name: "Dingtalk", Ident: Dingtalk, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
-	{Name: "Email", Ident: Email, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
+	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+	{Name: "SlackWebhook", Ident: SlackWebhook, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "SlackBot", Ident: SlackBot, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+	{Name: "Discord", Ident: Discord, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+	{Name: "Aliyun Voice", Ident: "ali-voice", Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+	{Name: "Aliyun SMS", Ident: "ali-sms", Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+	{Name: "Tencent Voice", Ident: "tx-voice", Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+	{Name: "Tencent SMS", Ident: "tx-sms", Weight: 7, Content: map[string]string{"content": NewTplMap["tx-sms"]}},
+	{Name: "Telegram", Ident: Telegram, Weight: 6, Content: map[string]string{"content": NewTplMap[Telegram]}},
+	{Name: "LarkCard", Ident: LarkCard, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
+	{Name: "Lark", Ident: Lark, Weight: 5, Content: map[string]string{"content": NewTplMap[Lark]}},
+	{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
+	{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+	{Name: "FeishuApp", Ident: FeishuApp, Weight: 4, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
+	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
+	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -627,6 +683,7 @@ func InitMessageTemplate(ctx *ctx.Context) {
 			CreateAt:           time.Now().Unix(),
 			UpdateBy:           "system",
 			UpdateAt:           time.Now().Unix(),
+			Weight:             tpl.Weight,
 		}
 
 		err := msgTpl.Upsert(ctx, msgTpl.Ident)
@@ -682,6 +739,25 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 				continue
 			}
 			tplContent[key] = body.String()
+			continue
+		} else if t.NotifyChannelIdent == "slackwebhook" || t.NotifyChannelIdent == "slackbot" {
+			text := strings.Join(append(defs, msgTpl), "")
+			tpl, err := template.New(key).Funcs(tplx.TemplateFuncMap).Parse(text)
+			if err != nil {
+				logger.Errorf("failed to parse template: %v events: %v", err, events)
+				continue
+			}
+
+			if err = tpl.Execute(&body, events); err != nil {
+				logger.Errorf("failed to execute template: %v events: %v", err, events)
+				continue
+			}
+
+			escaped := strings.ReplaceAll(body.String(), `"`, `\"`)
+			escaped = strings.ReplaceAll(escaped, "\n", "\\n")
+			escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+			escaped = strings.ReplaceAll(escaped, "&lt;", "<")
+			tplContent[key] = template.HTML(escaped)
 			continue
 		}
 

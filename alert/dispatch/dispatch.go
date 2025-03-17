@@ -81,7 +81,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 }
 
 func (e *Dispatch) ReloadTpls() error {
-	err := e.relaodTpls()
+	err := e.reloadTpls()
 	if err != nil {
 		logger.Errorf("failed to reload tpls: %v", err)
 	}
@@ -89,13 +89,13 @@ func (e *Dispatch) ReloadTpls() error {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
-		if err := e.relaodTpls(); err != nil {
+		if err := e.reloadTpls(); err != nil {
 			logger.Warning("failed to reload tpls:", err)
 		}
 	}
 }
 
-func (e *Dispatch) relaodTpls() error {
+func (e *Dispatch) reloadTpls() error {
 	tmpTpls, err := models.ListTpls(e.ctx)
 	if err != nil {
 		return err

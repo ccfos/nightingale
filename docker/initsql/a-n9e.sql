@@ -631,7 +631,9 @@ CREATE TABLE `alerting_engines`
     `datasource_id` bigint not null default 0 comment 'datasource id',
     `engine_cluster` varchar(128) not null default '' comment 'n9e-alert cluster',
     `clock` bigint not null,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_inst` (`instance`),
+    INDEX `idx_clock` (`clock`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `datasource`
@@ -702,6 +704,7 @@ CREATE TABLE `es_index_pattern` (
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+
 CREATE TABLE `builtin_metrics` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'unique identifier',
     `collector` varchar(191) NOT NULL COMMENT '''type of collector''',
@@ -718,6 +721,7 @@ CREATE TABLE `builtin_metrics` (
     `uuid` bigint NOT NULL DEFAULT 0 COMMENT '''uuid''',
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
+    INDEX `idx_uuid` (`uuid`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),
     INDEX `idx_builtinmetric_name` (`name` ASC),
