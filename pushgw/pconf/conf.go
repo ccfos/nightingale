@@ -13,7 +13,7 @@ type Pushgw struct {
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
 	IdentStatsThreshold int
-	IdentDropThreshold  int
+	IdentDropThreshold  int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
 	WriteConcurrency    int
 	LabelRewrite        bool
 	ForceUseServerTS    bool
