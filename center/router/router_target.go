@@ -406,15 +406,14 @@ func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		
+
 		if len(bgids) <= 0 {
 			return true, nil
-		}	
+		}
 	}
 
 	return false, nil
 }
-
 
 func (rt *Router) targetBindBgids(c *gin.Context) {
 	var f targetBgidsForm
@@ -570,4 +569,19 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(ret, err)
+}
+
+func (rt *Router) targetsOfHostQuery(c *gin.Context) {
+	var queries []models.HostQuery
+	ginx.BindJSON(c, &queries)
+
+	hostsQuery := models.GetHostsQuery(queries)
+	session := models.TargetFilterQueryBuild(rt.Ctx, hostsQuery, 0, 0)
+	var lst []*models.Target
+	err := session.Find(&lst).Error
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, err.Error())
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
 }
