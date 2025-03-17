@@ -169,6 +169,10 @@ func (rt *Router) notifyTest(c *gin.Context) {
 
 	notifyChannel := notifyChannels[0]
 
+	if !notifyChannel.Enable {
+		ginx.Bomb(http.StatusBadRequest, "notify channel not enabled, please enable it first")
+	}
+
 	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashtudy" {
 		messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
