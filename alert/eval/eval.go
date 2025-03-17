@@ -20,6 +20,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
 	"github.com/ccfos/nightingale/v6/pkg/parser"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	promql2 "github.com/ccfos/nightingale/v6/pkg/promql"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
@@ -672,16 +673,27 @@ func (arw *AlertRuleWorker) getHostIdents(paramQuery models.ParamQuery) ([]strin
 		return nil, err
 	}
 
-	hostsQuery := models.GetHostsQuery(queries)
-	session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
-	var lst []*models.Target
-	err = session.Find(&lst).Error
-	if err != nil {
-		return nil, err
+	if !arw.Ctx.IsCenter {
+		lst, err := poster.PostByUrlsWithResp[[]*models.Target](arw.Ctx, "/v1/n9e/targets-of-host-query", queries)
+		if err != nil {
+			return nil, err
+		}
+		for i := range lst {
+			params = append(params, lst[i].Ident)
+		}
+	} else {
+		hostsQuery := models.GetHostsQuery(queries)
+		session := models.TargetFilterQueryBuild(arw.Ctx, hostsQuery, 0, 0)
+		var lst []*models.Target
+		err = session.Find(&lst).Error
+		if err != nil {
+			return nil, err
+		}
+		for i := range lst {
+			params = append(params, lst[i].Ident)
+		}
 	}
-	for i := range lst {
-		params = append(params, lst[i].Ident)
-	}
+
 	arw.HostAndDeviceIdentCache.Store(cacheKey, params)
 	return params, nil
 }

@@ -579,6 +579,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/targets/note", rt.targetUpdateNoteByService)
 			service.PUT("/targets/bgid", rt.targetUpdateBgidByService)
 
+			service.POST("/targets-of-host-query", rt.targetsOfHostQuery)
+
 			service.POST("/alert-rules", rt.alertRuleAddByService)
 			service.POST("/alert-rule-add", rt.alertRuleAddOneByService)
 			service.DELETE("/alert-rules", rt.alertRuleDelByService)
