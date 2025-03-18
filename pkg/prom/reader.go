@@ -701,7 +701,7 @@ func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.
 	var warnings Warnings
 	var value model.Value
 	var statusCode int
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 1; i++ {
 		value, warnings, statusCode, err = h.query(ctx, query, ts)
 		if err == nil {
 			return value, warnings, nil
