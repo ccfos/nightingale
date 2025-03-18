@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"golang.org/x/exp/slices"
@@ -680,7 +679,7 @@ func CanMigrateBg(ctx *ctx.Context) bool {
 	return true
 }
 
-func MigrateBg(ctx *ctx.Context, bgLabelKey string, targetCache *memsto.TargetCacheType) {
+func MigrateBg(ctx *ctx.Context, bgLabelKey string) {
 	err := DoMigrateBg(ctx, bgLabelKey)
 	if err != nil {
 		log.Println("failed to migrate bgid, err:", err)
