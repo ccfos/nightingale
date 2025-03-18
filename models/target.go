@@ -319,7 +319,6 @@ func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
 	for i := 0; i < len(lst); i++ {
 		lst[i].FillTagsMap()
 		lst[i].GroupIds = tgs[lst[i].Ident]
-		logger.Infof("migrate target %+v", lst[i])
 	}
 
 	return lst, err
