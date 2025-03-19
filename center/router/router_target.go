@@ -571,14 +571,20 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, err)
 }
 
-
 func checkTargetsExistByIndent(ctx *ctx.Context, idents []string) {
-	for _, ident := range idents {
-		ok, err := models.TargetExistsByIndent(ctx, ident)
-		ginx.Dangerous(err)
 
-		if !ok {
-			ginx.Bomb(http.StatusBadRequest, "target not exists: %s", ident)
+	existingIdents, err := models.GetExistingTargetIdents(ctx, idents)
+	ginx.Dangerous(err)
+
+	if len(existingIdents) != len(idents) {
+		existMap := make(map[string]bool)
+		for _, ident := range existingIdents {
+			existMap[ident] = true
+		}
+		for _, ident := range idents {
+			if !existMap[ident] {
+				ginx.Bomb(http.StatusBadRequest, "target not exists: %s", ident)
+			}
 		}
 	}
 }
@@ -597,4 +603,3 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 
 	ginx.NewRender(c).Data(lst, nil)
 }
-

@@ -735,8 +735,11 @@ func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 	return nil
 }
 
-func TargetExistsByIndent(ctx *ctx.Context, idents string) (bool, error) {
-	var count int64
-	err := DB(ctx).Model(&Target{}).Where("ident = ?", idents).Count(&count).Error
-	return count > 0, err
+func GetExistingTargetIdents(ctx *ctx.Context, idents []string) ([]string, error) {
+	if len(idents) == 0 {
+		return []string{}, nil
+	}
+	var existingIdents []string
+	err := DB(ctx).Model(&Target{}).Where("ident IN ?", idents).Pluck("ident", &existingIdents).Error
+	return existingIdents, err
 }
