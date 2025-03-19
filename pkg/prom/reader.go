@@ -22,12 +22,14 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
 	"unsafe"
 
 	json "github.com/json-iterator/go"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/prometheus/common/model"
 
@@ -701,8 +703,22 @@ func (h *httpAPI) Query(ctx context.Context, query string, ts time.Time) (model.
 	var warnings Warnings
 	var value model.Value
 	var statusCode int
+
+	_, file, line, _ := runtime.Caller(1)
+	callerInfo := fmt.Sprintf("%s:%d", file, line)
+
 	for i := 0; i < 1; i++ {
+		start := time.Now()
 		value, warnings, statusCode, err = h.query(ctx, query, ts)
+		cost := time.Since(start).Milliseconds()
+
+		slowQuery := false
+		if cost > 100 {
+			slowQuery = true
+		}
+		logger.Infof("debug_query query: %s, cost: %dms, caller: %s, value: %v, warnings: %v, statusCode: %d, err: %v, slow_query_%v",
+			query, cost, callerInfo, value, warnings, statusCode, err, slowQuery)
+
 		if err == nil {
 			return value, warnings, nil
 		}
@@ -744,7 +760,18 @@ func (h *httpAPI) QueryRange(ctx context.Context, query string, r Range) (model.
 	q.Set("end", formatTime(r.End))
 	q.Set("step", strconv.FormatFloat(r.Step.Seconds(), 'f', -1, 64))
 
+	_, file, line, _ := runtime.Caller(1)
+	callerInfo := fmt.Sprintf("%s:%d", file, line)
+
+	start := time.Now()
 	_, body, warnings, err := h.client.DoGetFallback(ctx, u, q)
+	cost := time.Since(start).Milliseconds()
+	slowQuery := false
+	if cost > 100 {
+		slowQuery = true
+	}
+	logger.Infof("debug_query query: %s, cost: %dms, caller: %s, warnings: %v, err: %v, slow_query_%v",
+		query, cost, callerInfo, warnings, err, slowQuery)
 	if err != nil {
 		return nil, warnings, err
 	}

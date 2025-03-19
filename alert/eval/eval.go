@@ -281,9 +281,21 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			if hasLabelLossAggregator(query) || notExactMatch(query) {
 				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低
 				anomalyPoints = arw.VarFillingBeforeQuery(query, readerClient)
+				arw.Processor.Stats.CounterVarFillingQuery.WithLabelValues(
+					fmt.Sprintf("%v", arw.Rule.Id),
+					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+					fmt.Sprintf("%v", i),
+					"BeforeQuery",
+				).Inc()
 			} else {
 				// 先查询再过滤变量，效率较高，但无法处理有聚合函数的情况
 				anomalyPoints = arw.VarFillingAfterQuery(query, readerClient)
+				arw.Processor.Stats.CounterVarFillingQuery.WithLabelValues(
+					fmt.Sprintf("%v", arw.Rule.Id),
+					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+					fmt.Sprintf("%v", i),
+					"AfterQuery",
+				).Inc()
 			}
 			lst = append(lst, anomalyPoints...)
 		} else {

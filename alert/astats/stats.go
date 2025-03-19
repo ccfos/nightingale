@@ -17,6 +17,7 @@ type Stats struct {
 	CounterRuleEval             *prometheus.CounterVec
 	CounterQueryDataErrorTotal  *prometheus.CounterVec
 	CounterQueryDataTotal       *prometheus.CounterVec
+	CounterVarFillingQuery      *prometheus.CounterVec
 	CounterRecordEval           *prometheus.CounterVec
 	CounterRecordEvalErrorTotal *prometheus.CounterVec
 	CounterMuteTotal            *prometheus.CounterVec
@@ -135,6 +136,13 @@ func NewSyncStats() *Stats {
 		Help:      "The size of notify record queue.",
 	})
 
+	CounterVarFillingQuery := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "var_filling_query_total",
+		Help:      "Number of var filling query.",
+	}, []string{"rule_id", "datasource_id", "ref", "typ"})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -151,6 +159,7 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal,
 		GaugeQuerySeriesCount,
 		GaugeNotifyRecordQueueSize,
+		CounterVarFillingQuery,
 	)
 
 	return &Stats{
@@ -169,5 +178,6 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal:        CounterSubEventTotal,
 		GaugeQuerySeriesCount:       GaugeQuerySeriesCount,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
+		CounterVarFillingQuery:      CounterVarFillingQuery,
 	}
 }
