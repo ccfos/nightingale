@@ -121,7 +121,7 @@ func (ncc *NotifyChannelCacheType) SyncNotifyChannels() {
 	err := ncc.syncNotifyChannels()
 	if err != nil {
 		fmt.Println("failed to sync notify channels:", err)
-		exit(1)
+		// exit(1)
 	}
 
 	go ncc.loopSyncNotifyChannels()

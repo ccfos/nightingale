@@ -85,7 +85,7 @@ func (mtc *MessageTemplateCacheType) SyncMessageTemplates() {
 	err := mtc.syncMessageTemplates()
 	if err != nil {
 		fmt.Println("failed to sync message templates:", err)
-		exit(1)
+		// exit(1)
 	}
 
 	go mtc.loopSyncMessageTemplates()

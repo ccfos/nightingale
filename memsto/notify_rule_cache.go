@@ -85,7 +85,7 @@ func (nrc *NotifyRuleCacheType) SyncNotifyRules() {
 	err := nrc.syncNotifyRules()
 	if err != nil {
 		fmt.Println("failed to sync notify rules:", err)
-		exit(1)
+		// exit(1)
 	}
 
 	go nrc.loopSyncNotifyRules()
