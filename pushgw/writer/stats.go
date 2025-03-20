@@ -13,7 +13,7 @@ var (
 		prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Buckets:   []float64{.1, 1, 10},
+			Buckets:   []float64{.001, .01, .1, 1, 5, 10},
 			Name:      "forward_duration_seconds",
 			Help:      "Forward samples to TSDB. latencies in seconds.",
 		}, []string{"url"},
@@ -35,7 +35,7 @@ var (
 			Subsystem: subsystem,
 			Name:      "sample_queue_size",
 			Help:      "The size of sample queue.",
-		}, []string{"host_ident"},
+		}, []string{"queueid"},
 	)
 
 	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -57,7 +57,7 @@ var (
 		Subsystem: subsystem,
 		Name:      "push_queue_error_total",
 		Help:      "Number of push queue error.",
-	}, []string{"host_ident"})
+	}, []string{"queueid"})
 
 	CounterPushQueueOverLimitTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,

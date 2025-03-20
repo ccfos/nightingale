@@ -207,6 +207,8 @@ func (rt *Router) falconPush(c *gin.Context) {
 			if has {
 				rt.AppendLabels(pt, target, rt.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		err = rt.ForwardToQueue(c.ClientIP(), queueid, pt)

@@ -145,6 +145,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			if has {
 				rt.AppendLabels(&req.Timeseries[i], target, rt.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		if insertTarget {

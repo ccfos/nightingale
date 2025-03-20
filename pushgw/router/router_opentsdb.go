@@ -202,6 +202,8 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 			if has {
 				rt.AppendLabels(pt, target, rt.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(host).Inc()
 		}
 
 		err = rt.ForwardToQueue(c.ClientIP(), queueid, pt)

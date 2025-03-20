@@ -257,6 +257,8 @@ func (r *Router) datadogSeries(c *gin.Context) {
 			if has {
 				r.AppendLabels(pt, target, r.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		err = r.ForwardToQueue(c.ClientIP(), queueid, pt)
