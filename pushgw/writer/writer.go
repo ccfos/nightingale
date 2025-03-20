@@ -169,15 +169,11 @@ type IdentQueue struct {
 	ts      int64
 }
 
-func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (interface{}, bool) {
+func (ws *WritersType) ReportQueueStats(queueid string, identQueue *IdentQueue) (interface{}, bool) {
 	for {
-		time.Sleep(60 * time.Second)
+		time.Sleep(15 * time.Second)
 		count := identQueue.list.Len()
-		if count > ws.pushgw.IdentStatsThreshold {
-			GaugeSampleQueueSize.WithLabelValues(ident).Set(float64(count))
-		}
-
-		GaugeAllQueueSize.Set(float64(ws.AllQueueLen.Load().(int)))
+		GaugeSampleQueueSize.WithLabelValues(queueid).Set(float64(count))
 	}
 }
 
@@ -189,7 +185,7 @@ func (ws *WritersType) SetAllQueueLen() {
 			curMetricLen += q.list.Len()
 		}
 		ws.RUnlock()
-		ws.AllQueueLen.Store(curMetricLen)
+		ws.AllQueueLen.Store(int64(curMetricLen))
 		time.Sleep(time.Duration(ws.pushgw.WriterOpt.AllQueueMaxSizeInterval) * time.Millisecond)
 	}
 }
@@ -234,39 +230,33 @@ func (ws *WritersType) CleanExpQueue() {
 	}
 }
 
-func (ws *WritersType) PushSample(ident string, v interface{}) error {
+func (ws *WritersType) PushSample(queueid string, v interface{}) error {
 	ws.RLock()
-	identQueue := ws.queues[ident]
+	queue := ws.queues[queueid]
 	ws.RUnlock()
-	if identQueue == nil {
-		identQueue = &IdentQueue{
+	if queue == nil {
+		queue = &IdentQueue{
 			list:    NewSafeListLimited(ws.pushgw.WriterOpt.QueueMaxSize),
 			closeCh: make(chan struct{}),
 			ts:      time.Now().Unix(),
 		}
 
 		ws.Lock()
-		ws.queues[ident] = identQueue
+		ws.queues[queueid] = queue
 		ws.Unlock()
 
-		go ws.ReportQueueStats(ident, identQueue)
-		go ws.StartConsumer(identQueue)
+		go ws.ReportQueueStats(queueid, queue)
+		go ws.StartConsumer(queue)
 	}
 
-	identQueue.ts = time.Now().Unix()
-	curLen := ws.AllQueueLen.Load().(int)
-	if curLen > ws.pushgw.WriterOpt.AllQueueMaxSize {
-		err := fmt.Errorf("write queue full, metric count over limit: %d", curLen)
-		logger.Warning(err)
-		CounterPushQueueOverLimitTotal.Inc()
-		return err
-	}
+	queue.ts = time.Now().Unix()
 
-	succ := identQueue.list.PushFront(v)
+	succ := queue.list.PushFront(v)
 	if !succ {
-		logger.Warningf("Write channel(%s) full, current channel size: %d, item: %+v", ident, identQueue.list.Len(), v)
-		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
+		logger.Warningf("Write channel(%s) full, current channel size: %d, item: %+v", queueid, queue.list.Len(), v)
+		CounterPushQueueErrorTotal.WithLabelValues(queueid).Inc()
 	}
+
 	return nil
 }
 
@@ -294,7 +284,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 }
 
 func (ws *WritersType) Init() error {
-	ws.AllQueueLen.Store(0)
+	ws.AllQueueLen.Store(int64(0))
 
 	if err := ws.initWriters(); err != nil {
 		return err

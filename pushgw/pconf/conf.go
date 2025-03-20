@@ -31,7 +31,9 @@ type Pushgw struct {
 type WriterGlobalOpt struct {
 	QueueMaxSize            int
 	QueuePopSize            int
-	AllQueueMaxSize         int
+	QueueNumber             int     // 每个 writer 固定数量的队列
+	QueueWaterMark          float64 // 队列将满，开始丢弃数据的水位，比如 0.8
+	AllQueueMaxSize         int64
 	AllQueueMaxSizeInterval int
 	RetryCount              int
 	RetryInterval           int64
@@ -106,16 +108,22 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.WriterOpt.QueueMaxSize <= 0 {
-		p.WriterOpt.QueueMaxSize = 10000000
+		p.WriterOpt.QueueMaxSize = 1000_000
 	}
 
 	if p.WriterOpt.QueuePopSize <= 0 {
 		p.WriterOpt.QueuePopSize = 1000
 	}
 
-	if p.WriterOpt.AllQueueMaxSize <= 0 {
-		p.WriterOpt.AllQueueMaxSize = 5000000
+	if p.WriterOpt.QueueNumber <= 0 {
+		p.WriterOpt.QueueNumber = 128
 	}
+
+	if p.WriterOpt.QueueWaterMark <= 0 {
+		p.WriterOpt.QueueWaterMark = 0.9
+	}
+
+	p.WriterOpt.AllQueueMaxSize = int64(float64(p.WriterOpt.QueueNumber*p.WriterOpt.QueueMaxSize) * p.WriterOpt.QueueWaterMark)
 
 	if p.WriterOpt.AllQueueMaxSizeInterval <= 0 {
 		p.WriterOpt.AllQueueMaxSizeInterval = 200
@@ -199,5 +207,6 @@ func (p *Pushgw) PreCheck() {
 		if tlsConf != nil {
 			p.Writers[index].HTTPTransport.TLSClientConfig = tlsConf
 		}
+
 	}
 }
