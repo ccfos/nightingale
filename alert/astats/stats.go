@@ -55,7 +55,7 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "query_data_total",
 		Help:      "Number of rule eval query data.",
-	}, []string{"datasource"})
+	}, []string{"datasource", "rule_id"})
 
 	CounterRecordEval := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,

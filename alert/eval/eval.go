@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/dscache"
@@ -314,7 +315,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			}
 
 			var warnings promsdk.Warnings
-			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
+			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", arw.Rule.Id)).Inc()
 			value, warnings, err := readerClient.Query(context.Background(), promql, time.Now())
 			if err != nil {
 				logger.Errorf("rule_eval:%s promql:%s, error:%v", arw.Key(), promql, err)
@@ -425,6 +426,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 				realQuery = strings.Replace(realQuery, fmt.Sprintf("$%s", key), val, -1)
 			}
 			// 得到满足值变量的所有结果
+			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", arw.Rule.Id)).Inc()
 			value, _, err := readerClient.Query(context.Background(), curQuery, time.Now())
 			if err != nil {
 				logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), curQuery, err)
@@ -586,7 +588,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 				logger.Errorf("query:%s fail to unmarshalling into string slice, error:%v", paramQuery.Query, err)
 			}
 			if len(query) == 0 {
-				paramsKeyAllLabel, err := getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient)
+				paramsKeyAllLabel, err := getParamKeyAllLabel(varToLabel[paramKey], originPromql, readerClient, arw.DatasourceId, arw.Rule.Id, arw.Processor.Stats)
 				if err != nil {
 					logger.Errorf("rule_eval:%s, fail to getParamKeyAllLabel, error:%v query:%s", arw.Key(), err, paramQuery.Query)
 				}
@@ -617,7 +619,7 @@ func (arw *AlertRuleWorker) getParamPermutation(paramVal map[string]models.Param
 	return res, nil
 }
 
-func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API) ([]string, error) {
+func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API, dsId int64, rid int64, stats *astats.Stats) ([]string, error) {
 	labels, metricName, err := promql2.GetLabelsAndMetricNameWithReplace(promql, "$")
 	if err != nil {
 		return nil, fmt.Errorf("promql:%s, get labels error:%v", promql, err)
@@ -631,6 +633,7 @@ func getParamKeyAllLabel(paramKey string, promql string, client promsdk.API) ([]
 	}
 	pr := metricName + "{" + strings.Join(labelstrs, ",") + "}"
 
+	stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", dsId), fmt.Sprintf("%d", rid)).Inc()
 	value, _, err := client.Query(context.Background(), pr, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("promql: %s query error: %v", pr, err)
@@ -1288,6 +1291,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						<-semaphore
 						wg.Done()
 					}()
+					arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", arw.Rule.Id)).Inc()
 					value, _, err := readerClient.Query(context.Background(), promql, time.Now())
 					if err != nil {
 						logger.Errorf("rule_eval:%s, promql:%s, error:%v", arw.Key(), promql, err)
@@ -1468,7 +1472,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 
 			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
 			series, err := plug.QueryData(ctx, query)
-			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId)).Inc()
+			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", rule.Id)).Inc()
 			if err != nil {
 				logger.Warningf("rule_eval rid:%d query data error: %v", rule.Id, err)
 				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_CLIENT, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
