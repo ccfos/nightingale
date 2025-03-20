@@ -149,8 +149,8 @@ func (p *Pushgw) PreCheck() {
 		p.QueueSizeOfMetricPrefix = 100
 	}
 
-	for _, writer := range p.Writers {
-		for _, relabel := range writer.WriteRelabels {
+	for index := range p.Writers {
+		for _, relabel := range p.Writers[index].WriteRelabels {
 			if relabel.Regex == "" {
 				relabel.Regex = "(.*)"
 			}
@@ -175,29 +175,29 @@ func (p *Pushgw) PreCheck() {
 			}
 		}
 
-		tlsConf, err := writer.ClientConfig.TLSConfig()
+		tlsConf, err := p.Writers[index].ClientConfig.TLSConfig()
 		if err != nil {
 			panic(err)
 		}
 
 		// 初始化 http transport
-		writer.HTTPTransport = &http.Transport{
+		p.Writers[index].HTTPTransport = &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   time.Duration(writer.DialTimeout) * time.Millisecond,
-				KeepAlive: time.Duration(writer.KeepAlive) * time.Millisecond,
+				Timeout:   time.Duration(p.Writers[index].DialTimeout) * time.Millisecond,
+				KeepAlive: time.Duration(p.Writers[index].KeepAlive) * time.Millisecond,
 			}).DialContext,
-			ResponseHeaderTimeout: time.Duration(writer.Timeout) * time.Millisecond,
-			TLSHandshakeTimeout:   time.Duration(writer.TLSHandshakeTimeout) * time.Millisecond,
-			ExpectContinueTimeout: time.Duration(writer.ExpectContinueTimeout) * time.Millisecond,
-			MaxConnsPerHost:       writer.MaxConnsPerHost,
-			MaxIdleConns:          writer.MaxIdleConns,
-			MaxIdleConnsPerHost:   writer.MaxIdleConnsPerHost,
-			IdleConnTimeout:       time.Duration(writer.IdleConnTimeout) * time.Millisecond,
+			ResponseHeaderTimeout: time.Duration(p.Writers[index].Timeout) * time.Millisecond,
+			TLSHandshakeTimeout:   time.Duration(p.Writers[index].TLSHandshakeTimeout) * time.Millisecond,
+			ExpectContinueTimeout: time.Duration(p.Writers[index].ExpectContinueTimeout) * time.Millisecond,
+			MaxConnsPerHost:       p.Writers[index].MaxConnsPerHost,
+			MaxIdleConns:          p.Writers[index].MaxIdleConns,
+			MaxIdleConnsPerHost:   p.Writers[index].MaxIdleConnsPerHost,
+			IdleConnTimeout:       time.Duration(p.Writers[index].IdleConnTimeout) * time.Millisecond,
 		}
 
 		if tlsConf != nil {
-			writer.HTTPTransport.TLSClientConfig = tlsConf
+			p.Writers[index].HTTPTransport.TLSClientConfig = tlsConf
 		}
 	}
 }
