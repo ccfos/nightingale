@@ -2,7 +2,10 @@ package pconf
 
 import (
 	"log"
+	"net"
+	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
@@ -56,6 +59,10 @@ type WriterOptions struct {
 	WriteRelabels []*RelabelConfig
 
 	tlsx.ClientConfig
+
+	// writer 是在配置文件中写死的，不支持动态更新，所以启动的时候就初始化好
+	// 后面大概率也不需要动态更新，pushgw 甚至想单独拆出来作为一个独立的进程提供服务
+	HTTPTransport *http.Transport
 }
 
 type SASLConfig struct {
@@ -166,6 +173,31 @@ func (p *Pushgw) PreCheck() {
 			if relabel.Replacement == "" {
 				relabel.Replacement = "$1"
 			}
+		}
+
+		tlsConf, err := writer.ClientConfig.TLSConfig()
+		if err != nil {
+			panic(err)
+		}
+
+		// 初始化 http transport
+		writer.HTTPTransport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   time.Duration(writer.DialTimeout) * time.Millisecond,
+				KeepAlive: time.Duration(writer.KeepAlive) * time.Millisecond,
+			}).DialContext,
+			ResponseHeaderTimeout: time.Duration(writer.Timeout) * time.Millisecond,
+			TLSHandshakeTimeout:   time.Duration(writer.TLSHandshakeTimeout) * time.Millisecond,
+			ExpectContinueTimeout: time.Duration(writer.ExpectContinueTimeout) * time.Millisecond,
+			MaxConnsPerHost:       writer.MaxConnsPerHost,
+			MaxIdleConns:          writer.MaxIdleConns,
+			MaxIdleConnsPerHost:   writer.MaxIdleConnsPerHost,
+			IdleConnTimeout:       time.Duration(writer.IdleConnTimeout) * time.Millisecond,
+		}
+
+		if tlsConf != nil {
+			writer.HTTPTransport.TLSClientConfig = tlsConf
 		}
 	}
 }
