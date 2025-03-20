@@ -676,6 +676,62 @@
                 ]
             },
             {
+                "type": "barGauge",
+                "id": "83beec43-1471-4507-a7f9-d58c0c1f81df",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 11,
+                    "i": "1084e65c-0d67-4589-9c59-47a784dba0d6",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "topk(20, rate(n9e_pushgw_sample_received_by_ident[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "instant": true,
+                        "legend": "{{host_ident}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Top hosts",
+                "description": "上报监控数据最多的机器，数值表示每秒上报多少个数据点",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "sortOrder": "desc",
+                    "displayMode": "basic",
+                    "valueMode": "color",
+                    "otherPosition": "none"
+                },
+                "options": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    }
+                }
+            },
+            {
                 "type": "row",
                 "id": "5bf92893-f3fb-4a8a-bee3-c4c857add367",
                 "name": "Alerting",
@@ -684,7 +740,7 @@
                     "h": 1,
                     "w": 24,
                     "x": 0,
-                    "y": 11,
+                    "y": 16,
                     "i": "5bf92893-f3fb-4a8a-bee3-c4c857add367",
                     "isResizable": false
                 },
@@ -697,7 +753,7 @@
                     "h": 5,
                     "w": 6,
                     "x": 0,
-                    "y": 12,
+                    "y": 17,
                     "i": "ad1af16c-de0c-45f4-8875-cea4e85d51d0",
                     "isResizable": true
                 },
@@ -778,7 +834,7 @@
                     "h": 5,
                     "w": 6,
                     "x": 6,
-                    "y": 12,
+                    "y": 17,
                     "i": "9a91af6a-c4b2-4220-b3cb-7e52e431870d",
                     "isResizable": true
                 },
@@ -860,7 +916,7 @@
                     "h": 1,
                     "w": 24,
                     "x": 0,
-                    "y": 17,
+                    "y": 22,
                     "i": "9a283e20-67c3-4bed-8070-f2e2c654aa1e",
                     "isResizable": false
                 },
@@ -873,7 +929,7 @@
                     "h": 5,
                     "w": 12,
                     "x": 0,
-                    "y": 18,
+                    "y": 23,
                     "i": "d7c253bd-05f3-4b43-a7bd-34ffacd16fbd",
                     "isResizable": true
                 },
@@ -953,7 +1009,7 @@
                     "h": 5,
                     "w": 12,
                     "x": 12,
-                    "y": 18,
+                    "y": 23,
                     "i": "7c725076-a986-4414-abd4-ce06605665b5",
                     "isResizable": true
                 },
