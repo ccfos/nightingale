@@ -1,0 +1,1041 @@
+{
+    "name": "nightingale v8",
+    "tags": "",
+    "ident": "",
+    "uuid": 1742467018844000,
+    "configs": {
+        "panels": [
+            {
+                "type": "row",
+                "id": "5bfd69d8-f7c1-4821-b663-515b70744c0f",
+                "name": "Time Series In/Out",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "5bfd69d8-f7c1-4821-b663-515b70744c0f",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "53fcb9dc-23f9-41e0-bc5e-121eed14c3a4",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1,
+                    "i": "53fcb9dc-23f9-41e0-bc5e-121eed14c3a4",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_samples_received_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Samples received / Second",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8830b5cc-2b1a-4513-9cc1-bbd6c96dfffb",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1,
+                    "i": "21a12e4d-f029-4dd0-98f4-970ae28612a3",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_write_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Samples written to TSDB / Second",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "6fa42981-424c-4309-bc22-3c8191e5cf3c",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "e3e4d46e-b6d6-4cdd-b72d-56f3e9fb1e4a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_write_error_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Write Samples Occur Error / Second",
+                "description": "每秒有多少数据点写失败了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "e2cc1263-1eda-4d31-8772-7e63b3c24971",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "27ec2eb1-390d-42bb-904e-a8e28e3331ae",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_drop_sample_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Drop Samples / Second",
+                "description": "每秒 Drop 掉多少个数据点。只有配置了 Pushgw.DropSample 才会主动 Drop 指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9e32d6c9-e9a5-4890-8722-00d4197d9e5e",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 6,
+                    "i": "326b6619-1665-4d0c-adf8-75fb54aeb75b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "n9e_pushgw_sample_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Write Queue Size",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 10000,
+                                "type": ""
+                            },
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "39c3cfc0-0860-4f9f-aaf9-98cda7622556",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 6,
+                    "i": "dc941959-2255-4591-9fd4-c21c54815b92",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_push_queue_over_limit_error_total[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Queue Over WaterMark, Reject Requests / Second",
+                "description": "队列积压太严重，达到水位线，开始拒绝请求。表示每秒拒绝多少次请求",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 10000,
+                                "type": ""
+                            },
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "afe97f46-7752-44aa-8944-a60be597cf5e",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 6,
+                    "i": "321a6deb-8027-4af9-bd0c-0adf9941b286",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_forward_duration_seconds_count[$__rate_interval])",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "HTTP Request / Second（Write TSDB）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4efab293-c374-4515-985a-1dea80aa6da8",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 6,
+                    "i": "1ae8127f-d90b-4dfc-873c-a2f7b8936bc8",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, rate(n9e_pushgw_forward_duration_seconds_bucket[$__rate_interval]))",
+                        "refId": "A",
+                        "maxDataPoints": 240,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "P95 Latency（Write TSDB）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "5bf92893-f3fb-4a8a-bee3-c4c857add367",
+                "name": "Alerting",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 11,
+                    "i": "5bf92893-f3fb-4a8a-bee3-c4c857add367",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "caf23e58-d907-42b0-9ed6-722c8c6f3c5f",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 12,
+                    "i": "ad1af16c-de0c-45f4-8875-cea4e85d51d0",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_alert_rule_eval_error_total[$__rate_interval]) > 0",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Alerting rules eval occur errors / Second",
+                "description": "告警规则运行的时候，每秒失败了多少次",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "af584a0a-0595-4bd1-a999-4a9799fa40bf",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 12,
+                    "i": "9a91af6a-c4b2-4220-b3cb-7e52e431870d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "n9e_alert_alert_queue_size",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Queue length of alarm events",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "row",
+                "id": "9a283e20-67c3-4bed-8070-f2e2c654aa1e",
+                "name": "Sync",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17,
+                    "i": "9a283e20-67c3-4bed-8070-f2e2c654aa1e",
+                    "isResizable": false
+                },
+                "panels": []
+            },
+            {
+                "type": "timeseries",
+                "id": "d7c253bd-05f3-4b43-a7bd-34ffacd16fbd",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 18,
+                    "i": "d7c253bd-05f3-4b43-a7bd-34ffacd16fbd",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "n9e_cron_sync_number",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Last sync records count",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "7c725076-a986-4414-abd4-ce06605665b5",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 18,
+                    "i": "7c725076-a986-4414-abd4-ce06605665b5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "n9e_cron_duration",
+                        "refId": "A",
+                        "maxDataPoints": 240
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Last sync time duration",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "prom",
+                "type": "datasource"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}
