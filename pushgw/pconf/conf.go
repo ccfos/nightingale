@@ -125,7 +125,7 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.WriterOpt.QueueWaterMark <= 0 {
-		p.WriterOpt.QueueWaterMark = 0.9
+		p.WriterOpt.QueueWaterMark = 0.95
 	}
 
 	p.WriterOpt.AllQueueMaxSize = int64(float64(p.WriterOpt.QueueNumber*p.WriterOpt.QueueMaxSize) * p.WriterOpt.QueueWaterMark)

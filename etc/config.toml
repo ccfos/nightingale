@@ -136,7 +136,6 @@ ForceUseServerTS = true
 # [Pushgw.WriterOpt]
 # QueueMaxSize = 1000000
 # QueuePopSize = 1000
-# QueueNumber = 128
 
 [[Pushgw.Writers]] 
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
