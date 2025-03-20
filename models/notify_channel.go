@@ -787,7 +787,7 @@ func needsTemplateRendering(s string) bool {
 func (ncc *NotifyChannelConfig) SendEmail(notifyRuleId int64, events []*AlertCurEvent, tpl map[string]interface{}, sendtos []string, ch chan *EmailContext) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("To", sendtos...)
 	m.SetHeader("Subject", tpl["subject"].(string))
 	m.SetBody("text/html", tpl["content"].(string))
 	ch <- &EmailContext{notifyRuleId, events, m}
@@ -806,7 +806,7 @@ func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[st
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", ncc.RequestConfig.SMTPRequestConfig.From)
-	m.SetHeader("To", strings.Join(sendtos, ","))
+	m.SetHeader("To", sendtos...)
 	m.SetHeader("Subject", tpl["subject"].(string))
 	m.SetBody("text/html", tpl["content"].(string))
 	return gomail.Send(s, m)
