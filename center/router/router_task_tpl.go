@@ -130,7 +130,7 @@ func (rt *Router) taskTplAdd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
 
-	checkTargetsExistByIndent(rt.Ctx, f.Hosts)
+	rt.checkTargetsExistByIndent(f.Hosts)
 
 	sort.Strings(f.Tags)
 
@@ -170,7 +170,7 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 	var f taskTplForm
 	ginx.BindJSON(c, &f)
 
-	checkTargetsExistByIndent(rt.Ctx, f.Hosts)
+	rt.checkTargetsExistByIndent(f.Hosts)
 
 	sort.Strings(f.Tags)
 
