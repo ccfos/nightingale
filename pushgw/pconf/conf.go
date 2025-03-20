@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"regexp"
+	"runtime"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
@@ -116,7 +117,11 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	if p.WriterOpt.QueueNumber <= 0 {
-		p.WriterOpt.QueueNumber = 128
+		if runtime.NumCPU() > 1 {
+			p.WriterOpt.QueueNumber = runtime.NumCPU()
+		} else {
+			p.WriterOpt.QueueNumber = 128
+		}
 	}
 
 	if p.WriterOpt.QueueWaterMark <= 0 {
