@@ -91,6 +91,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
+	if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
+		models.MigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
+	}
+
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
@@ -129,12 +133,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
-
-	go func() {
-		if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
-			models.MigrateBg(ctx, pushgwRouter.Pushgw.BusiGroupLabelKey)
-		}
-	}()
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 

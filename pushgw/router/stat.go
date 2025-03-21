@@ -17,12 +17,12 @@ var (
 		Help:      "Total number samples received.",
 	}, []string{"channel"})
 
-	CounterDropSampleTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterDropSampleTotal = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "drop_sample_total",
 		Help:      "Number of drop sample.",
-	}, []string{"client_ip"})
+	})
 
 	CounterSampleReceivedByIdent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,

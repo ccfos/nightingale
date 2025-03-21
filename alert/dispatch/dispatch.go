@@ -732,10 +732,10 @@ func getSendTarget(customParams map[string]string, sendtos []string) string {
 
 	values := make([]string, 0)
 	for _, value := range customParams {
-		if len(value) <= 4 {
+		runes := []rune(value)
+		if len(runes) <= 4 {
 			values = append(values, value)
 		} else {
-			runes := []rune(value)
 			maskedValue := string(runes[:len(runes)-4]) + "****"
 			values = append(values, maskedValue)
 		}

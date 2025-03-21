@@ -127,8 +127,6 @@ AlertDetail = true
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true
-# # default busigroup key name
-# BusiGroupLabelKey = "busigroup"
 ForceUseServerTS = true
 
 # [Pushgw.DebugSample]
@@ -138,9 +136,6 @@ ForceUseServerTS = true
 # [Pushgw.WriterOpt]
 # QueueMaxSize = 1000000
 # QueuePopSize = 1000
-# AllQueueMaxSize = 1000000
-# fresh time, unit ms
-# AllQueueMaxSizeInterval = 200
 
 [[Pushgw.Writers]] 
 # Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
