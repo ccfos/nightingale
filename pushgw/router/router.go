@@ -76,7 +76,6 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 
 	registerMetrics()
-	go rt.ReportIdentStats()
 
 	r.Use(stat())
 	// datadog url: http://n9e-pushgw.foo.com/datadog
@@ -93,6 +92,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
+		r.POST("/proxy/v1/write", auth, rt.proxyRemoteWrite)
 		r.POST("/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {
@@ -103,6 +103,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.POST("/opentsdb/put", rt.openTSDBPut)
 		r.POST("/openfalcon/push", rt.falconPush)
 		r.POST("/prometheus/v1/write", rt.remoteWrite)
+		r.POST("/proxy/v1/write", rt.proxyRemoteWrite)
 		r.POST("/v1/n9e/edge/heartbeat", rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {

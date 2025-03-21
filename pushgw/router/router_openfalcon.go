@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -175,6 +176,8 @@ func (rt *Router) falconPush(c *gin.Context) {
 		return
 	}
 
+	queueid := fmt.Sprint(atomic.AddUint64(&globalCounter, 1) % uint64(rt.Pushgw.WriterOpt.QueueNumber))
+
 	var (
 		succ int
 		fail int
@@ -204,14 +207,11 @@ func (rt *Router) falconPush(c *gin.Context) {
 			if has {
 				rt.AppendLabels(pt, target, rt.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
-		if ident != "" {
-			err = rt.ForwardByIdent(c.ClientIP(), ident, pt)
-		} else {
-			err = rt.ForwardByMetric(c.ClientIP(), arr[i].Metric, pt)
-		}
-
+		err = rt.ForwardToQueue(c.ClientIP(), queueid, pt)
 		if err != nil {
 			c.String(rt.Pushgw.WriterOpt.OverLimitStatusCode, err.Error())
 			return
