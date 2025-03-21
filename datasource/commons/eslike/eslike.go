@@ -481,7 +481,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	source, _ := queryString.Source()
 	b, _ := json.Marshal(source)
-	logger.Debugf("query_data q:%+v tsAggr:%+v query_string:%s", param, tsAggr, string(b))
+	logger.Debugf("query_data q:%+v indexArr:%+v tsAggr:%+v query_string:%s", param, indexArr, tsAggr, string(b))
 
 	searchSource := elastic.NewSearchSource().
 		Query(queryString).
