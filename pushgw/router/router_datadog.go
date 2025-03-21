@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
 	easyjson "github.com/mailru/easyjson"
@@ -220,6 +221,8 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		return
 	}
 
+	queueid := fmt.Sprint(atomic.AddUint64(&globalCounter, 1) % uint64(r.Pushgw.WriterOpt.QueueNumber))
+
 	var (
 		succ int
 		fail int
@@ -254,14 +257,11 @@ func (r *Router) datadogSeries(c *gin.Context) {
 			if has {
 				r.AppendLabels(pt, target, r.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
-		if ident != "" {
-			err = r.ForwardByIdent(c.ClientIP(), ident, pt)
-		} else {
-			err = r.ForwardByMetric(c.ClientIP(), item.Metric, pt)
-		}
-
+		err = r.ForwardToQueue(c.ClientIP(), queueid, pt)
 		if err != nil {
 			c.String(r.Pushgw.WriterOpt.OverLimitStatusCode, err.Error())
 			return

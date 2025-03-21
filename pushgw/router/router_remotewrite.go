@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sync/atomic"
 
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/gin-gonic/gin"
@@ -102,7 +103,7 @@ func duplicateLabelKey(series *prompb.TimeSeries) bool {
 }
 
 func (rt *Router) remoteWrite(c *gin.Context) {
-	curLen := rt.Writers.AllQueueLen.Load().(int)
+	curLen := rt.Writers.AllQueueLen.Load().(int64)
 	if curLen > rt.Pushgw.WriterOpt.AllQueueMaxSize {
 		err := fmt.Errorf("write queue full, metric count over limit: %d", curLen)
 		logger.Warning(err)
@@ -124,6 +125,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		return
 	}
 
+	queueid := fmt.Sprint(atomic.AddUint64(&globalCounter, 1) % uint64(rt.Pushgw.WriterOpt.QueueNumber))
+
 	var (
 		ignoreIdent = ginx.QueryBool(c, "ignore_ident", false)
 		ignoreHost  = ginx.QueryBool(c, "ignore_host", true) // 默认值改成 true，要不然答疑成本太高。发版的时候通知 telegraf 用户，让他们设置 ignore_host=false
@@ -142,6 +145,8 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			if has {
 				rt.AppendLabels(&req.Timeseries[i], target, rt.BusiGroupCache)
 			}
+
+			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		if insertTarget {
@@ -150,13 +155,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			ids[ident] = struct{}{}
 		}
 
-		var err error
-		if len(ident) > 0 {
-			err = rt.ForwardByIdent(c.ClientIP(), ident, &req.Timeseries[i])
-		} else {
-			err = rt.ForwardByMetric(c.ClientIP(), extractMetricFromTimeSeries(&req.Timeseries[i]), &req.Timeseries[i])
-		}
-
+		err = rt.ForwardToQueue(c.ClientIP(), queueid, &req.Timeseries[i])
 		if err != nil {
 			c.String(rt.Pushgw.WriterOpt.OverLimitStatusCode, err.Error())
 			return
