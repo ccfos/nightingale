@@ -37,7 +37,6 @@ type AlertRuleWorker struct {
 	DatasourceId int64
 	Quit         chan struct{}
 	Inhibit      bool
-	Severity     int
 
 	Rule *models.AlertRule
 
@@ -233,7 +232,6 @@ func (arw *AlertRuleWorker) Stop() {
 
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
-	var severity int
 
 	var rule *models.PromRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -260,10 +258,6 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 	arw.Inhibit = rule.Inhibit
 	for i, query := range rule.Queries {
-		if query.Severity < severity {
-			arw.Severity = query.Severity
-		}
-
 		readerClient := arw.PromClients.GetCli(arw.DatasourceId)
 
 		if readerClient == nil {
@@ -748,7 +742,6 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 
 func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
-	var severity int
 
 	var rule *models.HostRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -776,10 +769,6 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 	arw.Inhibit = rule.Inhibit
 	now := time.Now().Unix()
 	for _, trigger := range rule.Triggers {
-		if trigger.Severity < severity {
-			arw.Severity = trigger.Severity
-		}
-
 		switch trigger.Type {
 		case "target_miss":
 			t := now - int64(trigger.Duration)
