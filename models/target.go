@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
+	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/logger"
 
 	"gorm.io/gorm"
@@ -738,4 +739,16 @@ func DoMigrateBg(ctx *ctx.Context, bgLabelKey string) error {
 		}
 	}
 	return nil
+}
+
+// 返回不存在的 idents
+func TargetNoExistIdents(ctx *ctx.Context, idents []string) ([]string, error) {
+	var existingIdents []string
+	err := ctx.DB.Table("target").Where("ident in ?", idents).Pluck("ident", &existingIdents).Error
+	if err != nil {
+		return nil, err
+	}
+
+	notExistIdents := slice.SubString(idents, existingIdents)
+	return notExistIdents, nil
 }

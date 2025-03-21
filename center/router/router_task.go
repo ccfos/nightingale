@@ -117,6 +117,8 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	f.Creator = user.Username
 
+	rt.checkTargetsExistByIndent(f.Hosts)
+
 	err := f.Verify()
 	ginx.Dangerous(err)
 

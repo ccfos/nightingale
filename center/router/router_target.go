@@ -571,6 +571,15 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, err)
 }
 
+func (rt *Router) checkTargetsExistByIndent(idents []string) {
+	existingIdents, err := models.TargetNoExistIdents(rt.Ctx, idents)
+	ginx.Dangerous(err)
+
+	if len(existingIdents) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "targets not exist: %s", strings.Join(existingIdents, ","))
+	}
+}
+
 func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 	var queries []models.HostQuery
 	ginx.BindJSON(c, &queries)
