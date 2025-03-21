@@ -187,6 +187,7 @@ func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) (
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
 		return e.Client.Search().
 			Index(indices...).
+			IgnoreUnavailable(true).
 			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
 			MaxConcurrentShardRequests(maxShard).
@@ -204,7 +205,7 @@ func (e *Elasticsearch) QueryIndices() ([]string, error) {
 
 func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
 	var fields []string
-	result, err := elastic.NewGetFieldMappingService(e.Client).Index(indexs...).Do(context.Background())
+	result, err := elastic.NewGetFieldMappingService(e.Client).Index(indexs...).IgnoreUnavailable(true).Do(context.Background())
 	if err != nil {
 		return fields, err
 	}
@@ -264,6 +265,7 @@ func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([
 
 		return e.Client.Search().
 			Index(indices...).
+			IgnoreUnavailable(true).
 			MaxConcurrentShardRequests(maxShard).
 			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
@@ -276,6 +278,7 @@ func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([
 func (e *Elasticsearch) QueryFieldValue(indexs []string, field string, query string) ([]string, error) {
 	var values []string
 	search := e.Client.Search().
+		IgnoreUnavailable(true).
 		Index(indexs...).
 		Size(0)
 
@@ -359,6 +362,7 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 
 		return e.Client.Search().
 			Index(indices...).
+			IgnoreUnavailable(true).
 			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
 			Do(ctx)
