@@ -99,7 +99,7 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		rule.CronPattern = fmt.Sprintf("@every %ds", interval)
 	}
 
-	arw.Scheduler = cron.New(cron.WithSeconds())
+	arw.Scheduler = cron.New(cron.WithSeconds(), cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)))
 
 	entryID, err := arw.Scheduler.AddFunc(rule.CronPattern, func() {
 		arw.Eval()
