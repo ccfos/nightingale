@@ -39,7 +39,7 @@ func NewRecordRuleContext(rule *models.RecordingRule, datasourceId int64, promCl
 		rule.CronPattern = fmt.Sprintf("@every %ds", rule.PromEvalInterval)
 	}
 
-	rrc.scheduler = cron.New(cron.WithSeconds())
+	rrc.scheduler = cron.New(cron.WithSeconds(), cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)))
 	_, err := rrc.scheduler.AddFunc(rule.CronPattern, func() {
 		rrc.Eval()
 	})
