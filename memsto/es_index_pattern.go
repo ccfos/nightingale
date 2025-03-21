@@ -1,6 +1,7 @@
 package memsto
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -50,7 +51,7 @@ func (p *EsIndexPatternCacheType) Get(id int64) (*models.EsIndexPattern, bool) {
 func (p *EsIndexPatternCacheType) SyncEsIndexPattern() {
 	err := p.syncEsIndexPattern()
 	if err != nil {
-		// log.Fatalln("failed to sync targets:", err)
+		log.Fatalln("failed to sync targets:", err)
 	}
 
 	go p.loopSyncEsIndexPattern()
