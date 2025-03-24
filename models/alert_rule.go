@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"text/template/parse"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -470,8 +471,18 @@ func (ar *AlertRule) Verify() error {
 	if ar.Name == "" {
 		return errors.New("name is blank")
 	}
-	if _, err := template.New("test").Parse(ar.Name); err != nil {
+
+	t, err := template.New("test").Parse(ar.Name)
+	if err != nil {
 		return errors.New("Name has invalid characters")
+	}
+
+	for _, node := range t.Tree.Root.Nodes {
+		if tn := node.(*parse.TextNode); tn != nil {
+			if str.Dangerous(tn.String()) {
+				return errors.New("Name has invalid characters")
+			}
+		}
 	}
 
 	if ar.Prod == "" {
