@@ -210,6 +210,14 @@ CREATE TABLE `message_template` (
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+ALTER TABLE `alert_rule` ADD COLUMN `notify_rule_ids` varchar(1024) DEFAULT '';
+ALTER TABLE `alert_rule` ADD COLUMN `notify_version` int DEFAULT 0;
+
+ALTER TABLE `alert_subscribe` ADD COLUMN `notify_rule_ids` varchar(1024) DEFAULT '';
+ALTER TABLE `alert_subscribe` ADD COLUMN `notify_version` int DEFAULT 0;
+
+ALTER TABLE `notification_record` ADD COLUMN `notify_rule_id` BIGINT NOT NULL DEFAULT 0;
+
 
 /* v8.0.0-beta.9 2025-03-17 */
 ALTER TABLE `message_template` ADD COLUMN `weight` int not null default 0;
