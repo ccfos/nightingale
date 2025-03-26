@@ -219,7 +219,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	}
 
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-
+	logger.Infof("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 	if isTimeout {
 		if err == nil {
 			return cmd.String(), res, errors.New("timeout and killed process")
@@ -227,11 +227,9 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 
 		return cmd.String(), res, err
 	}
-
 	if err != nil {
 		return cmd.String(), res, fmt.Errorf("failed to execute script: %v", err)
 	}
-	fmt.Printf("event_script_notify_ok: exec %s output: %s", fpath, buf.String())
 
 	return cmd.String(), res, nil
 }
