@@ -90,6 +90,14 @@ func (tc *TargetCacheType) Gets(idents []string) []*models.Target {
 	return targets
 }
 
+
+// 获取所有的 target
+func (tc *TargetCacheType) GetAll() map[string]*models.Target {
+	tc.RLock()
+	defer tc.RUnlock()
+	return tc.targets
+}
+
 func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()
