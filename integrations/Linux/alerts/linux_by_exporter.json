@@ -26,7 +26,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "(node_filesystem_device_error{instance=\"$node\",mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run.*\"}) \u003e 0",
+                    "prom_ql": "(node_filesystem_device_error{mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run.*\"}) \u003e 0",
                     "severity": 1
                 }
             ],
@@ -271,7 +271,7 @@
             "prom_ql": "",
             "queries": [
                 {
-                    "prom_ql": "(node_filefd_allocated{instance=\"$node\"}/node_filefd_maximum{instance=\"$node\"}*100) \u003e 90",
+                    "prom_ql": "(node_filefd_allocated/node_filefd_maximum*100) \u003e 90",
                     "severity": 2
                 }
             ],
