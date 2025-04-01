@@ -56,7 +56,11 @@ func (rt *Router) targetGets(c *gin.Context) {
 	hosts := queryStrListField(c, "hosts", ",", " ", "\n")
 
 	var err error
-	if len(bgids) == 0 {
+	if len(bgids) > 0 {
+		for _, gid := range bgids {
+			rt.bgroCheck(c, gid)
+		}
+	} else {
 		user := c.MustGet("user").(*models.User)
 		if !user.IsAdmin() {
 			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
