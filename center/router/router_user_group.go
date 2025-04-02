@@ -6,11 +6,11 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) checkBusiGroupPerm(c *gin.Context) {
@@ -32,7 +32,7 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 }
 
 func (rt *Router) userGroupGetsByService(c *gin.Context) {
-	ids := str.IdsInt64(ginx.QueryStr(c, "ids", ""))
+	ids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "ids", ""))
 
 	if len(ids) == 0 {
 		lst, err := models.UserGroupGetAll(rt.Ctx)
