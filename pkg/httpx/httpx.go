@@ -69,6 +69,7 @@ type JWTAuth struct {
 	AccessExpired  int64
 	RefreshExpired int64
 	RedisKeyPrefix string
+	SingleLogin    bool
 }
 
 type TokenAuth struct {

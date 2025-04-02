@@ -152,6 +152,13 @@ func (rt *Router) refreshPost(c *gin.Context) {
 			return
 		}
 
+		// 看这个 token 是否还存在 redis 中
+		val, err := rt.fetchAuth(c.Request.Context(), refreshUuid)
+		if err != nil || val == "" {
+			ginx.NewRender(c, http.StatusUnauthorized).Message("refresh token expired")
+			return
+		}
+
 		userIdentity, ok := claims["user_identity"].(string)
 		if !ok {
 			// Theoretically impossible

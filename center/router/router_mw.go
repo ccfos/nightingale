@@ -335,6 +335,12 @@ func (rt *Router) extractTokenMetadata(r *http.Request) (*AccessDetails, error) 
 			return nil, errors.New("failed to parse access_uuid from jwt")
 		}
 
+		// accessUuid 在 redis 里存在才放行
+		val, err := rt.fetchAuth(r.Context(), accessUuid)
+		if err != nil || val == "" {
+			return nil, errors.New("unauthorized")
+		}
+
 		return &AccessDetails{
 			AccessUuid:   accessUuid,
 			UserIdentity: claims["user_identity"].(string),
@@ -355,18 +361,43 @@ func (rt *Router) extractToken(r *http.Request) string {
 }
 
 func (rt *Router) createAuth(ctx context.Context, userIdentity string, td *TokenDetails) error {
+	username := strings.Split(userIdentity, "-")[1]
+
+	// 如果只能有一个账号登录，那么就删除之前的 token
+	if rt.HTTP.JWTAuth.SingleLogin {
+		delKeys, err := rt.Redis.SMembers(ctx, rt.wrapJwtKey(username)).Result()
+		if err != nil {
+			return err
+		}
+
+		if len(delKeys) > 0 {
+			errDel := rt.Redis.Del(ctx, delKeys...).Err()
+			if errDel != nil {
+				return errDel
+			}
+		}
+
+		if errDel := rt.Redis.Del(ctx, rt.wrapJwtKey(username)).Err(); errDel != nil {
+			return errDel
+		}
+	}
+
 	at := time.Unix(td.AtExpires, 0)
 	rte := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := rt.Redis.Set(ctx, rt.wrapJwtKey(td.AccessUuid), userIdentity, at.Sub(now)).Err()
-	if errAccess != nil {
-		return errAccess
+	if err := rt.Redis.Set(ctx, rt.wrapJwtKey(td.AccessUuid), userIdentity, at.Sub(now)).Err(); err != nil {
+		return err
 	}
 
-	errRefresh := rt.Redis.Set(ctx, rt.wrapJwtKey(td.RefreshUuid), userIdentity, rte.Sub(now)).Err()
-	if errRefresh != nil {
-		return errRefresh
+	if err := rt.Redis.Set(ctx, rt.wrapJwtKey(td.RefreshUuid), userIdentity, rte.Sub(now)).Err(); err != nil {
+		return err
+	}
+
+	if rt.HTTP.JWTAuth.SingleLogin {
+		if err := rt.Redis.SAdd(ctx, rt.wrapJwtKey(username), rt.wrapJwtKey(td.AccessUuid), rt.wrapJwtKey(td.RefreshUuid)).Err(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -413,9 +444,10 @@ type TokenDetails struct {
 }
 
 func (rt *Router) createTokens(signingKey, userIdentity string) (*TokenDetails, error) {
+	username := strings.Split(userIdentity, "-")[1]
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.AccessExpired)).Unix()
-	td.AccessUuid = uuid.NewString()
+	td.AccessUuid = username + "/" + uuid.NewString()
 
 	td.RtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.RefreshExpired)).Unix()
 	td.RefreshUuid = td.AccessUuid + "++" + userIdentity
