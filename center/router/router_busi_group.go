@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
 type busiGroupForm struct {
@@ -131,7 +131,7 @@ func (rt *Router) busiGroupGetsByService(c *gin.Context) {
 // 这个接口只有在活跃告警页面才调用，获取各个BG的活跃告警数量
 func (rt *Router) busiGroupAlertingsGets(c *gin.Context) {
 	ids := ginx.QueryStr(c, "ids", "")
-	ret, err := models.AlertNumbers(rt.Ctx, str.IdsInt64(ids))
+	ret, err := models.AlertNumbers(rt.Ctx, strx.IdsInt64ForAPI(ids))
 	ginx.NewRender(c).Data(ret, err)
 }
 
@@ -142,7 +142,7 @@ func (rt *Router) busiGroupGet(c *gin.Context) {
 }
 
 func (rt *Router) busiGroupsGetTags(c *gin.Context) {
-	bgids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
 	targetIdents, err := models.TargetIndentsGetByBgids(rt.Ctx, bgids)
 	ginx.Dangerous(err)
 	tags, err := models.TargetGetTags(rt.Ctx, targetIdents, true, "busigroup")
