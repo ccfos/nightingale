@@ -4,15 +4,15 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) chartShareGets(c *gin.Context) {
 	ids := ginx.QueryStr(c, "ids", "")
-	lst, err := models.ChartShareGetsByIds(rt.Ctx, str.IdsInt64(ids, ","))
+	lst, err := models.ChartShareGetsByIds(rt.Ctx, strx.IdsInt64ForAPI(ids, ","))
 	ginx.NewRender(c).Data(lst, err)
 }
 

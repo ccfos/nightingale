@@ -10,13 +10,13 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
 type TargetQuery struct {
@@ -44,7 +44,7 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 }
 
 func (rt *Router) targetGets(c *gin.Context) {
-	bgids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 30)
 	downtime := ginx.QueryInt64(c, "downtime", 0)
