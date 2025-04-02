@@ -444,10 +444,9 @@ type TokenDetails struct {
 }
 
 func (rt *Router) createTokens(signingKey, userIdentity string) (*TokenDetails, error) {
-	username := strings.Split(userIdentity, "-")[1]
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.AccessExpired)).Unix()
-	td.AccessUuid = username + "/" + uuid.NewString()
+	td.AccessUuid = uuid.NewString()
 
 	td.RtExpires = time.Now().Add(time.Minute * time.Duration(rt.HTTP.JWTAuth.RefreshExpired)).Unix()
 	td.RefreshUuid = td.AccessUuid + "++" + userIdentity
