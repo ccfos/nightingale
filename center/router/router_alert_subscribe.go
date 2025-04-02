@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/str"
 )
 
 // Return all, front-end search and paging
@@ -31,7 +31,7 @@ func (rt *Router) alertSubscribeGets(c *gin.Context) {
 }
 
 func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids", ""), ",")
+	gids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
 	if len(gids) > 0 {
 		for _, gid := range gids {
 			rt.bgroCheck(c, gid)

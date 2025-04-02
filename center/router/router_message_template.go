@@ -10,10 +10,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/str"
 )
 
 func (rt *Router) messageTemplatesAdd(c *gin.Context) {
@@ -137,7 +137,7 @@ func (rt *Router) messageTemplatesGet(c *gin.Context) {
 	if tmp := ginx.QueryStr(c, "notify_channel_idents", ""); tmp != "" {
 		notifyChannelIdents = strings.Split(tmp, ",")
 	}
-	notifyChannelIds := str.IdsInt64(ginx.QueryStr(c, "notify_channel_ids", ""))
+	notifyChannelIds := strx.IdsInt64ForAPI(ginx.QueryStr(c, "notify_channel_ids", ""))
 	if len(notifyChannelIds) > 0 {
 		ginx.Dangerous(models.DB(rt.Ctx).Model(models.NotifyChannelConfig{}).
 			Where("id in (?)", notifyChannelIds).Pluck("ident", &notifyChannelIdents).Error)

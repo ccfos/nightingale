@@ -2,8 +2,8 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
 const (
@@ -65,7 +65,7 @@ func (n *NotificaitonRecord) GetGroupIds(ctx *ctx.Context) (groupIds []int64) {
 		if sub, err := AlertSubscribeGet(ctx, "id=?", n.SubId); err != nil {
 			logger.Errorf("AlertSubscribeGet failed, err: %v", err)
 		} else {
-			groupIds = str.IdsInt64(sub.UserGroupIds, " ")
+			groupIds = strx.IdsInt64ForAPI(sub.UserGroupIds, " ")
 		}
 		return
 	}
@@ -73,7 +73,7 @@ func (n *NotificaitonRecord) GetGroupIds(ctx *ctx.Context) (groupIds []int64) {
 	if event, err := AlertHisEventGetById(ctx, n.EventId); err != nil {
 		logger.Errorf("AlertHisEventGetById failed, err: %v", err)
 	} else {
-		groupIds = str.IdsInt64(event.NotifyGroups, " ")
+		groupIds = strx.IdsInt64ForAPI(event.NotifyGroups, " ")
 	}
 	return
 }
