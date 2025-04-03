@@ -2,6 +2,7 @@ package flashduty
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -40,10 +41,12 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 
 	dutyUsers := make(map[string]*models.User, len(items))
 	for i := range items {
+		id, _ := strconv.ParseInt(items[i].RefID, 10, 64)
 		user := &models.User{
 			Username: items[i].MemberName,
 			Email:    items[i].Email,
 			Phone:    items[i].Phone,
+			Id:       id,
 		}
 		dutyUsers[user.Username+user.Email] = user
 	}
@@ -84,10 +87,12 @@ type User struct {
 	Email      string  `json:"email,omitempty"`
 	Phone      string  `json:"phone,omitempty"`
 	MemberName string  `json:"member_name,omitempty"`
+	RefID      string  `json:"ref_id,omitempty"`
 	Updates    Updates `json:"updates,omitempty"`
 }
 
 type Updates struct {
+	RefID       string `json:"ref_id,omitempty"`
 	Email       string `json:"email,omitempty"`
 	Phone       string `json:"phone,omitempty"`
 	MemberName  string `json:"member_name,omitempty"`
@@ -95,7 +100,7 @@ type Updates struct {
 }
 
 func (user *User) delMember(appKey string) error {
-	if user.Email == "" && user.Phone == "" {
+	if user.RefID == "" {
 		return errors.New("phones and email must be selected one of two")
 	}
 	return PostFlashDuty("/member/delete", appKey, user)
@@ -120,11 +125,14 @@ func (m *Members) addMembers(appKey string) error {
 	}
 	validUsers := make([]User, 0, len(m.Users))
 	for _, user := range m.Users {
-		if user.Email == "" && (user.Phone != "" && user.MemberName == "" || user.Phone == "") {
-			logger.Errorf("user(%+v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
+		if user.RefID == "" || (user.Phone == "" && user.Email == "") {
+			logger.Errorf("user(%+v) refID must not be none, Email or Phone can not be none", user)
 		} else {
 			validUsers = append(validUsers, user)
 		}
+	}
+	if len(validUsers) == 0 {
+		return nil
 	}
 	m.Users = validUsers
 	return PostFlashDuty("/member/invite", appKey, m)
@@ -141,7 +149,8 @@ func fdAddUsers(appKey string, users []models.User) error {
 func fdDelUsers(appKey string, users []models.User) {
 	fdUsers := usersToFdUsers(users)
 	for _, fdUser := range fdUsers {
-		if err := fdUser.delMember(appKey); err != nil {
+		user := &User{RefID: fdUser.RefID}
+		if err := user.delMember(appKey); err != nil {
 			logger.Errorf("failed to delete user: %v", err)
 		}
 	}
@@ -151,62 +160,31 @@ func usersToFdUsers(users []models.User) []User {
 	fdUsers := make([]User, 0, len(users))
 	for i := range users {
 		fdUsers = append(fdUsers, User{
-			Email:      users[i].Email,
+			RefID:      strconv.FormatInt(users[i].Id, 10),
 			Phone:      users[i].Phone,
+			Email:      users[i].Email,
 			MemberName: users[i].Username,
 		})
+
 	}
 	return fdUsers
 }
 
 func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
-	contact := target.FindSameContact(email, phone)
+	//contact := target.FindSameContact(email, phone)
 	var flashdutyUser User
-	var needSync bool
-	switch contact {
-	case "email":
-		flashdutyUser = User{
-			Email: target.Email,
-		}
-		if target.Phone != phone {
-			needSync = true
-			flashdutyUser.Updates = Updates{
-				Phone:       phone,
-				MemberName:  target.Username,
-				CountryCode: "CN",
-			}
-		}
-	case "phone":
-		flashdutyUser = User{
-			Phone: target.Phone,
-		}
-
-		if target.Email != email {
-			needSync = true
-			flashdutyUser.Updates = Updates{
-				Email:      email,
-				MemberName: target.Username,
-			}
-		}
-	default:
-		flashdutyUser = User{
-			MemberName: target.Username,
-		}
-		if target.Email != email {
-			needSync = true
-			flashdutyUser.Updates.Email = email
-		}
-		if target.Phone != phone {
-			needSync = true
-			flashdutyUser.Updates.Phone = phone
-			flashdutyUser.Updates.CountryCode = "CN"
-		}
+	/*	var needSync bool*/
+	flashdutyUser = User{
+		RefID: strconv.FormatInt(target.Id, 10),
+	}
+	flashdutyUser.Updates = Updates{
+		Phone:      phone,
+		Email:      email,
+		MemberName: target.Username,
 	}
 
-	if needSync {
-		err := flashdutyUser.UpdateMember(ctx)
-		if err != nil {
-			logger.Errorf("failed to update user: %v", err)
-		}
+	err := flashdutyUser.UpdateMember(ctx)
+	if err != nil {
+		logger.Errorf("failed to update user: %v", err)
 	}
 }

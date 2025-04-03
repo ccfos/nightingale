@@ -54,6 +54,7 @@ type Item struct {
 	Phone         string `json:"phone"`
 	Email         string `json:"email"`
 	EmailVerified string `json:"email_verified"`
+	RefID         string `json:"ref_id"`
 }
 
 func PostFlashDuty(path string, appKey string, body interface{}) error {
