@@ -22,7 +22,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 
 	req := make(map[string]interface{})
 	req["limit"] = 100
-	userList, err := PostFlashDutyWithResp("/member/list", appKey, req)
+	userList, err := PostFlashDutyWithResp[Data]("/member/list", appKey, req)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	for i := 0; i < total/100+1; i++ {
 		req["p"] = i
 		req["limit"] = 100
-		resp, err := PostFlashDutyWithResp("/member/list", appKey, req)
+		resp, err := PostFlashDutyWithResp[Data]("/member/list", appKey, req)
 		if err != nil {
 			return err
 		}

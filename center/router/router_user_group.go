@@ -99,7 +99,7 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, &ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncUGAdd()
+		err = ugs.SyncUGAdd(ug.Id)
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Data(ug.Id, err)

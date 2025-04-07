@@ -29,16 +29,23 @@ func NewUserGroupSyncer(ctx *ctx.Context, ug *models.UserGroup) (*UserGroupSynce
 	}, nil
 }
 
-func (ugs *UserGroupSyncer) SyncUGAdd() error {
+func (ugs *UserGroupSyncer) SyncUGAdd(ref_id int64) error {
+
+	fdt := Team{
+		TeamName: ugs.ug.Name,
+		RefID:    strconv.FormatInt(ref_id, 10),
+	}
+	err := fdt.UpdateTeam(ugs.appKey)
+	if err != nil {
+		return err
+	}
 	return ugs.syncTeamMember()
 }
 
 func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 	//修改为查询 ref_ID
-	err := ugs.CheckTeam(ref_id)
+	teamID, err := ugs.CheckTeam(ref_id)
 	if err != nil {
-		//如果没有这个团队，说明是第一次添加
-		//TODO 新增团队
 		emails := make([]string, 0)
 		phones := make([]string, 0)
 
@@ -64,7 +71,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		if err := ugs.syncTeamMember(); err != nil {
 			return err
 		}
-		return err
+		return nil
 	}
 	emails := make([]string, 0)
 	phones := make([]string, 0)
@@ -80,6 +87,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 	}
 	//根据 team_id 去更新 duty 中这个团队的信息
 	fdt := Team{
+		TeamID:   teamID,
 		RefID:    ref_id,
 		TeamName: ugs.ug.Name,
 		Emails:   emails,
@@ -159,6 +167,7 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 }
 
 type Team struct {
+	TeamID           int64    `json:"team_id"`
 	TeamName         string   `json:"team_name"`
 	ResetIfNameExist bool     `json:"reset_if_name_exist"`
 	Description      string   `json:"description"`
@@ -181,11 +190,8 @@ func (t *Team) UpdateTeam(appKey string) error {
 }
 
 func (t *Team) DelTeam(appKey string) error {
-
-	if t.RefID == "" {
-		return errors.New("ref_id must be set")
-	}
-	return PostFlashDuty("/team/delete", appKey, t)
+	PostFlashDuty("/team/delete", appKey, t)
+	return nil
 }
 
 func NeedSyncTeam(ctx *ctx.Context) bool {
@@ -217,14 +223,14 @@ func NeedSyncUser(ctx *ctx.Context) bool {
 }
 
 // 检查ref_id是否存在
-func (ugs *UserGroupSyncer) CheckTeam(ref_id string) error {
+func (ugs *UserGroupSyncer) CheckTeam(ref_id string) (int64, error) {
 	// Construct the request to query the team by name
-	err := PostFlashDuty("/team/info", ugs.appKey, map[string]interface{}{
+	info, err := PostFlashDutyWithResp[TeamInfo]("/team/info", ugs.appKey, map[string]interface{}{
 		"ref_id": ref_id,
 	})
-	if err != nil {
-		return err
+	if err != nil || info.TeamID == 0 {
+		return 0, err
 	}
 
-	return nil
+	return info.TeamID, nil
 }
