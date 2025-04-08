@@ -1,0 +1,1877 @@
+{
+    "id": 0,
+    "group_id": 0,
+    "name": "RabbitMQ 3.8+ 中文版",
+    "ident": "",
+    "tags": "",
+    "create_at": 0,
+    "create_by": "",
+    "update_at": 0,
+    "update_by": "",
+    "configs": {
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "4466a232-248d-45a8-bf4d-05d5139c7346",
+                "layout": {
+                    "h": 1,
+                    "i": "4466a232-248d-45a8-bf4d-05d5139c7346",
+                    "w": 24,
+                    "x": 0,
+                    "y": 0
+                },
+                "name": "Overview",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "队列中已准备好被消费但尚未被消费者获取的消息总数。建议监控阈值：>1000时警告（可能消费能力不足），>10000时严重（需检查消费者状态）。该指标用于评估消息积压情况，若持续增长需排查消费者处理能力或网络延迟问题。",
+                "id": "a20b5d06-4343-457a-89f2-33a52c4dec04",
+                "layout": {
+                    "h": 3,
+                    "i": "a20b5d06-4343-457a-89f2-33a52c4dec04",
+                    "w": 7,
+                    "x": 0,
+                    "y": 1
+                },
+                "name": "待处理消息数",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10000
+                            },
+                            "result": {
+                                "color": "#4a90e2"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 100000
+                            },
+                            "result": {
+                                "color": "#f50a0a"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "to": 9999
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_queue_messages_ready * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "消息队列每秒接收的新消息数量。建议监控阈值：持续低于预期值时警告（可能生产者异常），突发高峰时需关注消费者处理能力。该指标反映系统写入负载，异常波动可能影响整体吞吐量。",
+                "id": "893409b0-4ca0-450b-a0c9-f48eddf0e243",
+                "layout": {
+                    "h": 3,
+                    "i": "893409b0-4ca0-450b-a0c9-f48eddf0e243",
+                    "w": 5,
+                    "x": 7,
+                    "y": 1
+                },
+                "name": "每秒接收消息数",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 50
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_published_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "当前连接到消息队列并正在发布消息的生产者数量。建议监控阈值：突降为0时告警（可能生产者故障），异常激增时需关注资源竞争。该指标反映系统写入端的稳定性，适用于容量规划与异常检测场景。",
+                "id": "d596e7f0-5095-420e-bc38-674001dcf5f4",
+                "layout": {
+                    "h": 3,
+                    "i": "d596e7f0-5095-420e-bc38-674001dcf5f4",
+                    "w": 4,
+                    "x": 12,
+                    "y": 1
+                },
+                "name": "活跃生产者数量",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_channels * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) - sum(rabbitmq_channel_consumers * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description":"当前与消息队列系统建立的客户端连接总数（包括生产者、消费者和管理工具）。建议监控阈值：突降至0时告警（可能网络隔离），异常高峰时需检查资源限制或DDoS攻击。该指标反映系统整体访问压力，是容量评估和故障排查的关键指标之一。",
+                "id": "9f6d7dee-666d-4e1b-90d0-129b2e5ba085",
+                "layout": {
+                    "h": 3,
+                    "i": "9f6d7dee-666d-4e1b-90d0-129b2e5ba085",
+                    "w": 4,
+                    "x": 16,
+                    "y": 1
+                },
+                "name": "活跃连接数",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_connections * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "当前消息队列系统中存在的队列（或主题）总数。建议监控阈值：突增：可能因配置错误导致自动创建大量队列（需检查自动化策略）突降：可能误删除或系统元数据故障持续增长：需关注资源消耗（如内存/文件句柄）",
+                "id": "910eae0f-2b78-4d10-a780-8f997f6e96cb",
+                "layout": {
+                    "h": 3,
+                    "i": "910eae0f-2b78-4d10-a780-8f997f6e96cb",
+                    "w": 4,
+                    "x": 20,
+                    "y": 1
+                },
+                "name": "队列数量",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_queues * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "当前已被消费者接收但尚未明确确认（ACK）的消息总数。该指标直接反映系统的消息处理可靠性和消费者健康状态。",
+                "id": "2e8cd60f-51b0-46b2-8c0f-bf55604d340d",
+                "layout": {
+                    "h": 3,
+                    "i": "2e8cd60f-51b0-46b2-8c0f-bf55604d340d",
+                    "w": 7,
+                    "x": 0,
+                    "y": 2
+                },
+                "name": "未确认消息数",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "to": 99
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 100
+                            },
+                            "result": {
+                                "color": "#4a90e2"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 500
+                            },
+                            "result": {
+                                "color": "#d0021b"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_queue_messages_unacked * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "成功投递给消费者的消息数量。该指标反映系统的实时吞吐能力，是衡量消费者处理效率和服务端性能的关键指标。",
+                "id": "4b242c1e-85d5-48b3-8cce-b467209245ec",
+                "layout": {
+                    "h": 3,
+                    "i": "4b242c1e-85d5-48b3-8cce-b467209245ec",
+                    "w": 5,
+                    "x": 7,
+                    "y": 2
+                },
+                "name": "出站消息速率（消息/秒）",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 50
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_redelivered_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) +\nsum(rate(rabbitmq_channel_messages_delivered_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) +\nsum(rate(rabbitmq_channel_messages_delivered_ack_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) +\nsum(rate(rabbitmq_channel_get_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) +\nsum(rate(rabbitmq_channel_get_ack_total[60s]) * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "b87b1c6b-644a-42f4-915a-bd6857540f70",
+                "layout": {
+                    "h": 3,
+                    "i": "b87b1c6b-644a-42f4-915a-bd6857540f70",
+                    "w": 4,
+                    "x": 12,
+                    "y": 2
+                },
+                "name": "消息消费者",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_channel_consumers * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "在消息队列（如 RabbitMQ）中，通道是客户端与服务器之间的轻量级虚拟连接，用于高效传输消息。多个通道可以共享同一个 TCP 连接，减少资源消耗并提高并发性能。",
+                "id": "65103bcf-fb21-488d-a06b-7b0ea130ca4d",
+                "layout": {
+                    "h": 3,
+                    "i": "65103bcf-fb21-488d-a06b-7b0ea130ca4d",
+                    "w": 4,
+                    "x": 16,
+                    "y": 2
+                },
+                "name": "消息通道",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 10
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_channels * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "background",
+                    "textMode": "valueAndName",
+                    "textSize": {}
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "c6454712-e265-4387-ae86-9ac865af46f2",
+                "layout": {
+                    "h": 3,
+                    "i": "c6454712-e265-4387-ae86-9ac865af46f2",
+                    "w": 4,
+                    "x": 20,
+                    "y": 2
+                },
+                "name": "Nodes",
+                "options": {
+                    "standardOptions": {},
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 3,
+                                "to": null
+                            },
+                            "result": {
+                                "color": "#417505"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 8
+                            },
+                            "result": {
+                                "color": "#e70909"
+                            },
+                            "type": "range"
+                        }
+                    ]
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_build_info * on(instance) group_left(rabbitmq_cluster) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "stat",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "1712a96f-bcde-4d33-90b6-e2eba20527b9",
+                "layout": {
+                    "h": 1,
+                    "i": "1712a96f-bcde-4d33-90b6-e2eba20527b9",
+                    "w": 24,
+                    "x": 0,
+                    "y": 5
+                },
+                "name": "Nodes",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "columns": [
+                        "rabbitmq_cluster",
+                        "rabbitmq_node",
+                        "rabbitmq_version",
+                        "erlang_version"
+                    ],
+                    "displayMode": "labelsOfSeriesToRows",
+                    "showHeader": true
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "id": "1b3fdea0-1921-48ae-b11f-31cc27f816b0",
+                "layout": {
+                    "h": 3,
+                    "i": "1b3fdea0-1921-48ae-b11f-31cc27f816b0",
+                    "w": 24,
+                    "x": 0,
+                    "y": 6
+                },
+                "name": "nodes",
+                "options": {
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {}
+                ],
+                "targets": [
+                    {
+                        "expr": "rabbitmq_build_info * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "table",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "RabbitMQ 在内存压力下会主动阻塞消息发布者（Publisher），以避免内存耗尽导致服务崩溃。此指标表示当前剩余可用内存距离触发阻塞机制的阈值。",
+                "id": "b91068ed-0914-4a8d-91dd-9ffb3b692516",
+                "layout": {
+                    "h": 7,
+                    "i": "b91068ed-0914-4a8d-91dd-9ffb3b692516",
+                    "w": 8,
+                    "x": 0,
+                    "y": 7
+                },
+                "name": "发布者阻塞阈值（剩余可用内存）",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(rabbitmq_resident_memory_limit_bytes * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) -\n(rabbitmq_process_resident_memory_bytes * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "RabbitMQ 在磁盘空间不足时会主动阻塞消息发布者（Publisher），以防止因磁盘写满导致服务崩溃。此指标表示当前剩余可用磁盘空间距离触发阻塞机制的阈值。",
+                "id": "a74ca489-6101-49bc-9560-4cde368bc47e",
+                "layout": {
+                    "h": 7,
+                    "i": "a74ca489-6101-49bc-9560-4cde368bc47e",
+                    "w": 8,
+                    "x": 8,
+                    "y": 7
+                },
+                "name": "发布者阻塞阈值（剩余可用磁盘空间）",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "decimals": 1
+                    },
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rabbitmq_disk_space_available_bytes * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "RabbitMQ 依赖文件描述符（File Descriptors）来管理网络连接、队列、通道等资源。此指标表示当前系统剩余可用的文件描述符数量，若不足可能导致新连接被拒绝或服务异常。",
+                "id": "100ed9ae-2b84-4f2b-82b2-0444dd28deed",
+                "layout": {
+                    "h": 3,
+                    "i": "100ed9ae-2b84-4f2b-82b2-0444dd28deed",
+                    "w": 8,
+                    "x": 16,
+                    "y": 7
+                },
+                "name": "可用文件句柄数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(rabbitmq_process_max_fds * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) -\n(rabbitmq_process_open_fds * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "RabbitMQ 使用TCP套接字处理客户端连接（如AMQP、MQTT、STOMP等协议）。此指标表示当前可用的TCP套接字资源数量，若不足可能导致新连接被拒绝。",
+                "id": "a4859891-2538-47fc-946b-7ae3aa507c51",
+                "layout": {
+                    "h": 3,
+                    "i": "a4859891-2538-47fc-946b-7ae3aa507c51",
+                    "w": 8,
+                    "x": 16,
+                    "y": 8
+                },
+                "name": "可用TCP套接字数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "(rabbitmq_process_max_tcp_sockets * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) -\n(rabbitmq_process_open_tcp_sockets * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "fec98a71-0615-4782-bf8d-960529e243f9",
+                "layout": {
+                    "h": 1,
+                    "i": "fec98a71-0615-4782-bf8d-960529e243f9",
+                    "w": 24,
+                    "x": 0,
+                    "y": 14
+                },
+                "name": "QUEUED MESSAGES",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示队列中已准备好但尚未被消费者接收的消息数量。此指标反映消费者的处理能力，若持续增长可能表明消费者处理速度不足或存在阻塞。",
+                "id": "145dc75a-d3b8-491f-9ba6-6da787c8e265",
+                "layout": {
+                    "h": 3,
+                    "i": "145dc75a-d3b8-491f-9ba6-6da787c8e265",
+                    "w": 12,
+                    "x": 0,
+                    "y": 15
+                },
+                "name": "待消费消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_queue_messages_ready * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示已被消费者接收但尚未收到确认（ACK/NACK）的消息数量。此指标反映消费者的处理效率，若持续增长可能表明消费者处理延迟或存在故障。",
+                "id": "a6ca328a-8b19-488e-a70d-74372f994901",
+                "layout": {
+                    "h": 3,
+                    "i": "a6ca328a-8b19-488e-a70d-74372f994901",
+                    "w": 12,
+                    "x": 12,
+                    "y": 15
+                },
+                "name": "待确认消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rabbitmq_queue_messages_unacked * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "500c51ed-a0d6-41d9-903f-d000e289dc2b",
+                "layout": {
+                    "h": 1,
+                    "i": "500c51ed-a0d6-41d9-903f-d000e289dc2b",
+                    "w": 24,
+                    "x": 0,
+                    "y": 18
+                },
+                "name": "INCOMING MESSAGES",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示生产者每秒向队列或交换机发布的消息数量。此指标反映系统的写入负载，突增可能影响消息积压或处理延迟。",
+                "id": "ef4352a4-c281-4596-b89e-d79a565ca112",
+                "layout": {
+                    "h": 3,
+                    "i": "ef4352a4-c281-4596-b89e-d79a565ca112",
+                    "w": 12,
+                    "x": 0,
+                    "y": 19
+                },
+                "name": "每秒发布消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_published_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示服务器每秒向生产者发送的发布确认（Publisher Confirm）数量。此指标反映消息持久化或路由完成的效率，高确认速率通常表明系统处理能力良好。",
+                "id": "f0932549-d4a7-4eb1-a86e-35eb49569f29",
+                "layout": {
+                    "h": 3,
+                    "i": "f0932549-d4a7-4eb1-a86e-35eb49569f29",
+                    "w": 12,
+                    "x": 12,
+                    "y": 19
+                },
+                "name": "每秒确认发布的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_confirmed_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示交换机每秒成功路由到目标队列的消息数量。此指标反映消息分发的效率，若数值低于发布速率，可能存在路由键不匹配或队列未绑定等问题。",
+                "id": "f47766cb-3cdb-4f67-896f-77af421ff404",
+                "layout": {
+                    "h": 3,
+                    "i": "f47766cb-3cdb-4f67-896f-77af421ff404",
+                    "w": 12,
+                    "x": 0,
+                    "y": 20
+                },
+                "name": "每秒路由到队列的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_queue_messages_published_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示服务器每秒未能向生产者发送确认（Publisher Confirm）的消息数量。此指标反映消息持久化或路由的潜在问题，持续较高的数值可能表明性能瓶颈或故障。",
+                "id": "644302ba-3c99-4787-8023-93770b0a9e6c",
+                "layout": {
+                    "h": 3,
+                    "i": "644302ba-3c99-4787-8023-93770b0a9e6c",
+                    "w": 12,
+                    "x": 12,
+                    "y": 20
+                },
+                "name": "每秒未确认发布的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_unconfirmed[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示交换机因无法匹配任何绑定队列而每秒丢弃的消息数量。此指标反映路由键配置错误或消费者缺失问题，需检查交换机和队列的绑定关系。",
+                "id": "0a3eadfd-d84c-4070-9527-b4c62fc20787",
+                "layout": {
+                    "h": 3,
+                    "i": "0a3eadfd-d84c-4070-9527-b4c62fc20787",
+                    "w": 12,
+                    "x": 0,
+                    "y": 21
+                },
+                "name": "每秒丢弃的不可路由消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_unroutable_dropped_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示因无法路由到任何队列（且启用了 mandatory 标志）而每秒被退回给生产者的消息数量。此指标反映路由配置错误或消费者缺失，需检查交换机的绑定规则和生产者的错误处理逻辑。",
+                "id": "a14e8796-9614-4204-b5b8-5d1a47f356d8",
+                "layout": {
+                    "h": 3,
+                    "i": "a14e8796-9614-4204-b5b8-5d1a47f356d8",
+                    "w": 12,
+                    "x": 12,
+                    "y": 21
+                },
+                "name": "每秒回退给生产者的不可路由消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_unroutable_returned_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "2405258c-c08f-4e49-960a-5c9a12b29f12",
+                "layout": {
+                    "h": 1,
+                    "i": "2405258c-c08f-4e49-960a-5c9a12b29f12",
+                    "w": 24,
+                    "x": 0,
+                    "y": 24
+                },
+                "name": "OUTGOING MESSAGES",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者每秒成功接收的消息数量。此指标反映系统的实时吞吐量，若数值低于预期，可能因消费者处理能力不足、网络延迟或队列积压导致，需优化消费者性能或扩容。",
+                "id": "be0f1872-172c-4bc3-a901-4b645ebf5abe",
+                "layout": {
+                    "h": 3,
+                    "i": "be0f1872-172c-4bc3-a901-4b645ebf5abe",
+                    "w": 12,
+                    "x": 0,
+                    "y": 25
+                },
+                "name": "每秒投递的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(\n  (rate(rabbitmq_channel_messages_delivered_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) +\n  (rate(rabbitmq_channel_messages_delivered_ack_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"})\n) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示因消费者未确认（NACK或超时）而每秒重新投递到队列的消息数量。此指标反映消费者处理异常或性能瓶颈，高频重投递可能需优化消费者逻辑或调整超时参数。",
+                "id": "eff794ca-e844-4a12-b230-690aadefa53f",
+                "layout": {
+                    "h": 3,
+                    "i": "eff794ca-e844-4a12-b230-690aadefa53f",
+                    "w": 12,
+                    "x": 12,
+                    "y": 25
+                },
+                "name": "每秒重投递的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_redelivered_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "示消费者在手动确认（manual acknowledgment）模式下每秒接收的消息数量。此指标反映消费者处理消息的效率，若数值偏低可能因业务逻辑复杂或确认延迟导致，需优化处理逻辑或调整确认策略。",
+                "id": "2ed4be63-4fe9-462f-bc2f-967319bc3626",
+                "layout": {
+                    "h": 3,
+                    "i": "2ed4be63-4fe9-462f-bc2f-967319bc3626",
+                    "w": 12,
+                    "x": 0,
+                    "y": 26
+                },
+                "name": "每秒手动确认投递的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_delivered_ack_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者在自动确认（auto acknowledgment）模式下每秒接收的消息数量。此指标反映系统在无需手动确认情况下的消息处理能力，若数值异常可能因消费者处理速度不足或消息积压导致，需关注消费者性能或调整并发设置。",
+                "id": "116c44e0-c8e1-4f02-8eae-2140997e2280",
+                "layout": {
+                    "h": 3,
+                    "i": "116c44e0-c8e1-4f02-8eae-2140997e2280",
+                    "w": 12,
+                    "x": 12,
+                    "y": 26
+                },
+                "name": "每秒自动确认投递的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_delivered_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者每秒成功确认（acknowledged）的消息数量。此指标反映消费者处理消息的完成效率，若数值偏低可能因业务处理延迟、网络问题或确认机制异常导致，需检查消费者性能或确认逻辑是否合理。",
+                "id": "a1184534-3226-4c9a-ba6c-6d5258998518",
+                "layout": {
+                    "h": 3,
+                    "i": "a1184534-3226-4c9a-ba6c-6d5258998518",
+                    "w": 12,
+                    "x": 0,
+                    "y": 27
+                },
+                "name": "每秒确认的消息数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_messages_acked_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者在自动确认（auto acknowledgment）模式下每秒执行的轮询（polling）操作次数。此指标反映消费者从队列获取消息的频率，若数值异常可能因消费者处理能力不足或网络延迟导致，需优化轮询间隔或提升消费者性能。",
+                "id": "2f34e8c7-e7fb-4695-afce-034a10081437",
+                "layout": {
+                    "h": 3,
+                    "i": "2f34e8c7-e7fb-4695-afce-034a10081437",
+                    "w": 12,
+                    "x": 12,
+                    "y": 27
+                },
+                "name": "每秒自动确认模式下的轮询操作数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_get_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者每秒执行轮询（polling）操作但未获取到任何消息的次数。此指标反映队列的空闲程度或消费者轮询效率，若数值过高可能因队列消息不足或轮询间隔不合理导致，需调整消费者轮询策略或检查生产者消息生成情况。",
+                "id": "c7b1f4b8-5069-480f-a1f7-1c85dbc389c1",
+                "layout": {
+                    "h": 3,
+                    "i": "c7b1f4b8-5069-480f-a1f7-1c85dbc389c1",
+                    "w": 12,
+                    "x": 0,
+                    "y": 28
+                },
+                "name": "每秒无结果的轮询操作数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_get_empty_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示消费者在手动确认（manual acknowledgment）模式下每秒执行的轮询（polling）操作次数。此指标反映消费者从队列获取消息并需显式确认（ACK/NACK）的处理频率，若数值异常可能因消费者处理延迟或消息积压导致，需优化确认逻辑或调整并发处理能力。",
+                "id": "4c2f60db-3cb4-4926-944c-022cf876eec2",
+                "layout": {
+                    "h": 3,
+                    "i": "4c2f60db-3cb4-4926-944c-022cf876eec2",
+                    "w": 12,
+                    "x": 12,
+                    "y": 28
+                },
+                "name": "每秒手动确认模式下的轮询操作数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channel_get_ack_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "b6aa6f06-924f-4575-b4e0-d116ab744ea1",
+                "layout": {
+                    "h": 1,
+                    "i": "b6aa6f06-924f-4575-b4e0-d116ab744ea1",
+                    "w": 24,
+                    "x": 0,
+                    "y": 31
+                },
+                "name": "QUEUES",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示当前 RabbitMQ 集群或节点上存在的队列总数量。此指标反映系统整体负载和资源占用情况，若数值过高可能增加管理复杂度或影响性能，需结合队列消息数、消费者数量等指标评估是否需要合并或清理闲置队列。",
+                "id": "c26434ca-065f-4088-81c6-ef8f0cbca552",
+                "layout": {
+                    "h": 3,
+                    "i": "c26434ca-065f-4088-81c6-ef8f0cbca552",
+                    "w": 12,
+                    "x": 0,
+                    "y": 32
+                },
+                "name": "队列总数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rabbitmq_queues * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 上创建（声明）的新队列数量。此指标反映应用程序动态管理队列的活跃程度，若数值过高可能因频繁创建/删除队列导致资源开销增加，需检查是否存在不必要的临时队列或优化队列生命周期管理。",
+                "id": "ff021951-7991-4c3e-a667-8cd11e5c444c",
+                "layout": {
+                    "h": 3,
+                    "i": "ff021951-7991-4c3e-a667-8cd11e5c444c",
+                    "w": 4,
+                    "x": 12,
+                    "y": 32
+                },
+                "name": "每秒队列声明数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_queues_declared_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中新创建的队列数量。此指标反映系统处理新队列请求的频率，数值异常高可能表明应用程序存在频繁创建队列的行为，需结合业务逻辑判断是否合理，避免因过多队列导致资源浪费或性能下降。",
+                "id": "00bbb4fc-5cdf-4b29-a440-ff4da4325a0c",
+                "layout": {
+                    "h": 3,
+                    "i": "00bbb4fc-5cdf-4b29-a440-ff4da4325a0c",
+                    "w": 4,
+                    "x": 16,
+                    "y": 32
+                },
+                "name": "每秒队列创建数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_queues_created_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中被删除的队列数量。此指标反映系统清理或回收队列资源的频率。若数值异常高，可能表明应用程序存在频繁创建后立即删除队列的行为，需检查是否存在资源管理不当或临时队列滥用的情况，以避免不必要的性能开销。",
+                "id": "f802e41d-14fe-4193-a5cf-c31957b146f7",
+                "layout": {
+                    "h": 3,
+                    "i": "f802e41d-14fe-4193-a5cf-c31957b146f7",
+                    "w": 4,
+                    "x": 20,
+                    "y": 32
+                },
+                "name": "每秒队列删除数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_queues_deleted_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "5c7acadf-f9ff-4db9-a284-a206be245733",
+                "layout": {
+                    "h": 1,
+                    "i": "5c7acadf-f9ff-4db9-a284-a206be245733",
+                    "w": 24,
+                    "x": 0,
+                    "y": 35
+                },
+                "name": "CHANNELS",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示当前 RabbitMQ 中所有活跃的 AMQP 通道数量。通道是客户端与服务器通信的轻量级连接，每个连接可以包含多个通道。此指标反映系统当前的并发通信负载，数值过高可能增加服务器资源消耗，需结合连接数监控以避免性能瓶颈或内存泄漏问题。",
+                "id": "362c622f-3fd8-4bdd-8dce-7ebf335f42f9",
+                "layout": {
+                    "h": 3,
+                    "i": "362c622f-3fd8-4bdd-8dce-7ebf335f42f9",
+                    "w": 12,
+                    "x": 0,
+                    "y": 36
+                },
+                "name": "通道总数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rabbitmq_channels * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中新创建的 AMQP 通道数量。通道用于客户端与服务器之间的高效通信，但过多频繁创建可能导致资源消耗增加。若此指标异常升高，可能表明应用程序存在短生命周期通道滥用或连接管理不当，需优化以避免性能下降或内存压力。",
+                "id": "3a1a643b-8e2a-4ed1-8621-e5fae3ebc7c2",
+                "layout": {
+                    "h": 3,
+                    "i": "3a1a643b-8e2a-4ed1-8621-e5fae3ebc7c2",
+                    "w": 6,
+                    "x": 12,
+                    "y": 36
+                },
+                "name": "每秒通道创建数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channels_opened_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中被关闭的 AMQP 通道数量。通道关闭是正常通信结束或异常中断的结果。若此指标与通道创建速率（Channels opened/s）长期不匹配，可能反映连接泄漏、客户端未正确释放资源或频繁重连问题，需结合错误日志排查潜在隐患。",
+                "id": "01f1771a-dd54-45e5-aa1d-b6ee2111c53b",
+                "layout": {
+                    "h": 3,
+                    "i": "01f1771a-dd54-45e5-aa1d-b6ee2111c53b",
+                    "w": 6,
+                    "x": 18,
+                    "y": 36
+                },
+                "name": "每秒通道关闭数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_channels_closed_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "collapsed": true,
+                "id": "419f22e8-08cc-4d91-8bc9-7c1055368146",
+                "layout": {
+                    "h": 1,
+                    "i": "419f22e8-08cc-4d91-8bc9-7c1055368146",
+                    "w": 24,
+                    "x": 0,
+                    "y": 39
+                },
+                "name": "CONNECTIONS",
+                "type": "row"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中被关闭的客户端连接数量。连接关闭可能是正常终止（如客户端主动断开）或异常中断（如网络问题、心跳超时）。若此指标突增或与连接创建速率（Connections opened/s）不匹配，可能表明客户端存在异常重连、资源未释放或服务端主动断开（如流量限制、认证失败等），需结合日志分析具体原因。",
+                "id": "c14fd6f4-d3de-4811-82c6-2b20c9146e89",
+                "layout": {
+                    "h": 3,
+                    "i": "c14fd6f4-d3de-4811-82c6-2b20c9146e89",
+                    "w": 6,
+                    "x": 18,
+                    "y": 40
+                },
+                "name": "每秒连接关闭数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_connections_closed_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "lineInterpolation": "smooth",
+                    "lineWidth": 2,
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示 RabbitMQ 当前维护的所有客户端 TCP 连接数量。该指标直接反映系统负载和资源占用情况。若数值异常高（接近系统限制），可能导致文件描述符耗尽、内存压力增大或性能下降，需检查客户端连接池配置或是否存在连接泄漏问题。正常情况下应与业务流量趋势一致。",
+                "id": "1d06679b-c603-4cbf-85a7-7c8f4594258f",
+                "layout": {
+                    "h": 3,
+                    "i": "1d06679b-c603-4cbf-85a7-7c8f4594258f",
+                    "w": 12,
+                    "x": 0,
+                    "y": 40
+                },
+                "name": "当前活跃连接总数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "rabbitmq_connections * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            },
+            {
+                "custom": {
+                    "drawStyle": "lines",
+                    "fillOpacity": 0,
+                    "lineInterpolation": "smooth",
+                    "stack": "off"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "description": "表示每秒在 RabbitMQ 中新建立的客户端连接数量。该指标反映客户端连接请求的活跃程度。若数值突增，可能因客户端频繁重连（如配置错误、网络抖动）或突发流量导致，需结合连接关闭速率（Connections closed/s）分析是否存在异常短连接。长期过高可能增加服务端负载，需优化客户端连接复用策略。",
+                "id": "8c91f7fe-79e9-454a-9dd3-6f214a29e1eb",
+                "layout": {
+                    "h": 3,
+                    "i": "8c91f7fe-79e9-454a-9dd3-6f214a29e1eb",
+                    "w": 6,
+                    "x": 12,
+                    "y": 40
+                },
+                "name": "每秒新建连接数",
+                "options": {
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {},
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "sum(rate(rabbitmq_connections_opened_total[60s]) * on(instance) group_left(rabbitmq_cluster, rabbitmq_node) rabbitmq_identity_info{rabbitmq_cluster=\"$rabbitmq_cluster\"}) by(rabbitmq_node)",
+                        "refId": "A"
+                    }
+                ],
+                "type": "timeseries",
+                "version": "2.0.0"
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus",
+                "defaultValue": 1
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(rabbitmq_identity_info, rabbitmq_cluster)",
+                "name": "rabbitmq_cluster",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0",
+        "graphTooltip": "sharedCrosshair"
+    },
+    "public": 0,
+    "public_cate": 0,
+    "bgids": null,
+    "built_in": 0,
+    "hide": 0,
+    "uuid": 1717556328326911000
+}
