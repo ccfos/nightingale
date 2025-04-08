@@ -39,16 +39,19 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 		items = append(items, resp.Items...)
 	}
 
-	dutyUsers := make(map[string]*models.User, len(items))
+	dutyUsers := make(map[int64]*models.User, len(items))
 	for i := range items {
-		id, _ := strconv.ParseInt(items[i].RefID, 10, 64)
-		user := &models.User{
-			Username: items[i].MemberName,
-			Email:    items[i].Email,
-			Phone:    items[i].Phone,
-			Id:       id,
+		if items[i].RefID != "" {
+			id, _ := strconv.ParseInt(items[i].RefID, 10, 64)
+			user := &models.User{
+				Username: items[i].MemberName,
+				Email:    items[i].Email,
+				Phone:    items[i].Phone,
+				Id:       id,
+			}
+			dutyUsers[id] = user
 		}
-		dutyUsers[user.Username+user.Email] = user
+
 	}
 
 	dbUsersHas := sliceToMap(dbUsers)
@@ -64,16 +67,16 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	return nil
 }
 
-func sliceToMap(dbUsers []*models.User) map[string]*models.User {
-	m := make(map[string]*models.User, len(dbUsers))
+func sliceToMap(dbUsers []*models.User) map[int64]*models.User {
+	m := make(map[int64]*models.User, len(dbUsers))
 	for _, user := range dbUsers {
-		m[user.Username+user.Email] = user
+		m[user.Id] = user
 	}
 	return m
 }
 
 // in m1 and not in m2
-func diffMap(m1, m2 map[string]*models.User) []models.User {
+func diffMap(m1, m2 map[int64]*models.User) []models.User {
 	var diff []models.User
 	for i := range m1 {
 		if _, ok := m2[i]; !ok {
@@ -103,7 +106,8 @@ func (user *User) delMember(appKey string) error {
 	if user.RefID == "" {
 		return errors.New("phones and email must be selected one of two")
 	}
-	return PostFlashDuty("/member/delete", appKey, user)
+	userDel := &User{RefID: user.RefID}
+	return PostFlashDuty("/member/delete", appKey, userDel)
 }
 
 func (user *User) UpdateMember(ctx *ctx.Context) error {
