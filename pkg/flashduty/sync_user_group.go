@@ -70,7 +70,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		if err := fdt.AddTeam(ugs.appKey); err != nil {
 			return err
 		}
-		if err := ugs.syncTeamMember(0); err != nil {
+		if err := ugs.syncTeamMember(teamID); err != nil {
 			return err
 		}
 		return nil

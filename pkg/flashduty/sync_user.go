@@ -2,10 +2,11 @@ package flashduty
 
 import (
 	"errors"
-	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"strconv"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
 	"github.com/toolkits/pkg/logger"
 )
