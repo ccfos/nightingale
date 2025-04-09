@@ -63,7 +63,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	if err := fdAddUsers(appKey, addUsers); err != nil {
 		return err
 	}
-
+	updateUser(appKey, dbUsersHas, dutyUsers)
 	return nil
 }
 
@@ -85,6 +85,29 @@ func diffMap(m1, m2 map[int64]*models.User) []models.User {
 	}
 	return diff
 }
+func updateUser(appKey string, m1, m2 map[int64]*models.User) {
+	for i := range m1 {
+		if _, ok := m2[i]; ok {
+			if m1[i].Email != m2[i].Email || m1[i].Phone != m2[i].Phone || m1[i].Username != m2[i].Username {
+				var flashdutyUser User
+
+				flashdutyUser = User{
+					RefID: strconv.FormatInt(m1[i].Id, 10),
+				}
+				flashdutyUser.Updates = Updates{
+					Phone:      m1[i].Phone,
+					Email:      m1[i].Email,
+					MemberName: m1[i].Username,
+					RefID:      strconv.FormatInt(m1[i].Id, 10),
+				}
+				err := PostFlashDuty("/member/info/reset", appKey, flashdutyUser)
+				if err != nil {
+					logger.Errorf("failed to update user: %v", err)
+				}
+			}
+		}
+	}
+}
 
 type User struct {
 	Email      string  `json:"email,omitempty"`
@@ -104,7 +127,7 @@ type Updates struct {
 
 func (user *User) delMember(appKey string) error {
 	if user.RefID == "" {
-		return errors.New("phones and email must be selected one of two")
+		return errors.New("refID must not be none")
 	}
 	userDel := &User{RefID: user.RefID}
 	return PostFlashDuty("/member/delete", appKey, userDel)
@@ -153,8 +176,7 @@ func fdAddUsers(appKey string, users []models.User) error {
 func fdDelUsers(appKey string, users []models.User) {
 	fdUsers := usersToFdUsers(users)
 	for _, fdUser := range fdUsers {
-		user := &User{RefID: fdUser.RefID}
-		if err := user.delMember(appKey); err != nil {
+		if err := fdUser.delMember(appKey); err != nil {
 			logger.Errorf("failed to delete user: %v", err)
 		}
 	}
@@ -176,6 +198,10 @@ func usersToFdUsers(users []models.User) []User {
 
 func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 	//contact := target.FindSameContact(email, phone)
+	if target.Id == 0 {
+		logger.Errorf("user not found: %s", target.Username)
+		return
+	}
 	var flashdutyUser User
 	/*	var needSync bool*/
 	flashdutyUser = User{
@@ -185,6 +211,7 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		Phone:      phone,
 		Email:      email,
 		MemberName: target.Username,
+		RefID:      strconv.FormatInt(target.Id, 10),
 	}
 
 	err := flashdutyUser.UpdateMember(ctx)

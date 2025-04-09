@@ -3,6 +3,7 @@ package flashduty
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -43,9 +44,10 @@ func (ugs *UserGroupSyncer) SyncUGAdd(ref_id int64) error {
 }
 
 func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
-	//修改为查询 ref_ID
+	// 修改为查询 ref_ID
 	teamID, err := ugs.CheckTeam(ref_id)
-	if err != nil {
+	// 如果没有找到团队，说明是新建的团队
+	if err != nil && strings.Contains(err.Error(), "no team found by ref_id") {
 		emails := make([]string, 0)
 		phones := make([]string, 0)
 
@@ -72,6 +74,9 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 			return err
 		}
 		return nil
+	}
+	if err != nil {
+		return err
 	}
 	emails := make([]string, 0)
 	phones := make([]string, 0)
@@ -157,6 +162,7 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 	}
 
 	fdt := Team{
+		TeamID:   ugs.ug.Id,
 		TeamName: ugs.ug.Name,
 		Emails:   emails,
 		Phones:   phones,
@@ -222,7 +228,7 @@ func NeedSyncUser(ctx *ctx.Context) bool {
 	return true
 }
 
-// 检查ref_id是否存在
+// CheckTeam 检查ref_id是否存在
 func (ugs *UserGroupSyncer) CheckTeam(ref_id string) (int64, error) {
 	// Construct the request to query the team by name
 	info, err := PostFlashDutyWithResp[TeamInfo]("/team/info", ugs.appKey, map[string]interface{}{
