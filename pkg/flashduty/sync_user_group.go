@@ -40,7 +40,7 @@ func (ugs *UserGroupSyncer) SyncUGAdd(ref_id int64) error {
 	if err != nil {
 		return err
 	}
-	return ugs.syncTeamMember()
+	return ugs.syncTeamMember(0)
 }
 
 func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
@@ -70,7 +70,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		if err := fdt.AddTeam(ugs.appKey); err != nil {
 			return err
 		}
-		if err := ugs.syncTeamMember(); err != nil {
+		if err := ugs.syncTeamMember(0); err != nil {
 			return err
 		}
 		return nil
@@ -103,7 +103,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		return err
 	}
 
-	if err := ugs.syncTeamMember(); err != nil {
+	if err := ugs.syncTeamMember(teamID); err != nil {
 		return err
 	}
 	return nil
@@ -119,14 +119,14 @@ func (ugs *UserGroupSyncer) SyncUGDel(ref_id string) error {
 }
 
 func (ugs *UserGroupSyncer) SyncMembersAdd() error {
-	return ugs.syncTeamMember()
+	return ugs.syncTeamMember(0)
 }
 
 func (ugs *UserGroupSyncer) SyncMembersDel() error {
-	return ugs.syncTeamMember()
+	return ugs.syncTeamMember(0)
 }
 
-func (ugs *UserGroupSyncer) syncTeamMember() error {
+func (ugs *UserGroupSyncer) syncTeamMember(teamID int64) error {
 	uids, err := models.MemberIds(ugs.ctx, ugs.ug.Id)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (ugs *UserGroupSyncer) syncTeamMember() error {
 		return err
 	}
 
-	toDutyErr := ugs.addMemberToFDTeam(users)
+	toDutyErr := ugs.addMemberToFDTeam(users, teamID)
 	if toDutyErr != nil {
 		logger.Warningf("failed to sync user group %s %v to flashduty's team: %v", ugs.ug.Name, users, toDutyErr)
 	}
@@ -144,7 +144,7 @@ func (ugs *UserGroupSyncer) syncTeamMember() error {
 	return err
 }
 
-func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
+func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User, teamID int64) error {
 	if err := fdAddUsers(ugs.appKey, users); err != nil {
 		return err
 	}
@@ -161,10 +161,14 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 		}
 	}
 	refID := strconv.FormatInt(ugs.ug.Id, 10)
-	teamID, err := ugs.CheckTeam(refID)
-	if err != nil {
-		return err
+	var err error
+	if teamID == 0 {
+		teamID, err = ugs.CheckTeam(refID)
+		if err != nil {
+			return err
+		}
 	}
+
 	fdt := Team{
 		TeamID:   teamID,
 		TeamName: ugs.ug.Name,
