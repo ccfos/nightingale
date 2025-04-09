@@ -3,6 +3,7 @@ package flashduty
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -100,7 +101,7 @@ func updateUser(appKey string, m1, m2 map[int64]*models.User) {
 					MemberName: m1[i].Username,
 					RefID:      strconv.FormatInt(m1[i].Id, 10),
 				}
-				err := PostFlashDuty("/member/info/reset", appKey, flashdutyUser)
+				err := flashdutyUser.UpdateMember(appKey)
 				if err != nil {
 					logger.Errorf("failed to update user: %v", err)
 				}
@@ -133,11 +134,7 @@ func (user *User) delMember(appKey string) error {
 	return PostFlashDuty("/member/delete", appKey, userDel)
 }
 
-func (user *User) UpdateMember(ctx *ctx.Context) error {
-	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
+func (user *User) UpdateMember(appKey string) error {
 
 	return PostFlashDuty("/member/info/reset", appKey, user)
 }
@@ -202,6 +199,10 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		logger.Errorf("user not found: %s", target.Username)
 		return
 	}
+	if email == "" && phone == "" {
+		logger.Errorf("email and phone are both empty: %s", target.Username)
+		return
+	}
 	var flashdutyUser User
 	/*	var needSync bool*/
 	flashdutyUser = User{
@@ -213,8 +214,27 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		MemberName: target.Username,
 		RefID:      strconv.FormatInt(target.Id, 10),
 	}
+	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		logger.Errorf("failed to get flashduty app key: %v", err)
+		return
+	}
+	err = flashdutyUser.UpdateMember(appKey)
+	if err != nil && strings.Contains(err.Error(), "no member found by ref_id") {
+		// 如果没有找到成员，说明需要新建成员
+		NewUser := &User{
+			Phone:      phone,
+			Email:      email,
+			MemberName: target.Username,
+			RefID:      strconv.FormatInt(target.Id, 10),
+		}
+		err = PostFlashDuty("/member/invite", appKey, NewUser)
+		if err != nil {
+			logger.Errorf("failed to update user: %v", err)
+		}
+		return
 
-	err := flashdutyUser.UpdateMember(ctx)
+	}
 	if err != nil {
 		logger.Errorf("failed to update user: %v", err)
 	}
