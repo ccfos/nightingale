@@ -355,6 +355,9 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 		).Set(float64(len(lst)))
 	}
 
+	for i := range lst {
+		lst[i].QueryCount = len(rule.Queries)
+	}
 	return lst, nil
 }
 

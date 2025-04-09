@@ -686,7 +686,12 @@ func labelMapToArr(m map[string]string) []string {
 }
 
 func Hash(ruleId, datasourceId int64, vector models.AnomalyPoint) string {
-	return str.MD5(fmt.Sprintf("%d_%s_%d_%d_%s", ruleId, vector.Labels.String(), datasourceId, vector.Severity, vector.Query))
+	query := ""
+	if vector.QueryCount > 1 {
+		query = vector.Query
+	}
+
+	return str.MD5(fmt.Sprintf("%d_%s_%d_%d_%s", ruleId, vector.Labels.String(), datasourceId, vector.Severity, query))
 }
 
 func TagHash(vector models.AnomalyPoint) string {

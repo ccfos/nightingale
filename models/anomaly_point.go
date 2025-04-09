@@ -21,6 +21,7 @@ type AnomalyPoint struct {
 	ValuesUnit    map[string]unit.FormattedValue `json:"values_unit"`
 	RecoverConfig RecoverConfig                  `json:"recover_config"`
 	TriggerType   TriggerType                    `json:"trigger_type"`
+	QueryCount    int                            `json:"query_count"`
 }
 
 type TriggerType string
