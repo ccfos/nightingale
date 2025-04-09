@@ -2,11 +2,10 @@ package flashduty
 
 import (
 	"errors"
-	"strconv"
-	"strings"
-
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"strconv"
+	"strings"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -204,15 +203,16 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		return
 	}
 	var flashdutyUser User
+	refID := strconv.FormatInt(target.Id, 10)
 	/*	var needSync bool*/
 	flashdutyUser = User{
-		RefID: strconv.FormatInt(target.Id, 10),
+		RefID: refID,
 	}
 	flashdutyUser.Updates = Updates{
 		Phone:      phone,
 		Email:      email,
 		MemberName: target.Username,
-		RefID:      strconv.FormatInt(target.Id, 10),
+		RefID:      refID,
 	}
 	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
 	if err != nil {
@@ -220,13 +220,13 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 		return
 	}
 	err = flashdutyUser.UpdateMember(appKey)
-	if err != nil && strings.Contains(err.Error(), "no member found by ref_id") {
+	if err != nil && strings.Contains(err.Error(), "no member found") {
 		// 如果没有找到成员，说明需要新建成员
 		NewUser := &User{
 			Phone:      phone,
 			Email:      email,
 			MemberName: target.Username,
-			RefID:      strconv.FormatInt(target.Id, 10),
+			RefID:      refID,
 		}
 		err = PostFlashDuty("/member/invite", appKey, NewUser)
 		if err != nil {
