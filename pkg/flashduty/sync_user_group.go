@@ -65,7 +65,6 @@ func (ugs *UserGroupSyncer) SyncUGPut() error {
 		}
 		//根据 team_id 去更新 duty 中这个团队的信息
 		fdt := Team{
-			TeamID:   teamID,
 			RefID:    refID,
 			TeamName: ugs.ug.Name,
 			Emails:   emails,
