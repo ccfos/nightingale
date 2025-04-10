@@ -22,6 +22,7 @@ type EsIndexPattern struct {
 	UpdateAt                   int64  `json:"update_at"`
 	UpdateBy                   string `json:"update_by"`
 	CrossClusterEnabled        int    `json:"cross_cluster_enabled"`
+	Note                       string `json:"note"`
 }
 
 func (t *EsIndexPattern) TableName() string {
