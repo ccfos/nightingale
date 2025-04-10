@@ -205,7 +205,7 @@ func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
 	}
 	var flashdutyUser User
 	refID := strconv.FormatInt(target.Id, 10)
-	/*	var needSync bool*/
+
 	flashdutyUser = User{
 		RefID: refID,
 	}

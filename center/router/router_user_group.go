@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -99,7 +98,7 @@ func (rt *Router) userGroupAdd(c *gin.Context) {
 	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, &ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncUGAdd(ug.Id)
+		err = ugs.SyncUGAdd()
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Data(ug.Id, err)
@@ -130,7 +129,7 @@ func (rt *Router) userGroupPut(c *gin.Context) {
 	if f.IsSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncUGPut(strconv.FormatInt(ug.Id, 10))
+		err = ugs.SyncUGPut()
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(ug.Update(rt.Ctx, "Name", "Note", "UpdateAt", "UpdateBy"))
@@ -159,7 +158,7 @@ func (rt *Router) userGroupDel(c *gin.Context) {
 	if isSyncToFlashDuty || flashduty.NeedSyncTeam(rt.Ctx) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
-		err = ugs.SyncUGDel(strconv.FormatInt(ug.Id, 10))
+		err = ugs.SyncUGDel()
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(ug.Del(rt.Ctx))

@@ -15,6 +15,7 @@ type UserGroupSyncer struct {
 	ctx    *ctx.Context
 	ug     *models.UserGroup
 	appKey string
+	teamID int64
 }
 
 func NewUserGroupSyncer(ctx *ctx.Context, ug *models.UserGroup) (*UserGroupSyncer, error) {
@@ -30,23 +31,25 @@ func NewUserGroupSyncer(ctx *ctx.Context, ug *models.UserGroup) (*UserGroupSynce
 	}, nil
 }
 
-func (ugs *UserGroupSyncer) SyncUGAdd(ref_id int64) error {
-
+func (ugs *UserGroupSyncer) SyncUGAdd() error {
+	// 新建团队(无用户仅有团队名称)
 	fdt := Team{
 		TeamName: ugs.ug.Name,
-		RefID:    strconv.FormatInt(ref_id, 10),
+		RefID:    strconv.FormatInt(ugs.ug.Id, 10),
 	}
 	err := fdt.UpdateTeam(ugs.appKey)
 	if err != nil {
 		return err
 	}
-	return ugs.syncTeamMember(0)
+	return ugs.syncTeamMember()
 }
 
-func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
+func (ugs *UserGroupSyncer) SyncUGPut() error {
 	// 修改为查询 ref_ID
-	teamID, err := ugs.CheckTeam(ref_id)
+	refID := strconv.FormatInt(ugs.ug.Id, 10)
+	teamID, err := ugs.CheckTeam(refID)
 	// 如果没有找到团队，说明是新建的团队
+	ugs.teamID = teamID
 	if err != nil && strings.Contains(err.Error(), "no team found by ref_id") {
 		emails := make([]string, 0)
 		phones := make([]string, 0)
@@ -62,7 +65,8 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		}
 		//根据 team_id 去更新 duty 中这个团队的信息
 		fdt := Team{
-			RefID:    ref_id,
+			TeamID:   teamID,
+			RefID:    refID,
 			TeamName: ugs.ug.Name,
 			Emails:   emails,
 			Phones:   phones,
@@ -70,7 +74,8 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 		if err := fdt.AddTeam(ugs.appKey); err != nil {
 			return err
 		}
-		if err := ugs.syncTeamMember(teamID); err != nil {
+
+		if err := ugs.syncTeamMember(); err != nil {
 			return err
 		}
 		return nil
@@ -93,7 +98,7 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 	//根据 team_id 去更新 duty 中这个团队的信息
 	fdt := Team{
 		TeamID:   teamID,
-		RefID:    ref_id,
+		RefID:    refID,
 		TeamName: ugs.ug.Name,
 		Emails:   emails,
 		Phones:   phones,
@@ -102,31 +107,29 @@ func (ugs *UserGroupSyncer) SyncUGPut(ref_id string) error {
 	if err := fdt.UpdateTeam(ugs.appKey); err != nil {
 		return err
 	}
-
-	if err := ugs.syncTeamMember(teamID); err != nil {
+	if err := ugs.syncTeamMember(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (ugs *UserGroupSyncer) SyncUGDel(ref_id string) error {
+func (ugs *UserGroupSyncer) SyncUGDel() error {
 	fdt := Team{
-		//TeamName: ugName,
-		RefID: ref_id,
+		RefID: strconv.FormatInt(ugs.ug.Id, 10),
 	}
 	err := fdt.DelTeam(ugs.appKey)
 	return err
 }
 
 func (ugs *UserGroupSyncer) SyncMembersAdd() error {
-	return ugs.syncTeamMember(0)
+	return ugs.syncTeamMember()
 }
 
 func (ugs *UserGroupSyncer) SyncMembersDel() error {
-	return ugs.syncTeamMember(0)
+	return ugs.syncTeamMember()
 }
 
-func (ugs *UserGroupSyncer) syncTeamMember(teamID int64) error {
+func (ugs *UserGroupSyncer) syncTeamMember() error {
 	uids, err := models.MemberIds(ugs.ctx, ugs.ug.Id)
 	if err != nil {
 		return err
@@ -136,7 +139,7 @@ func (ugs *UserGroupSyncer) syncTeamMember(teamID int64) error {
 		return err
 	}
 
-	toDutyErr := ugs.addMemberToFDTeam(users, teamID)
+	toDutyErr := ugs.addMemberToFDTeam(users)
 	if toDutyErr != nil {
 		logger.Warningf("failed to sync user group %s %v to flashduty's team: %v", ugs.ug.Name, users, toDutyErr)
 	}
@@ -144,7 +147,7 @@ func (ugs *UserGroupSyncer) syncTeamMember(teamID int64) error {
 	return err
 }
 
-func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User, teamID int64) error {
+func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 	if err := fdAddUsers(ugs.appKey, users); err != nil {
 		return err
 	}
@@ -160,6 +163,7 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User, teamID int64)
 			logger.Warningf("The user %s has no email and phone, and failed to sync to flashduty's team", user.Username)
 		}
 	}
+	teamID := ugs.teamID
 	refID := strconv.FormatInt(ugs.ug.Id, 10)
 	var err error
 	if teamID == 0 {
