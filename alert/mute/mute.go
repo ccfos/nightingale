@@ -142,10 +142,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	if mute.Disabled == 1 {
 		return false
 	}
-	ts := event.TriggerTime
-	if len(clock) > 0 {
-		ts = clock[0]
-	}
+
 
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
@@ -160,7 +157,21 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 
-	if !mute.MuteTimeCheck(ts) {
+	if mute.MuteTimeType == models.TimeRange {
+		if !mute.TimeRangeCheck(event.TriggerTime) {
+			return false
+		}
+	} else if mute.MuteTimeType == models.Periodic {
+		ts := event.TriggerTime
+		if len(clock) > 0 {
+			ts = clock[0]
+		}
+		
+		if !mute.PeriodicCheck(ts) {
+			return false
+		}
+	} else {
+		logger.Warningf("mute time type invalid, %d", mute.MuteTimeType)
 		return false
 	}
 

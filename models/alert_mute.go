@@ -105,7 +105,7 @@ type AlertMute struct {
 	Cause             string         `json:"cause"`
 	Btime             int64          `json:"btime"`
 	Etime             int64          `json:"etime"`
-	Disabled          int            `json:"disabled"` // 0: enabled, 1: disabled
+	Disabled          int            `json:"disabled"`           // 0: enabled, 1: disabled
 	Activated         int            `json:"activated" gorm:"-"` // 0: not activated, 1: activated
 	CreateBy          string         `json:"create_by"`
 	UpdateBy          string         `json:"update_by"`
@@ -313,7 +313,17 @@ func (m *AlertMute) DB2FE() error {
 		}
 	}
 
-	if (m.MuteTimeCheck(time.Now().Unix())) {
+	// 检查时间范围
+	timeCheck := false
+	if m.MuteTimeType == TimeRange {
+		timeCheck = m.TimeRangeCheck(time.Now().Unix())
+	} else if m.MuteTimeType == Periodic {
+		timeCheck = m.PeriodicCheck(time.Now().Unix())
+	} else {
+		logger.Warningf("mute time type invalid, %d", m.MuteTimeType)
+	}
+
+	if timeCheck {
 		m.Activated = 1
 	} else {
 		m.Activated = 0
@@ -326,29 +336,29 @@ func (m *AlertMute) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfac
 	return DB(ctx).Model(m).Updates(fields).Error
 }
 
-func (m *AlertMute) MuteTimeCheck(checkTime int64) bool {
-	if m.MuteTimeType == TimeRange {
-		if checkTime < m.Btime || checkTime > m.Etime {
-			return false
-		}
-		return true
-	} else if m.MuteTimeType == Periodic {
-		tm := time.Unix(checkTime, 0)
-		triggerTime := tm.Format("15:04")
-		triggerWeek := strconv.Itoa(int(tm.Weekday()))
+func (m *AlertMute) TimeRangeCheck(checkTime int64) bool {
+	if checkTime < m.Btime || checkTime > m.Etime {
+		return false
+	}
+	return true
+}
 
-		for i := 0; i < len(m.PeriodicMutesJson); i++ {
-			if strings.Contains(m.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-				if m.PeriodicMutesJson[i].EnableStime == m.PeriodicMutesJson[i].EnableEtime || (m.PeriodicMutesJson[i].EnableStime == "00:00" && m.PeriodicMutesJson[i].EnableEtime == "23:59") {
+func (m *AlertMute) PeriodicCheck(checkTime int64) bool {
+	tm := time.Unix(checkTime, 0)
+	triggerTime := tm.Format("15:04")
+	triggerWeek := strconv.Itoa(int(tm.Weekday()))
+
+	for i := 0; i < len(m.PeriodicMutesJson); i++ {
+		if strings.Contains(m.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
+			if m.PeriodicMutesJson[i].EnableStime == m.PeriodicMutesJson[i].EnableEtime || (m.PeriodicMutesJson[i].EnableStime == "00:00" && m.PeriodicMutesJson[i].EnableEtime == "23:59") {
+				return true
+			} else if m.PeriodicMutesJson[i].EnableStime < m.PeriodicMutesJson[i].EnableEtime {
+				if triggerTime >= m.PeriodicMutesJson[i].EnableStime && triggerTime < m.PeriodicMutesJson[i].EnableEtime {
 					return true
-				} else if m.PeriodicMutesJson[i].EnableStime < m.PeriodicMutesJson[i].EnableEtime {
-					if triggerTime >= m.PeriodicMutesJson[i].EnableStime && triggerTime < m.PeriodicMutesJson[i].EnableEtime {
-						return true
-					}
-				} else {
-					if triggerTime >= m.PeriodicMutesJson[i].EnableStime || triggerTime < m.PeriodicMutesJson[i].EnableEtime {
-						return true
-					}
+				}
+			} else {
+				if triggerTime >= m.PeriodicMutesJson[i].EnableStime || triggerTime < m.PeriodicMutesJson[i].EnableEtime {
+					return true
 				}
 			}
 		}
