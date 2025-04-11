@@ -160,37 +160,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 
-	var matchTime bool
-	if mute.MuteTimeType == models.TimeRange {
-		if ts < mute.Btime || ts > mute.Etime {
-			return false
-		}
-		matchTime = true
-	} else if mute.MuteTimeType == models.Periodic {
-		tm := time.Unix(event.TriggerTime, 0)
-		triggerTime := tm.Format("15:04")
-		triggerWeek := strconv.Itoa(int(tm.Weekday()))
-
-		for i := 0; i < len(mute.PeriodicMutesJson); i++ {
-			if strings.Contains(mute.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime || (mute.PeriodicMutesJson[i].EnableStime == "00:00" && mute.PeriodicMutesJson[i].EnableEtime == "23:59") {
-					matchTime = true
-					break
-				} else if mute.PeriodicMutesJson[i].EnableStime < mute.PeriodicMutesJson[i].EnableEtime {
-					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime && triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
-						matchTime = true
-						break
-					}
-				} else {
-					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime || triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
-						matchTime = true
-						break
-					}
-				}
-			}
-		}
-	}
-	if !matchTime {
+	if !mute.MuteTimeCheck(ts) {
 		return false
 	}
 

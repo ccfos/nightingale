@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -316,6 +317,37 @@ func (m *AlertMute) DB2FE() error {
 
 func (m *AlertMute) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
+}
+
+func (m *AlertMute) MuteTimeCheck(checkTime int64) bool {
+	if m.MuteTimeType == TimeRange {
+		if checkTime < m.Btime || checkTime > m.Etime {
+			return false
+		}
+		return true
+	} else if m.MuteTimeType == Periodic {
+		tm := time.Unix(checkTime, 0)
+		triggerTime := tm.Format("15:04")
+		triggerWeek := strconv.Itoa(int(tm.Weekday()))
+
+		for i := 0; i < len(m.PeriodicMutesJson); i++ {
+			if strings.Contains(m.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
+				if m.PeriodicMutesJson[i].EnableStime == m.PeriodicMutesJson[i].EnableEtime || (m.PeriodicMutesJson[i].EnableStime == "00:00" && m.PeriodicMutesJson[i].EnableEtime == "23:59") {
+					return true
+				} else if m.PeriodicMutesJson[i].EnableStime < m.PeriodicMutesJson[i].EnableEtime {
+					if triggerTime >= m.PeriodicMutesJson[i].EnableStime && triggerTime < m.PeriodicMutesJson[i].EnableEtime {
+						return true
+					}
+				} else {
+					if triggerTime >= m.PeriodicMutesJson[i].EnableStime || triggerTime < m.PeriodicMutesJson[i].EnableEtime {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func AlertMuteDel(ctx *ctx.Context, ids []int64) error {
