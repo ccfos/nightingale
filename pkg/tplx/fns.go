@@ -37,10 +37,10 @@ func RegisterQueryFunc(f QueryFunc) {
 	queryFunc = f
 }
 
-type queryResult []*sample
+type QueryResult []*sample
 
 type queryResultByLabelSorter struct {
-	results queryResult
+	results QueryResult
 	by      string
 }
 
@@ -426,7 +426,7 @@ func FormatDecimal(s string, n int) string {
 	return fmt.Sprintf(format, num)
 }
 
-func First(v queryResult) (*sample, error) {
+func First(v QueryResult) (*sample, error) {
 	if len(v) > 0 {
 		return v[0], nil
 	}
@@ -472,7 +472,7 @@ func TableLink(expr string) string {
 	return strutil.TableLinkForExpression(expr)
 }
 
-func SortByLabel(label string, v queryResult) queryResult {
+func SortByLabel(label string, v QueryResult) QueryResult {
 	sorter := queryResultByLabelSorter{v[:], label}
 	sort.Stable(sorter)
 	return v
@@ -583,6 +583,83 @@ func Query(datasourceID int64, promql string) model.Value {
 	}
 
 	return nil
+}
+
+// ConvertToQueryResult 将model.Value转换为queryResult
+func ConvertToQueryResult(value model.Value) QueryResult {
+	if value == nil {
+		return nil
+	}
+
+	var result QueryResult
+
+	switch value.Type() {
+	case model.ValVector:
+		items, ok := value.(model.Vector)
+		if !ok {
+			return nil
+		}
+
+		for _, item := range items {
+			if math.IsNaN(float64(item.Value)) {
+				continue
+			}
+
+			labels := make(map[string]string)
+			for k, v := range item.Metric {
+				labels[string(k)] = string(v)
+			}
+
+			result = append(result, &sample{
+				Labels: labels,
+				Value:  float64(item.Value),
+			})
+		}
+	case model.ValMatrix:
+		items, ok := value.(model.Matrix)
+		if !ok {
+			return nil
+		}
+
+		for _, item := range items {
+			if len(item.Values) == 0 {
+				continue
+			}
+
+			last := item.Values[len(item.Values)-1]
+			if math.IsNaN(float64(last.Value)) {
+				continue
+			}
+
+			labels := make(map[string]string)
+			for k, v := range item.Metric {
+				labels[string(k)] = string(v)
+			}
+
+			result = append(result, &sample{
+				Labels: labels,
+				Value:  float64(last.Value),
+			})
+		}
+	case model.ValScalar:
+		item, ok := value.(*model.Scalar)
+		if !ok {
+			return nil
+		}
+
+		if math.IsNaN(float64(item.Value)) {
+			return nil
+		}
+
+		result = append(result, &sample{
+			Labels: map[string]string{},
+			Value:  float64(item.Value),
+		})
+	default:
+		return nil
+	}
+
+	return result
 }
 
 func MappingAndJoin(arr interface{}, prefix, suffix, join string) string {
