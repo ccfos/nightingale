@@ -106,6 +106,7 @@ type AlertMute struct {
 	Btime             int64          `json:"btime"`
 	Etime             int64          `json:"etime"`
 	Disabled          int            `json:"disabled"` // 0: enabled, 1: disabled
+	Activated         int            `json:"activated" gorm:"-"` // 0: not activated, 1: activated
 	CreateBy          string         `json:"create_by"`
 	UpdateBy          string         `json:"update_by"`
 	CreateAt          int64          `json:"create_at"`
@@ -310,6 +311,12 @@ func (m *AlertMute) DB2FE() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if (m.MuteTimeCheck(time.Now().Unix())) {
+		m.Activated = 1
+	} else {
+		m.Activated = 0
 	}
 
 	return err
