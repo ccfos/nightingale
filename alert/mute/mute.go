@@ -142,10 +142,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	if mute.Disabled == 1 {
 		return false
 	}
-	ts := event.TriggerTime
-	if len(clock) > 0 {
-		ts = clock[0]
-	}
+
 
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
@@ -160,37 +157,21 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 	}
 
-	var matchTime bool
 	if mute.MuteTimeType == models.TimeRange {
-		if ts < mute.Btime || ts > mute.Etime {
+		if !mute.IsWithinTimeRange(event.TriggerTime) {
 			return false
 		}
-		matchTime = true
 	} else if mute.MuteTimeType == models.Periodic {
-		tm := time.Unix(event.TriggerTime, 0)
-		triggerTime := tm.Format("15:04")
-		triggerWeek := strconv.Itoa(int(tm.Weekday()))
-
-		for i := 0; i < len(mute.PeriodicMutesJson); i++ {
-			if strings.Contains(mute.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
-				if mute.PeriodicMutesJson[i].EnableStime == mute.PeriodicMutesJson[i].EnableEtime || (mute.PeriodicMutesJson[i].EnableStime == "00:00" && mute.PeriodicMutesJson[i].EnableEtime == "23:59") {
-					matchTime = true
-					break
-				} else if mute.PeriodicMutesJson[i].EnableStime < mute.PeriodicMutesJson[i].EnableEtime {
-					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime && triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
-						matchTime = true
-						break
-					}
-				} else {
-					if triggerTime >= mute.PeriodicMutesJson[i].EnableStime || triggerTime < mute.PeriodicMutesJson[i].EnableEtime {
-						matchTime = true
-						break
-					}
-				}
-			}
+		ts := event.TriggerTime
+		if len(clock) > 0 {
+			ts = clock[0]
 		}
-	}
-	if !matchTime {
+		
+		if !mute.IsWithinPeriodicMute(ts) {
+			return false
+		}
+	} else {
+		logger.Warningf("mute time type invalid, %d", mute.MuteTimeType)
 		return false
 	}
 

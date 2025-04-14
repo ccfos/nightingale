@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -104,7 +105,8 @@ type AlertMute struct {
 	Cause             string         `json:"cause"`
 	Btime             int64          `json:"btime"`
 	Etime             int64          `json:"etime"`
-	Disabled          int            `json:"disabled"` // 0: enabled, 1: disabled
+	Disabled          int            `json:"disabled"`           // 0: enabled, 1: disabled
+	Activated         int            `json:"activated" gorm:"-"` // 0: not activated, 1: activated
 	CreateBy          string         `json:"create_by"`
 	UpdateBy          string         `json:"update_by"`
 	CreateAt          int64          `json:"create_at"`
@@ -311,11 +313,58 @@ func (m *AlertMute) DB2FE() error {
 		}
 	}
 
+	// 检查时间范围
+	isWithinTime := false
+	if m.MuteTimeType == TimeRange {
+		isWithinTime = m.IsWithinTimeRange(time.Now().Unix())
+	} else if m.MuteTimeType == Periodic {
+		isWithinTime = m.IsWithinPeriodicMute(time.Now().Unix())
+	} else {
+		logger.Warningf("mute time type invalid, %d", m.MuteTimeType)
+	}
+
+	if isWithinTime {
+		m.Activated = 1
+	} else {
+		m.Activated = 0
+	}
+
 	return err
 }
 
 func (m *AlertMute) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
+}
+
+func (m *AlertMute) IsWithinTimeRange(checkTime int64) bool {
+	if checkTime < m.Btime || checkTime > m.Etime {
+		return false
+	}
+	return true
+}
+
+func (m *AlertMute) IsWithinPeriodicMute(checkTime int64) bool {
+	tm := time.Unix(checkTime, 0)
+	triggerTime := tm.Format("15:04")
+	triggerWeek := strconv.Itoa(int(tm.Weekday()))
+
+	for i := 0; i < len(m.PeriodicMutesJson); i++ {
+		if strings.Contains(m.PeriodicMutesJson[i].EnableDaysOfWeek, triggerWeek) {
+			if m.PeriodicMutesJson[i].EnableStime == m.PeriodicMutesJson[i].EnableEtime || (m.PeriodicMutesJson[i].EnableStime == "00:00" && m.PeriodicMutesJson[i].EnableEtime == "23:59") {
+				return true
+			} else if m.PeriodicMutesJson[i].EnableStime < m.PeriodicMutesJson[i].EnableEtime {
+				if triggerTime >= m.PeriodicMutesJson[i].EnableStime && triggerTime < m.PeriodicMutesJson[i].EnableEtime {
+					return true
+				}
+			} else {
+				if triggerTime >= m.PeriodicMutesJson[i].EnableStime || triggerTime < m.PeriodicMutesJson[i].EnableEtime {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func AlertMuteDel(ctx *ctx.Context, ids []int64) error {
