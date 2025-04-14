@@ -480,7 +480,7 @@ func (ar *AlertRule) Verify() error {
 	for _, node := range t.Tree.Root.Nodes {
 		if tn := node.(*parse.TextNode); tn != nil {
 			if str.Dangerous(tn.String()) {
-				return errors.New("Name has invalid characters")
+				return fmt.Errorf("Name has invalid characters: %s", tn.String())
 			}
 		}
 	}
