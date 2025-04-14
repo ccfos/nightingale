@@ -314,16 +314,16 @@ func (m *AlertMute) DB2FE() error {
 	}
 
 	// 检查时间范围
-	timeCheck := false
+	isWithinTime := false
 	if m.MuteTimeType == TimeRange {
-		timeCheck = m.TimeRangeCheck(time.Now().Unix())
+		isWithinTime = m.IsWithinTimeRange(time.Now().Unix())
 	} else if m.MuteTimeType == Periodic {
-		timeCheck = m.PeriodicCheck(time.Now().Unix())
+		isWithinTime = m.IsWithinPeriodicMute(time.Now().Unix())
 	} else {
 		logger.Warningf("mute time type invalid, %d", m.MuteTimeType)
 	}
 
-	if timeCheck {
+	if isWithinTime {
 		m.Activated = 1
 	} else {
 		m.Activated = 0
@@ -336,14 +336,14 @@ func (m *AlertMute) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interfac
 	return DB(ctx).Model(m).Updates(fields).Error
 }
 
-func (m *AlertMute) TimeRangeCheck(checkTime int64) bool {
+func (m *AlertMute) IsWithinTimeRange(checkTime int64) bool {
 	if checkTime < m.Btime || checkTime > m.Etime {
 		return false
 	}
 	return true
 }
 
-func (m *AlertMute) PeriodicCheck(checkTime int64) bool {
+func (m *AlertMute) IsWithinPeriodicMute(checkTime int64) bool {
 	tm := time.Unix(checkTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))

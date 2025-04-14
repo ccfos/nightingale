@@ -158,7 +158,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	}
 
 	if mute.MuteTimeType == models.TimeRange {
-		if !mute.TimeRangeCheck(event.TriggerTime) {
+		if !mute.IsWithinTimeRange(event.TriggerTime) {
 			return false
 		}
 	} else if mute.MuteTimeType == models.Periodic {
@@ -167,7 +167,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 			ts = clock[0]
 		}
 		
-		if !mute.PeriodicCheck(ts) {
+		if !mute.IsWithinPeriodicMute(ts) {
 			return false
 		}
 	} else {
