@@ -2,6 +2,8 @@ package flashduty
 
 import (
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -21,7 +23,7 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 
 	req := make(map[string]interface{})
 	req["limit"] = 100
-	userList, err := PostFlashDutyWithResp("/member/list", appKey, req)
+	userList, err := PostFlashDutyWithResp[Data]("/member/list", appKey, req)
 	if err != nil {
 		return err
 	}
@@ -31,21 +33,26 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	for i := 0; i < total/100+1; i++ {
 		req["p"] = i
 		req["limit"] = 100
-		resp, err := PostFlashDutyWithResp("/member/list", appKey, req)
+		resp, err := PostFlashDutyWithResp[Data]("/member/list", appKey, req)
 		if err != nil {
 			return err
 		}
 		items = append(items, resp.Items...)
 	}
 
-	dutyUsers := make(map[string]*models.User, len(items))
+	dutyUsers := make(map[int64]*models.User, len(items))
 	for i := range items {
-		user := &models.User{
-			Username: items[i].MemberName,
-			Email:    items[i].Email,
-			Phone:    items[i].Phone,
+		if items[i].RefID != "" {
+			id, _ := strconv.ParseInt(items[i].RefID, 10, 64)
+			user := &models.User{
+				Username: items[i].MemberName,
+				Email:    items[i].Email,
+				Phone:    items[i].Phone,
+				Id:       id,
+			}
+			dutyUsers[id] = user
 		}
-		dutyUsers[user.Username+user.Email] = user
+
 	}
 
 	dbUsersHas := sliceToMap(dbUsers)
@@ -57,20 +64,20 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	if err := fdAddUsers(appKey, addUsers); err != nil {
 		return err
 	}
-
+	updateUser(appKey, dbUsersHas, dutyUsers)
 	return nil
 }
 
-func sliceToMap(dbUsers []*models.User) map[string]*models.User {
-	m := make(map[string]*models.User, len(dbUsers))
+func sliceToMap(dbUsers []*models.User) map[int64]*models.User {
+	m := make(map[int64]*models.User, len(dbUsers))
 	for _, user := range dbUsers {
-		m[user.Username+user.Email] = user
+		m[user.Id] = user
 	}
 	return m
 }
 
 // in m1 and not in m2
-func diffMap(m1, m2 map[string]*models.User) []models.User {
+func diffMap(m1, m2 map[int64]*models.User) []models.User {
 	var diff []models.User
 	for i := range m1 {
 		if _, ok := m2[i]; !ok {
@@ -79,15 +86,40 @@ func diffMap(m1, m2 map[string]*models.User) []models.User {
 	}
 	return diff
 }
+func updateUser(appKey string, m1, m2 map[int64]*models.User) {
+	for i := range m1 {
+		if _, ok := m2[i]; ok {
+			if m1[i].Email != m2[i].Email || m1[i].Phone != m2[i].Phone || m1[i].Username != m2[i].Username {
+				var flashdutyUser User
+
+				flashdutyUser = User{
+					RefID: strconv.FormatInt(m1[i].Id, 10),
+				}
+				flashdutyUser.Updates = Updates{
+					Phone:      m1[i].Phone,
+					Email:      m1[i].Email,
+					MemberName: m1[i].Username,
+					RefID:      strconv.FormatInt(m1[i].Id, 10),
+				}
+				err := flashdutyUser.UpdateMember(appKey)
+				if err != nil {
+					logger.Errorf("failed to update user: %v", err)
+				}
+			}
+		}
+	}
+}
 
 type User struct {
 	Email      string  `json:"email,omitempty"`
 	Phone      string  `json:"phone,omitempty"`
 	MemberName string  `json:"member_name,omitempty"`
+	RefID      string  `json:"ref_id,omitempty"`
 	Updates    Updates `json:"updates,omitempty"`
 }
 
 type Updates struct {
+	RefID       string `json:"ref_id,omitempty"`
 	Email       string `json:"email,omitempty"`
 	Phone       string `json:"phone,omitempty"`
 	MemberName  string `json:"member_name,omitempty"`
@@ -95,17 +127,14 @@ type Updates struct {
 }
 
 func (user *User) delMember(appKey string) error {
-	if user.Email == "" && user.Phone == "" {
-		return errors.New("phones and email must be selected one of two")
+	if user.RefID == "" {
+		return errors.New("refID must not be empty")
 	}
-	return PostFlashDuty("/member/delete", appKey, user)
+	userDel := &User{RefID: user.RefID}
+	return PostFlashDuty("/member/delete", appKey, userDel)
 }
 
-func (user *User) UpdateMember(ctx *ctx.Context) error {
-	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
-	if err != nil {
-		return err
-	}
+func (user *User) UpdateMember(appKey string) error {
 
 	return PostFlashDuty("/member/info/reset", appKey, user)
 }
@@ -120,11 +149,14 @@ func (m *Members) addMembers(appKey string) error {
 	}
 	validUsers := make([]User, 0, len(m.Users))
 	for _, user := range m.Users {
-		if user.Email == "" && (user.Phone != "" && user.MemberName == "" || user.Phone == "") {
-			logger.Errorf("user(%+v) phone and email must be selected one of two, and the member_name must be added when selecting the phone", user)
+		if user.RefID == "" || (user.Phone == "" && user.Email == "") {
+			logger.Errorf("user(%+v) refID must not be none, Email or Phone can not be none", user)
 		} else {
 			validUsers = append(validUsers, user)
 		}
+	}
+	if len(validUsers) == 0 {
+		return nil
 	}
 	m.Users = validUsers
 	return PostFlashDuty("/member/invite", appKey, m)
@@ -151,62 +183,60 @@ func usersToFdUsers(users []models.User) []User {
 	fdUsers := make([]User, 0, len(users))
 	for i := range users {
 		fdUsers = append(fdUsers, User{
-			Email:      users[i].Email,
+			RefID:      strconv.FormatInt(users[i].Id, 10),
 			Phone:      users[i].Phone,
+			Email:      users[i].Email,
 			MemberName: users[i].Username,
 		})
+
 	}
 	return fdUsers
 }
 
 func UpdateUser(ctx *ctx.Context, target models.User, email, phone string) {
-	contact := target.FindSameContact(email, phone)
-	var flashdutyUser User
-	var needSync bool
-	switch contact {
-	case "email":
-		flashdutyUser = User{
-			Email: target.Email,
-		}
-		if target.Phone != phone {
-			needSync = true
-			flashdutyUser.Updates = Updates{
-				Phone:       phone,
-				MemberName:  target.Username,
-				CountryCode: "CN",
-			}
-		}
-	case "phone":
-		flashdutyUser = User{
-			Phone: target.Phone,
-		}
-
-		if target.Email != email {
-			needSync = true
-			flashdutyUser.Updates = Updates{
-				Email:      email,
-				MemberName: target.Username,
-			}
-		}
-	default:
-		flashdutyUser = User{
-			MemberName: target.Username,
-		}
-		if target.Email != email {
-			needSync = true
-			flashdutyUser.Updates.Email = email
-		}
-		if target.Phone != phone {
-			needSync = true
-			flashdutyUser.Updates.Phone = phone
-			flashdutyUser.Updates.CountryCode = "CN"
-		}
+	//contact := target.FindSameContact(email, phone)
+	if target.Id == 0 {
+		logger.Errorf("user not found: %s", target.Username)
+		return
 	}
+	if email == "" && phone == "" {
+		logger.Errorf("email and phone are both empty: %s", target.Username)
+		return
+	}
+	var flashdutyUser User
+	refID := strconv.FormatInt(target.Id, 10)
 
-	if needSync {
-		err := flashdutyUser.UpdateMember(ctx)
+	flashdutyUser = User{
+		RefID: refID,
+	}
+	flashdutyUser.Updates = Updates{
+		Phone:      phone,
+		Email:      email,
+		MemberName: target.Username,
+		RefID:      refID,
+	}
+	appKey, err := models.ConfigsGetFlashDutyAppKey(ctx)
+	if err != nil {
+		logger.Errorf("failed to get flashduty app key: %v", err)
+		return
+	}
+	err = flashdutyUser.UpdateMember(appKey)
+	if err != nil && strings.Contains(err.Error(), "no member found") {
+		// 如果没有找到成员，说明需要新建成员
+		NewUser := &User{
+			Phone:      phone,
+			Email:      email,
+			MemberName: target.Username,
+			RefID:      refID,
+		}
+		err = PostFlashDuty("/member/invite", appKey, NewUser)
 		if err != nil {
 			logger.Errorf("failed to update user: %v", err)
 		}
+		return
+
+	}
+	if err != nil {
+		logger.Errorf("failed to update user: %v", err)
 	}
 }
