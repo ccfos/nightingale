@@ -159,7 +159,10 @@ func (rt *Router) userGroupDel(c *gin.Context) {
 		ugs, err := flashduty.NewUserGroupSyncer(rt.Ctx, ug)
 		ginx.Dangerous(err)
 		err = ugs.SyncUGDel()
-		ginx.Dangerous(err)
+		// 如果team 在 duty 被引用或者已经删除，会报错，可以忽略报错
+		if err != nil {
+			logger.Warningf("failed to sync user group %s to flashduty's team: %v", ug.Name, err)
+		}
 	}
 	ginx.NewRender(c).Message(ug.Del(rt.Ctx))
 
