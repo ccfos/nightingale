@@ -207,8 +207,8 @@ func (t *Team) UpdateTeam(appKey string) error {
 }
 
 func (t *Team) DelTeam(appKey string) error {
-	PostFlashDuty("/team/delete", appKey, t)
-	return nil
+	err := PostFlashDuty("/team/delete", appKey, t)
+	return err
 }
 
 func NeedSyncTeam(ctx *ctx.Context) bool {
