@@ -347,12 +347,14 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		if ip, ok := GetEsIndexPatternCacheType().Get(param.IndexPatternId); ok {
 			param.DateField = ip.TimeField
 			indexArr = []string{ip.Name}
+			param.Index = ip.Name
 		} else {
 			return nil, fmt.Errorf("index pattern:%d not found", param.IndexPatternId)
 		}
 	} else {
 		indexArr = strings.Split(param.Index, ",")
 	}
+
 	q := elastic.NewRangeQuery(param.DateField)
 	now := time.Now().Unix()
 	var start, end int64
@@ -528,7 +530,16 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	GetBuckts("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
 
-	return TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
+	items, err := TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
+
+	var m map[string]interface{}
+	bs, _ := json.Marshal(queryParam)
+	json.Unmarshal(bs, &m)
+	m["index"] = param.Index
+	for i := range items {
+		items[i].Query = fmt.Sprintf("%+v", m)
+	}
+	return items, nil
 }
 
 func HitFilter(typ string) bool {

@@ -1584,6 +1584,11 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 						}
 					}
 
+					queries := ruleQuery.Queries
+					if sample.Query != "" {
+						queries = []interface{}{sample.Query}
+					}
+
 					point := models.AnomalyPoint{
 						Key:           sample.MetricName(),
 						Labels:        sample.Metric,
@@ -1592,7 +1597,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 						Values:        values,
 						Severity:      trigger.Severity,
 						Triggered:     isTriggered,
-						Query:         fmt.Sprintf("query:%+v trigger:%+v", ruleQuery.Queries, trigger),
+						Query:         fmt.Sprintf("query:%+v trigger:%+v", queries, trigger),
 						RecoverConfig: trigger.RecoverConfig,
 						ValuesUnit:    valuesUnitMap,
 					}
