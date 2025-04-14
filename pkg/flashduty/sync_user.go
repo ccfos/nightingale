@@ -128,7 +128,7 @@ type Updates struct {
 
 func (user *User) delMember(appKey string) error {
 	if user.RefID == "" {
-		return errors.New("refID must not be none")
+		return errors.New("refID must not be empty")
 	}
 	userDel := &User{RefID: user.RefID}
 	return PostFlashDuty("/member/delete", appKey, userDel)
