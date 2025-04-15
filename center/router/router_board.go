@@ -51,8 +51,13 @@ func (rt *Router) boardAdd(c *gin.Context) {
 
 func (rt *Router) boardGet(c *gin.Context) {
 	bid := ginx.UrlParamStr(c, "bid")
-	board, err := models.BoardGet(rt.Ctx, "id = ? or ident = ?", bid, bid)
+	board, err := models.BoardGet(rt.Ctx, "ident = ?", bid)
 	ginx.Dangerous(err)
+
+	if board == nil {
+		board, err = models.BoardGet(rt.Ctx, "id = ?", bid)
+		ginx.Dangerous(err)
+	}
 
 	if board == nil {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
