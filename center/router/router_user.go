@@ -55,13 +55,13 @@ func (rt *Router) userGets(c *gin.Context) {
 		usernames = []string{}
 	}
 
-    if len(phones) == 1 && phones[0] == "" {
-        phones = []string{}
-    }
+	if len(phones) == 1 && phones[0] == "" {
+		phones = []string{}
+	}
 
-    if len(emails) == 1 && emails[0] == "" {
-        emails = []string{}
-    }
+	if len(emails) == 1 && emails[0] == "" {
+		emails = []string{}
+	}
 
 	go rt.UserCache.UpdateUsersLastActiveTime()
 	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
