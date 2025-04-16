@@ -47,12 +47,16 @@ func (rt *Router) userGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	order := ginx.QueryStr(c, "order", "username")
 	desc := ginx.QueryBool(c, "desc", false)
+	usernames := strings.Split(ginx.QueryStr(c, "usernames", ""), ",")
+	if len(usernames) == 1 && usernames[0] == "" {
+		usernames = []string{}
+	}
 
 	go rt.UserCache.UpdateUsersLastActiveTime()
 	total, err := models.UserTotal(rt.Ctx, query, stime, etime)
 	ginx.Dangerous(err)
 
-	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc)
+	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit), stime, etime, order, desc, usernames...)
 	ginx.Dangerous(err)
 
 	user := c.MustGet("user").(*models.User)
