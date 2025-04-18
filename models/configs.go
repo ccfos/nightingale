@@ -178,6 +178,23 @@ func ConfigsGetFlashDutyAppKey(ctx *ctx.Context) (string, error) {
 	if len(configs) == 0 || configs[0].Cval == "" {
 		return "", errors.New("flashduty_app_key is empty")
 	}
+	// Encrypted equals 1 means the value is encrypted
+	if configs[0].Encrypted == 1 {
+		privateKeyVal, err1 := ConfigsGet(ctx, RSA_PRIVATE_KEY)
+		passwordVal, err2 := ConfigsGet(ctx, RSA_PASSWORD)
+		if err1 != nil || err2 != nil {
+			return "", errors.New("failed to load RSA credentials from config")
+		}
+		decryptMap, decryptErr := ConfigUserVariableGetDecryptMap(ctx, []byte(privateKeyVal), passwordVal)
+		if decryptErr != nil {
+			return "", decryptErr
+		}
+		if val, ok := decryptMap["flashduty_app_key"]; ok {
+			return val, nil
+		} else {
+			return "", errors.New("flashduty_app_key is empty")
+		}
+	}
 	return configs[0].Cval, nil
 }
 
