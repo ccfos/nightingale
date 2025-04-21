@@ -30,6 +30,15 @@ type Configs struct { //ckey+external
 	UpdateBy  string `json:"update_by"`
 }
 
+// DashboardConfig config for dashboard
+type DashboardConfig struct {
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	URL       string  `json:"url"`
+	IsPrivate bool    `json:"is_private"` // true: private, false: public
+	TeamIDs   []int64 `json:"team_ids"`   // only used when IsPrivate is true
+}
+
 func (Configs) TableName() string {
 	return "configs"
 }

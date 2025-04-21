@@ -1,6 +1,8 @@
 package router
 
 import (
+	"encoding/json"
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -43,7 +45,39 @@ func (rt *Router) configPutByKey(c *gin.Context) {
 
 func (rt *Router) embeddedDashboardsGet(c *gin.Context) {
 	config, err := models.ConfigsGet(rt.Ctx, EMBEDDEDDASHBOARD)
-	ginx.NewRender(c).Data(config, err)
+	var dashboards []models.DashboardConfig
+	if err := json.Unmarshal([]byte(config), &dashboards); err != nil {
+		ginx.NewRender(c).Message(errors.Wrap(err, "invalid dashboard config format"))
+		return
+	}
+	// 获取当前用户可访问的Group ID 列表
+	me := c.MustGet("user").(*models.User)
+
+	if me.IsAdmin() {
+		ginx.NewRender(c).Data(dashboards, err)
+		return
+	}
+
+	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+	bgSet := make(map[int64]struct{}, len(gids))
+	for _, id := range gids {
+		bgSet[id] = struct{}{}
+	}
+	// 过滤出公开或有权限访问的私有 dashboard
+	var result []models.DashboardConfig
+	for _, d := range dashboards {
+		if !d.IsPrivate {
+			result = append(result, d)
+		} else {
+			for _, tid := range d.TeamIDs {
+				if _, ok := bgSet[tid]; ok {
+					result = append(result, d)
+					break
+				}
+			}
+		}
+	}
+	ginx.NewRender(c).Data(result, err)
 }
 
 func (rt *Router) embeddedDashboardsPut(c *gin.Context) {
