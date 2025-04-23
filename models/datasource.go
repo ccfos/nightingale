@@ -18,6 +18,7 @@ import (
 type Datasource struct {
 	Id             int64                  `json:"id"`
 	Name           string                 `json:"name"`
+	Identifier     string                 `json:"identifier"`
 	Description    string                 `json:"description"`
 	PluginId       int64                  `json:"plugin_id"`
 	PluginType     string                 `json:"plugin_type"`      // prometheus

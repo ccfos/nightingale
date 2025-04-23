@@ -308,7 +308,8 @@ type Target struct {
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;type:boolean;comment:is default datasource"`
+	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
+	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
 }
 
 type Configs struct {

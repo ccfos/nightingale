@@ -225,3 +225,4 @@ ALTER TABLE `notify_channel` ADD COLUMN `weight` int not null default 0;
 
 /* v8.0.0-beta.11 2025-04-10 */
 ALTER TABLE `es_index_pattern` ADD COLUMN `note` varchar(1024) not null default '';
+ALTER TABLE `datasource` ADD COLUMN `identifier` varchar(255) not null default '';

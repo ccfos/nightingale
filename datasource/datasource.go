@@ -98,6 +98,7 @@ func GetDatasourceByType(typ string, settings map[string]interface{}) (Datasourc
 type DatasourceInfo struct {
 	Id             int64                  `json:"id"`
 	Name           string                 `json:"name"`
+	Identifier     string                 `json:"identifier"`
 	Description    string                 `json:"description"`
 	ClusterName    string                 `json:"cluster_name"`
 	Category       string                 `json:"category"`
