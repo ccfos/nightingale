@@ -88,7 +88,15 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
-		auth := gin.BasicAuth(rt.HTTP.APIForAgent.BasicAuth)
+		accounts := make(gin.Accounts)
+		for username, password := range rt.HTTP.APIForAgent.BasicAuth {
+			accounts[username] = password
+		}
+		for username, password := range rt.HTTP.APIForService.BasicAuth {
+			accounts[username] = password
+		}
+
+		auth := gin.BasicAuth(accounts)
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
