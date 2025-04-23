@@ -17,9 +17,6 @@ import (
 
 func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	if !me.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "no permission")
-	}
 
 	var lst []*models.NotifyChannelConfig
 	ginx.BindJSON(c, &lst)
@@ -55,11 +52,6 @@ func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelsDel(c *gin.Context) {
-	me := c.MustGet("user").(*models.User)
-	if !me.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "no permission")
-	}
-
 	var f idsForm
 	ginx.BindJSON(c, &f)
 	f.Verify()
@@ -79,9 +71,6 @@ func (rt *Router) notifyChannelsDel(c *gin.Context) {
 
 func (rt *Router) notifyChannelPut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	if !me.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "no permission")
-	}
 
 	var f models.NotifyChannelConfig
 	ginx.BindJSON(c, &f)
