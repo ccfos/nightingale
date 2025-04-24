@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -68,7 +69,10 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 		eps[i].UpdateAt = now
 	}
 
-	return DB(ctx).Create(&eps).Error
+	// 用主键做冲突判断，有冲突则更新（UPSERT）
+	return DB(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true, // 冲突时更新所有字段
+	}).Create(&eps).Error
 }
 
 func ListEmbeddedProducts(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
