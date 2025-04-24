@@ -162,24 +162,16 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 			logger.Warningf("The user %s has no email and phone, and failed to sync to flashduty's team", user.Username)
 		}
 	}
-	teamID := ugs.teamID
 	refID := strconv.FormatInt(ugs.ug.Id, 10)
-	var err error
-	if teamID == 0 {
-		teamID, err = ugs.CheckTeam(refID)
-		if err != nil {
-			return err
-		}
-	}
 
 	fdt := Team{
-		TeamID:   teamID,
+		TeamID:   ugs.teamID,
 		TeamName: ugs.ug.Name,
 		Emails:   emails,
 		Phones:   phones,
 		RefID:    refID,
 	}
-	err = fdt.UpdateTeam(ugs.appKey)
+	err := fdt.UpdateTeam(ugs.appKey)
 	return err
 }
 
