@@ -2,7 +2,6 @@ package flashduty
 
 import (
 	"errors"
-	"log"
 	"strconv"
 	"strings"
 
@@ -169,7 +168,7 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 	if teamID == 0 {
 		teamID, err = ugs.CheckTeam(refID)
 		if err != nil {
-			log.Printf("CheckTeam failed for refID=%v: %v", refID, err)
+			logger.Errorf("CheckTeam failed for refID=%v: %v", refID, err)
 		}
 	}
 
