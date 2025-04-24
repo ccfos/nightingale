@@ -1,0 +1,97 @@
+package models
+
+import (
+	"encoding/json"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
+	"time"
+)
+
+type EmbeddedProduct struct {
+	ID        uint64 `json:"id" gorm:"primaryKey"` // 主键
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	IsPrivate bool   `json:"is_private"`
+	TeamIDs   string `json:"-" gorm:"column:team_ids"` // 数据库存储为 JSON 字符串
+	// 前端用的字段，GORM 忽略，自己处理序列化/反序列化
+	TeamIDsJson []int64 `json:"team_ids" gorm:"-"` // 前端用的数组形式
+	CreateAt    int64   `json:"create_at"`
+	CreateBy    string  `json:"create_by"`
+	UpdateAt    int64   `json:"update_at"`
+	UpdateBy    string  `json:"update_by"`
+}
+
+func (e *EmbeddedProduct) TableName() string {
+	return "embedded-product"
+}
+
+func (e *EmbeddedProduct) Verify() error {
+	if e.Name == "" {
+		return errors.New("Name is blank")
+	}
+
+	if str.Dangerous(e.Name) {
+		return errors.New("Name has invalid characters")
+	}
+
+	return nil
+}
+
+func (e *EmbeddedProduct) BeforeSave(tx *gorm.DB) (err error) {
+	if len(e.TeamIDsJson) > 0 {
+		bytes, err := json.Marshal(e.TeamIDsJson)
+		if err != nil {
+			return err
+		}
+		e.TeamIDs = string(bytes)
+	}
+	return nil
+}
+
+func (e *EmbeddedProduct) AfterFind(tx *gorm.DB) (err error) {
+	if e.TeamIDs != "" {
+		err = json.Unmarshal([]byte(e.TeamIDs), &e.TeamIDsJson)
+	}
+	return
+}
+
+func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
+	now := time.Now().Unix()
+
+	for i := range eps {
+		if err := eps[i].Verify(); err != nil {
+			return errors.Wrapf(err, "invalid entry at index %d", i)
+		}
+		eps[i].CreateAt = now
+		eps[i].UpdateAt = now
+	}
+
+	return DB(ctx).Create(&eps).Error
+}
+
+func ListEmbeddedProducts(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
+	var list []*EmbeddedProduct
+	err := DB(ctx).Find(&list).Error
+	return list, err
+}
+
+func GetEmbeddedProductByID(ctx *ctx.Context, id uint64) (*EmbeddedProduct, error) {
+	var ep EmbeddedProduct
+	err := DB(ctx).Where("id = ?", id).First(&ep).Error
+	return &ep, err
+}
+
+func UpdateEmbeddedProduct(ctx *ctx.Context, ep *EmbeddedProduct, username string) error {
+	if err := ep.Verify(); err != nil {
+		return err
+	}
+	ep.UpdateAt = time.Now().Unix()
+	ep.UpdateBy = username
+	return DB(ctx).Save(ep).Error
+}
+
+func DeleteEmbeddedProduct(ctx *ctx.Context, id uint64) error {
+	return DB(ctx).Where("id = ?", id).Delete(&EmbeddedProduct{}).Error
+}

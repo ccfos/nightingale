@@ -1399,6 +1399,25 @@ func (InitSqliteTaskHost) TableName() string {
 	return "task_host_0"
 }
 
+type InitEmbeddedProduct struct {
+	ID        uint64 `gorm:"primaryKey;autoIncrement;" json:"id"`
+	Name      string `gorm:"type:varchar(255)" json:"name"`
+	URL       string `gorm:"type:varchar(255)" json:"url"`
+	IsPrivate bool   `gorm:"type:boolean" json:"is_private"`
+	TeamIDs   string `gorm:"type:text" json:"team_ids"` // JSON 格式数组
+	CreateAt  int64  `gorm:"not null;default:0;comment:create time"`
+	CreateBy  string `gorm:"size:191;not null;default:'';comment:creator"`
+	UpdateAt  int64  `gorm:"not null;default:0;comment:update time"`
+	UpdateBy  string `gorm:"size:191;not null;default:'';comment:updater"`
+}
+
+func (InitEmbeddedProduct) TableName() string {
+	return "embedded-product"
+}
+
+func (InitEmbeddedProduct) TableOptions() string {
+	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+}
 func DataBaseInit(c DBConfig, db *gorm.DB) error {
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
@@ -1458,6 +1477,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitAlertRule{}}
 
 	for _, dt := range dts {
@@ -1540,6 +1560,9 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
+		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
+		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
+		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {
@@ -1654,6 +1677,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitAlertRule{}}
 
 	for _, dt := range dts {
@@ -1736,6 +1760,9 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
+		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
+		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
+		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {
@@ -1850,6 +1877,7 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitPostgresAlertRule{}}
 
 	for _, dt := range dts {
@@ -1932,6 +1960,9 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
+		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
+		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
+		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {

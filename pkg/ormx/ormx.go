@@ -1,7 +1,9 @@
 package ormx
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/ccfos/nightingale/v6/models"
 	"os"
 	"reflect"
 	"strings"
@@ -187,16 +189,16 @@ func checkSqliteDatabaseExist(c DBConfig) (bool, error) {
 
 func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.Split(c.DSN, " ")
-    dbName := ""
-    dbpair := ""
-    for _, part := range dsnParts {
-        if strings.HasPrefix(part, "dbname=") {
-            dbName = part[strings.Index(part, "=")+1:]
-            dbpair = part
-        }
-    }
-    connectionStr := strings.Replace(c.DSN, dbpair, "dbname=postgres", 1)
-    dialector := postgres.Open(connectionStr)
+	dbName := ""
+	dbpair := ""
+	for _, part := range dsnParts {
+		if strings.HasPrefix(part, "dbname=") {
+			dbName = part[strings.Index(part, "=")+1:]
+			dbpair = part
+		}
+	}
+	connectionStr := strings.Replace(c.DSN, dbpair, "dbname=postgres", 1)
+	dialector := postgres.Open(connectionStr)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -362,6 +364,49 @@ func New(c DBConfig) (*gorm.DB, error) {
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
 	}
+	// 检查InitEmbeddedProduct是否初始化过
+	CheckEmbeddedProductInitialized(db)
 
 	return db, nil
+}
+
+func CheckEmbeddedProductInitialized(db *gorm.DB) {
+	var count int64
+	err := db.Model(&InitEmbeddedProduct{}).Count(&count).Error
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		var lst []string
+		_ = db.Model(&InitConfig{}).Where("ckey=?  and external=? ", "embedded-dashboards", 0).Pluck("cval", &lst).Error
+		if len(lst) > 0 {
+			var oldData []DashboardConfig
+			if err := json.Unmarshal([]byte(lst[0]), oldData); err != nil {
+				if len(oldData) > 0 {
+					var newData []models.EmbeddedProduct
+					for _, v := range oldData {
+						now := time.Now().Unix()
+						newData = append(newData, models.EmbeddedProduct{
+							Name:      v.Name,
+							URL:       v.URL,
+							IsPrivate: false,
+							TeamIDs:   "",
+							CreateBy:  "root",
+							CreateAt:  now,
+							UpdateAt:  now,
+						})
+					}
+					db.Create(&newData)
+				}
+				return
+			}
+		}
+		return
+	}
+}
+
+type DashboardConfig struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
