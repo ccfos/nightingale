@@ -1560,9 +1560,6 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
-		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
-		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
-		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {
@@ -1760,9 +1757,6 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
-		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
-		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
-		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {
@@ -1960,9 +1954,6 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		{RoleName: "Standard", Operation: "/recording-rules/add"},
 		{RoleName: "Standard", Operation: "/recording-rules/put"},
 		{RoleName: "Standard", Operation: "/recording-rules/del"},
-		{RoleName: "Standard", Operation: "/embedded-product"},        //查看dashboard列表权限
-		{RoleName: "Standard", Operation: "/embedded-product/add"},    //单个添加
-		{RoleName: "Standard", Operation: "/embedded-product/delete"}, //单个删除
 	}
 
 	entries := []struct {

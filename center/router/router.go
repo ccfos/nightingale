@@ -489,10 +489,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards/put"), rt.embeddedDashboardsPut)
 
 		// 获取 embedded-product 列表
-		pages.GET("/embedded-product/list", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGetList)
+		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGetList)
 		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGet)
-		pages.POST("/embedded-product/add", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductADD)
-		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
+		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.embeddedProductADD)
+		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
 		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigGets)

@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"strconv"
@@ -56,28 +57,21 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	}
 
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
-	me := c.MustGet("user").(*models.User)
-	if me.IsAdmin() || data.IsPrivate == false {
-		ginx.NewRender(c).Data(data, err)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
 		return
 	}
-	// 获取当前用户可访问的Group ID 列表
-	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
-	// 构造组 ID 的 Set（用于快速判断）
-	groupSet := make(map[int64]struct{})
-	for _, gid := range gids {
-		groupSet[gid] = struct{}{}
+	me := c.MustGet("user").(*models.User)
+	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
 	}
-
-	// 判断是否有交集权限
-	for _, tid := range data.TeamIDsJson {
-		if _, ok := groupSet[tid]; ok {
-			ginx.NewRender(c).Data(data, nil)
-			return
-		}
+	if !ok {
+		ginx.NewRender(c, 403).Message("permission denied")
+		return
 	}
-
-	ginx.NewRender(c, 403).Message("permission denied")
+	ginx.NewRender(c).Data(data, nil)
 }
 
 func (rt *Router) embeddedProductADD(c *gin.Context) {
@@ -103,10 +97,25 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 		ginx.NewRender(c).Message("invalid id")
 		return
 	}
+	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	me := c.MustGet("user").(*models.User)
+	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
+
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	if !ok {
+		ginx.NewRender(c, 403).Message("permission denied")
+		return
+	}
 	ep.ID = id
 	ginx.BindJSON(c, &ep)
 
-	me := c.MustGet("user").(*models.User)
 	err = models.UpdateEmbeddedProduct(rt.Ctx, &ep, me.Nickname)
 	ginx.NewRender(c).Message(err)
 }
@@ -118,7 +127,46 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 		ginx.NewRender(c).Message("invalid id")
 		return
 	}
+	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	me := c.MustGet("user").(*models.User)
+	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
 
+	if err != nil {
+		ginx.NewRender(c).Message(err)
+		return
+	}
+	if !ok {
+		ginx.NewRender(c, 403).Message("permission denied")
+		return
+	}
 	err = models.DeleteEmbeddedProduct(rt.Ctx, id)
 	ginx.NewRender(c).Message(err)
+}
+
+func HasEmbeddedProductAccess(ctx *ctx.Context, user *models.User, ep *models.EmbeddedProduct) (bool, error) {
+	if user.IsAdmin() || !ep.IsPrivate {
+		return true, nil
+	}
+
+	gids, err := models.MyGroupIds(ctx, user.Id)
+	if err != nil {
+		return false, err
+	}
+
+	groupSet := make(map[int64]struct{}, len(gids))
+	for _, gid := range gids {
+		groupSet[gid] = struct{}{}
+	}
+
+	for _, tid := range ep.TeamIDsJson {
+		if _, ok := groupSet[tid]; ok {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
