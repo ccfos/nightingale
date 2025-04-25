@@ -92,7 +92,7 @@
 
 ## 交流渠道
 - 报告Bug，优先推荐提交[夜莺GitHub Issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml)
-- 关注[这个公众号](http://flashcat-public.oss-cn-beijing.aliyuncs.com/img/sretalk-qrcode.png)了解更多夜莺动态和知识
+- 关注[这个公众号](https://gitlink.org.cn/UlricQin)了解更多夜莺动态和知识
 - 加我微信：`picobyte`（我已关闭好友验证）拉入微信群，备注：`夜莺互助群`
 
 ## 广受关注
