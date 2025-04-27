@@ -153,6 +153,7 @@ var I18N = `{
     "View Embedded Product": "查看集成仪表盘",
     "Add Embedded Product": "添加集成仪表盘",
     "Delete Embedded Product": "删除集成仪表盘",
+    "Edit Embedded Product": "编辑集成仪表盘",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知规则", 
     "Message Templates": "消息模板",
@@ -312,6 +313,7 @@ var I18N = `{
     "View Embedded Product": "查看集成仪表盘",
     "Add Embedded Product": "添加集成仪表盘",
     "Delete Embedded Product": "删除集成仪表盘",
+    "Edit Embedded Product": "编辑集成仪表盘",
     "Message Templates": "消息模板",
     "User Contact Management": "用户联系方式管理"
   },
@@ -479,6 +481,7 @@ var I18N = `{
     "View Embedded Product": "查看集成儀表板",
     "Add Embedded Product": "新增集成儀表板",
     "Delete Embedded Product": "刪除集成儀表板"
+    "Edit Embedded Product": "編輯集成儀表板",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知規則", 
     "Message Templates": "訊息範本",
@@ -639,6 +642,7 @@ var I18N = `{
     "View Embedded Product": "統合ダッシュボードを表示",
     "Add Embedded Product": "統合ダッシュボードを追加",
     "Delete Embedded Product": "統合ダッシュボードを削除"
+    "Edit Embedded Product": "統合ダッシュボードを編集",
     "Message Templates": "メッセージテンプレート",
     "User Contact Management": "ユーザー連絡先管理"
   }

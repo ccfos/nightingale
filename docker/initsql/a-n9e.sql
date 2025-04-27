@@ -832,6 +832,20 @@ CREATE TABLE `message_template` (
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE `embedded-product` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) DEFAULT NULL,
+    `url` varchar(255) DEFAULT NULL,
+    `is_private` tinyint(1) DEFAULT NULL,
+    `team_ids` text,
+    `create_at` bigint NOT NULL DEFAULT '0' COMMENT 'create time',
+    `create_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'creator',
+    `update_at` bigint NOT NULL DEFAULT '0' COMMENT 'update time',
+    `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 CREATE TABLE `task_meta`
 (
     `id`          bigint unsigned NOT NULL AUTO_INCREMENT,

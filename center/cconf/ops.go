@@ -344,7 +344,7 @@ ops:
       cname: Add Embedded Product
     - name: "/embedded-product/delete"
       cname: Delete Embedded Product
-  	- name: "/embedded-product/put"
-	  cname: Edit Embedded Product
+    - name: "/embedded-product/put"
+      cname: Edit Embedded Product
 `
 )

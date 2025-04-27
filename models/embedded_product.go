@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/pkg/errors"
@@ -105,4 +106,52 @@ func UpdateEmbeddedProduct(ctx *ctx.Context, ep *EmbeddedProduct, username strin
 
 func DeleteEmbeddedProduct(ctx *ctx.Context, id uint64) error {
 	return DB(ctx).Where("id = ?", id).Delete(&EmbeddedProduct{}).Error
+}
+
+func CanMigrateEP(ctx *ctx.Context) bool {
+	var count int64
+	err := DB(ctx).Model(&EmbeddedProduct{}).Count(&count).Error
+	if err != nil {
+		log.Println("failed to get embedded-product table count, err:", err)
+		return false
+	}
+	return count <= 0
+}
+
+func MigrateEP(ctx *ctx.Context) {
+	var lst []string
+	_ = DB(ctx).Model(&Configs{}).Where("ckey=?  and external=? ", "embedded-dashboards", 0).Pluck("cval", &lst).Error
+	if len(lst) > 0 {
+		var oldData []DashboardConfig
+		if err := json.Unmarshal([]byte(lst[0]), &oldData); err != nil {
+			return
+		}
+		if len(oldData) > 0 {
+			var newData []EmbeddedProduct
+			for _, v := range oldData {
+				now := time.Now().Unix()
+				newData = append(newData, EmbeddedProduct{
+					Name:      v.Name,
+					URL:       v.URL,
+					IsPrivate: false,
+					TeamIDs:   "",
+					CreateBy:  "root",
+					CreateAt:  now,
+					UpdateAt:  now,
+					UpdateBy:  "root",
+				})
+			}
+			DB(ctx).Create(&newData)
+		}
+		return
+
+	}
+	return
+
+}
+
+type DashboardConfig struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }

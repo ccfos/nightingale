@@ -492,7 +492,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGetList)
 		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGet)
 		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductADD)
-		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductPut)
+		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
 		pages.GET("/user-variable-configs", rt.auth(), rt.user(), rt.perm("/help/variable-configs"), rt.userVariableConfigGets)

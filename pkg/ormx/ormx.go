@@ -1,7 +1,6 @@
 package ormx
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
@@ -363,67 +362,5 @@ func New(c DBConfig) (*gorm.DB, error) {
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
 	}
-	// 检查InitEmbeddedProduct是否初始化过
-	CheckEmbeddedProductInitialized(db)
-
 	return db, nil
-}
-
-func CheckEmbeddedProductInitialized(db *gorm.DB) {
-	var count int64
-	err := db.Model(&InitEmbeddedProduct{}).Count(&count).Error
-	if err != nil {
-		//表不存在错误
-		if strings.Contains(err.Error(), "Error 1146") {
-			// 表不存在，自动创建
-			migErr := db.AutoMigrate(&InitEmbeddedProduct{})
-			if migErr != nil {
-				return
-			}
-			// 创建表后，重新查询
-			err = db.Model(&InitEmbeddedProduct{}).Count(&count).Error
-			if err != nil {
-				return
-			}
-		} else {
-			// 其他错误，直接返回
-			return
-		}
-	}
-	if count <= 0 {
-		var lst []string
-		_ = db.Model(&InitConfig{}).Where("ckey=?  and external=? ", "embedded-dashboards", 0).Pluck("cval", &lst).Error
-		if len(lst) > 0 {
-			var oldData []DashboardConfig
-			if err := json.Unmarshal([]byte(lst[0]), &oldData); err != nil {
-				return
-			}
-			if len(oldData) > 0 {
-				var newData []InitEmbeddedProduct
-				for _, v := range oldData {
-					now := time.Now().Unix()
-					newData = append(newData, InitEmbeddedProduct{
-						Name:      v.Name,
-						URL:       v.URL,
-						IsPrivate: false,
-						TeamIDs:   "",
-						CreateBy:  "root",
-						CreateAt:  now,
-						UpdateAt:  now,
-						UpdateBy:  "root",
-					})
-				}
-				db.Create(&newData)
-			}
-			return
-
-		}
-		return
-	}
-}
-
-type DashboardConfig struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	URL  string `json:"url"`
 }
