@@ -121,6 +121,25 @@ func (u *User) IsAdmin() bool {
 	return false
 }
 
+// has group permission
+func (u *User) CheckGroupPermission(ctx *ctx.Context, groupIds []int64) error {
+	if !u.IsAdmin() {
+		ids, err := MyGroupIdsMap(ctx, u.Id)
+		if err != nil {
+			return err
+		}
+
+		for _, id := range groupIds {
+			if _, ok := ids[id]; ok {
+				return nil
+			}
+		}
+
+		return errors.New("no permission")
+	}
+	return nil
+}
+
 func (u *User) Verify() error {
 	u.Username = strings.TrimSpace(u.Username)
 

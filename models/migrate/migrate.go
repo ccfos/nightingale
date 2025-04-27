@@ -67,7 +67,8 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}}
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
+		&models.EventPipeline{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -225,6 +226,26 @@ func InsertPermPoints(db *gorm.DB) {
 	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
 		Operation: "/notification-rules/del",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/del",
 	})
 
 	for _, op := range ops {

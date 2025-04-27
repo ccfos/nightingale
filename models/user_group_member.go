@@ -22,6 +22,20 @@ func MyGroupIds(ctx *ctx.Context, userId int64) ([]int64, error) {
 	return ids, err
 }
 
+func MyGroupIdsMap(ctx *ctx.Context, userId int64) (map[int64]struct{}, error) {
+	ids, err := MyGroupIds(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[int64]struct{}, len(ids))
+	for _, id := range ids {
+		res[id] = struct{}{}
+	}
+
+	return res, nil
+}
+
 // my business group ids
 func MyBusiGroupIds(ctx *ctx.Context, userId int64) ([]int64, error) {
 	groupIds, err := MyGroupIds(ctx, userId)
