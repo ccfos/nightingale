@@ -843,7 +843,7 @@ CREATE TABLE `embedded-product` (
     `update_at` bigint NOT NULL DEFAULT '0' COMMENT 'update time',
     `update_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 CREATE TABLE `task_meta`
