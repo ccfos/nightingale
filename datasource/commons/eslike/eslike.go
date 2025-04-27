@@ -24,6 +24,7 @@ type Query struct {
 	Index          string     `json:"index" mapstructure:"index"`
 	IndexPatternId int64      `json:"index_pattern" mapstructure:"index_pattern"`
 	Filter         string     `json:"filter" mapstructure:"filter"`
+	Offset         int64      `json:"offset" mapstructure:"offset"`
 	MetricAggr     MetricAggr `json:"value" mapstructure:"value"`
 	GroupBy        []GroupBy  `json:"group_by" mapstructure:"group_by"`
 	DateField      string     `json:"date_field" mapstructure:"date_field"`
@@ -370,6 +371,11 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	if ok && delay != 0 {
 		end = end - delay
 		start = start - delay
+	}
+
+	if param.Offset > 0 {
+		end = end - param.Offset
+		start = start - param.Offset
 	}
 
 	q.Gte(time.Unix(start, 0).UnixMilli())
