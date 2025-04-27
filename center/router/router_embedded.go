@@ -3,17 +3,14 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"strconv"
 )
 
 func (rt *Router) embeddedProductGetList(c *gin.Context) {
 	dashboards, err := models.ListEmbeddedProducts(rt.Ctx)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
 	// 获取当前用户可访问的Group ID 列表
 	me := c.MustGet("user").(*models.User)
 
@@ -45,16 +42,12 @@ func (rt *Router) embeddedProductGetList(c *gin.Context) {
 }
 
 func (rt *Router) embeddedProductGet(c *gin.Context) {
-	idStr := c.Param("id")
-	if idStr == "" {
-		ginx.NewRender(c).Message("id is required")
-		return
-	}
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
+	idInt64 := ginx.UrlParamInt64(c, "id")
+	if idInt64 <= 0 {
 		ginx.NewRender(c).Message("invalid id")
 		return
 	}
+	id := uint64(idInt64)
 
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	if err != nil {
@@ -62,7 +55,7 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 		return
 	}
 	me := c.MustGet("user").(*models.User)
-	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
+	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	if err != nil {
 		ginx.NewRender(c).Message(err)
 		return
@@ -90,20 +83,20 @@ func (rt *Router) embeddedProductADD(c *gin.Context) {
 }
 
 func (rt *Router) embeddedProductPut(c *gin.Context) {
-	idStr := c.Param("id")
 	var ep models.EmbeddedProduct
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
+	idInt64 := ginx.UrlParamInt64(c, "id")
+	if idInt64 <= 0 {
 		ginx.NewRender(c).Message("invalid id")
 		return
 	}
+	id := uint64(idInt64)
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	if err != nil {
 		ginx.NewRender(c).Message(err)
 		return
 	}
 	me := c.MustGet("user").(*models.User)
-	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
+	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 
 	if err != nil {
 		ginx.NewRender(c).Message(err)
@@ -121,19 +114,19 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 }
 
 func (rt *Router) embeddedProductDelete(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
+	idInt64 := ginx.UrlParamInt64(c, "id")
+	if idInt64 <= 0 {
 		ginx.NewRender(c).Message("invalid id")
 		return
 	}
+	id := uint64(idInt64)
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	if err != nil {
 		ginx.NewRender(c).Message(err)
 		return
 	}
 	me := c.MustGet("user").(*models.User)
-	ok, err := HasEmbeddedProductAccess(rt.Ctx, me, data)
+	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 
 	if err != nil {
 		ginx.NewRender(c).Message(err)
@@ -147,7 +140,7 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 }
 
-func HasEmbeddedProductAccess(ctx *ctx.Context, user *models.User, ep *models.EmbeddedProduct) (bool, error) {
+func hasEmbeddedProductAccess(ctx *ctx.Context, user *models.User, ep *models.EmbeddedProduct) (bool, error) {
 	if user.IsAdmin() || !ep.IsPrivate {
 		return true, nil
 	}

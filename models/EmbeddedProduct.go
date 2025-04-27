@@ -2,12 +2,15 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/str"
+
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"time"
 )
 
 type EmbeddedProduct struct {
@@ -40,22 +43,26 @@ func (e *EmbeddedProduct) Verify() error {
 	return nil
 }
 
-func (e *EmbeddedProduct) BeforeSave(tx *gorm.DB) (err error) {
-	if len(e.TeamIDsJson) > 0 {
-		bytes, err := json.Marshal(e.TeamIDsJson)
-		if err != nil {
-			return err
-		}
-		e.TeamIDs = string(bytes)
+func (e *EmbeddedProduct) BeforeSave(tx *gorm.DB) error {
+	if len(e.TeamIDsJson) == 0 {
+		e.TeamIDs = "[]"
+		return nil
 	}
+
+	data, err := json.Marshal(e.TeamIDsJson)
+	if err != nil {
+		return err
+	}
+	e.TeamIDs = string(data)
 	return nil
 }
 
-func (e *EmbeddedProduct) AfterFind(tx *gorm.DB) (err error) {
-	if e.TeamIDs != "" {
-		err = json.Unmarshal([]byte(e.TeamIDs), &e.TeamIDsJson)
+func (e *EmbeddedProduct) AfterFind(tx *gorm.DB) error {
+	if e.TeamIDs == "" {
+		e.TeamIDsJson = nil
+		return nil
 	}
-	return
+	return json.Unmarshal([]byte(e.TeamIDs), &e.TeamIDsJson)
 }
 
 func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
@@ -63,7 +70,7 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 
 	for i := range eps {
 		if err := eps[i].Verify(); err != nil {
-			return errors.Wrapf(err, "invalid entry at index %d", i)
+			return errors.Wrapf(err, "invalid entry %v", eps[i])
 		}
 		eps[i].CreateAt = now
 		eps[i].UpdateAt = now
