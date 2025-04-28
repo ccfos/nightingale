@@ -2,7 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"log"
+	"github.com/toolkits/pkg/logger"
 	"time"
 
 	"github.com/pkg/errors"
@@ -87,7 +87,7 @@ func CanMigrateEP(ctx *ctx.Context) bool {
 	var count int64
 	err := DB(ctx).Model(&EmbeddedProduct{}).Count(&count).Error
 	if err != nil {
-		log.Println("failed to get embedded-product table count, err:", err)
+		logger.Printf("failed to get embedded-product table count, err:%s", err)
 		return false
 	}
 	return count <= 0
