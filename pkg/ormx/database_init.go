@@ -1403,7 +1403,7 @@ type InitEmbeddedProduct struct {
 	ID        uint64 `gorm:"primaryKey;autoIncrement"`
 	Name      string `gorm:"type:varchar(255)"`
 	URL       string `gorm:"type:varchar(255)"`
-	IsPrivate bool   `gorm:"type:tinyint(1)"`
+	IsPrivate bool   `gorm:"type:boolean"`
 	TeamIDs   string `gorm:"type:varchar(255)"`
 	CreateAt  int64  `gorm:"not null;default:0"`
 	CreateBy  string `gorm:"type:varchar(64);not null;default:''"`

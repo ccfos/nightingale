@@ -836,7 +836,7 @@ CREATE TABLE `embedded_product` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) DEFAULT NULL,
     `url` varchar(255) DEFAULT NULL,
-    `is_private` tinyint(1) DEFAULT NULL,
+    `is_private` boolean DEFAULT NULL,
     `team_ids` varchar(255),
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
