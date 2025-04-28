@@ -2,10 +2,10 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/toolkits/pkg/logger"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
