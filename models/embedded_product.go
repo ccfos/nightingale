@@ -10,22 +10,19 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type EmbeddedProduct struct {
-	ID        uint64 `json:"id" gorm:"primaryKey"` // 主键
-	Name      string `json:"name"`
-	URL       string `json:"url"`
-	IsPrivate bool   `json:"is_private"`
-	TeamIDs   string `json:"-" gorm:"column:team_ids"` // 数据库存储为 JSON 字符串
-	// 前端用的字段，GORM 忽略，自己处理序列化/反序列化
-	TeamIDsJson []int64 `json:"team_ids" gorm:"-"` // 前端用的数组形式
-	CreateAt    int64   `json:"create_at"`
-	CreateBy    string  `json:"create_by"`
-	UpdateAt    int64   `json:"update_at"`
-	UpdateBy    string  `json:"update_by"`
+	ID        uint64  `json:"id" gorm:"primaryKey"` // 主键
+	Name      string  `json:"name"`
+	URL       string  `json:"url"`
+	IsPrivate bool    `json:"is_private"`
+	TeamIDs   []int64 `json:"team_ids" gorm:"serializer:json"`
+	CreateAt  int64   `json:"create_at"`
+	CreateBy  string  `json:"create_by"`
+	UpdateAt  int64   `json:"update_at"`
+	UpdateBy  string  `json:"update_by"`
 }
 
 func (e *EmbeddedProduct) TableName() string {
@@ -42,28 +39,6 @@ func (e *EmbeddedProduct) Verify() error {
 	}
 
 	return nil
-}
-
-func (e *EmbeddedProduct) BeforeSave(tx *gorm.DB) error {
-	if len(e.TeamIDsJson) == 0 {
-		e.TeamIDs = "[]"
-		return nil
-	}
-
-	data, err := json.Marshal(e.TeamIDsJson)
-	if err != nil {
-		return err
-	}
-	e.TeamIDs = string(data)
-	return nil
-}
-
-func (e *EmbeddedProduct) AfterFind(tx *gorm.DB) error {
-	if e.TeamIDs == "" {
-		e.TeamIDsJson = nil
-		return nil
-	}
-	return json.Unmarshal([]byte(e.TeamIDs), &e.TeamIDsJson)
 }
 
 func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
@@ -134,7 +109,7 @@ func MigrateEP(ctx *ctx.Context) {
 					Name:      v.Name,
 					URL:       v.URL,
 					IsPrivate: false,
-					TeamIDs:   "",
+					TeamIDs:   []int64{},
 					CreateBy:  "root",
 					CreateAt:  now,
 					UpdateAt:  now,

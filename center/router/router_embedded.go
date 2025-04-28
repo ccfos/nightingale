@@ -30,7 +30,7 @@ func (rt *Router) embeddedProductGetList(c *gin.Context) {
 		if !d.IsPrivate {
 			result = append(result, d)
 		} else {
-			for _, tid := range d.TeamIDsJson {
+			for _, tid := range d.TeamIDs {
 				if _, ok := bgSet[tid]; ok {
 					result = append(result, d)
 					break
@@ -155,7 +155,7 @@ func hasEmbeddedProductAccess(ctx *ctx.Context, user *models.User, ep *models.Em
 		groupSet[gid] = struct{}{}
 	}
 
-	for _, tid := range ep.TeamIDsJson {
+	for _, tid := range ep.TeamIDs {
 		if _, ok := groupSet[tid]; ok {
 			return true, nil
 		}
