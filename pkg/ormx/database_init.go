@@ -1400,19 +1400,19 @@ func (InitSqliteTaskHost) TableName() string {
 }
 
 type InitEmbeddedProduct struct {
-	ID        uint64 `gorm:"primaryKey;autoIncrement;" json:"id"`
-	Name      string `gorm:"type:varchar(255)" json:"name"`
-	URL       string `gorm:"type:varchar(255)" json:"url"`
-	IsPrivate bool   `gorm:"type:boolean" json:"is_private"`
-	TeamIDs   string `gorm:"type:text" json:"team_ids"` // JSON 格式数组
-	CreateAt  int64  `gorm:"not null;default:0;comment:create time"`
-	CreateBy  string `gorm:"size:191;not null;default:'';comment:creator"`
-	UpdateAt  int64  `gorm:"not null;default:0;comment:update time"`
-	UpdateBy  string `gorm:"size:191;not null;default:'';comment:updater"`
+	ID        uint64 `gorm:"primaryKey;autoIncrement"`
+	Name      string `gorm:"type:varchar(255)"`
+	URL       string `gorm:"type:varchar(255)"`
+	IsPrivate bool   `gorm:"type:tinyint(1)"`
+	TeamIDs   string `gorm:"type:varchar(255)"`
+	CreateAt  int64  `gorm:"not null;default:0"`
+	CreateBy  string `gorm:"type:varchar(64);not null;default:''"`
+	UpdateAt  int64  `gorm:"not null;default:0"`
+	UpdateBy  string `gorm:"type:varchar(64);not null;default:''"`
 }
 
 func (InitEmbeddedProduct) TableName() string {
-	return "embedded-product"
+	return "embedded_product"
 }
 
 func (InitEmbeddedProduct) TableOptions() string {

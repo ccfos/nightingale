@@ -67,7 +67,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}, &models.EmbeddedProduct{}}
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}, &EmbeddedProduct{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -447,4 +447,20 @@ type NotifyChannelConfig struct {
 
 func (c *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
+}
+
+type EmbeddedProduct struct {
+	ID        uint64 `gorm:"primaryKey;autoIncrement"`
+	Name      string `gorm:"type:varchar(255)"`
+	URL       string `gorm:"type:varchar(255)"`
+	IsPrivate bool   `gorm:"type:tinyint(1)"`
+	TeamIDs   string `gorm:"type:varchar(255)"`
+	CreateAt  int64  `gorm:"not null;default:0"`
+	CreateBy  string `gorm:"type:varchar(64);not null;default:''"`
+	UpdateAt  int64  `gorm:"not null;default:0"`
+	UpdateBy  string `gorm:"type:varchar(64);not null;default:''"`
+}
+
+func (EmbeddedProduct) TableName() string {
+	return "embedded_product"
 }

@@ -26,7 +26,7 @@ type EmbeddedProduct struct {
 }
 
 func (e *EmbeddedProduct) TableName() string {
-	return "embedded-product"
+	return "embedded_product"
 }
 
 func (e *EmbeddedProduct) Verify() error {
