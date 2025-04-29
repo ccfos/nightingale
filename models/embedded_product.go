@@ -15,14 +15,14 @@ import (
 
 type EmbeddedProduct struct {
 	ID        uint64  `json:"id" gorm:"primaryKey"` // 主键
-	Name      string  `json:"name"`
-	URL       string  `json:"url"`
-	IsPrivate bool    `json:"is_private"`
+	Name      string  `json:"name" gorm:"column:name;type:varchar(255)"`
+	URL       string  `json:"url" gorm:"column:url;type:varchar(255)"`
+	IsPrivate bool    `json:"is_private" gorm:"column:is_private;type:boolean"`
 	TeamIDs   []int64 `json:"team_ids" gorm:"serializer:json"`
-	CreateAt  int64   `json:"create_at"`
-	CreateBy  string  `json:"create_by"`
-	UpdateAt  int64   `json:"update_at"`
-	UpdateBy  string  `json:"update_by"`
+	CreateAt  int64   `json:"create_at" gorm:"column:create_at;not null;default:0"`
+	CreateBy  string  `json:"create_by" gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt  int64   `json:"update_at" gorm:"column:update_at;not null;default:0"`
+	UpdateBy  string  `json:"update_by" gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
 func (e *EmbeddedProduct) TableName() string {

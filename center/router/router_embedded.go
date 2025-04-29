@@ -58,7 +58,7 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	ginx.NewRender(c).Data(data, nil)
 }
 
-func (rt *Router) embeddedProductADD(c *gin.Context) {
+func (rt *Router) embeddedProductAdd(c *gin.Context) {
 	var eps []models.EmbeddedProduct
 	ginx.BindJSON(c, &eps)
 
