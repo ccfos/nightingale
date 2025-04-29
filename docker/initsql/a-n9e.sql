@@ -787,6 +787,7 @@ CREATE TABLE `notify_rule` (
     `enable` tinyint(1) not null default 0,
     `user_group_ids` varchar(255) not null default '',
     `notify_configs` text,
+    `pipeline_configs` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
