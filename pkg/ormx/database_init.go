@@ -1399,6 +1399,25 @@ func (InitSqliteTaskHost) TableName() string {
 	return "task_host_0"
 }
 
+type InitEmbeddedProduct struct {
+	ID        uint64 `gorm:"primaryKey;autoIncrement"`
+	Name      string `gorm:"type:varchar(255)"`
+	URL       string `gorm:"type:varchar(255)"`
+	IsPrivate bool   `gorm:"type:boolean"`
+	TeamIDs   string `gorm:"type:varchar(255)"`
+	CreateAt  int64  `gorm:"not null;default:0"`
+	CreateBy  string `gorm:"type:varchar(64);not null;default:''"`
+	UpdateAt  int64  `gorm:"not null;default:0"`
+	UpdateBy  string `gorm:"type:varchar(64);not null;default:''"`
+}
+
+func (InitEmbeddedProduct) TableName() string {
+	return "embedded_product"
+}
+
+func (InitEmbeddedProduct) TableOptions() string {
+	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+}
 func DataBaseInit(c DBConfig, db *gorm.DB) error {
 	switch strings.ToLower(c.DBType) {
 	case "mysql":
@@ -1458,6 +1477,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitAlertRule{}}
 
 	for _, dt := range dts {
@@ -1654,6 +1674,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitAlertRule{}}
 
 	for _, dt := range dts {
@@ -1850,6 +1871,7 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		&InitChartGroup{},
 		&InitChart{},
 		&InitChartShare{},
+		&InitEmbeddedProduct{},
 		&InitPostgresAlertRule{}}
 
 	for _, dt := range dts {

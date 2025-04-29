@@ -187,16 +187,16 @@ func checkSqliteDatabaseExist(c DBConfig) (bool, error) {
 
 func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 	dsnParts := strings.Split(c.DSN, " ")
-    dbName := ""
-    dbpair := ""
-    for _, part := range dsnParts {
-        if strings.HasPrefix(part, "dbname=") {
-            dbName = part[strings.Index(part, "=")+1:]
-            dbpair = part
-        }
-    }
-    connectionStr := strings.Replace(c.DSN, dbpair, "dbname=postgres", 1)
-    dialector := postgres.Open(connectionStr)
+	dbName := ""
+	dbpair := ""
+	for _, part := range dsnParts {
+		if strings.HasPrefix(part, "dbname=") {
+			dbName = part[strings.Index(part, "=")+1:]
+			dbpair = part
+		}
+	}
+	connectionStr := strings.Replace(c.DSN, dbpair, "dbname=postgres", 1)
+	dialector := postgres.Open(connectionStr)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -362,6 +362,5 @@ func New(c DBConfig) (*gorm.DB, error) {
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
 	}
-
 	return db, nil
 }

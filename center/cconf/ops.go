@@ -334,5 +334,17 @@ ops:
       cname: Modify Notify Channels
     - name: "/notification-channels/del"
       cname: Delete Notify Channels
+
+- name: embedded-product
+  cname: Integrated Instrument Dashboard
+  ops:
+    - name: "/embedded-product"
+      cname: View Embedded Product
+    - name: "/embedded-product/add"
+      cname: Add Embedded Product
+    - name: "/embedded-product/delete"
+      cname: Delete Embedded Product
+    - name: "/embedded-product/put"
+      cname: Edit Embedded Product
 `
 )
