@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
-
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-
 	"gorm.io/gorm/clause"
 )
 
@@ -87,7 +86,7 @@ func CanMigrateEP(ctx *ctx.Context) bool {
 	var count int64
 	err := DB(ctx).Model(&EmbeddedProduct{}).Count(&count).Error
 	if err != nil {
-		logger.Printf("failed to get embedded-product table count, err:%s", err)
+		logger.Errorf("failed to get embedded-product table count, err:%v", err)
 		return false
 	}
 	return count <= 0
@@ -101,28 +100,30 @@ func MigrateEP(ctx *ctx.Context) {
 		if err := json.Unmarshal([]byte(lst[0]), &oldData); err != nil {
 			return
 		}
-		if len(oldData) > 0 {
-			var newData []EmbeddedProduct
-			for _, v := range oldData {
-				now := time.Now().Unix()
-				newData = append(newData, EmbeddedProduct{
-					Name:      v.Name,
-					URL:       v.URL,
-					IsPrivate: false,
-					TeamIDs:   []int64{},
-					CreateBy:  "root",
-					CreateAt:  now,
-					UpdateAt:  now,
-					UpdateBy:  "root",
-				})
-			}
-			DB(ctx).Create(&newData)
+
+		if len(oldData) < 1 {
+			return
 		}
-		return
 
+		now := time.Now().Unix()
+		var newData []EmbeddedProduct
+		for _, v := range oldData {
+			newData = append(newData, EmbeddedProduct{
+				Name:      v.Name,
+				URL:       v.URL,
+				IsPrivate: false,
+				TeamIDs:   []int64{},
+				CreateBy:  "system",
+				CreateAt:  now,
+				UpdateAt:  now,
+				UpdateBy:  "system",
+			})
+		}
+		err := DB(ctx).Create(&newData).Error
+		if err != nil {
+			logger.Errorf("failed to create embedded-product, err:%v", err)
+		}
 	}
-	return
-
 }
 
 type DashboardConfig struct {

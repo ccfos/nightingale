@@ -52,9 +52,14 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
-	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
+	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	ginx.Dangerous(err)
-	ginx.Dangerous(ok, 403)
+
+	if !hashPermission {
+		ginx.NewRender(c).Message("no permission")
+		return
+	}
+
 	ginx.NewRender(c).Data(data, nil)
 }
 
@@ -84,9 +89,13 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
-	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
+	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	ginx.Dangerous(err)
-	ginx.Dangerous(ok, 403)
+
+	if !hashPermission {
+		ginx.NewRender(c).Message("no permission")
+		return
+	}
 
 	ep.ID = id
 	ginx.BindJSON(c, &ep)
@@ -105,9 +114,14 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
-	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
+	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	ginx.Dangerous(err)
-	ginx.Dangerous(ok, 403)
+
+	if !hashPermission {
+		ginx.NewRender(c).Message("no permission")
+		return
+	}
+
 	err = models.DeleteEmbeddedProduct(rt.Ctx, id)
 	ginx.NewRender(c).Message(err)
 }
