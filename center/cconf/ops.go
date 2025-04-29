@@ -142,6 +142,13 @@ ops:
       cname: View Logs
     - name: "/log/index-patterns"
       cname: View Index Patterns
+    - name: "/log/index-patterns/add"
+      cname: Add Index Pattern
+    - name: "/log/index-patterns/put"
+      cname: Modify Index Pattern
+    - name: "/log/index-patterns/del"
+      cname: Delete Index Pattern
+
 
 - name: alert
   cname: Alert Rules
@@ -322,6 +329,18 @@ ops:
       cname: Modify Notify Rules
     - name: "/notification-rules/del"
       cname: Delete Notify Rules
+
+- name: event-pipelines
+  cname: Event Pipelines
+  ops:
+    - name: "/event-pipelines"
+      cname: View Event Pipelines
+    - name: "/event-pipelines/add"
+      cname: Add Event Pipeline
+    - name: "/event-pipelines/put"
+      cname: Modify Event Pipeline
+    - name: "/event-pipelines/del"
+      cname: Delete Event Pipeline
 
 - name: notify-channels
   cname: Notify Channels

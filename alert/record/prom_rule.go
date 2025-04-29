@@ -56,12 +56,13 @@ func (rrc *RecordRuleContext) Key() string {
 }
 
 func (rrc *RecordRuleContext) Hash() string {
-	return str.MD5(fmt.Sprintf("%d_%s_%s_%d_%s",
+	return str.MD5(fmt.Sprintf("%d_%s_%s_%d_%s_%s",
 		rrc.rule.Id,
 		rrc.rule.CronPattern,
 		rrc.rule.PromQl,
 		rrc.datasourceId,
 		rrc.rule.AppendTags,
+		rrc.rule.Name,
 	))
 }
 

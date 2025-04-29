@@ -67,7 +67,8 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}, &models.EmbeddedProduct{}}
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
+		&models.EventPipeline{},&models.EmbeddedProduct{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -178,11 +179,6 @@ func InsertPermPoints(db *gorm.DB) {
 	})
 
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/permissions",
-	})
-
-	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
 		Operation: "/ibex-settings",
 	})
@@ -227,12 +223,31 @@ func InsertPermPoints(db *gorm.DB) {
 		Operation: "/notification-rules/del",
 	})
 
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/add",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/put",
+	})
+
+	ops = append(ops, models.RoleOperation{
+		RoleName:  "Standard",
+		Operation: "/event-pipelines/del",
+	})
+
 	for _, op := range ops {
 		var count int64
 
-		err := db.Model(&models.RoleOperation{}).
-			Where("operation = ? AND role_name = ?", op.Operation, op.RoleName).
-			Count(&count).Error
+		session := db.Session(&gorm.Session{}).Model(&models.RoleOperation{})
+		err := session.Where("operation = ? AND role_name = ?", op.Operation, op.RoleName).Count(&count).Error
 
 		if err != nil {
 			logger.Errorf("check role operation exists failed, %v", err)
@@ -243,7 +258,7 @@ func InsertPermPoints(db *gorm.DB) {
 			continue
 		}
 
-		err = db.Model(&models.RoleOperation{}).Create(&op).Error
+		err = session.Create(&op).Error
 		if err != nil {
 			logger.Errorf("insert role operation failed, %v", err)
 		}
@@ -308,7 +323,8 @@ type Target struct {
 }
 
 type Datasource struct {
-	IsDefault bool `gorm:"column:is_default;type:boolean;comment:is default datasource"`
+	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
+	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
 }
 
 type Configs struct {
@@ -413,16 +429,17 @@ func (t *MessageTemplate) TableName() string {
 }
 
 type NotifyRule struct {
-	ID            int64                 `gorm:"column:id;primaryKey;autoIncrement"`
-	Name          string                `gorm:"column:name;type:varchar(255);not null"`
-	Description   string                `gorm:"column:description;type:text"`
-	Enable        bool                  `gorm:"column:enable;not null;default:false"`
-	UserGroupIds  []int64               `gorm:"column:user_group_ids;type:varchar(255)"`
-	NotifyConfigs []models.NotifyConfig `gorm:"column:notify_configs;type:text"`
-	CreateAt      int64                 `gorm:"column:create_at;not null;default:0"`
-	CreateBy      string                `gorm:"column:create_by;type:varchar(64);not null;default:''"`
-	UpdateAt      int64                 `gorm:"column:update_at;not null;default:0"`
-	UpdateBy      string                `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	ID              int64                   `gorm:"column:id;primaryKey;autoIncrement"`
+	Name            string                  `gorm:"column:name;type:varchar(255);not null"`
+	Description     string                  `gorm:"column:description;type:text"`
+	Enable          bool                    `gorm:"column:enable;not null;default:false"`
+	UserGroupIds    []int64                 `gorm:"column:user_group_ids;type:varchar(255)"`
+	NotifyConfigs   []models.NotifyConfig   `gorm:"column:notify_configs;type:text"`
+	PipelineConfigs []models.PipelineConfig `gorm:"column:pipeline_configs;type:text"`
+	CreateAt        int64                   `gorm:"column:create_at;not null;default:0"`
+	CreateBy        string                  `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt        int64                   `gorm:"column:update_at;not null;default:0"`
+	UpdateBy        string                  `gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
 func (r *NotifyRule) TableName() string {

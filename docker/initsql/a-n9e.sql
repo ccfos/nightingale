@@ -107,12 +107,6 @@ insert into `role_operation`(role_name, operation) values('Standard', '/help/mig
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/dependencies');
-
-insert into `role_operation`(role_name, operation) values('Admin', '/help/source');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
-
 insert into `role_operation`(role_name, operation) values('Standard', '/users');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups/add');
@@ -537,7 +531,7 @@ CREATE TABLE `builtin_components` (
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   `disabled` int NOT NULL DEFAULT 0 COMMENT '''is disabled or not''',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_ident` (`ident`)
+  KEY (`ident`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `builtin_payloads` (
@@ -645,6 +639,7 @@ CREATE TABLE `datasource`
 (
     `id` int unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(191) not null default '',
+    `identifier` varchar(255) not null default '',
     `description` varchar(255) not null default '',
     `category` varchar(255) not null default '',
     `plugin_id` int unsigned not null default 0,
@@ -792,6 +787,7 @@ CREATE TABLE `notify_rule` (
     `enable` tinyint(1) not null default 0,
     `user_group_ids` varchar(255) not null default '',
     `notify_configs` text,
+    `pipeline_configs` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
