@@ -641,7 +641,7 @@ var I18N = `{
     "Integrated Instrument Dashboard": "統合ダッシュボード",
     "View Embedded Product": "統合ダッシュボードを表示",
     "Add Embedded Product": "統合ダッシュボードを追加",
-    "Delete Embedded Product": "統合ダッシュボードを削除"
+    "Delete Embedded Product": "統合ダッシュボードを削除",
     "Edit Embedded Product": "統合ダッシュボードを編集",
     "Message Templates": "メッセージテンプレート",
     "User Contact Management": "ユーザー連絡先管理"
