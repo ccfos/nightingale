@@ -50,20 +50,11 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	id := uint64(idInt64)
 
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
 	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-	if !ok {
-		ginx.NewRender(c, 403).Message("permission denied")
-		return
-	}
+	ginx.Dangerous(err)
+	ginx.Dangerous(ok, 403)
 	ginx.NewRender(c).Data(data, nil)
 }
 
@@ -91,21 +82,12 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	}
 	id := uint64(idInt64)
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
 	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
+	ginx.Dangerous(err)
+	ginx.Dangerous(ok, 403)
 
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-	if !ok {
-		ginx.NewRender(c, 403).Message("permission denied")
-		return
-	}
 	ep.ID = id
 	ginx.BindJSON(c, &ep)
 
@@ -121,21 +103,11 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 	}
 	id := uint64(idInt64)
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
+	ginx.Dangerous(err)
 	me := c.MustGet("user").(*models.User)
 	ok, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
-
-	if err != nil {
-		ginx.NewRender(c).Message(err)
-		return
-	}
-	if !ok {
-		ginx.NewRender(c, 403).Message("permission denied")
-		return
-	}
+	ginx.Dangerous(err)
+	ginx.Dangerous(ok, 403)
 	err = models.DeleteEmbeddedProduct(rt.Ctx, id)
 	ginx.NewRender(c).Message(err)
 }
