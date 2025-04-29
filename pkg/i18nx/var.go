@@ -480,7 +480,7 @@ var I18N = `{
     "Integrated Instrument Dashboard": "集成儀表板",
     "View Embedded Product": "查看集成儀表板",
     "Add Embedded Product": "新增集成儀表板",
-    "Delete Embedded Product": "刪除集成儀表板"
+    "Delete Embedded Product": "刪除集成儀表板",
     "Edit Embedded Product": "編輯集成儀表板",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知規則", 
