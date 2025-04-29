@@ -1,6 +1,8 @@
 package router
 
 import (
+	"time"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 
@@ -8,14 +10,14 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-func (rt *Router) embeddedProductGetList(c *gin.Context) {
-	dashboards, err := models.ListEmbeddedProducts(rt.Ctx)
+func (rt *Router) embeddedProductGets(c *gin.Context) {
+	products, err := models.EmbeddedProductGets(rt.Ctx)
 	ginx.Dangerous(err)
 	// 获取当前用户可访问的Group ID 列表
 	me := c.MustGet("user").(*models.User)
 
 	if me.IsAdmin() {
-		ginx.NewRender(c).Data(dashboards, err)
+		ginx.NewRender(c).Data(products, err)
 		return
 	}
 
@@ -24,40 +26,41 @@ func (rt *Router) embeddedProductGetList(c *gin.Context) {
 	for _, id := range gids {
 		bgSet[id] = struct{}{}
 	}
-	// 过滤出公开或有权限访问的私有 dashboard
+
+	// 过滤出公开或有权限访问的私有 product link
 	var result []*models.EmbeddedProduct
-	for _, d := range dashboards {
-		if !d.IsPrivate {
-			result = append(result, d)
-		} else {
-			for _, tid := range d.TeamIDs {
-				if _, ok := bgSet[tid]; ok {
-					result = append(result, d)
-					break
-				}
+	for _, product := range products {
+		if !product.IsPrivate {
+			result = append(result, product)
+			continue
+		}
+
+		for _, tid := range product.TeamIDs {
+			if _, ok := bgSet[tid]; ok {
+				result = append(result, product)
+				break
 			}
 		}
 	}
+
 	ginx.NewRender(c).Data(result, err)
 }
 
 func (rt *Router) embeddedProductGet(c *gin.Context) {
-	idInt64 := ginx.UrlParamInt64(c, "id")
-	if idInt64 <= 0 {
-		ginx.NewRender(c).Message("invalid id")
-		return
+	id := ginx.UrlParamInt64(c, "id")
+	if id <= 0 {
+		ginx.Bomb(400, "invalid id")
 	}
-	id := uint64(idInt64)
 
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
+
 	me := c.MustGet("user").(*models.User)
 	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.NewRender(c).Message("no permission")
-		return
+		ginx.Bomb(403, "no permission")
 	}
 
 	ginx.NewRender(c).Data(data, nil)
@@ -80,46 +83,51 @@ func (rt *Router) embeddedProductAdd(c *gin.Context) {
 
 func (rt *Router) embeddedProductPut(c *gin.Context) {
 	var ep models.EmbeddedProduct
-	idInt64 := ginx.UrlParamInt64(c, "id")
-	if idInt64 <= 0 {
-		ginx.NewRender(c).Message("invalid id")
-		return
+	id := ginx.UrlParamInt64(c, "id")
+	ginx.BindJSON(c, &ep)
+
+	if id <= 0 {
+		ginx.Bomb(400, "invalid id")
 	}
-	id := uint64(idInt64)
-	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
+
+	oldProduct, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
+
 	me := c.MustGet("user").(*models.User)
-	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
+	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, oldProduct)
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.NewRender(c).Message("no permission")
-		return
+		ginx.Bomb(403, "no permission")
 	}
 
-	ep.ID = id
-	ginx.BindJSON(c, &ep)
+	now := time.Now().Unix()
+	oldProduct.Name = ep.Name
+	oldProduct.URL = ep.URL
+	oldProduct.IsPrivate = ep.IsPrivate
+	oldProduct.TeamIDs = ep.TeamIDs
+	oldProduct.UpdateBy = me.Username
+	oldProduct.UpdateAt = now
 
-	err = models.UpdateEmbeddedProduct(rt.Ctx, &ep, me.Nickname)
+	err = models.UpdateEmbeddedProduct(rt.Ctx, oldProduct)
 	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) embeddedProductDelete(c *gin.Context) {
-	idInt64 := ginx.UrlParamInt64(c, "id")
-	if idInt64 <= 0 {
-		ginx.NewRender(c).Message("invalid id")
-		return
+	id := ginx.UrlParamInt64(c, "id")
+	if id <= 0 {
+		ginx.Bomb(400, "invalid id")
 	}
-	id := uint64(idInt64)
+
 	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
+
 	me := c.MustGet("user").(*models.User)
 	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.NewRender(c).Message("no permission")
-		return
+		ginx.Bomb(403, "no permission")
 	}
 
 	err = models.DeleteEmbeddedProduct(rt.Ctx, id)

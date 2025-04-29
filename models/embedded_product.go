@@ -13,7 +13,7 @@ import (
 )
 
 type EmbeddedProduct struct {
-	ID        uint64  `json:"id" gorm:"primaryKey"` // 主键
+	ID        int64   `json:"id" gorm:"primaryKey"` // 主键
 	Name      string  `json:"name" gorm:"column:name;type:varchar(255)"`
 	URL       string  `json:"url" gorm:"column:url;type:varchar(255)"`
 	IsPrivate bool    `json:"is_private" gorm:"column:is_private;type:boolean"`
@@ -37,6 +37,14 @@ func (e *EmbeddedProduct) Verify() error {
 		return errors.New("Name has invalid characters")
 	}
 
+	if e.URL == "" {
+		return errors.New("URL is blank")
+	}
+
+	if len(e.TeamIDs) == 0 {
+		return errors.New("TeamIDs is blank")
+	}
+
 	return nil
 }
 
@@ -57,28 +65,26 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 	}).Create(&eps).Error
 }
 
-func ListEmbeddedProducts(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
+func EmbeddedProductGets(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
 	var list []*EmbeddedProduct
 	err := DB(ctx).Find(&list).Error
 	return list, err
 }
 
-func GetEmbeddedProductByID(ctx *ctx.Context, id uint64) (*EmbeddedProduct, error) {
+func GetEmbeddedProductByID(ctx *ctx.Context, id int64) (*EmbeddedProduct, error) {
 	var ep EmbeddedProduct
 	err := DB(ctx).Where("id = ?", id).First(&ep).Error
 	return &ep, err
 }
 
-func UpdateEmbeddedProduct(ctx *ctx.Context, ep *EmbeddedProduct, username string) error {
+func UpdateEmbeddedProduct(ctx *ctx.Context, ep *EmbeddedProduct) error {
 	if err := ep.Verify(); err != nil {
 		return err
 	}
-	ep.UpdateAt = time.Now().Unix()
-	ep.UpdateBy = username
 	return DB(ctx).Save(ep).Error
 }
 
-func DeleteEmbeddedProduct(ctx *ctx.Context, id uint64) error {
+func DeleteEmbeddedProduct(ctx *ctx.Context, id int64) error {
 	return DB(ctx).Where("id = ?", id).Delete(&EmbeddedProduct{}).Error
 }
 
