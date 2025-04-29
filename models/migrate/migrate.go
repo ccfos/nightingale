@@ -435,16 +435,17 @@ func (t *MessageTemplate) TableName() string {
 }
 
 type NotifyRule struct {
-	ID            int64                 `gorm:"column:id;primaryKey;autoIncrement"`
-	Name          string                `gorm:"column:name;type:varchar(255);not null"`
-	Description   string                `gorm:"column:description;type:text"`
-	Enable        bool                  `gorm:"column:enable;not null;default:false"`
-	UserGroupIds  []int64               `gorm:"column:user_group_ids;type:varchar(255)"`
-	NotifyConfigs []models.NotifyConfig `gorm:"column:notify_configs;type:text"`
-	CreateAt      int64                 `gorm:"column:create_at;not null;default:0"`
-	CreateBy      string                `gorm:"column:create_by;type:varchar(64);not null;default:''"`
-	UpdateAt      int64                 `gorm:"column:update_at;not null;default:0"`
-	UpdateBy      string                `gorm:"column:update_by;type:varchar(64);not null;default:''"`
+	ID              int64                   `gorm:"column:id;primaryKey;autoIncrement"`
+	Name            string                  `gorm:"column:name;type:varchar(255);not null"`
+	Description     string                  `gorm:"column:description;type:text"`
+	Enable          bool                    `gorm:"column:enable;not null;default:false"`
+	UserGroupIds    []int64                 `gorm:"column:user_group_ids;type:varchar(255)"`
+	NotifyConfigs   []models.NotifyConfig   `gorm:"column:notify_configs;type:text"`
+	PipelineConfigs []models.PipelineConfig `gorm:"column:pipeline_configs;type:text"`
+	CreateAt        int64                   `gorm:"column:create_at;not null;default:0"`
+	CreateBy        string                  `gorm:"column:create_by;type:varchar(64);not null;default:''"`
+	UpdateAt        int64                   `gorm:"column:update_at;not null;default:0"`
+	UpdateBy        string                  `gorm:"column:update_by;type:varchar(64);not null;default:''"`
 }
 
 func (r *NotifyRule) TableName() string {
