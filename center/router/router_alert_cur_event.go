@@ -43,6 +43,14 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
+	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
+	if myGroups {
+
+	}
+	aggrID := ginx.QueryInt64(c, "aggr_id", 0)
+
+	models.AlertCurEventGetById(rt.Ctx, aggrID)
+
 	dsIds := queryDatasourceIds(c)
 	rules := parseAggrRules(c)
 
@@ -145,6 +153,10 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
+	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
+	if myGroups {
+
+	}
 	dsIds := queryDatasourceIds(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
