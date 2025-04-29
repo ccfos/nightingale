@@ -14,14 +14,13 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/mute"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/relabel"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
-	"github.com/prometheus/prometheus/prompb"
 	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -279,44 +278,15 @@ func Relabel(rule *models.AlertRule, event *models.AlertCurEvent) {
 		return
 	}
 
-	if len(rule.EventRelabelConfig) == 0 {
-		return
-	}
-
 	// need to keep the original label
 	event.OriginalTags = event.Tags
 	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
 
-	labels := make([]prompb.Label, len(event.TagsJSON))
-	for i, tag := range event.TagsJSON {
-		label := strings.SplitN(tag, "=", 2)
-		event.OriginalTagsJSON[i] = tag
-		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
+	if len(rule.EventRelabelConfig) == 0 {
+		return
 	}
 
-	for i := 0; i < len(rule.EventRelabelConfig); i++ {
-		if rule.EventRelabelConfig[i].Replacement == "" {
-			rule.EventRelabelConfig[i].Replacement = "$1"
-		}
-
-		if rule.EventRelabelConfig[i].Separator == "" {
-			rule.EventRelabelConfig[i].Separator = ";"
-		}
-
-		if rule.EventRelabelConfig[i].Regex == "" {
-			rule.EventRelabelConfig[i].Regex = "(.*)"
-		}
-	}
-
-	// relabel process
-	relabels := writer.Process(labels, rule.EventRelabelConfig...)
-	event.TagsJSON = make([]string, len(relabels))
-	event.TagsMap = make(map[string]string, len(relabels))
-	for i, label := range relabels {
-		event.TagsJSON[i] = fmt.Sprintf("%s=%s", label.Name, label.Value)
-		event.TagsMap[label.Name] = label.Value
-	}
-	event.Tags = strings.Join(event.TagsJSON, ",,")
+	relabel.EventRelabel(event, rule.EventRelabelConfig)
 }
 
 func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, inhibit bool) {

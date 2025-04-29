@@ -31,21 +31,6 @@ type Processor struct {
 	Config interface{} `json:"config"`
 }
 
-// LabelEnrichProcessor 标签丰富处理器配置
-type LabelEnrichProcessor struct {
-	LabelSourceType string             `json:"label_source_type"`
-	LabelMappingID  string             `json:"label_mapping_id"`
-	SourceKeys      []LabelMappingPair `json:"source_keys"`
-	AppendKeys      []LabelMappingPair `json:"append_keys"`
-}
-
-// LabelMappingPair 标签映射对
-type LabelMappingPair struct {
-	SourceKey string `json:"source_key"`
-	TargetKey string `json:"target_key"`
-	RenameKey bool   `json:"rename_key,omitempty"`
-}
-
 func (e *EventPipeline) TableName() string {
 	return "event_pipeline"
 }
