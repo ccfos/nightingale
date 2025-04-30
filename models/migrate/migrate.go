@@ -67,7 +67,7 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}}
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}, &AlertAggrView{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -442,4 +442,19 @@ type NotifyChannelConfig struct {
 
 func (c *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
+}
+
+type AlertAggrView struct {
+	ID       uint64 `gorm:"primaryKey;autoIncrement"`
+	Name     string `gorm:"size:191;not null;default:''"`
+	Rule     string `gorm:"size:2048;not null;default:''"`
+	Format   string `gorm:"size:2048;not null;default:''"`
+	Cate     bool   `gorm:"type:tinyint(1);not null;comment:0: preset 1: custom"`
+	CreateAt int64  `gorm:"not null;default:0"`
+	CreateBy int64  `gorm:"not null;default:0;comment:user id;index:create_by"`
+	UpdateAt int64  `gorm:"not null;default:0"`
+}
+
+func (AlertAggrView) TableName() string {
+	return "alert_aggr_view"
 }
