@@ -15,16 +15,22 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 	pipelines, err := models.ListEventPipelines(rt.Ctx)
 	ginx.Dangerous(err)
 
+	allTids := make([]int64, 0)
+	for _, pipeline := range pipelines {
+		allTids = append(allTids, pipeline.TeamIds...)
+	}
+	ugMap, err := models.UserGroupIdAndNameMap(rt.Ctx, allTids)
+	ginx.Dangerous(err)
+	for _, pipeline := range pipelines {
+		for _, tid := range pipeline.TeamIds {
+			pipeline.TeamNames = append(pipeline.TeamNames, ugMap[tid])
+		}
+	}
+
 	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
 
 	if me.IsAdmin() {
-		for _, p := range pipelines {
-			err := p.FillTeamNames(rt.Ctx)
-			if err != nil {
-				continue
-			}
-		}
 		ginx.NewRender(c).Data(pipelines, nil)
 		return
 	}
@@ -33,10 +39,6 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 	for _, pipeline := range pipelines {
 		for _, tid := range pipeline.TeamIds {
 			if _, ok := gids[tid]; ok {
-				err := pipeline.FillTeamNames(rt.Ctx)
-				if err != nil {
-					continue
-				}
 				res = append(res, pipeline)
 				break
 			}
