@@ -39,18 +39,20 @@ func parseAggrRules(rule string) []*models.AggrRule {
 	return rules
 }
 
+func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, error) {
+	if !myGroups {
+		return nil, nil
+	}
+	me := ctx.MustGet("user").(*models.User)
+	return models.MyGroupIds(rt.Ctx, me.Id)
+}
+
 func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
 	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
-	var gids []int64
-	var err error
-	if myGroups {
-		me := c.MustGet("user").(*models.User)
-		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
-		ginx.Dangerous(err)
-	}
+	gids, err := getUserGroupIds(c, rt, myGroups)
 
 	aggrID := ginx.QueryInt64(c, "aggr_id", 0)
 
@@ -59,10 +61,12 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
-	format := parseAggrRules(alertEvent.Format)
-	// 为了兼容老版本的代码，如果format长度为0 我们选择使用rule作为format
-	if len(format) == 0 {
+	var format []*models.AggrRule
+	// 为了兼容老版本的代码，如果format为空时 我们选择使用rule作为format
+	if alertEvent.Format == "" {
 		format = parseAggrRules(alertEvent.Rule)
+	} else {
+		format = parseAggrRules(alertEvent.Format)
 	}
 
 	prod := ginx.QueryStr(c, "prods", "")
@@ -185,13 +189,7 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	}
 
 	ruleId := ginx.QueryInt64(c, "rid", 0)
-	var gids []int64
-	var err error
-	if myGroups {
-		me := c.MustGet("user").(*models.User)
-		gids, err = models.MyGroupIds(rt.Ctx, me.Id)
-		ginx.Dangerous(err)
-	}
+	gids, err := getUserGroupIds(c, rt, myGroups)
 
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
