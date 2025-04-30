@@ -16,6 +16,7 @@ type AlertAggrView struct {
 	Id       int64  `json:"id" gorm:"primaryKey"`
 	Name     string `json:"name"`
 	Rule     string `json:"rule"`
+	Format   string `json:"format"`
 	Cate     int    `json:"cate"`
 	CreateAt int64  `json:"create_at"`
 	CreateBy int64  `json:"create_by"`
@@ -136,4 +137,15 @@ func AlertAggrViewGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 	}
 
 	return lst[0], nil
+}
+
+func GetAlertAggrViewByAggrID(ctx *ctx.Context, aggrID int64) (*AlertAggrView, error) {
+	view, err := AlertAggrViewGet(ctx, "id = ?", aggrID)
+	if err != nil {
+		return nil, err
+	}
+	if view == nil {
+		return nil, errors.New("alert aggr view not found")
+	}
+	return view, nil
 }
