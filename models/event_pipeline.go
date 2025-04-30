@@ -131,17 +131,21 @@ func (e *EventPipeline) Update(ctx *ctx.Context, ref *EventPipeline) error {
 // FillTeamNames 填充团队名称
 func (e *EventPipeline) FillTeamNames(ctx *ctx.Context) error {
 	e.TeamNames = make([]string, 0, len(e.TeamIds))
-	for _, tid := range e.TeamIds {
-		team, err := UserGroupGet(ctx, "id = ?", tid)
-		if err != nil {
-			continue
-		}
-
-		if team == nil {
-			continue
-		}
-
-		e.TeamNames = append(e.TeamNames, team.Name)
+	if len(e.TeamIds) == 0 {
+		return nil
 	}
+
+	teamMap, err := UserGroupIdAndNameMap(ctx, e.TeamIds)
+	if err != nil {
+		return err
+	}
+
+	// 按原始TeamIds顺序填充TeamNames
+	for _, tid := range e.TeamIds {
+		if name, exists := teamMap[tid]; exists {
+			e.TeamNames = append(e.TeamNames, name)
+		}
+	}
+
 	return nil
 }

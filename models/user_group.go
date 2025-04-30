@@ -113,6 +113,19 @@ func UserGroupGetByIds(ctx *ctx.Context, ids []int64) ([]UserGroup, error) {
 	return lst, err
 }
 
+func UserGroupIdAndNameMap(ctx *ctx.Context, ids []int64) (map[int64]string, error) {
+	lst, err := UserGroupGetByIds(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[int64]string)
+	for _, ug := range lst {
+		m[ug.Id] = ug.Name
+	}
+	return m, nil
+}
+
 func UserGroupGetAll(ctx *ctx.Context) ([]*UserGroup, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*UserGroup](ctx, "/v1/n9e/user-groups")
