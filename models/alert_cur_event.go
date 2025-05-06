@@ -302,11 +302,14 @@ func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule, format string) (string, 
 	}
 
 	arr := make([]string, len(rules))
-	for i, rule := range rules {
-		switch rule.Type {
-		case "field":
+	for i := 0; i < len(rules); i++ {
+		rule := rules[i]
+
+		if rule.Type == "field" {
 			arr[i] = e.GetField(rule.Value)
-		case "tagkey":
+		}
+
+		if rule.Type == "tagkey" {
 			arr[i] = e.GetTagValue(rule.Value)
 		}
 
