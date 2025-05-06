@@ -58,6 +58,9 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	if myGroups {
 		gids, err = getUserGroupIds(c, rt, myGroups)
 		ginx.Dangerous(err)
+		if len(gids) == 0 {
+			gids = append(gids, -1)
+		}
 	}
 
 	viewID := ginx.QueryInt64(c, "view_id")
@@ -200,6 +203,9 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	if myGroups {
 		gids, err = getUserGroupIds(c, rt, myGroups)
 		ginx.Dangerous(err)
+		if len(gids) == 0 {
+			gids = append(gids, -1)
+		}
 	}
 
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
