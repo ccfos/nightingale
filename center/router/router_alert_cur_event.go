@@ -3,7 +3,6 @@ package router
 import (
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -61,19 +60,13 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 		ginx.Dangerous(err)
 	}
 
-	viewIDStr := c.Query("view_id")
-	if viewIDStr == "" {
-		ginx.Dangerous("view_id can not be empty")
-	}
-
-	viewID, err := strconv.ParseInt(viewIDStr, 10, 64)
-	ginx.Dangerous(err)
+	viewID := ginx.QueryInt64(c, "view_id")
 
 	alertView, err := models.GetAlertAggrViewByViewID(rt.Ctx, viewID)
 	ginx.Dangerous(err)
 
 	if alertView == nil {
-		ginx.Dangerous("alert aggr view not found")
+		ginx.Bomb(http.StatusNotFound, "alert aggr view not found")
 	}
 
 	dsIds := queryDatasourceIds(c)

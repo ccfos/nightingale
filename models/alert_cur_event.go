@@ -310,7 +310,7 @@ func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule, format string) (string, 
 			arr[i] = e.GetTagValue(rule.Value)
 		}
 
-		if arr[i] == "" {
+		if len(arr[i]) == 0 {
 			arr[i] = "Null"
 		}
 	}
