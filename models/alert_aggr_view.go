@@ -139,8 +139,8 @@ func AlertAggrViewGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 	return lst[0], nil
 }
 
-func GetAlertAggrViewByAggrID(ctx *ctx.Context, aggrID int64) (*AlertAggrView, error) {
-	view, err := AlertAggrViewGet(ctx, "id = ?", aggrID)
+func GetAlertAggrViewByViewID(ctx *ctx.Context, viewID int64) (*AlertAggrView, error) {
+	view, err := AlertAggrViewGet(ctx, "id = ?", viewID)
 	if err != nil {
 		return nil, err
 	}

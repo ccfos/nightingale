@@ -445,14 +445,7 @@ func (c *NotifyChannelConfig) TableName() string {
 }
 
 type AlertAggrView struct {
-	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	Name     string `gorm:"size:191;not null;default:''"`
-	Rule     string `gorm:"size:2048;not null;default:''"`
-	Format   string `gorm:"size:2048;not null;default:''"`
-	Cate     bool   `gorm:"type:tinyint(1);not null;comment:0: preset 1: custom"`
-	CreateAt int64  `gorm:"not null;default:0"`
-	CreateBy int64  `gorm:"not null;default:0;comment:user id;index:create_by"`
-	UpdateAt int64  `gorm:"not null;default:0"`
+	Format string `gorm:"size:2048;not null;default:''"`
 }
 
 func (AlertAggrView) TableName() string {
