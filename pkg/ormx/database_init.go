@@ -688,7 +688,6 @@ type InitPostgresAlertAggrView struct {
 	Name     string `gorm:"size:191;not null;default:''"`
 	Rule     string `gorm:"size:2048;not null;default:''"`
 	Cate     int16  `gorm:"type:smallint;not null;comment:0: preset 1: custom"`
-	Format   string `gorm:"size:2048;not null;default:''"`
 	CreateAt int64  `gorm:"not null;default:0"`
 	CreateBy int64  `gorm:"not null;default:0;comment:user id;index:create_by"`
 	UpdateAt int64  `gorm:"not null;default:0"`
