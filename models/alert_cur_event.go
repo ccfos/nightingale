@@ -634,6 +634,45 @@ func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 
 	return lst, err
 }
+func AlertCurEventDsIds(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity int, cates []string, ruleId int64, query string, myGroups []int64) (
+	[]int64, error) {
+
+	session := DB(ctx).Model(&AlertCurEvent{}).Distinct("datasource_id").Select("datasource_id")
+
+	if stime != 0 && etime != 0 {
+		session = session.Where("trigger_time between ? and ?", stime, etime)
+	}
+	if len(prods) != 0 {
+		session = session.Where("rule_prod in ?", prods)
+	}
+	if len(bgids) > 0 {
+		session = session.Where("group_id in ?", bgids)
+	}
+	if severity >= 0 {
+		session = session.Where("severity = ?", severity)
+	}
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
+	}
+	if ruleId > 0 {
+		session = session.Where("rule_id = ?", ruleId)
+	}
+	if len(myGroups) > 0 {
+		session = session.Where("group_id in ?", myGroups)
+	}
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("rule_name like ? or tags like ?", qarg, qarg)
+		}
+	}
+
+	var dsIds []int64
+	err := session.Find(&dsIds).Error
+	return dsIds, err
+}
 
 func AlertCurEventCountByRuleId(ctx *ctx.Context, rids []int64, stime, etime int64) map[int64]int64 {
 	type Row struct {
