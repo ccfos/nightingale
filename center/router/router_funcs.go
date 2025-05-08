@@ -40,6 +40,10 @@ func (rt *Router) statistic(c *gin.Context) {
 		model = models.NotifyRule{}
 	case "notify_channel":
 		model = models.NotifyChannel{}
+	case "event_pipeline":
+		statistics, err = models.EventPipelineStatistics(rt.Ctx)
+		ginx.NewRender(c).Data(statistics, err)
+		return
 	case "datasource":
 		// datasource update_at is different from others
 		statistics, err = models.DatasourceStatistics(rt.Ctx)
