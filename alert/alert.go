@@ -115,7 +115,9 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	eval.NewScheduler(alertc, externalProcessors, alertRuleCache, targetCache, targetsOfAlertRulesCache,
 		busiGroupCache, alertMuteCache, datasourceCache, promClients, naming, ctx, alertStats)
 
-	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, taskTplsCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, alertc.Alerting, ctx, alertStats)
+	eventProcessorCache := memsto.NewEventProcessorCache(ctx, syncStats)
+
+	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, taskTplsCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, eventProcessorCache, alertc.Alerting, ctx, alertStats)
 	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp, promClients)
 
 	notifyRecordComsumer := sender.NewNotifyRecordConsumer(ctx)

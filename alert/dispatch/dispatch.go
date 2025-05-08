@@ -15,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
+	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -35,6 +36,7 @@ type Dispatch struct {
 	notifyRuleCache      *memsto.NotifyRuleCacheType
 	notifyChannelCache   *memsto.NotifyChannelCacheType
 	messageTemplateCache *memsto.MessageTemplateCacheType
+	eventProcessorCache  *memsto.EventProcessorCacheType
 
 	alerting aconf.Alerting
 
@@ -54,7 +56,7 @@ type Dispatch struct {
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
 	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
-	messageTemplateCache *memsto.MessageTemplateCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:       alertRuleCache,
 		userCache:            userCache,
@@ -66,6 +68,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		notifyRuleCache:      notifyRuleCache,
 		notifyChannelCache:   notifyChannelCache,
 		messageTemplateCache: messageTemplateCache,
+		eventProcessorCache:  eventProcessorCache,
 
 		alerting: alerting,
 
@@ -155,6 +158,39 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 				continue
 			}
 
+			var processors []pipeline.Processor
+			for _, pipelineConfig := range notifyRule.PipelineConfigs {
+				if !pipelineConfig.Enable {
+					continue
+				}
+
+				processorConfig := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
+				if processorConfig == nil {
+					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, event)
+					continue
+				}
+
+				for _, p := range processorConfig.Processors {
+					processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+					if err != nil {
+						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, event, p)
+						continue
+					}
+					processors = append(processors, processor)
+				}
+			}
+
+			for _, processor := range processors {
+				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
+				processor.Process(e.ctx, event)
+				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
+				if event == nil {
+					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, event, processor)
+					break
+				}
+			}
+
+			// notify
 			for i := range notifyRule.NotifyConfigs {
 				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
 					continue
