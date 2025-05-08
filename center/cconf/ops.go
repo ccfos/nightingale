@@ -150,51 +150,39 @@ ops:
       cname: Delete Index Pattern
 
 
-- name: alert
-  cname: Alert Rules
+- name: alerting
+  cname: Alerting
   ops:
-    - name: "/alert-rules"
-      cname: View Alert Rules
-    - name: "/alert-rules/add"
-      cname: Add Alert Rule
-    - name: "/alert-rules/put"
-      cname: Modify Alert Rule
-    - name: "/alert-rules/del"
-      cname: Delete Alert Rule
-
-- name: alert-mutes
-  cname: Alert Silence Management
-  ops:
-    - name: "/alert-mutes"
-      cname: View Alert Silences
-    - name: "/alert-mutes/add"
-      cname: Add Alert Silence
-    - name: "/alert-mutes/put"
-      cname: Modify Alert Silence
-    - name: "/alert-mutes/del"
-      cname: Delete Alert Silence
-  
-- name: alert-subscribes
-  cname: Alert Subscription Management
-  ops:
-    - name: "/alert-subscribes"
-      cname: View Alert Subscriptions
-    - name: "/alert-subscribes/add"
-      cname: Add Alert Subscription
-    - name: "/alert-subscribes/put"
-      cname: Modify Alert Subscription
-    - name: "/alert-subscribes/del"
-      cname: Delete Alert Subscription
-
-- name: alert-events  
-  cname: Alert Event Management
-  ops:
-    - name: "/alert-cur-events"
-      cname: View Current Alerts
-    - name: "/alert-cur-events/del"
-      cname: Delete Current Alert
-    - name: "/alert-his-events"
-      cname: View Historical Alerts
+    - name: /alert-rules
+      cname: Alerting Rule - View
+    - name: /alert-rules/add
+      cname: Alerting Rule - Add
+    - name: /alert-rules/put
+      cname: Alerting Rule - Modify
+    - name: /alert-rules/del
+      cname: Alerting Rule - Delete
+    - name: /alert-mutes
+      cname: Mutting Rule - View
+    - name: /alert-mutes/add
+      cname: Mutting Rule - Add
+    - name: /alert-mutes/put
+      cname: Mutting Rule - Modify
+    - name: /alert-mutes/del
+      cname: Mutting Rule - Delete
+    - name: /alert-subscribes
+      cname: Subscribing Rule - View
+    - name: /alert-subscribes/add
+      cname: Subscribing Rule - Add
+    - name: /alert-subscribes/put
+      cname: Subscribing Rule - Modify
+    - name: /alert-subscribes/del
+      cname: Subscribing Rule - Delete
+    - name: /alert-cur-events
+      cname: Active Event - View
+    - name: /alert-cur-events/del
+      cname: Active Event - Delete
+    - name: /alert-his-events
+      cname: Historical Event - View
 
 - name: notification
   cname: Alert Notification
@@ -239,25 +227,25 @@ ops:
 - name: Organization
   cname: Organization
   ops:
-    - name: "/users"
+    - name: /users
       cname: User - View
-    - name: "/user-groups"
+    - name: /user-groups
       cname: Team - View
-    - name: "/user-groups/add"
+    - name: /user-groups/add
       cname: Team - Add
-    - name: "/user-groups/put"
+    - name: /user-groups/put
       cname: Team - Modify
-    - name: "/user-groups/del"
+    - name: /user-groups/del
       cname: Team - Delete
-    - name: "/busi-groups"
+    - name: /busi-groups
       cname: Business Group - View
-    - name: "/busi-groups/add"
+    - name: /busi-groups/add
       cname: Business Group - Add
-    - name: "/busi-groups/put"
+    - name: /busi-groups/put
       cname: Business Group - Modify
-    - name: "/busi-groups/del"
+    - name: /busi-groups/del
       cname: Business Group - Delete
-    - name: "/roles"
+    - name: /roles
       cname: Role - View
     
 - name: contacts
