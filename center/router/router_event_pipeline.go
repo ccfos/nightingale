@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -127,40 +128,90 @@ func (rt *Router) deleteEventPipelines(c *gin.Context) {
 // 测试事件Pipeline
 func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	var f struct {
-		EventID        int64                `json:"event_id"`
+		EventId        int64                `json:"event_id"`
 		PipelineConfig models.EventPipeline `json:"pipeline_config"`
 	}
 	ginx.BindJSON(c, &f)
 
-	// 获取告警事件
-	event, err := models.AlertCurEventGetById(rt.Ctx, f.EventID)
-	if err != nil || event == nil {
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	if err != nil || hisEvent == nil {
 		ginx.Bomb(http.StatusBadRequest, "event not found")
 	}
+	event := hisEvent.ToCur()
 
-	// 在实际应用中，这里需要执行事件处理器并返回处理后的事件
-	// 模拟处理结果返回
+	for _, p := range f.PipelineConfig.Processors {
+		processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+		}
+		processor.Process(rt.Ctx, event)
+	}
+
 	ginx.NewRender(c).Data(event, nil)
 }
 
 // 测试事件处理器
 func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	var f struct {
-		EventID         int64 `json:"event_id"`
-		ProcessorConfig struct {
-			Type   string      `json:"type"`
-			Config interface{} `json:"config"`
-		} `json:"processor_config"`
+		EventId         int64            `json:"event_id"`
+		ProcessorConfig models.Processor `json:"processor_config"`
 	}
 	ginx.BindJSON(c, &f)
 
-	// 获取告警事件
-	event, err := models.AlertCurEventGetById(rt.Ctx, f.EventID)
-	if err != nil || event == nil {
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	if err != nil || hisEvent == nil {
 		ginx.Bomb(http.StatusBadRequest, "event not found")
 	}
+	event := hisEvent.ToCur()
 
-	// 在实际应用中，这里需要执行单个处理器并返回处理后的事件
-	// 模拟处理结果返回
+	processor, err := pipeline.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "processor type not found")
+	}
+	processor.Process(rt.Ctx, event)
+
 	ginx.NewRender(c).Data(event, nil)
+}
+
+func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
+	var f struct {
+		EventId         int64                   `json:"event_id"`
+		PipelineConfigs []models.PipelineConfig `json:"pipeline_configs"`
+	}
+	ginx.BindJSON(c, &f)
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	if err != nil || hisEvent == nil {
+		ginx.Bomb(http.StatusBadRequest, "event not found")
+	}
+	event := hisEvent.ToCur()
+
+	pids := make([]int64, 0)
+	for _, pc := range f.PipelineConfigs {
+		if pc.Enable {
+			pids = append(pids, pc.PipelineId)
+		}
+	}
+
+	pipelines, err := models.GetEventPipelinesByIds(rt.Ctx, pids)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "processors not found")
+	}
+
+	for _, pl := range pipelines {
+		for _, p := range pl.Processors {
+			processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+			}
+			processor.Process(rt.Ctx, event)
+		}
+	}
+
+	ginx.NewRender(c).Data(event, nil)
+}
+
+func (rt *Router) eventPipelinesListByService(c *gin.Context) {
+	pipelines, err := models.ListEventPipelines(rt.Ctx)
+	ginx.NewRender(c).Data(pipelines, err)
 }
