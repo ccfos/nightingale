@@ -38,6 +38,7 @@ func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) {
 
 func EventRelabel(event *models.AlertCurEvent, relabelConfigs []*pconf.RelabelConfig) {
 	labels := make([]prompb.Label, len(event.TagsJSON))
+	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
 	for i, tag := range event.TagsJSON {
 		label := strings.SplitN(tag, "=", 2)
 		event.OriginalTagsJSON[i] = tag
