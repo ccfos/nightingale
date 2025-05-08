@@ -297,9 +297,15 @@ func (rt *Router) alertDataSourcesList(c *gin.Context) {
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
-	dsIds, err := models.AlertCurEventDsIds(rt.Ctx, prods, bgids, stime, etime, severity,
-		cates, ruleId, query, gids)
+	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, []int64{},
+		cates, ruleId, query, 50000, 0, gids)
 	ginx.Dangerous(err)
+
+	dsIds := make([]int64, 0, len(list))
+
+	for i := 0; i < len(list); i++ {
+		dsIds = append(dsIds, list[i].DatasourceId)
+	}
 
 	dsList, err := models.GetDatasourceInfosByIds(rt.Ctx, dsIds)
 	ginx.Dangerous(err)
