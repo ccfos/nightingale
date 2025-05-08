@@ -177,6 +177,20 @@ ops:
       cname: Subscribing Rule - Modify
     - name: /alert-subscribes/del
       cname: Subscribing Rule - Delete
+    - name: /job-tpls
+      cname: Self-healing-Script - View
+    - name: /job-tpls/add
+      cname: Self-healing-Script - Add
+    - name: /job-tpls/put
+      cname: Self-healing-Script - Modify
+    - name: /job-tpls/del
+      cname: Self-healing-Script - Delete
+    - name: /job-tasks
+      cname: Self-healing-Job - View
+    - name: /job-tasks/add
+      cname: Self-healing-Job - Add
+    - name: /job-tasks/put
+      cname: Self-healing-Job - Modify
     - name: /alert-cur-events
       cname: Active Event - View
     - name: /alert-cur-events/del
@@ -191,24 +205,6 @@ ops:
       cname: View Notification Settings
     - name: "/help/notification-tpls"
       cname: View Notification Templates
-
-- name: job
-  cname: Task Management
-  ops:
-    - name: "/job-tpls"
-      cname: View Task Templates
-    - name: "/job-tpls/add"
-      cname: Add Task Template
-    - name: "/job-tpls/put"
-      cname: Modify Task Template
-    - name: "/job-tpls/del"
-      cname: Delete Task Template
-    - name: "/job-tasks"
-      cname: View Task Instances
-    - name: "/job-tasks/add"
-      cname: Add Task Instance
-    - name: "/job-tasks/put"
-      cname: Modify Task Instance
 
 - name: targets
   cname: Infrastructure
