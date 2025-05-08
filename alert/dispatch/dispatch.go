@@ -164,13 +164,18 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 					continue
 				}
 
-				processorConfig := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
-				if processorConfig == nil {
+				eventPipeline := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
+				if eventPipeline == nil {
 					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, event)
 					continue
 				}
 
-				for _, p := range processorConfig.Processors {
+				if !pipelineApplicable(eventPipeline, event) {
+					logger.Debugf("notify_id: %d, event:%+v, pipeline_id: %d, not applicable", notifyRuleId, event, pipelineConfig.PipelineId)
+					continue
+				}
+
+				for _, p := range eventPipeline.Processors {
 					processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
 					if err != nil {
 						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, event, p)
@@ -216,6 +221,45 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 			}
 		}
 	}
+}
+
+func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEvent) bool {
+	if pipeline == nil {
+		return true
+	}
+
+	if !pipeline.FilterEnable {
+		return true
+	}
+
+	tagMatch := true
+	if len(pipeline.LabelFilters) > 0 {
+		for i := range pipeline.LabelFilters {
+			if pipeline.LabelFilters[i].Func == "" {
+				pipeline.LabelFilters[i].Func = pipeline.LabelFilters[i].Op
+			}
+		}
+
+		tagFilters, err := models.ParseTagFilter(pipeline.LabelFilters)
+		if err != nil {
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v", err, event, pipeline)
+			return false
+		}
+		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	attributesMatch := true
+	if len(pipeline.AttrFilters) > 0 {
+		tagFilters, err := models.ParseTagFilter(pipeline.AttrFilters)
+		if err != nil {
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v err:%v", tagFilters, event, pipeline, err)
+			return false
+		}
+
+		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
+	}
+
+	return tagMatch && attributesMatch
 }
 
 func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
