@@ -301,12 +301,16 @@ func (rt *Router) alertDataSourcesList(c *gin.Context) {
 		cates, ruleId, query, 50000, 0, gids)
 	ginx.Dangerous(err)
 
-	dsIds := make([]int64, 0, len(list))
+	uniqueDsIds := make(map[int64]struct{})
 
 	for i := 0; i < len(list); i++ {
-		dsIds = append(dsIds, list[i].DatasourceId)
+		uniqueDsIds[list[i].DatasourceId] = struct{}{}
 	}
 
+	dsIds := make([]int64, 0, len(uniqueDsIds))
+	for id := range uniqueDsIds {
+		dsIds = append(dsIds, id)
+	}
 	dsList, err := models.GetDatasourceInfosByIds(rt.Ctx, dsIds)
 	ginx.Dangerous(err)
 
