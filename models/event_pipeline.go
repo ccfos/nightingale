@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -25,7 +26,6 @@ type EventPipeline struct {
 	UpdateBy     string      `json:"update_by" gorm:"type:varchar(64)"`
 }
 
-// Processor 处理器配置
 type Processor struct {
 	Typ    string      `json:"typ"`
 	Config interface{} `json:"config"`
@@ -76,6 +76,12 @@ func GetEventPipeline(ctx *ctx.Context, id int64) (*EventPipeline, error) {
 	}
 	pipeline.DB2FE()
 	return &pipeline, nil
+}
+
+func GetEventPipelinesByIds(ctx *ctx.Context, ids []int64) ([]*EventPipeline, error) {
+	var pipelines []*EventPipeline
+	err := DB(ctx).Where("id in ?", ids).Find(&pipelines).Error
+	return pipelines, err
 }
 
 // UpdateEventPipeline 更新事件Pipeline
@@ -148,4 +154,25 @@ func (e *EventPipeline) FillTeamNames(ctx *ctx.Context) error {
 	}
 
 	return nil
+}
+
+func EventPipelineStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=event_pipeline")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&EventPipeline{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(stats) == 0 {
+		return nil, fmt.Errorf("no event pipeline found")
+	}
+
+	return stats[0], nil
 }

@@ -36,7 +36,7 @@ func RegisterProcessor(typ string, p Processor) {
 }
 
 // GetProcessorByType 根据类型获取处理器实例
-func GetProcessorByType(typ string, settings map[string]interface{}) (Processor, error) {
+func GetProcessorByType(typ string, settings interface{}) (Processor, error) {
 	typ = strings.TrimSpace(typ)
 	fn, found := processorRegister[typ]
 	if !found {
