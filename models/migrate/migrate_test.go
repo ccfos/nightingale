@@ -35,11 +35,6 @@ func TestInsertPermPoints(t *testing.T) {
 	})
 
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/permissions",
-	})
-
-	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
 		Operation: "/ibex-settings",
 	})

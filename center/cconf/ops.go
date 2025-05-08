@@ -236,37 +236,29 @@ ops:
     - name: "/targets/bind"
       cname: Bind Object
 
-- name: user
-  cname: User Management
+- name: Organization
+  cname: Organization
   ops:
     - name: "/users"
-      cname: View User List
+      cname: User - View
     - name: "/user-groups"
-      cname: View User Groups
+      cname: Team - View
     - name: "/user-groups/add"
-      cname: Add User Group
+      cname: Team - Add
     - name: "/user-groups/put"
-      cname: Modify User Group
+      cname: Team - Modify
     - name: "/user-groups/del"
-      cname: Delete User Group
-
-- name: busi-groups
-  cname: Business Group Management
-  ops:
+      cname: Team - Delete
     - name: "/busi-groups"
-      cname: View Business Groups
+      cname: Business Group - View
     - name: "/busi-groups/add"
-      cname: Add Business Group
+      cname: Business Group - Add
     - name: "/busi-groups/put"
-      cname: Modify Business Group
+      cname: Business Group - Modify
     - name: "/busi-groups/del"
-      cname: Delete Business Group
-
-- name: permissions
-  cname: Permission Management
-  ops:
-    - name: "/permissions"
-      cname: View Permission Settings
+      cname: Business Group - Delete
+    - name: "/roles"
+      cname: Role - View
     
 - name: contacts
   cname: User Contact Management
