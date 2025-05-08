@@ -415,6 +415,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 		pages.GET("/alert-cur-events/stats", rt.auth(), rt.alertCurEventsStatistics)
+		pages.GET("/alert-cur-events-datasources", rt.auth(), rt.user(), rt.alertDataSourcesList)
 
 		pages.GET("/alert-aggr-views", rt.auth(), rt.alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewDel)

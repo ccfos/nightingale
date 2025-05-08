@@ -288,7 +288,19 @@ func (e *AlertCurEvent) ParseURL(url string) (string, error) {
 	return body.String(), nil
 }
 
-func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
+func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule, format string) (string, error) {
+	if format != "" {
+		tmpl, err := template.New("card_title").Parse(format)
+		if err != nil {
+			return "", err
+		}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, e); err != nil {
+			return "", err
+		}
+		return buf.String(), nil
+	}
+
 	arr := make([]string, len(rules))
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
@@ -305,7 +317,7 @@ func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule) string {
 			arr[i] = "Null"
 		}
 	}
-	return strings.Join(arr, "::")
+	return strings.Join(arr, "::"), nil
 }
 
 func (e *AlertCurEvent) GetTagValue(tagkey string) string {
@@ -525,7 +537,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 }
 
 func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
-	severity int, dsIds []int64, cates []string, ruleId int64, query string) (int64, error) {
+	severity int, dsIds []int64, cates []string, ruleId int64, query string, myGroups []int64) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
@@ -552,6 +564,10 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 
 	if ruleId > 0 {
 		session = session.Where("rule_id = ?", ruleId)
+	}
+
+	if len(myGroups) > 0 {
+		session = session.Where("group_id in ?", myGroups)
 	}
 
 	if query != "" {
@@ -566,9 +582,10 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgids []int64, stime, 
 }
 
 func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
-	severity int, dsIds []int64, cates []string, ruleId int64, query string, limit, offset int) (
+	severity int, dsIds []int64, cates []string, ruleId int64, query string, limit, offset int, myGroups []int64) (
 	[]AlertCurEvent, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
+
 	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
 	}
@@ -595,7 +612,9 @@ func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 	if ruleId > 0 {
 		session = session.Where("rule_id = ?", ruleId)
 	}
-
+	if len(myGroups) > 0 {
+		session = session.Where("group_id in ?", myGroups)
+	}
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
