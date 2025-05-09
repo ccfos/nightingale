@@ -41,30 +41,30 @@ type AlertCurEvent struct {
 	CallbacksJSON      []string            `json:"callbacks" gorm:"-"` // for fe
 	RunbookUrl         string              `json:"runbook_url"`
 	NotifyRecovered    int                 `json:"notify_recovered"`
-	NotifyChannels     string              `json:"-"`                          // for db
-	NotifyChannelsJSON []string            `json:"notify_channels" gorm:"-"`   // for fe
-	NotifyGroups       string              `json:"-"`                          // for db
-	NotifyGroupsJSON   []string            `json:"notify_groups" gorm:"-"`     // for fe
-	NotifyGroupsObj    []*UserGroup        `json:"notify_groups_obj" gorm:"-"` // for fe
+	NotifyChannels     string              `json:"-"`                                    // for db
+	NotifyChannelsJSON []string            `json:"notify_channels,omitempty" gorm:"-"`   // for fe
+	NotifyGroups       string              `json:"-"`                                    // for db
+	NotifyGroupsJSON   []string            `json:"notify_groups,omitempty" gorm:"-"`     // for fe
+	NotifyGroupsObj    []*UserGroup        `json:"notify_groups_obj,omitempty" gorm:"-"` // for fe
 	TargetIdent        string              `json:"target_ident"`
 	TargetNote         string              `json:"target_note"`
 	TriggerTime        int64               `json:"trigger_time"`
 	TriggerValue       string              `json:"trigger_value"`
 	TriggerValues      string              `json:"trigger_values" gorm:"-"`
 	TriggerValuesJson  EventTriggerValues  `json:"trigger_values_json" gorm:"-"`
-	Tags               string              `json:"-"`                         // for db
-	TagsJSON           []string            `json:"tags" gorm:"-"`             // for fe
-	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`         // for internal usage
-	OriginalTags       string              `json:"-"`                         // for db
-	OriginalTagsJSON   []string            `json:"original_tags" gorm:"-"`    // for fe
-	Annotations        string              `json:"-"`                         //
-	AnnotationsJSON    map[string]string   `json:"annotations" gorm:"-"`      // for fe
-	IsRecovered        bool                `json:"is_recovered" gorm:"-"`     // for notify.py
-	NotifyUsersObj     []*User             `json:"notify_users_obj" gorm:"-"` // for notify.py
-	LastEvalTime       int64               `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
-	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`   // 上次发送时间
-	NotifyCurNumber    int                 `json:"notify_cur_number"`         // notify: current number
-	FirstTriggerTime   int64               `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	Tags               string              `json:"-"`                                   // for db
+	TagsJSON           []string            `json:"tags" gorm:"-"`                       // for fe
+	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`                   // for internal usage
+	OriginalTags       string              `json:"-"`                                   // for db
+	OriginalTagsJSON   []string            `json:"original_tags" gorm:"-"`              // for fe
+	Annotations        string              `json:"-"`                                   //
+	AnnotationsJSON    map[string]string   `json:"annotations" gorm:"-"`                // for fe
+	IsRecovered        bool                `json:"is_recovered" gorm:"-"`               // for notify.py
+	NotifyUsersObj     []*User             `json:"notify_users_obj,omitempty" gorm:"-"` // for notify.py
+	LastEvalTime       int64               `json:"last_eval_time" gorm:"-"`             // for notify.py 上次计算的时间
+	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`             // 上次发送时间
+	NotifyCurNumber    int                 `json:"notify_cur_number"`                   // notify: current number
+	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`
 	Claimant           string              `json:"claimant" gorm:"-"`
@@ -868,4 +868,101 @@ func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) map[string]inter
 	}
 
 	return res
+}
+
+func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
+	eventCopy := *e
+
+	// 复制指针字段
+	if e.NotifyGroupsObj != nil {
+		eventCopy.NotifyGroupsObj = make([]*UserGroup, len(e.NotifyGroupsObj))
+		for i, group := range e.NotifyGroupsObj {
+			if group != nil {
+				groupCopy := *group
+				eventCopy.NotifyGroupsObj[i] = &groupCopy
+			}
+		}
+	}
+
+	if e.NotifyUsersObj != nil {
+		eventCopy.NotifyUsersObj = make([]*User, len(e.NotifyUsersObj))
+		for i, user := range e.NotifyUsersObj {
+			if user != nil {
+				userCopy := *user
+				eventCopy.NotifyUsersObj[i] = &userCopy
+			}
+		}
+	}
+
+	if e.Target != nil {
+		targetCopy := *e.Target
+		eventCopy.Target = &targetCopy
+	}
+
+	// 复制切片字段
+	if e.CallbacksJSON != nil {
+		eventCopy.CallbacksJSON = make([]string, len(e.CallbacksJSON))
+		copy(eventCopy.CallbacksJSON, e.CallbacksJSON)
+	}
+
+	if e.NotifyChannelsJSON != nil {
+		eventCopy.NotifyChannelsJSON = make([]string, len(e.NotifyChannelsJSON))
+		copy(eventCopy.NotifyChannelsJSON, e.NotifyChannelsJSON)
+	}
+
+	if e.NotifyGroupsJSON != nil {
+		eventCopy.NotifyGroupsJSON = make([]string, len(e.NotifyGroupsJSON))
+		copy(eventCopy.NotifyGroupsJSON, e.NotifyGroupsJSON)
+	}
+
+	if e.TagsJSON != nil {
+		eventCopy.TagsJSON = make([]string, len(e.TagsJSON))
+		copy(eventCopy.TagsJSON, e.TagsJSON)
+	}
+
+	if e.TagsMap != nil {
+		eventCopy.TagsMap = make(map[string]string, len(e.TagsMap))
+		for k, v := range e.TagsMap {
+			eventCopy.TagsMap[k] = v
+		}
+	}
+
+	if e.OriginalTagsJSON != nil {
+		eventCopy.OriginalTagsJSON = make([]string, len(e.OriginalTagsJSON))
+		copy(eventCopy.OriginalTagsJSON, e.OriginalTagsJSON)
+	}
+
+	if e.AnnotationsJSON != nil {
+		eventCopy.AnnotationsJSON = make(map[string]string, len(e.AnnotationsJSON))
+		for k, v := range e.AnnotationsJSON {
+			eventCopy.AnnotationsJSON[k] = v
+		}
+	}
+
+	if e.ExtraInfo != nil {
+		eventCopy.ExtraInfo = make([]string, len(e.ExtraInfo))
+		copy(eventCopy.ExtraInfo, e.ExtraInfo)
+	}
+
+	if e.ExtraInfoMap != nil {
+		eventCopy.ExtraInfoMap = make([]map[string]string, len(e.ExtraInfoMap))
+		for i, m := range e.ExtraInfoMap {
+			if m != nil {
+				eventCopy.ExtraInfoMap[i] = make(map[string]string, len(m))
+				for k, v := range m {
+					eventCopy.ExtraInfoMap[i][k] = v
+				}
+			}
+		}
+	}
+
+	if e.NotifyRuleIDs != nil {
+		eventCopy.NotifyRuleIDs = make([]int64, len(e.NotifyRuleIDs))
+		copy(eventCopy.NotifyRuleIDs, e.NotifyRuleIDs)
+	}
+
+	eventCopy.RuleConfigJson = e.RuleConfigJson
+	eventCopy.ExtraConfig = e.ExtraConfig
+
+	return &eventCopy
 }

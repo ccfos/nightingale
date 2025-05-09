@@ -144,7 +144,7 @@ func (e *Dispatch) reloadTpls() error {
 	return nil
 }
 
-func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubscribe bool) {
+func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent) {
 
 	if len(event.NotifyRuleIDs) > 0 {
 		for _, notifyRuleId := range event.NotifyRuleIDs {
@@ -528,8 +528,9 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		notifyTarget.AndMerge(handler(rule, event, notifyTarget, e))
 	}
 
-	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
-	go e.HandleEventWithNotifyRule(event, isSubscribe)
+	// 深拷贝新的 event，避免并发修改 event 冲突
+	eventCopy := event.DeepCopy()
+	go e.HandleEventWithNotifyRule(eventCopy)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
