@@ -1,0 +1,26 @@
+package json
+
+import (
+	jsoniter "github.com/json-iterator/go"
+	"math"
+	"unsafe"
+)
+
+func init() {
+	// 为了处理prom数据中的NaN值
+	jsoniter.RegisterTypeEncoderFunc("float64", func(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+		f := *(*float64)(ptr)
+		if math.IsNaN(f) {
+			stream.WriteFloat64(0)
+		} else {
+			stream.WriteFloat64(f)
+		}
+	}, func(ptr unsafe.Pointer) bool {
+		return true
+	})
+}
+
+func MarshalWithCustomFloat(items interface{}) ([]byte, error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	return json.Marshal(items)
+}
