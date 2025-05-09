@@ -1,9 +1,10 @@
 package json
 
 import (
-	jsoniter "github.com/json-iterator/go"
 	"math"
 	"unsafe"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 func init() {
