@@ -869,3 +869,100 @@ func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) map[string]inter
 
 	return res
 }
+
+func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
+	eventCopy := *e
+
+	// 复制指针字段
+	if e.NotifyGroupsObj != nil {
+		eventCopy.NotifyGroupsObj = make([]*UserGroup, len(e.NotifyGroupsObj))
+		for i, group := range e.NotifyGroupsObj {
+			if group != nil {
+				groupCopy := *group
+				eventCopy.NotifyGroupsObj[i] = &groupCopy
+			}
+		}
+	}
+
+	if e.NotifyUsersObj != nil {
+		eventCopy.NotifyUsersObj = make([]*User, len(e.NotifyUsersObj))
+		for i, user := range e.NotifyUsersObj {
+			if user != nil {
+				userCopy := *user
+				eventCopy.NotifyUsersObj[i] = &userCopy
+			}
+		}
+	}
+
+	if e.Target != nil {
+		targetCopy := *e.Target
+		eventCopy.Target = &targetCopy
+	}
+
+	// 复制切片字段
+	if e.CallbacksJSON != nil {
+		eventCopy.CallbacksJSON = make([]string, len(e.CallbacksJSON))
+		copy(eventCopy.CallbacksJSON, e.CallbacksJSON)
+	}
+
+	if e.NotifyChannelsJSON != nil {
+		eventCopy.NotifyChannelsJSON = make([]string, len(e.NotifyChannelsJSON))
+		copy(eventCopy.NotifyChannelsJSON, e.NotifyChannelsJSON)
+	}
+
+	if e.NotifyGroupsJSON != nil {
+		eventCopy.NotifyGroupsJSON = make([]string, len(e.NotifyGroupsJSON))
+		copy(eventCopy.NotifyGroupsJSON, e.NotifyGroupsJSON)
+	}
+
+	if e.TagsJSON != nil {
+		eventCopy.TagsJSON = make([]string, len(e.TagsJSON))
+		copy(eventCopy.TagsJSON, e.TagsJSON)
+	}
+
+	if e.TagsMap != nil {
+		eventCopy.TagsMap = make(map[string]string, len(e.TagsMap))
+		for k, v := range e.TagsMap {
+			eventCopy.TagsMap[k] = v
+		}
+	}
+
+	if e.OriginalTagsJSON != nil {
+		eventCopy.OriginalTagsJSON = make([]string, len(e.OriginalTagsJSON))
+		copy(eventCopy.OriginalTagsJSON, e.OriginalTagsJSON)
+	}
+
+	if e.AnnotationsJSON != nil {
+		eventCopy.AnnotationsJSON = make(map[string]string, len(e.AnnotationsJSON))
+		for k, v := range e.AnnotationsJSON {
+			eventCopy.AnnotationsJSON[k] = v
+		}
+	}
+
+	if e.ExtraInfo != nil {
+		eventCopy.ExtraInfo = make([]string, len(e.ExtraInfo))
+		copy(eventCopy.ExtraInfo, e.ExtraInfo)
+	}
+
+	if e.ExtraInfoMap != nil {
+		eventCopy.ExtraInfoMap = make([]map[string]string, len(e.ExtraInfoMap))
+		for i, m := range e.ExtraInfoMap {
+			if m != nil {
+				eventCopy.ExtraInfoMap[i] = make(map[string]string, len(m))
+				for k, v := range m {
+					eventCopy.ExtraInfoMap[i][k] = v
+				}
+			}
+		}
+	}
+
+	if e.NotifyRuleIDs != nil {
+		eventCopy.NotifyRuleIDs = make([]int64, len(e.NotifyRuleIDs))
+		copy(eventCopy.NotifyRuleIDs, e.NotifyRuleIDs)
+	}
+
+	eventCopy.RuleConfigJson = e.RuleConfigJson
+	eventCopy.ExtraConfig = e.ExtraConfig
+
+	return &eventCopy
+}
