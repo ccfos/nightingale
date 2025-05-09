@@ -57,8 +57,11 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	var err error
 	if len(bgids) > 0 {
-		for _, gid := range bgids {
-			rt.bgroCheck(c, gid)
+		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
+		if !(len(bgids) == 1 && bgids[0] == 0) {
+			for _, gid := range bgids {
+				rt.bgroCheck(c, gid)
+			}
 		}
 	} else {
 		user := c.MustGet("user").(*models.User)
