@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"math"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -33,6 +34,14 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
 	}()
 
+	// 过滤NaN的数据
+	items = filterNaNSamples(items)
+
+	// 如果过滤后没有有效数据，直接返回
+	if len(items) == 0 {
+		return
+	}
+
 	data, err := beforeWrite(key, items, w.ForceUseServerTS, "json")
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
@@ -56,4 +65,21 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 
 		time.Sleep(time.Duration(w.RetryInterval) * time.Second)
 	}
+}
+
+func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
+	filtered := make([]prompb.TimeSeries, 0, len(items))
+	for _, ts := range items {
+		validSamples := ts.Samples[:0]
+		for _, sample := range ts.Samples {
+			if !math.IsNaN(sample.Value) {
+				validSamples = append(validSamples, sample)
+			}
+		}
+		if len(validSamples) > 0 {
+			ts.Samples = validSamples
+			filtered = append(filtered, ts)
+		}
+	}
+	return filtered
 }
