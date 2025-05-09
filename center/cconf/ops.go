@@ -97,23 +97,19 @@ ops:
     - name: /targets/bind
       cname: Host - Bind Uncategorized
 
-- name: dashboards
-  cname: Dashboards
+- name: Explorer
+  cname: Explorer
   ops:
-    - name: "/dashboards"
-      cname: View Dashboards
-    - name: "/dashboards/add"
-      cname: Add Dashboard
-    - name: "/dashboards/put"
-      cname: Modify Dashboard
-    - name: "/dashboards/del"
-      cname: Delete Dashboard
-    - name: "/embedded-dashboards/put"
-      cname: Modify Embedded Dashboard
-    - name: "/embedded-dashboards"
-      cname: View Embedded Dashboard
-    - name: "/public-dashboards"
-      cname: View Public Dashboard
+    - name: /dashboards
+      cname: Dashboard - View
+    - name: /dashboards/add
+      cname: Dashboard - Add
+    - name: /dashboards/put
+      cname: Dashboard - Modify
+    - name: /dashboards/del
+      cname: Dashboard - Delete
+    - name: /public-dashboards
+      cname: Dashboard - View Public
 
 - name: metric
   cname: Time Series Metrics
