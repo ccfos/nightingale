@@ -41,30 +41,30 @@ type AlertCurEvent struct {
 	CallbacksJSON      []string            `json:"callbacks" gorm:"-"` // for fe
 	RunbookUrl         string              `json:"runbook_url"`
 	NotifyRecovered    int                 `json:"notify_recovered"`
-	NotifyChannels     string              `json:"-"`                          // for db
-	NotifyChannelsJSON []string            `json:"notify_channels" gorm:"-"`   // for fe
-	NotifyGroups       string              `json:"-"`                          // for db
-	NotifyGroupsJSON   []string            `json:"notify_groups" gorm:"-"`     // for fe
-	NotifyGroupsObj    []*UserGroup        `json:"notify_groups_obj" gorm:"-"` // for fe
+	NotifyChannels     string              `json:"-"`                                    // for db
+	NotifyChannelsJSON []string            `json:"notify_channels,omitempty" gorm:"-"`   // for fe
+	NotifyGroups       string              `json:"-"`                                    // for db
+	NotifyGroupsJSON   []string            `json:"notify_groups,omitempty" gorm:"-"`     // for fe
+	NotifyGroupsObj    []*UserGroup        `json:"notify_groups_obj,omitempty" gorm:"-"` // for fe
 	TargetIdent        string              `json:"target_ident"`
 	TargetNote         string              `json:"target_note"`
 	TriggerTime        int64               `json:"trigger_time"`
 	TriggerValue       string              `json:"trigger_value"`
 	TriggerValues      string              `json:"trigger_values" gorm:"-"`
 	TriggerValuesJson  EventTriggerValues  `json:"trigger_values_json" gorm:"-"`
-	Tags               string              `json:"-"`                         // for db
-	TagsJSON           []string            `json:"tags" gorm:"-"`             // for fe
-	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`         // for internal usage
-	OriginalTags       string              `json:"-"`                         // for db
-	OriginalTagsJSON   []string            `json:"original_tags" gorm:"-"`    // for fe
-	Annotations        string              `json:"-"`                         //
-	AnnotationsJSON    map[string]string   `json:"annotations" gorm:"-"`      // for fe
-	IsRecovered        bool                `json:"is_recovered" gorm:"-"`     // for notify.py
-	NotifyUsersObj     []*User             `json:"notify_users_obj" gorm:"-"` // for notify.py
-	LastEvalTime       int64               `json:"last_eval_time" gorm:"-"`   // for notify.py 上次计算的时间
-	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`   // 上次发送时间
-	NotifyCurNumber    int                 `json:"notify_cur_number"`         // notify: current number
-	FirstTriggerTime   int64               `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	Tags               string              `json:"-"`                                   // for db
+	TagsJSON           []string            `json:"tags" gorm:"-"`                       // for fe
+	TagsMap            map[string]string   `json:"tags_map" gorm:"-"`                   // for internal usage
+	OriginalTags       string              `json:"-"`                                   // for db
+	OriginalTagsJSON   []string            `json:"original_tags" gorm:"-"`              // for fe
+	Annotations        string              `json:"-"`                                   //
+	AnnotationsJSON    map[string]string   `json:"annotations" gorm:"-"`                // for fe
+	IsRecovered        bool                `json:"is_recovered" gorm:"-"`               // for notify.py
+	NotifyUsersObj     []*User             `json:"notify_users_obj,omitempty" gorm:"-"` // for notify.py
+	LastEvalTime       int64               `json:"last_eval_time" gorm:"-"`             // for notify.py 上次计算的时间
+	LastSentTime       int64               `json:"last_sent_time" gorm:"-"`             // 上次发送时间
+	NotifyCurNumber    int                 `json:"notify_cur_number"`                   // notify: current number
+	FirstTriggerTime   int64               `json:"first_trigger_time"`                  // 连续告警的首次告警时间
 	ExtraConfig        interface{}         `json:"extra_config" gorm:"-"`
 	Status             int                 `json:"status" gorm:"-"`
 	Claimant           string              `json:"claimant" gorm:"-"`
