@@ -151,7 +151,7 @@ var I18N = `{
     "View Variable Settings": "查看变量配置",
     "View SSO Settings": "查看单点登录配置",
     "View Alerting Engines": "查看告警引擎列表",
-    "View Product Version": "查看关于产品",
+    "View Product Version": "查看产品版本",
 
     "---------zh_CN--------": "---------zh_CN--------"
   },
@@ -308,7 +308,7 @@ var I18N = `{
     "View Variable Settings": "查看變量配置",
     "View SSO Settings": "查看單點登錄配置",
     "View Alerting Engines": "查看告警引擎列表",
-    "View Product Version": "查看關於產品",
+    "View Product Version": "查看產品版本",
 
     "---------zh_HK--------": "---------zh_HK--------"
   },
@@ -462,7 +462,7 @@ var I18N = `{
     "View Variable Settings": "変数設定の表示",
     "View SSO Settings": "シングルサインオン設定の表示",
     "View Alerting Engines": "アラートエンジンの表示",
-    "View Product Version": "製品バージョンの表示",
+    "View Product Version": "製品のバージョンを見る",
 
     "---------ja_JP--------": "---------ja_JP--------"
   }
