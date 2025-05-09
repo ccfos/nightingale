@@ -229,6 +229,20 @@ ops:
     - name: /help/notification-tpls # 用于控制老版本的通知模板菜单是否展示
       cname: Notification Templates - View
 
+- name: Integrations
+  cname: Integrations
+  ops:
+    - name: /help/source # 用于控制能否看到数据源列表页面的菜单。只有 Admin 才能修改、删除数据源，这个 urlpath 后面得改成 /datasources
+      cname: Data Source - View
+    - name: /components
+      cname: Component - View
+    - name: /built-in-components/add
+      cname: Component - Add
+    - name: /built-in-components/put
+      cname: Component - Modify
+    - name: /built-in-components/del
+      cname: Component - Delete
+
 - name: Organization
   cname: Organization
   ops:
@@ -252,24 +266,6 @@ ops:
       cname: Business Group - Delete
     - name: /roles
       cname: Role - View
-
-- name: built-in-components
-  cname: Template Center
-  ops:
-    - name: "/built-in-components"
-      cname: View Built-in Components
-    - name: "/built-in-components/add"
-      cname: Add Built-in Component
-    - name: "/built-in-components/put"
-      cname: Modify Built-in Component
-    - name: "/built-in-components/del"
-      cname: Delete Built-in Component
-
-- name: datasource
-  cname: Data Source Management
-  ops:
-    - name: "/help/source"
-      cname: View Data Source Configuration
 
 - name: system
   cname: System Information

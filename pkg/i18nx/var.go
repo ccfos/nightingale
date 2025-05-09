@@ -123,6 +123,13 @@ var I18N = `{
     "Notification Settings - View": "老版本通知设置 - 查看",
     "Notification Templates - View": "老版本消息模板 - 查看",
 
+    "Integrations": "集成中心",
+    "Data Source - View": "数据源 - 查看",
+    "Component - View": "组件 - 查看",
+    "Component - Add": "组件 - 新增",
+    "Component - Modify": "组件 - 修改",
+    "Component - Delete": "组件 - 删除",
+
     "Organization": "人员组织",
     "User - View": "用户 - 查看",
     "Team - View": "团队 - 查看",
@@ -135,13 +142,6 @@ var I18N = `{
     "Business Group - Delete": "业务组 - 删除",
     "Role - View": "角色 - 查看",
 
-    "Template Center": "模板中心",
-    "View Built-in Components": "查看内置模板",
-    "Add Built-in Component": "添加内置模板",
-    "Modify Built-in Component": "修改内置模板",
-    "Delete Built-in Component": "删除内置模板",
-    "Data Source Management": "数据源管理",
-    "View Data Source Configuration": "数据源管理",
     "System Information": "系统配置",
     "View Variable Configuration": "变量配置管理",
     "View Version Information": "查看关于产品",
@@ -149,7 +149,6 @@ var I18N = `{
     "View SSO Configuration": "单点登录管理",
     "View Migration Configuration": "查看迁移配置",
     "View Site Settings": "查看站点设置",
-  
     "Integrated Instrument Dashboard": "集成仪表盘",
     "View Embedded Product": "查看集成仪表盘",
     "Add Embedded Product": "添加集成仪表盘",
@@ -282,6 +281,13 @@ var I18N = `{
     "Notification Settings - View": "老版本通知设置 - 查看",
     "Notification Templates - View": "老版本訊息範本 - 查看",
 
+    "Integrations": "集成中心",
+    "Data Source - View": "資料源 - 查看",
+    "Component - View": "組件 - 查看",
+    "Component - Add": "組件 - 新增",
+    "Component - Modify": "組件 - 修改",
+    "Component - Delete": "組件 - 刪除",
+
     "Organization": "人員組織",
     "User - View": "用戶 - 查看",
     "Team - View": "團隊 - 查看",
@@ -294,13 +300,6 @@ var I18N = `{
     "Business Group - Delete": "業務組 - 删除",
     "Role - View": "角色 - 查看",
 
-    "Template Center": "模板中心",
-    "View Built-in Components": "查看內置模板",
-    "Add Built-in Component": "添加內置模板",
-    "Modify Built-in Component": "修改內置模板",
-    "Delete Built-in Component": "刪除內置模板",
-    "Data Source Management": "數據源管理",
-    "View Data Source Configuration": "數據源管理",
     "System Information": "系統配置",
     "View Variable Configuration": "變量配置管理",
     "View Version Information": "查看關於產品",
@@ -308,7 +307,6 @@ var I18N = `{
     "View SSO Configuration": "單點登錄管理",
     "View Migration Configuration": "查看遷移配置",
     "View Site Settings": "查看站點設置",
-    
     "Integrated Instrument Dashboard": "集成儀表板",
     "View Embedded Product": "查看集成儀表板",
     "Add Embedded Product": "新增集成儀表板",
@@ -437,6 +435,13 @@ var I18N = `{
     "Notification Settings - View": "旧バージョンの通知設定 - 閲覧",
     "Notification Templates - View": "旧バージョンのメッセージテンプレート - 閲覧",
 
+    "Integrations": "統合センター",
+    "Data Source - View": "データソース - 閲覧",
+    "Component - View": "コンポーネント - 閲覧",
+    "Component - Add": "コンポーネント - 追加",
+    "Component - Modify": "コンポーネント - 修正",
+    "Component - Delete": "コンポーネント - 削除",
+
     "Organization": "組織",
     "User - View": "ユーザー - 閲覧",
     "Team - View": "チーム - 閲覧",
@@ -449,13 +454,6 @@ var I18N = `{
     "Business Group - Delete": "業務グループ - 削除",
     "Role - View": "役割 - 閲覧",
 
-    "Template Center": "テンプレートセンター",
-    "View Built-in Components": "内蔵テンプレートの表示",
-    "Add Built-in Component": "内蔵テンプレートの追加",
-    "Modify Built-in Component": "内蔵テンプレートの修正",
-    "Delete Built-in Component": "内蔵テンプレートの削除",
-    "Data Source Management": "データソース管理",
-    "View Data Source Configuration": "データソース管理",
     "System Information": "システム設定",
     "View Variable Configuration": "変数設定管理",
     "View Version Information": "製品情報",
@@ -463,7 +461,6 @@ var I18N = `{
     "View SSO Configuration": "シングルサインオン管理",
     "View Migration Configuration": "移行設定の表示",
     "View Site Settings": "サイト設定の表示",
-   
     "Integrated Instrument Dashboard": "統合ダッシュボード",
     "View Embedded Product": "統合ダッシュボードを表示",
     "Add Embedded Product": "統合ダッシュボードを追加",
