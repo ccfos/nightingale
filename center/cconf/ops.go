@@ -100,6 +100,36 @@ ops:
 - name: Explorer
   cname: Explorer
   ops:
+    - name: /metric/explorer
+      cname: Metrics Explorer
+    - name: /object/explorer
+      cname: Quick View
+    - name: /metrics-built-in
+      cname: Built-in Metric - View
+    - name: /builtin-metrics/add
+      cname: Built-in Metric - Add
+    - name: /builtin-metrics/put
+      cname: Built-in Metric - Modify
+    - name: /builtin-metrics/del
+      cname: Built-in Metric - Delete
+    - name: /recording-rules
+      cname: Recording Rule - View
+    - name: /recording-rules/add
+      cname: Recording Rule - Add
+    - name: /recording-rules/put
+      cname: Recording Rule - Modify
+    - name: /recording-rules/del
+      cname: Recording Rule - Delete
+    - name: /log/explorer
+      cname: Logs Explorer
+    - name: /log/index-patterns
+      cname: Index Pattern - View
+    - name: /log/index-patterns/add
+      cname: Index Pattern - Add
+    - name: /log/index-patterns/put
+      cname: Index Pattern - Modify
+    - name: /log/index-patterns/del
+      cname: Index Pattern - Delete
     - name: /dashboards
       cname: Dashboard - View
     - name: /dashboards/add
@@ -110,53 +140,6 @@ ops:
       cname: Dashboard - Delete
     - name: /public-dashboards
       cname: Dashboard - View Public
-
-- name: metric
-  cname: Time Series Metrics
-  ops:
-    - name: "/metric/explorer"
-      cname: View Metric Data
-    - name: "/object/explorer"
-      cname: View Object Data
-
-- name: builtin-metrics
-  cname: Metric Views
-  ops:
-    - name: "/metrics-built-in"
-      cname: View Built-in Metrics
-    - name: "/builtin-metrics/add"
-      cname: Add Built-in Metric
-    - name: "/builtin-metrics/put"
-      cname: Modify Built-in Metric
-    - name: "/builtin-metrics/del"
-      cname: Delete Built-in Metric
-
-- name: recording-rules
-  cname: Recording Rule Management
-  ops:
-    - name: "/recording-rules"
-      cname: View Recording Rules
-    - name: "/recording-rules/add"
-      cname: Add Recording Rule
-    - name: "/recording-rules/put"
-      cname: Modify Recording Rule
-    - name: "/recording-rules/del"
-      cname: Delete Recording Rule
-
-- name: log
-  cname: Log Analysis
-  ops:
-    - name: "/log/explorer"
-      cname: View Logs
-    - name: "/log/index-patterns"
-      cname: View Index Patterns
-    - name: "/log/index-patterns/add"
-      cname: Add Index Pattern
-    - name: "/log/index-patterns/put"
-      cname: Modify Index Pattern
-    - name: "/log/index-patterns/del"
-      cname: Delete Index Pattern
-
 
 - name: alerting
   cname: Alerting
