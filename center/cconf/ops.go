@@ -85,6 +85,18 @@ func MergeOperationConf() error {
 const (
 	builtInOps = `
 ops:
+- name: Infrastructure
+  cname: Infrastructure
+  ops:
+    - name: /targets
+      cname: Host - View
+    - name: /targets/put
+      cname: Host - Modify
+    - name: /targets/del
+      cname: Host - Delete
+    - name: /targets/bind
+      cname: Host - Bind Uncategorized
+
 - name: dashboards
   cname: Dashboards
   ops:
@@ -205,20 +217,6 @@ ops:
       cname: View Notification Settings
     - name: "/help/notification-tpls"
       cname: View Notification Templates
-
-- name: targets
-  cname: Infrastructure
-  ops:
-    - name: "/targets"
-      cname: View Objects
-    - name: "/targets/add"
-      cname: Add Object
-    - name: "/targets/put"
-      cname: Modify Object
-    - name: "/targets/del"
-      cname: Delete Object
-    - name: "/targets/bind"
-      cname: Bind Object
 
 - name: Organization
   cname: Organization
