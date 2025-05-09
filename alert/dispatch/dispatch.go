@@ -529,14 +529,9 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	}
 
 	// 深拷贝新的 event，避免并发修改 event 冲突
-	jsonData, _ := json.Marshal(event)
-	var eventCopy1 models.AlertCurEvent
-	var eventCopy2 models.AlertCurEvent
-	json.Unmarshal(jsonData, &eventCopy1)
-	json.Unmarshal(jsonData, &eventCopy2)
-
-	go e.HandleEventWithNotifyRule(&eventCopy1)
-	go e.Send(rule, &eventCopy2, notifyTarget, isSubscribe)
+	eventCopy := event.DeepCopy()
+	go e.HandleEventWithNotifyRule(eventCopy)
+	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
 	if !isSubscribe {
