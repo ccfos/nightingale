@@ -116,6 +116,10 @@ var I18N = `{
     "Message Template - Add": "消息模板 - 新增",
     "Message Template - Modify": "消息模板 - 修改",
     "Message Template - Delete": "消息模板 - 删除",
+    "Event Pipeline - View": "事件管道 - 查看",
+    "Event Pipeline - Add": "事件管道 - 新增",
+    "Event Pipeline - Modify": "事件管道 - 修改",
+    "Event Pipeline - Delete": "事件管道 - 删除",
     "Notification Settings - View": "老版本通知设置 - 查看",
     "Notification Templates - View": "老版本消息模板 - 查看",
 
@@ -271,6 +275,10 @@ var I18N = `{
     "Message Template - Add": "訊息範本 - 新增",
     "Message Template - Modify": "訊息範本 - 修改",
     "Message Template - Delete": "訊息範本 - 删除",
+    "Event Pipeline - View": "事件管線 - 查看",
+    "Event Pipeline - Add": "事件管線 - 新增",
+    "Event Pipeline - Modify": "事件管線 - 修改",
+    "Event Pipeline - Delete": "事件管線 - 删除",
     "Notification Settings - View": "老版本通知设置 - 查看",
     "Notification Templates - View": "老版本訊息範本 - 查看",
 
@@ -422,6 +430,10 @@ var I18N = `{
     "Message Template - Add": "メッセージテンプレート - 追加",
     "Message Template - Modify": "メッセージテンプレート - 修正",
     "Message Template - Delete": "メッセージテンプレート - 削除",
+    "Event Pipeline - View": "イベント パイプライン - 閲覧",
+    "Event Pipeline - Add": "イベント パイプライン - 追加",
+    "Event Pipeline - Modify": "イベント パイプライン - 修正",
+    "Event Pipeline - Delete": "イベント パイプライン - 削除",
     "Notification Settings - View": "旧バージョンの通知設定 - 閲覧",
     "Notification Templates - View": "旧バージョンのメッセージテンプレート - 閲覧",
 

@@ -216,6 +216,14 @@ ops:
       cname: Message Template - Modify
     - name: "/notification-templates/del"
       cname: Message Template - Delete
+    - name: "/event-pipelines"
+      cname: Event Pipeline - View
+    - name: "/event-pipelines/add"
+      cname: Event Pipeline - Add
+    - name: "/event-pipelines/put"
+      cname: Event Pipeline - Modify
+    - name: "/event-pipelines/del"
+      cname: Event Pipeline - Delete
     - name: /help/notification-settings # 用于控制老版本的通知设置菜单是否展示
       cname: Notification Settings - View
     - name: /help/notification-tpls # 用于控制老版本的通知模板菜单是否展示
@@ -276,18 +284,6 @@ ops:
       cname: View SSO Configuration
     - name: "/site-settings"
       cname: View Site Settings
-
-- name: event-pipelines
-  cname: Event Pipelines
-  ops:
-    - name: "/event-pipelines"
-      cname: View Event Pipelines
-    - name: "/event-pipelines/add"
-      cname: Add Event Pipeline
-    - name: "/event-pipelines/put"
-      cname: Modify Event Pipeline
-    - name: "/event-pipelines/del"
-      cname: Delete Event Pipeline
 
 - name: embedded-product
   cname: Integrated Instrument Dashboard
