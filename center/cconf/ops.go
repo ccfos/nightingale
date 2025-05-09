@@ -192,6 +192,30 @@ ops:
 - name: Notification
   cname: Notification
   ops:
+    - name: /notification-rules
+      cname: Notification Rule - View
+    - name: /notification-rules/add
+      cname: Notification Rule - Add
+    - name: /notification-rules/put
+      cname: Notification Rule - Modify
+    - name: /notification-rules/del
+      cname: Notification Rule - Delete
+    - name: /notification-channels
+      cname: Media Type - View
+    - name: /notification-channels/add
+      cname: Media Type - Add
+    - name: /notification-channels/put
+      cname: Media Type - Modify
+    - name: /notification-channels/del
+      cname: Media Type - Delete
+    - name: "/notification-templates"
+      cname: Message Template - View
+    - name: "/notification-templates/add"
+      cname: Message Template - Add
+    - name: "/notification-templates/put"
+      cname: Message Template - Modify
+    - name: "/notification-templates/del"
+      cname: Message Template - Delete
     - name: /help/notification-settings # 用于控制老版本的通知设置菜单是否展示
       cname: Notification Settings - View
     - name: /help/notification-tpls # 用于控制老版本的通知模板菜单是否展示
@@ -253,30 +277,6 @@ ops:
     - name: "/site-settings"
       cname: View Site Settings
 
-- name: message-templates
-  cname: Message Templates
-  ops:
-    - name: "/notification-templates"
-      cname: View Message Templates
-    - name: "/notification-templates/add"
-      cname: Add Message Templates
-    - name: "/notification-templates/put"
-      cname: Modify Message Templates
-    - name: "/notification-templates/del"
-      cname: Delete Message Templates
-
-- name: notify-rules
-  cname: Notify Rules
-  ops:
-    - name: "/notification-rules"
-      cname: View Notify Rules
-    - name: "/notification-rules/add"
-      cname: Add Notify Rules
-    - name: "/notification-rules/put"
-      cname: Modify Notify Rules
-    - name: "/notification-rules/del"
-      cname: Delete Notify Rules
-
 - name: event-pipelines
   cname: Event Pipelines
   ops:
@@ -288,18 +288,6 @@ ops:
       cname: Modify Event Pipeline
     - name: "/event-pipelines/del"
       cname: Delete Event Pipeline
-
-- name: notify-channels
-  cname: Notify Channels
-  ops:
-    - name: "/notification-channels"
-      cname: View Notify Channels
-    - name: "/notification-channels/add"
-      cname: Add Notify Channels
-    - name: "/notification-channels/put"
-      cname: Modify Notify Channels
-    - name: "/notification-channels/del"
-      cname: Delete Notify Channels
 
 - name: embedded-product
   cname: Integrated Instrument Dashboard
