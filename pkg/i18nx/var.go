@@ -147,7 +147,7 @@ var I18N = `{
     "Role - View": "角色 - 查看",
 
     "System Settings": "系统配置",
-    "View Site Settings": "查看站点设置"
+    "View Site Settings": "查看站点设置",
     "View Variable Settings": "查看变量配置",
     "View SSO Settings": "查看单点登录配置",
     "View Alerting Engines": "查看告警引擎列表",
