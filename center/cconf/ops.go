@@ -232,7 +232,7 @@ ops:
 - name: Integrations
   cname: Integrations
   ops:
-    - name: /help/source # 用于控制能否看到数据源列表页面的菜单。只有 Admin 才能修改、删除数据源，这个 urlpath 后面得改成 /datasources
+    - name: /datasources # 用于控制能否看到数据源列表页面的菜单。只有 Admin 才能修改、删除数据源
       cname: Data Source - View
     - name: /components
       cname: Component - View
@@ -242,7 +242,7 @@ ops:
       cname: Component - Modify
     - name: /built-in-components/del
       cname: Component - Delete
-    - name: /embedded-products # 前端要改 urlpath，末尾记得加个 s
+    - name: /embedded-products
       cname: Embedded Product - View
     - name: /embedded-product/add
       cname: Embedded Product - Add
@@ -278,15 +278,15 @@ ops:
 - name: System Settings
   cname: System Settings
   ops:
-    - name: /site-settings # 仅用于控制能否展示菜单，只有 Admin 才能修改、删除
+    - name: /system/site-settings # 仅用于控制能否展示菜单，只有 Admin 才能修改、删除
       cname: View Site Settings
-    - name: /help/variable-configs
-      cname: View Variable Configurations
-    - name: /help/sso
-      cname: View SSO Configurations
-    - name: /help/servers
+    - name: /system/variable-settings
+      cname: View Variable Settings
+    - name: /system/sso-settings
+      cname: View SSO Settings
+    - name: /system/alerting-engines
       cname: View Alerting Engines
-    - name: /help/version
+    - name: /system/version
       cname: View Product Version
 `
 )
