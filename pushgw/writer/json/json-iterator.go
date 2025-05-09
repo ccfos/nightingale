@@ -11,7 +11,7 @@ func init() {
 	jsoniter.RegisterTypeEncoderFunc("float64", func(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 		f := *(*float64)(ptr)
 		if math.IsNaN(f) {
-			stream.WriteFloat64(0)
+			stream.WriteString("null")
 		} else {
 			stream.WriteFloat64(f)
 		}
