@@ -129,6 +129,10 @@ var I18N = `{
     "Component - Add": "组件 - 新增",
     "Component - Modify": "组件 - 修改",
     "Component - Delete": "组件 - 删除",
+    "Embedded Product - View": "系统集成 - 查看",
+    "Embedded Product - Add": "系统集成 - 新增",
+    "Embedded Product - Modify": "系统集成 - 修改",
+    "Embedded Product - Delete": "系统集成 - 删除",
 
     "Organization": "人员组织",
     "User - View": "用户 - 查看",
@@ -142,19 +146,14 @@ var I18N = `{
     "Business Group - Delete": "业务组 - 删除",
     "Role - View": "角色 - 查看",
 
-    "System Information": "系统配置",
-    "View Variable Configuration": "变量配置管理",
-    "View Version Information": "查看关于产品",
-    "View Server Information": "查看告警引擎列表",
-    "View SSO Configuration": "单点登录管理",
-    "View Migration Configuration": "查看迁移配置",
-    "View Site Settings": "查看站点设置",
-    "Integrated Instrument Dashboard": "集成仪表盘",
-    "View Embedded Product": "查看集成仪表盘",
-    "Add Embedded Product": "添加集成仪表盘",
-    "Delete Embedded Product": "删除集成仪表盘",
-    "Edit Embedded Product": "编辑集成仪表盘",
-    "Message Templates": "消息模板"
+    "System Settings": "系统配置",
+    "View Site Settings": "查看站点设置"
+    "View Variable Configurations": "查看变量配置",
+    "View SSO Configurations": "查看单点登录配置",
+    "View Alerting Engines": "查看告警引擎列表",
+    "View Product Version": "查看关于产品",
+
+    "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
     "Username or password invalid": "用戶名或密碼錯誤",
@@ -287,6 +286,10 @@ var I18N = `{
     "Component - Add": "組件 - 新增",
     "Component - Modify": "組件 - 修改",
     "Component - Delete": "組件 - 刪除",
+    "Embedded Product - View": "系統集成 - 查看",
+    "Embedded Product - Add": "系統集成 - 新增",
+    "Embedded Product - Modify": "系統集成 - 修改",
+    "Embedded Product - Delete": "系統集成 - 刪除",
 
     "Organization": "人員組織",
     "User - View": "用戶 - 查看",
@@ -300,18 +303,14 @@ var I18N = `{
     "Business Group - Delete": "業務組 - 删除",
     "Role - View": "角色 - 查看",
 
-    "System Information": "系統配置",
-    "View Variable Configuration": "變量配置管理",
-    "View Version Information": "查看關於產品",
-    "View Server Information": "查看告警引擎列表",
-    "View SSO Configuration": "單點登錄管理",
-    "View Migration Configuration": "查看遷移配置",
+    "System Settings": "系統配置",
     "View Site Settings": "查看站點設置",
-    "Integrated Instrument Dashboard": "集成儀表板",
-    "View Embedded Product": "查看集成儀表板",
-    "Add Embedded Product": "新增集成儀表板",
-    "Delete Embedded Product": "刪除集成儀表板",
-    "Edit Embedded Product": "編輯集成儀表板"
+    "View Variable Configurations": "查看變量配置",
+    "View SSO Configurations": "查看單點登錄配置",
+    "View Alerting Engines": "查看告警引擎列表",
+    "View Product Version": "查看關於產品",
+
+    "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
     "Username or password invalid": "ユーザー名またはパスワードが無効です",
@@ -441,6 +440,10 @@ var I18N = `{
     "Component - Add": "コンポーネント - 追加",
     "Component - Modify": "コンポーネント - 修正",
     "Component - Delete": "コンポーネント - 削除",
+    "Embedded Product - View": "システム統合 - 閲覧",
+    "Embedded Product - Add": "システム統合 - 追加",
+    "Embedded Product - Modify": "システム統合 - 修正",
+    "Embedded Product - Delete": "システム統合 - 削除",
 
     "Organization": "組織",
     "User - View": "ユーザー - 閲覧",
@@ -454,17 +457,13 @@ var I18N = `{
     "Business Group - Delete": "業務グループ - 削除",
     "Role - View": "役割 - 閲覧",
 
-    "System Information": "システム設定",
-    "View Variable Configuration": "変数設定管理",
-    "View Version Information": "製品情報",
-    "View Server Information": "アラートエンジン一覧",
-    "View SSO Configuration": "シングルサインオン管理",
-    "View Migration Configuration": "移行設定の表示",
+    "System Settings": "システム設定",
     "View Site Settings": "サイト設定の表示",
-    "Integrated Instrument Dashboard": "統合ダッシュボード",
-    "View Embedded Product": "統合ダッシュボードを表示",
-    "Add Embedded Product": "統合ダッシュボードを追加",
-    "Delete Embedded Product": "統合ダッシュボードを削除",
-    "Edit Embedded Product": "統合ダッシュボードを編集"
+    "View Variable Configurations": "変数設定の表示",
+    "View SSO Configurations": "シングルサインオン設定の表示",
+    "View Alerting Engines": "アラートエンジンの表示",
+    "View Product Version": "製品バージョンの表示",
+
+    "---------ja_JP--------": "---------ja_JP--------"
   }
 }`

@@ -208,21 +208,21 @@ ops:
       cname: Media Type - Modify
     - name: /notification-channels/del
       cname: Media Type - Delete
-    - name: "/notification-templates"
+    - name: /notification-templates
       cname: Message Template - View
-    - name: "/notification-templates/add"
+    - name: /notification-templates/add
       cname: Message Template - Add
-    - name: "/notification-templates/put"
+    - name: /notification-templates/put
       cname: Message Template - Modify
-    - name: "/notification-templates/del"
+    - name: /notification-templates/del
       cname: Message Template - Delete
-    - name: "/event-pipelines"
+    - name: /event-pipelines
       cname: Event Pipeline - View
-    - name: "/event-pipelines/add"
+    - name: /event-pipelines/add
       cname: Event Pipeline - Add
-    - name: "/event-pipelines/put"
+    - name: /event-pipelines/put
       cname: Event Pipeline - Modify
-    - name: "/event-pipelines/del"
+    - name: /event-pipelines/del
       cname: Event Pipeline - Delete
     - name: /help/notification-settings # 用于控制老版本的通知设置菜单是否展示
       cname: Notification Settings - View
@@ -242,6 +242,14 @@ ops:
       cname: Component - Modify
     - name: /built-in-components/del
       cname: Component - Delete
+    - name: /embedded-products # 前端要改 urlpath，末尾记得加个 s
+      cname: Embedded Product - View
+    - name: /embedded-product/add
+      cname: Embedded Product - Add
+    - name: /embedded-product/put
+      cname: Embedded Product - Modify
+    - name: /embedded-product/delete
+      cname: Embedded Product - Delete
 
 - name: Organization
   cname: Organization
@@ -267,30 +275,18 @@ ops:
     - name: /roles
       cname: Role - View
 
-- name: system
-  cname: System Information
+- name: System Settings
+  cname: System Settings
   ops:
-    - name: "/help/variable-configs"
-      cname: View Variable Configuration
-    - name: "/help/version"
-      cname: View Version Information
-    - name: "/help/servers"
-      cname: View Server Information
-    - name: "/help/sso"
-      cname: View SSO Configuration
-    - name: "/site-settings"
+    - name: /site-settings # 仅用于控制能否展示菜单，只有 Admin 才能修改、删除
       cname: View Site Settings
-
-- name: embedded-product
-  cname: Integrated Instrument Dashboard
-  ops:
-    - name: "/embedded-product"
-      cname: View Embedded Product
-    - name: "/embedded-product/add"
-      cname: Add Embedded Product
-    - name: "/embedded-product/delete"
-      cname: Delete Embedded Product
-    - name: "/embedded-product/put"
-      cname: Edit Embedded Product
+    - name: /help/variable-configs
+      cname: View Variable Configurations
+    - name: /help/sso
+      cname: View SSO Configurations
+    - name: /help/servers
+      cname: View Alerting Engines
+    - name: /help/version
+      cname: View Product Version
 `
 )
