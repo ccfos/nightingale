@@ -3,7 +3,6 @@ package writer
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/fasttime"
 	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/writer/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -52,7 +52,7 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 		return proto.Marshal(req)
 	}
 
-	return json.Marshal(items)
+	return json.MarshalWithCustomFloat(items)
 }
 
 func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
