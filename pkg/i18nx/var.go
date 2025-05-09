@@ -103,9 +103,9 @@ var I18N = `{
     "Active Event - Delete": "活跃事件 - 删除",
     "Historical Event - View": "历史事件 - 查看",
 
-    "Alert Notification": "告警通知",
-    "View Notification Settings": "通知设置管理",
-    "View Notification Templates": "通知模板管理",
+    "Notification": "通知",
+    "Notification Settings - View": "老版本通知设置 - 查看",
+    "Notification Templates - View": "老版本消息模板 - 查看",
 
     "Organization": "人员组织",
     "User - View": "用户 - 查看",
@@ -152,8 +152,7 @@ var I18N = `{
     "Add Embedded Product": "添加集成仪表盘",
     "Delete Embedded Product": "删除集成仪表盘",
     "Edit Embedded Product": "编辑集成仪表盘",
-    "Message Templates": "消息模板",
-    "User Contact Management": "用户联系方式管理"
+    "Message Templates": "消息模板"
   },
   "zh_HK": {
     "Username or password invalid": "用戶名或密碼錯誤",
@@ -260,9 +259,9 @@ var I18N = `{
     "Active Event - Delete": "活躍事件 - 删除",
     "Historical Event - View": "歷史事件 - 查看",
 
-    "Alert Notification": "告警通知",
-    "View Notification Settings": "通知設置管理",
-    "View Notification Templates": "通知模板管理",
+    "Notification": "通知",
+    "Notification Settings - View": "老版本通知设置 - 查看",
+    "Notification Templates - View": "老版本消息模板 - 查看",
 
     "Organization": "人員組織",
     "User - View": "用戶 - 查看",
@@ -309,8 +308,7 @@ var I18N = `{
     "Edit Embedded Product": "編輯集成儀表板",
     "Notify Channels": "通知媒介",
     "Notify Rules": "通知規則", 
-    "Message Templates": "訊息範本",
-    "User Contact Management": "用戶聯絡方式管理"
+    "Message Templates": "訊息範本"
   },
   "ja_JP": {
     "Username or password invalid": "ユーザー名またはパスワードが無効です",
@@ -414,9 +412,9 @@ var I18N = `{
     "Active Event - Delete": "アクティブアラート - 削除",
     "Historical Event - View": "過去のアラート - 閲覧",
 
-    "Alert Notification": "アラート通知",
-    "View Notification Settings": "通知設定の管理",
-    "View Notification Templates": "通知テンプレートの管理",
+    "Notification": "通知",
+    "Notification Settings - View": "旧バージョンの通知設定 - 閲覧",
+    "Notification Templates - View": "旧バージョンのメッセージテンプレート - 閲覧",
 
     "Organization": "組織",
     "User - View": "ユーザー - 閲覧",
@@ -463,7 +461,6 @@ var I18N = `{
     "Add Embedded Product": "統合ダッシュボードを追加",
     "Delete Embedded Product": "統合ダッシュボードを削除",
     "Edit Embedded Product": "統合ダッシュボードを編集",
-    "Message Templates": "メッセージテンプレート",
-    "User Contact Management": "ユーザー連絡先管理"
+    "Message Templates": "メッセージテンプレート"
   }
 }`

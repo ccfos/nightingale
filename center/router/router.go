@@ -472,7 +472,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-channel", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyChannelGets)
 		pages.PUT("/notify-channel", rt.auth(), rt.admin(), rt.notifyChannelPuts)
 
-		pages.GET("/notify-contact", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyContactGets)
+		pages.GET("/notify-contact", rt.auth(), rt.user(), rt.notifyContactGets)
 		pages.PUT("/notify-contact", rt.auth(), rt.admin(), rt.notifyContactPuts)
 
 		pages.GET("/notify-config", rt.auth(), rt.user(), rt.perm("/help/notification-settings"), rt.notifyConfigGet)

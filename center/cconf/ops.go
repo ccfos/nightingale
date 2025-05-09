@@ -122,7 +122,7 @@ ops:
       cname: Recording Rule - Delete
     - name: /log/explorer
       cname: Logs Explorer
-    - name: /log/index-patterns
+    - name: /log/index-patterns # 前端有个管理索引模式的页面，所以需要一个权限点来控制，后面应该改成侧拉板
       cname: Index Pattern - View
     - name: /log/index-patterns/add
       cname: Index Pattern - Add
@@ -189,13 +189,13 @@ ops:
     - name: /alert-his-events
       cname: Historical Event - View
 
-- name: notification
-  cname: Alert Notification
+- name: Notification
+  cname: Notification
   ops:
-    - name: "/help/notification-settings"
-      cname: View Notification Settings
-    - name: "/help/notification-tpls"
-      cname: View Notification Templates
+    - name: /help/notification-settings # 用于控制老版本的通知设置菜单是否展示
+      cname: Notification Settings - View
+    - name: /help/notification-tpls # 用于控制老版本的通知模板菜单是否展示
+      cname: Notification Templates - View
 
 - name: Organization
   cname: Organization
@@ -220,12 +220,6 @@ ops:
       cname: Business Group - Delete
     - name: /roles
       cname: Role - View
-    
-- name: contacts
-  cname: User Contact Management
-  ops:
-    - name: "/contacts"
-      cname: User Contact Management
 
 - name: built-in-components
   cname: Template Center
