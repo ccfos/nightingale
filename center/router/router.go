@@ -489,8 +489,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards/put"), rt.embeddedDashboardsPut)
 
 		// 获取 embedded-product 列表
-		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGets)
-		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product"), rt.embeddedProductGet)
+		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.embeddedProductGets)
+		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.embeddedProductGet)
 		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductAdd)
 		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
