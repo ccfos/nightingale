@@ -444,12 +444,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
 
-		pages.GET("/roles", rt.auth(), rt.admin(), rt.roleGets)
+		pages.GET("/roles", rt.auth(), rt.user(), rt.perm("/roles"), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.admin(), rt.roleAdd)
 		pages.PUT("/roles", rt.auth(), rt.admin(), rt.rolePut)
 		pages.DELETE("/role/:id", rt.auth(), rt.admin(), rt.roleDel)
 
-		pages.GET("/role/:id/ops", rt.auth(), rt.admin(), rt.operationOfRole)
+		pages.GET("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles"), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.admin(), rt.roleBindOperation)
 		pages.GET("/operation", rt.operations)
 

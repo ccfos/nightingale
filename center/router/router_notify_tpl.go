@@ -45,7 +45,7 @@ func (rt *Router) notifyTplUpdateContent(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if notifyTpl.CreateBy != user.Username && !user.IsAdmin() {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	f.UpdateAt = time.Now().Unix()
@@ -64,7 +64,7 @@ func (rt *Router) notifyTplUpdate(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if notifyTpl.CreateBy != user.Username && !user.IsAdmin() {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	// get the count of the same channel and name but different id
@@ -188,7 +188,7 @@ func (rt *Router) notifyTplDel(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if notifyTpl.CreateBy != user.Username && !user.IsAdmin() {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	ginx.NewRender(c).Message(f.NotifyTplDelete(rt.Ctx, id))
