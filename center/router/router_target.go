@@ -461,7 +461,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 			ginx.Dangerous(err)
 
 			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 		isNeverGrouped, checkErr := haveNeverGroupedIdent(rt.Ctx, f.Idents)
@@ -471,7 +471,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 			can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
 			ginx.Dangerous(err)
 			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 	}
@@ -556,7 +556,7 @@ func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
 	ginx.Dangerous(err)
 
 	if len(nopri) > 0 {
-		ginx.Bomb(http.StatusForbidden, "No permission to operate the targets: %s", strings.Join(nopri, ", "))
+		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 }
 

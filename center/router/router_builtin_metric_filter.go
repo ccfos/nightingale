@@ -57,7 +57,7 @@ func (rt *Router) metricFilterDel(c *gin.Context) {
 			ginx.Dangerous(err)
 
 			if !HasPerm(gids, old.GroupsPerm, true) {
-				ginx.NewRender(c).Message("no permission")
+				ginx.NewRender(c).Message("forbidden")
 				return
 			}
 		}
@@ -79,7 +79,7 @@ func (rt *Router) metricFilterPut(c *gin.Context) {
 		ginx.Dangerous(err)
 
 		if !HasPerm(gids, old.GroupsPerm, true) {
-			ginx.NewRender(c).Message("no permission")
+			ginx.NewRender(c).Message("forbidden")
 			return
 		}
 	}

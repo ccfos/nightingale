@@ -60,7 +60,7 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	ginx.NewRender(c).Data(data, nil)
@@ -98,7 +98,7 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	now := time.Now().Unix()
@@ -127,7 +127,7 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	err = models.DeleteEmbeddedProduct(rt.Ctx, id)

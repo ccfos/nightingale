@@ -46,7 +46,7 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 	var errMsg string
 	for _, q := range f.Queries {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, q.Did, q.DsCate, q) {
-			ginx.Bomb(200, "no permission")
+			ginx.Bomb(200, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(q.DsCate, q.Did)
@@ -86,7 +86,7 @@ func (rt *Router) QueryData(c *gin.Context) {
 	var err error
 	for _, q := range f.Querys {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
-			ginx.Bomb(403, "no permission")
+			ginx.Bomb(403, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
@@ -126,7 +126,7 @@ func (rt *Router) QueryLogV2(c *gin.Context) {
 	var errMsg string
 	for _, q := range f.Querys {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
-			ginx.Bomb(200, "no permission")
+			ginx.Bomb(200, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
@@ -159,7 +159,7 @@ func (rt *Router) QueryLog(c *gin.Context) {
 	var resp []interface{}
 	for _, q := range f.Querys {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
-			ginx.Bomb(200, "no permission")
+			ginx.Bomb(200, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get("elasticsearch", f.DatasourceId)
