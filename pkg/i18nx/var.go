@@ -50,6 +50,7 @@ var I18N = `{
     "admin role can not be modified": "管理员角色不允许修改",
     "builtin payload already exists": "内置模板已存在",
     "This functionality has not been enabled. Please contact the system administrator to activate it.": "此功能尚未启用。请联系系统管理员启用",
+    "targets not exist: %s": "有些机器不存在: %s",
 
     "Infrastructure": "基础设施",
     "Host - View": "机器 - 查看",
@@ -207,6 +208,7 @@ var I18N = `{
     "builtin metric already exists": "內置指標已存在",
     "AlertRule already exists": "告警規則已存在",
     "This functionality has not been enabled. Please contact the system administrator to activate it.": "此功能尚未啟用。請聯繫系統管理員啟用",
+    "targets not exist: %s": "有些機器不存在: %s",
 
     "Infrastructure": "基礎設施",
     "Host - View": "機器 - 查看",
@@ -361,6 +363,7 @@ var I18N = `{
     "admin role can not be modified": "管理者ロールは変更できません",
     "builtin payload already exists": "ビルトインテンプレートは既に存在します",
     "This functionality has not been enabled. Please contact the system administrator to activate it.": "この機能はまだ有効になっていません。システム管理者に連絡して有効にしてください",
+    "targets not exist: %s": "いくつかのマシンが存在しません: %s",
 
     "Infrastructure": "インフラストラクチャ",
     "Host - View": "機器 - 閲覧",
@@ -515,6 +518,7 @@ var I18N = `{
     "admin role can not be modified": "Роль администратора не может быть изменена",
     "builtin payload already exists": "Встроенный шаблон уже существует",
     "This functionality has not been enabled. Please contact the system administrator to activate it.": "Эта функция не активирована. Пожалуйста, обратитесь к системному администратору для активации",
+    "targets not exist: %s": "Некоторые машины не существуют: %s",
 
     "Infrastructure": "Инфраструктура",
     "Host - View": "Хост - Просмотр",
