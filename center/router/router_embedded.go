@@ -92,14 +92,7 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 
 	oldProduct, err := models.GetEmbeddedProductByID(rt.Ctx, id)
 	ginx.Dangerous(err)
-
 	me := c.MustGet("user").(*models.User)
-	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, oldProduct)
-	ginx.Dangerous(err)
-
-	if !hashPermission {
-		ginx.Bomb(403, "forbidden")
-	}
 
 	now := time.Now().Unix()
 	oldProduct.Name = ep.Name
@@ -119,18 +112,7 @@ func (rt *Router) embeddedProductDelete(c *gin.Context) {
 		ginx.Bomb(400, "invalid id")
 	}
 
-	data, err := models.GetEmbeddedProductByID(rt.Ctx, id)
-	ginx.Dangerous(err)
-
-	me := c.MustGet("user").(*models.User)
-	hashPermission, err := hasEmbeddedProductAccess(rt.Ctx, me, data)
-	ginx.Dangerous(err)
-
-	if !hashPermission {
-		ginx.Bomb(403, "forbidden")
-	}
-
-	err = models.DeleteEmbeddedProduct(rt.Ctx, id)
+	err := models.DeleteEmbeddedProduct(rt.Ctx, id)
 	ginx.NewRender(c).Message(err)
 }
 
