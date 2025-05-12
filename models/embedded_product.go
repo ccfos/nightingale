@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -26,6 +27,13 @@ type EmbeddedProduct struct {
 
 func (e *EmbeddedProduct) TableName() string {
 	return "embedded_product"
+}
+
+func (e *EmbeddedProduct) AfterFind(tx *gorm.DB) (err error) {
+	if e.TeamIDs == nil {
+		e.TeamIDs = []int64{}
+	}
+	return nil
 }
 
 func (e *EmbeddedProduct) Verify() error {
