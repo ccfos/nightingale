@@ -41,7 +41,7 @@ func (e *EmbeddedProduct) Verify() error {
 		return errors.New("URL is blank")
 	}
 
-	if len(e.TeamIDs) == 0 {
+	if len(e.TeamIDs) == 0 && !e.IsPrivate {
 		return errors.New("TeamIDs is blank")
 	}
 
