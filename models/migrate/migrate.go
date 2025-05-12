@@ -178,11 +178,6 @@ func InsertPermPoints(db *gorm.DB) {
 	})
 
 	ops = append(ops, models.RoleOperation{
-		RoleName:  "Admin",
-		Operation: "/permissions",
-	})
-
-	ops = append(ops, models.RoleOperation{
 		RoleName:  "Standard",
 		Operation: "/ibex-settings",
 	})
@@ -230,9 +225,8 @@ func InsertPermPoints(db *gorm.DB) {
 	for _, op := range ops {
 		var count int64
 
-		err := db.Model(&models.RoleOperation{}).
-			Where("operation = ? AND role_name = ?", op.Operation, op.RoleName).
-			Count(&count).Error
+		session := db.Session(&gorm.Session{}).Model(&models.RoleOperation{})
+		err := session.Where("operation = ? AND role_name = ?", op.Operation, op.RoleName).Count(&count).Error
 
 		if err != nil {
 			logger.Errorf("check role operation exists failed, %v", err)
@@ -243,7 +237,7 @@ func InsertPermPoints(db *gorm.DB) {
 			continue
 		}
 
-		err = db.Model(&models.RoleOperation{}).Create(&op).Error
+		err = session.Create(&op).Error
 		if err != nil {
 			logger.Errorf("insert role operation failed, %v", err)
 		}
