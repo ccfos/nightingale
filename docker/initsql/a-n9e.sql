@@ -421,6 +421,7 @@ CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
     `rule` varchar(2048) not null default '',
+    `format` varchar(2048) not null default '',
     `cate` tinyint(1) not null comment '0: preset 1: custom',
     `create_at` bigint not null default 0,
     `create_by` bigint not null default 0 comment 'user id',

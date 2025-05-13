@@ -12,8 +12,8 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-func parseAggrRules(c *gin.Context) []*models.AggrRule {
-	aggrRules := strings.Split(ginx.QueryStr(c, "rule", ""), "::") // e.g. field:group_name::field:severity::tagkey:ident
+func parseAggrRules(rule string) []*models.AggrRule {
+	aggrRules := strings.Split(rule, "::") // e.g. field:group_name::field:severity::tagkey:ident
 
 	if len(aggrRules) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "rule empty")
@@ -39,12 +39,42 @@ func parseAggrRules(c *gin.Context) []*models.AggrRule {
 	return rules
 }
 
+func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, error) {
+	if !myGroups {
+		return nil, nil
+	}
+	me := ctx.MustGet("user").(*models.User)
+	return models.MyGroupIds(rt.Ctx, me.Id)
+}
+
 func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
+	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
+
+	var gids []int64
+	var err error
+	if myGroups {
+		gids, err = getUserGroupIds(c, rt, myGroups)
+		ginx.Dangerous(err)
+		if len(gids) == 0 {
+			gids = append(gids, -1)
+		}
+	}
+
+	viewId := ginx.QueryInt64(c, "view_id")
+
+	alertView, err := models.GetAlertAggrViewByViewID(rt.Ctx, viewId)
+	ginx.Dangerous(err)
+
+	if alertView == nil {
+		ginx.Bomb(http.StatusNotFound, "alert aggr view not found")
+	}
+
 	dsIds := queryDatasourceIds(c)
-	rules := parseAggrRules(c)
+
+	rules := parseAggrRules(alertView.Rule)
 
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
@@ -66,12 +96,13 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	// 最多获取50000个，获取太多也没啥意义
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, 0, query, 50000, 0)
+		cates, 0, query, 50000, 0, gids)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
 	for _, event := range list {
-		title := event.GenCardTitle(rules)
+		title, err := event.GenCardTitle(rules, alertView.Format)
+		ginx.Dangerous(err)
 		if _, has := cardmap[title]; has {
 			cardmap[title].Total++
 			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
@@ -145,6 +176,8 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	severity := ginx.QueryInt(c, "severity", -1)
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
+	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
+
 	dsIds := queryDatasourceIds(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
@@ -165,18 +198,29 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	ruleId := ginx.QueryInt64(c, "rid", 0)
 
+	var gids []int64
+	var err error
+	if myGroups {
+		gids, err = getUserGroupIds(c, rt, myGroups)
+		ginx.Dangerous(err)
+		if len(gids) == 0 {
+			gids = append(gids, -1)
+		}
+	}
+
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
 	ginx.Dangerous(err)
 
 	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query)
+		cates, ruleId, query, gids)
 	ginx.Dangerous(err)
 
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query, limit, ginx.Offset(c, limit))
+		cates, ruleId, query, limit, ginx.Offset(c, limit), gids)
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
+
 	for i := 0; i < len(list); i++ {
 		list[i].FillNotifyGroups(rt.Ctx, cache)
 	}
@@ -214,6 +258,63 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 			set[event.GroupId] = struct{}{}
 		}
 	}
+}
+
+// 列表方式，拉取活跃告警
+func (rt *Router) alertDataSourcesList(c *gin.Context) {
+	stime, etime := getTimeRange(c)
+	severity := ginx.QueryInt(c, "severity", -1)
+	query := ginx.QueryStr(c, "query", "")
+	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
+
+	prod := ginx.QueryStr(c, "prods", "")
+	if prod == "" {
+		prod = ginx.QueryStr(c, "rule_prods", "")
+	}
+
+	prods := []string{}
+	if prod != "" {
+		prods = strings.Split(prod, ",")
+	}
+
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
+
+	ruleId := ginx.QueryInt64(c, "rid", 0)
+	var gids []int64
+	var err error
+	if myGroups {
+		gids, err = getUserGroupIds(c, rt, myGroups)
+		ginx.Dangerous(err)
+		if len(gids) == 0 {
+			gids = append(gids, -1)
+		}
+	}
+
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
+	ginx.Dangerous(err)
+
+	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, []int64{},
+		cates, ruleId, query, 50000, 0, gids)
+	ginx.Dangerous(err)
+
+	uniqueDsIds := make(map[int64]struct{})
+
+	for i := 0; i < len(list); i++ {
+		uniqueDsIds[list[i].DatasourceId] = struct{}{}
+	}
+
+	dsIds := make([]int64, 0, len(uniqueDsIds))
+	for id := range uniqueDsIds {
+		dsIds = append(dsIds, id)
+	}
+	dsList, err := models.GetDatasourceInfosByIds(rt.Ctx, dsIds)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(dsList, nil)
 }
 
 func (rt *Router) alertCurEventGet(c *gin.Context) {
