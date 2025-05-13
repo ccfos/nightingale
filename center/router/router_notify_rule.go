@@ -31,7 +31,7 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 	for _, nr := range lst {
 		ginx.Dangerous(nr.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, nr.UserGroupIds) {
-			ginx.Bomb(http.StatusForbidden, "no permission")
+			ginx.Bomb(http.StatusForbidden, "forbidden")
 		}
 
 		nr.CreateBy = me.Username
@@ -56,8 +56,8 @@ func (rt *Router) notifyRulesDel(c *gin.Context) {
 		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 		ginx.Dangerous(err)
 		for _, t := range lst {
-			if !slice.HaveIntersection[int64](gids, t.UserGroupIds) {
-				ginx.Bomb(http.StatusForbidden, "no permission")
+			if !slice.HaveIntersection(gids, t.UserGroupIds) {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 	}
@@ -79,8 +79,8 @@ func (rt *Router) notifyRulePut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	ginx.Dangerous(err)
-	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) && !me.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "no permission")
+	if !slice.HaveIntersection(gids, nr.UserGroupIds) && !me.IsAdmin() {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 
 	f.UpdateBy = me.Username
@@ -99,8 +99,8 @@ func (rt *Router) notifyRuleGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "notify rule not found")
 	}
 
-	if !slice.HaveIntersection[int64](gids, nr.UserGroupIds) && !me.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "no permission")
+	if !slice.HaveIntersection(gids, nr.UserGroupIds) && !me.IsAdmin() {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 
 	ginx.NewRender(c).Data(nr, nil)

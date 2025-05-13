@@ -94,6 +94,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
 		models.MigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
 	}
+	if models.CanMigrateEP(ctx) {
+		models.MigrateEP(ctx)
+	}
 
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)

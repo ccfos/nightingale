@@ -15,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
+	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -35,6 +36,7 @@ type Dispatch struct {
 	notifyRuleCache      *memsto.NotifyRuleCacheType
 	notifyChannelCache   *memsto.NotifyChannelCacheType
 	messageTemplateCache *memsto.MessageTemplateCacheType
+	eventProcessorCache  *memsto.EventProcessorCacheType
 
 	alerting aconf.Alerting
 
@@ -54,7 +56,7 @@ type Dispatch struct {
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
 	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
-	messageTemplateCache *memsto.MessageTemplateCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:       alertRuleCache,
 		userCache:            userCache,
@@ -66,6 +68,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		notifyRuleCache:      notifyRuleCache,
 		notifyChannelCache:   notifyChannelCache,
 		messageTemplateCache: messageTemplateCache,
+		eventProcessorCache:  eventProcessorCache,
 
 		alerting: alerting,
 
@@ -141,7 +144,7 @@ func (e *Dispatch) reloadTpls() error {
 	return nil
 }
 
-func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubscribe bool) {
+func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent) {
 
 	if len(event.NotifyRuleIDs) > 0 {
 		for _, notifyRuleId := range event.NotifyRuleIDs {
@@ -155,6 +158,44 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 				continue
 			}
 
+			var processors []pipeline.Processor
+			for _, pipelineConfig := range notifyRule.PipelineConfigs {
+				if !pipelineConfig.Enable {
+					continue
+				}
+
+				eventPipeline := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
+				if eventPipeline == nil {
+					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, event)
+					continue
+				}
+
+				if !pipelineApplicable(eventPipeline, event) {
+					logger.Debugf("notify_id: %d, event:%+v, pipeline_id: %d, not applicable", notifyRuleId, event, pipelineConfig.PipelineId)
+					continue
+				}
+
+				for _, p := range eventPipeline.Processors {
+					processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+					if err != nil {
+						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, event, p)
+						continue
+					}
+					processors = append(processors, processor)
+				}
+			}
+
+			for _, processor := range processors {
+				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
+				processor.Process(e.ctx, event)
+				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
+				if event == nil {
+					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, event, processor)
+					break
+				}
+			}
+
+			// notify
 			for i := range notifyRule.NotifyConfigs {
 				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
 					continue
@@ -180,6 +221,45 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent, isSubs
 			}
 		}
 	}
+}
+
+func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEvent) bool {
+	if pipeline == nil {
+		return true
+	}
+
+	if !pipeline.FilterEnable {
+		return true
+	}
+
+	tagMatch := true
+	if len(pipeline.LabelFilters) > 0 {
+		for i := range pipeline.LabelFilters {
+			if pipeline.LabelFilters[i].Func == "" {
+				pipeline.LabelFilters[i].Func = pipeline.LabelFilters[i].Op
+			}
+		}
+
+		tagFilters, err := models.ParseTagFilter(pipeline.LabelFilters)
+		if err != nil {
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v", err, event, pipeline)
+			return false
+		}
+		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	attributesMatch := true
+	if len(pipeline.AttrFilters) > 0 {
+		tagFilters, err := models.ParseTagFilter(pipeline.AttrFilters)
+		if err != nil {
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v err:%v", tagFilters, event, pipeline, err)
+			return false
+		}
+
+		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
+	}
+
+	return tagMatch && attributesMatch
 }
 
 func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
@@ -448,8 +528,9 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		notifyTarget.AndMerge(handler(rule, event, notifyTarget, e))
 	}
 
-	// 处理事件发送,这里用一个goroutine处理一个event的所有发送事件
-	go e.HandleEventWithNotifyRule(event, isSubscribe)
+	// 深拷贝新的 event，避免并发修改 event 冲突
+	eventCopy := event.DeepCopy()
+	go e.HandleEventWithNotifyRule(eventCopy)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
