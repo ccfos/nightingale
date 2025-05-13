@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"text/template"
-	"text/template/parse"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -479,23 +477,8 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("name is blank")
 	}
 
-	// 兼容 {{index $labels "host.name"}} 这种情况的危险字符校验
-	var defs = []string{
-		"{{$labels := .TagsMap}}",
-		"{{$value := .TriggerValue}}",
-	}
-	text := strings.Join(append(defs, ar.Name), "")
-	t, err := template.New("test").Parse(text)
-	if err != nil {
-		return errors.New("parse name failed")
-	}
-
-	for _, node := range t.Tree.Root.Nodes {
-		if tn := node.(*parse.TextNode); tn != nil {
-			if str.Dangerous(tn.String()) {
-				return fmt.Errorf("name has invalid characters: %s", tn.String())
-			}
-		}
+	if str.Dangerous(ar.Name) {
+		return errors.New("Name has invalid characters")
 	}
 
 	if ar.Prod == "" {
