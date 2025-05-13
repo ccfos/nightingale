@@ -1,7 +1,7 @@
 {
     "id": 0,
     "group_id": 0,
-    "name": "Kubernetes / Container",
+    "name": "Kubernetes / Pod",
     "ident": "",
     "tags": "Categraf",
     "create_at": 0,
@@ -1748,20 +1748,34 @@
         ],
         "var": [
             {
-                "definition": "prometheus",
                 "name": "datasource",
-                "type": "datasource"
+                "type": "datasource",
+                "definition": "prometheus",
+                "defaultValue": 40
             },
             {
+                "name": "namespace",
+                "type": "query",
+                "hide": false,
                 "datasource": {
                     "cate": "prometheus",
                     "value": "${datasource}"
                 },
-                "definition": "label_values(container_cpu_usage_seconds_total, pod)",
-                "multi": false,
-                "name": "pod_name",
+                "definition": "label_values(container_cpu_usage_seconds_total, namespace)",
                 "reg": "",
-                "type": "query"
+                "multi": false
+            },
+            {
+                "name": "pod_name",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${datasource}"
+                },
+                "definition": "label_values(container_cpu_usage_seconds_total{namespace=\"$namespace\"}, pod)",
+                "reg": "",
+                "multi": false
             }
         ],
         "version": "3.0.0"

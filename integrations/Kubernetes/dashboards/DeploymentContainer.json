@@ -1,5 +1,5 @@
 {
-    "name": " Kubernetes-Deployment/ Container",
+    "name": "Kubernetes / Deployment / Container",
     "tags": "Categraf",
     "configs": {
         "panels": [
