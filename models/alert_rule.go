@@ -479,15 +479,21 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("name is blank")
 	}
 
-	t, err := template.New("test").Parse(ar.Name)
+	// 兼容 {{index $labels "host.name"}} 这种情况的危险字符校验
+	var defs = []string{
+		"{{$labels := .TagsMap}}",
+		"{{$value := .TriggerValue}}",
+	}
+	text := strings.Join(append(defs, ar.Name), "")
+	t, err := template.New("test").Parse(text)
 	if err != nil {
-		return errors.New("Name has invalid characters")
+		return errors.New("parse name failed")
 	}
 
 	for _, node := range t.Tree.Root.Nodes {
 		if tn := node.(*parse.TextNode); tn != nil {
 			if str.Dangerous(tn.String()) {
-				return fmt.Errorf("Name has invalid characters: %s", tn.String())
+				return fmt.Errorf("name has invalid characters: %s", tn.String())
 			}
 		}
 	}
