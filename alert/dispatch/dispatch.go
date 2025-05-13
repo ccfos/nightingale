@@ -144,11 +144,14 @@ func (e *Dispatch) reloadTpls() error {
 	return nil
 }
 
-func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent) {
+func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) {
 
-	if len(event.NotifyRuleIDs) > 0 {
-		for _, notifyRuleId := range event.NotifyRuleIDs {
-			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, event)
+	if len(eventOrigin.NotifyRuleIDs) > 0 {
+		for _, notifyRuleId := range eventOrigin.NotifyRuleIDs {
+			// 深拷贝新的 event，避免并发修改 event 冲突
+			eventCopy := eventOrigin.DeepCopy()
+
+			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, eventCopy)
 			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
 			if notifyRule == nil {
 				continue
@@ -166,19 +169,19 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent) {
 
 				eventPipeline := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
 				if eventPipeline == nil {
-					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, event)
+					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, eventCopy)
 					continue
 				}
 
-				if !pipelineApplicable(eventPipeline, event) {
-					logger.Debugf("notify_id: %d, event:%+v, pipeline_id: %d, not applicable", notifyRuleId, event, pipelineConfig.PipelineId)
+				if !pipelineApplicable(eventPipeline, eventCopy) {
+					logger.Debugf("notify_id: %d, event:%+v, pipeline_id: %d, not applicable", notifyRuleId, eventCopy, pipelineConfig.PipelineId)
 					continue
 				}
 
 				for _, p := range eventPipeline.Processors {
 					processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
 					if err != nil {
-						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, event, p)
+						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, eventCopy, p)
 						continue
 					}
 					processors = append(processors, processor)
@@ -186,38 +189,38 @@ func (e *Dispatch) HandleEventWithNotifyRule(event *models.AlertCurEvent) {
 			}
 
 			for _, processor := range processors {
-				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
-				processor.Process(e.ctx, event)
-				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, event, processor)
-				if event == nil {
-					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, event, processor)
+				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
+				processor.Process(e.ctx, eventCopy)
+				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
+				if eventCopy == nil {
+					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
 					break
 				}
 			}
 
 			// notify
 			for i := range notifyRule.NotifyConfigs {
-				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], event) {
+				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], eventCopy) {
 					continue
 				}
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil {
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
-					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, event, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
+					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
 					continue
 				}
 
 				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
-					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, event, notifyRule.NotifyConfigs[i].TemplateID)
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
+					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, notifyRule.NotifyConfigs[i].TemplateID)
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
 
 					continue
 				}
 
 				// todo go send
 				// todo 聚合 event
-				go e.sendV2([]*models.AlertCurEvent{event}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+				go e.sendV2([]*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
 			}
 		}
 	}
@@ -528,9 +531,7 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		notifyTarget.AndMerge(handler(rule, event, notifyTarget, e))
 	}
 
-	// 深拷贝新的 event，避免并发修改 event 冲突
-	eventCopy := event.DeepCopy()
-	go e.HandleEventWithNotifyRule(eventCopy)
+	go e.HandleEventWithNotifyRule(event)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
