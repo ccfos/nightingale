@@ -102,7 +102,7 @@ func ListEventPipelines(ctx *ctx.Context) ([]*EventPipeline, error) {
 	}
 
 	var pipelines []*EventPipeline
-	err := DB(ctx).Order("name desc").Find(&pipelines).Error
+	err := DB(ctx).Order("name asc").Find(&pipelines).Error
 	if err != nil {
 		return nil, err
 	}
