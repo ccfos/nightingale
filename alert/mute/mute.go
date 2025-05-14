@@ -129,7 +129,7 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 	}
 
 	for i := 0; i < len(mutes); i++ {
-		if matchMute(event, mutes[i]) {
+		if MatchMute(event, mutes[i]) {
 			return true, mutes[i].Id
 		}
 	}
@@ -137,12 +137,11 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 	return false, 0
 }
 
-// matchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
-func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
+// MatchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
+func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
 	if mute.Disabled == 1 {
 		return false
 	}
-
 
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
@@ -166,7 +165,7 @@ func matchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		if len(clock) > 0 {
 			ts = clock[0]
 		}
-		
+
 		if !mute.IsWithinPeriodicMute(ts) {
 			return false
 		}
