@@ -47,6 +47,7 @@ var PromDefaultDatasourceId int64
 func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 	for {
 		if !fromAPI {
+			foundDefaultDatasource := false
 			items, err := models.GetDatasources(ctx)
 			if err != nil {
 				logger.Errorf("get datasource from database fail: %v", err)
@@ -58,6 +59,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 			for _, item := range items {
 				if item.PluginType == "prometheus" && item.IsDefault {
 					atomic.StoreInt64(&PromDefaultDatasourceId, item.Id)
+					foundDefaultDatasource = true
 				}
 
 				logger.Debugf("get datasource: %+v", item)
@@ -90,6 +92,12 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 				}
 				dss = append(dss, ds)
 			}
+
+			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
+				logger.Debugf("no default datasource found")
+				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
+			}
+
 			PutDatasources(dss)
 		} else {
 			FromAPIHook()
