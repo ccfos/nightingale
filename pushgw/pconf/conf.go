@@ -14,6 +14,11 @@ import (
 )
 
 type Pushgw struct {
+	UpdateTargetRetryCount         int
+	UpdateTargetRetryIntervalMills int64
+	UpdateTargetTimeoutMills       int64
+	UpdateTargetBatchSize          int
+
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
 	IdentStatsThreshold int
@@ -33,7 +38,7 @@ type WriterGlobalOpt struct {
 	QueuePopSize            int
 	QueueNumber             int     // 每个 writer 固定数量的队列
 	QueueWaterMark          float64 // 队列将满，开始丢弃数据的水位，比如 0.8
-	AllQueueMaxSize         int64
+	AllQueueMaxSize         int64   // 自动计算得到，无需配置
 	AllQueueMaxSizeInterval int
 	RetryCount              int
 	RetryInterval           int64
@@ -103,6 +108,22 @@ type RelabelConfig struct {
 }
 
 func (p *Pushgw) PreCheck() {
+	if p.UpdateTargetRetryCount <= 0 {
+		p.UpdateTargetRetryCount = 3
+	}
+
+	if p.UpdateTargetRetryIntervalMills <= 0 {
+		p.UpdateTargetRetryIntervalMills = 500
+	}
+
+	if p.UpdateTargetTimeoutMills <= 0 {
+		p.UpdateTargetTimeoutMills = 3000
+	}
+
+	if p.UpdateTargetBatchSize <= 0 {
+		p.UpdateTargetBatchSize = 20
+	}
+
 	if p.BusiGroupLabelKey == "" {
 		p.BusiGroupLabelKey = "busigroup"
 	}
