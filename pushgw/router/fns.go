@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
@@ -152,7 +153,7 @@ func (rt *Router) ForwardToQueue(clientIP string, queueid string, v *prompb.Time
 	}
 
 	if rt.DropSample(v) {
-		CounterDropSampleTotal.Inc()
+		pstat.CounterDropSampleTotal.Inc()
 		return nil
 	}
 

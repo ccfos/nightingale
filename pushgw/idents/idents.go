@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
@@ -213,16 +214,26 @@ func (s *Set) writeTargetTsInRedis(ctx context.Context, redis storage.Redis, con
 	}
 
 	for i := 0; i < retryCount; i++ {
+		start := time.Now()
 		err := storage.MSet(ctx, redis, content)
+		duration := time.Since(start).Seconds()
+
 		logger.Debugf("update_ts: write target ts in redis, keys: %v, retryCount: %d, retryInterval: %v, error: %v", keys, retryCount, retryInterval, err)
 		if err == nil {
+			pstat.RedisOperationLatency.WithLabelValues("mset_target_ts", "success").Observe(duration)
 			return nil
 		} else {
 			logger.Errorf("update_ts: failed to write target ts in redis: %v, keys: %v, retry %d/%d", err, keys, i+1, retryCount)
 		}
 
 		if i < retryCount-1 {
+			// 最后一次尝试的时候不需要 sleep，之前的尝试如果失败了，都需要完事之后 sleep
 			time.Sleep(retryInterval)
+		}
+
+		if i == retryCount-1 {
+			// 记录最后一次的失败情况
+			pstat.RedisOperationLatency.WithLabelValues("mset_target_ts", "fail").Observe(duration)
 		}
 	}
 
