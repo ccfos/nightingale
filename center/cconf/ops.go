@@ -85,220 +85,210 @@ func MergeOperationConf() error {
 const (
 	builtInOps = `
 ops:
-- name: dashboards
-  cname: Dashboards
-  ops:
-    - name: "/dashboards"
-      cname: View Dashboards
-    - name: "/dashboards/add"
-      cname: Add Dashboard
-    - name: "/dashboards/put"
-      cname: Modify Dashboard
-    - name: "/dashboards/del"
-      cname: Delete Dashboard
-    - name: "/embedded-dashboards/put"
-      cname: Modify Embedded Dashboard
-    - name: "/embedded-dashboards"
-      cname: View Embedded Dashboard
-    - name: "/public-dashboards"
-      cname: View Public Dashboard
-
-- name: metric
-  cname: Time Series Metrics
-  ops:
-    - name: "/metric/explorer"
-      cname: View Metric Data
-    - name: "/object/explorer"
-      cname: View Object Data
-
-- name: builtin-metrics
-  cname: Metric Views
-  ops:
-    - name: "/metrics-built-in"
-      cname: View Built-in Metrics
-    - name: "/builtin-metrics/add"
-      cname: Add Built-in Metric
-    - name: "/builtin-metrics/put"
-      cname: Modify Built-in Metric
-    - name: "/builtin-metrics/del"
-      cname: Delete Built-in Metric
-
-- name: recording-rules
-  cname: Recording Rule Management
-  ops:
-    - name: "/recording-rules"
-      cname: View Recording Rules
-    - name: "/recording-rules/add"
-      cname: Add Recording Rule
-    - name: "/recording-rules/put"
-      cname: Modify Recording Rule
-    - name: "/recording-rules/del"
-      cname: Delete Recording Rule
-
-- name: log
-  cname: Log Analysis
-  ops:
-    - name: "/log/explorer"
-      cname: View Logs
-    - name: "/log/index-patterns"
-      cname: View Index Patterns
-
-- name: alert
-  cname: Alert Rules
-  ops:
-    - name: "/alert-rules"
-      cname: View Alert Rules
-    - name: "/alert-rules/add"
-      cname: Add Alert Rule
-    - name: "/alert-rules/put"
-      cname: Modify Alert Rule
-    - name: "/alert-rules/del"
-      cname: Delete Alert Rule
-
-- name: alert-mutes
-  cname: Alert Silence Management
-  ops:
-    - name: "/alert-mutes"
-      cname: View Alert Silences
-    - name: "/alert-mutes/add"
-      cname: Add Alert Silence
-    - name: "/alert-mutes/put"
-      cname: Modify Alert Silence
-    - name: "/alert-mutes/del"
-      cname: Delete Alert Silence
-  
-- name: alert-subscribes
-  cname: Alert Subscription Management
-  ops:
-    - name: "/alert-subscribes"
-      cname: View Alert Subscriptions
-    - name: "/alert-subscribes/add"
-      cname: Add Alert Subscription
-    - name: "/alert-subscribes/put"
-      cname: Modify Alert Subscription
-    - name: "/alert-subscribes/del"
-      cname: Delete Alert Subscription
-
-- name: alert-events  
-  cname: Alert Event Management
-  ops:
-    - name: "/alert-cur-events"
-      cname: View Current Alerts
-    - name: "/alert-cur-events/del"
-      cname: Delete Current Alert
-    - name: "/alert-his-events"
-      cname: View Historical Alerts
-
-- name: notification
-  cname: Alert Notification
-  ops:
-    - name: "/help/notification-settings"
-      cname: View Notification Settings
-    - name: "/help/notification-tpls"
-      cname: View Notification Templates
-
-- name: job
-  cname: Task Management
-  ops:
-    - name: "/job-tpls"
-      cname: View Task Templates
-    - name: "/job-tpls/add"
-      cname: Add Task Template
-    - name: "/job-tpls/put"
-      cname: Modify Task Template
-    - name: "/job-tpls/del"
-      cname: Delete Task Template
-    - name: "/job-tasks"
-      cname: View Task Instances
-    - name: "/job-tasks/add"
-      cname: Add Task Instance
-    - name: "/job-tasks/put"
-      cname: Modify Task Instance
-
-- name: targets
+- name: Infrastructure
   cname: Infrastructure
   ops:
-    - name: "/targets"
-      cname: View Objects
-    - name: "/targets/add"
-      cname: Add Object
-    - name: "/targets/put"
-      cname: Modify Object
-    - name: "/targets/del"
-      cname: Delete Object
-    - name: "/targets/bind"
-      cname: Bind Object
+    - name: /targets
+      cname: Host - View
+    - name: /targets/put
+      cname: Host - Modify
+    - name: /targets/del
+      cname: Host - Delete
+    - name: /targets/bind
+      cname: Host - Bind Uncategorized
 
-- name: user
-  cname: User Management
+- name: Explorer
+  cname: Explorer
   ops:
-    - name: "/users"
-      cname: View User List
-    - name: "/user-groups"
-      cname: View User Groups
-    - name: "/user-groups/add"
-      cname: Add User Group
-    - name: "/user-groups/put"
-      cname: Modify User Group
-    - name: "/user-groups/del"
-      cname: Delete User Group
+    - name: /metric/explorer
+      cname: Metrics Explorer
+    - name: /object/explorer
+      cname: Quick View
+    - name: /metrics-built-in
+      cname: Built-in Metric - View
+    - name: /builtin-metrics/add
+      cname: Built-in Metric - Add
+    - name: /builtin-metrics/put
+      cname: Built-in Metric - Modify
+    - name: /builtin-metrics/del
+      cname: Built-in Metric - Delete
+    - name: /recording-rules
+      cname: Recording Rule - View
+    - name: /recording-rules/add
+      cname: Recording Rule - Add
+    - name: /recording-rules/put
+      cname: Recording Rule - Modify
+    - name: /recording-rules/del
+      cname: Recording Rule - Delete
+    - name: /log/explorer
+      cname: Logs Explorer
+    - name: /log/index-patterns # 前端有个管理索引模式的页面，所以需要一个权限点来控制，后面应该改成侧拉板
+      cname: Index Pattern - View
+    - name: /log/index-patterns/add
+      cname: Index Pattern - Add
+    - name: /log/index-patterns/put
+      cname: Index Pattern - Modify
+    - name: /log/index-patterns/del
+      cname: Index Pattern - Delete
+    - name: /dashboards
+      cname: Dashboard - View
+    - name: /dashboards/add
+      cname: Dashboard - Add
+    - name: /dashboards/put
+      cname: Dashboard - Modify
+    - name: /dashboards/del
+      cname: Dashboard - Delete
+    - name: /public-dashboards
+      cname: Dashboard - View Public
 
-- name: busi-groups
-  cname: Business Group Management
+- name: alerting
+  cname: Alerting
   ops:
-    - name: "/busi-groups"
-      cname: View Business Groups
-    - name: "/busi-groups/add"
-      cname: Add Business Group
-    - name: "/busi-groups/put"
-      cname: Modify Business Group
-    - name: "/busi-groups/del"
-      cname: Delete Business Group
+    - name: /alert-rules
+      cname: Alerting Rule - View
+    - name: /alert-rules/add
+      cname: Alerting Rule - Add
+    - name: /alert-rules/put
+      cname: Alerting Rule - Modify
+    - name: /alert-rules/del
+      cname: Alerting Rule - Delete
+    - name: /alert-mutes
+      cname: Mutting Rule - View
+    - name: /alert-mutes/add
+      cname: Mutting Rule - Add
+    - name: /alert-mutes/put
+      cname: Mutting Rule - Modify
+    - name: /alert-mutes/del
+      cname: Mutting Rule - Delete
+    - name: /alert-subscribes
+      cname: Subscribing Rule - View
+    - name: /alert-subscribes/add
+      cname: Subscribing Rule - Add
+    - name: /alert-subscribes/put
+      cname: Subscribing Rule - Modify
+    - name: /alert-subscribes/del
+      cname: Subscribing Rule - Delete
+    - name: /job-tpls
+      cname: Self-healing-Script - View
+    - name: /job-tpls/add
+      cname: Self-healing-Script - Add
+    - name: /job-tpls/put
+      cname: Self-healing-Script - Modify
+    - name: /job-tpls/del
+      cname: Self-healing-Script - Delete
+    - name: /job-tasks
+      cname: Self-healing-Job - View
+    - name: /job-tasks/add
+      cname: Self-healing-Job - Add
+    - name: /job-tasks/put
+      cname: Self-healing-Job - Modify
+    - name: /alert-cur-events
+      cname: Active Event - View
+    - name: /alert-cur-events/del
+      cname: Active Event - Delete
+    - name: /alert-his-events
+      cname: Historical Event - View
 
-- name: permissions
-  cname: Permission Management
+- name: Notification
+  cname: Notification
   ops:
-    - name: "/permissions"
-      cname: View Permission Settings
-    
-- name: contacts
-  cname: User Contact Management
-  ops:
-    - name: "/contacts"
-      cname: User Contact Management
+    - name: /notification-rules
+      cname: Notification Rule - View
+    - name: /notification-rules/add
+      cname: Notification Rule - Add
+    - name: /notification-rules/put
+      cname: Notification Rule - Modify
+    - name: /notification-rules/del
+      cname: Notification Rule - Delete
+    - name: /notification-channels
+      cname: Media Type - View
+    - name: /notification-channels/add
+      cname: Media Type - Add
+    - name: /notification-channels/put
+      cname: Media Type - Modify
+    - name: /notification-channels/del
+      cname: Media Type - Delete
+    - name: /notification-templates
+      cname: Message Template - View
+    - name: /notification-templates/add
+      cname: Message Template - Add
+    - name: /notification-templates/put
+      cname: Message Template - Modify
+    - name: /notification-templates/del
+      cname: Message Template - Delete
+    - name: /event-pipelines
+      cname: Event Pipeline - View
+    - name: /event-pipelines/add
+      cname: Event Pipeline - Add
+    - name: /event-pipelines/put
+      cname: Event Pipeline - Modify
+    - name: /event-pipelines/del
+      cname: Event Pipeline - Delete
+    - name: /help/notification-settings # 用于控制老版本的通知设置菜单是否展示
+      cname: Notification Settings - View
+    - name: /help/notification-tpls # 用于控制老版本的通知模板菜单是否展示
+      cname: Notification Templates - View
 
-- name: built-in-components
-  cname: Template Center
+- name: Integrations
+  cname: Integrations
   ops:
-    - name: "/built-in-components"
-      cname: View Built-in Components
-    - name: "/built-in-components/add"
-      cname: Add Built-in Component
-    - name: "/built-in-components/put"
-      cname: Modify Built-in Component
-    - name: "/built-in-components/del"
-      cname: Delete Built-in Component
+    - name: /datasources # 用于控制能否看到数据源列表页面的菜单。只有 Admin 才能修改、删除数据源
+      cname: Data Source - View
+    - name: /components
+      cname: Component - View
+    - name: /components/add
+      cname: Component - Add
+    - name: /components/put
+      cname: Component - Modify
+    - name: /components/del
+      cname: Component - Delete
+    - name: /embedded-products
+      cname: Embedded Product - View
+    - name: /embedded-product/add
+      cname: Embedded Product - Add
+    - name: /embedded-product/put
+      cname: Embedded Product - Modify
+    - name: /embedded-product/delete
+      cname: Embedded Product - Delete
 
-- name: datasource
-  cname: Data Source Management
+- name: Organization
+  cname: Organization
   ops:
-    - name: "/help/source"
-      cname: View Data Source Configuration
+    - name: /users
+      cname: User - View
+    - name: /user-groups
+      cname: Team - View
+    - name: /user-groups/add
+      cname: Team - Add
+    - name: /user-groups/put
+      cname: Team - Modify
+    - name: /user-groups/del
+      cname: Team - Delete
+    - name: /busi-groups
+      cname: Business Group - View
+    - name: /busi-groups/add
+      cname: Business Group - Add
+    - name: /busi-groups/put
+      cname: Business Group - Modify
+    - name: /busi-groups/del
+      cname: Business Group - Delete
+    - name: /roles
+      cname: Role - View
 
-- name: system
-  cname: System Information
+- name: System Settings
+  cname: System Settings
   ops:
-    - name: "/help/variable-configs"
-      cname: View Variable Configuration
-    - name: "/help/version"
-      cname: View Version Information
-    - name: "/help/servers"
-      cname: View Server Information
-    - name: "/help/sso"
-      cname: View SSO Configuration
-    - name: "/site-settings"
+    - name: /system/site-settings # 仅用于控制能否展示菜单，只有 Admin 才能修改、删除
       cname: View Site Settings
-
+    - name: /system/variable-settings
+      cname: View Variable Settings
+    - name: /system/sso-settings
+      cname: View SSO Settings
+    - name: /system/alerting-engines
+      cname: View Alerting Engines
+    - name: /system/version
+      cname: View Product Version
+      
 - name: message-templates
   cname: Message Templates
   ops:
@@ -346,5 +336,6 @@ ops:
       cname: Delete Embedded Product
     - name: "/embedded-product/put"
       cname: Edit Embedded Product
+
 `
 )

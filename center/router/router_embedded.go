@@ -60,7 +60,7 @@ func (rt *Router) embeddedProductGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if !hashPermission {
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	ginx.NewRender(c).Data(data, nil)

@@ -18,6 +18,7 @@ import (
 type Datasource struct {
 	Id             int64                  `json:"id"`
 	Name           string                 `json:"name"`
+	Identifier     string                 `json:"identifier"`
 	Description    string                 `json:"description"`
 	PluginId       int64                  `json:"plugin_id"`
 	PluginType     string                 `json:"plugin_type"`      // prometheus
@@ -167,6 +168,31 @@ func DatasourceGet(ctx *ctx.Context, id int64) (*Datasource, error) {
 		return nil, err
 	}
 	return ds, ds.DB2FE()
+}
+
+type DatasourceInfo struct {
+	Id         int64  `json:"id"`
+	Name       string `json:"name"`
+	PluginType string `json:"plugin_type"`
+}
+
+func GetDatasourceInfosByIds(ctx *ctx.Context, ids []int64) ([]*DatasourceInfo, error) {
+	if len(ids) == 0 {
+		return []*DatasourceInfo{}, nil
+	}
+
+	var dsInfos []*DatasourceInfo
+	err := DB(ctx).
+		Model(&Datasource{}).
+		Select("id", "name", "plugin_type").
+		Where("id in ?", ids).
+		Find(&dsInfos).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dsInfos, nil
 }
 
 func (ds *Datasource) Get(ctx *ctx.Context) error {

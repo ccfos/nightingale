@@ -40,7 +40,7 @@ func (rt *Router) userVariableConfigPut(context *gin.Context) {
 	user := context.MustGet("user").(*models.User)
 	if !user.IsAdmin() && f.CreateBy != user.Username {
 		// only admin or creator can update
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	ginx.NewRender(context).Message(models.ConfigsUserVariableUpdate(rt.Ctx, f))
@@ -54,7 +54,7 @@ func (rt *Router) userVariableConfigDel(context *gin.Context) {
 	user := context.MustGet("user").(*models.User)
 	if !user.IsAdmin() && configs.CreateBy != user.Username {
 		// only admin or creator can delete
-		ginx.Bomb(403, "no permission")
+		ginx.Bomb(403, "forbidden")
 	}
 
 	if configs != nil && configs.External == models.ConfigExternal {

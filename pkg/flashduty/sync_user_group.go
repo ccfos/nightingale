@@ -168,7 +168,7 @@ func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
 	if teamID == 0 {
 		teamID, err = ugs.CheckTeam(refID)
 		if err != nil {
-			return err
+			logger.Warningf("CheckTeam failed for refID=%v: %v", refID, err)
 		}
 	}
 

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
@@ -84,20 +85,6 @@ func (rt *Router) taskGetsByGids(c *gin.Context) {
 	}, nil)
 }
 
-type taskForm struct {
-	Title     string   `json:"title" binding:"required"`
-	Account   string   `json:"account" binding:"required"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script" binding:"required"`
-	Args      string   `json:"args"`
-	Action    string   `json:"action" binding:"required"`
-	Creator   string   `json:"creator"`
-	Hosts     []string `json:"hosts" binding:"required"`
-}
-
 func (rt *Router) taskRecordAdd(c *gin.Context) {
 	var f *models.TaskRecord
 	ginx.BindJSON(c, &f)
@@ -112,6 +99,14 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	var f models.TaskForm
 	ginx.BindJSON(c, &f)
+	// 把 f.Hosts 中的空字符串过滤掉
+	hosts := make([]string, 0, len(f.Hosts))
+	for i := range f.Hosts {
+		if strings.TrimSpace(f.Hosts[i]) != "" {
+			hosts = append(hosts, strings.TrimSpace(f.Hosts[i]))
+		}
+	}
+	f.Hosts = hosts
 
 	bgid := ginx.UrlParamInt64(c, "id")
 	user := c.MustGet("user").(*models.User)

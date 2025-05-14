@@ -1,5 +1,5 @@
 {
-    "name": " Kubernetes-Statefulset / Container ",
+    "name": "Kubernetes / Statefulset / Container ",
     "tags": "Categraf",
     "configs": {
         "panels": [

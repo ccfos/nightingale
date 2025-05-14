@@ -57,15 +57,21 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 
 	for _, item := range list {
 		item.AuthJson.BasicAuthPassword = ""
-		if item.PluginType != models.PROMETHEUS {
-			item.SettingsJson = nil
-		} else {
+		if item.PluginType == models.PROMETHEUS {
 			for k, v := range item.SettingsJson {
 				if strings.HasPrefix(k, "prometheus.") {
 					item.SettingsJson[strings.TrimPrefix(k, "prometheus.")] = v
 					delete(item.SettingsJson, k)
 				}
 			}
+		} else if item.PluginType == "cloudwatch" {
+			for k := range item.SettingsJson {
+				if !strings.Contains(k, "region") {
+					delete(item.SettingsJson, k)
+				}
+			}
+		} else {
+			item.SettingsJson = nil
 		}
 		dss = append(dss, item)
 	}
@@ -117,7 +123,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 		err = req.Add(rt.Ctx)
 	} else {
-		err = req.Update(rt.Ctx, "name", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default")
+		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default")
 	}
 
 	Render(c, nil, err)
