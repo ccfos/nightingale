@@ -627,7 +627,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "(1 - mem_swap_free / mem_swap_total)*100 and mem_swap_total > 0",
+                        "expr": "(1 - mem_swap_free{ident=~\"$ident\"} / mem_swap_total{ident=~\"$ident\"})*100 and mem_swap_total{ident=~\"$ident\"} > 0",
                         "legend": "{{ident}}",
                         "maxDataPoints": 480,
                         "refId": "A",
