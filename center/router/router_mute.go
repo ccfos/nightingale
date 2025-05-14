@@ -1,11 +1,13 @@
 package router
 
 import (
+	"math"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/common"
+	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
@@ -65,6 +67,40 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 	f.CreateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+}
+
+type MuteTestForm struct {
+	EventId   int64            `json:"event_id" binding:"required"`
+	AlertMute models.AlertMute `json:"mute_config" binding:"required"`
+}
+
+func (rt *Router) alertMuteTryRun(c *gin.Context) {
+
+	var f MuteTestForm
+	ginx.BindJSON(c, &f)
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	ginx.Dangerous(err)
+
+	if hisEvent == nil {
+		ginx.Bomb(http.StatusNotFound, "event not found")
+	}
+
+	curEvent := *hisEvent.ToCur()
+	curEvent.SetTagsMap()
+
+	// 绕过时间范围检查：设置时间范围为全量（0 到 int64 最大值），仅验证其他匹配条件（如标签、策略类型等）
+	f.AlertMute.MuteTimeType = models.TimeRange
+	f.AlertMute.Btime = 0             // 最小可能值（如 Unix 时间戳起点）
+	f.AlertMute.Etime = math.MaxInt64 // 最大可能值（int64 上限）
+
+	if !mute.MatchMute(&curEvent, &f.AlertMute) {
+		ginx.NewRender(c).Data("not match", nil)
+		return
+	}
+
+	ginx.NewRender(c).Data("mute test match", nil)
+
 }
 
 // Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
