@@ -33,11 +33,12 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"}",
+                        "expr": "topk(100, cpu_usage_active{cpu=\"cpu-total\", ident=~\"$ident\"})",
                         "instant": true,
                         "legend": "{{ident}}",
                         "maxDataPoints": 480,
-                        "refId": "A"
+                        "refId": "A",
+                        "step": 15
                     }
                 ],
                 "transformations": [
@@ -104,11 +105,12 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "mem_used_percent{ident=~\"$ident\"}",
+                        "expr": "topk(100, mem_used_percent{ident=~\"$ident\"})",
                         "instant": true,
                         "legend": "{{ident}}",
                         "maxDataPoints": 480,
-                        "refId": "A"
+                        "refId": "A",
+                        "step": 15
                     }
                 ],
                 "transformations": [
