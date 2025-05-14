@@ -54,7 +54,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
-	idents := idents.New(ctx, redis)
+	idents := idents.New(ctx, redis, config.Pushgw)
 	metas := metas.New(redis)
 	writers := writer.NewWriters(config.Pushgw)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
