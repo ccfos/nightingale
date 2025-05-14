@@ -519,6 +519,7 @@ CREATE TABLE alert_aggr_view (
     id bigserial,
     name varchar(191) not null default '',
     rule varchar(2048) not null default '',
+    format varchar(2048) not null default '',
     cate smallint not null ,
     create_at bigint not null default 0,
     create_by bigint not null default 0,

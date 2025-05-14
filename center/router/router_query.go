@@ -47,7 +47,7 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, q.Did, q.DsCate, q) {
-			return LogResp{}, fmt.Errorf("no permission")
+			return LogResp{}, fmt.Errorf("forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(q.DsCate, q.Did)
@@ -114,7 +114,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 
 	for _, q := range f.Querys {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
-			return nil, fmt.Errorf("no permission")
+			return nil, fmt.Errorf("forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
@@ -185,7 +185,7 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 
 	for _, q := range f.Querys {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
-			return LogResp{}, fmt.Errorf("no permission")
+			return LogResp{}, fmt.Errorf("forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
@@ -244,7 +244,7 @@ func (rt *Router) QueryLog(c *gin.Context) {
 	var resp []interface{}
 	for _, q := range f.Querys {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
-			ginx.Bomb(200, "no permission")
+			ginx.Bomb(200, "forbidden")
 		}
 
 		plug, exists := dscache.DsCache.Get("elasticsearch", f.DatasourceId)

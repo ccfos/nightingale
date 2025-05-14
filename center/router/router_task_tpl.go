@@ -119,6 +119,18 @@ type taskTplForm struct {
 	Hosts     []string `json:"hosts"`
 }
 
+func (f *taskTplForm) Verify() {
+	// 传入的 f.Hosts 可能是 []string{"", "a", "b"}，需要过滤掉空字符串
+	args := make([]string, 0, len(f.Hosts))
+	for _, ident := range f.Hosts {
+		if strings.TrimSpace(ident) != "" {
+			args = append(args, strings.TrimSpace(ident))
+		}
+	}
+
+	f.Hosts = args
+}
+
 func (rt *Router) taskTplAdd(c *gin.Context) {
 	if !rt.Ibex.Enable {
 		ginx.Bomb(400, i18n.Sprintf(c.GetHeader("X-Language"), "This functionality has not been enabled. Please contact the system administrator to activate it."))
@@ -127,6 +139,7 @@ func (rt *Router) taskTplAdd(c *gin.Context) {
 
 	var f taskTplForm
 	ginx.BindJSON(c, &f)
+	f.Verify()
 
 	user := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
@@ -170,6 +183,7 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 
 	var f taskTplForm
 	ginx.BindJSON(c, &f)
+	f.Verify()
 
 	rt.checkTargetsExistByIndent(f.Hosts)
 
