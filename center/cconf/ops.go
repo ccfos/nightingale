@@ -236,11 +236,11 @@ ops:
       cname: Data Source - View
     - name: /components
       cname: Component - View
-    - name: /built-in-components/add
+    - name: /components/add
       cname: Component - Add
-    - name: /built-in-components/put
+    - name: /components/put
       cname: Component - Modify
-    - name: /built-in-components/del
+    - name: /components/del
       cname: Component - Delete
     - name: /embedded-products
       cname: Embedded Product - View
