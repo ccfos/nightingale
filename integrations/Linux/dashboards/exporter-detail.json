@@ -1,0 +1,3322 @@
+{
+    "name": "NodeExporter 机器常用指标",
+    "tags": "NodeExporter",
+    "ident": "",
+    "uuid": 1717556327748611000,
+    "configs": {
+        "links": [
+            {
+                "targetBlank": true,
+                "title": "n9e",
+                "url": "https://n9e.gitee.io/"
+            },
+            {
+                "targetBlank": true,
+                "title": "author",
+                "url": "http://flashcat.cloud/"
+            }
+        ],
+        "panels": [
+            {
+                "collapsed": true,
+                "id": "396bf5e2-f204-4349-8e00-fb9d25ed7e79",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "396bf5e2-f204-4349-8e00-fb9d25ed7e79",
+                    "isResizable": false
+                },
+                "name": "单机概况",
+                "type": "row"
+            },
+            {
+                "type": "stat",
+                "id": "534ca690-87e5-4c53-9c8a-d3afe0276bf5",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 0,
+                    "y": 1,
+                    "i": "534ca690-87e5-4c53-9c8a-d3afe0276bf5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_time_seconds{instance=~\"$node\"} - node_boot_time_seconds{instance=~\"$node\"}",
+                        "maxDataPoints": 480,
+                        "instant": true,
+                        "step": 15,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "启动时长",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "title": null,
+                        "value": null
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 1
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "69c96540-965b-4e87-9eb7-c24a0c974474",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 6,
+                    "y": 1,
+                    "i": "69c96540-965b-4e87-9eb7-c24a0c974474",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_memory_SwapTotal_bytes{instance=~\"$node\"} - node_memory_SwapFree_bytes{instance=~\"$node\"}",
+                        "maxDataPoints": 480,
+                        "instant": true,
+                        "step": 15,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "SWAP内存使用",
+                "description": "swap使用过高，会影响系统io性能，如果内存够用但swap使用很高，可以调小swappiness的值",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": null
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgba(148, 112, 255, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [],
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "stat",
+                "id": "84b04d6b-1f97-47b8-86ff-77e6b1af4f1d",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 12,
+                    "y": 1,
+                    "i": "84b04d6b-1f97-47b8-86ff-77e6b1af4f1d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "sum(node_filesystem_device_error{instance=~\"$node\",mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run.*\"}) by (instance)",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 480,
+                        "step": 15,
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "写文件错误数总和",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "graphMode": "none",
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 0,
+                    "textSize": {
+                        "value": null
+                    },
+                    "orientation": "auto"
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "result": {
+                                "color": "#369903"
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "match": {
+                                "from": 1,
+                                "to": null
+                            },
+                            "result": {
+                                "color": "#f0310f"
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "standardOptions": {
+                        "decimals": 1
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "39715d51-4d18-4185-8584-68a4d44adf2b",
+                "layout": {
+                    "h": 5,
+                    "w": 6,
+                    "x": 18,
+                    "y": 1,
+                    "i": "39715d51-4d18-4185-8584-68a4d44adf2b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_vmstat_oom_kill{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒OOM次数",
+                "description": "大于0，说明有进程内存不够用了，需要考虑扩容或升级配置了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#f90101",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "hexbin",
+                "id": "981e2271-2c6c-4410-b3fb-73c35049c11a",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 0,
+                    "y": 6,
+                    "i": "981e2271-2c6c-4410-b3fb-73c35049c11a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "topk(25, max(100 - ((node_filesystem_avail_bytes{instance=~\"$node\",} * 100) / node_filesystem_size_bytes{instance=~\"$node\"})) by (instance, mountpoint))",
+                        "legend": "{{instance}} {{mountpoint}}",
+                        "maxDataPoints": 480,
+                        "step": 15,
+                        "instant": true
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "磁盘分区使用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "fontBackground": true,
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colorRange": [
+                        "thresholds"
+                    ]
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 95,
+                                "type": ""
+                            },
+                            {
+                                "color": "rgba(230, 198, 39, 1)",
+                                "value": 75,
+                                "type": ""
+                            },
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    }
+                }
+            },
+            {
+                "type": "hexbin",
+                "id": "82310aef-8db6-46bf-96a0-fcad68ae7d9e",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 8,
+                    "y": 6,
+                    "i": "82310aef-8db6-46bf-96a0-fcad68ae7d9e",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "topk(25, max(100 - ((node_filesystem_files_free{instance=~\"$node\",mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run/user.*\"} * 100) / node_filesystem_files{instance=~\"$node\",mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run/user.*\"})) by (instance, mountpoint))",
+                        "legend": "{{instance}} {{mountpoint}}",
+                        "maxDataPoints": 480,
+                        "instant": true,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "inode分区使用率",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "valueAndName",
+                    "fontBackground": true,
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colorRange": [
+                        "thresholds"
+                    ]
+                },
+                "options": {
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 75,
+                                "type": ""
+                            },
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    }
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "14caedd8-a1fd-412b-8c50-e35d3df57a2b",
+                "layout": {
+                    "h": 5,
+                    "w": 8,
+                    "x": 16,
+                    "y": 6,
+                    "i": "14caedd8-a1fd-412b-8c50-e35d3df57a2b",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_filefd_allocated{instance=~\"$node\"}/node_filefd_maximum{instance=~\"$node\"}*100",
+                        "maxDataPoints": 480,
+                        "instant": false,
+                        "step": 15,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "FD使用率",
+                "description": "如果超过80%，建议把文件描述符的最大个数调大，或者扩容",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "639f4668-fb33-427d-8ec8-4f11127a1bf3",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 0,
+                    "y": 11,
+                    "i": "639f4668-fb33-427d-8ec8-4f11127a1bf3",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "avg without (mode,cpu) ( 1 - rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$node\"}[$__rate_interval]) ) * 100",
+                        "maxDataPoints": 480,
+                        "step": 15,
+                        "instant": false,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率",
+                "description": "如果cpu使用率超过50%，可以通过top命令查看机器上是否有异常进程，如果没有异常进程，则说明服务需要扩容或者机器需要升级配置了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "56dc011d-fc1c-4682-a903-1b778cbff9e8",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 8,
+                    "y": 11,
+                    "i": "56dc011d-fc1c-4682-a903-1b778cbff9e8",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$node\"} / node_memory_MemTotal_bytes{instance=~\"$node\"})) * 100",
+                        "maxDataPoints": 480,
+                        "step": 15,
+                        "instant": false,
+                        "legend": "{{instance}}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率",
+                "description": "如果内存使用率超过50%，则需要扩容或者升级配置了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.01,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "4a9ea87d-d650-43ff-bf1e-70f44afabace",
+                "layout": {
+                    "h": 6,
+                    "w": 8,
+                    "x": 16,
+                    "y": 11,
+                    "i": "4a9ea87d-d650-43ff-bf1e-70f44afabace",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_io_time_seconds_total{instance=~\"$node\"}[$__rate_interval]) * 100",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "IO Util",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(255, 101, 107)",
+                                "value": 75,
+                                "type": ""
+                            },
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "22df4dfe-6f93-4f44-b7ea-254a690922a5",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17,
+                    "i": "22df4dfe-6f93-4f44-b7ea-254a690922a5",
+                    "isResizable": false
+                },
+                "name": "系统指标",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "7c4fede9-18b6-4a45-9278-76b6f724716e",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 0,
+                    "y": 18,
+                    "i": "7c4fede9-18b6-4a45-9278-76b6f724716e",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_procs_running{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "进程数",
+                "description": "进程数超过2000，可以考虑扩容了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#ff0000",
+                                "value": 2000
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "28f96d86-79ed-4564-84c9-8e8c58d66985",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 6,
+                    "y": 18,
+                    "i": "28f96d86-79ed-4564-84c9-8e8c58d66985",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_intr_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} interrupts",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "irate(node_context_switches_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} context switches",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "上下文切换/中断",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1a16c5ad-1a71-4771-9f50-f3dcc4524f71",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 12,
+                    "y": 18,
+                    "i": "1a16c5ad-1a71-4771-9f50-f3dcc4524f71",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_entropy_available_bits{instance=~\"$node\"}",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "熵池大小",
+                "description": "熵池太小 ，程序使用随机函数会阻塞，可以安装 rng-tools 工具增加熵池大小，可参考\n<a href=\"https://codeantenna.com/a/Ab6aMd3NSA\" target=\"_blank\">https://codeantenna.com/a/Ab6aMd3NSA</a> ",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": null
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#f70202",
+                                "value": 100
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "077b1181-00e2-44ce-9295-7528a8b829d5",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 18,
+                    "y": 18,
+                    "i": "077b1181-00e2-44ce-9295-7528a8b829d5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_timex_offset_seconds{instance=~\"$node\"}",
+                        "legend": "{{instance}}",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "NTP偏移",
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "406a3fd8-52fb-4935-9971-d7a8f37437df",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 24,
+                    "i": "406a3fd8-52fb-4935-9971-d7a8f37437df",
+                    "isResizable": false
+                },
+                "name": "CPU详情",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "28f582ca-dd5c-41a8-8cc8-bcc88f755253",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 25,
+                    "i": "28f582ca-dd5c-41a8-8cc8-bcc88f755253",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": " (avg without (cpu, mode)(rate(node_cpu_seconds_total{instance=~\"$node\",mode=\"idle\"}[$__rate_interval])))*100",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU空闲率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            },
+                            {
+                                "color": "#f90101",
+                                "value": 10
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "bb2b0b33-2f78-428d-8847-d900d0bbdf25",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 25,
+                    "i": "bb2b0b33-2f78-428d-8847-d900d0bbdf25",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": " (avg without (cpu)(rate(node_cpu_seconds_total{instance=~\"$node\",mode!=\"idle\"}[$__rate_interval])))*100",
+                        "legend": "{{instance}} {{mode}}",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU使用率详情",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "51e95b78-940e-4e5e-9cf5-7c8515209de0",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 25,
+                    "i": "51e95b78-940e-4e5e-9cf5-7c8515209de0",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_load1{instance=~\"$node\"}",
+                        "legend": "{{instance}} load1",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_load5{instance=~\"$node\"}",
+                        "legend": "{{instance}} load5",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_load15{instance=~\"$node\"}",
+                        "legend": "{{instance}} load15",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU负载",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "f3ab98b2-318b-451b-868e-d967555b7925",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 32,
+                    "i": "f3ab98b2-318b-451b-868e-d967555b7925",
+                    "isResizable": false
+                },
+                "name": "内存详情",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "6b084867-c1a4-4e7f-a0d7-5dd24524f82d",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 33,
+                    "i": "6b084867-c1a4-4e7f-a0d7-5dd24524f82d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_memory_HugePages_Total{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Hugepagesize_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_HugePages_Surp{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_HugePages_Free{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_HugePages_Rsvd{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_AnonHugePages_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Inactive_file_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Inactive_anon_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Active_file_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Active_anon_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Unevictable_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_AnonPages_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Shmem_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Mapped_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Cached_bytes{instance=~\"$node\"} ",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_SwapCached_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Mlocked_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Buffers_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "用户态内存使用",
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single",
+                        "heightInPercentage": null
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "10b1dde7-7cad-4992-be3f-7e8c8aac8c03",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 33,
+                    "i": "10b1dde7-7cad-4992-be3f-7e8c8aac8c03",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_memory_Slab_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_SReclaimable_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_SUnreclaim_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_VmallocUsed_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_VmallocChunk_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_KernelStack_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Bounce_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内核态内存使用",
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "ea5480e7-ec20-41e5-a007-74c846fae91a",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 0,
+                    "y": 40,
+                    "i": "ea5480e7-ec20-41e5-a007-74c846fae91a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_memory_DirectMap1G_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_DirectMap2M_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_DirectMap4k_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "TLB效率",
+                "description": "/proc/meminfo中的DirectMap所统计的不是关于内存的使用，而是一个反映TLB效率的指标。TLB(Translation Lookaside Buffer)是位于CPU上的缓存，用于将内存的虚拟地址翻译成物理地址，由于TLB的大小有限，不能缓存的地址就需要访问内存里的page table来进行翻译，速度慢很多。为了尽可能地将地址放进TLB缓存，新的CPU硬件支持比4k更大的页面从而达到减少地址数量的目的， 比如2MB，4MB，甚至1GB的内存页，视不同的硬件而定。”DirectMap4k”表示映射为4kB的内存数量， “DirectMap2M”表示映射为2MB的内存数量，以此类推。所以DirectMap其实是一个反映TLB效率的指标",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8d31c2aa-38c9-434e-8c93-4cbae4e1bd8d",
+                "layout": {
+                    "h": 7,
+                    "w": 12,
+                    "x": 12,
+                    "y": 40,
+                    "i": "8d31c2aa-38c9-434e-8c93-4cbae4e1bd8d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_memory_NFS_Unstable_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Writeback_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_memory_Dirty_bytes{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "dirty page",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "table",
+                        "placement": "bottom",
+                        "columns": [
+                            "last"
+                        ],
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "88aeb766-214b-43a9-85f3-9ec6368f0da0",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 47,
+                    "i": "88aeb766-214b-43a9-85f3-9ec6368f0da0",
+                    "isResizable": false
+                },
+                "name": "磁盘详情",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "c06c49fa-60ce-4982-bfe5-1d5012dc4af1",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 0,
+                    "y": 48,
+                    "i": "c06c49fa-60ce-4982-bfe5-1d5012dc4af1",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_read_time_seconds_total{instance=~\"$node\"}[$__rate_interval]) / rate(node_disk_reads_completed_total{instance=~\"$node\"}[$__rate_interval])\n+\nrate(node_disk_write_time_seconds_total{instance=~\"$node\"}[$__rate_interval]) / rate(node_disk_writes_completed_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "io await",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b516483d-ea9b-4f4c-9fdc-5ac70fe159d2",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 6,
+                    "y": 48,
+                    "i": "b516483d-ea9b-4f4c-9fdc-5ac70fe159d2",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_read_bytes_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}}-Read",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_disk_written_bytes_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}}-Write",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "每秒读写数据大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bytesSecIEC",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b118aac2-217d-4fb3-881a-7926f0e8078e",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 12,
+                    "y": 48,
+                    "i": "b118aac2-217d-4fb3-881a-7926f0e8078e",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_reads_completed_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - Reads",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_disk_writes_completed_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - Writes",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_disk_reads_merged_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - Read merged",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_disk_writes_merged_total{instance=~\"$node\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - Write merged",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "IO/Merged次数",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "iops",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "362bfd2d-2ef2-49a0-b64e-14264495672c",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 18,
+                    "y": 48,
+                    "i": "362bfd2d-2ef2-49a0-b64e-14264495672c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_filesystem_readonly{instance=~\"$node\",device!~'rootfs',device!~\"tmpfs\",mountpoint!~\"/var/lib.*\"}",
+                        "legend": "{{instance}} {{mountpoint}} - ReadOnly",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "硬盘 ReadOnly",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "1c19b6ae-95fb-4358-bd01-bb0beec8d619",
+                "layout": {
+                    "h": 6,
+                    "w": 12,
+                    "x": 0,
+                    "y": 54,
+                    "i": "1c19b6ae-95fb-4358-bd01-bb0beec8d619",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "(rate(node_disk_read_bytes_total{instance=~\"$node\"}[$__rate_interval]) + rate(node_disk_written_bytes_total{instance=~\"$node\"}[$__rate_interval]))\n/\n(rate(node_disk_reads_completed_total{instance=~\"$node\"}[$__rate_interval]) + rate(node_disk_writes_completed_total{instance=~\"$node\"}[$__rate_interval]))",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "avgrq-sz",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8da1e948-283d-4e68-990f-8e6c9af22d05",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 12,
+                    "y": 54,
+                    "i": "8da1e948-283d-4e68-990f-8e6c9af22d05",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_disk_io_time_weighted_seconds_total{instance=~\"$node\"}[$__rate_interval])\n",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "avgqu-sz",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "925fc17e-565d-4c16-a8fb-9a6d07d446c6",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 18,
+                    "y": 54,
+                    "i": "41e3a384-7fdd-4da3-90cf-068f0058fac1",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_filesystem_device_error{instance=~\"$node\",device!~'rootfs',device!~\"tmpfs\",mountpoint!~\"/var/lib.*\"}",
+                        "legend": "{{instance}} {{mountpoint}} - Device error",
+                        "maxDataPoints": 480
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "硬盘设备错误",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "collapsed": true,
+                "id": "8fb70dca-4296-45a6-8dd3-770fc898ee65",
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 60,
+                    "i": "8fb70dca-4296-45a6-8dd3-770fc898ee65",
+                    "isResizable": false
+                },
+                "name": "网络详情",
+                "type": "row"
+            },
+            {
+                "type": "timeseries",
+                "id": "ae5d7236-c89f-4fb3-ae5c-e70cb03cb168",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 0,
+                    "y": 61,
+                    "i": "ae5d7236-c89f-4fb3-ae5c-e70cb03cb168",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_network_receive_bytes_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])*8",
+                        "legend": "{{instance}} {{device}} - in",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_network_transmit_bytes_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])*8",
+                        "legend": "{{instance}} {{device}} - out",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "出入流量大小",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "bitsSecSI",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9cc72d79-c0bd-440d-849a-bf8af74a2b6c",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 6,
+                    "y": 61,
+                    "i": "9cc72d79-c0bd-440d-849a-bf8af74a2b6c",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_network_receive_packets_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - in",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_network_transmit_packets_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - out",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "packets",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "packetsSec",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8b54d503-daa0-4bea-bb00-d9c723123efd",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 12,
+                    "y": 61,
+                    "i": "8b54d503-daa0-4bea-bb00-d9c723123efd",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_network_receive_errs_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - in",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_network_transmit_errs_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - out",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "error",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "packetsSec",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "293fc82f-1e25-412b-93cc-f8daceb61bd9",
+                "layout": {
+                    "h": 6,
+                    "w": 6,
+                    "x": 18,
+                    "y": 61,
+                    "i": "293fc82f-1e25-412b-93cc-f8daceb61bd9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(node_network_receive_drop_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - in",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "rate(node_network_transmit_drop_total{instance=~\"$node\",device=~\"e.*\"}[$__rate_interval])",
+                        "legend": "{{instance}} {{device}} - out",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "drop",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "packetsSec",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "8fe595ad-f393-4d1c-a523-888071ca41b9",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 0,
+                    "y": 67,
+                    "i": "8fe595ad-f393-4d1c-a523-888071ca41b9",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "100 * node_nf_conntrack_entries{instance=~\"$node\"} / node_nf_conntrack_entries_limit{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "nf_conntrack 使用率",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "64b815bc-b041-40f3-aaf2-21861836ab1d",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 8,
+                    "y": 67,
+                    "i": "64b815bc-b041-40f3-aaf2-21861836ab1d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_sockstat_TCP_alloc{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_sockstat_TCP_inuse{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_sockstat_TCP_orphan{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_sockstat_TCP_tw{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    },
+                    {
+                        "expr": "node_netstat_Tcp_CurrEstab{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "tcp socket stat",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.04,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "d089d8a2-dbbf-4dbf-89a8-b463522b1c1d",
+                "layout": {
+                    "h": 7,
+                    "w": 8,
+                    "x": 16,
+                    "y": 67,
+                    "i": "d089d8a2-dbbf-4dbf-89a8-b463522b1c1d",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "node_sockstat_sockets_used{instance=~\"$node\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "socket used",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgb(44, 157, 61)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "label": "时序库",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "node",
+                "label": "机器",
+                "type": "query",
+                "hide": false,
+                "multi": true,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(node_uname_info,  instance)",
+                "allOption": true,
+                "allValue": ".*"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

@@ -1,6 +1,6 @@
 {
     "name": "机器进程数量统计",
-    "tags": "Categraf Linux",
+    "tags": "Categraf",
     "ident": "",
     "uuid": 1717556327738575000,
     "configs": {
