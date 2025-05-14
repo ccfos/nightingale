@@ -1,5 +1,5 @@
 {
-    "name": "NodeExporter 机器常用指标",
+    "name": "机器常用指标（使用 NodeExporter 作为采集器）",
     "tags": "NodeExporter",
     "ident": "",
     "uuid": 1717556327748611000,
