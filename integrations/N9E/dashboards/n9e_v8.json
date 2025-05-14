@@ -86,7 +86,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_samples_received_total[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -166,7 +166,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_write_total[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -247,7 +247,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_write_error_total[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -328,7 +328,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_drop_sample_total[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -361,7 +361,7 @@
                         "expr": "topk(20, rate(n9e_pushgw_sample_received_by_ident[$__rate_interval]))",
                         "instant": true,
                         "legend": "{{host_ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -416,7 +416,7 @@
                 "targets": [
                     {
                         "expr": "n9e_pushgw_sample_queue_size",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -502,7 +502,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_push_queue_over_limit_error_total[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -589,7 +589,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_pushgw_forward_duration_seconds_count[$__rate_interval])",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -720,7 +720,7 @@
                 "targets": [
                     {
                         "expr": "histogram_quantile(0.95, rate(n9e_pushgw_forward_duration_seconds_bucket[$__rate_interval]))",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -766,7 +766,7 @@
                 "targets": [
                     {
                         "expr": "n9e_cron_sync_number",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -847,7 +847,7 @@
                 "targets": [
                     {
                         "expr": "n9e_cron_duration",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -930,7 +930,7 @@
                 "targets": [
                     {
                         "expr": "n9e_alert_alert_queue_size",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -1011,7 +1011,7 @@
                 "targets": [
                     {
                         "expr": "rate(n9e_alert_rule_eval_error_total[$__rate_interval]) > 0",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
                     }
@@ -1075,13 +1075,279 @@
                         }
                     }
                 ]
+            },
+            {
+                "type": "row",
+                "id": "88508bde-2957-4afb-b10f-1d84c6461eec",
+                "name": "Redis Read and Write",
+                "collapsed": true,
+                "layout": {
+                    "h": 1,
+                    "w": 24,
+                    "x": 0,
+                    "y": 17,
+                    "i": "88508bde-2957-4afb-b10f-1d84c6461eec",
+                    "isResizable": false
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "aa551bb1-c218-4fe2-8099-059e66905617",
+                "layout": {
+                    "h": 5,
+                    "w": 5,
+                    "x": 0,
+                    "y": 18,
+                    "i": "79b57988-0b58-4d2d-bd8f-41f5998496ce",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.99, rate(n9e_pushgw_redis_operation_latency_seconds_bucket[$__rate_interval]))",
+                        "maxDataPoints": 720,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "P99 Latency（Redis Operation）",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "seconds",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "964bd084-9a2e-453c-bc3a-cf64550fe358",
+                "layout": {
+                    "h": 5,
+                    "w": 5,
+                    "x": 5,
+                    "y": 18,
+                    "i": "153a8a0f-b9d7-4d7d-8cc4-aa346ecb73c5",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "rate(n9e_pushgw_redis_operation_latency_seconds_count[$__rate_interval])",
+                        "maxDataPoints": 720,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Redis Operation / Second",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "ops",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "5f92a0f4-cc4d-4c86-a5b1-cb12b9fd5304",
+                "layout": {
+                    "h": 5,
+                    "w": 5,
+                    "x": 10,
+                    "y": 18,
+                    "i": "7abbce6f-efea-40a8-a7be-85c3380a0794",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "(\nrate(n9e_pushgw_redis_operation_latency_seconds_bucket{le=\"+Inf\"}[$__rate_interval]) - rate(n9e_pushgw_redis_operation_latency_seconds_bucket{le=\"1\"}[$__rate_interval])\n) or vector(0)",
+                        "maxDataPoints": 720,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Slow Operataion / Second",
+                "description": "操作 Redis 时耗时超过 1s 就算慢",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "ops",
+                        "decimals": 1
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             }
         ],
         "var": [
             {
-                "definition": "prometheus",
                 "name": "prom",
-                "type": "datasource"
+                "label": "数据源",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
             }
         ],
         "version": "3.0.0"
