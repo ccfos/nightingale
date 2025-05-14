@@ -288,5 +288,54 @@ ops:
       cname: View Alerting Engines
     - name: /system/version
       cname: View Product Version
+      
+- name: message-templates
+  cname: Message Templates
+  ops:
+    - name: "/notification-templates"
+      cname: View Message Templates
+    - name: "/notification-templates/add"
+      cname: Add Message Templates
+    - name: "/notification-templates/put"
+      cname: Modify Message Templates
+    - name: "/notification-templates/del"
+      cname: Delete Message Templates
+
+- name: notify-rules
+  cname: Notify Rules
+  ops:
+    - name: "/notification-rules"
+      cname: View Notify Rules
+    - name: "/notification-rules/add"
+      cname: Add Notify Rules
+    - name: "/notification-rules/put"
+      cname: Modify Notify Rules
+    - name: "/notification-rules/del"
+      cname: Delete Notify Rules
+
+- name: notify-channels
+  cname: Notify Channels
+  ops:
+    - name: "/notification-channels"
+      cname: View Notify Channels
+    - name: "/notification-channels/add"
+      cname: Add Notify Channels
+    - name: "/notification-channels/put"
+      cname: Modify Notify Channels
+    - name: "/notification-channels/del"
+      cname: Delete Notify Channels
+
+- name: embedded-product
+  cname: Integrated Instrument Dashboard
+  ops:
+    - name: "/embedded-product"
+      cname: View Embedded Product
+    - name: "/embedded-product/add"
+      cname: Add Embedded Product
+    - name: "/embedded-product/delete"
+      cname: Delete Embedded Product
+    - name: "/embedded-product/put"
+      cname: Edit Embedded Product
+
 `
 )
