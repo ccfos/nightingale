@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
@@ -19,10 +20,13 @@ type RedisConfig struct {
 	Password string
 	DB       int
 	tlsx.ClientConfig
-	RedisType        string
-	MasterName       string
-	SentinelUsername string
-	SentinelPassword string
+	RedisType         string
+	MasterName        string
+	SentinelUsername  string
+	SentinelPassword  string
+	DialTimeoutMills  int // default 5000 ms
+	ReadTimeoutMills  int // default 3000 ms
+	WriteTimeoutMills int // default 3000 ms
 }
 
 type Redis redis.Cmdable
@@ -30,13 +34,28 @@ type Redis redis.Cmdable
 func NewRedis(cfg RedisConfig) (Redis, error) {
 	var redisClient Redis
 
+	if cfg.DialTimeoutMills == 0 {
+		cfg.DialTimeoutMills = 5000
+	}
+
+	if cfg.ReadTimeoutMills == 0 {
+		cfg.ReadTimeoutMills = 3000
+	}
+
+	if cfg.WriteTimeoutMills == 0 {
+		cfg.WriteTimeoutMills = 3000
+	}
+
 	switch cfg.RedisType {
 	case "standalone", "":
 		redisOptions := &redis.Options{
-			Addr:     cfg.Address,
-			Username: cfg.Username,
-			Password: cfg.Password,
-			DB:       cfg.DB,
+			Addr:         cfg.Address,
+			Username:     cfg.Username,
+			Password:     cfg.Password,
+			DB:           cfg.DB,
+			DialTimeout:  time.Duration(cfg.DialTimeoutMills) * time.Millisecond,
+			ReadTimeout:  time.Duration(cfg.ReadTimeoutMills) * time.Millisecond,
+			WriteTimeout: time.Duration(cfg.WriteTimeoutMills) * time.Millisecond,
 		}
 
 		if cfg.UseTLS {
@@ -52,9 +71,12 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 
 	case "cluster":
 		redisOptions := &redis.ClusterOptions{
-			Addrs:    strings.Split(cfg.Address, ","),
-			Username: cfg.Username,
-			Password: cfg.Password,
+			Addrs:        strings.Split(cfg.Address, ","),
+			Username:     cfg.Username,
+			Password:     cfg.Password,
+			DialTimeout:  time.Duration(cfg.DialTimeoutMills) * time.Millisecond,
+			ReadTimeout:  time.Duration(cfg.ReadTimeoutMills) * time.Millisecond,
+			WriteTimeout: time.Duration(cfg.WriteTimeoutMills) * time.Millisecond,
 		}
 
 		if cfg.UseTLS {
@@ -77,6 +99,9 @@ func NewRedis(cfg RedisConfig) (Redis, error) {
 			DB:               cfg.DB,
 			SentinelUsername: cfg.SentinelUsername,
 			SentinelPassword: cfg.SentinelPassword,
+			DialTimeout:      time.Duration(cfg.DialTimeoutMills) * time.Millisecond,
+			ReadTimeout:      time.Duration(cfg.ReadTimeoutMills) * time.Millisecond,
+			WriteTimeout:     time.Duration(cfg.WriteTimeoutMills) * time.Millisecond,
 		}
 
 		if cfg.UseTLS {
