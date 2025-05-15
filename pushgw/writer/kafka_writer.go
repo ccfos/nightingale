@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/toolkits/pkg/logger"
 )
@@ -30,7 +31,7 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 
 	start := time.Now()
 	defer func() {
-		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+		pstat.ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
 	}()
 
 	data, err := beforeWrite(key, items, w.ForceUseServerTS, "json")
@@ -46,7 +47,7 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 			break
 		}
 
-		CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
+		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("send to kafka got error: %v in %d times, broker: %v, topic: %s",
 			err, i, w.Opts.Brokers, w.Opts.Topic)
 

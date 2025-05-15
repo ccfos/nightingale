@@ -1,4 +1,4 @@
-package writer
+package pstat
 
 import "github.com/prometheus/client_golang/prometheus"
 
@@ -8,7 +8,36 @@ const (
 )
 
 var (
-	// 发往后端TSDB，延迟如何
+	CounterSampleTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "samples_received_total",
+		Help:      "Total number samples received.",
+	}, []string{"channel"})
+
+	CounterDropSampleTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "drop_sample_total",
+		Help:      "Number of drop sample.",
+	})
+
+	CounterSampleReceivedByIdent = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "sample_received_by_ident",
+		Help:      "Number of sample push by ident.",
+	}, []string{"host_ident"})
+
+	RequestDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "http_request_duration_seconds",
+			Help:      "HTTP request latencies in seconds.",
+		}, []string{"service", "code", "path", "method"},
+	)
+
 	ForwardDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
@@ -65,10 +94,25 @@ var (
 		Name:      "push_queue_over_limit_error_total",
 		Help:      "Number of push queue over limit.",
 	})
+
+	RedisOperationLatency = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "redis_operation_latency_seconds",
+			Help:      "Histogram of latencies for Redis operations",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5},
+		},
+		[]string{"operation", "status"},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(
+		CounterSampleTotal,
+		CounterDropSampleTotal,
+		CounterSampleReceivedByIdent,
+		RequestDuration,
 		ForwardDuration,
 		ForwardKafkaDuration,
 		CounterWirteTotal,
@@ -76,5 +120,6 @@ func init() {
 		CounterPushQueueErrorTotal,
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,
+		RedisOperationLatency,
 	)
 }

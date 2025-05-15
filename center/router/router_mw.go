@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -359,25 +360,41 @@ func (rt *Router) createAuth(ctx context.Context, userIdentity string, td *Token
 	rte := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	errAccess := rt.Redis.Set(ctx, rt.wrapJwtKey(td.AccessUuid), userIdentity, at.Sub(now)).Err()
-	if errAccess != nil {
-		return errAccess
+	if err := rt.Redis.Set(ctx, rt.wrapJwtKey(td.AccessUuid), userIdentity, at.Sub(now)).Err(); err != nil {
+		cstats.RedisOperationLatency.WithLabelValues("set_token", "fail").Observe(time.Since(now).Seconds())
+		return err
 	}
 
-	errRefresh := rt.Redis.Set(ctx, rt.wrapJwtKey(td.RefreshUuid), userIdentity, rte.Sub(now)).Err()
-	if errRefresh != nil {
-		return errRefresh
+	if err := rt.Redis.Set(ctx, rt.wrapJwtKey(td.RefreshUuid), userIdentity, rte.Sub(now)).Err(); err != nil {
+		cstats.RedisOperationLatency.WithLabelValues("set_token", "fail").Observe(time.Since(now).Seconds())
+		return err
 	}
+
+	cstats.RedisOperationLatency.WithLabelValues("set_token", "success").Observe(time.Since(now).Seconds())
 
 	return nil
 }
 
 func (rt *Router) fetchAuth(ctx context.Context, givenUuid string) (string, error) {
-	return rt.Redis.Get(ctx, rt.wrapJwtKey(givenUuid)).Result()
+	now := time.Now()
+	ret, err := rt.Redis.Get(ctx, rt.wrapJwtKey(givenUuid)).Result()
+	if err != nil {
+		cstats.RedisOperationLatency.WithLabelValues("get_token", "fail").Observe(time.Since(now).Seconds())
+	} else {
+		cstats.RedisOperationLatency.WithLabelValues("get_token", "success").Observe(time.Since(now).Seconds())
+	}
+
+	return ret, err
 }
 
 func (rt *Router) deleteAuth(ctx context.Context, givenUuid string) error {
-	return rt.Redis.Del(ctx, rt.wrapJwtKey(givenUuid)).Err()
+	err := rt.Redis.Del(ctx, rt.wrapJwtKey(givenUuid)).Err()
+	if err != nil {
+		cstats.RedisOperationLatency.WithLabelValues("del_token", "fail").Observe(time.Since(time.Now()).Seconds())
+	} else {
+		cstats.RedisOperationLatency.WithLabelValues("del_token", "success").Observe(time.Since(time.Now()).Seconds())
+	}
+	return err
 }
 
 func (rt *Router) deleteTokens(ctx context.Context, authD *AccessDetails) error {

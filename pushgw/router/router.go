@@ -14,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 )
 
@@ -42,8 +43,7 @@ func stat() gin.HandlerFunc {
 		method := c.Request.Method
 		labels := []string{"pushgw", code, c.FullPath(), method}
 
-		RequestCounter.WithLabelValues(labels...).Inc()
-		RequestDuration.WithLabelValues(labels...).Observe(float64(time.Since(start).Seconds()))
+		pstat.RequestDuration.WithLabelValues(labels...).Observe(float64(time.Since(start).Seconds()))
 	}
 }
 
@@ -74,8 +74,6 @@ func (rt *Router) Config(r *gin.Engine) {
 	if !rt.HTTP.APIForAgent.Enable {
 		return
 	}
-
-	registerMetrics()
 
 	r.Use(stat())
 	// datadog url: http://n9e-pushgw.foo.com/datadog

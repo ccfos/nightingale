@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/storage"
 
@@ -115,15 +116,23 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		}
 		newMap[models.WrapIdent(ident)] = meta
 	}
+
+	start := time.Now()
 	err := storage.MSet(context.Background(), s.redis, newMap)
 	if err != nil {
+		cstats.RedisOperationLatency.WithLabelValues("mset_target_meta", "fail").Observe(time.Since(start).Seconds())
 		return err
+	} else {
+		cstats.RedisOperationLatency.WithLabelValues("mset_target_meta", "success").Observe(time.Since(start).Seconds())
 	}
 
 	if len(extendMap) > 0 {
 		err = storage.MSet(context.Background(), s.redis, extendMap)
 		if err != nil {
+			cstats.RedisOperationLatency.WithLabelValues("mset_target_extend", "fail").Observe(time.Since(start).Seconds())
 			return err
+		} else {
+			cstats.RedisOperationLatency.WithLabelValues("mset_target_extend", "success").Observe(time.Since(start).Seconds())
 		}
 	}
 

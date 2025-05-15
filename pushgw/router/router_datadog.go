@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/gin-gonic/gin"
 	easyjson "github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -258,7 +259,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 				r.AppendLabels(pt, target, r.BusiGroupCache)
 			}
 
-			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
+			pstat.CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		err = r.ForwardToQueue(c.ClientIP(), queueid, pt)
@@ -271,7 +272,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("datadog").Add(float64(succ))
+		pstat.CounterSampleTotal.WithLabelValues("datadog").Add(float64(succ))
 		r.IdentSet.MSet(ids)
 	}
 

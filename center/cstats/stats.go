@@ -6,40 +6,49 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const Service = "n9e-center"
+const (
+	namespace = "n9e"
+	subsystem = "center"
+)
 
 var (
-	labels = []string{"service", "code", "path", "method"}
-
-	uptime = prometheus.NewCounterVec(
+	uptime = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "uptime",
-			Help: "HTTP service uptime.",
-		}, []string{"service"},
-	)
-
-	RequestCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_request_count_total",
-			Help: "Total number of HTTP requests made.",
-		}, labels,
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "uptime",
+			Help:      "HTTP service uptime.",
+		},
 	)
 
 	RequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Buckets: []float64{.01, .1, 1, 10},
-			Name:    "http_request_duration_seconds",
-			Help:    "HTTP request latencies in seconds.",
-		}, labels,
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   prometheus.DefBuckets,
+			Name:      "http_request_duration_seconds",
+			Help:      "HTTP request latencies in seconds.",
+		}, []string{"code", "path", "method"},
+	)
+
+	RedisOperationLatency = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "redis_operation_latency_seconds",
+			Help:      "Histogram of latencies for Redis operations",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5},
+		},
+		[]string{"operation", "status"},
 	)
 )
 
-func Init() {
+func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
 	prometheus.MustRegister(
 		uptime,
-		RequestCounter,
 		RequestDuration,
+		RedisOperationLatency,
 	)
 
 	go recordUptime()
@@ -48,6 +57,6 @@ func Init() {
 // recordUptime increases service uptime per second.
 func recordUptime() {
 	for range time.Tick(time.Second) {
-		uptime.WithLabelValues(Service).Inc()
+		uptime.Inc()
 	}
 }

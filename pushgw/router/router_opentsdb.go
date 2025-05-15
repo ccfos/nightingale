@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
@@ -203,7 +204,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 				rt.AppendLabels(pt, target, rt.BusiGroupCache)
 			}
 
-			CounterSampleReceivedByIdent.WithLabelValues(host).Inc()
+			pstat.CounterSampleReceivedByIdent.WithLabelValues(host).Inc()
 		}
 
 		err = rt.ForwardToQueue(c.ClientIP(), queueid, pt)
@@ -216,7 +217,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("opentsdb").Add(float64(succ))
+		pstat.CounterSampleTotal.WithLabelValues("opentsdb").Add(float64(succ))
 		rt.IdentSet.MSet(ids)
 	}
 
