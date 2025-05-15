@@ -537,7 +537,7 @@ CREATE TABLE `builtin_components` (
   `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
   `disabled` int NOT NULL DEFAULT 0 COMMENT '''is disabled or not''',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_ident` (`ident`)
+  KEY (`ident`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `builtin_payloads` (
@@ -793,6 +793,7 @@ CREATE TABLE `notify_rule` (
     `enable` tinyint(1) not null default 0,
     `user_group_ids` varchar(255) not null default '',
     `notify_configs` text,
+    `pipeline_configs` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
@@ -826,6 +827,22 @@ CREATE TABLE `message_template` (
     `notify_channel_ident` varchar(64) not null default '',
     `private` int not null default 0,
     `weight` int not null default 0,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `event_pipeline` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(128) not null,
+    `team_ids` text,
+    `description` varchar(255) not null default '',
+    `filter_enable` tinyint(1) not null default 0,
+    `label_filters` text,
+    `attribute_filters` text,
+    `processors` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,

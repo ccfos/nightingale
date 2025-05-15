@@ -330,6 +330,18 @@ ops:
     - name: "/notification-rules/del"
       cname: Delete Notify Rules
 
+- name: event-pipelines
+  cname: Event Pipelines
+  ops:
+    - name: "/event-pipelines"
+      cname: View Event Pipelines
+    - name: "/event-pipelines/add"
+      cname: Add Event Pipeline
+    - name: "/event-pipelines/put"
+      cname: Modify Event Pipeline
+    - name: "/event-pipelines/del"
+      cname: Delete Event Pipeline
+
 - name: notify-channels
   cname: Notify Channels
   ops:
