@@ -93,10 +93,9 @@ func stat() gin.HandlerFunc {
 
 		code := fmt.Sprintf("%d", c.Writer.Status())
 		method := c.Request.Method
-		labels := []string{cstats.Service, code, c.FullPath(), method}
+		labels := []string{code, c.FullPath(), method}
 
-		cstats.RequestCounter.WithLabelValues(labels...).Inc()
-		cstats.RequestDuration.WithLabelValues(labels...).Observe(float64(time.Since(start).Seconds()))
+		cstats.RequestDuration.WithLabelValues(labels...).Observe(time.Since(start).Seconds())
 	}
 }
 
