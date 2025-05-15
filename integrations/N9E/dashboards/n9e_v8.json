@@ -181,23 +181,7 @@
                 "version": "3.1.0"
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.3,
-                    "gradientMode": "opacity",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                        "type": "linear"
-                    },
-                    "showPoints": "none",
-                    "spanNulls": false,
-                    "stack": "off"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
-                "description": "每秒有多少数据点写失败了",
+                "type": "timeseries",
                 "id": "6fa42981-424c-4309-bc22-3c8191e5cf3c",
                 "layout": {
                     "h": 5,
@@ -207,46 +191,12 @@
                     "i": "e3e4d46e-b6d6-4cdd-b72d-56f3e9fb1e4a",
                     "isResizable": true
                 },
-                "maxPerRow": 4,
-                "name": "Write Samples Occur Error / Second",
-                "options": {
-                    "legend": {
-                        "behaviour": "showItem",
-                        "displayMode": "hidden",
-                        "placement": "bottom",
-                        "selectMode": "single"
-                    },
-                    "standardOptions": {},
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "#634CD9",
-                                "type": "base",
-                                "value": null
-                            }
-                        ]
-                    },
-                    "thresholdsStyle": {
-                        "mode": "dashed"
-                    },
-                    "tooltip": {
-                        "mode": "single"
-                    }
-                },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byFrameRefID"
-                        },
-                        "properties": {
-                            "rightYAxisDisplay": "off"
-                        }
-                    }
-                ],
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(n9e_pushgw_write_error_total[$__rate_interval])",
+                        "expr": "rate(n9e_pushgw_write_error_total[$__rate_interval]) or vector(0)",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
@@ -258,8 +208,58 @@
                         "options": {}
                     }
                 ],
-                "type": "timeseries",
-                "version": "3.1.0"
+                "name": "Write Samples Occur Error / Second",
+                "description": "每秒有多少数据点写失败了",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "single"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.3,
+                    "gradientMode": "opacity",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             },
             {
                 "custom": {
@@ -1010,7 +1010,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(n9e_alert_rule_eval_error_total[$__rate_interval]) > 0",
+                        "expr": "(rate(n9e_alert_rule_eval_error_total[$__rate_interval]) > 0) or vector(0)",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
@@ -1106,7 +1106,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "histogram_quantile(0.99, rate(n9e_pushgw_redis_operation_latency_seconds_bucket[$__rate_interval]))",
+                        "expr": "histogram_quantile(0.99, rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\"}[$__rate_interval]))",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
@@ -1122,7 +1122,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1189,7 +1190,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(n9e_pushgw_redis_operation_latency_seconds_count[$__rate_interval])",
+                        "expr": "rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"+Inf\"}[$__rate_interval])",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
@@ -1205,7 +1206,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1272,7 +1274,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "(\nrate(n9e_pushgw_redis_operation_latency_seconds_bucket{le=\"+Inf\"}[$__rate_interval]) - rate(n9e_pushgw_redis_operation_latency_seconds_bucket{le=\"1\"}[$__rate_interval])\n) or vector(0)",
+                        "expr": "(\nrate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"+Inf\"}[$__rate_interval]) - rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"1\"}[$__rate_interval])\n) or vector(0)",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
@@ -1289,7 +1291,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
