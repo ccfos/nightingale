@@ -70,8 +70,8 @@ func (rt *Router) addEventPipeline(c *gin.Context) {
 
 	user := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
-	pipeline.CreatedBy = user.Username
-	pipeline.CreatedAt = now
+	pipeline.CreateBy = user.Username
+	pipeline.CreateAt = now
 	pipeline.UpdateAt = now
 	pipeline.UpdateBy = user.Username
 
