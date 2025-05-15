@@ -99,6 +99,10 @@ type TargetUpdate struct {
 }
 
 func (s *Set) UpdateTargets(lst []string, now int64) error {
+	if len(lst) == 0 {
+		return nil
+	}
+
 	err := s.updateTargetsUpdateTs(lst, now, s.redis)
 	if err != nil {
 		logger.Errorf("update_ts: failed to update targets: %v error: %v", lst, err)
@@ -113,20 +117,6 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		return err
 	}
 
-	count := int64(len(lst))
-	if count == 0 {
-		return nil
-	}
-
-	ret := s.ctx.DB.Table("target").Where("ident in ?", lst).Update("update_at", now)
-	if ret.Error != nil {
-		return ret.Error
-	}
-
-	if ret.RowsAffected == count {
-		return nil
-	}
-
 	// there are some idents not found in db, so insert them
 	var exists []string
 	err = s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
@@ -138,7 +128,15 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	for i := 0; i < len(news); i++ {
 		err = s.ctx.DB.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {
-			logger.Error("failed to insert target:", news[i], "error:", err)
+			logger.Error("upsert_target: failed to insert target:", news[i], "error:", err)
+		}
+	}
+
+	// 从批量更新一批机器的时间戳，改成逐台更新，是为了避免批量更新时，mysql的锁竞争问题
+	for i := 0; i < len(exists); i++ {
+		err = s.ctx.DB.Exec("UPDATE target SET update_at = ? WHERE ident = ?", now, exists[i]).Error
+		if err != nil {
+			logger.Error("upsert_target: failed to update target:", exists[i], "error:", err)
 		}
 	}
 
@@ -150,12 +148,7 @@ func (s *Set) updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis
 		return fmt.Errorf("redis is nil")
 	}
 
-	count := int64(len(lst))
-	if count == 0 {
-		return nil
-	}
-
-	newMap := make(map[string]interface{}, count)
+	newMap := make(map[string]interface{}, len(lst))
 	for _, ident := range lst {
 		hostUpdateTime := models.HostUpdteTime{
 			UpdateTime: now,
