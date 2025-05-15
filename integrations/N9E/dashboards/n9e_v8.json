@@ -1190,7 +1190,7 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_bucket|n9e_center_redis_operation_latency_seconds_bucket\", le=\"+Inf\"}[$__rate_interval])",
+                        "expr": "rate({__name__=~\"n9e_pushgw_redis_operation_latency_seconds_count|n9e_center_redis_operation_latency_seconds_count\"}[$__rate_interval])",
                         "maxDataPoints": 720,
                         "refId": "A",
                         "step": 15
