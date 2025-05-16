@@ -227,5 +227,22 @@ ALTER TABLE `notify_channel` ADD COLUMN `weight` int not null default 0;
 ALTER TABLE `es_index_pattern` ADD COLUMN `note` varchar(1024) not null default '';
 ALTER TABLE `datasource` ADD COLUMN `identifier` varchar(255) not null default '';
 
-/* 添加pipeline_configs字段 */
+/* v8.0.0-beta.11 2025-05-15 */
 ALTER TABLE `notify_rule` ADD COLUMN `pipeline_configs` text;
+
+CREATE TABLE `event_pipeline` (
+    `id` bigint unsigned not null auto_increment,
+    `name` varchar(128) not null,
+    `team_ids` text,
+    `description` varchar(255) not null default '',
+    `filter_enable` tinyint(1) not null default 0,
+    `label_filters` text,
+    `attribute_filters` text,
+    `processors` text,
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+

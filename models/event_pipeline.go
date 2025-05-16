@@ -20,8 +20,8 @@ type EventPipeline struct {
 	LabelFilters []TagFilter `json:"label_filters" gorm:"type:text;serializer:json"`
 	AttrFilters  []TagFilter `json:"attribute_filters" gorm:"type:text;serializer:json"`
 	Processors   []Processor `json:"processors" gorm:"type:text;serializer:json"`
-	CreatedAt    int64       `json:"created_at" gorm:"type:bigint"`
-	CreatedBy    string      `json:"created_by" gorm:"type:varchar(64)"`
+	CreateAt     int64       `json:"create_at" gorm:"type:bigint"`
+	CreateBy     string      `json:"create_by" gorm:"type:varchar(64)"`
 	UpdateAt     int64       `json:"update_at" gorm:"type:bigint"`
 	UpdateBy     string      `json:"update_by" gorm:"type:varchar(64)"`
 }
@@ -102,7 +102,7 @@ func ListEventPipelines(ctx *ctx.Context) ([]*EventPipeline, error) {
 	}
 
 	var pipelines []*EventPipeline
-	err := DB(ctx).Find(&pipelines).Error
+	err := DB(ctx).Order("name desc").Find(&pipelines).Error
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,8 @@ func DeleteEventPipelines(ctx *ctx.Context, ids []int64) error {
 // Update 更新事件Pipeline
 func (e *EventPipeline) Update(ctx *ctx.Context, ref *EventPipeline) error {
 	ref.ID = e.ID
-	ref.CreatedAt = e.CreatedAt
-	ref.CreatedBy = e.CreatedBy
+	ref.CreateAt = e.CreateAt
+	ref.CreateBy = e.CreateBy
 	ref.UpdateAt = time.Now().Unix()
 
 	err := ref.Verify()
