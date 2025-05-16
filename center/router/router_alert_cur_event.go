@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -180,6 +181,8 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
+	eventIds := strx.IdsInt64ForAPI(ginx.QueryStr(c, "event_ids", ""), ",")
+
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
 		prod = ginx.QueryStr(c, "rule_prods", "")
@@ -218,6 +221,20 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
 		cates, ruleId, query, limit, ginx.Offset(c, limit), gids)
 	ginx.Dangerous(err)
+
+	if len(eventIds) > 0 {
+		eventIdsMap := make(map[int64]struct{}, len(eventIds))
+		for _, id := range eventIds {
+			eventIdsMap[id] = struct{}{}
+		}
+		filteredList := make([]models.AlertCurEvent, 0, len(list))
+		for _, event := range list {
+			if _, exists := eventIdsMap[event.Id]; exists {
+				filteredList = append(filteredList, event)
+			}
+		}
+		list = filteredList
+	}
 
 	cache := make(map[int64]*models.UserGroup)
 
