@@ -32,7 +32,7 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 	for _, tpl := range lst {
 		ginx.Dangerous(tpl.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, tpl.UserGroupIds) {
-			ginx.Bomb(http.StatusForbidden, "no permission")
+			ginx.Bomb(http.StatusForbidden, "forbidden")
 		}
 		idents = append(idents, tpl.Ident)
 
@@ -75,8 +75,8 @@ func (rt *Router) messageTemplatesDel(c *gin.Context) {
 		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 		ginx.Dangerous(err)
 		for _, t := range lst {
-			if !slice.HaveIntersection[int64](gids, t.UserGroupIds) {
-				ginx.Bomb(http.StatusForbidden, "no permission")
+			if !slice.HaveIntersection(gids, t.UserGroupIds) {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 	}
@@ -105,8 +105,8 @@ func (rt *Router) messageTemplatePut(c *gin.Context) {
 	if !me.IsAdmin() {
 		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
 		ginx.Dangerous(err)
-		if !slice.HaveIntersection[int64](gids, mt.UserGroupIds) {
-			ginx.Bomb(http.StatusForbidden, "no permission")
+		if !slice.HaveIntersection(gids, mt.UserGroupIds) {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
 		}
 	}
 
@@ -125,8 +125,8 @@ func (rt *Router) messageTemplateGet(c *gin.Context) {
 	if mt == nil {
 		ginx.Bomb(http.StatusNotFound, "message template not found")
 	}
-	if mt.Private == 1 && !slice.HaveIntersection[int64](gids, mt.UserGroupIds) {
-		ginx.Bomb(http.StatusForbidden, "no permission")
+	if mt.Private == 1 && !slice.HaveIntersection(gids, mt.UserGroupIds) {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 
 	ginx.NewRender(c).Data(mt, nil)

@@ -245,3 +245,4 @@ CREATE TABLE `event_pipeline` (
     `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+

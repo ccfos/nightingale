@@ -800,6 +800,7 @@ func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[st
 	s, err := d.Dial()
 	if err != nil {
 		logger.Errorf("email_sender: failed to dial: %s", err)
+		return err
 	}
 
 	m := gomail.NewMessage()

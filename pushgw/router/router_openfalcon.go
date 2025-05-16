@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/gin-gonic/gin"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -208,7 +209,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 				rt.AppendLabels(pt, target, rt.BusiGroupCache)
 			}
 
-			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
+			pstat.CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		err = rt.ForwardToQueue(c.ClientIP(), queueid, pt)
@@ -221,7 +222,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 	}
 
 	if succ > 0 {
-		CounterSampleTotal.WithLabelValues("openfalcon").Add(float64(succ))
+		pstat.CounterSampleTotal.WithLabelValues("openfalcon").Add(float64(succ))
 		rt.IdentSet.MSet(ids)
 	}
 

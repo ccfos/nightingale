@@ -135,7 +135,7 @@ func (u *User) CheckGroupPermission(ctx *ctx.Context, groupIds []int64) error {
 			}
 		}
 
-		return errors.New("no permission")
+		return errors.New("forbidden")
 	}
 	return nil
 }

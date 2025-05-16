@@ -13,7 +13,6 @@ import (
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
-	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
@@ -60,7 +59,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	i18nx.Init(configDir)
-	cstats.Init()
 	flashduty.Init(config.Center.FlashDuty)
 
 	db, err := storage.New(config.DB)
@@ -86,13 +84,16 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	}
 
 	metas := metas.New(redis)
-	idents := idents.New(ctx, redis)
+	idents := idents.New(ctx, redis, config.Pushgw)
 
 	syncStats := memsto.NewSyncStats()
 	alertStats := astats.NewSyncStats()
 
 	if config.Center.MigrateBusiGroupLabel || models.CanMigrateBg(ctx) {
 		models.MigrateBg(ctx, config.Pushgw.BusiGroupLabelKey)
+	}
+	if models.CanMigrateEP(ctx) {
+		models.MigrateEP(ctx)
 	}
 
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)

@@ -57,8 +57,11 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	var err error
 	if len(bgids) > 0 {
-		for _, gid := range bgids {
-			rt.bgroCheck(c, gid)
+		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
+		if !(len(bgids) == 1 && bgids[0] == 0) {
+			for _, gid := range bgids {
+				rt.bgroCheck(c, gid)
+			}
 		}
 	} else {
 		user := c.MustGet("user").(*models.User)
@@ -458,7 +461,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 			ginx.Dangerous(err)
 
 			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. You are not admin of BG(%s)", bg.Name)
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 		isNeverGrouped, checkErr := haveNeverGroupedIdent(rt.Ctx, f.Idents)
@@ -468,7 +471,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 			can, err := user.CheckPerm(rt.Ctx, "/targets/bind")
 			ginx.Dangerous(err)
 			if !can {
-				ginx.Bomb(http.StatusForbidden, "No permission. Only admin can assign BG")
+				ginx.Bomb(http.StatusForbidden, "forbidden")
 			}
 		}
 	}
@@ -553,7 +556,7 @@ func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
 	ginx.Dangerous(err)
 
 	if len(nopri) > 0 {
-		ginx.Bomb(http.StatusForbidden, "No permission to operate the targets: %s", strings.Join(nopri, ", "))
+		ginx.Bomb(http.StatusForbidden, "forbidden")
 	}
 }
 
@@ -576,11 +579,11 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 }
 
 func (rt *Router) checkTargetsExistByIndent(idents []string) {
-	existingIdents, err := models.TargetNoExistIdents(rt.Ctx, idents)
+	notExists, err := models.TargetNoExistIdents(rt.Ctx, idents)
 	ginx.Dangerous(err)
 
-	if len(existingIdents) > 0 {
-		ginx.Bomb(http.StatusBadRequest, "targets not exist: %s", strings.Join(existingIdents, ","))
+	if len(notExists) > 0 {
+		ginx.Bomb(http.StatusBadRequest, "targets not exist: %s", strings.Join(notExists, ", "))
 	}
 }
 

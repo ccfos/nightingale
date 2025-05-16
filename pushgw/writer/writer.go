@@ -3,7 +3,6 @@ package writer
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +14,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/fasttime"
 	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
+	"github.com/ccfos/nightingale/v6/pushgw/writer/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -32,7 +33,7 @@ type WriterType struct {
 }
 
 func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
-	CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
+	pstat.CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
 
 	if forceUseServerTS {
 		ts := int64(fasttime.UnixTimestamp()) * 1000
@@ -52,7 +53,7 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 		return proto.Marshal(req)
 	}
 
-	return json.Marshal(items)
+	return json.MarshalWithCustomFloat(items)
 }
 
 func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
@@ -67,7 +68,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 
 	start := time.Now()
 	defer func() {
-		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+		pstat.ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
 	}()
 
 	data, err := beforeWrite(key, items, w.ForceUseServerTS, "proto")
@@ -82,7 +83,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 			break
 		}
 
-		CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
+		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("post to %s got error: %v in %d times", w.Opts.Url, err, i)
 
 		if i == 0 {
@@ -173,7 +174,7 @@ func (ws *WritersType) ReportQueueStats(queueid string, identQueue *IdentQueue) 
 	for {
 		time.Sleep(15 * time.Second)
 		count := identQueue.list.Len()
-		GaugeSampleQueueSize.WithLabelValues(queueid).Set(float64(count))
+		pstat.GaugeSampleQueueSize.WithLabelValues(queueid).Set(float64(count))
 	}
 }
 
@@ -254,7 +255,7 @@ func (ws *WritersType) PushSample(queueid string, v interface{}) error {
 	succ := queue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d, item: %+v", queueid, queue.list.Len(), v)
-		CounterPushQueueErrorTotal.WithLabelValues(queueid).Inc()
+		pstat.CounterPushQueueErrorTotal.WithLabelValues(queueid).Inc()
 	}
 
 	return nil

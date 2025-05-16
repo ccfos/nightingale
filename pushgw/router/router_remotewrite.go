@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
@@ -107,7 +107,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	if curLen > rt.Pushgw.WriterOpt.AllQueueMaxSize {
 		err := fmt.Errorf("write queue full, metric count over limit: %d", curLen)
 		logger.Warning(err)
-		writer.CounterPushQueueOverLimitTotal.Inc()
+		pstat.CounterPushQueueOverLimitTotal.Inc()
 		c.String(rt.Pushgw.WriterOpt.OverLimitStatusCode, err.Error())
 		return
 	}
@@ -146,7 +146,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 				rt.AppendLabels(&req.Timeseries[i], target, rt.BusiGroupCache)
 			}
 
-			CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
+			pstat.CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
 		if insertTarget {
@@ -162,7 +162,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 		}
 	}
 
-	CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
+	pstat.CounterSampleTotal.WithLabelValues("prometheus").Add(float64(count))
 	rt.IdentSet.MSet(ids)
 
 	c.String(200, "")

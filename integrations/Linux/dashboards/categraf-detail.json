@@ -1,6 +1,6 @@
 {
-    "name": "机器常用指标 - 所有机器",
-    "tags": "categraf",
+    "name": "机器常用指标（使用 Categraf 作为采集器，如果只想看当前业务组内的机器修改大盘变量 ident 的变量类型为机器标识即可）",
+    "tags": "Categraf",
     "ident": "",
     "uuid": 1737103014612000,
     "configs": {
@@ -33,9 +33,11 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "count(last_over_time(system_uptime{ident=~\"$ident\"}[1m]))",
-                        "maxDataPoints": 240,
-                        "refId": "A"
+                        "expr": "count(last_over_time(system_uptime{ident=~\"$ident\"}[$__rate_interval]))",
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15,
+                        "instant": false
                     }
                 ],
                 "transformations": [
@@ -48,7 +50,7 @@
                 "maxPerRow": 4,
                 "custom": {
                     "textMode": "value",
-                    "graphMode": "none",
+                    "graphMode": "area",
                     "colorMode": "background",
                     "calc": "lastNotNull",
                     "valueField": "Value",
@@ -333,7 +335,7 @@
                     {
                         "expr": "100-cpu_usage_idle{ident=~\"$ident\",cpu=\"cpu-total\"}",
                         "legend": "{{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -348,7 +350,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -428,9 +431,9 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(diskio_io_time{ident=~\"$ident\"}[1m])/10",
+                        "expr": "rate(diskio_io_time{ident=~\"$ident\"}[$__rate_interval])/10",
                         "legend": "{{ident}} {{name}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -445,7 +448,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -527,7 +531,7 @@
                     {
                         "expr": "mem_used_percent{ident=~\"$ident\"}",
                         "legend": "{{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -542,7 +546,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -622,9 +627,9 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "(1 - mem_swap_free / mem_swap_total)*100",
+                        "expr": "(1 - mem_swap_free{ident=~\"$ident\"} / mem_swap_total{ident=~\"$ident\"})*100 and mem_swap_total{ident=~\"$ident\"} > 0",
                         "legend": "{{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -640,7 +645,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -720,9 +726,9 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "increase(kernel_vmstat_oom_kill{ident=~\"$ident\"}[5m])",
+                        "expr": "rate(kernel_vmstat_oom_kill{ident=~\"$ident\"}[$__rate_interval])",
                         "legend": "{{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -733,11 +739,12 @@
                         "options": {}
                     }
                 ],
-                "name": "5分钟内OOM次数",
+                "name": "每秒OOM次数",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -762,8 +769,8 @@
                         "steps": [
                             {
                                 "color": "#634CD9",
-                                "type": "base",
-                                "value": null
+                                "value": null,
+                                "type": "base"
                             }
                         ]
                     },
@@ -827,9 +834,9 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(net_bytes_recv{ident=~\"$ident\"}[1m])*8",
+                        "expr": "rate(net_bytes_recv{ident=~\"$ident\"}[$__rate_interval])*8",
                         "legend": "{{ident}} {{interface}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -844,7 +851,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -914,9 +922,9 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(net_bytes_sent{ident=~\"$ident\"}[1m])*8",
+                        "expr": "rate(net_bytes_sent{ident=~\"$ident\"}[$__rate_interval])*8",
                         "legend": "{{ident}} {{interface}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "B",
                         "step": 15
                     }
@@ -931,7 +939,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -986,21 +995,7 @@
                 ]
             },
             {
-                "custom": {
-                    "drawStyle": "lines",
-                    "fillOpacity": 0.03,
-                    "gradientMode": "none",
-                    "lineInterpolation": "smooth",
-                    "lineWidth": 2,
-                    "scaleDistribution": {
-                        "type": "linear"
-                    },
-                    "spanNulls": false,
-                    "stack": "off"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${prom}",
-                "description": "",
+                "type": "timeseries",
                 "id": "cfb80689-de7b-47fb-9155-052b796dd7f5",
                 "layout": {
                     "h": 5,
@@ -1010,43 +1005,13 @@
                     "i": "cfb80689-de7b-47fb-9155-052b796dd7f5",
                     "isResizable": true
                 },
-                "maxPerRow": 4,
-                "name": "Time Wait 状态的连接数",
-                "options": {
-                    "legend": {
-                        "behaviour": "showItem",
-                        "displayMode": "hidden"
-                    },
-                    "standardOptions": {
-                        "decimals": 0
-                    },
-                    "thresholds": {
-                        "steps": [
-                            {
-                                "color": "#634CD9",
-                                "type": "base",
-                                "value": null
-                            }
-                        ]
-                    },
-                    "tooltip": {
-                        "mode": "single"
-                    }
-                },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byFrameRefID"
-                        },
-                        "properties": {
-                            "rightYAxisDisplay": "off"
-                        }
-                    }
-                ],
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
                 "targets": [
                     {
                         "expr": "netstat_tcp_tw{ident=~\"$ident\"}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "B",
                         "step": 15
                     }
@@ -1057,8 +1022,61 @@
                         "options": {}
                     }
                 ],
-                "type": "timeseries",
-                "version": "3.0.0"
+                "name": "Time Wait 状态的连接数",
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
             },
             {
                 "type": "timeseries",
@@ -1076,16 +1094,18 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(net_err_in{ident=~\"$ident\"}[1m])",
+                        "expr": "rate(net_err_in{ident=~\"$ident\"}[$__rate_interval])",
                         "legend": "{{ident}}-{{interface}}-in",
-                        "maxDataPoints": 240,
-                        "refId": "A"
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
                     },
                     {
-                        "expr": "rate(net_err_out{ident=~\"$ident\"}[1m])",
+                        "expr": "rate(net_err_out{ident=~\"$ident\"}[$__rate_interval])",
                         "legend": "{{ident}}-{{interface}}-out",
-                        "maxDataPoints": 240,
-                        "refId": "B"
+                        "maxDataPoints": 480,
+                        "refId": "B",
+                        "step": 15
                     }
                 ],
                 "transformations": [
@@ -1098,7 +1118,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1164,16 +1185,18 @@
                 "datasourceValue": "${prom}",
                 "targets": [
                     {
-                        "expr": "rate(net_drop_in{ident=~\"$ident\"}[1m])",
+                        "expr": "rate(net_drop_in{ident=~\"$ident\"}[$__rate_interval])",
                         "legend": "{{ident}}-{{interface}}-in",
-                        "maxDataPoints": 240,
-                        "refId": "A"
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
                     },
                     {
-                        "expr": "rate(net_drop_out{ident=~\"$ident\"}[1m])",
+                        "expr": "rate(net_drop_out{ident=~\"$ident\"}[$__rate_interval])",
                         "legend": "{{ident}}-{{interface}}-out",
-                        "maxDataPoints": 240,
-                        "refId": "B"
+                        "maxDataPoints": 480,
+                        "refId": "B",
+                        "step": 15
                     }
                 ],
                 "transformations": [
@@ -1186,7 +1209,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1269,7 +1293,7 @@
                     {
                         "expr": "disk_device_error{ident=~\"$ident\"}",
                         "legend": "{{ident}} {{path}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     }
@@ -1284,7 +1308,8 @@
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1293,7 +1318,7 @@
                         "selectMode": "single"
                     },
                     "standardOptions": {
-                        "decimals": 2
+                        "decimals": 0
                     },
                     "thresholds": {
                         "mode": "absolute",
@@ -1352,7 +1377,7 @@
                     {
                         "expr": "100 * conntrack_ip_conntrack_count{ident=~\"$ident\"} / conntrack_ip_conntrack_max{ident=~\"$ident\"}",
                         "legend": "ip_conntrack {{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "A",
                         "step": 15
                     },
@@ -1360,7 +1385,7 @@
                         "__mode__": "__query__",
                         "expr": "100 * conntrack_nf_conntrack_count{ident=~\"$ident\"} / conntrack_nf_conntrack_max{ident=~\"$ident\"}",
                         "legend": "nf_conntrack {{ident}}",
-                        "maxDataPoints": 240,
+                        "maxDataPoints": 480,
                         "refId": "B",
                         "step": 15
                     }
@@ -1372,10 +1397,12 @@
                     }
                 ],
                 "name": "Conntrack使用率",
+                "description": "`dmesg -T` 有时看到 conntrack table full 的报错，大概率就是 conntrack 限制太小了，需要调整内核参数",
                 "maxPerRow": 4,
                 "options": {
                     "tooltip": {
-                        "mode": "single"
+                        "mode": "all",
+                        "sort": "desc"
                     },
                     "legend": {
                         "displayMode": "hidden",
@@ -1386,6 +1413,346 @@
                     "standardOptions": {
                         "util": "percent",
                         "decimals": 6
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "7c90380f-5ab6-4aa5-9070-f604985a0389",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 32,
+                    "i": "e7117d7c-b946-49fa-bc49-2afb0d2b3a44",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "processes_total{ident=~\"$ident\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Process 总量",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "3334c222-dd92-49eb-9744-4ce0f59031e4",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 32,
+                    "i": "0ecb9f26-4c4d-40d7-9934-5116e3ffa51a",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "procstat_rlimit_num_fds_hard{ident=~\"$ident\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "进程句柄数限制（低于4096要注意）",
+                "description": "以现在的硬件配置，通常句柄的 ulimit 应该比较大，如果低于 4096，大概率是忘记修改配置了，需要注意。这个数据是 Categraf 的 procstat 插件采集的。",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "decimals": 0
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "c3ee640f-e654-4fc7-aa2a-0dd8e9de67cb",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 0,
+                    "y": 37,
+                    "i": "423adbbf-8c23-45ab-b7d5-9a81b72291f1",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "ntp_offset_ms{ident=~\"$ident\"}",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "NTP时间偏移",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "milliseconds",
+                        "decimals": 2
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "rgba(44, 157, 61, 1)",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    },
+                    "thresholdsStyle": {
+                        "mode": "dashed"
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 2,
+                    "fillOpacity": 0.03,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "showPoints": "none",
+                    "pointSize": 5
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "rightYAxisDisplay": "off"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "9bb8d5ef-dc4e-419f-8e95-6dbb97b2afb6",
+                "layout": {
+                    "h": 5,
+                    "w": 12,
+                    "x": 12,
+                    "y": 37,
+                    "i": "e97f1934-26e8-4bf3-be21-95307443f146",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "linux_sysctl_fs_file_nr{ident=~\"$ident\"}/linux_sysctl_fs_file_max{ident=~\"$ident\"} * 100",
+                        "legend": "",
+                        "maxDataPoints": 480,
+                        "refId": "A",
+                        "step": 15
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "操作系统文件句柄使用率",
+                "description": "",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "desc"
+                    },
+                    "legend": {
+                        "displayMode": "hidden",
+                        "placement": "bottom",
+                        "behaviour": "showItem",
+                        "selectMode": "single"
+                    },
+                    "standardOptions": {
+                        "util": "percent",
+                        "decimals": 0
                     },
                     "thresholds": {
                         "mode": "absolute",

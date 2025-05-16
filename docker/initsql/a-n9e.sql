@@ -107,12 +107,6 @@ insert into `role_operation`(role_name, operation) values('Standard', '/help/mig
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/dependencies');
-
-insert into `role_operation`(role_name, operation) values('Admin', '/help/source');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
-insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
-
 insert into `role_operation`(role_name, operation) values('Standard', '/users');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups/add');
@@ -427,6 +421,7 @@ CREATE TABLE `alert_aggr_view` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null default '',
     `rule` varchar(2048) not null default '',
+    `format` varchar(2048) not null default '',
     `cate` tinyint(1) not null comment '0: preset 1: custom',
     `create_at` bigint not null default 0,
     `create_by` bigint not null default 0 comment 'user id',
@@ -849,6 +844,19 @@ CREATE TABLE `event_pipeline` (
     `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `embedded_product` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) DEFAULT NULL,
+    `url` varchar(255) DEFAULT NULL,
+    `is_private` boolean DEFAULT NULL,
+    `team_ids` varchar(255),
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `task_meta`
 (
