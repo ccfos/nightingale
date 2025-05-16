@@ -222,20 +222,6 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 		cates, ruleId, query, limit, ginx.Offset(c, limit), gids, eventIds)
 	ginx.Dangerous(err)
 
-	if len(eventIds) > 0 {
-		eventIdsMap := make(map[int64]struct{}, len(eventIds))
-		for _, id := range eventIds {
-			eventIdsMap[id] = struct{}{}
-		}
-		filteredList := make([]models.AlertCurEvent, 0, len(list))
-		for _, event := range list {
-			if _, exists := eventIdsMap[event.Id]; exists {
-				filteredList = append(filteredList, event)
-			}
-		}
-		list = filteredList
-	}
-
 	cache := make(map[int64]*models.UserGroup)
 
 	for i := 0; i < len(list); i++ {
