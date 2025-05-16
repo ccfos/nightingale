@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -139,8 +139,8 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	}
 	event := hisEvent.ToCur()
 
-	for _, p := range f.PipelineConfig.Processors {
-		processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+	for _, p := range f.PipelineConfig.ProcessorConfigs {
+		processor, err := models.GetProcessorByType(p.Typ, p.Config)
 		if err != nil {
 			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
 		}
@@ -153,8 +153,8 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 // 测试事件处理器
 func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	var f struct {
-		EventId         int64            `json:"event_id"`
-		ProcessorConfig models.Processor `json:"processor_config"`
+		EventId         int64                  `json:"event_id"`
+		ProcessorConfig models.ProcessorConfig `json:"processor_config"`
 	}
 	ginx.BindJSON(c, &f)
 
@@ -164,7 +164,7 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	}
 	event := hisEvent.ToCur()
 
-	processor, err := pipeline.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
+	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
 		ginx.Bomb(http.StatusBadRequest, "processor type not found")
 	}
@@ -199,8 +199,8 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 	}
 
 	for _, pl := range pipelines {
-		for _, p := range pl.Processors {
-			processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
+		for _, p := range pl.ProcessorConfigs {
+			processor, err := models.GetProcessorByType(p.Typ, p.Config)
 			if err != nil {
 				ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
 			}
