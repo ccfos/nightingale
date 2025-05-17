@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -96,7 +97,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	// 最多获取50000个，获取太多也没啥意义
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, 0, query, 50000, 0, gids)
+		cates, 0, query, 50000, 0, gids, []int64{})
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -180,6 +181,8 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
+	eventIds := strx.IdsInt64ForAPI(ginx.QueryStr(c, "event_ids", ""), ",")
+
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
 		prod = ginx.QueryStr(c, "rule_prods", "")
@@ -212,11 +215,11 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query, gids)
+		cates, ruleId, query, gids, eventIds)
 	ginx.Dangerous(err)
 
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query, limit, ginx.Offset(c, limit), gids)
+		cates, ruleId, query, limit, ginx.Offset(c, limit), gids, eventIds)
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -298,7 +301,7 @@ func (rt *Router) alertDataSourcesList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, []int64{},
-		cates, ruleId, query, 50000, 0, gids)
+		cates, ruleId, query, 50000, 0, gids, []int64{})
 	ginx.Dangerous(err)
 
 	uniqueDsIds := make(map[int64]struct{})
