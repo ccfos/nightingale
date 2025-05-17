@@ -1233,12 +1233,12 @@ var NotiChMap = []*NotifyChannelConfig{
 		Name: "Telegram", Ident: Telegram, RequestType: "http", Weight: 7, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:     "https://api.telegram.org/bot{{$params.token}}/sendMessage",
-				Method:  "POST",
+				URL:    "https://api.telegram.org/bot{{$params.token}}/sendMessage",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
 					Parameters: map[string]string{"chat_id": "{{$params.chat_id}}"},
-					Body:       `{"parse_mode": "markdown", "text": "{{$tpl.content}}"}`,
+					Body:       `{"text":"{{$tpl.content}}","parse_mode": "HTML"}`,
 				},
 			},
 		},

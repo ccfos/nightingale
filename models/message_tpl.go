@@ -505,15 +505,15 @@ var NewTplMap = map[string]string{
 {{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}   
 触发时值: {{$event.TriggerValue}}{{end}}   
 发送时间: {{timestamp}}`,
-	Telegram: `**级别状态**: {{if $event.IsRecovered}}<font color="info">S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">S{{$event.Severity}} Triggered</font>{{end}}   
-**规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
-**规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
-**监控对象**: {{$event.TargetIdent}}{{end}}   
-**监控指标**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
-**触发时值**: {{$event.TriggerValue}}{{end}}   
-{{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
-{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
-**发送时间**: {{timestamp}}`,
+	Telegram: `<b>级别状态: {{if $event.IsRecovered}}💚 S{{$event.Severity}} Recovered{{else}}⚠️ S{{$event.Severity}} Triggered{{end}}</b>
+<b>规则标题</b>: {{$event.RuleName}}{{if $event.RuleNote}}   
+<b>规则备注</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
+<b>监控对象</b>: {{$event.TargetIdent}}{{end}}   
+<b>监控指标</b>: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+<b>触发时值</b>: {{$event.TriggerValue}}{{end}}   
+{{if $event.IsRecovered}}<b>恢复时间</b>: {{timeformat $event.LastEvalTime}}{{else}}<b>首次触发时间</b>: {{timeformat $event.FirstTriggerTime}}{{end}}   
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}<b>距离首次告警</b>: {{humanizeDurationInterface $time_duration}}
+<b>发送时间</b>: {{timestamp}}`,
 	Wecom: `**级别状态**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">💔S{{$event.Severity}} Triggered</font>{{end}}       
 **规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
