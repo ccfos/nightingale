@@ -12,7 +12,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Broker节点入站网络IO速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node inbound network IO rate",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -27,7 +40,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Broker节点出站网络IO速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node outbound network IO rate",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -42,7 +68,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Broker节点当前分配的分区数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "The number of partitions currently allocated to the Broker node",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -57,7 +96,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Broker节点每秒消息吞吐量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node message throughput per second",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -72,7 +124,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Consumer Group提交偏移量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Consumer Group Commit Offset Sum",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -87,7 +152,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Consumer Group提交偏移量速率（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Consumer Group commit offset rate (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -102,7 +180,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Consumer Group Quantity Sum",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -117,7 +208,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Consumer Group最大提交偏移量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Consumer Group Maximum commit offset",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -132,7 +236,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求处理时间的50分位数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "50th quantile of Fetch request processing time",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -147,7 +264,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求处理时间的99分位数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "99th quantile of Fetch request processing time",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -162,7 +292,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求处理时间的99分位数（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "99th quantile of Fetch request processing time (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -177,7 +320,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求处理时间的平均值",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Average of Fetch request processing time",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -192,7 +348,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求处理时间的最大值",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum Fetch request processing time",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -207,7 +376,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Fetch请求失败速率（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Fetch request failure rate (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -222,7 +404,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Kafka Controller活跃状态计数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Kafka Controller active status count",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -237,7 +432,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求处理时间的50分位数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "50th Quantile of Processing Time for Produce requests",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -252,7 +460,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求处理时间的99分位数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "99th quantile of processing time for Produce requests",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -267,7 +488,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求处理时间的99分位数（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "99th quantile of Produce request processing time (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -282,7 +516,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求处理时间的平均值",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Average Produce request processing time",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -297,7 +544,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求处理时间的最大值",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "The maximum processing time of the Produce request",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -312,7 +572,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Produce请求失败速率（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Produce request failure rate (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -327,7 +600,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "各个Consumer Group和Topic的最大提交偏移量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum commit offsets for each Consumer Group and Topic",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -342,7 +628,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "各个Topic分区的最大日志结束偏移量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Maximum end of log offset for each Topic partition",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -357,7 +656,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "实例的Fetch请求速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Fetch request rate of an instance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -372,7 +684,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "实例的Produce请求速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Instance's Produce request rate",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -387,7 +712,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "已死亡的Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of dead Consumer Groups",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -402,7 +740,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "日志大小总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Sum of log sizes",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -417,7 +768,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "日志消费延迟 lag",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Log consumption delay lag",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -432,7 +796,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "日志结束偏移量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "End of log offset sum",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -447,7 +824,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "日志结束最大偏移量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "End of Log Max Offset",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -462,7 +852,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "正在准备进行rebalance的Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Sum number of Consumer Groups in preparation for rebalance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -477,7 +880,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "正在等待Leader进行状态分配的Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Sum number of Consumer Groups waiting for status allocation by Leader",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -492,7 +908,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点入站网络IO速率sum by(topic)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node inbound network IO rate per topic sum by (topic)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -507,7 +936,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点入站网络IO速率sum by(topic, instance)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node inbound network IO rate per topic sum by (topic, instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -522,7 +964,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点出站网络IO速率sum by(topic)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node outbound network IO rate per topic sum by (topic)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -537,7 +992,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点出站网络IO速率sum by(topic, instance)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node outbound network IO rate per topic sum by (topic, instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -552,7 +1020,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点出站网络IO速率sum by(topic, partition)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node outbound network IO rate per topic sum by (topic, partition)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -567,7 +1048,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点消息吞吐量（入站）sum by(topic)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node message throughput per topic (inbound) sum by (topic)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -582,7 +1076,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点消息吞吐量（入站）sum by(topic, instance)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node message throughput per topic (inbound) sum by (topic, instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -597,7 +1104,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的Broker节点网络IO速率（集群级别）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node network IO rate per Topic (cluster level)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -612,7 +1132,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的日志大小",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Log size per Topic",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -627,7 +1160,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的消息吞吐量sum by(topic, type)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Message throughput per topic sum by (topic, type)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -642,7 +1188,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个Topic的请求计数sum by(topic, type)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Request count per topic sum by (topic, type)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -657,7 +1216,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的Broker节点出站网络IO速率(实例级别)",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node outbound network IO rate per instance (instance level)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -672,7 +1244,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的Broker节点分区数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of Broker node partitions per instance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -687,7 +1272,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的Broker节点消息吞吐量（入站）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Broker node message throughput per instance (inbound)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -702,7 +1300,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的Fetch请求速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Fetch request rate per instance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -717,7 +1328,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的Produce请求速率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Produce request rate per instance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -732,7 +1356,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "每个实例的节点当前建立的连接数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of connections currently established by nodes per instance",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -747,7 +1384,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "活跃Broker数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of active brokers",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -762,7 +1412,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "稳定状态的Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Sum of the number of steady-state Consumer Groups",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -777,7 +1440,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "空的Consumer Group数量总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Sum number of empty Consumer Groups",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -792,7 +1468,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "节点当前建立的连接数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of connections currently established by the node",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -807,7 +1496,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "被fence的Broker数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of Brokers fenced",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -822,7 +1524,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "请求错误计数总和",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Request error count sum",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -837,7 +1552,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "请求错误计数率",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Request error count rate",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -852,7 +1580,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "请求错误计数率（每个实例）",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Request error count rate (per instance)",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -867,7 +1608,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "集群Topic总数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of cluster topics",
+                "note": ""
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -882,6 +1636,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "集群分区总数",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of cluster partitions",
+                "note": ""
+            }
+        ],
+        "enable": true
     }
 ]
