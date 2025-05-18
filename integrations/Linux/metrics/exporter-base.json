@@ -12,7 +12,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU Steal 时间占比（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "CPU Steal time ratio (average of the whole machine)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -27,7 +38,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 内核态时间占比（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "CPU core mode time ratio (average of the whole machine)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -42,7 +64,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 利用率（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "CPU utilization (machine average)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -57,7 +90,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 用户态时间占比（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "CPU user mode time ratio (average of the whole machine)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -72,7 +116,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 硬中断时间占比（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Proportion of CPU hard interrupt time (average of the whole machine)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -87,7 +142,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 空闲率（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "CPU idle rate (overall machine average)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -102,7 +168,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "CPU 软中断时间占比（整机平均）",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Proportion of CPU soft interrupt time (average of the whole machine)",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -113,11 +190,22 @@
         "unit": "percent",
         "note": "交换空间使用率。计算原子取自 `/proc/meminfo`。",
         "lang": "zh_CN",
-        "expression": "(node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes * 100 and node_memory_SwapTotal_bytes \u003e 0",
+        "expression": "(node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes * 100 and node_memory_SwapTotal_bytes > 0",
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "交换空间使用率",
+                "note": "交换空间使用率。计算原子取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Swap space usage",
+                "note": "Swap space usage. The computational atom is taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -132,7 +220,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "交换空间总量",
+                "note": "交换空间总量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Total swap space",
+                "note": "Total amount of swap space. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -147,7 +246,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "交换空间空闲量",
+                "note": "交换空间空闲量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Swap space free amount",
+                "note": "Exchange space free amount. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -162,7 +272,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存 Buffered 量",
+                "note": "用作缓冲区的内存量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Memory Buffered amount",
+                "note": "The amount of memory used as a buffer. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -177,7 +298,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存 Cached 量",
+                "note": "用作文件缓存的内存量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Memory Cached amount",
+                "note": "The amount of memory used as file cache. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -192,7 +324,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存使用率（基于MemAvailable）",
+                "note": "内存使用率。基于 MemAvailable 计算更准确，但是老版本的 Linux 不支持。"
+            },
+            "en_US": {
+                "name": "Memory usage (based on MemAvailable)",
+                "note": "Memory usage. Calculation based on MemAvailable is more accurate, but older versions of Linux do not support it."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -207,7 +350,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存可用量",
+                "note": "可以立即分配给进程的可用内存量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Memory Availability",
+                "note": "The amount of available memory that can be immediately allocated to a process. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -222,7 +376,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存总量",
+                "note": "内存总量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Total memory",
+                "note": "Total amount of memory. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -237,7 +402,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "内存空闲量",
+                "note": "未使用的内存量。取自 `/proc/meminfo`。"
+            },
+            "en_US": {
+                "name": "Free memory amount",
+                "note": "Amount of unused memory. Taken from `/proc/meminfo `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -252,7 +428,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "文件句柄 - 已分配占比",
+                "note": ""
+            },
+            "en_US": {
+                "name": "File handle-allocated proportion",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -267,7 +454,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "文件句柄 - 已分配量",
+                "note": ""
+            },
+            "en_US": {
+                "name": "File Handle-Amount Allocated",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -282,7 +480,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "文件句柄 - 总可分配量",
+                "note": ""
+            },
+            "en_US": {
+                "name": "File handle-total allocable quantity",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -297,7 +506,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘 IO - 时间维度 Utilization",
+                "note": "在时间维度统计硬盘 IO 时间占比，比如该值是 50%，表示有 50% 的时间是在处理 IO，该值 100%，表示一直在处理 IO，但是注意，现代磁盘设备具备并行处理多个 I/O 请求的能力，所以即便该值是 100%，可能硬盘还是可以接收新的处理请求。\n\n比如某人有两只手，最近 1 分钟一直在用单手劳动，从时间维度来看，利用率是 100%，但即便是 100%，再给他更多的活，他也能干，因为他还有一只手可用。"
+            },
+            "en_US": {
+                "name": "Hard Disk IO-Time Dimension Utilization",
+                "note": "Count the proportion of hard disk IO time in the time dimension. For example, if the value is 50%, it means that 50% of the time is processing IO, and if the value is 100%, it means that IO has been processing all the time. However, note that modern disk devices have the ability to process multiple I/O requests in parallel, so even if the value is 100%, the hard disk may still be able to receive new processing requests. \n \nFor example, someone has two hands and has been working with one hand in the last minute. From the time dimension, the utilization rate is 100%, but even if it is 100%, he can do it if he is given more work, because he still has one hand available."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -312,7 +532,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘 IO - 每秒写入字节数量",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Hard disk IO-bytes written per second",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -327,7 +558,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘 IO - 每秒写次数",
+                "note": "每秒写次数"
+            },
+            "en_US": {
+                "name": "Hard drive IO-writes per second",
+                "note": "Writes per second"
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -342,7 +584,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘 IO - 每秒读取字节数量",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Hard Drive IO-bytes read per second",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -357,7 +610,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘 IO - 每秒读次数",
+                "note": "每秒读次数"
+            },
+            "en_US": {
+                "name": "Hard drive IO-Reads per second",
+                "note": "Reads per second"
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -372,7 +636,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘使用率",
+                "note": "硬盘空间使用率。"
+            },
+            "en_US": {
+                "name": "Hard Drive Usage",
+                "note": "Hard disk space usage."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -387,7 +662,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘剩余量",
+                "note": "使用 SI 标准渲染数据，和 df 命令保持一致。"
+            },
+            "en_US": {
+                "name": "Remaining hard disk",
+                "note": "Use the SI standard to render data, consistent with the df command."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -402,7 +688,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘可用量",
+                "note": "使用 SI 标准渲染数据，和 df 命令保持一致。"
+            },
+            "en_US": {
+                "name": "Hard Drive Availability",
+                "note": "Use the SI standard to render data, consistent with the df command."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -417,7 +714,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "硬盘总量",
+                "note": "使用 SI 标准渲染数据，和 df 命令保持一致。"
+            },
+            "en_US": {
+                "name": "Total hard disk",
+                "note": "Use the SI standard to render data, consistent with the df command."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -432,7 +740,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统 CPU 核数",
+                "note": "CPU 逻辑核的数量。"
+            },
+            "en_US": {
+                "name": "Number of CPU cores",
+                "note": "Number of CPU logical cores."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -447,7 +766,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载 - 最近 1 分钟",
+                "note": "取自 `/proc/loadavg`。"
+            },
+            "en_US": {
+                "name": "System load average-last 1 minute",
+                "note": "Taken from `/proc/loadavg `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -462,7 +792,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载 - 最近 15 分钟",
+                "note": "取自 `/proc/loadavg`。"
+            },
+            "en_US": {
+                "name": "System load average-last 15 minutes",
+                "note": "Taken from `/proc/loadavg `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -477,7 +818,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载 - 最近 5 分钟",
+                "note": "取自 `/proc/loadavg`。"
+            },
+            "en_US": {
+                "name": "System load average-last 5 minutes",
+                "note": "Taken from `/proc/loadavg `."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -492,7 +844,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载（单核） - 最近 1 分钟",
+                "note": ""
+            },
+            "en_US": {
+                "name": "System Load Average (Single Core)-Last 1 Minute",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -507,7 +870,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载（单核） - 最近 15 分钟",
+                "note": ""
+            },
+            "en_US": {
+                "name": "System Load Average (Single Core)-Last 15 Minutes",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -522,7 +896,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "系统平均负载（单核） - 最近 5 分钟",
+                "note": ""
+            },
+            "en_US": {
+                "name": "System Load Average (Single Core)-Last 5 Minutes",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -537,7 +922,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡入方向（接收）每秒丢弃的数据包个数",
+                "note": "原始指标 node_network_receive_drop_total 表示操作系统启动之后各个网卡入方向（接收）丢弃的数据包总数。"
+            },
+            "en_US": {
+                "name": "Number of packets dropped per second in the incoming direction (receiving) of the network card",
+                "note": "The original indicator node _ network _ receive _ drop _ total indicates the total number of packets dropped (received) by each network card after the operating system starts."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -552,7 +948,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡入方向（接收）每秒数据包数",
+                "note": "原始指标 node_network_receive_packets_total 表示操作系统启动之后各个网卡入方向（接收）数据包总数。"
+            },
+            "en_US": {
+                "name": "NIC incoming (receiving) packets per second",
+                "note": "The original indicator node _ network _ receive _ packets _ total indicates the total number of data packets incoming (received) by each network card after the operating system is booted."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -567,7 +974,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡入方向（接收）每秒错包数",
+                "note": "原始指标 node_network_receive_errs_total 表示操作系统启动之后各个网卡入方向（接收）错包总数。"
+            },
+            "en_US": {
+                "name": "Number of wrong packets per second in the incoming direction (receiving) of the network card",
+                "note": "The original indicator node _ network _ receive _ errs _ total indicates the total number of error packets incoming (received) by each network card after the operating system is started."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -582,7 +1000,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡出方向（发送）每秒丢弃的数据包个数",
+                "note": "原始指标 node_network_transmit_drop_total 表示操作系统启动之后各个网卡出方向（发送）丢弃的数据包总数。"
+            },
+            "en_US": {
+                "name": "Number of packets discarded per second in the outbound direction (sending) of the network card",
+                "note": "The original indicator node _ network _ transmit _ drop _ total indicates the total number of packets discarded (sent) by each network card after the operating system starts."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -597,7 +1026,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡出方向（发送）每秒数据包数",
+                "note": "原始指标 node_network_transmit_packets_total 表示操作系统启动之后各个网卡出方向（发送）数据包总数。"
+            },
+            "en_US": {
+                "name": "Number of packets per second in the outgoing direction (sent) of the network card",
+                "note": "The original indicator node _ network _ transmit _ packets _ total indicates the total number of outbound (sent) data packets from each network card after the operating system is started."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -612,7 +1052,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡出方向（发送）每秒错包数",
+                "note": "原始指标 node_network_transmit_errs_total 表示操作系统启动之后各个网卡出方向（发送）错包总数。"
+            },
+            "en_US": {
+                "name": "Number of wrong packets per second in the outgoing direction (sending) of the network card",
+                "note": "The original indicator node _ network _ transmit _ errs _ total indicates the total number of error packets sent out (sent) by each network card after the operating system is started."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -627,7 +1078,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡每秒发送的 bit 量",
+                "note": "原始指标 node_network_transmit_bytes_total 表示操作系统启动之后发送的 byte 总量，因为网卡流量习惯使用 bit 作为单位，所以在表达式中做了换算。"
+            },
+            "en_US": {
+                "name": "The amount of bits sent per second by the network card",
+                "note": "The original indicator node _ network _ transmit _ bytes _ total represents the total number of bytes sent after the operating system starts. Because the network card traffic is used to using bits as a unit, it is converted in the expression."
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -642,6 +1104,17 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "网卡每秒接收的 bit 量",
+                "note": "原始指标 node_network_receive_bytes_total 表示操作系统启动之后接收的 byte 总量，因为网卡流量习惯使用 bit 作为单位，所以在表达式中做了换算。"
+            },
+            "en_US": {
+                "name": "The number of bits received by the network card per second",
+                "note": "The original indicator node _ network _ received _ bytes _ total represents the total number of bytes received after the operating system is started. Because the network card traffic is used to using bits as a unit, it is converted in the expression."
+            }
+        },
+        "enable": true
     }
 ]
