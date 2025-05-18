@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"encoding/json"
 	"path"
 	"strings"
 	"time"
@@ -125,81 +124,6 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid%1000 != 0 and uuid > 1000000000000000000 and type = 'dashboard' and updated_by = 'system'").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
-		}
-
-		// metrics
-		files, err = file.FilesUnder(componentDir + "/metrics")
-		if err == nil && len(files) > 0 {
-			for _, f := range files {
-				fp := componentDir + "/metrics/" + f
-				bs, err := file.ReadBytes(fp)
-				if err != nil {
-					logger.Warning("read builtin component metrics file fail", f, err)
-					continue
-				}
-
-				metrics := []models.BuiltinMetric{}
-				newMetrics := []models.BuiltinMetric{}
-				err = json.Unmarshal(bs, &metrics)
-				if err != nil {
-					logger.Warning("parse builtin component metrics file fail", f, err)
-					continue
-				}
-
-				writeMetricFileFlag := false
-				for _, metric := range metrics {
-					if metric.UUID == 0 {
-						writeMetricFileFlag = true
-						metric.UUID = time.Now().UnixNano()
-					}
-					newMetrics = append(newMetrics, metric)
-
-					old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
-					if err != nil {
-						logger.Warning("get builtin metrics fail ", metric, err)
-						continue
-					}
-
-					if old == nil {
-						err := metric.Add(ctx, SYSTEM)
-						if err != nil {
-							logger.Warning("add builtin metrics fail ", metric, err)
-						}
-						continue
-					}
-
-					if old.UpdatedBy == SYSTEM {
-						old.Collector = metric.Collector
-						old.Typ = metric.Typ
-						old.Name = metric.Name
-						old.Unit = metric.Unit
-						old.Note = metric.Note
-						old.Lang = metric.Lang
-						old.Expression = metric.Expression
-
-						err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
-						if err != nil {
-							logger.Warningf("update builtin metric:%+v fail %v", metric, err)
-						}
-					}
-				}
-
-				if writeMetricFileFlag {
-					bs, err = json.MarshalIndent(newMetrics, "", "    ")
-					if err != nil {
-						logger.Warning("marshal builtin metrics fail ", newMetrics, err)
-						continue
-					}
-
-					_, err = file.WriteBytes(fp, bs)
-					if err != nil {
-						logger.Warning("write builtin metrics file fail ", f, err)
-					}
-				}
-
-			}
-		} else if err != nil {
-			logger.Warningf("read builtin component metrics dir fail %s %v", component.Ident, err)
 		}
 	}
 }

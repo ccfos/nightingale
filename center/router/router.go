@@ -51,6 +51,7 @@ type Router struct {
 	UserGroupCache      *memsto.UserGroupCacheType
 	UserTokenCache      *memsto.UserTokenCacheType
 	BuiltinPayloadCache *memsto.BuiltinPayloadCacheType
+	BuiltinMetricCache  *memsto.BuiltinMetricCacheType
 	Ctx                 *ctx.Context
 
 	HeartbeatHook       HeartbeatHookFunc
@@ -62,7 +63,8 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, bpc *memsto.BuiltinPayloadCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, bpc *memsto.BuiltinPayloadCacheType,
+	bmc *memsto.BuiltinMetricCacheType) *Router {
 	return &Router{
 		HTTP:                httpConfig,
 		Center:              center,
@@ -81,6 +83,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserGroupCache:      ugc,
 		UserTokenCache:      utc,
 		BuiltinPayloadCache: bpc,
+		BuiltinMetricCache:  bmc,
 		Ctx:                 ctx,
 		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
 		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
