@@ -11,22 +11,24 @@ import (
 
 // EventPipeline 事件Pipeline模型
 type EventPipeline struct {
-	ID           int64       `json:"id" gorm:"primaryKey"`
-	Name         string      `json:"name" gorm:"type:varchar(128)"`
-	TeamIds      []int64     `json:"team_ids" gorm:"type:text;serializer:json"`
-	TeamNames    []string    `json:"team_names" gorm:"-"`
-	Description  string      `json:"description" gorm:"type:varchar(255)"`
-	FilterEnable bool        `json:"filter_enable" gorm:"type:tinyint(1)"`
-	LabelFilters []TagFilter `json:"label_filters" gorm:"type:text;serializer:json"`
-	AttrFilters  []TagFilter `json:"attribute_filters" gorm:"type:text;serializer:json"`
-	Processors   []Processor `json:"processors" gorm:"type:text;serializer:json"`
-	CreateAt     int64       `json:"create_at" gorm:"type:bigint"`
-	CreateBy     string      `json:"create_by" gorm:"type:varchar(64)"`
-	UpdateAt     int64       `json:"update_at" gorm:"type:bigint"`
-	UpdateBy     string      `json:"update_by" gorm:"type:varchar(64)"`
+	ID               int64             `json:"id" gorm:"primaryKey"`
+	Name             string            `json:"name" gorm:"type:varchar(128)"`
+	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
+	TeamNames        []string          `json:"team_names" gorm:"-"`
+	Description      string            `json:"description" gorm:"type:varchar(255)"`
+	FilterEnable     bool              `json:"filter_enable" gorm:"type:tinyint(1)"`
+	LabelFilters     []TagFilter       `json:"label_filters" gorm:"type:text;serializer:json"`
+	AttrFilters      []TagFilter       `json:"attribute_filters" gorm:"type:text;serializer:json"`
+	ProcessorConfigs []ProcessorConfig `json:"processors" gorm:"type:text;serializer:json"`
+	CreateAt         int64             `json:"create_at" gorm:"type:bigint"`
+	CreateBy         string            `json:"create_by" gorm:"type:varchar(64)"`
+	UpdateAt         int64             `json:"update_at" gorm:"type:bigint"`
+	UpdateBy         string            `json:"update_by" gorm:"type:varchar(64)"`
+
+	Processors []Processor `json:"-" gorm:"-"`
 }
 
-type Processor struct {
+type ProcessorConfig struct {
 	Typ    string      `json:"typ"`
 	Config interface{} `json:"config"`
 }
@@ -44,22 +46,20 @@ func (e *EventPipeline) Verify() error {
 		return errors.New("team_ids cannot be empty")
 	}
 
-	return nil
-}
-
-func (e *EventPipeline) DB2FE() {
-	if e.TeamIds == nil {
+	if len(e.TeamIds) == 0 {
 		e.TeamIds = make([]int64, 0)
 	}
-	if e.LabelFilters == nil {
+	if len(e.LabelFilters) == 0 {
 		e.LabelFilters = make([]TagFilter, 0)
 	}
-	if e.AttrFilters == nil {
+	if len(e.AttrFilters) == 0 {
 		e.AttrFilters = make([]TagFilter, 0)
 	}
-	if e.Processors == nil {
-		e.Processors = make([]Processor, 0)
+	if len(e.ProcessorConfigs) == 0 {
+		e.ProcessorConfigs = make([]ProcessorConfig, 0)
 	}
+
+	return nil
 }
 
 // CreateEventPipeline 创建事件Pipeline
@@ -74,7 +74,7 @@ func GetEventPipeline(ctx *ctx.Context, id int64) (*EventPipeline, error) {
 	if err != nil {
 		return nil, err
 	}
-	pipeline.DB2FE()
+	pipeline.Verify()
 	return &pipeline, nil
 }
 
@@ -108,7 +108,7 @@ func ListEventPipelines(ctx *ctx.Context) ([]*EventPipeline, error) {
 	}
 
 	for _, p := range pipelines {
-		p.DB2FE()
+		p.Verify()
 	}
 
 	return pipelines, nil

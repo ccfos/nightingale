@@ -5,7 +5,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
-func Pipeline(ctx *ctx.Context, event *models.AlertCurEvent, processors []Processor) {
+func Pipeline(ctx *ctx.Context, event *models.AlertCurEvent, processors []models.Processor) {
 	for _, processor := range processors {
 		processor.Process(ctx, event)
 	}
