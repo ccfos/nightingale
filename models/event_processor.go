@@ -14,7 +14,6 @@ type Processor interface {
 
 type NewProcessorFn func(settings interface{}) (Processor, error)
 
-// 处理器注册表，存储各种类型处理器的构造函数
 var processorRegister = map[string]NewProcessorFn{}
 
 func RegisterProcessor(typ string, p Processor) {
@@ -24,7 +23,6 @@ func RegisterProcessor(typ string, p Processor) {
 	processorRegister[typ] = p.Init
 }
 
-// GetProcessorByType 根据类型获取处理器实例
 func GetProcessorByType(typ string, settings interface{}) (Processor, error) {
 	typ = strings.TrimSpace(typ)
 	fn, found := processorRegister[typ]
