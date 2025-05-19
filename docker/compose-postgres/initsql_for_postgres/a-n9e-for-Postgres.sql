@@ -20,7 +20,7 @@ CREATE TABLE users (
 );
 
 COMMENT ON COLUMN users.id IS 'id';
-COMMENT ON COLUMN users.username IS 'login name, cannot rename';  
+COMMENT ON COLUMN users.username IS 'login name, cannot rename';
 COMMENT ON COLUMN users.nickname IS 'display name, chinese name';
 COMMENT ON COLUMN users.portrait IS 'portrait image url';
 COMMENT ON COLUMN users.roles IS 'Admin | Standard | Guest, split by space';
@@ -483,7 +483,7 @@ COMMENT ON COLUMN metric_view.create_by IS 'user id';
 
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
- 
+
 CREATE TABLE recording_rule (
     id bigserial,
     group_id bigint not null default '0',
@@ -752,15 +752,15 @@ CREATE TABLE datasource
     updated_by varchar(64) not null default '',
     UNIQUE (name),
     PRIMARY KEY (id)
-) ; 
-  
+) ;
+
 CREATE TABLE builtin_cate (
     id bigserial,
     name varchar(191) not null,
     user_id bigint not null default 0,
     PRIMARY KEY (id)
 ) ;
- 
+
 CREATE TABLE notify_tpl (
     id bigserial,
     channel varchar(32) not null,
@@ -810,6 +810,8 @@ CREATE TABLE builtin_metrics (
   lang varchar(191) NOT NULL DEFAULT '',
   note varchar(4096) NOT NULL,
   expression varchar(4096) NOT NULL,
+  translation text,
+  enable boolean NOT NULL DEFAULT false,
   created_at bigint NOT NULL DEFAULT 0,
   created_by varchar(191) NOT NULL DEFAULT '',
   updated_at bigint NOT NULL DEFAULT 0,

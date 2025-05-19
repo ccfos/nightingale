@@ -230,6 +230,7 @@ ALTER TABLE `datasource` ADD COLUMN `identifier` varchar(255) not null default '
 /* v8.0.0-beta.11 2025-05-15 */
 ALTER TABLE `notify_rule` ADD COLUMN `pipeline_configs` text;
 
+ALTER TABLE `notify_rule` ADD COLUMN `pipeline_configs_hash` varchar(64) not null default '';
 CREATE TABLE `event_pipeline` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(128) not null,
@@ -246,3 +247,6 @@ CREATE TABLE `event_pipeline` (
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+/* v8.0.0-beta.12 2025-05-16 */
+ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric';
+ALTER TABLE `builtin_metrics` ADD COLUMN `enable` BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'enable or disable metric';
