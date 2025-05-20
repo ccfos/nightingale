@@ -1,0 +1,211 @@
+[
+    {
+        "cate": "prometheus",
+        "name": "A certain disk is unable to read/write normally",
+        "prod": "metric",
+        "prom_for_duration": 0,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "(node_filesystem_device_error{mountpoint!~\"/var/lib/.*\",mountpoint!~\"/run.*\"}) \u003e 0",
+                    "severity": 1
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Disk needs to be cleaned - utilization has reached 92%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 - 100 * node_filesystem_avail_bytes / node_filesystem_size_bytes \u003e 92 ",
+                    "severity": 3
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Insufficient file handles - usage exceeds 90%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * node_filefd_allocated / node_filefd_maximum \u003e 90",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Insufficient inode resources - usage exceeds 90%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 - 100 * node_filesystem_files_free / node_filesystem_files \u003e 90",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Insufficient memory resources",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": true,
+            "queries": [
+                {
+                    "prom_ql": "(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100 \u003e 75",
+                    "severity": 2
+                },
+                {
+                    "prom_ql": "(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100 \u003e 90",
+                    "severity": 1
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Packet loss in the inbound direction of the network card",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(node_network_receive_drop_total[5m]) \u003e 3",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Packet loss in the outbound direction of the network card",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(node_network_transmit_drop_total[5m]) \u003e 3",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Packet errors in the inbound direction of the network card",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(node_network_receive_errs_total[5m]) \u003e 3",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Packet errors in the outbound direction of the network card",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(node_network_transmit_errs_total[5m]) \u003e 3",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "System conntrack needs to be adjusted - usage exceeds 80%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * node_nf_conntrack_entries / node_nf_conntrack_entries_limit \u003e 80",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "System OOM Occurred",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "increase(node_vmstat_oom_kill[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        }
+    },
+    {
+        "cate": "prometheus",
+        "name": "Too many running processes",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "node_procs_running \u003e 1000",
+                    "severity": 2
+                }
+            ]
+        }
+    }
+]

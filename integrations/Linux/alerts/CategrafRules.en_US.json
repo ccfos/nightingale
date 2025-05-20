@@ -1,0 +1,488 @@
+[
+    {
+        "cate": "prometheus",
+        "name": "Conntrack Table Usage Exceeds 80%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * conntrack_ip_conntrack_count / ip_conntrack_max \u003e 80",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327726493000
+    },
+    {
+        "cate": "prometheus",
+        "name": "CPU Usage High",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": true,
+            "queries": [
+                {
+                    "prom_ql": "cpu_usage_active{cpu=\"cpu-total\"} \u003e 75",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "cpu_usage_active{cpu=\"cpu-total\"} \u003e 85",
+                    "severity": 2
+                },
+                {
+                    "prom_ql": "cpu_usage_active{cpu=\"cpu-total\"} \u003e 95",
+                    "severity": 1
+                }
+            ]
+        },
+        "uuid": 1717556327726998000
+    },
+    {
+        "cate": "prometheus",
+        "name": "HTTP Address Probe Failed",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "http_response_result_code != 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327727426000
+    },
+    {
+        "cate": "prometheus",
+        "name": "IO Busy",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(diskio_io_time[5m])/10 \u003e 99",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327727909000
+    },
+    {
+        "cate": "prometheus",
+        "name": "NTP Time Offset Too Large",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "ntp_offset_ms \u003e 1000 or ntp_offset_ms \u003c -1000",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327728333000
+    },
+    {
+        "cate": "prometheus",
+        "name": "PING Address Probe Failed",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": false,
+            "queries": [
+                {
+                    "prom_ql": "ping_result_code != 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327728713000
+    },
+    {
+        "cate": "prometheus",
+        "name": "TME_WAIT Connections Exceed 20000, Possible Attention Needed",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "netstat_tcp_tw \u003e 20000",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327729188000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Memory Usage High",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": true,
+            "queries": [
+                {
+                    "prom_ql": "100 - mem_available_percent \u003e 75",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "100 - mem_available_percent \u003e 85",
+                    "severity": 2
+                },
+                {
+                    "prom_ql": "100 - mem_available_percent \u003e 95",
+                    "severity": 1
+                }
+            ]
+        },
+        "uuid": 1717556327729533000
+    },
+    {
+        "cate": "prometheus",
+        "name": "System File Handle Usage Exceeds 90%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * linux_sysctl_fs_file_nr / linux_sysctl_fs_file_max \u003e 90",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327729938000
+    },
+    {
+        "cate": "host",
+        "name": "Machine Monitoring - Agent Disconnected for Over 90 Seconds",
+        "prod": "host",
+        "prom_for_duration": 0,
+        "prom_eval_interval": 15,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "key": "all_hosts",
+                    "op": "==",
+                    "values": []
+                }
+            ],
+            "triggers": [
+                {
+                    "duration": 90,
+                    "severity": 2,
+                    "type": "target_miss"
+                }
+            ]
+        },
+        "uuid": 1717556327730336000
+    },
+    {
+        
+        "cate": "host",
+        "name": "Machine Monitoring - Time Offset Exceeds 3 Seconds",
+        "prod": "host",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "key": "all_hosts",
+                    "op": "==",
+                    "values": []
+                }
+            ],
+            "triggers": [
+                {
+                    "duration": 3000,
+                    "severity": 2,
+                    "type": "offset"
+                }
+            ]
+        },
+        "uuid": 1717556327730730000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Disk Monitoring - Inode Usage Exceeds 90%",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "100 * disk_inodes_used / disk_inodes_total \u003e 90",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327731534000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Disk Monitoring - Space Insufficient for Disks Over 200G",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": true,
+            "queries": [
+                {
+                    "prom_ql": "disk_free/1024/1024/1024 \u003c 20 and disk_total/1024/1024/1024 \u003e= 200",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "disk_free/1024/1024/1024 \u003c 10 and disk_total/1024/1024/1024 \u003e= 200",
+                    "severity": 2
+                },
+                {
+                    "prom_ql": "disk_free/1024/1024/1024 \u003c 2 and disk_total/1024/1024/1024 \u003e= 200",
+                    "severity": 1
+                }
+            ]
+        },
+        "uuid": 1717556327731912000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Disk Monitoring - Space Insufficient for Disks Under 200G",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "inhibit": true,
+            "queries": [
+                {
+                    "prom_ql": "disk_used_percent \u003e 90 and disk_total/1024/1024/1024 \u003c 200",
+                    "severity": 3
+                },
+                {
+                    "prom_ql": "disk_used_percent \u003e 95 and disk_total/1024/1024/1024 \u003c 200",
+                    "severity": 2
+                },
+                {
+                    "prom_ql": "disk_used_percent \u003e 99 and disk_total/1024/1024/1024 \u003c 200",
+                    "severity": 1
+                }
+            ]
+        },
+        "uuid": 1717556327732287000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Disk Monitoring - Device Errors",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "disk_device_error \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327732665000
+    },
+    {
+        "cate": "prometheus",
+        "name": "System OOM Occurred",
+        "prod": "metric",
+        "prom_for_duration": 0,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "increase(kernel_vmstat_oom_kill[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327733610000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Network Card Monitoring - Incoming Direction Packet Loss",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(net_drop_in[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327734000000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Network Card Monitoring - Incoming Direction Error Packets",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(net_err_in[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327734421000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Network Card Monitoring - Outgoing Direction Packet Loss",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(net_drop_out[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327734847000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Network Card Monitoring - Outgoing Direction Error Packets",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "irate(net_err_out[5m]) \u003e 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327735362000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Network Address Probe Failed",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "net_response_result_code != 0",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327735768000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Process Monitoring - Process Count is 0, Possible Process Crashed",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "procstat_lookup_count == 0",
+                    "severity": 1
+                }
+            ]
+        },
+        "uuid": 1717556327736228000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Process Monitoring - Process FD Limit Too Low",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "procstat_rlimit_num_fds_soft \u003c 4096",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327736656000
+    },
+    {
+        "cate": "prometheus",
+        "name": "Process Monitoring - Total Process Count Exceeds 600",
+        "prod": "metric",
+        "prom_for_duration": 60,
+        "prom_eval_interval": 30,
+        "notify_recovered": 1,
+        "notify_repeat_step": 60,
+        "rule_config": {
+            "queries": [
+                {
+                    "prom_ql": "processes_total \u003e 600",
+                    "severity": 2
+                }
+            ]
+        },
+        "uuid": 1717556327737117000
+    }
+]
