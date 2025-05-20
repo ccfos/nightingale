@@ -44,6 +44,12 @@ func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) b
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
+	if rule.EnableDaysOfWeek == "" {
+		// 如果规则没有配置生效时间，则默认全天生效
+
+		return false
+	}
+
 	enableStime := strings.Fields(rule.EnableStime)
 	enableEtime := strings.Fields(rule.EnableEtime)
 	enableDaysOfWeek := strings.Split(rule.EnableDaysOfWeek, ";")
