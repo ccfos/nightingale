@@ -82,6 +82,117 @@ func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
 	return count > 0, nil
 }
 
+// CanMigrateBuiltinTranslation checks if the builtin translation can be migrated.
+func CanMigrateBuiltinTranslation(ctx *ctx.Context) bool {
+	// Check if the builtin metrics is empty
+	var count int64
+	if err := DB(ctx).Model(&BuiltinMetric{}).Count(&count).Error; err != nil {
+		return false
+	}
+	if count == 0 {
+		return false
+	}
+
+	return true
+}
+
+// MigrateBuiltinTranslation migrates the builtin translation.
+func MigrateBuiltinTranslation(ctx *ctx.Context) error {
+	var allMetrics []BuiltinMetric
+	if err := DB(ctx).Find(&allMetrics).Error; err != nil {
+		return err
+	}
+
+	// Aggregate expression to []BuiltinMetric
+	grouped := map[string][]BuiltinMetric{}
+	for _, m := range allMetrics {
+		grouped[m.Expression] = append(grouped[m.Expression], m)
+	}
+
+	for expr, metrics := range grouped {
+		var enabled []BuiltinMetric
+		var disabled []BuiltinMetric
+
+		for _, m := range metrics {
+			if m.Enable {
+				enabled = append(enabled, m)
+			} else {
+				disabled = append(disabled, m)
+			}
+		}
+
+		if len(enabled) == 1 {
+			// Only one enabled metric, update its translation with disabled ones
+			main := enabled[0]
+			combined := mergeTranslations(main.Translation, disabled)
+			main.Translation = ensureHasEnglish(combined)
+			if err := DB(ctx).Model(&BuiltinMetric{}).Where("id = ?", main.ID).
+				Updates(map[string]interface{}{
+					"translation": main.Translation,
+					"updated_at":  time.Now().Unix(),
+				}).Error; err != nil {
+				return err
+			}
+		} else {
+			// Multiple enabled metrics, we need to disable the old ones and create a new one
+			if err := DB(ctx).Model(&BuiltinMetric{}).
+				Where("expression = ?", expr).
+				Update("enable", false).Error; err != nil {
+				return err
+			}
+
+			// Create a new metric
+			newMetric := metrics[0]
+			newMetric.Enable = true
+			newMetric.Translation = ensureHasEnglish(mergeTranslations(nil, metrics))
+			newMetric.CreatedAt = time.Now().Unix()
+			newMetric.UpdatedAt = newMetric.CreatedAt
+
+			if err := DB(ctx).Create(&newMetric).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func mergeTranslations(base []Translation, others []BuiltinMetric) []Translation {
+	langMap := map[string]Translation{}
+	for _, t := range base {
+		langMap[t.Lang] = t
+	}
+	for _, m := range others {
+		for _, t := range m.Translation {
+			if _, exists := langMap[t.Lang]; !exists {
+				langMap[t.Lang] = t
+			}
+		}
+	}
+	var merged []Translation
+	for _, t := range langMap {
+		merged = append(merged, t)
+	}
+	return merged
+}
+
+func ensureHasEnglish(translations []Translation) []Translation {
+	for _, t := range translations {
+		if t.Lang == "en_US" {
+			return translations
+		}
+	}
+	if len(translations) > 0 {
+		t := translations[0]
+		translations = append(translations, Translation{
+			Lang: "en_US",
+			Name: t.Name,
+			Note: t.Note,
+		})
+	}
+	return translations
+}
+
 func (bm *BuiltinMetric) Add(ctx *ctx.Context, username string) error {
 	if err := bm.Verify(); err != nil {
 		return err
