@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -45,7 +46,15 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 	if c.Client == nil {
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
-			Proxy:           http.ProxyFromEnvironment,
+		}
+
+		if c.Proxy != "" {
+			proxyURL, err := url.Parse(c.Proxy)
+			if err != nil {
+				logger.Errorf("failed to parse proxy url: %v", err)
+			} else {
+				transport.Proxy = http.ProxyURL(proxyURL)
+			}
 		}
 
 		c.Client = &http.Client{
@@ -54,14 +63,12 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 		}
 	}
 
-	// 设置 请求headers
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"
 	for k, v := range c.Headers {
 		headers[k] = v
 	}
 
-	// 将 event 转换为 json
 	body, err := json.Marshal(event)
 	if err != nil {
 		logger.Errorf("failed to marshal event: %v", err)
@@ -74,17 +81,14 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 		return
 	}
 
-	// 设置 headers
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
 
-	// 设置 basic auth
 	if c.AuthUsername != "" && c.AuthPassword != "" {
 		req.SetBasicAuth(c.AuthUsername, c.AuthPassword)
 	}
 
-	// 发送 post 请求
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		logger.Errorf("failed to send request: %v event: %v", err, event)
