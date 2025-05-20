@@ -20,7 +20,7 @@ type EventProcessorCacheType struct {
 	stats           *Stats
 
 	sync.RWMutex
-	processors map[int64]*models.EventPipeline // key: pipeline id
+	eventPipelines map[int64]*models.EventPipeline // key: pipeline id
 }
 
 func NewEventProcessorCache(ctx *ctx.Context, stats *Stats) *EventProcessorCacheType {
@@ -29,7 +29,7 @@ func NewEventProcessorCache(ctx *ctx.Context, stats *Stats) *EventProcessorCache
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
-		processors:      make(map[int64]*models.EventPipeline),
+		eventPipelines:  make(map[int64]*models.EventPipeline),
 	}
 	epc.SyncEventProcessors()
 	return epc
@@ -41,7 +41,7 @@ func (epc *EventProcessorCacheType) Reset() {
 
 	epc.statTotal = -1
 	epc.statLastUpdated = -1
-	epc.processors = make(map[int64]*models.EventPipeline)
+	epc.eventPipelines = make(map[int64]*models.EventPipeline)
 }
 
 func (epc *EventProcessorCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -54,7 +54,7 @@ func (epc *EventProcessorCacheType) StatChanged(total, lastUpdated int64) bool {
 
 func (epc *EventProcessorCacheType) Set(m map[int64]*models.EventPipeline, total, lastUpdated int64) {
 	epc.Lock()
-	epc.processors = m
+	epc.eventPipelines = m
 	epc.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -65,17 +65,29 @@ func (epc *EventProcessorCacheType) Set(m map[int64]*models.EventPipeline, total
 func (epc *EventProcessorCacheType) Get(processorId int64) *models.EventPipeline {
 	epc.RLock()
 	defer epc.RUnlock()
-	return epc.processors[processorId]
+	return epc.eventPipelines[processorId]
+}
+
+func (epc *EventProcessorCacheType) GetProcessorsById(processorId int64) []models.Processor {
+	epc.RLock()
+	defer epc.RUnlock()
+
+	eventPipeline, ok := epc.eventPipelines[processorId]
+	if !ok {
+		return []models.Processor{}
+	}
+
+	return eventPipeline.Processors
 }
 
 func (epc *EventProcessorCacheType) GetProcessorIds() []int64 {
 	epc.RLock()
 	defer epc.RUnlock()
 
-	count := len(epc.processors)
+	count := len(epc.eventPipelines)
 	list := make([]int64, 0, count)
-	for processorId := range epc.processors {
-		list = append(list, processorId)
+	for eid := range epc.eventPipelines {
+		list = append(list, eid)
 	}
 
 	return list
@@ -125,7 +137,18 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 
 	m := make(map[int64]*models.EventPipeline)
 	for i := 0; i < len(lst); i++ {
-		m[lst[i].ID] = lst[i]
+		eventPipeline := lst[i]
+		for _, p := range eventPipeline.ProcessorConfigs {
+			processor, err := models.GetProcessorByType(p.Typ, p.Config)
+			if err != nil {
+				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v type not found", eventPipeline.ID, eventPipeline, p)
+				continue
+			}
+
+			eventPipeline.Processors = append(eventPipeline.Processors, processor)
+		}
+
+		m[lst[i].ID] = eventPipeline
 	}
 
 	epc.Set(m, stat.Total, stat.LastUpdated)

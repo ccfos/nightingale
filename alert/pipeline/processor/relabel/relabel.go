@@ -1,15 +1,15 @@
 package relabel
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/alert/pipeline"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/common"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+
 	"github.com/prometheus/prometheus/prompb"
 )
 
@@ -19,17 +19,12 @@ type RelabelConfig struct {
 }
 
 func init() {
-	pipeline.RegisterProcessor("relabel", &RelabelConfig{})
+	models.RegisterProcessor("relabel", &RelabelConfig{})
 }
 
-func (r *RelabelConfig) Init(settings interface{}) (pipeline.Processor, error) {
-	b, err := json.Marshal(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(b, &r.RelabelConfig)
-	return r, err
+func (r *RelabelConfig) Init(settings interface{}) (models.Processor, error) {
+	result, err := common.InitProcessor[*RelabelConfig](settings)
+	return result, err
 }
 
 func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) {

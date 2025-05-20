@@ -15,7 +15,6 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
-	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -161,7 +160,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				continue
 			}
 
-			var processors []pipeline.Processor
+			var processors []models.Processor
 			for _, pipelineConfig := range notifyRule.PipelineConfigs {
 				if !pipelineConfig.Enable {
 					continue
@@ -178,14 +177,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					continue
 				}
 
-				for _, p := range eventPipeline.Processors {
-					processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
-					if err != nil {
-						logger.Warningf("notify_id: %d, event:%+v, processor:%+v type not found", notifyRuleId, eventCopy, p)
-						continue
-					}
-					processors = append(processors, processor)
-				}
+				processors = append(processors, e.eventProcessorCache.GetProcessorsById(pipelineConfig.PipelineId)...)
 			}
 
 			for _, processor := range processors {
@@ -196,6 +188,11 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
 					break
 				}
+			}
+
+			if eventCopy == nil {
+				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
+				continue
 			}
 
 			// notify
