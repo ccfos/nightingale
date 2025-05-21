@@ -179,7 +179,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		ginx.Bomb(http.StatusBadRequest, "notify channel not enabled, please enable it first")
 	}
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashtudy" {
+	if notifyChannel.RequestType != "flashdudy" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		ginx.Dangerous(err)
 		if len(messageTemplates) == 0 {

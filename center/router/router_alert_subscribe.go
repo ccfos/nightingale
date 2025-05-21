@@ -129,17 +129,17 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	// 先判断匹配条件
 	//ginx.NewRender(c).Message(f.Add(rt.Ctx))
 	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
-		ginx.NewRender(c).Message("Data source mismatch")
+		ginx.NewRender(c).Data("Data source mismatch", nil)
 		return
 	}
 	// 匹配tag
 	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
-		ginx.NewRender(c).Message("Tags mismatch")
+		ginx.NewRender(c).Data("Tags mismatch", nil)
 		return
 	}
 	// 匹配group name
 	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
-		ginx.NewRender(c).Message("Group name mismatch")
+		ginx.NewRender(c).Data("Group name mismatch", nil)
 		return
 	}
 	// 4. 检查严重级别（Severity）匹配
@@ -152,45 +152,16 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if !match {
-			return
-		}
-	}
-	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
-		ginx.NewRender(c).Message("Data source mismatch")
-		return
-	}
-	// 匹配tag
-	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
-		ginx.NewRender(c).Message("Tags mismatch")
-		return
-	}
-	// 匹配group name
-	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
-		ginx.NewRender(c).Message("Group name mismatch")
-		return
-	}
-
-	// 4. 检查严重级别（Severity）匹配
-	if len(f.SubscribeConfig.SeveritiesJson) != 0 {
-		match := false
-		for _, s := range f.SubscribeConfig.SeveritiesJson {
-			if s == curEvent.Severity || s == 0 {
-				match = true
-				break
-			}
-		}
-		if !match {
+			ginx.NewRender(c).Data("Severity mismatch", nil)
 			return
 		}
 	}
 
 	f.SubscribeConfig.ModifyEvent(&curEvent)
 
-	// 通知规则处理
-	notifyRules := make([]*models.NotifyRule, 0)
-
-	if len(notifyRules) == 0 && len(curEvent.NotifyChannelsJSON) == 0 {
-		ginx.NewRender(c).Message("No notification rules selected")
+	// 检查是否有通知规则(新)或者通知渠道(旧)
+	if len(f.SubscribeConfig.NotifyRuleIds) == 0 && len(curEvent.NotifyChannelsJSON) == 0 {
+		ginx.NewRender(c).Data("No notification rules selected", nil)
 		return
 	}
 	// 旧配置的处理
@@ -237,9 +208,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 		}
 	}
 
-	// notify_rules := make([]*models.NotifyRule, 0)
 	for _, id := range f.SubscribeConfig.NotifyRuleIds {
-		// notify_rules = append(notify_rules, notifyRule)
 		notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
 		if err != nil {
 			ginx.Dangerous(err)
@@ -248,8 +217,8 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
 			ginx.Dangerous(err)
 		}
-		ginx.NewRender(c).Data("Notification sent successfully", nil)
 	}
+	ginx.NewRender(c).Data("Notification sent successfully", nil)
 
 }
 
