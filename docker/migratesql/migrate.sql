@@ -250,3 +250,4 @@ CREATE TABLE `event_pipeline` (
 /* v8.0.0-beta.12 2025-05-16 */
 ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric';
 ALTER TABLE `builtin_metrics` ADD COLUMN `enable` BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'enable or disable metric';
+ALTER TABLE `builtin_metrics` DROP INDEX `idx_collector_typ_name`;

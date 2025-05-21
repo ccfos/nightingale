@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,27 +14,41 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID          int64         `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	UUID        int64         `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
-	Collector   string        `json:"collector" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
-	Typ         string        `json:"typ" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
-	Name        string        `json:"name" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
-	Unit        string        `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Note        string        `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
-	Lang        string        `json:"lang" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
-	Translation []Translation `json:"translation" gorm:"ttype:text;serializer:json;comment:'translation of metric'"`
-	Enable      bool          `json:"enable" gorm:"not null;default:false;comment:'enable or disable metric'"`
-	Expression  string        `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
-	CreatedAt   int64         `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy   string        `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt   int64         `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy   string        `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID          int64        `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID        int64        `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
+	Collector   string       `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
+	Typ         string       `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
+	Name        string       `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
+	Unit        string       `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
+	Note        string       `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Lang        string       `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
+	Translation Translations `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
+	Enable      bool         `json:"enable" gorm:"not null;default:false;comment:'enable or disable metric'"`
+	Expression  string       `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
+	CreatedAt   int64        `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy   string       `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt   int64        `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy   string       `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
 type Translation struct {
 	Lang string `json:"lang" gorm:"type:varchar(191);not null;default:'';comment:'language'"`
 	Name string `json:"name" gorm:"type:varchar(191);not null;default:'';comment:'name of metric'"`
 	Note string `json:"note" gorm:"type:varchar(4096);not null;default:'';comment:'description of metric'"`
+}
+
+type Translations []Translation
+
+func (t Translations) Value() (driver.Value, error) {
+	return json.Marshal(t)
+}
+
+func (t *Translations) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, t)
 }
 
 func (bm *BuiltinMetric) TableName() string {
@@ -135,6 +151,7 @@ func MigrateBuiltinTranslation(ctx *ctx.Context) error {
 			}
 		} else {
 			// Multiple enabled metrics, we need to disable the old ones and create a new one
+			fmt.Println("Disabling old metrics and creating a new one for expression:", expr, "name")
 			if err := DB(ctx).Model(&BuiltinMetric{}).
 				Where("expression = ?", expr).
 				Update("enable", false).Error; err != nil {
@@ -143,6 +160,10 @@ func MigrateBuiltinTranslation(ctx *ctx.Context) error {
 
 			// Create a new metric
 			newMetric := metrics[0]
+			newMetric.ID = 0
+			// Current metric has unique index on collector, typ, name, so we need to
+			// set them to empty string to avoid conflict
+			newMetric.Name = fmt.Sprintf("omit_%s", newMetric.Name)
 			newMetric.Enable = true
 			newMetric.Translation = ensureHasEnglish(mergeTranslations(nil, metrics))
 			newMetric.CreatedAt = time.Now().Unix()
