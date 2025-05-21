@@ -397,6 +397,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/add"), rt.bgrw(), rt.alertSubscribeAdd)
 		pages.PUT("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/put"), rt.bgrw(), rt.alertSubscribePut)
 		pages.DELETE("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/del"), rt.bgrw(), rt.alertSubscribeDel)
+		pages.POST("/alert-subscribe/alert-subscribes-tryrun", rt.auth(), rt.user(), rt.perm("/alert-subscribes/add"), rt.alertSubscribeTryRun)
 
 		if rt.Center.AnonymousAccess.AlertDetail {
 			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)

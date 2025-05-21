@@ -2,8 +2,11 @@ package router
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
@@ -102,6 +105,236 @@ func (rt *Router) alertSubscribeAdd(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+}
+
+type SubscribeTryRunForm struct {
+	EventId         int64                 `json:"event_id" binding:"required"`
+	SubscribeConfig models.AlertSubscribe `json:"subscribe_config" binding:"required"`
+}
+
+func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
+	var f SubscribeTryRunForm
+	ginx.BindJSON(c, &f)
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	ginx.Dangerous(err)
+
+	if hisEvent == nil {
+		ginx.Bomb(http.StatusNotFound, "event not found")
+	}
+
+	curEvent := *hisEvent.ToCur()
+	curEvent.SetTagsMap()
+
+	// 先判断匹配条件
+	//ginx.NewRender(c).Message(f.Add(rt.Ctx))
+	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
+		ginx.NewRender(c).Message("Data source mismatch")
+		return
+	}
+	// 匹配tag
+	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
+		ginx.NewRender(c).Message("Tags mismatch")
+		return
+	}
+	// 匹配group name
+	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
+		ginx.NewRender(c).Message("Group name mismatch")
+		return
+	}
+	// 4. 检查严重级别（Severity）匹配
+	if len(f.SubscribeConfig.SeveritiesJson) != 0 {
+		match := false
+		for _, s := range f.SubscribeConfig.SeveritiesJson {
+			if s == curEvent.Severity || s == 0 {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return
+		}
+	}
+	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
+		ginx.NewRender(c).Message("Data source mismatch")
+		return
+	}
+	// 匹配tag
+	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
+		ginx.NewRender(c).Message("Tags mismatch")
+		return
+	}
+	// 匹配group name
+	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
+		ginx.NewRender(c).Message("Group name mismatch")
+		return
+	}
+
+	// 4. 检查严重级别（Severity）匹配
+	if len(f.SubscribeConfig.SeveritiesJson) != 0 {
+		match := false
+		for _, s := range f.SubscribeConfig.SeveritiesJson {
+			if s == curEvent.Severity || s == 0 {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return
+		}
+	}
+
+	f.SubscribeConfig.ModifyEvent(&curEvent)
+
+	// 通知规则处理
+	notifyRules := make([]*models.NotifyRule, 0)
+
+	if len(notifyRules) == 0 && len(curEvent.NotifyChannelsJSON) == 0 {
+		ginx.NewRender(c).Message("No notification rules selected")
+		return
+	}
+	// 旧配置的处理
+	if len(curEvent.NotifyChannelsJSON) > 0 && len(curEvent.NotifyGroupsJSON) > 0 {
+
+		ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
+		ugids := strings.Fields(f.SubscribeConfig.UserGroupIds)
+		ngids := make([]int64, 0)
+		for i := 0; i < len(ugids); i++ {
+			if gid, err := strconv.ParseInt(ugids[i], 10, 64); err == nil {
+				ngids = append(ngids, gid)
+			}
+		}
+		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
+		uids := make([]int64, 0)
+		for i := range userGroups {
+			uids = append(uids, userGroups[i].UserIds...)
+		}
+		users := rt.UserCache.GetByUserIds(uids)
+		for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
+			flag := true
+			// ignore non-default channels
+			switch NotifyChannels {
+			case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
+				models.Telegram, models.Email, models.FeishuCard:
+				// do nothing
+			default:
+				continue
+			}
+			// default channels
+			for ui := range users {
+				if _, b := users[ui].ExtractToken(NotifyChannels); b {
+					flag = false
+					break
+				}
+			}
+			if flag {
+				ancs = append(ancs, NotifyChannels)
+			}
+		}
+		if len(ancs) > 0 {
+			ginx.NewRender(c).Message("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)
+			return
+		}
+	}
+
+	// notify_rules := make([]*models.NotifyRule, 0)
+	for _, id := range f.SubscribeConfig.NotifyRuleIds {
+		// notify_rules = append(notify_rules, notifyRule)
+		notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
+		if err != nil {
+			ginx.Dangerous(err)
+		}
+		for _, notifyConfig := range notifyRule.NotifyConfigs {
+			_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
+			ginx.Dangerous(err)
+			/*			notifyChannels, err := models.NotifyChannelGets(rt.Ctx, notifyConfig.ChannelID, "", "", -1)
+						ginx.Dangerous(err)
+						if len(notifyChannels) == 0 {
+							ginx.Bomb(http.StatusBadRequest, "notify channel not found")
+						}
+
+						notifyChannel := notifyChannels[0]
+						if !notifyChannel.Enable {
+							ginx.Bomb(http.StatusBadRequest, "notify channel not enabled, please enable it first")
+						}
+						tplContent := make(map[string]interface{})
+						events := []*models.AlertCurEvent{&curEvent}
+						if notifyChannel.RequestType != "flashtudy" {
+							messageTemplates, err := models.MessageTemplateGets(rt.Ctx, notifyConfig.TemplateID, "", "")
+							ginx.Dangerous(err)
+							if len(messageTemplates) == 0 {
+								ginx.Bomb(http.StatusBadRequest, "message template not found")
+							}
+							tplContent = messageTemplates[0].RenderEvent(events)
+						}
+						var contactKey string
+						if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
+							contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+						}
+
+						sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, rt.UserCache, rt.UserGroupCache)
+
+						var resp string
+						switch notifyChannel.RequestType {
+						case "flashduty":
+							client, err := models.GetHTTPClient(notifyChannel)
+							ginx.Dangerous(err)
+
+							for i := range flashDutyChannelIDs {
+								resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
+								if err != nil {
+									break
+								}
+							}
+							logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+							ginx.NewRender(c).Data(resp, err)
+						case "http":
+							client, err := models.GetHTTPClient(notifyChannel)
+							ginx.Dangerous(err)
+
+							if notifyChannel.RequestConfig == nil {
+								ginx.Bomb(http.StatusBadRequest, "request config not found")
+							}
+
+							if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
+								ginx.Bomb(http.StatusBadRequest, "http request config not found")
+							}
+
+							if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
+								resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
+								logger.Infof("channel_name: %v, event:%+v, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], sendtos, tplContent, customParams, resp, err)
+								if err != nil {
+									logger.Errorf("failed to send http notify: %v", err)
+								}
+								ginx.NewRender(c).Data(resp, err)
+							} else {
+								for i := range sendtos {
+									resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
+									logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
+									if err != nil {
+										logger.Errorf("failed to send http notify: %v", err)
+										ginx.NewRender(c).Message(err)
+										return
+									}
+								}
+								ginx.NewRender(c).Message(err)
+							}
+
+						case "smtp":
+							err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
+							ginx.NewRender(c).Message(err)
+						case "script":
+							resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
+							logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+							ginx.NewRender(c).Data(resp, err)
+						default:
+							logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
+							ginx.NewRender(c).Message(errors.New("unsupported request type"))
+						}*/
+		}
+		ginx.NewRender(c).Data("Notification sent successfully", nil)
+	}
+
 }
 
 func (rt *Router) alertSubscribePut(c *gin.Context) {
