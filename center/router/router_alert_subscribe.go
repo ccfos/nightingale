@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -203,9 +204,11 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if len(ancs) > 0 {
-			ginx.NewRender(c).Message("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)
+			ginx.NewRender(c).Data(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs), nil)
 			return
 		}
+		ginx.NewRender(c).Data("Notification match", nil)
+		return
 	}
 
 	for _, id := range f.SubscribeConfig.NotifyRuleIds {
