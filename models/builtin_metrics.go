@@ -140,7 +140,7 @@ func MigrateBuiltinTranslation(ctx *ctx.Context) error {
 		if len(enabled) == 1 {
 			// Only one enabled metric, update its translation with disabled ones
 			main := enabled[0]
-			combined := mergeTranslations(main.Translation, disabled)
+			combined := mergeTranslations(main.GetTranslations(), disabled)
 			main.Translation = ensureHasEnglish(combined)
 			if err := DB(ctx).Model(&BuiltinMetric{}).Where("id = ?", main.ID).
 				Updates(map[string]interface{}{
@@ -178,13 +178,28 @@ func MigrateBuiltinTranslation(ctx *ctx.Context) error {
 	return nil
 }
 
+func (bm *BuiltinMetric) GetTranslations() []Translation {
+	// Get the translations from Lang or Translation field to adapt to the old version
+	if len(bm.Translation) == 0 {
+		return []Translation{
+			{
+				Lang: bm.Lang,
+				Name: bm.Name,
+				Note: bm.Note,
+			},
+		}
+	}
+
+	return bm.Translation
+}
+
 func mergeTranslations(base []Translation, others []BuiltinMetric) []Translation {
 	langMap := map[string]Translation{}
 	for _, t := range base {
 		langMap[t.Lang] = t
 	}
 	for _, m := range others {
-		for _, t := range m.Translation {
+		for _, t := range m.GetTranslations() {
 			if _, exists := langMap[t.Lang]; !exists {
 				langMap[t.Lang] = t
 			}
