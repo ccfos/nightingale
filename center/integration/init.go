@@ -341,6 +341,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						old.Note = metric.Note
 						old.Lang = metric.Lang
 						old.Expression = metric.Expression
+						old.Translation = metric.Translation
+						old.Enable = metric.Enable
 
 						err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
 						if err != nil {

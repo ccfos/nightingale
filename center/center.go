@@ -96,6 +96,11 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		models.MigrateEP(ctx)
 	}
 
+	// This operation depends on the table is in latest version and the builtin metrics are imported.
+	if config.Center.MigrateBuiltinTranslation && models.CanMigrateBuiltinTranslation(ctx) {
+		models.MigrateBuiltinTranslation(ctx)
+	}
+
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)

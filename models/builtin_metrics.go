@@ -1,6 +1,8 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,19 +14,41 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID         int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	UUID       int64  `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
-	Collector  string `json:"collector" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
-	Typ        string `json:"typ" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
-	Name       string `json:"name" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
-	Unit       string `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Note       string `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
-	Lang       string `json:"lang" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
-	Expression string `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
-	CreatedAt  int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy  string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt  int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy  string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID          int64        `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID        int64        `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
+	Collector   string       `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
+	Typ         string       `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
+	Name        string       `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
+	Unit        string       `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
+	Note        string       `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Lang        string       `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
+	Translation Translations `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
+	Enable      bool         `json:"enable" gorm:"not null;default:false;comment:'enable or disable metric'"`
+	Expression  string       `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
+	CreatedAt   int64        `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy   string       `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt   int64        `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy   string       `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+}
+
+type Translation struct {
+	Lang string `json:"lang" gorm:"type:varchar(191);not null;default:'';comment:'language'"`
+	Name string `json:"name" gorm:"type:varchar(191);not null;default:'';comment:'name of metric'"`
+	Note string `json:"note" gorm:"type:varchar(4096);not null;default:'';comment:'description of metric'"`
+}
+
+type Translations []Translation
+
+func (t Translations) Value() (driver.Value, error) {
+	return json.Marshal(t)
+}
+
+func (t *Translations) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(bytes, t)
 }
 
 func (bm *BuiltinMetric) TableName() string {
@@ -36,6 +60,17 @@ func (bm *BuiltinMetric) TableOptions() string {
 }
 
 func (bm *BuiltinMetric) Verify() error {
+	// Check english language is existed.
+	hasEnglish := false
+	for _, bml := range bm.Translation {
+		if bml.Lang == "en_US" {
+			hasEnglish = true
+		}
+	}
+	if !hasEnglish {
+		return errors.New("english language is required")
+	}
+
 	bm.Collector = strings.TrimSpace(bm.Collector)
 	if bm.Collector == "" {
 		return errors.New("collector is blank")
@@ -61,6 +96,137 @@ func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// CanMigrateBuiltinTranslation checks if the builtin translation can be migrated.
+func CanMigrateBuiltinTranslation(ctx *ctx.Context) bool {
+	// Check if the builtin metrics is empty
+	var count int64
+	if err := DB(ctx).Model(&BuiltinMetric{}).Count(&count).Error; err != nil {
+		return false
+	}
+	if count == 0 {
+		return false
+	}
+
+	return true
+}
+
+// MigrateBuiltinTranslation migrates the builtin translation.
+func MigrateBuiltinTranslation(ctx *ctx.Context) error {
+	var allMetrics []BuiltinMetric
+	if err := DB(ctx).Find(&allMetrics).Error; err != nil {
+		return err
+	}
+
+	// Aggregate expression to []BuiltinMetric
+	grouped := map[string][]BuiltinMetric{}
+	for _, m := range allMetrics {
+		grouped[m.Expression] = append(grouped[m.Expression], m)
+	}
+
+	for expr, metrics := range grouped {
+		var enabled []BuiltinMetric
+		var disabled []BuiltinMetric
+
+		for _, m := range metrics {
+			if m.Enable {
+				enabled = append(enabled, m)
+			} else {
+				disabled = append(disabled, m)
+			}
+		}
+
+		if len(enabled) == 1 {
+			// Only one enabled metric, update its translation with disabled ones
+			main := enabled[0]
+			combined := mergeTranslations(main.GetTranslations(), disabled)
+			main.Translation = ensureHasEnglish(combined)
+			if err := DB(ctx).Model(&BuiltinMetric{}).Where("id = ?", main.ID).
+				Updates(map[string]interface{}{
+					"translation": main.Translation,
+					"updated_at":  time.Now().Unix(),
+				}).Error; err != nil {
+				return err
+			}
+		} else {
+			// Multiple enabled metrics, we need to disable the old ones and create a new one
+			fmt.Println("Disabling old metrics and creating a new one for expression:", expr, "name")
+			if err := DB(ctx).Model(&BuiltinMetric{}).
+				Where("expression = ?", expr).
+				Update("enable", false).Error; err != nil {
+				return err
+			}
+
+			// Create a new metric
+			newMetric := metrics[0]
+			newMetric.ID = 0
+			// Current metric has unique index on collector, typ, name, so we need to
+			// set them to empty string to avoid conflict
+			newMetric.Name = fmt.Sprintf("omit_%s", newMetric.Name)
+			newMetric.Enable = true
+			newMetric.Translation = ensureHasEnglish(mergeTranslations(nil, metrics))
+			newMetric.CreatedAt = time.Now().Unix()
+			newMetric.UpdatedAt = newMetric.CreatedAt
+
+			if err := DB(ctx).Create(&newMetric).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (bm *BuiltinMetric) GetTranslations() []Translation {
+	// Get the translations from Lang or Translation field to adapt to the old version
+	if len(bm.Translation) == 0 {
+		return []Translation{
+			{
+				Lang: bm.Lang,
+				Name: bm.Name,
+				Note: bm.Note,
+			},
+		}
+	}
+
+	return bm.Translation
+}
+
+func mergeTranslations(base []Translation, others []BuiltinMetric) []Translation {
+	langMap := map[string]Translation{}
+	for _, t := range base {
+		langMap[t.Lang] = t
+	}
+	for _, m := range others {
+		for _, t := range m.GetTranslations() {
+			if _, exists := langMap[t.Lang]; !exists {
+				langMap[t.Lang] = t
+			}
+		}
+	}
+	var merged []Translation
+	for _, t := range langMap {
+		merged = append(merged, t)
+	}
+	return merged
+}
+
+func ensureHasEnglish(translations []Translation) []Translation {
+	for _, t := range translations {
+		if t.Lang == "en_US" {
+			return translations
+		}
+	}
+	if len(translations) > 0 {
+		t := translations[0]
+		translations = append(translations, Translation{
+			Lang: "en_US",
+			Name: t.Name,
+			Note: t.Note,
+		})
+	}
+	return translations
 }
 
 func (bm *BuiltinMetric) Add(ctx *ctx.Context, username string) error {
@@ -116,15 +282,46 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 
 func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string, limit, offset int) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
-	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
+	session = builtinMetricQueryBuild(collector, session, typ, query, unit)
 	var lst []*BuiltinMetric
 	err := session.Limit(limit).Offset(offset).Order("collector asc, typ asc, name asc").Find(&lst).Error
+
+	// Update current lst with current language, default is en_US
+	for i := range lst {
+		trans, err := getTranslationWithLanguage(lst[i], lang)
+		if err != nil {
+			return nil, err
+		}
+
+		lst[i].Name = trans.Name
+		lst[i].Note = trans.Note
+	}
+
 	return lst, err
 }
 
-func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query, unit string) (int64, error) {
+func getTranslationWithLanguage(bm *BuiltinMetric, lang string) (*Translation, error) {
+	var defaultTranslation *Translation
+	for _, t := range bm.Translation {
+		if t.Lang == lang {
+			return &t, nil
+		}
+
+		if t.Lang == "en_US" {
+			defaultTranslation = &t
+		}
+	}
+
+	if defaultTranslation != nil {
+		return defaultTranslation, nil
+	}
+
+	return nil, errors.New("translation not found")
+}
+
+func BuiltinMetricCount(ctx *ctx.Context, collector, typ, query, unit string) (int64, error) {
 	session := DB(ctx).Model(&BuiltinMetric{})
-	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
+	session = builtinMetricQueryBuild(collector, session, typ, query, unit)
 
 	var cnt int64
 	err := session.Count(&cnt).Error
@@ -132,10 +329,9 @@ func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query, unit stri
 	return cnt, err
 }
 
-func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
-	if lang != "" {
-		session = session.Where("lang = ?", lang)
-	}
+func builtinMetricQueryBuild(collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
+	// We need to filter out the enabled metrics
+	session = session.Where("enable = ?", true)
 
 	if collector != "" {
 		session = session.Where("collector = ?", collector)

@@ -650,6 +650,8 @@ CREATE TABLE `builtin_metrics` (
     `lang` varchar(191) NOT NULL DEFAULT '',
     `note` varchar(4096) NOT NULL,
     `expression` varchar(4096) NOT NULL,
+    `translation` text,
+    `enable` tinyint(1) NOT NULL DEFAULT 0,
     `created_at` bigint NOT NULL DEFAULT 0,
     `created_by` varchar(191) NOT NULL DEFAULT '',
     `updated_at` bigint NOT NULL DEFAULT 0,

@@ -12,7 +12,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 CPU 利用率（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process CPU utilization (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md) \n \nThere are two modes of CPU utilization, one is solaris and the other is irix. The default is irix. In irix mode, the CPU utilization may exceed 100%. solaris will consider the number of CPU cores, and the CPU utilization in solaris mode will not exceed 100%."
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -27,7 +40,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 CPU 总利用率（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)\n\nCPU 利用率有两个模式，一个是 solaris，一个是 irix，默认是 irix，irix 模式下，CPU 利用率可能会超过 100%，solaris 会考虑 CPU 核数，solaris 模式的 CPU 利用率不会超过 100%。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total process CPU utilization (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md) \n \nThere are two modes of CPU utilization, one is solaris and the other is irix. The default is irix. In irix mode, the CPU utilization may exceed 100%. solaris will consider the number of CPU cores, and the CPU utilization in solaris mode will not exceed 100%."
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -42,7 +68,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒写入字节总数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of bytes written per second by process IO (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -57,7 +96,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒写入字节数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of bytes written per second by process IO (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -72,7 +124,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒写入次数总数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of process IO writes per second (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -87,7 +152,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒写入次数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process IO writes per second (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -102,7 +180,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒读取字节总数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of bytes read per second by process IO (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -117,7 +208,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒读取字节数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process IO reads bytes per second (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -132,7 +236,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒读取次数总数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of process IO reads per second (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -147,7 +264,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 IO 每秒读取次数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process IO reads per second (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -162,7 +292,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 Memory 利用率（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process Memory utilization (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -177,7 +320,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 Memory 总利用率（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process Memory Total utilization (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -192,7 +348,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 rlimit fd 软限制数量（匹配到的所有进程中的最小值）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process rlimit fd Number of soft limits (minimum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -207,7 +376,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程 rlimit fd 软限制数量（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process rlimit fd Number of soft limits (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -222,7 +404,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程启动时长（匹配到的所有进程的最小值）",
+                "note": "启动了多久"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process start time (minimum of all processes matched to)",
+                "note": "How long has it started"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -237,7 +432,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程启动时长（单进程）",
+                "note": "启动了多久"
+            },
+            {
+                "lang": "en_US",
+                "name": "Process startup time (single process)",
+                "note": "How long has it started"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -252,7 +460,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程数量（根据匹配条件查到的进程数量）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of processes (the number of processes found according to matching conditions)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -267,7 +488,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程文件句柄总打开数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of process file handles open (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -282,7 +516,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程文件句柄打开数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of process file handle openings (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -297,7 +544,20 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程线程总数（匹配到的所有进程加和）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Total number of process threads (sum of all processes matched to)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     },
     {
         "id": 0,
@@ -312,6 +572,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "进程线程数（单进程）",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of process threads (single process)",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/procstat/README.md)"
+            }
+        ],
+        "enable": true
     }
 ]

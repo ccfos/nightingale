@@ -3,18 +3,19 @@ package cconf
 import "time"
 
 type Center struct {
-	Plugins                []Plugin
-	MetricsYamlFile        string
-	OpsYamlFile            string
-	BuiltinIntegrationsDir string
-	I18NHeaderKey          string
-	MetricDesc             MetricDescType
-	AnonymousAccess        AnonymousAccess
-	UseFileAssets          bool
-	FlashDuty              FlashDuty
-	EventHistoryGroupView  bool
-	CleanNotifyRecordDay   int
-	MigrateBusiGroupLabel  bool
+	Plugins                   []Plugin
+	MetricsYamlFile           string
+	OpsYamlFile               string
+	BuiltinIntegrationsDir    string
+	I18NHeaderKey             string
+	MetricDesc                MetricDescType
+	AnonymousAccess           AnonymousAccess
+	UseFileAssets             bool
+	FlashDuty                 FlashDuty
+	EventHistoryGroupView     bool
+	CleanNotifyRecordDay      int
+	MigrateBusiGroupLabel     bool
+	MigrateBuiltinTranslation bool
 }
 
 type Plugin struct {
