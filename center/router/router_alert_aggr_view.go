@@ -72,6 +72,7 @@ func (rt *Router) alertAggrViewPut(c *gin.Context) {
 	view.Name = f.Name
 	view.Rule = f.Rule
 	view.Cate = f.Cate
+	view.Format = f.Format
 	if view.CreateBy == 0 {
 		view.CreateBy = me.Id
 	}
