@@ -50,7 +50,7 @@ func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, erro
 
 func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
-	severity := ginx.QueryInt(c, "severity", -1)
+	severity := strx.IdsInt64ForAPI(ginx.QueryStr(c, "severity", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
 
@@ -174,7 +174,7 @@ func (rt *Router) alertCurEventsGetByRid(c *gin.Context) {
 // 列表方式，拉取活跃告警
 func (rt *Router) alertCurEventsList(c *gin.Context) {
 	stime, etime := getTimeRange(c)
-	severity := ginx.QueryInt(c, "severity", -1)
+	severity := strx.IdsInt64ForAPI(ginx.QueryStr(c, "severity", ""), ",")
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
@@ -261,63 +261,6 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 			set[event.GroupId] = struct{}{}
 		}
 	}
-}
-
-// 列表方式，拉取活跃告警
-func (rt *Router) alertDataSourcesList(c *gin.Context) {
-	stime, etime := getTimeRange(c)
-	severity := ginx.QueryInt(c, "severity", -1)
-	query := ginx.QueryStr(c, "query", "")
-	myGroups := ginx.QueryBool(c, "my_groups", false) // 是否只看自己组，默认false
-
-	prod := ginx.QueryStr(c, "prods", "")
-	if prod == "" {
-		prod = ginx.QueryStr(c, "rule_prods", "")
-	}
-
-	prods := []string{}
-	if prod != "" {
-		prods = strings.Split(prod, ",")
-	}
-
-	cate := ginx.QueryStr(c, "cate", "$all")
-	cates := []string{}
-	if cate != "$all" {
-		cates = strings.Split(cate, ",")
-	}
-
-	ruleId := ginx.QueryInt64(c, "rid", 0)
-	var gids []int64
-	var err error
-	if myGroups {
-		gids, err = getUserGroupIds(c, rt, myGroups)
-		ginx.Dangerous(err)
-		if len(gids) == 0 {
-			gids = append(gids, -1)
-		}
-	}
-
-	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
-	ginx.Dangerous(err)
-
-	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, []int64{},
-		cates, ruleId, query, 50000, 0, gids, []int64{})
-	ginx.Dangerous(err)
-
-	uniqueDsIds := make(map[int64]struct{})
-
-	for i := 0; i < len(list); i++ {
-		uniqueDsIds[list[i].DatasourceId] = struct{}{}
-	}
-
-	dsIds := make([]int64, 0, len(uniqueDsIds))
-	for id := range uniqueDsIds {
-		dsIds = append(dsIds, id)
-	}
-	dsList, err := models.GetDatasourceInfosByIds(rt.Ctx, dsIds)
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(dsList, nil)
 }
 
 func (rt *Router) alertCurEventGet(c *gin.Context) {
