@@ -90,7 +90,7 @@ func (v *AlertAggrView) Update(ctx *ctx.Context) error {
 	}
 	v.UpdateAt = time.Now().Unix()
 
-	return DB(ctx).Model(v).Select("name", "rule", "cate", "update_at", "create_by").Updates(v).Error
+	return DB(ctx).Model(v).Select("name", "rule", "cate", "format", "update_at", "create_by").Updates(v).Error
 }
 
 // AlertAggrViewDel: userid for safe delete
