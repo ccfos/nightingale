@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -130,19 +131,16 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	// 先判断匹配条件
 	//ginx.NewRender(c).Message(f.Add(rt.Ctx))
 	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
-		ginx.NewRender(c).Data("Data source mismatch", nil)
-		return
+		ginx.Dangerous(errors.New("Data source mismatch"))
 	}
 	f.SubscribeConfig.Parse()
 	// 匹配tag
 	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
-		ginx.NewRender(c).Data("Tags mismatch", nil)
-		return
+		ginx.Dangerous(errors.New("Tags mismatch"))
 	}
 	// 匹配group name
 	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
-		ginx.NewRender(c).Data("Group name mismatch", nil)
-		return
+		ginx.Dangerous(errors.New("Group name mismatch"))
 	}
 	// 4. 检查严重级别（Severity）匹配
 	if len(f.SubscribeConfig.SeveritiesJson) != 0 {
@@ -154,8 +152,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if !match {
-			ginx.NewRender(c).Data("Severity mismatch", nil)
-			return
+			ginx.Dangerous(errors.New("Severity mismatch"))
 		}
 	}
 
@@ -163,8 +160,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 
 	// 检查是否有通知规则(新)或者通知渠道(旧)
 	if len(f.SubscribeConfig.NotifyRuleIds) == 0 && len(curEvent.NotifyChannelsJSON) == 0 {
-		ginx.NewRender(c).Data("No notification rules selected", nil)
-		return
+		ginx.Dangerous(errors.New("No notification rules selected"))
 	}
 	// 旧配置的处理
 	if len(curEvent.NotifyChannelsJSON) > 0 && len(curEvent.NotifyGroupsJSON) > 0 {
@@ -205,8 +201,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if len(ancs) > 0 {
-			ginx.NewRender(c).Data(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs), nil)
-			return
+			ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)))
 		}
 	}
 
