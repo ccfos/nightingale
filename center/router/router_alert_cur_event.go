@@ -253,6 +253,14 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 	}
 
 	event.LastEvalTime = event.TriggerTime
+
+	rule, err := models.AlertRuleGetById(rt.Ctx, event.RuleId)
+	ginx.Dangerous(err)
+
+	if rule != nil {
+		event.NotifyVersion = rule.NotifyVersion
+	}
+
 	ginx.NewRender(c).Data(event, nil)
 }
 
