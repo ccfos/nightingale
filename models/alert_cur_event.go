@@ -452,6 +452,21 @@ func (e *AlertCurEvent) DB2FE() error {
 	if err := json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson); err != nil {
 		return err
 	}
+
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+
 	return nil
 }
 
