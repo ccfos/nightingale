@@ -76,7 +76,9 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
-	NotifyRuleIDs      []int64             `json:"notify_rule_ids" gorm:"-"`
+
+	NotifyRuleIDs []int64 `json:"notify_rule_ids" gorm:"-"`
+	NotifyVersion int     `json:"notify_version"` // 0: old, 1: new
 }
 
 func (e *AlertCurEvent) SetTagsMap() {
@@ -453,6 +455,7 @@ func (e *AlertCurEvent) DB2FE() error {
 		return err
 	}
 
+	e.TagsMap = make(map[string]string)
 	for i := 0; i < len(e.TagsJSON); i++ {
 		pair := strings.TrimSpace(e.TagsJSON[i])
 		if pair == "" {
