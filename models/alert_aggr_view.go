@@ -16,7 +16,6 @@ type AlertAggrView struct {
 	Id       int64  `json:"id" gorm:"primaryKey"`
 	Name     string `json:"name"`
 	Rule     string `json:"rule"`
-	Format   string `json:"format"`
 	Cate     int    `json:"cate"`
 	CreateAt int64  `json:"create_at"`
 	CreateBy int64  `json:"create_by"`
@@ -92,7 +91,7 @@ func (v *AlertAggrView) Update(ctx *ctx.Context) error {
 	}
 	v.UpdateAt = time.Now().Unix()
 
-	return DB(ctx).Model(v).Select("name", "rule", "cate", "format", "update_at", "create_by").Updates(v).Error
+	return DB(ctx).Model(v).Select("name", "rule", "cate", "update_at", "create_by").Updates(v).Error
 }
 
 // AlertAggrViewDel: userid for safe delete

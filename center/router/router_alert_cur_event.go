@@ -13,33 +13,6 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-func parseAggrRules(rule string) []*models.AggrRule {
-	aggrRules := strings.Split(rule, "::") // e.g. field:group_name::field:severity::tagkey:ident
-
-	if len(aggrRules) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "rule empty")
-	}
-
-	rules := make([]*models.AggrRule, len(aggrRules))
-	for i := 0; i < len(aggrRules); i++ {
-		pair := strings.Split(aggrRules[i], ":")
-		if len(pair) != 2 {
-			ginx.Bomb(http.StatusBadRequest, "rule invalid")
-		}
-
-		if !(pair[0] == "field" || pair[0] == "tagkey") {
-			ginx.Bomb(http.StatusBadRequest, "rule invalid")
-		}
-
-		rules[i] = &models.AggrRule{
-			Type:  pair[0],
-			Value: pair[1],
-		}
-	}
-
-	return rules
-}
-
 func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, error) {
 	if !myGroups {
 		return nil, nil
@@ -75,8 +48,6 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
-	rules := parseAggrRules(alertView.Rule)
-
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
 		prod = ginx.QueryStr(c, "rule_prods", "")
@@ -102,7 +73,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	cardmap := make(map[string]*AlertCard)
 	for _, event := range list {
-		title, err := event.GenCardTitle(rules, alertView.Format)
+		title, err := event.GenCardTitle(alertView.Rule)
 		ginx.Dangerous(err)
 		if _, has := cardmap[title]; has {
 			cardmap[title].Total++

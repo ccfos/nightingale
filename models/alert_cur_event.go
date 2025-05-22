@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -288,19 +290,49 @@ func (e *AlertCurEvent) ParseURL(url string) (string, error) {
 	return body.String(), nil
 }
 
-func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule, format string) (string, error) {
-	if format != "" {
-		tmpl, err := template.New("card_title").Parse(format)
-		if err != nil {
-			return "", err
+func parseAggrRules(rule string) []*AggrRule {
+	aggrRules := strings.Split(rule, "::") // e.g. field:group_name::field:severity::tagkey:ident
+
+	if len(aggrRules) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "rule empty")
+	}
+
+	rules := make([]*AggrRule, len(aggrRules))
+	for i := 0; i < len(aggrRules); i++ {
+		pair := strings.Split(aggrRules[i], ":")
+		if len(pair) != 2 {
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
 		}
+
+		if !(pair[0] == "field" || pair[0] == "tagkey") {
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
+		}
+
+		rules[i] = &AggrRule{
+			Type:  pair[0],
+			Value: pair[1],
+		}
+	}
+	return rules
+}
+
+func (e *AlertCurEvent) GenCardTitle(rule string) (string, error) {
+	if strings.Contains(rule, "{{") {
+		// 有 {{ 表示使用的是新的配置方式，使用 go template 进行格式化
+
+		tmpl, err := template.New("card_title").Parse(rule)
+		if err != nil {
+			return fmt.Sprintf("failed to parse card title: %v", err), nil
+		}
+
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, e); err != nil {
-			return "", err
+			return fmt.Sprintf("failed to execute card title: %v", err), nil
 		}
 		return buf.String(), nil
 	}
 
+	rules := parseAggrRules(rule)
 	arr := make([]string, len(rules))
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
