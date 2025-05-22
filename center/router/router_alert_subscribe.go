@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 )
 
