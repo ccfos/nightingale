@@ -133,6 +133,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 		ginx.NewRender(c).Data("Data source mismatch", nil)
 		return
 	}
+	f.SubscribeConfig.Parse()
 	// 匹配tag
 	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
 		ginx.NewRender(c).Data("Tags mismatch", nil)
@@ -207,8 +208,6 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			ginx.NewRender(c).Data(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs), nil)
 			return
 		}
-		ginx.NewRender(c).Data("Notification match", nil)
-		return
 	}
 
 	for _, id := range f.SubscribeConfig.NotifyRuleIds {
@@ -221,7 +220,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			ginx.Dangerous(err)
 		}
 	}
-	ginx.NewRender(c).Data("Notification sent successfully", nil)
+	ginx.NewRender(c).Data("Notification match", nil)
 
 }
 
