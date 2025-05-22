@@ -78,7 +78,7 @@ type AlertCurEvent struct {
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 
 	NotifyRuleIDs []int64 `json:"notify_rule_ids" gorm:"-"`
-	NotifyVersion int     `json:"notify_version"` // 0: old, 1: new
+	NotifyVersion int     `json:"notify_version"  gorm:"-"` // 0: old, 1: new
 }
 
 func (e *AlertCurEvent) SetTagsMap() {
