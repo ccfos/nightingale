@@ -24,7 +24,7 @@ func LogEvent(event *models.AlertCurEvent, location string, err ...error) {
 		location,
 		event.RuleId,
 		event.SubRuleId,
-		event.NotifyRuleIDs,
+		event.NotifyRuleIds,
 		event.Cluster,
 		event.TagsJSON,
 		event.TriggerValue,

@@ -96,6 +96,7 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 		event.RuleConfigJson = ruleConfig
 	}
 
+	event.NotifyVersion, err = GetEventNotifyVersion(rt.Ctx, event.RuleId, event.NotifyRuleIds)
 	ginx.NewRender(c).Data(event, err)
 }
 
