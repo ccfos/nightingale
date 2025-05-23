@@ -145,8 +145,8 @@ func (e *Dispatch) reloadTpls() error {
 
 func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) {
 
-	if len(eventOrigin.NotifyRuleIDs) > 0 {
-		for _, notifyRuleId := range eventOrigin.NotifyRuleIDs {
+	if len(eventOrigin.NotifyRuleIds) > 0 {
+		for _, notifyRuleId := range eventOrigin.NotifyRuleIds {
 			// 深拷贝新的 event，避免并发修改 event 冲突
 			eventCopy := eventOrigin.DeepCopy()
 

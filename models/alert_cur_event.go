@@ -76,9 +76,9 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
+	NotifyRuleIds      []int64             `json:"notify_rule_ids" gorm:"serializer:json"`
 
-	NotifyRuleIDs []int64 `json:"notify_rule_ids" gorm:"-"`
-	NotifyVersion int     `json:"notify_version"  gorm:"-"` // 0: old, 1: new
+	NotifyVersion int `json:"notify_version"  gorm:"-"` // 0: old, 1: new
 }
 
 func (e *AlertCurEvent) SetTagsMap() {
@@ -439,6 +439,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
 		FirstTriggerTime: e.FirstTriggerTime,
+		NotifyRuleIds:    e.NotifyRuleIds,
 	}
 }
 
@@ -1031,9 +1032,9 @@ func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
 		}
 	}
 
-	if e.NotifyRuleIDs != nil {
-		eventCopy.NotifyRuleIDs = make([]int64, len(e.NotifyRuleIDs))
-		copy(eventCopy.NotifyRuleIDs, e.NotifyRuleIDs)
+	if e.NotifyRuleIds != nil {
+		eventCopy.NotifyRuleIds = make([]int64, len(e.NotifyRuleIds))
+		copy(eventCopy.NotifyRuleIds, e.NotifyRuleIds)
 	}
 
 	eventCopy.RuleConfigJson = e.RuleConfigJson

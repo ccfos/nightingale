@@ -1,12 +1,14 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
@@ -236,32 +238,41 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 
 func (rt *Router) alertCurEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
-	event, err := models.AlertCurEventGetById(rt.Ctx, eid)
-	ginx.Dangerous(err)
+	event, err := GetCurEventDetail(rt.Ctx, eid)
+	ginx.NewRender(c).Data(event, err)
+}
+
+func GetCurEventDetail(ctx *ctx.Context, eid int64) (*models.AlertCurEvent, error) {
+	event, err := models.AlertCurEventGetById(ctx, eid)
+	if err != nil {
+		return nil, err
+	}
 
 	if event == nil {
-		ginx.Bomb(404, "No such active event")
+		return nil, fmt.Errorf("no such active event")
 	}
 
-	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
-		rt.bgroCheck(c, event.GroupId)
-	}
-
-	ruleConfig, needReset := models.FillRuleConfigTplName(rt.Ctx, event.RuleConfig)
+	ruleConfig, needReset := models.FillRuleConfigTplName(ctx, event.RuleConfig)
 	if needReset {
 		event.RuleConfigJson = ruleConfig
 	}
 
 	event.LastEvalTime = event.TriggerTime
+	event.NotifyVersion, err = GetEventNotifyVersion(ctx, event.RuleId, event.NotifyRuleIds)
+	return event, err
+}
 
-	rule, err := models.AlertRuleGetById(rt.Ctx, event.RuleId)
-	ginx.Dangerous(err)
-
-	if rule != nil {
-		event.NotifyVersion = rule.NotifyVersion
+func GetEventNotifyVersion(ctx *ctx.Context, ruleId int64, notifyRuleIds []int64) (int, error) {
+	if len(notifyRuleIds) != 0 {
+		// 如果存在 notify_rule_ids，则认为使用新的告警通知方式
+		return 1, nil
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	rule, err := models.AlertRuleGetById(ctx, ruleId)
+	if err != nil {
+		return 0, err
+	}
+	return rule.NotifyVersion, nil
 }
 
 func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
