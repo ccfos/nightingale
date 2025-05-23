@@ -62,12 +62,12 @@
 
 
 ## 相关资料 & 交流渠道
-- 📚 [夜莺介绍PPT](https://mp.weixin.qq.com/s/Mkwx_46xrltSq8NLqAIYow) 对您了解夜莺各项关键特性会有帮助
+- 📚 [夜莺介绍PPT](https://mp.weixin.qq.com/s/Mkwx_46xrltSq8NLqAIYow) 对您了解夜莺各项关键特性会有帮助（PPT链接在文末）
 - 👉 [文档中心](https://flashcat.cloud/docs/) 为了更快的访问速度，站点托管在 [FlashcatCloud](https://flashcat.cloud)
 - ❤️ [报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=&projects=&template=question.yml) 写清楚问题描述、复现步骤、截图等信息，更容易得到答案
 - 💡 前后端代码分离，前端代码仓库：[https://github.com/n9e/fe](https://github.com/n9e/fe)
-- 关注[这个公众号](https://gitlink.org.cn/UlricQin)了解更多夜莺动态和知识
-- 加我微信：`picobyte`（我已关闭好友验证）拉入微信群，备注：`夜莺互助群`
+- 🎯 关注[这个公众号](https://gitlink.org.cn/UlricQin)了解更多夜莺动态和知识
+- 🌟 加我微信：`picobyte`（我已关闭好友验证）拉入微信群，备注：`夜莺互助群`
 
 
 ## 关键特性简介
