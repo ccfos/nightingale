@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -74,7 +76,15 @@ type AlertCurEvent struct {
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
-	NotifyRuleIDs      []int64             `json:"notify_rule_ids" gorm:"-"`
+	NotifyRuleIds      []int64             `json:"notify_rule_ids" gorm:"serializer:json"`
+
+	NotifyVersion int                `json:"notify_version"  gorm:"-"` // 0: old, 1: new
+	NotifyRules   []*EventNotifyRule `json:"notify_rules" gorm:"-"`
+}
+
+type EventNotifyRule struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 func (e *AlertCurEvent) SetTagsMap() {
@@ -288,19 +298,49 @@ func (e *AlertCurEvent) ParseURL(url string) (string, error) {
 	return body.String(), nil
 }
 
-func (e *AlertCurEvent) GenCardTitle(rules []*AggrRule, format string) (string, error) {
-	if format != "" {
-		tmpl, err := template.New("card_title").Parse(format)
-		if err != nil {
-			return "", err
+func parseAggrRules(rule string) []*AggrRule {
+	aggrRules := strings.Split(rule, "::") // e.g. field:group_name::field:severity::tagkey:ident
+
+	if len(aggrRules) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "rule empty")
+	}
+
+	rules := make([]*AggrRule, len(aggrRules))
+	for i := 0; i < len(aggrRules); i++ {
+		pair := strings.Split(aggrRules[i], ":")
+		if len(pair) != 2 {
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
 		}
+
+		if !(pair[0] == "field" || pair[0] == "tagkey") {
+			ginx.Bomb(http.StatusBadRequest, "rule invalid")
+		}
+
+		rules[i] = &AggrRule{
+			Type:  pair[0],
+			Value: pair[1],
+		}
+	}
+	return rules
+}
+
+func (e *AlertCurEvent) GenCardTitle(rule string) (string, error) {
+	if strings.Contains(rule, "{{") {
+		// 有 {{ 表示使用的是新的配置方式，使用 go template 进行格式化
+
+		tmpl, err := template.New("card_title").Parse(rule)
+		if err != nil {
+			return fmt.Sprintf("failed to parse card title: %v", err), nil
+		}
+
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, e); err != nil {
-			return "", err
+			return fmt.Sprintf("failed to execute card title: %v", err), nil
 		}
 		return buf.String(), nil
 	}
 
+	rules := parseAggrRules(rule)
 	arr := make([]string, len(rules))
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
@@ -405,6 +445,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
 		FirstTriggerTime: e.FirstTriggerTime,
+		NotifyRuleIds:    e.NotifyRuleIds,
 	}
 }
 
@@ -420,6 +461,22 @@ func (e *AlertCurEvent) DB2FE() error {
 	if err := json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson); err != nil {
 		return err
 	}
+
+	e.TagsMap = make(map[string]string)
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+
 	return nil
 }
 
@@ -981,9 +1038,9 @@ func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
 		}
 	}
 
-	if e.NotifyRuleIDs != nil {
-		eventCopy.NotifyRuleIDs = make([]int64, len(e.NotifyRuleIDs))
-		copy(eventCopy.NotifyRuleIDs, e.NotifyRuleIDs)
+	if e.NotifyRuleIds != nil {
+		eventCopy.NotifyRuleIds = make([]int64, len(e.NotifyRuleIds))
+		copy(eventCopy.NotifyRuleIds, e.NotifyRuleIds)
 	}
 
 	eventCopy.RuleConfigJson = e.RuleConfigJson

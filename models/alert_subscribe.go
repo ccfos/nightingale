@@ -408,9 +408,9 @@ func (s *AlertSubscribe) ModifyEvent(event *AlertCurEvent) {
 	}
 
 	if len(s.NotifyRuleIds) > 0 {
-		event.NotifyRuleIDs = s.NotifyRuleIds
+		event.NotifyRuleIds = s.NotifyRuleIds
 	} else {
-		event.NotifyRuleIDs = []int64{}
+		event.NotifyRuleIds = []int64{}
 	}
 
 	event.NotifyGroups = s.UserGroupIds

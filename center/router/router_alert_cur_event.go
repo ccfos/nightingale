@@ -1,44 +1,19 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
-
-func parseAggrRules(rule string) []*models.AggrRule {
-	aggrRules := strings.Split(rule, "::") // e.g. field:group_name::field:severity::tagkey:ident
-
-	if len(aggrRules) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "rule empty")
-	}
-
-	rules := make([]*models.AggrRule, len(aggrRules))
-	for i := 0; i < len(aggrRules); i++ {
-		pair := strings.Split(aggrRules[i], ":")
-		if len(pair) != 2 {
-			ginx.Bomb(http.StatusBadRequest, "rule invalid")
-		}
-
-		if !(pair[0] == "field" || pair[0] == "tagkey") {
-			ginx.Bomb(http.StatusBadRequest, "rule invalid")
-		}
-
-		rules[i] = &models.AggrRule{
-			Type:  pair[0],
-			Value: pair[1],
-		}
-	}
-
-	return rules
-}
 
 func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, error) {
 	if !myGroups {
@@ -75,8 +50,6 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
-	rules := parseAggrRules(alertView.Rule)
-
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
 		prod = ginx.QueryStr(c, "rule_prods", "")
@@ -102,7 +75,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	cardmap := make(map[string]*AlertCard)
 	for _, event := range list {
-		title, err := event.GenCardTitle(rules, alertView.Format)
+		title, err := event.GenCardTitle(alertView.Rule)
 		ginx.Dangerous(err)
 		if _, has := cardmap[title]; has {
 			cardmap[title].Total++
@@ -265,24 +238,60 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 
 func (rt *Router) alertCurEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
-	event, err := models.AlertCurEventGetById(rt.Ctx, eid)
-	ginx.Dangerous(err)
+	event, err := GetCurEventDetail(rt.Ctx, eid)
+	ginx.NewRender(c).Data(event, err)
+}
+
+func GetCurEventDetail(ctx *ctx.Context, eid int64) (*models.AlertCurEvent, error) {
+	event, err := models.AlertCurEventGetById(ctx, eid)
+	if err != nil {
+		return nil, err
+	}
 
 	if event == nil {
-		ginx.Bomb(404, "No such active event")
+		return nil, fmt.Errorf("no such active event")
 	}
 
-	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
-		rt.bgroCheck(c, event.GroupId)
-	}
-
-	ruleConfig, needReset := models.FillRuleConfigTplName(rt.Ctx, event.RuleConfig)
+	ruleConfig, needReset := models.FillRuleConfigTplName(ctx, event.RuleConfig)
 	if needReset {
 		event.RuleConfigJson = ruleConfig
 	}
 
 	event.LastEvalTime = event.TriggerTime
-	ginx.NewRender(c).Data(event, nil)
+	event.NotifyVersion, err = GetEventNotifyVersion(ctx, event.RuleId, event.NotifyRuleIds)
+	ginx.Dangerous(err)
+
+	event.NotifyRules, err = GetEventNorifyRuleNames(ctx, event.NotifyRuleIds)
+	return event, err
+}
+
+func GetEventNorifyRuleNames(ctx *ctx.Context, notifyRuleIds []int64) ([]*models.EventNotifyRule, error) {
+	notifyRuleNames := make([]*models.EventNotifyRule, 0)
+	notifyRules, err := models.NotifyRulesGet(ctx, "id in ?", notifyRuleIds)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, notifyRule := range notifyRules {
+		notifyRuleNames = append(notifyRuleNames, &models.EventNotifyRule{
+			Id:   notifyRule.ID,
+			Name: notifyRule.Name,
+		})
+	}
+	return notifyRuleNames, nil
+}
+
+func GetEventNotifyVersion(ctx *ctx.Context, ruleId int64, notifyRuleIds []int64) (int, error) {
+	if len(notifyRuleIds) != 0 {
+		// 如果存在 notify_rule_ids，则认为使用新的告警通知方式
+		return 1, nil
+	}
+
+	rule, err := models.AlertRuleGetById(ctx, ruleId)
+	if err != nil {
+		return 0, err
+	}
+	return rule.NotifyVersion, nil
 }
 
 func (rt *Router) alertCurEventsStatistics(c *gin.Context) {

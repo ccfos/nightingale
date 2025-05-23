@@ -153,7 +153,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 	eventsMap := make(map[string][]*models.AlertCurEvent)
 	for _, anomalyPoint := range anomalyPoints {
 		event := p.BuildEvent(anomalyPoint, from, now, ruleHash)
-		event.NotifyRuleIDs = cachedRule.NotifyRuleIds
+		event.NotifyRuleIds = cachedRule.NotifyRuleIds
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
@@ -537,7 +537,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 		if alertRule == nil {
 			continue
 		}
-		event.NotifyRuleIDs = alertRule.NotifyRuleIds
+		event.NotifyRuleIds = alertRule.NotifyRuleIds
 
 		if event.Cate == models.HOST {
 			target, exists := p.TargetCache.Get(event.TargetIdent)

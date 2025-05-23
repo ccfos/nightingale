@@ -67,8 +67,8 @@ func MigrateTables(db *gorm.DB) error {
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
-		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{}, 
-    &AlertAggrView{}, &models.EventPipeline{}, &models.EmbeddedProduct{}}
+		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
+		&models.EventPipeline{}, &models.EmbeddedProduct{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -80,24 +80,20 @@ func MigrateTables(db *gorm.DB) error {
 		dts = append(dts, &imodels.TaskSchedulerHealth{})
 	}
 
-	if !columnHasIndex(db, &AlertHisEvent{}, "original_tags") ||
-		!columnHasIndex(db, &AlertCurEvent{}, "original_tags") {
-		asyncDts := []interface{}{&AlertHisEvent{}, &AlertCurEvent{}}
-
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					logger.Errorf("panic to migrate table: %v", r)
-				}
-			}()
-
-			for _, dt := range asyncDts {
-				if err := db.AutoMigrate(dt); err != nil {
-					logger.Errorf("failed to migrate table %+v err:%v", dt, err)
-				}
+	asyncDts := []interface{}{&AlertHisEvent{}, &AlertCurEvent{}}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Errorf("panic to migrate table: %v", r)
 			}
 		}()
-	}
+
+		for _, dt := range asyncDts {
+			if err := db.AutoMigrate(dt); err != nil {
+				logger.Errorf("failed to migrate table %+v err:%v", dt, err)
+			}
+		}
+	}()
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
 		dts = append(dts, &models.BuiltinPayload{})
@@ -306,12 +302,14 @@ type TaskRecord struct {
 	EventId int64 `gorm:"column:event_id;bigint(20);not null;default:0;comment:event id;index:idx_event_id"`
 }
 type AlertHisEvent struct {
-	LastEvalTime int64  `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
-	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`
+	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
 }
 
 type AlertCurEvent struct {
-	OriginalTags string `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	OriginalTags  string  `gorm:"column:original_tags;type:text;comment:labels key=val,,k2=v2"`
+	NotifyRuleIds []int64 `gorm:"column:notify_rule_ids;type:text;serializer:json;comment:notify rule ids"`
 }
 
 type Target struct {
@@ -464,12 +462,4 @@ type NotifyChannelConfig struct {
 
 func (c *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
-}
-
-type AlertAggrView struct {
-	Format string `gorm:"size:2048;not null;default:''"`
-}
-
-func (AlertAggrView) TableName() string {
-	return "alert_aggr_view"
 }
