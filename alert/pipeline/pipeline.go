@@ -1,12 +1,11 @@
 package pipeline
 
 import (
-	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	_ "github.com/ccfos/nightingale/v6/alert/pipeline/processor/callback"
+	_ "github.com/ccfos/nightingale/v6/alert/pipeline/processor/eventdrop"
+	_ "github.com/ccfos/nightingale/v6/alert/pipeline/processor/eventupdate"
+	_ "github.com/ccfos/nightingale/v6/alert/pipeline/processor/relabel"
 )
 
-func Pipeline(ctx *ctx.Context, event *models.AlertCurEvent, processors []models.Processor) {
-	for _, processor := range processors {
-		processor.Process(ctx, event)
-	}
+func Init() {
 }

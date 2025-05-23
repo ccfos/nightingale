@@ -22,7 +22,7 @@ type EventUpdateConfig struct {
 }
 
 func init() {
-	models.RegisterProcessor("eventupdate", &EventUpdateConfig{})
+	models.RegisterProcessor("event_update", &EventUpdateConfig{})
 }
 
 func (c *EventUpdateConfig) Init(settings interface{}) (models.Processor, error) {
