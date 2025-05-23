@@ -216,7 +216,7 @@ func NotifyRulesGet(ctx *ctx.Context, where string, args ...interface{}) ([]*Not
 	if where != "" && len(args) > 0 {
 		session = session.Where(where, args...)
 	}
-	err := session.Find(&lst).Error
+	err := session.Order("name asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
