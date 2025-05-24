@@ -95,13 +95,17 @@
 
 ![夜莺仪表盘](doc/img/readme/2025-05-23_18-49-02.png)
 
-- 夜莺支持仪表盘功能，支持常见的图表类型，也内置了一些仪表盘，右侧是其中一个仪表盘的截图。
+- 夜莺支持仪表盘功能，支持常见的图表类型，也内置了一些仪表盘，上图是其中一个仪表盘的截图。
 - 如果你已经习惯了 Grafana，建议仍然使用 Grafana 看图。
 - 机器相关的监控数据，如果是 Categraf 采集的，建议使用夜莺自带的仪表盘查看，因为 Categraf 的指标命名 Follow 的是 Telegraf 的命名方式，和 Node Exporter 不同
 - 因为夜莺有个业务组的概念，机器可以归属不同的业务组，有时在仪表盘里只想查看当前所属业务组的机器，所以夜莺的仪表盘可以和业务组联动
 
 ## 广受关注
 [![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
+
+## 感谢众多企业的信赖
+
+![夜莺客户](doc/img/readme/logos.png)
 
 ## 社区共建
 - ❇️ 请阅读浏览[夜莺开源项目和社区治理架构草案](./doc/community-governance.md)，真诚欢迎每一位用户、开发者、公司以及组织，使用夜莺监控、积极反馈 Bug、提交功能需求、分享最佳实践，共建专业、活跃的夜莺开源社区。
