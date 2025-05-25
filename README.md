@@ -67,7 +67,7 @@
 - ❤️ [报告 Bug](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=&projects=&template=question.yml) 写清楚问题描述、复现步骤、截图等信息，更容易得到答案
 - 💡 前后端代码分离，前端代码仓库：[https://github.com/n9e/fe](https://github.com/n9e/fe)
 - 🎯 关注[这个公众号](https://gitlink.org.cn/UlricQin)了解更多夜莺动态和知识
-- 🌟 加我微信：`picobyte`（我已关闭好友验证）拉入微信群，备注：`夜莺互助群`
+- 🌟 加我微信：`picobyte`（我已关闭好友验证）拉入微信群，备注：`夜莺互助群`，如果已经把夜莺上到生产环境，可联系我拉入资深监控用户群
 
 
 ## 关键特性简介
