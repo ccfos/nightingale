@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 )
+
+const SYSTEM = "system"
 
 // BuiltinComponent represents a builtin component along with its metadata.
 type BuiltinComponent struct {
@@ -82,6 +85,11 @@ func (bc *BuiltinComponent) Update(ctx *ctx.Context, req BuiltinComponent) error
 		return err
 	}
 
+	// Only for update and delete operations, user cannot modify the component created by system
+	if bc.CreatedBy == strings.TrimSpace(SYSTEM) {
+		return errors.New("created_by is system, cannot be modified")
+	}
+
 	if bc.Ident != req.Ident {
 		exists, err := BuiltinComponentExists(ctx, &req)
 		if err != nil {
@@ -100,7 +108,8 @@ func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinComponent)).Error
+	// User can not delete components created by system
+	return DB(ctx).Where("id in ? and create_by != ?", ids, SYSTEM).Delete(new(BuiltinComponent)).Error
 }
 
 func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*BuiltinComponent, error) {
@@ -132,4 +141,44 @@ func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*
 	}
 
 	return lst[0], nil
+}
+
+func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=busi_group")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&BuiltinComponent{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func BuiltinComponentGetAllMap(ctx *ctx.Context) (map[uint64]*BuiltinComponent, error) {
+	var lst []*BuiltinComponent
+	var err error
+	if !ctx.IsCenter {
+		lst, err = poster.GetByUrls[[]*BuiltinComponent](ctx, "/v1/n9e/builtin-components")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = DB(ctx).Model(&BuiltinComponent{}).Find(&lst).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ret := make(map[uint64]*BuiltinComponent)
+	for i := 0; i < len(lst); i++ {
+		ret[lst[i].ID] = lst[i]
+	}
+
+	return ret, nil
 }
