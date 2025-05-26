@@ -192,35 +192,30 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
+	if typ == "" {
+		ginx.Bomb(http.StatusBadRequest, "type is required")
+		return
+	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
+	lst, err := rt.BuiltinPayloadCache.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
 	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
+	if typ == "" {
+		ginx.Bomb(http.StatusBadRequest, "type is required")
+		return
+	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
-	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
+	cates, err := rt.BuiltinPayloadCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+
 	ginx.NewRender(c).Data(cates, err)
-}
-
-func (rt *Router) builtinPayloadGet(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-
-	bp, err := models.BuiltinPayloadGet(rt.Ctx, "id = ?", id)
-	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
-	}
-	if bp == nil {
-		ginx.Bomb(http.StatusNotFound, "builtin payload not found")
-	}
-
-	ginx.NewRender(c).Data(bp, nil)
 }
 
 func (rt *Router) builtinPayloadsPut(c *gin.Context) {
@@ -273,14 +268,12 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.BuiltinPayloadDels(rt.Ctx, req.Ids))
 }
 
-func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
+func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid", 0)
-	// 优先以 uuid 为准
-	if uuid != 0 {
-		ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid))
+	if uuid == 0 {
+		ginx.Bomb(http.StatusBadRequest, "uuid is required")
 		return
 	}
 
-	id := ginx.QueryInt64(c, "id", 0)
-	ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "id = ?", id))
+	ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadByUUID(uuid))
 }

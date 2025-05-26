@@ -8,6 +8,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
+const SYSTEM = "system"
+
 // BuiltinComponent represents a builtin component along with its metadata.
 type BuiltinComponent struct {
 	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
