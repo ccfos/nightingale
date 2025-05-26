@@ -3,7 +3,7 @@
     <img src="doc/img/Nightingale_L_V.png" alt="nightingale - cloud native monitoring" width="100" /></a>
 </p>
 <p align="center">
-  <b>开源告警管理专家 一体化的可观测平台</b>
+  <b>开源告警管理专家</b>
 </p>
 
 <p align="center">
