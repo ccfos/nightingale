@@ -2,6 +2,7 @@ package relabel
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/common"
@@ -10,12 +11,26 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
+)
+
+const (
+	REPLACE_DOT = "___"
 )
 
 // RelabelConfig
 type RelabelConfig struct {
-	pconf.RelabelConfig
+	SourceLabels  []string `json:"source_labels"`
+	Separator     string   `json:"separator"`
+	Regex         string   `json:"regex"`
+	RegexCompiled *regexp.Regexp
+	If            string `json:"if"`
+	IfRegex       *regexp.Regexp
+	Modulus       uint64 `json:"modulus"`
+	TargetLabel   string `json:"target_label"`
+	Replacement   string `json:"replacement"`
+	Action        string `json:"action"`
 }
 
 func init() {
@@ -28,7 +43,27 @@ func (r *RelabelConfig) Init(settings interface{}) (models.Processor, error) {
 }
 
 func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) {
-	EventRelabel(event, []*pconf.RelabelConfig{&r.RelabelConfig})
+	sourceLabels := make([]model.LabelName, len(r.SourceLabels))
+	for i := range r.SourceLabels {
+		sourceLabels[i] = model.LabelName(strings.ReplaceAll(r.SourceLabels[i], ".", REPLACE_DOT))
+	}
+
+	relabelConfigs := []*pconf.RelabelConfig{
+		{
+			SourceLabels:  sourceLabels,
+			Separator:     r.Separator,
+			Regex:         r.Regex,
+			RegexCompiled: r.RegexCompiled,
+			If:            r.If,
+			IfRegex:       r.IfRegex,
+			Modulus:       r.Modulus,
+			TargetLabel:   r.TargetLabel,
+			Replacement:   r.Replacement,
+			Action:        r.Action,
+		},
+	}
+
+	EventRelabel(event, relabelConfigs)
 }
 
 func EventRelabel(event *models.AlertCurEvent, relabelConfigs []*pconf.RelabelConfig) {
@@ -36,7 +71,12 @@ func EventRelabel(event *models.AlertCurEvent, relabelConfigs []*pconf.RelabelCo
 	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
 	for i, tag := range event.TagsJSON {
 		label := strings.SplitN(tag, "=", 2)
+		if len(label) != 2 {
+			continue
+		}
 		event.OriginalTagsJSON[i] = tag
+
+		label[0] = strings.ReplaceAll(string(label[0]), ".", REPLACE_DOT)
 		labels[i] = prompb.Label{Name: label[0], Value: label[1]}
 	}
 
@@ -58,6 +98,7 @@ func EventRelabel(event *models.AlertCurEvent, relabelConfigs []*pconf.RelabelCo
 	event.TagsJSON = make([]string, len(gotLabels))
 	event.TagsMap = make(map[string]string, len(gotLabels))
 	for i, label := range gotLabels {
+		label.Name = strings.ReplaceAll(string(label.Name), REPLACE_DOT, ".")
 		event.TagsJSON[i] = fmt.Sprintf("%s=%s", label.Name, label.Value)
 		event.TagsMap[label.Name] = label.Value
 	}
