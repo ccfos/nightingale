@@ -250,8 +250,7 @@ func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
 	if f.AlertRuleConfig.EnableInBG == 1 {
 		// 判断事件是否在业务组下
 		if curEvent.GroupId != f.AlertRuleConfig.GroupId {
-			ginx.Bomb(http.StatusBadRequest, "The event does not belong to the current business group")
-			return
+			ginx.Dangerous(errors.New("The event does not belong to the current business group"))
 		}
 	}
 	// 判断事件发生时间是否满足enable_days_of_weeks,enable_stimes,enable_etimes 条件
@@ -275,8 +274,7 @@ func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
 			}
 		}
 		if !found {
-			ginx.Bomb(http.StatusBadRequest, "The event occurred on a day that is not within the allowed week range")
-			return
+			ginx.Dangerous(errors.New("The event occurred on a day that is not within the allowed week range"))
 		}
 	}
 
@@ -296,8 +294,7 @@ func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
 			}
 		}
 		if !inTimeRange {
-			ginx.Bomb(http.StatusBadRequest, "The event occurred on a day that is not within the allowed week range")
-			return
+			ginx.Dangerous(errors.New("The event occurred on a day that is not within the allowed day time range"))
 		}
 	}
 	if len(f.AlertRuleConfig.NotifyChannelsJSON) > 0 && len(f.AlertRuleConfig.NotifyGroupsJSON) > 0 {
