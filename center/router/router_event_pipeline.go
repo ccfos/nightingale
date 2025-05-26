@@ -142,7 +142,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	for _, p := range f.PipelineConfig.Processors {
 		processor, err := pipeline.GetProcessorByType(p.Typ, p.Config)
 		if err != nil {
-			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found, error: %s", p, err.Error())
 		}
 		processor.Process(rt.Ctx, event)
 	}
@@ -166,7 +166,7 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 
 	processor, err := pipeline.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "processor type not found")
+		ginx.Bomb(http.StatusBadRequest, "processor type: %s, error: %s", f.ProcessorConfig.Typ, err.Error())
 	}
 	processor.Process(rt.Ctx, event)
 
