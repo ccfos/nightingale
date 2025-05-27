@@ -446,6 +446,10 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 
 	switch notifyChannel.RequestType {
 	case "flashduty":
+		if len(flashDutyChannelIDs) == 0 {
+			flashDutyChannelIDs = []int64{0} // 如果 flashduty 通道没有配置，则使用 0, 给 SendFlashDuty 判断使用, 不给 flashduty 传 channel_id 参数
+		}
+
 		for i := range flashDutyChannelIDs {
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
