@@ -234,6 +234,10 @@ func (arw *AlertRuleWorker) Stop() {
 func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
 	var severity int
+	start := time.Now()
+	defer func() {
+		arw.Processor.Stats.GaugeRuleEvalDuration.WithLabelValues(fmt.Sprintf("%v", arw.Rule.Id), fmt.Sprintf("%v", arw.Processor.DatasourceId())).Set(float64(time.Since(start).Milliseconds()))
+	}()
 
 	var rule *models.PromRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -749,6 +753,10 @@ func combine(paramKeys []string, paraMap map[string][]string, index int, current
 func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.AnomalyPoint, error) {
 	var lst []models.AnomalyPoint
 	var severity int
+	start := time.Now()
+	defer func() {
+		arw.Processor.Stats.GaugeRuleEvalDuration.WithLabelValues(fmt.Sprintf("%v", arw.Rule.Id), fmt.Sprintf("%v", arw.Processor.DatasourceId())).Set(float64(time.Since(start).Milliseconds()))
+	}()
 
 	var rule *models.HostRuleConfig
 	if err := json.Unmarshal([]byte(ruleConfig), &rule); err != nil {
@@ -1427,6 +1435,10 @@ func fillVar(curRealQuery string, paramKey string, val string) string {
 
 func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint) {
 	// 获取查询和规则判断条件
+	start := time.Now()
+	defer func() {
+		arw.Processor.Stats.GaugeRuleEvalDuration.WithLabelValues(fmt.Sprintf("%v", arw.Rule.Id), fmt.Sprintf("%v", arw.Processor.DatasourceId())).Set(float64(time.Since(start).Milliseconds()))
+	}()
 	points := []models.AnomalyPoint{}
 	recoverPoints := []models.AnomalyPoint{}
 	ruleConfig := strings.TrimSpace(rule.RuleConfig)

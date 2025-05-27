@@ -25,6 +25,7 @@ type Stats struct {
 	CounterHeartbeatErrorTotal  *prometheus.CounterVec
 	CounterSubEventTotal        *prometheus.CounterVec
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
+	GaugeRuleEvalDuration       *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
 }
 
@@ -136,6 +137,13 @@ func NewSyncStats() *Stats {
 		Help:      "The size of notify record queue.",
 	})
 
+	GaugeRuleEvalDuration := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "rule_eval_duration_ms",
+		Help:      "Duration of rule eval in milliseconds.",
+	}, []string{"rule_id", "datasource_id"})
+
 	CounterVarFillingQuery := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -158,6 +166,7 @@ func NewSyncStats() *Stats {
 		CounterHeartbeatErrorTotal,
 		CounterSubEventTotal,
 		GaugeQuerySeriesCount,
+		GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
 	)
@@ -177,6 +186,7 @@ func NewSyncStats() *Stats {
 		CounterHeartbeatErrorTotal:  CounterHeartbeatErrorTotal,
 		CounterSubEventTotal:        CounterSubEventTotal,
 		GaugeQuerySeriesCount:       GaugeQuerySeriesCount,
+		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
 	}
