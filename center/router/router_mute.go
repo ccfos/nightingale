@@ -94,7 +94,9 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 	f.AlertMute.Btime = 0             // 最小可能值（如 Unix 时间戳起点）
 	f.AlertMute.Etime = math.MaxInt64 // 最大可能值（int64 上限）
 
-	if !mute.MatchMute(&curEvent, &f.AlertMute) {
+	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
+	ginx.Dangerous(err)
+	if !match {
 		ginx.NewRender(c).Data("not match", nil)
 		return
 	}

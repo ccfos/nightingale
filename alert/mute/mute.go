@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -129,7 +130,8 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 	}
 
 	for i := 0; i < len(mutes); i++ {
-		if MatchMute(event, mutes[i]) {
+		matched, _ := MatchMute(event, mutes[i])
+		if matched {
 			return true, mutes[i].Id
 		}
 	}
@@ -138,9 +140,9 @@ func EventMuteStrategy(event *models.AlertCurEvent, alertMuteCache *memsto.Alert
 }
 
 // MatchMute 如果传入了clock这个可选参数，就表示使用这个clock表示的时间，否则就从event的字段中取TriggerTime
-func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) bool {
+func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int64) (bool, error) {
 	if mute.Disabled == 1 {
-		return false
+		return false, errors.New("mute is disabled")
 	}
 
 	// 如果不是全局的，判断 匹配的 datasource id
@@ -152,13 +154,13 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 		// 判断 event.datasourceId 是否包含在 idm 中
 		if _, has := idm[event.DatasourceId]; !has {
-			return false
+			return false, errors.New("datasource id not match")
 		}
 	}
 
 	if mute.MuteTimeType == models.TimeRange {
 		if !mute.IsWithinTimeRange(event.TriggerTime) {
-			return false
+			return false, errors.New("event trigger time not within mute time range")
 		}
 	} else if mute.MuteTimeType == models.Periodic {
 		ts := event.TriggerTime
@@ -167,11 +169,11 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		}
 
 		if !mute.IsWithinPeriodicMute(ts) {
-			return false
+			return false, errors.New("event trigger time not within periodic mute range")
 		}
 	} else {
 		logger.Warningf("mute time type invalid, %d", mute.MuteTimeType)
-		return false
+		return false, errors.New("mute time type invalid")
 	}
 
 	var matchSeverity bool
@@ -187,12 +189,14 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 	}
 
 	if !matchSeverity {
-		return false
+		return false, errors.New("event severity not match mute severity")
 	}
 
 	if mute.ITags == nil || len(mute.ITags) == 0 {
-		return true
+		return true, nil
 	}
-
-	return common.MatchTags(event.TagsMap, mute.ITags)
+	if !common.MatchTags(event.TagsMap, mute.ITags) {
+		return false, errors.New("event tags not match mute tags")
+	}
+	return true, nil
 }
