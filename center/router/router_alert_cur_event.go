@@ -91,6 +91,10 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 				Severity: event.Severity,
 			}
 		}
+
+		if cardmap[title].Severity < 1 {
+			cardmap[title].Severity = 1
+		}
 	}
 
 	titles := make([]string, 0, len(cardmap))
