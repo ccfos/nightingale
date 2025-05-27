@@ -8,8 +8,8 @@ import (
 )
 
 type Processor interface {
-	Init(settings interface{}) (Processor, error)   // 初始化配置
-	Process(ctx *ctx.Context, event *AlertCurEvent) // 处理告警事件
+	Init(settings interface{}) (Processor, error)                  // 初始化配置
+	Process(ctx *ctx.Context, event *AlertCurEvent) *AlertCurEvent // 处理告警事件
 }
 
 type NewProcessorFn func(settings interface{}) (Processor, error)

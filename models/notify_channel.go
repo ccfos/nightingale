@@ -388,7 +388,10 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 
 	// 设置 URL 参数
 	query := req.URL.Query()
-	query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
+	if flashDutyChannelID != 0 {
+		// 如果 flashduty 有配置协作空间(channel_id)，则传入 channel_id 参数
+		query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
+	}
 	req.URL.RawQuery = query.Encode()
 	req.Header.Add("Content-Type", "application/json")
 
