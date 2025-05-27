@@ -157,7 +157,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 		return "", "", fmt.Errorf("script or path is empty")
 	}
 
-	fpath := ".notify_scriptt"
+	fpath := ".notify_script_" + strconv.FormatInt(ncc.ID, 10)
 	if config.Path != "" {
 		fpath = config.Path
 	} else {
