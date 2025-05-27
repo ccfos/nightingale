@@ -2,6 +2,7 @@ package memsto
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 	"strings"
 	"sync"
@@ -54,7 +55,7 @@ func (b *BuiltinComponentCacheType) StatChanged(total, lastUpdated int64) bool {
 }
 
 func (b *BuiltinComponentCacheType) SyncBuiltinComponents() {
-	b.syncBuiltinComponentFiles()
+	b.initBuiltinComponentFiles()
 
 	err := b.syncBuiltinComponents()
 	if err != nil {
@@ -64,7 +65,7 @@ func (b *BuiltinComponentCacheType) SyncBuiltinComponents() {
 	go b.loopSyncBuiltinComponents()
 }
 
-func (b *BuiltinComponentCacheType) syncBuiltinComponentFiles() error {
+func (b *BuiltinComponentCacheType) initBuiltinComponentFiles() error {
 	fp := b.builtinIntegrationsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "integrations")
@@ -282,6 +283,28 @@ func (b *BuiltinComponentCacheType) GetNamesByBuiltinComponentIds(ids []uint64) 
 		names[i] = b.bc[id].Ident
 	}
 	return names
+}
+
+func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
+	var result []*models.BuiltinPayload
+
+	// TODO: Use table to speed up query
+	for _, payload := range b.bp {
+		if (typ != "" && payload.Type != typ) ||
+			(componentId != 0 && payload.ComponentID != componentId) ||
+			(cate != "" && payload.Cate != cate) ||
+			(query != "" && !strings.Contains(payload.Name, query) && !strings.Contains(payload.Tags, query)) {
+			continue
+		}
+
+		result = append(result, payload)
+	}
+
+	if len(result) == 0 {
+		return nil, fmt.Errorf("no results found")
+	}
+
+	return result, nil
 }
 
 func (b *BuiltinComponentCacheType) GetNameByBuiltinComponentId(id uint64) string {
