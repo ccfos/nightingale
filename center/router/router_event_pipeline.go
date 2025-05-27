@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // 获取事件Pipeline列表
@@ -144,7 +145,10 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 		if err != nil {
 			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
 		}
-		processor.Process(rt.Ctx, event)
+		event = processor.Process(rt.Ctx, event)
+		if event == nil {
+			ginx.Bomb(http.StatusBadRequest, "event is nil")
+		}
 	}
 
 	ginx.NewRender(c).Data(event, nil)
@@ -168,7 +172,11 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusBadRequest, "processor type not found")
 	}
-	processor.Process(rt.Ctx, event)
+	event = processor.Process(rt.Ctx, event)
+	logger.Infof("processor %+v result: %+v", f.ProcessorConfig, event)
+	if event == nil {
+		ginx.Bomb(http.StatusBadRequest, "event is nil")
+	}
 
 	ginx.NewRender(c).Data(event, nil)
 }
@@ -204,7 +212,10 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 			if err != nil {
 				ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
 			}
-			processor.Process(rt.Ctx, event)
+			event = processor.Process(rt.Ctx, event)
+			if event == nil {
+				ginx.Bomb(http.StatusBadRequest, "event is nil")
+			}
 		}
 	}
 

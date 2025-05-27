@@ -185,7 +185,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			for _, processor := range processors {
 				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
-				processor.Process(e.ctx, eventCopy)
+				eventCopy = processor.Process(e.ctx, eventCopy)
 				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
 				if eventCopy == nil {
 					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)

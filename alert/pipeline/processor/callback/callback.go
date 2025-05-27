@@ -42,7 +42,7 @@ func (c *CallbackConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) {
+func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *models.AlertCurEvent {
 	if c.Client == nil {
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
@@ -72,13 +72,13 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 	body, err := json.Marshal(event)
 	if err != nil {
 		logger.Errorf("failed to marshal event: %v", err)
-		return
+		return event
 	}
 
 	req, err := http.NewRequest("POST", c.URL, strings.NewReader(string(body)))
 	if err != nil {
 		logger.Errorf("failed to create request: %v event: %v", err, event)
-		return
+		return event
 	}
 
 	for k, v := range headers {
@@ -92,14 +92,15 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		logger.Errorf("failed to send request: %v event: %v", err, event)
-		return
+		return event
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Errorf("failed to read response body: %v event: %v", err, event)
-		return
+		return event
 	}
 
 	logger.Infof("response body: %s", string(b))
+	return event
 }
