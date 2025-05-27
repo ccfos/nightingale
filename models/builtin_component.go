@@ -169,7 +169,8 @@ func BuiltinComponentGetAllMap(ctx *ctx.Context) (map[uint64]*BuiltinComponent, 
 			return nil, err
 		}
 	} else {
-		err = DB(ctx).Model(&BuiltinComponent{}).Find(&lst).Error
+		// Find data from user.
+		err = DB(ctx).Model(&BuiltinComponent{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
 		if err != nil {
 			return nil, err
 		}

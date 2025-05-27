@@ -197,7 +197,7 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
+	lst, err := rt.BuiltinComponentCache.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
 	ginx.NewRender(c).Data(lst, err)
 }
 
