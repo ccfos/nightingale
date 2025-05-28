@@ -30,12 +30,14 @@ type IbexCallBacker struct {
 
 func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 	if len(ctx.CallBackURL) == 0 || len(ctx.Events) == 0 {
+		logger.Warningf("event_callback_ibex: url or events is empty, url: %s, events: %+v", ctx.CallBackURL, ctx.Events)
 		return
 	}
 
 	event := ctx.Events[0]
 
 	if event.IsRecovered {
+		logger.Infof("event_callback_ibex: event is recovered, event: %+v", event)
 		return
 	}
 
@@ -43,8 +45,9 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 }
 
 func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent) {
+	logger.Infof("event_callback_ibex: url: %s, event: %+v", url, event)
 	if imodels.DB() == nil && ctx.IsCenter {
-		logger.Warning("event_callback_ibex: db is nil")
+		logger.Warningf("event_callback_ibex: db is nil, event: %+v", event)
 		return
 	}
 
@@ -63,17 +66,23 @@ func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.
 
 	id, err := strconv.ParseInt(idstr, 10, 64)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: failed to parse url: %s", url)
+		logger.Errorf("event_callback_ibex: failed to parse url: %s event: %+v", url, event)
 		return
 	}
 
 	if host == "" {
 		// 用户在callback url中没有传入host，就从event中解析
 		host = event.TargetIdent
+
+		if host == "" {
+			if ident, has := event.TagsMap["ident"]; has {
+				host = ident
+			}
+		}
 	}
 
 	if host == "" {
-		logger.Error("event_callback_ibex: failed to get host")
+		logger.Errorf("event_callback_ibex: failed to get host, id: %d, event: %+v", id, event)
 		return
 	}
 
@@ -83,21 +92,23 @@ func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.
 func CallIbex(ctx *ctx.Context, id int64, host string,
 	taskTplCache *memsto.TaskTplCache, targetCache *memsto.TargetCacheType,
 	userCache *memsto.UserCacheType, event *models.AlertCurEvent) {
+	logger.Infof("event_callback_ibex: id: %d, host: %s, event: %+v", id, host, event)
+
 	tpl := taskTplCache.Get(id)
 	if tpl == nil {
-		logger.Errorf("event_callback_ibex: no such tpl(%d)", id)
+		logger.Errorf("event_callback_ibex: no such tpl(%d), event: %+v", id, event)
 		return
 	}
 	// check perm
 	// tpl.GroupId - host - account 三元组校验权限
 	can, err := canDoIbex(tpl.UpdateBy, tpl, host, targetCache, userCache)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: check perm fail: %v", err)
+		logger.Errorf("event_callback_ibex: check perm fail: %v, event: %+v", err, event)
 		return
 	}
 
 	if !can {
-		logger.Errorf("event_callback_ibex: user(%s) no permission", tpl.UpdateBy)
+		logger.Errorf("event_callback_ibex: user(%s) no permission, event: %+v", tpl.UpdateBy, event)
 		return
 	}
 
@@ -122,7 +133,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 
 	tags, err := json.Marshal(tagsMap)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: failed to marshal tags to json: %v", tagsMap)
+		logger.Errorf("event_callback_ibex: failed to marshal tags to json: %v, event: %+v", tagsMap, event)
 		return
 	}
 
@@ -145,7 +156,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 
 	id, err = TaskAdd(in, tpl.UpdateBy, ctx.IsCenter)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: call ibex fail: %v", err)
+		logger.Errorf("event_callback_ibex: call ibex fail: %v, event: %+v", err, event)
 		return
 	}
 
@@ -167,7 +178,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	}
 
 	if err = record.Add(ctx); err != nil {
-		logger.Errorf("event_callback_ibex: persist task_record fail: %v", err)
+		logger.Errorf("event_callback_ibex: persist task_record fail: %v, event: %+v", err, event)
 	}
 }
 
@@ -187,7 +198,7 @@ func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *m
 
 func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	if storage.Cache == nil {
-		logger.Warning("event_callback_ibex: redis cache is nil")
+		logger.Warningf("event_callback_ibex: redis cache is nil, task: %+v", f)
 		return 0, fmt.Errorf("redis cache is nil")
 	}
 
