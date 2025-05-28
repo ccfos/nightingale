@@ -2214,3 +2214,15 @@ CREATE TABLE task_host_99
     PRIMARY KEY (`ii`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `source_token` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `source_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'source type',
+    `source_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'source identifier',
+    `token` varchar(255) NOT NULL DEFAULT '' COMMENT 'access token',
+    `expire_at` bigint NOT NULL DEFAULT 0 COMMENT 'expire timestamp',
+    `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
+    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    PRIMARY KEY (`id`),
+    KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
