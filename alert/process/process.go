@@ -195,7 +195,6 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 
 func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
 	p.fillTags(anomalyPoint)
-	p.mayHandleIdent()
 	hash := Hash(p.rule.Id, p.datasourceId, anomalyPoint)
 	ds := p.datasourceCache.GetById(p.datasourceId)
 	var dsName string
@@ -215,8 +214,6 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	event.DatasourceId = p.datasourceId
 	event.Cluster = dsName
 	event.Hash = hash
-	event.TargetIdent = p.target
-	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
 	event.TriggerValues = anomalyPoint.Values
 	event.TriggerValuesJson = models.EventTriggerValues{ValuesWithUnit: anomalyPoint.ValuesUnit}
@@ -270,6 +267,12 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	// 生成事件之后，立马进程 relabel 处理
 	Relabel(p.rule, event)
+
+	// 放到 Relabel(p.rule, event) 下面，为了处理 relabel 之后，标签里才出现 ident 的情况
+	p.mayHandleIdent()
+	event.TargetIdent = p.target
+	event.TargetNote = p.targetNote
+
 	return event
 }
 
