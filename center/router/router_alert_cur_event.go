@@ -93,7 +93,7 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 		}
 
 		if cardmap[title].Severity < 1 {
-			cardmap[title].Severity = 1
+			cardmap[title].Severity = 3
 		}
 	}
 
