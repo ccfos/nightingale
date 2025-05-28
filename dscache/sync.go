@@ -191,7 +191,14 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 		ids = append(ids, item.Id)
 
 		// 异步初始化 client 不然数据源同步的会很慢
-		go DsCache.Put(typ, item.Id, ds)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					logger.Errorf("panic in datasource item: %+v panic:%v", item, r)
+				}
+			}()
+			DsCache.Put(typ, item.Id, ds)
+		}()
 	}
 
 	logger.Debugf("get plugin by type success Ids:%v", ids)
