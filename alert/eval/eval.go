@@ -172,7 +172,7 @@ func (arw *AlertRuleWorker) Eval() {
 	case models.LOKI:
 		anomalyPoints, err = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
 	default:
-		anomalyPoints, recoverPoints = arw.GetAnomalyPoint(cachedRule, arw.Processor.DatasourceId())
+		anomalyPoints, recoverPoints, err = arw.GetAnomalyPoint(cachedRule, arw.Processor.DatasourceId())
 	}
 
 	if err != nil {
@@ -1414,13 +1414,14 @@ func fillVar(curRealQuery string, paramKey string, val string) string {
 	return curRealQuery
 }
 
-func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint) {
+func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) ([]models.AnomalyPoint, []models.AnomalyPoint, error) {
 	// 获取查询和规则判断条件
+
 	points := []models.AnomalyPoint{}
 	recoverPoints := []models.AnomalyPoint{}
 	ruleConfig := strings.TrimSpace(rule.RuleConfig)
 	if ruleConfig == "" {
-		logger.Warningf("rule_eval:%d promql is blank", rule.Id)
+		logger.Warningf("rule_eval:%d ruleConfig is blank", rule.Id)
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
 		arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
 			fmt.Sprintf("%v", arw.Rule.Id),
@@ -1428,7 +1429,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 			"",
 		).Set(0)
 
-		return points, recoverPoints
+		return points, recoverPoints, fmt.Errorf("rule_eval:%d ruleConfig is blank", rule.Id)
 	}
 
 	var ruleQuery models.RuleQuery
@@ -1436,7 +1437,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 	if err != nil {
 		logger.Warningf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
 		arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), GET_RULE_CONFIG, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
-		return points, recoverPoints
+		return points, recoverPoints, fmt.Errorf("rule_eval:%d promql parse error:%s", rule.Id, err.Error())
 	}
 
 	arw.Inhibit = ruleQuery.Inhibit
@@ -1456,7 +1457,8 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 					fmt.Sprintf("%v", i),
 				).Set(-2)
-				continue
+
+				return points, recoverPoints, fmt.Errorf("rule_eval:%d datasource:%d not exists", rule.Id, dsId)
 			}
 
 			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
@@ -1471,7 +1473,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					fmt.Sprintf("%v", i),
 				).Set(-1)
 
-				continue
+				return points, recoverPoints, fmt.Errorf("rule_eval:%d query data error: %v", rule.Id, err)
 			}
 
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
@@ -1505,6 +1507,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 		for _, query := range ruleQuery.Queries {
 			ref, unit, err := GetQueryRefAndUnit(query)
 			if err != nil {
+				logger.Warningf("rule_eval rid:%d query:%+v get ref and unit error:%s", rule.Id, query, err.Error())
 				continue
 			}
 			unitMap[ref] = unit
@@ -1671,5 +1674,5 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 		}
 	}
 
-	return points, recoverPoints
+	return points, recoverPoints, nil
 }
