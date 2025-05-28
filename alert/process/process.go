@@ -60,11 +60,9 @@ type Processor struct {
 	pendingsUseByRecover *AlertCurEventMap
 	inhibit              bool
 
-	tagsMap    map[string]string
-	tagsArr    []string
-	target     string
-	targetNote string
-	groupName  string
+	tagsMap   map[string]string
+	tagsArr   []string
+	groupName string
 
 	alertRuleCache          *memsto.AlertRuleCacheType
 	TargetCache             *memsto.TargetCacheType
@@ -195,6 +193,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 
 func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, now int64, ruleHash string) *models.AlertCurEvent {
 	p.fillTags(anomalyPoint)
+
 	hash := Hash(p.rule.Id, p.datasourceId, anomalyPoint)
 	ds := p.datasourceCache.GetById(p.datasourceId)
 	var dsName string
@@ -245,15 +244,6 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 		logger.Warningf("unmarshal annotations json failed: %v, rule: %d", err, p.rule.Id)
 	}
 
-	if p.target != "" {
-		if pt, exist := p.TargetCache.Get(p.target); exist {
-			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
-			event.Target = pt
-		} else {
-			logger.Infof("Target[ident: %s] doesn't exist in cache.", p.target)
-		}
-	}
-
 	if event.TriggerValues != "" && strings.Count(event.TriggerValues, "$") > 1 {
 		// TriggerValues 有多个变量，将多个变量都放到 TriggerValue 中
 		event.TriggerValue = event.TriggerValues
@@ -269,9 +259,16 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 	Relabel(p.rule, event)
 
 	// 放到 Relabel(p.rule, event) 下面，为了处理 relabel 之后，标签里才出现 ident 的情况
-	p.mayHandleIdent()
-	event.TargetIdent = p.target
-	event.TargetNote = p.targetNote
+	p.mayHandleIdent(event)
+
+	if event.TargetIdent != "" {
+		if pt, exist := p.TargetCache.Get(event.TargetIdent); exist {
+			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
+			event.Target = pt
+		} else {
+			logger.Infof("fill event target error, ident: %s doesn't exist in cache.", event.TargetIdent)
+		}
+	}
 
 	return event
 }
@@ -614,19 +611,19 @@ func (p *Processor) fillTags(anomalyPoint models.AnomalyPoint) {
 	p.tagsArr = labelMapToArr(tagsMap)
 }
 
-func (p *Processor) mayHandleIdent() {
+func (p *Processor) mayHandleIdent(event *models.AlertCurEvent) {
 	// handle ident
-	if ident, has := p.tagsMap["ident"]; has {
+	if ident, has := event.TagsMap["ident"]; has {
 		if target, exists := p.TargetCache.Get(ident); exists {
-			p.target = target.Ident
-			p.targetNote = target.Note
+			event.TargetIdent = target.Ident
+			event.TargetNote = target.Note
 		} else {
-			p.target = ident
-			p.targetNote = ""
+			event.TargetIdent = ident
+			event.TargetNote = ""
 		}
 	} else {
-		p.target = ""
-		p.targetNote = ""
+		event.TargetIdent = ""
+		event.TargetNote = ""
 	}
 }
 
