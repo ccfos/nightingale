@@ -736,6 +736,11 @@ func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEven
 	}
 	json.Unmarshal([]byte(rule.RuleConfig), &ruleConfig)
 
+	if event.IsRecovered {
+		// 恢复事件不需要走故障自愈的逻辑
+		return
+	}
+
 	for _, t := range ruleConfig.TaskTpls {
 		if t.TplId == 0 {
 			continue
