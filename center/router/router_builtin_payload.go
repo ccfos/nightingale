@@ -205,14 +205,16 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
-	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
+	cates, err := rt.BuiltinComponentCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+
 	ginx.NewRender(c).Data(cates, err)
 }
 
 func (rt *Router) builtinPayloadGet(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 
-	bp, err := models.BuiltinPayloadGet(rt.Ctx, "id = ?", id)
+	bp, err := rt.BuiltinComponentCache.GetBuiltinPayloadById(id)
+
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, err.Error())
 	}

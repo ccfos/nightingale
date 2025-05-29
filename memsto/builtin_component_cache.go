@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -305,6 +306,38 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 	}
 
 	return result, nil
+}
+
+func (b *BuiltinComponentCacheType) GetBuiltinPayloadById(id int64) (*models.BuiltinPayload, error) {
+	b.RLock()
+	defer b.RUnlock()
+	payload, ok := b.bp[id]
+	if ok {
+		return payload, nil
+	}
+
+	return nil, fmt.Errorf("no results found")
+}
+
+func (b *BuiltinComponentCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
+	var result set.StringSet
+
+	// TODO: Use table to speed up query
+	for _, payload := range b.bp {
+		if (typ != "" && payload.Type != typ) ||
+			(componentId != 0 && payload.ComponentID != componentId) {
+			continue
+		}
+
+		result = *result.Add(payload.Cate)
+	}
+
+	resultStrings := result.ToSlice()
+	if len(resultStrings) == 0 {
+		return nil, fmt.Errorf("no results found")
+	}
+
+	return resultStrings, nil
 }
 
 func (b *BuiltinComponentCacheType) GetNameByBuiltinComponentId(id uint64) string {

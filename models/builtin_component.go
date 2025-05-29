@@ -112,7 +112,7 @@ func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ? and create_by != ?", ids, SYSTEM).Delete(new(BuiltinComponent)).Error
 }
 
-func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*BuiltinComponent, error) {
+func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int, isByUser bool) ([]*BuiltinComponent, error) {
 	session := DB(ctx)
 	if query != "" {
 		queryPattern := "%" + query + "%"
@@ -120,6 +120,10 @@ func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*Buil
 	}
 	if disabled == 0 || disabled == 1 {
 		session = session.Where("disabled = ?", disabled)
+	}
+	// Filter components created by user
+	if isByUser {
+		session = session.Where("created_by != ?", SYSTEM)
 	}
 
 	var lst []*BuiltinComponent
