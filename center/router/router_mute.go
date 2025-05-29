@@ -65,6 +65,7 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 
 	username := c.MustGet("username").(string)
 	f.CreateBy = username
+	f.UpdateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
 }
