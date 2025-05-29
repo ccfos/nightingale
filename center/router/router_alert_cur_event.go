@@ -65,12 +65,12 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 		cates = strings.Split(cate, ",")
 	}
 
-	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, myGroups)
 	ginx.Dangerous(err)
 
 	// 最多获取50000个，获取太多也没啥意义
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, 0, query, 50000, 0, gids, []int64{})
+		cates, 0, query, 50000, 0, []int64{})
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
@@ -178,25 +178,15 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	ruleId := ginx.QueryInt64(c, "rid", 0)
 
-	var gids []int64
-	var err error
-	if myGroups {
-		gids, err = getUserGroupIds(c, rt, myGroups)
-		ginx.Dangerous(err)
-		if len(gids) == 0 {
-			gids = append(gids, -1)
-		}
-	}
-
-	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, myGroups)
 	ginx.Dangerous(err)
 
 	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query, gids, eventIds)
+		cates, ruleId, query, eventIds)
 	ginx.Dangerous(err)
 
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, ruleId, query, limit, ginx.Offset(c, limit), gids, eventIds)
+		cates, ruleId, query, limit, ginx.Offset(c, limit), eventIds)
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)

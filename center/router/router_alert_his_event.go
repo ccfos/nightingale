@@ -56,7 +56,7 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 
 	ruleId := ginx.QueryInt64(c, "rid", 0)
 
-	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, false)
 	ginx.Dangerous(err)
 
 	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
@@ -103,43 +103,39 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	ginx.NewRender(c).Data(event, err)
 }
 
-func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, eventHistoryGroupView bool) ([]int64, error) {
+func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, onlySelfGroupView bool, myGroups bool) ([]int64, error) {
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	var bgids []int64
 
-	if !eventHistoryGroupView || strings.HasPrefix(c.Request.URL.Path, "/v1") {
-		if bgid > 0 {
-			return []int64{bgid}, nil
-		}
-		return bgids, nil
-	}
-
 	user := c.MustGet("user").(*models.User)
-	if user.IsAdmin() {
+
+	if myGroups || (onlySelfGroupView && !strings.HasPrefix(c.Request.URL.Path, "/v1") && !user.IsAdmin()) {
+		// 1. 页面上勾选了我的业务组，需要查询用户所属的业务组
+		// 2. 如果 onlySelfGroupView 为 true，表示只允许查询用户所属的业务组
+		bussGroupIds, err := models.MyBusiGroupIds(ctx, user.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(bussGroupIds) == 0 {
+			// 如果没查到用户属于任何业务组，需要返回一个0，否则会导致查询到全部告警历史
+			return []int64{0}, nil
+		}
+
 		if bgid > 0 {
+			if !slices.Contains(bussGroupIds, bgid) && !user.IsAdmin() {
+				return nil, fmt.Errorf("business group ID not allowed")
+			}
+
 			return []int64{bgid}, nil
 		}
-		return bgids, nil
-	}
 
-	bussGroupIds, err := models.MyBusiGroupIds(ctx, user.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(bussGroupIds) == 0 {
-		// 如果没查到用户属于任何业务组，需要返回一个0，否则会导致查询到全部告警历史
-		return []int64{0}, nil
-	}
-
-	if bgid > 0 && !slices.Contains(bussGroupIds, bgid) {
-		return nil, fmt.Errorf("business group ID not allowed")
+		return bussGroupIds, nil
 	}
 
 	if bgid > 0 {
-		// Pass filter parameters, priority to use
 		return []int64{bgid}, nil
 	}
 
-	return bussGroupIds, nil
+	return bgids, nil
 }
