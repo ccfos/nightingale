@@ -904,3 +904,15 @@ CREATE TABLE dash_annotation (
     update_at bigint not null default 0,
     update_by varchar(64) not null default ''
 );
+
+CREATE TABLE source_token (
+    id bigserial PRIMARY KEY,
+    source_type varchar(64) NOT NULL DEFAULT '',
+    source_id varchar(255) NOT NULL DEFAULT '',
+    token varchar(255) NOT NULL DEFAULT '',
+    expire_at bigint NOT NULL DEFAULT 0,
+    create_at bigint NOT NULL DEFAULT 0,
+    create_by varchar(64) NOT NULL DEFAULT ''
+);
+
+CREATE INDEX idx_source_token_type_id_token ON source_token (source_type, source_id, token);

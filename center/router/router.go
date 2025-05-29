@@ -504,6 +504,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 		pages.GET("/site-info", rt.siteInfo)
 
+		// source token 相关路由
+		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
+
 		// for admin api
 		pages.GET("/user/busi-groups", rt.auth(), rt.admin(), rt.userBusiGroupsGets)
 
