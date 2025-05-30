@@ -149,7 +149,7 @@ func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*
 
 func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=busi_group")
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=builtin_components")
 		return s, err
 	}
 
