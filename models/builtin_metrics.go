@@ -7,7 +7,12 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"gorm.io/gorm"
+)
+
+const (
+	SYSTEM = "system"
 )
 
 // BuiltinMetric represents a metric along with its metadata.
@@ -224,4 +229,45 @@ func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy s
 		return nil
 	}
 	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{col: new, "updated_by": updatedBy}).Error
+}
+
+func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=builtin_metric")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&BuiltinMetric{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func BuiltinMetricGetAllMap(ctx *ctx.Context) (map[int64]*BuiltinMetric, error) {
+	var lst []*BuiltinMetric
+	var err error
+	if !ctx.IsCenter {
+		lst, err = poster.GetByUrls[[]*BuiltinMetric](ctx, "/v1/n9e/builtin-metrics")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Find data from user.
+		err = DB(ctx).Model(&BuiltinMetric{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ret := make(map[int64]*BuiltinMetric)
+	for i := 0; i < len(lst); i++ {
+		ret[lst[i].ID] = lst[i]
+	}
+
+	return ret, nil
 }
