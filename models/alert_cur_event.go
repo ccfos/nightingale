@@ -354,7 +354,7 @@ func (e *AlertCurEvent) GenCardTitle(rule string) (string, error) {
 		}
 
 		if len(arr[i]) == 0 {
-			arr[i] = "Null"
+			arr[i] = "Others"
 		}
 	}
 	return strings.Join(arr, "::"), nil
