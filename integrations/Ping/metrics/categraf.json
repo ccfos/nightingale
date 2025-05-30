@@ -12,7 +12,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping ttl 时间",
+                "note": "Time To Live，指的是报文在网络中能够“存活”的限制时间"
+            },
+            "en_US": {
+                "name": "Ping ttl time",
+                "note": "Time To Live refers to the limited time that a packet can \"survive\" in the network"
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -27,7 +38,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping 丢包率",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Ping packet loss rate",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -42,7 +64,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping 平均耗时",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Ping average time consumed",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -57,7 +90,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping 探测结果状态码",
+                "note": "值为 0 就是正常，非 0 值就是异常。如果 Ping 失败，Categraf 日志中理应会有异常日志"
+            },
+            "en_US": {
+                "name": "Ping probe result status code",
+                "note": "A value of 0 is normal, and a non-0 value is abnormal. If the Ping fails, there should be an exception log in the Categraf log"
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -72,7 +116,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping 最大耗时",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Ping maximum time consumption",
+                "note": ""
+            }
+        },
+        "enable": true
     },
     {
         "id": 0,
@@ -87,6 +142,17 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": {
+            "zh_CN": {
+                "name": "Ping 最小耗时",
+                "note": ""
+            },
+            "en_US": {
+                "name": "Ping minimum time consumption",
+                "note": ""
+            }
+        },
+        "enable": true
     }
 ]

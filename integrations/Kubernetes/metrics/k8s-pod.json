@@ -1,282 +1,590 @@
 [
     {
-      "uuid": 1745893024149445000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "Inode数量",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_fs_inodes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024149445000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "Inode数量",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_fs_inodes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "Inode数量",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Number of Inodes",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024121015300,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "不可中断任务数量",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_tasks_state{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\", state=\"uninterruptible\"}) by (name)"
+        "uuid": 1745893024121015300,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "不可中断任务数量",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_tasks_state{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\", state=\"uninterruptible\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "不可中断任务数量",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Number of uninterruptible tasks",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024130551800,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器cache使用",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "(sum(container_memory_cache{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))"
+        "uuid": 1745893024130551800,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器cache使用",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "(sum(container_memory_cache{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "translation": {
+            "zh_CN": {
+                "name": "容器cache使用",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container cache use",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024108569900,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器CPU Limit",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\",",
-      "lang": "zh_CN",
-      "expression": "(sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name))"
+        "uuid": 1745893024108569900,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器CPU Limit",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\",",
+        "lang": "zh_CN",
+        "expression": "(sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name))",
+        "translation": {
+            "zh_CN": {
+                "name": "容器CPU Limit",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\","
+            },
+            "en_US": {
+                "name": "Container CPU Limit",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"}/container _ spec _ cpu _ period {namespace = \"$namespace\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024112672500,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器CPU load 10",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_cpu_load_average_10s{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024112672500,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器CPU load 10",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_cpu_load_average_10s{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器CPU load 10",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container CPU load 10",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024026246700,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器CPU使用率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
+        "uuid": 1745893024026246700,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器CPU使用率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器CPU使用率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container CPU usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024029544000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器CPU归一化后使用率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name)))"
+        "uuid": 1745893024029544000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器CPU归一化后使用率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)/((sum(container_spec_cpu_quota{namespace=\"$namespace\", pod=~\"$pod_name\"}/container_spec_cpu_period{namespace=\"$namespace\", pod=~\"$pod_name\"}) by (name)))",
+        "translation": {
+            "zh_CN": {
+                "name": "容器CPU归一化后使用率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container CPU usage after normalization",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024146207700,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器I/O",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_fs_io_current{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024146207700,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器I/O",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_fs_io_current{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器I/O",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container I/O",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024136457000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器RSS内存使用",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "(sum(container_memory_rss{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))"
+        "uuid": 1745893024136457000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器RSS内存使用",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "(sum(container_memory_rss{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "translation": {
+            "zh_CN": {
+                "name": "容器RSS内存使用",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container RSS memory usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024139900200,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器内存 Limit",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024139900200,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器内存 Limit",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器内存 Limit",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container Memory Limit",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024032984300,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器内存使用",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "(sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))"
+        "uuid": 1745893024032984300,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器内存使用",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "(sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name))",
+        "translation": {
+            "zh_CN": {
+                "name": "容器内存使用",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container memory usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024127585500,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器内存使用率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "((sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)) /(sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)))*100"
+        "uuid": 1745893024127585500,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器内存使用率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "((sum(container_memory_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)) /(sum(container_spec_memory_limit_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)))*100",
+        "translation": {
+            "zh_CN": {
+                "name": "容器内存使用率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container memory usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024093620000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器内核态CPU使用率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_cpu_system_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
+        "uuid": 1745893024093620000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器内核态CPU使用率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_cpu_system_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器内核态CPU使用率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container kernel mode CPU usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024102879000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器发生CPU throttle的比率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m]))by(name) *100"
+        "uuid": 1745893024102879000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器发生CPU throttle的比率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m]))by(name) *100",
+        "translation": {
+            "zh_CN": {
+                "name": "容器发生CPU throttle的比率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "The rate at which container CPU throttle occurs",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024143177000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器发生OOM次数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_oom_events_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024143177000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器发生OOM次数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_oom_events_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器发生OOM次数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Number of OOM occurrences for container",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024083942000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器启动时长（小时）",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum((time()-container_start_time_seconds{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"})) by (name)"
+        "uuid": 1745893024083942000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器启动时长（小时）",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum((time()-container_start_time_seconds{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"})) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器启动时长（小时）",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container startup time (hours)",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024152466200,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器已使用的文件系统大小",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(container_fs_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)"
+        "uuid": 1745893024152466200,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器已使用的文件系统大小",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(container_fs_usage_bytes{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}) by (name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器已使用的文件系统大小",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "File system size used by the container",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024097849600,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "容器用户态CPU使用率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_cpu_user_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)"
+        "uuid": 1745893024097849600,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "容器用户态CPU使用率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_cpu_user_seconds_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])*100) by(name)",
+        "translation": {
+            "zh_CN": {
+                "name": "容器用户态CPU使用率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "Container user mode CPU usage",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024036896800,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "文件系统写入速率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_fs_writes_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)"
+        "uuid": 1745893024036896800,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "文件系统写入速率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_fs_writes_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+        "translation": {
+            "zh_CN": {
+                "name": "文件系统写入速率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "File system write rate",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024057722000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "文件系统读取速率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_fs_reads_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)"
+        "uuid": 1745893024057722000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "文件系统读取速率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\",",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_fs_reads_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\", image!~\".*pause.*\"}[1m])) by(name)",
+        "translation": {
+            "zh_CN": {
+                "name": "文件系统读取速率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\","
+            },
+            "en_US": {
+                "name": "File system read rate",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\","
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024166898000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络发送丢包数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_transmit_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024166898000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络发送丢包数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_transmit_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络发送丢包数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Number of packets lost by network transmission",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024160266500,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络发送数据包",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_transmit_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024160266500,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络发送数据包",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_transmit_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络发送数据包",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "The network sends packets",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024069935000,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络发送速率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024069935000,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络发送速率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_transmit_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络发送速率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Network transmission rate",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024163721700,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络发送错误数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_transmit_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024163721700,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络发送错误数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_transmit_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络发送错误数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Number of network transmission errors",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024173485600,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络接收丢包数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_receive_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024173485600,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络接收丢包数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_receive_packets_dropped_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络接收丢包数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Number of packet losses received by network",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024156389600,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络接收数据包数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_receive_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024156389600,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络接收数据包数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_receive_packets_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络接收数据包数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Number of packets received by network",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024075864800,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络接收速率",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024075864800,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络接收速率",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络接收速率",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Network reception rate",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     },
     {
-      "uuid": 1745893024170233300,
-      "collector": "Pod",
-      "typ": "Kubernetes",
-      "name": "网络接收错误数",
-      "unit": "",
-      "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
-      "lang": "zh_CN",
-      "expression": "sum(rate(container_network_receive_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)"
+        "uuid": 1745893024170233300,
+        "collector": "Pod",
+        "typ": "Kubernetes",
+        "name": "网络接收错误数",
+        "unit": "",
+        "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))",
+        "lang": "zh_CN",
+        "expression": "sum(rate(container_network_receive_errors_total{namespace=\"$namespace\", pod=~\"$pod_name\"}[1m])) by(name, interface)",
+        "translation": {
+            "zh_CN": {
+                "name": "网络接收错误数",
+                "note": "Pod自身指标\n类型: pod=~\"$pod_name\"}[1m]))"
+            },
+            "en_US": {
+                "name": "Number of network reception errors",
+                "note": "Pod's own indicators \nType: pod = ~ \"$pod _ name\"} [1m]))"
+            }
+        },
+        "enable": true
     }
-  ]
+]
