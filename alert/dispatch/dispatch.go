@@ -15,6 +15,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
+	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -79,6 +80,8 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		ctx:    ctx,
 		Astats: astats,
 	}
+
+	pipeline.Init()
 	return notify
 }
 
@@ -145,8 +148,8 @@ func (e *Dispatch) reloadTpls() error {
 
 func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) {
 
-	if len(eventOrigin.NotifyRuleIDs) > 0 {
-		for _, notifyRuleId := range eventOrigin.NotifyRuleIDs {
+	if len(eventOrigin.NotifyRuleIds) > 0 {
+		for _, notifyRuleId := range eventOrigin.NotifyRuleIds {
 			// 深拷贝新的 event，避免并发修改 event 冲突
 			eventCopy := eventOrigin.DeepCopy()
 

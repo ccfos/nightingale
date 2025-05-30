@@ -55,6 +55,10 @@ type AlertHisEvent struct {
 	NotifyCurNumber    int               `json:"notify_cur_number"`    // notify: current number
 	FirstTriggerTime   int64             `json:"first_trigger_time"`   // 连续告警的首次告警时间
 	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
+	NotifyRuleIds      []int64           `json:"notify_rule_ids" gorm:"serializer:json"`
+
+	NotifyVersion int                `json:"notify_version" gorm:"-"`
+	NotifyRules   []*EventNotifyRule `json:"notify_rules" gorm:"-"`
 }
 
 func (e *AlertHisEvent) TableName() string {

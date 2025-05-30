@@ -143,6 +143,32 @@ func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query s
 	return lst, err
 }
 
+func BuiltinPayloadGetById(ctx *ctx.Context, componentId uint64, typ, cate, query string) ([]*BuiltinPayload, error) {
+	session := DB(ctx)
+	if typ != "" {
+		session = session.Where("type = ?", typ)
+	}
+	if componentId != 0 {
+		session = session.Where("component_id = ?", componentId)
+	}
+
+	if cate != "" {
+		session = session.Where("cate = ?", cate)
+	}
+
+	if query != "" {
+		arr := strings.Fields(query)
+		for i := 0; i < len(arr); i++ {
+			qarg := "%" + arr[i] + "%"
+			session = session.Where("name like ? or tags like ?", qarg, qarg)
+		}
+	}
+
+	var lst []*BuiltinPayload
+	err := session.Find(&lst).Error
+	return lst, err
+}
+
 // get cates of BuiltinPayload by type and component, return []string
 func BuiltinPayloadCates(ctx *ctx.Context, typ string, componentID uint64) ([]string, error) {
 	var cates []string
@@ -168,7 +194,7 @@ func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error
 func InitBuiltinPayloads(ctx *ctx.Context) error {
 	var lst []*BuiltinPayload
 
-	components, err := BuiltinComponentGets(ctx, "", -1)
+	components, err := BuiltinComponentGets(ctx, "", -1, false)
 	if err != nil {
 		return err
 	}

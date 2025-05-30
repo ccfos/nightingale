@@ -54,3 +54,8 @@ nr_alloc_batch = 0
 ## arp_package
 
 统计 ARP 包的数量，该插件依赖 cgo，如果需要该插件需要下载 `with-cgo` 的 categraf 发布包。
+
+
+## ntp
+
+监控机器时间偏移量，只需要给出 ntp 服务端地址，Categraf 就会周期性去请求，对比本机时间，得到偏移量，监控指标是 ntp_offset_ms 顾名思义，单位是毫秒，一般这个值不能超过 1000
