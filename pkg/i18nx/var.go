@@ -149,6 +149,9 @@ var I18N = `{
     "Business Group - Modify": "业务组 - 修改",
     "Business Group - Delete": "业务组 - 删除",
     "Role - View": "角色 - 查看",
+    "Role - Add": "角色 - 新增",
+    "Role - Modify": "角色 - 修改",
+    "Role - Delete": "角色 - 删除",
 
     "System Settings": "系统配置",
     "View Site Settings": "查看站点设置",
@@ -310,6 +313,9 @@ var I18N = `{
     "Business Group - Modify": "業務組 - 修改",
     "Business Group - Delete": "業務組 - 删除",
     "Role - View": "角色 - 查看",
+    "Role - Add": "角色 - 新增",
+    "Role - Modify": "角色 - 修改",
+    "Role - Delete": "角色 - 删除",
 
     "System Settings": "系統配置",
     "View Site Settings": "查看站點設置",
@@ -468,6 +474,9 @@ var I18N = `{
     "Business Group - Modify": "業務グループ - 修正",
     "Business Group - Delete": "業務グループ - 削除",
     "Role - View": "役割 - 閲覧",
+    "Role - Add": "役割 - 追加",
+    "Role - Modify": "役割 - 修正",
+    "Role - Delete": "役割 - 削除",
 
     "System Settings": "システム設定",
     "View Site Settings": "サイト設定の表示",
@@ -626,6 +635,9 @@ var I18N = `{
     "Business Group - Modify": "Бизнес-группы - Изменить",
     "Business Group - Delete": "Бизнес-группы - Удалить",
     "Role - View": "Роли - Просмотр",
+    "Role - Add": "Роли - Добавить",
+    "Role - Modify": "Роли - Изменить",
+    "Role - Delete": "Роли - Удалить",
 
     "System Settings": "Настройки системы",
     "View Site Settings": "Просмотр настроек сайта",

@@ -280,6 +280,12 @@ ops:
       cname: Business Group - Delete
     - name: /roles
       cname: Role - View
+    - name: /roles/add
+      cname: Role - Add
+    - name: /roles/put
+      cname: Role - Modify
+    - name: /roles/del
+      cname: Role - Delete
 
 - name: System Settings
   cname: System Settings
