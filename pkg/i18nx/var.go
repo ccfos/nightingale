@@ -137,6 +137,9 @@ var I18N = `{
 
     "Organization": "人员组织",
     "User - View": "用户 - 查看",
+    "User - Add": "用户 - 新增",
+    "User - Modify": "用户 - 修改",
+    "User - Delete": "用户 - 删除",
     "Team - View": "团队 - 查看",
     "Team - Add": "团队 - 新增",
     "Team - Modify": "团队 - 修改",
@@ -295,6 +298,9 @@ var I18N = `{
 
     "Organization": "人員組織",
     "User - View": "用戶 - 查看",
+    "User - Add": "用戶 - 新增",
+    "User - Modify": "用戶 - 修改",
+    "User - Delete": "用戶 - 刪除",
     "Team - View": "團隊 - 查看",
     "Team - Add": "團隊 - 新增",
     "Team - Modify": "團隊 - 修改",
@@ -450,6 +456,9 @@ var I18N = `{
 
     "Organization": "組織",
     "User - View": "ユーザー - 閲覧",
+    "User - Add": "ユーザー - 追加",
+    "User - Modify": "ユーザー - 修正",
+    "User - Delete": "ユーザー - 削除",
     "Team - View": "チーム - 閲覧",
     "Team - Add": "チーム - 追加",
     "Team - Modify": "チーム - 修正",
@@ -605,6 +614,9 @@ var I18N = `{
 
     "Organization": "Организация",
     "User - View": "Пользователи - Просмотр",
+    "User - Add": "Пользователи - Добавить",
+    "User - Modify": "Пользователи - Изменить",
+    "User - Delete": "Пользователи - Удалить",
     "Team - View": "Команды - Просмотр",
     "Team - Add": "Команды - Добавить",
     "Team - Modify": "Команды - Изменить",

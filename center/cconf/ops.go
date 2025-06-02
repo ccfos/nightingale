@@ -256,6 +256,12 @@ ops:
   ops:
     - name: /users
       cname: User - View
+    - name: /users/add
+      cname: User - Add
+    - name: /users/put
+      cname: User - Modify
+    - name: /users/del
+      cname: User - Delete
     - name: /user-groups
       cname: Team - View
     - name: /user-groups/add

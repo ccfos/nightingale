@@ -264,11 +264,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/self/token/:id", rt.auth(), rt.user(), rt.deleteToken)
 
 		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
-		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
+		pages.POST("/users", rt.auth(), rt.user(), rt.perm("/users/add"), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
-		pages.PUT("/user/:id/profile", rt.auth(), rt.admin(), rt.userProfilePut)
-		pages.PUT("/user/:id/password", rt.auth(), rt.admin(), rt.userPasswordPut)
-		pages.DELETE("/user/:id", rt.auth(), rt.admin(), rt.userDel)
+		pages.PUT("/user/:id/profile", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userProfilePut)
+		pages.PUT("/user/:id/password", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userPasswordPut)
+		pages.DELETE("/user/:id", rt.auth(), rt.user(), rt.perm("/users/del"), rt.userDel)
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
 		pages.DELETE("/metric-views", rt.auth(), rt.user(), rt.metricViewDel)
