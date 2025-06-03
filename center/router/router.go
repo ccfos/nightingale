@@ -34,23 +34,24 @@ import (
 )
 
 type Router struct {
-	HTTP              httpx.Config
-	Center            cconf.Center
-	Ibex              conf.Ibex
-	Alert             aconf.Alert
-	Operations        cconf.Operation
-	DatasourceCache   *memsto.DatasourceCacheType
-	NotifyConfigCache *memsto.NotifyConfigCacheType
-	PromClients       *prom.PromClientMap
-	Redis             storage.Redis
-	MetaSet           *metas.Set
-	IdentSet          *idents.Set
-	TargetCache       *memsto.TargetCacheType
-	Sso               *sso.SsoClient
-	UserCache         *memsto.UserCacheType
-	UserGroupCache    *memsto.UserGroupCacheType
-	UserTokenCache    *memsto.UserTokenCacheType
-	Ctx               *ctx.Context
+	HTTP               httpx.Config
+	Center             cconf.Center
+	Ibex               conf.Ibex
+	Alert              aconf.Alert
+	Operations         cconf.Operation
+	DatasourceCache    *memsto.DatasourceCacheType
+	NotifyConfigCache  *memsto.NotifyConfigCacheType
+	PromClients        *prom.PromClientMap
+	Redis              storage.Redis
+	MetaSet            *metas.Set
+	IdentSet           *idents.Set
+	TargetCache        *memsto.TargetCacheType
+	Sso                *sso.SsoClient
+	UserCache          *memsto.UserCacheType
+	UserGroupCache     *memsto.UserGroupCacheType
+	UserTokenCache     *memsto.UserTokenCacheType
+	BuiltinMetricCache *memsto.BuiltinMetricCacheType
+	Ctx                *ctx.Context
 
 	HeartbeatHook       HeartbeatHookFunc
 	TargetDeleteHook    models.TargetDeleteHookFunc
@@ -61,7 +62,8 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType,
+	bmc *memsto.BuiltinMetricCacheType) *Router {
 	return &Router{
 		HTTP:                httpConfig,
 		Center:              center,
@@ -79,6 +81,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserCache:           uc,
 		UserGroupCache:      ugc,
 		UserTokenCache:      utc,
+		BuiltinMetricCache:  bmc,
 		Ctx:                 ctx,
 		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
 		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
