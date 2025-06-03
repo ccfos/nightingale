@@ -264,11 +264,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/self/token/:id", rt.auth(), rt.user(), rt.deleteToken)
 
 		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
-		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
+		pages.POST("/users", rt.auth(), rt.user(), rt.perm("/users/add"), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
-		pages.PUT("/user/:id/profile", rt.auth(), rt.admin(), rt.userProfilePut)
-		pages.PUT("/user/:id/password", rt.auth(), rt.admin(), rt.userPasswordPut)
-		pages.DELETE("/user/:id", rt.auth(), rt.admin(), rt.userDel)
+		pages.PUT("/user/:id/profile", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userProfilePut)
+		pages.PUT("/user/:id/password", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userPasswordPut)
+		pages.DELETE("/user/:id", rt.auth(), rt.user(), rt.perm("/users/del"), rt.userDel)
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
 		pages.DELETE("/metric-views", rt.auth(), rt.user(), rt.metricViewDel)
@@ -445,12 +445,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
 
 		pages.GET("/roles", rt.auth(), rt.user(), rt.perm("/roles"), rt.roleGets)
-		pages.POST("/roles", rt.auth(), rt.admin(), rt.roleAdd)
-		pages.PUT("/roles", rt.auth(), rt.admin(), rt.rolePut)
-		pages.DELETE("/role/:id", rt.auth(), rt.admin(), rt.roleDel)
+		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
+		pages.PUT("/roles", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.rolePut)
+		pages.DELETE("/role/:id", rt.auth(), rt.user(), rt.perm("/roles/del"), rt.roleDel)
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles"), rt.operationOfRole)
-		pages.PUT("/role/:id/ops", rt.auth(), rt.admin(), rt.roleBindOperation)
+		pages.PUT("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.roleBindOperation)
 		pages.GET("/operation", rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.notifyTplGets)

@@ -256,6 +256,12 @@ ops:
   ops:
     - name: /users
       cname: User - View
+    - name: /users/add
+      cname: User - Add
+    - name: /users/put
+      cname: User - Modify
+    - name: /users/del
+      cname: User - Delete
     - name: /user-groups
       cname: Team - View
     - name: /user-groups/add
@@ -274,6 +280,12 @@ ops:
       cname: Business Group - Delete
     - name: /roles
       cname: Role - View
+    - name: /roles/add
+      cname: Role - Add
+    - name: /roles/put
+      cname: Role - Modify
+    - name: /roles/del
+      cname: Role - Delete
 
 - name: System Settings
   cname: System Settings

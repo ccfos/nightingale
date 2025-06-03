@@ -137,6 +137,9 @@ var I18N = `{
 
     "Organization": "人员组织",
     "User - View": "用户 - 查看",
+    "User - Add": "用户 - 新增",
+    "User - Modify": "用户 - 修改",
+    "User - Delete": "用户 - 删除",
     "Team - View": "团队 - 查看",
     "Team - Add": "团队 - 新增",
     "Team - Modify": "团队 - 修改",
@@ -146,6 +149,9 @@ var I18N = `{
     "Business Group - Modify": "业务组 - 修改",
     "Business Group - Delete": "业务组 - 删除",
     "Role - View": "角色 - 查看",
+    "Role - Add": "角色 - 新增",
+    "Role - Modify": "角色 - 修改",
+    "Role - Delete": "角色 - 删除",
 
     "System Settings": "系统配置",
     "View Site Settings": "查看站点设置",
@@ -295,6 +301,9 @@ var I18N = `{
 
     "Organization": "人員組織",
     "User - View": "用戶 - 查看",
+    "User - Add": "用戶 - 新增",
+    "User - Modify": "用戶 - 修改",
+    "User - Delete": "用戶 - 刪除",
     "Team - View": "團隊 - 查看",
     "Team - Add": "團隊 - 新增",
     "Team - Modify": "團隊 - 修改",
@@ -304,6 +313,9 @@ var I18N = `{
     "Business Group - Modify": "業務組 - 修改",
     "Business Group - Delete": "業務組 - 删除",
     "Role - View": "角色 - 查看",
+    "Role - Add": "角色 - 新增",
+    "Role - Modify": "角色 - 修改",
+    "Role - Delete": "角色 - 删除",
 
     "System Settings": "系統配置",
     "View Site Settings": "查看站點設置",
@@ -450,6 +462,9 @@ var I18N = `{
 
     "Organization": "組織",
     "User - View": "ユーザー - 閲覧",
+    "User - Add": "ユーザー - 追加",
+    "User - Modify": "ユーザー - 修正",
+    "User - Delete": "ユーザー - 削除",
     "Team - View": "チーム - 閲覧",
     "Team - Add": "チーム - 追加",
     "Team - Modify": "チーム - 修正",
@@ -459,6 +474,9 @@ var I18N = `{
     "Business Group - Modify": "業務グループ - 修正",
     "Business Group - Delete": "業務グループ - 削除",
     "Role - View": "役割 - 閲覧",
+    "Role - Add": "役割 - 追加",
+    "Role - Modify": "役割 - 修正",
+    "Role - Delete": "役割 - 削除",
 
     "System Settings": "システム設定",
     "View Site Settings": "サイト設定の表示",
@@ -605,6 +623,9 @@ var I18N = `{
 
     "Organization": "Организация",
     "User - View": "Пользователи - Просмотр",
+    "User - Add": "Пользователи - Добавить",
+    "User - Modify": "Пользователи - Изменить",
+    "User - Delete": "Пользователи - Удалить",
     "Team - View": "Команды - Просмотр",
     "Team - Add": "Команды - Добавить",
     "Team - Modify": "Команды - Изменить",
@@ -614,6 +635,9 @@ var I18N = `{
     "Business Group - Modify": "Бизнес-группы - Изменить",
     "Business Group - Delete": "Бизнес-группы - Удалить",
     "Role - View": "Роли - Просмотр",
+    "Role - Add": "Роли - Добавить",
+    "Role - Modify": "Роли - Изменить",
+    "Role - Delete": "Роли - Удалить",
 
     "System Settings": "Настройки системы",
     "View Site Settings": "Просмотр настроек сайта",
