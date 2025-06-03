@@ -107,9 +107,17 @@ func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, onlySelfGroupView boo
 	bgid := ginx.QueryInt64(c, "bgid", 0)
 	var bgids []int64
 
-	user := c.MustGet("user").(*models.User)
+	if strings.HasPrefix(c.Request.URL.Path, "/v1") {
+		// 如果请求路径以 /v1 开头，不查询用户信息
+		if bgid > 0 {
+			return []int64{bgid}, nil
+		}
 
-	if myGroups || (onlySelfGroupView && !strings.HasPrefix(c.Request.URL.Path, "/v1") && !user.IsAdmin()) {
+		return bgids, nil
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if myGroups || (onlySelfGroupView && !user.IsAdmin()) {
 		// 1. 页面上勾选了我的业务组，需要查询用户所属的业务组
 		// 2. 如果 onlySelfGroupView 为 true，表示只允许查询用户所属的业务组
 		bussGroupIds, err := models.MyBusiGroupIds(ctx, user.Id)
