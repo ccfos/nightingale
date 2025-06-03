@@ -3,6 +3,7 @@ package memsto
 import (
 	"encoding/json"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -27,21 +28,23 @@ type BuiltinMetricCacheType struct {
 	builtinIntegrationsDir string // path to the directory containing builtin components, e.g., "/path/to/builtin/components"
 
 	sync.RWMutex
-	bc map[int64]*models.BuiltinMetric // key: id
+	bm              map[int64]*models.BuiltinMetric // key: id
+	expressionIdMap map[string]int64                // key: expression, value: id
 }
 
-func NewBuiltinMetricCacheType(ctx *ctx.Context, stats *Stats, builtinIntegrationsDir string) *BuiltinMetricCacheType {
-	bc := &BuiltinMetricCacheType{
+func NewBuiltinMetricCache(ctx *ctx.Context, stats *Stats, builtinIntegrationsDir string) *BuiltinMetricCacheType {
+	bm := &BuiltinMetricCacheType{
 		statTotal:              -1,
 		statLastUpdated:        -1,
 		ctx:                    ctx,
 		stats:                  stats,
 		builtinIntegrationsDir: builtinIntegrationsDir,
-		bc:                     make(map[int64]*models.BuiltinMetric),
+		bm:                     make(map[int64]*models.BuiltinMetric),
+		expressionIdMap:        make(map[string]int64),
 	}
 
-	bc.SyncBuiltinMetrics()
-	return bc
+	bm.SyncBuiltinMetrics()
+	return bm
 }
 func (b *BuiltinMetricCacheType) StatChanged(total, lastUpdated int64) bool {
 	if b.statTotal == total && b.statLastUpdated == lastUpdated {
@@ -131,7 +134,7 @@ func (b *BuiltinMetricCacheType) initBuiltinMetricFiles() error {
 						metric.UUID = time.Now().UnixNano()
 					}
 
-					b.bc[metric.ID] = &metric
+					b.addBuiltinMetric(&metric)
 				}
 			}
 		} else if err != nil {
@@ -157,39 +160,39 @@ func (b *BuiltinMetricCacheType) syncBuiltinMetrics() error {
 
 	stat, err := models.BuiltinMetricStatistics(b.ctx)
 	if err != nil {
-		dumper.PutSyncRecord("builtin_components", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
+		dumper.PutSyncRecord("builtin_metrics", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
 		return errors.WithMessage(err, "failed to exec BuiltinMetricStatistics")
 	}
 
 	if !b.StatChanged(stat.Total, stat.LastUpdated) {
-		b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_components").Set(0)
-		b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_components").Set(0)
-		dumper.PutSyncRecord("builtin_components", start.Unix(), -1, -1, "not changed")
+		b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_metrics").Set(0)
+		b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_metrics").Set(0)
+		dumper.PutSyncRecord("builtin_metrics", start.Unix(), -1, -1, "not changed")
 		return nil
 	}
 
-	bc, err := models.BuiltinMetricGetAllMap(b.ctx)
+	bm, err := models.BuiltinMetricGetAllMap(b.ctx)
 	if err != nil {
-		dumper.PutSyncRecord("builtin_components", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		dumper.PutSyncRecord("builtin_metrics", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call BuiltinMetricGetMap")
 	}
 
-	b.Set(bc, stat.Total, stat.LastUpdated)
+	b.Set(bm, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_components").Set(float64(ms))
-	b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_components").Set(float64(len(bc)))
+	b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_metrics").Set(float64(ms))
+	b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_metrics").Set(float64(len(bm)))
 
-	logger.Infof("timer: sync builtin components done, cost: %dms, number: %d", ms, len(bc))
-	dumper.PutSyncRecord("builtin_components", start.Unix(), ms, len(bc), "success")
+	logger.Infof("timer: sync builtin components done, cost: %dms, number: %d", ms, len(bm))
+	dumper.PutSyncRecord("builtin_metrics", start.Unix(), ms, len(bm), "success")
 
 	return nil
 }
 
-func (b *BuiltinMetricCacheType) Set(bc map[int64]*models.BuiltinMetric, total, lastUpdated int64) {
-	b.Lock()
-	b.bc = bc
-	b.Unlock()
+func (b *BuiltinMetricCacheType) Set(bm map[int64]*models.BuiltinMetric, total, lastUpdated int64) {
+	for _, metric := range bm {
+		b.addBuiltinMetric(metric)
+	}
 
 	// only one goroutine used, so no need lock
 	b.statTotal = total
@@ -199,20 +202,187 @@ func (b *BuiltinMetricCacheType) Set(bc map[int64]*models.BuiltinMetric, total, 
 func (b *BuiltinMetricCacheType) GetByBuiltinMetricId(id int64) *models.BuiltinMetric {
 	b.RLock()
 	defer b.RLock()
-	return b.bc[id]
+	return b.bm[id]
 }
 
-func (b *BuiltinMetricCacheType) addBuiltinMetric(bc *models.BuiltinMetric) error {
+func (b *BuiltinMetricCacheType) GetByBuiltinMetric(id int64) *models.BuiltinMetric {
+	b.RLock()
+	defer b.RLock()
+	return b.bm[id]
+}
+
+func (b *BuiltinMetricCacheType) Len(lang, collector, typ, query, unit string) int {
+	b.RLock()
+	defer b.RLock()
+	return len(b.bm)
+}
+
+// New metrics must use this method to add, so that the cache is updated correctly
+// with same expression.
+func (b *BuiltinMetricCacheType) addBuiltinMetric(bm *models.BuiltinMetric) error {
 	b.Lock()
 	defer b.Unlock()
 
-	if _, exists := b.bc[bc.ID]; exists {
+	if _, exists := b.bm[bm.ID]; exists {
 		return errors.New("builtin component already exists")
 	}
 
-	b.bc[bc.ID] = bc
+	// Merge to existing metric with same expression
+	if bm.Lang == "en_US" {
+		if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
+			// Update the existing metric with the new one
+			if _, exists := b.bm[existingId]; exists {
+				// Merge translation to current metric
+				bm.Translation = mergeTranslations(b.bm[existingId].Translation, bm.Translation)
+			}
+			// Delete the old metric
+			delete(b.bm, existingId)
+		}
+
+		// Direct update
+		b.bm[bm.ID] = bm
+		b.expressionIdMap[bm.Expression] = bm.ID
+	} else {
+		// For non-English metrics, we don't merge by expression
+		// In current implementation, user must have a zh_CN version of the metric
+		// so we can use zh_CN as the key
+		if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
+			// Update the existing metric with the new one
+			if existingMetric, exists := b.bm[existingId]; exists {
+				// We only need zh_CN as the key
+				existingMetric.Translation = mergeTranslations(b.bm[existingId].Translation, bm.Translation)
+				// Update the existing metric with the new one
+				b.bm[existingId] = existingMetric
+			}
+		} else {
+			// Add the new metric
+			b.bm[bm.ID] = bm
+			b.expressionIdMap[bm.Expression] = bm.ID
+		}
+	}
+
 	b.statTotal++
 	b.statLastUpdated = time.Now().Unix()
 
 	return nil
+}
+
+func mergeTranslations(existingTranslations, newTranslations []models.Translation) []models.Translation {
+	translationMap := make(map[string]models.Translation)
+
+	// Add existing translations to the map
+	for _, t := range existingTranslations {
+		translationMap[t.Lang] = t
+	}
+
+	// Add new translations to the map, overwriting existing ones if necessary
+	for _, t := range newTranslations {
+		translationMap[t.Lang] = t
+	}
+
+	// Convert the map back to a slice
+	var mergedTranslations []models.Translation
+	for _, t := range translationMap {
+		mergedTranslations = append(mergedTranslations, t)
+	}
+
+	return mergedTranslations
+}
+
+func getTranslationWithLanguage(bm *models.BuiltinMetric, lang string) (*models.Translation, error) {
+	var defaultTranslation *models.Translation
+	for _, t := range bm.Translation {
+		if t.Lang == lang {
+			return &t, nil
+		}
+
+		if t.Lang == "en_US" {
+			defaultTranslation = &t
+		}
+	}
+
+	if defaultTranslation != nil {
+		return defaultTranslation, nil
+	}
+
+	return nil, errors.New("translation not found")
+}
+
+func (b *BuiltinMetricCacheType) BuiltinMetricGets(lang, collector, typ, query, unit string, limit, offset int) ([]*models.BuiltinMetric, int, error) {
+	var filteredMetrics []*models.BuiltinMetric
+
+	for _, metric := range b.bm {
+		if !applyFilter(metric, lang, collector, typ, query, unit) {
+			continue
+		}
+		filteredMetrics = append(filteredMetrics, metric)
+	}
+
+	sort.Slice(filteredMetrics, func(i, j int) bool {
+		if filteredMetrics[i].Collector != filteredMetrics[j].Collector {
+			return filteredMetrics[i].Collector < filteredMetrics[j].Collector
+		}
+		if filteredMetrics[i].Typ != filteredMetrics[j].Typ {
+			return filteredMetrics[i].Typ < filteredMetrics[j].Typ
+		}
+		return filteredMetrics[i].Name < filteredMetrics[j].Name
+	})
+
+	if offset > len(filteredMetrics) {
+		return nil, 0, nil
+	}
+
+	end := offset + limit
+	if end > len(filteredMetrics) {
+		end = len(filteredMetrics)
+	}
+
+	return filteredMetrics[offset:end], len(filteredMetrics), nil
+}
+
+func applyFilter(metric *models.BuiltinMetric, lang, collector, typ, query, unit string) bool {
+	if lang != "" && metric.Lang != lang {
+		return false
+	}
+	if collector != "" && metric.Collector != collector {
+		return false
+	}
+	if typ != "" && metric.Typ != typ {
+		return false
+	}
+	if unit != "" && !containsUnit(unit, metric.Unit) {
+		return false
+	}
+	if query != "" && !applyQueryFilter(metric, query) {
+		return false
+	}
+
+	return true
+}
+
+func containsUnit(unit, metricUnit string) bool {
+	us := strings.Split(unit, ",")
+	for _, u := range us {
+		if u == metricUnit {
+			return true
+		}
+	}
+	return false
+}
+
+func applyQueryFilter(metric *models.BuiltinMetric, query string) bool {
+	qs := strings.Split(query, " ")
+	for _, q := range qs {
+		if strings.HasPrefix(q, "-") {
+			q = strings.TrimPrefix(q, "-")
+			if strings.Contains(metric.Name, q) || strings.Contains(metric.Note, q) || strings.Contains(metric.Expression, q) {
+				return false
+			}
+		} else {
+			if !strings.Contains(metric.Name, q) && !strings.Contains(metric.Note, q) && !strings.Contains(metric.Expression, q) {
+				return false
+			}
+		}
+	}
+	return true
 }
