@@ -259,3 +259,6 @@ CREATE TABLE `source_token` (
     KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+/* v8.0.0-beta.12 2025-06-03 */
+ALTER TABLE `alert_his_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
+ALTER TABLE `alert_cur_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
