@@ -2,7 +2,7 @@
   "name": "JVM by OpenTelementry",
   "tags": "Prometheus OpenTelementry",
   "ident": "",
-  "uuid": 1748965232512000,
+  "uuid": 1749052689795000,
   "configs": {
     "panels": [
       {
@@ -109,7 +109,7 @@
         "datasourceValue": "${prom}",
         "targets": [
           {
-            "expr": "(increase(jvm_cpu_time_seconds_total{instance=~\"$instance\",job=\"$job\"}[1m]) /60)/jvm_cpu_count{job=\"$job\",instance=~\"$instance\"}",
+            "expr": "((increase(jvm_cpu_time_seconds_total{instance=~\"$instance\",job=\"$job\"}[1m]) /60)/jvm_cpu_count{job=\"$job\",instance=~\"$instance\"}) *100",
             "refId": "A",
             "maxDataPoints": 240
           }
@@ -200,7 +200,7 @@
         "datasourceValue": "${prom}",
         "targets": [
           {
-            "expr": "jvm_cpu_recent_utilization_ratio{instance=~\"$instance\",job=\"$job\"}",
+            "expr": "jvm_cpu_recent_utilization_ratio{instance=~\"$instance\",job=\"$job\"}*100",
             "refId": "A",
             "maxDataPoints": 240
           }
