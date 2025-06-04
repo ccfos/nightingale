@@ -223,3 +223,31 @@ func InitBuiltinPayloads(ctx *ctx.Context) error {
 
 	return DB(ctx).Save(&lst).Error
 }
+
+func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
+	session := DB(ctx).Model(&BuiltinPayload{}).Select("count(*) as total", "max(update_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func BuiltinPayloadsGetAllMap(ctx *ctx.Context) (map[int64]*BuiltinPayload, error) {
+	var lst []*BuiltinPayload
+	// Find data from user.
+	err := DB(ctx).Model(&BuiltinPayload{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make(map[int64]*BuiltinPayload)
+	for i := 0; i < len(lst); i++ {
+		ret[lst[i].ID] = lst[i]
+	}
+
+	return ret, nil
+}

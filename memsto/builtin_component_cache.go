@@ -29,8 +29,13 @@ type BuiltinComponentCacheType struct {
 	builtinIntegrationsDir string // path to the directory containing builtin components, e.g., "/path/to/builtin/components"
 
 	sync.RWMutex
-	bc map[uint64]*models.BuiltinComponent // key: id
-	bp map[int64]*models.BuiltinPayload    // key: id
+	bc          map[uint64]*models.BuiltinComponent // key: id
+	bpsInSystem map[int64]*models.BuiltinPayload    // key: id, all builtin payloads
+	bpsInUser   map[int64]*models.BuiltinPayload    // key: id, all builtin payloads
+	// Created by system, do no need to be synced.
+	bpInSystem map[uint64]map[string][]*models.BuiltinPayload // key: id => map[cate][]payload
+	// Created by user, need to be synced with the database
+	bpInUser map[uint64]map[string][]*models.BuiltinPayload // key: id => map[cate][]payload
 }
 
 func NewBuiltinComponentCache(ctx *ctx.Context, stats *Stats, builtinIntegrationsDir string) *BuiltinComponentCacheType {
@@ -41,7 +46,10 @@ func NewBuiltinComponentCache(ctx *ctx.Context, stats *Stats, builtinIntegration
 		stats:                  stats,
 		builtinIntegrationsDir: builtinIntegrationsDir,
 		bc:                     make(map[uint64]*models.BuiltinComponent),
-		bp:                     make(map[int64]*models.BuiltinPayload),
+		bpsInSystem:            make(map[int64]*models.BuiltinPayload),
+		bpsInUser:              make(map[int64]*models.BuiltinPayload),
+		bpInSystem:             make(map[uint64]map[string][]*models.BuiltinPayload),
+		bpInUser:               make(map[uint64]map[string][]*models.BuiltinPayload),
 	}
 
 	bc.SyncBuiltinComponents()
@@ -63,7 +71,12 @@ func (b *BuiltinComponentCacheType) SyncBuiltinComponents() {
 		logger.Errorf("failed to sync builtin components: %v", err)
 	}
 
-	go b.loopSyncBuiltinComponents()
+	err = b.syncBuiltinPayloads()
+	if err != nil {
+		logger.Errorf("failed to sync builtin payload: %v", err)
+	}
+
+	go b.loopSyncBuiltinComponentsAndPayloads()
 }
 
 func (b *BuiltinComponentCacheType) initBuiltinComponentFiles() error {
@@ -152,7 +165,7 @@ func (b *BuiltinComponentCacheType) initBuiltinComponentFiles() error {
 						UUID:        alert.UUID,
 					}
 
-					b.addBuiltinPayload(&builtinAlert)
+					b.addBuiltinPayload(&builtinAlert, true)
 				}
 			}
 		}
@@ -206,7 +219,7 @@ func (b *BuiltinComponentCacheType) initBuiltinComponentFiles() error {
 					UUID:        dashboard.UUID,
 				}
 
-				b.addBuiltinPayload(&builtinDashboard)
+				b.addBuiltinPayload(&builtinDashboard, true)
 			}
 		} else if err != nil {
 			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
@@ -216,11 +229,14 @@ func (b *BuiltinComponentCacheType) initBuiltinComponentFiles() error {
 	return nil
 }
 
-func (b *BuiltinComponentCacheType) loopSyncBuiltinComponents() {
+func (b *BuiltinComponentCacheType) loopSyncBuiltinComponentsAndPayloads() {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
 		if err := b.syncBuiltinComponents(); err != nil {
+			logger.Warning("failed to sync datasources:", err)
+		}
+		if err := b.syncBuiltinPayloads(); err != nil {
 			logger.Warning("failed to sync datasources:", err)
 		}
 	}
@@ -248,7 +264,7 @@ func (b *BuiltinComponentCacheType) syncBuiltinComponents() error {
 		return errors.WithMessage(err, "failed to call BuiltinComponentGetMap")
 	}
 
-	b.Set(bc, stat.Total, stat.LastUpdated)
+	b.SetBuiltinComponent(bc, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_components").Set(float64(ms))
@@ -260,10 +276,83 @@ func (b *BuiltinComponentCacheType) syncBuiltinComponents() error {
 	return nil
 }
 
-func (b *BuiltinComponentCacheType) Set(bc map[uint64]*models.BuiltinComponent, total, lastUpdated int64) {
+func (b *BuiltinComponentCacheType) syncBuiltinPayloads() error {
+	start := time.Now()
+
+	stat, err := models.BuiltinPayloadsStatistics(b.ctx)
+	if err != nil {
+		dumper.PutSyncRecord("builtin_payloads", start.Unix(), -1, -1, "failed to query statistics: "+err.Error())
+		return errors.WithMessage(err, "failed to exec BuiltinPayloadsStatistics")
+	}
+
+	if !b.StatChanged(stat.Total, stat.LastUpdated) {
+		b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_payloads").Set(0)
+		b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_payloads").Set(0)
+		dumper.PutSyncRecord("builtin_payloads", start.Unix(), -1, -1, "not changed")
+		return nil
+	}
+
+	bc, err := models.BuiltinPayloadsGetAllMap(b.ctx)
+	if err != nil {
+		dumper.PutSyncRecord("builtin_payloads", start.Unix(), -1, -1, "failed to query records: "+err.Error())
+		return errors.WithMessage(err, "failed to call BuiltinPayloadsGetAllMap")
+	}
+
+	b.SetBuiltinPayload(bc, stat.Total, stat.LastUpdated)
+
+	ms := time.Since(start).Milliseconds()
+	b.stats.GaugeCronDuration.WithLabelValues("sync_builtin_payloads").Set(float64(ms))
+	b.stats.GaugeSyncNumber.WithLabelValues("sync_builtin_payloads").Set(float64(len(bc)))
+
+	logger.Infof("timer: sync builtin payloads done, cost: %dms, number: %d", ms, len(bc))
+	dumper.PutSyncRecord("builtin_payloads", start.Unix(), ms, len(bc), "success")
+
+	return nil
+}
+
+func (b *BuiltinComponentCacheType) SetBuiltinComponent(bc map[uint64]*models.BuiltinComponent, total, lastUpdated int64) {
 	b.Lock()
 	b.bc = bc
 	b.Unlock()
+
+	// only one goroutine used, so no need lock
+	b.statTotal = total
+	b.statLastUpdated = lastUpdated
+}
+
+func (b *BuiltinComponentCacheType) BuiltinComponentGets(query string, disabled int, isByUser bool) ([]*models.BuiltinComponent, error) {
+	var lst []*models.BuiltinComponent
+	for _, component := range b.bc {
+		if query != "" && !strings.Contains(component.Ident, query) {
+			continue
+		}
+		if disabled == 0 && component.Disabled != disabled {
+			continue
+		}
+		if disabled == 1 && component.Disabled != disabled {
+			continue
+		}
+		if isByUser && component.CreatedBy == SYSTEM {
+			continue
+		}
+		lst = append(lst, component)
+	}
+
+	return lst, nil
+}
+
+// SetBuiltinPayload sets the builtin payloads in the cache, only for payloads created by user.
+func (b *BuiltinComponentCacheType) SetBuiltinPayload(bp map[int64]*models.BuiltinPayload, total, lastUpdated int64) {
+	b.Lock()
+	defer b.Unlock()
+	for _, payload := range bp {
+		if payload.CreatedBy == SYSTEM {
+			b.addBuiltinPayload(payload, true)
+			continue
+		} else {
+			b.addBuiltinPayload(payload, false)
+		}
+	}
 
 	// only one goroutine used, so no need lock
 	b.statTotal = total
@@ -288,17 +377,59 @@ func (b *BuiltinComponentCacheType) GetNamesByBuiltinComponentIds(ids []uint64) 
 
 func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
 	var result []*models.BuiltinPayload
+	b.RLock()
+	defer b.RUnlock()
 
-	// TODO: Use table to speed up query
-	for _, payload := range b.bp {
-		if (typ != "" && payload.Type != typ) ||
-			(componentId != 0 && payload.ComponentID != componentId) ||
-			(cate != "" && payload.Cate != cate) ||
-			(query != "" && !strings.Contains(payload.Name, query) && !strings.Contains(payload.Tags, query)) {
-			continue
+	bpInCateInSystem, okInSystem := b.bpInSystem[componentId]
+	bpInCateInUser, okInUser := b.bpInUser[componentId]
+	if !okInSystem && !okInUser {
+		return nil, fmt.Errorf("no builtin payloads found for component id %d", componentId)
+	}
+
+	if okInSystem {
+		if cate == "" {
+			for _, bps := range bpInCateInSystem {
+				for _, bp := range bps {
+					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					result = append(result, bp)
+				}
+			}
+		} else {
+			bps, exists := bpInCateInSystem[cate]
+			if exists {
+				for _, bp := range bps {
+					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					result = append(result, bp)
+				}
+			}
 		}
+	}
 
-		result = append(result, payload)
+	if okInUser {
+		if cate == "" {
+			for _, bps := range bpInCateInUser {
+				for _, bp := range bps {
+					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					result = append(result, bp)
+				}
+			}
+		} else {
+			bps, exists := bpInCateInUser[cate]
+			if exists {
+				for _, bp := range bps {
+					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					result = append(result, bp)
+				}
+			}
+		}
 	}
 
 	if len(result) == 0 {
@@ -311,9 +442,14 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 func (b *BuiltinComponentCacheType) GetBuiltinPayloadById(id int64) (*models.BuiltinPayload, error) {
 	b.RLock()
 	defer b.RUnlock()
-	payload, ok := b.bp[id]
-	if ok {
-		return payload, nil
+
+	payloadInSystem, okInSystem := b.bpsInSystem[id]
+	if okInSystem {
+		return payloadInSystem, nil
+	}
+	payloadInUser, okInUser := b.bpsInUser[id]
+	if okInUser {
+		return payloadInUser, nil
 	}
 
 	return nil, fmt.Errorf("no results found")
@@ -322,14 +458,29 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayloadById(id int64) (*models.Bui
 func (b *BuiltinComponentCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
 	var result set.StringSet
 
-	// TODO: Use table to speed up query
-	for _, payload := range b.bp {
-		if (typ != "" && payload.Type != typ) ||
-			(componentId != 0 && payload.ComponentID != componentId) {
-			continue
-		}
+	bpInCateInSystem, okInSystem := b.bpInSystem[componentId]
+	bpInCateInUser, okInUser := b.bpInUser[componentId]
 
-		result = *result.Add(payload.Cate)
+	if !okInSystem && !okInUser {
+		return nil, fmt.Errorf("no builtin payloads found for component id %d", componentId)
+	}
+
+	if okInSystem {
+		for cate, bps := range bpInCateInSystem {
+			if typ != "" && bps[0].Type != typ {
+				continue
+			}
+			result.Add(cate)
+		}
+	}
+
+	if okInUser {
+		for cate, bps := range bpInCateInUser {
+			if typ != "" && bps[0].Type != typ {
+				continue
+			}
+			result.Add(cate)
+		}
 	}
 
 	resultStrings := result.ToSlice()
@@ -364,16 +515,55 @@ func (b *BuiltinComponentCacheType) addBuiltinComponent(bc *models.BuiltinCompon
 	return nil
 }
 
-func (b *BuiltinComponentCacheType) addBuiltinPayload(bp *models.BuiltinPayload) error {
+// addBuiltinPayload adds a new builtin payload to the cache.
+// If the payload is created by the system, it is stored in bpInSystem.
+// If it is created by the user, it is stored in bpInUser.
+// This function will not check duplicates.
+func (b *BuiltinComponentCacheType) addBuiltinPayload(bp *models.BuiltinPayload, isSystem bool) {
 	b.Lock()
 	defer b.Unlock()
 
-	if _, exists := b.bp[bp.ID]; exists {
-		return errors.New("builtin payload already exists")
-	}
+	if isSystem {
+		bpInSystem, exists := b.bpInSystem[bp.ComponentID]
+		if !exists {
+			bpInSystem := make(map[string][]*models.BuiltinPayload)
+			bpInSystem[bp.Cate] = append(bpInSystem[bp.Cate], bp)
+			b.bpInSystem[bp.ComponentID] = bpInSystem
+			return
+		}
+		bpInCateInSystem, exists := bpInSystem[bp.Cate]
+		if !exists {
+			bpInCateInSystem = []*models.BuiltinPayload{bp}
+			bpInSystem[bp.Cate] = bpInCateInSystem
+			b.bpInSystem[bp.ComponentID] = bpInSystem
+			return
+		}
+		bpInSystem[bp.Cate] = append(bpInCateInSystem, bp)
+		b.bpInSystem[bp.ComponentID] = bpInSystem
 
-	b.bp[bp.ID] = bp
-	return nil
+		// Add key value data to bpsInSystem
+		b.bpsInSystem[bp.ID] = bp
+	} else {
+		bpInUser, exists := b.bpInUser[bp.ComponentID]
+		if !exists {
+			bpInUser := make(map[string][]*models.BuiltinPayload)
+			bpInUser[bp.Cate] = append(bpInUser[bp.Cate], bp)
+			b.bpInUser[bp.ComponentID] = bpInUser
+			return
+		}
+		bpInCateInUser, exists := bpInUser[bp.Cate]
+		if !exists {
+			bpInCateInUser = []*models.BuiltinPayload{bp}
+			bpInUser[bp.Cate] = bpInCateInUser
+			b.bpInUser[bp.ComponentID] = bpInUser
+			return
+		}
+		bpInUser[bp.Cate] = append(bpInCateInUser, bp)
+		b.bpInUser[bp.ComponentID] = bpInUser
+
+		// Add key value data to bpsInUser
+		b.bpsInUser[bp.ID] = bp
+	}
 }
 
 type BuiltinBoard struct {
