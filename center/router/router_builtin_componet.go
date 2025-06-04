@@ -44,7 +44,7 @@ func (rt *Router) builtinComponentsGets(c *gin.Context) {
 	isByUser := ginx.QueryBool(c, "is_by_user", false)
 	disabled := ginx.QueryInt(c, "disabled", -1)
 
-	bc, err := models.BuiltinComponentGets(rt.Ctx, query, disabled, isByUser)
+	bc, err := rt.BuiltinComponentCache.BuiltinComponentGets(query, disabled, isByUser)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(bc, nil)

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
 )
 
 const SYSTEM = "system"
@@ -148,11 +147,6 @@ func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*
 }
 
 func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
-	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=builtin_components")
-		return s, err
-	}
-
 	session := DB(ctx).Model(&BuiltinComponent{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics
@@ -166,18 +160,10 @@ func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func BuiltinComponentGetAllMap(ctx *ctx.Context) (map[uint64]*BuiltinComponent, error) {
 	var lst []*BuiltinComponent
-	var err error
-	if !ctx.IsCenter {
-		lst, err = poster.GetByUrls[[]*BuiltinComponent](ctx, "/v1/n9e/builtin-components")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Find data from user.
-		err = DB(ctx).Model(&BuiltinComponent{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
-		if err != nil {
-			return nil, err
-		}
+	// Find data from user.
+	err := DB(ctx).Model(&BuiltinComponent{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+	if err != nil {
+		return nil, err
 	}
 
 	ret := make(map[uint64]*BuiltinComponent)
