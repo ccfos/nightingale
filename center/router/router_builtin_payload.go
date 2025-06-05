@@ -279,10 +279,10 @@ func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid", 0)
 	// 优先以 uuid 为准
 	if uuid != 0 {
-		ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid))
+		ginx.NewRender(c).Data(rt.BuiltinComponentCache.GetBuiltinPayloadByUUID(uuid))
 		return
 	}
 
 	id := ginx.QueryInt64(c, "id", 0)
-	ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "id = ?", id))
+	ginx.NewRender(c).Data(rt.BuiltinComponentCache.GetBuiltinPayloadById(id))
 }

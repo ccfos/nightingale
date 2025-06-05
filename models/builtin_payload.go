@@ -225,7 +225,7 @@ func InitBuiltinPayloads(ctx *ctx.Context) error {
 }
 
 func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&BuiltinPayload{}).Select("count(*) as total", "max(update_at) as last_updated")
+	session := DB(ctx).Model(&BuiltinPayload{}).Select("count(*) as total", "max(updated_at) as last_updated")
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error

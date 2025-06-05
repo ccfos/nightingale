@@ -147,7 +147,7 @@ func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*
 }
 
 func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&BuiltinComponent{}).Select("count(*) as total", "max(update_at) as last_updated")
+	session := DB(ctx).Model(&BuiltinComponent{}).Select("count(*) as total", "max(updated_at) as last_updated")
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
