@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 	"golang.org/x/exp/slices"
 )
 
@@ -76,6 +78,44 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+type alertHisEventsDeleteForm struct {
+	Severities []int `json:"severities"`
+	Timestamp  int64 `json:"timestamp" binding:"required"`
+}
+
+func (rt *Router) alertHisEventsDelete(c *gin.Context) {
+	var f alertHisEventsDeleteForm
+	ginx.BindJSON(c, &f)
+	// 校验
+	if f.Timestamp == 0 {
+		ginx.Bomb(http.StatusBadRequest, "timestamp parameter is required")
+		return
+	}
+
+	user := c.MustGet("user").(*models.User)
+
+	// 启动后台清理任务
+	go func() {
+		limit := 100
+		for {
+			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
+			if err != nil {
+				logger.Errorf("Failed to delete alert history events: operator=%s, timestamp=%d, severities=%v, error=%v",
+					user.Username, f.Timestamp, f.Severities, err)
+				break
+			}
+			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d",
+				user.Username, f.Timestamp, f.Severities, n)
+			if n < int64(limit) {
+				break // 已经删完
+			}
+
+			time.Sleep(100 * time.Millisecond) // 防止锁表
+		}
+	}()
+	ginx.NewRender(c).Message("Alert history events deletion started")
 }
 
 func (rt *Router) alertHisEventGet(c *gin.Context) {
