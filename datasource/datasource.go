@@ -53,6 +53,13 @@ func init() {
 		PluginType:     "ck",
 		PluginTypeName: "ClickHouse",
 	}
+
+	DatasourceTypes[5] = DatasourceType{
+		Id:             5,
+		Category:       "timeseries",
+		PluginType:     "mysql",
+		PluginTypeName: "MySQL",
+	}
 }
 
 type NewDatasrouceFn func(settings map[string]interface{}) (Datasource, error)
