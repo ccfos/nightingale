@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"github.com/toolkits/pkg/logger"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 	"golang.org/x/exp/slices"
 )
 
