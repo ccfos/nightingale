@@ -95,9 +95,6 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 	}
 
 	user := c.MustGet("user").(*models.User)
-	if !user.IsAdmin() {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
-	}
 
 	// 启动后台清理任务
 	go func() {
@@ -105,12 +102,16 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 		for {
 			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
 			if err != nil {
-				logger.Errorf("Failed to delete alert history events: %v", err)
+				logger.Errorf("Failed to delete alert history events: operator=%s, timestamp=%d, severities=%v, error=%v",
+					user.Username, f.Timestamp, f.Severities, err)
 				break
 			}
+			logger.Debugf("Successfully deleted alert history events: operator=%s, timestamp=%d, severities=%v, deleted=%d",
+				user.Username, f.Timestamp, f.Severities, n)
 			if n < int64(limit) {
 				break // 已经删完
 			}
+
 			time.Sleep(100 * time.Millisecond) // 防止锁表
 		}
 	}()
