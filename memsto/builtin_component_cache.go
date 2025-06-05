@@ -343,8 +343,6 @@ func (b *BuiltinComponentCacheType) BuiltinComponentGets(query string, disabled 
 
 // SetBuiltinPayload sets the builtin payloads in the cache, only for payloads created by user.
 func (b *BuiltinComponentCacheType) SetBuiltinPayload(bp map[int64]*models.BuiltinPayload, total, lastUpdated int64) {
-	b.Lock()
-	defer b.Unlock()
 	for _, payload := range bp {
 		if payload.CreatedBy == SYSTEM {
 			b.addBuiltinPayload(payload, true)
@@ -393,6 +391,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
 						continue
 					}
+					if typ != "" && bp.Type != typ {
+						continue
+					}
 					result = append(result, bp)
 				}
 			}
@@ -401,6 +402,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 			if exists {
 				for _, bp := range bps {
 					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					if typ != "" && bp.Type != typ {
 						continue
 					}
 					result = append(result, bp)
@@ -416,6 +420,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
 						continue
 					}
+					if typ != "" && bp.Type != typ {
+						continue
+					}
 					result = append(result, bp)
 				}
 			}
@@ -424,6 +431,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 			if exists {
 				for _, bp := range bps {
 					if query != "" && !strings.Contains(bp.Name, query) && !strings.Contains(bp.Tags, query) {
+						continue
+					}
+					if typ != "" && bp.Type != typ {
 						continue
 					}
 					result = append(result, bp)
@@ -437,6 +447,27 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayload(typ, cate, query string, c
 	}
 
 	return result, nil
+}
+
+// GetBuiltinPayloadByUUID returns the builtin payload by uuid
+// This function is in low performance, better not to use it in high frequency.
+func (b *BuiltinComponentCacheType) GetBuiltinPayloadByUUID(uuid int64) (*models.BuiltinPayload, error) {
+	b.RLock()
+	defer b.RUnlock()
+
+	for _, payload := range b.bpsInSystem {
+		if payload.UUID == uuid {
+			return payload, nil
+		}
+	}
+
+	for _, payload := range b.bpsInUser {
+		if payload.UUID == uuid {
+			return payload, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no results found")
 }
 
 func (b *BuiltinComponentCacheType) GetBuiltinPayloadById(id int64) (*models.BuiltinPayload, error) {
@@ -456,6 +487,7 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayloadById(id int64) (*models.Bui
 }
 
 func (b *BuiltinComponentCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
+	logger.Infof("b.bpInSystem: %d typ: %s componentId: %d", len(b.bpInSystem), typ, componentId)
 	var result set.StringSet
 
 	bpInCateInSystem, okInSystem := b.bpInSystem[componentId]
@@ -470,6 +502,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayloadCates(typ string, component
 			if typ != "" && bps[0].Type != typ {
 				continue
 			}
+			if componentId != 0 && bps[0].ComponentID != componentId {
+				continue
+			}
 			result.Add(cate)
 		}
 	}
@@ -477,6 +512,9 @@ func (b *BuiltinComponentCacheType) GetBuiltinPayloadCates(typ string, component
 	if okInUser {
 		for cate, bps := range bpInCateInUser {
 			if typ != "" && bps[0].Type != typ {
+				continue
+			}
+			if componentId != 0 && bps[0].ComponentID != componentId {
 				continue
 			}
 			result.Add(cate)
