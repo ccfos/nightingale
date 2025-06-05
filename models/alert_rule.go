@@ -28,6 +28,7 @@ const (
 	PROMETHEUS    = "prometheus"
 	TDENGINE      = "tdengine"
 	ELASTICSEARCH = "elasticsearch"
+	MYSQL         = "mysql"
 
 	CLICKHOUSE = "ck"
 )
@@ -1171,16 +1172,16 @@ func (ar *AlertRule) IsPrometheusRule() bool {
 	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
 
-func (ar *AlertRule) IsLokiRule() bool {
-	return ar.Prod == LOKI || ar.Cate == LOKI
-}
-
 func (ar *AlertRule) IsHostRule() bool {
 	return ar.Prod == HOST
 }
 
-func (ar *AlertRule) IsTdengineRule() bool {
-	return ar.Cate == TDENGINE
+func (ar *AlertRule) IsInnerRule() bool {
+	return ar.Cate == TDENGINE ||
+		ar.Cate == CLICKHOUSE ||
+		ar.Cate == ELASTICSEARCH ||
+		ar.Prod == LOKI || ar.Cate == LOKI ||
+		ar.Cate == MYSQL
 }
 
 func (ar *AlertRule) GetRuleType() string {

@@ -93,7 +93,7 @@ func (s *Scheduler) syncAlertRules() {
 		}
 
 		ruleType := rule.GetRuleType()
-		if rule.IsPrometheusRule() || rule.IsLokiRule() || rule.IsTdengineRule() || rule.IsClickHouseRule() || rule.IsElasticSearch() {
+		if rule.IsPrometheusRule() || rule.IsInnerRule() {
 			datasourceIds := s.datasourceCache.GetIDsByDsCateAndQueries(rule.Cate, rule.DatasourceQueries)
 			for _, dsId := range datasourceIds {
 				if !naming.DatasourceHashRing.IsHit(strconv.FormatInt(dsId, 10), fmt.Sprintf("%d", rule.Id), s.aconf.Heartbeat.Endpoint) {
