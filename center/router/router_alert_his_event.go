@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -76,6 +77,43 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+type alertHisEventsDeleteForm struct {
+	Severities []int `json:"severities"`
+	Timestamp  int64 `json:"timestamp" binding:"required"`
+}
+
+func (rt *Router) alertHisEventsDelete(c *gin.Context) {
+	var f alertHisEventsDeleteForm
+	ginx.BindJSON(c, &f)
+	// 校验
+	if f.Timestamp == 0 {
+		ginx.Bomb(http.StatusBadRequest, "timestamp parameter is required")
+		return
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if !user.IsAdmin() {
+		ginx.Bomb(http.StatusForbidden, "forbidden")
+	}
+
+	// 启动后台清理任务
+	go func() {
+		limit := 100
+		for {
+			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
+			if err != nil {
+				// 记录日志
+				break
+			}
+			if n < int64(limit) {
+				break // 已经删完
+			}
+			time.Sleep(100 * time.Millisecond) // 防止锁表
+		}
+	}()
+	ginx.NewRender(c).Message("Alert history events deletion started")
 }
 
 func (rt *Router) alertHisEventGet(c *gin.Context) {
