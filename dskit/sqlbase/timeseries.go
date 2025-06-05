@@ -112,8 +112,8 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 				metricTs[k] = float64(ts.Unix())
 			default:
 				// Default to labels for any unrecognized columns
-				if !ignore && keys.LabelKey != "" {
-					// 只有当 labelKey 不为空时，才将剩余的列作为 label
+				if !ignore && keys.LabelKey == "" {
+					// 只有当 labelKey 为空时，才将剩余的列作为 label
 					labels[k] = fmt.Sprintf("%v", v)
 				}
 			}
