@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/toolkits/pkg/logger"
 	"net/http"
 	"strings"
 	"time"
@@ -104,7 +105,7 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 		for {
 			n, err := models.AlertHisEventBatchDelete(rt.Ctx, f.Timestamp, f.Severities, limit)
 			if err != nil {
-				// 记录日志
+				logger.Errorf("Failed to delete alert history events: %v", err)
 				break
 			}
 			if n < int64(limit) {
