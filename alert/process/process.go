@@ -280,7 +280,7 @@ func Relabel(rule *models.AlertRule, event *models.AlertCurEvent) {
 
 	// need to keep the original label
 	event.OriginalTags = event.Tags
-	event.OriginalTagsJSON = make([]string, len(event.TagsJSON))
+	event.OriginalTagsJSON = event.TagsJSON
 
 	if len(rule.EventRelabelConfig) == 0 {
 		return
