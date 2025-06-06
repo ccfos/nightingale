@@ -3,7 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -240,12 +239,6 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	case "smtp":
 		if len(sendtos) == 0 {
 			ginx.Bomb(http.StatusBadRequest, "no valid email recipients configured")
-		}
-		// 验证邮箱格式
-		for _, email := range sendtos {
-			if !strings.Contains(email, "@") {
-				ginx.Bomb(http.StatusBadRequest, fmt.Sprintf("invalid email address: %s", email))
-			}
 		}
 		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
 		ginx.NewRender(c).Message(err)
