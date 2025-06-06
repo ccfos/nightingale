@@ -67,7 +67,7 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	shard := m.Shards[0]
 
 	if shard.Timeout == 0 {
-		shard.Timeout = 10
+		shard.Timeout = 300
 	}
 
 	if shard.MaxIdleConns == 0 {

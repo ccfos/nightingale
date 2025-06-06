@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/mysql"
@@ -126,7 +127,10 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		return nil, fmt.Errorf("valueKey is required")
 	}
 
-	items, err := m.QueryTimeseries(context.TODO(), &sqlbase.QueryParam{
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(m.Shards[0].Timeout)*time.Second)
+	defer cancel()
+
+	items, err := m.QueryTimeseries(timeoutCtx, &sqlbase.QueryParam{
 		Sql: mysqlQueryParam.SQL,
 		Keys: types.Keys{
 			ValueKey: mysqlQueryParam.Keys.ValueKey,
@@ -165,7 +169,10 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		}
 	}
 
-	items, err := m.Query(ctx, &sqlbase.QueryParam{
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(m.Shards[0].Timeout)*time.Second)
+	defer cancel()
+
+	items, err := m.Query(timeoutCtx, &sqlbase.QueryParam{
 		Sql: mysqlQueryParam.SQL,
 	})
 
