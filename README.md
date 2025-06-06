@@ -58,7 +58,7 @@
 - 想要把公司的多套监控系统产生的事件聚拢到一个平台，统一做收敛降噪、响应处理、数据分析
 - 想要支持人员的排班，践行 On-call 文化，想要支持告警认领、升级（避免遗漏）、协同处理
 
-那夜莺是不合适的，您需要的是 [PagerDuty](https://www.pagerduty.com/) 或 [FlashDuty](https://flashcat.cloud/product/flashcat-duty/) （产品易用，且有免费套餐）这样的 On-call 产品。
+那夜莺是不合适的，推荐您选用 [FlashDuty](https://flashcat.cloud/product/flashcat-duty/) 这样的 On-call 产品，产品简单易用，也有免费套餐。
 
 
 ## 相关资料 & 交流渠道
