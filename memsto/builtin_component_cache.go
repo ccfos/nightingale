@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -337,6 +338,10 @@ func (b *BuiltinComponentCacheType) BuiltinComponentGets(query string, disabled 
 		}
 		lst = append(lst, component)
 	}
+
+	sort.Slice(lst, func(i, j int) bool {
+		return lst[i].Ident < lst[j].Ident
+	})
 
 	return lst, nil
 }
