@@ -237,6 +237,9 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		}
 
 	case "smtp":
+		if len(sendtos) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "No valid email address in the user and team")
+		}
 		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
 		ginx.NewRender(c).Message(err)
 	case "script":
