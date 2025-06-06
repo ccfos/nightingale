@@ -12,7 +12,9 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/toolkits/pkg/ginx"
 )
 
@@ -30,6 +32,9 @@ func (rt *Router) messageTemplatesAdd(c *gin.Context) {
 	ginx.Dangerous(err)
 	now := time.Now().Unix()
 	for _, tpl := range lst {
+		// 生成一个唯一的标识符，以后也不允许修改，前端不需要传这个参数
+		tpl.Ident = uuid.New().String()
+
 		ginx.Dangerous(tpl.Verify())
 		if !isAdmin && !slice.HaveIntersection(gids, tpl.UserGroupIds) {
 			ginx.Bomb(http.StatusForbidden, "forbidden")
