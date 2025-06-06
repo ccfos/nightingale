@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "HTTP 探测响应码",
                 "note": "如果没有拿到 response，这个指标就没有值了"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "HTTP probe response code",
                 "note": "If you don't get response, this indicator has no value"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "HTTP 探测结果状态码",
                 "note": "0 值表示正常，大于 0 就是异常，各个值的含义如下：\n\n```\nSuccess          = 0\nConnectionFailed = 1\nTimeout          = 2\nDNSError         = 3\nAddressError     = 4\nBodyMismatch     = 5\nCodeMismatch     = 6\n```"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "HTTP probe result status code",
                 "note": "A value of 0 means normal, and a value greater than 0 means abnormal. The meanings of each value are as follows: \n \n``` \nSuccess = 0 \nConnectionFailed = 1 \nTimeout = 2 \nDNSError = 3 \nAddressError = 4 \nBodyMismatch = 5 \nCodeMismatch = 6 \n```"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "HTTP 探测耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "HTTP probe time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "HTTP 证书过期时间",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "HTTP certificate expiration time",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - DNS 请求耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-DNS request time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - TCP建连耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-TCP connection establishment time",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - TLS握手耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-TLS handshake time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - 探测结果状态码",
                 "note": "探测结果，0 是正常，其他数字有不同含义\n- 0：成功\n- 1：连接失败\n- 2：监测超时\n- 3：DNS解析失败\n- 4：地址格式错误\n- 5：返回内容不匹配\n- 6：返回码不匹配\n- 其他数字为未知错误"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-detection result status code",
                 "note": "Detection result, 0 is normal, other numbers have different meanings \n-0: Success \n-1: Connection failed \n-2: Monitoring timeout \n-3: DNS resolution failed \n-4: Address format is wrong \n-5: Return content does not match \n-6: Return code mismatch \n-Other numbers are unknown error"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - 整体耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-overall time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - 返回状态码",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-Return status code",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,16 +283,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拨测 - 首包耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Dial test-first package time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     }
 ]

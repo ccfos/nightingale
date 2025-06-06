@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health delayed unassigned 的分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of Cluster Health delayed unassigned shards",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health Pending task 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Cluster Health Pending tasks quantity",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health relocating 的分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of shards for Cluster Health relocating",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health unassigned 的分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Cluster Health unassigned number of shards",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 健康度状态码",
                 "note": "- 1：Green，绿色状态，表示所有分片都正常\n- 2：Yellow，黄色状态，主分片都正常，从分片有不正常的\n- 3：Red，红色状态，有些主分片不正常"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Cluster Health health status code",
                 "note": "-1: Green, Green state, indicating that all shards are normal \n-2: Yellow, Yellow state, the main shard is normal, the slave shard is abnormal \n-3: Red, Red state, some main shards are abnormal"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 数据节点数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of Cluster Health data nodes",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 正在初始化的分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of shards being initialized by Cluster Health",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 活跃主分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Cluster Health Number of active primary shards",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 活跃分片数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Cluster Health Active Shards",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Cluster Health 节点数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of Cluster Health nodes",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,17 +283,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Indexing 平均耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Indexing average time consumption",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -299,17 +310,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Merge 平均耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Average time consumed by Merge",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -325,17 +337,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Query 平均耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Query average time consumption",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -351,17 +364,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "每秒 indexing 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "indexing per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -377,17 +391,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "每秒 merge 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "merge size per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -403,17 +418,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "每秒 merge 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of merges per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -429,17 +445,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "每秒删除 doc 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of docs deleted per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -455,17 +472,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "硬盘使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Hard Drive Usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -481,17 +499,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "网络流量 - 入向每秒流量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Network traffic-inbound traffic per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -507,17 +526,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "网络流量 - 出向每秒流量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Network traffic-outbound traffic per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -533,17 +553,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 CPU 使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process CPU usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -559,17 +580,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 JVM Heap 使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process JVM Heap Usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -585,17 +607,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 JVM Heap 区 committed 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process JVM Heap area committed size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -611,17 +634,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 JVM Non Heap 区 committed 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process JVM Non Heap area committed size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -637,17 +661,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 JVM Old 内存池 used 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process JVM Old memory pool used size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -663,17 +688,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程 JVM Young 内存池 used 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process JVM Young memory pool used size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -689,17 +715,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程新生代每秒 GC 次数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of GCs per second for the new generation of the process",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -715,17 +742,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程新生代每秒 GC 耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process new generation time per second GC",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -741,17 +769,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程老生代每秒 GC 次数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of GCs per second of process old generation",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -767,16 +796,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "进程老生代每秒 GC 耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process old generation GC time per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     }
 ]

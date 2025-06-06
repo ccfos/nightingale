@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 利用率（system）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container CPU utilization (system)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 利用率（user）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container CPU utilization (user)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 利用率（整体，值不会大于 100）",
                 "note": "只有设置了 limit 的容器才能计算此利用率"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container CPU utilization (overall, the value will not be greater than 100)",
                 "note": "Only containers with limit set can calculate this utilization"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 利用率（整体，值可能大于 100）",
                 "note": "如果是 200% 表示占用了 2 个核"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container CPU utilization (overall, value may be greater than 100)",
                 "note": "If 200%, it means that 2 cores are occupied"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 每秒有多少 period",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "How many periods does the container CPU have per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 每秒被 throttle 的 period 量",
                 "note": "如果容器限制了 CPU，而 app 所需算法过多， 会被抑制使用，container_cpu_cfs_throttled_periods_total 统计总共有多少个 period 被抑制了，如果近期发生抑制是需要关注的，一些延迟敏感的 app 受影响尤为明显。出现被抑制的情况，大概率是需要升配了。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "The amount of periods that the container CPU is throttle per second",
                 "note": "If the container limits the CPU and the app requires too many algorithms, it will be suppressed. container _ CPU _ cfs _ throttled _ periods _ total counts how many periods have been suppressed in total. If suppression occurs recently, it needs attention. Some delay-sensitive apps are particularly affected. If it is suppressed, there is a high probability that it needs to be upgraded."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 CPU 被 throttle 的比例",
                 "note": "这个值大于 0 就要注意"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "The proportion of container CPU being throttle",
                 "note": "If this value is greater than 0, pay attention"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 filesystem 使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container filesystem usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 filesystem 使用量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container filesystem usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 filesystem 当前 IO 次数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container filesystem Current IO times",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,17 +283,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 filesystem 总量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container filesystem Total",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -299,17 +310,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 inode free 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container inode free amount",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -325,17 +337,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 inode total 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container inode total",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -351,17 +364,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 inode 使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container inode usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -377,17 +391,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 IO 每秒写入 byte 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container IO writes bytes per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -403,17 +418,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 IO 每秒读取 byte 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container IO reads bytes per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -429,17 +445,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory cache 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory cache amount",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -455,17 +472,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用率（Usage）",
                 "note": "如果有大量文件 IO，有大量 container_memory_cache，container_memory_usage_bytes 和 container_memory_working_set_bytes 的大小会有差异"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory Usage (Usage)",
                 "note": "If there is a large number of file IO and a large number of container _ memory _ cache, the size of container _ memory _ usage _ bytes and container _ memory _ working _ set _ bytes will be different"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -481,17 +499,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用率（Working Set）",
                 "note": "如果有大量文件 IO，有大量 container_memory_cache，container_memory_usage_bytes 和 container_memory_working_set_bytes 的大小会有差异"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory usage rate (Working Set)",
                 "note": "If there is a large number of file IO and a large number of container _ memory _ cache, the size of container _ memory _ usage _ bytes and container _ memory _ working _ set _ bytes will be different"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -507,17 +526,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用量（mapped_file）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory usage (mapped _ file)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -533,17 +553,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用量（RSS）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory usage (RSS)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -559,17 +580,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用量（Swap）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory usage (Swap)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -585,17 +607,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用量（Usage）",
                 "note": "如果有大量文件 IO，有大量 container_memory_cache，container_memory_usage_bytes 和 container_memory_working_set_bytes 的大小会有差异"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory Usage",
                 "note": "If there is a large number of file IO and a large number of container _ memory _ cache, the size of container _ memory _ usage _ bytes and container _ memory _ working _ set _ bytes will be different"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -611,17 +634,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 使用量（Working Set）",
                 "note": "如果有大量文件 IO，有大量 container_memory_cache，container_memory_usage_bytes 和 container_memory_working_set_bytes 的大小会有差异"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory usage (Working Set)",
                 "note": "If there is a large number of file IO and a large number of container _ memory _ cache, the size of container _ memory _ usage _ bytes and container _ memory _ working _ set _ bytes will be different"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -637,17 +661,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 分配失败次数（每秒）",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory allocation failures (per second)",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -663,17 +688,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 memory 限制量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container memory limit",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -689,17 +715,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒发送 bit 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container net sends bits per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -715,17 +742,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒发送 byte 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container net sends bytes per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -741,17 +769,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒发送数据包数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of packets sent per second by container net",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -767,17 +796,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒发送时 drop 包数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of drop packets sent by container net per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -793,17 +823,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒发送错包数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of wrong packets sent by container net per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -819,17 +850,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒接收 bit 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "The amount of bits received by the container net per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -845,17 +877,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒接收 byte 量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container net receives bytes per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -871,17 +904,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒接收数据包数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of packets received per second by container net",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -897,17 +931,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒接收时 drop 包数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of drop packets received by container net per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -923,17 +958,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器 net 每秒接收错包数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of wrong packets received by container net per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -949,17 +985,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器允许运行的最大线程数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "The maximum number of threads the container is allowed to run",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -975,17 +1012,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器内 1 号进程 soft ulimit 值",
                 "note": "容器内1号进程的软 ulimit 值。如果为-1，则无限制。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Process No. 1 soft ulimit value in container",
                 "note": "Soft ulimit value for process # 1 inside the container. If-1, there is no limit."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1001,17 +1039,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器已经运行的时间",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "How long the container has been running",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1027,17 +1066,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器当前打开套接字数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of currently open sockets in the container",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1053,17 +1093,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器当前打开文件句柄数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container Number of currently open file handles",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1079,17 +1120,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器当前运行的线程数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of threads currently running in the container",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1105,17 +1147,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器当前运行的进程数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of processes currently running in the container",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1131,17 +1174,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器总 GPU 加速卡可用内存量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Container Total GPU Accelerator Available Memory",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1157,16 +1201,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "容器正在使用的 GPU 加速卡内存量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "The amount of GPU accelerator card memory the container is using",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     }
 ]

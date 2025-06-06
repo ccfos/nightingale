@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"gorm.io/gorm"
 )
 
@@ -72,6 +71,11 @@ func (bm *BuiltinMetric) Verify() error {
 	}
 	if !hasEnglish {
 		return errors.New("english language is required")
+	}
+
+	// This verify is used to check creator is SYSTEM.
+	if bm.CreatedBy == SYSTEM {
+		return errors.New("can not modify system creator")
 	}
 
 	bm.Collector = strings.TrimSpace(bm.Collector)
@@ -147,6 +151,21 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
+	}
+
+	// Check if the builtin metrics are created by system.
+	var count int64
+	err := DB(ctx).
+		Where("id in ? AND created_by = ?", ids, "system").
+		Model(&BuiltinMetric{}).
+		Count(&count).
+		Error
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("cannot delete, some records are created by 'system'")
 	}
 
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
@@ -265,12 +284,7 @@ func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy s
 }
 
 func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
-	if !ctx.IsCenter {
-		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=builtin_metric")
-		return s, err
-	}
-
-	session := DB(ctx).Model(&BuiltinMetric{}).Select("count(*) as total", "max(update_at) as last_updated")
+	session := DB(ctx).Model(&BuiltinMetric{}).Select("count(*) as total", "max(updated_at) as last_updated")
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -283,18 +297,11 @@ func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func BuiltinMetricGetAllMap(ctx *ctx.Context) (map[int64]*BuiltinMetric, error) {
 	var lst []*BuiltinMetric
-	var err error
-	if !ctx.IsCenter {
-		lst, err = poster.GetByUrls[[]*BuiltinMetric](ctx, "/v1/n9e/builtin-metrics")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// Find data from user.
-		err = DB(ctx).Model(&BuiltinMetric{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
-		if err != nil {
-			return nil, err
-		}
+
+	// Find data from user.
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+	if err != nil {
+		return nil, err
 	}
 
 	ret := make(map[int64]*BuiltinMetric)

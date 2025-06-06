@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池 data 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status InnoDB buffer pool data size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池 dirty 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status InnoDB buffer pool dirty size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池 free 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status InnoDB buffer pool free size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池 page 使用率",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status InnoDB buffer pool page usage",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池 used 大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status InnoDB Buffer Pool used Size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status InnoDB 缓冲池总大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Total InnoDB Buffer Pool Size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 启动时长",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Startup Time",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 当前 running 的 threads 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status The number of threads currently running",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 当前打开的文件句柄数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of file handles currently open",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 当前连接数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of current connections",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,17 +283,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 最大曾用连接数",
                 "note": "曾经达到过的最大连接数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Maximum number of connections used",
                 "note": "Maximum number of connections ever reached"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -299,17 +310,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒 Command 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of Commands per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -325,17 +337,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒 query 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status queries per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -351,17 +364,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒 question 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Questions per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -377,17 +391,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒 slow query 数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status slow queries per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -403,17 +418,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒事务操作数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of transactions per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -429,17 +445,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒写操作数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of writes per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -455,17 +472,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒发送流量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status sends traffic per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -481,17 +499,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒接收流量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status receives traffic per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -507,17 +526,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 每秒读操作数量",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Read operations per second",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -533,17 +553,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 近 3 分钟 abort 的客户端",
                 "note": "原始指标 mysql_global_status_aborted_clients 表示由于客户端未正确关闭连接而终止的连接数，Counter 类型，单调递增。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status nearly 3 minutes abort client",
                 "note": "The raw metric mysql _ global _ status _ aborted _ clients represents the number of connections terminated because the client did not properly close the connection, Counter type, monotonically increasing."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -559,17 +580,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 近 3 分钟 abort 的连接数",
                 "note": "原始指标 mysql_global_status_aborted_connects 表示尝试连接到 MySQL 服务器失败的次数，Counter 类型，单调递增。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status Number of connections in last 3 minutes abort",
                 "note": "The raw metric MySQL _ global _ status _ aborted _ connects represents the number of failed attempts to connect to a MySQL server, Counter type, monotonically increasing."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -585,17 +607,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Status 近 3 分钟 table lock 等待次数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Status nearly 3 minutes table lock waiting times",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -611,17 +634,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Variables InnoDB 缓冲池配置大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Variables InnoDB buffer pool configuration size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -637,17 +661,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Variables read_only 开关值",
                 "note": "0 就是 OFF，1 是 ON"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Variables read _ only Switch value",
                 "note": "0 is OFF, 1 is ON"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -663,17 +688,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Variables 允许打开的文件句柄数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of file handles that Global Variables allows to open",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -689,17 +715,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Variables 最大连接数限制",
                 "note": "允许的最大连接数，默认值是 151，过小了。\n\n- 通过 `SHOW VARIABLES LIKE 'max_connections'` 命令查看当前设置\n- 通过 `SET GLOBAL max_connections = 2048` 重新设置最大连接数\n- 通过修改 MySQL 配置文件，在 `[mysqld]` 下面添加 `max_connections = 2048` 使其重启依旧生效"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Variables Maximum Connection Limit",
                 "note": "The maximum number of connections allowed, the default value is 151, is too small. \n \n-View the current settings with the ` SHOW VARIABLES LIKE'max _ connections ''command \n-Reset the maximum number of connections via ` SET GLOBAL max _ connections = 2048 ` \n-By modifying the MySQL configuration file, add ` max _ connections = 2048 ` under ` [mysqld] ` so that its restart still works"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -715,17 +742,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "Global Variables 查询缓存大小",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Global Variables Query Cache Size",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -741,17 +769,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MySQL 实例是否 UP",
                 "note": "1 表示 UP，说明能正常连到 MySQL 采集数据；0 表示无法连通 MySQL 实例，可能是网络问题、认证问题，或者 MySQL 本身就是挂了"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Whether MySQL instance is UP",
                 "note": "1 means UP, indicating that it can normally connect to MySQL to collect data; 0 means that the MySQL instance cannot be connected. It may be a network problem, authentication problem, or MySQL itself is down"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -767,17 +796,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MySQL 指标抓取耗时",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "MySQL metric crawling time-consuming",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -793,16 +823,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MySQL 版本信息",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "MySQL version information",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     }
 ]

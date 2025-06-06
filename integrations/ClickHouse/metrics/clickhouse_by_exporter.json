@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse Tcp 连接数",
                 "note": "tcp连接数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of ClickHouse Tcp connections",
                 "note": "tcp connections"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 内存",
                 "note": "分配的内存总量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Memory",
                 "note": "Total memory allocated"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "INSERT查询平均延迟",
                 "note": "INSERT查询平均延迟"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "INSERT query average latency",
                 "note": "INSERT query average latency"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "INSERT查询数",
                 "note": "与查询数相同，但仅限于INSERT查询"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "INSERT queries",
                 "note": "Same number as queries, but only INSERT queries"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "lseek函数调用次数",
                 "note": "'lseek'函数被调用的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of lseek function calls",
                 "note": "Number of times the'lseek 'function was called"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MergeTree表写入的压缩字节数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Compressed bytes written to the MergeTree table",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MergeTree表插入的数据块数",
                 "note": "插入到MergeTree表的数据块数。每个块形成一个数据部分"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of data blocks inserted into the MergeTree table",
                 "note": "The number of data blocks inserted into the MergeTree table. Each block forms a data portion"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MergeTree表插入的未压缩字节数",
                 "note": "插入到MergeTree表的未压缩字节数（列以它们在内存中存储的形式）\n\n在ClickHouse数据库中，当数据被插入到MergeTree系列表（包括ReplicatedMergeTree等）时，在数据实际被写入磁盘并经过压缩处理之前，在内存中以原始格式暂存时所占用的字节数量。这里的“未压缩”意味着数据还未经过ClickHouse为了节省存储空间而在存储阶段执行的列式存储压缩算法处理"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of uncompressed bytes inserted by the MergeTree table",
                 "note": "Number of uncompressed bytes inserted into the MergeTree table (columns in the form they are stored in memory) \n \nIn a ClickHouse database, when data is inserted into a MergeTree series table (including ReplicatedMergeTree, etc.), the number of bytes occupied when it is temporarily stored in the original format in memory before the data is actually written to disk and compressed. \"Uncompressed\" here means that the data has not been processed by the columnar storage compression algorithm that ClickHouse executes during the storage phase to save storage space"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "MergeTree表插入的行数",
                 "note": "插入到MergeTree表的行数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of rows inserted by the MergeTree table",
                 "note": "Number of rows inserted into the MergeTree table"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "SELECT查询平均延迟",
                 "note": "SELECT查询平均延迟"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "SELECT query average latency",
                 "note": "SELECT query average latency"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,17 +283,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "SELECT查询数",
                 "note": "SELECT查询的数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "SELECT Query Number",
                 "note": "Number of SELECT queries"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -299,17 +310,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "SELECT查询的字节数",
                 "note": "从所有表SELECT的字节数（未压缩列以它们在内存中存储的形式）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of bytes of SELECT query",
                 "note": "Number of bytes SELECT from all tables (uncompressed columns in the form they are stored in memory)"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -325,17 +337,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "SELECT查询的行数",
                 "note": "从所有表SELECT的行数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of rows of the SELECT query",
                 "note": "The number of rows SELECT from all tables"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -351,17 +364,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "TCP连接数",
                 "note": "与 TCP 服务器（带本地接口的客户端）的连接数，也包括服务器-服务器连接"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "TCP Connections",
                 "note": "Number of connections to TCP servers (clients with local interfaces), including server-server connections"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -377,17 +391,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "临时部分数",
                 "note": "目前正在生成的部分，不在数据部分列表中"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of temporary parts",
                 "note": "Section currently being generated, not in the data section list"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -403,17 +418,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "从文件描述符读取失败次数",
                 "note": "从文件描述符读取（read/pread）失败的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of read failures from file descriptor",
                 "note": "Number of failed reads (read/pread) from file descriptors"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -429,17 +445,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "从文件描述符读取次数",
                 "note": "从文件描述符进行读取（read/pread）的次数，不包括套接字"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Read times from file descriptor",
                 "note": "Number of reads (read/pread) made from file descriptors, excluding sockets"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -455,17 +472,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "从文件描述符读取的字节数",
                 "note": "从文件描述符读取的字节数。如果文件是压缩的，这将显示压缩后的数据大小"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of bytes read from file descriptor",
                 "note": "The number of bytes read from the file descriptor. If the file is compressed, this will show the size of the compressed data"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -481,17 +499,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "保留空间",
                 "note": "为当前运行的后台合并保留的磁盘空间。它略大于当前合并部分的总大小"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Reserve space",
                 "note": "Disk space reserved for the currently running background merge. It is slightly larger than the total size of the current merged portion"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -507,17 +526,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "内存占用",
                 "note": "分配的内存总量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Memory footprint",
                 "note": "Total memory allocated"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -533,17 +553,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "写入文件描述符次数",
                 "note": "写入文件描述符（write/pwrite）的次数，不包括套接字"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of writes to file descriptor",
                 "note": "Number of writes to file descriptors (write/pwrite), excluding sockets"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -559,17 +580,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "写入文件描述符的字节数",
                 "note": "写入文件描述符的字节数。如果文件是压缩的，这将显示压缩后的数据大小"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of bytes written to file descriptor",
                 "note": "The number of bytes written to the file descriptor. If the file is compressed, this will show the size of the compressed data"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -585,17 +607,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "合并平均持续时间",
                 "note": "合并的平均持续时间"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Pooled Average Duration",
                 "note": "Average duration of merger"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -611,17 +634,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "合并读取的未压缩字节数",
                 "note": "后台合并读取的未压缩字节数（列以它们在内存中存储的形式）。这是合并前的字节数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Uncompressed bytes read by merging",
                 "note": "Number of uncompressed bytes read by background merge (columns in the form they are stored in memory). This is the number of bytes before merging"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -637,17 +661,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "合并读取的行数",
                 "note": "后台合并读取的行数。这是合并前的行数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Merge number of rows read",
                 "note": "Number of rows read by background merge. This is the number of rows before merging"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -663,17 +688,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "后台合并次数",
                 "note": "启动的后台合并次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of background merges",
                 "note": "Number of background merges initiated"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -689,17 +715,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "复制部分合并次数",
                 "note": "ReplicatedMergeTree表的数据部分成功合并的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of copy partial merges",
                 "note": "Number of successful merges of the data portion of the ReplicatedMergeTree table"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -715,17 +742,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "复制部分数据丢失次数",
                 "note": "数据在任何副本上都不存在的次数（即使是现在离线的副本）。这些数据部分肯定丢失了。由于异步复制（如果未启用配额插入），当写入数据部分的副本失败并且在故障后重新联机时不包含该数据部分，这是正常现象"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of data losses in the replication part",
                 "note": "The number of times the data does not exist on any copy (even the copy that is now offline). These data parts must have been lost. Due to asynchronous replication (if quota insertion is not enabled), it is normal that the data part is not included when a copy of the data part fails to be written and comes back online after the failure"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -741,17 +769,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "失败的INSERT查询数",
                 "note": "与失败的查询相同，但仅限于INSERT查询"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of failed INSERT queries",
                 "note": "Same as the failed query but only for the INSERT query"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -767,17 +796,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "失败的SELECT查询数",
                 "note": "与失败的查询相同，但仅限于SELECT查询"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of failed SELECT queries",
                 "note": "Same as the failed query but only for the SELECT query"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -793,17 +823,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "失败的查询数",
                 "note": "失败的查询数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of failed queries",
                 "note": "Number of failed queries"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -819,17 +850,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "延迟插入次数",
                 "note": "由于分区的活动数据部分数量过多，INSERT到MergeTree表的块被限制的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Delayed Insertion Number",
                 "note": "The number of times the block of INSERT to MergeTree table is restricted due to the number of active data parts of the partition"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -845,17 +877,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "延迟插入阻塞的平均等待时间",
                 "note": "由于分区的活动数据部分数量过多，INSERT到MergeTree表的块被限制时的总等待时间（毫秒）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Average latency of delayed insertion blocking",
                 "note": "Total waiting time (milliseconds) when the block of INSERT to MergeTree table is restricted due to the number of active data parts of the partition"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -871,17 +904,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "慢查询次数",
                 "note": "从文件中进行慢查询读取的次数，这表明系统过载"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Slow query times",
                 "note": "Number of slow query reads from a file, indicating system overload"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -897,17 +931,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "打开的文件数",
                 "note": "打开的文件数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of open files",
                 "note": "Number of open files"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -923,17 +958,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "拒绝插入次数",
                 "note": "由于分区的活动数据部分数量过多，INSERT到MergeTree表的块被拒绝的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of rejected insertions",
                 "note": "Number of times a block of INSERT to MergeTree table was rejected due to an excessive number of active data parts of the partition"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -949,17 +985,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "提交部分数",
                 "note": "已经提交的数据部分的数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of submitted parts",
                 "note": "Number of data sections that have been submitted"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -975,17 +1012,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "插入字节数",
                 "note": "所有表INSERT的字节数（未压缩列以它们在内存中存储的形式）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Insert bytes",
                 "note": "Number of bytes of all tables INSERT (uncompressed columns in the form they are stored in memory)"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1001,17 +1039,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "插入行数",
                 "note": "所有表INSERT的行数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of rows inserted",
                 "note": "Number of rows for all tables INSERT"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1027,17 +1066,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "未压缩缓存命中次数",
                 "note": "未压缩缓存命中的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of uncompressed cache hits",
                 "note": "Number of uncompressed cache hits"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1053,17 +1093,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "未压缩缓存未命中次数",
                 "note": "未压缩缓存未命中的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of uncompressed cache misses",
                 "note": "Number of uncompressed cache misses"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1079,17 +1120,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "查询内存限制超标次数",
                 "note": "查询内存限制超标的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of times the query memory limit exceeds the standard",
                 "note": "The number of times the query memory limit exceeds the standard"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1105,17 +1147,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "查询处理线程降低次数",
                 "note": "由于慢查询读取，降低查询处理线程数的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Query processing thread reduction times",
                 "note": "Reduced number of query processing threads due to slow query reads"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1131,17 +1174,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "查询平均延迟",
                 "note": "查询平均延迟"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Average query latency",
                 "note": "Average query latency"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1157,17 +1201,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "查询总数",
                 "note": "需要解释和可能执行的查询数量，不包括失败的查询"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Total queries",
                 "note": "Number of queries to be interpreted and possibly executed, excluding failed queries"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1183,17 +1228,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "标记缓存命中次数",
                 "note": "标记缓存命中的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Tag cache hits",
                 "note": "Mark the number of cache hits"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1209,17 +1255,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "标记缓存未命中次数",
                 "note": "标记缓存未命中的次数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Tag cache misses",
                 "note": "Mark the number of cache misses"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1235,17 +1282,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "读取的压缩块数",
                 "note": "从压缩源（文件，网络）读取的压缩块数（独立压缩的数据块）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of compressed blocks read",
                 "note": "Number of compressed blocks read from compression source (file, network) (independently compressed data blocks)"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1261,17 +1309,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "读取的数据部分数",
                 "note": "从MergeTree表读取的数据部分数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of data parts read",
                 "note": "Number of data parts read from the MergeTree table"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1287,17 +1336,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "读取的未压缩字节数",
                 "note": "从压缩源（文件，网络）读取的未压缩字节数（解压后的字节数）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of uncompressed bytes read",
                 "note": "Number of uncompressed bytes read from compressed source (file, network) (number of decompressed bytes)"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1313,17 +1363,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "读取的标记数",
                 "note": "从MergeTree表读取的标记数（索引粒度）"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of marks read",
                 "note": "Number of tokens read from MergeTree table (index granularity)"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1339,17 +1390,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "读取的范围数",
                 "note": "从MergeTree表读取的所有数据部分中（非相邻）的范围数"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of ranges read",
                 "note": "Number of ranges (non-adjacent) in all data parts read from the MergeTree table"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -1365,16 +1417,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "预提交部分数",
                 "note": "在数据部分中，但不用于SELECT查询的部分"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of pre-commit parts",
                 "note": "In the DATA section, but not the section used for the SELECT query"
             }
-        },
-        "enable": true
+        ]
     }
 ]

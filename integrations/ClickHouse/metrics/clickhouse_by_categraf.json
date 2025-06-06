@@ -13,17 +13,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse HTTP 连接数",
                 "note": "通过HTTP协议连接到ClickHouse服务器的客户端数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse HTTP Connections",
                 "note": "The number of clients connected to the ClickHouse server via the HTTP protocol."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -39,17 +40,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse INSERT查询平均时间",
                 "note": "插入查询执行的平均时间（微秒）。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse INSERT query average time",
                 "note": "The average time in microseconds for the insertion query to execute."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -65,17 +67,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse SELECT 查询数",
                 "note": "执行的选择（SELECT）查询的数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse SELECT Query Number",
                 "note": "Number of SELECT queries executed"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -91,17 +94,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse SELECT查询平均时间",
                 "note": "选择查询执行的平均时间（微秒）。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse SELECT query average time",
                 "note": "Select the average time (microseconds) for query execution."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -117,17 +121,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse TCP 连接数",
                 "note": "通过TCP协议连接到ClickHouse服务器的客户端数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse TCP Connections",
                 "note": "The number of clients connected to the ClickHouse server via the TCP protocol."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -143,17 +148,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 临时数据量",
                 "note": "临时数据部分的数量，这些部分当前正在生成。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Temporary Data Volume",
                 "note": "The number of temporary data sections that are currently being generated."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -169,17 +175,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 分布式表连接数",
                 "note": "发送到分布式表的远程服务器的数据连接数。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Distributed Table Joins",
                 "note": "The number of data connections sent to the remote server of the distributed table."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -195,17 +202,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 宽数据量",
                 "note": "宽数据部分的数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse wide data volume",
                 "note": "Number of wide data sections."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -221,17 +229,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 待插入分布式表文件数",
                 "note": "等待异步插入到分布式表的文件数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Number of distributed table files to be inserted",
                 "note": "The number of files waiting to be inserted asynchronously into the distributed table."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -247,17 +256,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 提交前数据量",
                 "note": "提交前的数据部分数量，这些部分在data_parts列表中，但不用于SELECT查询。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Data volume before ClickHouse submission",
                 "note": "The number of data parts before submission, which are in the data _ parts list, but are not used for SELECT queries."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -273,17 +283,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 提交后数据量",
                 "note": "提交后的数据部分数量，这些部分在data_parts列表中，并且用于SELECT查询。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Data volume after ClickHouse submission",
                 "note": "The number of submitted data parts, which are in the data _ parts list and used for SELECT queries."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -299,17 +310,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 插入未压缩",
                 "note": " 插入操作写入的未压缩字节数。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Insert Uncompressed",
                 "note": "The number of uncompressed bytes written by the insert operation."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -325,17 +337,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 插入行数",
                 "note": ""
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of ClickHouse inserted rows",
                 "note": ""
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -351,17 +364,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 查询优先级",
                 "note": "由于优先级设置，被停止并等待的查询数量。\n"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Query Priority",
                 "note": "The number of queries that were stopped and waiting due to the priority setting. \n"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -377,17 +391,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 查询总数",
                 "note": "ClickHouse执行的查询总数。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Total ClickHouse Queries",
                 "note": "The total number of queries executed by ClickHouse."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -403,17 +418,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 查询总时间",
                 "note": "查询执行的总时间（微秒）。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Total ClickHouse query time",
                 "note": "The total time in microseconds for the query to execute."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -429,17 +445,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 正被删除数据量",
                 "note": "正在被删除的数据部分数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Amount of Data being Deleted",
                 "note": "The number of data parts being deleted."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -455,17 +472,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 移动池活动任务数",
                 "note": "后台移动池中的活动任务数，用于处理数据移动。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of active tasks in ClickHouse mobile pool",
                 "note": "The number of active tasks in the background move pool, used to handle data moves."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -481,17 +499,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 紧凑数据量",
                 "note": "紧凑数据部分的数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Compact Data Volume",
                 "note": "Number of compact data sections."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -507,17 +526,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 缓冲区活动任务数",
                 "note": "后台缓冲区冲洗调度池中的活动任务数，用于定期缓冲区冲洗。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of active tasks in ClickHouse buffer",
                 "note": "The number of active tasks in the background buffer flushing scheduling pool for periodic buffer flushing."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -533,17 +553,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 跨磁盘量",
                 "note": "移动到另一个磁盘并应在析构函数中删除的数据部分数量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse cross-disk volume",
                 "note": "The number of portions of data that are moved to another disk and should be deleted in the destructor."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -559,17 +580,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse 过时数据量",
                 "note": " 过时的数据部分数量，这些部分不是活动数据部分，但当前SELECT查询可能使用它们。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Obsolete Data Volume",
                 "note": "The number of obsolete data parts that are not active data parts, but may be used by the current SELECT query."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -585,17 +607,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse中内存使用情况",
                 "note": "ClickHouse服务器使用的总内存量。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Memory usage in ClickHouse",
                 "note": "The total amount of memory used by the ClickHouse server."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -611,17 +634,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse中数据库数量",
                 "note": "ClickHouse数据库数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of databases in ClickHouse",
                 "note": "Number of ClickHouse databases"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -637,17 +661,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse中表的数量",
                 "note": "ClickHouse表数量"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "Number of tables in ClickHouse",
                 "note": "Number of ClickHouse tables"
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -663,17 +688,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse修订",
                 "note": "ClickHouse服务器的修订号，通常是一个用于标识特定构建的数字。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse Revision",
                 "note": "The revision number of the ClickHouse server, usually a number used to identify a specific build."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -689,17 +715,18 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse服务器运行时间",
                 "note": "ClickHouse服务器自启动以来的运行时间。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse server runtime",
                 "note": "The running time of the ClickHouse server since it started."
             }
-        },
-        "enable": true
+        ]
     },
     {
         "id": 0,
@@ -715,16 +742,17 @@
         "created_by": "",
         "updated_at": 0,
         "updated_by": "",
-        "translation": {
-            "zh_CN": {
+        "translation": [
+            {
+                "lang": "zh_CN",
                 "name": "ClickHouse版本号",
                 "note": "ClickHouse服务器的版本号，以整数形式表示。"
             },
-            "en_US": {
+            {
+                "lang": "en_US",
                 "name": "ClickHouse version number",
                 "note": "Version number of the ClickHouse server, expressed as an integer."
             }
-        },
-        "enable": true
+        ]
     }
 ]

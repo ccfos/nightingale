@@ -229,3 +229,6 @@ ALTER TABLE `datasource` ADD COLUMN `identifier` varchar(255) not null default '
 
 /* 添加pipeline_configs字段 */
 ALTER TABLE `notify_rule` ADD COLUMN `pipeline_configs` text;
+
+/* Add translation column for builtin metrics */
+ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric' AFTER `lang`;

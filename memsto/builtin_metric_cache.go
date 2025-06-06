@@ -199,16 +199,26 @@ func (b *BuiltinMetricCacheType) Set(bm map[int64]*models.BuiltinMetric, total, 
 	b.statLastUpdated = lastUpdated
 }
 
-func (b *BuiltinMetricCacheType) GetByBuiltinMetricId(id int64) *models.BuiltinMetric {
+func (b *BuiltinMetricCacheType) GetByBuiltinMetricId(id int64) (*models.BuiltinMetric, error) {
 	b.RLock()
 	defer b.RLock()
-	return b.bm[id]
+	bp, ok := b.bm[id]
+	if !ok {
+		return nil, errors.New("builtin metric not found")
+	}
+
+	return bp, nil
 }
 
-func (b *BuiltinMetricCacheType) GetByBuiltinMetric(id int64) *models.BuiltinMetric {
+func (b *BuiltinMetricCacheType) GetByBuiltinMetric(id int64) (*models.BuiltinMetric, error) {
 	b.RLock()
 	defer b.RLock()
-	return b.bm[id]
+	bp, ok := b.bm[id]
+	if !ok {
+		return nil, errors.New("builtin metric not found")
+	}
+
+	return bp, nil
 }
 
 func (b *BuiltinMetricCacheType) Len(lang, collector, typ, query, unit string) int {
