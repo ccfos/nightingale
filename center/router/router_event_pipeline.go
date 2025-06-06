@@ -147,7 +147,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 		}
 		event = processor.Process(rt.Ctx, event)
 		if event == nil {
-			ginx.Bomb(http.StatusBadRequest, "event is nil")
+			ginx.Bomb(http.StatusBadRequest, "event is dropped")
 		}
 	}
 
