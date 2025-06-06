@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
@@ -160,35 +162,37 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	if len(events) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "not events applicable")
 	}
+	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(resp, err)
+}
 
-	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, f.NotifyConfig.ChannelID, "", "", -1)
+func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
+	notifyChannels, err := models.NotifyChannelGets(ctx, notifyConfig.ChannelID, "", "", -1)
 	ginx.Dangerous(err)
 	if len(notifyChannels) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "notify channel not found")
 	}
 
 	notifyChannel := notifyChannels[0]
-
 	if !notifyChannel.Enable {
 		ginx.Bomb(http.StatusBadRequest, "notify channel not enabled, please enable it first")
 	}
-
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashtudy" {
-		messageTemplates, err := models.MessageTemplateGets(rt.Ctx, f.NotifyConfig.TemplateID, "", "")
+	if notifyChannel.RequestType != "flashduty" {
+		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		ginx.Dangerous(err)
 		if len(messageTemplates) == 0 {
 			ginx.Bomb(http.StatusBadRequest, "message template not found")
 		}
 		tplContent = messageTemplates[0].RenderEvent(events)
 	}
-
 	var contactKey string
 	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&f.NotifyConfig, contactKey, rt.UserCache, rt.UserGroupCache)
+	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
 
 	var resp string
 	switch notifyChannel.RequestType {
@@ -203,7 +207,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			}
 		}
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		ginx.NewRender(c).Data(resp, err)
+		return resp, nil
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
 		ginx.Dangerous(err)
@@ -222,30 +226,29 @@ func (rt *Router) notifyTest(c *gin.Context) {
 			if err != nil {
 				logger.Errorf("failed to send http notify: %v", err)
 			}
-			ginx.NewRender(c).Data(resp, err)
+			return resp, nil
 		} else {
 			for i := range sendtos {
 				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
 				logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
 				if err != nil {
 					logger.Errorf("failed to send http notify: %v", err)
-					ginx.NewRender(c).Message(err)
-					return
+					return resp, err
 				}
 			}
-			ginx.NewRender(c).Message(err)
+			return resp, err
 		}
 
 	case "smtp":
 		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
-		ginx.NewRender(c).Message(err)
+		return resp, err
 	case "script":
 		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
-		ginx.NewRender(c).Data(resp, err)
+		return resp, err
 	default:
 		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
-		ginx.NewRender(c).Message(errors.New("unsupported request type"))
+		return resp, errors.New("unsupported request type")
 	}
 }
 
