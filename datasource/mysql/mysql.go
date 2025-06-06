@@ -127,7 +127,12 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		return nil, fmt.Errorf("valueKey is required")
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(m.Shards[0].Timeout)*time.Second)
+	timeout := m.Shards[0].Timeout
+	if timeout == 0 {
+		timeout = 60
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	items, err := m.QueryTimeseries(timeoutCtx, &sqlbase.QueryParam{
@@ -169,7 +174,12 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		}
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(m.Shards[0].Timeout)*time.Second)
+	timeout := m.Shards[0].Timeout
+	if timeout == 0 {
+		timeout = 60
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	items, err := m.Query(timeoutCtx, &sqlbase.QueryParam{
