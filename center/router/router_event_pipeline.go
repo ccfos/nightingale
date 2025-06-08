@@ -175,7 +175,7 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	event = processor.Process(rt.Ctx, event)
 	logger.Infof("processor %+v result: %+v", f.ProcessorConfig, event)
 	if event == nil {
-		ginx.Bomb(http.StatusBadRequest, "event is nil")
+		ginx.Bomb(http.StatusBadRequest, "event is dropped")
 	}
 
 	ginx.NewRender(c).Data(event, nil)
@@ -214,7 +214,7 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 			}
 			event = processor.Process(rt.Ctx, event)
 			if event == nil {
-				ginx.Bomb(http.StatusBadRequest, "event is nil")
+				ginx.Bomb(http.StatusBadRequest, "event is dropped")
 			}
 		}
 	}
