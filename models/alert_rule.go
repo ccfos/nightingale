@@ -1172,6 +1172,14 @@ func (ar *AlertRule) IsPrometheusRule() bool {
 	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
 
+func (ar *AlertRule) IsLokiRule() bool {
+	return ar.Prod == LOKI || ar.Cate == LOKI
+}
+
+func (ar *AlertRule) IsTdengineRule() bool {
+	return ar.Cate == TDENGINE
+}
+
 func (ar *AlertRule) IsHostRule() bool {
 	return ar.Prod == HOST
 }
