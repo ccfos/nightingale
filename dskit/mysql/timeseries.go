@@ -59,8 +59,13 @@ func (m *MySQL) CheckMaxQueryRows(db *gorm.DB, ctx context.Context, query *sqlba
 				return err
 			}
 
-			if v > float64(m.Shards[0].MaxQueryRows) {
-				return fmt.Errorf("query result rows count %d exceeds the maximum limit %d", int(v), m.Shards[0].MaxQueryRows)
+			maxQueryRows := m.Shards[0].MaxQueryRows
+			if maxQueryRows == 0 {
+				maxQueryRows = 500
+			}
+
+			if v > float64(maxQueryRows) {
+				return fmt.Errorf("query result rows count %d exceeds the maximum limit %d", int(v), maxQueryRows)
 			}
 		}
 	}
