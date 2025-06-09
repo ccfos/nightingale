@@ -197,7 +197,7 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	lst, err := rt.BuiltinComponentCache.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
+	lst, err := rt.BuiltinPayloadCache.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
 	ginx.NewRender(c).Data(lst, err)
 }
 
@@ -205,24 +205,9 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
-	cates, err := rt.BuiltinComponentCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	cates, err := rt.BuiltinPayloadCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
 
 	ginx.NewRender(c).Data(cates, err)
-}
-
-func (rt *Router) builtinPayloadGet(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-
-	bp, err := rt.BuiltinComponentCache.GetBuiltinPayloadById(id)
-
-	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
-	}
-	if bp == nil {
-		ginx.Bomb(http.StatusNotFound, "builtin payload not found")
-	}
-
-	ginx.NewRender(c).Data(bp, nil)
 }
 
 func (rt *Router) builtinPayloadsPut(c *gin.Context) {
@@ -234,6 +219,11 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 
 	if bp == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such builtin payload")
+		return
+	}
+
+	if bp.CreatedBy == SYSTEM {
+		ginx.Bomb(http.StatusBadRequest, "system component can not be modified")
 		return
 	}
 
@@ -279,10 +269,10 @@ func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid", 0)
 	// 优先以 uuid 为准
 	if uuid != 0 {
-		ginx.NewRender(c).Data(rt.BuiltinComponentCache.GetBuiltinPayloadByUUID(uuid))
+		ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadByUUID(uuid))
 		return
 	}
 
 	id := ginx.QueryInt64(c, "id", 0)
-	ginx.NewRender(c).Data(rt.BuiltinComponentCache.GetBuiltinPayloadById(id))
+	ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadById(id))
 }

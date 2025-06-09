@@ -34,24 +34,24 @@ import (
 )
 
 type Router struct {
-	HTTP                  httpx.Config
-	Center                cconf.Center
-	Ibex                  conf.Ibex
-	Alert                 aconf.Alert
-	Operations            cconf.Operation
-	DatasourceCache       *memsto.DatasourceCacheType
-	NotifyConfigCache     *memsto.NotifyConfigCacheType
-	PromClients           *prom.PromClientMap
-	Redis                 storage.Redis
-	MetaSet               *metas.Set
-	IdentSet              *idents.Set
-	TargetCache           *memsto.TargetCacheType
-	Sso                   *sso.SsoClient
-	UserCache             *memsto.UserCacheType
-	UserGroupCache        *memsto.UserGroupCacheType
-	UserTokenCache        *memsto.UserTokenCacheType
-	BuiltinComponentCache *memsto.BuiltinComponentCacheType
-	Ctx                   *ctx.Context
+	HTTP                httpx.Config
+	Center              cconf.Center
+	Ibex                conf.Ibex
+	Alert               aconf.Alert
+	Operations          cconf.Operation
+	DatasourceCache     *memsto.DatasourceCacheType
+	NotifyConfigCache   *memsto.NotifyConfigCacheType
+	PromClients         *prom.PromClientMap
+	Redis               storage.Redis
+	MetaSet             *metas.Set
+	IdentSet            *idents.Set
+	TargetCache         *memsto.TargetCacheType
+	Sso                 *sso.SsoClient
+	UserCache           *memsto.UserCacheType
+	UserGroupCache      *memsto.UserGroupCacheType
+	UserTokenCache      *memsto.UserTokenCacheType
+	BuiltinPayloadCache *memsto.BuiltinPayloadCacheType
+	Ctx                 *ctx.Context
 
 	HeartbeatHook       HeartbeatHookFunc
 	TargetDeleteHook    models.TargetDeleteHookFunc
@@ -62,29 +62,29 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, bcc *memsto.BuiltinComponentCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, bpc *memsto.BuiltinPayloadCacheType) *Router {
 	return &Router{
-		HTTP:                  httpConfig,
-		Center:                center,
-		Alert:                 alert,
-		Ibex:                  ibex,
-		Operations:            operations,
-		DatasourceCache:       ds,
-		NotifyConfigCache:     ncc,
-		PromClients:           pc,
-		Redis:                 redis,
-		MetaSet:               metaSet,
-		IdentSet:              idents,
-		TargetCache:           tc,
-		Sso:                   sso,
-		UserCache:             uc,
-		UserGroupCache:        ugc,
-		UserTokenCache:        utc,
-		BuiltinComponentCache: bcc,
-		Ctx:                   ctx,
-		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:      func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
+		HTTP:                httpConfig,
+		Center:              center,
+		Alert:               alert,
+		Ibex:                ibex,
+		Operations:          operations,
+		DatasourceCache:     ds,
+		NotifyConfigCache:   ncc,
+		PromClients:         pc,
+		Redis:               redis,
+		MetaSet:             metaSet,
+		IdentSet:            idents,
+		TargetCache:         tc,
+		Sso:                 sso,
+		UserCache:           uc,
+		UserGroupCache:      ugc,
+		UserTokenCache:      utc,
+		BuiltinPayloadCache: bpc,
+		Ctx:                 ctx,
+		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
+		AlertRuleModifyHook: func(ar *models.AlertRule) {},
 	}
 }
 
@@ -520,7 +520,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.builtinPayloadsGets)
 		pages.GET("/builtin-payloads/cates", rt.auth(), rt.user(), rt.builtinPayloadcatesGet)
 		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/add"), rt.builtinPayloadsAdd)
-		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/components"), rt.builtinPayloadGet)
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/del"), rt.builtinPayloadsDel)
 		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUIDOrID)

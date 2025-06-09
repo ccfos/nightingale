@@ -145,31 +145,3 @@ func BuiltinComponentGet(ctx *ctx.Context, where string, args ...interface{}) (*
 
 	return lst[0], nil
 }
-
-func BuiltinComponentStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&BuiltinComponent{}).Select("count(*) as total", "max(updated_at) as last_updated")
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return stats[0], nil
-}
-
-func BuiltinComponentGetAllMap(ctx *ctx.Context) (map[uint64]*BuiltinComponent, error) {
-	var lst []*BuiltinComponent
-	// Find data from user.
-	err := DB(ctx).Model(&BuiltinComponent{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
-	if err != nil {
-		return nil, err
-	}
-
-	ret := make(map[uint64]*BuiltinComponent)
-	for i := 0; i < len(lst); i++ {
-		ret[lst[i].ID] = lst[i]
-	}
-
-	return ret, nil
-}

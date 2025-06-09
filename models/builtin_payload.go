@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -99,6 +100,22 @@ func BuiltinPayloadDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
+
+	// Check if the builtin payloads are created by system.
+	var count int64
+	err := DB(ctx).
+		Where("id in ? AND created_by = ?", ids, "system").
+		Model(&BuiltinPayload{}).
+		Count(&count).
+		Error
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return fmt.Errorf("cannot delete, some records are created by 'system'")
+	}
+
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinPayload)).Error
 }
 
