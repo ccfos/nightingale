@@ -89,34 +89,8 @@ func (b *BuiltinPayloadCacheType) initBuiltinPayloadsByFile() error {
 			Ident: dir,
 		}
 
-		// get logo name
-		// /api/n9e/integrations/icon/AliYun/aliyun.png
-		files, err := file.FilesUnder(componentDir + "/icon")
-		if err == nil && len(files) > 0 {
-			component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
-		} else if err != nil {
-			logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
-		}
-
-		// get description
-		files, err = file.FilesUnder(componentDir + "/markdown")
-		if err == nil && len(files) > 0 {
-			var readmeFile string
-			for _, file := range files {
-				if strings.HasSuffix(strings.ToLower(file), "md") {
-					readmeFile = componentDir + "/markdown/" + file
-					break
-				}
-			}
-			if readmeFile != "" {
-				component.Readme, _ = file.ReadString(readmeFile)
-			}
-		} else if err != nil {
-			logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
-		}
-
 		// alerts
-		files, err = file.FilesUnder(componentDir + "/alerts")
+		files, err := file.FilesUnder(componentDir + "/alerts")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
 				fp := componentDir + "/alerts/" + f
@@ -155,7 +129,7 @@ func (b *BuiltinPayloadCacheType) initBuiltinPayloadsByFile() error {
 						UUID:        alert.UUID,
 					}
 
-					b.addBuiltinPayload(&builtinAlert, true)
+					b.addBuiltinPayloadByFile(&builtinAlert)
 				}
 			}
 		}
@@ -209,7 +183,7 @@ func (b *BuiltinPayloadCacheType) initBuiltinPayloadsByFile() error {
 					UUID:        dashboard.UUID,
 				}
 
-				b.addBuiltinPayload(&builtinDashboard, true)
+				b.addBuiltinPayloadByFile(&builtinDashboard)
 			}
 		} else if err != nil {
 			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
@@ -269,7 +243,7 @@ func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp map[int64]*models.Bui
 		if payload.CreatedBy == SYSTEM {
 			continue
 		} else {
-			b.addBuiltinPayload(payload, false)
+			b.addBuiltinPayloadByDB(payload)
 		}
 	}
 
@@ -290,31 +264,19 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, com
 	b.RLock()
 	defer b.RUnlock()
 
-	// map[componet_id]map[type]map[cate][]*models.BuiltinPayload
-	buildPayloadsByFile, okInBuildPayloadsByFile := b.buildPayloadsByFile[componentId]
-	buildPayloadsByDB, okInBuildPayloadsByDB := b.buildPayloadsByDB[componentId]
-	if okInBuildPayloadsByFile {
-		buildPayloadsInComponent = buildPayloadsByFile
-	} else if okInBuildPayloadsByDB {
-		buildPayloadsInComponent = buildPayloadsByDB
-	} else {
-		return nil, fmt.Errorf("no builtin payloads found for component id %d", componentId)
+	buildPayloadsInComponent, err := b.getBuiltinPayloadsByComponentId(componentId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get builtin payloads by component id %d: %v", componentId, err)
 	}
 
-	// Check type
-	if typ != "" {
-		bpInType, exists := buildPayloadsInComponent[typ]
-		if !exists {
-			return nil, fmt.Errorf("no builtin payloads found for type %s", typ)
-		}
-		buildPayloadsInType = append(buildPayloadsInType, bpInType)
-	} else {
-		for _, typeMap := range buildPayloadsByDB {
-			buildPayloadsInType = append(buildPayloadsInType, typeMap)
-		}
+	// Check type, type is needed
+	bpInType, exists := buildPayloadsInComponent[typ]
+	if !exists {
+		return nil, fmt.Errorf("no builtin payloads found for type %s", typ)
 	}
+	buildPayloadsInType = append(buildPayloadsInType, bpInType)
 
-	// Check category
+	// Check category, if cate is empty, we will return all categories
 	for _, bpInType := range buildPayloadsInType {
 		if cate != "" {
 			bpInCate, exists := bpInType[cate]
@@ -384,40 +346,10 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadByUUID(uuid int64) (*models.B
 	return nil, fmt.Errorf("no results found")
 }
 
-func (b *BuiltinPayloadCacheType) GetBuiltinPayloadById(id int64) (*models.BuiltinPayload, error) {
-	b.RLock()
-	defer b.RUnlock()
-
-	for _, typeMap := range b.buildPayloadsByFile {
-		for _, cateMap := range typeMap {
-			for _, payloads := range cateMap {
-				for _, payload := range payloads {
-					if payload.ID == id {
-						return payload, nil
-					}
-				}
-			}
-		}
-	}
-
-	for _, typeMap := range b.buildPayloadsByDB {
-		for _, cateMap := range typeMap {
-			for _, payloads := range cateMap {
-				for _, payload := range payloads {
-					if payload.ID == id {
-						return payload, nil
-					}
-				}
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("no results found")
-}
-
-func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
-	var result set.StringSet
-
+// getBuiltinPayloadsByComponentId returns all builtin payloads for a given component ID
+// It combines payloads from both file and database caches.
+// This function is not safe, so it should be called with a lock.
+func (b *BuiltinPayloadCacheType) getBuiltinPayloadsByComponentId(componentId uint64) (map[string]map[string][]*models.BuiltinPayload, error) {
 	bpInCateInFile, okInFile := b.buildPayloadsByFile[componentId]
 	bpInCateInDB, okInDB := b.buildPayloadsByDB[componentId]
 
@@ -425,37 +357,45 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 		return nil, fmt.Errorf("no builtin payloads found for component id %d", componentId)
 	}
 
+	result := make(map[string]map[string][]*models.BuiltinPayload)
+
 	if okInFile {
-		if typ != "" {
-			for _, bpsInType := range bpInCateInFile {
-				for cate := range bpsInType {
-					result.Add(cate)
-				}
-			}
-		} else {
-			bpInType, exists := bpInCateInFile[typ]
-			if exists {
-				for cate := range bpInType {
-					result.Add(cate)
+		for typ, cateMap := range bpInCateInFile {
+			result[typ] = cateMap
+		}
+	}
+
+	// Merge the payloads from the database if they exist
+	if okInDB {
+		for typ, cateMap := range bpInCateInDB {
+			if _, exists := result[typ]; !exists {
+				result[typ] = cateMap
+			} else {
+				for cate, payloads := range cateMap {
+					result[typ][cate] = append(result[typ][cate], payloads...)
 				}
 			}
 		}
 	}
 
-	if okInDB {
-		if typ != "" {
-			for _, bpsInType := range bpInCateInDB {
-				for cate := range bpsInType {
-					result.Add(cate)
-				}
-			}
-		} else {
-			bpInType, exists := bpInCateInFile[typ]
-			if exists {
-				for cate := range bpInType {
-					result.Add(cate)
-				}
-			}
+	return result, nil
+}
+
+func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
+	var result set.StringSet
+
+	b.RLock()
+	defer b.RUnlock()
+
+	bpInCate, err := b.getBuiltinPayloadsByComponentId(componentId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get builtin payloads by component id %d: %v", componentId, err)
+	}
+
+	bpInType, exists := bpInCate[typ]
+	if exists {
+		for cate := range bpInType {
+			result.Add(cate)
 		}
 	}
 
@@ -467,71 +407,50 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 	return resultStrings, nil
 }
 
-// addBuiltinPayload adds a new builtin payload to the cache.
-// If the payload is created by the system, it is stored in bpInSystem.
-// If it is created by the user, it is stored in bpInUser.
-// This function will not check duplicates.
-func (b *BuiltinPayloadCacheType) addBuiltinPayload(bp *models.BuiltinPayload, isSystem bool) {
+// addBuiltinPayloadByFile adds a new builtin payload to the cache for file.
+func (b *BuiltinPayloadCacheType) addBuiltinPayloadByFile(bp *models.BuiltinPayload) {
 	b.Lock()
 	defer b.Unlock()
 
-	if isSystem {
-		bpInType, exists := b.buildPayloadsByFile[bp.ComponentID]
-		if !exists {
-			bpInType := make(map[string]map[string][]*models.BuiltinPayload)
-			bpInType[bp.Cate] = make(map[string][]*models.BuiltinPayload)
-			bpInType[bp.Cate][bp.Type] = append(bpInType[bp.Cate][bp.Type], bp)
-			b.buildPayloadsByFile[bp.ComponentID] = bpInType
-			return
-		}
-		bpInCate, exists := bpInType[bp.Type]
-		if !exists {
-			bpInCate = make(map[string][]*models.BuiltinPayload)
-			bpInType[bp.Type] = bpInCate
-			b.buildPayloadsByFile[bp.ComponentID] = bpInType
-			return
-		}
-		bps, exists := bpInCate[bp.Cate]
-		if !exists {
-			bps = []*models.BuiltinPayload{bp}
-			bpInCate[bp.Cate] = bps
-			bpInType[bp.Cate] = bpInCate
-			b.buildPayloadsByFile[bp.ComponentID] = bpInType
-			return
-		}
-		bpInCate[bp.Cate] = append(bps, bp)
-		bpInType[bp.Type] = bpInCate
-		// Add key value data to bpsInSystem
-		b.buildPayloadsByFile[bp.ComponentID] = bpInType
-	} else {
-		bpInType, exists := b.buildPayloadsByDB[bp.ComponentID]
-		if !exists {
-			bpInType := make(map[string]map[string][]*models.BuiltinPayload)
-			bpInType[bp.Cate] = make(map[string][]*models.BuiltinPayload)
-			bpInType[bp.Cate][bp.Type] = append(bpInType[bp.Cate][bp.Type], bp)
-			b.buildPayloadsByDB[bp.ComponentID] = bpInType
-			return
-		}
-		bpInCate, exists := bpInType[bp.Type]
-		if !exists {
-			bpInCate = make(map[string][]*models.BuiltinPayload)
-			bpInType[bp.Type] = bpInCate
-			b.buildPayloadsByDB[bp.ComponentID] = bpInType
-			return
-		}
-		bps, exists := bpInCate[bp.Cate]
-		if !exists {
-			bps = []*models.BuiltinPayload{bp}
-			bpInCate[bp.Cate] = bps
-			bpInType[bp.Cate] = bpInCate
-			b.buildPayloadsByDB[bp.ComponentID] = bpInType
-			return
-		}
-		bpInCate[bp.Cate] = append(bps, bp)
-		bpInType[bp.Type] = bpInCate
-		// Add key value data to bpsInSystem
-		b.buildPayloadsByDB[bp.ComponentID] = bpInType
+	bpInType, exists := b.buildPayloadsByFile[bp.ComponentID]
+	if !exists {
+		bpInType = make(map[string]map[string][]*models.BuiltinPayload)
 	}
+	bpInCate, exists := bpInType[bp.Type]
+	if !exists {
+		bpInCate = make(map[string][]*models.BuiltinPayload)
+	}
+	bps, exists := bpInCate[bp.Cate]
+	if !exists {
+		bps = make([]*models.BuiltinPayload, 0)
+	}
+	bpInCate[bp.Cate] = append(bps, bp)
+	bpInType[bp.Type] = bpInCate
+	// Add key value data to bpsInSystem
+	b.buildPayloadsByFile[bp.ComponentID] = bpInType
+}
+
+// addBuiltinPayloadByDB adds a new builtin payload to the cache for db.
+func (b *BuiltinPayloadCacheType) addBuiltinPayloadByDB(bp *models.BuiltinPayload) {
+	b.Lock()
+	defer b.Unlock()
+
+	bpInType, exists := b.buildPayloadsByDB[bp.ComponentID]
+	if !exists {
+		bpInType = make(map[string]map[string][]*models.BuiltinPayload)
+	}
+	bpInCate, exists := bpInType[bp.Type]
+	if !exists {
+		bpInCate = make(map[string][]*models.BuiltinPayload)
+	}
+	bps, exists := bpInCate[bp.Cate]
+	if !exists {
+		bps = make([]*models.BuiltinPayload, 0)
+	}
+	bpInCate[bp.Cate] = append(bps, bp)
+	bpInType[bp.Type] = bpInCate
+	// Add key value data to bpsInSystem
+	b.buildPayloadsByDB[bp.ComponentID] = bpInType
 }
 
 type BuiltinBoard struct {

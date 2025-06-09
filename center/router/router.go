@@ -522,7 +522,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/add"), rt.builtinPayloadsAdd)
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/del"), rt.builtinPayloadsDel)
-		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUIDOrID)
+		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUID)
 
 		pages.POST("/message-templates", rt.auth(), rt.user(), rt.perm("/notification-templates/add"), rt.messageTemplatesAdd)
 		pages.DELETE("/message-templates", rt.auth(), rt.user(), rt.perm("/notification-templates/del"), rt.messageTemplatesDel)

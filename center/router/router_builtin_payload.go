@@ -192,6 +192,10 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
+	if typ == "" {
+		ginx.Bomb(http.StatusBadRequest, "type is required")
+		return
+	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
 	cate := ginx.QueryStr(c, "cate", "")
@@ -203,6 +207,10 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
+	if typ == "" {
+		ginx.Bomb(http.StatusBadRequest, "type is required")
+		return
+	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
 	cates, err := rt.BuiltinPayloadCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
@@ -219,11 +227,6 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 
 	if bp == nil {
 		ginx.NewRender(c, http.StatusNotFound).Message("No such builtin payload")
-		return
-	}
-
-	if bp.CreatedBy == SYSTEM {
-		ginx.Bomb(http.StatusBadRequest, "system component can not be modified")
 		return
 	}
 
@@ -265,14 +268,12 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.BuiltinPayloadDels(rt.Ctx, req.Ids))
 }
 
-func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
+func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid", 0)
-	// 优先以 uuid 为准
-	if uuid != 0 {
-		ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadByUUID(uuid))
+	if uuid == 0 {
+		ginx.Bomb(http.StatusBadRequest, "uuid is required")
 		return
 	}
 
-	id := ginx.QueryInt64(c, "id", 0)
-	ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadById(id))
+	ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadByUUID(uuid))
 }
