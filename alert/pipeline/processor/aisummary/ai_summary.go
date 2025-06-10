@@ -20,6 +20,10 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+const (
+	HTTP_STATUS_SUCCESS = 200
+)
+
 // AISummaryConfig 配置结构体
 type AISummaryConfig struct {
 	callback.HTTPConfig
@@ -54,22 +58,9 @@ func (c *AISummaryConfig) Init(settings interface{}) (models.Processor, error) {
 
 func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *models.AlertCurEvent {
 	if c.Client == nil {
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
-		}
-
-		if c.Proxy != "" {
-			proxyURL, err := url.Parse(c.Proxy)
-			if err != nil {
-				logger.Errorf("failed to parse proxy url: %v", err)
-			} else {
-				transport.Proxy = http.ProxyURL(proxyURL)
-			}
-		}
-
-		c.Client = &http.Client{
-			Timeout:   time.Duration(c.Timeout) * time.Millisecond,
-			Transport: transport,
+		if err := c.initHTTPClient(); err != nil {
+			logger.Errorf("failed to initialize HTTP client: %v", err)
+			return event
 		}
 	}
 
@@ -102,6 +93,26 @@ func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent)
 	event.Annotations = string(b)
 
 	return event
+}
+
+func (c *AISummaryConfig) initHTTPClient() error {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
+	}
+
+	if c.Proxy != "" {
+		proxyURL, err := url.Parse(c.Proxy)
+		if err != nil {
+			return fmt.Errorf("failed to parse proxy url: %v", err)
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
+
+	c.Client = &http.Client{
+		Timeout:   time.Duration(c.Timeout) * time.Millisecond,
+		Transport: transport,
+	}
+	return nil
 }
 
 func (c *AISummaryConfig) prepareEventInfo(event *models.AlertCurEvent) (string, error) {
@@ -172,6 +183,12 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 		return "", fmt.Errorf("failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
+
+	// 检查响应状态码
+	if resp.StatusCode != HTTP_STATUS_SUCCESS {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
+	}
 
 	// 读取响应
 	body, err := io.ReadAll(resp.Body)
