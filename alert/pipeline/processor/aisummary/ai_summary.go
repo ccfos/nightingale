@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	HTTP_STATUS_SUCCESS = 200
+	HTTP_STATUS_SUCCESS_MAX = 299
 )
 
 // AISummaryConfig 配置结构体
@@ -185,7 +185,7 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 	defer resp.Body.Close()
 
 	// 检查响应状态码
-	if resp.StatusCode != HTTP_STATUS_SUCCESS {
+	if resp.StatusCode > HTTP_STATUS_SUCCESS_MAX {
 		body, _ := io.ReadAll(resp.Body)
 		return "", fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(body))
 	}
