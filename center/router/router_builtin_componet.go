@@ -26,11 +26,6 @@ func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
-		// Check created_by for system components
-		if lst[i].CreatedBy == SYSTEM {
-			ginx.Bomb(http.StatusBadRequest, "system component can not be modified")
-		}
-
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
 			reterr[lst[i].Ident] = err.Error()
 		}
@@ -41,10 +36,9 @@ func (rt *Router) builtinComponentsAdd(c *gin.Context) {
 
 func (rt *Router) builtinComponentsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
-	isByUser := ginx.QueryBool(c, "is_by_user", false)
 	disabled := ginx.QueryInt(c, "disabled", -1)
 
-	bc, err := models.BuiltinComponentGets(rt.Ctx, query, disabled, isByUser)
+	bc, err := models.BuiltinComponentGets(rt.Ctx, query, disabled)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(bc, nil)
@@ -63,7 +57,7 @@ func (rt *Router) builtinComponentsPut(c *gin.Context) {
 	}
 
 	if bc.CreatedBy == SYSTEM {
-		ginx.Bomb(http.StatusBadRequest, "system component can not be modified")
+		req.Ident = bc.Ident
 	}
 
 	username := Username(c)

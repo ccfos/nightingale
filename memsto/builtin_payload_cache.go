@@ -219,7 +219,7 @@ func (b *BuiltinPayloadCacheType) syncBuiltinPayloadsByDB() error {
 		return nil
 	}
 
-	bc, err := models.BuiltinPayloadsGetAllMap(b.ctx)
+	bc, err := models.BuiltinPayloadsGetAll(b.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("builtin_payloads", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call BuiltinPayloadsGetAllMap")
@@ -238,9 +238,9 @@ func (b *BuiltinPayloadCacheType) syncBuiltinPayloadsByDB() error {
 }
 
 // SetBuiltinPayload sets the builtin payloads in the cache, only for payloads created by user.
-func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp map[int64]*models.BuiltinPayload, total, lastUpdated int64) {
+func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp []*models.BuiltinPayload, total, lastUpdated int64) {
 	for _, payload := range bp {
-		if payload.CreatedBy == SYSTEM {
+		if payload.UpdatedBy == SYSTEM {
 			continue
 		} else {
 			b.addBuiltinPayloadByDB(payload)
@@ -254,8 +254,6 @@ func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp map[int64]*models.Bui
 
 func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
 	var result []*models.BuiltinPayload
-	// Prepare the maps to hold the builtin payloads for each component
-	var buildPayloadsInComponent map[string]map[string][]*models.BuiltinPayload
 	// Prepare the maps to hold the builtin payloads for each types
 	var buildPayloadsInType []map[string][]*models.BuiltinPayload
 	// Prepare the maps to hold the builtin payloads for each category
@@ -264,17 +262,19 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, com
 	b.RLock()
 	defer b.RUnlock()
 
-	buildPayloadsInComponent, err := b.getBuiltinPayloadsByComponentId(componentId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get builtin payloads by component id %d: %v", componentId, err)
+	sources := []map[string]map[string][]*models.BuiltinPayload{
+		b.buildPayloadsByFile[componentId],
+		b.buildPayloadsByDB[componentId],
 	}
 
-	// Check type, type is needed
-	bpInType, exists := buildPayloadsInComponent[typ]
-	if !exists {
-		return nil, fmt.Errorf("no builtin payloads found for type %s", typ)
+	for _, source := range sources {
+		bpInType, exist := source[typ]
+		if !exist {
+			continue
+		}
+
+		buildPayloadsInType = append(buildPayloadsInType, bpInType)
 	}
-	buildPayloadsInType = append(buildPayloadsInType, bpInType)
 
 	// Check category, if cate is empty, we will return all categories
 	for _, bpInType := range buildPayloadsInType {
@@ -382,29 +382,30 @@ func (b *BuiltinPayloadCacheType) getBuiltinPayloadsByComponentId(componentId ui
 }
 
 func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
-	var result set.StringSet
-
 	b.RLock()
 	defer b.RUnlock()
 
-	bpInCate, err := b.getBuiltinPayloadsByComponentId(componentId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get builtin payloads by component id %d: %v", componentId, err)
+	var result set.StringSet
+
+	sources := []map[string]map[string][]*models.BuiltinPayload{
+		b.buildPayloadsByFile[componentId],
+		b.buildPayloadsByDB[componentId],
 	}
 
-	bpInType, exists := bpInCate[typ]
-	if exists {
-		for cate := range bpInType {
+	for _, source := range sources {
+		if source == nil {
+			continue
+		}
+		typeData := source[typ]
+		if typeData == nil {
+			continue
+		}
+		for cate := range typeData {
 			result.Add(cate)
 		}
 	}
 
-	resultStrings := result.ToSlice()
-	if len(resultStrings) == 0 {
-		return nil, fmt.Errorf("no results found")
-	}
-
-	return resultStrings, nil
+	return result.ToSlice(), nil
 }
 
 // addBuiltinPayloadByFile adds a new builtin payload to the cache for file.

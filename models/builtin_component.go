@@ -84,11 +84,6 @@ func (bc *BuiltinComponent) Update(ctx *ctx.Context, req BuiltinComponent) error
 		return err
 	}
 
-	// Only for update and delete operations, user cannot modify the component created by system
-	if bc.CreatedBy == strings.TrimSpace(SYSTEM) {
-		return errors.New("created_by is system, cannot be modified")
-	}
-
 	if bc.Ident != req.Ident {
 		exists, err := BuiltinComponentExists(ctx, &req)
 		if err != nil {
@@ -107,11 +102,10 @@ func BuiltinComponentDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	// User can not delete components created by system
-	return DB(ctx).Where("id in ? and create_by != ?", ids, SYSTEM).Delete(new(BuiltinComponent)).Error
+	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinComponent)).Error
 }
 
-func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int, isByUser bool) ([]*BuiltinComponent, error) {
+func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*BuiltinComponent, error) {
 	session := DB(ctx)
 	if query != "" {
 		queryPattern := "%" + query + "%"
@@ -119,10 +113,6 @@ func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int, isByUser
 	}
 	if disabled == 0 || disabled == 1 {
 		session = session.Where("disabled = ?", disabled)
-	}
-	// Filter components created by user
-	if isByUser {
-		session = session.Where("created_by != ?", SYSTEM)
 	}
 
 	var lst []*BuiltinComponent

@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -100,22 +99,6 @@ func BuiltinPayloadDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
-
-	// Check if the builtin payloads are created by system.
-	var count int64
-	err := DB(ctx).
-		Where("id in ? AND created_by = ?", ids, "system").
-		Model(&BuiltinPayload{}).
-		Count(&count).
-		Error
-	if err != nil {
-		return err
-	}
-
-	if count > 0 {
-		return fmt.Errorf("cannot delete, some records are created by 'system'")
-	}
-
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinPayload)).Error
 }
 
@@ -135,32 +118,6 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 }
 
 func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query string) ([]*BuiltinPayload, error) {
-	session := DB(ctx)
-	if typ != "" {
-		session = session.Where("type = ?", typ)
-	}
-	if componentId != 0 {
-		session = session.Where("component_id = ?", componentId)
-	}
-
-	if cate != "" {
-		session = session.Where("cate = ?", cate)
-	}
-
-	if query != "" {
-		arr := strings.Fields(query)
-		for i := 0; i < len(arr); i++ {
-			qarg := "%" + arr[i] + "%"
-			session = session.Where("name like ? or tags like ?", qarg, qarg)
-		}
-	}
-
-	var lst []*BuiltinPayload
-	err := session.Find(&lst).Error
-	return lst, err
-}
-
-func BuiltinPayloadGetById(ctx *ctx.Context, componentId uint64, typ, cate, query string) ([]*BuiltinPayload, error) {
 	session := DB(ctx)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
@@ -211,7 +168,7 @@ func BuiltinPayloadComponents(ctx *ctx.Context, typ, cate string) (string, error
 func InitBuiltinPayloads(ctx *ctx.Context) error {
 	var lst []*BuiltinPayload
 
-	components, err := BuiltinComponentGets(ctx, "", -1, false)
+	components, err := BuiltinComponentGets(ctx, "", -1)
 	if err != nil {
 		return err
 	}
@@ -253,18 +210,13 @@ func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func BuiltinPayloadsGetAllMap(ctx *ctx.Context) (map[int64]*BuiltinPayload, error) {
+func BuiltinPayloadsGetAll(ctx *ctx.Context) ([]*BuiltinPayload, error) {
 	var lst []*BuiltinPayload
 	// Find data from user.
-	err := DB(ctx).Model(&BuiltinPayload{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_at != ?", SYSTEM).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make(map[int64]*BuiltinPayload)
-	for i := 0; i < len(lst); i++ {
-		ret[lst[i].ID] = lst[i]
-	}
-
-	return ret, nil
+	return lst, nil
 }
