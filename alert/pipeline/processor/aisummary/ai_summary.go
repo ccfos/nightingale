@@ -156,6 +156,7 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 
 	// 设置请求头
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
 	for k, v := range c.Headers {
 		req.Header.Set(k, v)
 	}
