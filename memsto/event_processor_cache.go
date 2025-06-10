@@ -141,7 +141,7 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 		for _, p := range eventPipeline.ProcessorConfigs {
 			processor, err := models.GetProcessorByType(p.Typ, p.Config)
 			if err != nil {
-				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v type not found", eventPipeline.ID, eventPipeline, p)
+				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v get processor err: %+v", eventPipeline.ID, eventPipeline, p, err)
 				continue
 			}
 

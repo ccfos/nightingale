@@ -143,7 +143,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	for _, p := range f.PipelineConfig.ProcessorConfigs {
 		processor, err := models.GetProcessorByType(p.Typ, p.Config)
 		if err != nil {
-			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+			ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 		}
 		event = processor.Process(rt.Ctx, event)
 		if event == nil {
@@ -170,7 +170,7 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 
 	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "processor type not found")
+		ginx.Bomb(http.StatusBadRequest, "get processor err: %+v", err)
 	}
 	event = processor.Process(rt.Ctx, event)
 	logger.Infof("processor %+v result: %+v", f.ProcessorConfig, event)
@@ -210,7 +210,7 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 		for _, p := range pl.ProcessorConfigs {
 			processor, err := models.GetProcessorByType(p.Typ, p.Config)
 			if err != nil {
-				ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+				ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 			}
 			event = processor.Process(rt.Ctx, event)
 			if event == nil {
