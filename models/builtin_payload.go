@@ -213,7 +213,7 @@ func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
 func BuiltinPayloadsGetAll(ctx *ctx.Context) ([]*BuiltinPayload, error) {
 	var lst []*BuiltinPayload
 	// Find data from user.
-	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_at != ?", SYSTEM).Find(&lst).Error
+	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_by != ?", SYSTEM).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}

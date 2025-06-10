@@ -31,20 +31,24 @@ type BuiltinPayloadCacheType struct {
 
 	sync.RWMutex
 	// Created from files, do no need to be synced.
-	buildPayloadsByFile map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	buildPayloadsByFile          map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	buildPayloadsByFileUUIDIndex map[int64]*models.BuiltinPayload                          // map[uuid]payload
 	// Created from db, need to be synced with the database
-	buildPayloadsByDB map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	buildPayloadsByDB          map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	buildPayloadsByDBUUIDIndex map[int64]*models.BuiltinPayload                          // map[uuid]payload
 }
 
 func NewBuiltinPayloadCache(ctx *ctx.Context, stats *Stats, builtinIntegrationsDir string) *BuiltinPayloadCacheType {
 	bc := &BuiltinPayloadCacheType{
-		statTotal:              -1,
-		statLastUpdated:        -1,
-		ctx:                    ctx,
-		stats:                  stats,
-		builtinIntegrationsDir: builtinIntegrationsDir,
-		buildPayloadsByFile:    make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
-		buildPayloadsByDB:      make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		statTotal:                    -1,
+		statLastUpdated:              -1,
+		ctx:                          ctx,
+		stats:                        stats,
+		builtinIntegrationsDir:       builtinIntegrationsDir,
+		buildPayloadsByFile:          make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		buildPayloadsByFileUUIDIndex: make(map[int64]*models.BuiltinPayload),
+		buildPayloadsByDB:            make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		buildPayloadsByDBUUIDIndex:   make(map[int64]*models.BuiltinPayload),
 	}
 
 	bc.SyncBuiltinPayloads()
@@ -239,6 +243,9 @@ func (b *BuiltinPayloadCacheType) syncBuiltinPayloadsByDB() error {
 
 // SetBuiltinPayload sets the builtin payloads in the cache, only for payloads created by user.
 func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp []*models.BuiltinPayload, total, lastUpdated int64) {
+	// Clear the old cache, wait for the next sync to rebuild it.
+	b.clearbuildPayloadsByDBAndIndex()
+
 	for _, payload := range bp {
 		if payload.UpdatedBy == SYSTEM {
 			continue
@@ -252,13 +259,15 @@ func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp []*models.BuiltinPayl
 	b.statLastUpdated = lastUpdated
 }
 
-func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
-	var result []*models.BuiltinPayload
-	// Prepare the maps to hold the builtin payloads for each types
-	var buildPayloadsInType []map[string][]*models.BuiltinPayload
-	// Prepare the maps to hold the builtin payloads for each category
-	var buildPayloadsInCate [][]*models.BuiltinPayload
+func (b *BuiltinPayloadCacheType) clearbuildPayloadsByDBAndIndex() {
+	b.Lock()
+	defer b.Unlock()
 
+	b.buildPayloadsByDB = make(map[uint64]map[string]map[string][]*models.BuiltinPayload)
+	b.buildPayloadsByDBUUIDIndex = make(map[int64]*models.BuiltinPayload)
+}
+
+func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
 	b.RLock()
 	defer b.RUnlock()
 
@@ -267,50 +276,54 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, com
 		b.buildPayloadsByDB[componentId],
 	}
 
+	var result []*models.BuiltinPayload
+
 	for _, source := range sources {
-		bpInType, exist := source[typ]
-		if !exist {
+		if source == nil {
 			continue
 		}
 
-		buildPayloadsInType = append(buildPayloadsInType, bpInType)
-	}
-
-	// Check category, if cate is empty, we will return all categories
-	for _, bpInType := range buildPayloadsInType {
-		if cate != "" {
-			bpInCate, exists := bpInType[cate]
-			if !exists {
-				return nil, fmt.Errorf("no builtin payloads found for type %s and cate %s", typ, cate)
-			}
-			buildPayloadsInCate = append(buildPayloadsInCate, bpInCate)
-		} else {
-			for _, cateMap := range bpInType {
-				buildPayloadsInCate = append(buildPayloadsInCate, cateMap)
-			}
+		typeMap, exists := source[typ]
+		if !exists {
+			continue
 		}
-	}
 
-	// Check query
-	for _, bpInCate := range buildPayloadsInCate {
-		for _, payload := range bpInCate {
-			if query != "" && !strings.Contains(payload.Name, query) && !strings.Contains(payload.Tags, query) {
+		if cate != "" {
+			payloads, exists := typeMap[cate]
+			if !exists {
 				continue
 			}
-			result = append(result, payload)
+			result = append(result, filterByQuery(payloads, query)...)
+		} else {
+			for _, payloads := range typeMap {
+				result = append(result, filterByQuery(payloads, query)...)
+			}
 		}
 	}
 
 	if len(result) == 0 {
-		return nil, fmt.Errorf("no results found")
+		return nil, fmt.Errorf("no builtin payloads found for type=%s cate=%s query=%s", typ, cate, query)
 	}
 
-	// Sort the result by id
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].ID < result[j].ID
 	})
 
 	return result, nil
+}
+
+func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.BuiltinPayload {
+	if query == "" {
+		return payloads
+	}
+
+	var filtered []*models.BuiltinPayload
+	for _, p := range payloads {
+		if strings.Contains(p.Name, query) || strings.Contains(p.Tags, query) {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
 }
 
 // GetBuiltinPayloadByUUID returns the builtin payload by uuid
@@ -319,66 +332,15 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadByUUID(uuid int64) (*models.B
 	b.RLock()
 	defer b.RUnlock()
 
-	for _, typeMap := range b.buildPayloadsByFile {
-		for _, cateMap := range typeMap {
-			for _, payloads := range cateMap {
-				for _, payload := range payloads {
-					if payload.UUID == uuid {
-						return payload, nil
-					}
-				}
-			}
-		}
+	if payload, exists := b.buildPayloadsByFileUUIDIndex[uuid]; exists {
+		return payload, nil
 	}
 
-	for _, typeMap := range b.buildPayloadsByDB {
-		for _, cateMap := range typeMap {
-			for _, payloads := range cateMap {
-				for _, payload := range payloads {
-					if payload.UUID == uuid {
-						return payload, nil
-					}
-				}
-			}
-		}
+	if payload, exists := b.buildPayloadsByDBUUIDIndex[uuid]; exists {
+		return payload, nil
 	}
 
-	return nil, fmt.Errorf("no results found")
-}
-
-// getBuiltinPayloadsByComponentId returns all builtin payloads for a given component ID
-// It combines payloads from both file and database caches.
-// This function is not safe, so it should be called with a lock.
-func (b *BuiltinPayloadCacheType) getBuiltinPayloadsByComponentId(componentId uint64) (map[string]map[string][]*models.BuiltinPayload, error) {
-	bpInCateInFile, okInFile := b.buildPayloadsByFile[componentId]
-	bpInCateInDB, okInDB := b.buildPayloadsByDB[componentId]
-
-	if !okInFile && !okInDB {
-		return nil, fmt.Errorf("no builtin payloads found for component id %d", componentId)
-	}
-
-	result := make(map[string]map[string][]*models.BuiltinPayload)
-
-	if okInFile {
-		for typ, cateMap := range bpInCateInFile {
-			result[typ] = cateMap
-		}
-	}
-
-	// Merge the payloads from the database if they exist
-	if okInDB {
-		for typ, cateMap := range bpInCateInDB {
-			if _, exists := result[typ]; !exists {
-				result[typ] = cateMap
-			} else {
-				for cate, payloads := range cateMap {
-					result[typ][cate] = append(result[typ][cate], payloads...)
-				}
-			}
-		}
-	}
-
-	return result, nil
+	return nil, fmt.Errorf("no results found for uuid=%d", uuid)
 }
 
 func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
@@ -412,46 +374,36 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 func (b *BuiltinPayloadCacheType) addBuiltinPayloadByFile(bp *models.BuiltinPayload) {
 	b.Lock()
 	defer b.Unlock()
-
-	bpInType, exists := b.buildPayloadsByFile[bp.ComponentID]
-	if !exists {
-		bpInType = make(map[string]map[string][]*models.BuiltinPayload)
-	}
-	bpInCate, exists := bpInType[bp.Type]
-	if !exists {
-		bpInCate = make(map[string][]*models.BuiltinPayload)
-	}
-	bps, exists := bpInCate[bp.Cate]
-	if !exists {
-		bps = make([]*models.BuiltinPayload, 0)
-	}
-	bpInCate[bp.Cate] = append(bps, bp)
-	bpInType[bp.Type] = bpInCate
-	// Add key value data to bpsInSystem
-	b.buildPayloadsByFile[bp.ComponentID] = bpInType
+	b.addBuiltinPayload(b.buildPayloadsByFile, b.buildPayloadsByFileUUIDIndex, bp)
 }
 
 // addBuiltinPayloadByDB adds a new builtin payload to the cache for db.
 func (b *BuiltinPayloadCacheType) addBuiltinPayloadByDB(bp *models.BuiltinPayload) {
 	b.Lock()
 	defer b.Unlock()
+	b.addBuiltinPayload(b.buildPayloadsByDB, b.buildPayloadsByDBUUIDIndex, bp)
+}
 
-	bpInType, exists := b.buildPayloadsByDB[bp.ComponentID]
-	if !exists {
-		bpInType = make(map[string]map[string][]*models.BuiltinPayload)
+// addBuiltinPayload
+func (b *BuiltinPayloadCacheType) addBuiltinPayload(
+	cacheMap map[uint64]map[string]map[string][]*models.BuiltinPayload,
+	indexMap map[int64]*models.BuiltinPayload,
+	bp *models.BuiltinPayload,
+) {
+	if _, exists := cacheMap[bp.ComponentID]; !exists {
+		cacheMap[bp.ComponentID] = make(map[string]map[string][]*models.BuiltinPayload)
 	}
-	bpInCate, exists := bpInType[bp.Type]
-	if !exists {
-		bpInCate = make(map[string][]*models.BuiltinPayload)
+	bpInType := cacheMap[bp.ComponentID]
+	if _, exists := bpInType[bp.Type]; !exists {
+		bpInType[bp.Type] = make(map[string][]*models.BuiltinPayload)
 	}
-	bps, exists := bpInCate[bp.Cate]
-	if !exists {
-		bps = make([]*models.BuiltinPayload, 0)
+	bpInCate := bpInType[bp.Type]
+	if _, exists := bpInCate[bp.Cate]; !exists {
+		bpInCate[bp.Cate] = make([]*models.BuiltinPayload, 0)
 	}
-	bpInCate[bp.Cate] = append(bps, bp)
-	bpInType[bp.Type] = bpInCate
-	// Add key value data to bpsInSystem
-	b.buildPayloadsByDB[bp.ComponentID] = bpInType
+	bpInCate[bp.Cate] = append(bpInCate[bp.Cate], bp)
+
+	indexMap[bp.UUID] = bp
 }
 
 type BuiltinBoard struct {
