@@ -73,11 +73,6 @@ func (bm *BuiltinMetric) Verify() error {
 		return errors.New("english language is required")
 	}
 
-	// This verify is used to check creator is SYSTEM.
-	if bm.CreatedBy == SYSTEM {
-		return errors.New("can not modify system creator")
-	}
-
 	bm.Collector = strings.TrimSpace(bm.Collector)
 	if bm.Collector == "" {
 		return errors.New("collector is blank")
@@ -151,21 +146,6 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
-	}
-
-	// Check if the builtin metrics are created by system.
-	var count int64
-	err := DB(ctx).
-		Where("id in ? AND created_by = ?", ids, "system").
-		Model(&BuiltinMetric{}).
-		Count(&count).
-		Error
-	if err != nil {
-		return err
-	}
-
-	if count > 0 {
-		return fmt.Errorf("cannot delete, some records are created by 'system'")
 	}
 
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
@@ -295,19 +275,14 @@ func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func BuiltinMetricGetAllMap(ctx *ctx.Context) (map[int64]*BuiltinMetric, error) {
+func BuiltinMetricGetAll(ctx *ctx.Context) ([]*BuiltinMetric, error) {
 	var lst []*BuiltinMetric
 
 	// Find data from user.
-	err := DB(ctx).Model(&BuiltinMetric{}).Where("created_at != ?", SYSTEM).Find(&lst).Error
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("updated_at != ?", SYSTEM).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make(map[int64]*BuiltinMetric)
-	for i := 0; i < len(lst); i++ {
-		ret[lst[i].ID] = lst[i]
-	}
-
-	return ret, nil
+	return lst, nil
 }

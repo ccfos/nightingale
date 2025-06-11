@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -85,34 +86,8 @@ func (b *BuiltinMetricCacheType) initBuiltinMetricFiles() error {
 			Ident: dir,
 		}
 
-		// get logo name
-		// /api/n9e/integrations/icon/AliYun/aliyun.png
-		files, err := file.FilesUnder(componentDir + "/icon")
-		if err == nil && len(files) > 0 {
-			component.Logo = "/api/n9e/integrations/icon/" + component.Ident + "/" + files[0]
-		} else if err != nil {
-			logger.Warningf("read builtin component icon dir fail %s %v", component.Ident, err)
-		}
-
-		// get description
-		files, err = file.FilesUnder(componentDir + "/markdown")
-		if err == nil && len(files) > 0 {
-			var readmeFile string
-			for _, file := range files {
-				if strings.HasSuffix(strings.ToLower(file), "md") {
-					readmeFile = componentDir + "/markdown/" + file
-					break
-				}
-			}
-			if readmeFile != "" {
-				component.Readme, _ = file.ReadString(readmeFile)
-			}
-		} else if err != nil {
-			logger.Warningf("read builtin component markdown dir fail %s %v", component.Ident, err)
-		}
-
 		// metrics
-		files, err = file.FilesUnder(componentDir + "/metrics")
+		files, err := file.FilesUnder(componentDir + "/metrics")
 		if err == nil && len(files) > 0 {
 			for _, f := range files {
 				fp := componentDir + "/metrics/" + f
@@ -149,10 +124,23 @@ func (b *BuiltinMetricCacheType) loopSyncBuiltinMetrics() {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
+		// Current metric need to be cleaned up before sync
+		// to avoid duplicate metrics.
+		b.CleanupBuiltinMetricsCache()
+		b.initBuiltinMetricFiles()
 		if err := b.syncBuiltinMetrics(); err != nil {
 			logger.Warning("failed to sync datasources:", err)
 		}
 	}
+}
+
+func (b *BuiltinMetricCacheType) CleanupBuiltinMetricsCache() {
+	b.Lock()
+	defer b.Unlock()
+
+	// Clear the cache
+	b.bm = make(map[int64]*models.BuiltinMetric)
+	b.expressionIdMap = make(map[string]int64)
 }
 
 func (b *BuiltinMetricCacheType) syncBuiltinMetrics() error {
@@ -171,7 +159,7 @@ func (b *BuiltinMetricCacheType) syncBuiltinMetrics() error {
 		return nil
 	}
 
-	bm, err := models.BuiltinMetricGetAllMap(b.ctx)
+	bm, err := models.BuiltinMetricGetAll(b.ctx)
 	if err != nil {
 		dumper.PutSyncRecord("builtin_metrics", start.Unix(), -1, -1, "failed to query records: "+err.Error())
 		return errors.WithMessage(err, "failed to call BuiltinMetricGetMap")
@@ -189,7 +177,7 @@ func (b *BuiltinMetricCacheType) syncBuiltinMetrics() error {
 	return nil
 }
 
-func (b *BuiltinMetricCacheType) Set(bm map[int64]*models.BuiltinMetric, total, lastUpdated int64) {
+func (b *BuiltinMetricCacheType) Set(bm []*models.BuiltinMetric, total, lastUpdated int64) {
 	for _, metric := range bm {
 		b.addBuiltinMetric(metric)
 	}
@@ -200,17 +188,6 @@ func (b *BuiltinMetricCacheType) Set(bm map[int64]*models.BuiltinMetric, total, 
 }
 
 func (b *BuiltinMetricCacheType) GetByBuiltinMetricId(id int64) (*models.BuiltinMetric, error) {
-	b.RLock()
-	defer b.RLock()
-	bp, ok := b.bm[id]
-	if !ok {
-		return nil, errors.New("builtin metric not found")
-	}
-
-	return bp, nil
-}
-
-func (b *BuiltinMetricCacheType) GetByBuiltinMetric(id int64) (*models.BuiltinMetric, error) {
 	b.RLock()
 	defer b.RLock()
 	bp, ok := b.bm[id]
@@ -239,41 +216,48 @@ func (b *BuiltinMetricCacheType) addBuiltinMetric(bm *models.BuiltinMetric) erro
 
 	// Merge to existing metric with same expression
 	if bm.Lang == "en_US" {
-		if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
-			// Update the existing metric with the new one
-			if _, exists := b.bm[existingId]; exists {
-				// Merge translation to current metric
-				bm.Translation = mergeTranslations(b.bm[existingId].Translation, bm.Translation)
-			}
-			// Delete the old metric
-			delete(b.bm, existingId)
-		}
-
-		// Direct update
-		b.bm[bm.ID] = bm
-		b.expressionIdMap[bm.Expression] = bm.ID
-	} else {
-		// For non-English metrics, we don't merge by expression
-		// In current implementation, user must have a zh_CN version of the metric
-		// so we can use zh_CN as the key
-		if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
-			// Update the existing metric with the new one
-			if existingMetric, exists := b.bm[existingId]; exists {
-				// We only need zh_CN as the key
-				existingMetric.Translation = mergeTranslations(b.bm[existingId].Translation, bm.Translation)
-				// Update the existing metric with the new one
-				b.bm[existingId] = existingMetric
-			}
-		} else {
-			// Add the new metric
-			b.bm[bm.ID] = bm
-			b.expressionIdMap[bm.Expression] = bm.ID
-		}
+		return b.addOrUpdateBuiltinMetricForLang(bm)
 	}
 
+	return b.addNonEnglishMetric(bm)
+}
+
+func (b *BuiltinMetricCacheType) addOrUpdateBuiltinMetricForLang(bm *models.BuiltinMetric) error {
+	if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
+		// Update the existing metric with the new one
+		if existingMetric, exists := b.bm[existingId]; exists {
+			// Merge translation to current metric
+			bm.Translation = mergeTranslations(existingMetric.Translation, bm.Translation)
+		}
+		// Delete the old metric
+		delete(b.bm, existingId)
+	}
+	// Direct update
+	b.bm[bm.ID] = bm
+	b.expressionIdMap[bm.Expression] = bm.ID
 	b.statTotal++
 	b.statLastUpdated = time.Now().Unix()
+	return nil
+}
 
+func (b *BuiltinMetricCacheType) addNonEnglishMetric(bm *models.BuiltinMetric) error {
+	// For non-English metrics, we don't merge by expression
+	// In current implementation, user must have a zh_CN version of the metric
+	// so we can use zh_CN as the key
+	if existingId, ok := b.expressionIdMap[bm.Expression]; ok {
+		// Update the existing metric with the new one
+		if existingMetric, exists := b.bm[existingId]; exists {
+			// We only need zh_CN as the key
+			existingMetric.Translation = mergeTranslations(existingMetric.Translation, bm.Translation)
+			// Update the existing metric with the new one
+			b.bm[existingId] = existingMetric
+		}
+	} else {
+		b.bm[bm.ID] = bm
+		b.expressionIdMap[bm.Expression] = bm.ID
+	}
+	b.statTotal++
+	b.statLastUpdated = time.Now().Unix()
 	return nil
 }
 
@@ -299,32 +283,40 @@ func mergeTranslations(existingTranslations, newTranslations []models.Translatio
 	return mergedTranslations
 }
 
-func getTranslationWithLanguage(bm *models.BuiltinMetric, lang string) (*models.Translation, error) {
-	var defaultTranslation *models.Translation
-	for _, t := range bm.Translation {
-		if t.Lang == lang {
-			return &t, nil
-		}
-
-		if t.Lang == "en_US" {
-			defaultTranslation = &t
-		}
-	}
-
-	if defaultTranslation != nil {
-		return defaultTranslation, nil
-	}
-
-	return nil, errors.New("translation not found")
-}
-
 func (b *BuiltinMetricCacheType) BuiltinMetricGets(lang, collector, typ, query, unit string, limit, offset int) ([]*models.BuiltinMetric, int, error) {
+	logger.Debug("BuiltinMetricGets",
+		"lang", lang,
+		"collector", collector,
+		"typ", typ,
+		"query", query,
+		"unit", unit,
+		"limit", limit,
+		"offset", offset,
+	)
 	var filteredMetrics []*models.BuiltinMetric
 
 	for _, metric := range b.bm {
-		if !applyFilter(metric, lang, collector, typ, query, unit) {
+		if !applyFilter(metric, collector, typ, query, unit) {
+			logger.Debug("BuiltinMetricGets",
+				"lang", lang,
+				"collector", collector,
+				"typ", typ,
+				"query", query,
+				"unit", unit,
+				"metric", metric,
+				"filtered", false,
+			)
 			continue
 		}
+
+		// Apply language
+		trans, err := getTranslationWithLanguage(metric, lang)
+		if err != nil {
+			continue // Skip if translation not found
+		}
+		metric.Name = trans.Name
+		metric.Note = trans.Note
+
 		filteredMetrics = append(filteredMetrics, metric)
 	}
 
@@ -350,24 +342,30 @@ func (b *BuiltinMetricCacheType) BuiltinMetricGets(lang, collector, typ, query, 
 	return filteredMetrics[offset:end], len(filteredMetrics), nil
 }
 
-func applyFilter(metric *models.BuiltinMetric, lang, collector, typ, query, unit string) bool {
-	if lang != "" && metric.Lang != lang {
-		return false
-	}
-	if collector != "" && metric.Collector != collector {
-		return false
-	}
-	if typ != "" && metric.Typ != typ {
-		return false
-	}
-	if unit != "" && !containsUnit(unit, metric.Unit) {
-		return false
-	}
-	if query != "" && !applyQueryFilter(metric, query) {
-		return false
+func getTranslationWithLanguage(bm *models.BuiltinMetric, lang string) (*models.Translation, error) {
+	var defaultTranslation *models.Translation
+	for _, t := range bm.Translation {
+		if t.Lang == lang {
+			return &t, nil
+		}
+
+		if t.Lang == "en_US" {
+			defaultTranslation = &t
+		}
 	}
 
-	return true
+	if defaultTranslation != nil {
+		return defaultTranslation, nil
+	}
+
+	return nil, errors.New("translation not found")
+}
+
+func applyFilter(metric *models.BuiltinMetric, collector, typ, query, unit string) bool {
+	return (metric.Collector == collector || collector == "") &&
+		(metric.Typ == typ || typ == "") &&
+		(containsUnit(unit, metric.Unit) || unit == "") &&
+		(applyQueryFilter(metric, query) || query == "")
 }
 
 func containsUnit(unit, metricUnit string) bool {
@@ -395,4 +393,32 @@ func applyQueryFilter(metric *models.BuiltinMetric, query string) bool {
 		}
 	}
 	return true
+}
+
+func (b *BuiltinMetricCacheType) BuiltinMetricTypes(lang, collector, query string) []string {
+	typeSet := set.NewStringSet()
+
+	for _, metric := range b.bm {
+		if !applyFilter(metric, collector, "", query, "") {
+			continue
+		}
+
+		typeSet.Add(metric.Typ)
+	}
+
+	return typeSet.ToSlice()
+}
+
+func (b *BuiltinMetricCacheType) BuiltinMetricCollectors(lang, typ, query string) []string {
+	collectorSet := set.NewStringSet()
+
+	for _, metric := range b.bm {
+		if !applyFilter(metric, "", typ, query, "") {
+			continue
+		}
+
+		collectorSet.Add(metric.Collector)
+	}
+
+	return collectorSet.ToSlice()
 }
