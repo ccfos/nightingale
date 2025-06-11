@@ -30,7 +30,6 @@ type AISummaryConfig struct {
 	ModelName      string                 `json:"model_name"`
 	APIKey         string                 `json:"api_key"`
 	PromptTemplate string                 `json:"prompt_template"`
-	Temperature    float64                `json:"temperature"`
 	CustomParams   map[string]interface{} `json:"custom_params"`
 }
 
@@ -139,7 +138,6 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 	// 构建基础请求参数
 	reqParams := map[string]interface{}{
 		"model":       c.ModelName,
-		"temperature": c.Temperature,
 		"messages": []Message{
 			{
 				Role:    "user",
@@ -170,11 +168,6 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	for k, v := range c.Headers {
 		req.Header.Set(k, v)
-	}
-
-	// 设置基本认证
-	if c.AuthUsername != "" && c.AuthPassword != "" {
-		req.SetBasicAuth(c.AuthUsername, c.AuthPassword)
 	}
 
 	// 发送请求
