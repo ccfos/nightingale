@@ -29,6 +29,7 @@ const (
 	TDENGINE      = "tdengine"
 	ELASTICSEARCH = "elasticsearch"
 	MYSQL         = "mysql"
+	POSTGRESQL    = "pgsql"
 
 	CLICKHOUSE = "ck"
 )
@@ -1197,7 +1198,8 @@ func (ar *AlertRule) IsInnerRule() bool {
 		ar.Cate == CLICKHOUSE ||
 		ar.Cate == ELASTICSEARCH ||
 		ar.Prod == LOKI || ar.Cate == LOKI ||
-		ar.Cate == MYSQL
+		ar.Cate == MYSQL ||
+		ar.Cate == POSTGRESQL
 }
 
 func (ar *AlertRule) GetRuleType() string {
