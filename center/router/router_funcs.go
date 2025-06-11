@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 const defaultLimit = 300
@@ -182,7 +181,6 @@ func HasPermission(ctx *ctx.Context, c *gin.Context, sourceType, sourceId string
 
 	// 尝试从请求中获取 __token 参数
 	token := ginx.QueryStr(c, "__token", "")
-	logger.Infof("token: %s", token)
 
 	// 如果有 __token 参数，验证其合法性
 	if token != "" {
