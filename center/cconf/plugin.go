@@ -37,4 +37,10 @@ var Plugins = []Plugin{
 		Type:     "mysql",
 		TypeName: "MySQL",
 	},
+	{
+		Id:       7,
+		Category: "timeseries",
+		Type:     "pgsql",
+		TypeName: "PostgreSQL",
+	},
 }

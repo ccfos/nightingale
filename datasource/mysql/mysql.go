@@ -94,6 +94,26 @@ func (m *MySQL) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
+	if oldShard.MaxQueryRows != newShard.MaxQueryRows {
+		return false
+	}
+
+	if oldShard.Timeout != newShard.Timeout {
+		return false
+	}
+
+	if oldShard.MaxIdleConns != newShard.MaxIdleConns {
+		return false
+	}
+
+	if oldShard.MaxOpenConns != newShard.MaxOpenConns {
+		return false
+	}
+
+	if oldShard.ConnMaxLifetime != newShard.ConnMaxLifetime {
+		return false
+	}
+
 	return true
 }
 
