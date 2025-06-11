@@ -23,10 +23,10 @@ func TestAISummaryConfig_Process(t *testing.T) {
 		ModelName:      "gemini-2.0-flash",
 		APIKey:         "*",
 		PromptTemplate: "告警规则：{{$event.RuleName}}\n严重程度：{{$event.Severity}}",
-		Temperature:    0.7,
 		CustomParams: map[string]interface{}{
-			"max_tokens": 2000,
-			"top_p":      0.9,
+			"temperature": 0.7,
+			"max_tokens":  2000,
+			"top_p":       0.9,
 		},
 	}
 
