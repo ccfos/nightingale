@@ -19,7 +19,7 @@ type HTTPConfig struct {
 	URL           string            `json:"url"`
 	Method        string            `json:"method,omitempty"`
 	Body          string            `json:"body,omitempty"`
-	Headers       map[string]string `json:"headers"`
+	Headers       map[string]string `json:"header"`
 	AuthUsername  string            `json:"auth_username"`
 	AuthPassword  string            `json:"auth_password"`
 	Timeout       int               `json:"timeout"` // 单位:ms

@@ -122,12 +122,14 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := models.AlertHisEventGetById(rt.Ctx, eid)
 	ginx.Dangerous(err)
-
 	if event == nil {
 		ginx.Bomb(404, "No such alert event")
 	}
 
-	if !rt.Center.AnonymousAccess.AlertDetail && rt.Center.EventHistoryGroupView {
+	hasPermission := HasPermission(rt.Ctx, c, "event", fmt.Sprintf("%d", eid), rt.Center.AnonymousAccess.AlertDetail)
+	if !hasPermission {
+		rt.auth()(c)
+		rt.user()(c)
 		rt.bgroCheck(c, event.GroupId)
 	}
 

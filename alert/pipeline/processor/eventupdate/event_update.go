@@ -90,6 +90,11 @@ func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEven
 	}
 	logger.Infof("response body: %s", string(b))
 
-	json.Unmarshal(b, &event)
+	err = json.Unmarshal(b, &event)
+	if err != nil {
+		logger.Errorf("failed to unmarshal response body: %v event: %v", err, event)
+		return event
+	}
+
 	return event
 }
