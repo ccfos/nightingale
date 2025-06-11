@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -40,7 +41,7 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 	if len(rule.Labels) > 0 {
 		for k, v := range rule.Labels {
 			if k != "severity" {
-				appendTags = append(appendTags, fmt.Sprintf("%s=%s", k, v))
+				appendTags = append(appendTags, fmt.Sprintf("%s=%s", strings.ReplaceAll(k, " ", ""), strings.ReplaceAll(v, " ", "")))
 			} else {
 				switch v {
 				case "critical":

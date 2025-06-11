@@ -506,7 +506,7 @@ func (ar *AlertRule) Verify() error {
 	ar.AppendTags = strings.TrimSpace(ar.AppendTags)
 	arr := strings.Fields(ar.AppendTags)
 	for i := 0; i < len(arr); i++ {
-		if len(strings.Split(arr[i], "=")) != 2 {
+		if !strings.Contains(arr[i], "=") {
 			return fmt.Errorf("AppendTags(%s) invalid", arr[i])
 		}
 	}
@@ -839,7 +839,6 @@ func (ar *AlertRule) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGro
 }
 
 func (ar *AlertRule) FE2DB() error {
-
 	if len(ar.EnableStimesJSON) > 0 {
 		ar.EnableStime = strings.Join(ar.EnableStimesJSON, " ")
 		ar.EnableEtime = strings.Join(ar.EnableEtimesJSON, " ")
@@ -867,7 +866,16 @@ func (ar *AlertRule) FE2DB() error {
 	ar.NotifyChannels = strings.Join(ar.NotifyChannelsJSON, " ")
 	ar.NotifyGroups = strings.Join(ar.NotifyGroupsJSON, " ")
 	ar.Callbacks = strings.Join(ar.CallbacksJSON, " ")
-	ar.AppendTags = strings.Join(ar.AppendTagsJSON, " ")
+
+	for i := range ar.AppendTagsJSON {
+		// 后面要把多个标签拼接在一起，所以每个标签里不能有空格
+		ar.AppendTagsJSON[i] = strings.ReplaceAll(ar.AppendTagsJSON[i], " ", "")
+	}
+
+	if len(ar.AppendTagsJSON) > 0 {
+		ar.AppendTags = strings.Join(ar.AppendTagsJSON, " ")
+	}
+
 	algoParamsByte, err := json.Marshal(ar.AlgoParamsJson)
 	if err != nil {
 		return fmt.Errorf("marshal algo_params err:%v", err)
