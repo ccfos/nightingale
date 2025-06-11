@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
@@ -43,6 +44,13 @@ func (rt *Router) notificationRecordAdd(c *gin.Context) {
 
 func (rt *Router) notificationRecordList(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
+
+	hasPermission := HasPermission(rt.Ctx, c, "event", fmt.Sprintf("%d", eid), rt.Center.AnonymousAccess.AlertDetail)
+	if !hasPermission {
+		rt.auth()(c)
+		rt.user()(c)
+	}
+
 	lst, err := models.NotificaitonRecordsGetByEventId(rt.Ctx, eid)
 	ginx.Dangerous(err)
 

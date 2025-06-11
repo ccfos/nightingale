@@ -398,15 +398,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/put"), rt.bgrw(), rt.alertSubscribePut)
 		pages.DELETE("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/del"), rt.bgrw(), rt.alertSubscribeDel)
 
-		if rt.Center.AnonymousAccess.AlertDetail {
-			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
-			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
-			pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
-		} else {
-			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.user(), rt.alertCurEventGet)
-			pages.GET("/alert-his-event/:eid", rt.auth(), rt.user(), rt.alertHisEventGet)
-			pages.GET("/event-notify-records/:eid", rt.auth(), rt.user(), rt.notificationRecordList)
-		}
+		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
+		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
