@@ -74,6 +74,9 @@ func (b *BuiltinPayloadCacheType) SyncBuiltinPayloads() {
 }
 
 func (b *BuiltinPayloadCacheType) initBuiltinPayloadsByFile() error {
+	b.Lock()
+	defer b.Unlock()
+
 	fp := b.builtinIntegrationsDir
 	if fp == "" {
 		fp = path.Join(runner.Cwd, "integrations")
@@ -243,6 +246,9 @@ func (b *BuiltinPayloadCacheType) syncBuiltinPayloadsByDB() error {
 
 // SetBuiltinPayload sets the builtin payloads in the cache, only for payloads created by user.
 func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp []*models.BuiltinPayload, total, lastUpdated int64) {
+	b.Lock()
+	defer b.Unlock()
+
 	// Clear the old cache, wait for the next sync to rebuild it.
 	b.clearbuildPayloadsByDBAndIndex()
 
@@ -260,9 +266,6 @@ func (b *BuiltinPayloadCacheType) SetBuiltinPayloadInDB(bp []*models.BuiltinPayl
 }
 
 func (b *BuiltinPayloadCacheType) clearbuildPayloadsByDBAndIndex() {
-	b.Lock()
-	defer b.Unlock()
-
 	b.buildPayloadsByDB = make(map[uint64]map[string]map[string][]*models.BuiltinPayload)
 	b.buildPayloadsByDBUUIDIndex = make(map[int64]*models.BuiltinPayload)
 }
@@ -372,15 +375,11 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 
 // addBuiltinPayloadByFile adds a new builtin payload to the cache for file.
 func (b *BuiltinPayloadCacheType) addBuiltinPayloadByFile(bp *models.BuiltinPayload) {
-	b.Lock()
-	defer b.Unlock()
 	b.addBuiltinPayload(b.buildPayloadsByFile, b.buildPayloadsByFileUUIDIndex, bp)
 }
 
 // addBuiltinPayloadByDB adds a new builtin payload to the cache for db.
 func (b *BuiltinPayloadCacheType) addBuiltinPayloadByDB(bp *models.BuiltinPayload) {
-	b.Lock()
-	defer b.Unlock()
 	b.addBuiltinPayload(b.buildPayloadsByDB, b.buildPayloadsByDBUUIDIndex, bp)
 }
 
