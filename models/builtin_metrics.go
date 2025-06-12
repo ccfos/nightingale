@@ -1,8 +1,6 @@
 package models
 
 import (
-	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,41 +16,28 @@ const (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID          int64        `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	UUID        int64        `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
-	Collector   string       `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
-	Typ         string       `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
-	Name        string       `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
-	Unit        string       `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Note        string       `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
-	Lang        string       `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
-	Translation Translations `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
-	Expression  string       `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
-	CreatedAt   int64        `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy   string       `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt   int64        `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy   string       `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID          int64         `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID        int64         `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
+	Collector   string        `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
+	Typ         string        `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
+	Name        string        `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
+	Unit        string        `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
+	Note        string        `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Lang        string        `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
+	Translation []Translation `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
+	Expression  string        `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
+	CreatedAt   int64         `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy   string        `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt   int64         `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy   string        `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
 type Translation struct {
-	Lang string `json:"lang" gorm:"type:varchar(191);not null;default:'';comment:'language'"`
-	Name string `json:"name" gorm:"type:varchar(191);not null;default:'';comment:'name of metric'"`
-	Note string `json:"note" gorm:"type:varchar(4096);not null;default:'';comment:'description of metric'"`
+	Lang string `json:"lang"`
+	Name string `json:"name"`
+	Note string `json:"note"`
 }
 
-type Translations []Translation
-
-func (t Translations) Value() (driver.Value, error) {
-	return json.Marshal(t)
-}
-
-func (t *Translations) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-	return json.Unmarshal(bytes, t)
-}
 func (bm *BuiltinMetric) TableName() string {
 	return "builtin_metrics"
 }

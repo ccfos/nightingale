@@ -97,7 +97,7 @@ func (rt *Router) builtinMetricsTypes(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	lang := c.GetHeader("X-Language")
 
-	metricTypeList := rt.BuiltinMetricCache.BuiltinMetricTypes(collector, query, lang)
+	metricTypeList := rt.BuiltinMetricCache.BuiltinMetricTypes(lang, collector, query)
 	ginx.NewRender(c).Data(metricTypeList, nil)
 }
 
@@ -106,6 +106,6 @@ func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	lang := c.GetHeader("X-Language")
 
-	collectorList := rt.BuiltinMetricCache.BuiltinMetricCollectors(typ, query, lang)
+	collectorList := rt.BuiltinMetricCache.BuiltinMetricCollectors(lang, typ, query)
 	ginx.NewRender(c).Data(collectorList, nil)
 }
