@@ -279,7 +279,7 @@ func BuiltinMetricGetAll(ctx *ctx.Context) ([]*BuiltinMetric, error) {
 	var lst []*BuiltinMetric
 
 	// Find data from user.
-	err := DB(ctx).Model(&BuiltinMetric{}).Where("updated_at != ?", SYSTEM).Find(&lst).Error
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
