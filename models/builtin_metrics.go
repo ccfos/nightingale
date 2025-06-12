@@ -10,10 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	SYSTEM = "system"
-)
-
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
 	ID          int64         `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`

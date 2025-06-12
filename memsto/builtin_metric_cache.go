@@ -19,8 +19,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
-const SYSTEM = "system"
-
 type BuiltinMetricCacheType struct {
 	statTotal              int64
 	statLastUpdated        int64
@@ -192,6 +190,11 @@ func (b *BuiltinMetricCacheType) Set(builtinMetricsByDB []*models.BuiltinMetric,
 func (b *BuiltinMetricCacheType) convertBuiltinMetricByDB(builtinMetricsCacheList map[string][]*models.BuiltinMetric) {
 	for expression, builtinMetrics := range builtinMetricsCacheList {
 		// Sort by id and get the first one
+		// NOTE: 为兼容旧版本用户已经创建的metrics，同时将修改metrics收敛到同一个记录上，
+		// 我们选择使用expression相同但是id最小的metric记录作为主要的Metric。
+		// NOTE: In order to be compatible with metrics already created by users of older versions,
+		// and to converge modified metrics into a single record,
+		// we chose to use the metric record with the same expression but the smallest ID as the primary metric.
 		sort.Slice(builtinMetrics, func(i, j int) bool {
 			return builtinMetrics[i].ID < builtinMetrics[j].ID
 		})
@@ -199,11 +202,15 @@ func (b *BuiltinMetricCacheType) convertBuiltinMetricByDB(builtinMetricsCacheLis
 		currentBuiltinMetric := builtinMetrics[0]
 		// User have no customed translation, so we can merge it
 		if len(currentBuiltinMetric.Translation) == 0 {
+			translationMap := make(map[string]models.Translation)
 			for _, bm := range builtinMetrics {
-				currentBuiltinMetric.Translation = mergeTranslations(
-					getDefaultTranslation(currentBuiltinMetric),
-					getDefaultTranslation(bm),
-				)
+				for _, t := range getDefaultTranslation(bm) {
+					translationMap[t.Lang] = t
+				}
+			}
+			currentBuiltinMetric.Translation = make([]models.Translation, 0, len(translationMap))
+			for _, t := range translationMap {
+				currentBuiltinMetric.Translation = append(currentBuiltinMetric.Translation, t)
 			}
 		}
 
@@ -237,34 +244,17 @@ func (b *BuiltinMetricCacheType) appendBuiltinMetric(
 	builtinMetricsCacheList[bm.Expression] = builtinMetrics
 }
 
-func mergeTranslations(existingTranslations, newTranslations []models.Translation) []models.Translation {
-	translationMap := make(map[string]models.Translation)
-
-	// Add existing translations to the map
-	for _, t := range existingTranslations {
-		translationMap[t.Lang] = t
-	}
-
-	// Add new translations to the map, overwriting existing ones if necessary
-	for _, t := range newTranslations {
-		translationMap[t.Lang] = t
-	}
-
-	// Convert the map back to a slice
-	var mergedTranslations []models.Translation
-	for _, t := range translationMap {
-		mergedTranslations = append(mergedTranslations, t)
-	}
-
-	return mergedTranslations
-}
-
 func (b *BuiltinMetricCacheType) BuiltinMetricGets(lang, collector, typ, query, unit string, limit, offset int) ([]*models.BuiltinMetric, int, error) {
+	b.RLock()
+	defer b.RUnlock()
+
 	var filteredMetrics []*models.BuiltinMetric
 	sources := []map[string]*models.BuiltinMetric{
-		b.builtinMetricsByFile,
 		b.builtinMetricsByDB,
+		b.builtinMetricsByFile,
 	}
+
+	expressionSet := set.NewStringSet()
 
 	// Get all metrics from both file and DB caches with filtering applied
 	for _, metrics := range sources {
@@ -272,6 +262,16 @@ func (b *BuiltinMetricCacheType) BuiltinMetricGets(lang, collector, typ, query, 
 			if !applyFilter(metric, collector, typ, query, unit) {
 				continue
 			}
+
+			// Skip if expression is already in db cache
+			// NOTE: 忽略重复的expression，特别的，在旧版本中，用户可能已经创建了重复的metrics，需要覆盖掉ByFile中相同的Metrics
+			// NOTE: Ignore duplicate expressions, especially in the old version, users may have created duplicate metrics,
+			if expressionSet.Exists(metric.Expression) {
+				continue
+			}
+
+			// Add db expression in set.
+			expressionSet.Add(metric.Expression)
 
 			// Apply language
 			trans, err := getTranslationWithLanguage(metric, lang)
@@ -364,6 +364,9 @@ func applyQueryFilter(metric *models.BuiltinMetric, query string) bool {
 }
 
 func (b *BuiltinMetricCacheType) BuiltinMetricTypes(lang, collector, query string) []string {
+	b.RLock()
+	defer b.RUnlock()
+
 	typeSet := set.NewStringSet()
 
 	sources := []map[string]*models.BuiltinMetric{
@@ -385,6 +388,9 @@ func (b *BuiltinMetricCacheType) BuiltinMetricTypes(lang, collector, query strin
 }
 
 func (b *BuiltinMetricCacheType) BuiltinMetricCollectors(lang, typ, query string) []string {
+	b.RLock()
+	defer b.RUnlock()
+
 	collectorSet := set.NewStringSet()
 
 	sources := []map[string]*models.BuiltinMetric{
