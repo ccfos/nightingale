@@ -54,7 +54,8 @@ func TestAISummaryConfig_Process(t *testing.T) {
 	assert.NotNil(t, processor)
 
 	// 测试处理函数
-	result := processor.Process(&ctx.Context{}, event)
+	result, _, err := processor.Process(&ctx.Context{}, event)
+	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.NotEmpty(t, result.AnnotationsJSON["ai_summary"])
 
