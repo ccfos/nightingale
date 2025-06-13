@@ -14,6 +14,13 @@ func decryptConfig(config *ConfigType, cryptoKey string) error {
 
 	config.DB.DSN = decryptDsn
 
+	decryptRedisPwd, err := secu.DealWithDecrypt(config.Redis.Password, cryptoKey)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt the redis password: %s", err)
+	}
+
+	config.Redis.Password = decryptRedisPwd
+
 	for k := range config.HTTP.APIForService.BasicAuth {
 		decryptPwd, err := secu.DealWithDecrypt(config.HTTP.APIForService.BasicAuth[k], cryptoKey)
 		if err != nil {
