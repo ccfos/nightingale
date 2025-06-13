@@ -208,9 +208,9 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 }
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
-	param, ok := queryParam.(*eslike.Query)
-	if !ok {
-		return nil, fmt.Errorf("invalid query parameter type")
+	param := new(eslike.Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, err
 	}
 
 	if param.QueryType == "SQL" {
@@ -283,9 +283,9 @@ func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
 }
 
 func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
-	param, ok := queryParam.(*eslike.Query)
-	if !ok {
-		return nil, 0, fmt.Errorf("invalid query parameter type")
+	param := new(eslike.Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, 0, err
 	}
 
 	if param.QueryType == "SQL" {

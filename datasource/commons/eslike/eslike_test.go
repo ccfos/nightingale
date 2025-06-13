@@ -48,7 +48,6 @@ func TestQuerySQLData(t *testing.T) {
 
 	// Test query parameters
 	query := &Query{
-		Ref:          "test",
 		Query:        "SELECT * FROM library",
 		Timeout:      30,
 		QueryType:    "SQL",
