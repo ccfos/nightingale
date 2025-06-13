@@ -634,17 +634,20 @@ func QuerySQLData(ctx context.Context, queryParam interface{}, cliTimeout int64,
 			if colType == "datetime" {
 				if ts, err := sqlbase.ParseTime(value, time.RFC3339Nano); err == nil {
 					metricTs[colName] = float64(ts.Unix())
+				} else {
+					logger.Warningf("parse time error:%v", err)
 				}
 				continue
 			}
 
 			switch v := value.(type) {
-			case float64, int64:
-				metricValue[colName] = float64(v.(float64))
-				continue
+			case float64:
+				metricValue[colName] = v
+			case int64:
+				metricValue[colName] = float64(v)
+			default:
+				labels[colName] = fmt.Sprintf("%v", value)
 			}
-
-			labels[colName] = fmt.Sprintf("%v", value)
 		}
 
 		// Process metric values
