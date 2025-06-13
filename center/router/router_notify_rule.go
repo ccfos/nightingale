@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
@@ -162,28 +161,34 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	if len(events) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "not events applicable")
 	}
+
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
-	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(resp, err)
 }
 
 func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
 	notifyChannels, err := models.NotifyChannelGets(ctx, notifyConfig.ChannelID, "", "", -1)
-	ginx.Dangerous(err)
+	if err != nil {
+		return "", fmt.Errorf("failed to get notify channels: %v", err)
+	}
+
 	if len(notifyChannels) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "notify channel not found")
+		return "", fmt.Errorf("notify channel not found")
 	}
 
 	notifyChannel := notifyChannels[0]
 	if !notifyChannel.Enable {
-		ginx.Bomb(http.StatusBadRequest, "notify channel not enabled, please enable it first")
+		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
 	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashduty" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
-		ginx.Dangerous(err)
+		if err != nil {
+			return "", fmt.Errorf("failed to get message templates: %v", err)
+		}
+
 		if len(messageTemplates) == 0 {
-			ginx.Bomb(http.StatusBadRequest, "message template not found")
+			return "", fmt.Errorf("message template not found")
 		}
 		tplContent = messageTemplates[0].RenderEvent(events)
 	}
@@ -198,33 +203,37 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	switch notifyChannel.RequestType {
 	case "flashduty":
 		client, err := models.GetHTTPClient(notifyChannel)
-		ginx.Dangerous(err)
+		if err != nil {
+			return "", fmt.Errorf("failed to get http client: %v", err)
+		}
 
 		for i := range flashDutyChannelIDs {
 			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
 			if err != nil {
-				break
+				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
 			}
 		}
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		return resp, nil
 	case "http":
 		client, err := models.GetHTTPClient(notifyChannel)
-		ginx.Dangerous(err)
+		if err != nil {
+			return "", fmt.Errorf("failed to get http client: %v", err)
+		}
 
 		if notifyChannel.RequestConfig == nil {
-			ginx.Bomb(http.StatusBadRequest, "request config not found")
+			return "", fmt.Errorf("request config is nil")
 		}
 
 		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
-			ginx.Bomb(http.StatusBadRequest, "http request config not found")
+			return "", fmt.Errorf("http request config is nil")
 		}
 
 		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
 			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
 			logger.Infof("channel_name: %v, event:%+v, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], sendtos, tplContent, customParams, resp, err)
 			if err != nil {
-				logger.Errorf("failed to send http notify: %v", err)
+				return "", fmt.Errorf("failed to send http notify: %v", err)
 			}
 			return resp, nil
 		} else {
@@ -232,23 +241,25 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
 				logger.Infof("channel_name: %v, event:%+v,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
 				if err != nil {
-					logger.Errorf("failed to send http notify: %v", err)
-					return resp, err
+					return "", fmt.Errorf("failed to send http notify: %v", err)
 				}
 			}
-			return resp, err
+			return resp, nil
 		}
 
 	case "smtp":
 		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
-		return resp, err
+		if err != nil {
+			return "", fmt.Errorf("failed to send email notify: %v", err)
+		}
+		return resp, nil
 	case "script":
 		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		return resp, err
 	default:
 		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
-		return resp, errors.New("unsupported request type")
+		return "", fmt.Errorf("unsupported request type")
 	}
 }
 

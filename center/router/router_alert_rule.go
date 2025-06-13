@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
@@ -178,58 +179,68 @@ func (rt *Router) alertRuleNotifyTryRun(c *gin.Context) {
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
 
-	if len(f.AlertRuleConfig.NotifyChannelsJSON) > 0 && len(f.AlertRuleConfig.NotifyGroupsJSON) > 0 {
+	if f.AlertRuleConfig.NotifyVersion == 1 {
+		for _, id := range f.AlertRuleConfig.NotifyRuleIds {
+			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
+			ginx.Dangerous(err)
+			for _, notifyConfig := range notifyRule.NotifyConfigs {
+				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
+				ginx.Dangerous(err)
+			}
+		}
 
-		ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
-		ugids := f.AlertRuleConfig.NotifyGroupsJSON
-		ngids := make([]int64, 0)
-		for i := 0; i < len(ugids); i++ {
-			if gid, err := strconv.ParseInt(ugids[i], 10, 64); err == nil {
-				ngids = append(ngids, gid)
-			}
-		}
-		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
-		uids := make([]int64, 0)
-		for i := range userGroups {
-			uids = append(uids, userGroups[i].UserIds...)
-		}
-		users := rt.UserCache.GetByUserIds(uids)
-		for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
-			flag := true
-			// ignore non-default channels
-			switch NotifyChannels {
-			case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
-				models.Telegram, models.Email, models.FeishuCard:
-				// do nothing
-			default:
-				continue
-			}
-			// default channels
-			for ui := range users {
-				if _, b := users[ui].ExtractToken(NotifyChannels); b {
-					flag = false
-					break
-				}
-			}
-			if flag {
-				ancs = append(ancs, NotifyChannels)
-			}
-		}
-		if len(ancs) > 0 {
-			ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)))
+		ginx.NewRender(c).Data("notification test ok", nil)
+		return
+	}
+
+	if len(f.AlertRuleConfig.NotifyChannelsJSON) == 0 {
+		ginx.Bomb(http.StatusOK, "no notify channels selected")
+	}
+
+	if len(f.AlertRuleConfig.NotifyGroupsJSON) == 0 {
+		ginx.Bomb(http.StatusOK, "no notify groups selected")
+	}
+
+	ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
+	ugids := f.AlertRuleConfig.NotifyGroupsJSON
+	ngids := make([]int64, 0)
+	for i := 0; i < len(ugids); i++ {
+		if gid, err := strconv.ParseInt(ugids[i], 10, 64); err == nil {
+			ngids = append(ngids, gid)
 		}
 	}
-	for _, id := range f.AlertRuleConfig.NotifyRuleIds {
-		notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
-		if err != nil {
-			ginx.Dangerous(err)
+	userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
+	uids := make([]int64, 0)
+	for i := range userGroups {
+		uids = append(uids, userGroups[i].UserIds...)
+	}
+	users := rt.UserCache.GetByUserIds(uids)
+	for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
+		flag := true
+		// ignore non-default channels
+		switch NotifyChannels {
+		case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
+			models.Telegram, models.Email, models.FeishuCard:
+			// do nothing
+		default:
+			continue
 		}
-		for _, notifyConfig := range notifyRule.NotifyConfigs {
-			_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
-			ginx.Dangerous(err)
+		// default channels
+		for ui := range users {
+			if _, b := users[ui].ExtractToken(NotifyChannels); b {
+				flag = false
+				break
+			}
+		}
+		if flag {
+			ancs = append(ancs, NotifyChannels)
 		}
 	}
-	ginx.NewRender(c).Data("Notification match", nil)
+	if len(ancs) > 0 {
+		ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %v", ancs)))
+	}
+
+	ginx.NewRender(c).Data("notification test ok", nil)
 }
 
 func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
@@ -247,108 +258,19 @@ func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
 
-	if f.AlertRuleConfig.EnableInBG == 1 {
-		// 判断事件是否在业务组下
-		if curEvent.GroupId != f.AlertRuleConfig.GroupId {
-			ginx.Dangerous(errors.New("The event does not belong to the current business group"))
-		}
-	}
-	// 判断事件发生时间是否满足enable_days_of_weeks,enable_stimes,enable_etimes 条件
-	eventTime := time.Unix(curEvent.TriggerTime, 0)
-	eventWeekday := int(eventTime.Weekday()) // 0=Sunday, 1=Monday...
-	eventHM := eventTime.Format("15:04")
-
-	// 判断星期几
-	if len(f.AlertRuleConfig.EnableDaysOfWeeksJSON) > 0 {
-		found := false
-		weekdayStr := strconv.Itoa(eventWeekday)
-		for _, w := range f.AlertRuleConfig.EnableDaysOfWeeksJSON {
-			for _, day := range w {
-				if day == weekdayStr {
-					found = true
-					break
-				}
-			}
-			if found {
-				break
-			}
-		}
-		if !found {
-			ginx.Dangerous(errors.New("The event occurred on a day that is not within the allowed week range"))
-		}
+	if f.AlertRuleConfig.Disabled == 1 {
+		ginx.Bomb(http.StatusOK, "rule is disabled")
 	}
 
-	// 判断时分
-	if len(f.AlertRuleConfig.EnableStimesJSON) > 0 && len(f.AlertRuleConfig.EnableEtimesJSON) > 0 {
-		inTimeRange := false
-		for i := 0; i < len(f.AlertRuleConfig.EnableStimesJSON) && i < len(f.AlertRuleConfig.EnableEtimesJSON); i++ {
-			stime := f.AlertRuleConfig.EnableStimesJSON[i]
-			etime := f.AlertRuleConfig.EnableEtimesJSON[i]
-			if stime == "00:00" && etime == "00:00" {
-				inTimeRange = true
-				break
-			}
-			if stime <= eventHM && eventHM <= etime {
-				inTimeRange = true
-				break
-			}
-		}
-		if !inTimeRange {
-			ginx.Dangerous(errors.New("The event occurred on a day that is not within the allowed day time range"))
-		}
+	if mute.TimeSpanMuteStrategy(&f.AlertRuleConfig, &curEvent) {
+		ginx.Bomb(http.StatusOK, "event is not match for period of time")
 	}
-	if len(f.AlertRuleConfig.NotifyChannelsJSON) > 0 && len(f.AlertRuleConfig.NotifyGroupsJSON) > 0 {
 
-		ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
-		ugids := f.AlertRuleConfig.NotifyGroupsJSON
-		ngids := make([]int64, 0)
-		for i := 0; i < len(ugids); i++ {
-			if gid, err := strconv.ParseInt(ugids[i], 10, 64); err == nil {
-				ngids = append(ngids, gid)
-			}
-		}
-		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
-		uids := make([]int64, 0)
-		for i := range userGroups {
-			uids = append(uids, userGroups[i].UserIds...)
-		}
-		users := rt.UserCache.GetByUserIds(uids)
-		for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
-			flag := true
-			// ignore non-default channels
-			switch NotifyChannels {
-			case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
-				models.Telegram, models.Email, models.FeishuCard:
-				// do nothing
-			default:
-				continue
-			}
-			// default channels
-			for ui := range users {
-				if _, b := users[ui].ExtractToken(NotifyChannels); b {
-					flag = false
-					break
-				}
-			}
-			if flag {
-				ancs = append(ancs, NotifyChannels)
-			}
-		}
-		if len(ancs) > 0 {
-			ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs)))
-		}
+	if mute.BgNotMatchMuteStrategy(&f.AlertRuleConfig, &curEvent, rt.TargetCache) {
+		ginx.Bomb(http.StatusOK, "event target busi group not match rule busi group")
 	}
-	for _, id := range f.AlertRuleConfig.NotifyRuleIds {
-		notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
-		if err != nil {
-			ginx.Dangerous(err)
-		}
-		for _, notifyConfig := range notifyRule.NotifyConfigs {
-			_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
-			ginx.Dangerous(err)
-		}
-	}
-	ginx.NewRender(c).Data("Notification match", nil)
+
+	ginx.NewRender(c).Data("event is effective", nil)
 }
 
 func (rt *Router) alertRuleAddByImport(c *gin.Context) {
