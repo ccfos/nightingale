@@ -2,6 +2,8 @@ package eslike
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -46,15 +48,30 @@ func TestQuerySQLData(t *testing.T) {
 
 	// Test query parameters
 	query := &Query{
-		Ref:     "test",
-		Query:   "SELECT * FROM library",
-		Timeout: 30,
+		Ref:          "test",
+		Query:        "SELECT * FROM library",
+		Timeout:      30,
+		QueryType:    "SQL",
+		CustomParams: make(map[string]interface{}),
+		MaxQueryRows: 2,
 	}
 
 	// Execute query
 	results, err := QuerySQLData(context.Background(), query, 30, "7.0", client)
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
+
+	// Print results
+	fmt.Printf("\nQuerySQLData Results:\n")
+	for i, result := range results {
+		fmt.Printf("Result %d:\n", i+1)
+		fmt.Printf("  Ref: %s\n", result.Ref)
+		fmt.Printf("  Metric: %v\n", result.Metric)
+		fmt.Printf("  Values: %v\n", result.Values)
+		if result.Query != "" {
+			fmt.Printf("  Query: %s\n", result.Query)
+		}
+	}
 }
 
 func TestQuerySQLLog(t *testing.T) {
@@ -65,8 +82,11 @@ func TestQuerySQLLog(t *testing.T) {
 
 	// Test query parameters
 	query := &Query{
-		Query:   "SELECT * FROM library",
-		Timeout: 30,
+		Query:        "SELECT * FROM library",
+		Timeout:      30,
+		QueryType:    "SQL",
+		CustomParams: make(map[string]interface{}),
+		MaxQueryRows: 2,
 	}
 
 	// Execute query
@@ -74,6 +94,24 @@ func TestQuerySQLLog(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, results)
 	assert.GreaterOrEqual(t, total, int64(0))
+
+	// Print results
+	fmt.Printf("\nQuerySQLLog Results:\n")
+	fmt.Printf("Total: %d\n", total)
+	for i, result := range results {
+		fmt.Printf("Result %d:\n", i+1)
+		// Pretty print the result map
+		if resultMap, ok := result.(map[string]interface{}); ok {
+			prettyJSON, err := json.MarshalIndent(resultMap, "", "  ")
+			if err == nil {
+				fmt.Printf("  %s\n", string(prettyJSON))
+			} else {
+				fmt.Printf("  %v\n", resultMap)
+			}
+		} else {
+			fmt.Printf("  %v\n", result)
+		}
+	}
 }
 
 func TestParseTime(t *testing.T) {

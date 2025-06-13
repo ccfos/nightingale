@@ -214,7 +214,7 @@ func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) (
 	}
 
 	if param.QueryType == "SQL" {
-		return eslike.QuerySQLData(ctx, queryParam, e.Timeout, e.Version, e.NewClient)
+		return eslike.QuerySQLData(ctx, param, e.Timeout, e.Version, e.NewClient)
 	}
 
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
@@ -292,10 +292,10 @@ func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([
 		if param.CustomParams == nil {
 			param.CustomParams = make(map[string]interface{})
 		}
-		if _, exists := param.CustomParams["max_query_rows"]; !exists && e.MaxQueryRows > 0 {
-			param.CustomParams["max_query_rows"] = e.MaxQueryRows
+		if e.MaxQueryRows > 0 {
+			param.MaxQueryRows = e.MaxQueryRows
 		}
-		return eslike.QuerySQLLog(ctx, queryParam, e.Timeout, e.Version, e.NewClient)
+		return eslike.QuerySQLLog(ctx, param, e.Timeout, e.Version, e.NewClient)
 	}
 
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
