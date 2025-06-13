@@ -1,13 +1,18 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 )
 
@@ -102,6 +107,124 @@ func (rt *Router) alertSubscribeAdd(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+}
+
+type SubscribeTryRunForm struct {
+	EventId         int64                 `json:"event_id" binding:"required"`
+	SubscribeConfig models.AlertSubscribe `json:"subscribe_config" binding:"required"`
+}
+
+func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
+	var f SubscribeTryRunForm
+	ginx.BindJSON(c, &f)
+
+	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
+	ginx.Dangerous(err)
+
+	if hisEvent == nil {
+		ginx.Bomb(http.StatusNotFound, "event not found")
+	}
+
+	curEvent := *hisEvent.ToCur()
+	curEvent.SetTagsMap()
+
+	// 先判断匹配条件
+	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
+		ginx.Dangerous(errors.New("Datasource mismatch"))
+	}
+
+	// 匹配 tag
+	f.SubscribeConfig.Parse()
+	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
+		ginx.Dangerous(errors.New("Tags mismatch"))
+	}
+
+	// 匹配group name
+	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
+		ginx.Dangerous(errors.New("Group name mismatch"))
+	}
+
+	// 检查严重级别（Severity）匹配
+	if len(f.SubscribeConfig.SeveritiesJson) != 0 {
+		match := false
+		for _, s := range f.SubscribeConfig.SeveritiesJson {
+			if s == curEvent.Severity || s == 0 {
+				match = true
+				break
+			}
+		}
+		if !match {
+			ginx.Dangerous(errors.New("Severity mismatch"))
+		}
+	}
+
+	// 新版本通知规则
+	if f.SubscribeConfig.NotifyVersion == 1 {
+		for _, id := range f.SubscribeConfig.NotifyRuleIds {
+			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
+			ginx.Dangerous(err)
+
+			for _, notifyConfig := range notifyRule.NotifyConfigs {
+				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
+				ginx.Dangerous(err)
+			}
+		}
+
+		ginx.NewRender(c).Data("notification test ok", nil)
+		return
+	}
+
+	// 旧版通知方式
+	f.SubscribeConfig.ModifyEvent(&curEvent)
+	if len(curEvent.NotifyChannelsJSON) == 0 {
+		ginx.Bomb(http.StatusBadRequest, "no notify channels selected")
+	}
+
+	if len(curEvent.NotifyGroupsJSON) == 0 {
+		ginx.Bomb(http.StatusOK, "no notify groups selected")
+	}
+
+	ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
+	ugids := strings.Fields(f.SubscribeConfig.UserGroupIds)
+	ngids := make([]int64, 0)
+	for i := 0; i < len(ugids); i++ {
+		if gid, err := strconv.ParseInt(ugids[i], 10, 64); err == nil {
+			ngids = append(ngids, gid)
+		}
+	}
+
+	userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
+	uids := make([]int64, 0)
+	for i := range userGroups {
+		uids = append(uids, userGroups[i].UserIds...)
+	}
+	users := rt.UserCache.GetByUserIds(uids)
+	for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
+		flag := true
+		// ignore non-default channels
+		switch NotifyChannels {
+		case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
+			models.Telegram, models.Email, models.FeishuCard:
+			// do nothing
+		default:
+			continue
+		}
+		// default channels
+		for ui := range users {
+			if _, b := users[ui].ExtractToken(NotifyChannels); b {
+				flag = false
+				break
+			}
+		}
+		if flag {
+			ancs = append(ancs, NotifyChannels)
+		}
+	}
+	if len(ancs) > 0 {
+		ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %v", ancs)))
+	}
+
+	ginx.NewRender(c).Data("notification test ok", nil)
 }
 
 func (rt *Router) alertSubscribePut(c *gin.Context) {
