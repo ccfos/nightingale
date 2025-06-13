@@ -76,7 +76,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
@@ -111,6 +110,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
 	messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
 	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
+	builtinPayloadCache := memsto.NewBuiltinPayloadCache(ctx, syncStats, config.Center.BuiltinIntegrationsDir)
+	builtinMetricCache := memsto.NewBuiltinMetricCache(ctx, syncStats, config.Center.BuiltinIntegrationsDir)
+	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)
@@ -132,7 +134,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache, builtinPayloadCache, builtinMetricCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)

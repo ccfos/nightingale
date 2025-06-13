@@ -12,7 +12,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 当前空闲连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status Number of current idle connections",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            }
+        ]
     },
     {
         "id": 0,
@@ -27,7 +39,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 正在回写 response 的连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status The number of connections that are writing back response",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            }
+        ]
     },
     {
         "id": 0,
@@ -42,7 +66,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 正在处理的活动连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\nReading + Writing + Waiting 的总和"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status Number of active connections being processed",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md) \n \nSum of Reading + Writing + Waiting"
+            }
+        ]
     },
     {
         "id": 0,
@@ -57,7 +93,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 正在读取 request header 的连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status is reading the number of connections to the request header",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            }
+        ]
     },
     {
         "id": 0,
@@ -72,7 +120,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 每秒 accept 的新连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status New connections accepted per second",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            }
+        ]
     },
     {
         "id": 0,
@@ -87,7 +147,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 每秒 handle 的新连接数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status New connections per second handle",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)"
+            }
+        ]
     },
     {
         "id": 0,
@@ -102,6 +174,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Nginx stub_status 每秒处理的请求数",
+                "note": "[文档](https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md)\n\n如果有 keep-alive 连接的情况，一个连接上会处理多个请求。"
+            },
+            {
+                "lang": "en_US",
+                "name": "Nginx stub _ status requests processed per second",
+                "note": "[Documentation] (https://github.com/flashcatcloud/categraf/blob/main/inputs/nginx/README.md) \n \nIf there is a keep-alive connection, multiple requests will be processed on one connection."
+            }
+        ]
     }
 ]

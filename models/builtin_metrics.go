@@ -12,19 +12,26 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID         int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	UUID       int64  `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
-	Collector  string `json:"collector" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
-	Typ        string `json:"typ" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
-	Name       string `json:"name" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
-	Unit       string `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Note       string `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
-	Lang       string `json:"lang" gorm:"uniqueIndex:idx_collector_typ_name;type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
-	Expression string `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
-	CreatedAt  int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy  string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt  int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy  string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID          int64         `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID        int64         `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
+	Collector   string        `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
+	Typ         string        `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
+	Name        string        `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
+	Unit        string        `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
+	Note        string        `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Lang        string        `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
+	Translation []Translation `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
+	Expression  string        `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
+	CreatedAt   int64         `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy   string        `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt   int64         `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy   string        `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+}
+
+type Translation struct {
+	Lang string `json:"lang"`
+	Name string `json:"name"`
+	Note string `json:"note"`
 }
 
 func (bm *BuiltinMetric) TableName() string {
@@ -36,6 +43,17 @@ func (bm *BuiltinMetric) TableOptions() string {
 }
 
 func (bm *BuiltinMetric) Verify() error {
+	// Check english language is existed.
+	hasEnglish := false
+	for _, bml := range bm.Translation {
+		if bml.Lang == "en_US" {
+			hasEnglish = true
+		}
+	}
+	if !hasEnglish {
+		return errors.New("english language is required")
+	}
+
 	bm.Collector = strings.TrimSpace(bm.Collector)
 	if bm.Collector == "" {
 		return errors.New("collector is blank")
@@ -224,4 +242,28 @@ func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy s
 		return nil
 	}
 	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{col: new, "updated_by": updatedBy}).Error
+}
+
+func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
+	session := DB(ctx).Model(&BuiltinMetric{}).Select("count(*) as total", "max(updated_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}
+
+func BuiltinMetricGetAll(ctx *ctx.Context) ([]*BuiltinMetric, error) {
+	var lst []*BuiltinMetric
+
+	// Find data from user.
+	err := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return lst, nil
 }

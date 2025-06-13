@@ -259,3 +259,5 @@ CREATE TABLE `source_token` (
     KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+/* Add translation column for builtin metrics */
+ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric' AFTER `lang`;
