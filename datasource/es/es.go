@@ -120,7 +120,7 @@ func (e *Elasticsearch) InitClient() error {
 		Header:    http.Header{},
 	}
 
-	if e.Basic.Enable && e.Basic.Username != "" && e.Basic.Password != "" {
+	if e.Basic.Username != "" && e.Basic.Password != "" {
 		cfg.Username = e.Basic.Username
 		cfg.Password = e.Basic.Password
 	}
