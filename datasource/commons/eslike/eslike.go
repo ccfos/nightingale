@@ -3,14 +3,17 @@ package eslike
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/elastic/go-elasticsearch/v9"
@@ -610,10 +613,93 @@ func QuerySQLData(ctx context.Context, queryParam interface{}, cliTimeout int64,
 	}
 
 	// Extract columns and rows
-	// columns := result["columns"].([]interface{})
-	// rows := result["rows"].([]interface{})
+	columns := result["columns"].([]interface{})
+	rows := result["rows"].([]interface{})
 
-	return nil, nil
+	var dataResps []models.DataResp
+	dataMap := make(map[string]*models.DataResp)
+
+	for _, row := range rows {
+		rowData := row.([]interface{})
+		labels := make(map[string]string)
+		metricValue := make(map[string]float64)
+		metricTs := make(map[string]float64)
+
+		// Process each column based on its role
+		for i, col := range columns {
+			colName := col.(map[string]interface{})["name"].(string)
+			colType := col.(map[string]interface{})["type"].(string)
+			value := rowData[i]
+
+			if colType == "datetime" {
+				if ts, err := sqlbase.ParseTime(value, time.RFC3339Nano); err == nil {
+					metricTs[colName] = float64(ts.Unix())
+				}
+				continue
+			}
+
+			switch v := value.(type) {
+			case float64, int64:
+				metricValue[colName] = float64(v.(float64))
+				continue
+			}
+
+			labels[colName] = fmt.Sprintf("%v", value)
+		}
+
+		// Process metric values
+		for metricName, value := range metricValue {
+			metrics := make(model.Metric)
+			var labelsStr []string
+
+			// Add labels
+			for k, v := range labels {
+				metrics[model.LabelName(k)] = model.LabelValue(v)
+				labelsStr = append(labelsStr, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			// Add metric name
+			metrics["__name__"] = model.LabelValue(metricName)
+			labelsStr = append(labelsStr, fmt.Sprintf("__name__=%s", metricName))
+
+			// Create hash key for labels
+			sort.Strings(labelsStr)
+			labelsStrHash := fmt.Sprintf("%x", md5.Sum([]byte(strings.Join(labelsStr, ","))))
+
+			// Get timestamp
+			var ts float64
+			for id, timestamp := range metricTs {
+				ts = timestamp
+				if id == "time" {
+					break
+				}
+			}
+			if ts == 0 {
+				ts = float64(time.Now().Unix())
+			}
+
+			// Create or update DataResp
+			valuePair := []float64{ts, value}
+			if existing, ok := dataMap[labelsStrHash]; ok {
+				existing.Values = append(existing.Values, valuePair)
+			} else {
+				dataResp := models.DataResp{
+					Ref:    param.Ref,
+					Metric: metrics,
+					Values: [][]float64{valuePair},
+				}
+				dataMap[labelsStrHash] = &dataResp
+			}
+		}
+	}
+
+	// Convert map to slice and sort values
+	for _, v := range dataMap {
+		sort.Slice(v.Values, func(i, j int) bool { return v.Values[i][0] < v.Values[j][0] })
+		dataResps = append(dataResps, *v)
+	}
+
+	return dataResps, nil
 }
 
 func HitFilter(typ string) bool {
@@ -782,36 +868,19 @@ func QuerySQLLog(ctx context.Context, queryParam interface{}, timeout int64, ver
 	columns := result["columns"].([]interface{})
 	rows := result["rows"].([]interface{})
 
-	// Convert rows to the expected format
+	// Convert rows to interface slice
 	var ret []interface{}
 	for _, row := range rows {
 		rowData := row.([]interface{})
-		hit := &elastic.SearchHit{
-			Source: make([]byte, 0),
-			Fields: make(map[string]interface{}),
-		}
+		rowMap := make(map[string]interface{})
 
 		// Convert row data to a map
-		rowMap := make(map[string]interface{})
 		for i, col := range columns {
 			colName := col.(map[string]interface{})["name"].(string)
 			rowMap[colName] = rowData[i]
 		}
 
-		// Marshal the row map to JSON for Source
-		sourceBytes, err := json.Marshal(rowMap)
-		if err != nil {
-			logger.Warningf("Failed to marshal row data: %v", err)
-			continue
-		}
-		hit.Source = sourceBytes
-
-		// Add fields
-		for k, v := range rowMap {
-			hit.Fields[k] = []interface{}{v}
-		}
-
-		ret = append(ret, hit)
+		ret = append(ret, rowMap)
 	}
 
 	return ret, 0, nil
