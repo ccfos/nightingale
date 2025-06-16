@@ -254,6 +254,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/notify-channels", rt.notifyChannelsGets)
 		pages.GET("/contact-keys", rt.contactKeysGets)
+		pages.GET("/install-date", rt.installDateGet)
 
 		pages.GET("/self/perms", rt.auth(), rt.user(), rt.permsGets)
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)

@@ -235,3 +235,20 @@ func (rt *Router) userDel(c *gin.Context) {
 
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
 }
+
+func (rt *Router) installDateGet(c *gin.Context) {
+	rootUser, err := models.UserGetByUsername(rt.Ctx, "root")
+	if err != nil {
+		logger.Errorf("get root user failed: %v", err)
+		ginx.NewRender(c).Data(0, nil)
+		return
+	}
+
+	if rootUser == nil {
+		logger.Errorf("root user not found")
+		ginx.NewRender(c).Data(0, nil)
+		return
+	}
+
+	ginx.NewRender(c).Data(rootUser.CreateAt, nil)
+}
