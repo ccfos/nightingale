@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/metas"
@@ -90,8 +91,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		for username, password := range rt.HTTP.APIForAgent.BasicAuth {
 			accounts[username] = password
 		}
+
+		// 合并两个 basic auth，为了让 n9e-edge 和 n9e-pushgw 使用服务端授权调用 api for agent 的接口
 		for username, password := range rt.HTTP.APIForService.BasicAuth {
-			accounts[username] = password
+			if _, exists := accounts[username]; exists {
+				logger.Errorf("api for agent and api for service basic auth username conflict: %s", username)
+			} else {
+				accounts[username] = password
+			}
 		}
 
 		auth := gin.BasicAuth(accounts)
