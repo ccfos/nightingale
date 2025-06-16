@@ -17,7 +17,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -55,26 +54,23 @@ func (c *AISummaryConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *models.AlertCurEvent {
+func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
 	if c.Client == nil {
 		if err := c.initHTTPClient(); err != nil {
-			logger.Errorf("failed to initialize HTTP client: %v", err)
-			return event
+			return event, "", fmt.Errorf("failed to initialize HTTP client: %v processor: %v", err, c)
 		}
 	}
 
 	// 准备告警事件信息
 	eventInfo, err := c.prepareEventInfo(event)
 	if err != nil {
-		logger.Errorf("failed to prepare event info: %v", err)
-		return event
+		return event, "", fmt.Errorf("failed to prepare event info: %v processor: %v", err, c)
 	}
 
 	// 调用AI模型生成总结
 	summary, err := c.generateAISummary(eventInfo)
 	if err != nil {
-		logger.Errorf("failed to generate AI summary: %v", err)
-		return event
+		return event, "", fmt.Errorf("failed to generate AI summary: %v processor: %v", err, c)
 	}
 
 	// 将总结添加到annotations字段
@@ -86,12 +82,11 @@ func (c *AISummaryConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent)
 	// 更新Annotations字段
 	b, err := json.Marshal(event.AnnotationsJSON)
 	if err != nil {
-		logger.Errorf("failed to marshal annotations: %v", err)
-		return event
+		return event, "", fmt.Errorf("failed to marshal annotations: %v processor: %v", err, c)
 	}
 	event.Annotations = string(b)
 
-	return event
+	return event, "", nil
 }
 
 func (c *AISummaryConfig) initHTTPClient() error {
@@ -137,7 +132,7 @@ func (c *AISummaryConfig) prepareEventInfo(event *models.AlertCurEvent) (string,
 func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 	// 构建基础请求参数
 	reqParams := map[string]interface{}{
-		"model":       c.ModelName,
+		"model": c.ModelName,
 		"messages": []Message{
 			{
 				Role:    "user",

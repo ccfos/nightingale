@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 // 获取事件Pipeline列表
@@ -145,9 +144,17 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 		if err != nil {
 			ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 		}
-		event = processor.Process(rt.Ctx, event)
+		event, _, err = processor.Process(rt.Ctx, event)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
+		}
+
 		if event == nil {
-			ginx.Bomb(http.StatusBadRequest, "event is dropped")
+			ginx.NewRender(c).Data(map[string]interface{}{
+				"event":  event,
+				"result": "event is dropped",
+			}, nil)
+			return
 		}
 	}
 
@@ -172,13 +179,15 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusBadRequest, "get processor err: %+v", err)
 	}
-	event = processor.Process(rt.Ctx, event)
-	logger.Infof("processor %+v result: %+v", f.ProcessorConfig, event)
-	if event == nil {
-		ginx.Bomb(http.StatusBadRequest, "event is dropped")
+	event, res, err := processor.Process(rt.Ctx, event)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "processor err: %+v", err)
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	ginx.NewRender(c).Data(map[string]interface{}{
+		"event":  event,
+		"result": res,
+	}, nil)
 }
 
 func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
@@ -212,9 +221,17 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 			if err != nil {
 				ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 			}
-			event = processor.Process(rt.Ctx, event)
+
+			event, _, err := processor.Process(rt.Ctx, event)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
+			}
 			if event == nil {
-				ginx.Bomb(http.StatusBadRequest, "event is dropped")
+				ginx.NewRender(c).Data(map[string]interface{}{
+					"event":  event,
+					"result": "event is dropped",
+				}, nil)
+				return
 			}
 		}
 	}
