@@ -145,13 +145,6 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 			}
 		}
 
-		logger.Infof("updating channel %d (new: %t)", chID, !exists)
-
-		// 如果是更新，先停止旧的资源
-		if exists {
-			ncc.stopChannelResources(chID)
-		}
-
 		// 更新通道配置
 		ncc.channels[chID] = newChannel
 
