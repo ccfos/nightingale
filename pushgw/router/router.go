@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
@@ -87,21 +88,22 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
-		accounts := make(gin.Accounts)
+		accounts := make(ginx.Accounts, 0)
 		for username, password := range rt.HTTP.APIForAgent.BasicAuth {
-			accounts[username] = password
+			accounts = append(accounts, ginx.Account{
+				User:     username,
+				Password: password,
+			})
 		}
 
-		// 合并两个 basic auth，为了让 n9e-edge 和 n9e-pushgw 使用服务端授权调用 api for agent 的接口
 		for username, password := range rt.HTTP.APIForService.BasicAuth {
-			if _, exists := accounts[username]; exists {
-				logger.Errorf("api for agent and api for service basic auth username conflict: %s", username)
-			} else {
-				accounts[username] = password
-			}
+			accounts = append(accounts, ginx.Account{
+				User:     username,
+				Password: password,
+			})
 		}
 
-		auth := gin.BasicAuth(accounts)
+		auth := ginx.BasicAuth(accounts)
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
