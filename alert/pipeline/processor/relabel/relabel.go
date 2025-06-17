@@ -42,7 +42,7 @@ func (r *RelabelConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *models.AlertCurEvent {
+func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
 	sourceLabels := make([]model.LabelName, len(r.SourceLabels))
 	for i := range r.SourceLabels {
 		sourceLabels[i] = model.LabelName(strings.ReplaceAll(r.SourceLabels[i], ".", REPLACE_DOT))
@@ -64,7 +64,7 @@ func (r *RelabelConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *
 	}
 
 	EventRelabel(event, relabelConfigs)
-	return event
+	return event, "", nil
 }
 
 func EventRelabel(event *models.AlertCurEvent, relabelConfigs []*pconf.RelabelConfig) {

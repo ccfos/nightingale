@@ -31,4 +31,16 @@ var Plugins = []Plugin{
 		Type:     "ck",
 		TypeName: "ClickHouse",
 	},
+	{
+		Id:       6,
+		Category: "timeseries",
+		Type:     "mysql",
+		TypeName: "MySQL",
+	},
+	{
+		Id:       7,
+		Category: "timeseries",
+		Type:     "pgsql",
+		TypeName: "PostgreSQL",
+	},
 }

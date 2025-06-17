@@ -1,0 +1,1620 @@
+{
+  "name": "JVM by OpenTelementry",
+  "tags": "Prometheus OpenTelementry",
+  "ident": "",
+  "uuid": 1749052689795000,
+  "configs": {
+    "panels": [
+      {
+        "collapsed": true,
+        "id": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0,
+          "i": "a26c5c3d-7b60-4746-bd1f-ca95581cf2fd",
+          "isResizable": false
+        },
+        "name": "CPU Info",
+        "type": "row"
+      },
+      {
+        "type": "stat",
+        "id": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 0,
+          "y": 1,
+          "i": "a55c40fc-dc25-4d2a-8e99-928e02c5ff5d",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_cpu_count{job=\"$job\",instance=~\"$instance\"}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "CPU Count",
+        "maxPerRow": 4,
+        "custom": {
+          "textMode": "value",
+          "graphMode": "none",
+          "colorMode": "value",
+          "calc": "lastNotNull",
+          "valueField": "Value",
+          "colSpan": 1,
+          "textSize": {
+            "value": 64
+          },
+          "orientation": "auto"
+        },
+        "options": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "standardOptions": {
+            "util": ""
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "0721ee76-816b-469f-9c49-2bef94a9299e",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 8,
+          "y": 1,
+          "i": "0721ee76-816b-469f-9c49-2bef94a9299e",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "((increase(jvm_cpu_time_seconds_total{instance=~\"$instance\",job=\"$job\"}[1m]) /60)/jvm_cpu_count{job=\"$job\",instance=~\"$instance\"}) *100",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM CPU 每分钟平均使用率",
+        "description": "CPU 每分钟平均使用率，已做归一化处理，即不管几个核，CPU使用率最大值为 100%",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "percentUnit"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              },
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "9d27fdb7-9ab5-41ce-9266-c97860244283",
+        "layout": {
+          "h": 4,
+          "w": 8,
+          "x": 16,
+          "y": 1,
+          "i": "83786365-c832-479c-ae25-e9ff69c5245f",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_cpu_recent_utilization_ratio{instance=~\"$instance\",job=\"$job\"}*100",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM CPU 瞬时使用率",
+        "links": [],
+        "description": "JVM 进程在最近系统采样周期内（通常是几百毫秒） CPU 的使用率\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "percentUnit"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.01,
+          "gradientMode": "none",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "thresholds": {
+                "steps": [
+                  {
+                    "color": "#6C53B1",
+                    "value": null,
+                    "type": "base"
+                  }
+                ]
+              },
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "collapsed": true,
+        "id": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 5,
+          "i": "705c90e0-e8b6-4f1c-b35c-c8a785009a20",
+          "isResizable": false
+        },
+        "name": "JVM Memory",
+        "type": "row",
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 6,
+          "i": "5455e2f2-f6bb-4888-9d88-240d7e12cce2",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_committed_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Commit Memory(heap)",
+        "description": "已提交内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "765b22a9-1ddc-4c08-8758-684e3c13252b",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 6,
+          "i": "765b22a9-1ddc-4c08-8758-684e3c13252b",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_committed_bytes{jvm_memory_type=\"non_heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Commit Memory(nonheap)",
+        "description": "已提交内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "6d4caef8-cd49-4fd5-9bb5-feadeb4f777e",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 13,
+          "i": "af0eee36-6791-48a1-8715-39e57848e1b8",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_limit_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Memory Limit(heap)",
+        "description": "最大可获取内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "aee4fa22-73ac-4991-ab6c-935999ac4729",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 13,
+          "i": "d2c78767-39bb-4ac4-858f-cc5501311f0b",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_limit_bytes{jvm_memory_type=\"non_heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Memory Limit(nonheap)",
+        "description": "最大可获取内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "5a96cae3-a0f5-4b8d-b76a-063efd592060",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 20,
+          "i": "0381f655-147e-4cfb-84b4-46ea8a1ae4b2",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Memory Used(heap)",
+        "description": "已使用内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ef4c8781-8876-4e59-8b6d-781813ae433e",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 20,
+          "i": "be93dba2-55c5-49a3-a511-ef0c9835843c",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{jvm_memory_type=\"non_heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "JVM Memory Used(nonheap)",
+        "description": "已使用内存\nhttps://opentelemetry.io/docs/specs/semconv/runtime/jvm-metrics/",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "29b53a9d-b38a-4462-a4f4-d4c1db300596",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 0,
+          "y": 27,
+          "i": "5b7c0a0d-d887-4edb-a025-ec3bb2298f1c",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_after_last_gc_bytes{jvm_memory_type=\"heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "上次GC后 JVM Memory Used(heap)",
+        "description": "最近一次GC后的内存使用量",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "d50ff8ea-d8c1-4f87-b34c-64661cca7700",
+        "layout": {
+          "h": 7,
+          "w": 12,
+          "x": 12,
+          "y": 27,
+          "i": "66887b68-53ea-4d9b-96f6-1cbcf8531c92",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_after_last_gc_bytes{jvm_memory_type=\"non_heap\",job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_memory_pool_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "上次GC后 JVM Memory Used(nonheap)",
+        "description": "最近一次GC后的内存使用量",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "bytesIEC",
+            "decimals": 1
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "collapsed": true,
+        "id": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 34,
+          "i": "0aaf3516-4938-41e3-b7cb-323de6de75d9",
+          "isResizable": false
+        },
+        "name": "GC",
+        "type": "row",
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "5303bda0-47c2-4aca-bb12-1da512500f4a",
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 0,
+          "y": 35,
+          "i": "5303bda0-47c2-4aca-bb12-1da512500f4a",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "increase(jvm_gc_duration_seconds_sum{job=\"$job\",instance=~\"$instance\"}[1m])",
+            "refId": "A",
+            "maxDataPoints": 240,
+            "legend": "{{jvm_gc_action}} - {{jvm_gc_name}}"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "过去一分钟GC总耗时（秒）",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "cf410459-b5df-4aca-a410-ecda091d6097",
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 8,
+          "y": 35,
+          "i": "cf410459-b5df-4aca-a410-ecda091d6097",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "increase(jvm_gc_duration_seconds_count{job=\"$job\",instance=\"$instance\"}[1m])",
+            "legend": "{{jvm_gc_action}} - {{jvm_gc_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "过去一分钟GC次数",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
+        "layout": {
+          "h": 7,
+          "w": 8,
+          "x": 16,
+          "y": 35,
+          "i": "30feb928-b7c3-4e71-aeeb-cc10994b313c",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "histogram_quantile(\n  0.95,\n  sum by(le, jvm_gc_action, jvm_gc_name) (\n    rate(jvm_gc_duration_seconds_bucket{instance=\"$instance\", job=\"$job\"}[1m])\n  )\n)",
+            "legend": "{{jvm_gc_action}} - {{jvm_gc_name}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "过去1分钟单次GC耗时95分位值（秒）",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {
+            "util": "none"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "bars",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "collapsed": true,
+        "id": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
+        "layout": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 42,
+          "i": "fd6d0772-40d7-4211-b9bb-601e35fb6431",
+          "isResizable": false
+        },
+        "name": "Threads and Class Loading",
+        "type": "row",
+        "panels": []
+      },
+      {
+        "type": "timeseries",
+        "id": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 43,
+          "i": "65c74a2b-5f01-4491-b45a-dffe4a9b678a",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_thread_count{job=\"$job\",instance=\"$instance\"}",
+            "legend": "{{jvm_thread_daemon}} - {{jvm_thread_state}}",
+            "refId": "A",
+            "maxDataPoints": 240
+          },
+          {
+            "expr": "jvm_threads_daemon{job=\"$job\",instance=\"$instance\"}",
+            "legend": "daemon",
+            "refId": "B",
+            "maxDataPoints": 240
+          },
+          {
+            "expr": "jvm_threads_deadlocked{job=\"$job\",instance=\"$instance\"}",
+            "legend": "deadlocked",
+            "refId": "C",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Threads",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "desc"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "2da16907-adf7-4561-9338-4254c89a311b",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 43,
+          "i": "2da16907-adf7-4561-9338-4254c89a311b",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_class_count{job=\"$job\", instance=\"$instance\"}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Class Count",
+        "description": "Number of classes currently loaded.",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "2eaccbc6-0084-40e8-8c4d-ea12fd562ba0",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 43,
+          "i": "7b261291-6429-4bb4-a433-3266495f10ce",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_class_loaded_total{job=\"$job\", instance=\"$instance\"}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Class Loaded Count",
+        "description": "Number of classes loaded since JVM start.\n",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      },
+      {
+        "type": "timeseries",
+        "id": "ce49545c-3cd3-4a9f-ac3d-163e1aafa3f8",
+        "layout": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 43,
+          "i": "94b94ee3-a907-4815-b8c6-80ffa8502df1",
+          "isResizable": true
+        },
+        "version": "3.1.0",
+        "datasourceCate": "prometheus",
+        "datasourceValue": "${prom}",
+        "targets": [
+          {
+            "expr": "jvm_class_unloaded_total{job=\"$job\", instance=\"$instance\"}",
+            "refId": "A",
+            "maxDataPoints": 240
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {}
+          }
+        ],
+        "name": "Class Unload Count",
+        "description": "Number of classes unloaded since JVM start.",
+        "maxPerRow": 4,
+        "options": {
+          "tooltip": {
+            "mode": "all",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "hidden",
+            "placement": "bottom",
+            "behaviour": "showItem",
+            "selectMode": "single"
+          },
+          "standardOptions": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgb(44, 157, 61)",
+                "value": null,
+                "type": "base"
+              }
+            ]
+          },
+          "thresholdsStyle": {
+            "mode": "dashed"
+          }
+        },
+        "custom": {
+          "drawStyle": "lines",
+          "lineInterpolation": "smooth",
+          "spanNulls": false,
+          "lineWidth": 2,
+          "fillOpacity": 0.3,
+          "gradientMode": "opacity",
+          "stack": "off",
+          "scaleDistribution": {
+            "type": "linear"
+          },
+          "showPoints": "none",
+          "pointSize": 5
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": {
+              "rightYAxisDisplay": "off"
+            }
+          }
+        ]
+      }
+    ],
+    "var": [
+      {
+        "definition": "prometheus",
+        "name": "prom",
+        "type": "datasource"
+      },
+      {
+        "name": "job",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${prom}"
+        },
+        "definition": "label_values(jvm_class_count, job)",
+        "multi": false
+      },
+      {
+        "name": "instance",
+        "type": "query",
+        "hide": false,
+        "datasource": {
+          "cate": "prometheus",
+          "value": "${prom}"
+        },
+        "definition": "label_values(jvm_class_count{job=\"$job\"}, instance)",
+        "multi": false
+      }
+    ],
+    "version": "3.0.0"
+  }
+}

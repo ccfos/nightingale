@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 // 获取事件Pipeline列表
@@ -143,15 +142,27 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	for _, p := range f.PipelineConfig.ProcessorConfigs {
 		processor, err := models.GetProcessorByType(p.Typ, p.Config)
 		if err != nil {
-			ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+			ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 		}
-		event = processor.Process(rt.Ctx, event)
+		event, _, err = processor.Process(rt.Ctx, event)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
+		}
+
 		if event == nil {
-			ginx.Bomb(http.StatusBadRequest, "event is nil")
+			ginx.NewRender(c).Data(map[string]interface{}{
+				"event":  event,
+				"result": "event is dropped",
+			}, nil)
+			return
 		}
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	m := map[string]interface{}{
+		"event":  event,
+		"result": "",
+	}
+	ginx.NewRender(c).Data(m, nil)
 }
 
 // 测试事件处理器
@@ -170,15 +181,17 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 
 	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "processor type not found")
+		ginx.Bomb(200, "get processor err: %+v", err)
 	}
-	event = processor.Process(rt.Ctx, event)
-	logger.Infof("processor %+v result: %+v", f.ProcessorConfig, event)
-	if event == nil {
-		ginx.Bomb(http.StatusBadRequest, "event is nil")
+	event, res, err := processor.Process(rt.Ctx, event)
+	if err != nil {
+		ginx.Bomb(200, "processor err: %+v", err)
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	ginx.NewRender(c).Data(map[string]interface{}{
+		"event":  event,
+		"result": res,
+	}, nil)
 }
 
 func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
@@ -210,11 +223,19 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 		for _, p := range pl.ProcessorConfigs {
 			processor, err := models.GetProcessorByType(p.Typ, p.Config)
 			if err != nil {
-				ginx.Bomb(http.StatusBadRequest, "processor %+v type not found", p)
+				ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 			}
-			event = processor.Process(rt.Ctx, event)
+
+			event, _, err := processor.Process(rt.Ctx, event)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
+			}
 			if event == nil {
-				ginx.Bomb(http.StatusBadRequest, "event is nil")
+				ginx.NewRender(c).Data(map[string]interface{}{
+					"event":  event,
+					"result": "event is dropped",
+				}, nil)
+				return
 			}
 		}
 	}

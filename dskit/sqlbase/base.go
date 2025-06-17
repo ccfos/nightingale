@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/dskit/types"
-
 	"gorm.io/gorm"
+
+	"github.com/ccfos/nightingale/v6/dskit/types"
 )
 
 // NewDB creates a new Gorm DB instance based on the provided gorm.Dialector and configures the connection pool
@@ -19,7 +19,7 @@ func NewDB(ctx context.Context, dialector gorm.Dialector, maxIdleConns, maxOpenC
 	// Create a new Gorm DB instance
 	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return db, err
 	}
 
 	// Configure the connection pool
@@ -33,6 +33,17 @@ func NewDB(ctx context.Context, dialector gorm.Dialector, maxIdleConns, maxOpenC
 	sqlDB.SetConnMaxLifetime(connMaxLifetime)
 
 	return db.WithContext(ctx), sqlDB.Ping()
+}
+
+func CloseDB(db *gorm.DB) error {
+	if db != nil {
+		sqlDb, err := db.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDb.Close()
+	}
+	return nil
 }
 
 // ShowTables retrieves a list of all tables in the specified database
@@ -112,7 +123,7 @@ func DescTable(ctx context.Context, db *gorm.DB, query string) ([]*types.ColumnP
 		}
 
 		// Convert the database-specific type to internal type
-		type2, indexable := convertDBType(db.Dialector.Name(), typ)
+		type2, indexable := ConvertDBType(db.Dialector.Name(), typ)
 		columns = append(columns, &types.ColumnProperty{
 			Field:     field,
 			Type:      typ,
@@ -175,7 +186,7 @@ func SelectRows(ctx context.Context, db *gorm.DB, table, query string) ([]map[st
 }
 
 // convertDBType converts MySQL or PostgreSQL data types to custom internal types and determines if they are indexable
-func convertDBType(dialect, dbType string) (string, bool) {
+func ConvertDBType(dialect, dbType string) (string, bool) {
 	typ := strings.ToLower(dbType)
 
 	// Common type conversions
@@ -190,7 +201,7 @@ func convertDBType(dialect, dbType string) (string, bool) {
 		strings.HasPrefix(typ, "char"), strings.HasPrefix(typ, "tinytext"),
 		strings.HasPrefix(typ, "mediumtext"), strings.HasPrefix(typ, "longtext"),
 		strings.HasPrefix(typ, "character varying"), strings.HasPrefix(typ, "nvarchar"),
-		strings.HasPrefix(typ, "nchar"):
+		strings.HasPrefix(typ, "nchar"), strings.HasPrefix(typ, "bpchar"):
 		return types.LogExtractValueTypeText, true
 
 	case strings.HasPrefix(typ, "float"), strings.HasPrefix(typ, "double"),
@@ -203,7 +214,7 @@ func convertDBType(dialect, dbType string) (string, bool) {
 		strings.HasPrefix(typ, "time"), strings.HasPrefix(typ, "smalldatetime"):
 		return types.LogExtractValueTypeDate, false
 
-	case strings.HasPrefix(typ, "boolean"), strings.HasPrefix(typ, "bit"):
+	case strings.HasPrefix(typ, "boolean"), strings.HasPrefix(typ, "bit"), strings.HasPrefix(typ, "bool"):
 		return types.LogExtractValueTypeBool, false
 	}
 

@@ -9,6 +9,8 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource"
 	_ "github.com/ccfos/nightingale/v6/datasource/ck"
 	"github.com/ccfos/nightingale/v6/datasource/es"
+	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
+	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"
 	"github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"

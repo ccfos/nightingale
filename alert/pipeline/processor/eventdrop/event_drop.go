@@ -2,6 +2,7 @@ package eventdrop
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	texttemplate "text/template"
 
@@ -25,7 +26,7 @@ func (c *EventDropConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (c *EventDropConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) *models.AlertCurEvent {
+func (c *EventDropConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
 	// 使用背景是可以根据此处理器，实现对事件进行更加灵活的过滤的逻辑
 	// 在标签过滤和属性过滤都不满足需求时可以使用
 	// 如果模板执行结果为 true，则删除该事件
@@ -40,22 +41,20 @@ func (c *EventDropConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent)
 
 	tpl, err := texttemplate.New("eventdrop").Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
-		logger.Errorf("processor failed to parse template: %v event: %v", err, event)
-		return event
+		return event, "", fmt.Errorf("processor failed to parse template: %v processor: %v", err, c)
 	}
 
 	var body bytes.Buffer
 	if err = tpl.Execute(&body, event); err != nil {
-		logger.Errorf("processor failed to execute template: %v event: %v", err, event)
-		return event
+		return event, "", fmt.Errorf("processor failed to execute template: %v processor: %v", err, c)
 	}
 
 	result := strings.TrimSpace(body.String())
 	logger.Infof("processor eventdrop result: %v", result)
 	if result == "true" {
 		logger.Infof("processor eventdrop drop event: %v", event)
-		return nil
+		return nil, "drop event success", nil
 	}
 
-	return event
+	return event, "drop event failed", nil
 }

@@ -243,6 +243,15 @@ func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 	return AlertHisEventGet(ctx, "id=?", id)
 }
 
+func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int, limit int) (int64, error) {
+	db := DB(ctx).Where("last_eval_time < ?", timestamp)
+	if len(severities) > 0 {
+		db = db.Where("severity IN (?)", severities)
+	}
+	res := db.Limit(limit).Delete(&AlertHisEvent{})
+	return res.RowsAffected, res.Error
+}
+
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
 }

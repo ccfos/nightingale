@@ -233,6 +233,14 @@ func (rt *Router) checkCurEventBusiGroupRWPermission(c *gin.Context, ids []int64
 func (rt *Router) alertCurEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := GetCurEventDetail(rt.Ctx, eid)
+
+	hasPermission := HasPermission(rt.Ctx, c, "event", fmt.Sprintf("%d", eid), rt.Center.AnonymousAccess.AlertDetail)
+	if !hasPermission {
+		rt.auth()(c)
+		rt.user()(c)
+		rt.bgroCheck(c, event.GroupId)
+	}
+
 	ginx.NewRender(c).Data(event, err)
 }
 

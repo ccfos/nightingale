@@ -148,11 +148,12 @@ func DatasourceCheck(ds models.Datasource) error {
 		},
 	}
 
+	ds.HTTPJson.Url = strings.TrimRight(ds.HTTPJson.Url, "/")
 	var fullURL string
 	req, err := ds.HTTPJson.NewReq(&fullURL)
 	if err != nil {
 		logger.Errorf("Error creating request: %v", err)
-		return fmt.Errorf("request urls:%v failed", ds.HTTPJson.GetUrls())
+		return fmt.Errorf("request urls:%v failed: %v", ds.HTTPJson.GetUrls(), err)
 	}
 
 	if ds.PluginType == models.PROMETHEUS {
@@ -168,14 +169,14 @@ func DatasourceCheck(ds models.Datasource) error {
 		req, err = http.NewRequest("GET", fullURL, nil)
 		if err != nil {
 			logger.Errorf("Error creating request: %v", err)
-			return fmt.Errorf("request url:%s failed", fullURL)
+			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
 	} else if ds.PluginType == models.TDENGINE {
 		fullURL = fmt.Sprintf("%s/rest/sql", ds.HTTPJson.Url)
 		req, err = http.NewRequest("POST", fullURL, strings.NewReader("show databases"))
 		if err != nil {
 			logger.Errorf("Error creating request: %v", err)
-			return fmt.Errorf("request url:%s failed", fullURL)
+			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
 	}
 
@@ -187,7 +188,7 @@ func DatasourceCheck(ds models.Datasource) error {
 		req, err = http.NewRequest("GET", fullURL, nil)
 		if err != nil {
 			logger.Errorf("Error creating request: %v", err)
-			return fmt.Errorf("request url:%s failed", fullURL)
+			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
 	}
 
@@ -202,7 +203,7 @@ func DatasourceCheck(ds models.Datasource) error {
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Errorf("Error making request: %v\n", err)
-		return fmt.Errorf("request url:%s failed", fullURL)
+		return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 	}
 	defer resp.Body.Close()
 
