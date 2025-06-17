@@ -158,7 +158,11 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 		}
 	}
 
-	ginx.NewRender(c).Data(event, nil)
+	m := map[string]interface{}{
+		"event":  event,
+		"result": "",
+	}
+	ginx.NewRender(c).Data(m, nil)
 }
 
 // 测试事件处理器
@@ -177,11 +181,11 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 
 	processor, err := models.GetProcessorByType(f.ProcessorConfig.Typ, f.ProcessorConfig.Config)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "get processor err: %+v", err)
+		ginx.Bomb(200, "get processor err: %+v", err)
 	}
 	event, res, err := processor.Process(rt.Ctx, event)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "processor err: %+v", err)
+		ginx.Bomb(200, "processor err: %+v", err)
 	}
 
 	ginx.NewRender(c).Data(map[string]interface{}{
