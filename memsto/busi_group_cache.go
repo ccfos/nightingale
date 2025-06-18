@@ -118,8 +118,6 @@ func (c *BusiGroupCacheType) syncBusiGroups() error {
 	ms := time.Since(start).Milliseconds()
 	c.stats.GaugeCronDuration.WithLabelValues("sync_busi_groups").Set(float64(ms))
 	c.stats.GaugeSyncNumber.WithLabelValues("sync_busi_groups").Set(float64(len(m)))
-
-	logger.Infof("timer: sync busi groups done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("busi_groups", start.Unix(), ms, len(m), "success")
 
 	return nil

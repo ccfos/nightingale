@@ -84,7 +84,6 @@ func (ttc *TaskTplCache) syncTaskTpl() error {
 	ttc.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	logger.Infof("timer: sync task tpls done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("task_tpls", start.Unix(), ms, len(m), "success")
 
 	return nil

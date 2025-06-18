@@ -134,8 +134,6 @@ func (d *DatasourceCacheType) syncDatasources() error {
 	ms := time.Since(start).Milliseconds()
 	d.stats.GaugeCronDuration.WithLabelValues("sync_datasources").Set(float64(ms))
 	d.stats.GaugeSyncNumber.WithLabelValues("sync_datasources").Set(float64(len(ds)))
-
-	logger.Infof("timer: sync datasources done, cost: %dms, number: %d", ms, len(ds))
 	dumper.PutSyncRecord("datasources", start.Unix(), ms, len(ds), "success")
 
 	return nil

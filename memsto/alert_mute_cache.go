@@ -142,7 +142,6 @@ func (amc *AlertMuteCacheType) syncAlertMutes() error {
 	ms := time.Since(start).Milliseconds()
 	amc.stats.GaugeCronDuration.WithLabelValues("sync_alert_mutes").Set(float64(ms))
 	amc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_mutes").Set(float64(len(lst)))
-	logger.Infof("timer: sync mutes done, cost: %dms, number: %d", ms, len(lst))
 	dumper.PutSyncRecord("alert_mutes", start.Unix(), ms, len(lst), "success")
 
 	return nil

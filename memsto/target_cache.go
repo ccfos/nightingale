@@ -179,7 +179,6 @@ func (tc *TargetCacheType) syncTargets() error {
 	ms := time.Since(start).Milliseconds()
 	tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(float64(ms))
 	tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(float64(len(lst)))
-	logger.Infof("timer: sync targets done, cost: %dms, number: %d", ms, len(lst))
 	dumper.PutSyncRecord("targets", start.Unix(), ms, len(lst), "success")
 
 	return nil

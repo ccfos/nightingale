@@ -198,7 +198,6 @@ func (ncc *NotifyChannelCacheType) syncNotifyChannels() error {
 	ms := time.Since(start).Milliseconds()
 	ncc.stats.GaugeCronDuration.WithLabelValues("sync_notify_channels").Set(float64(ms))
 	ncc.stats.GaugeSyncNumber.WithLabelValues("sync_notify_channels").Set(float64(len(m)))
-	logger.Infof("timer: sync notify channels done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("notify_channels", start.Unix(), ms, len(m), "success")
 
 	return nil

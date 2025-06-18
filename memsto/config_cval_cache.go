@@ -82,8 +82,6 @@ func (c *CvalCache) syncConfigs() error {
 	ms := time.Since(start).Milliseconds()
 	c.stats.GaugeCronDuration.WithLabelValues("sync_cvals").Set(float64(ms))
 	c.stats.GaugeSyncNumber.WithLabelValues("sync_cvals").Set(float64(len(c.cvals)))
-
-	logger.Infof("timer: sync cvals done, cost: %dms", ms)
 	dumper.PutSyncRecord("cvals", start.Unix(), ms, len(c.cvals), "success")
 
 	return nil
