@@ -4,9 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -234,4 +237,76 @@ func transportPut(dsid, updatedat int64, tran http.RoundTripper) {
 	transports[dsid] = tran
 	updatedAts[dsid] = updatedat
 	transportsLock.Unlock()
+}
+
+const (
+	DatasourceTypePrometheus      = "Prometheus"
+	DatasourceTypeVictoriaMetrics = "VictoriaMetrics"
+)
+
+type deleteDatasourceSeriesForm struct {
+	DatasourceID int64    `json:"datasource_id"`
+	Match        []string `json:"match"`
+	Start        string   `json:"start"`
+	End          string   `json:"end"`
+}
+
+func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
+	var ddsf deleteDatasourceSeriesForm
+	ginx.BindJSON(c, &ddsf)
+	ds := rt.DatasourceCache.GetById(ddsf.DatasourceID)
+
+	if ds == nil {
+		c.String(http.StatusBadRequest, "no such datasource")
+		return
+	}
+
+	// Get datasource type, now only support prometheus and victoriametrics
+	datasourceType, ok := ds.SettingsJson["prometheus.tsdb_type"]
+	if !ok {
+		ginx.Bomb(http.StatusBadRequest, "datasource type not found, please check your datasource settings")
+		return
+	}
+
+	switch datasourceType {
+	case DatasourceTypePrometheus:
+		rt.proxyDeleteSeriesRequest(c, ddsf)
+	case DatasourceTypeVictoriaMetrics:
+		// Delete API doesn’t support the deletion of specific time ranges.
+		// Refer: https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#how-to-delete-time-series
+		ddsf.Start = ""
+		ddsf.End = ""
+		rt.proxyDeleteSeriesRequest(c, ddsf)
+	default:
+		ginx.Bomb(http.StatusBadRequest, "not support delete series yet")
+	}
+
+	ginx.NewRender(c).Data(nil, nil)
+}
+
+func (rt *Router) proxyDeleteSeriesRequest(c *gin.Context, ddsf deleteDatasourceSeriesForm) {
+	form := url.Values{}
+	for _, m := range ddsf.Match {
+		form.Add("match[]", m)
+	}
+	if ddsf.Start != "" {
+		form.Add("start", ddsf.Start)
+	}
+	if ddsf.End != "" {
+		form.Add("end", ddsf.End)
+	}
+
+	req := c.Request
+	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Body = io.NopCloser(strings.NewReader(form.Encode()))
+	req.ContentLength = int64(len(form.Encode()))
+	req.Header.Del("Accept-Encoding")
+
+	req.URL.Path = fmt.Sprintf("/api/n9e/proxy/%d/api/v1/admin/tsdb/delete_series", ddsf.DatasourceID)
+
+	c.Params = gin.Params{
+		{Key: "id", Value: strconv.FormatInt(ddsf.DatasourceID, 10)},
+	}
+	rt.dsProxy(c)
 }
