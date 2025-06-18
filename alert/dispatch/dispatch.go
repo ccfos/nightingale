@@ -82,6 +82,10 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 	}
 
 	pipeline.Init()
+
+	// 设置通知记录回调函数
+	notifyChannelCache.SetNotifyRecordFunc(sender.NotifyRecord)
+
 	return notify
 }
 
@@ -451,30 +455,25 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
 		}
-		return
+
 	case "http":
-		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
-			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
-		}
-		if notifyChannel.RequestConfig == nil {
-			logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, request config not found", notifyRuleId, notifyChannel.Name, events[0])
+		// 使用队列模式处理 http 通知
+		// 创建通知任务
+		task := &memsto.NotifyTask{
+			Events:        events,
+			NotifyRuleId:  notifyRuleId,
+			NotifyChannel: notifyChannel,
+			TplContent:    tplContent,
+			CustomParams:  customParams,
+			Sendtos:       sendtos,
 		}
 
-		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
-			logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, http request config not found", notifyRuleId, notifyChannel.Name, events[0])
-		}
-
-		if NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err := notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, sendtos, resp, err)
-
-			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), resp, err)
-		} else {
-			for i := range sendtos {
-				resp, err := notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
-				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, []string{sendtos[i]}), resp, err)
-			}
+		// 将任务加入队列
+		success := e.notifyChannelCache.EnqueueNotifyTask(task)
+		if !success {
+			logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
+			// 如果入队失败，记录错误通知
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
 		}
 
 	case "smtp":
