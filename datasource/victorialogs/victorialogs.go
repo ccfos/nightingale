@@ -6,17 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
-	"github.com/prometheus/common/model"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -29,10 +31,18 @@ func init() {
 }
 
 type Victorialogs struct {
-	Addr     string `json:"addr" mapstructure:"addr"`
-	TLS      TLS    `json:"tls" mapstructure:"tls"`
-	MaxLines int    `json:"max_lines" mapstructure:"max_lines"`
+	Addr     string            `json:"victorialogs.addr" mapstructure:"victorialogs.addr"`
+	Timeout  int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"`
+	Basic    BasicAuth         `json:"victorialogs.basic" mapstructure:"victorialogs.basic"`
+	TLS      TLS               `json:"victorialogs.tls" mapstructure:"victorialogs.tls"`
+	Headers  map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
+	MaxLines int               `json:"victorialogs.max_lines" mapstructure:"victorialogs.max_lines"`
 	Client   *http.Client
+}
+
+type BasicAuth struct {
+	Username string `json:"victorialogs.user" mapstructure:"victorialogs.user"`
+	Password string `json:"victorialogs.password" mapstructure:"victorialogs.password"`
 }
 
 type TLS struct {
@@ -57,6 +67,10 @@ func (v *Victorialogs) Init(settings map[string]interface{}) (datasource.Datasou
 func (v *Victorialogs) InitClient() error {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(v.Timeout) * time.Second,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(v.Timeout) * time.Second,
 	}
 
 	if strings.Contains(v.Addr, "https") {
@@ -152,6 +166,8 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 	if err != nil {
 		return nil, err
 	}
+
+	v.AuthAndHeaders(r)
 
 	resp, err := v.Client.Do(r)
 	if err != nil {
@@ -253,6 +269,8 @@ func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 		return nil, 0, err
 	}
 
+	v.AuthAndHeaders(r)
+
 	resp, err := v.Client.Do(r)
 	if err != nil {
 		return nil, 0, err
@@ -311,6 +329,8 @@ func CalcHits(ctx context.Context, query interface{}, v *Victorialogs) int64 {
 		return 0
 	}
 
+	v.AuthAndHeaders(r)
+
 	resp, err := v.Client.Do(r)
 	if err != nil {
 		return 0
@@ -342,4 +362,14 @@ func CalcHits(ctx context.Context, query interface{}, v *Victorialogs) int64 {
 
 func (v *Victorialogs) QueryMapData(ctx context.Context, query interface{}) ([]map[string]string, error) {
 	return nil, nil
+}
+
+func (v *Victorialogs) AuthAndHeaders(req *http.Request) {
+	for k, v := range v.Headers {
+		req.Header.Set(k, v)
+	}
+
+	if v.Basic.Username != "" {
+		req.SetBasicAuth(v.Basic.Username, v.Basic.Password)
+	}
 }
