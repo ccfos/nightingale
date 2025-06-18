@@ -280,7 +280,9 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 	// 现在只处理 http 类型，flashduty 保持直接发送
 	if task.NotifyChannel.RequestType == "http" {
 		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
+			start := time.Now()
 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
+			resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos, resp, err)
 
@@ -290,7 +292,9 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			}
 		} else {
 			for i := range task.Sendtos {
+				start := time.Now()
 				resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
+				resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
 				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 					task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
 
