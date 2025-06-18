@@ -1,6 +1,7 @@
 package sender
 
 import (
+	"fmt"
 	"html/template"
 	"net/url"
 	"strings"
@@ -134,7 +135,9 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,
 	stats *astats.Stats, events []*models.AlertCurEvent) {
+	start := time.Now()
 	res, err := doSend(url, body, channel, stats)
+	res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
 	NotifyRecord(ctx, events, 0, channel, token, res, err)
 }
 
@@ -166,7 +169,9 @@ func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID i
 func doSend(url string, body interface{}, channel string, stats *astats.Stats) (string, error) {
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 
+	start := time.Now()
 	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
+	res = []byte(fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res))
 	if err != nil {
 		logger.Errorf("%s_sender: result=fail url=%s code=%d error=%v req:%v response=%s", channel, url, code, err, body, string(res))
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
