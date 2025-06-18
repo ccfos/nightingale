@@ -158,8 +158,6 @@ func (ugc *UserGroupCacheType) syncUserGroups() error {
 	ms := time.Since(start).Milliseconds()
 	ugc.stats.GaugeCronDuration.WithLabelValues("sync_user_groups").Set(float64(ms))
 	ugc.stats.GaugeSyncNumber.WithLabelValues("sync_user_groups").Set(float64(len(m)))
-
-	logger.Infof("timer: sync user groups done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("user_groups", start.Unix(), ms, len(m), "success")
 
 	return nil

@@ -168,8 +168,6 @@ func (utc *UserTokenCacheType) syncUserTokens() error {
 	ms := time.Since(start).Milliseconds()
 	utc.stats.GaugeCronDuration.WithLabelValues("sync_user_tokens").Set(float64(ms))
 	utc.stats.GaugeSyncNumber.WithLabelValues("sync_user_tokens").Set(float64(len(tokenUsers)))
-
-	logger.Infof("timer: sync user tokens done, cost: %dms, number: %d", ms, len(tokenUsers))
 	dumper.PutSyncRecord("user_tokens", start.Unix(), ms, len(tokenUsers), "success")
 
 	return nil

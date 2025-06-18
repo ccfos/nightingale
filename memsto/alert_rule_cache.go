@@ -132,7 +132,6 @@ func (arc *AlertRuleCacheType) syncAlertRules() error {
 	ms := time.Since(start).Milliseconds()
 	arc.stats.GaugeCronDuration.WithLabelValues("sync_alert_rules").Set(float64(ms))
 	arc.stats.GaugeSyncNumber.WithLabelValues("sync_alert_rules").Set(float64(len(m)))
-	logger.Infof("timer: sync rules done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("alert_rules", start.Unix(), ms, len(m), "success")
 
 	return nil

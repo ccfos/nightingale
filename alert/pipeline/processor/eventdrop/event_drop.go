@@ -53,7 +53,7 @@ func (c *EventDropConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent)
 	logger.Infof("processor eventdrop result: %v", result)
 	if result == "true" {
 		logger.Infof("processor eventdrop drop event: %v", event)
-		return event, "drop event success", nil
+		return nil, "drop event success", nil
 	}
 
 	return event, "drop event failed", nil

@@ -156,7 +156,6 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 	ms := time.Since(start).Milliseconds()
 	epc.stats.GaugeCronDuration.WithLabelValues("sync_event_processors").Set(float64(ms))
 	epc.stats.GaugeSyncNumber.WithLabelValues("sync_event_processors").Set(float64(len(m)))
-	logger.Infof("timer: sync event processors done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("event_processors", start.Unix(), ms, len(m), "success")
 
 	return nil

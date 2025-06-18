@@ -189,8 +189,6 @@ func (uc *UserCacheType) syncUsers() error {
 	ms := time.Since(start).Milliseconds()
 	uc.stats.GaugeCronDuration.WithLabelValues("sync_users").Set(float64(ms))
 	uc.stats.GaugeSyncNumber.WithLabelValues("sync_users").Set(float64(len(m)))
-
-	logger.Infof("timer: sync users done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("users", start.Unix(), ms, len(m), "success")
 
 	return nil

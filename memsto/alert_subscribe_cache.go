@@ -180,7 +180,6 @@ func (c *AlertSubscribeCacheType) syncAlertSubscribes() error {
 	ms := time.Since(start).Milliseconds()
 	c.stats.GaugeCronDuration.WithLabelValues("sync_alert_subscribes").Set(float64(ms))
 	c.stats.GaugeSyncNumber.WithLabelValues("sync_alert_subscribes").Set(float64(len(lst)))
-	logger.Infof("timer: sync subscribes done, cost: %dms, number: %d", ms, len(lst))
 	dumper.PutSyncRecord("alert_subscribes", start.Unix(), ms, len(lst), "success")
 
 	return nil
