@@ -467,16 +467,18 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 		return
 	}
 
-	logger.Debugf("rule_eval:%s event:%+v fire", p.Key(), event)
+	message := "unknown"
+	defer func() {
+		logger.Infof("rule_eval:%s event-hash-%s %s", p.Key(), event.Hash, message)
+	}()
+
 	if fired, has := p.fires.Get(event.Hash); has {
 		p.fires.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
 		event.FirstTriggerTime = fired.FirstTriggerTime
 		p.HandleFireEventHook(event)
 
 		if cachedRule.NotifyRepeatStep == 0 {
-			logger.Debugf("rule_eval:%s event:%+v repeat is zero nothing to do", p.Key(), event)
-			// 说明不想重复通知，那就直接返回了，nothing to do
-			// do not need to send alert again
+			message = "stalled, rule.notify_repeat_step is 0, no need to repeat notify"
 			return
 		}
 
@@ -485,21 +487,26 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 			if cachedRule.NotifyMaxNumber == 0 {
 				// 最大可以发送次数如果是0，表示不想限制最大发送次数，一直发即可
 				event.NotifyCurNumber = fired.NotifyCurNumber + 1
+				message = fmt.Sprintf("fired, notify_repeat_step_matched(%d >= %d + %d * 60) notify_max_number_ignore(#%d / %d)", event.LastEvalTime, fired.LastSentTime, cachedRule.NotifyRepeatStep, event.NotifyCurNumber, cachedRule.NotifyMaxNumber)
 				p.pushEventToQueue(event)
 			} else {
 				// 有最大发送次数的限制，就要看已经发了几次了，是否达到了最大发送次数
 				if fired.NotifyCurNumber >= cachedRule.NotifyMaxNumber {
-					logger.Debugf("rule_eval:%s event:%+v reach max number", p.Key(), event)
+					message = fmt.Sprintf("stalled, notify_repeat_step_matched(%d >= %d + %d * 60) notify_max_number_not_matched(#%d / %d)", event.LastEvalTime, fired.LastSentTime, cachedRule.NotifyRepeatStep, fired.NotifyCurNumber, cachedRule.NotifyMaxNumber)
 					return
 				} else {
 					event.NotifyCurNumber = fired.NotifyCurNumber + 1
+					message = fmt.Sprintf("fired, notify_repeat_step_matched(%d >= %d + %d * 60) notify_max_number_matched(#%d / %d)", event.LastEvalTime, fired.LastSentTime, cachedRule.NotifyRepeatStep, event.NotifyCurNumber, cachedRule.NotifyMaxNumber)
 					p.pushEventToQueue(event)
 				}
 			}
+		} else {
+			message = fmt.Sprintf("stalled, notify_repeat_step_not_matched(%d < %d + %d * 60)", event.LastEvalTime, fired.LastSentTime, cachedRule.NotifyRepeatStep)
 		}
 	} else {
 		event.NotifyCurNumber = 1
 		event.FirstTriggerTime = event.TriggerTime
+		message = fmt.Sprintf("fired, first_trigger_time: %d", event.FirstTriggerTime)
 		p.HandleFireEventHook(event)
 		p.pushEventToQueue(event)
 	}
