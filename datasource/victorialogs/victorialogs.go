@@ -209,9 +209,9 @@ func (v *Victorialogs) MakeTSQuery(ctx context.Context, query interface{}, event
 }
 
 func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
-	queryParam, ok := query.(*QueryParam)
-	if !ok {
-		return nil, errors.New("invalid query param: expected *QueryParam")
+	queryParam := new(QueryParam)
+	if err := mapstructure.Decode(query, queryParam); err != nil {
+		return nil, fmt.Errorf("failed to decode query param: %w", err)
 	}
 
 	if queryParam.Query == "" {
@@ -315,9 +315,9 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 }
 
 func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {
-	queryParam, ok := query.(*QueryParam)
-	if !ok {
-		return nil, 0, errors.New("invalid query param: expected *QueryParam")
+	queryParam := new(QueryParam)
+	if err := mapstructure.Decode(query, queryParam); err != nil {
+		return nil, 0, fmt.Errorf("failed to decode query param: %w", err)
 	}
 
 	if queryParam.Query == "" {
