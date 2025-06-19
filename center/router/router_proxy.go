@@ -4,22 +4,21 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 )
 
 type QueryFormItem struct {
@@ -245,10 +244,10 @@ const (
 )
 
 type deleteDatasourceSeriesForm struct {
-	DatasourceID int64    `json:"datasource_id"`
-	Match        []string `json:"match"`
-	Start        string   `json:"start"`
-	End          string   `json:"end"`
+	DatasourceID int64  `json:"datasource_id"`
+	Match        string `json:"match"`
+	Start        string `json:"start"`
+	End          string `json:"end"`
 }
 
 func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
@@ -268,45 +267,34 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		return
 	}
 
+	target, err := ds.HTTPJson.ParseUrl()
+	if err != nil {
+		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
+		return
+	}
+
+	timeout := time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond
+
 	switch datasourceType {
 	case DatasourceTypePrometheus:
-		rt.proxyDeleteSeriesRequest(c, ddsf)
+		// Prometheus delete api need POST method
+		// https://prometheus.io/docs/prometheus/latest/querying/api/#delete-series
+		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?match[]=%s&start=%s&end=%s", target.Host, ddsf.Match, ddsf.Start, ddsf.End)
+		_, _, err := poster.PostJSON(url, timeout, nil)
+		if err != nil {
+			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
+		}
 	case DatasourceTypeVictoriaMetrics:
 		// Delete API doesn’t support the deletion of specific time ranges.
 		// Refer: https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#how-to-delete-time-series
-		ddsf.Start = ""
-		ddsf.End = ""
-		rt.proxyDeleteSeriesRequest(c, ddsf)
+		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?match[]=%s", target.Host, ddsf.Match)
+		_, err := httplib.Get(url).SetTimeout(timeout).Response()
+		if err != nil {
+			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
+		}
 	default:
 		ginx.Bomb(http.StatusBadRequest, "not support delete series yet")
 	}
 
 	ginx.NewRender(c).Data(nil, nil)
-}
-
-func (rt *Router) proxyDeleteSeriesRequest(c *gin.Context, ddsf deleteDatasourceSeriesForm) {
-	form := url.Values{}
-	for _, m := range ddsf.Match {
-		form.Add("match[]", m)
-	}
-	if ddsf.Start != "" {
-		form.Add("start", ddsf.Start)
-	}
-	if ddsf.End != "" {
-		form.Add("end", ddsf.End)
-	}
-
-	req := c.Request
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Body = io.NopCloser(strings.NewReader(form.Encode()))
-	req.ContentLength = int64(len(form.Encode()))
-	req.Header.Del("Accept-Encoding")
-
-	req.URL.Path = fmt.Sprintf("/api/n9e/proxy/%d/api/v1/admin/tsdb/delete_series", ddsf.DatasourceID)
-
-	c.Params = gin.Params{
-		{Key: "id", Value: strconv.FormatInt(ddsf.DatasourceID, 10)},
-	}
-	rt.dsProxy(c)
 }
