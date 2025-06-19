@@ -1,7 +1,6 @@
 package router
 
 import (
-	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -72,13 +71,13 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 
 type MuteTestForm struct {
 	EventId   int64            `json:"event_id" binding:"required"`
-	AlertMute models.AlertMute `json:"mute_config" binding:"required"`
+	AlertMute models.AlertMute `json:"config" binding:"required"`
 }
 
 func (rt *Router) alertMuteTryRun(c *gin.Context) {
-
 	var f MuteTestForm
 	ginx.BindJSON(c, &f)
+	ginx.Dangerous(f.AlertMute.Verify())
 
 	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
 	ginx.Dangerous(err)
@@ -90,19 +89,14 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
 
-	// 绕过时间范围检查：设置时间范围为全量（0 到 int64 最大值），仅验证其他匹配条件（如标签、策略类型等）
-	f.AlertMute.MuteTimeType = models.TimeRange
-	f.AlertMute.Btime = 0             // 最小可能值（如 Unix 时间戳起点）
-	f.AlertMute.Etime = math.MaxInt64 // 最大可能值（int64 上限）
-
 	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
 	ginx.Dangerous(err)
 	if !match {
-		ginx.NewRender(c).Data("not match", nil)
+		ginx.NewRender(c).Data("event not match mute", nil)
 		return
 	}
 
-	ginx.NewRender(c).Data("mute test match", nil)
+	ginx.NewRender(c).Data("event match mute", nil)
 
 }
 
