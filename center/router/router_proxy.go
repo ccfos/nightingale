@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -244,10 +246,10 @@ const (
 )
 
 type deleteDatasourceSeriesForm struct {
-	DatasourceID int64  `json:"datasource_id"`
-	Match        string `json:"match"`
-	Start        string `json:"start"`
-	End          string `json:"end"`
+	DatasourceID int64    `json:"datasource_id"`
+	Match        []string `json:"match"`
+	Start        string   `json:"start"`
+	End          string   `json:"end"`
 }
 
 func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
@@ -267,6 +269,12 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		return
 	}
 
+	writeAddr, ok := ds.SettingsJson["write_addr"]
+	if !ok {
+		ginx.Bomb(http.StatusBadRequest, "datasource write_addr not found, please check your datasource settings")
+		return
+	}
+
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
 		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
@@ -274,12 +282,17 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 	}
 
 	timeout := time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond
+	matchQuerys := make([]string, 0)
+	for _, match := range ddsf.Match {
+		matchQuerys = append(matchQuerys, fmt.Sprintf("match[]=%s", match))
+	}
+	matchQuery := strings.Join(matchQuerys, "&")
 
 	switch datasourceType {
 	case DatasourceTypePrometheus:
 		// Prometheus delete api need POST method
 		// https://prometheus.io/docs/prometheus/latest/querying/api/#delete-series
-		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?match[]=%s&start=%s&end=%s", target.Host, ddsf.Match, ddsf.Start, ddsf.End)
+		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s&start=%s&end=%s", target.Host, matchQuery, ddsf.Start, ddsf.End)
 		_, _, err := poster.PostJSON(url, timeout, nil)
 		if err != nil {
 			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
@@ -287,7 +300,19 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 	case DatasourceTypeVictoriaMetrics:
 		// Delete API doesn’t support the deletion of specific time ranges.
 		// Refer: https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#how-to-delete-time-series
-		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?match[]=%s", target.Host, ddsf.Match)
+		var url string
+		// Check VictoriaMetrics is single node or cluster
+		re := regexp.MustCompile(`/insert/(\d+)/prometheus`)
+		matches := re.FindStringSubmatch(writeAddr.(string))
+		if len(matches) > 0 && matches[1] != "" {
+			accountID, err := strconv.Atoi(matches[1])
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "invalid accountID: %s", matches[1])
+			}
+			url = fmt.Sprintf("http://%s/delete/%d/prometheus/api/v1/admin/tsdb/delete_series?%s", target.Host, accountID, matchQuery)
+		} else {
+			url = fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s", target.Host, matchQuery)
+		}
 		_, err := httplib.Get(url).SetTimeout(timeout).Response()
 		if err != nil {
 			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
