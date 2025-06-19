@@ -92,6 +92,12 @@ func (v *Victorialogs) InitClient() error {
 }
 
 func (v *Victorialogs) Validate(ctx context.Context) error {
+	if v.Client == nil {
+		if err := v.InitClient(); err != nil {
+			return err
+		}
+	}
+
 	baseURL, err := url.Parse(v.Addr)
 	if err != nil {
 		return err
@@ -144,6 +150,12 @@ func (v *Victorialogs) MakeTSQuery(ctx context.Context, query interface{}, event
 }
 
 func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
+	if v.Client == nil {
+		if err := v.InitClient(); err != nil {
+			return nil, err
+		}
+	}
+
 	queryParam, ok := query.(*QueryParam)
 	if !ok {
 		return nil, errors.New("invalid query param")
@@ -246,6 +258,12 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 }
 
 func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {
+	if v.Client == nil {
+		if err := v.InitClient(); err != nil {
+			return nil, 0, err
+		}
+	}
+
 	queryParam, ok := query.(*QueryParam)
 	if !ok {
 		return nil, 0, errors.New("invalid query param")
@@ -307,6 +325,12 @@ func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 }
 
 func CalcHits(ctx context.Context, query interface{}, v *Victorialogs) int64 {
+	if v.Client == nil {
+		if err := v.InitClient(); err != nil {
+			return 0
+		}
+	}
+
 	queryParam, ok := query.(*QueryParam)
 	if !ok {
 		return 0
