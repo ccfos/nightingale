@@ -142,6 +142,7 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["es.min_interval"] = item.SettingsJson["min_interval"]
 	ds.Settings["es.max_shard"] = item.SettingsJson["max_shard"]
 	ds.Settings["es.enable_write"] = item.SettingsJson["enable_write"]
+	ds.Settings["es.max_query_rows"] = item.SettingsJson["max_query_rows"]
 }
 
 // for opensearch

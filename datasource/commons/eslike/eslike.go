@@ -1,17 +1,23 @@
 package eslike
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/common/model"
@@ -37,6 +43,11 @@ type Query struct {
 
 	Timeout  int `json:"timeout" mapstructure:"timeout"`
 	MaxShard int `json:"max_shard" mapstructure:"max_shard"`
+
+	QueryType    string                 `json:"query_type" mapstructure:"query_type"`
+	Query        string                 `json:"query" mapstructure:"query"`
+	CustomParams map[string]interface{} `json:"custom_params" mapstructure:"custom_params"`
+	MaxQueryRows int                    `json:"max_query_rows" mapstructure:"max_query_rows"`
 }
 
 type MetricAggr struct {
@@ -548,6 +559,152 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	return items, nil
 }
 
+func QuerySQLData(ctx context.Context, queryParam interface{}, cliTimeout int64, version string, client *elasticsearch.Client) ([]models.DataResp, error) {
+	param := new(Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, err
+	}
+
+	if param.Timeout == 0 {
+		param.Timeout = int(cliTimeout) / 1000
+	}
+
+	// Prepare SQL query request
+	query := map[string]interface{}{
+		"query": param.Query,
+	}
+
+	for k, v := range param.CustomParams {
+		query[k] = v
+	}
+
+	// Add timeout if specified
+	if param.Timeout > 0 {
+		query["request_timeout"] = fmt.Sprintf("%ds", param.Timeout)
+	}
+
+	// Execute SQL query
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal SQL query: %v", err)
+	}
+
+	// Create a new request with context
+	req := esapi.SQLQueryRequest{
+		Body: bytes.NewReader(queryBytes),
+	}
+
+	// Execute the request with context
+	res, err := req.Do(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute SQL query: %v", err)
+	}
+	defer res.Body.Close()
+
+	// Parse response
+	var result map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to parse SQL response: %v", err)
+	}
+
+	// Check for errors in response
+	if res.IsError() {
+		return nil, fmt.Errorf("SQL query error: %s", result["error"].(map[string]interface{})["reason"])
+	}
+
+	// Extract columns and rows
+	columns := result["columns"].([]interface{})
+	rows := result["rows"].([]interface{})
+
+	var dataResps []models.DataResp
+	dataMap := make(map[string]*models.DataResp)
+
+	for _, row := range rows {
+		rowData := row.([]interface{})
+		labels := make(map[string]string)
+		metricValue := make(map[string]float64)
+		metricTs := make(map[string]float64)
+
+		// Process each column based on its role
+		for i, col := range columns {
+			colName := col.(map[string]interface{})["name"].(string)
+			colType := col.(map[string]interface{})["type"].(string)
+			value := rowData[i]
+
+			if colType == "datetime" {
+				if ts, err := sqlbase.ParseTime(value, time.RFC3339Nano); err == nil {
+					metricTs[colName] = float64(ts.Unix())
+				} else {
+					logger.Warningf("parse time error:%v", err)
+				}
+				continue
+			}
+
+			switch v := value.(type) {
+			case float64:
+				metricValue[colName] = v
+			case int64:
+				metricValue[colName] = float64(v)
+			default:
+				labels[colName] = fmt.Sprintf("%v", value)
+			}
+		}
+
+		// Process metric values
+		for metricName, value := range metricValue {
+			metrics := make(model.Metric)
+			var labelsStr []string
+
+			// Add labels
+			for k, v := range labels {
+				metrics[model.LabelName(k)] = model.LabelValue(v)
+				labelsStr = append(labelsStr, fmt.Sprintf("%s=%s", k, v))
+			}
+
+			// Add metric name
+			metrics["__name__"] = model.LabelValue(metricName)
+			labelsStr = append(labelsStr, fmt.Sprintf("__name__=%s", metricName))
+
+			// Create hash key for labels
+			sort.Strings(labelsStr)
+			labelsStrHash := fmt.Sprintf("%x", md5.Sum([]byte(strings.Join(labelsStr, ","))))
+
+			// Get timestamp
+			var ts float64
+			for id, timestamp := range metricTs {
+				ts = timestamp
+				if id == "time" {
+					break
+				}
+			}
+			if ts == 0 {
+				ts = float64(time.Now().Unix())
+			}
+
+			// Create or update DataResp
+			valuePair := []float64{ts, value}
+			if existing, ok := dataMap[labelsStrHash]; ok {
+				existing.Values = append(existing.Values, valuePair)
+			} else {
+				dataResp := models.DataResp{
+					Ref:    param.Ref,
+					Metric: metrics,
+					Values: [][]float64{valuePair},
+				}
+				dataMap[labelsStrHash] = &dataResp
+			}
+		}
+	}
+
+	// Convert map to slice and sort values
+	for _, v := range dataMap {
+		sort.Slice(v.Values, func(i, j int) bool { return v.Values[i][0] < v.Values[j][0] })
+		dataResps = append(dataResps, *v)
+	}
+
+	return dataResps, nil
+}
+
 func HitFilter(typ string) bool {
 	switch typ {
 	case "keyword", "date", "long", "integer", "short", "byte", "double", "float", "half_float", "scaled_float", "unsigned_long":
@@ -650,4 +807,84 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	}
 
 	return ret, total, nil
+}
+
+func QuerySQLLog(ctx context.Context, queryParam interface{}, timeout int64, version string, client *elasticsearch.Client) ([]interface{}, int64, error) {
+	param := new(Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, 0, err
+	}
+
+	if param.Timeout == 0 {
+		param.Timeout = int(timeout) / 1000
+	}
+
+	// Prepare SQL query request
+	query := map[string]interface{}{
+		"query": param.Query,
+	}
+
+	for k, v := range param.CustomParams {
+		query[k] = v
+	}
+
+	// Add timeout if specified
+	if param.Timeout > 0 {
+		query["request_timeout"] = fmt.Sprintf("%ds", param.Timeout)
+	}
+
+	// Add max rows limit
+	if param.MaxQueryRows > 0 {
+		query["fetch_size"] = param.MaxQueryRows
+	}
+
+	// Execute SQL query
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to marshal SQL query: %v", err)
+	}
+
+	// Create a new request with context
+	req := esapi.SQLQueryRequest{
+		Body: bytes.NewReader(queryBytes),
+	}
+
+	// Execute the request with context
+	res, err := req.Do(ctx, client)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to execute SQL query: %v", err)
+	}
+	defer res.Body.Close()
+
+	// Parse response
+	var result map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, 0, fmt.Errorf("failed to parse SQL response: %v", err)
+	}
+
+	// Check for errors in response
+	if res.IsError() {
+		return nil, 0, fmt.Errorf("SQL query error: %s", result["error"].(map[string]interface{})["reason"])
+	}
+
+	// Extract columns and rows
+	columns := result["columns"].([]interface{})
+	rows := result["rows"].([]interface{})
+
+	// Convert rows to interface slice
+	var ret []interface{}
+	for _, row := range rows {
+		rowData := row.([]interface{})
+		rowMap := make(map[string]interface{})
+
+		// Convert row data to a map
+		for i, col := range columns {
+			colName := col.(map[string]interface{})["name"].(string)
+			rowMap[colName] = rowData[i]
+		}
+
+		ret = append(ret, rowMap)
+	}
+
+	return ret, 0, nil
 }
