@@ -43,4 +43,10 @@ var Plugins = []Plugin{
 		Type:     "pgsql",
 		TypeName: "PostgreSQL",
 	},
+	{
+		Id:       8,
+		Category: "logging",
+		Type:     "victorialogs",
+		TypeName: "VictoriaLogs",
+	},
 }

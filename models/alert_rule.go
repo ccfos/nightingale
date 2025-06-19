@@ -31,7 +31,8 @@ const (
 	MYSQL         = "mysql"
 	POSTGRESQL    = "pgsql"
 
-	CLICKHOUSE = "ck"
+	CLICKHOUSE   = "ck"
+	VICTORIALOGS = "victorialogs"
 )
 
 const (
@@ -1199,7 +1200,8 @@ func (ar *AlertRule) IsInnerRule() bool {
 		ar.Cate == ELASTICSEARCH ||
 		ar.Prod == LOKI || ar.Cate == LOKI ||
 		ar.Cate == MYSQL ||
-		ar.Cate == POSTGRESQL
+		ar.Cate == POSTGRESQL ||
+		ar.Cate == VICTORIALOGS
 }
 
 func (ar *AlertRule) GetRuleType() string {
