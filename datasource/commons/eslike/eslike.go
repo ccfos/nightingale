@@ -687,7 +687,7 @@ func QuerySQLData(ctx context.Context, queryParam interface{}, cliTimeout int64,
 				existing.Values = append(existing.Values, valuePair)
 			} else {
 				dataResp := models.DataResp{
-					Ref:    param.Query,
+					Ref:    param.Ref,
 					Metric: metrics,
 					Values: [][]float64{valuePair},
 				}
