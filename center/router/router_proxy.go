@@ -269,12 +269,6 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		return
 	}
 
-	writeAddr, ok := ds.SettingsJson["write_addr"]
-	if !ok {
-		ginx.Bomb(http.StatusBadRequest, "datasource write_addr not found, please check your datasource settings")
-		return
-	}
-
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
 		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
@@ -293,17 +287,20 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		// Prometheus delete api need POST method
 		// https://prometheus.io/docs/prometheus/latest/querying/api/#delete-series
 		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s&start=%s&end=%s", target.Host, matchQuery, ddsf.Start, ddsf.End)
-		_, _, err := poster.PostJSON(url, timeout, nil)
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
-		}
+		go func() {
+			_, _, err := poster.PostJSON(url, timeout, nil)
+			if err != nil {
+				logger.Errorf("failed to delete series: %v", err)
+			}
+		}()
 	case DatasourceTypeVictoriaMetrics:
 		// Delete API doesn’t support the deletion of specific time ranges.
 		// Refer: https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#how-to-delete-time-series
 		var url string
 		// Check VictoriaMetrics is single node or cluster
-		re := regexp.MustCompile(`/insert/(\d+)/prometheus`)
-		matches := re.FindStringSubmatch(writeAddr.(string))
+		// Cluster will have /select/<accountID>/prometheus pattern
+		re := regexp.MustCompile(`/select/(\d+)/prometheus`)
+		matches := re.FindStringSubmatch(ds.HTTPJson.Url)
 		if len(matches) > 0 && matches[1] != "" {
 			accountID, err := strconv.Atoi(matches[1])
 			if err != nil {
@@ -313,10 +310,12 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		} else {
 			url = fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s", target.Host, matchQuery)
 		}
-		_, err := httplib.Get(url).SetTimeout(timeout).Response()
-		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, "delete series error: %#v", err)
-		}
+		go func() {
+			_, err := httplib.Get(url).SetTimeout(timeout).Response()
+			if err != nil {
+				logger.Errorf("delete series error: %#v", err)
+			}
+		}()
 	default:
 		ginx.Bomb(http.StatusBadRequest, "not support delete series yet")
 	}
