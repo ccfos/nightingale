@@ -1,16 +1,17 @@
 package victorialogs
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
@@ -23,7 +24,11 @@ import (
 )
 
 const (
-	VictorialogsType = "victorialogs"
+	VictorialogsType  = "victorialogs"
+	DefaultMaxLines   = 1000
+	DefaultTimeout    = 30
+	MaxErrorBodySize  = 1024 * 1024 // 1MB
+	DefaultBufferSize = 64 * 1024   // 64KB
 )
 
 func init() {
@@ -38,6 +43,7 @@ type Victorialogs struct {
 	Headers  map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
 	MaxLines int               `json:"victorialogs.max_lines" mapstructure:"victorialogs.max_lines"`
 	Client   *http.Client
+	once     sync.Once
 }
 
 type BasicAuth struct {
@@ -60,58 +66,113 @@ type QueryParam struct {
 func (v *Victorialogs) Init(settings map[string]interface{}) (datasource.Datasource, error) {
 	newest := new(Victorialogs)
 	err := mapstructure.Decode(settings, newest)
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置默认值
 	newest.Addr = strings.TrimSuffix(newest.Addr, "/")
-	return newest, err
+	if newest.Timeout <= 0 {
+		newest.Timeout = DefaultTimeout
+	}
+	if newest.MaxLines <= 0 {
+		newest.MaxLines = DefaultMaxLines
+	}
+	newest.InitClient()
+	return newest, nil
 }
 
 func (v *Victorialogs) InitClient() error {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout: time.Duration(v.Timeout) * time.Second,
-		}).DialContext,
-		ResponseHeaderTimeout: time.Duration(v.Timeout) * time.Second,
+	var initErr error
+	v.once.Do(func() {
+		transport := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		}
+
+		if strings.HasPrefix(v.Addr, "https://") {
+			tlsConfig := tlsx.ClientConfig{
+				InsecureSkipVerify: v.TLS.SkipTlsVerify,
+				UseTLS:             true,
+			}
+			cfg, err := tlsConfig.TLSConfig()
+			if err != nil {
+				initErr = fmt.Errorf("failed to create TLS config: %w", err)
+				return
+			}
+			transport.TLSClientConfig = cfg
+		}
+
+		v.Client = &http.Client{
+			Transport: transport,
+			Timeout:   time.Duration(v.Timeout) * time.Second,
+		}
+	})
+	return initErr
+}
+
+// buildURL 统一URL构建逻辑，减少重复代码
+func (v *Victorialogs) buildURL(path string, queryParam *QueryParam, extraParams map[string]string) (*url.URL, error) {
+	baseURL, err := url.Parse(v.Addr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address: %w", err)
+	}
+	baseURL.Path = path
+
+	values := baseURL.Query()
+	if queryParam != nil {
+		if queryParam.Query != "" {
+			values.Add("query", queryParam.Query)
+		}
+		if queryParam.Start != 0 {
+			values.Add("start", strconv.FormatInt(queryParam.Start, 10))
+		}
+		if queryParam.End != 0 {
+			values.Add("end", strconv.FormatInt(queryParam.End, 10))
+		}
+		if queryParam.Step != "" {
+			values.Add("step", queryParam.Step)
+		}
 	}
 
-	if strings.Contains(v.Addr, "https") {
-		tlsConfig := tlsx.ClientConfig{
-			InsecureSkipVerify: v.TLS.SkipTlsVerify,
-			UseTLS:             true,
-		}
-		cfg, err := tlsConfig.TLSConfig()
-		if err != nil {
-			return err
-		}
-		transport.TLSClientConfig = cfg
+	for k, v := range extraParams {
+		values.Add(k, v)
 	}
 
-	v.Client = &http.Client{
-		Transport: transport,
+	baseURL.RawQuery = values.Encode()
+	return baseURL, nil
+}
+
+// createRequest 统一请求创建逻辑
+func (v *Victorialogs) createRequest(ctx context.Context, url string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	return nil
+	v.AuthAndHeaders(req)
+	return req, nil
+}
+
+// readLimitedErrorBody 统一错误响应体读取
+func readLimitedErrorBody(resp *http.Response) string {
+	limitedReader := io.LimitReader(resp.Body, MaxErrorBodySize)
+	body, _ := io.ReadAll(limitedReader)
+	return string(body)
 }
 
 func (v *Victorialogs) Validate(ctx context.Context) error {
-	if v.Client == nil {
-		if err := v.InitClient(); err != nil {
-			return err
-		}
-	}
-
-	baseURL, err := url.Parse(v.Addr)
-	if err != nil {
-		return err
-	}
-	baseURL.Path = "/health"
-
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL.String(), nil)
+	url, err := v.buildURL("/health", nil, nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := v.Client.Do(r)
+	req, err := v.createRequest(ctx, url.String())
 	if err != nil {
 		return err
+	}
+
+	resp, err := v.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("health check failed: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -120,7 +181,8 @@ func (v *Victorialogs) Validate(ctx context.Context) error {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got status code: %d, expected: %d", resp.StatusCode, http.StatusOK)
+		body := readLimitedErrorBody(resp)
+		return fmt.Errorf("health check failed with status %d: %s", resp.StatusCode, body)
 	}
 
 	return nil
@@ -132,13 +194,10 @@ func (v *Victorialogs) Equal(p datasource.Datasource) bool {
 		logger.Errorf("unexpected plugin type, expected is victorialogs")
 		return false
 	}
-	if v.Addr != newest.Addr {
-		return false
-	}
-	if v.TLS.SkipTlsVerify != newest.TLS.SkipTlsVerify {
-		return false
-	}
-	return true
+	return v.Addr == newest.Addr &&
+		v.Timeout == newest.Timeout &&
+		v.TLS.SkipTlsVerify == newest.TLS.SkipTlsVerify &&
+		v.Basic.Username == newest.Basic.Username
 }
 
 func (v *Victorialogs) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
@@ -150,48 +209,37 @@ func (v *Victorialogs) MakeTSQuery(ctx context.Context, query interface{}, event
 }
 
 func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
-	if v.Client == nil {
-		if err := v.InitClient(); err != nil {
-			return nil, err
-		}
-	}
-
 	queryParam, ok := query.(*QueryParam)
 	if !ok {
-		return nil, errors.New("invalid query param")
+		return nil, errors.New("invalid query param: expected *QueryParam")
 	}
 
-	baseURL, err := url.Parse(v.Addr)
-	if err != nil {
-		return nil, err
+	if queryParam.Query == "" {
+		return nil, errors.New("query cannot be empty")
 	}
-	baseURL.Path = "/select/logsql/stats_query_range"
 
-	values := baseURL.Query()
-	values.Add("query", queryParam.Query)
-	values.Add("start", strconv.FormatInt(queryParam.Start, 10))
-	values.Add("end", strconv.FormatInt(queryParam.End, 10))
-	values.Add("step", queryParam.Step)
-	baseURL.RawQuery = values.Encode()
-
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL.String(), nil)
+	url, err := v.buildURL("/select/logsql/stats_query_range", queryParam, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	v.AuthAndHeaders(r)
-
-	resp, err := v.Client.Do(r)
+	req, err := v.createRequest(ctx, url.String())
 	if err != nil {
 		return nil, err
+	}
+
+	resp, err := v.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// parse response
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		body := readLimitedErrorBody(resp)
+		return nil, fmt.Errorf("query failed with status %d: %s", resp.StatusCode, body)
 	}
+
+	decoder := json.NewDecoder(resp.Body)
 
 	var respData struct {
 		Status string `json:"status"`
@@ -202,19 +250,25 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 				Values [][]interface{}   `json:"values"`
 			} `json:"result"`
 		} `json:"data"`
+		Error     string `json:"error,omitempty"`
+		ErrorType string `json:"errorType,omitempty"`
 	}
 
-	if err := json.Unmarshal(body, &respData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+	if err := decoder.Decode(&respData); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	if respData.Status != "success" {
+		if respData.Error != "" {
+			return nil, fmt.Errorf("query failed: %s (%s)", respData.Error, respData.ErrorType)
+		}
 		return nil, fmt.Errorf("query failed with status: %s", respData.Status)
 	}
 
-	var dataResps []models.DataResp
+	// 预分配切片容量
+	dataResps := make([]models.DataResp, 0, len(respData.Data.Result))
 	for _, result := range respData.Data.Result {
-		metric := make(model.Metric)
+		metric := make(model.Metric, len(result.Metric))
 		for k, v := range result.Metric {
 			metric[model.LabelName(k)] = model.LabelValue(v)
 		}
@@ -224,6 +278,7 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 			if len(v) != 2 {
 				continue
 			}
+
 			ts, ok := v[0].(float64)
 			if !ok {
 				continue
@@ -246,72 +301,64 @@ func (v *Victorialogs) QueryData(ctx context.Context, query interface{}) ([]mode
 			values = append(values, []float64{ts, val})
 		}
 
-		dataResps = append(dataResps, models.DataResp{
-			Ref:    queryParam.Ref,
-			Metric: metric,
-			Values: values,
-			Query:  queryParam.Query,
-		})
+		if len(values) > 0 {
+			dataResps = append(dataResps, models.DataResp{
+				Ref:    queryParam.Ref,
+				Metric: metric,
+				Values: values,
+				Query:  queryParam.Query,
+			})
+		}
 	}
 
 	return dataResps, nil
 }
 
 func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {
-	if v.Client == nil {
-		if err := v.InitClient(); err != nil {
-			return nil, 0, err
-		}
-	}
-
 	queryParam, ok := query.(*QueryParam)
 	if !ok {
-		return nil, 0, errors.New("invalid query param")
+		return nil, 0, errors.New("invalid query param: expected *QueryParam")
 	}
 
-	baseURL, err := url.Parse(v.Addr)
-	if err != nil {
-		return nil, 0, err
+	if queryParam.Query == "" {
+		return nil, 0, errors.New("query cannot be empty")
 	}
-	baseURL.Path = "/select/logsql/query"
 
-	values := baseURL.Query()
-	values.Add("query", queryParam.Query)
-	values.Add("start", strconv.FormatInt(queryParam.Start, 10))
-	values.Add("end", strconv.FormatInt(queryParam.End, 10))
-	values.Add("limit", strconv.Itoa(v.MaxLines))
-	baseURL.RawQuery = values.Encode()
-
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL.String(), nil)
+	extraParams := map[string]string{
+		"limit": strconv.Itoa(v.MaxLines),
+	}
+	url, err := v.buildURL("/select/logsql/query", queryParam, extraParams)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	v.AuthAndHeaders(r)
-
-	resp, err := v.Client.Do(r)
+	req, err := v.createRequest(ctx, url.String())
 	if err != nil {
 		return nil, 0, err
+	}
+
+	resp, err := v.Client.Do(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("query failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// parse response - stream of JSON lines
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, 0, err
+	if resp.StatusCode != http.StatusOK {
+		body := readLimitedErrorBody(resp)
+		return nil, 0, fmt.Errorf("query failed with status %d: %s", resp.StatusCode, body)
 	}
 
-	// Split the response into lines and parse each line as JSON
-	lines := strings.Split(string(body), "\n")
-	var logs []interface{}
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, DefaultBufferSize), 0) // 0 表示无限制
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	logs := make([]interface{}, 0, v.MaxLines)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
 
-		// Parse each line as a JSON object
 		var logEntry map[string]interface{}
 		if err := json.Unmarshal([]byte(line), &logEntry); err != nil {
 			logger.Warningf("failed to parse log line: %v, line: %s", err, line)
@@ -321,48 +368,46 @@ func (v *Victorialogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 		logs = append(logs, logEntry)
 	}
 
-	return logs, CalcHits(ctx, query, v), nil
+	if err := scanner.Err(); err != nil {
+		return nil, 0, fmt.Errorf("error reading response: %w", err)
+	}
+
+	var hits int64
+	if len(logs) > 0 {
+		hits = v.calcHits(ctx, queryParam)
+	}
+
+	return logs, hits, nil
 }
 
-func CalcHits(ctx context.Context, query interface{}, v *Victorialogs) int64 {
-	if v.Client == nil {
-		if err := v.InitClient(); err != nil {
-			return 0
-		}
-	}
-
-	queryParam, ok := query.(*QueryParam)
-	if !ok {
+func (v *Victorialogs) calcHits(ctx context.Context, queryParam *QueryParam) int64 {
+	url, err := v.buildURL("/select/logsql/hits", queryParam, nil)
+	if err != nil {
+		logger.Errorf("invalid address for hits calculation: %v", err)
 		return 0
 	}
 
-	baseURL, err := url.Parse(v.Addr)
+	req, err := v.createRequest(ctx, url.String())
 	if err != nil {
-		return 0
-	}
-	baseURL.Path = "/select/logsql/hits"
-
-	values := baseURL.Query()
-	values.Add("query", queryParam.Query)
-	values.Add("start", strconv.FormatInt(queryParam.Start, 10))
-	values.Add("end", strconv.FormatInt(queryParam.End, 10))
-	baseURL.RawQuery = values.Encode()
-
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL.String(), nil)
-	if err != nil {
+		logger.Errorf("failed to create hits request: %v", err)
 		return 0
 	}
 
-	v.AuthAndHeaders(r)
-
-	resp, err := v.Client.Do(r)
+	resp, err := v.Client.Do(req)
 	if err != nil {
+		logger.Errorf("hits query failed: %v", err)
 		return 0
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		logger.Errorf("hits query failed with status: %d", resp.StatusCode)
+		return 0
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		logger.Errorf("failed to read hits response: %v", err)
 		return 0
 	}
 
@@ -373,6 +418,7 @@ func CalcHits(ctx context.Context, query interface{}, v *Victorialogs) int64 {
 	}
 
 	if err := json.Unmarshal(body, &respData); err != nil {
+		logger.Errorf("failed to unmarshal hits response: %v", err)
 		return 0
 	}
 

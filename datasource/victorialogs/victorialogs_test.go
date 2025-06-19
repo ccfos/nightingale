@@ -16,9 +16,9 @@ import (
 
 func TestVictorialogs_Init(t *testing.T) {
 	settings := map[string]interface{}{
-		"addr":      "http://localhost:9428",
-		"tls":       map[string]interface{}{"skip_tls_verify": true},
-		"max_lines": 1000,
+		"victorialogs.addr":      "http://localhost:9428",
+		"victorialogs.tls":       map[string]interface{}{"skip_tls_verify": true},
+		"victorialogs.max_lines": 1000,
 	}
 
 	ds, err := new(Victorialogs).Init(settings)
@@ -287,7 +287,7 @@ func TestCalcHits(t *testing.T) {
 		End:   time.Now().Unix(),
 	}
 
-	total := CalcHits(context.Background(), query, v)
+	total := v.calcHits(context.Background(), query)
 	t.Logf("Total hits: %d", total)
 	// Don't assert specific value as it depends on actual data
 }
@@ -346,4 +346,3 @@ func TestVictorialogs_MakeTSQuery(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, result)
 }
- 
