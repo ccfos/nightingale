@@ -175,6 +175,10 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 
 	// 新版本通知规则
 	if f.SubscribeConfig.NotifyVersion == 1 {
+		if len(f.SubscribeConfig.NotifyRuleIds) == 0 {
+			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "no notify rules selected"))
+		}
+
 		for _, id := range f.SubscribeConfig.NotifyRuleIds {
 			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
 			if err != nil {
