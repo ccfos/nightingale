@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 // Return all, front-end search and paging
@@ -90,14 +91,18 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 	curEvent.SetTagsMap()
 
 	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
-	ginx.Dangerous(err)
+	if err != nil {
+		// 对错误信息进行 i18n 翻译
+		translatedErr := i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+		ginx.Bomb(http.StatusBadRequest, translatedErr)
+	}
+
 	if !match {
 		ginx.NewRender(c).Data("event not match mute", nil)
 		return
 	}
 
 	ginx.NewRender(c).Data("event match mute", nil)
-
 }
 
 // Preview events (alert_cur_event) that match the mute strategy based on the following criteria:
