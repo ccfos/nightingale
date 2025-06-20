@@ -71,8 +71,9 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 }
 
 type MuteTestForm struct {
-	EventId   int64            `json:"event_id" binding:"required"`
-	AlertMute models.AlertMute `json:"config" binding:"required"`
+	EventId       int64            `json:"event_id" binding:"required"`
+	AlertMute     models.AlertMute `json:"config" binding:"required"`
+	PassTimeCheck bool             `json:"pass_time_check"`
 }
 
 func (rt *Router) alertMuteTryRun(c *gin.Context) {
@@ -89,6 +90,17 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
+
+	if f.PassTimeCheck {
+		f.AlertMute.MuteTimeType = models.Periodic
+		f.AlertMute.PeriodicMutesJson = []models.PeriodicMute{
+			{
+				EnableDaysOfWeek: "0 1 2 3 4 5 6",
+				EnableStime:      "00:00",
+				EnableEtime:      "00:00",
+			},
+		}
+	}
 
 	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
 	if err != nil {
