@@ -258,7 +258,7 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 	ds := rt.DatasourceCache.GetById(ddsf.DatasourceID)
 
 	if ds == nil {
-		c.String(http.StatusBadRequest, "no such datasource")
+		ginx.Bomb(http.StatusBadRequest, "no such datasource")
 		return
 	}
 
@@ -271,7 +271,7 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 
 	target, err := ds.HTTPJson.ParseUrl()
 	if err != nil {
-		c.String(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
+		ginx.Bomb(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
 		return
 	}
 
@@ -288,10 +288,14 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 		// https://prometheus.io/docs/prometheus/latest/querying/api/#delete-series
 		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s&start=%s&end=%s", target.Host, matchQuery, ddsf.Start, ddsf.End)
 		go func() {
-			_, _, err := poster.PostJSON(url, timeout, nil)
+			resp, _, err := poster.PostJSON(url, timeout, nil)
 			if err != nil {
-				logger.Errorf("failed to delete series: %v", err)
+				logger.Errorf("delete series error datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, err: %v",
+					ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, err)
+				return
 			}
+			logger.Infof("delete datasource series datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, respBody: %s",
+				ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, string(resp))
 		}()
 	case DatasourceTypeVictoriaMetrics:
 		// Delete API doesn’t support the deletion of specific time ranges.
@@ -311,10 +315,14 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 			url = fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s", target.Host, matchQuery)
 		}
 		go func() {
-			_, err := httplib.Get(url).SetTimeout(timeout).Response()
+			resp, err := httplib.Get(url).SetTimeout(timeout).Response()
 			if err != nil {
-				logger.Errorf("delete series error: %#v", err)
+				logger.Errorf("delete series failed | datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, err: %v",
+					ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, err)
+				return
 			}
+			logger.Infof("sending delete series request | datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, respBody: %s",
+				ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, resp.Body)
 		}()
 	default:
 		ginx.Bomb(http.StatusBadRequest, "not support delete series yet")
