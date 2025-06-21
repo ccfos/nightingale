@@ -177,6 +177,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	pages := r.Group(pagesPrefix)
 	{
 
+		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
