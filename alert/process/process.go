@@ -584,7 +584,9 @@ func (p *Processor) fillTags(anomalyPoint models.AnomalyPoint) {
 	}
 
 	// handle rule tags
-	for _, tag := range p.rule.AppendTagsJSON {
+	tags := p.rule.AppendTagsJSON
+	tags = append(tags, "rulename="+p.rule.Name)
+	for _, tag := range tags {
 		arr := strings.SplitN(tag, "=", 2)
 
 		var defs = []string{
@@ -610,8 +612,6 @@ func (p *Processor) fillTags(anomalyPoint models.AnomalyPoint) {
 
 		tagsMap[arr[0]] = body.String()
 	}
-
-	tagsMap["rulename"] = p.rule.Name
 	p.tagsMap = tagsMap
 
 	// handle tagsArr
