@@ -8,6 +8,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	_ "github.com/ccfos/nightingale/v6/datasource/ck"
+	_ "github.com/ccfos/nightingale/v6/datasource/doris"
 	"github.com/ccfos/nightingale/v6/datasource/es"
 	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
 	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"

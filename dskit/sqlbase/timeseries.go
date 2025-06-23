@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"strconv"
@@ -121,6 +122,11 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 
 		// Compile and store the metric values
 		for metricName, value := range metricValue {
+			// NaN 无法执行json.Marshal(), 接口会报错
+			if math.IsNaN(value) {
+				continue
+			}
+
 			metrics := make(model.Metric)
 			var labelsStr []string
 
