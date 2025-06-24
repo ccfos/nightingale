@@ -27,6 +27,8 @@ type Stats struct {
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
 	GaugeRuleEvalDuration       *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
+	GaugeStatusPageCheckTs      *prometheus.GaugeVec
+	GaugeStatusPageCheckValue   *prometheus.GaugeVec
 }
 
 func NewSyncStats() *Stats {
@@ -151,6 +153,22 @@ func NewSyncStats() *Stats {
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
 
+	// 状态页面检查时间戳指标
+	GaugeStatusPageCheckTs := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "statuspage_check_ts",
+		Help:      "Status page check timestamp.",
+	}, []string{"rule_id", "ref"})
+
+	// 状态页面检查值指标
+	GaugeStatusPageCheckValue := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "statuspage_check_value",
+		Help:      "Status page check value.",
+	}, []string{"rule_id", "ref"})
+
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -169,6 +187,8 @@ func NewSyncStats() *Stats {
 		GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
+		GaugeStatusPageCheckTs,
+		GaugeStatusPageCheckValue,
 	)
 
 	return &Stats{
@@ -189,5 +209,7 @@ func NewSyncStats() *Stats {
 		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
+		GaugeStatusPageCheckTs:      GaugeStatusPageCheckTs,
+		GaugeStatusPageCheckValue:   GaugeStatusPageCheckValue,
 	}
 }
