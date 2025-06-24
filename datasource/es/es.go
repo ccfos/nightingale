@@ -17,6 +17,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
 
+	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/toolkits/pkg/logger"
@@ -27,18 +28,20 @@ const (
 )
 
 type Elasticsearch struct {
-	Addr        string            `json:"es.addr" mapstructure:"es.addr"`
-	Nodes       []string          `json:"es.nodes" mapstructure:"es.nodes"`
-	Timeout     int64             `json:"es.timeout" mapstructure:"es.timeout"` // millis
-	Basic       BasicAuth         `json:"es.basic" mapstructure:"es.basic"`
-	TLS         TLS               `json:"es.tls" mapstructure:"es.tls"`
-	Version     string            `json:"es.version" mapstructure:"es.version"`
-	Headers     map[string]string `json:"es.headers" mapstructure:"es.headers"`
-	MinInterval int               `json:"es.min_interval" mapstructure:"es.min_interval"` // seconds
-	MaxShard    int               `json:"es.max_shard" mapstructure:"es.max_shard"`
-	ClusterName string            `json:"es.cluster_name" mapstructure:"es.cluster_name"`
-	EnableWrite bool              `json:"es.enable_write" mapstructure:"es.enable_write"` // 允许写操作
-	Client      *elastic.Client   `json:"es.client" mapstructure:"es.client"`
+	Addr         string                `json:"es.addr" mapstructure:"es.addr"`
+	Nodes        []string              `json:"es.nodes" mapstructure:"es.nodes"`
+	Timeout      int64                 `json:"es.timeout" mapstructure:"es.timeout"` // millis
+	Basic        BasicAuth             `json:"es.basic" mapstructure:"es.basic"`
+	TLS          TLS                   `json:"es.tls" mapstructure:"es.tls"`
+	Version      string                `json:"es.version" mapstructure:"es.version"`
+	Headers      map[string]string     `json:"es.headers" mapstructure:"es.headers"`
+	MinInterval  int                   `json:"es.min_interval" mapstructure:"es.min_interval"` // seconds
+	MaxShard     int                   `json:"es.max_shard" mapstructure:"es.max_shard"`
+	ClusterName  string                `json:"es.cluster_name" mapstructure:"es.cluster_name"`
+	EnableWrite  bool                  `json:"es.enable_write" mapstructure:"es.enable_write"` // 允许写操作
+	Client       *elastic.Client       `json:"es.client" mapstructure:"es.client"`
+	NewClient    *elasticsearch.Client `json:"es.new_client" mapstructure:"es.new_client"`
+	MaxQueryRows int                   `json:"es.max_query_rows" mapstructure:"es.max_query_rows"`
 }
 
 type TLS struct {
@@ -106,6 +109,28 @@ func (e *Elasticsearch) InitClient() error {
 	options = append(options, elastic.SetHealthcheck(false))
 
 	e.Client, err = elastic.NewClient(options...)
+
+	if err != nil {
+		return err
+	}
+
+	cfg := elasticsearch.Config{
+		Addresses: e.Nodes,
+		Transport: transport,
+		Header:    http.Header{},
+	}
+
+	if e.Basic.Username != "" && e.Basic.Password != "" {
+		cfg.Username = e.Basic.Username
+		cfg.Password = e.Basic.Password
+	}
+
+	for k, v := range e.Headers {
+		cfg.Header[k] = []string{v}
+	}
+
+	e.NewClient, err = elasticsearch.NewClient(cfg)
+
 	return err
 }
 
@@ -183,6 +208,14 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 }
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
+	param := new(eslike.Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, err
+	}
+
+	if param.QueryType == "SQL" {
+		return eslike.QuerySQLData(ctx, param, e.Timeout, e.Version, e.NewClient)
+	}
 
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
 		return e.Client.Search().
@@ -250,6 +283,20 @@ func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
 }
 
 func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
+	param := new(eslike.Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, 0, err
+	}
+
+	if param.QueryType == "SQL" {
+		if param.CustomParams == nil {
+			param.CustomParams = make(map[string]interface{})
+		}
+		if e.MaxQueryRows > 0 {
+			param.MaxQueryRows = e.MaxQueryRows
+		}
+		return eslike.QuerySQLLog(ctx, param, e.Timeout, e.Version, e.NewClient)
+	}
 
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
 		// 应该是之前为了获取 fields 字段，做的这个兼容
