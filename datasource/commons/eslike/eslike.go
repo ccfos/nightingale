@@ -416,11 +416,12 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		MinDocCount(1)
 
 	if strings.HasPrefix(version, "7") {
-		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval))
+		// 确保查询在一个时间区间内所以 Interval*2
+		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval*2))
 	} else {
 		// 兼容 7.0 以下的版本
 		// OpenSearch 也使用这个字段
-		tsAggr.Interval(fmt.Sprintf("%ds", param.Interval))
+		tsAggr.Interval(fmt.Sprintf("%ds", param.Interval*2))
 	}
 
 	// group by
