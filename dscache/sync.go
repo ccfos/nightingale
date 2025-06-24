@@ -11,6 +11,7 @@ import (
 	_ "github.com/ccfos/nightingale/v6/datasource/doris"
 	"github.com/ccfos/nightingale/v6/datasource/es"
 	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
+	_ "github.com/ccfos/nightingale/v6/datasource/opensearch"
 	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"
 	"github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"

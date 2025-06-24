@@ -31,6 +31,7 @@ const (
 	MYSQL         = "mysql"
 	POSTGRESQL    = "pgsql"
 	DORIS         = "doris"
+	OPENSEARCH    = "opensearch"
 
 	CLICKHOUSE = "ck"
 )
@@ -1201,7 +1202,8 @@ func (ar *AlertRule) IsInnerRule() bool {
 		ar.Prod == LOKI || ar.Cate == LOKI ||
 		ar.Cate == MYSQL ||
 		ar.Cate == POSTGRESQL ||
-		ar.Cate == DORIS
+		ar.Cate == DORIS ||
+		ar.Cate == OPENSEARCH
 }
 
 func (ar *AlertRule) GetRuleType() string {

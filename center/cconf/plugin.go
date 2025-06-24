@@ -49,4 +49,10 @@ var Plugins = []Plugin{
 		Type:     "doris",
 		TypeName: "Doris",
 	},
+	{
+		Id:       9,
+		Category: "logging",
+		Type:     "opensearch",
+		TypeName: "OpenSearch",
+	},
 }
