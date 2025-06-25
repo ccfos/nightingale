@@ -33,6 +33,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/olivere/elastic/v7 v7.0.32
+	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/pkg/errors v0.9.1

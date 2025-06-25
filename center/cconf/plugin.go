@@ -43,4 +43,16 @@ var Plugins = []Plugin{
 		Type:     "pgsql",
 		TypeName: "PostgreSQL",
 	},
+	{
+		Id:       8,
+		Category: "logging",
+		Type:     "doris",
+		TypeName: "Doris",
+	},
+	{
+		Id:       9,
+		Category: "logging",
+		Type:     "opensearch",
+		TypeName: "OpenSearch",
+	},
 }

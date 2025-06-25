@@ -232,6 +232,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/log-query", rt.QueryLog)
 		}
 
+		// OpenSearch 专用接口
+		pages.POST("/os-indices", rt.QueryOSIndices)
+		pages.POST("/os-variable", rt.QueryOSVariable)
+		pages.POST("/os-fields", rt.QueryOSFields)
+
 		pages.GET("/sql-template", rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
