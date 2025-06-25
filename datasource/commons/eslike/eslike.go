@@ -416,7 +416,9 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		MinDocCount(1)
 
 	if strings.HasPrefix(version, "7") {
-		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval))
+		// 添加偏移量，使第一个分桶bucket的左边界对齐为 start 时间
+		offset := (start % param.Interval) - param.Interval
+		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
 	} else {
 		// 兼容 7.0 以下的版本
 		// OpenSearch 也使用这个字段
