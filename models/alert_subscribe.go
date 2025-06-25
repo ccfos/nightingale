@@ -132,6 +132,10 @@ func (s *AlertSubscribe) Verify() error {
 		}
 	}
 
+	if s.NotifyVersion == 1 && len(s.NotifyRuleIds) == 0 {
+		return errors.New("no notify rules selected")
+	}
+
 	return nil
 }
 

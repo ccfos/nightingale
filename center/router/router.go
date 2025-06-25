@@ -177,6 +177,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	pages := r.Group(pagesPrefix)
 	{
 
+		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
@@ -230,6 +231,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/fields", rt.QueryFields)
 			pages.POST("/log-query", rt.QueryLog)
 		}
+
+		// OpenSearch 专用接口
+		pages.POST("/os-indices", rt.QueryOSIndices)
+		pages.POST("/os-variable", rt.QueryOSVariable)
+		pages.POST("/os-fields", rt.QueryOSFields)
 
 		pages.GET("/sql-template", rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)

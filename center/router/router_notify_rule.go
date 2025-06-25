@@ -249,7 +249,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 
 	case "smtp":
 		if len(sendtos) == 0 {
-			ginx.Bomb(http.StatusBadRequest, "No valid email address in the user and team")
+			return "", fmt.Errorf("no valid email address in the user and team")
 		}
 		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
 		if err != nil {

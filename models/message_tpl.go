@@ -242,7 +242,12 @@ var NewTplMap = map[string]string{
 	- {{$key}}: {{$val}}
 {{- end}}
 {{- end}}
-
+{{if $event.AnnotationsJSON}}
+- **附加信息**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{end}}
 {{$domain := "http://127.0.0.1:17000" }}
 {{$mutelink := print $domain "/alert-mutes/add?busiGroup=" $event.GroupId "&cate=" $event.Cate "&datasource_ids=" $event.DatasourceId "&prod=" $event.RuleProd}}
 {{- range $key, $value := $event.TagsMap}}
@@ -471,6 +476,10 @@ var NewTplMap = map[string]string{
 规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
 规则备注: {{$event.RuleNote}}{{end}}   
 监控指标: {{$event.TagsJSON}}
+附加信息:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}  
 {{if $event.IsRecovered}}恢复时间：{{timeformat $event.LastEvalTime}}{{else}}触发时间: {{timeformat $event.TriggerTime}}
 触发时值: {{$event.TriggerValue}}{{end}}
 发送时间: {{timestamp}}{{$domain := "http://127.0.0.1:17000" }}   
@@ -492,9 +501,15 @@ var NewTplMap = map[string]string{
 **事件标签:** {{$event.TagsJSON}}   
 **触发时间:** {{timeformat $event.TriggerTime}}   
 **发送时间:** {{timestamp}}   
-**触发时值:** {{$event.TriggerValue}}   
+**触发时值:** {{$event.TriggerValue}}  
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
+{{if $event.AnnotationsJSON}}
+**附加信息**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}} 
+{{- end}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
 [事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?busiGroup={{$event.GroupId}}&cate={{$event.Cate}}&datasource_ids={{$event.DatasourceId}}&prod={{$event.RuleProd}}{{range $key, $value := $event.TagsMap}}&tags={{$key}}%3D{{$value}}{{end}})|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
 	EmailSubject: `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
@@ -518,7 +533,8 @@ var NewTplMap = map[string]string{
 **规则标题**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **规则备注**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
 **监控对象**: {{$event.TargetIdent}}{{end}}   
-**监控指标**: {{$event.TagsJSON}}{{if not $event.IsRecovered}}   
+**监控指标**: {{$event.TagsJSON}}   
+{{if $event.AnnotationsJSON}}**附加信息**:{{range $key, $val := $event.AnnotationsJSON}}{{$key}}:{{$val}}  {{end}}   {{end}}{{if not $event.IsRecovered}}
 **触发时值**: {{$event.TriggerValue}}{{end}}   
 {{if $event.IsRecovered}}**恢复时间**: {{timeformat $event.LastEvalTime}}{{else}}**首次触发时间**: {{timeformat $event.FirstTriggerTime}}{{end}}   
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}

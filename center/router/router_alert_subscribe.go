@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,8 +11,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 // Return all, front-end search and paging
@@ -111,12 +110,13 @@ func (rt *Router) alertSubscribeAdd(c *gin.Context) {
 
 type SubscribeTryRunForm struct {
 	EventId         int64                 `json:"event_id" binding:"required"`
-	SubscribeConfig models.AlertSubscribe `json:"subscribe_config" binding:"required"`
+	SubscribeConfig models.AlertSubscribe `json:"config" binding:"required"`
 }
 
 func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	var f SubscribeTryRunForm
 	ginx.BindJSON(c, &f)
+	ginx.Dangerous(f.SubscribeConfig.Verify())
 
 	hisEvent, err := models.AlertHisEventGetById(rt.Ctx, f.EventId)
 	ginx.Dangerous(err)
@@ -128,20 +128,35 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
 
+	lang := c.GetHeader("X-Language")
+
 	// 先判断匹配条件
 	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
-		ginx.Dangerous(errors.New("Datasource mismatch"))
+		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event datasource not match"))
+	}
+
+	if len(f.SubscribeConfig.RuleIds) != 0 {
+		match := false
+		for _, rid := range f.SubscribeConfig.RuleIds {
+			if rid == curEvent.RuleId {
+				match = true
+				break
+			}
+		}
+		if !match {
+			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event rule id not match"))
+		}
 	}
 
 	// 匹配 tag
 	f.SubscribeConfig.Parse()
 	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
-		ginx.Dangerous(errors.New("Tags mismatch"))
+		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event tags not match"))
 	}
 
 	// 匹配group name
 	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
-		ginx.Dangerous(errors.New("Group name mismatch"))
+		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event group name not match"))
 	}
 
 	// 检查严重级别（Severity）匹配
@@ -154,34 +169,42 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if !match {
-			ginx.Dangerous(errors.New("Severity mismatch"))
+			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event severity not match"))
 		}
 	}
 
 	// 新版本通知规则
 	if f.SubscribeConfig.NotifyVersion == 1 {
+		if len(f.SubscribeConfig.NotifyRuleIds) == 0 {
+			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "no notify rules selected"))
+		}
+
 		for _, id := range f.SubscribeConfig.NotifyRuleIds {
 			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
-			ginx.Dangerous(err)
+			if err != nil {
+				ginx.Bomb(http.StatusNotFound, i18n.Sprintf(lang, "subscribe notify rule not found: %v", err))
+			}
 
 			for _, notifyConfig := range notifyRule.NotifyConfigs {
 				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
-				ginx.Dangerous(err)
+				if err != nil {
+					ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "notify rule send error: %v", err))
+				}
 			}
 		}
 
-		ginx.NewRender(c).Data("notification test ok", nil)
+		ginx.NewRender(c).Data(i18n.Sprintf(lang, "event match subscribe and notification test ok"), nil)
 		return
 	}
 
 	// 旧版通知方式
 	f.SubscribeConfig.ModifyEvent(&curEvent)
 	if len(curEvent.NotifyChannelsJSON) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "no notify channels selected")
+		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "no notify channels selected"))
 	}
 
 	if len(curEvent.NotifyGroupsJSON) == 0 {
-		ginx.Bomb(http.StatusOK, "no notify groups selected")
+		ginx.Bomb(http.StatusOK, i18n.Sprintf(lang, "no notify groups selected"))
 	}
 
 	ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
@@ -221,10 +244,10 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 		}
 	}
 	if len(ancs) > 0 {
-		ginx.Dangerous(errors.New(fmt.Sprintf("All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %v", ancs)))
+		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "all users missing notify channel configurations: %v", ancs))
 	}
 
-	ginx.NewRender(c).Data("notification test ok", nil)
+	ginx.NewRender(c).Data(i18n.Sprintf(lang, "event match subscribe and notify settings ok"), nil)
 }
 
 func (rt *Router) alertSubscribePut(c *gin.Context) {

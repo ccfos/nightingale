@@ -161,7 +161,7 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 
 type AlertRuleTryRunForm struct {
 	EventId         int64            `json:"event_id" binding:"required"`
-	AlertRuleConfig models.AlertRule `json:"alert_rule_config" binding:"required"`
+	AlertRuleConfig models.AlertRule `json:"config" binding:"required"`
 }
 
 func (rt *Router) alertRuleNotifyTryRun(c *gin.Context) {

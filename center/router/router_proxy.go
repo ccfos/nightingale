@@ -7,16 +7,20 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	pkgprom "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/net/httplib"
 )
 
 type QueryFormItem struct {
@@ -234,4 +238,95 @@ func transportPut(dsid, updatedat int64, tran http.RoundTripper) {
 	transports[dsid] = tran
 	updatedAts[dsid] = updatedat
 	transportsLock.Unlock()
+}
+
+const (
+	DatasourceTypePrometheus      = "Prometheus"
+	DatasourceTypeVictoriaMetrics = "VictoriaMetrics"
+)
+
+type deleteDatasourceSeriesForm struct {
+	DatasourceID int64    `json:"datasource_id"`
+	Match        []string `json:"match"`
+	Start        string   `json:"start"`
+	End          string   `json:"end"`
+}
+
+func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
+	var ddsf deleteDatasourceSeriesForm
+	ginx.BindJSON(c, &ddsf)
+	ds := rt.DatasourceCache.GetById(ddsf.DatasourceID)
+
+	if ds == nil {
+		ginx.Bomb(http.StatusBadRequest, "no such datasource")
+		return
+	}
+
+	// Get datasource type, now only support prometheus and victoriametrics
+	datasourceType, ok := ds.SettingsJson["prometheus.tsdb_type"]
+	if !ok {
+		ginx.Bomb(http.StatusBadRequest, "datasource type not found, please check your datasource settings")
+		return
+	}
+
+	target, err := ds.HTTPJson.ParseUrl()
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "invalid urls: %s", ds.HTTPJson.GetUrls())
+		return
+	}
+
+	timeout := time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond
+	matchQuerys := make([]string, 0)
+	for _, match := range ddsf.Match {
+		matchQuerys = append(matchQuerys, fmt.Sprintf("match[]=%s", match))
+	}
+	matchQuery := strings.Join(matchQuerys, "&")
+
+	switch datasourceType {
+	case DatasourceTypePrometheus:
+		// Prometheus delete api need POST method
+		// https://prometheus.io/docs/prometheus/latest/querying/api/#delete-series
+		url := fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s&start=%s&end=%s", target.Host, matchQuery, ddsf.Start, ddsf.End)
+		go func() {
+			resp, _, err := poster.PostJSON(url, timeout, nil)
+			if err != nil {
+				logger.Errorf("delete series error datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, err: %v",
+					ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, err)
+				return
+			}
+			logger.Infof("delete datasource series datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, respBody: %s",
+				ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, string(resp))
+		}()
+	case DatasourceTypeVictoriaMetrics:
+		// Delete API doesn’t support the deletion of specific time ranges.
+		// Refer: https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#how-to-delete-time-series
+		var url string
+		// Check VictoriaMetrics is single node or cluster
+		// Cluster will have /select/<accountID>/prometheus pattern
+		re := regexp.MustCompile(`/select/(\d+)/prometheus`)
+		matches := re.FindStringSubmatch(ds.HTTPJson.Url)
+		if len(matches) > 0 && matches[1] != "" {
+			accountID, err := strconv.Atoi(matches[1])
+			if err != nil {
+				ginx.Bomb(http.StatusInternalServerError, "invalid accountID: %s", matches[1])
+			}
+			url = fmt.Sprintf("http://%s/delete/%d/prometheus/api/v1/admin/tsdb/delete_series?%s", target.Host, accountID, matchQuery)
+		} else {
+			url = fmt.Sprintf("http://%s/api/v1/admin/tsdb/delete_series?%s", target.Host, matchQuery)
+		}
+		go func() {
+			resp, err := httplib.Get(url).SetTimeout(timeout).Response()
+			if err != nil {
+				logger.Errorf("delete series failed | datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, err: %v",
+					ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, err)
+				return
+			}
+			logger.Infof("sending delete series request | datasource_id: %d, datasource_name: %s, match: %s, start: %s, end: %s, respBody: %s",
+				ddsf.DatasourceID, ds.Name, ddsf.Match, ddsf.Start, ddsf.End, resp.Body)
+		}()
+	default:
+		ginx.Bomb(http.StatusBadRequest, "not support delete series yet")
+	}
+
+	ginx.NewRender(c).Data(nil, nil)
 }
