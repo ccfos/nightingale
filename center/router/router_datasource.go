@@ -108,6 +108,31 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 	}
 
+	for k, v := range req.SettingsJson {
+		if strings.Contains(k, "cluster_name") {
+			req.ClusterName = v.(string)
+			break
+		}
+
+		if req.PluginType == models.OPENSEARCH {
+			if nodes, ok := req.SettingsJson["os.nodes"]; ok {
+				// 处理 JSON 解析后的类型转换问题
+				switch v := nodes.(type) {
+				case []string:
+					if len(v) > 0 {
+						req.HTTPJson.Url = v[0]
+					}
+				case []interface{}:
+					if len(v) > 0 {
+						if str, ok := v[0].(string); ok {
+							req.HTTPJson.Url = str
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if req.Id == 0 {
 		req.CreatedBy = username
 		req.Status = "enabled"
