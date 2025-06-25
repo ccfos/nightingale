@@ -72,6 +72,12 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "所有用户缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配订阅规则，通知设置正常",
 
+    "event time not match time filter": "事件时间不匹配时间过滤器",
+    "event severity not match severity filter": "事件等级不匹配等级过滤器",
+    "event tag not match tag filter": "事件标签不匹配标签过滤器",
+    "event attributes not match attributes filter": "事件属性不匹配属性过滤器",
+    "failed to parse tag filter: %v": "解析标签过滤器失败: %v",
+
     "Infrastructure": "基础设施",
     "Host - View": "机器 - 查看",
     "Host - Modify": "机器 - 修改",
@@ -256,6 +262,12 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "所有用戶缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配訂閱規則，通知設置正常",
 
+    "event time not match time filter": "事件時間不匹配時間過濾器",
+    "event severity not match severity filter": "事件等級不匹配等級過濾器",
+    "event tag not match tag filter": "事件標籤不匹配標籤過濾器",
+    "event attributes not match attributes filter": "事件屬性不匹配屬性過濾器",
+    "failed to parse tag filter: %v": "解析標籤過濾器失敗: %v",
+
     "Infrastructure": "基礎設施",
     "Host - View": "機器 - 查看",
     "Host - Modify": "機器 - 修改",
@@ -437,6 +449,12 @@ var I18N = `{
     "all users missing notify channel configurations: %v": "すべてのユーザーに通知チャンネル設定がありません: %v",
     "event match subscribe and notify settings ok": "イベントがサブスクライブルールに一致し、通知設定が正常です",
 
+    "event time not match time filter": "イベント時間が時間フィルタと一致しません",
+    "event severity not match severity filter": "イベント等級が等級フィルタと一致しません",
+    "event tag not match tag filter": "イベントタグがタグフィルタと一致しません",
+    "event attributes not match attributes filter": "イベント属性が属性フィルタと一致しません",
+    "failed to parse tag filter: %v": "タグフィルタの解析に失敗しました: %v",
+
     "Infrastructure": "インフラストラクチャ",
     "Host - View": "機器 - 閲覧",
     "Host - Modify": "機器 - 修正",
@@ -617,6 +635,12 @@ var I18N = `{
     "no notify groups selected": "Группы уведомлений не выбраны",
     "all users missing notify channel configurations: %v": "У всех пользователей отсутствуют настройки каналов уведомлений: %v",
     "event match subscribe and notify settings ok": "Событие соответствует правилу подписки, настройки уведомлений в порядке",
+
+    "event time not match time filter": "Время события не соответствует временному фильтру",
+    "event severity not match severity filter": "Уровень события не соответствует фильтру уровня",
+    "event tag not match tag filter": "Теги события не соответствуют фильтру тегов",
+    "event attributes not match attributes filter": "Атрибуты события не соответствуют фильтру атрибутов",
+    "failed to parse tag filter: %v": "Не удалось разобрать фильтр тегов: %v",
 
     "Infrastructure": "Инфраструктура",
     "Host - View": "Хост - Просмотр",

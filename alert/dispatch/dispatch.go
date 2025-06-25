@@ -204,9 +204,12 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			// notify
 			for i := range notifyRule.NotifyConfigs {
-				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], eventCopy) {
+				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
+				if err != nil {
+					logger.Errorf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
 					continue
 				}
+
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil {
@@ -269,7 +272,7 @@ func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 	return tagMatch && attributesMatch
 }
 
-func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
+func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) error {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := int(tm.Weekday())
@@ -321,11 +324,19 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		}
 	}
 
+	if !timeMatch {
+		return fmt.Errorf("event time not match time filter")
+	}
+
 	severityMatch := false
 	for i := range notifyConfig.Severities {
 		if notifyConfig.Severities[i] == event.Severity {
 			severityMatch = true
 		}
+	}
+
+	if !severityMatch {
+		return fmt.Errorf("event severity not match severity filter")
 	}
 
 	tagMatch := true
@@ -339,9 +350,13 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v", err, event, notifyConfig)
-			return false
+			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	if !tagMatch {
+		return fmt.Errorf("event tag not match tag filter")
 	}
 
 	attributesMatch := true
@@ -349,13 +364,18 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v err:%v", tagFilters, event, notifyConfig, err)
-			return false
+			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 
 		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
 	}
+
+	if !attributesMatch {
+		return fmt.Errorf("event attributes not match attributes filter")
+	}
+
 	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%+v notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event, notifyConfig)
-	return timeMatch && severityMatch && tagMatch && attributesMatch
+	return nil
 }
 
 func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, map[string]string) {

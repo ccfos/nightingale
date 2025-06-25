@@ -153,13 +153,11 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	for _, he := range hisEvents {
 		event := he.ToCur()
 		event.SetTagsMap()
-		if dispatch.NotifyRuleApplicable(&f.NotifyConfig, event) {
-			events = append(events, event)
+		if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
+			ginx.Bomb(http.StatusBadRequest, err.Error())
 		}
-	}
 
-	if len(events) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "not events applicable")
+		events = append(events, event)
 	}
 
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
