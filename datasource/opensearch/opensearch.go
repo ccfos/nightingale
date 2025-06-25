@@ -17,9 +17,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/datasource/commons/eslike"
-
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	oscliv2 "github.com/opensearch-project/opensearch-go/v2"

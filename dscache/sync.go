@@ -84,8 +84,6 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 
 				if item.PluginType == "elasticsearch" {
 					esN9eToDatasourceInfo(&ds, item)
-				} else if item.PluginType == "opensearch" {
-					osN9eToDatasourceInfo(&ds, item)
 				} else if item.PluginType == "tdengine" {
 					tdN9eToDatasourceInfo(&ds, item)
 				} else {
@@ -144,24 +142,6 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["es.min_interval"] = item.SettingsJson["min_interval"]
 	ds.Settings["es.max_shard"] = item.SettingsJson["max_shard"]
 	ds.Settings["es.enable_write"] = item.SettingsJson["enable_write"]
-}
-
-// for opensearch
-func osN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
-	ds.Settings = make(map[string]interface{})
-	ds.Settings["os.nodes"] = []string{item.HTTPJson.Url}
-	ds.Settings["os.timeout"] = item.HTTPJson.Timeout
-	ds.Settings["os.basic"] = es.BasicAuth{
-		Username: item.AuthJson.BasicAuthUser,
-		Password: item.AuthJson.BasicAuthPassword,
-	}
-	ds.Settings["os.tls"] = es.TLS{
-		SkipTlsVerify: item.HTTPJson.TLS.SkipTlsVerify,
-	}
-	ds.Settings["os.version"] = item.SettingsJson["version"]
-	ds.Settings["os.headers"] = item.HTTPJson.Headers
-	ds.Settings["os.min_interval"] = item.SettingsJson["min_interval"]
-	ds.Settings["os.max_shard"] = item.SettingsJson["max_shard"]
 }
 
 func PutDatasources(items []datasource.DatasourceInfo) {

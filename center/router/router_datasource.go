@@ -2,12 +2,14 @@ package router
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -113,23 +115,40 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			req.ClusterName = v.(string)
 			break
 		}
+	}
 
-		if req.PluginType == models.OPENSEARCH {
-			if nodes, ok := req.SettingsJson["os.nodes"]; ok {
-				// 处理 JSON 解析后的类型转换问题
-				switch v := nodes.(type) {
-				case []string:
-					if len(v) > 0 {
-						req.HTTPJson.Url = v[0]
-					}
-				case []interface{}:
-					if len(v) > 0 {
-						if str, ok := v[0].(string); ok {
-							req.HTTPJson.Url = str
-						}
-					}
-				}
-			}
+	if req.PluginType == models.OPENSEARCH {
+		b, err := json.Marshal(req.SettingsJson)
+		if err != nil {
+			logger.Warningf("marshal settings fail: %v", err)
+			return
+		}
+
+		var os opensearch.OpenSearch
+		err = json.Unmarshal(b, &os)
+		if err != nil {
+			logger.Warningf("unmarshal settings fail: %v", err)
+			return
+		}
+
+		if len(os.Nodes) == 0 {
+			logger.Warningf("nodes empty, %+v", req)
+			return
+		}
+
+		req.HTTPJson = models.HTTP{
+			Timeout: os.Timeout,
+			Url:     os.Nodes[0],
+			Headers: os.Headers,
+			TLS: models.TLS{
+				SkipTlsVerify: os.TLS.SkipTlsVerify,
+			},
+		}
+
+		req.AuthJson = models.Auth{
+			BasicAuth:         os.Basic.Enable,
+			BasicAuthUser:     os.Basic.Username,
+			BasicAuthPassword: os.Basic.Password,
 		}
 	}
 

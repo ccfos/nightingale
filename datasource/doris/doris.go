@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
 )
@@ -87,6 +88,30 @@ func (d *Doris) Equal(p datasource.Datasource) bool {
 	}
 
 	if d.FeAddr != newest.FeAddr {
+		return false
+	}
+
+	if d.MaxQueryRows != newest.MaxQueryRows {
+		return false
+	}
+
+	if d.Timeout != newest.Timeout {
+		return false
+	}
+
+	if d.MaxIdleConns != newest.MaxIdleConns {
+		return false
+	}
+
+	if d.MaxOpenConns != newest.MaxOpenConns {
+		return false
+	}
+
+	if d.ConnMaxLifetime != newest.ConnMaxLifetime {
+		return false
+	}
+
+	if d.ClusterName != newest.ClusterName {
 		return false
 	}
 
