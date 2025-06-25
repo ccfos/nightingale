@@ -416,7 +416,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		MinDocCount(1)
 
 	if strings.HasPrefix(version, "7") {
-		// 添加偏移量
+		// 添加偏移量，使第一个分桶bucket的左边界对齐为 start 时间
 		offset := (start % param.Interval) - param.Interval
 		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
 	} else {
