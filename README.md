@@ -27,13 +27,13 @@
 
 [English](./README.md) | [中文](./README_zh.md)
 
-## What is Nightingale
+## 🎯 What is Nightingale
 
 Nightingale is an open-source monitoring project that focuses on alerting. Similar to Grafana, Nightingale also connects with various existing data sources. However, while Grafana emphasizes visualization, Nightingale places greater emphasis on the alerting engine, as well as the processing and distribution of alarms.
 
 The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODC).
 
-## How Nightingale Works
+## 💡 How Nightingale Works
 
 Many users have already collected metrics and log data. In this case, you can connect your storage repositories (such as VictoriaMetrics, ElasticSearch, etc.) as data sources in Nightingale. This allows you to configure alerting rules and notification rules within Nightingale, enabling the generation and distribution of alarms.
 
@@ -49,7 +49,7 @@ For certain edge data centers with poor network connectivity to the central Nigh
 
 > In the above diagram, Data Center A has a good network with the central data center, so it uses the Nightingale process in the central data center as the alerting engine. Data Center B has a poor network with the central data center, so it deploys `n9e-edge` as the alerting engine to handle alerting for its own data sources.
 
-## Alert Noise Reduction, Escalation, and Collaboration
+## 🔕 Alert Noise Reduction, Escalation, and Collaboration
 
 Nightingale focuses on being an alerting engine, responsible for generating alarms and flexibly distributing them based on rules. It supports 20 built-in notification medias (such as phone calls, SMS, email, DingTalk, Slack, etc.).
 
@@ -59,12 +59,12 @@ If you have more advanced requirements, such as:
 
 Then Nightingale is not suitable. It is recommended that you choose on-call products such as PagerDuty and FlashDuty. These products are simple and easy to use.
 
-## Communication Channels
+## 🗨️ Communication Channels
 
 - **Report Bugs:** It is highly recommended to submit issues via the [Nightingale GitHub Issue tracker](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Fbug&projects=&template=bug_report.yml).
 - **Documentation:** For more information, we recommend thoroughly browsing the [Nightingale Documentation Site](https://n9e.github.io/).
 
-## Key Features
+## 🔑 Key Features
 
 ![Nightingale Alerting rules](doc/img/readme/2025-05-23_18-43-37.png)
 
@@ -93,15 +93,15 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 - For machine-related monitoring data collected by Categraf, it is advisable to use Nightingale's built-in dashboards for viewing. This is because Categraf's metric naming follows Telegraf's convention, which differs from that of Node Exporter.  
 - Due to Nightingale's concept of business groups (where machines can belong to different groups), there may be scenarios where you only want to view machines within the current business group on the dashboard. Thus, Nightingale's dashboards can be linked with business groups for interactive filtering.
 
-## Stargazers over time
+## 🌟 Stargazers over time
 
 [![Stargazers over time](https://api.star-history.com/svg?repos=ccfos/nightingale&type=Date)](https://star-history.com/#ccfos/nightingale&Date)
 
-## Users
+## 🔥 Users
 
 ![User Logos](doc/img/readme/logos.png)
 
-## Community Co-Building
+## 🤝 Community Co-Building
 
 - ❇️ Please read the [Nightingale Open Source Project and Community Governance Draft](./doc/community-governance.md). We sincerely welcome every user, developer, company, and organization to use Nightingale, actively report bugs, submit feature requests, share best practices, and help build a professional and active open-source community.
 -  ❤️ Nightingale Contributors
@@ -109,5 +109,5 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
   <img src="https://contrib.rocks/image?repo=ccfos/nightingale" />
 </a>
 
-## License
+## 📜 License
 - [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
