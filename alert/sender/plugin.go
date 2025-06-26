@@ -79,6 +79,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
+	start := time.Now()
 	err := startCmd(cmd)
 	if err != nil {
 		logger.Errorf("event_script_notify_fail: run cmd err: %v", err)
@@ -88,6 +89,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
 
 	res := buf.String()
+	res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
 
 	// 截断超出长度的输出
 	if len(res) > 512 {

@@ -144,14 +144,24 @@ func (arw *AlertRuleWorker) Start() {
 }
 
 func (arw *AlertRuleWorker) Eval() {
-	logger.Infof("eval:%s started", arw.Key())
+	begin := time.Now()
+	var message string
+
+	defer func() {
+		if len(message) == 0 {
+			logger.Infof("rule_eval:%s finished, duration:%v", arw.Key(), time.Since(begin))
+		} else {
+			logger.Infof("rule_eval:%s finished, duration:%v, message:%s", arw.Key(), time.Since(begin), message)
+		}
+	}()
+
 	if arw.Processor.PromEvalInterval == 0 {
 		arw.Processor.PromEvalInterval = getPromEvalInterval(arw.Processor.ScheduleEntry.Schedule)
 	}
 
 	cachedRule := arw.Rule
 	if cachedRule == nil {
-		// logger.Errorf("rule_eval:%s Rule not found", arw.Key())
+		message = "rule not found"
 		return
 	}
 	arw.Processor.Stats.CounterRuleEval.WithLabelValues().Inc()
@@ -177,11 +187,12 @@ func (arw *AlertRuleWorker) Eval() {
 
 	if err != nil {
 		logger.Errorf("rule_eval:%s get anomaly point err:%s", arw.Key(), err.Error())
+		message = "failed to get anomaly points"
 		return
 	}
 
 	if arw.Processor == nil {
-		logger.Warningf("rule_eval:%s Processor is nil", arw.Key())
+		message = "processor is nil"
 		return
 	}
 
@@ -223,7 +234,7 @@ func (arw *AlertRuleWorker) Eval() {
 }
 
 func (arw *AlertRuleWorker) Stop() {
-	logger.Infof("rule_eval %s stopped", arw.Key())
+	logger.Infof("rule_eval:%s stopped", arw.Key())
 	close(arw.Quit)
 	c := arw.Scheduler.Stop()
 	<-c.Done()

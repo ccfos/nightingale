@@ -132,7 +132,6 @@ func (nrc *NotifyRuleCacheType) syncNotifyRules() error {
 	ms := time.Since(start).Milliseconds()
 	nrc.stats.GaugeCronDuration.WithLabelValues("sync_notify_rules").Set(float64(ms))
 	nrc.stats.GaugeSyncNumber.WithLabelValues("sync_notify_rules").Set(float64(len(m)))
-	logger.Infof("timer: sync notify rules done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("notify_rules", start.Unix(), ms, len(m), "success")
 
 	return nil

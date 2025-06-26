@@ -133,7 +133,6 @@ func (rrc *RecordingRuleCacheType) syncRecordingRules() error {
 	ms := time.Since(start).Milliseconds()
 	rrc.stats.GaugeCronDuration.WithLabelValues("sync_recording_rules").Set(float64(ms))
 	rrc.stats.GaugeSyncNumber.WithLabelValues("sync_recording_rules").Set(float64(len(m)))
-	logger.Infof("timer: sync recording rules done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("recording_rules", start.Unix(), ms, len(m), "success")
 
 	return nil

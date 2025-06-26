@@ -246,7 +246,21 @@ CREATE TABLE `event_pipeline` (
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-/* v8.0.0-next */
+/* v8.0.0 2025-05-15 */
+CREATE TABLE `embedded_product` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) DEFAULT NULL,
+    `url` varchar(255) DEFAULT NULL,
+    `is_private` boolean DEFAULT NULL,
+    `team_ids` varchar(255),
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* v8.0.0 2025-05-29 */
 CREATE TABLE `source_token` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `source_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'source type',
@@ -259,5 +273,11 @@ CREATE TABLE `source_token` (
     KEY `idx_source_type_id_token` (`source_type`, `source_id`, `token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
 /* Add translation column for builtin metrics */
 ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric' AFTER `lang`;
+
+/* v8.0.0-beta.12 2025-06-03 */
+ALTER TABLE `alert_his_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
+ALTER TABLE `alert_cur_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
+

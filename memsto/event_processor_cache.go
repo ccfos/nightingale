@@ -141,7 +141,7 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 		for _, p := range eventPipeline.ProcessorConfigs {
 			processor, err := models.GetProcessorByType(p.Typ, p.Config)
 			if err != nil {
-				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v type not found", eventPipeline.ID, eventPipeline, p)
+				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v get processor err: %+v", eventPipeline.ID, eventPipeline, p, err)
 				continue
 			}
 
@@ -156,7 +156,6 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 	ms := time.Since(start).Milliseconds()
 	epc.stats.GaugeCronDuration.WithLabelValues("sync_event_processors").Set(float64(ms))
 	epc.stats.GaugeSyncNumber.WithLabelValues("sync_event_processors").Set(float64(len(m)))
-	logger.Infof("timer: sync event processors done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("event_processors", start.Unix(), ms, len(m), "success")
 
 	return nil

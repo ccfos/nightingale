@@ -132,7 +132,6 @@ func (mtc *MessageTemplateCacheType) syncMessageTemplates() error {
 	ms := time.Since(start).Milliseconds()
 	mtc.stats.GaugeCronDuration.WithLabelValues("sync_message_templates").Set(float64(ms))
 	mtc.stats.GaugeSyncNumber.WithLabelValues("sync_message_templates").Set(float64(len(m)))
-	logger.Infof("timer: sync message templates done, cost: %dms, number: %d", ms, len(m))
 	dumper.PutSyncRecord("message_templates", start.Unix(), ms, len(m), "success")
 
 	return nil

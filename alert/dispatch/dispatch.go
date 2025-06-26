@@ -82,6 +82,10 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 	}
 
 	pipeline.Init()
+
+	// 设置通知记录回调函数
+	notifyChannelCache.SetNotifyRecordFunc(sender.NotifyRecord)
+
 	return notify
 }
 
@@ -185,8 +189,8 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			for _, processor := range processors {
 				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
-				eventCopy = processor.Process(e.ctx, eventCopy)
-				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
+				eventCopy, res, err := processor.Process(e.ctx, eventCopy)
+				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
 				if eventCopy == nil {
 					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
 					break
@@ -200,9 +204,12 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			// notify
 			for i := range notifyRule.NotifyConfigs {
-				if !NotifyRuleApplicable(&notifyRule.NotifyConfigs[i], eventCopy) {
+				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
+				if err != nil {
+					logger.Errorf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
 					continue
 				}
+
 				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil {
@@ -265,7 +272,7 @@ func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 	return tagMatch && attributesMatch
 }
 
-func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) bool {
+func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.AlertCurEvent) error {
 	tm := time.Unix(event.TriggerTime, 0)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := int(tm.Weekday())
@@ -317,11 +324,19 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		}
 	}
 
+	if !timeMatch {
+		return fmt.Errorf("event time not match time filter")
+	}
+
 	severityMatch := false
 	for i := range notifyConfig.Severities {
 		if notifyConfig.Severities[i] == event.Severity {
 			severityMatch = true
 		}
+	}
+
+	if !severityMatch {
+		return fmt.Errorf("event severity not match severity filter")
 	}
 
 	tagMatch := true
@@ -335,9 +350,13 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v", err, event, notifyConfig)
-			return false
+			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
+	}
+
+	if !tagMatch {
+		return fmt.Errorf("event tag not match tag filter")
 	}
 
 	attributesMatch := true
@@ -345,13 +364,18 @@ func NotifyRuleApplicable(notifyConfig *models.NotifyConfig, event *models.Alert
 		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v err:%v", tagFilters, event, notifyConfig, err)
-			return false
+			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 
 		attributesMatch = common.MatchTags(event.JsonTagsAndValue(), tagFilters)
 	}
+
+	if !attributesMatch {
+		return fmt.Errorf("event attributes not match attributes filter")
+	}
+
 	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%+v notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event, notifyConfig)
-	return timeMatch && severityMatch && tagMatch && attributesMatch
+	return nil
 }
 
 func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, map[string]string) {
@@ -447,41 +471,40 @@ func (e *Dispatch) sendV2(events []*models.AlertCurEvent, notifyRuleId int64, no
 		}
 
 		for i := range flashDutyChannelIDs {
+			start := time.Now()
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
 		}
-		return
+
 	case "http":
-		if e.notifyChannelCache.HttpConcurrencyAdd(notifyChannel.ID) {
-			defer e.notifyChannelCache.HttpConcurrencyDone(notifyChannel.ID)
-		}
-		if notifyChannel.RequestConfig == nil {
-			logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, request config not found", notifyRuleId, notifyChannel.Name, events[0])
+		// 使用队列模式处理 http 通知
+		// 创建通知任务
+		task := &memsto.NotifyTask{
+			Events:        events,
+			NotifyRuleId:  notifyRuleId,
+			NotifyChannel: notifyChannel,
+			TplContent:    tplContent,
+			CustomParams:  customParams,
+			Sendtos:       sendtos,
 		}
 
-		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
-			logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, http request config not found", notifyRuleId, notifyChannel.Name, events[0])
-		}
-
-		if NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err := notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, sendtos, resp, err)
-
-			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), resp, err)
-		} else {
-			for i := range sendtos {
-				resp, err := notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, e.notifyChannelCache.GetHttpClient(notifyChannel.ID))
-				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, userInfo:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, sendtos[i], resp, err)
-				sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, []string{sendtos[i]}), resp, err)
-			}
+		// 将任务加入队列
+		success := e.notifyChannelCache.EnqueueNotifyTask(task)
+		if !success {
+			logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
+			// 如果入队失败，记录错误通知
+			sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
 		}
 
 	case "smtp":
 		notifyChannel.SendEmail(notifyRuleId, events, tplContent, sendtos, e.notifyChannelCache.GetSmtpClient(notifyChannel.ID))
 
 	case "script":
+		start := time.Now()
 		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
+		res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
 		logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
 		sender.NotifyRecord(e.ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:

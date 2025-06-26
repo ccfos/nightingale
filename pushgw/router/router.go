@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
@@ -86,15 +87,22 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
-		accounts := make(gin.Accounts)
+		accounts := make(ginx.Accounts, 0)
 		for username, password := range rt.HTTP.APIForAgent.BasicAuth {
-			accounts[username] = password
-		}
-		for username, password := range rt.HTTP.APIForService.BasicAuth {
-			accounts[username] = password
+			accounts = append(accounts, ginx.Account{
+				User:     username,
+				Password: password,
+			})
 		}
 
-		auth := gin.BasicAuth(accounts)
+		for username, password := range rt.HTTP.APIForService.BasicAuth {
+			accounts = append(accounts, ginx.Account{
+				User:     username,
+				Password: password,
+			})
+		}
+
+		auth := ginx.BasicAuth(accounts)
 		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
 		r.POST("/openfalcon/push", auth, rt.falconPush)
 		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)

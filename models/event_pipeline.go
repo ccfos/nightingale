@@ -16,7 +16,7 @@ type EventPipeline struct {
 	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
 	TeamNames        []string          `json:"team_names" gorm:"-"`
 	Description      string            `json:"description" gorm:"type:varchar(255)"`
-	FilterEnable     bool              `json:"filter_enable" gorm:"type:tinyint(1)"`
+	FilterEnable     bool              `json:"filter_enable" gorm:"type:bigint"`
 	LabelFilters     []TagFilter       `json:"label_filters" gorm:"type:text;serializer:json"`
 	AttrFilters      []TagFilter       `json:"attribute_filters" gorm:"type:text;serializer:json"`
 	ProcessorConfigs []ProcessorConfig `json:"processors" gorm:"type:text;serializer:json"`

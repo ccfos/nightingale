@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"strconv"
@@ -112,7 +113,8 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 				metricTs[k] = float64(ts.Unix())
 			default:
 				// Default to labels for any unrecognized columns
-				if !ignore {
+				if !ignore && keys.LabelKey == "" {
+					// 只有当 labelKey 为空时，才将剩余的列作为 label
 					labels[k] = fmt.Sprintf("%v", v)
 				}
 			}
@@ -120,6 +122,11 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 
 		// Compile and store the metric values
 		for metricName, value := range metricValue {
+			// NaN 无法执行json.Marshal(), 接口会报错
+			if math.IsNaN(value) {
+				continue
+			}
+
 			metrics := make(model.Metric)
 			var labelsStr []string
 

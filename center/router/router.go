@@ -182,6 +182,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	pages := r.Group(pagesPrefix)
 	{
 
+		pages.DELETE("/datasource/series", rt.auth(), rt.admin(), rt.deleteDatasourceSeries)
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
@@ -236,6 +237,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/log-query", rt.QueryLog)
 		}
 
+		// OpenSearch 专用接口
+		pages.POST("/os-indices", rt.QueryOSIndices)
+		pages.POST("/os-variable", rt.QueryOSVariable)
+		pages.POST("/os-fields", rt.QueryOSFields)
+
 		pages.GET("/sql-template", rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
@@ -259,6 +265,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/notify-channels", rt.notifyChannelsGets)
 		pages.GET("/contact-keys", rt.contactKeysGets)
+		pages.GET("/install-date", rt.installDateGet)
 
 		pages.GET("/self/perms", rt.auth(), rt.user(), rt.permsGets)
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
@@ -377,6 +384,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/relabel-test", rt.auth(), rt.user(), rt.relabelTest)
 		pages.POST("/busi-group/:id/alert-rules/clone", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.cloneToMachine)
 		pages.POST("/busi-groups/alert-rules/clones", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.batchAlertRuleClone)
+		pages.POST("/busi-group/alert-rules/notify-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleNotifyTryRun)
+		pages.POST("/busi-group/alert-rules/enable-tryrun", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.alertRuleEnableTryRun)
 
 		pages.GET("/busi-groups/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGetsByGids)
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -402,22 +411,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/add"), rt.bgrw(), rt.alertSubscribeAdd)
 		pages.PUT("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/put"), rt.bgrw(), rt.alertSubscribePut)
 		pages.DELETE("/busi-group/:id/alert-subscribes", rt.auth(), rt.user(), rt.perm("/alert-subscribes/del"), rt.bgrw(), rt.alertSubscribeDel)
+		pages.POST("/alert-subscribe/alert-subscribes-tryrun", rt.auth(), rt.user(), rt.perm("/alert-subscribes/add"), rt.alertSubscribeTryRun)
 
-		if rt.Center.AnonymousAccess.AlertDetail {
-			pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
-			pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
-			pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
-		} else {
-			pages.GET("/alert-cur-event/:eid", rt.auth(), rt.user(), rt.alertCurEventGet)
-			pages.GET("/alert-his-event/:eid", rt.auth(), rt.user(), rt.alertHisEventGet)
-			pages.GET("/event-notify-records/:eid", rt.auth(), rt.user(), rt.notificationRecordList)
-		}
+		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
+		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
+		pages.DELETE("/alert-his-events", rt.auth(), rt.admin(), rt.alertHisEventsDelete)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 		pages.GET("/alert-cur-events/stats", rt.auth(), rt.alertCurEventsStatistics)
 
