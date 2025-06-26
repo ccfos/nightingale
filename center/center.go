@@ -95,6 +95,8 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		models.MigrateEP(ctx)
 	}
 
+	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
+
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
@@ -112,7 +114,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
 	builtinPayloadCache := memsto.NewBuiltinPayloadCache(ctx, syncStats, config.Center.BuiltinIntegrationsDir)
 	builtinMetricCache := memsto.NewBuiltinMetricCache(ctx, syncStats, config.Center.BuiltinIntegrationsDir)
-	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 
 	sso := sso.Init(config.Center, ctx, configCache)
 	promClients := prom.NewPromClient(ctx)

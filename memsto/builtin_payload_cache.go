@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -92,8 +91,15 @@ func (b *BuiltinPayloadCacheType) initBuiltinPayloadsByFile() error {
 	for _, dir := range dirList {
 		// components icon
 		componentDir := fp + "/" + dir
-		component := models.BuiltinComponent{
+		component := &models.BuiltinComponent{
 			Ident: dir,
+		}
+
+		// get component by ident
+		component, err := models.BuiltinComponentGet(b.ctx, "ident = ?", dir)
+		if err != nil {
+			logger.Warning("get builtin component fail ", componentDir, err)
+			continue
 		}
 
 		// alerts
@@ -304,13 +310,11 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayload(typ, cate, query string, com
 		}
 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("no builtin payloads found for type=%s cate=%s query=%s", typ, cate, query)
+	if len(result) > 0 {
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].ID < result[j].ID
+		})
 	}
-
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].ID < result[j].ID
-	})
 
 	return result, nil
 }
@@ -350,7 +354,7 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 	b.RLock()
 	defer b.RUnlock()
 
-	var result set.StringSet
+	var result []string
 
 	sources := []map[string]map[string][]*models.BuiltinPayload{
 		b.buildPayloadsByFile[componentId],
@@ -366,11 +370,12 @@ func (b *BuiltinPayloadCacheType) GetBuiltinPayloadCates(typ string, componentId
 			continue
 		}
 		for cate := range typeData {
-			result.Add(cate)
+			result = append(result, cate)
 		}
 	}
 
-	return result.ToSlice(), nil
+	sort.Strings(result)
+	return result, nil
 }
 
 // addBuiltinPayloadByFile adds a new builtin payload to the cache for file.
