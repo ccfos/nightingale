@@ -171,7 +171,7 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 
 func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]string, error) {
 	var typs []string
-	session := DB(ctx).Model(&BuiltinMetric{})
+	session := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM)
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
 	}
@@ -190,7 +190,7 @@ func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]stri
 
 func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]string, error) {
 	var collectors []string
-	session := DB(ctx).Model(&BuiltinMetric{})
+	session := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM)
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
 	}
@@ -212,28 +212,4 @@ func BuiltinMetricBatchUpdateColumn(ctx *ctx.Context, col, old, new, updatedBy s
 		return nil
 	}
 	return DB(ctx).Model(&BuiltinMetric{}).Where(fmt.Sprintf("%s = ?", col), old).Updates(map[string]interface{}{col: new, "updated_by": updatedBy}).Error
-}
-
-func BuiltinMetricStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&BuiltinMetric{}).Select("count(*) as total", "max(updated_at) as last_updated")
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return stats[0], nil
-}
-
-func BuiltinMetricGetAll(ctx *ctx.Context) ([]*BuiltinMetric, error) {
-	var lst []*BuiltinMetric
-
-	// Find data from user.
-	err := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM).Find(&lst).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return lst, nil
 }

@@ -197,26 +197,3 @@ func InitBuiltinPayloads(ctx *ctx.Context) error {
 
 	return DB(ctx).Save(&lst).Error
 }
-
-func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&BuiltinPayload{}).Select("count(*) as total", "max(updated_at) as last_updated")
-
-	var stats []*Statistics
-	err := session.Find(&stats).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return stats[0], nil
-}
-
-func BuiltinPayloadsGetAll(ctx *ctx.Context) ([]*BuiltinPayload, error) {
-	var lst []*BuiltinPayload
-	// Find data from user.
-	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_by != ?", SYSTEM).Order("name ASC").Find(&lst).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return lst, nil
-}
