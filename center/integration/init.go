@@ -441,17 +441,28 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 		return filteredMetrics[i].Name < filteredMetrics[j].Name
 	})
 
-	if offset > len(filteredMetrics) {
-		return nil, 0, nil
+	totalCount := len(filteredMetrics)
+
+	// Validate parameters
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Handle edge cases
+	if offset >= totalCount || limit == 0 {
+		return []*models.BuiltinMetric{}, totalCount, nil
 	}
 
 	// Apply pagination
 	end := offset + limit
-	if end > len(filteredMetrics) {
-		end = len(filteredMetrics)
+	if end > totalCount {
+		end = totalCount
 	}
 
-	return filteredMetrics[offset:end], len(filteredMetrics), nil
+	return filteredMetrics[offset:end], totalCount, nil
 }
 
 func (b *BuiltinPayloadInFileType) BuiltinMetricTypes(lang, collector, query string) []string {
