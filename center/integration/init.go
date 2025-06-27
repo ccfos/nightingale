@@ -269,8 +269,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					if metric.UUID == 0 {
 						time.Sleep(time.Microsecond)
 						metric.UUID = time.Now().UnixMicro()
-						metric.ID = metric.UUID
 					}
+					metric.ID = metric.UUID
 
 					BuiltinPayloadInFile.BuiltinMetricsByFile[metric.Expression] = &metric
 				}
