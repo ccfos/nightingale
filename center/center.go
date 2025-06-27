@@ -76,6 +76,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
+	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 	var redis storage.Redis
 	redis, err = storage.NewRedis(config.Redis)
 	if err != nil {
@@ -94,8 +95,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if models.CanMigrateEP(ctx) {
 		models.MigrateEP(ctx)
 	}
-
-	go integration.Init(ctx, config.Center.BuiltinIntegrationsDir)
 
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
