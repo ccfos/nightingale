@@ -9,6 +9,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
+	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/container/set"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
@@ -21,6 +24,8 @@ var BuiltinPayloadInFile *BuiltinPayloadInFileType
 type BuiltinPayloadInFileType struct {
 	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
 	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
+
+	BuiltinMetricsByFile map[string]*models.BuiltinMetric
 }
 
 func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
@@ -158,7 +163,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				newAlerts := []models.AlertRule{}
 				for _, alert := range alerts {
 					if alert.UUID == 0 {
-						alert.UUID = time.Now().UnixNano()
+						time.Sleep(time.Microsecond)
+						alert.UUID = time.Now().UnixMicro()
 					}
 
 					newAlerts = append(newAlerts, alert)
@@ -177,6 +183,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						Tags:        alert.AppendTags,
 						Content:     string(content),
 						UUID:        alert.UUID,
+						ID:          alert.UUID,
 					}
 					BuiltinPayloadInFile.addBuiltinPayload(&builtinAlert)
 
@@ -232,6 +239,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Tags:        dashboard.Tags,
 					Content:     string(content),
 					UUID:        dashboard.UUID,
+					ID:          dashboard.UUID,
 				}
 				BuiltinPayloadInFile.addBuiltinPayload(&builtinDashboard)
 			}
@@ -240,63 +248,36 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		}
 
 		// metrics
-		// files, err = file.FilesUnder(componentDir + "/metrics")
-		// if err == nil && len(files) > 0 {
-		// 	for _, f := range files {
-		// 		fp := componentDir + "/metrics/" + f
-		// 		bs, err := file.ReadBytes(fp)
-		// 		if err != nil {
-		// 			logger.Warning("read builtin component metrics file fail", f, err)
-		// 			continue
-		// 		}
+		files, err = file.FilesUnder(componentDir + "/metrics")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				fp := componentDir + "/metrics/" + f
+				bs, err := file.ReadBytes(fp)
+				if err != nil {
+					logger.Warning("read builtin component metrics file fail", f, err)
+					continue
+				}
 
-		// 		metrics := []models.BuiltinMetric{}
-		// 		newMetrics := []models.BuiltinMetric{}
-		// 		err = json.Unmarshal(bs, &metrics)
-		// 		if err != nil {
-		// 			logger.Warning("parse builtin component metrics file fail", f, err)
-		// 			continue
-		// 		}
+				metrics := []models.BuiltinMetric{}
+				err = json.Unmarshal(bs, &metrics)
+				if err != nil {
+					logger.Warning("parse builtin component metrics file fail", f, err)
+					continue
+				}
 
-		// 		for _, metric := range metrics {
-		// 			if metric.UUID == 0 {
-		// 				metric.UUID = time.Now().UnixNano()
-		// 			}
-		// 			newMetrics = append(newMetrics, metric)
+				for _, metric := range metrics {
+					if metric.UUID == 0 {
+						time.Sleep(time.Microsecond)
+						metric.UUID = time.Now().UnixMicro()
+						metric.ID = metric.UUID
+					}
 
-		// 			old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
-		// 			if err != nil {
-		// 				logger.Warning("get builtin metrics fail ", metric, err)
-		// 				continue
-		// 			}
-
-		// 			if old == nil {
-		// 				err := metric.Add(ctx, SYSTEM)
-		// 				if err != nil {
-		// 					logger.Warning("add builtin metrics fail ", metric, err)
-		// 				}
-		// 				continue
-		// 			}
-
-		// 			if old.UpdatedBy == SYSTEM {
-		// 				old.Collector = metric.Collector
-		// 				old.Typ = metric.Typ
-		// 				old.Name = metric.Name
-		// 				old.Unit = metric.Unit
-		// 				old.Note = metric.Note
-		// 				old.Lang = metric.Lang
-		// 				old.Expression = metric.Expression
-
-		// 				err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
-		// 				if err != nil {
-		// 					logger.Warningf("update builtin metric:%+v fail %v", metric, err)
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// } else if err != nil {
-		// 	logger.Warningf("read builtin component metrics dir fail %s %v", component.Ident, err)
-		// }
+					BuiltinPayloadInFile.BuiltinMetricsByFile[metric.Expression] = &metric
+				}
+			}
+		} else if err != nil {
+			logger.Warningf("read builtin component metrics dir fail %s %v", component.Ident, err)
+		}
 	}
 }
 
@@ -321,8 +302,9 @@ type BuiltinBoard struct {
 
 func NewBuiltinPayloadInFileType() *BuiltinPayloadInFileType {
 	return &BuiltinPayloadInFileType{
-		Data:      make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
-		IndexData: make(map[int64]*models.BuiltinPayload),
+		Data:                 make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		IndexData:            make(map[int64]*models.BuiltinPayload),
+		BuiltinMetricsByFile: make(map[string]*models.BuiltinMetric),
 	}
 }
 
@@ -409,4 +391,201 @@ func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.Bu
 		}
 	}
 	return filtered
+}
+
+func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.BuiltinMetric, lang, collector, typ, query, unit string, limit, offset int) ([]*models.BuiltinMetric, int, error) {
+	var filteredMetrics []*models.BuiltinMetric
+	expressionSet := set.NewStringSet()
+
+	builtinMetricsByDB := convertBuiltinMetricByDB(metricsInDB)
+
+	for expression, metric := range builtinMetricsByDB {
+		b.BuiltinMetricsByFile[expression] = metric
+	}
+
+	for _, metric := range b.BuiltinMetricsByFile {
+		if !applyFilter(metric, collector, typ, query, unit) {
+			continue
+		}
+
+		// Skip if expression is already in db cache
+		// NOTE: 忽略重复的expression，特别的，在旧版本中，用户可能已经创建了重复的metrics，需要覆盖掉ByFile中相同的Metrics
+		// NOTE: Ignore duplicate expressions, especially in the old version, users may have created duplicate metrics,
+		if expressionSet.Exists(metric.Expression) {
+			continue
+		}
+
+		// Add db expression in set.
+		expressionSet.Add(metric.Expression)
+
+		// Apply language
+		trans, err := getTranslationWithLanguage(metric, lang)
+		if err != nil {
+			logger.Errorf("Error getting translation for metric %s: %v", metric.Name, err)
+			continue // Skip if translation not found
+		}
+		metric.Name = trans.Name
+		metric.Note = trans.Note
+
+		filteredMetrics = append(filteredMetrics, metric)
+	}
+
+	// Sort metrics
+	sort.Slice(filteredMetrics, func(i, j int) bool {
+		if filteredMetrics[i].Collector != filteredMetrics[j].Collector {
+			return filteredMetrics[i].Collector < filteredMetrics[j].Collector
+		}
+		if filteredMetrics[i].Typ != filteredMetrics[j].Typ {
+			return filteredMetrics[i].Typ < filteredMetrics[j].Typ
+		}
+		return filteredMetrics[i].Name < filteredMetrics[j].Name
+	})
+
+	if offset > len(filteredMetrics) {
+		return nil, 0, nil
+	}
+
+	// Apply pagination
+	end := offset + limit
+	if end > len(filteredMetrics) {
+		end = len(filteredMetrics)
+	}
+
+	return filteredMetrics[offset:end], len(filteredMetrics), nil
+}
+
+func (b *BuiltinPayloadInFileType) BuiltinMetricTypes(lang, collector, query string) []string {
+	typeSet := set.NewStringSet()
+	for _, metric := range b.BuiltinMetricsByFile {
+		if !applyFilter(metric, collector, "", query, "") {
+			continue
+		}
+
+		typeSet.Add(metric.Typ)
+	}
+
+	return typeSet.ToSlice()
+}
+
+func (b *BuiltinPayloadInFileType) BuiltinMetricCollectors(lang, typ, query string) []string {
+	collectorSet := set.NewStringSet()
+	for _, metric := range b.BuiltinMetricsByFile {
+		if !applyFilter(metric, "", typ, query, "") {
+			continue
+		}
+
+		collectorSet.Add(metric.Collector)
+	}
+	return collectorSet.ToSlice()
+}
+
+func applyFilter(metric *models.BuiltinMetric, collector, typ, query, unit string) bool {
+	return (collector == "" || metric.Collector == collector) &&
+		(typ == "" || metric.Typ == typ) &&
+		(unit == "" || containsUnit(unit, metric.Unit)) &&
+		(query == "" || applyQueryFilter(metric, query))
+}
+
+func containsUnit(unit, metricUnit string) bool {
+	us := strings.Split(unit, ",")
+	for _, u := range us {
+		if u == metricUnit {
+			return true
+		}
+	}
+	return false
+}
+
+func applyQueryFilter(metric *models.BuiltinMetric, query string) bool {
+	qs := strings.Split(query, " ")
+	for _, q := range qs {
+		if strings.HasPrefix(q, "-") {
+			q = strings.TrimPrefix(q, "-")
+			if strings.Contains(metric.Name, q) || strings.Contains(metric.Note, q) || strings.Contains(metric.Expression, q) {
+				return false
+			}
+		} else {
+			if !strings.Contains(metric.Name, q) && !strings.Contains(metric.Note, q) && !strings.Contains(metric.Expression, q) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func getTranslationWithLanguage(bm *models.BuiltinMetric, lang string) (*models.Translation, error) {
+	var defaultTranslation *models.Translation
+	for _, t := range bm.Translation {
+		if t.Lang == lang {
+			return &t, nil
+		}
+
+		if t.Lang == "en_US" {
+			defaultTranslation = &t
+		}
+	}
+
+	if defaultTranslation != nil {
+		return defaultTranslation, nil
+	}
+
+	return nil, errors.Errorf("translation not found for metric %s", bm.Name)
+}
+
+func convertBuiltinMetricByDB(metricsInDB []*models.BuiltinMetric) map[string]*models.BuiltinMetric {
+	builtinMetricsByDB := make(map[string]*models.BuiltinMetric)
+	builtinMetricsByDBList := make(map[string][]*models.BuiltinMetric)
+
+	for _, metric := range metricsInDB {
+		builtinMetrics, ok := builtinMetricsByDBList[metric.Expression]
+		if !ok {
+			builtinMetrics = []*models.BuiltinMetric{}
+		}
+
+		builtinMetrics = append(builtinMetrics, metric)
+		builtinMetricsByDBList[metric.Expression] = builtinMetrics
+	}
+
+	for expression, builtinMetrics := range builtinMetricsByDBList {
+		if len(builtinMetrics) == 0 {
+			continue
+		}
+
+		// NOTE: 为兼容旧版本用户已经创建的 metrics，同时将修改 metrics 收敛到同一个记录上，
+		// 我们选择使用 expression 相同但是 id 最小的 metric 记录作为主要的 Metric。
+		sort.Slice(builtinMetrics, func(i, j int) bool {
+			return builtinMetrics[i].ID < builtinMetrics[j].ID
+		})
+
+		currentBuiltinMetric := builtinMetrics[0]
+		// User have no customed translation, so we can merge it
+		if len(currentBuiltinMetric.Translation) == 0 {
+			translationMap := make(map[string]models.Translation)
+			for _, bm := range builtinMetrics {
+				for _, t := range getDefaultTranslation(bm) {
+					translationMap[t.Lang] = t
+				}
+			}
+			currentBuiltinMetric.Translation = make([]models.Translation, 0, len(translationMap))
+			for _, t := range translationMap {
+				currentBuiltinMetric.Translation = append(currentBuiltinMetric.Translation, t)
+			}
+		}
+
+		builtinMetricsByDB[expression] = currentBuiltinMetric
+	}
+
+	return builtinMetricsByDB
+}
+
+func getDefaultTranslation(bm *models.BuiltinMetric) []models.Translation {
+	if len(bm.Translation) != 0 {
+		return bm.Translation
+	}
+
+	return []models.Translation{{
+		Lang: bm.Lang,
+		Name: bm.Name,
+		Note: bm.Note,
+	}}
 }

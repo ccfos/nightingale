@@ -2,8 +2,10 @@ package router
 
 import (
 	"net/http"
+	"sort"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +31,7 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
 		lst[i].Lang = lang
-		lst[i].UUID = time.Now().UnixNano()
+		lst[i].UUID = time.Now().UnixMicro()
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
 			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
 		}
@@ -48,8 +50,12 @@ func (rt *Router) builtinMetricsGets(c *gin.Context) {
 		lang = "zh_CN"
 	}
 
-	bm, total, err := rt.BuiltinMetricCache.BuiltinMetricGets(lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
+	bm, err := models.BuiltinMetricGets(rt.Ctx, lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
+
+	bm, total, err := integration.BuiltinPayloadInFile.BuiltinMetricGets(bm, lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
 	ginx.NewRender(c).Data(gin.H{
 		"list":  bm,
 		"total": total,
@@ -97,7 +103,25 @@ func (rt *Router) builtinMetricsTypes(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	lang := c.GetHeader("X-Language")
 
-	metricTypeList := rt.BuiltinMetricCache.BuiltinMetricTypes(lang, collector, query)
+	metricTypeListInDB, err := models.BuiltinMetricTypes(rt.Ctx, lang, collector, query)
+	ginx.Dangerous(err)
+
+	metricTypeListInFile := integration.BuiltinPayloadInFile.BuiltinMetricTypes(lang, collector, query)
+
+	typeMap := make(map[string]struct{})
+	for _, metricType := range metricTypeListInDB {
+		typeMap[metricType] = struct{}{}
+	}
+	for _, metricType := range metricTypeListInFile {
+		typeMap[metricType] = struct{}{}
+	}
+
+	metricTypeList := make([]string, 0, len(typeMap))
+	for metricType := range typeMap {
+		metricTypeList = append(metricTypeList, metricType)
+	}
+	sort.Strings(metricTypeList)
+
 	ginx.NewRender(c).Data(metricTypeList, nil)
 }
 
@@ -106,6 +130,24 @@ func (rt *Router) builtinMetricsCollectors(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	lang := c.GetHeader("X-Language")
 
-	collectorList := rt.BuiltinMetricCache.BuiltinMetricCollectors(lang, typ, query)
+	collectorListInDB, err := models.BuiltinMetricCollectors(rt.Ctx, lang, typ, query)
+	ginx.Dangerous(err)
+
+	collectorListInFile := integration.BuiltinPayloadInFile.BuiltinMetricCollectors(lang, typ, query)
+
+	collectorMap := make(map[string]struct{})
+	for _, collector := range collectorListInDB {
+		collectorMap[collector] = struct{}{}
+	}
+	for _, collector := range collectorListInFile {
+		collectorMap[collector] = struct{}{}
+	}
+
+	collectorList := make([]string, 0, len(collectorMap))
+	for collector := range collectorMap {
+		collectorList = append(collectorList, collector)
+	}
+	sort.Strings(collectorList)
+
 	ginx.NewRender(c).Data(collectorList, nil)
 }

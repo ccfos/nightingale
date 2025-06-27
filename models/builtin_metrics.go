@@ -43,15 +43,8 @@ func (bm *BuiltinMetric) TableOptions() string {
 }
 
 func (bm *BuiltinMetric) Verify() error {
-	// Check english language is existed.
-	hasEnglish := false
-	for _, bml := range bm.Translation {
-		if bml.Lang == "en_US" {
-			hasEnglish = true
-		}
-	}
-	if !hasEnglish {
-		return errors.New("english language is required")
+	if len(bm.Translation) == 0 {
+		return errors.New("translation is required")
 	}
 
 	bm.Collector = strings.TrimSpace(bm.Collector)
@@ -62,11 +55,6 @@ func (bm *BuiltinMetric) Verify() error {
 	bm.Typ = strings.TrimSpace(bm.Typ)
 	if bm.Typ == "" {
 		return errors.New("type is blank")
-	}
-
-	bm.Name = strings.TrimSpace(bm.Name)
-	if bm.Name == "" {
-		return errors.New("name is blank")
 	}
 
 	return nil
@@ -106,19 +94,9 @@ func (bm *BuiltinMetric) Update(ctx *ctx.Context, req BuiltinMetric) error {
 		return err
 	}
 
-	if bm.Lang != req.Lang && bm.Collector != req.Collector && bm.Typ != req.Typ && bm.Name != req.Name {
-		exists, err := BuiltinMetricExists(ctx, &req)
-		if err != nil {
-			return err
-		}
-		if exists {
-			return errors.New("builtin metric already exists")
-		}
-	}
 	req.UpdatedAt = time.Now().Unix()
 	req.CreatedAt = bm.CreatedAt
 	req.CreatedBy = bm.CreatedBy
-	req.Lang = bm.Lang
 	req.UUID = bm.UUID
 
 	return DB(ctx).Model(bm).Select("*").Updates(req).Error
@@ -140,17 +118,9 @@ func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit strin
 	return lst, err
 }
 
-func BuiltinMetricCount(ctx *ctx.Context, lang, collector, typ, query, unit string) (int64, error) {
-	session := DB(ctx).Model(&BuiltinMetric{})
-	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
-
-	var cnt int64
-	err := session.Count(&cnt).Error
-
-	return cnt, err
-}
-
 func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
+	session = session.Where("updated_by != ?", SYSTEM)
+
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
 	}
