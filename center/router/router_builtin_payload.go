@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -192,13 +193,26 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
+	if typ == "" {
+		ginx.Bomb(http.StatusBadRequest, "type is required")
+		return
+	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
 	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
-	ginx.NewRender(c).Data(lst, err)
+	ginx.Dangerous(err)
+
+	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
+	ginx.Dangerous(err)
+
+	if len(lstInFile) > 0 {
+		lst = append(lst, lstInFile...)
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
@@ -206,21 +220,31 @@ func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
 	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
-	ginx.NewRender(c).Data(cates, err)
-}
+	ginx.Dangerous(err)
 
-func (rt *Router) builtinPayloadGet(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
+	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	ginx.Dangerous(err)
 
-	bp, err := models.BuiltinPayloadGet(rt.Ctx, "id = ?", id)
-	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
+	// 使用 map 进行去重
+	cateMap := make(map[string]bool)
+
+	// 添加数据库中的分类
+	for _, cate := range cates {
+		cateMap[cate] = true
 	}
-	if bp == nil {
-		ginx.Bomb(http.StatusNotFound, "builtin payload not found")
+
+	// 添加文件中的分类
+	for _, cate := range catesInFile {
+		cateMap[cate] = true
 	}
 
-	ginx.NewRender(c).Data(bp, nil)
+	// 将去重后的结果转换回切片
+	result := make([]string, 0, len(cateMap))
+	for cate := range cateMap {
+		result = append(result, cate)
+	}
+
+	ginx.NewRender(c).Data(result, nil)
 }
 
 func (rt *Router) builtinPayloadsPut(c *gin.Context) {
@@ -273,14 +297,15 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 	ginx.NewRender(c).Message(models.BuiltinPayloadDels(rt.Ctx, req.Ids))
 }
 
-func (rt *Router) builtinPayloadsGetByUUIDOrID(c *gin.Context) {
-	uuid := ginx.QueryInt64(c, "uuid", 0)
-	// 优先以 uuid 为准
-	if uuid != 0 {
-		ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid))
-		return
-	}
+func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
+	uuid := ginx.QueryInt64(c, "uuid")
 
-	id := ginx.QueryInt64(c, "id", 0)
-	ginx.NewRender(c).Data(models.BuiltinPayloadGet(rt.Ctx, "id = ?", id))
+	bp, err := models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid)
+	ginx.Dangerous(err)
+
+	if bp != nil {
+		ginx.NewRender(c).Data(bp, nil)
+	} else {
+		ginx.NewRender(c).Data(integration.BuiltinPayloadInFile.IndexData[uuid], nil)
+	}
 }

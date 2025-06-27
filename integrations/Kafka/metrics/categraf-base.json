@@ -12,7 +12,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Broker 数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of Brokers",
+                "note": ""
+            }
+        ]
     },
     {
         "id": 0,
@@ -27,7 +39,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Partition 副本不同步的数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of out-of-sync copies of Partition",
+                "note": ""
+            }
+        ]
     },
     {
         "id": 0,
@@ -42,7 +66,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "Partition 副本数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of Partition copies",
+                "note": ""
+            }
+        ]
     },
     {
         "id": 0,
@@ -57,7 +93,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "各个 Topic 每秒消费消息量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Each Topic consumes messages per second",
+                "note": ""
+            }
+        ]
     },
     {
         "id": 0,
@@ -72,7 +120,19 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "各个 Topic 每秒生产消息量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Production message volume per second per Topic",
+                "note": ""
+            }
+        ]
     },
     {
         "id": 0,
@@ -87,6 +147,18 @@
         "created_at": 0,
         "created_by": "",
         "updated_at": 0,
-        "updated_by": ""
+        "updated_by": "",
+        "translation": [
+            {
+                "lang": "zh_CN",
+                "name": "各个 Topic 的 Partition 数量",
+                "note": ""
+            },
+            {
+                "lang": "en_US",
+                "name": "Number of Partitions for each Topic",
+                "note": ""
+            }
+        ]
     }
 ]

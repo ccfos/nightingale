@@ -523,10 +523,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-payloads", rt.auth(), rt.user(), rt.builtinPayloadsGets)
 		pages.GET("/builtin-payloads/cates", rt.auth(), rt.user(), rt.builtinPayloadcatesGet)
 		pages.POST("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/add"), rt.builtinPayloadsAdd)
-		pages.GET("/builtin-payload/:id", rt.auth(), rt.user(), rt.perm("/components"), rt.builtinPayloadGet)
 		pages.PUT("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/put"), rt.builtinPayloadsPut)
 		pages.DELETE("/builtin-payloads", rt.auth(), rt.user(), rt.perm("/components/del"), rt.builtinPayloadsDel)
-		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUIDOrID)
+		pages.GET("/builtin-payload", rt.auth(), rt.user(), rt.builtinPayloadsGetByUUID)
 
 		pages.POST("/message-templates", rt.auth(), rt.user(), rt.perm("/notification-templates/add"), rt.messageTemplatesAdd)
 		pages.DELETE("/message-templates", rt.auth(), rt.user(), rt.perm("/notification-templates/del"), rt.messageTemplatesDel)
