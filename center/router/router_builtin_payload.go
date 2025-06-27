@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/ccfos/nightingale/v6/center/integration"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -201,21 +202,49 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 	cate := ginx.QueryStr(c, "cate", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	lst, err := rt.BuiltinPayloadCache.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
-	ginx.NewRender(c).Data(lst, err)
+	lst, err := models.BuiltinPayloadGets(rt.Ctx, uint64(ComponentID), typ, cate, query)
+	ginx.Dangerous(err)
+
+	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
+	ginx.Dangerous(err)
+
+	if len(lstInFile) > 0 {
+		lst = append(lst, lstInFile...)
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) builtinPayloadcatesGet(c *gin.Context) {
 	typ := ginx.QueryStr(c, "type", "")
-	if typ == "" {
-		ginx.Bomb(http.StatusBadRequest, "type is required")
-		return
-	}
 	ComponentID := ginx.QueryInt64(c, "component_id", 0)
 
-	cates, err := rt.BuiltinPayloadCache.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	cates, err := models.BuiltinPayloadCates(rt.Ctx, typ, uint64(ComponentID))
+	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(cates, err)
+	catesInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayloadCates(typ, uint64(ComponentID))
+	ginx.Dangerous(err)
+
+	// 使用 map 进行去重
+	cateMap := make(map[string]bool)
+
+	// 添加数据库中的分类
+	for _, cate := range cates {
+		cateMap[cate] = true
+	}
+
+	// 添加文件中的分类
+	for _, cate := range catesInFile {
+		cateMap[cate] = true
+	}
+
+	// 将去重后的结果转换回切片
+	result := make([]string, 0, len(cateMap))
+	for cate := range cateMap {
+		result = append(result, cate)
+	}
+
+	ginx.NewRender(c).Data(result, nil)
 }
 
 func (rt *Router) builtinPayloadsPut(c *gin.Context) {
@@ -269,11 +298,14 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 }
 
 func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
-	uuid := ginx.QueryInt64(c, "uuid", 0)
-	if uuid == 0 {
-		ginx.Bomb(http.StatusBadRequest, "uuid is required")
-		return
-	}
+	uuid := ginx.QueryInt64(c, "uuid")
 
-	ginx.NewRender(c).Data(rt.BuiltinPayloadCache.GetBuiltinPayloadByUUID(uuid))
+	bp, err := models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid)
+	ginx.Dangerous(err)
+
+	if bp != nil {
+		ginx.NewRender(c).Data(bp, nil)
+	} else {
+		ginx.NewRender(c).Data(integration.BuiltinPayloadInFile.IndexData[uuid], nil)
+	}
 }

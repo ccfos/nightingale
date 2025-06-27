@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"encoding/json"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,7 +16,16 @@ import (
 
 const SYSTEM = "system"
 
+var BuiltinPayloadInFile *BuiltinPayloadInFileType
+
+type BuiltinPayloadInFileType struct {
+	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
+}
+
 func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
+	BuiltinPayloadInFile = NewBuiltinPayloadInFileType()
+
 	err := models.InitBuiltinPayloads(ctx)
 	if err != nil {
 		logger.Warning("init old builtinPayloads fail ", err)
@@ -125,6 +136,167 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
+
+		// alerts
+		files, err = file.FilesUnder(componentDir + "/alerts")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				fp := componentDir + "/alerts/" + f
+				bs, err := file.ReadBytes(fp)
+				if err != nil {
+					logger.Warning("read builtin component alerts file fail ", f, err)
+					continue
+				}
+
+				alerts := []models.AlertRule{}
+				err = json.Unmarshal(bs, &alerts)
+				if err != nil {
+					logger.Warning("parse builtin component alerts file fail ", f, err)
+					continue
+				}
+
+				newAlerts := []models.AlertRule{}
+				for _, alert := range alerts {
+					if alert.UUID == 0 {
+						alert.UUID = time.Now().UnixNano()
+					}
+
+					newAlerts = append(newAlerts, alert)
+					content, err := json.Marshal(alert)
+					if err != nil {
+						logger.Warning("marshal builtin alert fail ", alert, err)
+						continue
+					}
+
+					cate := strings.Replace(f, ".json", "", -1)
+					builtinAlert := models.BuiltinPayload{
+						ComponentID: component.ID,
+						Type:        "alert",
+						Cate:        cate,
+						Name:        alert.Name,
+						Tags:        alert.AppendTags,
+						Content:     string(content),
+						UUID:        alert.UUID,
+					}
+					BuiltinPayloadInFile.addBuiltinPayload(&builtinAlert)
+
+				}
+			}
+		}
+
+		// dashboards
+		files, err = file.FilesUnder(componentDir + "/dashboards")
+		if err == nil && len(files) > 0 {
+			for _, f := range files {
+				fp := componentDir + "/dashboards/" + f
+				bs, err := file.ReadBytes(fp)
+				if err != nil {
+					logger.Warning("read builtin component dashboards file fail ", f, err)
+					continue
+				}
+
+				dashboard := BuiltinBoard{}
+				err = json.Unmarshal(bs, &dashboard)
+				if err != nil {
+					logger.Warning("parse builtin component dashboards file fail ", f, err)
+					continue
+				}
+
+				if dashboard.UUID == 0 {
+					time.Sleep(time.Microsecond)
+					dashboard.UUID = time.Now().UnixMicro()
+					// 补全文件中的 uuid
+					bs, err = json.MarshalIndent(dashboard, "", "    ")
+					if err != nil {
+						logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+						continue
+					}
+
+					_, err = file.WriteBytes(fp, bs)
+					if err != nil {
+						logger.Warning("write builtin dashboard file fail ", f, err)
+					}
+				}
+
+				content, err := json.Marshal(dashboard)
+				if err != nil {
+					logger.Warning("marshal builtin dashboard fail ", dashboard, err)
+					continue
+				}
+
+				builtinDashboard := models.BuiltinPayload{
+					ComponentID: component.ID,
+					Type:        "dashboard",
+					Cate:        "",
+					Name:        dashboard.Name,
+					Tags:        dashboard.Tags,
+					Content:     string(content),
+					UUID:        dashboard.UUID,
+				}
+				BuiltinPayloadInFile.addBuiltinPayload(&builtinDashboard)
+			}
+		} else if err != nil {
+			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
+		}
+
+		// metrics
+		// files, err = file.FilesUnder(componentDir + "/metrics")
+		// if err == nil && len(files) > 0 {
+		// 	for _, f := range files {
+		// 		fp := componentDir + "/metrics/" + f
+		// 		bs, err := file.ReadBytes(fp)
+		// 		if err != nil {
+		// 			logger.Warning("read builtin component metrics file fail", f, err)
+		// 			continue
+		// 		}
+
+		// 		metrics := []models.BuiltinMetric{}
+		// 		newMetrics := []models.BuiltinMetric{}
+		// 		err = json.Unmarshal(bs, &metrics)
+		// 		if err != nil {
+		// 			logger.Warning("parse builtin component metrics file fail", f, err)
+		// 			continue
+		// 		}
+
+		// 		for _, metric := range metrics {
+		// 			if metric.UUID == 0 {
+		// 				metric.UUID = time.Now().UnixNano()
+		// 			}
+		// 			newMetrics = append(newMetrics, metric)
+
+		// 			old, err := models.BuiltinMetricGet(ctx, "uuid = ?", metric.UUID)
+		// 			if err != nil {
+		// 				logger.Warning("get builtin metrics fail ", metric, err)
+		// 				continue
+		// 			}
+
+		// 			if old == nil {
+		// 				err := metric.Add(ctx, SYSTEM)
+		// 				if err != nil {
+		// 					logger.Warning("add builtin metrics fail ", metric, err)
+		// 				}
+		// 				continue
+		// 			}
+
+		// 			if old.UpdatedBy == SYSTEM {
+		// 				old.Collector = metric.Collector
+		// 				old.Typ = metric.Typ
+		// 				old.Name = metric.Name
+		// 				old.Unit = metric.Unit
+		// 				old.Note = metric.Note
+		// 				old.Lang = metric.Lang
+		// 				old.Expression = metric.Expression
+
+		// 				err = models.DB(ctx).Model(old).Select("*").Updates(old).Error
+		// 				if err != nil {
+		// 					logger.Warningf("update builtin metric:%+v fail %v", metric, err)
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// } else if err != nil {
+		// 	logger.Warningf("read builtin component metrics dir fail %s %v", component.Ident, err)
+		// }
 	}
 }
 
@@ -145,4 +317,96 @@ type BuiltinBoard struct {
 	BuiltIn    int         `json:"built_in"` // 0: false, 1: true
 	Hide       int         `json:"hide"`     // 0: false, 1: true
 	UUID       int64       `json:"uuid"`
+}
+
+func NewBuiltinPayloadInFileType() *BuiltinPayloadInFileType {
+	return &BuiltinPayloadInFileType{
+		Data:      make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		IndexData: make(map[int64]*models.BuiltinPayload),
+	}
+}
+
+func (b *BuiltinPayloadInFileType) addBuiltinPayload(bp *models.BuiltinPayload) {
+	if _, exists := b.Data[bp.ComponentID]; !exists {
+		b.Data[bp.ComponentID] = make(map[string]map[string][]*models.BuiltinPayload)
+	}
+	bpInType := b.Data[bp.ComponentID]
+	if _, exists := bpInType[bp.Type]; !exists {
+		bpInType[bp.Type] = make(map[string][]*models.BuiltinPayload)
+	}
+	bpInCate := bpInType[bp.Type]
+	if _, exists := bpInCate[bp.Cate]; !exists {
+		bpInCate[bp.Cate] = make([]*models.BuiltinPayload, 0)
+	}
+	bpInCate[bp.Cate] = append(bpInCate[bp.Cate], bp)
+
+	b.IndexData[bp.UUID] = bp
+}
+
+func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
+
+	var result []*models.BuiltinPayload
+	source := b.Data[componentId]
+
+	if source == nil {
+		return nil, nil
+	}
+
+	typeMap, exists := source[typ]
+	if !exists {
+		return nil, nil
+	}
+
+	if cate != "" {
+		payloads, exists := typeMap[cate]
+		if !exists {
+			return nil, nil
+		}
+		result = append(result, filterByQuery(payloads, query)...)
+	} else {
+		for _, payloads := range typeMap {
+			result = append(result, filterByQuery(payloads, query)...)
+		}
+	}
+
+	if len(result) > 0 {
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name < result[j].Name
+		})
+	}
+
+	return result, nil
+}
+
+func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentId uint64) ([]string, error) {
+	var result []string
+	source := b.Data[componentId]
+	if source == nil {
+		return result, nil
+	}
+
+	typeData := source[typ]
+	if typeData == nil {
+		return result, nil
+	}
+	for cate := range typeData {
+		result = append(result, cate)
+	}
+
+	sort.Strings(result)
+	return result, nil
+}
+
+func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.BuiltinPayload {
+	if query == "" {
+		return payloads
+	}
+
+	var filtered []*models.BuiltinPayload
+	for _, p := range payloads {
+		if strings.Contains(p.Name, query) || strings.Contains(p.Tags, query) {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
 }

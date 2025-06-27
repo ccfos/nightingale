@@ -117,7 +117,7 @@ func BuiltinComponentGets(ctx *ctx.Context, query string, disabled int) ([]*Buil
 
 	var lst []*BuiltinComponent
 
-	err := session.Order("ident ASC").Find(&lst).Error
+	err := session.Order("disabled ASC, updated_at DESC, ident ASC").Find(&lst).Error
 
 	return lst, err
 }

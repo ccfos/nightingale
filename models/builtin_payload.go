@@ -118,7 +118,7 @@ func BuiltinPayloadGet(ctx *ctx.Context, where string, args ...interface{}) (*Bu
 }
 
 func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query string) ([]*BuiltinPayload, error) {
-	session := DB(ctx)
+	session := DB(ctx).Where("updated_by != ?", SYSTEM)
 	if typ != "" {
 		session = session.Where("type = ?", typ)
 	}
@@ -146,7 +146,7 @@ func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query s
 // get cates of BuiltinPayload by type and component, return []string
 func BuiltinPayloadCates(ctx *ctx.Context, typ string, componentID uint64) ([]string, error) {
 	var cates []string
-	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component_id = ?", typ, componentID).Distinct("cate").Pluck("cate", &cates).Error
+	err := DB(ctx).Model(new(BuiltinPayload)).Where("type = ? and component_id = ? and updated_by != ?", typ, componentID, SYSTEM).Distinct("cate").Pluck("cate", &cates).Error
 	return cates, err
 }
 
@@ -213,7 +213,7 @@ func BuiltinPayloadsStatistics(ctx *ctx.Context) (*Statistics, error) {
 func BuiltinPayloadsGetAll(ctx *ctx.Context) ([]*BuiltinPayload, error) {
 	var lst []*BuiltinPayload
 	// Find data from user.
-	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_by != ?", SYSTEM).Find(&lst).Error
+	err := DB(ctx).Model(&BuiltinPayload{}).Where("updated_by != ?", SYSTEM).Order("name ASC").Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
