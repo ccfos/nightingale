@@ -25,7 +25,7 @@ type BuiltinPayloadInFileType struct {
 	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
 	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
 
-	BuiltinMetricsByFile map[string]*models.BuiltinMetric
+	BuiltinMetrics map[string]*models.BuiltinMetric
 }
 
 func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
@@ -272,7 +272,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					}
 					metric.ID = metric.UUID
 
-					BuiltinPayloadInFile.BuiltinMetricsByFile[metric.Expression] = &metric
+					BuiltinPayloadInFile.BuiltinMetrics[metric.Expression] = &metric
 				}
 			}
 		} else if err != nil {
@@ -302,9 +302,9 @@ type BuiltinBoard struct {
 
 func NewBuiltinPayloadInFileType() *BuiltinPayloadInFileType {
 	return &BuiltinPayloadInFileType{
-		Data:                 make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
-		IndexData:            make(map[int64]*models.BuiltinPayload),
-		BuiltinMetricsByFile: make(map[string]*models.BuiltinMetric),
+		Data:           make(map[uint64]map[string]map[string][]*models.BuiltinPayload),
+		IndexData:      make(map[int64]*models.BuiltinPayload),
+		BuiltinMetrics: make(map[string]*models.BuiltinMetric),
 	}
 }
 
@@ -400,10 +400,10 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 	builtinMetricsByDB := convertBuiltinMetricByDB(metricsInDB)
 
 	for expression, metric := range builtinMetricsByDB {
-		b.BuiltinMetricsByFile[expression] = metric
+		b.BuiltinMetrics[expression] = metric
 	}
 
-	for _, metric := range b.BuiltinMetricsByFile {
+	for _, metric := range b.BuiltinMetrics {
 		if !applyFilter(metric, collector, typ, query, unit) {
 			continue
 		}
@@ -467,7 +467,7 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 
 func (b *BuiltinPayloadInFileType) BuiltinMetricTypes(lang, collector, query string) []string {
 	typeSet := set.NewStringSet()
-	for _, metric := range b.BuiltinMetricsByFile {
+	for _, metric := range b.BuiltinMetrics {
 		if !applyFilter(metric, collector, "", query, "") {
 			continue
 		}
@@ -480,7 +480,7 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricTypes(lang, collector, query str
 
 func (b *BuiltinPayloadInFileType) BuiltinMetricCollectors(lang, typ, query string) []string {
 	collectorSet := set.NewStringSet()
-	for _, metric := range b.BuiltinMetricsByFile {
+	for _, metric := range b.BuiltinMetrics {
 		if !applyFilter(metric, "", typ, query, "") {
 			continue
 		}
