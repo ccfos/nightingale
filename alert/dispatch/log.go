@@ -18,7 +18,7 @@ func LogEvent(event *models.AlertCurEvent, location string, err ...error) {
 	}
 
 	logger.Infof(
-		"event(%s %s) %s: rule_id=%d sub_id:%d notify_rule_ids:%v cluster:%s %v%s@%d %s",
+		"event(%s %s) %s: rule_id=%d sub_id:%d notify_rule_ids:%v cluster:%s %v%s@%d last_eval_time:%d %s",
 		event.Hash,
 		status,
 		location,
@@ -29,6 +29,7 @@ func LogEvent(event *models.AlertCurEvent, location string, err ...error) {
 		event.TagsJSON,
 		event.TriggerValue,
 		event.TriggerTime,
+		event.LastEvalTime,
 		message,
 	)
 }
