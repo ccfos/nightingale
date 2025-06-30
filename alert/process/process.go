@@ -432,10 +432,11 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
 			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
-			preEvalTime = preEvent.LastEvalTime
+			preEvalTime = preEvent.FirstEvalTime
 		} else {
+			event.FirstEvalTime = event.LastEvalTime
 			p.pendings.Set(event.Hash, event)
-			preEvalTime = event.LastEvalTime
+			preEvalTime = event.FirstEvalTime
 		}
 
 		if event.LastEvalTime-preEvalTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
