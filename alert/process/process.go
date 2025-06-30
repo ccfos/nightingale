@@ -428,17 +428,17 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 			continue
 		}
 
-		var preTriggerTime int64 // 第一个 pending event 的触发时间
+		var preEvalTime int64 // 第一个 pending event 的检测时间
 		preEvent, has := p.pendings.Get(event.Hash)
 		if has {
 			p.pendings.UpdateLastEvalTime(event.Hash, event.LastEvalTime)
-			preTriggerTime = preEvent.TriggerTime
+			preEvalTime = preEvent.LastEvalTime
 		} else {
 			p.pendings.Set(event.Hash, event)
-			preTriggerTime = event.TriggerTime
+			preEvalTime = event.LastEvalTime
 		}
 
-		if event.LastEvalTime-preTriggerTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
+		if event.LastEvalTime-preEvalTime+int64(event.PromEvalInterval) >= int64(p.rule.PromForDuration) {
 			fireEvents = append(fireEvents, event)
 			if severity > event.Severity {
 				severity = event.Severity
