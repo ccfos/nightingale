@@ -1,6 +1,10 @@
 package astats
 
 import (
+	"fmt"
+	"sync"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -8,6 +12,29 @@ const (
 	namespace = "n9e"
 	subsystem = "alert"
 )
+
+type withTimestampCollector struct {
+	metric      *prometheus.Desc
+	ts          time.Time
+	value       float64
+	labelNames  []string
+	labelValues []string
+}
+
+func (c *withTimestampCollector) Collect(ch chan<- prometheus.Metric) {
+	metric := prometheus.MustNewConstMetric(c.metric, prometheus.GaugeValue, c.value, c.labelValues...)
+	ch <- prometheus.NewMetricWithTimestamp(c.ts, metric)
+}
+
+func (c *withTimestampCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- c.metric
+}
+
+func (c *withTimestampCollector) SetValue(value float64, labelValues []string) {
+	c.ts = time.Now()
+	c.value = value
+	c.labelValues = labelValues
+}
 
 type Stats struct {
 	AlertNotifyTotal            *prometheus.CounterVec
@@ -27,8 +54,9 @@ type Stats struct {
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
 	GaugeRuleEvalDuration       *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
-	GaugeStatusPageCheckTs      *prometheus.GaugeVec
-	GaugeStatusPageCheckValue   *prometheus.GaugeVec
+	GaugeStatusPageCheckTs      map[int64]map[string]*withTimestampCollector
+	GaugeStatusPageCheckValue   map[int64]map[string]*withTimestampCollector
+	statusPageGaugesMutex       sync.RWMutex
 }
 
 func NewSyncStats() *Stats {
@@ -153,22 +181,6 @@ func NewSyncStats() *Stats {
 		Help:      "Number of var filling query.",
 	}, []string{"rule_id", "datasource_id", "ref", "typ"})
 
-	// 状态页面检查时间戳指标
-	GaugeStatusPageCheckTs := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "statuspage_check_ts",
-		Help:      "Status page check timestamp.",
-	}, []string{"rule_id", "ref"})
-
-	// 状态页面检查值指标
-	GaugeStatusPageCheckValue := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "statuspage_check_value",
-		Help:      "Status page check value.",
-	}, []string{"rule_id", "ref"})
-
 	prometheus.MustRegister(
 		CounterAlertsTotal,
 		GaugeAlertQueueSize,
@@ -187,8 +199,6 @@ func NewSyncStats() *Stats {
 		GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
-		GaugeStatusPageCheckTs,
-		GaugeStatusPageCheckValue,
 	)
 
 	return &Stats{
@@ -209,7 +219,53 @@ func NewSyncStats() *Stats {
 		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
-		GaugeStatusPageCheckTs:      GaugeStatusPageCheckTs,
-		GaugeStatusPageCheckValue:   GaugeStatusPageCheckValue,
+		GaugeStatusPageCheckTs:      make(map[int64]map[string]*withTimestampCollector),
+		GaugeStatusPageCheckValue:   make(map[int64]map[string]*withTimestampCollector),
+		statusPageGaugesMutex:       sync.RWMutex{},
 	}
+}
+
+// GetOrCreateStatusPageGauges 获取或创建指定 rule_id 和 ref 的状态页面 Gauge 指标
+func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames []string) (*withTimestampCollector, *withTimestampCollector) {
+	s.statusPageGaugesMutex.Lock()
+	defer s.statusPageGaugesMutex.Unlock()
+
+	// 检查是否已存在该 rule_id 的映射
+	if s.GaugeStatusPageCheckTs[ruleId] == nil {
+		s.GaugeStatusPageCheckTs[ruleId] = make(map[string]*withTimestampCollector)
+		s.GaugeStatusPageCheckValue[ruleId] = make(map[string]*withTimestampCollector)
+	}
+
+	// 检查是否已存在该 ref 的 Gauge
+	if s.GaugeStatusPageCheckTs[ruleId][ref] == nil {
+		// 创建新的 withTimestampCollector，包含所有需要的标签
+		tsGauge := &withTimestampCollector{
+			metric: prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, subsystem, fmt.Sprintf("statuspage_check_ts_rule_%d_ref_%s", ruleId, ref)),
+				fmt.Sprintf("Status page check timestamp for rule %d ref %s", ruleId, ref),
+				labelNames,
+				nil,
+			),
+			labelNames: labelNames,
+		}
+
+		valueGauge := &withTimestampCollector{
+			metric: prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, subsystem, fmt.Sprintf("statuspage_check_value_rule_%d_ref_%s", ruleId, ref)),
+				fmt.Sprintf("Status page check value for rule %d ref %s", ruleId, ref),
+				labelNames,
+				nil,
+			),
+			labelNames: labelNames,
+		}
+
+		// 注册到 Prometheus
+		prometheus.MustRegister(tsGauge, valueGauge)
+
+		// 存储到映射中
+		s.GaugeStatusPageCheckTs[ruleId][ref] = tsGauge
+		s.GaugeStatusPageCheckValue[ruleId][ref] = valueGauge
+	}
+
+	return s.GaugeStatusPageCheckTs[ruleId][ref], s.GaugeStatusPageCheckValue[ruleId][ref]
 }

@@ -28,7 +28,6 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/prometheus/common/model"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -351,21 +350,19 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			// 存储状态页面数据
 			if len(points) > 0 {
 				for _, point := range points {
-					// 构建基础标签
-					labels := prometheus.Labels{
-						"rule_id": fmt.Sprintf("%d", arw.Rule.Id),
-						"ref":     fmt.Sprintf("%v", i),
-					}
-
-					// 添加原始标签中的每个标签作为独立的标签
+					var labelNames []string
+					var labelValues []string
 					for k, v := range point.Labels {
-						if k != "__name__" { // 跳过metric名称标签
-							labels[string(k)] = string(v)
+						if k != "__name__" {
+							labelNames = append(labelNames, string(k))
+							labelValues = append(labelValues, string(v))
 						}
 					}
 
-					arw.Processor.Stats.GaugeStatusPageCheckTs.With(labels).Set(float64(point.Timestamp))
-					arw.Processor.Stats.GaugeStatusPageCheckValue.With(labels).Set(point.Value)
+					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%v", i), labelNames)
+
+					tsCollector.SetValue(float64(point.Timestamp), labelValues)
+					valueCollector.SetValue(point.Value, labelValues)
 				}
 			}
 
