@@ -449,7 +449,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/datasource/status/update", rt.auth(), rt.admin(), rt.datasourceUpdataStatus)
 		pages.DELETE("/datasource/", rt.auth(), rt.admin(), rt.datasourceDel)
 
-		pages.GET("/roles", rt.auth(), rt.user(), rt.perm("/roles"), rt.roleGets)
+		pages.GET("/roles", rt.auth(), rt.user(), rt.roleGets)
 		pages.POST("/roles", rt.auth(), rt.user(), rt.perm("/roles/add"), rt.roleAdd)
 		pages.PUT("/roles", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.rolePut)
 		pages.DELETE("/role/:id", rt.auth(), rt.user(), rt.perm("/roles/del"), rt.roleDel)
