@@ -68,6 +68,9 @@ Enable = false
 HeaderUserNameKey = "X-User-Name"
 DefaultRoles = ["Standard"]
 
+[HTTP.TokenAuth]
+Enable = true
+
 [HTTP.RSA]
 # open RSA
 OpenRSA = false
