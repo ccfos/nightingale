@@ -846,6 +846,20 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				if updateTime < t {
 					missTargets = append(missTargets, ident)
 				}
+
+				// 存储状态页面数据
+				LabelName := make([]string, 0)
+				LabelValue := make([]string, 0)
+				target, exists := arw.Processor.TargetCache.Get(ident)
+				if exists {
+					for k, v := range target.TagsMap {
+						LabelName = append(LabelName, k)
+						LabelValue = append(LabelValue, v)
+					}
+				}
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, ident, LabelName)
+				tsCollector.SetValue(float64(now), LabelValue)
+				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
 				fmt.Sprintf("%v", arw.Rule.Id),
@@ -898,6 +912,21 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				}
 
 				offset := meta.Offset
+
+				// 存储状态页面数据
+				LabelName := make([]string, 0)
+				LabelValue := make([]string, 0)
+				target, exists := arw.Processor.TargetCache.Get(ident)
+				if exists {
+					for k, v := range target.TagsMap {
+						LabelName = append(LabelName, k)
+						LabelValue = append(LabelValue, v)
+					}
+				}
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, ident, LabelName)
+				tsCollector.SetValue(float64(now), LabelValue)
+				valueCollector.SetValue(float64(offset), LabelValue)
+
 				if math.Abs(float64(offset)) > float64(trigger.Duration) {
 					offsetIdents[ident] = offset
 				}
