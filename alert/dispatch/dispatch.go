@@ -188,13 +188,15 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			}
 
 			for _, processor := range processors {
+				var res string
+				var err error
 				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
-				eventCopy, res, err := processor.Process(e.ctx, eventCopy)
-				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
+				eventCopy, res, err = processor.Process(e.ctx, eventCopy)
 				if eventCopy == nil {
-					logger.Warningf("notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
+					logger.Warningf("after processor notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
 					break
 				}
+				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
 			}
 
 			if eventCopy == nil {
