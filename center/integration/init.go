@@ -448,7 +448,7 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.Built
 		if filteredMetrics[i].Typ != filteredMetrics[j].Typ {
 			return filteredMetrics[i].Typ < filteredMetrics[j].Typ
 		}
-		return filteredMetrics[i].Name < filteredMetrics[j].Name
+		return filteredMetrics[i].Expression < filteredMetrics[j].Expression
 	})
 
 	totalCount := len(filteredMetrics)

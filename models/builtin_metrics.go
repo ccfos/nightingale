@@ -62,7 +62,7 @@ func (bm *BuiltinMetric) Verify() error {
 
 func BuiltinMetricExists(ctx *ctx.Context, bm *BuiltinMetric) (bool, error) {
 	var count int64
-	err := DB(ctx).Model(bm).Where("lang = ? and collector = ? and typ = ? and name = ?", bm.Lang, bm.Collector, bm.Typ, bm.Name).Count(&count).Error
+	err := DB(ctx).Model(bm).Where("expression = ? and collector = ? and typ = ?", bm.Expression, bm.Collector, bm.Typ).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
