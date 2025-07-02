@@ -941,6 +941,20 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				if updateTime < t {
 					missTargets = append(missTargets, ident)
 				}
+
+				// 存储状态页面数据
+				LabelName := make([]string, 0)
+				LabelValue := make([]string, 0)
+				target, exists := arw.Processor.TargetCache.Get(ident)
+				if exists {
+					for k, v := range target.TagsMap {
+						LabelName = append(LabelName, k)
+						LabelValue = append(LabelValue, v)
+					}
+				}
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, ident, LabelName)
+				tsCollector.SetValue(float64(now), LabelValue)
+				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
 			logger.Debugf("rule_eval:%s missTargets:%v", arw.Key(), missTargets)
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
@@ -1537,6 +1551,24 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					seriesTagIndex[tagHash] = make([]uint64, 0)
 				}
 				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+
+				// 存储状态页面数据
+				ts, value, exists := series[i].Last()
+				if exists {
+					var labelNames []string
+					var labelValues []string
+					for k, v := range series[i].Metric {
+						if k != "__name__" {
+							labelNames = append(labelNames, string(k))
+							labelValues = append(labelValues, string(v))
+						}
+					}
+
+					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(rule.Id, series[i].Ref, labelNames)
+
+					tsCollector.SetValue(ts, labelValues)
+					valueCollector.SetValue(value, labelValues)
+				}
 			}
 			ref, err := GetQueryRef(query)
 			if err != nil {
