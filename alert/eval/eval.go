@@ -807,7 +807,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 
 	arw.Inhibit = rule.Inhibit
 	now := time.Now().Unix()
-	for _, trigger := range rule.Triggers {
+	for ref, trigger := range rule.Triggers {
 		switch trigger.Type {
 		case "target_miss":
 			t := now - int64(trigger.Duration)
@@ -850,7 +850,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, "0", LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
@@ -909,7 +909,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, "0", LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(offset), LabelValue)
 
@@ -960,7 +960,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, "0", LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
