@@ -525,12 +525,19 @@ func (ar *AlertRule) Verify() error {
 		return err
 	}
 
-	if len(ar.NotifyRuleIds) > 0 {
-		ar.NotifyVersion = 1
+	if ar.NotifyVersion == 0 {
+		// 如果是旧版本，则清空 NotifyRuleIds
+		ar.NotifyRuleIds = []int64{}
+	}
+
+	if ar.NotifyVersion > 0 {
+		// 如果是新版本，则清空旧的通知媒介和通知组
 		ar.NotifyChannelsJSON = []string{}
 		ar.NotifyGroupsJSON = []string{}
 		ar.NotifyChannels = ""
 		ar.NotifyGroups = ""
+		ar.Callbacks = ""
+		ar.CallbacksJSON = []string{}
 	}
 
 	return nil
