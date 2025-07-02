@@ -122,6 +122,8 @@ func MigrateTables(db *gorm.DB) error {
 		}
 	}
 	DropUniqueFiledLimit(db, &Configs{}, "ckey", "configs_ckey_key")
+	// 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
+	DropUniqueFiledLimit(db, &models.BuiltinMetric{}, "idx_collector_typ_name", "idx_collector_typ_name")
 	InsertPermPoints(db)
 	return nil
 }

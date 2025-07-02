@@ -184,6 +184,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						Content:     string(content),
 						UUID:        alert.UUID,
 						ID:          alert.UUID,
+						CreatedBy:   SYSTEM,
+						UpdatedBy:   SYSTEM,
 					}
 					BuiltinPayloadInFile.addBuiltinPayload(&builtinAlert)
 
@@ -240,6 +242,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Content:     string(content),
 					UUID:        dashboard.UUID,
 					ID:          dashboard.UUID,
+					CreatedBy:   SYSTEM,
+					UpdatedBy:   SYSTEM,
 				}
 				BuiltinPayloadInFile.addBuiltinPayload(&builtinDashboard)
 			}
@@ -271,6 +275,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						metric.UUID = time.Now().UnixMicro()
 					}
 					metric.ID = metric.UUID
+					metric.CreatedBy = SYSTEM
+					metric.UpdatedBy = SYSTEM
 
 					BuiltinPayloadInFile.BuiltinMetrics[metric.Expression] = &metric
 				}
@@ -396,14 +402,18 @@ func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.Bu
 func (b *BuiltinPayloadInFileType) BuiltinMetricGets(metricsInDB []*models.BuiltinMetric, lang, collector, typ, query, unit string, limit, offset int) ([]*models.BuiltinMetric, int, error) {
 	var filteredMetrics []*models.BuiltinMetric
 	expressionSet := set.NewStringSet()
-
 	builtinMetricsByDB := convertBuiltinMetricByDB(metricsInDB)
+	builtinMetricsMap := make(map[string]*models.BuiltinMetric)
 
 	for expression, metric := range builtinMetricsByDB {
-		b.BuiltinMetrics[expression] = metric
+		builtinMetricsMap[expression] = metric
 	}
 
-	for _, metric := range b.BuiltinMetrics {
+	for expression, metric := range b.BuiltinMetrics {
+		builtinMetricsMap[expression] = metric
+	}
+
+	for _, metric := range builtinMetricsMap {
 		if !applyFilter(metric, collector, typ, query, unit) {
 			continue
 		}
@@ -491,10 +501,23 @@ func (b *BuiltinPayloadInFileType) BuiltinMetricCollectors(lang, typ, query stri
 }
 
 func applyFilter(metric *models.BuiltinMetric, collector, typ, query, unit string) bool {
-	return (collector == "" || metric.Collector == collector) &&
-		(typ == "" || metric.Typ == typ) &&
-		(unit == "" || containsUnit(unit, metric.Unit)) &&
-		(query == "" || applyQueryFilter(metric, query))
+	if collector != "" && collector != metric.Collector {
+		return false
+	}
+
+	if typ != "" && typ != metric.Typ {
+		return false
+	}
+
+	if unit != "" && !containsUnit(unit, metric.Unit) {
+		return false
+	}
+
+	if query != "" && !applyQueryFilter(metric, query) {
+		return false
+	}
+
+	return true
 }
 
 func containsUnit(unit, metricUnit string) bool {

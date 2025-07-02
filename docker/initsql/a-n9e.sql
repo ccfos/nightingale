@@ -723,7 +723,6 @@ CREATE TABLE `builtin_metrics` (
     `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT '''updater''',
     `uuid` bigint NOT NULL DEFAULT 0 COMMENT '''uuid''',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
     INDEX `idx_uuid` (`uuid`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),

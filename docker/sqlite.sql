@@ -656,7 +656,6 @@ CREATE TABLE `builtin_metrics` (
     `uuid integer` not null default 0
 );
 
-CREATE UNIQUE INDEX idx_collector_typ_name ON builtin_metrics (lang, collector, typ, name);
 CREATE INDEX idx_collector ON builtin_metrics (collector);
 CREATE INDEX idx_typ ON builtin_metrics (typ);
 CREATE INDEX idx_builtinmetric_name ON builtin_metrics (name);

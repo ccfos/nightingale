@@ -13,7 +13,6 @@ CREATE TABLE `builtin_metrics` (
     `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
     `updated_by` varchar(191) NOT NULL DEFAULT '' COMMENT 'updater',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `idx_collector_typ_name` (`lang`,`collector`, `typ`, `name`),
     INDEX `idx_collector` (`collector`),
     INDEX `idx_typ` (`typ`),
     INDEX `idx_name` (`name`),
@@ -280,4 +279,8 @@ ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation
 /* v8.0.0-beta.12 2025-06-03 */
 ALTER TABLE `alert_his_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
 ALTER TABLE `alert_cur_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
+
+/* v8.0.0-beta.13 */
+-- 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
+DROP INDEX IF EXISTS `idx_collector_typ_name` ON `builtin_metrics`;
 
