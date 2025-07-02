@@ -1,11 +1,15 @@
 package astats
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -14,14 +18,41 @@ const (
 )
 
 type withTimestampCollector struct {
-	metric      *prometheus.Desc
-	ts          time.Time
-	value       float64
-	labelNames  []string
-	labelValues []string
+	metric       *prometheus.Desc
+	ts           time.Time
+	value        float64
+	labelNames   []string
+	labelValues  []string
+	quota        int
+	labelHashSet map[string]struct{}
+	mu           sync.RWMutex
+}
+
+// CheckQuota 检查并添加标签集，如果超过配额则返回 false
+func (c *withTimestampCollector) CheckQuota(labelValues []string) bool {
+	labelHash := generateLabelHash(labelValues)
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, exists := c.labelHashSet[labelHash]; exists {
+		return true
+	}
+
+	if len(c.labelHashSet) >= c.quota {
+		logger.Warningf("status page check quota exceeded, current: %d, quota: %d, label_values: %v", len(c.labelHashSet), c.quota, labelValues)
+		return false
+	}
+
+	c.labelHashSet[labelHash] = struct{}{}
+	return true
 }
 
 func (c *withTimestampCollector) Collect(ch chan<- prometheus.Metric) {
+	if len(c.labelValues) != len(c.labelNames) {
+		return
+	}
+
 	metric := prometheus.MustNewConstMetric(c.metric, prometheus.GaugeValue, c.value, c.labelValues...)
 	ch <- prometheus.NewMetricWithTimestamp(c.ts, metric)
 }
@@ -31,6 +62,10 @@ func (c *withTimestampCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *withTimestampCollector) SetValue(value float64, labelValues []string) {
+	if !c.CheckQuota(labelValues) {
+		return
+	}
+
 	c.ts = time.Now()
 	c.value = value
 	c.labelValues = labelValues
@@ -225,8 +260,15 @@ func NewSyncStats() *Stats {
 	}
 }
 
+// generateLabelHash 生成标签值的哈希
+func generateLabelHash(labelValues []string) string {
+	labelStr := strings.Join(labelValues, ",")
+	hash := md5.Sum([]byte(labelStr))
+	return hex.EncodeToString(hash[:])
+}
+
 // GetOrCreateStatusPageGauges 获取或创建指定 rule_id 和 ref 的状态页面 Gauge 指标
-func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames []string) (*withTimestampCollector, *withTimestampCollector) {
+func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames []string, quota int) (*withTimestampCollector, *withTimestampCollector) {
 	s.statusPageGaugesMutex.Lock()
 	defer s.statusPageGaugesMutex.Unlock()
 
@@ -246,7 +288,10 @@ func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames
 				labelNames,
 				nil,
 			),
-			labelNames: labelNames,
+			labelNames:   labelNames,
+			quota:        quota,
+			labelHashSet: make(map[string]struct{}),
+			mu:           sync.RWMutex{},
 		}
 
 		valueGauge := &withTimestampCollector{
@@ -256,7 +301,10 @@ func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames
 				labelNames,
 				nil,
 			),
-			labelNames: labelNames,
+			labelNames:   labelNames,
+			quota:        quota,
+			labelHashSet: make(map[string]struct{}),
+			mu:           sync.RWMutex{},
 		}
 
 		// 注册到 Prometheus

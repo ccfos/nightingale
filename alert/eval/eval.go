@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
@@ -52,6 +53,8 @@ type AlertRuleWorker struct {
 	LastSeriesStore map[uint64]models.DataResp
 
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
+
+	StatusPageQuota int
 }
 
 const (
@@ -74,7 +77,7 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context, aconf aconf.Alert) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		DatasourceId: datasourceId,
 		Quit:         make(chan struct{}),
@@ -112,6 +115,9 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
 
 	Processor.PromEvalInterval = getPromEvalInterval(Processor.ScheduleEntry.Schedule)
+
+	arw.StatusPageQuota = aconf.Alerting.StatusPageQuota
+
 	return arw
 }
 
@@ -359,7 +365,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 						}
 					}
 
-					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%v", i), labelNames)
+					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%v", i), labelNames, arw.StatusPageQuota)
 
 					tsCollector.SetValue(float64(point.Timestamp), labelValues)
 					valueCollector.SetValue(point.Value, labelValues)
@@ -850,7 +856,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName, arw.StatusPageQuota)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
@@ -909,7 +915,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName, arw.StatusPageQuota)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(offset), LabelValue)
 
@@ -960,7 +966,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				// 存储状态页面数据
 				LabelName := []string{"ident"}
 				LabelValue := []string{ident}
-				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName)
+				tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(arw.Rule.Id, fmt.Sprintf("%d", ref), LabelName, arw.StatusPageQuota)
 				tsCollector.SetValue(float64(now), LabelValue)
 				valueCollector.SetValue(float64(now-updateTime), LabelValue)
 			}
@@ -1572,7 +1578,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 						}
 					}
 
-					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(rule.Id, series[i].Ref, labelNames)
+					tsCollector, valueCollector := arw.Processor.Stats.GetOrCreateStatusPageGauges(rule.Id, series[i].Ref, labelNames, arw.StatusPageQuota)
 
 					tsCollector.SetValue(ts, labelValues)
 					valueCollector.SetValue(value, labelValues)

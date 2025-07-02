@@ -33,6 +33,7 @@ type Alerting struct {
 	TemplatesDir      string
 	NotifyConcurrency int
 	WebhookBatchSend  bool
+	StatusPageQuota   int
 }
 
 type CallPlugin struct {
@@ -62,5 +63,9 @@ func (a *Alert) PreCheck(configDir string) {
 
 	if a.EngineDelay == 0 {
 		a.EngineDelay = 30
+	}
+
+	if a.Alerting.StatusPageQuota == 0 {
+		a.Alerting.StatusPageQuota = 100000
 	}
 }
