@@ -31,7 +31,9 @@
 
 Nightingale is an open-source monitoring project that focuses on alerting. Similar to Grafana, Nightingale also connects with various existing data sources. However, while Grafana emphasizes visualization, Nightingale places greater emphasis on the alerting engine, as well as the processing and distribution of alarms.
 
-The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODC).
+> The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODC).
+
+![](https://n9e.github.io/img/global/arch-bg.png)
 
 ## 💡 How Nightingale Works
 
@@ -104,7 +106,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 ## 🤝 Community Co-Building
 
 - ❇️ Please read the [Nightingale Open Source Project and Community Governance Draft](./doc/community-governance.md). We sincerely welcome every user, developer, company, and organization to use Nightingale, actively report bugs, submit feature requests, share best practices, and help build a professional and active open-source community.
--  ❤️ Nightingale Contributors
+- ❤️ Nightingale Contributors
 <a href="https://github.com/ccfos/nightingale/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ccfos/nightingale" />
 </a>
