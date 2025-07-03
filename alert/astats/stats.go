@@ -1,75 +1,13 @@
 package astats
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"fmt"
-	"strings"
-	"sync"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/toolkits/pkg/logger"
 )
 
 const (
 	namespace = "n9e"
 	subsystem = "alert"
 )
-
-type withTimestampCollector struct {
-	metric       *prometheus.Desc
-	ts           time.Time
-	value        float64
-	labelNames   []string
-	labelValues  []string
-	quota        int
-	labelHashSet map[string]struct{}
-	mu           sync.RWMutex
-}
-
-// CheckQuota 检查并添加标签集，如果超过配额则返回 false
-func (c *withTimestampCollector) CheckQuota(labelValues []string) bool {
-	labelHash := generateLabelHash(labelValues)
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if _, exists := c.labelHashSet[labelHash]; exists {
-		return true
-	}
-
-	if len(c.labelHashSet) >= c.quota {
-		logger.Warningf("status page check quota exceeded, current: %d, quota: %d, label_values: %v", len(c.labelHashSet), c.quota, labelValues)
-		return false
-	}
-
-	c.labelHashSet[labelHash] = struct{}{}
-	return true
-}
-
-func (c *withTimestampCollector) Collect(ch chan<- prometheus.Metric) {
-	if len(c.labelValues) != len(c.labelNames) {
-		return
-	}
-
-	metric := prometheus.MustNewConstMetric(c.metric, prometheus.GaugeValue, c.value, c.labelValues...)
-	ch <- prometheus.NewMetricWithTimestamp(c.ts, metric)
-}
-
-func (c *withTimestampCollector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.metric
-}
-
-func (c *withTimestampCollector) SetValue(value float64, labelValues []string) {
-	if !c.CheckQuota(labelValues) {
-		return
-	}
-
-	c.ts = time.Now()
-	c.value = value
-	c.labelValues = labelValues
-}
 
 type Stats struct {
 	AlertNotifyTotal            *prometheus.CounterVec
@@ -89,9 +27,6 @@ type Stats struct {
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
 	GaugeRuleEvalDuration       *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
-	GaugeStatusPageCheckTs      map[int64]map[string]*withTimestampCollector
-	GaugeStatusPageCheckValue   map[int64]map[string]*withTimestampCollector
-	statusPageGaugesMutex       sync.RWMutex
 }
 
 func NewSyncStats() *Stats {
@@ -254,66 +189,5 @@ func NewSyncStats() *Stats {
 		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
-		GaugeStatusPageCheckTs:      make(map[int64]map[string]*withTimestampCollector),
-		GaugeStatusPageCheckValue:   make(map[int64]map[string]*withTimestampCollector),
-		statusPageGaugesMutex:       sync.RWMutex{},
 	}
-}
-
-// generateLabelHash 生成标签值的哈希
-func generateLabelHash(labelValues []string) string {
-	labelStr := strings.Join(labelValues, ",")
-	hash := md5.Sum([]byte(labelStr))
-	return hex.EncodeToString(hash[:])
-}
-
-// GetOrCreateStatusPageGauges 获取或创建指定 rule_id 和 ref 的状态页面 Gauge 指标
-func (s *Stats) GetOrCreateStatusPageGauges(ruleId int64, ref string, labelNames []string, quota int) (*withTimestampCollector, *withTimestampCollector) {
-	s.statusPageGaugesMutex.Lock()
-	defer s.statusPageGaugesMutex.Unlock()
-
-	// 检查是否已存在该 rule_id 的映射
-	if s.GaugeStatusPageCheckTs[ruleId] == nil {
-		s.GaugeStatusPageCheckTs[ruleId] = make(map[string]*withTimestampCollector)
-		s.GaugeStatusPageCheckValue[ruleId] = make(map[string]*withTimestampCollector)
-	}
-
-	// 检查是否已存在该 ref 的 Gauge
-	if s.GaugeStatusPageCheckTs[ruleId][ref] == nil {
-		// 创建新的 withTimestampCollector，包含所有需要的标签
-		tsGauge := &withTimestampCollector{
-			metric: prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, subsystem, fmt.Sprintf("statuspage_check_ts_rule_%d_ref_%s", ruleId, ref)),
-				fmt.Sprintf("Status page check timestamp for rule %d ref %s", ruleId, ref),
-				labelNames,
-				nil,
-			),
-			labelNames:   labelNames,
-			quota:        quota,
-			labelHashSet: make(map[string]struct{}),
-			mu:           sync.RWMutex{},
-		}
-
-		valueGauge := &withTimestampCollector{
-			metric: prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, subsystem, fmt.Sprintf("statuspage_check_value_rule_%d_ref_%s", ruleId, ref)),
-				fmt.Sprintf("Status page check value for rule %d ref %s", ruleId, ref),
-				labelNames,
-				nil,
-			),
-			labelNames:   labelNames,
-			quota:        quota,
-			labelHashSet: make(map[string]struct{}),
-			mu:           sync.RWMutex{},
-		}
-
-		// 注册到 Prometheus
-		prometheus.MustRegister(tsGauge, valueGauge)
-
-		// 存储到映射中
-		s.GaugeStatusPageCheckTs[ruleId][ref] = tsGauge
-		s.GaugeStatusPageCheckValue[ruleId][ref] = valueGauge
-	}
-
-	return s.GaugeStatusPageCheckTs[ruleId][ref], s.GaugeStatusPageCheckValue[ruleId][ref]
 }
