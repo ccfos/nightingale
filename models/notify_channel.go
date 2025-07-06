@@ -21,10 +21,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode/utf8"
 
+	"github.com/ccfos/nightingale/v6/pkg/cmdx"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
@@ -33,7 +33,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/sys"
 	"gopkg.in/gomail.v2"
 )
 
@@ -196,10 +195,8 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
 
-	err := startCmd(cmd)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to start script: %v", err)
-	}
+	err, isTimeout := cmdx.RunTimeout(cmd, time.Duration(config.Timeout)*time.Millisecond)
+	logger.Infof("event_script_notify_result: exec %s output: %s isTimeout: %v err: %v", fpath, buf.String(), isTimeout, err)
 
 	res := buf.String()
 
@@ -218,8 +215,6 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 		res = res[:validLen] + "..."
 	}
 
-	err, isTimeout := sys.WrapTimeout(cmd, time.Duration(config.Timeout)*time.Second)
-	logger.Infof("event_script_notify_result: exec %s output: %s isTimeout: %v err: %v", fpath, buf.String(), isTimeout, err)
 	if isTimeout {
 		if err == nil {
 			return cmd.String(), res, errors.New("timeout and killed process")
@@ -255,11 +250,6 @@ func getStdinBytes(events []*AlertCurEvent, tpl map[string]interface{}, params m
 	}
 
 	return jsonBytes
-}
-
-func startCmd(c *exec.Cmd) error {
-	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	return c.Start()
 }
 
 func NotifyChannelStatistics(ctx *ctx.Context) (*Statistics, error) {
