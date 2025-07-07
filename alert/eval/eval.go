@@ -2,8 +2,6 @@ package eval
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -63,7 +61,7 @@ type AlertRuleWorker struct {
 
 	// StatusDataTracker tracks stored status data entries with their timestamps
 	// Key: SHA256 hex string, Value: timestamp for cleanup purposes
-	StatusDataTracker map[string]int64
+	StatusDataTracker map[uint64]int64
 	StatusDataMutex   sync.RWMutex
 }
 
@@ -101,7 +99,7 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 			return nil, nil
 		},
 		LastSeriesStore:   make(map[uint64]models.DataResp),
-		StatusDataTracker: make(map[string]int64),
+		StatusDataTracker: make(map[uint64]int64),
 	}
 
 	interval := rule.PromEvalInterval
@@ -1784,13 +1782,11 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	}
 
 	// 生成唯一的键用于跟踪
-	var keyParts []string
+	metric := make(model.Metric)
 	for _, label := range labels {
-		keyParts = append(keyParts, fmt.Sprintf("%s=%s", label[0], label[1]))
+		metric[model.LabelName(label[0])] = model.LabelValue(label[1])
 	}
-	entryKey := strings.Join(keyParts, "|")
-	entryKeyHash := sha256.Sum256([]byte(entryKey))
-	entryKeyHashStr := hex.EncodeToString(entryKeyHash[:])
+	entryKeyHash := hash.GetTagHash(metric)
 
 	arw.StatusDataMutex.Lock()
 	defer arw.StatusDataMutex.Unlock()
@@ -1804,8 +1800,8 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	// }
 
 	// 检查总配额限制
-	if _, exists := arw.StatusDataTracker[entryKeyHashStr]; !exists && len(arw.StatusDataTracker) >= arw.StatusPageTotalQuota {
-		logger.Warningf("status data tracker is full, entryKey: %s", entryKeyHashStr)
+	if _, exists := arw.StatusDataTracker[entryKeyHash]; !exists && len(arw.StatusDataTracker) >= arw.StatusPageTotalQuota {
+		logger.Warningf("status data tracker is full, entryKey: %d", entryKeyHash)
 		return
 	}
 
@@ -1838,6 +1834,6 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	}
 
 	// 成功写入后，将条目添加到跟踪器
-	arw.StatusDataTracker[entryKeyHashStr] = time.Now().Unix()
-	logger.Debugf("Stored status data entry: %s, total entries: %d", entryKeyHashStr, len(arw.StatusDataTracker))
+	arw.StatusDataTracker[entryKeyHash] = time.Now().Unix()
+	logger.Debugf("Stored status data entry: %d, total entries: %d", entryKeyHash, len(arw.StatusDataTracker))
 }
