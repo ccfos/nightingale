@@ -1767,7 +1767,16 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 }
 
 func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64, value float64) {
-	if GlobalStatusDataTracker == nil {
+	// 生成唯一的键用于跟踪
+	metric := make(model.Metric)
+	for _, label := range labels {
+		metric[model.LabelName(label[0])] = model.LabelValue(label[1])
+	}
+	entryKeyHash := hash.GetTagHash(metric)
+
+	// 将条目添加到跟踪器
+	if success := GlobalStatusDataTracker.Put(entryKeyHash); !success {
+		logger.Warningf("Failed to store status data entry in prometheus: %d (reaching total quota limit)", entryKeyHash)
 		return
 	}
 
@@ -1780,19 +1789,6 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	writerClient := arw.PromClients.GetWriterCli(DefaultPromDatasourceId)
 	if writerClient.Client == nil {
 		logger.Errorf("error store status page data, prometheus client not found for datasource id: %d", DefaultPromDatasourceId)
-		return
-	}
-
-	// 生成唯一的键用于跟踪
-	metric := make(model.Metric)
-	for _, label := range labels {
-		metric[model.LabelName(label[0])] = model.LabelValue(label[1])
-	}
-	entryKeyHash := hash.GetTagHash(metric)
-
-	// 成功写入后，将条目添加到跟踪器 (LRU cache automatically handles capacity and expiration)
-	if success := GlobalStatusDataTracker.Put(entryKeyHash); !success {
-		logger.Warningf("Failed to store status data entry in prometheus: %d (reaching total quota limit)", entryKeyHash)
 		return
 	}
 
