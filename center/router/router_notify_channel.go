@@ -33,6 +33,11 @@ func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 		lst[i].CreateAt = time.Now().Unix()
 		lst[i].UpdateBy = me.Username
 		lst[i].UpdateAt = time.Now().Unix()
+		if lst[i].EnableBool {
+			lst[i].Enable = 1
+		} else {
+			lst[i].Enable = 0
+		}
 	}
 
 	lstWithSameName, err := models.NotifyChannelsGet(rt.Ctx, "name IN ?", names)
