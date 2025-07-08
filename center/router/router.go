@@ -406,6 +406,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.POST("/alert-status", rt.QueryAlertStatus)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)

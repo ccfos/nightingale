@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/dscache"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
-	"github.com/ccfos/nightingale/v6/prom"
+
+	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -20,15 +21,20 @@ type AlertStatusQuery struct {
 	Labels    string `json:"labels,omitempty"` // 可选的标签过滤
 }
 
-func QueryAlertStatus(ctx *ctx.Context, promClients *prom.PromClientMap, query AlertStatusQuery) (interface{}, error) {
+func (rt *Router) QueryAlertStatus(c *gin.Context) {
+	var query AlertStatusQuery
+	ginx.BindJSON(c, &query)
+
 	DefaultPromDatasourceId := atomic.LoadInt64(&dscache.PromDefaultDatasourceId)
 	if DefaultPromDatasourceId == 0 {
-		return nil, fmt.Errorf("datasource id is 0")
+		ginx.NewRender(c).Message("datasource id is 0")
+		return
 	}
 
-	readerClient := promClients.GetCli(DefaultPromDatasourceId)
+	readerClient := rt.PromClients.GetCli(DefaultPromDatasourceId)
 	if readerClient == nil {
-		return nil, fmt.Errorf("prometheus client not found for datasource id: %d", DefaultPromDatasourceId)
+		ginx.NewRender(c).Message(fmt.Sprintf("prometheus client not found for datasource id: %d", DefaultPromDatasourceId))
+		return
 	}
 
 	// 构建 PromQL 查询语句
@@ -50,11 +56,12 @@ func QueryAlertStatus(ctx *ctx.Context, promClients *prom.PromClientMap, query A
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to query prometheus: %v with query: %v", err, promql)
+		ginx.NewRender(c).Message(fmt.Sprintf("failed to query prometheus: %v with query: %v", err, promql))
+		return
 	}
 
 	if len(warnings) > 0 {
 		logger.Warningf("Query warnings: %v", warnings)
 	}
-	return value, nil
+	ginx.NewRender(c).Data(value, nil)
 }
