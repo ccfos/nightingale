@@ -19,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -34,6 +35,12 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+)
+
+// Global variables for status data tracking
+var (
+	// GlobalStatusDataTracker tracks stored status data entries using LRU cache
+	GlobalStatusDataTracker *memsto.AlertStatusLRUCache
 )
 
 type AlertRuleWorker struct {
@@ -57,12 +64,6 @@ type AlertRuleWorker struct {
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
 
 	StatusPageSingleQuota int
-	StatusPageTotalQuota  int
-
-	// StatusDataTracker tracks stored status data entries with their timestamps
-	// Key: SHA256 hex string, Value: timestamp for cleanup purposes
-	StatusDataTracker map[uint64]int64
-	StatusDataMutex   sync.RWMutex
 }
 
 const (
@@ -98,8 +99,8 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
-		LastSeriesStore:   make(map[uint64]models.DataResp),
-		StatusDataTracker: make(map[uint64]int64),
+		LastSeriesStore:       make(map[uint64]models.DataResp),
+		StatusPageSingleQuota: aconf.Alerting.StatusPageSingleQuota,
 	}
 
 	interval := rule.PromEvalInterval
@@ -125,8 +126,10 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 
 	Processor.PromEvalInterval = getPromEvalInterval(Processor.ScheduleEntry.Schedule)
 
-	arw.StatusPageSingleQuota = aconf.Alerting.StatusPageSingleQuota
-	arw.StatusPageTotalQuota = aconf.Alerting.StatusPageTotalQuota
+	// Initialize GlobalStatusDataTracker if not already initialized
+	if GlobalStatusDataTracker == nil {
+		GlobalStatusDataTracker = memsto.NewAlertStatusLRUCache(aconf.Alerting.StatusPageTotalQuota)
+	}
 
 	return arw
 }
@@ -1764,8 +1767,7 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 }
 
 func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64, value float64) {
-	// 检查总配额限制
-	if arw.StatusPageTotalQuota <= 0 {
+	if GlobalStatusDataTracker == nil {
 		return
 	}
 
@@ -1788,20 +1790,9 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	}
 	entryKeyHash := hash.GetTagHash(metric)
 
-	arw.StatusDataMutex.Lock()
-	defer arw.StatusDataMutex.Unlock()
-
-	// 清理过期数据
-	// cutoffTime := timestamp - 300
-	// for key, ts := range arw.StatusDataTracker {
-	// 	if ts < cutoffTime {
-	// 		delete(arw.StatusDataTracker, key)
-	// 	}
-	// }
-
-	// 检查总配额限制
-	if _, exists := arw.StatusDataTracker[entryKeyHash]; !exists && len(arw.StatusDataTracker) >= arw.StatusPageTotalQuota {
-		logger.Warningf("status data tracker is full, entryKey: %d", entryKeyHash)
+	// 成功写入后，将条目添加到跟踪器 (LRU cache automatically handles capacity and expiration)
+	if success := GlobalStatusDataTracker.Put(entryKeyHash); !success {
+		logger.Warningf("Failed to store status data entry in prometheus: %d (reaching total quota limit)", entryKeyHash)
 		return
 	}
 
@@ -1832,8 +1823,4 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 		logger.Errorf("error writing status page data to prometheus: %v", err)
 		return
 	}
-
-	// 成功写入后，将条目添加到跟踪器
-	arw.StatusDataTracker[entryKeyHash] = time.Now().Unix()
-	logger.Debugf("Stored status data entry: %d, total entries: %d", entryKeyHash, len(arw.StatusDataTracker))
 }

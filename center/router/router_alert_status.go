@@ -1,31 +1,34 @@
-package memsto
+package router
 
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/toolkits/pkg/logger"
 )
 
-type Query struct {
+type AlertStatusQuery struct {
 	RuleId    int64  `json:"rule_id"`
 	StartTime int64  `json:"start_time"`
 	EndTime   int64  `json:"end_time"`
 	Labels    string `json:"labels,omitempty"` // 可选的标签过滤
 }
 
-func QueryAlertStatus(ctx *ctx.Context, promClients *prom.PromClientMap, datasourceId int64, query Query) (interface{}, error) {
-	if datasourceId == 0 {
+func QueryAlertStatus(ctx *ctx.Context, promClients *prom.PromClientMap, query AlertStatusQuery) (interface{}, error) {
+	DefaultPromDatasourceId := atomic.LoadInt64(&dscache.PromDefaultDatasourceId)
+	if DefaultPromDatasourceId == 0 {
 		return nil, fmt.Errorf("datasource id is 0")
 	}
 
-	readerClient := promClients.GetCli(datasourceId)
+	readerClient := promClients.GetCli(DefaultPromDatasourceId)
 	if readerClient == nil {
-		return nil, fmt.Errorf("prometheus client not found for datasource id: %d", datasourceId)
+		return nil, fmt.Errorf("prometheus client not found for datasource id: %d", DefaultPromDatasourceId)
 	}
 
 	// 构建 PromQL 查询语句
