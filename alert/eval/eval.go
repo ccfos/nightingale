@@ -378,6 +378,8 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 					for k, v := range point.Labels {
 						if k != "__name__" {
 							labels = append(labels, [2]string{string(k), string(v)})
+						} else {
+							labels = append(labels, [2]string{"metric_name", string(v)})
 						}
 					}
 
@@ -1578,6 +1580,8 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					for k, v := range series[i].Metric {
 						if k != "__name__" {
 							labels = append(labels, [2]string{string(k), string(v)})
+						} else {
+							labels = append(labels, [2]string{"metric_name", string(v)})
 						}
 					}
 
@@ -1776,7 +1780,7 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 
 	// 将条目添加到跟踪器
 	if success := GlobalStatusDataTracker.Put(entryKeyHash); !success {
-		logger.Warningf("Failed to store status data entry in prometheus: %d (reaching total quota limit)", entryKeyHash)
+		logger.Warningf("Failed to store status data entry in prometheus with labels: %v (reaching labels total quota limit)", labels)
 		return
 	}
 
@@ -1816,7 +1820,7 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 	// 写入数据到prometheus
 	err := writerClient.Write([]prompb.TimeSeries{timeSeries})
 	if err != nil {
-		logger.Errorf("error writing status page data to prometheus: %v", err)
+		logger.Errorf("error writing status page data to prometheus: %v with labels: %v", err, labels)
 		return
 	}
 }

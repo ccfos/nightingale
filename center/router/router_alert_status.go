@@ -50,8 +50,7 @@ func QueryAlertStatus(ctx *ctx.Context, promClients *prom.PromClientMap, query A
 	})
 
 	if err != nil {
-		logger.Errorf("Failed to query alert status: %v", err)
-		return nil, fmt.Errorf("failed to query prometheus: %v", err)
+		return nil, fmt.Errorf("failed to query prometheus: %v with query: %v", err, promql)
 	}
 
 	if len(warnings) > 0 {
