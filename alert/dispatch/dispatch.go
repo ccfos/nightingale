@@ -163,7 +163,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				continue
 			}
 
-			if !notifyRule.Enable {
+			if notifyRule.Enable == 0 {
 				continue
 			}
 

@@ -12,7 +12,8 @@ type NotifyRule struct {
 	ID           int64   `json:"id" gorm:"primarykey"`
 	Name         string  `json:"name"`                                  // 名称
 	Description  string  `json:"description"`                           // 备注
-	Enable       bool    `json:"enable"`                                // 启用状态
+	Enable       int     `json:"-" gorm:"enable"`                       // 启用状态
+	EnableBool   bool    `json:"enable" gorm:"-"`                       // 启用状态(布尔值)
 	UserGroupIds []int64 `json:"user_group_ids" gorm:"serializer:json"` // 告警组ID
 
 	PipelineConfigs []PipelineConfig `json:"pipeline_configs" gorm:"serializer:json"`
@@ -91,7 +92,7 @@ func NotifyRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 		return s, err
 	}
 
-	session := DB(ctx).Model(&NotifyRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("enable = ?", true)
+	session := DB(ctx).Model(&NotifyRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("enable = ?", 1)
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -109,7 +110,7 @@ func NotifyRuleGetsAll(ctx *ctx.Context) ([]*NotifyRule, error) {
 	}
 
 	var rules []*NotifyRule
-	err := DB(ctx).Where("enable = ?", true).Find(&rules).Error
+	err := DB(ctx).Where("enable = ?", 1).Find(&rules).Error
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +187,11 @@ func (r *NotifyRule) Update(ctx *ctx.Context, ref NotifyRule) error {
 	ref.CreateBy = r.CreateBy
 	ref.UpdateAt = time.Now().Unix()
 
+	if ref.EnableBool {
+		ref.Enable = 1
+	} else {
+		ref.Enable = 0
+	}
 	err := ref.Verify()
 	if err != nil {
 		return err
@@ -221,6 +227,7 @@ func NotifyRulesGet(ctx *ctx.Context, where string, args ...interface{}) ([]*Not
 		return nil, err
 	}
 	for _, r := range lst {
+		r.EnableBool = r.Enable == 1
 		r.DB2FE()
 	}
 	return lst, nil

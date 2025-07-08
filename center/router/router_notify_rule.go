@@ -177,7 +177,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	}
 
 	notifyChannel := notifyChannels[0]
-	if !notifyChannel.Enable {
+	if notifyChannel.Enable == 0 {
 		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
 	tplContent := make(map[string]interface{})
