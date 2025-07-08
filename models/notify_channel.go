@@ -816,6 +816,13 @@ func (ncc *NotifyChannelConfig) SendEmailNow(events []*AlertCurEvent, tpl map[st
 }
 
 func (ncc *NotifyChannelConfig) Verify() error {
+
+	if ncc.EnableBool {
+		ncc.Enable = 1
+	} else {
+		ncc.Enable = 0
+	}
+
 	if ncc.Name == "" {
 		return errors.New("channel name cannot be empty")
 	}
@@ -942,12 +949,6 @@ func (ncc *NotifyChannelConfig) Update(ctx *ctx.Context, ref NotifyChannelConfig
 	ref.CreateAt = ncc.CreateAt
 	ref.CreateBy = ncc.CreateBy
 	ref.UpdateAt = time.Now().Unix()
-
-	if ref.EnableBool {
-		ref.Enable = 1
-	} else {
-		ref.Enable = 0
-	}
 
 	err := ref.Verify()
 	if err != nil {

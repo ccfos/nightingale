@@ -122,7 +122,11 @@ func (r *NotifyRule) Verify() error {
 	if r.Name == "" {
 		return errors.New("name cannot be empty")
 	}
-
+	if r.EnableBool {
+		r.Enable = 1
+	} else {
+		r.Enable = 0
+	}
 	// if len(r.UserGroupIds) == 0 {
 	// 	return errors.New("user group ids cannot be empty")
 	// }
@@ -187,11 +191,6 @@ func (r *NotifyRule) Update(ctx *ctx.Context, ref NotifyRule) error {
 	ref.CreateBy = r.CreateBy
 	ref.UpdateAt = time.Now().Unix()
 
-	if ref.EnableBool {
-		ref.Enable = 1
-	} else {
-		ref.Enable = 0
-	}
 	err := ref.Verify()
 	if err != nil {
 		return err
@@ -206,6 +205,7 @@ func (r *NotifyRule) DB2FE() {
 	if r.NotifyConfigs == nil {
 		r.NotifyConfigs = make([]NotifyConfig, 0)
 	}
+	r.EnableBool = r.Enable == 1
 }
 
 func NotifyRuleGet(ctx *ctx.Context, where string, args ...interface{}) (*NotifyRule, error) {
@@ -227,7 +227,6 @@ func NotifyRulesGet(ctx *ctx.Context, where string, args ...interface{}) ([]*Not
 		return nil, err
 	}
 	for _, r := range lst {
-		r.EnableBool = r.Enable == 1
 		r.DB2FE()
 	}
 	return lst, nil
