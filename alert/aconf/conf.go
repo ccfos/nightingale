@@ -67,7 +67,7 @@ func (a *Alert) PreCheck(configDir string) {
 	}
 
 	if a.Alerting.StatusPageSingleQuota == 0 {
-		a.Alerting.StatusPageSingleQuota = 100000
+		a.Alerting.StatusPageSingleQuota = 10
 	}
 
 	if a.Alerting.StatusPageTotalQuota == 0 {
