@@ -20,8 +20,8 @@ import (
 
 // Doris struct to hold connection details and the connection object
 type Doris struct {
-	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`         // be node
-	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe node
+	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`         // fe mysql endpoint
+	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe http endpoint
 	User            string `json:"doris.user" mapstructure:"doris.user"`         //
 	Password        string `json:"doris.password" mapstructure:"doris.password"` //
 	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`
