@@ -38,7 +38,7 @@ func (rt *Router) QueryAlertStatus(c *gin.Context) {
 	}
 
 	// 构建 PromQL 查询语句
-	metricName := fmt.Sprintf("n9e_alert_rule_%d_status", query.RuleId)
+	metricName := fmt.Sprintf("n9e_alert_rule_%d_status_value", query.RuleId)
 	promql := metricName
 
 	// 如果有标签过滤，添加到查询中

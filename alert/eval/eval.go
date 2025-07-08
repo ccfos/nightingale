@@ -1796,29 +1796,58 @@ func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64,
 		return
 	}
 
-	// 构造 prompb.TimeSeries
-	promLabels := make([]prompb.Label, 0, len(labels)+1)
-	promLabels = append(promLabels, prompb.Label{
-		Name:  "__name__",
-		Value: fmt.Sprintf("n9e_alert_rule_%d_status", arw.Rule.Id),
-	})
+	// 使用当前时间作为写入 Prometheus 的时间戳
+	now := time.Now().Unix() * 1000
+
+	// 构造基础标签
+	baseLabels := make([]prompb.Label, 0, len(labels)+1)
 	for _, label := range labels {
-		promLabels = append(promLabels, prompb.Label{
+		baseLabels = append(baseLabels, prompb.Label{
 			Name:  label[0],
 			Value: label[1],
 		})
 	}
-	sample := prompb.Sample{
-		Timestamp: timestamp * 1000,
+
+	var timeSeries []prompb.TimeSeries
+
+	// 创建存储原始时间戳的时间序列
+	timestampLabels := make([]prompb.Label, 0, len(baseLabels)+1)
+	timestampLabels = append(timestampLabels, prompb.Label{
+		Name:  "__name__",
+		Value: fmt.Sprintf("n9e_alert_rule_%d_status_timestamp", arw.Rule.Id),
+	})
+	timestampLabels = append(timestampLabels, baseLabels...)
+
+	timestampSample := prompb.Sample{
+		Timestamp: now,
+		Value:     float64(timestamp),
+	}
+	timestampTimeSeries := prompb.TimeSeries{
+		Labels:  timestampLabels,
+		Samples: []prompb.Sample{timestampSample},
+	}
+	timeSeries = append(timeSeries, timestampTimeSeries)
+
+	// 创建存储原始值的时间序列
+	valueLabels := make([]prompb.Label, 0, len(baseLabels)+1)
+	valueLabels = append(valueLabels, prompb.Label{
+		Name:  "__name__",
+		Value: fmt.Sprintf("n9e_alert_rule_%d_status_value", arw.Rule.Id),
+	})
+	valueLabels = append(valueLabels, baseLabels...)
+
+	valueSample := prompb.Sample{
+		Timestamp: now,
 		Value:     value,
 	}
-	timeSeries := prompb.TimeSeries{
-		Labels:  promLabels,
-		Samples: []prompb.Sample{sample},
+	valueTimeSeries := prompb.TimeSeries{
+		Labels:  valueLabels,
+		Samples: []prompb.Sample{valueSample},
 	}
+	timeSeries = append(timeSeries, valueTimeSeries)
 
 	// 写入数据到prometheus
-	err := writerClient.Write([]prompb.TimeSeries{timeSeries})
+	err := writerClient.Write(timeSeries)
 	if err != nil {
 		logger.Errorf("error writing status page data to prometheus: %v with labels: %v", err, labels)
 		return
