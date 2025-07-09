@@ -39,11 +39,6 @@ func (rt *Router) notifyRulesAdd(c *gin.Context) {
 		nr.CreateAt = now
 		nr.UpdateBy = me.Username
 		nr.UpdateAt = now
-		if nr.EnableBool {
-			nr.Enable = 1
-		} else {
-			nr.Enable = 0
-		}
 		err := models.Insert(rt.Ctx, nr)
 		ginx.Dangerous(err)
 	}
