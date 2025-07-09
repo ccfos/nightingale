@@ -8,6 +8,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dskit/types"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/mitchellh/mapstructure"
@@ -27,11 +28,16 @@ type Doris struct {
 }
 
 type QueryParam struct {
-	Ref      string          `json:"ref" mapstructure:"ref"`
-	Database string          `json:"database" mapstructure:"database"`
-	Table    string          `json:"table" mapstructure:"table"`
-	SQL      string          `json:"sql" mapstructure:"sql"`
-	Keys     datasource.Keys `json:"keys" mapstructure:"keys"`
+	Ref        string          `json:"ref" mapstructure:"ref"`
+	Database   string          `json:"database" mapstructure:"database"`
+	Table      string          `json:"table" mapstructure:"table"`
+	SQL        string          `json:"sql" mapstructure:"sql"`
+	Keys       datasource.Keys `json:"keys" mapstructure:"keys"`
+	Limit      int             `json:"limit" mapstructure:"limit"`
+	From       int64           `json:"from" mapstructure:"from"`
+	To         int64           `json:"to" mapstructure:"to"`
+	TimeField  string          `json:"time_field" mapstructure:"time_field"`
+	TimeFormat string          `json:"time_format" mapstructure:"time_format"`
 }
 
 func (d *Doris) InitClient() error {
@@ -66,7 +72,7 @@ func (d *Doris) Validate(ctx context.Context) error {
 func (d *Doris) Equal(p datasource.Datasource) bool {
 	newest, ok := p.(*Doris)
 	if !ok {
-		logger.Errorf("unexpected plugin type, expected is ck")
+		logger.Errorf("unexpected plugin type, expected is doris")
 		return false
 	}
 
@@ -174,6 +180,14 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		return nil, 0, err
 	}
 
+	if strings.Contains(dorisQueryParam.SQL, "$__") {
+		var err error
+		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
 	items, err := d.QueryLogs(ctx, &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,
@@ -187,7 +201,7 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		logs = append(logs, items[i])
 	}
 
-	return logs, 0, nil
+	return logs, int64(len(logs)), nil
 }
 
 func (d *Doris) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
