@@ -18,6 +18,7 @@ type AlertStatusQuery struct {
 	RuleId    int64  `json:"rule_id"`
 	StartTime int64  `json:"start_time"`
 	EndTime   int64  `json:"end_time"`
+	Step      int64  `json:"step"`
 	Labels    string `json:"labels,omitempty"` // 可选的标签过滤
 }
 
@@ -61,7 +62,7 @@ func (rt *Router) QueryAlertStatus(c *gin.Context) {
 	value, warnings, err := readerClient.QueryRange(context.Background(), valuePromql, promsdk.Range{
 		Start: time.Unix(query.StartTime, 0),
 		End:   time.Unix(query.EndTime, 0),
-		Step:  time.Minute,
+		Step:  time.Duration(query.Step) * time.Second,
 	})
 
 	if err != nil {
@@ -69,6 +70,7 @@ func (rt *Router) QueryAlertStatus(c *gin.Context) {
 			"value":     nil,
 			"timestamp": nil,
 		}, nil)
+		logger.Errorf("Query value error: %v with query: %s", err, valuePromql)
 		return
 	}
 
@@ -79,7 +81,7 @@ func (rt *Router) QueryAlertStatus(c *gin.Context) {
 	timestamp, warnings, err := readerClient.QueryRange(context.Background(), timestampPromql, promsdk.Range{
 		Start: time.Unix(query.StartTime, 0),
 		End:   time.Unix(query.EndTime, 0),
-		Step:  time.Minute,
+		Step:  time.Duration(query.Step) * time.Second,
 	})
 
 	if err != nil {
@@ -87,6 +89,7 @@ func (rt *Router) QueryAlertStatus(c *gin.Context) {
 			"value":     nil,
 			"timestamp": nil,
 		}, nil)
+		logger.Errorf("Query timestamp error: %v with query: %s", err, timestampPromql)
 		return
 	}
 
