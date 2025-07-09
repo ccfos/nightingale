@@ -8,11 +8,11 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dskit/types"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
-	"github.com/ccfos/nightingale/v6/pkg/macros"
 )
 
 const (
