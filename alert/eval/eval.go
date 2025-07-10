@@ -11,12 +11,15 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -28,9 +31,16 @@ import (
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/prometheus/common/model"
 
+	"github.com/prometheus/prometheus/prompb"
 	"github.com/robfig/cron/v3"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+)
+
+// Global variables for status data tracking
+var (
+	// GlobalStatusDataTracker tracks stored status data entries using LRU cache
+	GlobalStatusDataTracker *memsto.AlertStatusLRUCache
 )
 
 type AlertRuleWorker struct {
@@ -52,6 +62,8 @@ type AlertRuleWorker struct {
 	LastSeriesStore map[uint64]models.DataResp
 
 	DeviceIdentHook func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error)
+
+	StatusPageSingleQuota int
 }
 
 const (
@@ -74,7 +86,7 @@ const (
 	Inner JoinType = "inner"
 )
 
-func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context) *AlertRuleWorker {
+func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *process.Processor, promClients *prom.PromClientMap, ctx *ctx.Context, aconf aconf.Alert) *AlertRuleWorker {
 	arw := &AlertRuleWorker{
 		DatasourceId: datasourceId,
 		Quit:         make(chan struct{}),
@@ -87,7 +99,8 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 		DeviceIdentHook: func(arw *AlertRuleWorker, paramQuery models.ParamQuery) ([]string, error) {
 			return nil, nil
 		},
-		LastSeriesStore: make(map[uint64]models.DataResp),
+		LastSeriesStore:       make(map[uint64]models.DataResp),
+		StatusPageSingleQuota: aconf.Alerting.StatusPageSingleQuota,
 	}
 
 	interval := rule.PromEvalInterval
@@ -112,6 +125,12 @@ func NewAlertRuleWorker(rule *models.AlertRule, datasourceId int64, Processor *p
 	Processor.ScheduleEntry = arw.Scheduler.Entry(entryID)
 
 	Processor.PromEvalInterval = getPromEvalInterval(Processor.ScheduleEntry.Schedule)
+
+	// Initialize GlobalStatusDataTracker if not already initialized
+	if GlobalStatusDataTracker == nil {
+		GlobalStatusDataTracker = memsto.NewAlertStatusLRUCache(aconf.Alerting.StatusPageTotalQuota)
+	}
+
 	return arw
 }
 
@@ -346,6 +365,28 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 
 			logger.Infof("rule_eval:%s query:%+v, value:%v", arw.Key(), query, value)
 			points := models.ConvertAnomalyPoints(value)
+
+			// 存储状态页面数据
+			if len(points) > 0 {
+				for i, point := range points {
+					if arw.StatusPageSingleQuota < i {
+						break
+					}
+
+					var labels [][2]string
+					labels = append(labels, [2]string{"ref", fmt.Sprintf("%v", i)})
+					for k, v := range point.Labels {
+						if k != "__name__" {
+							labels = append(labels, [2]string{string(k), string(v)})
+						} else {
+							labels = append(labels, [2]string{"metric_name", string(v)})
+						}
+					}
+
+					arw.StoreStatusData(labels, int64(point.Timestamp), point.Value)
+				}
+			}
+
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
 				fmt.Sprintf("%v", arw.Rule.Id),
 				fmt.Sprintf("%v", arw.Processor.DatasourceId()),
@@ -787,7 +828,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 
 	arw.Inhibit = rule.Inhibit
 	now := time.Now().Unix()
-	for _, trigger := range rule.Triggers {
+	for ref, trigger := range rule.Triggers {
 		switch trigger.Type {
 		case "target_miss":
 			t := now - int64(trigger.Duration)
@@ -826,6 +867,10 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				if updateTime < t {
 					missTargets = append(missTargets, ident)
 				}
+
+				// 存储状态页面数据
+				labels := [][2]string{{"ident", ident}, {"ref", fmt.Sprintf("%v", ref)}}
+				arw.StoreStatusData(labels, now, float64(now-updateTime))
 			}
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
 				fmt.Sprintf("%v", arw.Rule.Id),
@@ -878,6 +923,11 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				}
 
 				offset := meta.Offset
+
+				// 存储状态页面数据
+				labels := [][2]string{{"ident", ident}, {"ref", fmt.Sprintf("%v", ref)}}
+				arw.StoreStatusData(labels, now, float64(offset))
+
 				if math.Abs(float64(offset)) > float64(trigger.Duration) {
 					offsetIdents[ident] = offset
 				}
@@ -921,6 +971,10 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) ([]models.Ano
 				if updateTime < t {
 					missTargets = append(missTargets, ident)
 				}
+
+				// 存储状态页面数据
+				labels := [][2]string{{"ident", ident}, {"ref", fmt.Sprintf("%v", ref)}}
+				arw.StoreStatusData(labels, now, float64(now-updateTime))
 			}
 			logger.Debugf("rule_eval:%s missTargets:%v", arw.Key(), missTargets)
 			arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
@@ -1517,6 +1571,22 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					seriesTagIndex[tagHash] = make([]uint64, 0)
 				}
 				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+
+				// 存储状态页面数据
+				ts, value, exists := series[i].Last()
+				if exists && arw.StatusPageSingleQuota > i {
+					var labels [][2]string
+					labels = append(labels, [2]string{"ref", series[i].Ref})
+					for k, v := range series[i].Metric {
+						if k != "__name__" {
+							labels = append(labels, [2]string{string(k), string(v)})
+						} else {
+							labels = append(labels, [2]string{"metric_name", string(v)})
+						}
+					}
+
+					arw.StoreStatusData(labels, int64(ts), value)
+				}
 			}
 			ref, err := GetQueryRef(query)
 			if err != nil {
@@ -1698,4 +1768,88 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 	}
 
 	return points, recoverPoints, nil
+}
+
+func (arw *AlertRuleWorker) StoreStatusData(labels [][2]string, timestamp int64, value float64) {
+	// 生成唯一的键用于跟踪
+	metric := make(model.Metric)
+	for _, label := range labels {
+		metric[model.LabelName(label[0])] = model.LabelValue(label[1])
+	}
+	entryKeyHash := hash.GetTagHash(metric)
+
+	// 将条目添加到跟踪器
+	if success := GlobalStatusDataTracker.Put(entryKeyHash); !success {
+		logger.Warningf("Failed to store status data entry in prometheus with labels: %v (reaching labels total quota limit)", labels)
+		return
+	}
+
+	DefaultPromDatasourceId := atomic.LoadInt64(&dscache.PromDefaultDatasourceId)
+	if DefaultPromDatasourceId == 0 {
+		logger.Errorf("error store status page data, default datasource id is 0")
+		return
+	}
+
+	writerClient := arw.PromClients.GetWriterCli(DefaultPromDatasourceId)
+	if writerClient.Client == nil {
+		logger.Errorf("error store status page data, prometheus client not found for datasource id: %d", DefaultPromDatasourceId)
+		return
+	}
+
+	// 使用当前时间作为写入 Prometheus 的时间戳
+	now := time.Now().Unix() * 1000
+
+	// 构造基础标签
+	baseLabels := make([]prompb.Label, 0, len(labels)+1)
+	for _, label := range labels {
+		baseLabels = append(baseLabels, prompb.Label{
+			Name:  label[0],
+			Value: label[1],
+		})
+	}
+
+	var timeSeries []prompb.TimeSeries
+
+	// 创建存储原始时间戳的时间序列
+	timestampLabels := make([]prompb.Label, 0, len(baseLabels)+1)
+	timestampLabels = append(timestampLabels, prompb.Label{
+		Name:  "__name__",
+		Value: fmt.Sprintf("n9e_alert_rule_%d_status_timestamp", arw.Rule.Id),
+	})
+	timestampLabels = append(timestampLabels, baseLabels...)
+
+	timestampSample := prompb.Sample{
+		Timestamp: now,
+		Value:     float64(timestamp),
+	}
+	timestampTimeSeries := prompb.TimeSeries{
+		Labels:  timestampLabels,
+		Samples: []prompb.Sample{timestampSample},
+	}
+	timeSeries = append(timeSeries, timestampTimeSeries)
+
+	// 创建存储原始值的时间序列
+	valueLabels := make([]prompb.Label, 0, len(baseLabels)+1)
+	valueLabels = append(valueLabels, prompb.Label{
+		Name:  "__name__",
+		Value: fmt.Sprintf("n9e_alert_rule_%d_status_value", arw.Rule.Id),
+	})
+	valueLabels = append(valueLabels, baseLabels...)
+
+	valueSample := prompb.Sample{
+		Timestamp: now,
+		Value:     value,
+	}
+	valueTimeSeries := prompb.TimeSeries{
+		Labels:  valueLabels,
+		Samples: []prompb.Sample{valueSample},
+	}
+	timeSeries = append(timeSeries, valueTimeSeries)
+
+	// 写入数据到prometheus
+	err := writerClient.Write(timeSeries)
+	if err != nil {
+		logger.Errorf("error writing status page data to prometheus: %v with labels: %v", err, labels)
+		return
+	}
 }

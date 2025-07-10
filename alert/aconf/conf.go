@@ -29,10 +29,12 @@ type HeartbeatConfig struct {
 }
 
 type Alerting struct {
-	Timeout           int64
-	TemplatesDir      string
-	NotifyConcurrency int
-	WebhookBatchSend  bool
+	Timeout               int64
+	TemplatesDir          string
+	NotifyConcurrency     int
+	WebhookBatchSend      bool
+	StatusPageSingleQuota int
+	StatusPageTotalQuota  int
 }
 
 type CallPlugin struct {
@@ -62,5 +64,13 @@ func (a *Alert) PreCheck(configDir string) {
 
 	if a.EngineDelay == 0 {
 		a.EngineDelay = 30
+	}
+
+	if a.Alerting.StatusPageSingleQuota == 0 {
+		a.Alerting.StatusPageSingleQuota = 10
+	}
+
+	if a.Alerting.StatusPageTotalQuota == 0 {
+		a.Alerting.StatusPageTotalQuota = 100000
 	}
 }

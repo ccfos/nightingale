@@ -116,7 +116,7 @@ func (s *Scheduler) syncAlertRules() {
 				}
 				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
 
-				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx)
+				alertRule := NewAlertRuleWorker(rule, dsId, processor, s.promClients, s.ctx, s.aconf)
 				alertRuleWorkers[alertRule.Hash()] = alertRule
 			}
 		} else if rule.IsHostRule() {
@@ -125,7 +125,7 @@ func (s *Scheduler) syncAlertRules() {
 				continue
 			}
 			processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, 0, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
-			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx)
+			alertRule := NewAlertRuleWorker(rule, 0, processor, s.promClients, s.ctx, s.aconf)
 			alertRuleWorkers[alertRule.Hash()] = alertRule
 		} else {
 			// 如果 rule 不是通过 prometheus engine 来告警的，则创建为 externalRule
