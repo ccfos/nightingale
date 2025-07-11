@@ -288,6 +288,7 @@ func (rt *Router) alertSubscribePut(c *gin.Context) {
 			"busi_groups",
 			"note",
 			"notify_rule_ids",
+			"notify_version",
 		))
 	}
 

@@ -240,12 +240,12 @@ func (ncc *NotifyChannelCacheType) startHttpChannel(chID int64, channel *models.
 		go ncc.startNotifyConsumer(chID, queue, quitCh)
 	}
 
-	logger.Infof("started %d notify consumers for channel %d", concurrency, chID)
+	logger.Debugf("started %d notify consumers for channel %d", concurrency, chID)
 }
 
 // 启动通知消费者协程
 func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *list.SafeListLimited, quitCh chan struct{}) {
-	logger.Infof("starting notify consumer for channel %d", channelID)
+	logger.Debugf("starting notify consumer for channel %d", channelID)
 
 	for {
 		select {
