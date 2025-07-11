@@ -922,11 +922,6 @@ func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 }
 
 func (ncc *NotifyChannelConfig) Update(ctx *ctx.Context, ref NotifyChannelConfig) error {
-	// ref.FE2DB()
-	if ncc.Ident != ref.Ident {
-		return errors.New("cannot update ident")
-	}
-
 	ref.ID = ncc.ID
 	ref.CreateAt = ncc.CreateAt
 	ref.CreateBy = ncc.CreateBy
