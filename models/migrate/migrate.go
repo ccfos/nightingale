@@ -72,8 +72,10 @@ func MigrateTables(db *gorm.DB) error {
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
+		DropUniqueFiledLimit(db, &models.PostgresBuiltinComponent{}, "idx_ident", "idx_ident")
 	} else {
 		dts = append(dts, &models.BuiltinComponent{})
+		DropUniqueFiledLimit(db, &models.BuiltinComponent{}, "idx_ident", "idx_ident")
 	}
 
 	if !db.Migrator().HasColumn(&imodels.TaskSchedulerHealth{}, "scheduler") {
@@ -125,18 +127,16 @@ func MigrateTables(db *gorm.DB) error {
 	// 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
 	DropUniqueFiledLimit(db, &models.BuiltinMetric{}, "idx_collector_typ_name", "idx_collector_typ_name")
 
-	// 删除 builtin_components 表的 idx_ident 唯一索引
-	if isPostgres(db) {
-		DropUniqueFiledLimit(db, &models.PostgresBuiltinComponent{}, "idx_ident", "idx_ident")
-	} else {
-		DropUniqueFiledLimit(db, &models.BuiltinComponent{}, "idx_ident", "idx_ident")
-	}
-
 	InsertPermPoints(db)
 	return nil
 }
 
 func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string, pgUniqueFiled string) { // UNIQUE KEY (`ckey`)
+	// 先检查表是否存在，如果不存在则直接返回
+	if !db.Migrator().HasTable(dst) {
+		return
+	}
+
 	if db.Migrator().HasIndex(dst, uniqueFiled) {
 		err := db.Migrator().DropIndex(dst, uniqueFiled) //mysql  DROP INDEX
 		if err != nil {
