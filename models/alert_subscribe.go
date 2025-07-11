@@ -116,7 +116,18 @@ func (s *AlertSubscribe) Verify() error {
 		return errors.New("severities is required")
 	}
 
-	if len(s.NotifyRuleIds) > 0 {
+	if s.NotifyVersion == 1 {
+		if len(s.NotifyRuleIds) == 0 {
+			return errors.New("no notify rules selected")
+		}
+
+		s.UserGroupIds = ""
+		s.RedefineChannels = 0
+		s.NewChannels = ""
+		s.RedefineWebhooks = 0
+		s.Webhooks = ""
+		s.RedefineSeverity = 0
+		s.NewSeverity = 0
 		return nil
 	}
 
@@ -132,8 +143,8 @@ func (s *AlertSubscribe) Verify() error {
 		}
 	}
 
-	if s.NotifyVersion == 1 && len(s.NotifyRuleIds) == 0 {
-		return errors.New("no notify rules selected")
+	if s.NotifyVersion == 0 {
+		s.NotifyRuleIds = []int64{}
 	}
 
 	return nil

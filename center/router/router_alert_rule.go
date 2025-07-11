@@ -551,6 +551,10 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				f.Fields["notify_groups"] = ""
 				f.Fields["callbacks"] = ""
 			}
+
+			if k == "notify_channels" {
+				f.Fields["notify_version"] = 0
+			}
 		}
 
 		for k, v := range f.Fields {
