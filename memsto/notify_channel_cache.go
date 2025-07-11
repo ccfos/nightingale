@@ -250,7 +250,7 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 	for {
 		select {
 		case <-quitCh:
-			logger.Infof("notify consumer for channel %d stopped", channelID)
+			logger.Debugf("notify consumer for channel %d stopped", channelID)
 			return
 		default:
 			// 从队列中取出任务
