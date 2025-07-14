@@ -67,3 +67,73 @@ func TestAISummaryConfig_Process(t *testing.T) {
 	t.Logf("原始注释: %v", result.AnnotationsJSON["description"])
 	t.Logf("AI总结: %s", result.AnnotationsJSON["ai_summary"])
 }
+
+func TestConvertCustomParam(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected interface{}
+		hasError bool
+	}{
+		{
+			name:     "nil value",
+			input:    nil,
+			expected: nil,
+			hasError: false,
+		},
+		{
+			name:     "string number to int64",
+			input:    "123",
+			expected: int64(123),
+			hasError: false,
+		},
+		{
+			name:     "string float to float64",
+			input:    "123.45",
+			expected: 123.45,
+			hasError: false,
+		},
+		{
+			name:     "string boolean to bool",
+			input:    "true",
+			expected: true,
+			hasError: false,
+		},
+		{
+			name:     "string false to bool",
+			input:    "false",
+			expected: false,
+			hasError: false,
+		},
+		{
+			name:     "JSON array string to slice",
+			input:    `["a", "b", "c"]`,
+			expected: []interface{}{"a", "b", "c"},
+			hasError: false,
+		},
+		{
+			name:     "JSON object string to map",
+			input:    `{"key": "value", "num": 123}`,
+			expected: map[string]interface{}{"key": "value", "num": float64(123)},
+			hasError: false,
+		},
+		{
+			name:     "plain string remains string",
+			input:    "hello world",
+			expected: "hello world",
+			hasError: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			converted, err := convertCustomParam(test.input)
+			if test.hasError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, converted)
+		})
+	}
+}
