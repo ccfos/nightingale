@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -143,7 +144,11 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 
 	// 合并自定义参数
 	for k, v := range c.CustomParams {
-		reqParams[k] = v
+		converted, err := convertCustomParam(v)
+		if err != nil {
+			return "", fmt.Errorf("failed to convert custom param %s: %v", k, err)
+		}
+		reqParams[k] = converted
 	}
 
 	// 序列化请求体
@@ -195,4 +200,45 @@ func (c *AISummaryConfig) generateAISummary(eventInfo string) (string, error) {
 	}
 
 	return chatResp.Choices[0].Message.Content, nil
+}
+
+// convertCustomParam 将前端传入的参数转换为正确的类型
+func convertCustomParam(value interface{}) (interface{}, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	// 如果是字符串，尝试转换为其他类型
+	if str, ok := value.(string); ok {
+		// 尝试转换为数字
+		if f, err := strconv.ParseFloat(str, 64); err == nil {
+			// 检查是否为整数
+			if f == float64(int64(f)) {
+				return int64(f), nil
+			}
+			return f, nil
+		}
+
+		// 尝试转换为布尔值
+		if b, err := strconv.ParseBool(str); err == nil {
+			return b, nil
+		}
+
+		// 尝试解析为JSON数组
+		if strings.HasPrefix(strings.TrimSpace(str), "[") {
+			var arr []interface{}
+			if err := json.Unmarshal([]byte(str), &arr); err == nil {
+				return arr, nil
+			}
+		}
+
+		// 尝试解析为JSON对象
+		if strings.HasPrefix(strings.TrimSpace(str), "{") {
+			var obj map[string]interface{}
+			if err := json.Unmarshal([]byte(str), &obj); err == nil {
+				return obj, nil
+			}
+		}
+	}
+	return value, nil
 }
