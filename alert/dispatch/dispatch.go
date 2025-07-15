@@ -595,6 +595,10 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 		return
 	}
 
+	if !sub.MatchCate(event.Cate) {
+		return
+	}
+
 	if !common.MatchTags(event.TagsMap, sub.ITags) {
 		return
 	}
