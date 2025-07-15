@@ -187,7 +187,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 						CreatedBy:   SYSTEM,
 						UpdatedBy:   SYSTEM,
 					}
-					BuiltinPayloadInFile.addBuiltinPayload(&builtinAlert)
+					BuiltinPayloadInFile.AddBuiltinPayload(&builtinAlert)
 
 				}
 			}
@@ -245,7 +245,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					CreatedBy:   SYSTEM,
 					UpdatedBy:   SYSTEM,
 				}
-				BuiltinPayloadInFile.addBuiltinPayload(&builtinDashboard)
+				BuiltinPayloadInFile.AddBuiltinPayload(&builtinDashboard)
 			}
 		} else if err != nil {
 			logger.Warningf("read builtin component dash dir fail %s %v", component.Ident, err)
@@ -314,7 +314,7 @@ func NewBuiltinPayloadInFileType() *BuiltinPayloadInFileType {
 	}
 }
 
-func (b *BuiltinPayloadInFileType) addBuiltinPayload(bp *models.BuiltinPayload) {
+func (b *BuiltinPayloadInFileType) AddBuiltinPayload(bp *models.BuiltinPayload) {
 	if _, exists := b.Data[bp.ComponentID]; !exists {
 		b.Data[bp.ComponentID] = make(map[string]map[string][]*models.BuiltinPayload)
 	}
