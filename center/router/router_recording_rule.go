@@ -149,6 +149,12 @@ func (rt *Router) recordingRulePutFields(c *gin.Context) {
 		f.Fields["datasource_queries"] = string(bytes)
 	}
 
+	if datasourceIds, ok := f.Fields["datasource_ids"]; ok {
+		bytes, err := json.Marshal(datasourceIds)
+		ginx.Dangerous(err)
+		f.Fields["datasource_ids"] = string(bytes)
+	}
+
 	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.RecordingRuleGetById(rt.Ctx, f.Ids[i])
 		ginx.Dangerous(err)
