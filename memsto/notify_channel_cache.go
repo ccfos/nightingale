@@ -502,7 +502,11 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 					m.Mail.GetHeader("Subject"), m.Mail.GetHeader("To"))
 			}
 
-			// sender.NotifyRecord(ncc.ctx, m.Events, m.NotifyRuleId, models.Email, strings.Join(m.Mail.GetHeader("To"), ","), "", err)
+			// 记录通知详情
+			if ncc.notifyRecordFunc != nil {
+				target := strings.Join(m.Mail.GetHeader("To"), ",")
+				ncc.notifyRecordFunc(ncc.ctx, m.Events, m.NotifyRuleId, "Email", target, "success", err)
+			}
 			size++
 
 			if size >= conf.Batch {
