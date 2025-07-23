@@ -892,7 +892,8 @@ func (ar *AlertRule) FE2DB() error {
 	}
 	ar.AlgoParams = string(algoParamsByte)
 
-	if ar.RuleConfigJson == nil {
+	// 老的规则，是 PromQl 和 Severity 字段，新版的规则，使用 RuleConfig 字段
+	if ar.RuleConfigJson == nil || len(ar.PromQl) > 0 {
 		query := PromQuery{
 			PromQl:   ar.PromQl,
 			Severity: ar.Severity,
