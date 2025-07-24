@@ -1,6 +1,6 @@
 module github.com/ccfos/nightingale/v6
 
-go 1.22
+go 1.23.0
 
 require (
 	github.com/BurntSushi/toml v1.4.0
@@ -47,7 +47,7 @@ require (
 	github.com/tidwall/gjson v1.14.2
 	github.com/toolkits/pkg v1.3.8
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.27.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/clickhouse v0.6.1
