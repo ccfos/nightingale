@@ -75,6 +75,8 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 		AnnotationsJSON:   annotations,
 		AppendTagsJSON:    appendTags,
 		DatasourceQueries: datasouceQueries,
+		NotifyVersion:     1,
+		NotifyRuleIds:     []int64{},
 	}
 
 	return ar
