@@ -60,6 +60,7 @@ _test
 .vscode
 .issue
 .cursor
+.claude
 .DS_Store
 .cache-loader
 .payload
