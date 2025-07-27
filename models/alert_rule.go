@@ -1009,11 +1009,8 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, name string) (bool, er
 	if err != nil {
 		return false, err
 	}
-	if len(lst) == 0 {
-		return false, nil
-	}
 
-	return false, nil
+	return len(lst) > 0, nil
 }
 
 func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {
