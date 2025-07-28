@@ -89,7 +89,7 @@ func diffMap(m1, m2 map[int64]*models.User) []models.User {
 func updateUser(appKey string, m1, m2 map[int64]*models.User) {
 	for i := range m1 {
 		if _, ok := m2[i]; ok {
-			if m1[i].Email != m2[i].Email || m1[i].Phone != m2[i].Phone || m1[i].Username != m2[i].Username {
+			if m1[i].Email != m2[i].Email || !PhoneIsSame(m1[i].Phone, m2[i].Phone) || m1[i].Username != m2[i].Username {
 				var flashdutyUser User
 
 				flashdutyUser = User{
@@ -108,6 +108,30 @@ func updateUser(appKey string, m1, m2 map[int64]*models.User) {
 			}
 		}
 	}
+}
+
+func PhoneIsSame(phone1, phone2 string) bool {
+	// 兼容不同国家/地区前缀，例如 +86、+1、+44 等，以及包含空格或短横线的格式
+	normalize := func(p string) string {
+		p = strings.TrimSpace(p)
+		p = strings.ReplaceAll(p, " ", "")
+		p = strings.ReplaceAll(p, "-", "")
+		p = strings.TrimPrefix(p, "+")
+		return p
+	}
+
+	p1 := normalize(phone1)
+	p2 := normalize(phone2)
+
+	if p1 == p2 {
+		return true
+	}
+
+	// 如果长度相差不超过 3 且较长的以较短的结尾，则认为是相同号码（忽略最多 3 位国家区号差异）
+	if len(p1) > len(p2) {
+		return len(p1)-len(p2) <= 3 && strings.HasSuffix(p1, p2)
+	}
+	return len(p2)-len(p1) <= 3 && strings.HasSuffix(p2, p1)
 }
 
 type User struct {
