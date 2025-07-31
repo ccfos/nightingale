@@ -161,6 +161,9 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
+	if resp == "" {
+		resp = "success"
+	}
 	ginx.NewRender(c).Data(resp, err)
 }
 
