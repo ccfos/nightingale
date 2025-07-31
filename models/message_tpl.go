@@ -249,7 +249,7 @@ var NewTplMap = map[string]string{
 {{- end}}
 {{end}}
 {{$domain := "http://127.0.0.1:17000" }}
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -506,7 +506,7 @@ var NewTplMap = map[string]string{
 {{- end}} 
 {{- end}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	EmailSubject: `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 	Mm: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
@@ -535,7 +535,7 @@ var NewTplMap = map[string]string{
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	Lark: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
 规则备注: {{$event.RuleNote}}{{end}}   
@@ -568,7 +568,7 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	SlackWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 *Alarm cluster:* {{$event.Cluster}}{{end}}
@@ -596,7 +596,7 @@ var NewTplMap = map[string]string{
 {{$domain := "http://127.0.0.1:17000" }}   
 <{{$domain}}/alert-his-events/{{$event.Id}}|Event Details> 
 <{{$domain}}/alert-mutes/add?__event_id={{$event.Id}}|Block for 1 hour> 
-<{{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}}|View Curve>`,
+<{{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}|View Curve>`,
 	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
@@ -608,7 +608,7 @@ var NewTplMap = map[string]string{
 **Send Time**: {{timestamp}}
 
 {{$domain := "http://127.0.0.1:17000" }}
-[Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|urlquery}})`,
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}})`,
 
 	MattermostWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
@@ -630,7 +630,7 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 {{$domain := "http://127.0.0.1:17000" }}   
-[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{$domain}}/metric/explorer?data_source_id={{$event.DatasourceId}}&data_source_name=prometheus&mode=graph&prom_ql={{$event.PromQl|escape}})`,
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}})`,
 	FeishuApp: `{{- if $event.IsRecovered -}}
 {{- if ne $event.Cate "host" -}}
 **告警集群:** {{$event.Cluster}}{{end}}   
