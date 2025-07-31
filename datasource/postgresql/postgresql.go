@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	regx = "(?i)from\\s+([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)"
+	regx = `(?i)from\s+((?:"[^"]+"|[a-zA-Z0-9_]+))\.((?:"[^"]+"|[a-zA-Z0-9_]+))\.((?:"[^"]+"|[a-zA-Z0-9_]+))`
 )
 
 func init() {
@@ -162,6 +162,7 @@ func (p *PostgreSQL) QueryData(ctx context.Context, query interface{}) ([]models
 		return nil, err
 	}
 
+	postgresqlQueryParam.SQL = formatSQLDatabaseNameWithRegex(postgresqlQueryParam.SQL)
 	if strings.Contains(postgresqlQueryParam.SQL, "$__") {
 		var err error
 		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To)
@@ -229,6 +230,7 @@ func (p *PostgreSQL) QueryLog(ctx context.Context, query interface{}) ([]interfa
 		p.Shards[0].DB = db
 	}
 
+	postgresqlQueryParam.SQL = formatSQLDatabaseNameWithRegex(postgresqlQueryParam.SQL)
 	if strings.Contains(postgresqlQueryParam.SQL, "$__") {
 		var err error
 		postgresqlQueryParam.SQL, err = macros.Macro(postgresqlQueryParam.SQL, postgresqlQueryParam.From, postgresqlQueryParam.To)
@@ -280,7 +282,17 @@ func parseDBName(sql string) (db string, err error) {
 	if len(matches) != 4 {
 		return "", fmt.Errorf("no valid table name in format database.schema.table found")
 	}
-	return matches[1], nil
+	return strings.Trim(matches[1], `"`), nil
+}
+
+// formatSQLDatabaseNameWithRegex 只对 dbname.scheme.tabname 格式进行数据库名称格式化，转为 "dbname".scheme.tabname
+// 在pgsql中，大小写是通过"" 双引号括起来区分的,默认pg都是转为小写的，所以这里转为 "dbname".scheme."tabname"
+func formatSQLDatabaseNameWithRegex(sql string) string {
+	// 匹配 from dbname.scheme.table_name 的模式
+	// 使用捕获组来精确匹配数据库名称，确保后面跟着scheme和table
+	re := regexp.MustCompile(`(?i)\bfrom\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)`)
+
+	return re.ReplaceAllString(sql, `from "$1"."$2"."$3"`)
 }
 
 func extractColumns(sql string) ([]string, error) {
