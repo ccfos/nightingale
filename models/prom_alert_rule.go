@@ -27,8 +27,13 @@ func convertInterval(interval string) int {
 	duration, err := time.ParseDuration(interval)
 	if err != nil {
 		logger.Errorf("Error parsing interval `%s`, err: %v", interval, err)
-		return 0
+		return 60
 	}
+
+	if duration.Seconds() == 0 {
+		duration = 60 * time.Second
+	}
+
 	return int(duration.Seconds())
 }
 
@@ -57,17 +62,12 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 	}
 
 	ar := AlertRule{
-		Name:             rule.Alert,
-		Severity:         severity,
-		Disabled:         disabled,
-		PromForDuration:  convertInterval(rule.For),
-		PromQl:           rule.Expr,
-		PromEvalInterval: convertInterval(interval),
-		EnableStimeJSON:  "00:00",
-		EnableEtimeJSON:  "23:59",
-		EnableDaysOfWeekJSON: []string{
-			"1", "2", "3", "4", "5", "6", "0",
-		},
+		Name:              rule.Alert,
+		Severity:          severity,
+		Disabled:          disabled,
+		PromForDuration:   convertInterval(rule.For),
+		PromQl:            rule.Expr,
+		PromEvalInterval:  convertInterval(interval),
 		EnableInBG:        AlertRuleEnableInGlobalBG,
 		NotifyRecovered:   AlertRuleNotifyRecovered,
 		NotifyRepeatStep:  AlertRuleNotifyRepeatStep60Min,
