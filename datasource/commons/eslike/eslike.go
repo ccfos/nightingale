@@ -271,7 +271,10 @@ func MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, st
 	}
 
 	for i := 0; i < len(eventTags); i++ {
-		eventTags[i] = strings.Replace(eventTags[i], "=", ":", 1)
+		arr := strings.SplitN(eventTags[i], "=", 2)
+		if len(arr) == 2 {
+			eventTags[i] = fmt.Sprintf("%s:%s", arr[0], strconv.Quote(arr[1]))
+		}
 	}
 
 	if len(eventTags) > 0 {
@@ -295,7 +298,10 @@ func MakeTSQuery(ctx context.Context, query interface{}, eventTags []string, sta
 	}
 
 	for i := 0; i < len(eventTags); i++ {
-		eventTags[i] = strings.Replace(eventTags[i], "=", ":", 1)
+		arr := strings.SplitN(eventTags[i], "=", 2)
+		if len(arr) == 2 {
+			eventTags[i] = fmt.Sprintf("%s:%s", arr[0], strconv.Quote(arr[1]))
+		}
 	}
 
 	if len(eventTags) > 0 {
