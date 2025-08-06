@@ -465,8 +465,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "fields empty")
 	}
 
-	f.Fields["update_by"] = c.MustGet("username").(string)
-	f.Fields["update_at"] = time.Now().Unix()
+	updateBy := c.MustGet("username").(string)
+	updateAt := time.Now().Unix()
 
 	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.AlertRuleGetById(rt.Ctx, f.Ids[i])
@@ -483,7 +483,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(originRule)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
-				continue
 			}
 		}
 
@@ -496,7 +495,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(ar.AnnotationsJSON)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
-				continue
 			}
 		}
 
@@ -509,7 +507,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(ar.AnnotationsJSON)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
-				continue
 			}
 		}
 
@@ -519,7 +516,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				callback := callbacks.(string)
 				if !strings.Contains(ar.Callbacks, callback) {
 					ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
-					continue
 				}
 			}
 		}
@@ -529,7 +525,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
-				continue
 			}
 		}
 
@@ -539,7 +534,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				bytes, err := json.Marshal(datasourceQueries)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"datasource_queries": bytes}))
-				continue
 			}
 		}
 
@@ -555,6 +549,12 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
 			}
 		}
+
+		// 统一更新更新时间和更新人，只有更新时间变了，告警规则才会被引擎拉取
+		ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{
+			"update_by": updateBy,
+			"update_at": updateAt,
+		}))
 	}
 
 	ginx.NewRender(c).Message(nil)
