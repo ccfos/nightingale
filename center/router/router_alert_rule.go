@@ -308,19 +308,52 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 	var f promRuleForm
 	ginx.Dangerous(c.BindJSON(&f))
 
+	// 首先尝试解析带 groups 的格式
 	var pr struct {
 		Groups []models.PromRuleGroup `yaml:"groups"`
 	}
 	err := yaml.Unmarshal([]byte(f.Payload), &pr)
-	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "invalid yaml format, please use the example format. err: %v", err)
+
+	var groups []models.PromRuleGroup
+
+	if err != nil || len(pr.Groups) == 0 {
+		// 如果解析失败或没有 groups，尝试解析规则数组格式
+		var rules []models.PromRule
+		err = yaml.Unmarshal([]byte(f.Payload), &rules)
+		if err != nil {
+			// 最后尝试解析单个规则格式
+			var singleRule models.PromRule
+			err = yaml.Unmarshal([]byte(f.Payload), &singleRule)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "invalid yaml format. err: %v", err)
+			}
+
+			// 验证单个规则是否有效
+			if singleRule.Alert == "" && singleRule.Record == "" {
+				ginx.Bomb(http.StatusBadRequest, "input yaml is empty or invalid")
+			}
+
+			rules = []models.PromRule{singleRule}
+		}
+
+		// 验证规则数组是否为空
+		if len(rules) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "input yaml contains no rules")
+		}
+
+		// 将规则数组包装成 group
+		groups = []models.PromRuleGroup{
+			{
+				Name:  "imported_rules",
+				Rules: rules,
+			},
+		}
+	} else {
+		// 使用已解析的 groups
+		groups = pr.Groups
 	}
 
-	if len(pr.Groups) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
-	}
-
-	lst := models.DealPromGroup(pr.Groups, f.DatasourceQueries, f.Disabled)
+	lst := models.DealPromGroup(groups, f.DatasourceQueries, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)

@@ -67,7 +67,7 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 		Disabled:          disabled,
 		PromForDuration:   convertInterval(rule.For),
 		PromQl:            rule.Expr,
-		PromEvalInterval:  convertInterval(interval),
+		CronPattern:       fmt.Sprintf("@every %ds", convertInterval(interval)),
 		EnableInBG:        AlertRuleEnableInGlobalBG,
 		NotifyRecovered:   AlertRuleNotifyRecovered,
 		NotifyRepeatStep:  AlertRuleNotifyRepeatStep60Min,
@@ -88,7 +88,7 @@ func DealPromGroup(promRule []PromRuleGroup, dataSourceQueries []DatasourceQuery
 	for _, group := range promRule {
 		interval := group.Interval
 		if interval == "" {
-			interval = "15s"
+			interval = "60s"
 		}
 		for _, rule := range group.Rules {
 			if rule.Alert != "" {
