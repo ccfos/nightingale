@@ -554,6 +554,7 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 
 			if k == "notify_channels" {
 				f.Fields["notify_version"] = 0
+				f.Fields["notify_rule_ids"] = []int64{}
 			}
 		}
 
