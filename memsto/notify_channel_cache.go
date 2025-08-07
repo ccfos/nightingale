@@ -33,7 +33,7 @@ type NotifyTask struct {
 // NotifyRecordFunc 通知记录函数类型
 type NotifyRecordFunc func(ctx *ctx.Context, events []*models.AlertCurEvent, notifyRuleId int64, channelName, target, resp string, err error)
 
-type NotifyCallbackFunc func(ctx *ctx.Context, qppId, appKey string)
+type NotifyCallbackFunc func(ctx *ctx.Context, ident string, params map[string]string)
 
 type NotifyChannelCacheType struct {
 	statTotal       int64
@@ -70,8 +70,8 @@ func NewNotifyChannelCache(c *ctx.Context, stats *Stats) *NotifyChannelCacheType
 		httpClient:      make(map[int64]*http.Client),
 		smtpCh:          make(map[int64]chan *models.EmailContext),
 		smtpQuitCh:      make(map[int64]chan struct{}),
-		NotifyCallback: func(c *ctx.Context, qppId, appKey string) {
-			return
+		NotifyCallback: func(ctx *ctx.Context, ident string, params map[string]string) {
+
 		},
 	}
 
@@ -176,7 +176,7 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 				ncc.startHttpChannel(chID, newChannel)
 			}
 
-			go ncc.NotifyCallback(ncc.ctx, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_id"], newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_secret"])
+			go ncc.NotifyCallback(ncc.ctx, newChannel.Ident, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters)
 		case "smtp":
 			// 创建SMTP发送器
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.SMTPRequestConfig != nil {

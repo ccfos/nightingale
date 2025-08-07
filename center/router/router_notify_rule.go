@@ -161,11 +161,9 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	}
 
 	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
-
 	if resp == "" {
 		resp = "success"
 	}
-
 	ginx.NewRender(c).Data(resp, err)
 }
 
@@ -224,7 +222,6 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
-
 		if notifyChannel.RequestConfig == nil {
 			return "", fmt.Errorf("request config is nil")
 		}

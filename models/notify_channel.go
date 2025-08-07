@@ -42,11 +42,11 @@ type EmailContext struct {
 	Mail         *gomail.Message
 }
 
-var NotifyHookQuery HookQuery = func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
+var NotifyHookQuery HookQuery = func(host map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
 	return nil, nil, false
 }
 
-type HookQuery func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
+type HookQuery func(hostmap map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
 
 // NotifyChannelConfig 通知媒介
 type NotifyChannelConfig struct {
@@ -461,7 +461,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 
 	query := req.URL.Query()
 
-	query, headers, getQueryOk := NotifyHookQuery(ncc.RequestConfig.HTTPRequestConfig.Headers["Host"], ncc.Ident, query, parameters)
+	query, headers, getQueryOk := NotifyHookQuery(ncc.RequestConfig.HTTPRequestConfig.Headers, ncc.Ident, query, parameters)
 
 	if !getQueryOk {
 		// 设置请求头 腾讯云短信、语音特殊处理
@@ -491,10 +491,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 				query.Add(key, value)
 			}
 		}
-	}
-
-	for key, value := range headers {
-		req.Header.Add(key, value)
+	} else {
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
 	}
 
 	req.URL.RawQuery = query.Encode()
