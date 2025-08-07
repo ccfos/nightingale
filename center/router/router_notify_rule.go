@@ -160,11 +160,11 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		events = append(events, event)
 	}
 
-	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
+	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, rt.NotifyChannelCache, f.NotifyConfig, events)
 	ginx.NewRender(c).Data(resp, err)
 }
 
-func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
+func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
 	notifyChannels, err := models.NotifyChannelGets(ctx, notifyConfig.ChannelID, "", "", -1)
 	if err != nil {
 		return "", fmt.Errorf("failed to get notify channels: %v", err)
@@ -214,6 +214,9 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		return resp, nil
 	case "http":
+		if notifyChannelCache.GetHookQuery != nil {
+			notifyChannel.GetQuery = notifyChannelCache.GetHookQuery
+		}
 		client, err := models.GetHTTPClient(notifyChannel)
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)

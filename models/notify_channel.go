@@ -41,6 +41,7 @@ type EmailContext struct {
 	Events       []*AlertCurEvent
 	Mail         *gomail.Message
 }
+type HookQuery func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string)
 
 // NotifyChannelConfig 通知媒介
 type NotifyChannelConfig struct {
@@ -58,11 +59,12 @@ type NotifyChannelConfig struct {
 	RequestType   string         `json:"request_type"` // http, stmp, script, flashduty
 	RequestConfig *RequestConfig `json:"request_config,omitempty" gorm:"serializer:json"`
 
-	Weight   int    `json:"weight"` // 权重，根据此字段对内置模板进行排序
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
+	Weight   int       `json:"weight"` // 权重，根据此字段对内置模板进行排序
+	CreateAt int64     `json:"create_at"`
+	CreateBy string    `json:"create_by"`
+	UpdateAt int64     `json:"update_at"`
+	UpdateBy string    `json:"update_by"`
+	GetQuery HookQuery `gorm:"-" json:"-"`
 }
 
 func (ncc *NotifyChannelConfig) TableName() string {
@@ -467,6 +469,15 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		}
 
 		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
+	} else if ncc.Ident == "feishuapp" && ncc.GetQuery != nil {
+		req, err = http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
+		if err != nil {
+			return "", err
+		}
+		query, headers = ncc.GetQuery(ncc.RequestConfig.HTTPRequestConfig.Headers["Host"], ncc.Ident, query, parameters)
 		for key, value := range headers {
 			req.Header.Set(key, value)
 		}
@@ -1456,6 +1467,20 @@ func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
 	if ch.UpdateBy != "" && ch.UpdateBy != "system" {
 		return nil
 	}
+	return ch.Update(ctx, *ncc)
+}
+
+// UpsertForce 强制更新，用于初始化时覆盖现有记录
+func (ncc *NotifyChannelConfig) UpsertForce(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
+	if err != nil {
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
+	}
+
+	if ch == nil {
+		return Insert(ctx, ncc)
+	}
+
 	return ch.Update(ctx, *ncc)
 }
 

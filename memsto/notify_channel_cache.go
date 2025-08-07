@@ -33,6 +33,10 @@ type NotifyTask struct {
 // NotifyRecordFunc 通知记录函数类型
 type NotifyRecordFunc func(ctx *ctx.Context, events []*models.AlertCurEvent, notifyRuleId int64, channelName, target, resp string, err error)
 
+type FeiShuCallbackFunc func(ctx *ctx.Context, qppId, appKey string)
+
+// GetHookQuery 类型定义已移至 models 包中
+
 type NotifyChannelCacheType struct {
 	statTotal       int64
 	statLastUpdated int64
@@ -52,13 +56,17 @@ type NotifyChannelCacheType struct {
 
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
+
+	FeiShuCallback FeiShuCallbackFunc
+
+	GetHookQuery models.HookQuery
 }
 
-func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
+func NewNotifyChannelCache(c *ctx.Context, stats *Stats) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
-		ctx:             ctx,
+		ctx:             c,
 		stats:           stats,
 		channels:        make(map[int64]*models.NotifyChannelConfig),
 		channelsQueue:   make(map[int64]*list.SafeListLimited),
@@ -66,6 +74,9 @@ func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheTy
 		httpClient:      make(map[int64]*http.Client),
 		smtpCh:          make(map[int64]chan *models.EmailContext),
 		smtpQuitCh:      make(map[int64]chan struct{}),
+		FeiShuCallback: func(c *ctx.Context, qppId, appKey string) {
+			return
+		},
 	}
 
 	ncc.SyncNotifyChannels()
@@ -168,6 +179,8 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 			if newChannel.RequestType == "http" {
 				ncc.startHttpChannel(chID, newChannel)
 			}
+
+			go ncc.FeiShuCallback(ncc.ctx, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_id"], newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_secret"])
 		case "smtp":
 			// 创建SMTP发送器
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.SMTPRequestConfig != nil {
@@ -281,6 +294,9 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 	if task.NotifyChannel.RequestType == "http" {
 		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
 			start := time.Now()
+			if task.NotifyChannel.Ident == models.FeishuApp && ncc.GetHookQuery != nil {
+				task.NotifyChannel.GetQuery = ncc.GetHookQuery
+			}
 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
 			resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
@@ -305,6 +321,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			}
 		}
 	}
+
 }
 
 // 判断是否需要批量发送联系人

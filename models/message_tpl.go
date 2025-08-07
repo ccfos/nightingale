@@ -724,6 +724,18 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
+func (t *MessageTemplate) UpsertForce(ctx *ctx.Context, ident string) error {
+	tpl, err := MessageTemplateGet(ctx, "ident = ?", ident)
+	if err != nil {
+		return errors.WithMessage(err, "failed to get message tpl")
+	}
+	if tpl == nil {
+		return Insert(ctx, t)
+	}
+
+	return tpl.Update(ctx, *t)
+}
+
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interface{} {
 	if t == nil {
 		return nil
