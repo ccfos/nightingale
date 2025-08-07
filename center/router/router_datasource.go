@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -102,7 +103,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	if !req.ForceSave {
 		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE {
-			err = DatasourceCheck(req)
+			err = DatasourceCheck(c, req)
 			if err != nil {
 				Dangerous(c, err)
 				return
@@ -173,7 +174,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	Render(c, nil, err)
 }
 
-func DatasourceCheck(ds models.Datasource) error {
+func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE {
 		if ds.HTTPJson.Url == "" {
 			return fmt.Errorf("url is empty")
@@ -232,6 +233,10 @@ func DatasourceCheck(ds models.Datasource) error {
 		req, err = http.NewRequest("GET", fullURL, nil)
 		if err != nil {
 			logger.Errorf("Error creating request: %v", err)
+			if !strings.Contains(ds.HTTPJson.Url, "/loki") {
+				lang := c.GetHeader("X-Language")
+				return fmt.Errorf(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
+			}
 			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
 	}
@@ -253,6 +258,10 @@ func DatasourceCheck(ds models.Datasource) error {
 
 	if resp.StatusCode != 200 {
 		logger.Errorf("Error making request: %v\n", resp.StatusCode)
+		if resp.StatusCode == 404 && ds.PluginType == models.LOKI && !strings.Contains(ds.HTTPJson.Url, "/loki") {
+			lang := c.GetHeader("X-Language")
+			return fmt.Errorf(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
+		}
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("request url:%s failed code:%d body:%s", fullURL, resp.StatusCode, string(body))
 	}

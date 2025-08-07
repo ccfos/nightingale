@@ -124,7 +124,7 @@ func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 func TargetDel(ctx *ctx.Context, idents []string, deleteHook TargetDeleteHookFunc) error {
 	if len(idents) == 0 {
-		panic("idents empty")
+		return errors.New("idents cannot be empty")
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {

@@ -71,6 +71,7 @@ var I18N = `{
     "no notify groups selected": "未选择通知组",
     "all users missing notify channel configurations: %v": "所有用户缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配订阅规则，通知设置正常",
+    "/loki suffix is miss, please add /loki to the url: %s": "缺少/loki后缀，请在URL中添加/loki：%s",
 
     "event time not match time filter": "事件时间不匹配时间过滤器",
     "event severity not match severity filter": "事件等级不匹配等级过滤器",
@@ -261,6 +262,7 @@ var I18N = `{
     "no notify groups selected": "未選擇通知組",
     "all users missing notify channel configurations: %v": "所有用戶缺少通知渠道配置: %v",
     "event match subscribe and notify settings ok": "事件匹配訂閱規則，通知設置正常",
+    "/loki suffix is miss, please add /loki to the url: %s": "缺少/loki後綴，請在URL中添加/loki：%s",
 
     "event time not match time filter": "事件時間不匹配時間過濾器",
     "event severity not match severity filter": "事件等級不匹配等級過濾器",
@@ -448,6 +450,7 @@ var I18N = `{
     "no notify groups selected": "通知グループが選択されていません",
     "all users missing notify channel configurations: %v": "すべてのユーザーに通知チャンネル設定がありません: %v",
     "event match subscribe and notify settings ok": "イベントがサブスクライブルールに一致し、通知設定が正常です",
+    "/loki suffix is miss, please add /loki to the url: %s": "/lokiサフィックスがありません。URLに/lokiを追加してください: %s",
 
     "event time not match time filter": "イベント時間が時間フィルタと一致しません",
     "event severity not match severity filter": "イベント等級が等級フィルタと一致しません",
@@ -635,6 +638,7 @@ var I18N = `{
     "no notify groups selected": "Группы уведомлений не выбраны",
     "all users missing notify channel configurations: %v": "У всех пользователей отсутствуют настройки каналов уведомлений: %v",
     "event match subscribe and notify settings ok": "Событие соответствует правилу подписки, настройки уведомлений в порядке",
+    "/loki suffix is miss, please add /loki to the url: %s": "Отсутствует суффикс /loki, пожалуйста, добавьте /loki к URL: %s",
 
     "event time not match time filter": "Время события не соответствует временному фильтру",
     "event severity not match severity filter": "Уровень события не соответствует фильтру уровня",

@@ -735,6 +735,15 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 		return DB(ctx).Model(ar).Updates(updates).Error
 	}
 
+	if column == "notify_groups" || column == "notify_channels" {
+		updates := map[string]interface{}{
+			column:            value,
+			"notify_version":  0,
+			"notify_rule_ids": []int64{},
+		}
+		return DB(ctx).Model(ar).Updates(updates).Error
+	}
+
 	return DB(ctx).Model(ar).UpdateColumn(column, value).Error
 }
 
@@ -1009,11 +1018,8 @@ func AlertRuleExists(ctx *ctx.Context, id, groupId int64, name string) (bool, er
 	if err != nil {
 		return false, err
 	}
-	if len(lst) == 0 {
-		return false, nil
-	}
 
-	return false, nil
+	return len(lst) > 0, nil
 }
 
 func GetAlertRuleIdsByTaskId(ctx *ctx.Context, taskId int64) ([]int64, error) {

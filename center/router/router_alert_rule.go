@@ -308,19 +308,52 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 	var f promRuleForm
 	ginx.Dangerous(c.BindJSON(&f))
 
+	// 首先尝试解析带 groups 的格式
 	var pr struct {
 		Groups []models.PromRuleGroup `yaml:"groups"`
 	}
 	err := yaml.Unmarshal([]byte(f.Payload), &pr)
-	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "invalid yaml format, please use the example format. err: %v", err)
+
+	var groups []models.PromRuleGroup
+
+	if err != nil || len(pr.Groups) == 0 {
+		// 如果解析失败或没有 groups，尝试解析规则数组格式
+		var rules []models.PromRule
+		err = yaml.Unmarshal([]byte(f.Payload), &rules)
+		if err != nil {
+			// 最后尝试解析单个规则格式
+			var singleRule models.PromRule
+			err = yaml.Unmarshal([]byte(f.Payload), &singleRule)
+			if err != nil {
+				ginx.Bomb(http.StatusBadRequest, "invalid yaml format. err: %v", err)
+			}
+
+			// 验证单个规则是否有效
+			if singleRule.Alert == "" && singleRule.Record == "" {
+				ginx.Bomb(http.StatusBadRequest, "input yaml is empty or invalid")
+			}
+
+			rules = []models.PromRule{singleRule}
+		}
+
+		// 验证规则数组是否为空
+		if len(rules) == 0 {
+			ginx.Bomb(http.StatusBadRequest, "input yaml contains no rules")
+		}
+
+		// 将规则数组包装成 group
+		groups = []models.PromRuleGroup{
+			{
+				Name:  "imported_rules",
+				Rules: rules,
+			},
+		}
+	} else {
+		// 使用已解析的 groups
+		groups = pr.Groups
 	}
 
-	if len(pr.Groups) == 0 {
-		ginx.Bomb(http.StatusBadRequest, "input yaml is empty")
-	}
-
-	lst := models.DealPromGroup(pr.Groups, f.DatasourceQueries, f.Disabled)
+	lst := models.DealPromGroup(groups, f.DatasourceQueries, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
 	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
@@ -465,8 +498,8 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "fields empty")
 	}
 
-	f.Fields["update_by"] = c.MustGet("username").(string)
-	f.Fields["update_at"] = time.Now().Unix()
+	updateBy := c.MustGet("username").(string)
+	updateAt := time.Now().Unix()
 
 	for i := 0; i < len(f.Ids); i++ {
 		ar, err := models.AlertRuleGetById(rt.Ctx, f.Ids[i])
@@ -483,7 +516,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(originRule)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"rule_config": string(b)}))
-				continue
 			}
 		}
 
@@ -496,7 +528,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(ar.AnnotationsJSON)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
-				continue
 			}
 		}
 
@@ -509,7 +540,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				b, err := json.Marshal(ar.AnnotationsJSON)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"annotations": string(b)}))
-				continue
 			}
 		}
 
@@ -519,7 +549,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				callback := callbacks.(string)
 				if !strings.Contains(ar.Callbacks, callback) {
 					ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": ar.Callbacks + " " + callback}))
-					continue
 				}
 			}
 		}
@@ -529,7 +558,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 			if callbacks, has := f.Fields["callbacks"]; has {
 				callback := callbacks.(string)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"callbacks": strings.ReplaceAll(ar.Callbacks, callback, "")}))
-				continue
 			}
 		}
 
@@ -539,21 +567,6 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				bytes, err := json.Marshal(datasourceQueries)
 				ginx.Dangerous(err)
 				ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{"datasource_queries": bytes}))
-				continue
-			}
-		}
-
-		// 检测是否是批量更新通知规则的字段，如果是清理掉旧版本的配置
-		for k := range f.Fields {
-			if k == "notify_rule_ids" {
-				f.Fields["notify_version"] = 1
-				f.Fields["notify_channels"] = ""
-				f.Fields["notify_groups"] = ""
-				f.Fields["callbacks"] = ""
-			}
-
-			if k == "notify_channels" {
-				f.Fields["notify_version"] = 0
 			}
 		}
 
@@ -569,6 +582,12 @@ func (rt *Router) alertRulePutFields(c *gin.Context) {
 				ginx.Dangerous(ar.UpdateColumn(rt.Ctx, k, v))
 			}
 		}
+
+		// 统一更新更新时间和更新人，只有更新时间变了，告警规则才会被引擎拉取
+		ginx.Dangerous(ar.UpdateFieldsMap(rt.Ctx, map[string]interface{}{
+			"update_by": updateBy,
+			"update_at": updateAt,
+		}))
 	}
 
 	ginx.NewRender(c).Message(nil)

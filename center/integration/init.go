@@ -390,9 +390,10 @@ func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.Bu
 		return payloads
 	}
 
+	queryLower := strings.ToLower(query)
 	var filtered []*models.BuiltinPayload
 	for _, p := range payloads {
-		if strings.Contains(p.Name, query) || strings.Contains(p.Tags, query) {
+		if strings.Contains(strings.ToLower(p.Name), queryLower) || strings.Contains(strings.ToLower(p.Tags), queryLower) {
 			filtered = append(filtered, p)
 		}
 	}
