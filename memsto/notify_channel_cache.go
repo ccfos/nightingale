@@ -35,8 +35,6 @@ type NotifyRecordFunc func(ctx *ctx.Context, events []*models.AlertCurEvent, not
 
 type NotifyCallbackFunc func(ctx *ctx.Context, qppId, appKey string)
 
-// GetHookQuery 类型定义已移至 models 包中
-
 type NotifyChannelCacheType struct {
 	statTotal       int64
 	statLastUpdated int64
