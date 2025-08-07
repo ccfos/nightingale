@@ -160,7 +160,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		events = append(events, event)
 	}
 
-	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, rt.NotifyChannelCache, f.NotifyConfig, events)
+	resp, err := SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, f.NotifyConfig, events)
 
 	if resp == "" {
 		resp = "success"
@@ -169,7 +169,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 	ginx.NewRender(c).Data(resp, err)
 }
 
-func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
+func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroup *memsto.UserGroupCacheType, notifyConfig models.NotifyConfig, events []*models.AlertCurEvent) (string, error) {
 	notifyChannels, err := models.NotifyChannelGets(ctx, notifyConfig.ChannelID, "", "", -1)
 	if err != nil {
 		return "", fmt.Errorf("failed to get notify channels: %v", err)

@@ -184,7 +184,7 @@ func (rt *Router) alertRuleNotifyTryRun(c *gin.Context) {
 			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
 			ginx.Dangerous(err)
 			for _, notifyConfig := range notifyRule.NotifyConfigs {
-				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, rt.NotifyChannelCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
+				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
 				ginx.Dangerous(err)
 			}
 		}

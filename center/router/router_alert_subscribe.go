@@ -186,7 +186,7 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 
 			for _, notifyConfig := range notifyRule.NotifyConfigs {
-				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, rt.NotifyChannelCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
+				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
 				if err != nil {
 					ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "notify rule send error: %v", err))
 				}
