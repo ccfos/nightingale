@@ -219,9 +219,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
 		return resp, nil
 	case "http":
-		if notifyChannelCache.GetHookQuery != nil {
-			notifyChannel.GetQuery = notifyChannelCache.GetHookQuery
-		}
+
 		client, err := models.GetHTTPClient(notifyChannel)
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)

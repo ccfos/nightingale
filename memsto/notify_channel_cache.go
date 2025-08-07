@@ -58,8 +58,6 @@ type NotifyChannelCacheType struct {
 	notifyRecordFunc NotifyRecordFunc
 
 	NotifyCallback NotifyCallbackFunc
-
-	GetHookQuery models.HookQuery
 }
 
 func NewNotifyChannelCache(c *ctx.Context, stats *Stats) *NotifyChannelCacheType {
@@ -294,9 +292,6 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 	if task.NotifyChannel.RequestType == "http" {
 		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
 			start := time.Now()
-			if task.NotifyChannel.Ident == models.FeishuApp && ncc.GetHookQuery != nil {
-				task.NotifyChannel.GetQuery = ncc.GetHookQuery
-			}
 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
 			resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
 			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",

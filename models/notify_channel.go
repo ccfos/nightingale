@@ -41,7 +41,12 @@ type EmailContext struct {
 	Events       []*AlertCurEvent
 	Mail         *gomail.Message
 }
-type HookQuery func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string)
+
+var NotifyHookQuery HookQuery = func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
+	return nil, nil, false
+}
+
+type HookQuery func(host, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
 
 // NotifyChannelConfig 通知媒介
 type NotifyChannelConfig struct {
@@ -59,12 +64,11 @@ type NotifyChannelConfig struct {
 	RequestType   string         `json:"request_type"` // http, stmp, script, flashduty
 	RequestConfig *RequestConfig `json:"request_config,omitempty" gorm:"serializer:json"`
 
-	Weight   int       `json:"weight"` // 权重，根据此字段对内置模板进行排序
-	CreateAt int64     `json:"create_at"`
-	CreateBy string    `json:"create_by"`
-	UpdateAt int64     `json:"update_at"`
-	UpdateBy string    `json:"update_by"`
-	GetQuery HookQuery `gorm:"-" json:"-"`
+	Weight   int    `json:"weight"` // 权重，根据此字段对内置模板进行排序
+	CreateAt int64  `json:"create_at"`
+	CreateBy string `json:"create_by"`
+	UpdateAt int64  `json:"update_at"`
+	UpdateBy string `json:"update_by"`
 }
 
 func (ncc *NotifyChannelConfig) TableName() string {
@@ -456,41 +460,41 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	}
 
 	query := req.URL.Query()
-	// 设置请求头 腾讯云短信、语音特殊处理
-	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-		headers = ncc.setTxHeader(headers, body)
-		for key, value := range headers {
-			req.Header.Add(key, value)
-		}
-	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		req, err = http.NewRequest(httpConfig.Method, url, nil)
-		if err != nil {
-			return "", err
+
+	query, headers, getQueryOk := NotifyHookQuery(ncc.RequestConfig.HTTPRequestConfig.Headers["Host"], ncc.Ident, query, parameters)
+
+	if !getQueryOk {
+		// 设置请求头 腾讯云短信、语音特殊处理
+		if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
+			headers = ncc.setTxHeader(headers, body)
+			for key, value := range headers {
+				req.Header.Add(key, value)
+			}
+		} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
+			req, err = http.NewRequest(httpConfig.Method, url, nil)
+			if err != nil {
+				return "", err
+			}
+
+			query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
+			for key, value := range headers {
+				req.Header.Set(key, value)
+			}
+		} else {
+			for key, value := range headers {
+				req.Header.Add(key, value)
+			}
 		}
 
-		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
-		for key, value := range headers {
-			req.Header.Set(key, value)
-		}
-	} else if ncc.Ident == "feishuapp" && ncc.GetQuery != nil {
-		req, err = http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
-		if err != nil {
-			return "", err
-		}
-		query, headers = ncc.GetQuery(ncc.RequestConfig.HTTPRequestConfig.Headers["Host"], ncc.Ident, query, parameters)
-		for key, value := range headers {
-			req.Header.Set(key, value)
-		}
-	} else {
-		for key, value := range headers {
-			req.Header.Add(key, value)
+		if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
+			for key, value := range parameters {
+				query.Add(key, value)
+			}
 		}
 	}
 
-	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-		for key, value := range parameters {
-			query.Add(key, value)
-		}
+	for key, value := range headers {
+		req.Header.Add(key, value)
 	}
 
 	req.URL.RawQuery = query.Encode()
