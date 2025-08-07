@@ -33,7 +33,7 @@ type NotifyTask struct {
 // NotifyRecordFunc 通知记录函数类型
 type NotifyRecordFunc func(ctx *ctx.Context, events []*models.AlertCurEvent, notifyRuleId int64, channelName, target, resp string, err error)
 
-type FeiShuCallbackFunc func(ctx *ctx.Context, qppId, appKey string)
+type NotifyCallbackFunc func(ctx *ctx.Context, qppId, appKey string)
 
 // GetHookQuery 类型定义已移至 models 包中
 
@@ -57,7 +57,7 @@ type NotifyChannelCacheType struct {
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
 
-	FeiShuCallback FeiShuCallbackFunc
+	NotifyCallback NotifyCallbackFunc
 
 	GetHookQuery models.HookQuery
 }
@@ -74,7 +74,7 @@ func NewNotifyChannelCache(c *ctx.Context, stats *Stats) *NotifyChannelCacheType
 		httpClient:      make(map[int64]*http.Client),
 		smtpCh:          make(map[int64]chan *models.EmailContext),
 		smtpQuitCh:      make(map[int64]chan struct{}),
-		FeiShuCallback: func(c *ctx.Context, qppId, appKey string) {
+		NotifyCallback: func(c *ctx.Context, qppId, appKey string) {
 			return
 		},
 	}
@@ -180,7 +180,7 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 				ncc.startHttpChannel(chID, newChannel)
 			}
 
-			go ncc.FeiShuCallback(ncc.ctx, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_id"], newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_secret"])
+			go ncc.NotifyCallback(ncc.ctx, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_id"], newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters["feishuapp_secret"])
 		case "smtp":
 			// 创建SMTP发送器
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.SMTPRequestConfig != nil {
