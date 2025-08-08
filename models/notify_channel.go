@@ -42,11 +42,11 @@ type EmailContext struct {
 	Mail         *gomail.Message
 }
 
-var NotifyHookQuery HookQuery = func(host map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
+var NotifyHookQuery HookQuery = func(head map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
 	return nil, nil, false
 }
 
-type HookQuery func(hostmap map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
+type HookQuery func(head map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
 
 // NotifyChannelConfig 通知媒介
 type NotifyChannelConfig struct {
