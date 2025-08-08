@@ -221,7 +221,6 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
-
 		if notifyChannel.RequestConfig == nil {
 			return "", fmt.Errorf("request config is nil")
 		}

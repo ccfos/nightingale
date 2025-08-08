@@ -33,6 +33,8 @@ type NotifyTask struct {
 // NotifyRecordFunc 通知记录函数类型
 type NotifyRecordFunc func(ctx *ctx.Context, events []*models.AlertCurEvent, notifyRuleId int64, channelName, target, resp string, err error)
 
+type NotifyCallbackFunc func(ctx *ctx.Context, ident string, params map[string]string)
+
 type NotifyChannelCacheType struct {
 	statTotal       int64
 	statLastUpdated int64
@@ -52,13 +54,15 @@ type NotifyChannelCacheType struct {
 
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
+
+	NotifyCallback NotifyCallbackFunc
 }
 
-func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
+func NewNotifyChannelCache(c *ctx.Context, stats *Stats) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
 		statTotal:       -1,
 		statLastUpdated: -1,
-		ctx:             ctx,
+		ctx:             c,
 		stats:           stats,
 		channels:        make(map[int64]*models.NotifyChannelConfig),
 		channelsQueue:   make(map[int64]*list.SafeListLimited),
@@ -66,6 +70,9 @@ func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheTy
 		httpClient:      make(map[int64]*http.Client),
 		smtpCh:          make(map[int64]chan *models.EmailContext),
 		smtpQuitCh:      make(map[int64]chan struct{}),
+		NotifyCallback: func(ctx *ctx.Context, ident string, params map[string]string) {
+
+		},
 	}
 
 	ncc.SyncNotifyChannels()
@@ -168,6 +175,8 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 			if newChannel.RequestType == "http" {
 				ncc.startHttpChannel(chID, newChannel)
 			}
+
+			go ncc.NotifyCallback(ncc.ctx, newChannel.Ident, newChannel.RequestConfig.HTTPRequestConfig.Request.Parameters)
 		case "smtp":
 			// 创建SMTP发送器
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.SMTPRequestConfig != nil {
@@ -305,6 +314,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			}
 		}
 	}
+
 }
 
 // 判断是否需要批量发送联系人
