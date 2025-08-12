@@ -42,6 +42,12 @@ type EmailContext struct {
 	Mail         *gomail.Message
 }
 
+var NotifyHookQuery HookQuery = func(head map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool) {
+	return nil, nil, false
+}
+
+type HookQuery func(head map[string]string, ident string, query url.Values, params map[string]string) (url.Values, map[string]string, bool)
+
 // NotifyChannelConfig 通知媒介
 type NotifyChannelConfig struct {
 	ID int64 `json:"id" gorm:"primaryKey"`
@@ -454,31 +460,40 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	}
 
 	query := req.URL.Query()
-	// 设置请求头 腾讯云短信、语音特殊处理
-	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-		headers = ncc.setTxHeader(headers, body)
-		for key, value := range headers {
-			req.Header.Add(key, value)
-		}
-	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		req, err = http.NewRequest(httpConfig.Method, url, nil)
-		if err != nil {
-			return "", err
+
+	query, headers, getQueryOk := NotifyHookQuery(ncc.RequestConfig.HTTPRequestConfig.Headers, ncc.Ident, query, parameters)
+
+	if !getQueryOk {
+		// 设置请求头 腾讯云短信、语音特殊处理
+		if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
+			headers = ncc.setTxHeader(headers, body)
+			for key, value := range headers {
+				req.Header.Add(key, value)
+			}
+		} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
+			req, err = http.NewRequest(httpConfig.Method, url, nil)
+			if err != nil {
+				return "", err
+			}
+
+			query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
+			for key, value := range headers {
+				req.Header.Set(key, value)
+			}
+		} else {
+			for key, value := range headers {
+				req.Header.Add(key, value)
+			}
 		}
 
-		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
-		for key, value := range headers {
-			req.Header.Set(key, value)
+		if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
+			for key, value := range parameters {
+				query.Add(key, value)
+			}
 		}
 	} else {
 		for key, value := range headers {
 			req.Header.Add(key, value)
-		}
-	}
-
-	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-		for key, value := range parameters {
-			query.Add(key, value)
 		}
 	}
 
@@ -1456,6 +1471,20 @@ func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
 	if ch.UpdateBy != "" && ch.UpdateBy != "system" {
 		return nil
 	}
+	return ch.Update(ctx, *ncc)
+}
+
+// UpsertForce 强制更新，用于初始化时覆盖现有记录
+func (ncc *NotifyChannelConfig) UpsertForce(ctx *ctx.Context) error {
+	ch, err := NotifyChannelGet(ctx, "name = ?", ncc.Name)
+	if err != nil {
+		return errors.WithMessage(err, "notify channel init failed to get message tpl")
+	}
+
+	if ch == nil {
+		return Insert(ctx, ncc)
+	}
+
 	return ch.Update(ctx, *ncc)
 }
 
