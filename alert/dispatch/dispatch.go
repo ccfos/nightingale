@@ -45,6 +45,7 @@ type Dispatch struct {
 	tpls             map[string]*template.Template
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
+	NotifyHook       func(*models.AlertCurEvent, int64) bool
 
 	ctx    *ctx.Context
 	Astats *astats.Stats
@@ -76,6 +77,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		tpls:             make(map[string]*template.Template),
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
+		NotifyHook:       func(*models.AlertCurEvent, int64) bool { return false },
 
 		ctx:    ctx,
 		Astats: astats,
@@ -201,6 +203,10 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			if eventCopy == nil {
 				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
+				continue
+			}
+
+			if e.NotifyHook(eventCopy, notifyRuleId) {
 				continue
 			}
 
