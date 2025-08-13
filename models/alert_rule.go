@@ -267,7 +267,7 @@ func GetDatasourceIDsByDatasourceQueries[T any](datasourceQueries []DatasourceQu
 
 	// 所有 query 取交集，初始集合为全集
 	curIDs := make(map[int64]struct{})
-	for id, _ := range idMap {
+	for id := range idMap {
 		curIDs[id] = struct{}{}
 	}
 
