@@ -20,6 +20,14 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	DEFAULT_TIMEOUT           = 300
+	DEFAULT_MAX_IDLE_CONNS    = 10
+	DEFAULT_MAX_OPEN_CONNS    = 100
+	DEFAULT_CONN_MAX_LIFETIME = 300
+	DEFAULT_MAX_QUERY_ROWS    = 100
+)
+
 type MySQL struct {
 	Shards []Shard `json:"mysql.shards" mapstructure:"mysql.shards"`
 }
@@ -67,23 +75,23 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 	shard := m.Shards[0]
 
 	if shard.Timeout == 0 {
-		shard.Timeout = 300
+		shard.Timeout = DEFAULT_TIMEOUT
 	}
 
 	if shard.MaxIdleConns == 0 {
-		shard.MaxIdleConns = 10
+		shard.MaxIdleConns = DEFAULT_MAX_IDLE_CONNS
 	}
 
 	if shard.MaxOpenConns == 0 {
-		shard.MaxOpenConns = 100
+		shard.MaxOpenConns = DEFAULT_MAX_OPEN_CONNS
 	}
 
 	if shard.ConnMaxLifetime == 0 {
-		shard.ConnMaxLifetime = 300
+		shard.ConnMaxLifetime = DEFAULT_CONN_MAX_LIFETIME
 	}
 
 	if shard.MaxQueryRows == 0 {
-		shard.MaxQueryRows = 100
+		shard.MaxQueryRows = DEFAULT_MAX_QUERY_ROWS
 	}
 
 	if len(shard.Addr) == 0 {

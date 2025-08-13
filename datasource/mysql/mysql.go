@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	MySQLType = "mysql"
+	MySQLType       = "mysql"
+	DEFAULT_TIMEOUT = 60
 )
 
 func init() {
@@ -149,7 +150,7 @@ func (m *MySQL) QueryData(ctx context.Context, query interface{}) ([]models.Data
 
 	timeout := m.Shards[0].Timeout
 	if timeout == 0 {
-		timeout = 60
+		timeout = DEFAULT_TIMEOUT
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
@@ -196,7 +197,7 @@ func (m *MySQL) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 
 	timeout := m.Shards[0].Timeout
 	if timeout == 0 {
-		timeout = 60
+		timeout = DEFAULT_TIMEOUT
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
