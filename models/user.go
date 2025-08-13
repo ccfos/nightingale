@@ -509,8 +509,7 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 		if needCheck {
 			incrLoginFailCount(ctx, redis, username, seconds)
 		}
-
-		return nil, fmt.Errorf("Username or password invalid")
+		return nil, fmt.Errorf("username or password invalid")
 	}
 
 	loginPass, err := CryptoPass(ctx, pass)
@@ -522,7 +521,7 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 		if needCheck {
 			incrLoginFailCount(ctx, redis, username, seconds)
 		}
-		return nil, fmt.Errorf("Username or password invalid")
+		return nil, fmt.Errorf("username or password invalid")
 	}
 
 	return user, nil
@@ -854,7 +853,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 		if err != nil {
 			return nil, err
 		}
-		if t != nil && t.MatchGroupId(busiGroupIds...) {
+		if t.MatchGroupId(busiGroupIds...) {
 			err = DB(ctx).Order("name").Limit(limit).Where("id in ?", t.GroupIds).Find(&lst).Error
 		}
 	}

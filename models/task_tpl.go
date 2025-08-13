@@ -312,7 +312,7 @@ func (t *TaskTpl) Del(ctx *ctx.Context) error {
 
 func (t *TaskTpl) AddTags(ctx *ctx.Context, tags []string, updateBy string) error {
 	for i := 0; i < len(tags); i++ {
-		if -1 == strings.Index(t.Tags, tags[i]+" ") {
+		if !strings.Contains(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
 		}
 	}
