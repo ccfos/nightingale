@@ -106,7 +106,7 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 
 			// 按类型搜索，包含任一关键词
 			for _, ds := range dss {
-				dsTypeNameLower := strings.ToLower(ds.PluginTypeName)
+				dsTypeNameLower := strings.ToLower(ds.PluginType)
 				for _, keyword := range keywords {
 					if strings.Contains(dsTypeNameLower, keyword) {
 						typeFiltered = append(typeFiltered, ds)
