@@ -85,51 +85,32 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 
 	// 实现搜索过滤逻辑
 	query := ginx.QueryStr(c, "query", "")
+	var intersection []*models.Datasource
 	if query != "" {
-		// 分割搜索关键词
 		keywords := strings.Fields(strings.ToLower(query))
 		if len(keywords) > 0 {
-			var nameFiltered []*models.Datasource
-			var typeFiltered []*models.Datasource
-
-			// 按名称搜索，包含任一关键词
+			// 将 PluginType 和 name 拼成一个字符串来搜索
 			for _, ds := range dss {
-				dsNameLower := strings.ToLower(ds.Name)
+				searchStr := strings.ToLower(ds.PluginType + " " + ds.Name + " ")
+				matchedCount := 0
+				// 检查是否所有关键词都匹配（交集逻辑）
 				for _, keyword := range keywords {
-					if strings.Contains(dsNameLower, keyword) {
-						nameFiltered = append(nameFiltered, ds)
-						break // 找到一个匹配的关键词就跳出
+					if strings.Contains(searchStr, keyword) {
+						matchedCount++
 					}
 				}
-			}
-
-			// 按类型搜索，包含任一关键词
-			for _, ds := range dss {
-				dsTypeNameLower := strings.ToLower(ds.PluginType)
-				for _, keyword := range keywords {
-					if strings.Contains(dsTypeNameLower, keyword) {
-						typeFiltered = append(typeFiltered, ds)
-						break // 找到一个匹配的关键词就跳出
-					}
+				// 只有当所有关键词都匹配时才添加到结果中
+				if matchedCount == len(keywords) {
+					intersection = append(intersection, ds)
 				}
 			}
-
-			// 取交集 - 既在名称过滤结果中，也在类型过滤结果中
-			var intersection []*models.Datasource
-			for _, nameDs := range nameFiltered {
-				for _, typeDs := range typeFiltered {
-					if nameDs.Id == typeDs.Id {
-						intersection = append(intersection, nameDs)
-						break
-					}
-				}
-			}
-
-			dss = intersection
 		}
+	} else {
+		// 如果没有查询条件，返回所有数据源
+		intersection = dss
 	}
 
-	ginx.NewRender(c).Data(dss, err)
+	ginx.NewRender(c).Data(intersection, err)
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
