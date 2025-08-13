@@ -83,6 +83,52 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 		dss = rt.DatasourceCache.DatasourceFilter(dss, user)
 	}
 
+	// 实现搜索过滤逻辑
+	query := ginx.QueryStr(c, "query", "")
+	if query != "" {
+		// 分割搜索关键词
+		keywords := strings.Fields(strings.ToLower(query))
+		if len(keywords) > 0 {
+			var nameFiltered []*models.Datasource
+			var typeFiltered []*models.Datasource
+
+			// 按名称搜索，包含任一关键词
+			for _, ds := range dss {
+				dsNameLower := strings.ToLower(ds.Name)
+				for _, keyword := range keywords {
+					if strings.Contains(dsNameLower, keyword) {
+						nameFiltered = append(nameFiltered, ds)
+						break // 找到一个匹配的关键词就跳出
+					}
+				}
+			}
+
+			// 按类型搜索，包含任一关键词
+			for _, ds := range dss {
+				dsTypeNameLower := strings.ToLower(ds.PluginTypeName)
+				for _, keyword := range keywords {
+					if strings.Contains(dsTypeNameLower, keyword) {
+						typeFiltered = append(typeFiltered, ds)
+						break // 找到一个匹配的关键词就跳出
+					}
+				}
+			}
+
+			// 取交集 - 既在名称过滤结果中，也在类型过滤结果中
+			var intersection []*models.Datasource
+			for _, nameDs := range nameFiltered {
+				for _, typeDs := range typeFiltered {
+					if nameDs.Id == typeDs.Id {
+						intersection = append(intersection, nameDs)
+						break
+					}
+				}
+			}
+
+			dss = intersection
+		}
+	}
+
 	ginx.NewRender(c).Data(dss, err)
 }
 
