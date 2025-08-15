@@ -202,6 +202,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			}
 
 			if eventCopy == nil {
+				sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", "", errors.New("drop by processor"))
 				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
 				continue
 			}
