@@ -20,7 +20,7 @@ type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
 	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Op     string              `json:"op"`    // `==` | `=~` | `in` | `!=` | `!~` | `not in`
-	Value  string              `json:"value"` // tag value
+	Value  interface{}         `json:"value"` // tag value
 	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
@@ -46,15 +46,59 @@ func ParseTagFilter(bFilters []TagFilter) ([]TagFilter, error) {
 	var err error
 	for i := 0; i < len(bFilters); i++ {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
-			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			// 这里存在两个情况，一个是 string 一个是 int
+			var pattern string
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				pattern = v
+			case int:
+				pattern = strconv.Itoa(v)
+			default:
+				return nil, fmt.Errorf("unsupported value type for regex: %T", v)
+			}
+			bFilters[i].Regexp, err = regexp.Compile(pattern)
 			if err != nil {
 				return nil, err
 			}
 		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
-			arr := strings.Fields(bFilters[i].Value)
+			// 这里存在两个情况，一个是 string 一个是[]int
 			bFilters[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				bFilters[i].Vset[arr[j]] = struct{}{}
+
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				// 处理字符串情况
+				arr := strings.Fields(v)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
+			case []int:
+				// 处理[]int情况
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[strconv.Itoa(v[j])] = struct{}{}
+				}
+			case []string:
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[v[j]] = struct{}{}
+				}
+			case []interface{}:
+				// 处理[]interface{}情况（JSON解析可能产生）
+				for j := 0; j < len(v); j++ {
+					switch item := v[j].(type) {
+					case string:
+						bFilters[i].Vset[item] = struct{}{}
+					case int:
+						bFilters[i].Vset[strconv.Itoa(item)] = struct{}{}
+					case float64:
+						bFilters[i].Vset[strconv.Itoa(int(item))] = struct{}{}
+					}
+				}
+			default:
+				// 兜底处理，转为字符串
+				str := fmt.Sprintf("%v", v)
+				arr := strings.Fields(str)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
 			}
 		}
 	}
@@ -73,15 +117,54 @@ func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	}
 	for i := 0; i < len(bFilters); i++ {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
-			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			var pattern string
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				pattern = v
+			case int:
+				pattern = strconv.Itoa(v)
+			default:
+				return nil, fmt.Errorf("unsupported value type for regex: %T", v)
+			}
+			bFilters[i].Regexp, err = regexp.Compile(pattern)
 			if err != nil {
 				return nil, err
 			}
 		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
-			arr := strings.Fields(bFilters[i].Value)
 			bFilters[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				bFilters[i].Vset[arr[j]] = struct{}{}
+
+			// 在GetTagFilters中，Value通常是string类型，但也要处理其他可能的类型
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				// 处理字符串情况
+				arr := strings.Fields(v)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
+			case []int:
+				// 处理[]int情况
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[strconv.Itoa(v[j])] = struct{}{}
+				}
+			case []interface{}:
+				// 处理[]interface{}情况（JSON解析可能产生）
+				for j := 0; j < len(v); j++ {
+					switch item := v[j].(type) {
+					case string:
+						bFilters[i].Vset[item] = struct{}{}
+					case int:
+						bFilters[i].Vset[strconv.Itoa(item)] = struct{}{}
+					case float64:
+						bFilters[i].Vset[strconv.Itoa(int(item))] = struct{}{}
+					}
+				}
+			default:
+				// 兜底处理，转为字符串
+				str := fmt.Sprintf("%v", v)
+				arr := strings.Fields(str)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
 			}
 		}
 	}
