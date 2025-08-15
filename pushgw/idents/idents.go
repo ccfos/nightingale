@@ -134,6 +134,8 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	}
 
 	// 从批量更新一批机器的时间戳，改成逐台更新，是为了避免批量更新时，mysql的锁竞争问题
+	start := time.Now()
+	duration := time.Since(start).Seconds()
 	if len(exists) > 0 {
 		sema := semaphore.NewSemaphore(s.configs.UpdateDBTargetConcurrency)
 		wg := sync.WaitGroup{}
@@ -148,6 +150,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		}
 		wg.Wait()
 	}
+	pstat.DBOperationLatency.WithLabelValues("update_targets_ts").Observe(duration)
 
 	return nil
 }
