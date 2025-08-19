@@ -530,6 +530,11 @@ func NeedBatchContacts(requestConfig *models.HTTPRequestConfig) bool {
 // event: 告警/恢复事件
 // isSubscribe: 告警事件是否由subscribe的配置产生
 func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
+	go e.HandleEventWithNotifyRule(event)
+	if event.IsRecovered && event.NotifyRecovered == 0 {
+		return
+	}
+
 	rule := e.alertRuleCache.Get(event.RuleId)
 	if rule == nil {
 		return
@@ -562,7 +567,6 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		notifyTarget.AndMerge(handler(rule, event, notifyTarget, e))
 	}
 
-	go e.HandleEventWithNotifyRule(event)
 	go e.Send(rule, event, notifyTarget, isSubscribe)
 
 	// 如果是不是订阅规则出现的event, 则需要处理订阅规则的event
