@@ -105,6 +105,17 @@ var (
 		},
 		[]string{"operation", "status"},
 	)
+
+	DBOperationLatency = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "db_operation_latency_seconds",
+			Help:      "Histogram of latencies for DB operations",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5},
+		},
+		[]string{"operation"},
+	)
 )
 
 func init() {
@@ -121,5 +132,6 @@ func init() {
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,
 		RedisOperationLatency,
+		DBOperationLatency,
 	)
 }

@@ -18,6 +18,7 @@ type Pushgw struct {
 	UpdateTargetRetryIntervalMills int64
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
+	UpdateDBTargetConcurrency      int
 
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
@@ -122,6 +123,10 @@ func (p *Pushgw) PreCheck() {
 
 	if p.UpdateTargetBatchSize <= 0 {
 		p.UpdateTargetBatchSize = 20
+	}
+
+	if p.UpdateDBTargetConcurrency <= 0 {
+		p.UpdateDBTargetConcurrency = 16
 	}
 
 	if p.BusiGroupLabelKey == "" {
