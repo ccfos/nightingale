@@ -79,6 +79,11 @@ var I18N = `{
     "event attributes not match attributes filter": "事件属性不匹配属性过滤器",
     "failed to parse tag filter: %v": "解析标签过滤器失败: %v",
 
+    "event is dropped": "事件已被丢弃，不会进行通知",
+    "drop event success": "丢弃事件成功",
+    "drop event failed": "丢弃事件失败",
+    "callback success": "回调成功",
+
     "Infrastructure": "基础设施",
     "Host - View": "机器 - 查看",
     "Host - Modify": "机器 - 修改",
@@ -269,7 +274,11 @@ var I18N = `{
     "event tag not match tag filter": "事件標籤不匹配標籤過濾器",
     "event attributes not match attributes filter": "事件屬性不匹配屬性過濾器",
     "failed to parse tag filter: %v": "解析標籤過濾器失敗: %v",
-
+    "event is dropped": "事件已被丟棄，不會進行通知",
+    "drop event success": "丟棄事件成功",
+    "drop event failed": "丟棄事件失敗",
+    "callback success": "回調成功",
+  
     "Infrastructure": "基礎設施",
     "Host - View": "機器 - 查看",
     "Host - Modify": "機器 - 修改",
@@ -457,7 +466,11 @@ var I18N = `{
     "event tag not match tag filter": "イベントタグがタグフィルタと一致しません",
     "event attributes not match attributes filter": "イベント属性が属性フィルタと一致しません",
     "failed to parse tag filter: %v": "タグフィルタの解析に失敗しました: %v",
-
+    "event is dropped": "イベントが破棄されました，通知は行われません",
+    "drop event success": "イベント破棄成功",
+    "drop event failed": "イベント破棄失敗",
+    "callback success": "コールバック成功",
+   
     "Infrastructure": "インフラストラクチャ",
     "Host - View": "機器 - 閲覧",
     "Host - Modify": "機器 - 修正",
@@ -645,7 +658,11 @@ var I18N = `{
     "event tag not match tag filter": "Теги события не соответствуют фильтру тегов",
     "event attributes not match attributes filter": "Атрибуты события не соответствуют фильтру атрибутов",
     "failed to parse tag filter: %v": "Не удалось разобрать фильтр тегов: %v",
-
+    "event is dropped": "Событие отброшено, уведомление не будет отправлено",
+    "drop event success": "Событие успешно отброшено",
+    "drop event failed": "Не удалось отбросить событие",
+    "callback success": "Обратный вызов успешен",
+   
     "Infrastructure": "Инфраструктура",
     "Host - View": "Хост - Просмотр",
     "Host - Modify": "Хост - Изменить",
