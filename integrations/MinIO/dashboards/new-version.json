@@ -2,7 +2,7 @@
     "name": "MinIO Dashboard New Version",
     "tags": "",
     "ident": "",
-    "uuid": 1755740482768000,
+    "uuid": 1755762763066000,
     "configs": {
         "links": [],
         "panels": [
@@ -560,18 +560,7 @@
                 "version": "3.0.0"
             },
             {
-                "custom": {
-                    "calc": "avg",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "graphMode": "none",
-                    "textMode": "value",
-                    "textSize": {},
-                    "valueField": "Value"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${DS_PROMETHEUS}",
-                "description": "",
+                "type": "stat",
                 "id": "776ecb58-5daf-4d5c-9c5b-774f476de70b",
                 "layout": {
                     "h": 2,
@@ -581,19 +570,43 @@
                     "x": 3,
                     "y": 6
                 },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "minio_cluster_drive_online_total{job=\"$scrape_jobs\"}",
+                        "legend": "Total online drives in MinIO Cluster",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Online Drives",
                 "links": [],
+                "description": "",
                 "maxPerRow": 4,
-                "name": "Total Online Disks",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
                 "options": {
-                    "standardOptions": {
-                        "util": "none"
-                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "type": "base",
-                                "value": null
+                                "value": null,
+                                "type": "base"
                             },
                             {
                                 "color": "#F2495C",
@@ -611,23 +624,29 @@
                             },
                             "type": "special"
                         }
-                    ]
+                    ],
+                    "standardOptions": {
+                        "util": "none"
+                    }
                 },
-                "targets": [
+                "overrides": [
                     {
-                        "expr": "minio_cluster_disk_online_total{job=\"$scrape_jobs\"}",
-                        "legend": "Total online disks in MinIO Cluster",
-                        "refId": "A"
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
                     }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "type": "stat",
-                "version": "3.0.0"
+                ]
             },
             {
                 "custom": {
@@ -876,18 +895,7 @@
                 "version": "3.0.0"
             },
             {
-                "custom": {
-                    "calc": "avg",
-                    "colSpan": 1,
-                    "colorMode": "value",
-                    "graphMode": "none",
-                    "textMode": "value",
-                    "textSize": {},
-                    "valueField": "Value"
-                },
-                "datasourceCate": "prometheus",
-                "datasourceValue": "${DS_PROMETHEUS}",
-                "description": "",
+                "type": "stat",
                 "id": "136b9b07-6979-4402-89da-3a79ab8dc732",
                 "layout": {
                     "h": 2,
@@ -897,19 +905,43 @@
                     "x": 3,
                     "y": 8
                 },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${DS_PROMETHEUS}",
+                "targets": [
+                    {
+                        "expr": "minio_cluster_drive_offline_total{job=\"$scrape_jobs\"}",
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Total Offline Drives",
                 "links": [],
+                "description": "",
                 "maxPerRow": 4,
-                "name": "Total Offline Disks",
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "avg",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {},
+                    "orientation": "auto"
+                },
                 "options": {
-                    "standardOptions": {
-                        "util": "none"
-                    },
                     "thresholds": {
                         "steps": [
                             {
                                 "color": "#73BF69",
-                                "type": "base",
-                                "value": null
+                                "value": null,
+                                "type": "base"
                             },
                             {
                                 "color": "#F2495C",
@@ -927,23 +959,29 @@
                             },
                             "type": "special"
                         }
-                    ]
+                    ],
+                    "standardOptions": {
+                        "util": "none"
+                    }
                 },
-                "targets": [
+                "overrides": [
                     {
-                        "expr": "minio_cluster_disk_offline_total{job=\"$scrape_jobs\"}",
-                        "legend": "",
-                        "refId": "A"
+                        "matcher": {
+                            "id": "byFrameRefID"
+                        },
+                        "properties": {
+                            "thresholds": {
+                                "steps": [
+                                    {
+                                        "color": "#6C53B1",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            }
+                        }
                     }
-                ],
-                "transformations": [
-                    {
-                        "id": "organize",
-                        "options": {}
-                    }
-                ],
-                "type": "stat",
-                "version": "3.0.0"
+                ]
             },
             {
                 "custom": {
