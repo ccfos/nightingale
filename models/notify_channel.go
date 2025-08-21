@@ -94,6 +94,8 @@ type UserInfo struct {
 type FlashDutyRequestConfig struct {
 	Proxy          string `json:"proxy"`
 	IntegrationUrl string `json:"integration_url"`
+	Timeout        int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes     int    `json:"retry_times"` // 重试次数
 }
 
 // ParamItem 自定义参数项
@@ -196,7 +198,7 @@ func (ncc *NotifyChannelConfig) SendScript(events []*AlertCurEvent, tpl map[stri
 	cmd.Stderr = &buf
 
 	err, isTimeout := cmdx.RunTimeout(cmd, time.Duration(config.Timeout)*time.Millisecond)
-	logger.Infof("event_script_notify_result: exec %s output: %s isTimeout: %v err: %v", fpath, buf.String(), isTimeout, err)
+	logger.Infof("event_script_notify_result: exec %s output: %s isTimeout: %v err: %v stdin: %s", fpath, buf.String(), isTimeout, err, string(getStdinBytes(events, tpl, params, sendtos)))
 
 	res := buf.String()
 
@@ -315,9 +317,20 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	}
 
 	httpConfig := nc.RequestConfig.HTTPRequestConfig
-	if httpConfig.Timeout == 0 {
-		httpConfig.Timeout = 10000
+
+	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的超时时间
+	timeout := httpConfig.Timeout
+	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil {
+		flashDutyTimeout := nc.RequestConfig.FlashDutyRequestConfig.Timeout
+		if flashDutyTimeout > 0 {
+			timeout = flashDutyTimeout
+		}
 	}
+
+	if timeout == 0 {
+		timeout = 10000 // HTTP 默认 10 秒
+	}
+
 	if httpConfig.Concurrency == 0 {
 		httpConfig.Concurrency = 5
 	}
@@ -347,13 +360,13 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		Proxy:           proxyFunc,
 		TLSClientConfig: tlsConfig,
 		DialContext: (&net.Dialer{
-			Timeout: time.Duration(httpConfig.Timeout) * time.Millisecond,
+			Timeout: time.Duration(timeout) * time.Millisecond,
 		}).DialContext,
 	}
 
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(httpConfig.Timeout) * time.Millisecond,
+		Timeout:   time.Duration(timeout) * time.Millisecond,
 	}
 
 	return client, nil
@@ -385,13 +398,24 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	req.URL.RawQuery = query.Encode()
 	req.Header.Add("Content-Type", "application/json")
 
+	// 获取重试配置，设置默认值
+	retryTimes := ncc.RequestConfig.FlashDutyRequestConfig.RetryTimes
+	if retryTimes == 0 {
+		retryTimes = 3 // 默认重试3次
+	}
+
 	// 重试机制
-	for i := 0; i <= 3; i++ {
+	for i := 0; i <= retryTimes; i++ {
 		logger.Infof("send flashduty req:%+v body:%+v", req, string(body))
+
+		// 直接使用客户端发送请求，超时时间已经在 client 中设置
 		resp, err := client.Do(req)
+
 		if err != nil {
-			logger.Errorf("send flashduty req:%+v err:%v", req, err)
-			time.Sleep(time.Duration(100) * time.Millisecond)
+			logger.Errorf("send flashduty req:%+v err:%v times:%d", req, err, i+1)
+			if i < retryTimes {
+				time.Sleep(time.Duration(100) * time.Millisecond)
+			}
 			continue
 		}
 		defer resp.Body.Close()
@@ -402,11 +426,13 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 			logger.Errorf("failed to read response: %v, event: %v", err, events)
 		}
 
-		logger.Infof("send flashduty req:%+v resp:%+v body:%+v err:%v", req, resp, string(body), err)
+		logger.Infof("send flashduty req:%+v resp:%+v body:%+v err:%v times:%d", req, resp, string(body), err, i+1)
 		if resp.StatusCode == http.StatusOK {
 			return string(body), nil
 		}
-		time.Sleep(time.Duration(100) * time.Millisecond)
+		if i < retryTimes {
+			time.Sleep(time.Duration(100) * time.Millisecond)
+		}
 	}
 
 	return "", errors.New("failed to send request")
@@ -1421,6 +1447,8 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 			FlashDutyRequestConfig: &FlashDutyRequestConfig{
 				IntegrationUrl: "flashduty integration url",
+				Timeout:        5000, // 默认5秒超时
+				RetryTimes:     3,    // 默认重试3次
 			},
 		},
 	},

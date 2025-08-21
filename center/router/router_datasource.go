@@ -84,7 +84,34 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 		dss = rt.DatasourceCache.DatasourceFilter(dss, user)
 	}
 
-	ginx.NewRender(c).Data(dss, err)
+	// 实现搜索过滤逻辑
+	query := ginx.QueryStr(c, "query", "")
+	var intersection []*models.Datasource
+	if query != "" {
+		keywords := strings.Fields(strings.ToLower(query))
+		if len(keywords) > 0 {
+			// 将 PluginType 和 name 拼成一个字符串来搜索
+			for _, ds := range dss {
+				searchStr := strings.ToLower(ds.PluginType + " " + ds.Name + " ")
+				matchedCount := 0
+				// 检查是否所有关键词都匹配（交集逻辑）
+				for _, keyword := range keywords {
+					if strings.Contains(searchStr, keyword) {
+						matchedCount++
+					}
+				}
+				// 只有当所有关键词都匹配时才添加到结果中
+				if matchedCount == len(keywords) {
+					intersection = append(intersection, ds)
+				}
+			}
+		}
+	} else {
+		// 如果没有查询条件，返回所有数据源
+		intersection = dss
+	}
+
+	ginx.NewRender(c).Data(intersection, err)
 }
 
 func (rt *Router) datasourceUpsert(c *gin.Context) {
