@@ -211,6 +211,13 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				logger.Debugf("notify_id: %d, event:%+v, notify_hook return true", notifyRuleId, eventCopy)
 				continue
 			}
+
+			if eventCopy.IsRecovered && eventCopy.NotifyRecovered == 0 {
+				// 如果 eventCopy 是恢复事件，且 NotifyRecovered 为 0，则不发送通知
+
+				continue
+			}
+
 			logger.Debugf("notify_id: %d, event:%+v, notify_hook return false", notifyRuleId, eventCopy)
 
 			// notify
