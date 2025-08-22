@@ -110,10 +110,6 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 
 	e.persist(event)
 
-	if event.IsRecovered && event.NotifyRecovered == 0 {
-		return
-	}
-
 	e.dispatch.HandleEventNotify(event, false)
 }
 

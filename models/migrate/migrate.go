@@ -444,6 +444,7 @@ type NotifyRule struct {
 	UserGroupIds    []int64                 `gorm:"column:user_group_ids;type:varchar(255)"`
 	NotifyConfigs   []models.NotifyConfig   `gorm:"column:notify_configs;type:text"`
 	PipelineConfigs []models.PipelineConfig `gorm:"column:pipeline_configs;type:text"`
+	ExtraConfig     interface{}             `gorm:"column:extra_config;type:text"`
 	CreateAt        int64                   `gorm:"column:create_at;not null;default:0"`
 	CreateBy        string                  `gorm:"column:create_by;type:varchar(64);not null;default:''"`
 	UpdateAt        int64                   `gorm:"column:update_at;not null;default:0"`
