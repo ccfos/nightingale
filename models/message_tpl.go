@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"regexp"
+	"sort"
 	"strings"
 	texttemplate "text/template"
 	"time"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/str"
 )
 
 // MessageTemplate 消息模板结构
@@ -249,7 +251,7 @@ var NewTplMap = map[string]string{
 {{- end}}
 {{end}}
 {{$domain := "http://127.0.0.1:17000" }}
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | {{if ne $aggrkey ""}}[事件聚合]({{$domain}}/alert-his-events/aggr_detail?__aggr_key={{$aggrkey}}){{end}} | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -714,10 +716,26 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
+func GetAggrKey(events []*AlertCurEvent) string {
+	if len(events) == 0 {
+		return ""
+	}
+
+	ids := make([]string, 0)
+	for i := range len(events) {
+		ids = append(ids, fmt.Sprintf("%d", events[i].Id))
+	}
+	sort.Strings(ids)
+	idsStr := strings.Join(ids, ",")
+	logger.Debugf("notify_hook aggr_key: %s, ids: %v", str.MD5(idsStr), ids)
+	return str.MD5(idsStr)
+}
+
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
+
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
@@ -727,6 +745,8 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			"{{ $labels := $event.TagsMap }}",
 			"{{ $value := $event.TriggerValue }}",
 		}
+
+		defs = append(defs, fmt.Sprintf("{{ $aggrkey := \"%s\" }}", GetAggrKey(events)))
 
 		var body bytes.Buffer
 		if t.NotifyChannelIdent == "email" {

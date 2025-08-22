@@ -19,6 +19,7 @@ type NotifyRule struct {
 
 	// 通知配置
 	NotifyConfigs []NotifyConfig `json:"notify_configs" gorm:"serializer:json"`
+	ExtraConfig   interface{}    `json:"extra_config" gorm:"serializer:json"`
 
 	CreateAt int64  `json:"create_at"`
 	CreateBy string `json:"create_by"`
@@ -73,11 +74,6 @@ func GetNotifyRule(c *ctx.Context, id int64) (*NotifyRule, error) {
 		return nil, err
 	}
 	return &rule, nil
-}
-
-// 更新 NotifyRule
-func UpdateNotifyRule(c *ctx.Context, rule *NotifyRule) error {
-	return DB(c).Save(rule).Error
 }
 
 // 删除 NotifyRule
