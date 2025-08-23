@@ -19,6 +19,7 @@ type Pushgw struct {
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
 	UpdateDBTargetConcurrency      int
+	UpdateDBTargetTimestampDisable bool
 	PushConcurrency                int
 
 	BusiGroupLabelKey   string
