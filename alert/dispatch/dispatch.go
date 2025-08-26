@@ -168,6 +168,8 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			if !notifyRule.Enable {
 				continue
 			}
+			eventCopy.NotifyRuleId = notifyRuleId
+			eventCopy.NotifyRuleName = notifyRule.Name
 
 			var processors []models.Processor
 			for _, pipelineConfig := range notifyRule.PipelineConfigs {
