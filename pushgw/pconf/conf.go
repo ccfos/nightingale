@@ -21,6 +21,7 @@ type Pushgw struct {
 	UpdateDBTargetConcurrency      int
 	UpdateDBTargetTimestampDisable bool
 	PushConcurrency                int
+	UpdateTargetByUrlConcurrency   int
 
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
@@ -133,6 +134,10 @@ func (p *Pushgw) PreCheck() {
 
 	if p.PushConcurrency <= 0 {
 		p.PushConcurrency = 16
+	}
+
+	if p.UpdateTargetByUrlConcurrency <= 0 {
+		p.UpdateTargetByUrlConcurrency = 10
 	}
 
 	if p.BusiGroupLabelKey == "" {
