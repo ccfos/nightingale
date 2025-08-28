@@ -118,6 +118,11 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		return err
 	}
 
+	if s.configs.UpdateDBTargetTimestampDisable {
+		// 如果 mysql 压力太大，关闭更新 db 的操作
+		return nil
+	}
+
 	// there are some idents not found in db, so insert them
 	var exists []string
 	err = s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
