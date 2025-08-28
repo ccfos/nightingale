@@ -290,6 +290,15 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 				models.DataSourceQueryAll,
 			}
 		}
+
+		// 将导入的规则统一转为新版本的通知规则配置
+		lst[i].NotifyVersion = 1
+		lst[i].NotifyChannelsJSON = []string{}
+		lst[i].NotifyGroupsJSON = []string{}
+		lst[i].NotifyChannels = ""
+		lst[i].NotifyGroups = ""
+		lst[i].Callbacks = ""
+		lst[i].CallbacksJSON = []string{}
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
