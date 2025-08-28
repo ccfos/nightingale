@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -166,17 +166,17 @@ func readDatadogBody(c *gin.Context) ([]byte, error) {
 			return nil, e
 		}
 		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
+		bs, err = io.ReadAll(r)
 	} else if enc == "deflate" {
 		r, e := zlib.NewReader(c.Request.Body)
 		if e != nil {
 			return nil, e
 		}
 		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
+		bs, err = io.ReadAll(r)
 	} else {
 		defer c.Request.Body.Close()
-		bs, err = ioutil.ReadAll(c.Request.Body)
+		bs, err = io.ReadAll(c.Request.Body)
 	}
 
 	return bs, err

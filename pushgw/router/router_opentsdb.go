@@ -3,7 +3,7 @@ package router
 import (
 	"compress/gzip"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -136,10 +136,10 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 			return
 		}
 		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
+		bs, err = io.ReadAll(r)
 	} else {
 		defer c.Request.Body.Close()
-		bs, err = ioutil.ReadAll(c.Request.Body)
+		bs, err = io.ReadAll(c.Request.Body)
 	}
 
 	if err != nil {

@@ -3,7 +3,6 @@ package router
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync/atomic"
 
@@ -171,7 +170,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling
 // snappy decompression.
 func DecodeWriteRequest(r io.Reader) (*prompb.WriteRequest, error) {
-	compressed, err := ioutil.ReadAll(r)
+	compressed, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

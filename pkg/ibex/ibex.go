@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -148,7 +148,7 @@ func (i *Ibex) do() error {
 		defer res.Body.Close()
 	}
 
-	payload, err := ioutil.ReadAll(res.Body)
+	payload, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}

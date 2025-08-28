@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
@@ -43,11 +43,11 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 			return req, err
 		}
 		defer r.Close()
-		bs, err = ioutil.ReadAll(r)
+		bs, err = io.ReadAll(r)
 		ginx.Dangerous(err)
 	} else {
 		defer c.Request.Body.Close()
-		bs, err = ioutil.ReadAll(c.Request.Body)
+		bs, err = io.ReadAll(c.Request.Body)
 		if err != nil {
 			return req, err
 		}

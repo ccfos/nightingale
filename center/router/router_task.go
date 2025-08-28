@@ -7,7 +7,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
-
+	imodels "github.com/flashcatcloud/ibex/src/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
@@ -148,4 +148,29 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	err = record.Add(rt.Ctx)
 	ginx.NewRender(c).Data(taskId, err)
+}
+
+func (rt *Router) taskPut(c *gin.Context) {
+	if !rt.Ibex.Enable {
+		ginx.Bomb(400, i18n.Sprintf(c.GetHeader("X-Language"), "This functionality has not been enabled. Please contact the system administrator to activate it."))
+		return
+	}
+
+	var task imodels.TaskHost
+	ginx.BindJSON(c, &task)
+
+	// 把 f.Hosts 中的空字符串过滤掉
+	if task.Host == "" || task.Id <= 0 || task.Status == "" {
+		ginx.Bomb(400, "invalid request body")
+	}
+	task.Host = strings.TrimSpace(task.Host)
+
+	rt.checkTargetPerm(c, []string{task.Host})
+
+	// update task host
+	err := task.Upsert()
+	if err != nil {
+		ginx.Bomb(500, err.Error())
+	}
+	ginx.NewRender(c).Data(task.Id, nil)
 }
