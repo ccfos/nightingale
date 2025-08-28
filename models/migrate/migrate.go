@@ -127,7 +127,6 @@ func MigrateTables(db *gorm.DB) error {
 	// 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
 	DropUniqueFiledLimit(db, &models.BuiltinMetric{}, "idx_collector_typ_name", "idx_collector_typ_name")
 
-	InsertPermPoints(db)
 	return nil
 }
 
@@ -165,110 +164,6 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 		}
 	}
 	return false
-}
-
-func InsertPermPoints(db *gorm.DB) {
-	var ops []models.RoleOperation
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/alert-mutes/put",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/log/index-patterns",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/help/variable-configs",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/ibex-settings",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-templates",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-templates/add",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-templates/put",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-templates/del",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-rules",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-rules/add",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-rules/put",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/notification-rules/del",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/event-pipelines",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/event-pipelines/add",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/event-pipelines/put",
-	})
-
-	ops = append(ops, models.RoleOperation{
-		RoleName:  "Standard",
-		Operation: "/event-pipelines/del",
-	})
-
-	for _, op := range ops {
-		var count int64
-
-		session := db.Session(&gorm.Session{}).Model(&models.RoleOperation{})
-		err := session.Where("operation = ? AND role_name = ?", op.Operation, op.RoleName).Count(&count).Error
-
-		if err != nil {
-			logger.Errorf("check role operation exists failed, %v", err)
-			continue
-		}
-
-		if count > 0 {
-			continue
-		}
-
-		err = session.Create(&op).Error
-		if err != nil {
-			logger.Errorf("insert role operation failed, %v", err)
-		}
-	}
 }
 
 type AlertRule struct {
