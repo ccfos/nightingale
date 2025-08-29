@@ -96,6 +96,7 @@ type FlashDutyRequestConfig struct {
 	IntegrationUrl string `json:"integration_url"`
 	Timeout        int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes     int    `json:"retry_times"` // 重试次数
+	RetrySleep     int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // ParamItem 自定义参数项
@@ -372,6 +373,23 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
+func (ncc *NotifyChannelConfig) makeFlashDutyRequest(url string, bodyBytes []byte, flashDutyChannelID int64) (*http.Request, error) {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置 URL 参数
+	query := req.URL.Query()
+	if flashDutyChannelID != 0 {
+		// 如果 flashduty 有配置协作空间(channel_id)，则传入 channel_id 参数
+		query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
+	}
+	req.URL.RawQuery = query.Encode()
+	req.Header.Add("Content-Type", "application/json")
+	return req, nil
+}
+
 func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
 	// todo 每一个 channel 批量发送事件
 	if client == nil {
@@ -383,59 +401,57 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, bytes.NewBuffer(body))
-	if err != nil {
-		logger.Errorf("failed to create request: %v, event: %v", err, events)
-		return "", err
+	url := ncc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl
+
+	retrySleep := time.Second
+	if ncc.RequestConfig.FlashDutyRequestConfig.RetrySleep > 0 {
+		retrySleep = time.Duration(ncc.RequestConfig.FlashDutyRequestConfig.RetrySleep) * time.Millisecond
 	}
 
-	// 设置 URL 参数
-	query := req.URL.Query()
-	if flashDutyChannelID != 0 {
-		// 如果 flashduty 有配置协作空间(channel_id)，则传入 channel_id 参数
-		query.Add("channel_id", strconv.FormatInt(flashDutyChannelID, 10))
-	}
-	req.URL.RawQuery = query.Encode()
-	req.Header.Add("Content-Type", "application/json")
-
-	// 获取重试配置，设置默认值
-	retryTimes := ncc.RequestConfig.FlashDutyRequestConfig.RetryTimes
-	if retryTimes == 0 {
-		retryTimes = 3 // 默认重试3次
+	retryTimes := 3
+	if ncc.RequestConfig.FlashDutyRequestConfig.RetryTimes > 0 {
+		retryTimes = ncc.RequestConfig.FlashDutyRequestConfig.RetryTimes
 	}
 
-	// 重试机制
+	// 把最后一次错误保存下来，后面返回，让用户在页面上也可以看到
+	var lastErrorMessage string
 	for i := 0; i <= retryTimes; i++ {
-		logger.Infof("send flashduty req:%+v body:%+v", req, string(body))
+		req, err := ncc.makeFlashDutyRequest(url, body, flashDutyChannelID)
+		if err != nil {
+			logger.Errorf("send_flashduty: failed to create request. url=%s request_body=%s error=%v", url, string(body), err)
+			return fmt.Sprintf("failed to create request. error: %v", err), err
+		}
 
 		// 直接使用客户端发送请求，超时时间已经在 client 中设置
 		resp, err := client.Do(req)
-
 		if err != nil {
-			logger.Errorf("send flashduty req:%+v err:%v times:%d", req, err, i+1)
+			logger.Errorf("send_flashduty: http_call=fail url=%s request_body=%s error=%v times=%d", url, string(body), err, i+1)
 			if i < retryTimes {
-				time.Sleep(time.Duration(100) * time.Millisecond)
+				// 重试等待时间，后面要放到页面上配置
+				time.Sleep(retrySleep)
 			}
+			lastErrorMessage = err.Error()
 			continue
 		}
-		defer resp.Body.Close()
 
-		// 读取响应
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			logger.Errorf("failed to read response: %v, event: %v", err, events)
+		// 走到这里，说明请求 Flashduty 成功，不管 Flashduty 返回了什么结果，都不判断，仅保存，给用户查看即可
+		// 比如服务端返回 5xx，也不要重试，重试可能会导致服务端数据有问题。告警事件这样的东西，没有那么关键，只要最终能在 UI 上看到调用结果就行
+		var resBody []byte
+		if resp.Body != nil {
+			defer resp.Body.Close()
+
+			resBody, err = io.ReadAll(resp.Body)
+			if err != nil {
+				logger.Errorf("send_flashduty: failed to read response. request_body=%s, error=%v", string(body), err)
+				resBody = []byte("failed to read response. error: " + err.Error())
+			}
 		}
 
-		logger.Infof("send flashduty req:%+v resp:%+v body:%+v err:%v times:%d", req, resp, string(body), err, i+1)
-		if resp.StatusCode == http.StatusOK {
-			return string(body), nil
-		}
-		if i < retryTimes {
-			time.Sleep(time.Duration(100) * time.Millisecond)
-		}
+		logger.Infof("send_flashduty: http_call=succ url=%s request_body=%s response_code=%d response_body=%s times=%d", url, string(body), resp.StatusCode, string(resBody), i+1)
+		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody)), nil
 	}
 
-	return "", errors.New("failed to send request")
+	return lastErrorMessage, errors.New("failed to send request")
 }
 
 func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
