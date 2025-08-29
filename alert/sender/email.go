@@ -141,7 +141,7 @@ func updateSmtp(ctx *ctx.Context, ncc *memsto.NotifyConfigCacheType) {
 func startEmailSender(ctx *ctx.Context, smtp aconf.SMTPConfig) {
 	conf := smtp
 	if conf.Host == "" || conf.Port == 0 {
-		logger.Warning("SMTP configurations invalid")
+		logger.Debug("SMTP configurations invalid")
 		<-mailQuit
 		return
 	}

@@ -448,7 +448,7 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
-	logger.Infof("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
+	logger.Debugf("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.Username, conf.Password)
 	if conf.InsecureSkipVerify {

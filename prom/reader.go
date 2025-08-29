@@ -117,7 +117,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 				continue
 			}
 
-			logger.Info("setClientFromPromOption success: ", dsId)
+			logger.Infof("setClientFromPromOption success, datasourceId: %d", dsId)
 			PromOptions.Set(dsId, po)
 			continue
 		}
