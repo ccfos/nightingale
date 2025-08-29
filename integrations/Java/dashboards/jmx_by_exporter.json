@@ -1,5 +1,4 @@
-[
-    {
+{
         "name": "JMX",
         "tags": "Prometheus JMX",
         "ident": "",
@@ -1512,4 +1511,3 @@
             "version": "3.0.0"
         }
     }
-]
