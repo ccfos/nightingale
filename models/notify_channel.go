@@ -2,7 +2,6 @@ package models
 
 import (
 	"bytes"
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/tls"
@@ -373,6 +372,49 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	return client, nil
 }
 
+func (ncc *NotifyChannelConfig) makeHTTPRequest(httpConfig *HTTPRequestConfig, url string, headers map[string]string, parameters map[string]string, body []byte) (*http.Request, error) {
+	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v", err)
+		return nil, err
+	}
+
+	query := req.URL.Query()
+	// 设置请求头 腾讯云短信、语音特殊处理
+	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
+		headers = ncc.setTxHeader(headers, body)
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
+	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
+		req, err = http.NewRequest(httpConfig.Method, url, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
+	} else {
+		for key, value := range headers {
+			req.Header.Add(key, value)
+		}
+	}
+
+	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
+		for key, value := range parameters {
+			query.Add(key, value)
+		}
+	}
+
+	req.URL.RawQuery = query.Encode()
+	// 记录完整的请求信息
+	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
+
+	return req, nil
+}
+
 func (ncc *NotifyChannelConfig) makeFlashDutyRequest(url string, bodyBytes []byte, flashDutyChannelID int64) (*http.Request, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
 	if err != nil {
@@ -489,54 +531,21 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 	url, headers, parameters := ncc.replaceVariables(fullTpl)
 	logger.Infof("url: %v, headers: %v, parameters: %v", url, headers, parameters)
 
-	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
-	if err != nil {
-		logger.Errorf("failed to create request: %v, event: %v", err, events)
-		return "", err
-	}
-
-	query := req.URL.Query()
-	// 设置请求头 腾讯云短信、语音特殊处理
-	if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-		headers = ncc.setTxHeader(headers, body)
-		for key, value := range headers {
-			req.Header.Add(key, value)
-		}
-	} else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-		req, err = http.NewRequest(httpConfig.Method, url, nil)
-		if err != nil {
-			return "", err
-		}
-
-		query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
-		for key, value := range headers {
-			req.Header.Set(key, value)
-		}
-	} else {
-		for key, value := range headers {
-			req.Header.Add(key, value)
-		}
-	}
-
-	if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-		for key, value := range parameters {
-			query.Add(key, value)
-		}
-	}
-
-	req.URL.RawQuery = query.Encode()
-	// 记录完整的请求信息
-	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
-
 	// 重试机制
-	for i := 0; i <= httpConfig.RetryTimes; i++ {
+	var lastErrorMessage string
+	for i := 0; i < httpConfig.RetryTimes; i++ {
 		var resp *http.Response
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(httpConfig.Timeout)*time.Millisecond)
-		resp, err = client.Do(req.WithContext(ctx))
-		cancel() // 确保释放资源
+		req, err := ncc.makeHTTPRequest(httpConfig, url, headers, parameters, body)
 		if err != nil {
+			logger.Errorf("send_http: failed to create request. url=%s request_body=%s error=%v", url, string(body), err)
+			return fmt.Sprintf("failed to create request. error: %v", err), err
+		}
+
+		resp, err = client.Do(req)
+		if err != nil {
+			logger.Errorf("send_http: failed to send http notify. url=%s request_body=%s error=%v", url, string(body), err)
+			lastErrorMessage = err.Error()
 			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
-			logger.Errorf("send http request failed to send http notify: %v", err)
 			continue
 		}
 		defer resp.Body.Close()
@@ -544,11 +553,9 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		// 读取响应
 		body, err := io.ReadAll(resp.Body)
 		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(body))
-
 		if err != nil {
-			logger.Errorf("failed to send http notify: %v", err)
+			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
 		}
-
 		if resp.StatusCode == http.StatusOK {
 			return string(body), nil
 		}
@@ -556,8 +563,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		return "", fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
-	return "", err
-
+	return lastErrorMessage, errors.New("all retries failed, last error: " + lastErrorMessage)
 }
 
 // getAliQuery 获取阿里云API的查询参数和请求头
