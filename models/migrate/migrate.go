@@ -393,14 +393,13 @@ func addAutoIncrementPrimaryKey(db *gorm.DB) {
 			}
 		}
 
-		// 为 board_busigroup 表重构主键（分三步执行）
+		// 为 board_busigroup 表重构主键
 		if db.Migrator().HasTable("board_busigroup") && !db.Migrator().HasColumn("board_busigroup", "ii") {
-			err := db.Exec("ALTER TABLE `board_busigroup` DROP PRIMARY KEY").Error
-			if err != nil {
-				logger.Errorf("failed to drop primary key from board_busigroup: %v", err)
-			}
+			// 先尝试删除主键，忽略不存在的错误
+			db.Exec("ALTER TABLE `board_busigroup` DROP PRIMARY KEY")
 
-			err = db.Exec("ALTER TABLE `board_busigroup` ADD `ii` INT PRIMARY KEY AUTO_INCREMENT").Error
+			// 添加新的自增主键列
+			err := db.Exec("ALTER TABLE `board_busigroup` ADD COLUMN `ii` INT AUTO_INCREMENT PRIMARY KEY FIRST").Error
 			if err != nil {
 				logger.Errorf("failed to add new primary key to board_busigroup: %v", err)
 			}
