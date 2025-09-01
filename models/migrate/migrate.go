@@ -127,6 +127,9 @@ func MigrateTables(db *gorm.DB) error {
 	// 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
 	DropUniqueFiledLimit(db, &models.BuiltinMetric{}, "idx_collector_typ_name", "idx_collector_typ_name")
 
+	// 添加自增主键 ii 列到指定表
+	addAutoIncrementPrimaryKey(db)
+
 	return nil
 }
 
@@ -367,4 +370,36 @@ type NotifyChannelConfig struct {
 
 func (c *NotifyChannelConfig) TableName() string {
 	return "notify_channel"
+}
+
+// addAutoIncrementPrimaryKey 为指定表添加自增主键 ii 列
+func addAutoIncrementPrimaryKey(db *gorm.DB) {
+	// 只在 MySQL 数据库上执行这些操作
+	switch db.Dialector.(type) {
+	case *mysql.Dialector:
+		// 为 task_scheduler_health 表添加 ii 列作为主键
+		if db.Migrator().HasTable("task_scheduler_health") && !db.Migrator().HasColumn("task_scheduler_health", "ii") {
+			err := db.Exec("ALTER TABLE `task_scheduler_health` ADD `ii` INT PRIMARY KEY AUTO_INCREMENT").Error
+			if err != nil {
+				logger.Errorf("failed to add ii column to task_scheduler_health: %v", err)
+			}
+		}
+
+		// 为 board_payload 表添加 ii 列作为主键
+		if db.Migrator().HasTable("board_payload") && !db.Migrator().HasColumn("board_payload", "ii") {
+			err := db.Exec("ALTER TABLE `board_payload` ADD `ii` INT PRIMARY KEY AUTO_INCREMENT").Error
+			if err != nil {
+				logger.Errorf("failed to add ii column to board_payload: %v", err)
+			}
+		}
+
+		// 为 board_busigroup 表重构主键（添加 ii 列并重新设置主键）
+		if db.Migrator().HasTable("board_busigroup") && !db.Migrator().HasColumn("board_busigroup", "ii") {
+			err := db.Exec("ALTER TABLE `board_busigroup` ADD COLUMN `ii` INT NOT NULL AUTO_INCREMENT FIRST, DROP PRIMARY KEY, ADD PRIMARY KEY (`ii`)").Error
+			if err != nil {
+				logger.Errorf("failed to restructure primary key for board_busigroup: %v", err)
+			}
+		}
+	default:
+	}
 }
