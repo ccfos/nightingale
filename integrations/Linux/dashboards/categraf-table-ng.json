@@ -1,0 +1,299 @@
+{
+    "name": "Host Table NG",
+    "tags": "Categraf",
+    "ident": "",
+    "uuid": 1756720567064000,
+    "configs": {
+        "var": [
+            {
+                "name": "prom",
+                "label": "PROM",
+                "type": "datasource",
+                "hide": false,
+                "definition": "prometheus"
+            },
+            {
+                "name": "ident",
+                "label": "机器",
+                "type": "query",
+                "hide": false,
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(mem_free, ident)",
+                "multi": true,
+                "allOption": true
+            }
+        ],
+        "panels": [
+            {
+                "type": "tableNG",
+                "id": "306cab0d-f643-4d86-94d0-248fc05fd8a8",
+                "layout": {
+                    "h": 10,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "306cab0d-f643-4d86-94d0-248fc05fd8a8",
+                    "isResizable": true
+                },
+                "version": "3.1.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "cpu_usage_active{ident=~\"$ident\"}",
+                        "instant": true
+                    },
+                    {
+                        "expr": "100 - mem_available_percent{ident=~\"$ident\"}",
+                        "__mode__": "__query__",
+                        "refId": "B",
+                        "instant": true
+                    },
+                    {
+                        "expr": "disk_used_percent{path=\"/\", ident=~\"$ident\"}",
+                        "__mode__": "__query__",
+                        "refId": "C",
+                        "instant": true
+                    },
+                    {
+                        "expr": "categraf_info{ident=~\"$ident\"}",
+                        "__mode__": "__query__",
+                        "refId": "D",
+                        "instant": true
+                    }
+                ],
+                "transformationsNG": [
+                    {
+                        "id": "joinByField",
+                        "options": {
+                            "mode": "outer",
+                            "byField": "ident"
+                        }
+                    },
+                    {
+                        "id": "organize",
+                        "options": {
+                            "fields": [
+                                "ident",
+                                "__time_0",
+                                "__name___0",
+                                "cpu",
+                                "__value_#A",
+                                "__time_1",
+                                "__value_#B",
+                                "__time_2",
+                                "__name___2",
+                                "device",
+                                "fstype",
+                                "mode",
+                                "path",
+                                "__value_#C",
+                                "__time_3",
+                                "__name___3",
+                                "version",
+                                "__value_#D"
+                            ],
+                            "renameByName": {
+                                "ident": "机器",
+                                "__value_#A": "CPU利用率%",
+                                "__value_#B": "内存利用率%",
+                                "__value_#C": "根分区利用率%",
+                                "version": "Categraf Version"
+                            },
+                            "excludeByName": {
+                                "__time_0": true,
+                                "__name__": true,
+                                "agent_isp": true,
+                                "agent_region": true,
+                                "cpu": true,
+                                "env": true,
+                                "myenv": true,
+                                "__time_1": true,
+                                "__time_2": true,
+                                "__name___2": true,
+                                "device": true,
+                                "fstype": true,
+                                "mode": true,
+                                "path": true,
+                                "__name___0": true,
+                                "__value_#D": true,
+                                "__time_3": true,
+                                "__name___3": true
+                            },
+                            "indexByName": {
+                                "ident": 0,
+                                "version": 1,
+                                "__time_0": 2,
+                                "__name___0": 3,
+                                "agent_isp": 4,
+                                "agent_region": 5,
+                                "cpu": 6,
+                                "env": 7,
+                                "myenv": 8,
+                                "__value_#A": 9,
+                                "__time_1": 10,
+                                "__value_#B": 11,
+                                "__time_2": 12,
+                                "__name___2": 13,
+                                "device": 14,
+                                "fstype": 15,
+                                "mode": 16,
+                                "path": 17,
+                                "__value_#C": 18,
+                                "__time_3": 19,
+                                "__name___3": 20,
+                                "__value_#D": 21
+                            }
+                        }
+                    }
+                ],
+                "name": "机器表格样例",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "filterable": true,
+                    "cellOptions": {
+                        "type": "none",
+                        "wrapText": false
+                    }
+                },
+                "options": {
+                    "links": [
+                        {
+                            "title": "详情",
+                            "url": "/components/dashboard/detail?__uuid__=1737103014612000&ident=${ident}&prom=${prom}"
+                        }
+                    ],
+                    "standardOptions": {
+                        "decimals": 2
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "CPU利用率%"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "color-background",
+                                "mode": "lcd",
+                                "valueDisplayMode": "text"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(255, 101, 107)",
+                                        "value": 85,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgba(236, 210, 69, 1)",
+                                        "value": 70,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "valueMappings": [],
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2,
+                                "min": 0,
+                                "max": 100
+                            }
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "内存利用率%"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "gauge",
+                                "mode": "lcd",
+                                "valueDisplayMode": "text"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(255, 101, 107)",
+                                        "value": 80,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgba(236, 210, 69, 1)",
+                                        "value": 60,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2,
+                                "min": 0,
+                                "max": 100
+                            }
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "value": "根分区利用率%"
+                        },
+                        "properties": {
+                            "cellOptions": {
+                                "type": "gauge",
+                                "mode": "basic",
+                                "valueDisplayMode": "text"
+                            },
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "rgb(255, 101, 107)",
+                                        "value": 90,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgba(236, 210, 69, 1)",
+                                        "value": 60,
+                                        "type": ""
+                                    },
+                                    {
+                                        "color": "rgb(44, 157, 61)",
+                                        "value": null,
+                                        "type": "base"
+                                    }
+                                ]
+                            },
+                            "standardOptions": {
+                                "util": "percent",
+                                "decimals": 2,
+                                "min": 0,
+                                "max": 100
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "version": "3.1.0"
+    }
+}
