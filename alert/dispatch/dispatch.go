@@ -203,14 +203,14 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
 			}
 
-			if eventCopy == nil {
-				sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", "", errors.New("drop by processor"))
-				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
+			if e.NotifyHook(eventCopy, notifyRuleId) {
+				logger.Debugf("notify_id: %d, event:%+v, notify_hook return true", notifyRuleId, eventCopy)
 				continue
 			}
 
-			if e.NotifyHook(eventCopy, notifyRuleId) {
-				logger.Debugf("notify_id: %d, event:%+v, notify_hook return true", notifyRuleId, eventCopy)
+			if eventCopy == nil {
+				sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", "", errors.New("drop by processor"))
+				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
 				continue
 			}
 
