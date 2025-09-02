@@ -395,11 +395,23 @@ func addAutoIncrementPrimaryKey(db *gorm.DB) {
 
 		// 为 board_busigroup 表重构主键
 		if db.Migrator().HasTable("board_busigroup") && !db.Migrator().HasColumn("board_busigroup", "ii") {
-			// 先尝试删除主键，忽略不存在的错误
-			db.Exec("ALTER TABLE `board_busigroup` DROP PRIMARY KEY")
+			// 使用 SHOW KEYS 检查主键是否存在（权限要求更低）
+			var keyInfo []map[string]interface{}
+			err := db.Raw("SHOW KEYS FROM `board_busigroup` WHERE Key_name = 'PRIMARY'").Find(&keyInfo).Error
+			if err != nil {
+				logger.Errorf("failed to check primary key for board_busigroup: %v", err)
+			}
+
+			// 只有当主键存在时才删除
+			if len(keyInfo) > 0 {
+				err = db.Exec("ALTER TABLE `board_busigroup` DROP PRIMARY KEY").Error
+				if err != nil {
+					logger.Errorf("failed to drop primary key from board_busigroup: %v", err)
+				}
+			}
 
 			// 添加新的自增主键列
-			err := db.Exec("ALTER TABLE `board_busigroup` ADD COLUMN `ii` INT AUTO_INCREMENT PRIMARY KEY FIRST").Error
+			err = db.Exec("ALTER TABLE `board_busigroup` ADD COLUMN `ii` INT AUTO_INCREMENT PRIMARY KEY FIRST").Error
 			if err != nil {
 				logger.Errorf("failed to add new primary key to board_busigroup: %v", err)
 			}
