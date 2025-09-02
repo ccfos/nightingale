@@ -165,7 +165,8 @@
                     "links": [
                         {
                             "title": "详情",
-                            "url": "/components/dashboard/detail?__uuid__=1737103014612000&ident=${ident}&prom=${prom}"
+                            "url": "/components/dashboard/detail?__uuid__=1737103014612000&ident=${ident}&prom=${prom}",
+                            "targetBlank": true
                         }
                     ],
                     "standardOptions": {
