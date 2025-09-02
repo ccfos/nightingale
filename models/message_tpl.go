@@ -251,7 +251,7 @@ var NewTplMap = map[string]string{
 {{- end}}
 {{end}}
 {{$domain := "http://127.0.0.1:17000" }}
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | {{if ne $aggrkey ""}}[事件聚合]({{$domain}}/alert-his-events/aggr_detail?__aggr_key={{$aggrkey}}){{end}} | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -717,7 +717,7 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 }
 
 func GetAggrKey(events []*AlertCurEvent) string {
-	if len(events) == 0 {
+	if len(events) <= 1 {
 		return ""
 	}
 
