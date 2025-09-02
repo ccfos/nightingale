@@ -22,6 +22,8 @@ import (
 
 var FromAPIHook func()
 
+var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
+
 func Init(ctx *ctx.Context, fromAPI bool) {
 	go getDatasourcesFromDBLoop(ctx, fromAPI)
 }
@@ -98,6 +100,10 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 			if !foundDefaultDatasource && atomic.LoadInt64(&PromDefaultDatasourceId) != 0 {
 				logger.Debugf("no default datasource found")
 				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
+			}
+
+			if DatasourceProcessHook != nil {
+				dss = DatasourceProcessHook(dss)
 			}
 
 			PutDatasources(dss)
