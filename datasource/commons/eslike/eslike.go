@@ -19,11 +19,11 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-type FixedFiled string
+type FixedField string
 
 const (
-	FieldIndex FixedFiled = "_index"
-	FieldId    FixedFiled = "_id"
+	FieldIndex FixedField = "_index"
+	FieldId    FixedField = "_id"
 )
 
 type Query struct {
