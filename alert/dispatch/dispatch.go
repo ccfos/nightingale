@@ -632,6 +632,9 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 }
 
 func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, notifyTarget *NotifyTarget, isSubscribe bool) {
+	if len(event.NotifyRuleIds) > 0 {
+		return
+	}
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
