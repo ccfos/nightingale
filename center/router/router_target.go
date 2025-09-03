@@ -601,3 +601,10 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 
 	ginx.NewRender(c).Data(lst, nil)
 }
+
+func (rt *Router) targetUpdate(c *gin.Context) {
+	var f idents.TargetUpdate
+	ginx.BindJSON(c, &f)
+
+	ginx.NewRender(c).Message(rt.IdentSet.UpdateTargets(f.Lst, f.Now))
+}

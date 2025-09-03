@@ -18,7 +18,9 @@ import (
 // Return all, front-end search and paging
 func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
-	lst, err := models.AlertMuteGetsByBG(rt.Ctx, bgid)
+	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
+	query := ginx.QueryStr(c, "query", "")
+	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, -1, query)
 
 	ginx.NewRender(c).Data(lst, err)
 }
