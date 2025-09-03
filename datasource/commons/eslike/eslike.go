@@ -10,12 +10,20 @@ import (
 
 	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
-	"github.com/ccfos/nightingale/v6/memsto"
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
+)
+
+type FixedFiled string
+
+const (
+	FieldIndex FixedFiled = "_index"
+	FieldId    FixedFiled = "_id"
 )
 
 type Query struct {
@@ -37,6 +45,18 @@ type Query struct {
 
 	Timeout  int `json:"timeout" mapstructure:"timeout"`
 	MaxShard int `json:"max_shard" mapstructure:"max_shard"`
+
+	SearchAfter *SearchAfter `json:"search_after" mapstructure:"search_after"`
+}
+
+type SortFiled struct {
+	Field     string `json:"field" mapstructure:"field"`
+	Ascending bool   `json:"ascending" mapstructure:"ascending"`
+}
+
+type SearchAfter struct {
+	SortFields  []SortFiled   `json:"sort_fields" mapstructure:"sort_fields"`   // 指定排序字段, 一般是timestamp:desc, _index:asc, _id:asc 三者组合，构成唯一的排序字段
+	SearchAfter []interface{} `json:"search_after" mapstructure:"search_after"` // 指定排序字段的搜索值，搜索值必须和sort_fields的顺序一致，为上一次查询的最后一条日志的值
 }
 
 type MetricAggr struct {
@@ -611,14 +631,28 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	if param.MaxShard < 1 {
 		param.MaxShard = maxShard
 	}
-
+	// from+size 分页方式获取日志，受es 的max_result_window参数限制，默认最多返回1w条日志, 可以使用search_after方式获取更多日志
 	source := elastic.NewSearchSource().
 		TrackTotalHits(true).
 		Query(queryString).
-		From(param.P).
-		Size(param.Limit).
-		Sort(param.DateField, param.Ascending)
-
+		Size(param.Limit)
+	// 是否使用search_after方式
+	if param.SearchAfter != nil {
+		// 设置默认排序字段
+		if len(param.SearchAfter.SortFields) == 0 {
+			source = source.Sort(param.DateField, param.Ascending).Sort(string(FieldIndex), true).Sort(string(FieldId), true)
+		} else {
+			for _, field := range param.SearchAfter.SortFields {
+				source = source.Sort(field.Field, field.Ascending)
+			}
+		}
+		if len(param.SearchAfter.SearchAfter) > 0 {
+			source = source.SearchAfter(param.SearchAfter.SearchAfter...)
+		}
+		logger.Debugf("query searchAfter:%v", *param.SearchAfter)
+	} else {
+		source = source.From(param.P).Sort(param.DateField, param.Ascending)
+	}
 	result, err := search(ctx, indexArr, source, param.Timeout, param.MaxShard)
 	if err != nil {
 		logger.Warningf("query data error:%v", err)
