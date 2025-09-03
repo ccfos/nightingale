@@ -649,7 +649,6 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 		if len(param.SearchAfter.SearchAfter) > 0 {
 			source = source.SearchAfter(param.SearchAfter.SearchAfter...)
 		}
-		logger.Debugf("query searchAfter:%v", *param.SearchAfter)
 	} else {
 		source = source.From(param.P).Sort(param.DateField, param.Ascending)
 	}
