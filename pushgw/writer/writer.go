@@ -3,7 +3,9 @@ package writer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,7 +17,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/pstat"
-	"github.com/ccfos/nightingale/v6/pushgw/writer/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -52,8 +53,49 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 
 		return proto.Marshal(req)
 	}
+	// 如果是 json 格式，将 NaN 值的数据丢弃掉
+	return json.Marshal(filterNaNSamples(items))
+}
 
-	return json.MarshalWithCustomFloat(items)
+func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
+	// 早期检查：如果没有NaN值，直接返回原始数据
+	hasNaN := false
+	for i := range items {
+		for j := range items[i].Samples {
+			if math.IsNaN(items[i].Samples[j].Value) {
+				hasNaN = true
+				break
+			}
+		}
+		if hasNaN {
+			break
+		}
+	}
+
+	if !hasNaN {
+		return items
+	}
+
+	// 有NaN值时进行过滤，原地修改以减少内存分配
+	for i := range items {
+		samples := items[i].Samples
+		validCount := 0
+
+		// 原地过滤 samples，避免额外的内存分配
+		for j := range samples {
+			if !math.IsNaN(samples[j].Value) {
+				if validCount != j {
+					samples[validCount] = samples[j]
+				}
+				validCount++
+			}
+		}
+
+		// 保留所有时间序列，即使没有有效样本（此时Samples为空）
+		items[i].Samples = samples[:validCount]
+	}
+
+	return items
 }
 
 func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
