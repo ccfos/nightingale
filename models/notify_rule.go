@@ -1,7 +1,10 @@
 package models
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -40,11 +43,18 @@ type NotifyConfig struct {
 	ChannelID  int64                  `json:"channel_id"`  // 通知媒介(如：阿里云短信)
 	TemplateID int64                  `json:"template_id"` // 通知模板
 	Params     map[string]interface{} `json:"params"`      // 通知参数
+	Type       string                 `json:"type"`
 
 	Severities []int        `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
 	TimeRanges []TimeRanges `json:"time_ranges"` // 适用时段
 	LabelKeys  []TagFilter  `json:"label_keys"`  // 适用标签
 	Attributes []TagFilter  `json:"attributes"`  // 适用属性
+}
+
+func (n *NotifyConfig) Hash() string {
+	hash := sha256.New()
+	hash.Write([]byte(fmt.Sprintf("%d%d%v%s", n.ChannelID, n.TemplateID, n.Params, n.Type)))
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 type CustomParams struct {

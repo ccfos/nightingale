@@ -24,6 +24,15 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+var ShouldSkipNotify func(*ctx.Context, *models.AlertCurEvent, int64) bool
+var SendByNotifyRule func(*ctx.Context, *memsto.UserCacheType, *memsto.UserGroupCacheType, *memsto.NotifyChannelCacheType,
+	[]*models.AlertCurEvent, int64, *models.NotifyConfig, *models.NotifyChannelConfig, *models.MessageTemplate)
+
+func init() {
+	ShouldSkipNotify = shouldSkipNotify
+	SendByNotifyRule = SendNotifyRuleMessage
+}
+
 type Dispatch struct {
 	alertRuleCache      *memsto.AlertRuleCacheType
 	userCache           *memsto.UserCacheType
@@ -45,10 +54,8 @@ type Dispatch struct {
 	tpls             map[string]*template.Template
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
-	NotifyHook       func(*models.AlertCurEvent, int64) bool
-
-	ctx    *ctx.Context
-	Astats *astats.Stats
+	ctx              *ctx.Context
+	Astats           *astats.Stats
 
 	RwLock sync.RWMutex
 }
@@ -57,7 +64,7 @@ type Dispatch struct {
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
 	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
-	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
+	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, alerting aconf.Alerting, c *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:       alertRuleCache,
 		userCache:            userCache,
@@ -77,9 +84,8 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		tpls:             make(map[string]*template.Template),
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
-		NotifyHook:       func(*models.AlertCurEvent, int64) bool { return false },
 
-		ctx:    ctx,
+		ctx:    c,
 		Astats: astats,
 	}
 
@@ -203,24 +209,10 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
 			}
 
-			if e.NotifyHook(eventCopy, notifyRuleId) {
-				logger.Debugf("notify_id: %d, event:%+v, notify_hook return true", notifyRuleId, eventCopy)
+			if ShouldSkipNotify(e.ctx, eventCopy, notifyRuleId) {
+				logger.Infof("notify_id: %d, event:%+v, should skip notify", notifyRuleId, eventCopy)
 				continue
 			}
-
-			if eventCopy == nil {
-				sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", "", errors.New("drop by processor"))
-				// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
-				continue
-			}
-
-			if eventCopy.IsRecovered && eventCopy.NotifyRecovered == 0 {
-				// 如果 eventCopy 是恢复事件，且 NotifyRecovered 为 0，则不发送通知
-
-				continue
-			}
-
-			logger.Debugf("notify_id: %d, event:%+v, notify_hook return false", notifyRuleId, eventCopy)
 
 			// notify
 			for i := range notifyRule.NotifyConfigs {
@@ -245,10 +237,25 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					continue
 				}
 
-				go SendV2(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
 			}
 		}
 	}
+}
+
+func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleId int64) bool {
+	if event == nil {
+		sender.NotifyRecord(ctx, []*models.AlertCurEvent{event}, notifyRuleId, "", "", "", errors.New("drop by processor"))
+		// 如果 eventCopy 为 nil，说明 eventCopy 被 processor drop 掉了, 不再发送通知
+		return true
+	}
+
+	if event.IsRecovered && event.NotifyRecovered == 0 {
+		// 如果 eventCopy 是恢复事件，且 NotifyRecovered 为 0，则不发送通知
+		return true
+	}
+
+	return false
 }
 
 func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEvent) bool {
@@ -461,7 +468,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	return sendtos, flashDutyChannelIDs, customParams
 }
 
-func SendV2(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
+func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
 	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	if len(events) == 0 {
 		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
