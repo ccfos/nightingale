@@ -49,13 +49,13 @@ type Query struct {
 	SearchAfter *SearchAfter `json:"search_after" mapstructure:"search_after"`
 }
 
-type SortFiled struct {
+type SortField struct {
 	Field     string `json:"field" mapstructure:"field"`
 	Ascending bool   `json:"ascending" mapstructure:"ascending"`
 }
 
 type SearchAfter struct {
-	SortFields  []SortFiled   `json:"sort_fields" mapstructure:"sort_fields"`   // 指定排序字段, 一般是timestamp:desc, _index:asc, _id:asc 三者组合，构成唯一的排序字段
+	SortFields  []SortField   `json:"sort_fields" mapstructure:"sort_fields"`   // 指定排序字段, 一般是timestamp:desc, _index:asc, _id:asc 三者组合，构成唯一的排序字段
 	SearchAfter []interface{} `json:"search_after" mapstructure:"search_after"` // 指定排序字段的搜索值，搜索值必须和sort_fields的顺序一致，为上一次查询的最后一条日志的值
 }
 
