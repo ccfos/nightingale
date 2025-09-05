@@ -53,7 +53,7 @@ type NotifyConfig struct {
 
 func (n *NotifyConfig) Hash() string {
 	hash := sha256.New()
-	hash.Write([]byte(fmt.Sprintf("%d%d%v%s", n.ChannelID, n.TemplateID, n.Params, n.Type)))
+	hash.Write([]byte(fmt.Sprintf("%d%d%v%s%v%v%v%v", n.ChannelID, n.TemplateID, n.Params, n.Type, n.Severities, n.TimeRanges, n.LabelKeys, n.Attributes)))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 

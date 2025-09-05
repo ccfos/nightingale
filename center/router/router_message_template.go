@@ -196,6 +196,7 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 	var defs = []string{
 		"{{$events := .}}",
 		"{{$event := index . 0}}",
+		"{{$aggr_key := \"\"}}",
 	}
 	ret := make(map[string]string, len(req.Tpl.Content))
 	for k, v := range req.Tpl.Content {
