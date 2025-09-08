@@ -62,11 +62,11 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
-		recovered, dsIds, cates, ruleId, query)
+		recovered, dsIds, cates, ruleId, query, []int64{})
 	ginx.Dangerous(err)
 
 	list, err := models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered,
-		dsIds, cates, ruleId, query, limit, ginx.Offset(c, limit))
+		dsIds, cates, ruleId, query, limit, ginx.Offset(c, limit), []int64{})
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)

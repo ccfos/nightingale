@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/i18n"
 )
 
 // 获取事件Pipeline列表
@@ -139,12 +140,14 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	}
 	event := hisEvent.ToCur()
 
+	lang := c.GetHeader("X-Language")
+	var result string
 	for _, p := range f.PipelineConfig.ProcessorConfigs {
 		processor, err := models.GetProcessorByType(p.Typ, p.Config)
 		if err != nil {
 			ginx.Bomb(http.StatusBadRequest, "get processor: %+v err: %+v", p, err)
 		}
-		event, _, err = processor.Process(rt.Ctx, event)
+		event, result, err = processor.Process(rt.Ctx, event)
 		if err != nil {
 			ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
 		}
@@ -152,7 +155,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 		if event == nil {
 			ginx.NewRender(c).Data(map[string]interface{}{
 				"event":  event,
-				"result": "event is dropped",
+				"result": i18n.Sprintf(lang, "event is dropped"),
 			}, nil)
 			return
 		}
@@ -160,7 +163,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 
 	m := map[string]interface{}{
 		"event":  event,
-		"result": "",
+		"result": i18n.Sprintf(lang, result),
 	}
 	ginx.NewRender(c).Data(m, nil)
 }
@@ -188,9 +191,10 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 		ginx.Bomb(200, "processor err: %+v", err)
 	}
 
+	lang := c.GetHeader("X-Language")
 	ginx.NewRender(c).Data(map[string]interface{}{
 		"event":  event,
-		"result": res,
+		"result": i18n.Sprintf(lang, res),
 	}, nil)
 }
 
@@ -231,9 +235,10 @@ func (rt *Router) tryRunEventProcessorByNotifyRule(c *gin.Context) {
 				ginx.Bomb(http.StatusBadRequest, "processor: %+v err: %+v", p, err)
 			}
 			if event == nil {
+				lang := c.GetHeader("X-Language")
 				ginx.NewRender(c).Data(map[string]interface{}{
 					"event":  event,
-					"result": "event is dropped",
+					"result": i18n.Sprintf(lang, "event is dropped"),
 				}, nil)
 				return
 			}

@@ -544,6 +544,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-rule/custom-params", rt.auth(), rt.user(), rt.perm("/notification-rules"), rt.notifyRuleCustomParamsGet)
 		pages.POST("/notify-rule/event-pipelines-tryrun", rt.auth(), rt.user(), rt.perm("/notification-rules/add"), rt.tryRunEventProcessorByNotifyRule)
 
+		pages.GET("/event-tagkeys", rt.auth(), rt.user(), rt.eventTagKeys)
+		pages.GET("/event-tagvalues", rt.auth(), rt.user(), rt.eventTagValues)
+
 		// 事件Pipeline相关路由
 		pages.GET("/event-pipelines", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.eventPipelinesList)
 		pages.POST("/event-pipeline", rt.auth(), rt.user(), rt.perm("/event-pipelines/add"), rt.addEventPipeline)
