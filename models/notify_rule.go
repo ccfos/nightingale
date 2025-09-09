@@ -22,7 +22,7 @@ type NotifyRule struct {
 
 	// 通知配置
 	NotifyConfigs []NotifyConfig `json:"notify_configs" gorm:"serializer:json"`
-	ExtraConfig   interface{}    `json:"extra_config" gorm:"serializer:json"`
+	ExtraConfig   interface{}    `json:"extra_config,omitempty" gorm:"serializer:json"`
 
 	CreateAt int64  `json:"create_at"`
 	CreateBy string `json:"create_by"`
@@ -196,7 +196,12 @@ func (r *NotifyRule) Update(ctx *ctx.Context, ref NotifyRule) error {
 	if err != nil {
 		return err
 	}
-	return DB(ctx).Model(r).Select("*").Updates(ref).Error
+
+	db := DB(ctx).Model(r).Select("*")
+	if ref.ExtraConfig == nil {
+		db = db.Omit("ExtraConfig")
+	}
+	return db.Updates(ref).Error
 }
 
 func (r *NotifyRule) DB2FE() {
