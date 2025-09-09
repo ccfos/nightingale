@@ -148,6 +148,8 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 		if ds.AuthJson.BasicAuthUser != "" {
 			req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+		} else {
+			req.Header.Del("Authorization")
 		}
 
 		headerCount := len(ds.HTTPJson.Headers)
