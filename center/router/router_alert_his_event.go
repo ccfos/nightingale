@@ -118,6 +118,17 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 	ginx.NewRender(c).Message("Alert history events deletion started")
 }
 
+var TransferEventToCur func(*ctx.Context, *models.AlertHisEvent) *models.AlertCurEvent
+
+func init() {
+	TransferEventToCur = transferEventToCur
+}
+
+func transferEventToCur(ctx *ctx.Context, event *models.AlertHisEvent) *models.AlertCurEvent {
+	cur := event.ToCur()
+	return cur
+}
+
 func (rt *Router) alertHisEventGet(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := models.AlertHisEventGetById(rt.Ctx, eid)
@@ -142,7 +153,7 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	event.NotifyRules, err = GetEventNorifyRuleNames(rt.Ctx, event.NotifyRuleIds)
-	ginx.NewRender(c).Data(event, err)
+	ginx.NewRender(c).Data(TransferEventToCur(rt.Ctx, event), err)
 }
 
 func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, onlySelfGroupView bool, myGroups bool) ([]int64, error) {

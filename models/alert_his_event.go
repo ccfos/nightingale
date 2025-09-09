@@ -423,6 +423,9 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		NotifyChannelsJSON: e.NotifyChannelsJSON,
 		NotifyGroupsJSON:   e.NotifyGroupsJSON,
 		OriginalTagsJSON:   e.OriginalTagsJSON,
+		NotifyRuleIds:      e.NotifyRuleIds,
+		NotifyRules:        e.NotifyRules,
+		NotifyVersion:      e.NotifyVersion,
 	}
 
 	cur.SetTagsMap()
