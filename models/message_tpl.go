@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"regexp"
-	"sort"
 	"strings"
 	texttemplate "text/template"
 	"time"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/str"
 )
 
 // MessageTemplate 消息模板结构
@@ -716,19 +714,19 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
-func GetAggrKey(events []*AlertCurEvent) string {
-	if len(events) <= 1 {
-		return ""
-	}
+var GetDefs func(events []*AlertCurEvent) []string
 
-	ids := make([]string, 0)
-	for i := range len(events) {
-		ids = append(ids, fmt.Sprintf("%d", events[i].Id))
+func getDefs(events []*AlertCurEvent) []string {
+	return []string{
+		"{{ $events := . }}",
+		"{{ $event := index $events 0 }}",
+		"{{ $labels := $event.TagsMap }}",
+		"{{ $value := $event.TriggerValue }}",
 	}
-	sort.Strings(ids)
-	idsStr := strings.Join(ids, ",")
-	logger.Debugf("notify_hook aggr_key: %s, ids: %v", str.MD5(idsStr), ids)
-	return str.MD5(idsStr)
+}
+
+func init() {
+	GetDefs = getDefs
 }
 
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interface{} {
@@ -739,14 +737,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		var defs = []string{
-			"{{ $events := . }}",
-			"{{ $event := index $events 0 }}",
-			"{{ $labels := $event.TagsMap }}",
-			"{{ $value := $event.TriggerValue }}",
-		}
-
-		defs = append(defs, fmt.Sprintf("{{ $aggrkey := \"%s\" }}", GetAggrKey(events)))
+		defs := GetDefs(events)
 
 		var body bytes.Buffer
 		if t.NotifyChannelIdent == "email" {
