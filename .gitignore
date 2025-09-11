@@ -58,6 +58,7 @@ _test
 .idea
 .index
 .vscode
+.claude
 .DS_Store
 .cache-loader
 .payload
