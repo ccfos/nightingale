@@ -169,7 +169,7 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 
 		ds, err := datasource.GetDatasourceByType(typ, item.Settings)
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			logger.Debugf("get plugin:%+v fail: %v", item, err)
 			continue
 		}
 
