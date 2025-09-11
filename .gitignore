@@ -59,6 +59,7 @@ _test
 .index
 .vscode
 .issue
+.issue/*
 .cursor
 .claude
 .DS_Store
