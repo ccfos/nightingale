@@ -714,11 +714,11 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
-var GetDefs func(events []*AlertCurEvent) []string
+var GetDefs func(map[string]interface{}) []string
 
-func getDefs(events []*AlertCurEvent) []string {
+func getDefs(renderData map[string]interface{}) []string {
 	return []string{
-		"{{ $events := . }}",
+		"{{ $events := .events }}",
 		"{{ $event := index $events 0 }}",
 		"{{ $labels := $event.TagsMap }}",
 		"{{ $value := $event.TriggerValue }}",
@@ -734,10 +734,13 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 		return nil
 	}
 
+	renderData := make(map[string]interface{})
+	renderData["events"] = events
+
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		defs := GetDefs(events)
+		defs := GetDefs(renderData)
 
 		var body bytes.Buffer
 		if t.NotifyChannelIdent == "email" {
@@ -750,7 +753,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			}
 
 			var body bytes.Buffer
-			if err = tpl.Execute(&body, events); err != nil {
+			if err = tpl.Execute(&body, renderData); err != nil {
 				logger.Errorf("failed to execute template: %v", err)
 				tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 				continue
@@ -765,7 +768,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 				continue
 			}
 
-			if err = tpl.Execute(&body, events); err != nil {
+			if err = tpl.Execute(&body, renderData); err != nil {
 				logger.Errorf("failed to execute template: %v events: %v", err, events)
 				continue
 			}
@@ -786,7 +789,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			continue
 		}
 
-		if err = tpl.Execute(&body, events); err != nil {
+		if err = tpl.Execute(&body, renderData); err != nil {
 			logger.Errorf("failed to execute template: %v events: %v", err, events)
 			tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 			continue

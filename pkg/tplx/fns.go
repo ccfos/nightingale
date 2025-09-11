@@ -739,3 +739,25 @@ func JsonMarshal(v interface{}) template.HTML {
 	}
 	return template.HTML(string(json))
 }
+
+func MapDifference(firstMap, secondMap map[string]string) (map[string]string, error) {
+	// 创建结果 map
+	result := make(map[string]string)
+	// 遍历第一个 map，将不在第二个 map 中的键值对添加到结果中
+	for key, value := range firstMap {
+		if _, exists := secondMap[key]; !exists {
+			result[key] = value
+		}
+	}
+
+	return result, nil
+}
+
+func TagsMapToStr(m map[string]string) string {
+	strs := []string{}
+	for key, value := range m {
+		strs = append(strs, key+"="+value)
+	}
+	sort.Strings(strs)
+	return strings.Join(strs, ",")
+}
