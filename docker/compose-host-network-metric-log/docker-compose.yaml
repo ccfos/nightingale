@@ -6,6 +6,10 @@ services:
     container_name: mysql
     hostname: mysql
     restart: always
+    security_opt:
+      - no-new-privileges:true
+    security_opt:
+      - 'no-new-privileges:true'
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 1234
@@ -20,6 +24,8 @@ services:
     container_name: redis
     hostname: redis
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       TZ: Asia/Shanghai
     network_mode: host
@@ -29,6 +35,8 @@ services:
     container_name: prometheus
     hostname: prometheus
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       TZ: Asia/Shanghai
     volumes:
@@ -47,6 +55,8 @@ services:
     container_name: n9e
     hostname: n9e
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       GIN_MODE: release
       TZ: Asia/Shanghai
@@ -67,6 +77,8 @@ services:
     container_name: "categraf"
     hostname: "categraf01"
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       TZ: Asia/Shanghai
       HOST_PROC: /hostfs/proc
@@ -86,6 +98,8 @@ services:
     image: bitnami/zookeeper:3.9
     container_name: "zookeeper"
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - TZ=Asia/Shanghai
       - ALLOW_ANONYMOUS_LOGIN=yes
@@ -97,6 +111,8 @@ services:
     image: bitnami/kafka:3.4
     container_name: "kafka"
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       TZ: Asia/Shanghai
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
@@ -111,6 +127,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1    
     container_name: "elasticsearch"
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - TZ=Asia/Shanghai
       - discovery.type=single-node
@@ -122,6 +140,8 @@ services:
     image: docker.elastic.co/logstash/logstash:8.11.3
     container_name: "logstash"
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - TZ=Asia/Shanghai
       - LS_JAVA_OPTS=-Xmx256m -Xms256m
