@@ -53,6 +53,7 @@ type WriterOptions struct {
 	Url           string
 	BasicAuthUser string
 	BasicAuthPass string
+	AsyncWrite    bool // 如果有多个转发 writer，对应不重要的 writer，可以设置为 true，异步转发提供转发效率
 
 	Timeout               int64
 	DialTimeout           int64

@@ -262,6 +262,10 @@ func (ws *WritersType) isCriticalBackend(key string) bool {
 	// 使用类型断言判断
 	switch backend.(type) {
 	case WriterType:
+		if backend.(WriterType).Opts.AsyncWrite {
+			return false
+		}
+
 		// HTTP Writer 作为关键后端
 		return true
 	case KafkaWriterType:
