@@ -115,7 +115,7 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 			time.Sleep(100 * time.Millisecond) // 防止锁表
 		}
 	}()
-	ginx.NewRender(c).Message("Alert history events deletion started")
+	ginx.NewRender(c).Data("Alert history events deletion started", nil)
 }
 
 var TransferEventToCur func(*ctx.Context, *models.AlertHisEvent) *models.AlertCurEvent
