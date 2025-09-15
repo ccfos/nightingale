@@ -48,7 +48,7 @@ func CloseDB(db *gorm.DB) error {
 
 // ShowTables retrieves a list of all tables in the specified database
 func ShowTables(ctx context.Context, db *gorm.DB, query string) ([]string, error) {
-	var tables []string
+	tables := make([]string, 0)
 
 	rows, err := db.WithContext(ctx).Raw(query).Rows()
 	if err != nil {
