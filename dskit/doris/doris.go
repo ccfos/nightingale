@@ -138,7 +138,7 @@ func (d *Doris) ShowDatabases(ctx context.Context) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var databases []string
+	databases := make([]string, 0)
 	for rows.Next() {
 		var dbName string
 		if err := rows.Scan(&dbName); err != nil {
@@ -201,7 +201,7 @@ func (d *Doris) ShowResources(ctx context.Context, resourceType string) ([]strin
 	}
 
 	// 将 map 转换为切片
-	var resources []string
+	resources := make([]string, 0)
 	for name := range distinctName {
 		resources = append(resources, name)
 	}
@@ -226,7 +226,7 @@ func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, erro
 	}
 	defer rows.Close()
 
-	var tables []string
+	tables := make([]string, 0)
 	for rows.Next() {
 		var tableName string
 		if err := rows.Scan(&tableName); err != nil {
