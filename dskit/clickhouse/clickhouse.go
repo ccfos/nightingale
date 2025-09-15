@@ -129,9 +129,7 @@ func (c *Clickhouse) QueryRows(ctx context.Context, query string) (*sql.Rows, er
 
 // ShowDatabases lists all databases in Clickhouse
 func (c *Clickhouse) ShowDatabases(ctx context.Context) ([]string, error) {
-	var (
-		res []string
-	)
+	res := make([]string, 0)
 
 	rows, err := c.QueryRows(ctx, ShowDatabases)
 	if err != nil {
@@ -151,9 +149,7 @@ func (c *Clickhouse) ShowDatabases(ctx context.Context) ([]string, error) {
 
 // ShowTables lists all tables in a given database
 func (c *Clickhouse) ShowTables(ctx context.Context, database string) ([]string, error) {
-	var (
-		res []string
-	)
+	res := make([]string, 0)
 
 	showTables := fmt.Sprintf(ShowTables, database)
 	rows, err := c.QueryRows(ctx, showTables)
