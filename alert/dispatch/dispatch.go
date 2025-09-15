@@ -204,7 +204,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				eventCopy, res, err = processor.Process(e.ctx, eventCopy)
 				if eventCopy == nil {
 					logger.Warningf("after processor notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, "", "", res, errors.New("drop by processor"))
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", res, errors.New("drop by processor"))
 					break
 				}
 				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
@@ -254,7 +254,6 @@ func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleI
 		// 如果 eventCopy 是恢复事件，且 NotifyRecovered 为 0，则不发送通知
 		return true
 	}
-
 	return false
 }
 
