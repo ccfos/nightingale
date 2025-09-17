@@ -276,6 +276,7 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 // processNotifyTask 处理通知任务（仅处理 http 类型）
 func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 	httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
+	logger.Debugf("processNotifyTask: task: %+v", task)
 
 	// 现在只处理 http 类型，flashduty 保持直接发送
 	if task.NotifyChannel.RequestType == "http" {

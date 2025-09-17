@@ -12,8 +12,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
-	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 
 	"gorm.io/gorm"
 )
@@ -661,7 +661,7 @@ func CanMigrateBg(ctx *ctx.Context) bool {
 		return false
 	}
 	if cnt == 0 {
-		log.Println("target table is empty, skip migration.")
+		logger.Debug("target table is empty, skip migration.")
 		return false
 	}
 
