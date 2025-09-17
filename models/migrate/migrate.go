@@ -128,7 +128,7 @@ func MigrateTables(db *gorm.DB) error {
 	DropUniqueFiledLimit(db, &models.BuiltinMetric{}, "idx_collector_typ_name", "idx_collector_typ_name")
 
 	// 添加自增主键 ii 列到指定表
-	addAutoIncrementPrimaryKey(db)
+	// addAutoIncrementPrimaryKey(db)
 
 	return nil
 }
@@ -382,14 +382,6 @@ func addAutoIncrementPrimaryKey(db *gorm.DB) {
 			err := db.Exec("ALTER TABLE `task_scheduler_health` ADD `ii` INT PRIMARY KEY AUTO_INCREMENT").Error
 			if err != nil {
 				logger.Errorf("failed to add ii column to task_scheduler_health: %v", err)
-			}
-		}
-
-		// 为 board_payload 表添加 ii 列作为主键
-		if db.Migrator().HasTable("board_payload") && !db.Migrator().HasColumn("board_payload", "ii") {
-			err := db.Exec("ALTER TABLE `board_payload` ADD `ii` INT PRIMARY KEY AUTO_INCREMENT").Error
-			if err != nil {
-				logger.Errorf("failed to add ii column to board_payload: %v", err)
 			}
 		}
 
