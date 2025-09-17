@@ -987,6 +987,8 @@ func (ar *AlertRule) DB2FE() error {
 		return err
 	}
 
+	ar.FillSeverities()
+
 	return nil
 }
 

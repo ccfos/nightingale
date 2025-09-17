@@ -35,7 +35,6 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
-			ars[i].FillSeverities()
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -80,7 +79,6 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 		names := make([]string, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
-			ars[i].FillSeverities()
 
 			if len(ars[i].DatasourceQueries) != 0 {
 				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
