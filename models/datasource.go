@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 )
 
 type Datasource struct {
@@ -140,7 +141,7 @@ func (ds *Datasource) Update(ctx *ctx.Context, selectField interface{}, selectFi
 	if ds.UpdatedAt == 0 {
 		ds.UpdatedAt = time.Now().Unix()
 	}
-	return DB(ctx).Model(ds).Select(selectField, selectFields...).Updates(ds).Error
+	return DB(ctx).Model(ds).Session(&gorm.Session{SkipHooks: true}).Select(selectField, selectFields...).Updates(ds).Error
 }
 
 func (ds *Datasource) Add(ctx *ctx.Context) error {
