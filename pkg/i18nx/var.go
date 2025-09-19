@@ -77,6 +77,7 @@ var I18N = `{
     "event tag not match tag filter": "事件标签不匹配标签过滤器",
     "event attributes not match attributes filter": "事件属性不匹配属性过滤器",
     "failed to parse tag filter: %v": "解析标签过滤器失败: %v",
+    "Alert history events deletion started": "告警历史事件删除任务已启动",
 
     "Infrastructure": "基础设施",
     "Host - View": "机器 - 查看",
@@ -267,6 +268,7 @@ var I18N = `{
     "event tag not match tag filter": "事件標籤不匹配標籤過濾器",
     "event attributes not match attributes filter": "事件屬性不匹配屬性過濾器",
     "failed to parse tag filter: %v": "解析標籤過濾器失敗: %v",
+    "Alert history events deletion started": "告警歷史事件刪除任務已啟動",
 
     "Infrastructure": "基礎設施",
     "Host - View": "機器 - 查看",
@@ -454,6 +456,7 @@ var I18N = `{
     "event tag not match tag filter": "イベントタグがタグフィルタと一致しません",
     "event attributes not match attributes filter": "イベント属性が属性フィルタと一致しません",
     "failed to parse tag filter: %v": "タグフィルタの解析に失敗しました: %v",
+    "Alert history events deletion started": "アラート履歴イベントの削除タスクが開始されました",
 
     "Infrastructure": "インフラストラクチャ",
     "Host - View": "機器 - 閲覧",
@@ -641,6 +644,7 @@ var I18N = `{
     "event tag not match tag filter": "Теги события не соответствуют фильтру тегов",
     "event attributes not match attributes filter": "Атрибуты события не соответствуют фильтру атрибутов",
     "failed to parse tag filter: %v": "Не удалось разобрать фильтр тегов: %v",
+    "Alert history events deletion started": "Задача удаления исторических событий оповещений запущена",
 
     "Infrastructure": "Инфраструктура",
     "Host - View": "Хост - Просмотр",
