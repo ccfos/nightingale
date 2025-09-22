@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/redis/go-redis/v9"
 
@@ -969,5 +971,50 @@ func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
 		return errors.WithMessage(err, "failed to add user to groups")
 	}
 
+	return nil
+}
+
+// BeforeSave GORM钩子，在保存前执行
+func (u *User) BeforeSave(tx *gorm.DB) (err error) {
+	// 获取全局配置
+	config := conf.GetConfig()
+
+	// 检查是否启用了手机号加密
+	if config != nil && config.UserPhoneEncryption.Enabled && config.UserPhoneEncryption.Secret != "" {
+		// 对手机号进行加密
+		if u.Phone != "" {
+			encryptedPhone, err := secu.AesEncrypt([]byte(u.Phone), []byte(config.UserPhoneEncryption.Secret))
+			if err != nil {
+				return err
+			}
+			u.Phone = secu.BASE64StdEncode(encryptedPhone)
+		}
+	}
+	return nil
+}
+
+// AfterFind GORM钩子，在查询后执行
+func (u *User) AfterFind(tx *gorm.DB) (err error) {
+	// 获取全局配置
+	config := conf.GetConfig()
+
+	// 检查是否启用了手机号加密
+	if config != nil && config.UserPhoneEncryption.Enabled && config.UserPhoneEncryption.Secret != "" {
+		// 对手机号进行解密
+		if u.Phone != "" {
+			encryptedData, err := secu.BASE64StdDecode(u.Phone)
+			if err != nil {
+				// 如果解密失败，可能是未加密的数据，保持原样
+				return nil
+			}
+
+			decryptedPhone, err := secu.AesDecrypt(encryptedData, []byte(config.UserPhoneEncryption.Secret))
+			if err != nil {
+				// 如果解密失败，可能是未加密的数据，保持原样
+				return nil
+			}
+			u.Phone = string(decryptedPhone)
+		}
+	}
 	return nil
 }

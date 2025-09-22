@@ -3,8 +3,10 @@ package migrate
 import (
 	"fmt"
 
+	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	imodels "github.com/flashcatcloud/ibex/src/models"
 	"github.com/toolkits/pkg/logger"
@@ -15,6 +17,74 @@ import (
 func Migrate(db *gorm.DB) {
 	MigrateTables(db)
 	MigrateEsIndexPatternTable(db)
+	// 执行手机号加密迁移
+	MigratePhoneEncryption(db)
+}
+
+// MigratePhoneEncryption 当启用了加密配置时，对已有的用户手机号数据进行加密
+func MigratePhoneEncryption(db *gorm.DB) {
+	// 获取全局配置
+	config := conf.GetConfig()
+
+	// 检查是否启用了手机号加密功能
+	if config == nil || !config.UserPhoneEncryption.Enabled || config.UserPhoneEncryption.Secret == "" {
+		return
+	}
+
+	logger.Info("Start migrating user phone encryption...")
+
+	// 查询所有手机号不为空的用户
+	var users []models.User
+	if err := db.Where("phone != ?", "").Find(&users).Error; err != nil {
+		logger.Errorf("Failed to query users with phone numbers: %v", err)
+		return
+	}
+
+	// 获取加密密钥
+	secret := []byte(config.UserPhoneEncryption.Secret)
+
+	// 对每个用户的手机号进行加密
+	for _, user := range users {
+		// 检查手机号是否已经是加密格式（简单检查是否包含Base64字符）
+		if isEncrypted(user.Phone) {
+			continue
+		}
+
+		// 对手机号进行加密
+		encryptedPhone, err := secu.AesEncrypt([]byte(user.Phone), secret)
+		if err != nil {
+			logger.Errorf("Failed to encrypt phone for user %s: %v", user.Username, err)
+			continue
+		}
+
+		// 使用Base64编码加密后的数据
+		encodedPhone := secu.BASE64StdEncode(encryptedPhone)
+
+		// 更新数据库中的手机号字段
+		if err := db.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encodedPhone).Error; err != nil {
+			logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
+			continue
+		}
+
+		logger.Debugf("Successfully encrypted phone for user %s", user.Username)
+	}
+
+	logger.Info("User phone encryption migration completed.")
+}
+
+// isEncrypted 简单检查手机号是否已经是加密格式
+func isEncrypted(phone string) bool {
+	// 如果包含Base64字符且长度较长，可能是已加密的数据
+	if len(phone) > 20 && (len(phone)%4 == 0) {
+		for _, c := range phone {
+			if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=' {
+				continue
+			}
+			return false
+		}
+		return true
+	}
+	return false
 }
 
 func MigrateIbexTables(db *gorm.DB) {

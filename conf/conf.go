@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -15,6 +16,26 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 )
+
+// 全局配置变量和锁
+var (
+	globalConfig *ConfigType
+	configMutex  sync.RWMutex
+)
+
+// GetConfig 获取全局配置
+func GetConfig() *ConfigType {
+	configMutex.RLock()
+	defer configMutex.RUnlock()
+	return globalConfig
+}
+
+// SetConfig 设置全局配置
+func SetConfig(config *ConfigType) {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+	globalConfig = config
+}
 
 type ConfigType struct {
 	Global    GlobalConfig
@@ -28,6 +49,14 @@ type ConfigType struct {
 	Alert  aconf.Alert
 	Center cconf.Center
 	Ibex   Ibex
+
+	// 新增配置项：是否对用户手机号进行加密
+	UserPhoneEncryption UserPhoneEncryptionConfig `json:"user_phone_encryption"`
+}
+
+type UserPhoneEncryptionConfig struct {
+	Enabled bool   `json:"enabled"` // 是否启用手机号加密
+	Secret  string `json:"secret"`  // 加密密钥
 }
 
 type CenterApi struct {
@@ -87,6 +116,9 @@ func InitConfig(configDir, cryptoKey string) (*ConfigType, error) {
 	}
 
 	config.Alert.Heartbeat.Endpoint = fmt.Sprintf("%s:%d", config.Alert.Heartbeat.IP, config.HTTP.Port)
+
+	// 设置全局配置
+	SetConfig(config)
 
 	return config, nil
 }
