@@ -83,6 +83,7 @@ type AlertCurEvent struct {
 
 	NotifyVersion int                `json:"notify_version"  gorm:"-"` // 0: old, 1: new
 	NotifyRules   []*EventNotifyRule `json:"notify_rules" gorm:"-"`
+	RecoverTime   int64              `json:"recover_time" gorm:"-"`
 }
 
 type EventNotifyRule struct {

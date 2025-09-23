@@ -28,7 +28,6 @@ const (
 	Wecom             = "wecom"
 	Feishu            = "feishu"
 	FeishuCard        = "feishucard"
-	FeishuApp         = "feishuapp"
 	Discord           = "discord"
 	MattermostWebhook = "mattermostwebhook"
 	MattermostBot     = "mattermostbot"
