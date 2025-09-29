@@ -40,11 +40,12 @@ var (
 )
 
 const (
-	SALT            = "salt"
-	RSA_PRIVATE_KEY = "rsa_private_key"
-	RSA_PUBLIC_KEY  = "rsa_public_key"
-	RSA_PASSWORD    = "rsa_password"
-	JWT_SIGNING_KEY = "jwt_signing_key"
+	SALT                     = "salt"
+	RSA_PRIVATE_KEY          = "rsa_private_key"
+	RSA_PUBLIC_KEY           = "rsa_public_key"
+	RSA_PASSWORD             = "rsa_password"
+	JWT_SIGNING_KEY          = "jwt_signing_key"
+	PHONE_ENCRYPTION_ENABLED = "phone_encryption_enabled" // 手机号加密开关
 )
 
 func InitJWTSigningKey(ctx *ctx.Context) string {
@@ -196,6 +197,41 @@ func ConfigsGetFlashDutyAppKey(ctx *ctx.Context) (string, error) {
 		}
 	}
 	return configs[0].Cval, nil
+}
+
+// GetPhoneEncryptionEnabled 获取手机号加密是否开启
+func GetPhoneEncryptionEnabled(ctx *ctx.Context) (bool, error) {
+	val, err := ConfigsGet(ctx, PHONE_ENCRYPTION_ENABLED)
+	if err != nil {
+		return false, err
+	}
+	return val == "true" || val == "1", nil
+}
+
+// SetPhoneEncryptionEnabled 设置手机号加密开关
+func SetPhoneEncryptionEnabled(ctx *ctx.Context, enabled bool) error {
+	val := "false"
+	if enabled {
+		val = "true"
+	}
+	return ConfigsSet(ctx, PHONE_ENCRYPTION_ENABLED, val)
+}
+
+// GetRSAKeys 获取RSA密钥对
+func GetRSAKeys(ctx *ctx.Context) (privateKey []byte, publicKey []byte, password string, err error) {
+	privateKeyVal, err := ConfigsGet(ctx, RSA_PRIVATE_KEY)
+	if err != nil {
+		return nil, nil, "", errors.WithMessage(err, "failed to get RSA private key")
+	}
+	publicKeyVal, err := ConfigsGet(ctx, RSA_PUBLIC_KEY)
+	if err != nil {
+		return nil, nil, "", errors.WithMessage(err, "failed to get RSA public key")
+	}
+	passwordVal, err := ConfigsGet(ctx, RSA_PASSWORD)
+	if err != nil {
+		return nil, nil, "", errors.WithMessage(err, "failed to get RSA password")
+	}
+	return []byte(privateKeyVal), []byte(publicKeyVal), passwordVal, nil
 }
 
 func ConfigsSelectByCkey(ctx *ctx.Context, ckey string) ([]Configs, error) {
