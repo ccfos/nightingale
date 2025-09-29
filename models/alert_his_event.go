@@ -426,7 +426,6 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		NotifyRuleIds:      e.NotifyRuleIds,
 		NotifyRules:        e.NotifyRules,
 		NotifyVersion:      e.NotifyVersion,
-		RecoverTime:        e.RecoverTime,
 	}
 
 	cur.SetTagsMap()

@@ -75,13 +75,6 @@ Enable = true
 # open RSA
 OpenRSA = false
 
-# 用户手机号加密配置
-# [UserPhoneEncryption]
-# 是否启用手机号加密
-# Enabled = false
-# 加密密钥，建议使用16、24或32字节的密钥以支持AES-128、AES-192或AES-256
-# Secret = "0123456789abcdef0123456789abcdef"
-
 [DB]
 # mysql postgres sqlite
 DBType = "sqlite"

@@ -3,8 +3,8 @@ package migrate
 import (
 	"fmt"
 
-	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
@@ -23,15 +23,15 @@ func Migrate(db *gorm.DB) {
 
 // MigratePhoneEncryption 当启用了加密配置时，对已有的用户手机号数据进行加密
 func MigratePhoneEncryption(db *gorm.DB) {
-	// 获取全局配置
-	config := conf.GetConfig()
-
-	// 检查是否启用了手机号加密功能
-	if config == nil || !config.UserPhoneEncryption.Enabled || config.UserPhoneEncryption.Secret == "" {
+	// 获取加密配置从数据库
+	ctx := &ctx.Context{IsCenter: true}
+	enabled, err := models.GetPhoneEncryptionEnabled(ctx)
+	if err != nil || !enabled {
+		// 如果配置读取失败或未启用，直接返回
 		return
 	}
 
-	logger.Info("Start migrating user phone encryption...")
+	logger.Info("Start migrating user phone encryption using RSA...")
 
 	// 查询所有手机号不为空的用户
 	var users []models.User
@@ -40,8 +40,12 @@ func MigratePhoneEncryption(db *gorm.DB) {
 		return
 	}
 
-	// 获取加密密钥
-	secret := []byte(config.UserPhoneEncryption.Secret)
+	// 获取RSA密钥
+	_, publicKey, _, err := models.GetRSAKeys(ctx)
+	if err != nil {
+		logger.Errorf("Failed to get RSA keys: %v", err)
+		return
+	}
 
 	// 对每个用户的手机号进行加密
 	for _, user := range users {
@@ -51,17 +55,14 @@ func MigratePhoneEncryption(db *gorm.DB) {
 		}
 
 		// 对手机号进行加密
-		encryptedPhone, err := secu.AesEncrypt([]byte(user.Phone), secret)
+		encryptedPhone, err := secu.EncryptValue(user.Phone, publicKey)
 		if err != nil {
 			logger.Errorf("Failed to encrypt phone for user %s: %v", user.Username, err)
 			continue
 		}
 
-		// 使用Base64编码加密后的数据
-		encodedPhone := secu.BASE64StdEncode(encryptedPhone)
-
 		// 更新数据库中的手机号字段
-		if err := db.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encodedPhone).Error; err != nil {
+		if err := db.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encryptedPhone).Error; err != nil {
 			logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
 			continue
 		}

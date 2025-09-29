@@ -49,14 +49,6 @@ type ConfigType struct {
 	Alert  aconf.Alert
 	Center cconf.Center
 	Ibex   Ibex
-
-	// 新增配置项：是否对用户手机号进行加密
-	UserPhoneEncryption UserPhoneEncryptionConfig `json:"user_phone_encryption"`
-}
-
-type UserPhoneEncryptionConfig struct {
-	Enabled bool   `json:"enabled"` // 是否启用手机号加密
-	Secret  string `json:"secret"`  // 加密密钥
 }
 
 type CenterApi struct {
