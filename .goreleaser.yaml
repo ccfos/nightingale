@@ -9,7 +9,7 @@ snapshot:
 checksum:
   name_template: 'checksums.txt'
 changelog:
-  skip: true
+  use: github-native
 
 builds:
   - id: build
