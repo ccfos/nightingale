@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/redis/go-redis/v9"
 
@@ -968,5 +969,68 @@ func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
 		return errors.WithMessage(err, "failed to add user to groups")
 	}
 
+	return nil
+}
+
+// BeforeSave GORM钩子，在保存前执行
+func (u *User) BeforeSave(tx *gorm.DB) (err error) {
+	// 获取手机号加密配置从数据库
+	ctx := &ctx.Context{IsCenter: true}
+	enabled, err := GetPhoneEncryptionEnabled(ctx)
+	if err != nil {
+		// 如果配置读取失败，记录日志但不阻止保存
+		logger.Debugf("Failed to get phone encryption config: %v", err)
+		return nil
+	}
+
+	// 检查是否启用了手机号加密
+	if enabled && u.Phone != "" {
+		// 获取RSA密钥
+		_, publicKey, _, err := GetRSAKeys(ctx)
+		if err != nil {
+			logger.Debugf("Failed to get RSA keys for phone encryption: %v", err)
+			return nil
+		}
+
+		// 对手机号进行加密
+		encryptedPhone, err := secu.EncryptValue(u.Phone, publicKey)
+		if err != nil {
+			logger.Errorf("Failed to encrypt phone: %v", err)
+			return err
+		}
+		u.Phone = encryptedPhone
+	}
+	return nil
+}
+
+// AfterFind GORM钩子，在查询后执行
+func (u *User) AfterFind(tx *gorm.DB) (err error) {
+	// 获取手机号加密配置从数据库
+	ctx := &ctx.Context{IsCenter: true}
+	enabled, err := GetPhoneEncryptionEnabled(ctx)
+	if err != nil {
+		// 如果配置读取失败，记录日志但不阻止查询
+		logger.Debugf("Failed to get phone encryption config: %v", err)
+		return nil
+	}
+
+	// 检查是否启用了手机号加密
+	if enabled && u.Phone != "" {
+		// 获取RSA密钥
+		privateKey, _, password, err := GetRSAKeys(ctx)
+		if err != nil {
+			logger.Debugf("Failed to get RSA keys for phone decryption: %v", err)
+			return nil
+		}
+
+		// 对手机号进行解密
+		decryptedPhone, err := secu.Decrypt(u.Phone, privateKey, password)
+		if err != nil {
+			// 如果解密失败，可能是未加密的数据，保持原样
+			logger.Debugf("Failed to decrypt phone (may be unencrypted): %v", err)
+			return nil
+		}
+		u.Phone = decryptedPhone
+	}
 	return nil
 }
