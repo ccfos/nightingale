@@ -1037,10 +1037,3 @@ func (u *User) DecryptPhone() {
 	}
 	u.Phone = decryptedPhone
 }
-
-// DecryptPhones 批量解密用户手机号
-func DecryptPhones(users []*User) {
-	for _, user := range users {
-		user.DecryptPhone()
-	}
-}
