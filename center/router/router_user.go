@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 func (rt *Router) userBusiGroupsGets(c *gin.Context) {
@@ -256,63 +257,92 @@ func (rt *Router) installDateGet(c *gin.Context) {
 
 // usersPhoneEncrypt 统一手机号加密
 func (rt *Router) usersPhoneEncrypt(c *gin.Context) {
-	// 先启用手机号加密功能
-	err := models.SetPhoneEncryptionEnabled(rt.Ctx, true)
-	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("开启手机号加密功能失败: %v", err))
-		return
-	}
-
-	// 获取所有用户
 	users, err := models.UserGetAll(rt.Ctx)
 	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("获取用户列表失败: %v", err))
+		ginx.NewRender(c).Message(fmt.Errorf("get users failed: %v", err))
 		return
 	}
 
 	// 获取RSA密钥
 	_, publicKey, _, err := models.GetRSAKeys(rt.Ctx)
 	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("获取RSA密钥失败: %v", err))
+		ginx.NewRender(c).Message(fmt.Errorf("get RSA keys failed: %v", err))
+		return
+	}
+
+	// 先启用手机号加密功能
+	err = models.SetPhoneEncryptionEnabled(rt.Ctx, true)
+	if err != nil {
+		ginx.NewRender(c).Message(fmt.Errorf("enable phone encryption failed: %v", err))
+		return
+	}
+
+	// 刷新配置缓存
+	err = models.RefreshPhoneEncryptionCache(rt.Ctx)
+	if err != nil {
+		logger.Errorf("Failed to refresh phone encryption cache: %v", err)
+		// 回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, false)
+		ginx.NewRender(c).Message(fmt.Errorf("refresh cache failed: %v", err))
 		return
 	}
 
 	successCount := 0
 	failCount := 0
+	var failedUsers []string
 
-	// 对每个用户的手机号进行加密
-	for _, user := range users {
-		if user.Phone == "" {
-			continue
+	// 使用事务处理所有用户的手机号加密
+	err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		// 对每个用户的手机号进行加密
+		for _, user := range users {
+			if user.Phone == "" {
+				continue
+			}
+
+			// 检查是否已经加密
+			if isPhoneEncrypted(user.Phone) {
+				continue
+			}
+
+			// 对手机号进行加密
+			encryptedPhone, err := secu.EncryptValue(user.Phone, publicKey)
+			if err != nil {
+				logger.Errorf("Failed to encrypt phone for user %s: %v", user.Username, err)
+				failCount++
+				failedUsers = append(failedUsers, user.Username)
+				continue
+			}
+
+			// 直接更新数据库中的手机号字段（绕过GORM钩子）
+			err = tx.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encryptedPhone).Error
+			if err != nil {
+				logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
+				failCount++
+				failedUsers = append(failedUsers, user.Username)
+				continue
+			}
+
+			successCount++
+			logger.Debugf("Successfully encrypted phone for user %s", user.Username)
 		}
 
-		// 检查是否已经加密（简单检查是否包含Base64字符）
-		if isPhoneEncrypted(user.Phone) {
-			continue
+		// 如果有失败的用户，回滚事务
+		if failCount > 0 {
+			return fmt.Errorf("encrypt failed users: %d, failed users: %v", failCount, failedUsers)
 		}
 
-		// 对手机号进行加密
-		encryptedPhone, err := secu.EncryptValue(user.Phone, publicKey)
-		if err != nil {
-			logger.Errorf("Failed to encrypt phone for user %s: %v", user.Username, err)
-			failCount++
-			continue
-		}
+		return nil
+	})
 
-		// 直接更新数据库中的手机号字段（绕过GORM钩子）
-		err = models.DB(rt.Ctx).Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encryptedPhone).Error
-		if err != nil {
-			logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
-			failCount++
-			continue
-		}
-
-		successCount++
-		logger.Debugf("Successfully encrypted phone for user %s", user.Username)
+	if err != nil {
+		// 加密失败，回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, false)
+		models.RefreshPhoneEncryptionCache(rt.Ctx)
+		ginx.NewRender(c).Message(fmt.Errorf("encrypt phone failed: %v", err))
+		return
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"message":       "手机号加密操作完成",
 		"success_count": successCount,
 		"fail_count":    failCount,
 	}, nil)
@@ -323,76 +353,104 @@ func (rt *Router) usersPhoneDecrypt(c *gin.Context) {
 	// 先关闭手机号加密功能
 	err := models.SetPhoneEncryptionEnabled(rt.Ctx, false)
 	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("关闭手机号加密功能失败: %v", err))
+		ginx.NewRender(c).Message(fmt.Errorf("disable phone encryption failed: %v", err))
 		return
 	}
 
-	// 获取所有用户
-	users, err := models.UserGetAll(rt.Ctx)
+	// 刷新配置缓存
+	err = models.RefreshPhoneEncryptionCache(rt.Ctx)
 	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("获取用户列表失败: %v", err))
+		logger.Errorf("Failed to refresh phone encryption cache: %v", err)
+		// 回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, true)
+		ginx.NewRender(c).Message(fmt.Errorf("refresh cache failed: %v", err))
+		return
+	}
+
+	// 获取所有用户（此时加密开关已关闭，直接读取数据库原始数据）
+	var users []*models.User
+	err = models.DB(rt.Ctx).Find(&users).Error
+	if err != nil {
+		// 回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, true)
+		models.RefreshPhoneEncryptionCache(rt.Ctx)
+		ginx.NewRender(c).Message(fmt.Errorf("get users failed: %v", err))
 		return
 	}
 
 	// 获取RSA密钥
 	privateKey, _, password, err := models.GetRSAKeys(rt.Ctx)
 	if err != nil {
-		ginx.NewRender(c).Message(fmt.Errorf("获取RSA密钥失败: %v", err))
+		// 回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, true)
+		models.RefreshPhoneEncryptionCache(rt.Ctx)
+		ginx.NewRender(c).Message(fmt.Errorf("get RSA keys failed: %v", err))
 		return
 	}
 
 	successCount := 0
 	failCount := 0
+	var failedUsers []string
 
-	// 对每个用户的手机号进行解密
-	for _, user := range users {
-		if user.Phone == "" {
-			continue
+	// 使用事务处理所有用户的手机号解密
+	err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		// 对每个用户的手机号进行解密
+		for _, user := range users {
+			if user.Phone == "" {
+				continue
+			}
+
+			// 检查是否是加密的手机号
+			if !isPhoneEncrypted(user.Phone) {
+				continue
+			}
+
+			// 对手机号进行解密
+			decryptedPhone, err := secu.Decrypt(user.Phone, privateKey, password)
+			if err != nil {
+				logger.Errorf("Failed to decrypt phone for user %s: %v", user.Username, err)
+				failCount++
+				failedUsers = append(failedUsers, user.Username)
+				continue
+			}
+
+			// 直接更新数据库中的手机号字段（绕过GORM钩子）
+			err = tx.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", decryptedPhone).Error
+			if err != nil {
+				logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
+				failCount++
+				failedUsers = append(failedUsers, user.Username)
+				continue
+			}
+
+			successCount++
+			logger.Debugf("Successfully decrypted phone for user %s", user.Username)
 		}
 
-		// 检查是否是加密的手机号
-		if !isPhoneEncrypted(user.Phone) {
-			continue
+		// 如果有失败的用户，回滚事务
+		if failCount > 0 {
+			return fmt.Errorf("decrypt failed users: %d, failed users: %v", failCount, failedUsers)
 		}
 
-		// 对手机号进行解密
-		decryptedPhone, err := secu.Decrypt(user.Phone, privateKey, password)
-		if err != nil {
-			logger.Errorf("Failed to decrypt phone for user %s: %v", user.Username, err)
-			failCount++
-			continue
-		}
+		return nil
+	})
 
-		// 直接更新数据库中的手机号字段（绕过GORM钩子）
-		err = models.DB(rt.Ctx).Model(&models.User{}).Where("id = ?", user.Id).Update("phone", decryptedPhone).Error
-		if err != nil {
-			logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)
-			failCount++
-			continue
-		}
-
-		successCount++
-		logger.Debugf("Successfully decrypted phone for user %s", user.Username)
+	if err != nil {
+		// 解密失败，回滚配置
+		models.SetPhoneEncryptionEnabled(rt.Ctx, true)
+		models.RefreshPhoneEncryptionCache(rt.Ctx)
+		ginx.NewRender(c).Message(fmt.Errorf("decrypt phone failed: %v", err))
+		return
 	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"message":       "手机号解密操作完成",
 		"success_count": successCount,
 		"fail_count":    failCount,
 	}, nil)
 }
 
-// isPhoneEncrypted 简单检查手机号是否已经加密
+// isPhoneEncrypted 检查手机号是否已经加密
 func isPhoneEncrypted(phone string) bool {
-	// 如果包含Base64字符且长度较长，可能是已加密的数据
-	if len(phone) > 20 && (len(phone)%4 == 0) {
-		for _, c := range phone {
-			if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=' {
-				continue
-			}
-			return false
-		}
-		return true
-	}
-	return false
+	// 检查是否有 "enc:" 前缀标记
+	return len(phone) > 4 && phone[:4] == "enc:"
 }

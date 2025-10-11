@@ -277,10 +277,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/user/:id/password", rt.auth(), rt.user(), rt.perm("/users/put"), rt.userPasswordPut)
 		pages.DELETE("/user/:id", rt.auth(), rt.user(), rt.perm("/users/del"), rt.userDel)
 
-		// 手机号加密/解密接口
-		pages.POST("/users/phone/encrypt", rt.auth(), rt.admin(), rt.usersPhoneEncrypt)
-		pages.POST("/users/phone/decrypt", rt.auth(), rt.admin(), rt.usersPhoneDecrypt)
-
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
 		pages.DELETE("/metric-views", rt.auth(), rt.user(), rt.metricViewDel)
 		pages.POST("/metric-views", rt.auth(), rt.user(), rt.metricViewAdd)
@@ -680,6 +676,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/message-templates", rt.messageTemplateGets)
 
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
+
+			// 手机号加密/解密接口
+			service.POST("/users/phone/encrypt", rt.auth(), rt.admin(), rt.usersPhoneEncrypt)
+			service.POST("/users/phone/decrypt", rt.auth(), rt.admin(), rt.usersPhoneDecrypt)
 		}
 	}
 

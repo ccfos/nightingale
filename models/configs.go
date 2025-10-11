@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -47,6 +48,60 @@ const (
 	JWT_SIGNING_KEY          = "jwt_signing_key"
 	PHONE_ENCRYPTION_ENABLED = "phone_encryption_enabled" // 手机号加密开关
 )
+
+// 手机号加密配置缓存
+var (
+	phoneEncryptionCache struct {
+		sync.RWMutex
+		enabled    bool
+		privateKey []byte
+		publicKey  []byte
+		password   string
+		loaded     bool
+	}
+)
+
+// LoadPhoneEncryptionConfig 加载手机号加密配置到缓存
+func LoadPhoneEncryptionConfig(ctx *ctx.Context) error {
+	enabled, err := GetPhoneEncryptionEnabled(ctx)
+	if err != nil {
+		return errors.WithMessage(err, "failed to get phone encryption enabled")
+	}
+
+	privateKey, publicKey, password, err := GetRSAKeys(ctx)
+	if err != nil {
+		return errors.WithMessage(err, "failed to get RSA keys")
+	}
+
+	phoneEncryptionCache.Lock()
+	defer phoneEncryptionCache.Unlock()
+
+	phoneEncryptionCache.enabled = enabled
+	phoneEncryptionCache.privateKey = privateKey
+	phoneEncryptionCache.publicKey = publicKey
+	phoneEncryptionCache.password = password
+	phoneEncryptionCache.loaded = true
+
+	logger.Debugf("Phone encryption config loaded: enabled=%v", enabled)
+	return nil
+}
+
+// GetPhoneEncryptionConfigFromCache 从缓存获取手机号加密配置
+func GetPhoneEncryptionConfigFromCache() (enabled bool, publicKey []byte, privateKey []byte, password string, loaded bool) {
+	phoneEncryptionCache.RLock()
+	defer phoneEncryptionCache.RUnlock()
+
+	return phoneEncryptionCache.enabled,
+		phoneEncryptionCache.publicKey,
+		phoneEncryptionCache.privateKey,
+		phoneEncryptionCache.password,
+		phoneEncryptionCache.loaded
+}
+
+// RefreshPhoneEncryptionCache 刷新缓存（在修改配置后调用）
+func RefreshPhoneEncryptionCache(ctx *ctx.Context) error {
+	return LoadPhoneEncryptionConfig(ctx)
+}
 
 func InitJWTSigningKey(ctx *ctx.Context) string {
 	val, err := ConfigsGet(ctx, JWT_SIGNING_KEY)

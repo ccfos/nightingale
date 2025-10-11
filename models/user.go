@@ -163,6 +163,10 @@ func (u *User) Verify() error {
 		return errors.New("Email invalid")
 	}
 
+	if u.Phone != "" {
+		return u.EncryptPhone()
+	}
+
 	return nil
 }
 
@@ -322,6 +326,7 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 
 	lst[0].RolesLst = strings.Fields(lst[0].Roles)
 	lst[0].Admin = lst[0].IsAdmin()
+	lst[0].DecryptPhone() // 解密手机号
 
 	return lst[0], nil
 }
@@ -336,6 +341,7 @@ func UsersGet(ctx *ctx.Context, where string, args ...interface{}) ([]*User, err
 	for _, user := range lst {
 		user.RolesLst = strings.Fields(user.Roles)
 		user.Admin = user.IsAdmin()
+		user.DecryptPhone() // 解密手机号
 	}
 
 	return lst, nil
@@ -593,6 +599,7 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime in
 		users[i].RolesLst = strings.Fields(users[i].Roles)
 		users[i].Admin = users[i].IsAdmin()
 		users[i].Password = ""
+		users[i].DecryptPhone() // 解密手机号
 
 		// query for user group information
 		var userGroupIDs []int64
@@ -634,6 +641,7 @@ func UserGetAll(ctx *ctx.Context) ([]*User, error) {
 		for i := 0; i < len(lst); i++ {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
+			lst[i].DecryptPhone() // 解密手机号
 		}
 	}
 	return lst, err
@@ -650,6 +658,7 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 		for i := 0; i < len(lst); i++ {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
+			lst[i].DecryptPhone() // 解密手机号
 		}
 	}
 
@@ -972,65 +981,67 @@ func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
 	return nil
 }
 
-// BeforeSave GORM钩子，在保存前执行
-func (u *User) BeforeSave(tx *gorm.DB) (err error) {
-	// 获取手机号加密配置从数据库
-	ctx := &ctx.Context{IsCenter: true}
-	enabled, err := GetPhoneEncryptionEnabled(ctx)
-	if err != nil {
-		// 如果配置读取失败，记录日志但不阻止保存
-		logger.Debugf("Failed to get phone encryption config: %v", err)
+func (u *User) EncryptPhone() (err error) {
+	// 从缓存获取手机号加密配置
+	enabled, publicKey, _, _, loaded := GetPhoneEncryptionConfigFromCache()
+	if !loaded {
+		// 如果缓存未加载，记录日志但不阻止保存
+		logger.Infof("Phone encryption config cache not loaded, user: %s", u.Username)
 		return nil
 	}
 
 	// 检查是否启用了手机号加密
 	if enabled && u.Phone != "" {
-		// 获取RSA密钥
-		_, publicKey, _, err := GetRSAKeys(ctx)
-		if err != nil {
-			logger.Debugf("Failed to get RSA keys for phone encryption: %v", err)
+		// 检查手机号是否已经加密（避免重复加密）
+		if len(u.Phone) > 4 && u.Phone[:4] == "enc:" {
+			// 已经加密，跳过
 			return nil
 		}
 
 		// 对手机号进行加密
 		encryptedPhone, err := secu.EncryptValue(u.Phone, publicKey)
 		if err != nil {
-			logger.Errorf("Failed to encrypt phone: %v", err)
-			return err
+			logger.Warningf("Failed to encrypt phone: %v, user: %s", err, u.Username)
+			return nil
 		}
+
 		u.Phone = encryptedPhone
 	}
 	return nil
 }
 
-// AfterFind GORM钩子，在查询后执行
-func (u *User) AfterFind(tx *gorm.DB) (err error) {
-	// 获取手机号加密配置从数据库
-	ctx := &ctx.Context{IsCenter: true}
-	enabled, err := GetPhoneEncryptionEnabled(ctx)
+// DecryptPhone 解密用户手机号（如果已加密）
+func (u *User) DecryptPhone() {
+	if u.Phone == "" {
+		return
+	}
+
+	// 检查手机号是否是加密格式（有 "enc:" 前缀）
+	if len(u.Phone) <= 4 || u.Phone[:4] != "enc:" {
+		// 不是加密格式，不需要解密
+		return
+	}
+
+	// 从缓存获取手机号加密配置
+	enabled, _, privateKey, password, loaded := GetPhoneEncryptionConfigFromCache()
+	if !loaded || !enabled {
+		// 如果缓存未加载或未启用加密，不解密
+		return
+	}
+
+	// 对手机号进行解密
+	decryptedPhone, err := secu.Decrypt(u.Phone, privateKey, password)
 	if err != nil {
-		// 如果配置读取失败，记录日志但不阻止查询
-		logger.Debugf("Failed to get phone encryption config: %v", err)
-		return nil
+		// 如果解密失败，记录错误但保持原样
+		logger.Warningf("Failed to decrypt phone for user %s: %v", u.Username, err)
+		return
 	}
+	u.Phone = decryptedPhone
+}
 
-	// 检查是否启用了手机号加密
-	if enabled && u.Phone != "" {
-		// 获取RSA密钥
-		privateKey, _, password, err := GetRSAKeys(ctx)
-		if err != nil {
-			logger.Debugf("Failed to get RSA keys for phone decryption: %v", err)
-			return nil
-		}
-
-		// 对手机号进行解密
-		decryptedPhone, err := secu.Decrypt(u.Phone, privateKey, password)
-		if err != nil {
-			// 如果解密失败，可能是未加密的数据，保持原样
-			logger.Debugf("Failed to decrypt phone (may be unencrypted): %v", err)
-			return nil
-		}
-		u.Phone = decryptedPhone
+// DecryptPhones 批量解密用户手机号
+func DecryptPhones(users []*User) {
+	for _, user := range users {
+		user.DecryptPhone()
 	}
-	return nil
 }
