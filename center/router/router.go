@@ -676,6 +676,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/message-templates", rt.messageTemplateGets)
 
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
+
+			// 手机号加密存储配置接口
+			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)
+			service.POST("/users/phone/decrypt", rt.usersPhoneDecrypt)
 		}
 	}
 
