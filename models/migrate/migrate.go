@@ -261,6 +261,7 @@ type BoardBusigroup struct {
 type Users struct {
 	Belong         string `gorm:"column:belong;varchar(16);default:'';comment:belong"`
 	LastActiveTime int64  `gorm:"column:last_active_time;type:int;default:0;comment:last_active_time"`
+	Phone          string `gorm:"column:phone;type:varchar(1024);not null;default:''"`
 }
 
 type SsoConfig struct {
