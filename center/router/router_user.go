@@ -299,12 +299,10 @@ func (rt *Router) usersPhoneEncrypt(c *gin.Context) {
 				continue
 			}
 
-			// 检查是否已经加密
 			if isPhoneEncrypted(user.Phone) {
 				continue
 			}
 
-			// 对手机号进行加密
 			encryptedPhone, err := secu.EncryptValue(user.Phone, publicKey)
 			if err != nil {
 				logger.Errorf("Failed to encrypt phone for user %s: %v", user.Username, err)
@@ -313,7 +311,6 @@ func (rt *Router) usersPhoneEncrypt(c *gin.Context) {
 				continue
 			}
 
-			// 直接更新数据库中的手机号字段（绕过GORM钩子）
 			err = tx.Model(&models.User{}).Where("id = ?", user.Id).Update("phone", encryptedPhone).Error
 			if err != nil {
 				logger.Errorf("Failed to update phone for user %s: %v", user.Username, err)

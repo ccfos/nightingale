@@ -998,7 +998,6 @@ func (u *User) EncryptPhone() (err error) {
 			return nil
 		}
 
-		// 对手机号进行加密
 		encryptedPhone, err := secu.EncryptValue(u.Phone, publicKey)
 		if err != nil {
 			logger.Warningf("Failed to encrypt phone: %v, user: %s", err, u.Username)
