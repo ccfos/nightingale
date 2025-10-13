@@ -245,6 +245,26 @@ func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, op
 	return lst, err
 }
 
+func TargetGetsAllByOptions(ctx *ctx.Context, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
+	var lst []*Target
+
+	order = validateOrderField(order, "ident")
+
+	if desc {
+		order += " desc"
+	} else {
+		order += " asc"
+	}
+
+	err := buildTargetWhere(ctx, options...).Order(order).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+		}
+	}
+	return lst, err
+}
+
 // 根据 groupids, tags, hosts 查询 targets
 func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) ([]*Target, error) {
 	var lst []*Target

@@ -2,9 +2,11 @@ package router
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,26 +58,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	hosts := queryStrListField(c, "hosts", ",", " ", "\n")
 
-	var err error
-	if len(bgids) > 0 {
-		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
-		if !(len(bgids) == 1 && bgids[0] == 0) {
-			for _, gid := range bgids {
-				rt.bgroCheck(c, gid)
-			}
-		}
-	} else {
-		user := c.MustGet("user").(*models.User)
-		if !user.IsAdmin() {
-			// 如果是非 admin 用户，全部对象的情况，找到用户有权限的业务组
-			var err error
-			bgids, err = models.MyBusiGroupIds(rt.Ctx, user.Id)
-			ginx.Dangerous(err)
-
-			// 将未分配业务组的对象也加入到列表中
-			bgids = append(bgids, 0)
-		}
-	}
+	bgids = rt.resolveTargetBgids(c, bgids)
 
 	options := []models.BuildTargetWhereOption{
 		models.BuildTargetWhereWithBgids(bgids),
@@ -91,61 +74,109 @@ func (rt *Router) targetGets(c *gin.Context) {
 		ginx.Offset(c, limit), order, desc, options...)
 	ginx.Dangerous(err)
 
-	tgs, err := models.TargetBusiGroupsGetAll(rt.Ctx)
-	ginx.Dangerous(err)
-
-	for _, t := range list {
-		t.GroupIds = tgs[t.Ident]
-	}
-
-	if err == nil {
-		now := time.Now()
-		cache := make(map[int64]*models.BusiGroup)
-
-		var keys []string
-		for i := 0; i < len(list); i++ {
-			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
-			keys = append(keys, models.WrapIdent(list[i].Ident))
-
-			if now.Unix()-list[i].UpdateAt < 60 {
-				list[i].TargetUp = 2
-			} else if now.Unix()-list[i].UpdateAt < 180 {
-				list[i].TargetUp = 1
-			}
-		}
-
-		if len(keys) > 0 {
-			metaMap := make(map[string]*models.HostMeta)
-			vals := storage.MGet(context.Background(), rt.Redis, keys)
-			for _, value := range vals {
-				var meta models.HostMeta
-				if value == nil {
-					continue
-				}
-				err := json.Unmarshal(value, &meta)
-				if err != nil {
-					logger.Warningf("unmarshal %v host meta failed: %v", value, err)
-					continue
-				}
-				metaMap[meta.Hostname] = &meta
-			}
-
-			for i := 0; i < len(list); i++ {
-				if meta, ok := metaMap[list[i].Ident]; ok {
-					list[i].FillMeta(meta)
-				} else {
-					// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
-					list[i].CpuNum = -1
-				}
-			}
-		}
-
-	}
+	ginx.Dangerous(rt.populateTargetDetails(list))
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+func (rt *Router) targetExport(c *gin.Context) {
+	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
+	query := ginx.QueryStr(c, "query", "")
+	downtime := ginx.QueryInt64(c, "downtime", 0)
+	dsIds := queryDatasourceIds(c)
+	order := ginx.QueryStr(c, "order", "ident")
+	desc := ginx.QueryBool(c, "desc", false)
+	hosts := queryStrListField(c, "hosts", ",", " ", "\n")
+
+	bgids = rt.resolveTargetBgids(c, bgids)
+
+	options := []models.BuildTargetWhereOption{
+		models.BuildTargetWhereWithBgids(bgids),
+		models.BuildTargetWhereWithDsIds(dsIds),
+		models.BuildTargetWhereWithQuery(query),
+		models.BuildTargetWhereWithDowntime(downtime),
+		models.BuildTargetWhereWithHosts(hosts),
+	}
+
+	list, err := models.TargetGetsAllByOptions(rt.Ctx, order, desc, options...)
+	ginx.Dangerous(err)
+
+	ginx.Dangerous(rt.populateTargetDetails(list))
+
+	filename := fmt.Sprintf("targets_%s.csv", time.Now().Format("20060102150405"))
+	c.Writer.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	c.Writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.Writer.WriteHeaderNow()
+
+	if _, err := c.Writer.Write([]byte{0xEF, 0xBB, 0xBF}); err != nil {
+		logger.Warningf("write utf-8 bom failed: %v", err)
+	}
+
+	writer := csv.NewWriter(c.Writer)
+	defer writer.Flush()
+
+	header := []string{
+		"ident", "host_ip", "note", "business_groups", "tags", "host_tags",
+		"engine_name", "agent_version", "os", "cpu_num", "cpu_util", "mem_util",
+		"remote_addr", "update_at",
+	}
+	if err := writer.Write(header); err != nil {
+		logger.Warningf("write csv header failed: %v", err)
+		return
+	}
+
+	const timeLayout = "2006-01-02 15:04:05"
+
+	for _, target := range list {
+		updateAt := ""
+		if target.UpdateAt > 0 {
+			updateAt = time.Unix(target.UpdateAt, 0).Format(timeLayout)
+		}
+
+		cpuNum := ""
+		if target.CpuNum >= 0 {
+			cpuNum = strconv.Itoa(target.CpuNum)
+		}
+
+		cpuUtil := ""
+		if target.CpuUtil != 0 {
+			cpuUtil = fmt.Sprintf("%.2f", target.CpuUtil)
+		}
+
+		memUtil := ""
+		if target.MemUtil != 0 {
+			memUtil = fmt.Sprintf("%.2f", target.MemUtil)
+		}
+
+		row := []string{
+			target.Ident,
+			target.HostIp,
+			target.Note,
+			strings.Join(target.GroupNames, ";"),
+			strings.Join(target.TagsJSON, " "),
+			strings.Join(target.HostTags, " "),
+			target.EngineName,
+			target.AgentVersion,
+			target.OS,
+			cpuNum,
+			cpuUtil,
+			memUtil,
+			target.RemoteAddr,
+			updateAt,
+		}
+
+		if err := writer.Write(row); err != nil {
+			logger.Warningf("write csv row failed: %v", err)
+			return
+		}
+	}
+
+	if err := writer.Error(); err != nil {
+		logger.Warningf("flush csv writer failed: %v", err)
+	}
 }
 
 func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
@@ -246,6 +277,99 @@ func (rt *Router) targetBindTags(f targetTagsForm, failedIdents map[string]strin
 	}
 
 	return failedIdents, nil
+}
+
+func (rt *Router) populateTargetDetails(list []*models.Target) error {
+	if len(list) == 0 {
+		return nil
+	}
+
+	tgs, err := models.TargetBusiGroupsGetAll(rt.Ctx)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	cache := make(map[int64]*models.BusiGroup)
+	keys := make([]string, 0, len(list))
+
+	for _, target := range list {
+		target.GroupIds = tgs[target.Ident]
+
+		if now.Unix()-target.UpdateAt < 60 {
+			target.TargetUp = 2
+		} else if now.Unix()-target.UpdateAt < 180 {
+			target.TargetUp = 1
+		}
+
+		if err := target.FillGroup(rt.Ctx, cache); err != nil {
+			return err
+		}
+
+		if len(target.GroupObjs) > 0 {
+			names := make([]string, 0, len(target.GroupObjs))
+			for _, group := range target.GroupObjs {
+				if group != nil {
+					names = append(names, group.Name)
+				}
+			}
+			target.GroupNames = names
+		} else {
+			target.GroupNames = nil
+		}
+
+		keys = append(keys, models.WrapIdent(target.Ident))
+	}
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	metaMap := make(map[string]*models.HostMeta)
+	vals := storage.MGet(context.Background(), rt.Redis, keys)
+	for _, value := range vals {
+		if value == nil {
+			continue
+		}
+		var meta models.HostMeta
+		if err := json.Unmarshal(value, &meta); err != nil {
+			logger.Warningf("unmarshal %v host meta failed: %v", value, err)
+			continue
+		}
+		metaMap[meta.Hostname] = &meta
+	}
+
+	for _, target := range list {
+		if meta, ok := metaMap[target.Ident]; ok {
+			target.FillMeta(meta)
+		} else {
+			// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
+			target.CpuNum = -1
+		}
+	}
+
+	return nil
+}
+
+func (rt *Router) resolveTargetBgids(c *gin.Context, bgids []int64) []int64 {
+	if len(bgids) > 0 {
+		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
+		if !(len(bgids) == 1 && bgids[0] == 0) {
+			for _, gid := range bgids {
+				rt.bgroCheck(c, gid)
+			}
+		}
+		return bgids
+	}
+
+	user := c.MustGet("user").(*models.User)
+	if !user.IsAdmin() {
+		ids, err := models.MyBusiGroupIds(rt.Ctx, user.Id)
+		ginx.Dangerous(err)
+		bgids = append(ids, 0)
+	}
+
+	return bgids
 }
 
 func (rt *Router) validateTags(tags []string) error {
