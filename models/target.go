@@ -228,6 +228,10 @@ func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, er
 
 func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
 	var lst []*Target
+
+	// SQL injection protection: validate order parameter with comprehensive checks
+	order = validateOrderField(order, "ident")
+
 	if desc {
 		order += " desc"
 	} else {

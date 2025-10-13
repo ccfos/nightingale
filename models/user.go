@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -555,6 +556,64 @@ func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, e
 	return num, nil
 }
 
+var (
+	// 预编译正则表达式，避免重复编译
+	whitespaceRegex = regexp.MustCompile(`\s+`)
+	validOrderRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
+
+	// 危险关键词集合，使用map提高查找效率
+	dangerousKeywords = map[string]bool{
+		"union": true, "select": true, "insert": true, "update": true, "delete": true,
+		"drop": true, "alter": true, "create": true, "exec": true, "execute": true,
+		"script": true, "javascript": true, "updatexml": true, "concat": true, "char": true,
+		"having": true, "group_concat": true, "information_schema": true, "sleep": true,
+		"benchmark": true, "load_file": true, "outfile": true, "dumpfile": true, "into": true,
+		"from": true, "where": true,
+	}
+)
+
+// validateOrderField 验证排序字段，防止SQL注入
+func validateOrderField(order string, defaultField string) string {
+	// 空值检查
+	if order == "" {
+		return defaultField
+	}
+
+	// 长度检查
+	if len(order) > 64 {
+		logger.Warningf("SQL injection attempt detected: order field too long (%d chars)", len(order))
+		return defaultField
+	}
+
+	// 移除所有空白字符
+	order = whitespaceRegex.ReplaceAllString(order, "")
+	if order == "" {
+		return defaultField
+	}
+
+	// 检查危险字符
+	orderLower := strings.ToLower(order)
+	if strings.ContainsAny(order, "();'\"` --/*\\=+-*/><|&^~") ||
+		strings.Contains(orderLower, "0x") || strings.Contains(orderLower, "0b") {
+		logger.Warningf("SQL injection attempt detected: contains dangerous characters")
+		return defaultField
+	}
+
+	// 检查危险关键词
+	if dangerousKeywords[orderLower] {
+		logger.Warningf("SQL injection attempt detected: contains dangerous keyword '%s'", orderLower)
+		return defaultField
+	}
+
+	// 使用正则表达式验证格式：只允许字母开头的字段名，可选择性包含表名
+	if !validOrderRegex.MatchString(order) {
+		logger.Warningf("SQL injection attempt detected: invalid order field format")
+		return defaultField
+	}
+
+	return order
+}
+
 func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
 	order string, desc bool, usernames, phones, emails []string) ([]User, error) {
 
@@ -563,6 +622,9 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime in
 	if stime != 0 && etime != 0 {
 		session = session.Where("last_active_time between ? and ?", stime, etime)
 	}
+
+	// SQL injection protection: validate order parameter with comprehensive checks
+	order = validateOrderField(order, "username")
 
 	if desc {
 		order = order + " desc"
