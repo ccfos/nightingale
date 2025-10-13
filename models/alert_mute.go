@@ -230,7 +230,7 @@ func AlertMuteGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertMu
 	return lst[0], err
 }
 
-func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, query string) (lst []AlertMute, err error) {
+func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, expired int, query string) (lst []AlertMute, err error) {
 	session := DB(ctx)
 
 	if bgid != -1 {
@@ -246,6 +246,15 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, q
 			session = session.Where("disabled = 0")
 		} else {
 			session = session.Where("disabled = 1")
+		}
+	}
+
+	if expired != -1 {
+		now := time.Now().Unix()
+		if expired == 1 {
+			session = session.Where("mute_time_type = ? AND etime < ?", TimeRange, now)
+		} else {
+			session = session.Where("(mute_time_type = ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now, Periodic)
 		}
 	}
 
