@@ -215,30 +215,58 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				continue
 			}
 
-			// notify
-			for i := range notifyRule.NotifyConfigs {
-				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
-				if err != nil {
-					logger.Errorf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
-					continue
-				}
-
-				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
-				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
+			sendByConfig := func(cfg *models.NotifyConfig) bool {
+				notifyChannel := e.notifyChannelCache.Get(cfg.ChannelID)
+				messageTemplate := e.messageTemplateCache.Get(cfg.TemplateID)
 				if notifyChannel == nil {
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
-					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
-					continue
+					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", cfg.ChannelID), "", "", errors.New("notify_channel not found"))
+					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy, cfg.ChannelID, cfg.TemplateID)
+					return false
 				}
 
 				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
-					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, notifyRule.NotifyConfigs[i].TemplateID)
+					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, cfg.TemplateID)
 					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
+					return false
+				}
 
+				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, cfg, notifyChannel, messageTemplate)
+				return true
+			}
+
+			matched := false
+			defaultIndexes := make([]int, 0)
+
+			for i := range notifyRule.NotifyConfigs {
+				cfg := &notifyRule.NotifyConfigs[i]
+				if cfg.IsDefault {
+					defaultIndexes = append(defaultIndexes, i)
 					continue
 				}
 
-				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+				if err := NotifyRuleMatchCheck(cfg, eventCopy); err != nil {
+					logger.Infof("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, match skipped: %v", notifyRuleId, eventCopy, cfg.ChannelID, cfg.TemplateID, cfg, err)
+					continue
+				}
+
+				matched = true
+				sendByConfig(cfg)
+			}
+
+			if !matched && len(defaultIndexes) > 0 {
+				for _, idx := range defaultIndexes {
+					cfg := &notifyRule.NotifyConfigs[idx]
+					if err := NotifyRuleMatchCheck(cfg, eventCopy); err != nil {
+						logger.Warningf("notify_id: %d, event:%+v, default notify_config:%+v, err:%v", notifyRuleId, eventCopy, cfg, err)
+						continue
+					}
+					matched = true
+					sendByConfig(cfg)
+				}
+			}
+
+			if !matched {
+				logger.Errorf("notify_id: %d, event:%+v, no notify_config matched", notifyRuleId, eventCopy)
 			}
 		}
 	}
