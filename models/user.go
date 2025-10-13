@@ -560,16 +560,6 @@ var (
 	// 预编译正则表达式，避免重复编译
 	whitespaceRegex = regexp.MustCompile(`\s+`)
 	validOrderRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
-
-	// 危险关键词集合，使用map提高查找效率
-	dangerousKeywords = map[string]bool{
-		"union": true, "select": true, "insert": true, "update": true, "delete": true,
-		"drop": true, "alter": true, "create": true, "exec": true, "execute": true,
-		"script": true, "javascript": true, "updatexml": true, "concat": true, "char": true,
-		"having": true, "group_concat": true, "information_schema": true, "sleep": true,
-		"benchmark": true, "load_file": true, "outfile": true, "dumpfile": true, "into": true,
-		"from": true, "where": true,
-	}
 )
 
 // validateOrderField 验证排序字段，防止SQL注入
@@ -593,15 +583,9 @@ func validateOrderField(order string, defaultField string) string {
 
 	// 检查危险字符
 	orderLower := strings.ToLower(order)
-	if strings.ContainsAny(order, "();'\"` --/*\\=+-*/><|&^~") ||
+	if strings.ContainsAny(order, "();,'\"` --/*\\=+-*/><|&^~") ||
 		strings.Contains(orderLower, "0x") || strings.Contains(orderLower, "0b") {
 		logger.Warningf("SQL injection attempt detected: contains dangerous characters")
-		return defaultField
-	}
-
-	// 检查危险关键词
-	if dangerousKeywords[orderLower] {
-		logger.Warningf("SQL injection attempt detected: contains dangerous keyword '%s'", orderLower)
 		return defaultField
 	}
 
