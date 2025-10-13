@@ -562,7 +562,6 @@ var (
 	validOrderRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
 )
 
-// validateOrderField 验证排序字段，防止SQL注入
 func validateOrderField(order string, defaultField string) string {
 	// 空值检查
 	if order == "" {
@@ -607,7 +606,6 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime in
 		session = session.Where("last_active_time between ? and ?", stime, etime)
 	}
 
-	// SQL injection protection: validate order parameter with comprehensive checks
 	order = validateOrderField(order, "username")
 
 	if desc {
