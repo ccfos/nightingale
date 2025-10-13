@@ -67,6 +67,13 @@ func init() {
 		PluginType:     "pgsql",
 		PluginTypeName: "PostgreSQL",
 	}
+
+	DatasourceTypes[7] = DatasourceType{
+		Id:             7,
+		Category:       "timeseries",
+		PluginType:     "mongodb",
+		PluginTypeName: "MongoDB",
+	}
 }
 
 type NewDatasrouceFn func(settings map[string]interface{}) (Datasource, error)
