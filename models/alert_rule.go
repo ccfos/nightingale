@@ -32,6 +32,7 @@ const (
 	POSTGRESQL    = "pgsql"
 	DORIS         = "doris"
 	OPENSEARCH    = "opensearch"
+	MONGODB       = "mongodb"
 
 	CLICKHOUSE = "ck"
 )
