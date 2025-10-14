@@ -192,6 +192,15 @@ var I18N = `{
     "View Alerting Engines": "查看告警引擎列表",
     "View Product Version": "查看产品版本",
 
+    "Some alert rules still in the BusiGroup": "业务组中仍有告警规则",
+    "Some alert mutes still in the BusiGroup": "业务组中仍有屏蔽规则",
+    "Some alert subscribes still in the BusiGroup": "业务组中仍有订阅规则",
+    "Some Board still in the BusiGroup": "业务组中仍有仪表盘",
+    "Some targets still in the BusiGroup": "业务组中仍有监控对象",
+    "Some recording rules still in the BusiGroup": "业务组中仍有记录规则",
+    "Some recovery scripts still in the BusiGroup": "业务组中仍有自愈脚本",
+    "Some target busigroups still in the BusiGroup": "业务组中仍有监控对象",
+
     "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
@@ -387,6 +396,15 @@ var I18N = `{
     "View Alerting Engines": "查看告警引擎列表",
     "View Product Version": "查看產品版本",
 
+    "Some alert rules still in the BusiGroup": "業務組中仍有告警規則",
+    "Some alert mutes still in the BusiGroup": "業務組中仍有屏蔽規則",
+    "Some alert subscribes still in the BusiGroup": "業務組中仍有訂閱規則",
+    "Some Board still in the BusiGroup": "業務組中仍有儀表板",
+    "Some targets still in the BusiGroup": "業務組中仍有監控對象",
+    "Some recording rules still in the BusiGroup": "業務組中仍有記錄規則",
+    "Some recovery scripts still in the BusiGroup": "業務組中仍有自愈腳本",
+    "Some target busigroups still in the BusiGroup": "業務組中仍有監控對象",
+
     "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
@@ -579,6 +597,15 @@ var I18N = `{
     "View Alerting Engines": "アラートエンジンの表示",
     "View Product Version": "製品のバージョンを見る",
 
+    "Some alert rules still in the BusiGroup": "ビジネスグループにまだアラートルールがあります",
+    "Some alert mutes still in the BusiGroup": "ビジネスグループにまだミュートルールがあります",
+    "Some alert subscribes still in the BusiGroup": "ビジネスグループにまだサブスクライブルールがあります",
+    "Some Board still in the BusiGroup": "ビジネスグループにまだダッシュボードがあります",
+    "Some targets still in the BusiGroup": "ビジネスグループにまだ監視対象があります",
+    "Some recording rules still in the BusiGroup": "ビジネスグループにまだ記録ルールがあります",
+    "Some recovery scripts still in the BusiGroup": "ビジネスグループにまだ自己回復スクリプトがあります",
+    "Some target busigroups still in the BusiGroup": "ビジネスグループにまだ監視対象があります",
+
     "---------ja_JP--------": "---------ja_JP--------"
   },
   "ru_RU": {
@@ -770,6 +797,15 @@ var I18N = `{
     "View SSO Settings": "Просмотр настроек единого входа",
     "View Alerting Engines": "Просмотр списка алертинг-инженеров",
     "View Product Version": "Просмотр версии продукта",
+
+    "Some alert rules still in the BusiGroup": "В бизнес-группе еще есть правила оповещений",
+    "Some alert mutes still in the BusiGroup": "В бизнес-группе еще есть правила отключения оповещений",
+    "Some alert subscribes still in the BusiGroup": "В бизнес-группе еще есть правила подписки",
+    "Some Board still in the BusiGroup": "В бизнес-группе еще есть панели мониторинга",
+    "Some targets still in the BusiGroup": "В бизнес-группе еще есть объекты мониторинга",
+    "Some recording rules still in the BusiGroup": "В бизнес-группе еще есть правила записи",
+    "Some recovery scripts still in the BusiGroup": "В бизнес-группе еще есть скрипты самоисцеления",
+    "Some target busigroups still in the BusiGroup": "В бизнес-группе еще есть объекты мониторинга",
 
     "---------ru_RU--------": "---------ru_RU--------"
   }
