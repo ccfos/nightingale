@@ -62,6 +62,11 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+func (rt *Router) activeAlertMuteGets(c *gin.Context) {
+	lst, err := models.AlertMuteGetsAll(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}
+
 func (rt *Router) alertMuteAdd(c *gin.Context) {
 
 	var f models.AlertMute
