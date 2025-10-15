@@ -127,7 +127,7 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 
 func AlertHisEventTotal(
 	ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64, severity int,
-	recovered int, dsIds []int64, cates []string, ruleId int64, query string) (int64, error) {
+	recovered int, dsIds []int64, cates []string, ruleId int64, query string, eventIds []int64) (int64, error) {
 	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) > 0 {
@@ -158,6 +158,10 @@ func AlertHisEventTotal(
 		session = session.Where("rule_id = ?", ruleId)
 	}
 
+	if len(eventIds) > 0 {
+		session = session.Where("id in ?", eventIds)
+	}
+
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -171,7 +175,7 @@ func AlertHisEventTotal(
 
 func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
 	severity int, recovered int, dsIds []int64, cates []string, ruleId int64, query string,
-	limit, offset int) ([]AlertHisEvent, error) {
+	limit, offset int, eventIds []int64) ([]AlertHisEvent, error) {
 	session := DB(ctx).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) != 0 {
@@ -200,6 +204,10 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 
 	if ruleId > 0 {
 		session = session.Where("rule_id = ?", ruleId)
+	}
+
+	if len(eventIds) > 0 {
+		session = session.Where("id in ?", eventIds)
 	}
 
 	if query != "" {
@@ -415,6 +423,10 @@ func (e *AlertHisEvent) ToCur() *AlertCurEvent {
 		NotifyChannelsJSON: e.NotifyChannelsJSON,
 		NotifyGroupsJSON:   e.NotifyGroupsJSON,
 		OriginalTagsJSON:   e.OriginalTagsJSON,
+		NotifyRuleIds:      e.NotifyRuleIds,
+		NotifyRules:        e.NotifyRules,
+		NotifyVersion:      e.NotifyVersion,
+		RecoverTime:        e.RecoverTime,
 	}
 
 	cur.SetTagsMap()

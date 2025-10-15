@@ -35,13 +35,12 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
-			ars[i].FillSeverities()
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
 }
 
-func getAlertCueEventTimeRange(c *gin.Context) (stime, etime int64) {
+func GetAlertCueEventTimeRange(c *gin.Context) (stime, etime int64) {
 	stime = ginx.QueryInt64(c, "stime", 0)
 	etime = ginx.QueryInt64(c, "etime", 0)
 	if etime == 0 {
@@ -80,7 +79,6 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 		names := make([]string, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
-			ars[i].FillSeverities()
 
 			if len(ars[i].DatasourceQueries) != 0 {
 				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
@@ -90,7 +88,7 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 			names = append(names, ars[i].UpdateBy)
 		}
 
-		stime, etime := getAlertCueEventTimeRange(c)
+		stime, etime := GetAlertCueEventTimeRange(c)
 		cnt := models.AlertCurEventCountByRuleId(rt.Ctx, rids, stime, etime)
 		if cnt != nil {
 			for i := 0; i < len(ars); i++ {
@@ -290,6 +288,15 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 				models.DataSourceQueryAll,
 			}
 		}
+
+		// 将导入的规则统一转为新版本的通知规则配置
+		lst[i].NotifyVersion = 1
+		lst[i].NotifyChannelsJSON = []string{}
+		lst[i].NotifyGroupsJSON = []string{}
+		lst[i].NotifyChannels = ""
+		lst[i].NotifyGroups = ""
+		lst[i].Callbacks = ""
+		lst[i].CallbacksJSON = []string{}
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")

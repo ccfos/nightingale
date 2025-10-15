@@ -193,10 +193,9 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 		events[i] = he.ToCur()
 	}
 
-	var defs = []string{
-		"{{$events := .}}",
-		"{{$event := index . 0}}",
-	}
+	renderData := make(map[string]interface{})
+	renderData["events"] = events
+	defs := models.GetDefs(renderData)
 	ret := make(map[string]string, len(req.Tpl.Content))
 	for k, v := range req.Tpl.Content {
 		text := strings.Join(append(defs, v), "")
@@ -207,7 +206,7 @@ func (rt *Router) eventsMessage(c *gin.Context) {
 		}
 
 		var buf bytes.Buffer
-		err = tpl.Execute(&buf, events)
+		err = tpl.Execute(&buf, renderData)
 		if err != nil {
 			ret[k] = err.Error()
 			continue

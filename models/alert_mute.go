@@ -20,7 +20,7 @@ type TagFilter struct {
 	Key    string              `json:"key"`   // tag key
 	Func   string              `json:"func"`  // `==` | `=~` | `in` | `!=` | `!~` | `not in`
 	Op     string              `json:"op"`    // `==` | `=~` | `in` | `!=` | `!~` | `not in`
-	Value  string              `json:"value"` // tag value
+	Value  interface{}         `json:"value"` // tag value
 	Regexp *regexp.Regexp      // parse value to regexp if func = '=~' or '!~'
 	Vset   map[string]struct{} // parse value to regexp if func = 'in' or 'not in'
 }
@@ -46,15 +46,59 @@ func ParseTagFilter(bFilters []TagFilter) ([]TagFilter, error) {
 	var err error
 	for i := 0; i < len(bFilters); i++ {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
-			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			// 这里存在两个情况，一个是 string 一个是 int
+			var pattern string
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				pattern = v
+			case int:
+				pattern = strconv.Itoa(v)
+			default:
+				return nil, fmt.Errorf("unsupported value type for regex: %T", v)
+			}
+			bFilters[i].Regexp, err = regexp.Compile(pattern)
 			if err != nil {
 				return nil, err
 			}
 		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
-			arr := strings.Fields(bFilters[i].Value)
+			// 这里存在两个情况，一个是 string 一个是[]int
 			bFilters[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				bFilters[i].Vset[arr[j]] = struct{}{}
+
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				// 处理字符串情况
+				arr := strings.Fields(v)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
+			case []int:
+				// 处理[]int情况
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[strconv.Itoa(v[j])] = struct{}{}
+				}
+			case []string:
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[v[j]] = struct{}{}
+				}
+			case []interface{}:
+				// 处理[]interface{}情况（JSON解析可能产生）
+				for j := 0; j < len(v); j++ {
+					switch item := v[j].(type) {
+					case string:
+						bFilters[i].Vset[item] = struct{}{}
+					case int:
+						bFilters[i].Vset[strconv.Itoa(item)] = struct{}{}
+					case float64:
+						bFilters[i].Vset[strconv.Itoa(int(item))] = struct{}{}
+					}
+				}
+			default:
+				// 兜底处理，转为字符串
+				str := fmt.Sprintf("%v", v)
+				arr := strings.Fields(str)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
 			}
 		}
 	}
@@ -73,15 +117,54 @@ func GetTagFilters(jsonArr ormx.JSONArr) ([]TagFilter, error) {
 	}
 	for i := 0; i < len(bFilters); i++ {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
-			bFilters[i].Regexp, err = regexp.Compile(bFilters[i].Value)
+			var pattern string
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				pattern = v
+			case int:
+				pattern = strconv.Itoa(v)
+			default:
+				return nil, fmt.Errorf("unsupported value type for regex: %T", v)
+			}
+			bFilters[i].Regexp, err = regexp.Compile(pattern)
 			if err != nil {
 				return nil, err
 			}
 		} else if bFilters[i].Func == "in" || bFilters[i].Func == "not in" {
-			arr := strings.Fields(bFilters[i].Value)
 			bFilters[i].Vset = make(map[string]struct{})
-			for j := 0; j < len(arr); j++ {
-				bFilters[i].Vset[arr[j]] = struct{}{}
+
+			// 在GetTagFilters中，Value通常是string类型，但也要处理其他可能的类型
+			switch v := bFilters[i].Value.(type) {
+			case string:
+				// 处理字符串情况
+				arr := strings.Fields(v)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
+			case []int:
+				// 处理[]int情况
+				for j := 0; j < len(v); j++ {
+					bFilters[i].Vset[strconv.Itoa(v[j])] = struct{}{}
+				}
+			case []interface{}:
+				// 处理[]interface{}情况（JSON解析可能产生）
+				for j := 0; j < len(v); j++ {
+					switch item := v[j].(type) {
+					case string:
+						bFilters[i].Vset[item] = struct{}{}
+					case int:
+						bFilters[i].Vset[strconv.Itoa(item)] = struct{}{}
+					case float64:
+						bFilters[i].Vset[strconv.Itoa(int(item))] = struct{}{}
+					}
+				}
+			default:
+				// 兜底处理，转为字符串
+				str := fmt.Sprintf("%v", v)
+				arr := strings.Fields(str)
+				for j := 0; j < len(arr); j++ {
+					bFilters[i].Vset[arr[j]] = struct{}{}
+				}
 			}
 		}
 	}
@@ -147,7 +230,7 @@ func AlertMuteGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertMu
 	return lst[0], err
 }
 
-func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, query string) (lst []AlertMute, err error) {
+func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, expired int, query string) (lst []AlertMute, err error) {
 	session := DB(ctx)
 
 	if bgid != -1 {
@@ -163,6 +246,15 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, q
 			session = session.Where("disabled = 0")
 		} else {
 			session = session.Where("disabled = 1")
+		}
+	}
+
+	if expired != -1 {
+		now := time.Now().Unix()
+		if expired == 1 {
+			session = session.Where("mute_time_type = ? AND etime < ?", TimeRange, now)
+		} else {
+			session = session.Where("(mute_time_type = ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now, Periodic)
 		}
 	}
 
@@ -395,7 +487,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	// get my cluster's mutes
 	var lst []*AlertMute
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/alert-mutes?disabled=0")
+		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/active-alert-mutes")
 		if err != nil {
 			return nil, err
 		}
@@ -406,6 +498,10 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	}
 
 	session := DB(ctx).Model(&AlertMute{}).Where("disabled = 0")
+
+	// 只筛选在生效时间内的屏蔽规则, 这里 btime < now+10 是为了避免同步期间有规则满足了生效时间条件
+	now := time.Now().Unix()
+	session = session.Where("(mute_time_type = ? AND btime <= ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now+10, now, Periodic)
 
 	err := session.Find(&lst).Error
 	if err != nil {

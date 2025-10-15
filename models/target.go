@@ -12,8 +12,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/set"
-	"github.com/toolkits/pkg/slice"
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 
 	"gorm.io/gorm"
 )
@@ -228,6 +228,9 @@ func TargetTotal(ctx *ctx.Context, options ...BuildTargetWhereOption) (int64, er
 
 func TargetGets(ctx *ctx.Context, limit, offset int, order string, desc bool, options ...BuildTargetWhereOption) ([]*Target, error) {
 	var lst []*Target
+
+	order = validateOrderField(order, "ident")
+
 	if desc {
 		order += " desc"
 	} else {
@@ -661,7 +664,7 @@ func CanMigrateBg(ctx *ctx.Context) bool {
 		return false
 	}
 	if cnt == 0 {
-		log.Println("target table is empty, skip migration.")
+		logger.Debug("target table is empty, skip migration.")
 		return false
 	}
 

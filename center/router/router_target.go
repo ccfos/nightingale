@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
@@ -600,4 +601,11 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(lst, nil)
+}
+
+func (rt *Router) targetUpdate(c *gin.Context) {
+	var f idents.TargetUpdate
+	ginx.BindJSON(c, &f)
+
+	ginx.NewRender(c).Message(rt.IdentSet.UpdateTargets(f.Lst, f.Now))
 }

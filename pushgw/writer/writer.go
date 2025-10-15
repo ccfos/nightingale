@@ -3,7 +3,9 @@ package writer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,7 +17,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/kafka"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/pstat"
-	"github.com/ccfos/nightingale/v6/pushgw/writer/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
@@ -52,8 +53,49 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 
 		return proto.Marshal(req)
 	}
+	// 如果是 json 格式，将 NaN 值的数据丢弃掉
+	return json.Marshal(filterNaNSamples(items))
+}
 
-	return json.MarshalWithCustomFloat(items)
+func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
+	// 早期检查：如果没有NaN值，直接返回原始数据
+	hasNaN := false
+	for i := range items {
+		for j := range items[i].Samples {
+			if math.IsNaN(items[i].Samples[j].Value) {
+				hasNaN = true
+				break
+			}
+		}
+		if hasNaN {
+			break
+		}
+	}
+
+	if !hasNaN {
+		return items
+	}
+
+	// 有NaN值时进行过滤，原地修改以减少内存分配
+	for i := range items {
+		samples := items[i].Samples
+		validCount := 0
+
+		// 原地过滤 samples，避免额外的内存分配
+		for j := range samples {
+			if !math.IsNaN(samples[j].Value) {
+				if validCount != j {
+					samples[validCount] = samples[j]
+				}
+				validCount++
+			}
+		}
+
+		// 保留所有时间序列，即使没有有效样本（此时Samples为空）
+		items[i].Samples = samples[:validCount]
+	}
+
+	return items
 }
 
 func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
@@ -157,10 +199,11 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 }
 
 type WritersType struct {
-	pushgw      pconf.Pushgw
-	backends    map[string]Writer
-	queues      map[string]*IdentQueue
-	AllQueueLen atomic.Value
+	pushgw          pconf.Pushgw
+	backends        map[string]Writer
+	queues          map[string]*IdentQueue
+	AllQueueLen     atomic.Value
+	PushConcurrency atomic.Int64
 	sync.RWMutex
 }
 
@@ -208,6 +251,31 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 
 func (ws *WritersType) Put(name string, writer Writer) {
 	ws.backends[name] = writer
+}
+
+func (ws *WritersType) isCriticalBackend(key string) bool {
+	backend, exists := ws.backends[key]
+	if !exists {
+		return false
+	}
+
+	// 使用类型断言判断
+	switch backend.(type) {
+	case WriterType:
+		if backend.(WriterType).Opts.AsyncWrite {
+			return false
+		}
+
+		// HTTP Writer 作为关键后端
+		return true
+	case KafkaWriterType:
+		// Kafka Writer 作为非关键后端
+		return false
+	default:
+		// 未知类型，保守起见作为关键后端
+		logger.Warningf("Unknown backend type: %T, treating as critical", backend)
+		return true
+	}
 }
 
 func (ws *WritersType) CleanExpQueue() {
@@ -278,10 +346,62 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 				continue
 			}
 			for key := range ws.backends {
-				ws.backends[key].Write(key, series)
+
+				if ws.isCriticalBackend(key) {
+					ws.backends[key].Write(key, series)
+				} else {
+					// 像 kafka 这种 writer 使用异步写入，防止因为写入太慢影响主流程
+					ws.writeToNonCriticalBackend(key, series)
+				}
 			}
 		}
 	}
+}
+
+func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.TimeSeries) {
+	// 原子性地检查并增加并发数
+	currentConcurrency := ws.PushConcurrency.Add(1)
+
+	if currentConcurrency > int64(ws.pushgw.PushConcurrency) {
+		// 超过限制，立即减少计数并丢弃
+		ws.PushConcurrency.Add(-1)
+		logger.Warningf("push concurrency limit exceeded, current: %d, limit: %d, dropping %d series for backend: %s",
+			currentConcurrency-1, ws.pushgw.PushConcurrency, len(series), key)
+		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
+		return
+	}
+
+	// 深拷贝数据，确保并发安全
+	seriesCopy := ws.deepCopySeries(series)
+
+	// 启动goroutine处理
+	go func(backendKey string, data []prompb.TimeSeries) {
+		defer func() {
+			ws.PushConcurrency.Add(-1)
+			if r := recover(); r != nil {
+				logger.Errorf("panic in non-critical backend %s: %v", backendKey, r)
+			}
+		}()
+
+		ws.backends[backendKey].Write(backendKey, data)
+	}(key, seriesCopy)
+}
+
+// 完整的深拷贝方法
+func (ws *WritersType) deepCopySeries(series []prompb.TimeSeries) []prompb.TimeSeries {
+	seriesCopy := make([]prompb.TimeSeries, len(series))
+
+	for i := range series {
+		seriesCopy[i] = series[i]
+
+		if len(series[i].Samples) > 0 {
+			samples := make([]prompb.Sample, len(series[i].Samples))
+			copy(samples, series[i].Samples)
+			seriesCopy[i].Samples = samples
+		}
+	}
+
+	return seriesCopy
 }
 
 func (ws *WritersType) Init() error {

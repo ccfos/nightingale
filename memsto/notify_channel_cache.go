@@ -276,6 +276,7 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 // processNotifyTask 处理通知任务（仅处理 http 类型）
 func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 	httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
+	logger.Debugf("processNotifyTask: task: %+v", task)
 
 	// 现在只处理 http 类型，flashduty 保持直接发送
 	if task.NotifyChannel.RequestType == "http" {
@@ -294,7 +295,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			for i := range task.Sendtos {
 				start := time.Now()
 				resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
-				resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
+				resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
 				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 					task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
 
@@ -448,7 +449,7 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 		logger.Warning("SMTP configurations invalid")
 		return
 	}
-	logger.Infof("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
+	logger.Debugf("start email sender... conf.Host:%+v,conf.Port:%+v", conf.Host, conf.Port)
 
 	d := gomail.NewDialer(conf.Host, conf.Port, conf.Username, conf.Password)
 	if conf.InsecureSkipVerify {

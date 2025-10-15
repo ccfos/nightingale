@@ -78,9 +78,12 @@ type AlertCurEvent struct {
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 	NotifyRuleIds      []int64             `json:"notify_rule_ids" gorm:"serializer:json"`
+	NotifyRuleId       int64               `json:"notify_rule_id" gorm:"-"`
+	NotifyRuleName     string              `json:"notify_rule_name" gorm:"-"`
 
 	NotifyVersion int                `json:"notify_version"  gorm:"-"` // 0: old, 1: new
 	NotifyRules   []*EventNotifyRule `json:"notify_rules" gorm:"-"`
+	RecoverTime   int64              `json:"recover_time" gorm:"-"`
 }
 
 type EventNotifyRule struct {

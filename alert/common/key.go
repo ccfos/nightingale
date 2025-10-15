@@ -35,9 +35,9 @@ func MatchGroupsName(groupName string, groupFilter []models.TagFilter) bool {
 func matchTag(value string, filter models.TagFilter) bool {
 	switch filter.Func {
 	case "==":
-		return strings.TrimSpace(filter.Value) == strings.TrimSpace(value)
+		return strings.TrimSpace(fmt.Sprintf("%v", filter.Value)) == strings.TrimSpace(value)
 	case "!=":
-		return strings.TrimSpace(filter.Value) != strings.TrimSpace(value)
+		return strings.TrimSpace(fmt.Sprintf("%v", filter.Value)) != strings.TrimSpace(value)
 	case "in":
 		_, has := filter.Vset[value]
 		return has

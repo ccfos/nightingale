@@ -24,6 +24,7 @@ type Set struct {
 	redis   storage.Redis
 	ctx     *ctx.Context
 	configs pconf.Pushgw
+	sema    *semaphore.Semaphore
 }
 
 func New(ctx *ctx.Context, redis storage.Redis, configs pconf.Pushgw) *Set {
@@ -33,6 +34,7 @@ func New(ctx *ctx.Context, redis storage.Redis, configs pconf.Pushgw) *Set {
 		ctx:     ctx,
 		configs: configs,
 	}
+	set.sema = semaphore.NewSemaphore(configs.UpdateTargetByUrlConcurrency)
 
 	set.Init()
 	return set
@@ -114,8 +116,26 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 			Lst: lst,
 			Now: now,
 		}
-		err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
-		return err
+
+		if !s.sema.TryAcquire() {
+			logger.Warningf("update_targets: update target by url concurrency limit, skip update target: %v", lst)
+			return nil // 达到并发上限，放弃请求，只是页面上的机器时间不更新，不影响机器失联告警，降级处理下
+		}
+
+		go func() {
+			defer s.sema.Release()
+			// 修改为异步发送，防止机器太多，每个请求耗时比较长导致机器心跳时间更新不及时
+			err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
+			if err != nil {
+				logger.Errorf("failed to post target update: %v", err)
+			}
+		}()
+		return nil
+	}
+
+	if s.configs.UpdateDBTargetTimestampDisable {
+		// 如果 mysql 压力太大，关闭更新 db 的操作
+		return nil
 	}
 
 	// there are some idents not found in db, so insert them

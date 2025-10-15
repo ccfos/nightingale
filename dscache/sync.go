@@ -22,6 +22,8 @@ import (
 
 var FromAPIHook func()
 
+var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
+
 func Init(ctx *ctx.Context, fromAPI bool) {
 	go getDatasourcesFromDBLoop(ctx, fromAPI)
 }
@@ -100,6 +102,10 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 				atomic.StoreInt64(&PromDefaultDatasourceId, 0)
 			}
 
+			if DatasourceProcessHook != nil {
+				dss = DatasourceProcessHook(dss)
+			}
+
 			PutDatasources(dss)
 		} else {
 			FromAPIHook()
@@ -163,7 +169,7 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 
 		ds, err := datasource.GetDatasourceByType(typ, item.Settings)
 		if err != nil {
-			logger.Warningf("get plugin:%+v fail: %v", item, err)
+			logger.Debugf("get plugin:%+v fail: %v", item, err)
 			continue
 		}
 

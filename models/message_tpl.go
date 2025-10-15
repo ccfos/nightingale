@@ -209,7 +209,6 @@ func (t MsgTplList) IfUsed(nr *NotifyRule) bool {
 const (
 	DingtalkTitle   = `{{if $event.IsRecovered}} Recovered {{else}}Triggered{{end}}: {{$event.RuleName}}`
 	FeishuCardTitle = `🔔 {{$event.RuleName}}`
-	FeishuAppTitle  = `{{- if $event.IsRecovered }}🔔 ﹝恢复﹞ {{$event.RuleName}}{{- else }}🔔 ﹝告警﹞ {{$event.RuleName}}{{- end -}}`
 	LarkCardTitle   = `🔔 {{$event.RuleName}}`
 )
 
@@ -249,7 +248,7 @@ var NewTplMap = map[string]string{
 {{- end}}
 {{end}}
 {{$domain := "http://127.0.0.1:17000" }}
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Email: `<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -506,7 +505,7 @@ var NewTplMap = map[string]string{
 {{- end}} 
 {{- end}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	EmailSubject: `{{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}: {{$event.RuleName}} {{$event.TagsJSON}}`,
 	Mm: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
@@ -535,7 +534,7 @@ var NewTplMap = map[string]string{
 {{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**距离首次告警**: {{humanizeDurationInterface $time_duration}}
 **发送时间**: {{timestamp}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	Lark: `级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}   
 规则名称: {{$event.RuleName}}{{if $event.RuleNote}}   
 规则备注: {{$event.RuleNote}}{{end}}   
@@ -568,7 +567,7 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 {{$domain := "http://请联系管理员修改通知模板将域名替换为实际的域名" }}   
-[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}){{end}}`,
+[事件详情]({{$domain}}/alert-his-events/{{$event.Id}})|[屏蔽1小时]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[查看曲线]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
 	SlackWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
 *Alarm cluster:* {{$event.Cluster}}{{end}}
@@ -596,7 +595,7 @@ var NewTplMap = map[string]string{
 {{$domain := "http://127.0.0.1:17000" }}   
 <{{$domain}}/alert-his-events/{{$event.Id}}|Event Details> 
 <{{$domain}}/alert-mutes/add?__event_id={{$event.Id}}|Block for 1 hour> 
-<{{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}}|View Curve>`,
+<{{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph|View Curve>`,
 	Discord: `**Level Status**: {{if $event.IsRecovered}}S{{$event.Severity}} Recovered{{else}}S{{$event.Severity}} Triggered{{end}}   
 **Rule Title**: {{$event.RuleName}}{{if $event.RuleNote}}   
 **Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}   
@@ -608,7 +607,7 @@ var NewTplMap = map[string]string{
 **Send Time**: {{timestamp}}
 
 {{$domain := "http://127.0.0.1:17000" }}
-[Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}})`,
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}}) | [Silence 1h]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}}) | [View Graph]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
 
 	MattermostWebhook: `{{ if $event.IsRecovered }}
 {{- if ne $event.Cate "host"}}
@@ -630,26 +629,7 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 {{$domain := "http://127.0.0.1:17000" }}   
-[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph}})`,
-	FeishuApp: `{{- if $event.IsRecovered -}}
-{{- if ne $event.Cate "host" -}}
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Recovered   
-**告警名称:** {{$event.RuleName}}  
-**事件标签:** {{$event.TagsJSON}}   
-**恢复时间:** {{timeformat $event.LastEvalTime}}   
-**告警描述:** **服务已恢复**   
-{{- else }}
-{{- if ne $event.Cate "host"}}   
-**告警集群:** {{$event.Cluster}}{{end}}   
-**级别状态:** S{{$event.Severity}} Triggered   
-**告警名称:** {{$event.RuleName}}  
-**事件标签:** {{$event.TagsJSON}}   
-**触发时间:** {{timeformat $event.TriggerTime}}   
-**发送时间:** {{timestamp}}   
-**触发时值:** {{$event.TriggerValue}}   
-{{if $event.RuleNote }}**告警描述:** **{{$event.RuleNote}}**{{end}}   
-{{- end -}}`,
+[Event Details]({{$domain}}/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{$domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{$domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
 }
 
 var MsgTplMap = []MessageTemplate{
@@ -668,7 +648,6 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Lark", Ident: Lark, Weight: 5, Content: map[string]string{"content": NewTplMap[Lark]}},
 	{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
 	{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
-	{Name: "FeishuApp", Ident: FeishuApp, Weight: 4, Content: map[string]string{"title": FeishuAppTitle, "content": NewTplMap[FeishuApp]}},
 	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
@@ -714,19 +693,33 @@ func (t *MessageTemplate) Upsert(ctx *ctx.Context, ident string) error {
 	return tpl.Update(ctx, *t)
 }
 
+var GetDefs func(map[string]interface{}) []string
+
+func getDefs(renderData map[string]interface{}) []string {
+	return []string{
+		"{{ $events := .events }}",
+		"{{ $event := index $events 0 }}",
+		"{{ $labels := $event.TagsMap }}",
+		"{{ $value := $event.TriggerValue }}",
+	}
+}
+
+func init() {
+	GetDefs = getDefs
+}
+
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interface{} {
 	if t == nil {
 		return nil
 	}
+
+	renderData := make(map[string]interface{})
+	renderData["events"] = events
+
 	// event 内容渲染到 messageTemplate
 	tplContent := make(map[string]interface{})
 	for key, msgTpl := range t.Content {
-		var defs = []string{
-			"{{ $events := . }}",
-			"{{ $event := index $events 0 }}",
-			"{{ $labels := $event.TagsMap }}",
-			"{{ $value := $event.TriggerValue }}",
-		}
+		defs := GetDefs(renderData)
 
 		var body bytes.Buffer
 		if t.NotifyChannelIdent == "email" {
@@ -739,7 +732,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			}
 
 			var body bytes.Buffer
-			if err = tpl.Execute(&body, events); err != nil {
+			if err = tpl.Execute(&body, renderData); err != nil {
 				logger.Errorf("failed to execute template: %v", err)
 				tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 				continue
@@ -754,7 +747,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 				continue
 			}
 
-			if err = tpl.Execute(&body, events); err != nil {
+			if err = tpl.Execute(&body, renderData); err != nil {
 				logger.Errorf("failed to execute template: %v events: %v", err, events)
 				continue
 			}
@@ -775,7 +768,7 @@ func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent) map[string]interf
 			continue
 		}
 
-		if err = tpl.Execute(&body, events); err != nil {
+		if err = tpl.Execute(&body, renderData); err != nil {
 			logger.Errorf("failed to execute template: %v events: %v", err, events)
 			tplContent[key] = fmt.Sprintf("failed to execute template: %v", err)
 			continue

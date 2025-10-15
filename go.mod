@@ -13,7 +13,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/expr-lang/expr v1.16.1
-	github.com/flashcatcloud/ibex v1.3.5
+	github.com/flashcatcloud/ibex v1.3.6
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/glebarez/sqlite v1.11.0
@@ -160,3 +160,5 @@ require (
 )
 
 replace golang.org/x/exp v0.0.0-20231006140011-7918f672742d => golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+
+// replace github.com/flashcatcloud/ibex => ../github.com/flashcatcloud/ibex

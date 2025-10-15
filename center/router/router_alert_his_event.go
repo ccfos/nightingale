@@ -62,11 +62,11 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	total, err := models.AlertHisEventTotal(rt.Ctx, prods, bgids, stime, etime, severity,
-		recovered, dsIds, cates, ruleId, query)
+		recovered, dsIds, cates, ruleId, query, []int64{})
 	ginx.Dangerous(err)
 
 	list, err := models.AlertHisEventGets(rt.Ctx, prods, bgids, stime, etime, severity, recovered,
-		dsIds, cates, ruleId, query, limit, ginx.Offset(c, limit))
+		dsIds, cates, ruleId, query, limit, ginx.Offset(c, limit), []int64{})
 	ginx.Dangerous(err)
 
 	cache := make(map[int64]*models.UserGroup)
@@ -115,7 +115,18 @@ func (rt *Router) alertHisEventsDelete(c *gin.Context) {
 			time.Sleep(100 * time.Millisecond) // 防止锁表
 		}
 	}()
-	ginx.NewRender(c).Message("Alert history events deletion started")
+	ginx.NewRender(c).Data("Alert history events deletion started", nil)
+}
+
+var TransferEventToCur func(*ctx.Context, *models.AlertHisEvent) *models.AlertCurEvent
+
+func init() {
+	TransferEventToCur = transferEventToCur
+}
+
+func transferEventToCur(ctx *ctx.Context, event *models.AlertHisEvent) *models.AlertCurEvent {
+	cur := event.ToCur()
+	return cur
 }
 
 func (rt *Router) alertHisEventGet(c *gin.Context) {
@@ -142,7 +153,7 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	event.NotifyRules, err = GetEventNorifyRuleNames(rt.Ctx, event.NotifyRuleIds)
-	ginx.NewRender(c).Data(event, err)
+	ginx.NewRender(c).Data(TransferEventToCur(rt.Ctx, event), err)
 }
 
 func GetBusinessGroupIds(c *gin.Context, ctx *ctx.Context, onlySelfGroupView bool, myGroups bool) ([]int64, error) {

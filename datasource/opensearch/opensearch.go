@@ -100,7 +100,8 @@ func (os *OpenSearch) InitClient() error {
 		Header:    headers,
 	}
 
-	if os.Basic.Enable && os.Basic.Username != "" {
+	// 只要有用户名就添加认证，不依赖 Enable 字段
+	if os.Basic.Username != "" {
 		options.Username = os.Basic.Username
 		options.Password = os.Basic.Password
 	}
@@ -154,8 +155,9 @@ func (os *OpenSearch) Validate(ctx context.Context) (err error) {
 		}
 	}
 
-	if os.Basic.Enable && (len(os.Basic.Username) == 0 || len(os.Basic.Password) == 0) {
-		return fmt.Errorf("need a valid user, password")
+	// 如果提供了用户名，必须同时提供密码
+	if len(os.Basic.Username) > 0 && len(os.Basic.Password) == 0 {
+		return fmt.Errorf("password is required when username is provided")
 	}
 
 	if os.MaxShard == 0 {

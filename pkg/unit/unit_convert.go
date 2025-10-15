@@ -71,6 +71,24 @@ func ValueFormatter(unit string, decimals int, value float64) FormattedValue {
 		}
 	}
 
+	// Handle positive and negative infinity
+	if math.IsInf(value, 1) {
+		return FormattedValue{
+			Value: 9999999999,
+			Unit:  "",
+			Text:  "+Inf",
+			Stat:  9999999999,
+		}
+	}
+	if math.IsInf(value, -1) {
+		return FormattedValue{
+			Value: -9999999999,
+			Unit:  "",
+			Text:  "-Inf",
+			Stat:  -9999999999,
+		}
+	}
+
 	// 处理时间单位
 	switch unit {
 	case "none":

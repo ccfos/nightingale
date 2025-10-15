@@ -62,6 +62,8 @@ var TemplateFuncMap = template.FuncMap{
 	"batchContactsAtsInFeishuEmail": BatchContactsAtsInFeishuEmail,
 	"batchContactsAtsInFeishuId":    BatchContactsAtsInFeishuId,
 	"jsonMarshal":                   JsonMarshal,
+	"mapDifference":                 MapDifference,
+	"tagsMapToStr":                  TagsMapToStr,
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap

@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, error) {
@@ -304,4 +305,124 @@ func (rt *Router) alertCurEventsStatistics(c *gin.Context) {
 func (rt *Router) alertCurEventDelByHash(c *gin.Context) {
 	hash := ginx.QueryStr(c, "hash")
 	ginx.NewRender(c).Message(models.AlertCurEventDelByHash(rt.Ctx, hash))
+}
+
+func (rt *Router) eventTagKeys(c *gin.Context) {
+	// 获取最近1天的活跃告警事件
+	now := time.Now().Unix()
+	stime := now - 24*3600
+	etime := now
+
+	// 获取用户可见的业务组ID列表
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, false)
+	if err != nil {
+		logger.Warningf("failed to get business group ids: %v", err)
+		ginx.NewRender(c).Data([]string{"ident", "app", "service", "instance"}, nil)
+		return
+	}
+
+	// 查询活跃告警事件，限制数量以提高性能
+	events, err := models.AlertCurEventsGet(rt.Ctx, []string{}, bgids, stime, etime, []int64{}, []int64{}, []string{}, 0, "", 200, 0, []int64{})
+	if err != nil {
+		logger.Warningf("failed to get current alert events: %v", err)
+		ginx.NewRender(c).Data([]string{"ident", "app", "service", "instance"}, nil)
+		return
+	}
+
+	// 如果没有查到事件，返回默认标签
+	if len(events) == 0 {
+		ginx.NewRender(c).Data([]string{"ident", "app", "service", "instance"}, nil)
+		return
+	}
+
+	// 收集所有标签键并去重
+	tagKeys := make(map[string]struct{})
+	for _, event := range events {
+		for key := range event.TagsMap {
+			tagKeys[key] = struct{}{}
+		}
+	}
+
+	// 转换为字符串切片
+	var result []string
+	for key := range tagKeys {
+		result = append(result, key)
+	}
+
+	// 如果没有收集到任何标签键，返回默认值
+	if len(result) == 0 {
+		result = []string{"ident", "app", "service", "instance"}
+	}
+
+	ginx.NewRender(c).Data(result, nil)
+}
+
+func (rt *Router) eventTagValues(c *gin.Context) {
+	// 获取标签key
+	tagKey := ginx.QueryStr(c, "key")
+
+	// 获取最近1天的活跃告警事件
+	now := time.Now().Unix()
+	stime := now - 24*3600
+	etime := now
+
+	// 获取用户可见的业务组ID列表
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, false)
+	if err != nil {
+		logger.Warningf("failed to get business group ids: %v", err)
+		ginx.NewRender(c).Data([]string{}, nil)
+		return
+	}
+
+	// 查询活跃告警事件，获取更多数据以保证统计准确性
+	events, err := models.AlertCurEventsGet(rt.Ctx, []string{}, bgids, stime, etime, []int64{}, []int64{}, []string{}, 0, "", 1000, 0, []int64{})
+	if err != nil {
+		logger.Warningf("failed to get current alert events: %v", err)
+		ginx.NewRender(c).Data([]string{}, nil)
+		return
+	}
+
+	// 如果没有查到事件，返回空数组
+	if len(events) == 0 {
+		ginx.NewRender(c).Data([]string{}, nil)
+		return
+	}
+
+	// 统计标签值出现次数
+	valueCount := make(map[string]int)
+	for _, event := range events {
+		// TagsMap已经在AlertCurEventsGet中处理，直接使用
+		if value, exists := event.TagsMap[tagKey]; exists && value != "" {
+			valueCount[value]++
+		}
+	}
+
+	// 转换为切片并按出现次数降序排序
+	type tagValue struct {
+		value string
+		count int
+	}
+
+	tagValues := make([]tagValue, 0, len(valueCount))
+	for value, count := range valueCount {
+		tagValues = append(tagValues, tagValue{value, count})
+	}
+
+	// 按出现次数降序排序
+	sort.Slice(tagValues, func(i, j int) bool {
+		return tagValues[i].count > tagValues[j].count
+	})
+
+	// 只取Top20并转换为字符串数组
+	limit := 20
+	if len(tagValues) < limit {
+		limit = len(tagValues)
+	}
+
+	result := make([]string, 0, limit)
+	for i := 0; i < limit; i++ {
+		result = append(result, tagValues[i].value)
+	}
+
+	ginx.NewRender(c).Data(result, nil)
 }
