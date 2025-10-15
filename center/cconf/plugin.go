@@ -55,4 +55,10 @@ var Plugins = []Plugin{
 		Type:     "opensearch",
 		TypeName: "OpenSearch",
 	},
+	{
+		Id:       10,
+		Category: "timeseries",
+		Type:     "mongodb",
+		TypeName: "MongoDB",
+	},
 }
