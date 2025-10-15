@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/redis/go-redis/v9"
 
@@ -160,6 +162,10 @@ func (u *User) Verify() error {
 
 	if u.Email != "" && !str.IsMail(u.Email) {
 		return errors.New("Email invalid")
+	}
+
+	if u.Phone != "" {
+		return u.EncryptPhone()
 	}
 
 	return nil
@@ -321,6 +327,7 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 
 	lst[0].RolesLst = strings.Fields(lst[0].Roles)
 	lst[0].Admin = lst[0].IsAdmin()
+	lst[0].DecryptPhone() // 解密手机号
 
 	return lst[0], nil
 }
@@ -335,6 +342,7 @@ func UsersGet(ctx *ctx.Context, where string, args ...interface{}) ([]*User, err
 	for _, user := range lst {
 		user.RolesLst = strings.Fields(user.Roles)
 		user.Admin = user.IsAdmin()
+		user.DecryptPhone() // 解密手机号
 	}
 
 	return lst, nil
@@ -548,6 +556,47 @@ func UserTotal(ctx *ctx.Context, query string, stime, etime int64) (num int64, e
 	return num, nil
 }
 
+var (
+	// 预编译正则表达式，避免重复编译
+	whitespaceRegex = regexp.MustCompile(`\s+`)
+	validOrderRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$`)
+)
+
+func validateOrderField(order string, defaultField string) string {
+	// 空值检查
+	if order == "" {
+		return defaultField
+	}
+
+	// 长度检查
+	if len(order) > 64 {
+		logger.Warningf("SQL injection attempt detected: order field too long (%d chars)", len(order))
+		return defaultField
+	}
+
+	// 移除所有空白字符
+	order = whitespaceRegex.ReplaceAllString(order, "")
+	if order == "" {
+		return defaultField
+	}
+
+	// 检查危险字符
+	orderLower := strings.ToLower(order)
+	if strings.ContainsAny(order, "();,'\"` --/*\\=+-*/><|&^~") ||
+		strings.Contains(orderLower, "0x") || strings.Contains(orderLower, "0b") {
+		logger.Warningf("SQL injection attempt detected: contains dangerous characters")
+		return defaultField
+	}
+
+	// 使用正则表达式验证格式：只允许字母开头的字段名，可选择性包含表名
+	if !validOrderRegex.MatchString(order) {
+		logger.Warningf("SQL injection attempt detected: invalid order field format")
+		return defaultField
+	}
+
+	return order
+}
+
 func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime int64,
 	order string, desc bool, usernames, phones, emails []string) ([]User, error) {
 
@@ -556,6 +605,8 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime in
 	if stime != 0 && etime != 0 {
 		session = session.Where("last_active_time between ? and ?", stime, etime)
 	}
+
+	order = validateOrderField(order, "username")
 
 	if desc {
 		order = order + " desc"
@@ -592,6 +643,7 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int, stime, etime in
 		users[i].RolesLst = strings.Fields(users[i].Roles)
 		users[i].Admin = users[i].IsAdmin()
 		users[i].Password = ""
+		users[i].DecryptPhone() // 解密手机号
 
 		// query for user group information
 		var userGroupIDs []int64
@@ -633,6 +685,7 @@ func UserGetAll(ctx *ctx.Context) ([]*User, error) {
 		for i := 0; i < len(lst); i++ {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
+			lst[i].DecryptPhone() // 解密手机号
 		}
 	}
 	return lst, err
@@ -649,6 +702,7 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 		for i := 0; i < len(lst); i++ {
 			lst[i].RolesLst = strings.Fields(lst[i].Roles)
 			lst[i].Admin = lst[i].IsAdmin()
+			lst[i].DecryptPhone() // 解密手机号
 		}
 	}
 
@@ -969,4 +1023,61 @@ func (u *User) AddUserAndGroups(ctx *ctx.Context, coverTeams bool) error {
 	}
 
 	return nil
+}
+
+func (u *User) EncryptPhone() (err error) {
+	// 从缓存获取手机号加密配置
+	enabled, publicKey, _, _, loaded := GetPhoneEncryptionConfigFromCache()
+	if !loaded {
+		// 如果缓存未加载，记录日志但不阻止保存
+		logger.Infof("Phone encryption config cache not loaded, user: %s", u.Username)
+		return nil
+	}
+
+	// 检查是否启用了手机号加密
+	if enabled && u.Phone != "" {
+		// 检查手机号是否已经加密（避免重复加密）
+		if len(u.Phone) > 4 && u.Phone[:4] == "enc:" {
+			// 已经加密，跳过
+			return nil
+		}
+
+		encryptedPhone, err := secu.EncryptValue(u.Phone, publicKey)
+		if err != nil {
+			logger.Warningf("Failed to encrypt phone: %v, user: %s", err, u.Username)
+			return nil
+		}
+
+		u.Phone = encryptedPhone
+	}
+	return nil
+}
+
+// DecryptPhone 解密用户手机号（如果已加密）
+func (u *User) DecryptPhone() {
+	if u.Phone == "" {
+		return
+	}
+
+	// 检查手机号是否是加密格式（有 "enc:" 前缀）
+	if len(u.Phone) <= 4 || u.Phone[:4] != "enc:" {
+		// 不是加密格式，不需要解密
+		return
+	}
+
+	// 从缓存获取手机号加密配置
+	enabled, _, privateKey, password, loaded := GetPhoneEncryptionConfigFromCache()
+	if !loaded || !enabled {
+		// 如果缓存未加载或未启用加密，不解密
+		return
+	}
+
+	// 对手机号进行解密
+	decryptedPhone, err := secu.Decrypt(u.Phone, privateKey, password)
+	if err != nil {
+		// 如果解密失败，记录错误但保持原样
+		logger.Warningf("Failed to decrypt phone for user %s: %v", u.Username, err)
+		return
+	}
+	u.Phone = decryptedPhone
 }

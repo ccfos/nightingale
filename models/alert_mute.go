@@ -230,7 +230,7 @@ func AlertMuteGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertMu
 	return lst[0], err
 }
 
-func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, query string) (lst []AlertMute, err error) {
+func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, expired int, query string) (lst []AlertMute, err error) {
 	session := DB(ctx)
 
 	if bgid != -1 {
@@ -246,6 +246,15 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, disabled int, q
 			session = session.Where("disabled = 0")
 		} else {
 			session = session.Where("disabled = 1")
+		}
+	}
+
+	if expired != -1 {
+		now := time.Now().Unix()
+		if expired == 1 {
+			session = session.Where("mute_time_type = ? AND etime < ?", TimeRange, now)
+		} else {
+			session = session.Where("(mute_time_type = ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now, Periodic)
 		}
 	}
 
@@ -478,7 +487,7 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	// get my cluster's mutes
 	var lst []*AlertMute
 	if !ctx.IsCenter {
-		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/alert-mutes?disabled=0")
+		lst, err := poster.GetByUrls[[]*AlertMute](ctx, "/v1/n9e/active-alert-mutes")
 		if err != nil {
 			return nil, err
 		}
@@ -489,6 +498,10 @@ func AlertMuteGetsAll(ctx *ctx.Context) ([]*AlertMute, error) {
 	}
 
 	session := DB(ctx).Model(&AlertMute{}).Where("disabled = 0")
+
+	// 只筛选在生效时间内的屏蔽规则, 这里 btime < now+10 是为了避免同步期间有规则满足了生效时间条件
+	now := time.Now().Unix()
+	session = session.Where("(mute_time_type = ? AND btime <= ? AND etime >= ?) OR mute_time_type = ?", TimeRange, now+10, now, Periodic)
 
 	err := session.Find(&lst).Error
 	if err != nil {

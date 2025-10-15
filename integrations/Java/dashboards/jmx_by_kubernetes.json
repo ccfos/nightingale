@@ -1,4 +1,5 @@
-{
+[
+  {
     "name": "JMX - Kubernetes",
     "tags": "Prometheus JMX Kubernetes",
     "configs": {
@@ -1871,3 +1872,4 @@
     },
     "uuid": 1755595969673000
   }
+]
