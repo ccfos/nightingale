@@ -108,9 +108,26 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
+	eventCopy := event.DeepCopy()
+	e.handleEventPipeline(event)
+	if event == nil {
+		e.persist(eventCopy)
+		logger.Warningf("event drop by pipeline, rule_eval:%s, event: %+v", getKey(event), eventCopy)
+		return
+	}
 	e.persist(event)
 
 	e.dispatch.HandleEventNotify(event, false)
+}
+
+// handle event pipeline
+func (e *Consumer) handleEventPipeline(event *models.AlertCurEvent) *models.AlertCurEvent {
+	rule := e.dispatch.alertRuleCache.Get(event.RuleId)
+	if rule == nil {
+		return event
+	}
+
+	return HandleEventPipeline(rule.PipelineConfigs, &models.AlertCurEvent{Id: event.Id, SubRuleId: event.SubRuleId}, event, e.dispatch.eventProcessorCache, e.ctx, rule.Id, "alert_rule")
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
