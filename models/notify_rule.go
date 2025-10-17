@@ -137,17 +137,21 @@ func (r *NotifyRule) Verify() error {
 	// 	return errors.New("notify configs cannot be empty")
 	// }
 
-	defaultCount := 0
-	for _, config := range r.NotifyConfigs {
+	defaultSeen := false
+	for idx := range r.NotifyConfigs {
+		config := r.NotifyConfigs[idx]
 		if config.IsDefault {
-			defaultCount++
+			if defaultSeen {
+				return errors.New("only one default notify config is allowed")
+			}
+			if idx != len(r.NotifyConfigs)-1 {
+				return errors.New("default notify config must be the last entry")
+			}
+			defaultSeen = true
 		}
 		if err := config.Verify(); err != nil {
 			return err
 		}
-	}
-	if defaultCount > 1 {
-		return errors.New("only one default notify config is allowed")
 	}
 
 	return nil
