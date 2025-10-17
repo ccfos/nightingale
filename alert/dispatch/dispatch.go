@@ -252,6 +252,7 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 				logger.Infof("processor_by_%s_id:%d pipeline_id:%d, after processor:%+v, event dropped, event: %+v", from, id, pipelineConfig.PipelineId, processor, eventOrigin)
 
 				if from == "notify_rule" {
+					// alert_rule 获取不到 eventId 记录没有意义
 					sender.NotifyRecord(ctx, []*models.AlertCurEvent{eventOrigin}, id, "", "", res, fmt.Errorf("processor_by_%s_id:%d pipeline_id:%d, drop by processor", from, id, pipelineConfig.PipelineId))
 				}
 				return nil

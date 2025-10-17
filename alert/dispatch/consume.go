@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -109,10 +110,11 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	}
 
 	eventCopy := event.DeepCopy()
-	e.handleEventPipeline(event)
+	event = e.handleEventPipeline(event, eventCopy)
 	if event == nil {
 		e.persist(eventCopy)
-		logger.Warningf("event drop by pipeline, rule_eval:%s, event: %+v", getKey(event), eventCopy)
+		logger.Infof("event drop by pipeline, rule_eval:%s, event: %+v", getKey(eventCopy), eventCopy)
+		sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, eventCopy.RuleId, "", "", "", fmt.Errorf("processor_by_alert_rule_id:%d, drop by pipeline", eventCopy.RuleId))
 		return
 	}
 	e.persist(event)
@@ -121,13 +123,13 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 }
 
 // handle event pipeline
-func (e *Consumer) handleEventPipeline(event *models.AlertCurEvent) *models.AlertCurEvent {
+func (e *Consumer) handleEventPipeline(event, eventCopy *models.AlertCurEvent) *models.AlertCurEvent {
 	rule := e.dispatch.alertRuleCache.Get(event.RuleId)
 	if rule == nil {
 		return event
 	}
 
-	return HandleEventPipeline(rule.PipelineConfigs, &models.AlertCurEvent{Id: event.Id, SubRuleId: event.SubRuleId}, event, e.dispatch.eventProcessorCache, e.ctx, rule.Id, "alert_rule")
+	return HandleEventPipeline(rule.PipelineConfigs, eventCopy, event, e.dispatch.eventProcessorCache, e.ctx, rule.Id, "alert_rule")
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
