@@ -1,6 +1,7 @@
 package mute
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -153,13 +154,7 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 
 	// 如果不是全局的，判断 匹配的 datasource id
 	if len(mute.DatasourceIdsJson) != 0 && mute.DatasourceIdsJson[0] != 0 && event.DatasourceId != 0 {
-		idm := make(map[int64]struct{}, len(mute.DatasourceIdsJson))
-		for i := 0; i < len(mute.DatasourceIdsJson); i++ {
-			idm[mute.DatasourceIdsJson[i]] = struct{}{}
-		}
-
-		// 判断 event.datasourceId 是否包含在 idm 中
-		if _, has := idm[event.DatasourceId]; !has {
+		if !slices.Contains(mute.DatasourceIdsJson, event.DatasourceId) {
 			return false, errors.New("datasource id not match")
 		}
 	}
@@ -198,7 +193,7 @@ func MatchMute(event *models.AlertCurEvent, mute *models.AlertMute, clock ...int
 		return false, errors.New("event severity not match mute severity")
 	}
 
-	if mute.ITags == nil || len(mute.ITags) == 0 {
+	if len(mute.ITags) == 0 {
 		return true, nil
 	}
 	if !common.MatchTags(event.TagsMap, mute.ITags) {

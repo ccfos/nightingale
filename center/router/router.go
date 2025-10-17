@@ -628,6 +628,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/recording-rules", rt.recordingRuleGetsByService)
 
 			service.GET("/alert-mutes", rt.alertMuteGets)
+			service.GET("/active-alert-mutes", rt.activeAlertMuteGets)
 			service.POST("/alert-mutes", rt.alertMuteAddByService)
 			service.DELETE("/alert-mutes", rt.alertMuteDel)
 

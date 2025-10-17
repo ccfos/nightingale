@@ -49,11 +49,11 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 				appendTags = append(appendTags, fmt.Sprintf("%s=%s", strings.ReplaceAll(k, " ", ""), strings.ReplaceAll(v, " ", "")))
 			} else {
 				switch v {
-				case "critical":
+				case "critical", "Critical", "CRITICAL", "error", "Error", "ERROR", "fatal", "Fatal", "FATAL", "page", "Page", "PAGE", "sev1", "SEV1", "Severity1", "severity1", "SEVERITY1":
 					severity = 1
-				case "warning":
+				case "warning", "Warning", "WARNING", "warn", "Warn", "WARN", "sev2", "SEV2", "Severity2", "severity2", "SEVERITY2":
 					severity = 2
-				case "info":
+				case "info", "Info", "INFO", "notice", "Notice", "NOTICE", "sev3", "SEV3", "Severity3", "severity3", "SEVERITY3":
 					severity = 3
 				}
 				ruleName += "-" + v

@@ -62,6 +62,11 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+func (rt *Router) activeAlertMuteGets(c *gin.Context) {
+	lst, err := models.AlertMuteGetsAll(rt.Ctx)
+	ginx.NewRender(c).Data(lst, err)
+}
+
 func (rt *Router) alertMuteAdd(c *gin.Context) {
 
 	var f models.AlertMute
@@ -71,7 +76,9 @@ func (rt *Router) alertMuteAdd(c *gin.Context) {
 	f.CreateBy = username
 	f.UpdateBy = username
 	f.GroupId = ginx.UrlParamInt64(c, "id")
-	ginx.NewRender(c).Message(f.Add(rt.Ctx))
+
+	ginx.Dangerous(f.Add(rt.Ctx))
+	ginx.NewRender(c).Data(f.Id, nil)
 }
 
 type MuteTestForm struct {
