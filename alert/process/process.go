@@ -13,7 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
-	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/relabel"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -25,8 +24,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
-
-type EventMuteHookFunc func(event *models.AlertCurEvent) bool
 
 type ExternalProcessorsType struct {
 	ExternalLock sync.RWMutex
@@ -76,7 +73,6 @@ type Processor struct {
 
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
-	EventMuteHook          EventMuteHookFunc
 
 	ScheduleEntry    cron.Entry
 	PromEvalInterval int
@@ -121,7 +117,6 @@ func NewProcessor(engineName string, rule *models.AlertRule, datasourceId int64,
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
-		EventMuteHook:          func(event *models.AlertCurEvent) bool { return false },
 	}
 
 	p.mayHandleGroup()
@@ -155,28 +150,6 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		// 如果 event 被 mute 了,本质也是 fire 的状态,这里无论如何都添加到 alertingKeys 中,防止 fire 的事件自动恢复了
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
-		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
-		if isMuted {
-			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
-			p.Stats.CounterMuteTotal.WithLabelValues(
-				fmt.Sprintf("%v", event.GroupName),
-				fmt.Sprintf("%v", p.rule.Id),
-				fmt.Sprintf("%v", muteId),
-				fmt.Sprintf("%v", p.datasourceId),
-			).Inc()
-			continue
-		}
-
-		if p.EventMuteHook(event) {
-			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
-			p.Stats.CounterMuteTotal.WithLabelValues(
-				fmt.Sprintf("%v", event.GroupName),
-				fmt.Sprintf("%v", p.rule.Id),
-				fmt.Sprintf("%v", 0),
-				fmt.Sprintf("%v", p.datasourceId),
-			).Inc()
-			continue
-		}
 
 		tagHash := TagHash(anomalyPoint)
 		eventsMap[tagHash] = append(eventsMap[tagHash], event)
