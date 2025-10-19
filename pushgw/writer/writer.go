@@ -181,7 +181,30 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 		}
 
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
-			logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s", url, resp.StatusCode, string(body))
+			// 解码并解析 req 以便打印指标信息
+			decoded, decodeErr := snappy.Decode(nil, req)
+			metricsInfo := "failed to decode request"
+			if decodeErr == nil {
+				var writeReq prompb.WriteRequest
+				if unmarshalErr := proto.Unmarshal(decoded, &writeReq); unmarshalErr == nil {
+					metricsInfo = fmt.Sprintf("timeseries count: %d", len(writeReq.Timeseries))
+					logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, %s", url, resp.StatusCode, string(body), metricsInfo)
+					// 只打印前几条样本，避免日志泛滥
+					sampleCount := 5
+					if sampleCount > len(writeReq.Timeseries) {
+						sampleCount = len(writeReq.Timeseries)
+					}
+					for i := 0; i < sampleCount; i++ {
+						logger.Warningf("push data with remote write:%s timeseries: [%d] %s", url, i, writeReq.Timeseries[i].String())
+					}
+				} else {
+					metricsInfo = fmt.Sprintf("failed to unmarshal: %v", unmarshalErr)
+					logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, metrics: %s", url, resp.StatusCode, string(body), metricsInfo)
+				}
+			} else {
+				metricsInfo = fmt.Sprintf("failed to decode: %v", decodeErr)
+				logger.Warningf("push data with remote write:%s request got status code: %v, response body: %s, metrics: %s", url, resp.StatusCode, string(body), metricsInfo)
+			}
 			continue
 		}
 
