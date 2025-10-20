@@ -44,6 +44,7 @@ type NotifyConfig struct {
 	TemplateID int64                  `json:"template_id"` // 通知模板
 	Params     map[string]interface{} `json:"params"`      // 通知参数
 	Type       string                 `json:"type"`
+	IsDefault  bool                   `json:"is_default"` // 缺省通知配置
 
 	Severities []int        `json:"severities"`  // 适用级别(一级告警、二级告警、三级告警)
 	TimeRanges []TimeRanges `json:"time_ranges"` // 适用时段
@@ -53,7 +54,7 @@ type NotifyConfig struct {
 
 func (n *NotifyConfig) Hash() string {
 	hash := sha256.New()
-	hash.Write([]byte(fmt.Sprintf("%d%d%v%s%v%v%v%v", n.ChannelID, n.TemplateID, n.Params, n.Type, n.Severities, n.TimeRanges, n.LabelKeys, n.Attributes)))
+	hash.Write([]byte(fmt.Sprintf("%d%d%v%s%t%v%v%v%v", n.ChannelID, n.TemplateID, n.Params, n.Type, n.IsDefault, n.Severities, n.TimeRanges, n.LabelKeys, n.Attributes)))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
@@ -136,7 +137,18 @@ func (r *NotifyRule) Verify() error {
 	// 	return errors.New("notify configs cannot be empty")
 	// }
 
-	for _, config := range r.NotifyConfigs {
+	defaultSeen := false
+	for idx := range r.NotifyConfigs {
+		config := r.NotifyConfigs[idx]
+		if config.IsDefault {
+			if defaultSeen {
+				return errors.New("only one default notify config is allowed")
+			}
+			if idx != len(r.NotifyConfigs)-1 {
+				return errors.New("default notify config must be the last entry")
+			}
+			defaultSeen = true
+		}
 		if err := config.Verify(); err != nil {
 			return err
 		}
