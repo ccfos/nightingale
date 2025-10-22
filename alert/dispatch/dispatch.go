@@ -28,6 +28,8 @@ var ShouldSkipNotify func(*ctx.Context, *models.AlertCurEvent, int64) bool
 var SendByNotifyRule func(*ctx.Context, *memsto.UserCacheType, *memsto.UserGroupCacheType, *memsto.NotifyChannelCacheType,
 	[]*models.AlertCurEvent, int64, *models.NotifyConfig, *models.NotifyChannelConfig, *models.MessageTemplate)
 
+var EventProcessorCache *memsto.EventProcessorCacheType
+
 func init() {
 	ShouldSkipNotify = shouldSkipNotify
 	SendByNotifyRule = SendNotifyRuleMessage
@@ -90,6 +92,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 	}
 
 	pipeline.Init()
+	EventProcessorCache = eventProcessorCache
 
 	// 设置通知记录回调函数
 	notifyChannelCache.SetNotifyRecordFunc(sender.NotifyRecord)

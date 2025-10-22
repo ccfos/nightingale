@@ -9,9 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/common"
-	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/alert/queue"
-	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -32,11 +30,11 @@ type Consumer struct {
 	dispatch       *Dispatch
 	promClients    *prom.PromClientMap
 	alertMuteCache *memsto.AlertMuteCacheType
-
-	EventMuteHook EventMuteHookFunc
 }
 
 type EventMuteHookFunc func(event *models.AlertCurEvent) bool
+
+var EventMuteHook EventMuteHookFunc = func(event *models.AlertCurEvent) bool { return false }
 
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 	tplx.RegisterQueryFunc(func(datasourceID int64, promql string) model.Value {
@@ -59,7 +57,6 @@ func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, 
 		promClients: promClients,
 
 		alertMuteCache: alertMuteCache,
-		EventMuteHook:  func(event *models.AlertCurEvent) bool { return false },
 	}
 }
 
@@ -119,56 +116,9 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
-	eventCopy := event.DeepCopy()
-	event = e.handleEventPipeline(event, eventCopy)
-	if event == nil {
-		e.persist(eventCopy)
-		logger.Infof("event drop by pipeline, rule_eval:%s, event: %+v", getKey(eventCopy), eventCopy)
-		sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, eventCopy.RuleId, "", "", "", fmt.Errorf("processor_by_alert_rule_id:%d, drop by pipeline", eventCopy.RuleId))
-		return
-	}
-
-	rule := e.dispatch.alertRuleCache.Get(event.RuleId)
-	if rule == nil {
-		return
-	}
-
-	isMuted, detail, muteId := mute.IsMuted(rule, event, e.dispatch.targetCache, e.alertMuteCache)
-	if isMuted {
-		logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", getKey(event), event, detail)
-		e.dispatch.Astats.CounterMuteTotal.WithLabelValues(
-			fmt.Sprintf("%v", event.GroupName),
-			fmt.Sprintf("%v", rule.Id),
-			fmt.Sprintf("%v", muteId),
-			fmt.Sprintf("%v", event.DatasourceId),
-		).Inc()
-		return
-	}
-
-	if e.EventMuteHook(event) {
-		logger.Debugf("rule_eval:%s event:%v is muted by hook", getKey(event), event)
-		e.dispatch.Astats.CounterMuteTotal.WithLabelValues(
-			fmt.Sprintf("%v", event.GroupName),
-			fmt.Sprintf("%v", rule.Id),
-			fmt.Sprintf("%v", 0),
-			fmt.Sprintf("%v", event.DatasourceId),
-		).Inc()
-		return
-	}
-
 	e.persist(event)
 
 	e.dispatch.HandleEventNotify(event, false)
-}
-
-// handle event pipeline
-func (e *Consumer) handleEventPipeline(event, eventCopy *models.AlertCurEvent) *models.AlertCurEvent {
-	rule := e.dispatch.alertRuleCache.Get(event.RuleId)
-	if rule == nil {
-		return event
-	}
-
-	return HandleEventPipeline(rule.PipelineConfigs, eventCopy, event, e.dispatch.eventProcessorCache, e.ctx, rule.Id, "alert_rule")
 }
 
 func (e *Consumer) persist(event *models.AlertCurEvent) {
