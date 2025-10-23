@@ -154,17 +154,16 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 
 		// event processor
 		eventCopy := event.DeepCopy()
-		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, event, eventCopy, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
+		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
 		if event == nil {
-			logger.Infof("event drop by pipeline, rule_eval:%s, event: %+v", p.Key(), eventCopy)
-			// sender.NotifyRecord(p.ctx, []*models.AlertCurEvent{eventCopy}, eventCopy.RuleId, "", "", "", fmt.Errorf("processor_by_alert_rule_id:%d, drop by pipeline", eventCopy.RuleId))
+			logger.Infof("rule_eval:%s is muted drop by pipeline event:%v", p.Key(), eventCopy)
 			continue
 		}
 
 		// event mute
 		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			logger.Debugf("rule_eval:%s event:%v is muted, detail:%s", p.Key(), event, detail)
+			logger.Infof("rule_eval:%s is muted, detail:%s event:%v", p.Key(), detail, event)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -175,7 +174,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		}
 
 		if dispatch.EventMuteHook(event) {
-			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
+			logger.Infof("rule_eval:%s is muted by hook event:%v", p.Key(), event)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),

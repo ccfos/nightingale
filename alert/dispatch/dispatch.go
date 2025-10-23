@@ -252,7 +252,7 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, before processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, event)
 			event, res, err = processor.Process(ctx, event)
 			if event == nil {
-				logger.Infof("processor_by_%s_id:%d pipeline_id:%d, after processor:%+v, event dropped, event: %+v", from, id, pipelineConfig.PipelineId, processor, eventOrigin)
+				logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, after processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, eventOrigin)
 
 				if from == "notify_rule" {
 					// alert_rule 获取不到 eventId 记录没有意义
@@ -264,6 +264,8 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		}
 	}
 
+	event.FE2DB()
+	event.FillTagsMap()
 	return event
 }
 

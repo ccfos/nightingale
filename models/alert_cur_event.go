@@ -498,6 +498,23 @@ func (e *AlertCurEvent) FE2DB() {
 
 }
 
+func (e *AlertCurEvent) FillTagsMap() {
+	e.TagsMap = make(map[string]string)
+	for i := 0; i < len(e.TagsJSON); i++ {
+		pair := strings.TrimSpace(e.TagsJSON[i])
+		if pair == "" {
+			continue
+		}
+
+		arr := strings.SplitN(pair, "=", 2)
+		if len(arr) != 2 {
+			continue
+		}
+
+		e.TagsMap[arr[0]] = arr[1]
+	}
+}
+
 func (e *AlertCurEvent) DB2Mem() {
 	e.IsRecovered = false
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
