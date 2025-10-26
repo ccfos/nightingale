@@ -47,7 +47,7 @@ Nightingale itself does not provide monitoring data collection capabilities. We 
 
 For certain edge data centers with poor network connectivity to the central Nightingale server, we offer a distributed deployment mode for the alerting engine. In this mode, even if the network is disconnected, the alerting functionality remains unaffected.
 
-![Edge Deployment Mode](doc/img/readme/20240222102119.png)
+![Edge Deployment Mode](doc/img/readme/multi-region-arch.png)
 
 > In the above diagram, Data Center A has a good network with the central data center, so it uses the Nightingale process in the central data center as the alerting engine. Data Center B has a poor network with the central data center, so it deploys `n9e-edge` as the alerting engine to handle alerting for its own data sources.
 
@@ -68,7 +68,7 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 
 ## 🔑 Key Features
 
-![Nightingale Alerting rules](doc/img/readme/2025-05-23_18-43-37.png)
+![Nightingale Alerting rules](doc/img/readme/alerting-rules-en.png)
 
 - Nightingale supports alerting rules, mute rules, subscription rules, and notification rules. It natively supports 20 types of notification media and allows customization of message templates.  
 - It supports event pipelines for Pipeline processing of alarms, facilitating automated integration with in-house systems. For example, it can append metadata to alarms or perform relabeling on events. 
@@ -76,19 +76,19 @@ Then Nightingale is not suitable. It is recommended that you choose on-call prod
 - Many databases and middleware come with built-in alert rules that can be directly imported and used. It also supports direct import of Prometheus alerting rules.  
 - It supports alerting self-healing, which automatically triggers a script to execute predefined logic after an alarm is generated—such as cleaning up disk space or capturing the current system state.
 
-![Nightingale Alarm Dashboard](doc/img/readme/2025-05-30_08-49-28.png)
+![Nightingale Alarm Dashboard](doc/img/readme/active-events-en.png)
 
 - Nightingale archives historical alarms and supports multi-dimensional query and statistics.  
 - It supports flexible aggregation grouping, allowing a clear view of the distribution of alarms across the company.
 
-![Nightingale Integration Center](doc/img/readme/2025-05-23_18-46-06.png)
+![Nightingale Integration Center](doc/img/readme/integration-components-en.png)
 
 - Nightingale has built-in metric descriptions, dashboards, and alerting rules for common operating systems, middleware, and databases, which are contributed by the community with varying quality.  
 - It directly receives data via multiple protocols such as Remote Write, OpenTSDB, Datadog, and Falcon, integrates with various Agents.  
 - It supports data sources like Prometheus, ElasticSearch, Loki, ClickHouse, MySQL, Postgres, allowing alerting based on data from these sources.  
 - Nightingale can be easily embedded into internal enterprise systems (e.g. Grafana, CMDB), and even supports configuring menu visibility for these embedded systems.
 
-![Nightingale dashboards](doc/img/readme/2025-05-23_18-49-02.png)
+![Nightingale dashboards](doc/img/readme/dashboard-en.png)
 
 - Nightingale supports dashboard functionality, including common chart types, and comes with pre-built dashboards. The image above is a screenshot of one of these dashboards.  
 - If you are already accustomed to Grafana, it is recommended to continue using Grafana for visualization, as Grafana has deeper expertise in this area.  
