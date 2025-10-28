@@ -235,6 +235,16 @@ func (rt *Router) userDel(c *gin.Context) {
 		return
 	}
 
+	// 如果要删除的用户是 admin 角色，检查是否是最后一个 admin
+	if target.IsAdmin() {
+		adminCount, err := models.CountAdminUsers(rt.Ctx)
+		ginx.Dangerous(err)
+
+		if adminCount <= 1 {
+			ginx.Bomb(http.StatusBadRequest, "Cannot delete the last admin user")
+		}
+	}
+
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
 }
 

@@ -172,6 +172,7 @@ type AlertRule struct {
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
+	PipelineConfigs   []models.PipelineConfig  `gorm:"column:pipeline_configs;type:text;serializer:json"`
 }
 
 type AlertSubscribe struct {
