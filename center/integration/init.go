@@ -331,6 +331,30 @@ func (b *BuiltinPayloadInFileType) AddBuiltinPayload(bp *models.BuiltinPayload) 
 	b.IndexData[bp.UUID] = bp
 }
 
+func (b *BuiltinPayloadInFileType) GetComponentIdentByCate(typ, cate string) string {
+
+	for _, source := range b.Data {
+		if source == nil {
+			continue
+		}
+
+		typeMap, exists := source[typ]
+		if !exists {
+			continue
+		}
+
+		payloads, exists := typeMap[cate]
+		if !exists {
+			continue
+		}
+
+		if len(payloads) > 0 {
+			return payloads[0].Component
+		}
+	}
+	return ""
+}
+
 func (b *BuiltinPayloadInFileType) GetBuiltinPayload(typ, cate, query string, componentId uint64) ([]*models.BuiltinPayload, error) {
 
 	var result []*models.BuiltinPayload
