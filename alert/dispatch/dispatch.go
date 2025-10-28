@@ -28,6 +28,8 @@ var ShouldSkipNotify func(*ctx.Context, *models.AlertCurEvent, int64) bool
 var SendByNotifyRule func(*ctx.Context, *memsto.UserCacheType, *memsto.UserGroupCacheType, *memsto.NotifyChannelCacheType,
 	[]*models.AlertCurEvent, int64, *models.NotifyConfig, *models.NotifyChannelConfig, *models.MessageTemplate)
 
+var EventProcessorCache *memsto.EventProcessorCacheType
+
 func init() {
 	ShouldSkipNotify = shouldSkipNotify
 	SendByNotifyRule = SendNotifyRuleMessage
@@ -90,6 +92,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 	}
 
 	pipeline.Init()
+	EventProcessorCache = eventProcessorCache
 
 	// 设置通知记录回调函数
 	notifyChannelCache.SetNotifyRecordFunc(sender.NotifyRecord)
@@ -177,39 +180,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			eventCopy.NotifyRuleId = notifyRuleId
 			eventCopy.NotifyRuleName = notifyRule.Name
 
-			var processors []models.Processor
-			for _, pipelineConfig := range notifyRule.PipelineConfigs {
-				if !pipelineConfig.Enable {
-					continue
-				}
-
-				eventPipeline := e.eventProcessorCache.Get(pipelineConfig.PipelineId)
-				if eventPipeline == nil {
-					logger.Warningf("notify_id: %d, event:%+v, processor not found", notifyRuleId, eventCopy)
-					continue
-				}
-
-				if !pipelineApplicable(eventPipeline, eventCopy) {
-					logger.Debugf("notify_id: %d, event:%+v, pipeline_id: %d, not applicable", notifyRuleId, eventCopy, pipelineConfig.PipelineId)
-					continue
-				}
-
-				processors = append(processors, e.eventProcessorCache.GetProcessorsById(pipelineConfig.PipelineId)...)
-			}
-
-			for _, processor := range processors {
-				var res string
-				var err error
-				logger.Infof("before processor notify_id: %d, event:%+v, processor:%+v", notifyRuleId, eventCopy, processor)
-				eventCopy, res, err = processor.Process(e.ctx, eventCopy)
-				if eventCopy == nil {
-					logger.Warningf("after processor notify_id: %d, event:%+v, processor:%+v, event is nil", notifyRuleId, eventCopy, processor)
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventOrigin}, notifyRuleId, "", "", res, errors.New("drop by processor"))
-					break
-				}
-				logger.Infof("after processor notify_id: %d, event:%+v, processor:%+v, res:%v, err:%v", notifyRuleId, eventCopy, processor, res, err)
-			}
-
+			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule")
 			if ShouldSkipNotify(e.ctx, eventCopy, notifyRuleId) {
 				logger.Infof("notify_id: %d, event:%+v, should skip notify", notifyRuleId, eventCopy)
 				continue
@@ -257,7 +228,48 @@ func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleI
 	return false
 }
 
-func pipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEvent) bool {
+func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, event *models.AlertCurEvent, eventProcessorCache *memsto.EventProcessorCacheType, ctx *ctx.Context, id int64, from string) *models.AlertCurEvent {
+	for _, pipelineConfig := range pipelineConfigs {
+		if !pipelineConfig.Enable {
+			continue
+		}
+
+		eventPipeline := eventProcessorCache.Get(pipelineConfig.PipelineId)
+		if eventPipeline == nil {
+			logger.Warningf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not found, event: %+v", from, id, pipelineConfig.PipelineId, event)
+			continue
+		}
+
+		if !PipelineApplicable(eventPipeline, event) {
+			logger.Debugf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not applicable, event: %+v", from, id, pipelineConfig.PipelineId, event)
+			continue
+		}
+
+		processors := eventProcessorCache.GetProcessorsById(pipelineConfig.PipelineId)
+		for _, processor := range processors {
+			var res string
+			var err error
+			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, before processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, event)
+			event, res, err = processor.Process(ctx, event)
+			if event == nil {
+				logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, after processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, eventOrigin)
+
+				if from == "notify_rule" {
+					// alert_rule 获取不到 eventId 记录没有意义
+					sender.NotifyRecord(ctx, []*models.AlertCurEvent{eventOrigin}, id, "", "", res, fmt.Errorf("processor_by_%s_id:%d pipeline_id:%d, drop by processor", from, id, pipelineConfig.PipelineId))
+				}
+				return nil
+			}
+			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, after processor:%+v, event: %+v, res:%v, err:%v", from, id, pipelineConfig.PipelineId, processor, event, res, err)
+		}
+	}
+
+	event.FE2DB()
+	event.FillTagsMap()
+	return event
+}
+
+func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEvent) bool {
 	if pipeline == nil {
 		return true
 	}
@@ -496,7 +508,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 			start := time.Now()
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
-			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
+			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
 		}
 
@@ -527,7 +539,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		start := time.Now()
 		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
 		res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
-		logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
+		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:
 		logger.Warningf("notify_id: %d, channel_name: %v, event:%+v send type not found", notifyRuleId, notifyChannel.Name, events[0])

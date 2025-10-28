@@ -286,7 +286,7 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) ([]models.Ano
 			continue
 		}
 
-		if query.VarEnabled {
+		if query.VarEnabled && strings.Contains(query.PromQl, "$") {
 			var anomalyPoints []models.AnomalyPoint
 			if hasLabelLossAggregator(query) || notExactMatch(query) {
 				// 若有聚合函数或非精确匹配则需要先填充变量然后查询，这个方式效率较低

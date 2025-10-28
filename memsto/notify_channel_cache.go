@@ -284,7 +284,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			start := time.Now()
 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
 			resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
-			logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+			logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos, resp, err)
 
 			// 调用通知记录回调函数
@@ -296,7 +296,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 				start := time.Now()
 				resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
 				resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
-				logger.Infof("notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+				logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 					task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
 
 				// 调用通知记录回调函数

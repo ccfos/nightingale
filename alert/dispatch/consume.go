@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/queue"
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -26,9 +27,14 @@ type Consumer struct {
 	alerting aconf.Alerting
 	ctx      *ctx.Context
 
-	dispatch    *Dispatch
-	promClients *prom.PromClientMap
+	dispatch       *Dispatch
+	promClients    *prom.PromClientMap
+	alertMuteCache *memsto.AlertMuteCacheType
 }
+
+type EventMuteHookFunc func(event *models.AlertCurEvent) bool
+
+var EventMuteHook EventMuteHookFunc = func(event *models.AlertCurEvent) bool { return false }
 
 func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 	tplx.RegisterQueryFunc(func(datasourceID int64, promql string) model.Value {
@@ -43,12 +49,14 @@ func InitRegisterQueryFunc(promClients *prom.PromClientMap) {
 }
 
 // 创建一个 Consumer 实例
-func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap) *Consumer {
+func NewConsumer(alerting aconf.Alerting, ctx *ctx.Context, dispatch *Dispatch, promClients *prom.PromClientMap, alertMuteCache *memsto.AlertMuteCacheType) *Consumer {
 	return &Consumer{
 		alerting:    alerting,
 		ctx:         ctx,
 		dispatch:    dispatch,
 		promClients: promClients,
+
+		alertMuteCache: alertMuteCache,
 	}
 }
 

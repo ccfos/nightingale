@@ -369,6 +369,12 @@ func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
+func CountAdminUsers(ctx *ctx.Context) (int64, error) {
+	var count int64
+	err := DB(ctx).Model(&User{}).Where("roles LIKE ?", "%"+AdminRole+"%").Count(&count).Error
+	return count, err
+}
+
 func UsersGetByGroupIds(ctx *ctx.Context, groupIds []int64) ([]User, error) {
 	if len(groupIds) == 0 {
 		return nil, nil
