@@ -106,6 +106,19 @@ func (e *Elasticsearch) InitClient() error {
 	options = append(options, elastic.SetHealthcheck(false))
 
 	e.Client, err = elastic.NewClient(options...)
+	if err == nil {
+		if e.Addr != "" {
+			if ver, verr := e.Client.ElasticsearchVersion(e.Addr); verr == nil {
+				logger.Infof("detected elasticsearch version: %s", ver)
+				e.Version = ver
+			} else {
+				logger.Warningf("failed to detect elasticsearch version from %s: %v", e.Addr, verr)
+			}
+		} else {
+			logger.Warning("no addr available to detect elasticsearch version")
+		}
+	}
+
 	return err
 }
 
@@ -183,17 +196,19 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 }
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
-
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
+		convertedSource, err := convertRangeQuery(source)
+		if err != nil {
+			return nil, err
+		}
 		return e.Client.Search().
 			Index(indices...).
 			IgnoreUnavailable(true).
-			Source(source).
+			Source(convertedSource).
 			Timeout(fmt.Sprintf("%ds", timeout)).
 			MaxConcurrentShardRequests(maxShard).
 			Do(ctx)
 	}
-
 	return eslike.QueryData(ctx, queryParam, e.Timeout, e.Version, search)
 }
 
@@ -406,4 +421,83 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 	}
 
 	return result, nil
+}
+
+func convertRangeQuery(source interface{}) (interface{}, error) {
+	sourceMap, ok := source.(map[string]interface{})
+	if !ok {
+		data, err := json.Marshal(source)
+		if err != nil {
+			return source, err
+		}
+		if err := json.Unmarshal(data, &sourceMap); err != nil {
+			return source, err
+		}
+	}
+	processMap(sourceMap)
+	return sourceMap, nil
+}
+
+func processMap(m map[string]interface{}) {
+
+	for key, value := range m {
+		if key == "range" {
+			// 处理 range query
+			if rangeMap, ok := value.(map[string]interface{}); ok {
+				for field, params := range rangeMap {
+					if paramsMap, ok := params.(map[string]interface{}); ok {
+						convertFromToParams(paramsMap)
+						processMap(paramsMap)
+						rangeMap[field] = paramsMap
+					}
+				}
+			}
+		} else if subMap, ok := value.(map[string]interface{}); ok {
+			processMap(subMap)
+		} else if arr, ok := value.([]interface{}); ok {
+			for _, item := range arr {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					processMap(itemMap)
+				}
+			}
+		}
+	}
+}
+
+// convertFromToParams 用于将 from/to 以及区间开闭控制参数转换为 gte/gt 和 lte/lt 参数 以兼容 ES 9中REST API弃用的from/to参数
+func convertFromToParams(params map[string]interface{}) {
+	includeLower := true
+	includeUpper := true
+
+	if val, ok := params["include_lower"]; ok {
+		if b, ok := val.(bool); ok {
+			includeLower = b
+		}
+		delete(params, "include_lower")
+	}
+
+	if val, ok := params["include_upper"]; ok {
+		if b, ok := val.(bool); ok {
+			includeUpper = b
+		}
+		delete(params, "include_upper")
+	}
+
+	if from, ok := params["from"]; ok {
+		if includeLower {
+			params["gte"] = from
+		} else {
+			params["gt"] = from
+		}
+		delete(params, "from")
+	}
+
+	if to, ok := params["to"]; ok {
+		if includeUpper {
+			params["lte"] = to
+		} else {
+			params["lt"] = to
+		}
+		delete(params, "to")
+	}
 }

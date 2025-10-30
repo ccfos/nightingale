@@ -441,10 +441,30 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		Field(param.DateField).
 		MinDocCount(1)
 
-	if strings.HasPrefix(version, "7") {
+	versionParts := strings.Split(version, ".")
+	major := 0
+	if len(versionParts) > 0 {
+		if m, err := strconv.Atoi(versionParts[0]); err == nil {
+			major = m
+		}
+	}
+	minor := 0
+	if len(versionParts) > 1 {
+		if m, err := strconv.Atoi(versionParts[1]); err == nil {
+			minor = m
+		}
+	}
+
+	if major >= 7 {
 		// 添加偏移量，使第一个分桶bucket的左边界对齐为 start 时间
 		offset := (start % param.Interval) - param.Interval
-		tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+		if minor >= 2 {
+			// ES 7.2+ 使用 fixed_interval
+			tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+		} else {
+			// 7.0-7.1 使用 interval（带 offset）
+			tsAggr.Interval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
+		}
 	} else {
 		// 兼容 7.0 以下的版本
 		// OpenSearch 也使用这个字段
