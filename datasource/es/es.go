@@ -127,8 +127,6 @@ func (e *Elasticsearch) InitClient() error {
 		if e.Version == "" {
 			logger.Warning("failed to detect elasticsearch version from configured nodes, keep configured version")
 		}
-	} else {
-		logger.Warning("client is nil, skip elasticsearch version detection")
 	}
 
 	return err
