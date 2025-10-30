@@ -434,23 +434,42 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 }
 
 func convertRangeQuery(source interface{}) (interface{}, error) {
-	sourceMap, ok := source.(map[string]interface{})
-	if !ok {
-		return source, fmt.Errorf("source type error")
+	if source == nil {
+		return nil, nil
 	}
+
+	// 直接断言为 *elastic.SearchSource
+	ss, ok := source.(*elastic.SearchSource)
+	if !ok {
+		return source, nil
+	}
+
+	// 将 *elastic.SearchSource 转为 map[string]interface{}
+	src, err := ss.Source()
+	if err != nil {
+		return source, nil
+	}
+
+	// 断言为 map[string]interface{}
+	sourceMap, ok := src.(map[string]interface{})
+	if !ok {
+		// 如果不是 map，退回原始 src
+		return src, nil
+	}
+
+	// 处理 map，转换 range 查询
 	processMap(sourceMap)
 	return sourceMap, nil
 }
 
 func processMap(m map[string]interface{}) {
-
 	for key, value := range m {
 		if key == "range" {
 			// 处理 range query
 			// 进入条件示例（原始 ES Query DSL）：
-			// "query": { "range": { "timestamp": { "from": 1600000000000, "to": 1600003600000, "include_lower": true } } }
+			// "query": { "range": { "@timestamp": { "from": 1600000000000, "to": 1600003600000, "include_lower": true } } }
 			// 或者使用 gte/lt 形式：
-			// "query": { "range": { "timestamp": { "gte": 1600000000000, "lt": 1600003600000 } } }
+			// "query": { "range": { "@timestamp": { "gte": 1600000000000, "lt": 1600003600000 } } }
 			// 目的：把 from/to & include_lower/include_upper 转成 gte/gt/lte/lt 以兼容 ES9 的 REST 语法变更
 			if rangeMap, ok := value.(map[string]interface{}); ok {
 				for field, params := range rangeMap {
