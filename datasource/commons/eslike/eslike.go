@@ -458,8 +458,10 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	if major >= 7 {
 		// 添加偏移量，使第一个分桶bucket的左边界对齐为 start 时间
 		offset := (start % param.Interval) - param.Interval
-		if minor >= 2 {
-			// ES 7.2+ 使用 fixed_interval
+
+		// 使用 fixed_interval 的条件：ES 7.2+ 或者任何 major > 7（例如 ES8）
+		if (major > 7) || (major == 7 && minor >= 2) {
+			// ES 7.2+ 以及 ES8+ 使用 fixed_interval
 			tsAggr.FixedInterval(fmt.Sprintf("%ds", param.Interval)).Offset(fmt.Sprintf("%ds", offset))
 		} else {
 			// 7.0-7.1 使用 interval（带 offset）

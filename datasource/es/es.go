@@ -106,17 +106,29 @@ func (e *Elasticsearch) InitClient() error {
 	options = append(options, elastic.SetHealthcheck(false))
 
 	e.Client, err = elastic.NewClient(options...)
-	if err == nil {
-		if e.Addr != "" {
-			if ver, verr := e.Client.ElasticsearchVersion(e.Addr); verr == nil {
-				logger.Infof("detected elasticsearch version: %s", ver)
-				e.Version = ver
-			} else {
-				logger.Warningf("failed to detect elasticsearch version from %s: %v", e.Addr, verr)
+	if err != nil {
+		return err
+	}
+
+	if e.Client != nil {
+		for _, addr := range e.Nodes {
+			if addr == "" {
+				continue
 			}
-		} else {
-			logger.Warning("no addr available to detect elasticsearch version")
+			if ver, verr := e.Client.ElasticsearchVersion(addr); verr == nil {
+				logger.Infof("detected elasticsearch version from %s: %s", addr, ver)
+				e.Version = ver
+				e.Addr = addr
+				break
+			} else {
+				logger.Debugf("detect version failed from %s: %v", addr, verr)
+			}
 		}
+		if e.Version == "" {
+			logger.Warning("failed to detect elasticsearch version from configured nodes, keep configured version")
+		}
+	} else {
+		logger.Warning("client is nil, skip elasticsearch version detection")
 	}
 
 	return err
@@ -426,13 +438,7 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 func convertRangeQuery(source interface{}) (interface{}, error) {
 	sourceMap, ok := source.(map[string]interface{})
 	if !ok {
-		data, err := json.Marshal(source)
-		if err != nil {
-			return source, err
-		}
-		if err := json.Unmarshal(data, &sourceMap); err != nil {
-			return source, err
-		}
+		return source, fmt.Errorf("source type error")
 	}
 	processMap(sourceMap)
 	return sourceMap, nil
@@ -443,6 +449,11 @@ func processMap(m map[string]interface{}) {
 	for key, value := range m {
 		if key == "range" {
 			// 处理 range query
+			// 进入条件示例（原始 ES Query DSL）：
+			// "query": { "range": { "timestamp": { "from": 1600000000000, "to": 1600003600000, "include_lower": true } } }
+			// 或者使用 gte/lt 形式：
+			// "query": { "range": { "timestamp": { "gte": 1600000000000, "lt": 1600003600000 } } }
+			// 目的：把 from/to & include_lower/include_upper 转成 gte/gt/lte/lt 以兼容 ES9 的 REST 语法变更
 			if rangeMap, ok := value.(map[string]interface{}); ok {
 				for field, params := range rangeMap {
 					if paramsMap, ok := params.(map[string]interface{}); ok {
@@ -453,8 +464,18 @@ func processMap(m map[string]interface{}) {
 				}
 			}
 		} else if subMap, ok := value.(map[string]interface{}); ok {
+			// 处理嵌套对象（递归）
+			// 进入条件示例（原始 ES Query DSL）：
+			// "query": { "bool": { "must": { "match": { "msg": "x" } }, "filter": { "range": { "@timestamp": {...} } } } }
+			// "aggs": { "ts": { "date_histogram": { "field":"@timestamp", "fixed_interval":"1m" } } }
+			// 目的：递归遍历任意嵌套的 map，以处理内部可能的 range/date_histogram/其他需要兼容转换的结构
 			processMap(subMap)
 		} else if arr, ok := value.([]interface{}); ok {
+			// 处理数组类型（递归每个元素）
+			// 进入条件示例（原始 ES Query DSL）：
+			// "query": { "bool": { "should": [ { "match": {"msg":"a"} }, { "match": {"msg":"b"} } ] } }
+			// "aggs": { "filters": { "filters": [ { "term": {"host":"a"} }, { "term": {"host":"b"} } ] } }
+			// 目的：遍历数组中的每个对象元素，处理其中可能包含的 range / 嵌套 map 等
 			for _, item := range arr {
 				if itemMap, ok := item.(map[string]interface{}); ok {
 					processMap(itemMap)
