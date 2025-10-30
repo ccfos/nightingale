@@ -10,20 +10,12 @@ jobs:
   translate:
     runs-on: ubuntu-latest
     steps:
-      - name: Translate Issues and Comments
+      - name: Translate Issues
         uses: usthe/issues-translate-action@v2.7
         with:
           # 是否翻译 issue 标题
           IS_MODIFY_TITLE: true
-          # 是否翻译 issue 内容
-          IS_MODIFY_BODY: false
-          # 是否翻译评论
-          IS_MODIFY_COMMENT: false
-          # 自定义机器人标签
-          CUSTOM_BOT_LABEL: bot
-          # 目标翻译语言（英文）
-          TARGET_LANGUAGE: en
-          # 需要排除的语言（已经是英文的就不翻译）
-          IGNORED_LANGUAGES: en
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GitHub Token
+          BOT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 自定义翻译标注（可选）
+          # CUSTOM_BOT_NOTE: "Translation by bot"
