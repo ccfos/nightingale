@@ -3,12 +3,13 @@ name: 'Issue Translator'
 on:
   issues:
     types: [opened]
-  issue_comment:
-    types: [created]
 
 jobs:
   translate:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
       - name: Translate Issues
         uses: usthe/issues-translate-action@v2.7
