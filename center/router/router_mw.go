@@ -453,6 +453,30 @@ func (rt *Router) wrapJwtKey(key string) string {
 	return rt.HTTP.JWTAuth.RedisKeyPrefix + key
 }
 
+func (rt *Router) wrapIdTokenKey(userId int64) string {
+	return fmt.Sprintf("n9e_id_token_%d", userId)
+}
+
+// saveIdToken 保存用户的 id_token 到 Redis
+func (rt *Router) saveIdToken(ctx context.Context, userId int64, idToken string) error {
+	if idToken == "" {
+		return nil
+	}
+	// id_token 的过期时间应该与 RefreshToken 保持一致，确保在整个会话期间都可用于登出
+	expiration := time.Minute * time.Duration(rt.HTTP.JWTAuth.RefreshExpired)
+	return rt.Redis.Set(ctx, rt.wrapIdTokenKey(userId), idToken, expiration).Err()
+}
+
+// fetchIdToken 从 Redis 获取用户的 id_token
+func (rt *Router) fetchIdToken(ctx context.Context, userId int64) (string, error) {
+	return rt.Redis.Get(ctx, rt.wrapIdTokenKey(userId)).Result()
+}
+
+// deleteIdToken 从 Redis 删除用户的 id_token
+func (rt *Router) deleteIdToken(ctx context.Context, userId int64) error {
+	return rt.Redis.Del(ctx, rt.wrapIdTokenKey(userId)).Err()
+}
+
 type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string

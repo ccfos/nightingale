@@ -107,9 +107,20 @@ func (rt *Router) logoutPost(c *gin.Context) {
 
 	var logoutAddr string
 	user := c.MustGet("user").(*models.User)
+
+	// 获取用户的 id_token
+	idToken, err := rt.fetchIdToken(c.Request.Context(), user.Id)
+	if err != nil {
+		logger.Debugf("fetch id_token failed: %v, user_id: %d", err, user.Id)
+		idToken = "" // 如果获取失败，使用空字符串
+	}
+
+	// 删除 id_token
+	rt.deleteIdToken(c.Request.Context(), user.Id)
+
 	switch user.Belong {
 	case "oidc":
-		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr()
+		logoutAddr = rt.Sso.OIDC.GetSsoLogoutAddr(idToken)
 	case "cas":
 		logoutAddr = rt.Sso.CAS.GetSsoLogoutAddr()
 	case "oauth2":
@@ -199,6 +210,14 @@ func (rt *Router) refreshPost(c *gin.Context) {
 		ginx.Dangerous(err)
 		ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
+		// 延长 id_token 的过期时间，使其与新的 refresh token 生命周期保持一致
+		// 注意：这里不会获取新的 id_token，只是延长 Redis 中现有 id_token 的 TTL
+		if idToken, err := rt.fetchIdToken(c.Request.Context(), userid); err == nil && idToken != "" {
+			if err := rt.saveIdToken(c.Request.Context(), userid, idToken); err != nil {
+				logger.Debugf("refresh id_token ttl failed: %v, user_id: %d", err, userid)
+			}
+		}
+
 		ginx.NewRender(c).Data(gin.H{
 			"access_token":  ts.AccessToken,
 			"refresh_token": ts.RefreshToken,
@@ -285,6 +304,13 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
 	ginx.Dangerous(err)
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+
+	// 保存 id_token 到 Redis，用于登出时使用
+	if ret.IdToken != "" {
+		if err := rt.saveIdToken(c.Request.Context(), user.Id, ret.IdToken); err != nil {
+			logger.Errorf("save id_token failed: %v, user_id: %d", err, user.Id)
+		}
+	}
 
 	redirect := "/"
 	if ret.Redirect != "/login" {

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -140,14 +141,22 @@ func (s *SsoClient) GetDisplayName() string {
 	return s.DisplayName
 }
 
-func (s *SsoClient) GetSsoLogoutAddr() string {
+func (s *SsoClient) GetSsoLogoutAddr(idToken string) string {
 	s.RLock()
 	defer s.RUnlock()
 	if !s.Enable {
 		return ""
 	}
 
-	return s.SsoLogoutAddr
+	return s.replaceIdTokenTemplate(s.SsoLogoutAddr, idToken)
+}
+
+// replaceIdTokenTemplate 替换登出 URL 中的 {{$__id_token__}} 模板变量
+func (s *SsoClient) replaceIdTokenTemplate(logoutAddr, idToken string) string {
+	if idToken == "" {
+		return logoutAddr
+	}
+	return strings.ReplaceAll(logoutAddr, "{{$__id_token__}}", idToken)
 }
 
 func wrapStateKey(key string) string {
@@ -201,6 +210,7 @@ type CallbackOutput struct {
 	Redirect    string `json:"redirect"`
 	Msg         string `json:"msg"`
 	AccessToken string `json:"accessToken"`
+	IdToken     string `json:"idToken"`
 	Username    string `json:"username"`
 	Nickname    string `json:"nickname"`
 	Phone       string `yaml:"phone"`
@@ -245,6 +255,7 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 
 	output := &CallbackOutput{
 		AccessToken: oauth2Token.AccessToken,
+		IdToken:     rawIDToken,
 		Username:    extractClaim(data, s.Attributes.Username),
 		Nickname:    extractClaim(data, s.Attributes.Nickname),
 		Phone:       extractClaim(data, s.Attributes.Phone),
