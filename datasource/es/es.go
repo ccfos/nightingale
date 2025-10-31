@@ -207,14 +207,10 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
 	search := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
-		convertedSource, err := convertRangeQuery(source)
-		if err != nil {
-			return nil, err
-		}
 		return e.Client.Search().
 			Index(indices...).
 			IgnoreUnavailable(true).
-			Source(convertedSource).
+			Source(source).
 			Timeout(fmt.Sprintf("%ds", timeout)).
 			MaxConcurrentShardRequests(maxShard).
 			Do(ctx)
@@ -431,111 +427,4 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 	}
 
 	return result, nil
-}
-
-func convertRangeQuery(source interface{}) (interface{}, error) {
-	if source == nil {
-		return nil, nil
-	}
-
-	// 直接断言为 *elastic.SearchSource
-	ss, ok := source.(*elastic.SearchSource)
-	if !ok {
-		return source, nil
-	}
-
-	// 将 *elastic.SearchSource 转为 map[string]interface{}
-	src, err := ss.Source()
-	if err != nil {
-		return source, nil
-	}
-
-	// 断言为 map[string]interface{}
-	sourceMap, ok := src.(map[string]interface{})
-	if !ok {
-		// 如果不是 map，退回原始 src
-		return src, nil
-	}
-
-	// 处理 map，转换 range 查询
-	processMap(sourceMap)
-	return sourceMap, nil
-}
-
-func processMap(m map[string]interface{}) {
-	for key, value := range m {
-		if key == "range" {
-			// 处理 range query
-			// 进入条件示例（原始 ES Query DSL）：
-			// "query": { "range": { "@timestamp": { "from": 1600000000000, "to": 1600003600000, "include_lower": true } } }
-			// 或者使用 gte/lt 形式：
-			// "query": { "range": { "@timestamp": { "gte": 1600000000000, "lt": 1600003600000 } } }
-			// 目的：把 from/to & include_lower/include_upper 转成 gte/gt/lte/lt 以兼容 ES9 的 REST 语法变更
-			if rangeMap, ok := value.(map[string]interface{}); ok {
-				for field, params := range rangeMap {
-					if paramsMap, ok := params.(map[string]interface{}); ok {
-						convertFromToParams(paramsMap)
-						processMap(paramsMap)
-						rangeMap[field] = paramsMap
-					}
-				}
-			}
-		} else if subMap, ok := value.(map[string]interface{}); ok {
-			// 处理嵌套对象（递归）
-			// 进入条件示例（原始 ES Query DSL）：
-			// "query": { "bool": { "must": { "match": { "msg": "x" } }, "filter": { "range": { "@timestamp": {...} } } } }
-			// "aggs": { "ts": { "date_histogram": { "field":"@timestamp", "fixed_interval":"1m" } } }
-			// 目的：递归遍历任意嵌套的 map，以处理内部可能的 range/date_histogram/其他需要兼容转换的结构
-			processMap(subMap)
-		} else if arr, ok := value.([]interface{}); ok {
-			// 处理数组类型（递归每个元素）
-			// 进入条件示例（原始 ES Query DSL）：
-			// "query": { "bool": { "should": [ { "match": {"msg":"a"} }, { "match": {"msg":"b"} } ] } }
-			// "aggs": { "filters": { "filters": [ { "term": {"host":"a"} }, { "term": {"host":"b"} } ] } }
-			// 目的：遍历数组中的每个对象元素，处理其中可能包含的 range / 嵌套 map 等
-			for _, item := range arr {
-				if itemMap, ok := item.(map[string]interface{}); ok {
-					processMap(itemMap)
-				}
-			}
-		}
-	}
-}
-
-// convertFromToParams 用于将 from/to 以及区间开闭控制参数转换为 gte/gt 和 lte/lt 参数 以兼容 ES 9中REST API弃用的from/to参数
-func convertFromToParams(params map[string]interface{}) {
-	includeLower := true
-	includeUpper := true
-
-	if val, ok := params["include_lower"]; ok {
-		if b, ok := val.(bool); ok {
-			includeLower = b
-		}
-		delete(params, "include_lower")
-	}
-
-	if val, ok := params["include_upper"]; ok {
-		if b, ok := val.(bool); ok {
-			includeUpper = b
-		}
-		delete(params, "include_upper")
-	}
-
-	if from, ok := params["from"]; ok {
-		if includeLower {
-			params["gte"] = from
-		} else {
-			params["gt"] = from
-		}
-		delete(params, "from")
-	}
-
-	if to, ok := params["to"]; ok {
-		if includeUpper {
-			params["lte"] = to
-		} else {
-			params["lt"] = to
-		}
-		delete(params, "to")
-	}
 }
