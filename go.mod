@@ -161,4 +161,6 @@ require (
 
 replace golang.org/x/exp v0.0.0-20231006140011-7918f672742d => golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 
+replace github.com/olivere/elastic/v7 => github.com/n9e/elastic/v7 v7.0.33-0.20251031061708-f480a2dfcfa7
+
 // replace github.com/flashcatcloud/ibex => ../github.com/flashcatcloud/ibex
