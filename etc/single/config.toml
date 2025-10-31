@@ -27,7 +27,7 @@ KeyFile = ""
 # whether print access log
 PrintAccessLog = false
 # whether enable pprof
-PProf = false
+PProf = true
 # expose prometheus /metrics?
 ExposeMetrics = true
 # http graceful shutdown timeout, unit: s
@@ -42,10 +42,10 @@ WriteTimeout = 40
 IdleTimeout = 120
 
 [HTTP.ShowCaptcha]
-Enable = false 
+Enable = false
 
 [HTTP.APIForAgent]
-Enable = true 
+Enable = true
 # [HTTP.APIForAgent.BasicAuth]
 # user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
@@ -56,7 +56,7 @@ user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
 
 [HTTP.JWTAuth]
 # unit: min
-AccessExpired = 1500
+AccessExpired = 15
 # unit: min
 RefreshExpired = 10080
 RedisKeyPrefix = "/jwt/"
@@ -68,22 +68,19 @@ Enable = false
 HeaderUserNameKey = "X-User-Name"
 DefaultRoles = ["Standard"]
 
+[HTTP.TokenAuth]
+Enable = true
+
 [HTTP.RSA]
 # open RSA
 OpenRSA = false
-# RSA public key
-RSAPublicKeyPath = "/etc/n9e/public.pem"
-# RSA private key
-RSAPrivateKeyPath = "/etc/n9e/private.pem"
-# RSA private key password
-RSAPassWord = ""
 
 [DB]
-DSN="host=postgres port=5432 user=root dbname=n9e_v6 password=1234 sslmode=disable"
+# mysql postgres sqlite
+DBType = "sqlite"
+DSN = "n9e.db"
 # enable debug mode or not
 Debug = false
-# mysql postgres
-DBType = "postgres"
 # unit: s
 MaxLifetime = 7200
 # max open connections
@@ -93,14 +90,14 @@ MaxIdleConns = 50
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
-Address = "redis:6379"
+Address = "127.0.0.1:6379"
 # Username = ""
 # Password = ""
 # DB = 0
 # UseTLS = false
 # TLSMinVersion = "1.2"
-# standalone cluster sentinel
-RedisType = "standalone"
+# standalone cluster sentinel miniredis
+RedisType = "miniredis"
 # Mastername for sentinel type
 # MasterName = "mymaster"
 # SentinelUsername = ""
@@ -114,11 +111,8 @@ IP = ""
 Interval = 1000
 EngineName = "default"
 
-# [Alert.Alerting]
-# NotifyConcurrency = 10
-
 [Center]
-MetricsYamlFile = "./etc/metrics.yaml"
+MetricsYamlFile = "../metrics.yaml"
 I18NHeaderKey = "X-Language"
 
 [Center.AnonymousAccess]
@@ -130,17 +124,8 @@ AlertDetail = true
 LabelRewrite = true
 ForceUseServerTS = true
 
-# [Pushgw.DebugSample]
-# ident = "xx"
-# __name__ = "xx"
-
-# [Pushgw.WriterOpt]
-# QueueMaxSize = 1000000
-# QueuePopSize = 1000
-
 [[Pushgw.Writers]] 
-# Url = "http://127.0.0.1:8480/insert/0/prometheus/api/v1/write"
-Url = "http://victoriametrics:8428/api/v1/write"
+Url = "http://victoria:8428/api/v1/write"
 # Basic auth username
 BasicAuthUser = ""
 # Basic auth password
@@ -157,18 +142,6 @@ KeepAlive = 30000
 MaxConnsPerHost = 0
 MaxIdleConns = 100
 MaxIdleConnsPerHost = 100
-## Optional TLS Config
-# UseTLS = false
-# TLSCA = "/etc/n9e/ca.pem"
-# TLSCert = "/etc/n9e/cert.pem"
-# TLSKey = "/etc/n9e/key.pem"
-# InsecureSkipVerify = false
-# [[Writers.WriteRelabels]]
-# Action = "replace"
-# SourceLabels = ["__address__"]
-# Regex = "([^:]+)(?::\\d+)?"
-# Replacement = "$1:80"
-# TargetLabel = "__address__"
 
 [Ibex]
 Enable = true

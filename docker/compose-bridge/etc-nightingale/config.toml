@@ -89,8 +89,6 @@ MaxLifetime = 7200
 MaxOpenConns = 150
 # max idle connections
 MaxIdleConns = 50
-# enable auto migrate or not
-# EnableAutoMigrate = false
 
 [Redis]
 # address, ip:port or ip1:port,ip2:port for cluster and sentinel(SentinelAddrs)
