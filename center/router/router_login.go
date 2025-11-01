@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
@@ -268,6 +269,36 @@ func (rt *Router) loginCallback(c *gin.Context) {
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
 
+	// Check if the callback parameter code exists
+	if code == "" {
+		ginx.NewRender(c).Data(CallbackOutput{}, fmt.Errorf("missing authorization code"))
+		return
+	}
+
+	// Construct a unique Redis distributed lock key
+	lockKey := fmt.Sprintf("oidc_callback_lock_%s", code)
+	ctx := c.Request.Context()
+
+	// Try setting a lock in Redis
+	locked, err := rt.Redis.SetNX(ctx, lockKey, "1", 30*time.Second).Result()
+	if err != nil {
+		logger.Errorf("failed to acquire callback lock for code %s: %v", code, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, fmt.Errorf("failed to process callback"))
+		return
+	}
+
+	// If locking fails
+	// it means the authorization code is being processed by another request or has already been used.
+	if !locked {
+		logger.Warningf("callback code %s already processed, rejecting duplicate request", code)
+		ginx.NewRender(c).Data(CallbackOutput{}, fmt.Errorf("authorization code already used"))
+		return
+	}
+
+	defer func() {
+		rt.Redis.Del(ctx, lockKey)
+	}()
+
 	ret, err := rt.Sso.OIDC.Callback(rt.Redis, c.Request.Context(), code, state)
 	if err != nil {
 		logger.Errorf("sso_callback fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
@@ -317,12 +348,9 @@ func (rt *Router) loginCallback(c *gin.Context) {
 		redirect = ret.Redirect
 	}
 
-	ginx.NewRender(c).Data(CallbackOutput{
-		Redirect:     redirect,
-		User:         user,
-		AccessToken:  ts.AccessToken,
-		RefreshToken: ts.RefreshToken,
-	}, nil)
+	c.SetCookie("access_token", ts.AccessToken, 3600*24*7, "/", "", false, true)
+	c.SetCookie("refresh_token", ts.RefreshToken, 3600*24*30, "/", "", false, true)
+	c.Redirect(http.StatusFound, redirect)
 }
 
 type RedirectOutput struct {
