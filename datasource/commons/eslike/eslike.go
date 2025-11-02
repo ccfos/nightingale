@@ -158,7 +158,7 @@ func GetQueryString(filter string, q *elastic.RangeQuery) *elastic.BoolQuery {
 			queryString = elastic.NewBoolQuery().Filter(elastic.NewMultiMatchQuery(filter).Lenient(true).Type("phrase")).Filter(q)
 		}
 	} else {
-		queryString = elastic.NewBoolQuery().Should(q)
+		queryString = elastic.NewBoolQuery().Filter(q)
 	}
 
 	return queryString
