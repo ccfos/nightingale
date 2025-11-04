@@ -254,6 +254,34 @@ func ConfigsGetFlashDutyAppKey(ctx *ctx.Context) (string, error) {
 	return configs[0].Cval, nil
 }
 
+func ConfigsGetPagerDutyApiKey(ctx *ctx.Context) (string, error) {
+	configs, err := ConfigsSelectByCkey(ctx, "pagerduty_api_key")
+	if err != nil {
+		return "", err
+	}
+	if len(configs) == 0 || configs[0].Cval == "" {
+		return "", errors.New("pagerduty_api_key is empty")
+	}
+	// Encrypted equals 1 means the value is encrypted
+	if configs[0].Encrypted == 1 {
+		privateKeyVal, err1 := ConfigsGet(ctx, RSA_PRIVATE_KEY)
+		passwordVal, err2 := ConfigsGet(ctx, RSA_PASSWORD)
+		if err1 != nil || err2 != nil {
+			return "", errors.New("failed to load RSA credentials from config")
+		}
+		decryptMap, decryptErr := ConfigUserVariableGetDecryptMap(ctx, []byte(privateKeyVal), passwordVal)
+		if decryptErr != nil {
+			return "", decryptErr
+		}
+		if val, ok := decryptMap["pagerduty_api_key"]; ok {
+			return val, nil
+		} else {
+			return "", errors.New("pagerduty_api_key is empty")
+		}
+	}
+	return configs[0].Cval, nil
+}
+
 // GetPhoneEncryptionEnabled 获取手机号加密是否开启
 func GetPhoneEncryptionEnabled(ctx *ctx.Context) (bool, error) {
 	val, err := ConfigsGet(ctx, PHONE_ENCRYPTION_ENABLED)

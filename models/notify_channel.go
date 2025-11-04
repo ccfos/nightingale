@@ -73,6 +73,7 @@ type RequestConfig struct {
 	SMTPRequestConfig      *SMTPRequestConfig      `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
 	ScriptRequestConfig    *ScriptRequestConfig    `json:"script_request_config,omitempty" gorm:"serializer:json"`
 	FlashDutyRequestConfig *FlashDutyRequestConfig `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
+	PagerDutyRequestConfig *PagerDutyRequestConfig `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -96,6 +97,15 @@ type FlashDutyRequestConfig struct {
 	Timeout        int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes     int    `json:"retry_times"` // 重试次数
 	RetrySleep     int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+// PagerDutyRequestConfig PagerDuty 类型的参数配置
+type PagerDutyRequestConfig struct {
+	Proxy      string `json:"proxy"`
+	ApiKey     string `json:"api_key"`     // PagerDuty 账户或用户的 API Key，不是集成的 Integration Key (routing key)
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes int    `json:"retry_times"` // 重试次数
+	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // ParamItem 自定义参数项
@@ -865,7 +875,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
-	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" {
+	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" && ncc.RequestType != "pagerduty" {
 		return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
 	}
 
@@ -893,6 +903,10 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		}
 	case "flashduty":
 		if err := ncc.ValidateFlashDutyRequestConfig(); err != nil {
+			return err
+		}
+	case "pagerduty":
+		if err := ncc.ValidatePagerDutyRequestConfig(); err != nil {
 			return err
 		}
 	}
@@ -965,6 +979,13 @@ func (ncc *NotifyChannelConfig) ValidateScriptRequestConfig() error {
 func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 	if ncc.RequestConfig.FlashDutyRequestConfig == nil {
 		return errors.New("flashduty request config cannot be nil")
+	}
+	return nil
+}
+
+func (ncc *NotifyChannelConfig) ValidatePagerDutyRequestConfig() error {
+	if ncc.RequestConfig.PagerDutyRequestConfig == nil {
+		return errors.New("pagerduty request config cannot be nil")
 	}
 	return nil
 }
@@ -1448,6 +1469,24 @@ var NotiChMap = []*NotifyChannelConfig{
 				IntegrationUrl: "flashduty integration url",
 				Timeout:        5000, // 默认5秒超时
 				RetryTimes:     3,    // 默认重试3次
+			},
+		},
+	},
+	{
+		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			PagerDutyRequestConfig: &PagerDutyRequestConfig{
+				ApiKey:     "pagerduty api key",
+				Timeout:    5000,
+				RetryTimes: 3,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "service_id", CName: "Service", Type: "select"},
+					{Key: "routing_key", CName: "Routing Key", Type: "string"},
+				},
 			},
 		},
 	},

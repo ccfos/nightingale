@@ -266,3 +266,121 @@ func parseIntegrationUrl(urlStr string) (baseUrl string, integrationKey string, 
 
 	return host, integrationKey, nil
 }
+
+func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	// configs, err := models.ConfigsGet(rt.Ctx, "pagerduty_api_key")
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "failed to get pagerduty api key")
+	}
+
+	// jsonData := []byte("{}")
+	// if len(configs) > 0 {
+	// 	me := c.MustGet("user").(*models.User)
+	// 	jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
+	// }
+
+	items, err := getPagerDutyServices(nc.RequestConfig.PagerDutyRequestConfig.ApiKey)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(items, nil)
+}
+
+func getPagerDutyServices(apiKey string) ([]struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	IntegrationKey string `json:"integration_key"`
+}, error) {
+	req, err := http.NewRequest("GET", "https://api.pagerduty.com/services", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
+
+	httpResp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResp.Body.Close()
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var serviceRes struct {
+		Services []struct {
+			Name         string `json:"name"`
+			ID           string `json:"id"`
+			Integrations []struct {
+				ID   string `json:"id"`
+				Self string `json:"self"` // integration 的 API URL
+			} `json:"integrations"`
+		} `json:"services"`
+	}
+
+	if err := json.Unmarshal(body, &serviceRes); err != nil {
+		return nil, err
+	}
+	services := make([]struct {
+		ID             string `json:"id"`
+		Name           string `json:"name"`
+		IntegrationKey string `json:"integration_key"`
+	}, 0, len(serviceRes.Services))
+
+	for _, svc := range serviceRes.Services {
+		for _, integ := range svc.Integrations {
+			// 通过 integration 的 API URL 获取 integration key
+			integrationKey, err := getPagerDutyIntegrationKey(integ.Self, apiKey)
+			if err != nil {
+				return nil, err
+			}
+			services = append(services, struct {
+				ID             string `json:"id"`
+				Name           string `json:"name"`
+				IntegrationKey string `json:"integration_key"`
+			}{
+				ID:             svc.ID,
+				Name:           svc.Name,
+				IntegrationKey: integrationKey,
+			})
+		}
+	}
+
+	return services, nil
+}
+
+func getPagerDutyIntegrationKey(integrationUrl, apiKey string) (string, error) {
+	req, err := http.NewRequest("GET", integrationUrl, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
+
+	httpResp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer httpResp.Body.Close()
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var integRes struct {
+		Integration struct {
+			IntegrationKey string `json:"integration_key"`
+		} `json:"integration"`
+	}
+
+	if err := json.Unmarshal(body, &integRes); err != nil {
+		return "", err
+	}
+
+	return integRes.Integration.IntegrationKey, nil
+}
