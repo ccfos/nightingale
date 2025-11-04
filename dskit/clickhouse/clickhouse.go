@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	neturl "net/url"
 	"strings"
 	"time"
 
@@ -83,7 +84,7 @@ func (c *Clickhouse) InitCli() error {
 		ckDriver.New(
 			ckDriver.Config{
 				DSN: fmt.Sprintf(ckDataSource,
-					c.User, c.Password, addr),
+					neturl.QueryEscape(c.User), neturl.QueryEscape(c.Password), addr),
 				DisableDatetimePrecision:  true,
 				DontSupportRenameColumn:   true,
 				SkipInitializeWithVersion: false,

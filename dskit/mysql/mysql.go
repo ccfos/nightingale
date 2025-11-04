@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -114,7 +115,7 @@ func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) 
 		}
 	}()
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", shard.User, shard.Password, shard.Addr, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True", url.QueryEscape(shard.User), url.QueryEscape(shard.Password), shard.Addr, database)
 	db, err = sqlbase.NewDB(
 		ctx,
 		mysql.Open(dsn),
