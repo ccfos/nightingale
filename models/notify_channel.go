@@ -545,7 +545,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		if err != nil {
 			logger.Errorf("send_http: failed to send http notify. url=%s request_body=%s error=%v", url, string(body), err)
 			lastErrorMessage = err.Error()
-			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
+			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
 			continue
 		}
 		defer resp.Body.Close()
