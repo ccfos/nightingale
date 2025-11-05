@@ -506,6 +506,110 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	return lastErrorMessage, errors.New("failed to send request")
 }
 
+func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKey string, client *http.Client) (string, error) {
+	if client == nil {
+		return "", fmt.Errorf("http client not found")
+	}
+
+	retrySleep := time.Second
+	if ncc.RequestConfig.PagerDutyRequestConfig.RetrySleep > 0 {
+		retrySleep = time.Duration(ncc.RequestConfig.PagerDutyRequestConfig.RetrySleep) * time.Millisecond
+	}
+
+	retryTimes := 3
+	if ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes > 0 {
+		retryTimes = ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes
+	}
+
+	for _, event := range events {
+		action := "trigger"
+		if event.IsRecovered {
+			action = "resolve"
+		}
+
+		severity := "critical"
+		switch event.Severity {
+		case 2:
+			severity = "error"
+		case 3:
+			severity = "warning"
+		}
+		// 夜莺对应 PagerDuty 映射关系
+		jsonBody := map[string]interface{}{
+			"routing_key":  routingKey,
+			"event_action": action,
+			"dedup_key":    event.Hash,
+			"payload": map[string]interface{}{
+				"summary":   event.RuleName,
+				"source":    "nightingale",
+				"severity":  severity,
+				"timestamp": time.Unix(event.TriggerTime, 0).Format(time.RFC3339),
+				"custom_details": map[string]interface{}{
+					"tags": event.TagsJSON,
+				},
+			},
+		}
+
+		body, err := json.Marshal(jsonBody)
+		if err != nil {
+			logger.Errorf("send_pagerduty: failed to marshal request body. error=%v", err)
+			return "", err
+		}
+		url := "https://events.pagerduty.com/v2/enqueue"
+
+		var lastErrorMessage string
+		for i := 0; i <= retryTimes; i++ {
+			req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+			if err != nil {
+				logger.Errorf("send_pagerduty: failed to create request. url=%s request_body=%s error=%v", url, string(body), err)
+				lastErrorMessage = err.Error()
+				if i < retryTimes {
+					time.Sleep(retrySleep)
+					continue
+				}
+				break
+			}
+			req.Header.Add("Content-Type", "application/json")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				logger.Errorf("send_pagerduty: http_call=fail url=%s request_body=%s error=%v times=%d", url, string(body), err, i+1)
+				lastErrorMessage = err.Error()
+				if i < retryTimes {
+					time.Sleep(retrySleep)
+					continue
+				}
+				break
+			}
+
+			// 读取并及时关闭 body，避免在循环中累积 defer
+			resBody, readErr := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if readErr != nil {
+				logger.Errorf("send_pagerduty: failed to read response. request_body=%s, error=%v", string(body), readErr)
+				resBody = []byte("failed to read response. error: " + readErr.Error())
+			}
+
+			logger.Infof("send_pagerduty: http_call=succ url=%s request_body=%s response_code=%d response_body=%s times=%d", url, string(body), resp.StatusCode, string(resBody), i+1)
+
+			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted {
+				return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody)), nil
+			}
+
+			// 非成功响应，记录并在仍有重试次数时等待后重试
+			lastErrorMessage = fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody))
+			if i < retryTimes {
+				time.Sleep(retrySleep)
+				continue
+			}
+			// 没有更多重试，跳出重试循环
+			break
+		}
+		return lastErrorMessage, errors.New("failed to send request")
+	}
+	return "", nil
+}
+
 func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
@@ -1485,7 +1589,6 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "service_id", CName: "Service", Type: "select"},
-					{Key: "routing_key", CName: "Routing Key", Type: "string"},
 				},
 			},
 		},

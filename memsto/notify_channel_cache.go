@@ -150,7 +150,7 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 
 		// 根据类型创建相应的资源
 		switch newChannel.RequestType {
-		case "http", "flashduty":
+		case "http", "flashduty", "pagerduty":
 			// 创建HTTP客户端
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.HTTPRequestConfig != nil {
 				cli, err := models.GetHTTPClient(newChannel)

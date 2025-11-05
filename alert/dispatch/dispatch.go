@@ -202,7 +202,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					continue
 				}
 
-				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
+				if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate == nil {
 					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, notifyRule.NotifyConfigs[i].TemplateID)
 					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
 
@@ -414,9 +414,10 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 	return nil
 }
 
-func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, map[string]string) {
+func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string) {
 	customParams := make(map[string]string)
 	var flashDutyChannelIDs []int64
+	var pagerDutyRoutingKeys []string
 	var userInfoParams models.CustomParams
 
 	for key, value := range notifyConfig.Params {
@@ -434,13 +435,20 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					}
 				}
 			}
+		case "pagerduty_routing_keys":
+			if data, err := json.Marshal(value); err == nil {
+				var keys []string
+				if json.Unmarshal(data, &keys) == nil {
+					pagerDutyRoutingKeys = keys
+				}
+			}
 		default:
 			customParams[key] = value.(string)
 		}
 	}
 
 	if len(userInfoParams.UserIDs) == 0 && len(userInfoParams.UserGroupIDs) == 0 {
-		return []string{}, flashDutyChannelIDs, customParams
+		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
 	}
 
 	userIds := make([]int64, 0)
@@ -476,7 +484,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 		visited[user.Id] = true
 	}
 
-	return sendtos, flashDutyChannelIDs, customParams
+	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
 }
 
 func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
@@ -496,7 +504,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
 	switch notifyChannel.RequestType {
 	case "flashduty":
@@ -510,6 +518,15 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
 			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
+		}
+
+	case "pagerduty":
+		for _, routingKey := range pagerdutyRoutingKeys {
+			start := time.Now()
+			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
+			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], respBody, err)
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
 		}
 
 	case "http":

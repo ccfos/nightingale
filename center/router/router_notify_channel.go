@@ -275,16 +275,9 @@ func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "notify channel not found")
 	}
 
-	// configs, err := models.ConfigsGet(rt.Ctx, "pagerduty_api_key")
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, "failed to get pagerduty api key")
 	}
-
-	// jsonData := []byte("{}")
-	// if len(configs) > 0 {
-	// 	me := c.MustGet("user").(*models.User)
-	// 	jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
-	// }
 
 	items, err := getPagerDutyServices(nc.RequestConfig.PagerDutyRequestConfig.ApiKey)
 	ginx.Dangerous(err)
