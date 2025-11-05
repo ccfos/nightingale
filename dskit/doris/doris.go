@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -100,7 +99,7 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	}()
 
 	// Simplified connection logic for Doris using MySQL driver
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", url.QueryEscape(d.User), url.QueryEscape(d.Password), d.Addr, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", d.User, d.Password, d.Addr, database)
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
