@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -252,6 +253,35 @@ func ConfigsGetFlashDutyAppKey(ctx *ctx.Context) (string, error) {
 		}
 	}
 	return configs[0].Cval, nil
+}
+
+func ConfigsGetSiteInfo(ctx *ctx.Context) (string, error) {
+	configs, err := ConfigsSelectByCkey(ctx, "site_info")
+	if err != nil {
+		return "", err
+	}
+	if len(configs) == 0 || configs[0].Cval == "" {
+		return "", errors.New("site_info is empty")
+	}
+	return configs[0].Cval, nil
+}
+
+func ConfigsGetSiteUrl(ctx *ctx.Context) (string, error) {
+	siteInfo, err := ConfigsGetSiteInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+	// 转为json获取其中的site_url字段
+	var siteInfoMap map[string]interface{}
+	err = json.Unmarshal([]byte(siteInfo), &siteInfoMap)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to unmarshal site_info")
+	}
+	siteUrl, ok := siteInfoMap["site_url"].(string)
+	if !ok || siteUrl == "" {
+		return "", errors.New("site_url is empty in site_info")
+	}
+	return siteUrl, nil
 }
 
 func ConfigsGetPagerDutyApiKey(ctx *ctx.Context) (string, error) {

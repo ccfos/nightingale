@@ -506,7 +506,7 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	return lastErrorMessage, errors.New("failed to send request")
 }
 
-func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKey string, client *http.Client) (string, error) {
+func (ncc *NotifyChannelConfig) SendPagerDuty(ctx *ctx.Context, events []*AlertCurEvent, routingKey string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
 	}
@@ -520,6 +520,8 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 	if ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes > 0 {
 		retryTimes = ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes
 	}
+
+	siteUrl, _ := ConfigsGetSiteUrl(ctx)
 
 	for _, event := range events {
 		action := "trigger"
@@ -543,10 +545,17 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 				"summary":   event.RuleName,
 				"source":    "nightingale",
 				"severity":  severity,
+				"group":     event.GroupName,
+				"component": event.Target,
 				"timestamp": time.Unix(event.TriggerTime, 0).Format(time.RFC3339),
 				"custom_details": map[string]interface{}{
-					"tags": event.TagsJSON,
+					"tags":        event.TagsJSON,
+					"annotations": event.AnnotationsJSON,
 				},
+			},
+			"links": []map[string]string{
+				{"href": fmt.Sprintf("%s/alert-his-events/%d", siteUrl, event.Id), "text": "View in Nightingale"},
+				{"href": fmt.Sprintf("%s/alert-mutes/add?__event_id=%d", siteUrl, event.Id), "text": "Mute this alert"},
 			},
 		}
 

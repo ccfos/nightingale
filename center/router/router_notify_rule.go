@@ -223,7 +223,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		}
 
 		for _, routingKey := range pagerDutyRoutingKeys {
-			resp, err = notifyChannel.SendPagerDuty(events, routingKey, client)
+			resp, err = notifyChannel.SendPagerDuty(ctx, events, routingKey, client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
 			}
