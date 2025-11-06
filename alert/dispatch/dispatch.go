@@ -521,9 +521,10 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		}
 
 	case "pagerduty":
+		siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
 		for _, routingKey := range pagerdutyRoutingKeys {
 			start := time.Now()
-			respBody, err := notifyChannel.SendPagerDuty(ctx, events, routingKey, notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
 			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)

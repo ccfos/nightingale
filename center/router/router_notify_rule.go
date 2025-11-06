@@ -222,8 +222,10 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
 
+		siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+
 		for _, routingKey := range pagerDutyRoutingKeys {
-			resp, err = notifyChannel.SendPagerDuty(ctx, events, routingKey, client)
+			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
 			}
