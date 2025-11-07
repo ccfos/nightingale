@@ -300,7 +300,7 @@ func getPagerDutyServices(apiKey string, timeout time.Duration) ([]PagerDutyServ
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
 
 	httpResp, err := (&http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: timeout,
 	}).Do(req)
 	if err != nil {
 		return nil, err
@@ -324,7 +324,7 @@ func getPagerDutyServices(apiKey string, timeout time.Duration) ([]PagerDutyServ
 	for _, svc := range serviceRes.Services {
 		for _, integ := range svc.Integrations {
 			// 通过 integration 的 API URL 获取 integration key
-			integrationKey, err := getPagerDutyIntegrationKey(integ.Self, apiKey)
+			integrationKey, err := getPagerDutyIntegrationKey(integ.Self, apiKey, timeout)
 			if err != nil {
 				return nil, err
 			}
@@ -344,14 +344,16 @@ func getPagerDutyServices(apiKey string, timeout time.Duration) ([]PagerDutyServ
 }
 
 // getPagerDutyIntegrationKey 通过 integration 的 API URL 获取 integration key
-func getPagerDutyIntegrationKey(integrationUrl, apiKey string) (string, error) {
+func getPagerDutyIntegrationKey(integrationUrl, apiKey string, timeout time.Duration) (string, error) {
 	req, err := http.NewRequest("GET", integrationUrl, nil)
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
 
-	httpResp, err := (&http.Client{}).Do(req)
+	httpResp, err := (&http.Client{
+		Timeout: timeout,
+	}).Do(req)
 	if err != nil {
 		return "", err
 	}
