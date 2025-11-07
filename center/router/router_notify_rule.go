@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
@@ -85,7 +86,82 @@ func (rt *Router) notifyRulePut(c *gin.Context) {
 	}
 
 	f.UpdateBy = me.Username
+	// 在update之前对pagerduty进行特殊处理，把url转换为routing key
+	if f.NotifyConfigs != nil {
+		handlePagerDutyRoutingKey(rt.Ctx, f.NotifyConfigs)
+	}
 	ginx.NewRender(c).Message(nr.Update(rt.Ctx, f))
+}
+
+// handlePagerDutyRoutingKey 虽然前端传来的字段是 pagerduty_routing_keys 但是实际上是 url 列表，为了避免多次请求，后端只会在保存时把url转换为 routing key 列表
+func handlePagerDutyRoutingKey(ctx *ctx.Context, notifyConfigs []models.NotifyConfig) {
+	for i := range notifyConfigs {
+		nc, err := models.NotifyChannelGet(ctx, "id=?", notifyConfigs[i].ChannelID)
+		if err != nil || nc == nil {
+			logger.Warningf("handlePagerDutyRoutingKey: notify channel not found id=%d err=%v", notifyConfigs[i].ChannelID, err)
+			continue
+		}
+		if notifyConfigs[i].Params == nil {
+			continue
+		}
+
+		for key, value := range notifyConfigs[i].Params {
+			if key != "pagerduty_integration_urls" {
+				continue
+			}
+
+			urlsInterface, ok := value.([]interface{})
+			if !ok {
+				logger.Warningf("handlePagerDutyRoutingKey: pagerduty_routing_keys must be []string channel_id=%d type=%T", notifyConfigs[i].ChannelID, value)
+				continue
+			}
+
+			urls := make([]string, 0, len(urlsInterface))
+			for _, u := range urlsInterface {
+				if us, ok := u.(string); ok {
+					urls = append(urls, us)
+				} else {
+					logger.Warningf("handlePagerDutyRoutingKey: pagerduty_routing_keys item must be string channel_id=%d type=%T", notifyConfigs[i].ChannelID, u)
+				}
+			}
+
+			apiKey := ""
+			timeoutMS := 5000
+			if nc.RequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig != nil {
+				apiKey = nc.RequestConfig.PagerDutyRequestConfig.ApiKey
+				if nc.RequestConfig.PagerDutyRequestConfig.Timeout > 0 {
+					timeoutMS = nc.RequestConfig.PagerDutyRequestConfig.Timeout
+				}
+			}
+			timeout := time.Duration(timeoutMS) * time.Millisecond
+
+			seen := map[string]struct{}{}
+			var extractedKeys []string
+			for idx, u := range urls {
+				u = strings.TrimSpace(u)
+				if u == "" {
+					continue
+				}
+
+				integrationKey, err := getPagerDutyIntegrationKey(u, apiKey, timeout)
+				if err != nil {
+					// 记录可追踪信息但避免输出敏感 routing_key
+					logger.Warningf("handlePagerDutyRoutingKey: parse failed channel_id=%d idx=%d err=%v", notifyConfigs[i].ChannelID, idx, err)
+					continue
+				}
+				integrationKey = strings.TrimSpace(integrationKey)
+				if integrationKey == "" {
+					continue
+				}
+				if _, ok := seen[integrationKey]; ok {
+					continue
+				}
+				seen[integrationKey] = struct{}{}
+				extractedKeys = append(extractedKeys, integrationKey)
+			}
+			notifyConfigs[i].Params["pagerduty_routing_keys"] = extractedKeys
+		}
+	}
 }
 
 func (rt *Router) notifyRuleGet(c *gin.Context) {

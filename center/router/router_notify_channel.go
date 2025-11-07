@@ -276,13 +276,31 @@ func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
 	}
 
 	items, err := getPagerDutyServices(nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
-	ginx.NewRender(c).Data(items, err)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty services: %v", err))
+	}
+	// 服务: []集成，扁平化为服务-集成
+	var flattenedItems []map[string]string
+	for _, svc := range items {
+		for _, integ := range svc.Integrations {
+			flattenedItems = append(flattenedItems, map[string]string{
+				"service_id":          svc.ID,
+				"service_name":        svc.Name,
+				"integration_summary": integ.Summary,
+				"integration_id":      integ.ID,
+				"integration_url":     integ.Self,
+			})
+		}
+	}
+
+	ginx.NewRender(c).Data(flattenedItems, nil)
 }
 
 type PagerDutyIntegration struct {
 	ID             string `json:"id"`
 	IntegrationKey string `json:"integration_key"`
 	Self           string `json:"self"` // integration 的 API URL
+	Summary        string `json:"summary"`
 }
 
 type PagerDutyService struct {
@@ -291,56 +309,54 @@ type PagerDutyService struct {
 	Integrations []PagerDutyIntegration `json:"integrations"`
 }
 
-// getPagerDutyServices 从 PagerDuty API 获取服务列表及其集成信息
+// getPagerDutyServices 从 PagerDuty API 分页获取所有服务及其集成信息
 func getPagerDutyServices(apiKey string, timeout time.Duration) ([]PagerDutyService, error) {
-	req, err := http.NewRequest("GET", "https://api.pagerduty.com/services", nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
+	const limit = 100 // 每页最大数量
+	var offset uint   // 分页偏移量
+	var allServices []PagerDutyService
 
-	httpResp, err := (&http.Client{
-		Timeout: timeout,
-	}).Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer httpResp.Body.Close()
+	for {
+		// 构建带分页参数的 URL
+		url := fmt.Sprintf("https://api.pagerduty.com/services?limit=%d&offset=%d", limit, offset)
 
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var serviceRes struct {
-		Services []PagerDutyService `json:"services"`
-	}
-
-	if err := json.Unmarshal(body, &serviceRes); err != nil {
-		return nil, err
-	}
-	services := make([]PagerDutyService, 0, len(serviceRes.Services))
-
-	for _, svc := range serviceRes.Services {
-		for _, integ := range svc.Integrations {
-			// 通过 integration 的 API URL 获取 integration key
-			integrationKey, err := getPagerDutyIntegrationKey(integ.Self, apiKey, timeout)
-			if err != nil {
-				return nil, err
-			}
-			services = append(services, PagerDutyService{
-				ID:   svc.ID,
-				Name: svc.Name,
-				Integrations: []PagerDutyIntegration{{
-					ID:             integ.ID,
-					IntegrationKey: integrationKey,
-				}},
-			})
-			services[len(services)-1].Integrations[0].Self = integrationKey
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
 		}
+		req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", apiKey))
+		req.Header.Set("Accept", "application/vnd.pagerduty+json;version=2")
+
+		httpResp, err := (&http.Client{Timeout: timeout}).Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		body, err := io.ReadAll(httpResp.Body)
+		httpResp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		// 定义包含分页信息的响应结构
+		var serviceRes struct {
+			Services []PagerDutyService `json:"services"`
+			More     bool               `json:"more"` // 是否还有更多数据
+			Limit    uint               `json:"limit"`
+			Offset   uint               `json:"offset"`
+		}
+
+		if err := json.Unmarshal(body, &serviceRes); err != nil {
+			return nil, err
+		}
+		allServices = append(allServices, serviceRes.Services...)
+		// 判断是否还有更多数据
+		if !serviceRes.More || len(serviceRes.Services) < int(limit) {
+			break
+		}
+		offset += limit // 准备请求下一页
 	}
 
-	return services, nil
+	return allServices, nil
 }
 
 // getPagerDutyIntegrationKey 通过 integration 的 API URL 获取 integration key
