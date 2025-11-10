@@ -42,6 +42,11 @@ func (c *CvalCache) initSyncConfigs() {
 		log.Fatalln("failed to sync configs:", err)
 	}
 
+	err = models.RefreshPhoneEncryptionCache(c.ctx)
+	if err != nil {
+		logger.Errorf("failed to refresh phone encryption cache: %v", err)
+	}
+
 	go c.loopSyncConfigs()
 }
 
