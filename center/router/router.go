@@ -681,6 +681,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			// 手机号加密存储配置接口
 			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)
 			service.POST("/users/phone/decrypt", rt.usersPhoneDecrypt)
+			service.POST("/users/phone/refresh-encryption-config", rt.usersPhoneDecryptRefresh)
 		}
 	}
 
