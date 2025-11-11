@@ -6,6 +6,14 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
+type SsoReqConfig struct {
+	Id          int64       `json:"id"`
+	Name        string      `json:"name"`
+	Content     string      `json:"content"`
+	SettingJson interface{} `json:"setting"`
+	UpdateAt    int64       `json:"update_at"`
+}
+
 type SsoConfig struct {
 	Id       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -22,6 +30,13 @@ func SsoConfigGets(c *ctx.Context) ([]SsoConfig, error) {
 	var lst []SsoConfig
 	err := DB(c).Find(&lst).Error
 	return lst, err
+}
+
+// Query query sso config
+func (b *SsoConfig) Query(c *ctx.Context) (SsoConfig, error) {
+	var sso SsoConfig
+	err := DB(c).Model(b).Where("name = ?", b.Name).First(&sso).Error
+	return sso, err
 }
 
 // 创建 builtin_cate
