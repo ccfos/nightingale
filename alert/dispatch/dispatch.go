@@ -25,7 +25,7 @@ import (
 )
 
 var ShouldSkipNotify func(*ctx.Context, *models.AlertCurEvent, int64) bool
-var SendByNotifyRule func(*ctx.Context, *memsto.UserCacheType, *memsto.UserGroupCacheType, *memsto.NotifyChannelCacheType,
+var SendByNotifyRule func(*ctx.Context, *memsto.UserCacheType, *memsto.UserGroupCacheType, *memsto.NotifyChannelCacheType, *memsto.CvalCache,
 	[]*models.AlertCurEvent, int64, *models.NotifyConfig, *models.NotifyChannelConfig, *models.MessageTemplate)
 
 var EventProcessorCache *memsto.EventProcessorCacheType
@@ -43,6 +43,7 @@ type Dispatch struct {
 	targetCache         *memsto.TargetCacheType
 	notifyConfigCache   *memsto.NotifyConfigCacheType
 	taskTplsCache       *memsto.TaskTplCache
+	configCvalCache     *memsto.CvalCache
 
 	notifyRuleCache      *memsto.NotifyRuleCacheType
 	notifyChannelCache   *memsto.NotifyChannelCacheType
@@ -66,7 +67,7 @@ type Dispatch struct {
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
 	taskTplsCache *memsto.TaskTplCache, notifyRuleCache *memsto.NotifyRuleCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
-	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, alerting aconf.Alerting, c *ctx.Context, astats *astats.Stats) *Dispatch {
+	messageTemplateCache *memsto.MessageTemplateCacheType, eventProcessorCache *memsto.EventProcessorCacheType, configCvalCache *memsto.CvalCache, alerting aconf.Alerting, c *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:       alertRuleCache,
 		userCache:            userCache,
@@ -79,6 +80,7 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		notifyChannelCache:   notifyChannelCache,
 		messageTemplateCache: messageTemplateCache,
 		eventProcessorCache:  eventProcessorCache,
+		configCvalCache:      configCvalCache,
 
 		alerting: alerting,
 
@@ -209,7 +211,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 					continue
 				}
 
-				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, e.configCvalCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
 			}
 		}
 	}
@@ -435,7 +437,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					}
 				}
 			}
-		case "pagerduty_routing_keys":
+		case "pagerduty_integration_keys":
 			// 兼容多种来源的数组类型，优先尝试直接反序列化为 []string
 			if data, err := json.Marshal(value); err == nil {
 				var keys []string
@@ -527,7 +529,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
 }
 
-func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType,
+func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, configCvalCache *memsto.CvalCache,
 	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	if len(events) == 0 {
 		logger.Errorf("notify_id: %d events is empty", notifyRuleId)
@@ -561,10 +563,13 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		}
 
 	case "pagerduty":
-		siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+		siteInfo := configCvalCache.GetSiteInfo()
+		if siteInfo == nil {
+			logger.Errorf("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, siteInfo not found", notifyRuleId, notifyChannel.Name, events[0])
+		}
 		for _, routingKey := range pagerdutyRoutingKeys {
 			start := time.Now()
-			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
+			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
 			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)

@@ -296,6 +296,27 @@ func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
 	ginx.NewRender(c).Data(flattenedItems, nil)
 }
 
+func (rt *Router) pagerDutyIntegrationKeyGet(c *gin.Context) {
+	serviceId := ginx.UrlParamStr(c, "service_id")
+	integrationId := ginx.UrlParamStr(c, "integration_id")
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if err != nil || nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	integrationUrl := fmt.Sprintf("https://api.pagerduty.com/services/%s/integrations/%s", serviceId, integrationId)
+	integrationKey, err := getPagerDutyIntegrationKey(integrationUrl, nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty integration key: %v", err))
+	}
+
+	ginx.NewRender(c).Data(map[string]string{
+		"integration_key": integrationKey,
+	}, nil)
+}
+
 type PagerDutyIntegration struct {
 	ID             string `json:"id"`
 	IntegrationKey string `json:"integration_key"`
@@ -365,7 +386,7 @@ func getPagerDutyIntegrationKey(integrationUrl, apiKey string, timeout time.Dura
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", apiKey))
+	req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", apiKey))
 
 	httpResp, err := (&http.Client{
 		Timeout: timeout,
