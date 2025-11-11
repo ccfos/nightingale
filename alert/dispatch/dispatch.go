@@ -438,7 +438,6 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 				}
 			}
 		case "pagerduty_integration_keys":
-			// 兼容多种来源的数组类型，优先尝试直接反序列化为 []string
 			if data, err := json.Marshal(value); err == nil {
 				var keys []string
 				if json.Unmarshal(data, &keys) == nil {
@@ -446,46 +445,9 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					break
 				}
 			}
-			// 兜底：如果上面失败，尝试逐项转换 []interface{} -> []string
-			switch vv := value.(type) {
-			case []string:
-				pagerDutyRoutingKeys = vv
-			case []interface{}:
-				for _, it := range vv {
-					if s, ok := it.(string); ok && s != "" {
-						pagerDutyRoutingKeys = append(pagerDutyRoutingKeys, s)
-					}
-				}
-			case string:
-				if vv != "" {
-					pagerDutyRoutingKeys = []string{vv}
-				}
-			}
 		default:
 			// 避免直接 value.(string) 导致 panic，支持多种类型并统一为字符串
-			switch v := value.(type) {
-			case string:
-				customParams[key] = v
-			case []string:
-				customParams[key] = strings.Join(v, ",")
-			case []interface{}:
-				parts := make([]string, 0, len(v))
-				for _, it := range v {
-					if s, ok := it.(string); ok && s != "" {
-						parts = append(parts, s)
-					} else {
-						parts = append(parts, fmt.Sprintf("%v", it))
-					}
-				}
-				customParams[key] = strings.Join(parts, ",")
-			default:
-				// 尝试 marshal 为 JSON 字符串作为兜底
-				if b, err := json.Marshal(v); err == nil {
-					customParams[key] = string(b)
-				} else {
-					customParams[key] = fmt.Sprintf("%v", v)
-				}
-			}
+			customParams[key] = value.(string)
 		}
 	}
 
@@ -564,9 +526,6 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	case "pagerduty":
 		siteInfo := configCvalCache.GetSiteInfo()
-		if siteInfo == nil {
-			logger.Errorf("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, siteInfo not found", notifyRuleId, notifyChannel.Name, events[0])
-		}
 		for _, routingKey := range pagerdutyRoutingKeys {
 			start := time.Now()
 			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))

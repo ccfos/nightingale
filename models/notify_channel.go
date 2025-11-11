@@ -1626,13 +1626,6 @@ var NotiChMap = []*NotifyChannelConfig{
 				RetryTimes: 3,
 			},
 		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "service_id", CName: "Service", Type: "select"},
-				},
-			},
-		},
 	},
 }
 
