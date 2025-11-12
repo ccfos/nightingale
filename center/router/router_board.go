@@ -115,6 +115,10 @@ func (rt *Router) boardPureGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
 
+	// 清除创建者和更新者信息
+	board.CreateBy = ""
+	board.UpdateBy = ""
+
 	ginx.NewRender(c).Data(board, nil)
 }
 
