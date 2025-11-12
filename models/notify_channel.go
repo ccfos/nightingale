@@ -526,6 +526,7 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 
 	endpoint := "https://events.pagerduty.com/v2/enqueue"
 	var failedMsgs []string
+	var responses []string
 
 	for _, event := range events {
 		action := "trigger"
@@ -581,10 +582,13 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 		if err != nil {
 			logger.Errorf("send_pagerduty: failed to marshal request body. error=%v", err)
 			failedMsgs = append(failedMsgs, fmt.Sprintf("event %d marshal error: %v", event.Id, err))
+			// 记录一条空响应占位，方便上层区分事件
+			responses = append(responses, fmt.Sprintf("event %d: marshal error: %v", event.Id, err))
 			continue
 		}
 
 		var lastErrorMessage string
+		var lastRespSummary string
 		attempts := retryTimes + 1
 		for i := 0; i < attempts; i++ {
 			req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
@@ -623,15 +627,18 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 				resBody = []byte("")
 			}
 
+			respSummary := fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody))
+			lastRespSummary = respSummary
+
 			logger.Infof("send_pagerduty: http_call=succ url=%s request_body=%s response_code=%d response_body=%s times=%d", endpoint, string(body), resp.StatusCode, string(resBody), i+1)
 
 			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted {
-				// 当前事件发送成功，继续处理下一个 event
+				// 当前事件发送成功
 				lastErrorMessage = ""
 				break
 			}
 
-			lastErrorMessage = fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody))
+			lastErrorMessage = respSummary
 			if i < attempts-1 {
 				time.Sleep(retrySleep)
 				continue
@@ -639,16 +646,22 @@ func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKe
 			break
 		}
 
+		// 保存本次事件的响应摘要（无论成功或失败），便于上层记录 traceId 等信息
+		if lastRespSummary == "" && lastErrorMessage != "" {
+			lastRespSummary = lastErrorMessage
+		}
+		responses = append(responses, fmt.Sprintf("event %d: %s", event.Id, lastRespSummary))
+
 		if lastErrorMessage != "" {
 			failedMsgs = append(failedMsgs, fmt.Sprintf("event %d: %s", event.Id, lastErrorMessage))
 		}
-		// 不在这里直接 return，继续处理剩余事件
 	}
 
+	// 将每个 event 的响应摘要返回给上层，便于记录 pagerduty 返回的 traceId 等信息
 	if len(failedMsgs) > 0 {
-		return strings.Join(failedMsgs, " | "), errors.New("some events failed to send")
+		return strings.Join(responses, " | "), errors.New(strings.Join(failedMsgs, " | "))
 	}
-	return "", nil
+	return strings.Join(responses, " | "), nil
 }
 
 func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
