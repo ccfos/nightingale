@@ -117,4 +117,4 @@
 </a>
 
 ## License
-- [Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
+- [Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
