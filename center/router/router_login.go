@@ -599,7 +599,7 @@ func (rt *Router) ssoConfigNameGet(c *gin.Context) {
 }
 
 func (rt *Router) ssoConfigGets(c *gin.Context) {
-	var ssoConfigs []models.SsoReqConfig
+	var ssoConfigs []models.SsoConfig
 	lst, err := models.SsoConfigGets(rt.Ctx)
 	ginx.Dangerous(err)
 	if len(lst) == 0 {
@@ -607,7 +607,7 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 	}
 
 	for _, config := range lst {
-		var ssoReqConfig models.SsoReqConfig
+		var ssoReqConfig models.SsoConfig
 		ssoReqConfig.Id = config.Id
 		ssoReqConfig.Name = config.Name
 		ssoReqConfig.UpdateAt = config.UpdateAt
@@ -627,7 +627,7 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 
 func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 	var f models.SsoConfig
-	var ssoConfig models.SsoReqConfig
+	var ssoConfig models.SsoConfig
 	ginx.BindJSON(c, &ssoConfig)
 
 	switch ssoConfig.Name {

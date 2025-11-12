@@ -6,19 +6,12 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
-type SsoReqConfig struct {
+type SsoConfig struct {
 	Id          int64       `json:"id"`
 	Name        string      `json:"name"`
 	Content     string      `json:"content"`
-	SettingJson interface{} `json:"setting"`
+	SettingJson interface{} `json:"setting"  gorm:"-"`
 	UpdateAt    int64       `json:"update_at"`
-}
-
-type SsoConfig struct {
-	Id       int64  `json:"id"`
-	Name     string `json:"name"`
-	Content  string `json:"content"`
-	UpdateAt int64  `json:"update_at"`
 }
 
 func (b *SsoConfig) TableName() string {

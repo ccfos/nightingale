@@ -38,12 +38,12 @@ type Config struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	RedirectURL  string `json:"redirect_url"`
-	// Scope 授权范围,授权页面显示的授权信息以应用注册时配置的为准
-	// 当前只支持两种输入:openid：授权后可获得用户userid, openid corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔
-	Scopes []string `json:"scopes"`
 	// 值为consent时，会进入授权确认页，默认值为：consent
-	Prompt          string   `json:"prompt"`
-	Proxy           string   `json:"proxy"`
+	Prompt string `json:"prompt"`
+	Proxy  string `json:"proxy"`
+	// Scope 授权范围, 授权页面显示的授权信息以应用注册时配置的为准
+	// 当前只支持两种输入:openid：授权后可获得用户userid, openid corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔
+	Scope           bool     `json:"scope"`
 	SkipTlsVerify   bool     `json:"skip_tls_verify"`
 	CoverAttributes bool     `json:"cover_attributes"`
 	DefaultRoles    []string `json:"default_roles"`
@@ -124,7 +124,7 @@ func New(cf Config) *SsoClient {
 	return s
 }
 
-func (s *SsoClient) AuthCodeURL() (string, error) {
+func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 	var buf bytes.Buffer
 	dingtalkOauthAuthURl := defaultAuthURL
 	if s.DingTalkConfig.AuthURL != "" {
@@ -141,13 +141,13 @@ func (s *SsoClient) AuthCodeURL() (string, error) {
 		return "", errors.New("DingTalk OAuth RedirectURL is empty")
 	}
 
-	if len(s.DingTalkConfig.Scopes) == 0 {
-		v.Set("scope", "openid")
+	if s.DingTalkConfig.Scope {
+		v.Set("scope", "openid corpid")
 	} else {
-		v.Set("scope", strings.Join(s.DingTalkConfig.Scopes, " "))
+		v.Set("scope", "openid")
 	}
 
-	v.Set("state", uuid.New().String())
+	v.Set("state", state)
 
 	if s.DingTalkConfig.Prompt == "" {
 		s.DingTalkConfig.Prompt = "consent"
@@ -214,7 +214,7 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.AuthCodeURL()
+	return s.AuthCodeURL(state)
 
 }
 
@@ -238,17 +238,20 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 		return nil, fmt.Errorf("CreateClient error: %s", err)
 	}
 
-	redirect := "/"
+	redirect := ""
 	if redis != nil {
 		redirect, err = fetchRedirect(redis, ctx, state)
 		if err != nil {
-			logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
+			logger.Errorf("get redirect err:%v code:%s state:%s", err, code, state)
 		}
+	}
+	if redirect == "" {
+		redirect = "/"
 	}
 
 	err = deleteRedirect(redis, ctx, state)
 	if err != nil {
-		logger.Errorf("delete redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("delete redirect err:%v code:%s state:%s", err, code, state)
 	}
 
 	var callbackOutput CallbackOutput
