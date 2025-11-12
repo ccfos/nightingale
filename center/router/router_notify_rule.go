@@ -198,7 +198,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
+	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
 
 	var resp string
 	switch notifyChannel.RequestType {
@@ -212,6 +212,22 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
+			}
+		}
+		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+		return resp, nil
+	case "pagerduty":
+		client, err := models.GetHTTPClient(notifyChannel)
+		if err != nil {
+			return "", fmt.Errorf("failed to get http client: %v", err)
+		}
+
+		siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+
+		for _, routingKey := range pagerDutyRoutingKeys {
+			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)
+			if err != nil {
+				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
 			}
 		}
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
