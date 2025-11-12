@@ -186,33 +186,62 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				continue
 			}
 
-			// notify
-			for i := range notifyRule.NotifyConfigs {
-				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
-				if err != nil {
-					logger.Errorf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
-					continue
+			var defaultCfg *models.NotifyConfig
+			if len(notifyRule.NotifyConfigs) > 0 {
+				lastCfg := &notifyRule.NotifyConfigs[len(notifyRule.NotifyConfigs)-1]
+				if lastCfg.IsDefault {
+					defaultCfg = lastCfg
 				}
+			}
 
-				notifyChannel := e.notifyChannelCache.Get(notifyRule.NotifyConfigs[i].ChannelID)
-				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
-				if notifyChannel == nil {
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
-					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
-					continue
-				}
+			matched := false
 
-				if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
-					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, notifyRule.NotifyConfigs[i].TemplateID)
-					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
+		for i := range notifyRule.NotifyConfigs {
+			cfg := &notifyRule.NotifyConfigs[i]
+			if cfg == defaultCfg {
+				continue
+			}
 
-					continue
-				}
+			if err := NotifyRuleMatchCheck(cfg, eventCopy); err != nil {
+				logger.Infof("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, match skipped: %v", notifyRuleId, eventCopy, cfg.ChannelID, cfg.TemplateID, cfg, err)
+				continue
+			}
 
-				go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{eventCopy}, notifyRuleId, &notifyRule.NotifyConfigs[i], notifyChannel, messageTemplate)
+			if e.notifyByConfig(eventCopy, notifyRuleId, cfg) {
+				matched = true
 			}
 		}
+
+		if !matched && defaultCfg != nil {
+			if e.notifyByConfig(eventCopy, notifyRuleId, defaultCfg) {
+				matched = true
+			}
+		}
+
+		if !matched {
+			logger.Errorf("notify_id: %d, event:%+v, no notify_config matched", notifyRuleId, eventCopy)
+		}
+		}
 	}
+}
+
+func (e *Dispatch) notifyByConfig(event *models.AlertCurEvent, notifyRuleId int64, cfg *models.NotifyConfig) bool {
+	notifyChannel := e.notifyChannelCache.Get(cfg.ChannelID)
+	messageTemplate := e.messageTemplateCache.Get(cfg.TemplateID)
+	if notifyChannel == nil {
+		sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", cfg.ChannelID), "", "", errors.New("notify_channel not found"))
+		logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, event, cfg.ChannelID, cfg.TemplateID)
+		return false
+	}
+
+	if notifyChannel.RequestType != "flashduty" && messageTemplate == nil {
+		logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, event, cfg.TemplateID)
+		sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{event}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
+		return false
+	}
+
+	go SendByNotifyRule(e.ctx, e.userCache, e.userGroupCache, e.notifyChannelCache, []*models.AlertCurEvent{event}, notifyRuleId, cfg, notifyChannel, messageTemplate)
+	return true
 }
 
 func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleId int64) bool {
