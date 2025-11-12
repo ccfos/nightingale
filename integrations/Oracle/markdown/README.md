@@ -8,7 +8,7 @@ Oracle 插件的核心监控原理，就是执行下面 [这些 SQL 语句](http
 
 ```toml
 [[metrics]]
-mesurement = "activity"
+measurement = "activity"
 metric_fields = [ "value" ]
 field_to_append = "name"
 timeout = "3s"
@@ -17,7 +17,7 @@ SELECT name, value FROM v$sysstat WHERE name IN ('parse count (total)', 'execute
 '''
 ```
 
-- mesurement：指标类别
+- measurement：指标类别
 - label_fields：作为 label 的字段
 - metric_fields：作为 metric 的字段，因为是作为 metric 的字段，所以这个字段的值必须是数字
 - field_to_append：表示这个字段附加到 metric_name 后面，作为 metric_name 的一部分

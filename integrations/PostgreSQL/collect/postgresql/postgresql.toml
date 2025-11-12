@@ -40,7 +40,7 @@
   ## with pool_mode set to transaction.
   #prepared_statements = true
   # [[instances.metrics]]
-  # mesurement = "sessions"
+  # measurement = "sessions"
   # label_fields = [ "status", "type" ]
   # metric_fields = [ "value" ]
   # timeout = "3s"

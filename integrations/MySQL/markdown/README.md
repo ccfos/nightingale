@@ -61,7 +61,7 @@ gather_slave_status = true
 
 # 自定义SQL，指定SQL、返回的各个列那些是作为metric，哪些是作为label
 # [[instances.queries]]
-# mesurement = "users"
+# measurement = "users"
 # metric_fields = [ "total" ]
 # label_fields = [ "service" ]
 # # field_to_append = ""
