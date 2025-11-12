@@ -124,7 +124,7 @@ func New(cf Config) *SsoClient {
 	return s
 }
 
-func (s *SsoClient) AuthCodeURL() string {
+func (s *SsoClient) AuthCodeURL() (string, error) {
 	var buf bytes.Buffer
 	dingtalkOauthAuthURl := defaultAuthURL
 	if s.DingTalkConfig.AuthURL != "" {
@@ -137,7 +137,15 @@ func (s *SsoClient) AuthCodeURL() string {
 	}
 	v.Set("redirect_uri", s.DingTalkConfig.RedirectURL)
 
-	v.Set("scope", strings.Join(s.DingTalkConfig.Scopes, " "))
+	if s.DingTalkConfig.RedirectURL == "" {
+		return "", errors.New("DingTalk OAuth RedirectURL is empty")
+	}
+
+	if len(s.DingTalkConfig.Scopes) == 0 {
+		v.Set("scope", "openid")
+	} else {
+		v.Set("scope", strings.Join(s.DingTalkConfig.Scopes, " "))
+	}
 
 	v.Set("state", uuid.New().String())
 
@@ -154,7 +162,7 @@ func (s *SsoClient) AuthCodeURL() string {
 	}
 	buf.WriteString(v.Encode())
 
-	return buf.String()
+	return buf.String(), nil
 
 }
 
@@ -206,7 +214,7 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 	s.RLock()
 	defer s.RUnlock()
 
-	return s.AuthCodeURL(), nil
+	return s.AuthCodeURL()
 
 }
 
