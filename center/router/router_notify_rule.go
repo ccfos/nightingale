@@ -333,8 +333,8 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 			filterKey := ""
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
-				cname, exsits := keyMap[key]
-				if exsits {
+				cname, exists := keyMap[key]
+				if exists {
 					list = append(list, paramList{
 						Name:  key,
 						CName: cname,
