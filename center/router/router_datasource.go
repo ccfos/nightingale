@@ -171,6 +171,16 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			return
 		}
 
+		// 检查ckconfig的nodes不应该以http://或https://开头
+		for _, addr := range ckConfig.Nodes {
+			if strings.HasPrefix(addr, "http://") || strings.HasPrefix(addr, "https://") {
+				err = fmt.Errorf("clickhouse node address should not start with http:// or https:// : %s", addr)
+				logger.Warningf("clickhouse node address invalid: %v", err)
+				Dangerous(c, err)
+				return
+			}
+		}
+
 		// InitCli 会自动检测并选择 HTTP 或 Native 协议
 		err = ckConfig.InitCli()
 		if err != nil {
