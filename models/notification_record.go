@@ -11,7 +11,7 @@ const (
 	NotiStatusFailure
 )
 
-type NotificaitonRecord struct {
+type NotificationRecord struct {
 	Id           int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement"`
 	NotifyRuleID int64  `json:"notify_rule_id" gorm:"type:bigint;comment:notify rule id"`
 	EventId      int64  `json:"event_id" gorm:"type:bigint;not null;index:idx_evt,priority:1;comment:event history id"`
@@ -23,8 +23,8 @@ type NotificaitonRecord struct {
 	CreatedAt    int64  `json:"created_at" gorm:"type:bigint;not null;comment:create time"`
 }
 
-func NewNotificationRecord(event *AlertCurEvent, notifyRuleID int64, channel, target string) *NotificaitonRecord {
-	return &NotificaitonRecord{
+func NewNotificationRecord(event *AlertCurEvent, notifyRuleID int64, channel, target string) *NotificationRecord {
+	return &NotificationRecord{
 		NotifyRuleID: notifyRuleID,
 		EventId:      event.Id,
 		SubId:        event.SubRuleId,
@@ -34,29 +34,29 @@ func NewNotificationRecord(event *AlertCurEvent, notifyRuleID int64, channel, ta
 	}
 }
 
-func (n *NotificaitonRecord) SetStatus(status int) {
+func (n *NotificationRecord) SetStatus(status int) {
 	if n == nil {
 		return
 	}
 	n.Status = status
 }
 
-func (n *NotificaitonRecord) SetDetails(details string) {
+func (n *NotificationRecord) SetDetails(details string) {
 	if n == nil {
 		return
 	}
 	n.Details = details
 }
 
-func (n *NotificaitonRecord) TableName() string {
+func (n *NotificationRecord) TableName() string {
 	return "notification_record"
 }
 
-func (n *NotificaitonRecord) Add(ctx *ctx.Context) error {
+func (n *NotificationRecord) Add(ctx *ctx.Context) error {
 	return Insert(ctx, n)
 }
 
-func (n *NotificaitonRecord) GetGroupIds(ctx *ctx.Context) (groupIds []int64) {
+func (n *NotificationRecord) GetGroupIds(ctx *ctx.Context) (groupIds []int64) {
 	if n == nil {
 		return
 	}
@@ -78,12 +78,12 @@ func (n *NotificaitonRecord) GetGroupIds(ctx *ctx.Context) (groupIds []int64) {
 	return
 }
 
-func NotificaitonRecordsGetByEventId(ctx *ctx.Context, eid int64) ([]*NotificaitonRecord, error) {
-	return NotificaitonRecordsGet(ctx, "event_id=?", eid)
+func NotificationRecordsGetByEventId(ctx *ctx.Context, eid int64) ([]*NotificationRecord, error) {
+	return NotificationRecordsGet(ctx, "event_id=?", eid)
 }
 
-func NotificaitonRecordsGet(ctx *ctx.Context, where string, args ...interface{}) ([]*NotificaitonRecord, error) {
-	var lst []*NotificaitonRecord
+func NotificationRecordsGet(ctx *ctx.Context, where string, args ...interface{}) ([]*NotificationRecord, error) {
+	var lst []*NotificationRecord
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
 		return nil, err
