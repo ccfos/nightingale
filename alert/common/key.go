@@ -49,6 +49,6 @@ func matchTag(value string, filter models.TagFilter) bool {
 	case "!~":
 		return !filter.Regexp.MatchString(value)
 	}
-	// unexpect func
+	// unexpected func
 	return false
 }

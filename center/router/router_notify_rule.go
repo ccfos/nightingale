@@ -181,6 +181,13 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	if !notifyChannel.Enable {
 		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
+
+	// 获取站点URL用于模板渲染
+	siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+	if siteUrl == "" {
+		siteUrl = "http://127.0.0.1:17000"
+	}
+
 	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashduty" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
@@ -191,14 +198,14 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(messageTemplates) == 0 {
 			return "", fmt.Errorf("message template not found")
 		}
-		tplContent = messageTemplates[0].RenderEvent(events)
+		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
 	}
 	var contactKey string
 	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
+	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
 
 	var resp string
 	switch notifyChannel.RequestType {
@@ -212,6 +219,20 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
+			}
+		}
+		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
+		return resp, nil
+	case "pagerduty":
+		client, err := models.GetHTTPClient(notifyChannel)
+		if err != nil {
+			return "", fmt.Errorf("failed to get http client: %v", err)
+		}
+
+		for _, routingKey := range pagerDutyRoutingKeys {
+			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)
+			if err != nil {
+				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
 			}
 		}
 		logger.Infof("channel_name: %v, event:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0], tplContent, customParams, resp, err)
@@ -317,8 +338,8 @@ func (rt *Router) notifyRuleCustomParamsGet(c *gin.Context) {
 			filterKey := ""
 			for key, value := range nc.Params {
 				// 找到在通知媒介中的自定义变量配置项，进行 cname 转换
-				cname, exsits := keyMap[key]
-				if exsits {
+				cname, exists := keyMap[key]
+				if exists {
 					list = append(list, paramList{
 						Name:  key,
 						CName: cname,

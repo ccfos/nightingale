@@ -162,7 +162,7 @@ func (rt *Router) notifyConfigPut(c *gin.Context) {
 		ginx.Bomb(200, "key %s can not modify", f.Ckey)
 	}
 	username := c.MustGet("username").(string)
-	//insert or update build-in config
+	//insert or update built-in config
 	ginx.Dangerous(models.ConfigsSetWithUname(rt.Ctx, f.Ckey, f.Cval, username))
 	if f.Ckey == models.SMTP {
 		// 重置邮件发送器

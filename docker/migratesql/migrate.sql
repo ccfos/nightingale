@@ -289,3 +289,7 @@ ALTER TABLE `notify_rule` ADD COLUMN `extra_config` text COMMENT 'extra config';
 
 /* v8.4.1 2025-11-10 */
 ALTER TABLE `alert_rule` ADD COLUMN `pipeline_configs` text COMMENT 'pipeline configs';
+
+/* v8.4.2 2025-11-13 */
+ALTER TABLE `board` ADD COLUMN `note` varchar(1024) not null default '' comment 'note';
+ALTER TABLE `builtin_payloads` ADD COLUMN `note` varchar(1024) not null default '' comment 'note of payload';

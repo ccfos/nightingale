@@ -170,7 +170,6 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			Dangerous(c, err)
 			return
 		}
-
 		// 检查ckconfig的nodes不应该以http://或https://开头
 		for _, addr := range ckConfig.Nodes {
 			if strings.HasPrefix(addr, "http://") || strings.HasPrefix(addr, "https://") {

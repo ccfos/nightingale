@@ -124,13 +124,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			component.ID = old.ID
 		}
 
-		// delete uuid is emtpy
+		// delete uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect' and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
 
-		// delete builtin metrics uuid is emtpy
+		// delete builtin metrics uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0 and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin metrics fail ", err)
@@ -239,6 +239,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Cate:        "",
 					Name:        dashboard.Name,
 					Tags:        dashboard.Tags,
+					Note:        dashboard.Note,
 					Content:     string(content),
 					UUID:        dashboard.UUID,
 					ID:          dashboard.UUID,
@@ -293,6 +294,7 @@ type BuiltinBoard struct {
 	Name       string      `json:"name"`
 	Ident      string      `json:"ident"`
 	Tags       string      `json:"tags"`
+	Note       string      `json:"note"`
 	CreateAt   int64       `json:"create_at"`
 	CreateBy   string      `json:"create_by"`
 	UpdateAt   int64       `json:"update_at"`
