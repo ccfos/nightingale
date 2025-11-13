@@ -143,7 +143,7 @@ func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, chan
 
 func NotifyRecord(ctx *ctx.Context, evts []*models.AlertCurEvent, notifyRuleID int64, channel, target, res string, err error) {
 	// 一个通知可能对应多个 event，都需要记录
-	notis := make([]*models.NotificaitonRecord, 0, len(evts))
+	notis := make([]*models.NotificationRecord, 0, len(evts))
 	for _, evt := range evts {
 		noti := models.NewNotificationRecord(evt, notifyRuleID, channel, target)
 		if err != nil {

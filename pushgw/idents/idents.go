@@ -189,7 +189,7 @@ func (s *Set) updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis
 
 	newMap := make(map[string]interface{}, len(lst))
 	for _, ident := range lst {
-		hostUpdateTime := models.HostUpdteTime{
+		hostUpdateTime := models.HostUpdateTime{
 			UpdateTime: now,
 			Ident:      ident,
 		}
