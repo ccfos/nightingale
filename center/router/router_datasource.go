@@ -159,6 +159,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		b, err := json.Marshal(req.SettingsJson)
 		if err != nil {
 			logger.Warningf("marshal clickhouse settings failed: %v", err)
+			Dangerous(c, err)
 			return
 		}
 
@@ -166,6 +167,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		err = json.Unmarshal(b, &ckConfig)
 		if err != nil {
 			logger.Warningf("unmarshal clickhouse settings failed: %v", err)
+			Dangerous(c, err)
 			return
 		}
 
@@ -173,6 +175,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		err = ckConfig.InitCli()
 		if err != nil {
 			logger.Warningf("clickhouse connection failed: %v", err)
+			Dangerous(c, err)
 			return
 		}
 
@@ -180,6 +183,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		_, err = ckConfig.ShowDatabases(context.Background())
 		if err != nil {
 			logger.Warningf("clickhouse test query failed: %v", err)
+			Dangerous(c, err)
 			return
 		}
 	}
