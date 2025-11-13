@@ -181,6 +181,13 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	if !notifyChannel.Enable {
 		return "", fmt.Errorf("notify channel not enabled, please enable it first")
 	}
+
+	// 获取站点URL用于模板渲染
+	siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
+	if siteUrl == "" {
+		siteUrl = "http://127.0.0.1:17000"
+	}
+
 	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashduty" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
@@ -191,7 +198,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(messageTemplates) == 0 {
 			return "", fmt.Errorf("message template not found")
 		}
-		tplContent = messageTemplates[0].RenderEvent(events)
+		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
 	}
 	var contactKey string
 	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
@@ -221,8 +228,6 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
-
-		siteUrl, _ := models.ConfigsGetSiteUrl(ctx)
 
 		for _, routingKey := range pagerDutyRoutingKeys {
 			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)

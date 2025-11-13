@@ -498,9 +498,10 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		return
 	}
 
+	siteInfo := configCvalCache.GetSiteInfo()
 	tplContent := make(map[string]interface{})
 	if notifyChannel.RequestType != "flashduty" {
-		tplContent = messageTemplate.RenderEvent(events)
+		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
 	}
 
 	var contactKey string
@@ -525,7 +526,6 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		}
 
 	case "pagerduty":
-		siteInfo := configCvalCache.GetSiteInfo()
 		for _, routingKey := range pagerdutyRoutingKeys {
 			start := time.Now()
 			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))

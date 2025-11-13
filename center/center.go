@@ -2,9 +2,12 @@ package center
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/dscache"
+
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -96,6 +99,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		models.MigrateEP(ctx)
 	}
 
+	// 初始化 siteUrl，如果为空则设置默认值
+	InitSiteUrl(ctx, config.Alert.Heartbeat.IP, config.HTTP.Port)
+
 	configCache := memsto.NewConfigCache(ctx, syncStats, config.HTTP.RSA.RSAPrivateKey, config.HTTP.RSA.RSAPassWord)
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, syncStats)
 	targetCache := memsto.NewTargetCache(ctx, syncStats, redis)
@@ -158,4 +164,68 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		logxClean()
 		httpClean()
 	}, nil
+}
+
+// initSiteUrl 初始化 site_info 中的 site_url，如果为空则使用服务器IP和端口设置默认值
+func InitSiteUrl(ctx *ctx.Context, serverIP string, serverPort int) {
+	// 构造默认的 SiteUrl
+	defaultSiteUrl := fmt.Sprintf("http://%s:%d", serverIP, serverPort)
+
+	// 获取现有的 site_info 配置
+	siteInfoStr, err := models.ConfigsGet(ctx, "site_info")
+	if err != nil {
+		logger.Errorf("failed to get site_info config: %v", err)
+		return
+	}
+
+	// 如果 site_info 不存在，创建新的
+	if siteInfoStr == "" {
+		newSiteInfo := memsto.SiteInfo{
+			SiteUrl: defaultSiteUrl,
+		}
+		siteInfoBytes, err := json.Marshal(newSiteInfo)
+		if err != nil {
+			logger.Errorf("failed to marshal site_info: %v", err)
+			return
+		}
+
+		err = models.ConfigsSet(ctx, "site_info", string(siteInfoBytes))
+		if err != nil {
+			logger.Errorf("failed to set site_info: %v", err)
+			return
+		}
+
+		logger.Infof("initialized site_url with default value: %s", defaultSiteUrl)
+		return
+	}
+
+	// 检查现有的 site_info 中的 site_url 字段
+	var existingSiteInfo memsto.SiteInfo
+	err = json.Unmarshal([]byte(siteInfoStr), &existingSiteInfo)
+	if err != nil {
+		logger.Errorf("failed to unmarshal site_info: %v", err)
+		return
+	}
+
+	// 如果 site_url 已经有值，则不需要初始化
+	if existingSiteInfo.SiteUrl != "" {
+		return
+	}
+
+	// 设置 site_url
+	existingSiteInfo.SiteUrl = defaultSiteUrl
+
+	siteInfoBytes, err := json.Marshal(existingSiteInfo)
+	if err != nil {
+		logger.Errorf("failed to marshal updated site_info: %v", err)
+		return
+	}
+
+	err = models.ConfigsSet(ctx, "site_info", string(siteInfoBytes))
+	if err != nil {
+		logger.Errorf("failed to update site_info: %v", err)
+		return
+	}
+
+	logger.Infof("initialized site_url with default value: %s", defaultSiteUrl)
 }
