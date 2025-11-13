@@ -36,12 +36,14 @@ type Config struct {
 	AuthURL     string `json:"auth_url"`
 	DisplayName string `json:"display_name"`
 	// CorpId 用于指定用户需要选择的组织, scope包含corpid时该参数存在意义
-	CorpId          string   `json:"corpId"`
-	ClientID        string   `json:"client_id"`
-	ClientSecret    string   `json:"client_secret"`
-	RedirectURL     string   `json:"redirect_url"`
-	UseDingTalkName bool     `json:"use_dingtalk_name"`
-	Proxy           string   `json:"proxy"`
+	CorpId          string `json:"corpId"`
+	ClientID        string `json:"client_id"`
+	ClientSecret    string `json:"client_secret"`
+	RedirectURL     string `json:"redirect_url"`
+	UseDingTalkName bool   `json:"use_dingtalk_name"`
+	Proxy           string `json:"proxy"`
+	// Scope 授权范围, 当前只支持两种输入, openid：授权后可获得用户userid, openid corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔。注意url编码
+	Scope           bool     `json:"scope"`
 	SkipTlsVerify   bool     `json:"skip_tls_verify"`
 	CoverAttributes bool     `json:"cover_attributes"`
 	DefaultRoles    []string `json:"default_roles"`
@@ -144,9 +146,13 @@ func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 		v.Set("scope", "openid corpid")
 		v.Set("corpId", s.DingTalkConfig.CorpId)
 	} else {
-		v.Set("scope", "openid")
+		if s.DingTalkConfig.Scope {
+			v.Set("scope", "openid corpid")
+		} else {
+			v.Set("scope", "openid")
+		}
 	}
-
+	v.Set("prompt", "consent")
 	v.Set("state", state)
 
 	if strings.Contains(dingTalkOauthAuthURl, "?") {
