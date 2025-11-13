@@ -32,18 +32,16 @@ type SsoClient struct {
 }
 
 type Config struct {
-	Enable       bool   `json:"enable"`
-	AuthURL      string `json:"auth_url"`
-	DisplayName  string `json:"display_name"`
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	RedirectURL  string `json:"redirect_url"`
-	// 值为consent时，会进入授权确认页，默认值为：consent
-	Prompt string `json:"prompt"`
-	Proxy  string `json:"proxy"`
-	// Scope 授权范围, 授权页面显示的授权信息以应用注册时配置的为准
-	// 当前只支持两种输入:openid：授权后可获得用户userid, openid corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔
-	Scope           bool     `json:"scope"`
+	Enable      bool   `json:"enable"`
+	AuthURL     string `json:"auth_url"`
+	DisplayName string `json:"display_name"`
+	// CorpId 用于指定用户需要选择的组织, scope包含corpid时该参数存在意义
+	CorpId          string   `json:"corpId"`
+	ClientID        string   `json:"client_id"`
+	ClientSecret    string   `json:"client_secret"`
+	RedirectURL     string   `json:"redirect_url"`
+	UseDingTalkName bool     `json:"use_dingtalk_name"`
+	Proxy           string   `json:"proxy"`
 	SkipTlsVerify   bool     `json:"skip_tls_verify"`
 	CoverAttributes bool     `json:"cover_attributes"`
 	DefaultRoles    []string `json:"default_roles"`
@@ -78,9 +76,9 @@ func (c *Config) CreateClient() (*dingtalkoauth2_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	_result, _err := dingtalkoauth2_1_0.NewClient(config)
+	dingTalkOAuthClient, err := dingtalkoauth2_1_0.NewClient(config)
 
-	return _result, _err
+	return dingTalkOAuthClient, err
 
 }
 
@@ -95,8 +93,9 @@ func (c *Config) ContactClient() (*contact_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	_result, _err := contact_1_0.NewClient(config)
-	return _result, _err
+
+	dingTalkContactClient, err := contact_1_0.NewClient(config)
+	return dingTalkContactClient, err
 }
 
 func (c *Config) setProxy(config *openapi.Config) error {
@@ -126,11 +125,11 @@ func New(cf Config) *SsoClient {
 
 func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 	var buf bytes.Buffer
-	dingtalkOauthAuthURl := defaultAuthURL
+	dingTalkOauthAuthURl := defaultAuthURL
 	if s.DingTalkConfig.AuthURL != "" {
-		dingtalkOauthAuthURl = s.DingTalkConfig.AuthURL
+		dingTalkOauthAuthURl = s.DingTalkConfig.AuthURL
 	}
-	buf.WriteString(dingtalkOauthAuthURl)
+	buf.WriteString(dingTalkOauthAuthURl)
 	v := url.Values{
 		"response_type": {"code"},
 		"client_id":     {s.DingTalkConfig.ClientID},
@@ -141,21 +140,16 @@ func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 		return "", errors.New("DingTalk OAuth RedirectURL is empty")
 	}
 
-	if s.DingTalkConfig.Scope {
+	if s.DingTalkConfig.CorpId != "" {
 		v.Set("scope", "openid corpid")
+		v.Set("corpId", s.DingTalkConfig.CorpId)
 	} else {
 		v.Set("scope", "openid")
 	}
 
 	v.Set("state", state)
 
-	if s.DingTalkConfig.Prompt == "" {
-		s.DingTalkConfig.Prompt = "consent"
-	}
-
-	v.Set("prompt", s.DingTalkConfig.Prompt)
-
-	if strings.Contains(dingtalkOauthAuthURl, "?") {
+	if strings.Contains(dingTalkOauthAuthURl, "?") {
 		buf.WriteByte('&')
 	} else {
 		buf.WriteByte('?')
@@ -235,7 +229,7 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 
 	user, err := contactClient.GetUserWithOptions(tea.String("me"), getUserHeaders, &util.RuntimeOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("CreateClient error: %s", err)
+		return nil, fmt.Errorf("dingTalk create contactClient error: %s", err)
 	}
 
 	redirect := ""
@@ -255,15 +249,24 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 	}
 
 	var callbackOutput CallbackOutput
+	if user.Body.Nick == nil {
+		return nil, errors.New("dingTalk user nick is nil")
+	}
 
 	callbackOutput.Redirect = redirect
-	callbackOutput.Username = tea.ToString(*user.Body.UnionId)
+	if s.DingTalkConfig.UseDingTalkName {
+		callbackOutput.Username = tea.ToString(*user.Body.Nick)
+	} else {
+		callbackOutput.Username = tea.ToString(*user.Body.UnionId)
+	}
+
 	callbackOutput.Nickname = tea.ToString(*user.Body.Nick)
-	callbackOutput.Email = tea.ToString(*user.Body.Email)
-	if tea.ToString(*user.Body.Email) != "" {
+	if user.Body.Email != nil {
 		callbackOutput.Email = tea.ToString(*user.Body.Email)
 	}
-	callbackOutput.Phone = tea.ToString(*user.Body.Mobile)
+	if user.Body.Mobile != nil {
+		callbackOutput.Phone = tea.ToString(*user.Body.Mobile)
+	}
 
 	return &callbackOutput, nil
 

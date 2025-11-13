@@ -461,7 +461,6 @@ func (rt *Router) loginRedirectDingTalk(c *gin.Context) {
 			return
 		}
 	}
-	fmt.Println(rt.Sso.DingTalk)
 
 	if !rt.Sso.DingTalk.Enable {
 		ginx.NewRender(c).Data("", nil)
@@ -480,7 +479,7 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 
 	ret, err := rt.Sso.DingTalk.Callback(rt.Redis, c.Request.Context(), code, state)
 	if err != nil {
-		logger.Debugf("DingTalk.callback() get ret %+v error %v", ret, err)
+		logger.Errorf("sso_callback DingTalk fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
 		return
 	}
@@ -490,12 +489,12 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 
 	if user != nil {
 		if rt.Sso.DingTalk.DingTalkConfig.CoverAttributes {
-			updatedFields := user.UpdateSsoFields("DingTalk", ret.Nickname, ret.Phone, ret.Email)
+			updatedFields := user.UpdateSsoFields(dingtalk.SsoTypeName, ret.Nickname, ret.Phone, ret.Email)
 			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
 		}
 	} else {
 		user = new(models.User)
-		user.FullSsoFields("Dingtalk", ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.DingTalk.DingTalkConfig.DefaultRoles)
+		user.FullSsoFields(dingtalk.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.DingTalk.DingTalkConfig.DefaultRoles)
 		// create user from oidc
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
@@ -678,7 +677,7 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
 		rt.Sso.OAuth2.Reload(config)
-	case "DingTalk":
+	case dingtalk.SsoTypeName:
 		var config dingtalk.Config
 		err := json.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)

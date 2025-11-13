@@ -271,7 +271,6 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 			s.OAuth2.Reload(config)
 		case dingtalk.SsoTypeName:
 			var config dingtalk.Config
-			logger.Infof("reload %s..", dingtalk.SsoTypeName)
 			err := json.Unmarshal([]byte(cfg.Content), &config)
 			if err != nil {
 				logger.Warningf("reload %s failed: %s", dingtalk.SsoTypeName, err)
