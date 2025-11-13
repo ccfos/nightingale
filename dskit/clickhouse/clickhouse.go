@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/mitchellh/mapstructure"
+	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/net/httplib"
 	ckDriver "gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
@@ -31,6 +33,13 @@ type Clickhouse struct {
 	Password     string   `json:"ck.password" mapstructure:"ck.password"`
 	Timeout      int      `json:"ck.timeout" mapstructure:"ck.timeout"`
 	MaxQueryRows int      `json:"ck.max_query_rows" mapstructure:"ck.max_query_rows"`
+	Protocol     string   `json:"ck.protocol" mapstructure:"ck.protocol"`
+	SkipSSL      bool     `json:"ck.skip_ssl" mapstructure:"ck.skip_ssl"`
+
+	// 连接池配置（可选）
+	MaxIdleConns    int `json:"ck.max_idle_conns" mapstructure:"ck.max_idle_conns"`       // 最大空闲连接数
+	MaxOpenConns    int `json:"ck.max_open_conns" mapstructure:"ck.max_open_conns"`       // 最大打开连接数
+	ConnMaxLifetime int `json:"ck.conn_max_lifetime" mapstructure:"ck.conn_max_lifetime"` // 连接最大生命周期（秒）
 
 	Client       *gorm.DB `json:"-"`
 	ClientByHTTP *sql.DB  `json:"-"`
@@ -45,45 +54,135 @@ func (c *Clickhouse) InitCli() error {
 		return fmt.Errorf("not found ck shard, please check datasource config")
 	}
 	addr := c.Nodes[0]
-	url := addr
-	if !strings.HasPrefix(url, "http://") {
-		url = "http://" + url
+
+	// 用于探测的 URL（仅在 protocol 为空时使用）
+	probeURL := addr
+	if !strings.HasPrefix(probeURL, "http://") && !strings.HasPrefix(probeURL, "https://") {
+		probeURL = "http://" + probeURL
 	}
-	resp, err := httplib.Get(url).SetTimeout(time.Second * 1).Response()
-	// 忽略HTTP Code错误, 因为可能不是HTTP协议
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	// HTTP 协议
-	if resp.StatusCode == 200 {
-		jsonBytes, _ := io.ReadAll(resp.Body)
-		if len(jsonBytes) > 0 && strings.Contains(strings.ToLower(string(jsonBytes)), "ok.") {
-			ckconn := clickhouse.OpenDB(&clickhouse.Options{
-				Addr: []string{addr},
-				Auth: clickhouse.Auth{
-					Username: c.User,
-					Password: c.Password,
-				},
-				Settings: clickhouse.Settings{
-					"max_execution_time": 60,
-				},
+
+	prot := strings.ToLower(strings.TrimSpace(c.Protocol))
+	// 如果用户显式指定 protocol，只允许 http 或 native
+	if prot != "" {
+		if prot != "http" && prot != "native" {
+			return fmt.Errorf("unsupported clickhouse protocol: %s, only `http` or `native` allowed", c.Protocol)
+		}
+
+		if prot == "http" {
+			opts := &clickhouse.Options{
+				Addr:        []string{addr},
+				Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
+				Settings:    clickhouse.Settings{"max_execution_time": 60},
 				DialTimeout: 10 * time.Second,
 				Protocol:    clickhouse.HTTP,
-			})
+			}
+			if c.SkipSSL {
+				opts.TLS = &tls.Config{InsecureSkipVerify: true}
+			}
+			ckconn := clickhouse.OpenDB(opts)
 			if ckconn == nil {
 				return errors.New("db conn failed")
+			}
+			// 应用连接池配置到 HTTP sql.DB
+			if c.MaxIdleConns > 0 {
+				ckconn.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				ckconn.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
 			}
 			c.ClientByHTTP = ckconn
 			return nil
 		}
+
+		// prot == "native"
+		host := strings.TrimPrefix(addr, "http://")
+		host = strings.TrimPrefix(host, "https://")
+		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
+		if c.SkipSSL {
+			dsn = dsn + "&secure=true&skip_verify=true"
+		}
+		db, err := gorm.Open(
+			ckDriver.New(
+				ckDriver.Config{
+					DSN:                       dsn,
+					DisableDatetimePrecision:  true,
+					DontSupportRenameColumn:   true,
+					SkipInitializeWithVersion: false,
+				}),
+		)
+		if err != nil {
+			return err
+		}
+		// 应用连接池配置到 gorm 底层 *sql.DB
+		if sqlDB, derr := db.DB(); derr == nil {
+			if c.MaxIdleConns > 0 {
+				sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+			}
+		} else {
+			logger.Debugf("clickhouse: get native sql DB failed: %v", derr)
+		}
+		c.Client = db
+		return nil
 	}
 
+	// protocol 未指定，按探测流程决定（优先 HTTP 探测，探测失败则回落 native）
+	resp, err := httplib.Get(probeURL).SetTimeout(time.Second * 1).Response()
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 200 {
+			jsonBytes, _ := io.ReadAll(resp.Body)
+			if len(jsonBytes) > 0 && strings.Contains(strings.ToLower(string(jsonBytes)), "ok.") {
+				opts := &clickhouse.Options{
+					Addr:        []string{addr},
+					Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
+					Settings:    clickhouse.Settings{"max_execution_time": 60},
+					DialTimeout: 10 * time.Second,
+					Protocol:    clickhouse.HTTP,
+				}
+				if c.SkipSSL {
+					opts.TLS = &tls.Config{InsecureSkipVerify: true}
+				}
+				ckconn := clickhouse.OpenDB(opts)
+				if ckconn == nil {
+					return errors.New("db conn failed")
+				}
+				if c.MaxIdleConns > 0 {
+					ckconn.SetMaxIdleConns(c.MaxIdleConns)
+				}
+				if c.MaxOpenConns > 0 {
+					ckconn.SetMaxOpenConns(c.MaxOpenConns)
+				}
+				if c.ConnMaxLifetime > 0 {
+					ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+				}
+				c.ClientByHTTP = ckconn
+				return nil
+			}
+		}
+	} else {
+		logger.Debugf("clickhouse probe http err: %v, fallback to native", err)
+	}
+
+	// fallback 到 native 驱动（去掉可能的 scheme）
+	host := strings.TrimPrefix(addr, "http://")
+	host = strings.TrimPrefix(host, "https://")
+	dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
+	if c.SkipSSL {
+		dsn = dsn + "&secure=true&skip_verify=true"
+	}
 	db, err := gorm.Open(
 		ckDriver.New(
 			ckDriver.Config{
-				DSN: fmt.Sprintf(ckDataSource,
-					c.User, c.Password, addr),
+				DSN:                       dsn,
 				DisableDatetimePrecision:  true,
 				DontSupportRenameColumn:   true,
 				SkipInitializeWithVersion: false,
@@ -92,9 +191,18 @@ func (c *Clickhouse) InitCli() error {
 	if err != nil {
 		return err
 	}
-
+	if sqlDB, derr := db.DB(); derr == nil {
+		if c.MaxIdleConns > 0 {
+			sqlDB.SetMaxIdleConns(c.MaxIdleConns)
+		}
+		if c.MaxOpenConns > 0 {
+			sqlDB.SetMaxOpenConns(c.MaxOpenConns)
+		}
+		if c.ConnMaxLifetime > 0 {
+			sqlDB.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+		}
+	}
 	c.Client = db
-
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
+	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
 
 	"github.com/gin-gonic/gin"
@@ -150,6 +152,39 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 			BasicAuth:         os.Basic.Enable,
 			BasicAuthUser:     os.Basic.Username,
 			BasicAuthPassword: os.Basic.Password,
+		}
+	}
+
+	if req.PluginType == models.CLICKHOUSE {
+		b, err := json.Marshal(req.SettingsJson)
+		if err != nil {
+			logger.Warningf("marshal clickhouse settings failed: %v", err)
+			Dangerous(c, err)
+			return
+		}
+
+		var ckConfig clickhouse.Clickhouse
+		err = json.Unmarshal(b, &ckConfig)
+		if err != nil {
+			logger.Warningf("unmarshal clickhouse settings failed: %v", err)
+			Dangerous(c, err)
+			return
+		}
+
+		// InitCli 会自动检测并选择 HTTP 或 Native 协议
+		err = ckConfig.InitCli()
+		if err != nil {
+			logger.Warningf("clickhouse connection failed: %v", err)
+			Dangerous(c, err)
+			return
+		}
+
+		// 执行 SHOW DATABASES 测试连通性
+		_, err = ckConfig.ShowDatabases(context.Background())
+		if err != nil {
+			logger.Warningf("clickhouse test query failed: %v", err)
+			Dangerous(c, err)
+			return
 		}
 	}
 
