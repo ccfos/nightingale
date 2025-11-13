@@ -239,6 +239,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Cate:        "",
 					Name:        dashboard.Name,
 					Tags:        dashboard.Tags,
+					Note:        dashboard.Note,
 					Content:     string(content),
 					UUID:        dashboard.UUID,
 					ID:          dashboard.UUID,
@@ -293,6 +294,7 @@ type BuiltinBoard struct {
 	Name       string      `json:"name"`
 	Ident      string      `json:"ident"`
 	Tags       string      `json:"tags"`
+	Note       string      `json:"note"`
 	CreateAt   int64       `json:"create_at"`
 	CreateBy   string      `json:"create_by"`
 	UpdateAt   int64       `json:"update_at"`

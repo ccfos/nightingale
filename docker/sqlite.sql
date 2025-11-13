@@ -184,6 +184,7 @@ CREATE TABLE `board` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `note` varchar(1024) not null default '',
     `public_cate` bigint not null default 0
 );
 CREATE UNIQUE INDEX idx_board_group_id_name ON `board` (group_id, name);
@@ -491,6 +492,7 @@ CREATE TABLE `builtin_payloads` (
   `name` varchar(191) not null,
   `tags` varchar(191) not null default '',
   `content` longtext not null,
+  `note` varchar(1024) not null default '',
   `created_at` bigint(20) not null default 0,
   `created_by` varchar(191) not null default '',
   `updated_at` bigint(20) not null default 0,

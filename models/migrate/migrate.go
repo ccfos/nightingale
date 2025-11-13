@@ -251,7 +251,8 @@ type NotifyTpl struct {
 }
 
 type Board struct {
-	PublicCate int `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
+	PublicCate int    `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
+	Note       string `gorm:"column:note;type:varchar(1024);not null;default:'';comment:note"`
 }
 
 type BoardBusigroup struct {
