@@ -124,13 +124,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			component.ID = old.ID
 		}
 
-		// delete uuid is emtpy
+		// delete uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect' and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
 
-		// delete builtin metrics uuid is emtpy
+		// delete builtin metrics uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0 and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin metrics fail ", err)

@@ -244,7 +244,7 @@ func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
 							continue
 						}
 
-						if _, exsits := fieldMap[kk]; !exsits {
+						if _, exists := fieldMap[kk]; !exists {
 							fieldMap[kk] = struct{}{}
 							fields = append(fields, kk)
 						}
@@ -256,7 +256,7 @@ func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
 						continue
 					}
 
-					if _, exsits := fieldMap[k]; !exsits {
+					if _, exists := fieldMap[k]; !exists {
 						fieldMap[k] = struct{}{}
 						fields = append(fields, k)
 					}
