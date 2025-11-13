@@ -20,16 +20,16 @@ type HostMeta struct {
 	Config       interface{}            `json:"config"`
 }
 
-type HostUpdteTime struct {
+type HostUpdateTime struct {
 	Ident      string `json:"ident"`
 	UpdateTime int64  `json:"update_time"`
 }
 
-func (h HostUpdteTime) MarshalBinary() ([]byte, error) {
+func (h HostUpdateTime) MarshalBinary() ([]byte, error) {
 	return json.Marshal(h)
 }
 
-func (h *HostUpdteTime) UnmarshalBinary(data []byte) error {
+func (h *HostUpdateTime) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, h)
 }
 
