@@ -408,6 +408,18 @@ func InitRoot(ctx *ctx.Context) bool {
 		return false
 	}
 
+	// 查询用户个数
+	count, err := Count(DB(ctx).Model(&User{}))
+	if err != nil {
+		fmt.Println("failed to count user:", err)
+		os.Exit(1)
+	}
+
+	if count == 1 {
+		// 说明数据库只有一个 root 用户，并且 root 用户密码没有加密，需要初始化 salt
+		InitSalt(ctx)
+	}
+
 	newPass, err := CryptoPass(ctx, user.Password)
 	if err != nil {
 		fmt.Println("failed to crypto pass:", err)
