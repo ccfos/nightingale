@@ -619,7 +619,7 @@ func convertBuiltinMetricByDB(metricsInDB []*models.BuiltinMetric) map[string]*m
 		})
 
 		currentBuiltinMetric := builtinMetrics[0]
-		// User have no costumed translation, so we can merge it
+		// User has no customized translation, so we can merge it
 		if len(currentBuiltinMetric.Translation) == 0 {
 			translationMap := make(map[string]models.Translation)
 			for _, bm := range builtinMetrics {
