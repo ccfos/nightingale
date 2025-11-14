@@ -84,9 +84,9 @@ type QueryFieldsFunc func(indices []string) ([]string, error)
 type GroupByCate string
 
 const (
-	Filters  GroupByCate = "filters"
+	Filters   GroupByCate = "filters"
 	Histogram GroupByCate = "histogram"
-	Terms    GroupByCate = "terms"
+	Terms     GroupByCate = "terms"
 )
 
 // 参数
@@ -405,7 +405,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	}
 
 	q.Gte(time.Unix(start, 0).UnixMilli())
-	q.Lte(time.Unix(end, 0).UnixMilli())
+	q.Lt(time.Unix(end, 0).UnixMilli())
 	q.Format("epoch_millis")
 
 	field := param.MetricAggr.Field
@@ -632,8 +632,8 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	now := time.Now().Unix()
 	var start, end int64
 	if param.End != 0 && param.Start != 0 {
-		end = param.End - param.End%param.Interval
-		start = param.Start - param.Start%param.Interval
+		end = param.End
+		start = param.Start
 	} else {
 		end = now
 		start = end - param.Interval
@@ -641,7 +641,7 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 
 	q := elastic.NewRangeQuery(param.DateField)
 	q.Gte(time.Unix(start, 0).UnixMilli())
-	q.Lte(time.Unix(end, 0).UnixMilli())
+	q.Lt(time.Unix(end, 0).UnixMilli())
 	q.Format("epoch_millis")
 
 	queryString := GetQueryString(param.Filter, q)

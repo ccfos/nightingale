@@ -19,6 +19,8 @@ datas = "datas"
 pendings = "pendings"
 pendingsUseByRecover = "pendingsUseByRecover"
 pendingsUseByRecoverMap = "pendingsUseByRecoverMap"
+# typs is intentionally used as shorthand for types (parameter name)
+typs = "typs"
 
 [default.extend-words]
 # Some false positives
