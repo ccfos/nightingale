@@ -417,7 +417,7 @@
                         "type": "linear"
                     },
                     "spanNulls": false,
-                    "stack": "noraml"
+                    "stack": "normal"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -737,7 +737,7 @@
                         "type": "linear"
                     },
                     "spanNulls": false,
-                    "stack": "noraml"
+                    "stack": "normal"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",

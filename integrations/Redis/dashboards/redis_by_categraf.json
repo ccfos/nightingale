@@ -470,7 +470,7 @@
                     "lineWidth": 2,
                     "fillOpacity": 0.3,
                     "gradientMode": "opacity",
-                    "stack": "noraml",
+                    "stack": "normal",
                     "scaleDistribution": {
                         "type": "linear"
                     }
@@ -790,7 +790,7 @@
                     "lineWidth": 2,
                     "fillOpacity": 0.3,
                     "gradientMode": "opacity",
-                    "stack": "noraml",
+                    "stack": "normal",
                     "scaleDistribution": {
                         "type": "linear"
                     }
