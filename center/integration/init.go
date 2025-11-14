@@ -22,7 +22,7 @@ const SYSTEM = "system"
 var BuiltinPayloadInFile *BuiltinPayloadInFileType
 
 type BuiltinPayloadInFileType struct {
-	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[component_id]map[type]map[cate][]*models.BuiltinPayload
 	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
 
 	BuiltinMetrics map[string]*models.BuiltinMetric
@@ -619,7 +619,7 @@ func convertBuiltinMetricByDB(metricsInDB []*models.BuiltinMetric) map[string]*m
 		})
 
 		currentBuiltinMetric := builtinMetrics[0]
-		// User have no customed translation, so we can merge it
+		// User has no customized translation, so we can merge it
 		if len(currentBuiltinMetric.Translation) == 0 {
 			translationMap := make(map[string]models.Translation)
 			for _, bm := range builtinMetrics {

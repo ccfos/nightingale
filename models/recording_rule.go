@@ -21,7 +21,7 @@ type RecordingRule struct {
 	DatasourceIds     string            `json:"-" gorm:"datasource_ids,omitempty"`
 	DatasourceIdsJson []int64           `json:"datasource_ids" gorm:"-"`                             // for open source fe
 	DatasourceQueries []DatasourceQuery `json:"datasource_queries,omitempty" gorm:"serializer:json"` // datasource queries
-	Cluster           string            `json:"cluster"`                                             // take effect by cluster, seperated by space
+	Cluster           string            `json:"cluster"`                                             // take effect by cluster, separated by space
 	Name              string            `json:"name"`                                                // new metric name
 	Disabled          int               `json:"disabled"`                                            // 0: enabled, 1: disabled
 	PromQl            string            `json:"prom_ql"`                                             // just one ql for promql

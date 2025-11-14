@@ -264,11 +264,11 @@ func GetCurEventDetail(ctx *ctx.Context, eid int64) (*models.AlertCurEvent, erro
 	event.NotifyVersion, err = GetEventNotifyVersion(ctx, event.RuleId, event.NotifyRuleIds)
 	ginx.Dangerous(err)
 
-	event.NotifyRules, err = GetEventNorifyRuleNames(ctx, event.NotifyRuleIds)
+	event.NotifyRules, err = GetEventNotifyRuleNames(ctx, event.NotifyRuleIds)
 	return event, err
 }
 
-func GetEventNorifyRuleNames(ctx *ctx.Context, notifyRuleIds []int64) ([]*models.EventNotifyRule, error) {
+func GetEventNotifyRuleNames(ctx *ctx.Context, notifyRuleIds []int64) ([]*models.EventNotifyRule, error) {
 	notifyRuleNames := make([]*models.EventNotifyRule, 0)
 	notifyRules, err := models.NotifyRulesGet(ctx, "id in ?", notifyRuleIds)
 	if err != nil {
