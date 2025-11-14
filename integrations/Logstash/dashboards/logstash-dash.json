@@ -87,7 +87,7 @@
                     "x": 12,
                     "y": 1
                 },
-                "name": "Event emmited Rate(/s)",
+                "name": "Event emitted Rate(/s)",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
@@ -423,7 +423,7 @@
                             "x": 0,
                             "y": 19
                         },
-                        "name": "cpu Utlization",
+                        "name": "cpu Utilization",
                         "options": {
                             "legend": {
                                 "displayMode": "hidden"
