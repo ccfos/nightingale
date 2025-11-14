@@ -578,7 +578,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		gv := version.GithubVersion.Load()
 		if gv != nil {
-			ginx.NewRender(c).Data(gin.H{"version": v, "github_version": gv.(string)}, nil)
+			ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": gv.(string)}, nil)
 		} else {
 			ginx.NewRender(c).Data(gin.H{"version": v, "github_version": ""}, nil)
 		}

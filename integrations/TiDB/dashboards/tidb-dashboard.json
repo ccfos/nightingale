@@ -851,7 +851,7 @@
                         "type": "linear"
                     },
                     "spanNulls": false,
-                    "stack": "normal"
+                    "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${tidb_datasource}",

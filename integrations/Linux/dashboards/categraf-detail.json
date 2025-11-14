@@ -898,7 +898,7 @@
                             "id": "byFrameRefID"
                         },
                         "properties": {
-                            "rightYAxisDisplay": "normal",
+                            "rightYAxisDisplay": "noraml",
                             "standardOptions": {
                                 "util": "bitsIEC"
                             }
@@ -986,7 +986,7 @@
                             "id": "byFrameRefID"
                         },
                         "properties": {
-                            "rightYAxisDisplay": "normal",
+                            "rightYAxisDisplay": "noraml",
                             "standardOptions": {
                                 "util": "bitsIEC"
                             }

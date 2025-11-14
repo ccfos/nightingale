@@ -140,7 +140,7 @@
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
                     "lineWidth": 2,
-                    "stack": "normal"
+                    "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",
@@ -222,7 +222,7 @@
                     "gradientMode": "opacity",
                     "lineInterpolation": "smooth",
                     "lineWidth": 2,
-                    "stack": "normal"
+                    "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${prom}",

@@ -1114,7 +1114,7 @@
                     "drawStyle": "lines",
                     "fillOpacity": 0.2,
                     "lineInterpolation": "smooth",
-                    "stack": "normal"
+                    "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}",
@@ -1162,7 +1162,7 @@
                         "type": "linear"
                     },
                     "spanNulls": false,
-                    "stack": "normal"
+                    "stack": "noraml"
                 },
                 "datasourceCate": "prometheus",
                 "datasourceValue": "${datasource}",
