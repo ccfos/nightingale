@@ -115,7 +115,7 @@ nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
 nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
 nginx_handled: 自nginx启动起,处理过的客户端连接总数
 nginx_reading: 正在读取HTTP请求头部的连接总数
-nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Keep-Alive请求,该值会大于handled值
 nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
 nginx_upstream_check_rise: upstream_check模块对后端的检测次数
 nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
