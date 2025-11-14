@@ -50,15 +50,11 @@ func (rt *Router) builtinMetricsGets(c *gin.Context) {
 		lang = "zh_CN"
 	}
 
-	bmInDB, totalInDB, err := models.BuiltinMetricGets(rt.Ctx, "", collector, typ, query, unit, limit, ginx.Offset(c, limit))
+	bmInDB, err := models.BuiltinMetricGets(rt.Ctx, "", collector, typ, query, unit, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	bm, total, err := integration.BuiltinPayloadInFile.BuiltinMetricGets(bmInDB, lang, collector, typ, query, unit, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
-
-	if totalInDB > total {
-		total = totalInDB
-	}
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  bm,
