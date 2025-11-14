@@ -132,7 +132,6 @@ func (c *Clickhouse) InitCli() error {
 		return nil
 	}
 
-	// protocol 未指定：直接按 HTTP（host:port -> http）连接，去掉探测逻辑
 	opts := &clickhouse.Options{
 		Addr:        []string{addr},
 		Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
@@ -140,19 +139,26 @@ func (c *Clickhouse) InitCli() error {
 		DialTimeout: 10 * time.Second,
 		Protocol:    clickhouse.HTTP,
 	}
+
 	ckconn := clickhouse.OpenDB(opts)
 	if ckconn != nil {
-		if c.MaxIdleConns > 0 {
-			ckconn.SetMaxIdleConns(c.MaxIdleConns)
+		// 做一次 Ping 校验，避免把 native 端口误当作 HTTP 使用
+		if err := ckconn.Ping(); err == nil {
+			if c.MaxIdleConns > 0 {
+				ckconn.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				ckconn.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+			}
+			c.ClientByHTTP = ckconn
+			return nil
+		} else {
+			logger.Debugf("clickhouse http ping failed for %s, fallback to native: %v", addr, err)
+			_ = ckconn.Close()
 		}
-		if c.MaxOpenConns > 0 {
-			ckconn.SetMaxOpenConns(c.MaxOpenConns)
-		}
-		if c.ConnMaxLifetime > 0 {
-			ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-		}
-		c.ClientByHTTP = ckconn
-		return nil
 	}
 
 	// 作为最后回退，尝试 native 连接
