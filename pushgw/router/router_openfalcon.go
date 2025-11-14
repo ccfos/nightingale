@@ -39,7 +39,7 @@ func (m *FalconMetric) Clean(ts int64) error {
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			m.Value = f
 		} else {
-			return fmt.Errorf("unparseable value %v", v)
+			return fmt.Errorf("unparsable value %v", v)
 		}
 	case float64:
 		m.Value = v
@@ -50,7 +50,7 @@ func (m *FalconMetric) Clean(ts int64) error {
 	case int:
 		m.Value = float64(v)
 	default:
-		return fmt.Errorf("unparseable value %v", v)
+		return fmt.Errorf("unparsable value %v", v)
 	}
 
 	// if timestamp bigger than 32 bits, likely in milliseconds

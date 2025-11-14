@@ -37,7 +37,7 @@ func Upgrade(configFile string) error {
 			}
 		}
 
-		authJosn := models.Auth{
+		authJson := models.Auth{
 			BasicAuthUser:     cluster.BasicAuthUser,
 			BasicAuthPassword: cluster.BasicAuthPass,
 		}
@@ -59,7 +59,7 @@ func Upgrade(configFile string) error {
 			PluginTypeName: "Prometheus Like",
 			Name:           cluster.Name,
 			HTTPJson:       httpJson,
-			AuthJson:       authJosn,
+			AuthJson:       authJson,
 			ClusterName:    "default",
 			Status:         "enabled",
 		}

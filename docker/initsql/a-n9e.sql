@@ -61,7 +61,7 @@ CREATE TABLE `configs` (
     `external`  bigint DEFAULT 0 COMMENT '0\\:built-in 1\\:external',
     `encrypted` bigint DEFAULT 0 COMMENT '0\\:plaintext 1\\:ciphertext',
     `create_at` bigint DEFAULT 0 COMMENT 'create_at',
-    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'cerate_by',
+    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'create_by',
     `update_at` bigint DEFAULT 0 COMMENT 'update_at',
     `update_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'update_by',
     PRIMARY KEY (`id`)
@@ -676,7 +676,7 @@ CREATE TABLE `notify_tpl` (
     `name` varchar(255) not null,
     `content` text not null,
     `create_at` bigint DEFAULT 0 COMMENT 'create_at',
-    `create_by` varchar(64) DEFAULT '' COMMENT 'cerate_by',
+    `create_by` varchar(64) DEFAULT '' COMMENT 'create_by',
     `update_at` bigint DEFAULT 0 COMMENT 'update_at',
     `update_by` varchar(64) DEFAULT '' COMMENT 'update_by',
     PRIMARY KEY (`id`),

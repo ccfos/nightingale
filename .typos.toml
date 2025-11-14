@@ -1,0 +1,39 @@
+# Configuration for typos tool
+[files]
+extend-exclude = [
+    # Ignore auto-generated easyjson files
+    "*_easyjson.go",
+    # Ignore binary files
+    "*.gz",
+    "*.tar",
+    "n9e",
+    "n9e-*"
+]
+
+[default.extend-identifiers]
+# Didi is a company name (DiDi), not a typo
+Didi = "Didi"
+# datas is intentionally used as plural of data (slice variable)
+datas = "datas"
+# pendings is intentionally used as plural
+pendings = "pendings"
+pendingsUseByRecover = "pendingsUseByRecover"
+pendingsUseByRecoverMap = "pendingsUseByRecoverMap"
+
+[default.extend-words]
+# Some false positives
+ba = "ba"
+# Specific corrections for ambiguous typos
+contigious = "contiguous"
+onw = "own"
+componet = "component"
+Patten = "Pattern"
+Requets = "Requests"
+Mis = "Miss"
+exporer = "exporter"
+soruce = "source"
+verison = "version"
+Configations = "Configurations"
+emmited = "emitted"
+Utlization = "Utilization"
+serie = "series"

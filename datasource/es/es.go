@@ -224,9 +224,9 @@ func (e *Elasticsearch) QueryIndices() ([]string, error) {
 	return result, err
 }
 
-func (e *Elasticsearch) QueryFields(indexs []string) ([]string, error) {
+func (e *Elasticsearch) QueryFields(indexes []string) ([]string, error) {
 	var fields []string
-	result, err := elastic.NewGetFieldMappingService(e.Client).Index(indexs...).IgnoreUnavailable(true).Do(context.Background())
+	result, err := elastic.NewGetFieldMappingService(e.Client).Index(indexes...).IgnoreUnavailable(true).Do(context.Background())
 	if err != nil {
 		return fields, err
 	}
@@ -296,11 +296,11 @@ func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([
 	return eslike.QueryLog(ctx, queryParam, e.Timeout, e.Version, e.MaxShard, search)
 }
 
-func (e *Elasticsearch) QueryFieldValue(indexs []string, field string, query string) ([]string, error) {
+func (e *Elasticsearch) QueryFieldValue(indexes []string, field string, query string) ([]string, error) {
 	var values []string
 	search := e.Client.Search().
 		IgnoreUnavailable(true).
-		Index(indexs...).
+		Index(indexes...).
 		Size(0)
 
 	if query != "" {

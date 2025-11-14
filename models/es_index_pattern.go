@@ -73,15 +73,15 @@ func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
 	return DB(ctx).Model(ei).Select("*").Updates(eip).Error
 }
 
-func (dbIndexPatten *EsIndexPattern) DB2FE() {
-	if dbIndexPatten.AllowHideSystemIndices == 1 {
-		dbIndexPatten.AllowHideSystemIndicesBool = true
+func (dbIndexPattern *EsIndexPattern) DB2FE() {
+	if dbIndexPattern.AllowHideSystemIndices == 1 {
+		dbIndexPattern.AllowHideSystemIndicesBool = true
 	}
 }
 
-func (feIndexPatten *EsIndexPattern) FE2DB() {
-	if feIndexPatten.AllowHideSystemIndicesBool {
-		feIndexPatten.AllowHideSystemIndices = 1
+func (feIndexPattern *EsIndexPattern) FE2DB() {
+	if feIndexPattern.AllowHideSystemIndicesBool {
+		feIndexPattern.AllowHideSystemIndices = 1
 	}
 }
 

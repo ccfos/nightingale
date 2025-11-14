@@ -10,7 +10,7 @@ import (
 
 type BuiltinPayload struct {
 	ID          int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Type        string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
+	Type        string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collect
 	Component   string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` //
 	ComponentID uint64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;comment:'component_id of payload'"`          // ComponentID which the payload belongs to
 	Cate        string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1

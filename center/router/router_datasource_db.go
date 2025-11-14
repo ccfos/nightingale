@@ -60,8 +60,8 @@ func (rt *Router) ShowTables(c *gin.Context) {
 	}
 	switch plug.(type) {
 	case TableShower:
-		if len(f.Querys) > 0 {
-			database, ok := f.Querys[0].(string)
+		if len(f.Queries) > 0 {
+			database, ok := f.Queries[0].(string)
 			if ok {
 				tables, err = plug.(TableShower).ShowTables(c.Request.Context(), database)
 			}
@@ -90,8 +90,8 @@ func (rt *Router) DescribeTable(c *gin.Context) {
 	switch plug.(type) {
 	case TableDescriber:
 		client := plug.(TableDescriber)
-		if len(f.Querys) > 0 {
-			columns, err = client.DescribeTable(c.Request.Context(), f.Querys[0])
+		if len(f.Queries) > 0 {
+			columns, err = client.DescribeTable(c.Request.Context(), f.Queries[0])
 		}
 	default:
 		ginx.Bomb(200, "datasource not exists")

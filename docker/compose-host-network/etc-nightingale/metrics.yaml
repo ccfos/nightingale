@@ -53,7 +53,7 @@ zh:
   mem_huge_page_size: 每个大页的大小
   mem_huge_pages_free: 池中尚未分配的 HugePages 数量
   mem_huge_pages_total: 预留HugePages的总个数
-  mem_inactive: 空闲的内存数(包括free和avalible的内存)
+  mem_inactive: 空闲的内存数(包括free和available的内存)
   mem_low_free: 未被使用的低位大小
   mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
   mem_mapped: 设备和文件等映射的大小
@@ -327,7 +327,7 @@ en:
   mem_huge_page_size: "The size of each big page"
   mem_huge_pages_free: "The number of Huge Pages in the pool that have not been allocated"
   mem_huge_pages_total: "Reserve the total number of Huge Pages"
-  mem_inactive: "Free memory (including the memory of free and avalible)"
+  mem_inactive: "Free memory (including the memory of free and available)"
   mem_low_free: "Unused low size"
   mem_low_total: "The total size of the low memory memory can achieve the same role of high memory, and it can be used by the kernel to record some of its own data structure"
   mem_mapped: "The size of the mapping of equipment and files"
@@ -663,7 +663,7 @@ en:
   # vmalloc已分配的内存，虚拟地址空间上的连续的内存
   node_memory_VmallocUsed_bytes: Amount of vmalloc area which is used
   # vmalloc区可用的连续最大快的大小，通过此指标可以知道vmalloc可分配连续内存的最大值
-  node_memory_VmallocChunk_bytes: Largest contigious block of vmalloc area which is free
+  node_memory_VmallocChunk_bytes: Largest contiguous block of vmalloc area which is free
   # 内存的硬件故障删除掉的内存页的总大小
   node_memory_HardwareCorrupted_bytes: Amount of RAM that the kernel identified as corrupted / not working
   # 用于在虚拟和物理内存地址之间映射的内存

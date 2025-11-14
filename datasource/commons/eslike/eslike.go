@@ -695,7 +695,7 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 			var x map[string]interface{}
 			err := json.Unmarshal(result.Hits.Hits[i].Source, &x)
 			if err != nil {
-				logger.Warningf("Unmarshal soruce error:%v", err)
+				logger.Warningf("Unmarshal source error:%v", err)
 				continue
 			}
 

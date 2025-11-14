@@ -238,14 +238,14 @@ type Configs struct {
 	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
 	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 	CreateAt  int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
 	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy  string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }
 
 type NotifyTpl struct {
 	CreateAt int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
 	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }

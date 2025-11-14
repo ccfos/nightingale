@@ -170,7 +170,7 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 }
 
 func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]string, error) {
-	var typs []string
+	var types []string
 	session := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM)
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
@@ -184,8 +184,8 @@ func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]stri
 		session = session.Where("typ like ?", "%"+query+"%")
 	}
 
-	err := session.Select("distinct(typ)").Pluck("typ", &typs).Error
-	return typs, err
+	err := session.Select("distinct(typ)").Pluck("typ", &types).Error
+	return types, err
 }
 
 func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]string, error) {
