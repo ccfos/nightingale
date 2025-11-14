@@ -53,7 +53,7 @@ func Upgrade(configFile string) error {
 			Headers:             header,
 		}
 
-		datasrouce := models.Datasource{
+		datasource := models.Datasource{
 			PluginId:       1,
 			PluginType:     "prometheus",
 			PluginTypeName: "Prometheus Like",
@@ -64,7 +64,7 @@ func Upgrade(configFile string) error {
 			Status:         "enabled",
 		}
 
-		err = datasrouce.Add(ctx)
+		err = datasource.Add(ctx)
 		if err != nil {
 			logger.Errorf("add datasource %s error: %v", cluster.Name, err)
 		}
