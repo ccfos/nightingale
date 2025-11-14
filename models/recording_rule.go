@@ -167,6 +167,11 @@ func (re *RecordingRule) Verify() error {
 		}
 	}
 
+	// Check if query_configs length exceeds TEXT type limit (65535 bytes)
+	if len(re.QueryConfigs) > 65535 {
+		return fmt.Errorf("query_configs length (%d bytes) exceeds TEXT type limit (65535 bytes), please reduce the configuration size", len(re.QueryConfigs))
+	}
+
 	return nil
 }
 
