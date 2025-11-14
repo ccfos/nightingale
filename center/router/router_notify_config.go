@@ -219,8 +219,8 @@ func (rt *Router) notifyChannelConfigGets(c *gin.Context) {
 	id := ginx.QueryInt64(c, "id", 0)
 	name := ginx.QueryStr(c, "name", "")
 	ident := ginx.QueryStr(c, "ident", "")
-	eabled := ginx.QueryInt(c, "eabled", -1)
+	enabled := ginx.QueryInt(c, "enabled", -1)
 
-	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, id, name, ident, eabled)
+	notifyChannels, err := models.NotifyChannelGets(rt.Ctx, id, name, ident, enabled)
 	ginx.NewRender(c).Data(notifyChannels, err)
 }

@@ -85,7 +85,7 @@ type GroupByCate string
 
 const (
 	Filters  GroupByCate = "filters"
-	Histgram GroupByCate = "histgram"
+	Histogram GroupByCate = "histogram"
 	Terms    GroupByCate = "terms"
 )
 
@@ -493,7 +493,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 			} else {
 				groupByAggregation = elastic.NewTermsAggregation().Field(groupBy.Field).OrderByKeyDesc().Size(groupBy.Size).MinDocCount(int(groupBy.MinDocCount))
 			}
-		case Histgram:
+		case Histogram:
 			if param.MetricAggr.Func != "count" {
 				groupByAggregation = elastic.NewHistogramAggregation().Field(groupBy.Field).Interval(float64(groupBy.Interval)).SubAggregation(field, aggr)
 			} else {
@@ -523,7 +523,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 			switch groupBy.Cate {
 			case Terms:
 				groupByAggregation = elastic.NewTermsAggregation().Field(groupBy.Field).SubAggregation(groupBys[i-1].Field, groupByAggregation).OrderByKeyDesc().Size(groupBy.Size).MinDocCount(int(groupBy.MinDocCount))
-			case Histgram:
+			case Histogram:
 				groupByAggregation = elastic.NewHistogramAggregation().Field(groupBy.Field).Interval(float64(groupBy.Interval)).SubAggregation(groupBys[i-1].Field, groupByAggregation)
 			case Filters:
 				for _, filterParam := range groupBy.Params {
