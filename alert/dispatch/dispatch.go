@@ -437,7 +437,11 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					}
 				}
 			}
-		case "pagerduty_integration_keys":
+		case "pagerduty_integration_keys", "pagerduty_integration_ids":
+			if key == "pagerduty_integration_ids" {
+				// 不处理ids，直接跳过，这个字段只给前端标记用
+				continue
+			}
 			if data, err := json.Marshal(value); err == nil {
 				var keys []string
 				if json.Unmarshal(data, &keys) == nil {
