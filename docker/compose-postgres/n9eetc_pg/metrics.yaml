@@ -420,7 +420,7 @@ node_memory_Shmem_bytes: Used shared memory (shared between several processes, t
 # 匿名页内存大小
 node_memory_AnonPages_bytes: Memory in user pages not backed by files
 # 被关联的内存页大小
-node_memory_Mapped_bytes: Used memory in mapped pages files which have been mmaped, such as libraries
+node_memory_Mapped_bytes: Used memory in mapped pages files which have been mapped, such as libraries
 # file-backed内存页缓存大小
 node_memory_Cached_bytes: Parked file data (file content) cache
 # 系统中有多少匿名页曾经被swap-out、现在又被swap-in并且swap-in之后页面中的内容一直没发生变化
