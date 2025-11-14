@@ -178,7 +178,7 @@ func getUnixTs(timeStr string) int64 {
 	return parsedTime.UnixMilli()
 }
 
-func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *MetricPtr, labels string, ts int64, f string) {
+func GetBuckets(labelKey string, keys []string, arr []interface{}, metrics *MetricPtr, labels string, ts int64, f string) {
 	var err error
 	bucketsKey := ""
 	if len(keys) > 0 {
@@ -226,9 +226,9 @@ func GetBuckts(labelKey string, keys []string, arr []interface{}, metrics *Metri
 		nextBucketsArr, exists := innerBuckets.(map[string]interface{})["buckets"]
 		if exists {
 			if len(keys[1:]) >= 1 {
-				GetBuckts(bucketsKey, keys[1:], nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
+				GetBuckets(bucketsKey, keys[1:], nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
 			} else {
-				GetBuckts(bucketsKey, []string{}, nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
+				GetBuckets(bucketsKey, []string{}, nextBucketsArr.([]interface{}), metrics, newlabels, ts, f)
 			}
 		} else {
 
@@ -584,7 +584,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	metrics := &MetricPtr{Data: make(map[string][][]float64)}
 
-	GetBuckts("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
+	GetBuckets("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
 
 	items, err := TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
 
@@ -695,7 +695,7 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 			var x map[string]interface{}
 			err := json.Unmarshal(result.Hits.Hits[i].Source, &x)
 			if err != nil {
-				logger.Warningf("Unmarshal soruce error:%v", err)
+				logger.Warningf("Unmarshal source error:%v", err)
 				continue
 			}
 
