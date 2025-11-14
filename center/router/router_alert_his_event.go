@@ -152,7 +152,7 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	event.NotifyVersion, err = GetEventNotifyVersion(rt.Ctx, event.RuleId, event.NotifyRuleIds)
 	ginx.Dangerous(err)
 
-	event.NotifyRules, err = GetEventNorifyRuleNames(rt.Ctx, event.NotifyRuleIds)
+	event.NotifyRules, err = GetEventNotifyRuleNames(rt.Ctx, event.NotifyRuleIds)
 	ginx.NewRender(c).Data(TransferEventToCur(rt.Ctx, event), err)
 }
 
