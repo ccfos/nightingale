@@ -50,7 +50,7 @@ mem_high_total: 高位内存总大小（Highmem是指所有内存高于860MB的�
 mem_huge_page_size: 每个大页的大小
 mem_huge_pages_free: 池中尚未分配的 HugePages 数量
 mem_huge_pages_total: 预留HugePages的总个数
-mem_inactive: 空闲的内存数(包括free和avalible的内存)
+mem_inactive: 空闲的内存数(包括free和available的内存)
 mem_low_free: 未被使用的低位大小
 mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
 mem_mapped: 设备和文件等映射的大小
@@ -115,7 +115,7 @@ nginx_accepts: 自nginx启动起,与客户端建立过得连接总数
 nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
 nginx_handled: 自nginx启动起,处理过的客户端连接总数
 nginx_reading: 正在读取HTTP请求头部的连接总数
-nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Keep-Alive请求,该值会大于handled值
 nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
 nginx_upstream_check_rise: upstream_check模块对后端的检测次数
 nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0

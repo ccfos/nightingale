@@ -53,7 +53,7 @@ zh:
   mem_huge_page_size: 每个大页的大小
   mem_huge_pages_free: 池中尚未分配的 HugePages 数量
   mem_huge_pages_total: 预留HugePages的总个数
-  mem_inactive: 空闲的内存数(包括free和avalible的内存)
+  mem_inactive: 空闲的内存数(包括free和available的内存)
   mem_low_free: 未被使用的低位大小
   mem_low_total: 低位内存总大小,低位可以达到高位内存一样的作用，而且它还能够被内核用来记录一些自己的数据结构
   mem_mapped: 设备和文件等映射的大小
@@ -143,7 +143,7 @@ zh:
   nginx_active: 当前nginx正在处理的活动连接数,等于Reading/Writing/Waiting总和
   nginx_handled: 自nginx启动起,处理过的客户端连接总数
   nginx_reading: 正在读取HTTP请求头部的连接总数
-  nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Krrp-Alive请求,该值会大于handled值
+  nginx_requests: 自nginx启动起,处理过的客户端请求总数,由于存在HTTP Keep-Alive请求,该值会大于handled值
   nginx_upstream_check_fall: upstream_check模块检测到后端失败的次数
   nginx_upstream_check_rise: upstream_check模块对后端的检测次数
   nginx_upstream_check_status_code: 后端upstream的状态,up为1,down为0
@@ -327,7 +327,7 @@ en:
   mem_huge_page_size: "The size of each big page"
   mem_huge_pages_free: "The number of Huge Pages in the pool that have not been allocated"
   mem_huge_pages_total: "Reserve the total number of Huge Pages"
-  mem_inactive: "Free memory (including the memory of free and avalible)"
+  mem_inactive: "Free memory (including the memory of free and available)"
   mem_low_free: "Unused low size"
   mem_low_total: "The total size of the low memory memory can achieve the same role of high memory, and it can be used by the kernel to record some of its own data structure"
   mem_mapped: "The size of the mapping of equipment and files"
@@ -369,7 +369,7 @@ en:
   netstat_tcp_time_wait: "Time _ WAIT status network link number"
   netstat_udp_socket: "Number of network links in UDP status"
 
-  processes_blocked: "The number of processes in the unreprudible sleep state('U','D','L')"
+  processes_blocked: "The number of processes in the unreproducible sleep state('U','D','L')"
   processes_dead: "Number of processes in recycling('X')"
   processes_idle: "Number of idle processes hanging('I')"
   processes_paging: "Number of paging processes('P')"
@@ -397,7 +397,7 @@ en:
   nginx_active: "The current number of activity connections that Nginx is being processed is equal to Reading/Writing/Waiting"
   nginx_handled: "Starting from Nginx, the total number of client connections that have been processed"
   nginx_reading: "Reading the total number of connections on the http request header"
-  nginx_requests: "Since nginx is started, the total number of client requests processed, due to the existence of HTTP Krrp - Alive requests, this value will be greater than the handled value"
+  nginx_requests: "Since nginx is started, the total number of client requests processed, due to the existence of HTTP Keep-Alive requests, this value will be greater than the handled value"
   nginx_upstream_check_fall: "UPStream_CHECK module detects the number of back -end failures"
   nginx_upstream_check_rise: "UPSTREAM _ Check module to detect the number of back -end"
   nginx_upstream_check_status_code: "The state of the backstream is 1, and the down is 0"
