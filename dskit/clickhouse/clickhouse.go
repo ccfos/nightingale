@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/net/httplib"
 	ckDriver "gorm.io/driver/clickhouse"
 	"gorm.io/gorm"
 )
@@ -28,13 +26,14 @@ const (
 )
 
 type Clickhouse struct {
-	Nodes        []string `json:"ck.nodes" mapstructure:"ck.nodes"`
-	User         string   `json:"ck.user" mapstructure:"ck.user"`
-	Password     string   `json:"ck.password" mapstructure:"ck.password"`
-	Timeout      int      `json:"ck.timeout" mapstructure:"ck.timeout"`
-	MaxQueryRows int      `json:"ck.max_query_rows" mapstructure:"ck.max_query_rows"`
-	Protocol     string   `json:"ck.protocol" mapstructure:"ck.protocol"`
-	SkipSSL      bool     `json:"ck.skip_ssl" mapstructure:"ck.skip_ssl"`
+	Nodes            []string `json:"ck.nodes" mapstructure:"ck.nodes"`
+	User             string   `json:"ck.user" mapstructure:"ck.user"`
+	Password         string   `json:"ck.password" mapstructure:"ck.password"`
+	Timeout          int      `json:"ck.timeout" mapstructure:"ck.timeout"`
+	MaxQueryRows     int      `json:"ck.max_query_rows" mapstructure:"ck.max_query_rows"`
+	Protocol         string   `json:"ck.protocol" mapstructure:"ck.protocol"`
+	SkipSSLVerify    bool     `json:"ck.skip_ssl_verify" mapstructure:"ck.skip_ssl_verify"`
+	SecureConnection bool     `json:"ck.secure_connection" mapstructure:"ck.secure_connection"`
 
 	// 连接池配置（可选）
 	MaxIdleConns    int `json:"ck.max_idle_conns" mapstructure:"ck.max_idle_conns"`       // 最大空闲连接数
@@ -53,21 +52,17 @@ func (c *Clickhouse) InitCli() error {
 	if len(c.Nodes) == 0 {
 		return fmt.Errorf("not found ck shard, please check datasource config")
 	}
+	// 前端只允许 host:port，直接使用第一个节点
 	addr := c.Nodes[0]
-
-	// 用于探测的 URL（仅在 protocol 为空时使用）
-	probeURL := addr
-	if !strings.HasPrefix(probeURL, "http://") && !strings.HasPrefix(probeURL, "https://") {
-		probeURL = "http://" + probeURL
-	}
 
 	prot := strings.ToLower(strings.TrimSpace(c.Protocol))
 	// 如果用户显式指定 protocol，只允许 http 或 native
 	if prot != "" {
 		if prot != "http" && prot != "native" {
-			return fmt.Errorf("unsupported clickhouse protocol: %s, only `http` or `native` allowed", c.Protocol)
+			return fmt.Errorf("unsupported clickhouse protocol: %s, only `http`, `https` or `native` allowed", c.Protocol)
 		}
 
+		// HTTP(S) 路径（使用 clickhouse-go HTTP client）
 		if prot == "http" {
 			opts := &clickhouse.Options{
 				Addr:        []string{addr},
@@ -76,8 +71,9 @@ func (c *Clickhouse) InitCli() error {
 				DialTimeout: 10 * time.Second,
 				Protocol:    clickhouse.HTTP,
 			}
-			if c.SkipSSL {
-				opts.TLS = &tls.Config{InsecureSkipVerify: true}
+			// 仅当显式指定 https 时才启用 TLS 并使用 SkipSSL 控制 InsecureSkipVerify
+			if c.SecureConnection {
+				opts.TLS = &tls.Config{InsecureSkipVerify: c.SkipSSLVerify}
 			}
 			ckconn := clickhouse.OpenDB(opts)
 			if ckconn == nil {
@@ -97,12 +93,14 @@ func (c *Clickhouse) InitCli() error {
 			return nil
 		}
 
-		// prot == "native"
-		host := strings.TrimPrefix(addr, "http://")
-		host = strings.TrimPrefix(host, "https://")
-		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
-		if c.SkipSSL {
-			dsn = dsn + "&secure=true&skip_verify=true"
+		// native 路径（使用 gorm + native driver）
+		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, addr)
+		// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
+		if c.SecureConnection {
+			dsn = dsn + "&secure=true"
+			if c.SkipSSLVerify {
+				dsn = dsn + "&skip_verify=true"
+			}
 		}
 		db, err := gorm.Open(
 			ckDriver.New(
@@ -134,50 +132,44 @@ func (c *Clickhouse) InitCli() error {
 		return nil
 	}
 
-	// protocol 未指定，按探测流程决定（优先 HTTP 探测，探测失败则回落 native）
-	resp, err := httplib.Get(probeURL).SetTimeout(time.Second * 1).Response()
-	if err == nil {
-		defer resp.Body.Close()
-		if resp.StatusCode == 200 {
-			jsonBytes, _ := io.ReadAll(resp.Body)
-			if len(jsonBytes) > 0 && strings.Contains(strings.ToLower(string(jsonBytes)), "ok.") {
-				opts := &clickhouse.Options{
-					Addr:        []string{addr},
-					Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
-					Settings:    clickhouse.Settings{"max_execution_time": 60},
-					DialTimeout: 10 * time.Second,
-					Protocol:    clickhouse.HTTP,
-				}
-				if c.SkipSSL {
-					opts.TLS = &tls.Config{InsecureSkipVerify: true}
-				}
-				ckconn := clickhouse.OpenDB(opts)
-				if ckconn == nil {
-					return errors.New("db conn failed")
-				}
-				if c.MaxIdleConns > 0 {
-					ckconn.SetMaxIdleConns(c.MaxIdleConns)
-				}
-				if c.MaxOpenConns > 0 {
-					ckconn.SetMaxOpenConns(c.MaxOpenConns)
-				}
-				if c.ConnMaxLifetime > 0 {
-					ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
-				}
-				c.ClientByHTTP = ckconn
-				return nil
-			}
-		}
-	} else {
-		logger.Debugf("clickhouse probe http err: %v, fallback to native", err)
+	opts := &clickhouse.Options{
+		Addr:        []string{addr},
+		Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
+		Settings:    clickhouse.Settings{"max_execution_time": 60},
+		DialTimeout: 10 * time.Second,
+		Protocol:    clickhouse.HTTP,
 	}
 
-	// fallback 到 native 驱动（去掉可能的 scheme）
-	host := strings.TrimPrefix(addr, "http://")
-	host = strings.TrimPrefix(host, "https://")
+	ckconn := clickhouse.OpenDB(opts)
+	if ckconn != nil {
+		// 做一次 Ping 校验，避免把 native 端口误当作 HTTP 使用
+		if err := ckconn.Ping(); err == nil {
+			if c.MaxIdleConns > 0 {
+				ckconn.SetMaxIdleConns(c.MaxIdleConns)
+			}
+			if c.MaxOpenConns > 0 {
+				ckconn.SetMaxOpenConns(c.MaxOpenConns)
+			}
+			if c.ConnMaxLifetime > 0 {
+				ckconn.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Second)
+			}
+			c.ClientByHTTP = ckconn
+			return nil
+		} else {
+			logger.Debugf("clickhouse http ping failed for %s, fallback to native: %v", addr, err)
+			_ = ckconn.Close()
+		}
+	}
+
+	// 作为最后回退，尝试 native 连接
+	host := strings.TrimPrefix(strings.TrimPrefix(addr, "http://"), "https://")
 	dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
-	if c.SkipSSL {
-		dsn = dsn + "&secure=true&skip_verify=true"
+	// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
+	if c.SecureConnection {
+		dsn = dsn + "&secure=true"
+		if c.SkipSSLVerify {
+			dsn = dsn + "&skip_verify=true"
+		}
 	}
 	db, err := gorm.Open(
 		ckDriver.New(
