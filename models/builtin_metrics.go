@@ -110,12 +110,14 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
-func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string, limit, offset int) ([]*BuiltinMetric, error) {
+func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
 	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
 	var lst []*BuiltinMetric
-	err := session.Limit(limit).Offset(offset).Order("collector asc, typ asc, name asc").Find(&lst).Error
-	return lst, err
+	if err := session.Order("collector asc, typ asc, name asc").Find(&lst).Error; err != nil {
+		return nil, err
+	}
+	return lst, nil
 }
 
 func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
