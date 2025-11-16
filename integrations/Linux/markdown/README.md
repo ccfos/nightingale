@@ -1,6 +1,6 @@
 # Linux
 
-Linux 类别下，包含多个内置插件，比如 cpu、mem、net、netstat、kernel_vmstat 等，这些插件大都是默认是开启的，无需额外配置，可能有额外配置需求的插件如下。
+Linux 集成是 Nightingale 的核心基础组件之一。它通过 Categraf 采集器，自动收集 Linux 操作系统的各项关键指标，如 CPU、内存、磁盘、网络、系统负载等，帮助您快速搭建主机监控能力。Linux 类别下，包含多个内置插件，比如 cpu、mem、net、netstat、kernel_vmstat 等，这些插件大都是默认是开启的，无需额外配置，可能有额外配置需求的插件如下。
 
 ## cpu
 
@@ -15,13 +15,13 @@ collect_per_cpu = true
 统计网络连接数，默认配置如下，可根据实际情况调整。
 
 ```ini
-# 默认开启了 smmary 统计，类似 ss -s 命令的输出
+# 默认开启了 summary 统计，类似 ss -s 命令的输出
 disable_summary_stats = false
 # 默认关闭了所有连接的详细统计，在连接数较多的机器上统计此数据会影响性能
 disable_connection_stats = true
 # 读取 /proc/net/netstat 的内容，默认关闭了，可以开启，这部分不影响性能
-tcp_ext = false
-ip_ext = false
+tcp_ext = false: 是否采集 /proc/net/snmp 中 TCP 相关的详细指标（如 TcpExtListenOverflows 等）。
+ip_ext = false: 是否采集 /proc/net/snmp 中 IP 相关的详细指标（如 IpExtInOctets 等）。
 ```
 
 ## disk
@@ -59,3 +59,19 @@ nr_alloc_batch = 0
 ## ntp
 
 监控机器时间偏移量，只需要给出 ntp 服务端地址，Categraf 就会周期性去请求，对比本机时间，得到偏移量，监控指标是 ntp_offset_ms 顾名思义，单位是毫秒，一般这个值不能超过 1000
+
+## 仪表盘与告警
+
+本集成默认内置了丰富的仪表盘和告警规则，帮助您快速实现 Linux 监控告警。
+
+### 内置仪表盘
+
+* `Linux Host Overview by Categraf`：提供核心指标的概览视图。
+* `Linux Host Detail by Categraf`：提供更详细的主机性能指标。
+
+### 内置告警规则
+
+本集成提供了两套告警规则，您可按需导入：
+
+* `linux_by_categraf.json`：包含磁盘、内存、网络丢包等基础告警。
+* `CommonAlertingRules-Categraf.json`：包含一套更丰富、更通用的主机告警规则（推荐）。
