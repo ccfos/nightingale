@@ -190,7 +190,7 @@
                     },
                     {
                         "expr": "sqlserver_performance_value{counter=\"Total Server Memory (KB)\",serverName=\"$instance\"}-sqlserver_performance_value{counter=\"Used memory (KB)\",serverName=\"$instance\"}",
-                        "legend": "RAM availbable",
+                        "legend": "RAM available",
                         "maxDataPoints": 240,
                         "refId": "B"
                     },
