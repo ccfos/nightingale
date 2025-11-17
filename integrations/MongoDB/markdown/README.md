@@ -87,6 +87,3 @@ mongo -h xxx -u xxx -p xxx --authenticationDatabase admin
 > db.createUser({user:"categraf",pwd:"categraf",roles: [{role:"read",db:"local"},{"role":"clusterMonitor","db":"admin"}]})
 ```
 
-## 监控大盘和告警规则
-
-夜莺内置了 MongoDB 的告警规则和监控大盘，克隆到自己的业务组使用即可。虽然文件后缀是 `_exporter` 也可以使用，因为 categraf 这个插件是基于 mongodb-exporter 封装的。

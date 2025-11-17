@@ -29,7 +29,3 @@
 # The value `AUTO` will automatically detect the fields to query.
 query_field_names = "AUTO"
 ```
-
-## TODO
-
-GPU 卡已经关注哪些监控指标，缺少监控大盘JSON和告警规则JSON，欢迎大家 PR
