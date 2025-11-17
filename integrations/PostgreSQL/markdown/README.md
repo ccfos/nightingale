@@ -52,7 +52,7 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 # prepared_statements = true
 #
 # [[instances.metrics]]
-# mesurement = "sessions"
+# measurement = "sessions"
 # label_fields = [ "status", "type" ]
 # metric_fields = [ "value" ]
 # timeout = "3s"

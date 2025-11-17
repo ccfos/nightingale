@@ -120,7 +120,7 @@ Url = "http://127.0.0.1:9090/api/v1/write"
 - 补充和完善文档 => [n9e.github.io](https://n9e.github.io/)
 - 分享您在使用夜莺监控过程中的最佳实践和经验心得 => [文章分享](https://flashcat.cloud/docs/content/flashcat-monitor/nightingale/share/)
 - 提交产品建议 =》 [github issue](https://github.com/ccfos/nightingale/issues/new?assignees=&labels=kind%2Ffeature&template=enhancement.md)
-- 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/didi/nightingale/pulls)
+- 提交代码，让夜莺监控更快、更稳、更好用 => [github pull request](https://github.com/ccfos/nightingale/pulls)
 
 **尊重、认可和记录每一位贡献者的工作**是夜莺开源社区的第一指导原则，我们提倡**高效的提问**，这既是对开发者时间的尊重，也是对整个社区知识沉淀的贡献：
 - 提问之前请先查阅 [FAQ](https://www.gitlink.org.cn/ccfos/nightingale/wiki/faq) 
@@ -140,7 +140,7 @@ Url = "http://127.0.0.1:9090/api/v1/write"
 </a>
 
 ## License
-[Apache License V2.0](https://github.com/didi/nightingale/blob/main/LICENSE)
+[Apache License V2.0](https://github.com/ccfos/nightingale/blob/main/LICENSE)
 
 ## 加入交流群
 

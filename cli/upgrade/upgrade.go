@@ -37,7 +37,7 @@ func Upgrade(configFile string) error {
 			}
 		}
 
-		authJosn := models.Auth{
+		authJson := models.Auth{
 			BasicAuthUser:     cluster.BasicAuthUser,
 			BasicAuthPassword: cluster.BasicAuthPass,
 		}
@@ -53,18 +53,18 @@ func Upgrade(configFile string) error {
 			Headers:             header,
 		}
 
-		datasrouce := models.Datasource{
+		datasource := models.Datasource{
 			PluginId:       1,
 			PluginType:     "prometheus",
 			PluginTypeName: "Prometheus Like",
 			Name:           cluster.Name,
 			HTTPJson:       httpJson,
-			AuthJson:       authJosn,
+			AuthJson:       authJson,
 			ClusterName:    "default",
 			Status:         "enabled",
 		}
 
-		err = datasrouce.Add(ctx)
+		err = datasource.Add(ctx)
 		if err != nil {
 			logger.Errorf("add datasource %s error: %v", cluster.Name, err)
 		}

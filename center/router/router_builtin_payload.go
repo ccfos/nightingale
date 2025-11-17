@@ -19,6 +19,7 @@ type Board struct {
 	Tags    string      `json:"tags"`
 	Configs interface{} `json:"configs"`
 	UUID    int64       `json:"uuid"`
+	Note    string      `json:"note"`
 }
 
 func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
@@ -129,6 +130,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 						Name:        dashboard.Name,
 						Tags:        dashboard.Tags,
 						UUID:        dashboard.UUID,
+						Note:        dashboard.Note,
 						Content:     string(contentBytes),
 						CreatedBy:   username,
 						UpdatedBy:   username,
@@ -164,6 +166,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 				Name:        dashboard.Name,
 				Tags:        dashboard.Tags,
 				UUID:        dashboard.UUID,
+				Note:        dashboard.Note,
 				Content:     string(contentBytes),
 				CreatedBy:   username,
 				UpdatedBy:   username,
@@ -275,6 +278,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 
 		req.Name = dashboard.Name
 		req.Tags = dashboard.Tags
+		req.Note = dashboard.Note
 	} else if req.Type == "collect" {
 		c := make(map[string]interface{})
 		if _, err := toml.Decode(req.Content, &c); err != nil {

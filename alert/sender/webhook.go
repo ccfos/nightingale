@@ -37,7 +37,7 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 
 	req, err := http.NewRequest("POST", conf.Url, bf)
 	if err != nil {
-		logger.Warningf("%s alertingWebhook failed to new reques event:%s err:%v", channel, string(bs), err)
+		logger.Warningf("%s alertingWebhook failed to new request event:%s err:%v", channel, string(bs), err)
 		return true, "", err
 	}
 

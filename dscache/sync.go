@@ -32,7 +32,7 @@ type ListInput struct {
 	Page       int    `json:"p"`
 	Limit      int    `json:"limit"`
 	Category   string `json:"category"`
-	PluginType string `json:"plugin_type"` // promethues
+	PluginType string `json:"plugin_type"` // prometheus
 	Status     string `json:"status"`
 }
 

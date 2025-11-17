@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -117,7 +118,8 @@ func (p *PostgreSQL) NewConn(ctx context.Context, database string) (*gorm.DB, er
 	}()
 
 	// Simplified connection logic for PostgreSQL
-	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable&TimeZone=Asia/Shanghai", p.Shard.User, p.Shard.Password, p.Shard.Addr, database)
+	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable&TimeZone=Asia/Shanghai", url.QueryEscape(p.Shard.User), url.QueryEscape(p.Shard.Password), p.Shard.Addr, database)
+
 	db, err = sqlbase.NewDB(
 		ctx,
 		postgres.Open(dsn),

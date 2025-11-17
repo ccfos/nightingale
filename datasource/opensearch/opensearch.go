@@ -369,7 +369,7 @@ func (os *OpenSearch) QueryLog(ctx context.Context, queryParam interface{}) ([]i
 	return eslike.QueryLog(ctx, queryParam, os.Timeout, os.Version, 0, search)
 }
 
-func (os *OpenSearch) QueryFieldValue(indexs []string, field string, query string) ([]string, error) {
+func (os *OpenSearch) QueryFieldValue(indexes []string, field string, query string) ([]string, error) {
 	var values []string
 	source := elastic.NewSearchSource().
 		Size(0)
@@ -379,7 +379,7 @@ func (os *OpenSearch) QueryFieldValue(indexs []string, field string, query strin
 	}
 	source = source.Aggregation("distinct", elastic.NewTermsAggregation().Field(field).Size(10000))
 
-	result, err := search(context.Background(), indexs, source, 0, os.Client)
+	result, err := search(context.Background(), indexes, source, 0, os.Client)
 	if err != nil {
 		return values, err
 	}

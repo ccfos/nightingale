@@ -41,12 +41,13 @@ const (
 	LarkCard          = "larkcard"
 	Phone             = "phone"
 
-	DingtalkKey = "dingtalk_robot_token"
-	WecomKey    = "wecom_robot_token"
-	FeishuKey   = "feishu_robot_token"
-	MmKey       = "mm_webhook_url"
-	TelegramKey = "telegram_robot_token"
-	LarkKey     = "lark_robot_token"
+	DingtalkKey  = "dingtalk_robot_token"
+	WecomKey     = "wecom_robot_token"
+	FeishuKey    = "feishu_robot_token"
+	MmKey        = "mm_webhook_url"
+	TelegramKey  = "telegram_robot_token"
+	LarkKey      = "lark_robot_token"
+	PagerDutyKey = "pagerduty_key"
 
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"
@@ -405,6 +406,18 @@ func InitRoot(ctx *ctx.Context) bool {
 	if len(user.Password) > 31 {
 		// already done before
 		return false
+	}
+
+	// 查询用户个数
+	count, err := Count(DB(ctx).Model(&User{}))
+	if err != nil {
+		fmt.Println("failed to count user:", err)
+		os.Exit(1)
+	}
+
+	if count == 1 {
+		// 说明数据库只有一个 root 用户，并且 root 用户密码没有加密，需要初始化 salt
+		InitSalt(ctx)
 	}
 
 	newPass, err := CryptoPass(ctx, user.Password)

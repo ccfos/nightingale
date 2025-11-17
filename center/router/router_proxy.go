@@ -278,11 +278,11 @@ func (rt *Router) deleteDatasourceSeries(c *gin.Context) {
 	}
 
 	timeout := time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond
-	matchQuerys := make([]string, 0)
+	matchQueries := make([]string, 0)
 	for _, match := range ddsf.Match {
-		matchQuerys = append(matchQuerys, fmt.Sprintf("match[]=%s", match))
+		matchQueries = append(matchQueries, fmt.Sprintf("match[]=%s", match))
 	}
-	matchQuery := strings.Join(matchQuerys, "&")
+	matchQuery := strings.Join(matchQueries, "&")
 
 	switch datasourceType {
 	case DatasourceTypePrometheus:

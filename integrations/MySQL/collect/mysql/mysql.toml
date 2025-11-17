@@ -2,7 +2,7 @@
 # interval = 15
 
 # [[queries]]
-# mesurement = "users"
+# measurement = "users"
 # metric_fields = [ "total" ]
 # label_fields = [ "service" ]
 # timeout = "3s"
@@ -47,7 +47,7 @@
 # insecure_skip_verify = true
 
 #[[instances.queries]]
-# mesurement = "lock_wait"
+# measurement = "lock_wait"
 # metric_fields = [ "total" ]
 # timeout = "3s"
 # request = '''
@@ -55,7 +55,7 @@
 #'''
 
 # [[instances.queries]]
-# mesurement = "users"
+# measurement = "users"
 # metric_fields = [ "total" ]
 # label_fields = [ "service" ]
 # # field_to_append = ""

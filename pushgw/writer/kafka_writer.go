@@ -47,7 +47,7 @@ func (w KafkaWriterType) Write(key string, items []prompb.TimeSeries, headers ..
 			break
 		}
 
-		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
+		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("send to kafka got error: %v in %d times, broker: %v, topic: %s",
 			err, i, w.Opts.Brokers, w.Opts.Topic)
 

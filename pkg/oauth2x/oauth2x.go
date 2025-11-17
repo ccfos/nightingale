@@ -176,7 +176,7 @@ func deleteRedirect(redis storage.Redis, ctx context.Context, state string) erro
 func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state string) (*CallbackOutput, error) {
 	ret, err := s.exchangeUser(code)
 	if err != nil {
-		return nil, fmt.Errorf("ilegal user:%v", err)
+		return nil, fmt.Errorf("illegal user:%v", err)
 	}
 	ret.Redirect, err = fetchRedirect(redis, ctx, state)
 	if err != nil {

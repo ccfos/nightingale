@@ -272,8 +272,6 @@ CREATE TABLE `source_token` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-/* Add translation column for builtin metrics */
-ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric' AFTER `lang`;
 
 /* v8.0.0-beta.12 2025-06-03 */
 ALTER TABLE `alert_his_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify rule ids';
@@ -283,3 +281,15 @@ ALTER TABLE `alert_cur_event` ADD COLUMN `notify_rule_ids` text COMMENT 'notify 
 -- 删除 builtin_metrics 表的 idx_collector_typ_name 唯一索引
 DROP INDEX IF EXISTS `idx_collector_typ_name` ON `builtin_metrics`;
 
+/* v8.0.0 2025-07-03 */
+ALTER TABLE `builtin_metrics` ADD COLUMN `translation` TEXT COMMENT 'translation of metric' AFTER `lang`;
+
+/* v8.4.0 2025-10-15 */
+ALTER TABLE `notify_rule` ADD COLUMN `extra_config` text COMMENT 'extra config';
+
+/* v8.4.1 2025-11-10 */
+ALTER TABLE `alert_rule` ADD COLUMN `pipeline_configs` text COMMENT 'pipeline configs';
+
+/* v8.4.2 2025-11-13 */
+ALTER TABLE `board` ADD COLUMN `note` varchar(1024) not null default '' comment 'note';
+ALTER TABLE `builtin_payloads` ADD COLUMN `note` varchar(1024) not null default '' comment 'note of payload';

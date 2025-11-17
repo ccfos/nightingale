@@ -199,7 +199,7 @@ func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 
 		if num == 100 {
 			vals := storage.MGet(context.Background(), tc.redis, keys)
 			for _, value := range vals {
-				var hostUpdateTime models.HostUpdteTime
+				var hostUpdateTime models.HostUpdateTime
 				if value == nil {
 					continue
 				}
@@ -218,7 +218,7 @@ func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 
 
 	vals := storage.MGet(context.Background(), tc.redis, keys)
 	for _, value := range vals {
-		var hostUpdateTime models.HostUpdteTime
+		var hostUpdateTime models.HostUpdateTime
 		if value == nil {
 			continue
 		}

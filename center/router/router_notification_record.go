@@ -33,7 +33,7 @@ type Record struct {
 
 // notificationRecordAdd
 func (rt *Router) notificationRecordAdd(c *gin.Context) {
-	var req []*models.NotificaitonRecord
+	var req []*models.NotificationRecord
 	ginx.BindJSON(c, &req)
 	err := sender.PushNotifyRecords(req)
 	ginx.Dangerous(err, 429)
@@ -43,14 +43,14 @@ func (rt *Router) notificationRecordAdd(c *gin.Context) {
 
 func (rt *Router) notificationRecordList(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
-	lst, err := models.NotificaitonRecordsGetByEventId(rt.Ctx, eid)
+	lst, err := models.NotificationRecordsGetByEventId(rt.Ctx, eid)
 	ginx.Dangerous(err)
 
 	response := buildNotificationResponse(rt.Ctx, lst)
 	ginx.NewRender(c).Data(response, nil)
 }
 
-func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificaitonRecord) NotificationResponse {
+func buildNotificationResponse(ctx *ctx.Context, nl []*models.NotificationRecord) NotificationResponse {
 	response := NotificationResponse{
 		SubRules: []SubRule{},
 		Notifies: make(map[string][]Record),

@@ -68,10 +68,10 @@ type RelationKey struct {
 type QueryParam struct {
 	Cate         string        `json:"cate"`
 	DatasourceId int64         `json:"datasource_id"`
-	Querys       []interface{} `json:"query"`
+	Queries       []interface{} `json:"query"`
 }
 
 type Series struct {
-	SeriesStore map[uint64]DataResp            `josn:"store"`
+	SeriesStore map[uint64]DataResp            `json:"store"`
 	SeriesIndex map[string]map[uint64]struct{} `json:"index"`
 }

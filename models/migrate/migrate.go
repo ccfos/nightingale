@@ -66,7 +66,7 @@ func MigrateTables(db *gorm.DB) error {
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
 		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
-		&models.MetricFilter{}, &models.NotificaitonRecord{}, &models.TargetBusiGroup{},
+		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{}}
 
@@ -238,20 +238,21 @@ type Configs struct {
 	External  int    `gorm:"column:external;type:int;default:0;comment:0\\:built-in 1\\:external"`
 	Encrypted int    `gorm:"column:encrypted;type:int;default:0;comment:0\\:plaintext 1\\:ciphertext"`
 	CreateAt  int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	CreateBy  string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
 	UpdateAt  int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy  string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }
 
 type NotifyTpl struct {
 	CreateAt int64  `gorm:"column:create_at;type:int;default:0;comment:create_at"`
-	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:cerate_by"`
+	CreateBy string `gorm:"column:create_by;type:varchar(64);default:'';comment:create_by"`
 	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }
 
 type Board struct {
-	PublicCate int `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
+	PublicCate int    `gorm:"column:public_cate;int;not null;default:0;comment:0 anonymous 1 login 2 busi"`
+	Note       string `gorm:"column:note;type:varchar(1024);not null;default:'';comment:note"`
 }
 
 type BoardBusigroup struct {
@@ -260,7 +261,7 @@ type BoardBusigroup struct {
 }
 
 type Users struct {
-	Belong         string `gorm:"column:belong;varchar(16);default:'';comment:belong"`
+	Belong         string `gorm:"column:belong;type:varchar(16);default:'';comment:belong"`
 	LastActiveTime int64  `gorm:"column:last_active_time;type:int;default:0;comment:last_active_time"`
 	Phone          string `gorm:"column:phone;type:varchar(1024);not null;default:''"`
 }
@@ -270,8 +271,9 @@ type SsoConfig struct {
 }
 
 type BuiltinPayloads struct {
-	UUID        int64 `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
-	ComponentID int64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;not null;default:0;comment:'component_id of payload'"`
+	UUID        int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
+	ComponentID int64  `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;not null;default:0;comment:'component_id of payload'"`
+	Note        string `json:"note" gorm:"type:varchar(1024);not null;default:'';comment:'note of payload'"`
 }
 
 type TaskHostDoing struct {

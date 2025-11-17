@@ -112,7 +112,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 	var wg sync.WaitGroup
 	var errs []error
 
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
 			return nil, fmt.Errorf("forbidden")
 		}
@@ -127,7 +127,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 		go func(query interface{}) {
 			defer wg.Done()
 
-			datas, err := plug.QueryData(ctx.Request.Context(), query)
+			data, err := plug.QueryData(ctx.Request.Context(), query)
 			if err != nil {
 				logger.Warningf("query data error: req:%+v err:%v", query, err)
 				mu.Lock()
@@ -136,9 +136,9 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 				return
 			}
 
-			logger.Debugf("query data: req:%+v resp:%+v", query, datas)
+			logger.Debugf("query data: req:%+v resp:%+v", query, data)
 			mu.Lock()
-			resp = append(resp, datas...)
+			resp = append(resp, data...)
 			mu.Unlock()
 		}(q)
 	}
@@ -183,7 +183,7 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 	var wg sync.WaitGroup
 	var errs []error
 
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
 			return LogResp{}, fmt.Errorf("forbidden")
 		}
@@ -242,7 +242,7 @@ func (rt *Router) QueryLog(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	var resp []interface{}
-	for _, q := range f.Querys {
+	for _, q := range f.Queries {
 		if !rt.Center.AnonymousAccess.PromQuerier && !CheckDsPerm(c, f.DatasourceId, f.Cate, q) {
 			ginx.Bomb(200, "forbidden")
 		}

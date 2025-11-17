@@ -17,6 +17,7 @@ type boardForm struct {
 	Name       string  `json:"name"`
 	Ident      string  `json:"ident"`
 	Tags       string  `json:"tags"`
+	Note       string  `json:"note"`
 	Configs    string  `json:"configs"`
 	Public     int     `json:"public"`
 	PublicCate int     `json:"public_cate"`
@@ -34,6 +35,7 @@ func (rt *Router) boardAdd(c *gin.Context) {
 		Name:     f.Name,
 		Ident:    f.Ident,
 		Tags:     f.Tags,
+		Note:     f.Note,
 		Configs:  f.Configs,
 		CreateBy: me.Username,
 		UpdateBy: me.Username,
@@ -115,6 +117,10 @@ func (rt *Router) boardPureGet(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "No such dashboard")
 	}
 
+	// 清除创建者和更新者信息
+	board.CreateBy = ""
+	board.UpdateBy = ""
+
 	ginx.NewRender(c).Data(board, nil)
 }
 
@@ -180,10 +186,11 @@ func (rt *Router) boardPut(c *gin.Context) {
 	bo.Name = f.Name
 	bo.Ident = f.Ident
 	bo.Tags = f.Tags
+	bo.Note = f.Note
 	bo.UpdateBy = me.Username
 	bo.UpdateAt = time.Now().Unix()
 
-	err = bo.Update(rt.Ctx, "name", "ident", "tags", "update_by", "update_at")
+	err = bo.Update(rt.Ctx, "name", "ident", "tags", "note", "update_by", "update_at")
 	ginx.NewRender(c).Data(bo, err)
 }
 

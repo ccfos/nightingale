@@ -73,6 +73,7 @@ type RequestConfig struct {
 	SMTPRequestConfig      *SMTPRequestConfig      `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
 	ScriptRequestConfig    *ScriptRequestConfig    `json:"script_request_config,omitempty" gorm:"serializer:json"`
 	FlashDutyRequestConfig *FlashDutyRequestConfig `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
+	PagerDutyRequestConfig *PagerDutyRequestConfig `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -96,6 +97,15 @@ type FlashDutyRequestConfig struct {
 	Timeout        int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes     int    `json:"retry_times"` // 重试次数
 	RetrySleep     int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+// PagerDutyRequestConfig PagerDuty 类型的参数配置
+type PagerDutyRequestConfig struct {
+	Proxy      string `json:"proxy"`
+	ApiKey     string `json:"api_key"`     // PagerDuty 账户或用户的 API Key，不是集成的 Integration Key (routing key)
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes int    `json:"retry_times"` // 重试次数
+	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // ParamItem 自定义参数项
@@ -496,6 +506,164 @@ func (ncc *NotifyChannelConfig) SendFlashDuty(events []*AlertCurEvent, flashDuty
 	return lastErrorMessage, errors.New("failed to send request")
 }
 
+func (ncc *NotifyChannelConfig) SendPagerDuty(events []*AlertCurEvent, routingKey, siteUrl string, client *http.Client) (string, error) {
+	if client == nil {
+		return "", fmt.Errorf("http client not found")
+	}
+	if ncc.RequestConfig == nil || ncc.RequestConfig.PagerDutyRequestConfig == nil {
+		return "", fmt.Errorf("pagerduty request config not found")
+	}
+
+	retrySleep := time.Second
+	if ncc.RequestConfig.PagerDutyRequestConfig.RetrySleep > 0 {
+		retrySleep = time.Duration(ncc.RequestConfig.PagerDutyRequestConfig.RetrySleep) * time.Millisecond
+	}
+
+	retryTimes := 3
+	if ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes > 0 {
+		retryTimes = ncc.RequestConfig.PagerDutyRequestConfig.RetryTimes
+	}
+
+	endpoint := "https://events.pagerduty.com/v2/enqueue"
+	var failedMsgs []string
+	var responses []string
+
+	for _, event := range events {
+		action := "trigger"
+		if event.IsRecovered {
+			action = "resolve"
+		}
+
+		severity := "critical"
+		switch event.Severity {
+		case 2:
+			severity = "error"
+		case 3:
+			severity = "warning"
+		}
+
+		jsonBody := map[string]interface{}{
+			"routing_key":  routingKey,
+			"event_action": action,
+			"dedup_key":    event.Hash,
+			"payload": map[string]interface{}{
+				"summary":   event.RuleName,
+				"source":    event.Cluster,
+				"severity":  severity,
+				"group":     event.GroupName,
+				"component": event.Target,
+				"timestamp": time.Unix(event.TriggerTime, 0).Format(time.RFC3339),
+				"custom_details": map[string]interface{}{
+					"tags":               event.TagsJSON,
+					"annotations":        event.AnnotationsJSON,
+					"cluster":            event.Cluster,
+					"rule_id":            event.RuleId,
+					"rule_note":          event.RuleNote,
+					"rule_prod":          event.RuleProd,
+					"prom_ql":            event.PromQl,
+					"target_ident":       event.TargetIdent,
+					"target_note":        event.TargetNote,
+					"datasource_id":      event.DatasourceId,
+					"first_trigger_time": time.Unix(event.FirstTriggerTime, 0).Format(time.RFC3339),
+					"prom_for_duration":  event.PromForDuration,
+					"runbook_url":        event.RunbookUrl,
+					"notify_cur_number":  event.NotifyCurNumber,
+					"group_id":           event.GroupId,
+					"cate":               event.Cate,
+				},
+			},
+			"links": []map[string]string{
+				{"href": fmt.Sprintf("%s/alert-his-events/%d", siteUrl, event.Id), "text": "Event Detail"},
+				{"href": fmt.Sprintf("%s/alert-mutes/add?__event_id=%d", siteUrl, event.Id), "text": "Mute this alert"},
+			},
+		}
+
+		body, err := json.Marshal(jsonBody)
+		if err != nil {
+			logger.Errorf("send_pagerduty: failed to marshal request body. error=%v", err)
+			failedMsgs = append(failedMsgs, fmt.Sprintf("event %d marshal error: %v", event.Id, err))
+			// 记录一条空响应占位，方便上层区分事件
+			responses = append(responses, fmt.Sprintf("event %d: marshal error: %v", event.Id, err))
+			continue
+		}
+
+		var lastErrorMessage string
+		var lastRespSummary string
+		attempts := retryTimes + 1
+		for i := 0; i < attempts; i++ {
+			req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+			if err != nil {
+				logger.Errorf("send_pagerduty: failed to create request. url=%s request_body=%s error=%v", endpoint, string(body), err)
+				lastErrorMessage = err.Error()
+				if i < attempts-1 {
+					time.Sleep(retrySleep)
+					continue
+				}
+				break
+			}
+			req.Header.Add("Content-Type", "application/json")
+
+			resp, err := client.Do(req)
+			if err != nil {
+				logger.Errorf("send_pagerduty: http_call=fail url=%s request_body=%s error=%v times=%d", endpoint, string(body), err, i+1)
+				lastErrorMessage = err.Error()
+				if i < attempts-1 {
+					time.Sleep(retrySleep)
+					continue
+				}
+				break
+			}
+
+			// 确保关闭 body
+			var resBody []byte
+			if resp.Body != nil {
+				resBody, err = io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if err != nil {
+					logger.Errorf("send_pagerduty: failed to read response. request_body=%s, error=%v", string(body), err)
+					resBody = []byte("failed to read response. error: " + err.Error())
+				}
+			} else {
+				resBody = []byte("")
+			}
+
+			respSummary := fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(resBody))
+			lastRespSummary = respSummary
+
+			logger.Infof("send_pagerduty: http_call=succ url=%s request_body=%s response_code=%d response_body=%s times=%d", endpoint, string(body), resp.StatusCode, string(resBody), i+1)
+
+			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusAccepted {
+				// 当前事件发送成功
+				lastErrorMessage = ""
+				break
+			}
+
+			lastErrorMessage = respSummary
+			if i < attempts-1 {
+				time.Sleep(retrySleep)
+				continue
+			}
+			break
+		}
+
+		// 保存本次事件的响应摘要（无论成功或失败），便于上层记录 traceId 等信息
+		if lastRespSummary == "" && lastErrorMessage != "" {
+			lastRespSummary = lastErrorMessage
+		}
+		responses = append(responses, fmt.Sprintf("event %d: %s", event.Id, lastRespSummary))
+
+		if lastErrorMessage != "" {
+			failedMsgs = append(failedMsgs, fmt.Sprintf("event %d: %s", event.Id, lastErrorMessage))
+		}
+	}
+
+	// 将每个 event 的响应摘要返回给上层，便于记录 pagerduty 返回的 traceId 等信息
+	if len(failedMsgs) > 0 {
+		return strings.Join(responses, " | "), errors.New(strings.Join(failedMsgs, " | "))
+	}
+	return strings.Join(responses, " | "), nil
+}
+
 func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")
@@ -545,7 +713,7 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 		if err != nil {
 			logger.Errorf("send_http: failed to send http notify. url=%s request_body=%s error=%v", url, string(body), err)
 			lastErrorMessage = err.Error()
-			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Second)
+			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
 			continue
 		}
 		defer resp.Body.Close()
@@ -865,7 +1033,7 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
-	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" {
+	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" && ncc.RequestType != "pagerduty" {
 		return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
 	}
 
@@ -893,6 +1061,10 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		}
 	case "flashduty":
 		if err := ncc.ValidateFlashDutyRequestConfig(); err != nil {
+			return err
+		}
+	case "pagerduty":
+		if err := ncc.ValidatePagerDutyRequestConfig(); err != nil {
 			return err
 		}
 	}
@@ -965,6 +1137,13 @@ func (ncc *NotifyChannelConfig) ValidateScriptRequestConfig() error {
 func (ncc *NotifyChannelConfig) ValidateFlashDutyRequestConfig() error {
 	if ncc.RequestConfig.FlashDutyRequestConfig == nil {
 		return errors.New("flashduty request config cannot be nil")
+	}
+	return nil
+}
+
+func (ncc *NotifyChannelConfig) ValidatePagerDutyRequestConfig() error {
+	if ncc.RequestConfig.PagerDutyRequestConfig == nil {
+		return errors.New("pagerduty request config cannot be nil")
 	}
 	return nil
 }
@@ -1448,6 +1627,16 @@ var NotiChMap = []*NotifyChannelConfig{
 				IntegrationUrl: "flashduty integration url",
 				Timeout:        5000, // 默认5秒超时
 				RetryTimes:     3,    // 默认重试3次
+			},
+		},
+	},
+	{
+		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			PagerDutyRequestConfig: &PagerDutyRequestConfig{
+				ApiKey:     "pagerduty api key",
+				Timeout:    5000,
+				RetryTimes: 3,
 			},
 		},
 	},

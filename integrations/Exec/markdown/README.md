@@ -10,15 +10,15 @@ data_format有3个值，其用法为：
 
 influx 格式的内容规范：
 ```
-mesurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
+measurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
 ```
-- 首先mesurement，表示一个类别的监控指标，比如 connections；
-- mesurement后面是逗号，逗号后面是标签，如果没有标签，则mesurement后面不需要逗号
+- 首先measurement，表示一个类别的监控指标，比如 connections；
+- measurement后面是逗号，逗号后面是标签，如果没有标签，则measurement后面不需要逗号
 - 标签是k=v的格式，多个标签用逗号分隔，比如region=beijing,env=test
 - 标签后面是空格
 - 空格后面是属性字段，多个属性字段用逗号分隔
 - 属性字段是字段名=值的格式，在categraf里值只能是数字
-  最终，mesurement和各个属性字段名称拼接成metric名字
+  最终，measurement和各个属性字段名称拼接成metric名字
 
 ## falcon
 Open-Falcon的格式如下，举例：
@@ -99,7 +99,7 @@ commands = [
 # # interval = global.interval * interval_times
 # interval_times = 1
 
-# # mesurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
+# # measurement,labelkey1=labelval1,labelkey2=labelval2 field1=1.2,field2=2.3
 data_format = "influx"
 ```
 

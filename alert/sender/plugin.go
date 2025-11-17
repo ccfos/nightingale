@@ -35,7 +35,7 @@ func alertingCallScript(ctx *ctx.Context, stdinBytes []byte, notifyScript models
 
 	channel := "script"
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
-	fpath := ".notify_scriptt"
+	fpath := ".notify_script"
 	if config.Type == 1 {
 		fpath = config.Content
 	} else {

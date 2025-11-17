@@ -41,7 +41,7 @@ func SsoConfigLastUpdateTime(c *ctx.Context) (int64, error) {
 	return lastUpdateTime, err
 }
 
-// get sso_config coutn by name
+// get sso_config count by name
 func SsoConfigCountByName(c *ctx.Context, name string) (int64, error) {
 	var count int64
 	err := DB(c).Model(&SsoConfig{}).Where("name = ?", name).Count(&count).Error

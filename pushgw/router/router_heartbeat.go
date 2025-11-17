@@ -25,8 +25,8 @@ func (rt *Router) heartbeat(c *gin.Context) {
 		ginx.Dangerous(err)
 	}
 	api := "/v1/n9e/center/heartbeat"
-	if rt.HeartbeartApi != "" {
-		api = rt.HeartbeartApi
+	if rt.HeartbeatApi != "" {
+		api = rt.HeartbeatApi
 	}
 
 	ret, err := poster.PostByUrlsWithResp[map[string]interface{}](rt.Ctx, fmt.Sprintf("%s?gid=%s&overwrite_gids=%t", api, gid, overwriteGids), req)

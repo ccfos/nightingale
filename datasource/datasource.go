@@ -69,9 +69,9 @@ func init() {
 	}
 }
 
-type NewDatasrouceFn func(settings map[string]interface{}) (Datasource, error)
+type NewDatasourceFn func(settings map[string]interface{}) (Datasource, error)
 
-var datasourceRegister = map[string]NewDatasrouceFn{}
+var datasourceRegister = map[string]NewDatasourceFn{}
 
 type Datasource interface {
 	Init(settings map[string]interface{}) (Datasource, error) // 初始化配置

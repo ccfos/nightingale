@@ -22,7 +22,7 @@ const SYSTEM = "system"
 var BuiltinPayloadInFile *BuiltinPayloadInFileType
 
 type BuiltinPayloadInFileType struct {
-	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[componet_id]map[type]map[cate][]*models.BuiltinPayload
+	Data      map[uint64]map[string]map[string][]*models.BuiltinPayload // map[component_id]map[type]map[cate][]*models.BuiltinPayload
 	IndexData map[int64]*models.BuiltinPayload                          // map[uuid]payload
 
 	BuiltinMetrics map[string]*models.BuiltinMetric
@@ -124,13 +124,13 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 			component.ID = old.ID
 		}
 
-		// delete uuid is emtpy
+		// delete uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_payloads where uuid = 0 and type != 'collect' and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin payloads fail ", err)
 		}
 
-		// delete builtin metrics uuid is emtpy
+		// delete builtin metrics uuid is empty
 		err = models.DB(ctx).Exec("delete from builtin_metrics where uuid = 0 and (updated_by = 'system' or updated_by = '')").Error
 		if err != nil {
 			logger.Warning("delete builtin metrics fail ", err)
@@ -239,6 +239,7 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 					Cate:        "",
 					Name:        dashboard.Name,
 					Tags:        dashboard.Tags,
+					Note:        dashboard.Note,
 					Content:     string(content),
 					UUID:        dashboard.UUID,
 					ID:          dashboard.UUID,
@@ -293,6 +294,7 @@ type BuiltinBoard struct {
 	Name       string      `json:"name"`
 	Ident      string      `json:"ident"`
 	Tags       string      `json:"tags"`
+	Note       string      `json:"note"`
 	CreateAt   int64       `json:"create_at"`
 	CreateBy   string      `json:"create_by"`
 	UpdateAt   int64       `json:"update_at"`
@@ -617,7 +619,7 @@ func convertBuiltinMetricByDB(metricsInDB []*models.BuiltinMetric) map[string]*m
 		})
 
 		currentBuiltinMetric := builtinMetrics[0]
-		// User have no customed translation, so we can merge it
+		// User has no customized translation, so we can merge it
 		if len(currentBuiltinMetric.Translation) == 0 {
 			translationMap := make(map[string]models.Translation)
 			for _, bm := range builtinMetrics {
