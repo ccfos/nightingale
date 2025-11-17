@@ -53,7 +53,7 @@ type Dispatch struct {
 	alerting aconf.Alerting
 
 	Senders          map[string]sender.Sender
-	CallBacks        map[string]sender.CallBacker
+	Callbacks        map[string]sender.Callbacker
 	tpls             map[string]*template.Template
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
@@ -137,16 +137,16 @@ func (e *Dispatch) reloadTpls() error {
 	}
 
 	// domain -> Callback()
-	callbacks := map[string]sender.CallBacker{
-		models.DingtalkDomain:   sender.NewCallBacker(models.DingtalkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.WecomDomain:      sender.NewCallBacker(models.WecomDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.FeishuDomain:     sender.NewCallBacker(models.FeishuDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.TelegramDomain:   sender.NewCallBacker(models.TelegramDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.FeishuCardDomain: sender.NewCallBacker(models.FeishuCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.IbexDomain:       sender.NewCallBacker(models.IbexDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.LarkDomain:       sender.NewCallBacker(models.LarkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.DefaultDomain:    sender.NewCallBacker(models.DefaultDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
-		models.LarkCardDomain:   sender.NewCallBacker(models.LarkCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+	callbacks := map[string]sender.Callbacker{
+		models.DingtalkDomain:   sender.NewCallbacker(models.DingtalkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.WecomDomain:      sender.NewCallbacker(models.WecomDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.FeishuDomain:     sender.NewCallbacker(models.FeishuDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.TelegramDomain:   sender.NewCallbacker(models.TelegramDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.FeishuCardDomain: sender.NewCallbacker(models.FeishuCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.IbexDomain:       sender.NewCallbacker(models.IbexDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkDomain:       sender.NewCallbacker(models.LarkDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.DefaultDomain:    sender.NewCallbacker(models.DefaultDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
+		models.LarkCardDomain:   sender.NewCallbacker(models.LarkCardDomain, e.targetCache, e.userCache, e.taskTplsCache, tmpTpls),
 	}
 
 	e.RwLock.RLock()
@@ -158,7 +158,7 @@ func (e *Dispatch) reloadTpls() error {
 	e.RwLock.Lock()
 	e.tpls = tmpTpls
 	e.Senders = senders
-	e.CallBacks = callbacks
+	e.Callbacks = callbacks
 	e.RwLock.Unlock()
 	return nil
 }
@@ -749,20 +749,20 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 			continue
 		}
 
-		cbCtx := sender.BuildCallBackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
+		cbCtx := sender.BuildCallbackContext(e.ctx, urlStr, rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.alerting.WebhookBatchSend, e.Astats)
 
-		if wh, ok := whMap[cbCtx.CallBackURL]; !ogw && ok && wh.Enable {
-			logger.Debugf("SendCallbacks: webhook[%s] is in global conf.", cbCtx.CallBackURL)
+		if wh, ok := whMap[cbCtx.CallbackURL]; !ogw && ok && wh.Enable {
+			logger.Debugf("SendCallbacks: webhook[%s] is in global conf.", cbCtx.CallbackURL)
 			continue
 		}
 
 		if strings.HasPrefix(urlStr, "${ibex}") {
-			e.CallBacks[models.IbexDomain].CallBack(cbCtx)
+			e.Callbacks[models.IbexDomain].Callback(cbCtx)
 			continue
 		}
 
 		if !(strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://")) {
-			cbCtx.CallBackURL = "http://" + urlStr
+			cbCtx.CallbackURL = "http://" + urlStr
 		}
 
 		parsedURL, err := url.Parse(urlStr)
@@ -773,21 +773,21 @@ func (e *Dispatch) SendCallbacks(rule *models.AlertRule, notifyTarget *NotifyTar
 
 		// process feishu card
 		if parsedURL.Host == models.FeishuDomain && parsedURL.Query().Get("card") == "1" {
-			e.CallBacks[models.FeishuCardDomain].CallBack(cbCtx)
+			e.Callbacks[models.FeishuCardDomain].Callback(cbCtx)
 			continue
 		}
 
 		// process lark card
 		if parsedURL.Host == models.LarkDomain && parsedURL.Query().Get("card") == "1" {
-			e.CallBacks[models.LarkCardDomain].CallBack(cbCtx)
+			e.Callbacks[models.LarkCardDomain].Callback(cbCtx)
 			continue
 		}
 
-		callBacker, ok := e.CallBacks[parsedURL.Host]
+		callbacker, ok := e.Callbacks[parsedURL.Host]
 		if ok {
-			callBacker.CallBack(cbCtx)
+			callbacker.Callback(cbCtx)
 		} else {
-			e.CallBacks[models.DefaultDomain].CallBack(cbCtx)
+			e.Callbacks[models.DefaultDomain].Callback(cbCtx)
 		}
 	}
 }

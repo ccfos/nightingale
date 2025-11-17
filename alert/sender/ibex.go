@@ -19,18 +19,18 @@ import (
 )
 
 var (
-	_ CallBacker = (*IbexCallBacker)(nil)
+	_ Callbacker = (*IbexCallbacker)(nil)
 )
 
-type IbexCallBacker struct {
+type IbexCallbacker struct {
 	targetCache  *memsto.TargetCacheType
 	userCache    *memsto.UserCacheType
 	taskTplCache *memsto.TaskTplCache
 }
 
-func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
-	if len(ctx.CallBackURL) == 0 || len(ctx.Events) == 0 {
-		logger.Warningf("event_callback_ibex: url or events is empty, url: %s, events: %+v", ctx.CallBackURL, ctx.Events)
+func (c *IbexCallbacker) Callback(ctx CallbackContext) {
+	if len(ctx.CallbackURL) == 0 || len(ctx.Events) == 0 {
+		logger.Warningf("event_callback_ibex: url or events is empty, url: %s, events: %+v", ctx.CallbackURL, ctx.Events)
 		return
 	}
 
@@ -41,10 +41,10 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 		return
 	}
 
-	c.handleIbex(ctx.Ctx, ctx.CallBackURL, event)
+	c.handleIbex(ctx.Ctx, ctx.CallbackURL, event)
 }
 
-func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent) {
+func (c *IbexCallbacker) handleIbex(ctx *ctx.Context, url string, event *models.AlertCurEvent) {
 	logger.Infof("event_callback_ibex: url: %s, event: %+v", url, event)
 	if imodels.DB() == nil && ctx.IsCenter {
 		logger.Warningf("event_callback_ibex: db is nil, event: %+v", event)

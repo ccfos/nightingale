@@ -54,7 +54,7 @@ func (chr *DatasourceHashRingType) IsHit(datasourceId string, pk string, current
 	node, err := chr.GetNode(datasourceId, pk)
 	if err != nil {
 		if !errors.Is(err, consistent.ErrEmptyCircle) {
-			logger.Errorf("rule id:%s is not work, datasource id:%s failed to get node from hashring:%v", pk, datasourceId, err)
+			logger.Errorf("rule id:%s is not work, datasource id:%s failed to get node from hash ring:%v", pk, datasourceId, err)
 		}
 		return false
 	}

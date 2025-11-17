@@ -46,15 +46,15 @@ func (ms *MmSender) Send(ctx MessageContext) {
 	}, ctx.Events, models.Mm)
 }
 
-func (ms *MmSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (ms *MmSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 	message := BuildTplMessage(models.Mm, ms.tpl, ctx.Events)
 
 	SendMM(ctx.Ctx, MatterMostMessage{
 		Text:   message,
-		Tokens: []string{ctx.CallBackURL},
+		Tokens: []string{ctx.CallbackURL},
 		Stats:  ctx.Stats,
 	}, ctx.Events, "callback")
 }

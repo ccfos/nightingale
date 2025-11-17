@@ -24,19 +24,19 @@ type feishu struct {
 }
 
 var (
-	_ CallBacker = (*FeishuSender)(nil)
+	_ Callbacker = (*FeishuSender)(nil)
 )
 
 type FeishuSender struct {
 	tpl *template.Template
 }
 
-func (fs *FeishuSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (fs *FeishuSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
-	ats := ExtractAtsParams(ctx.CallBackURL)
+	ats := ExtractAtsParams(ctx.CallbackURL)
 	message := BuildTplMessage(models.Feishu, fs.tpl, ctx.Events)
 
 	if len(ats) > 0 {
@@ -54,7 +54,7 @@ func (fs *FeishuSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
+	doSendAndRecord(ctx.Ctx, ctx.CallbackURL, ctx.CallbackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 func (fs *FeishuSender) Send(ctx MessageContext) {

@@ -13,12 +13,12 @@ type LarkCardSender struct {
 	tpl *template.Template
 }
 
-func (fs *LarkCardSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (fs *LarkCardSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
-	ats := ExtractAtsParams(ctx.CallBackURL)
+	ats := ExtractAtsParams(ctx.CallbackURL)
 	message := BuildTplMessage(models.LarkCard, fs.tpl, ctx.Events)
 
 	if len(ats) > 0 {
@@ -50,13 +50,13 @@ func (fs *LarkCardSender) CallBack(ctx CallBackContext) {
 
 	// This is to be compatible with the Larkcard interface, if with query string parameters, the request will fail
 	// Remove query parameters from the URL,
-	parsedURL, err := url.Parse(ctx.CallBackURL)
+	parsedURL, err := url.Parse(ctx.CallbackURL)
 	if err != nil {
 		return
 	}
 	parsedURL.RawQuery = ""
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
+	doSendAndRecord(ctx.Ctx, ctx.CallbackURL, ctx.CallbackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 func (fs *LarkCardSender) Send(ctx MessageContext) {

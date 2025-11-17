@@ -8,15 +8,15 @@ import (
 )
 
 var (
-	_ CallBacker = (*LarkSender)(nil)
+	_ Callbacker = (*LarkSender)(nil)
 )
 
 type LarkSender struct {
 	tpl *template.Template
 }
 
-func (lk *LarkSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (lk *LarkSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
@@ -27,7 +27,7 @@ func (lk *LarkSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
+	doSendAndRecord(ctx.Ctx, ctx.CallbackURL, ctx.CallbackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 func (lk *LarkSender) Send(ctx MessageContext) {

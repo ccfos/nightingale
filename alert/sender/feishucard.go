@@ -92,12 +92,12 @@ func createFeishuCardBody() feishuCard {
 	}
 }
 
-func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (fs *FeishuCardSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
-	ats := ExtractAtsParams(ctx.CallBackURL)
+	ats := ExtractAtsParams(ctx.CallbackURL)
 	message := BuildTplMessage(models.FeishuCard, fs.tpl, ctx.Events)
 
 	if len(ats) > 0 {
@@ -129,7 +129,7 @@ func (fs *FeishuCardSender) CallBack(ctx CallBackContext) {
 
 	// This is to be compatible with the feishucard interface, if with query string parameters, the request will fail
 	// Remove query parameters from the URL,
-	parsedURL, err := url.Parse(ctx.CallBackURL)
+	parsedURL, err := url.Parse(ctx.CallbackURL)
 	if err != nil {
 		return
 	}

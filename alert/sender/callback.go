@@ -17,15 +17,15 @@ import (
 )
 
 type (
-	// CallBacker 进行回调的接口
-	CallBacker interface {
-		CallBack(ctx CallBackContext)
+	// Callbacker 进行回调的接口
+	Callbacker interface {
+		Callback(ctx CallbackContext)
 	}
 
-	// CallBackContext 回调时所需的上下文
-	CallBackContext struct {
+	// CallbackContext 回调时所需的上下文
+	CallbackContext struct {
 		Ctx         *ctx.Context
-		CallBackURL string
+		CallbackURL string
 		Users       []*models.User
 		Rule        *models.AlertRule
 		Events      []*models.AlertCurEvent
@@ -33,17 +33,17 @@ type (
 		BatchSend   bool
 	}
 
-	DefaultCallBacker struct{}
+	DefaultCallbacker struct{}
 )
 
-func BuildCallBackContext(ctx *ctx.Context, callBackURL string, rule *models.AlertRule, events []*models.AlertCurEvent,
-	uids []int64, userCache *memsto.UserCacheType, batchSend bool, stats *astats.Stats) CallBackContext {
+func BuildCallbackContext(ctx *ctx.Context, callbackURL string, rule *models.AlertRule, events []*models.AlertCurEvent,
+	uids []int64, userCache *memsto.UserCacheType, batchSend bool, stats *astats.Stats) CallbackContext {
 	users := userCache.GetByUserIds(uids)
 
-	newCallBackUrl, _ := events[0].ParseURL(callBackURL)
-	return CallBackContext{
+	newCallbackUrl, _ := events[0].ParseURL(callbackURL)
+	return CallbackContext{
 		Ctx:         ctx,
-		CallBackURL: newCallBackUrl,
+		CallbackURL: newCallbackUrl,
 		Rule:        rule,
 		Events:      events,
 		Users:       users,
@@ -70,23 +70,23 @@ func ExtractAtsParams(rawURL string) []string {
 	return strings.Split(atParam, ",")
 }
 
-func NewCallBacker(
+func NewCallbacker(
 	key string,
 	targetCache *memsto.TargetCacheType,
 	userCache *memsto.UserCacheType,
 	taskTplCache *memsto.TaskTplCache,
 	tpls map[string]*template.Template,
-) CallBacker {
+) Callbacker {
 
 	switch key {
 	case models.IbexDomain: // Distribute to Ibex
-		return &IbexCallBacker{
+		return &IbexCallbacker{
 			targetCache:  targetCache,
 			userCache:    userCache,
 			taskTplCache: taskTplCache,
 		}
 	case models.DefaultDomain: // default callback
-		return &DefaultCallBacker{}
+		return &DefaultCallbacker{}
 	case models.DingtalkDomain:
 		return &DingtalkSender{tpl: tpls[models.Dingtalk]}
 	case models.WecomDomain:
@@ -108,8 +108,8 @@ func NewCallBacker(
 	return nil
 }
 
-func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
-	if len(ctx.CallBackURL) == 0 || len(ctx.Events) == 0 {
+func (c *DefaultCallbacker) Callback(ctx CallbackContext) {
+	if len(ctx.CallbackURL) == 0 || len(ctx.Events) == 0 {
 		return
 	}
 
@@ -119,7 +119,7 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 		webhookConf := &models.Webhook{
 			Type:          models.RuleCallback,
 			Enable:        true,
-			Url:           ctx.CallBackURL,
+			Url:           ctx.CallbackURL,
 			Timeout:       5,
 			RetryCount:    3,
 			RetryInterval: 10,
@@ -130,7 +130,7 @@ func (c *DefaultCallBacker) CallBack(ctx CallBackContext) {
 		return
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, event, "callback", ctx.Stats, ctx.Events)
+	doSendAndRecord(ctx.Ctx, ctx.CallbackURL, ctx.CallbackURL, event, "callback", ctx.Stats, ctx.Events)
 }
 
 func doSendAndRecord(ctx *ctx.Context, url, token string, body interface{}, channel string,

@@ -24,7 +24,7 @@ type dingtalk struct {
 }
 
 var (
-	_ CallBacker = (*DingtalkSender)(nil)
+	_ Callbacker = (*DingtalkSender)(nil)
 )
 
 type DingtalkSender struct {
@@ -71,8 +71,8 @@ func (ds *DingtalkSender) Send(ctx MessageContext) {
 	}
 }
 
-func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (ds *DingtalkSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
@@ -83,7 +83,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		},
 	}
 
-	ats := ExtractAtsParams(ctx.CallBackURL)
+	ats := ExtractAtsParams(ctx.CallbackURL)
 	message := BuildTplMessage(models.Dingtalk, ds.tpl, ctx.Events)
 
 	if len(ats) > 0 {
@@ -97,7 +97,7 @@ func (ds *DingtalkSender) CallBack(ctx CallBackContext) {
 		body.Markdown.Text = message
 	}
 
-	doSendAndRecord(ctx.Ctx, ctx.CallBackURL, ctx.CallBackURL, body, "callback", ctx.Stats, ctx.Events)
+	doSendAndRecord(ctx.Ctx, ctx.CallbackURL, ctx.CallbackURL, body, "callback", ctx.Stats, ctx.Events)
 }
 
 // extract urls and ats from Users

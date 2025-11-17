@@ -24,22 +24,22 @@ type telegram struct {
 }
 
 var (
-	_ CallBacker = (*TelegramSender)(nil)
+	_ Callbacker = (*TelegramSender)(nil)
 )
 
 type TelegramSender struct {
 	tpl *template.Template
 }
 
-func (ts *TelegramSender) CallBack(ctx CallBackContext) {
-	if len(ctx.Events) == 0 || len(ctx.CallBackURL) == 0 {
+func (ts *TelegramSender) Callback(ctx CallbackContext) {
+	if len(ctx.Events) == 0 || len(ctx.CallbackURL) == 0 {
 		return
 	}
 
 	message := BuildTplMessage(models.Telegram, ts.tpl, ctx.Events)
 	SendTelegram(ctx.Ctx, TelegramMessage{
 		Text:   message,
-		Tokens: []string{ctx.CallBackURL},
+		Tokens: []string{ctx.CallbackURL},
 		Stats:  ctx.Stats,
 	}, ctx.Events, "callback")
 }
