@@ -224,15 +224,15 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	users := rt.UserCache.GetByUserIds(uids)
 	for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
 		flag := true
-		// ignore non-default channels
+		// Ignore non-default channels
 		switch NotifyChannels {
 		case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
 			models.Telegram, models.Email, models.FeishuCard:
-			// do nothing
+			// Do nothing
 		default:
 			continue
 		}
-		// default channels
+		// Default channels
 		for ui := range users {
 			if _, b := users[ui].ExtractToken(NotifyChannels); b {
 				flag = false

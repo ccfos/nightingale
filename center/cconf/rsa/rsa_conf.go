@@ -53,9 +53,7 @@ func InitRSAConfig(ctx *ctx.Context, rsaConfig *httpx.RSAConfig) error {
 }
 
 func initRSAKeyPairs(ctx *ctx.Context, rsaPassWord string) (password string, privateByte, publicByte []byte, err error) {
-
 	// Generate RSA keys
-
 	// Generate RSA password
 	if rsaPassWord != "" {
 		logger.Debug("Using existing RSA password")

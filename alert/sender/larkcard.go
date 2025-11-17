@@ -48,7 +48,7 @@ func (fs *LarkCardSender) CallBack(ctx CallBackContext) {
 	body.Card.Elements[0].Text.Content = message
 	body.Card.Elements[2].Elements[0].Content = SendTitle
 
-	// This is to be compatible with the Larkcard interface, if with query string parameters, the request will fail
+	// This is to be compatible with the LarkCard interface, if with query string parameters, the request will fail
 	// Remove query parameters from the URL,
 	parsedURL, err := url.Parse(ctx.CallBackURL)
 	if err != nil {

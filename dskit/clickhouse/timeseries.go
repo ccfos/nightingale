@@ -53,6 +53,6 @@ func (c *Clickhouse) QueryTimeseries(ctx context.Context, query *QueryParam) ([]
 		return nil, err
 	}
 
-	// 构造成时续数据
+	// 构造成时序数据
 	return sqlbase.FormatMetricValues(query.Keys, rows, true), nil
 }

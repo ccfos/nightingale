@@ -94,7 +94,7 @@ func dialSmtp(d *gomail.Dialer) gomail.SendCloser {
 	for {
 		select {
 		case <-mailQuit:
-			// Note that Sendcloser is not obtained below,
+			// Note that SendCloser is not obtained below,
 			// and the outgoing signal (with configuration changes) exits the current dial
 			return nil
 		default:

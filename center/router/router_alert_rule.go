@@ -215,15 +215,15 @@ func (rt *Router) alertRuleNotifyTryRun(c *gin.Context) {
 	users := rt.UserCache.GetByUserIds(uids)
 	for _, NotifyChannels := range curEvent.NotifyChannelsJSON {
 		flag := true
-		// ignore non-default channels
+		// Ignore non-default channels
 		switch NotifyChannels {
 		case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
 			models.Telegram, models.Email, models.FeishuCard:
-			// do nothing
+			// Do nothing
 		default:
 			continue
 		}
-		// default channels
+		// Default channels
 		for ui := range users {
 			if _, b := users[ui].ExtractToken(NotifyChannels); b {
 				flag = false
@@ -641,7 +641,7 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 	var f models.AlertRule //new
 	ginx.BindJSON(c, &f)
 
-	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
+	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { // Validation NotifyChannels
 		ngids := make([]int64, 0, len(f.NotifyChannelsJSON))
 		for i := range f.NotifyGroupsJSON {
 			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
@@ -653,19 +653,19 @@ func (rt *Router) alertRuleValidation(c *gin.Context) {
 			uids = append(uids, userGroups[i].UserIds...)
 		}
 		users := rt.UserCache.GetByUserIds(uids)
-		//If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
+		// If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
 		ancs := make([]string, 0, len(f.NotifyChannelsJSON)) //absent Notify Channels
 		for i := range f.NotifyChannelsJSON {
 			flag := true
-			//ignore non-default channels
+			// Ignore non-default channels
 			switch f.NotifyChannelsJSON[i] {
 			case models.Dingtalk, models.Wecom, models.Feishu, models.Mm,
 				models.Telegram, models.Email, models.FeishuCard:
-				// do nothing
+				// Do nothing
 			default:
 				continue
 			}
-			//default channels
+			// Default channels
 			for ui := range users {
 				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
 					flag = false

@@ -22,8 +22,8 @@ import (
 type Doris struct {
 	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`         // fe mysql endpoint
 	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe http endpoint
-	User            string `json:"doris.user" mapstructure:"doris.user"`         //
-	Password        string `json:"doris.password" mapstructure:"doris.password"` //
+	User            string `json:"doris.user" mapstructure:"doris.user"`
+	Password        string `json:"doris.password" mapstructure:"doris.password"`
 	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`
 	MaxIdleConns    int    `json:"doris.max_idle_conns" mapstructure:"doris.max_idle_conns"`
 	MaxOpenConns    int    `json:"doris.max_open_conns" mapstructure:"doris.max_open_conns"`

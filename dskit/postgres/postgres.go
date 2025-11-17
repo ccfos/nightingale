@@ -73,7 +73,7 @@ func NewPostgreSQLWithSettings(ctx context.Context, settings interface{}) (*Post
 // NewConn establishes a new connection to PostgreSQL
 func (p *PostgreSQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) {
 	if len(p.DB) == 0 && len(database) == 0 {
-		return nil, errors.New("empty pgsql database") // 兼容阿里实时数仓Holgres, 连接时必须指定db名字
+		return nil, errors.New("empty pgsql database") // 兼容阿里实时数仓Hologres, 连接时必须指定db名字
 	}
 
 	if p.Shard.Timeout == 0 {
