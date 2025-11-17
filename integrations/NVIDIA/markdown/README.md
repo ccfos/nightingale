@@ -25,7 +25,7 @@
 # nvidia_smi_command = "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null SSH_USER@SSH_HOST nvidia-smi"
 
 # Comma-separated list of the query fields.
-# You can find out possible fields by running `nvidia-smi --help-query-gpus`.
+# You can find out possible fields by running `nvidia-smi --help-query-gpu`.
 # The value `AUTO` will automatically detect the fields to query.
 query_field_names = "AUTO"
 ```
