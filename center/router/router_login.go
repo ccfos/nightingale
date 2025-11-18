@@ -605,6 +605,8 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 		ginx.NewRender(c).Data(ssoConfigs, nil)
 	}
 
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	dingTalkExist := false
 	for _, config := range lst {
 		var ssoReqConfig models.SsoConfig
 		ssoReqConfig.Id = config.Id
@@ -612,6 +614,7 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 		ssoReqConfig.UpdateAt = config.UpdateAt
 		switch config.Name {
 		case dingtalk.SsoTypeName:
+			dingTalkExist = true
 			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
 			ginx.Dangerous(err)
 		default:
@@ -619,6 +622,12 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 		}
 
 		ssoConfigs = append(ssoConfigs, ssoReqConfig)
+	}
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	if !dingTalkExist {
+		var ssoConfig models.SsoConfig
+		ssoConfig.Name = dingtalk.SsoTypeName
+		ssoConfigs = append(ssoConfigs, ssoConfig)
 	}
 
 	ginx.NewRender(c).Data(ssoConfigs, nil)
@@ -681,6 +690,9 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		var config dingtalk.Config
 		err := json.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
+		if rt.Sso.DingTalk == nil {
+			rt.Sso.DingTalk = dingtalk.New(config)
+		}
 		rt.Sso.DingTalk.Reload(config)
 	}
 

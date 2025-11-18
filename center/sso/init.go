@@ -228,7 +228,9 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 		return err
 	}
 	userVariableMap := s.configCache.Get()
+	ssoConfigMap := make(map[string]models.SsoConfig, 0)
 	for _, cfg := range configs {
+		ssoConfigMap[cfg.Name] = cfg
 		cfg.Content = tplx.ReplaceTemplateUseText(cfg.Name, cfg.Content, userVariableMap)
 		switch cfg.Name {
 		case "LDAP":
@@ -269,16 +271,24 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 				continue
 			}
 			s.OAuth2.Reload(config)
-		case dingtalk.SsoTypeName:
-			var config dingtalk.Config
-			err := json.Unmarshal([]byte(cfg.Content), &config)
-			if err != nil {
-				logger.Warningf("reload %s failed: %s", dingtalk.SsoTypeName, err)
-				continue
-			}
-			s.DingTalk.Reload(config)
 
 		}
+	}
+
+	if dingTalkConfig, ok := ssoConfigMap[dingtalk.SsoTypeName]; ok {
+		var config dingtalk.Config
+		err := json.Unmarshal([]byte(dingTalkConfig.Content), &config)
+		if err != nil {
+			logger.Warningf("reload %s failed: %s", dingtalk.SsoTypeName, err)
+		} else {
+			if s.DingTalk != nil {
+				s.DingTalk.Reload(config)
+			} else {
+				s.DingTalk = dingtalk.New(config)
+			}
+		}
+	} else {
+		s.DingTalk = nil
 	}
 
 	s.LastUpdateTime = lastUpdateTime

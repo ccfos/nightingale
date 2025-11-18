@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/dingtalk/user_1_0"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
@@ -36,14 +37,15 @@ type Config struct {
 	AuthURL     string `json:"auth_url"`
 	DisplayName string `json:"display_name"`
 	// CorpId 用于指定用户需要选择的组织, scope包含corpid时该参数存在意义
-	CorpId          string `json:"corpId"`
-	ClientID        string `json:"client_id"`
-	ClientSecret    string `json:"client_secret"`
-	RedirectURL     string `json:"redirect_url"`
-	UseDingTalkName bool   `json:"use_dingtalk_name"`
-	Proxy           string `json:"proxy"`
-	// Scope 授权范围, 当前只支持两种输入, openid：授权后可获得用户userid, openid corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔。注意url编码
-	Scope           bool     `json:"scope"`
+	CorpId          string   `json:"corpId"`
+	ClientID        string   `json:"client_id"`
+	ClientSecret    string   `json:"client_secret"`
+	RedirectURL     string   `json:"redirect_url"`
+	UsernameField   string   `json:"username_field"`
+	Endpoint        string   `json:"endpoint"`
+	DingTalkAPI     string   `json:"dingtalk_api"`
+	UseMemberInfo   bool     `json:"use_member_info"` // 是否开启查询用户详情，需要qyapi_get_member权限
+	Proxy           string   `json:"proxy"`
 	SkipTlsVerify   bool     `json:"skip_tls_verify"`
 	CoverAttributes bool     `json:"cover_attributes"`
 	DefaultRoles    []string `json:"default_roles"`
@@ -78,6 +80,10 @@ func (c *Config) CreateClient() (*dingtalkoauth2_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = c.setEndpoint(config, c.Endpoint)
+	if err != nil {
+		return nil, err
+	}
 	dingTalkOAuthClient, err := dingtalkoauth2_1_0.NewClient(config)
 
 	return dingTalkOAuthClient, err
@@ -95,9 +101,56 @@ func (c *Config) ContactClient() (*contact_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	err = c.setEndpoint(config, c.Endpoint)
+	if err != nil {
+		return nil, err
+	}
 	dingTalkContactClient, err := contact_1_0.NewClient(config)
 	return dingTalkContactClient, err
+}
+
+// UserClient 用户详情
+func (c *Config) UserClient() (*user_1_0.Client, error) {
+
+	config := &openapi.Config{}
+	// 请求协议
+	config.Protocol = tea.String("https")
+	config.RegionId = tea.String("central")
+	err := c.setProxy(config)
+	if err != nil {
+		return nil, err
+	}
+	err = c.setEndpoint(config, c.DingTalkAPI)
+	if err != nil {
+		return nil, err
+	}
+	dingTalkUserClient, err := user_1_0.NewClient(config)
+	return dingTalkUserClient, err
+}
+
+func (c *Config) setEndpoint(config *openapi.Config, endpoint string) error {
+
+	if endpoint == "" {
+		return nil
+	}
+
+	endpointURL, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+
+	switch endpointURL.Scheme {
+	case "http":
+		config.SetProtocol("http")
+		config.Endpoint = tea.String(strings.Replace(endpoint, "http://", "", 1))
+	case "https":
+		config.SetProtocol("https")
+		config.Endpoint = tea.String(strings.Replace(endpoint, "https://", "", 1))
+	default:
+		config.SetProtocol("https")
+		config.Endpoint = tea.String(endpoint)
+	}
+	return nil
 }
 
 func (c *Config) setProxy(config *openapi.Config) error {
@@ -108,10 +161,9 @@ func (c *Config) setProxy(config *openapi.Config) error {
 	}
 	switch proxyURL.Scheme {
 	case "https":
-		config.HttpsProxy = tea.String(c.Proxy)
+		config.SetHttpsProxy(c.Proxy)
 	default:
-		config.HttpProxy = tea.String(c.Proxy)
-
+		config.SetHttpProxy(c.Proxy)
 	}
 	return nil
 }
@@ -143,14 +195,14 @@ func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 	}
 
 	if s.DingTalkConfig.CorpId != "" {
+		// Scope 授权范围, 当前只支持两种输入,
+		// openid：授权后可获得用户userid, openid
+		// corpid：授权后可获得用户id和登录过程中用户选择的组织id，空格分隔。注意url编码
 		v.Set("scope", "openid corpid")
+		// corpId: 必须设置scope值为openid corpid
 		v.Set("corpId", s.DingTalkConfig.CorpId)
 	} else {
-		if s.DingTalkConfig.Scope {
-			v.Set("scope", "openid corpid")
-		} else {
-			v.Set("scope", "openid")
-		}
+		v.Set("scope", "openid")
 	}
 	v.Set("prompt", "consent")
 	v.Set("state", state)
@@ -177,7 +229,23 @@ func (s *SsoClient) GetUserToken(code string) (string, error) {
 	}
 	resp, err := authClient.GetUserToken(getUserTokenRequest)
 	if err != nil {
-		return "", errors.New("dingtalk sso get token error: " + err.Error())
+		return "", errors.New("dingTalk sso get token error: " + err.Error())
+	}
+
+	tokenBody := resp.Body
+	accessToken := tea.StringValue(tokenBody.AccessToken)
+	return accessToken, nil
+}
+
+func (s *SsoClient) GetAccessToken() (string, error) {
+	authClient, err := s.DingTalkConfig.CreateClient()
+	getUserTokenRequest := &dingtalkoauth2_1_0.GetAccessTokenRequest{
+		AppKey:    tea.String(s.DingTalkConfig.ClientID),
+		AppSecret: tea.String(s.DingTalkConfig.ClientSecret),
+	}
+	resp, err := authClient.GetAccessToken(getUserTokenRequest)
+	if err != nil {
+		return "", errors.New("dingTalk sso get token error: " + err.Error())
 	}
 
 	tokenBody := resp.Body
@@ -218,24 +286,56 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 
 }
 
-func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state string) (*CallbackOutput, error) {
-
-	accessToken, err := s.GetUserToken(code)
+func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*user_1_0.GetUserResult, error) {
+	userClient, err := s.DingTalkConfig.UserClient()
 	if err != nil {
 		return nil, fmt.Errorf("CreateClient error: %s", err)
+	}
+	query := &user_1_0.GetUserQuery{AccessToken: accessToken}
+	unionReq := &user_1_0.GetUnionIdRequest{
+		UnionID: unionid,
+	}
+	uid, err := userClient.GetByUnionId(unionReq, query)
+	if err != nil {
+		return nil, err
+	}
+	if uid.Body == nil {
+		return nil, errors.Errorf("dingTalk get userid fail status code : %d", tea.Int32Value(uid.StatusCode))
+	}
+	if uid.Body.Result == nil {
+		return nil, errors.Errorf("dingTalk get userid body: %s", uid.Body.String())
+	}
+	req := &user_1_0.GetUserRequest{
+		UserID: tea.StringValue(uid.Body.Result.UserId),
+	}
+
+	userInfo, err := userClient.GetUser(req, query)
+
+	if userInfo.Body == nil {
+		return nil, errors.Errorf("dingTalk get userinfo status code: %d", tea.Int32Value(userInfo.StatusCode))
+	}
+
+	return userInfo.Body.Result, nil
+}
+
+func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, state string) (*CallbackOutput, error) {
+
+	userAccessToken, err := s.GetUserToken(code)
+	if err != nil {
+		return nil, fmt.Errorf("dingTalk GetUserToken error: %s", err)
 	}
 	// 获取用户信息
 	contactClient, err := s.DingTalkConfig.ContactClient()
 	if err != nil {
-		return nil, fmt.Errorf("CreateClient error: %s", err)
+		return nil, fmt.Errorf("dingTalk New ContactClient error: %s", err)
 	}
 
 	getUserHeaders := &contact_1_0.GetUserHeaders{}
-	getUserHeaders.XAcsDingtalkAccessToken = tea.String(accessToken)
+	getUserHeaders.XAcsDingtalkAccessToken = tea.String(userAccessToken)
 
-	user, err := contactClient.GetUserWithOptions(tea.String("me"), getUserHeaders, &util.RuntimeOptions{})
+	me, err := contactClient.GetUserWithOptions(tea.String("me"), getUserHeaders, &util.RuntimeOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("dingTalk create contactClient error: %s", err)
+		return nil, fmt.Errorf("dingTalk GetUser me error: %s", err)
 	}
 
 	redirect := ""
@@ -255,27 +355,81 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 	}
 
 	var callbackOutput CallbackOutput
-	if user.Body.Nick == nil {
-		return nil, errors.New("dingTalk user nick is nil")
+	if me.Body == nil {
+		return nil, fmt.Errorf("dingTalk GetUser failed, status code:%d", me.StatusCode)
+	}
+
+	username := tea.StringValue(me.Body.Nick)
+	nickname := tea.StringValue(me.Body.Nick)
+	phone := tea.StringValue(me.Body.Mobile)
+	email := tea.StringValue(me.Body.Email)
+
+	if s.DingTalkConfig.UseMemberInfo {
+		unionID := tea.StringValue(me.Body.UnionId)
+		accessToken, err := dingTalkAccessTokenCacheGet(redis, ctx)
+		if err != nil {
+			logger.Warningf("dingTalk get accessToken cache fail %s", err.Error())
+		}
+		if accessToken == "" {
+			accessToken, err = s.GetAccessToken()
+			if err != nil {
+				return nil, err
+			}
+			err = dingTalkAccessTokenCacheSet(redis, ctx, accessToken)
+			if err != nil {
+				logger.Warningf("dingTalk set accessToken cache fail %s", err.Error())
+			}
+		}
+
+		user, err := s.GetUserInfo(accessToken, unionID)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, fmt.Errorf("dingTalk GetUserInfo unionid %s username %s is nil", unionID, username)
+		}
+		username = tea.StringValue(user.Name)
+		nickname = tea.StringValue(user.Name)
+		phone = tea.StringValue(user.Mobile)
+		email = tea.StringValue(user.Email)
 	}
 
 	callbackOutput.Redirect = redirect
-	if s.DingTalkConfig.UseDingTalkName {
-		callbackOutput.Username = tea.ToString(*user.Body.Nick)
-	} else {
-		callbackOutput.Username = tea.ToString(*user.Body.UnionId)
-	}
 
-	callbackOutput.Nickname = tea.ToString(*user.Body.Nick)
-	if user.Body.Email != nil {
-		callbackOutput.Email = tea.ToString(*user.Body.Email)
+	switch s.DingTalkConfig.UsernameField {
+	case "name":
+		if username == "" {
+			return nil, errors.New("dingTalk user name is empty")
+		}
+		callbackOutput.Username = username
+	case "email":
+		if email == "" {
+			return nil, errors.New("dingTalk user email is empty")
+		}
+		callbackOutput.Username = email
+	default:
+		if phone == "" {
+			return nil, errors.New("dingTalk user mobile is empty")
+		}
+		callbackOutput.Username = phone
 	}
-	if user.Body.Mobile != nil {
-		callbackOutput.Phone = tea.ToString(*user.Body.Mobile)
-	}
+	callbackOutput.Nickname = nickname
+	callbackOutput.Email = email
+	callbackOutput.Phone = phone
 
 	return &callbackOutput, nil
 
+}
+
+func dingTalkAccessTokenCacheSet(redis storage.Redis, ctx context.Context, accessToken string) error {
+	// accessToken的有效期为7200秒（2小时），有效期内重复获取会返回相同结果并自动续期，过期后获取会返回新的accessToken
+	// 不能频繁调用gettoken接口，否则会受到频率拦截。
+	// 设置accessToken缓存90分钟，比官方少半小时
+	return redis.Set(ctx, wrapStateKey("dingtalk_access_token"), accessToken, time.Duration(5400*time.Second)).Err()
+}
+
+func dingTalkAccessTokenCacheGet(redis storage.Redis, ctx context.Context) (string, error) {
+	return redis.Get(ctx, wrapStateKey("dingtalk_access_token")).Result()
 }
 
 func fetchRedirect(redis storage.Redis, ctx context.Context, state string) (string, error) {
