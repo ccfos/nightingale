@@ -48,22 +48,6 @@ func ParseTagFilter(bFilters []TagFilter) ([]TagFilter, error) {
 		if bFilters[i].Func == "=~" || bFilters[i].Func == "!~" {
 			// 这里存在两个情况，一个是 string 一个是 int
 			var pattern string
-			// 对target_group做特殊处理
-			if bFilters[i].Key == "target_group" {
-				filterValueMap, ok := bFilters[i].Value.(map[string]interface{})
-				if !ok {
-					return nil, fmt.Errorf("invalid target_group filter value type: %T", bFilters[i].Value)
-				}
-				pattern, ok = filterValueMap["name"].(string)
-				if !ok {
-					return nil, fmt.Errorf("target_group filter missing name field")
-				}
-				bFilters[i].Regexp, err = regexp.Compile(pattern)
-				if err != nil {
-					return nil, err
-				}
-				continue
-			}
 			switch v := bFilters[i].Value.(type) {
 			case string:
 				pattern = v

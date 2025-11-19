@@ -14,8 +14,9 @@ func RuleKey(datasourceId, id int64) string {
 
 func MatchTags(eventTagsMap map[string]string, itags []models.TagFilter) bool {
 	for _, filter := range itags {
-		// target_group 优先特殊处理：匹配通过则继续下一个 filter，匹配失败则整组不匹配
+		// target_group in和not in优先特殊处理：匹配通过则继续下一个 filter，匹配失败则整组不匹配
 		if filter.Key == "target_group" {
+			// target 字段从 event.JsonTagsAndValue() 中获取的
 			v, ok := eventTagsMap["target"]
 			if !ok {
 				return false
@@ -73,31 +74,36 @@ func targetGroupMatch(value string, filter models.TagFilter) bool {
 	if err := json.Unmarshal([]byte(value), &valueMap); err != nil {
 		return false
 	}
-	filterValueMap, ok := filter.Value.(map[string]interface{})
-	if !ok {
-		return false
-	}
-
 	switch filter.Func {
-	case "in":
+	case "in", "not in":
+		filterValueIds, ok := filter.Value.([]interface{})
+		if !ok {
+			return false
+		}
 		groupIds, ok := valueMap["group_ids"].([]interface{})
 		if !ok {
 			return false
 		}
-
-		filterGroupIds, ok := filterValueMap["ids"].([]interface{})
-		if !ok {
-			return false
-		}
-		// 只要 groupIds 中有一个在 filterGroupIds 中出现，就返回 true
+		// in 只要 groupIds 中有一个在 filterGroupIds 中出现，就返回 true
+		// not in 则相反
+		found := false
 		for _, gid := range groupIds {
-			for _, fgid := range filterGroupIds {
+			for _, fgid := range filterValueIds {
 				if fmt.Sprintf("%v", gid) == fmt.Sprintf("%v", fgid) {
-					return true
+					found = true
+					break
 				}
 			}
+			if found {
+				break
+			}
 		}
-		return false
+		if filter.Func == "in" {
+			return found
+		}
+		// filter.Func == "not in"
+		return !found
+
 	case "=~":
 		// 正则满足一个就返回 true
 		groupNames, ok := valueMap["group_names"].([]interface{})
