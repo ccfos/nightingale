@@ -14,13 +14,20 @@ func RuleKey(datasourceId, id int64) string {
 
 func MatchTags(eventTagsMap map[string]string, itags []models.TagFilter) bool {
 	for _, filter := range itags {
-		value, has := eventTagsMap[filter.Key]
-		// 当匹配为target_group时，特殊处理
+		// target_group 优先特殊处理：匹配通过则继续下一个 filter，匹配失败则整组不匹配
 		if filter.Key == "target_group" {
-			if v, ok := eventTagsMap["target"]; ok {
-				return targetGroupMatch(v, filter)
+			v, ok := eventTagsMap["target"]
+			if !ok {
+				return false
 			}
+			if !targetGroupMatch(v, filter) {
+				return false
+			}
+			continue
 		}
+
+		// 普通标签按原逻辑处理
+		value, has := eventTagsMap[filter.Key]
 		if !has {
 			return false
 		}
