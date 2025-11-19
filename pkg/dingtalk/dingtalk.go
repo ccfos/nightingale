@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/dingtalk/user_1_0"
+	dingtalkUserClient "github.com/ccfos/nightingale/v6/pkg/dingtalk/user"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	"github.com/alibabacloud-go/dingtalk/contact_1_0"
-	dingtalkoauth2_1_0 "github.com/alibabacloud-go/dingtalk/oauth2_1_0"
+	dingtalkoauth2 "github.com/alibabacloud-go/dingtalk/oauth2_1_0"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/google/uuid"
@@ -71,7 +71,7 @@ func wrapStateKey(key string) string {
  * @return Client
  * @throws Exception
  */
-func (c *Config) CreateClient() (*dingtalkoauth2_1_0.Client, error) {
+func (c *Config) CreateClient() (*dingtalkoauth2.Client, error) {
 
 	config := &openapi.Config{}
 	config.Protocol = tea.String("https")
@@ -84,7 +84,7 @@ func (c *Config) CreateClient() (*dingtalkoauth2_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	dingTalkOAuthClient, err := dingtalkoauth2_1_0.NewClient(config)
+	dingTalkOAuthClient, err := dingtalkoauth2.NewClient(config)
 
 	return dingTalkOAuthClient, err
 
@@ -110,7 +110,7 @@ func (c *Config) ContactClient() (*contact_1_0.Client, error) {
 }
 
 // UserClient 用户详情
-func (c *Config) UserClient() (*user_1_0.Client, error) {
+func (c *Config) UserClient() (*dingtalkUserClient.Client, error) {
 
 	config := &openapi.Config{}
 	// 请求协议
@@ -124,7 +124,7 @@ func (c *Config) UserClient() (*user_1_0.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	dingTalkUserClient, err := user_1_0.NewClient(config)
+	dingTalkUserClient, err := dingtalkUserClient.NewClient(config)
 	return dingTalkUserClient, err
 }
 
@@ -220,7 +220,7 @@ func (s *SsoClient) AuthCodeURL(state string) (string, error) {
 
 func (s *SsoClient) GetUserToken(code string) (string, error) {
 	authClient, err := s.DingTalkConfig.CreateClient()
-	getUserTokenRequest := &dingtalkoauth2_1_0.GetUserTokenRequest{
+	getUserTokenRequest := &dingtalkoauth2.GetUserTokenRequest{
 		ClientId:     tea.String(s.DingTalkConfig.ClientID),
 		ClientSecret: tea.String(s.DingTalkConfig.ClientSecret),
 		Code:         tea.String(code),
@@ -239,7 +239,7 @@ func (s *SsoClient) GetUserToken(code string) (string, error) {
 
 func (s *SsoClient) GetAccessToken() (string, error) {
 	authClient, err := s.DingTalkConfig.CreateClient()
-	getUserTokenRequest := &dingtalkoauth2_1_0.GetAccessTokenRequest{
+	getUserTokenRequest := &dingtalkoauth2.GetAccessTokenRequest{
 		AppKey:    tea.String(s.DingTalkConfig.ClientID),
 		AppSecret: tea.String(s.DingTalkConfig.ClientSecret),
 	}
@@ -286,13 +286,13 @@ func (s *SsoClient) Authorize(redis storage.Redis, redirect string) (string, err
 
 }
 
-func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*user_1_0.GetUserResult, error) {
+func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*dingtalkUserClient.GetUserResult, error) {
 	userClient, err := s.DingTalkConfig.UserClient()
 	if err != nil {
 		return nil, fmt.Errorf("CreateClient error: %s", err)
 	}
-	query := &user_1_0.GetUserQuery{AccessToken: accessToken}
-	unionReq := &user_1_0.GetUnionIdRequest{
+	query := &dingtalkUserClient.GetUserQuery{AccessToken: accessToken}
+	unionReq := &dingtalkUserClient.GetUnionIdRequest{
 		UnionID: unionid,
 	}
 	uid, err := userClient.GetByUnionId(unionReq, query)
@@ -305,7 +305,7 @@ func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*user_1_0.G
 	if uid.Body.Result == nil {
 		return nil, errors.Errorf("dingTalk get userid body: %s", uid.Body.String())
 	}
-	req := &user_1_0.GetUserRequest{
+	req := &dingtalkUserClient.GetUserRequest{
 		UserID: tea.StringValue(uid.Body.Result.UserId),
 	}
 

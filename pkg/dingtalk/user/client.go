@@ -1,4 +1,4 @@
-package user_1_0
+package user
 
 import (
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
