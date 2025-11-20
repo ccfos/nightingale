@@ -1,6 +1,6 @@
 # docker
 
-forked from telegraf/inputs.docker
+forked from telegraf/inputs.docker。容器监控更推荐采用 cAdvisor 采集数据，然后用 input.prometheus 来采集 cAdvisor 的数据。Docker 插件基本可以忽略了。
 
 ## change
 

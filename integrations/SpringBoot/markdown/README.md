@@ -25,9 +25,3 @@ urls = [
      "http://192.168.11.177:8080/actuator/prometheus"
 ]
 ```
-
-## 仪表盘
-
-夜莺内置了一个 SpringBoot 仪表盘，由网友贡献，克隆到自己的业务组下即可使用，欢迎大家一起来提 PR 完善。
-
-![actuator2.0](http://download.flashcat.cloud/uPic/actuator_2.0.png)

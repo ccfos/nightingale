@@ -1,4 +1,4 @@
-forked from [telegraf/snmp](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/bind)
+forked from [telegraf/bind](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/bind)
 
 配置示例
 ```

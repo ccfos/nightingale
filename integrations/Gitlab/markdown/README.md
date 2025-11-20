@@ -68,7 +68,3 @@ urls = [
 labels = {service="gitlab", job="nginx"}
 ```
 
-## 仪表盘和告警规则
-
-夜莺内置提供了 gitlab 各个组件相关的仪表盘和告警规则，导入自己的业务组即可使用。
-

@@ -97,7 +97,3 @@ username = "root"
 password = "1234"
 labels = { instance="zbx-localhost:3306" }
 ```
-
-## 监控大盘和告警规则
-
-本 README 的同级目录，大家可以看到alerts.json 是告警规则，导入夜莺就可以使用， dashboard-by-instance.json 就是监控大盘（注意！监控大盘使用instance大盘变量，所以，上面的配置文件中要配置一个instance的标签，就是 `labels = { instance="n9e-10.2.3.4:3306" }` 部分），也是导入夜莺就可以使用。dashboard-by-ident是使用ident作为大盘变量，适用于先找到宿主机器，再找机器上面的mysql实例的场景

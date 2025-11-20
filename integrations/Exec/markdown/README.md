@@ -124,18 +124,3 @@ journalctl -f -n 500 -u categraf | grep "E\!" | grep "W\!"
 # 检查数据呈现
 如图：
 ![image](https://user-images.githubusercontent.com/12181410/220940504-04c47faa-790a-42c1-b3dd-1510ae55c217.png)
-
-# 告警规则
-```
-脚本作用不同，规则就不同，先略过。
-```
-
-# 监控图表
-```
-脚本作用不同，规则就不同，先略过。
-```
-
-# 故障自愈
-```
-脚本作用不同，规则就不同，先略过。
-```
