@@ -180,12 +180,12 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 	}
 	ret.Redirect, err = fetchRedirect(redis, ctx, state)
 	if err != nil {
-		logger.Errorf("get redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("get redirect err:%v code:%s state:%s", err, code, state)
 	}
 
 	err = deleteRedirect(redis, ctx, state)
 	if err != nil {
-		logger.Errorf("delete redirect err:%v code:%s state:%s", code, state, err)
+		logger.Errorf("delete redirect err:%v code:%s state:%s", err, code, state)
 	}
 	return ret, nil
 }

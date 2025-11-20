@@ -2,13 +2,16 @@ package router
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
+	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
@@ -17,8 +20,10 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type loginForm struct {
@@ -439,6 +444,81 @@ func (rt *Router) loginRedirectOAuth(c *gin.Context) {
 	ginx.NewRender(c).Data(redirect, err)
 }
 
+func (rt *Router) loginRedirectDingTalk(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exists := c.Get("userid")
+	if exists {
+		userid := v.(int64)
+		user, err := models.UserGetById(rt.Ctx, userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // already login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if !rt.Sso.DingTalk.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := rt.Sso.DingTalk.Authorize(rt.Redis, redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+
+	ret, err := rt.Sso.DingTalk.Callback(rt.Redis, c.Request.Context(), code, state)
+	if err != nil {
+		logger.Errorf("sso_callback DingTalk fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet(rt.Ctx, "username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if rt.Sso.DingTalk.DingTalkConfig.CoverAttributes {
+			updatedFields := user.UpdateSsoFields(dingtalk.SsoTypeName, ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
+		}
+	} else {
+		user = new(models.User)
+		user.FullSsoFields(dingtalk.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.DingTalk.DingTalkConfig.DefaultRoles)
+		// create user from dingtalk
+		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
+
+}
+
 func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
@@ -485,13 +565,14 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 }
 
 type SsoConfigOutput struct {
-	OidcDisplayName  string `json:"oidcDisplayName"`
-	CasDisplayName   string `json:"casDisplayName"`
-	OauthDisplayName string `json:"oauthDisplayName"`
+	OidcDisplayName     string `json:"oidcDisplayName"`
+	CasDisplayName      string `json:"casDisplayName"`
+	OauthDisplayName    string `json:"oauthDisplayName"`
+	DingTalkDisplayName string `json:"dingTalkDisplayName"`
 }
 
 func (rt *Router) ssoConfigNameGet(c *gin.Context) {
-	var oidcDisplayName, casDisplayName, oauthDisplayName string
+	var oidcDisplayName, casDisplayName, oauthDisplayName, dingTalkDisplayName string
 	if rt.Sso.OIDC != nil {
 		oidcDisplayName = rt.Sso.OIDC.GetDisplayName()
 	}
@@ -504,23 +585,85 @@ func (rt *Router) ssoConfigNameGet(c *gin.Context) {
 		oauthDisplayName = rt.Sso.OAuth2.GetDisplayName()
 	}
 
+	if rt.Sso.DingTalk != nil {
+		dingTalkDisplayName = rt.Sso.DingTalk.GetDisplayName()
+	}
+
 	ginx.NewRender(c).Data(SsoConfigOutput{
-		OidcDisplayName:  oidcDisplayName,
-		CasDisplayName:   casDisplayName,
-		OauthDisplayName: oauthDisplayName,
+		OidcDisplayName:     oidcDisplayName,
+		CasDisplayName:      casDisplayName,
+		OauthDisplayName:    oauthDisplayName,
+		DingTalkDisplayName: dingTalkDisplayName,
 	}, nil)
 }
 
 func (rt *Router) ssoConfigGets(c *gin.Context) {
-	ginx.NewRender(c).Data(models.SsoConfigGets(rt.Ctx))
+	var ssoConfigs []models.SsoConfig
+	lst, err := models.SsoConfigGets(rt.Ctx)
+	ginx.Dangerous(err)
+	if len(lst) == 0 {
+		ginx.NewRender(c).Data(ssoConfigs, nil)
+		return
+	}
+
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	dingTalkExist := false
+	for _, config := range lst {
+		var ssoReqConfig models.SsoConfig
+		ssoReqConfig.Id = config.Id
+		ssoReqConfig.Name = config.Name
+		ssoReqConfig.UpdateAt = config.UpdateAt
+		switch config.Name {
+		case dingtalk.SsoTypeName:
+			dingTalkExist = true
+			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
+			ginx.Dangerous(err)
+		default:
+			ssoReqConfig.Content = config.Content
+		}
+
+		ssoConfigs = append(ssoConfigs, ssoReqConfig)
+	}
+	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
+	if !dingTalkExist {
+		var ssoConfig models.SsoConfig
+		ssoConfig.Name = dingtalk.SsoTypeName
+		ssoConfigs = append(ssoConfigs, ssoConfig)
+	}
+
+	ginx.NewRender(c).Data(ssoConfigs, nil)
 }
 
 func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 	var f models.SsoConfig
-	ginx.BindJSON(c, &f)
+	var ssoConfig models.SsoConfig
+	ginx.BindJSON(c, &ssoConfig)
 
-	err := f.Update(rt.Ctx)
-	ginx.Dangerous(err)
+	switch ssoConfig.Name {
+	case dingtalk.SsoTypeName:
+		f.Name = ssoConfig.Name
+		setting, err := json.Marshal(ssoConfig.SettingJson)
+		ginx.Dangerous(err)
+		f.Content = string(setting)
+		f.UpdateAt = time.Now().Unix()
+		sso, err := f.Query(rt.Ctx)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			ginx.Dangerous(err)
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = f.Create(rt.Ctx)
+		} else {
+			f.Id = sso.Id
+			err = f.Update(rt.Ctx)
+		}
+		ginx.Dangerous(err)
+	default:
+		f.Id = ssoConfig.Id
+		f.Name = ssoConfig.Name
+		f.Content = ssoConfig.Content
+		err := f.Update(rt.Ctx)
+		ginx.Dangerous(err)
+	}
 
 	switch f.Name {
 	case "LDAP":
@@ -544,6 +687,14 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
 		rt.Sso.OAuth2.Reload(config)
+	case dingtalk.SsoTypeName:
+		var config dingtalk.Config
+		err := json.Unmarshal([]byte(f.Content), &config)
+		ginx.Dangerous(err)
+		if rt.Sso.DingTalk == nil {
+			rt.Sso.DingTalk = dingtalk.New(config)
+		}
+		rt.Sso.DingTalk.Reload(config)
 	}
 
 	ginx.NewRender(c).Message(nil)
