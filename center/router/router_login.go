@@ -495,7 +495,7 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 	} else {
 		user = new(models.User)
 		user.FullSsoFields(dingtalk.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, rt.Sso.DingTalk.DingTalkConfig.DefaultRoles)
-		// create user from oidc
+		// create user from dingtalk
 		ginx.Dangerous(user.Add(rt.Ctx))
 	}
 
@@ -603,6 +603,7 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 	ginx.Dangerous(err)
 	if len(lst) == 0 {
 		ginx.NewRender(c).Data(ssoConfigs, nil)
+		return
 	}
 
 	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
