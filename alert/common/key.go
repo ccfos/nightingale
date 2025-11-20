@@ -76,10 +76,16 @@ func targetGroupMatch(value string, filter models.TagFilter) bool {
 	}
 	switch filter.Func {
 	case "in", "not in":
+		// float64 类型的 id 切片
 		filterValueIds, ok := filter.Value.([]interface{})
 		if !ok {
 			return false
 		}
+		filterValueIdsMap := make(map[float64]struct{})
+		for _, id := range filterValueIds {
+			filterValueIdsMap[id.(float64)] = struct{}{}
+		}
+		// float64 类型的 groupIds 切片
 		groupIds, ok := valueMap["group_ids"].([]interface{})
 		if !ok {
 			return false
@@ -88,13 +94,7 @@ func targetGroupMatch(value string, filter models.TagFilter) bool {
 		// not in 则相反
 		found := false
 		for _, gid := range groupIds {
-			for _, fgid := range filterValueIds {
-				if fmt.Sprintf("%v", gid) == fmt.Sprintf("%v", fgid) {
-					found = true
-					break
-				}
-			}
-			if found {
+			if _, found = filterValueIdsMap[gid.(float64)]; found {
 				break
 			}
 		}
