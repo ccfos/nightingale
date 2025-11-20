@@ -310,6 +310,7 @@ func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*dingtalkUs
 	}
 
 	userInfo, err := userClient.GetUser(req, query)
+	logger.Debugf("dingTalk get userinfo req %s", req.UserID)
 
 	if userInfo.Body == nil {
 		return nil, errors.Errorf("dingTalk get userinfo status code: %d", tea.Int32Value(userInfo.StatusCode))
@@ -358,7 +359,7 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 	if me.Body == nil {
 		return nil, fmt.Errorf("dingTalk GetUser failed, status code:%d", me.StatusCode)
 	}
-
+	logger.Debugf("dingTalk get contact %+v", me)
 	username := tea.StringValue(me.Body.Nick)
 	nickname := tea.StringValue(me.Body.Nick)
 	phone := tea.StringValue(me.Body.Mobile)
@@ -388,6 +389,7 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 		if user == nil {
 			return nil, fmt.Errorf("dingTalk GetUserInfo unionid %s username %s is nil", unionID, username)
 		}
+		logger.Debugf("dingTalk get user info unionID %s accessToken %s result %+v", unionID, accessToken, user)
 		username = tea.StringValue(user.Name)
 		nickname = tea.StringValue(user.Name)
 		phone = tea.StringValue(user.Mobile)
