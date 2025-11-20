@@ -399,7 +399,7 @@
                     "y": 17
                 },
                 "links": [],
-                "name": "bandwith delta/sec (FILTER)",
+                "name": "bandwidth delta/sec (FILTER)",
                 "options": {
                     "legend": {
                         "displayMode": "hidden"
