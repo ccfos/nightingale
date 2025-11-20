@@ -104,18 +104,24 @@ func targetGroupMatch(value string, filter models.TagFilter) bool {
 		// filter.Func == "not in"
 		return !found
 
-	case "=~":
-		// 正则满足一个就返回 true
+	case "=~", "!~":
+		// 正则满足一个就认为 matched
 		groupNames, ok := valueMap["group_names"].([]interface{})
 		if !ok {
 			return false
 		}
+		matched := false
 		for _, gname := range groupNames {
 			if filter.Regexp.MatchString(fmt.Sprintf("%v", gname)) {
-				return true
+				matched = true
+				break
 			}
 		}
-		return false
+		if filter.Func == "=~" {
+			return matched
+		}
+		// "!~": 只要有一个匹配就返回 false，否则返回 true
+		return !matched
 	default:
 		return false
 	}
