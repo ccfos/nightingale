@@ -27,40 +27,6 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 	lst, err := me.UserGroups(rt.Ctx, limit, query)
-	if err != nil {
-		ginx.Dangerous(err)
-	}
-
-	allBusiGroups, err := models.BusiGroupGetAll(rt.Ctx)
-	if err != nil {
-		ginx.Dangerous(err)
-	}
-
-	var allMembers []models.BusiGroupMember
-	if err = models.DB(rt.Ctx).Model(&models.BusiGroupMember{}).Find(&allMembers).Error; err != nil {
-		ginx.Dangerous(err)
-	}
-
-	busiGroupMap := make(map[int64]*models.BusiGroup)
-	for _, bg := range allBusiGroups {
-		busiGroupMap[bg.Id] = bg
-	}
-
-	userGroupToBusiGroupsMap := make(map[int64][]*models.BusiGroupRes)
-	for _, member := range allMembers {
-		if bg, ok := busiGroupMap[member.BusiGroupId]; ok {
-			userGroupToBusiGroupsMap[member.UserGroupId] = append(userGroupToBusiGroupsMap[member.UserGroupId], &models.BusiGroupRes{
-				Id:   bg.Id,
-				Name: bg.Name,
-			})
-		}
-	}
-
-	for i := 0; i < len(lst); i++ {
-		if busiGroups, ok := userGroupToBusiGroupsMap[lst[i].Id]; ok {
-			lst[i].BusiGroupsRes = busiGroups
-		}
-	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
