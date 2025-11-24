@@ -209,6 +209,7 @@ CREATE TABLE board (
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
+    note varchar(1024) not null default '',
     PRIMARY KEY (id),
     UNIQUE (group_id, name)
 ) ;
@@ -219,6 +220,7 @@ COMMENT ON COLUMN board.public IS '0:false 1:true';
 COMMENT ON COLUMN board.built_in IS '0:false 1:true';
 COMMENT ON COLUMN board.hide IS '0:false 1:true';
 COMMENT ON COLUMN board.public_cate IS '0 anonymous 1 login 2 busi';
+COMMENT ON COLUMN board.note IS 'note';
 
 
 -- for dashboard new version
@@ -873,6 +875,7 @@ CREATE TABLE builtin_payloads (
   name VARCHAR(191) NOT NULL,
   tags VARCHAR(191) NOT NULL DEFAULT '',
   content TEXT NOT NULL,
+  note VARCHAR(1024) NOT NULL DEFAULT '',
   created_at BIGINT NOT NULL DEFAULT 0,
   created_by VARCHAR(191) NOT NULL DEFAULT '',
   updated_at BIGINT NOT NULL DEFAULT 0,

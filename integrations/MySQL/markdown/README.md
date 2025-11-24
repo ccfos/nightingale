@@ -61,7 +61,7 @@ gather_slave_status = true
 
 # 自定义SQL，指定SQL、返回的各个列那些是作为metric，哪些是作为label
 # [[instances.queries]]
-# mesurement = "users"
+# measurement = "users"
 # metric_fields = [ "total" ]
 # label_fields = [ "service" ]
 # # field_to_append = ""
@@ -94,27 +94,3 @@ username = "root"
 password = "1234"
 labels = { instance="zbx-localhost:3306" }
 ```
-
-## 监控大盘
-
-夜莺内置了 mysql 相关的监控大盘，内置了至少 4 个仪表盘：
-
-### mysql_by_categraf_instance
-
-这个大盘是使用 categraf 作为采集器，使用 instance 作为大盘变量，所以上例采集配置中都有一个 instance 的标签，就是和这个大盘配合使用的。
-
-### mysql_by_categraf_ident
-
-这个大盘是使用 categraf 作为采集器，使用 ident 作为大盘变量，即在查看 mysql 监控指标的时候，先通过大盘选中宿主机器，再通过机器找到 mysql 实例。
-
-### dashboard-by-aws-rds
-
-这是网友贡献的大盘，采集的 aws 的 rds 相关的数据制作的大盘。欢迎各位网友贡献大盘，这是一个很好的共建社区的方式。把您做好的大盘导出为 JSON，提 PR 到 [这个目录](https://github.com/ccfos/nightingale/tree/main/integrations/MySQL/dashboards) 下即可。
-
-### mysql_by_exporter
-
-这是使用 mysqld_exporter 作为采集器制作的大盘。
-
-## 告警规则
-
-夜莺内置了 mysql 相关的告警规则，克隆到自己的业务组即可使用。也欢迎大家一起来通过 PR 完善修改这个内置的 [告警规则](https://github.com/ccfos/nightingale/tree/main/integrations/MySQL/alerts)。

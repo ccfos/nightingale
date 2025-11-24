@@ -14,7 +14,7 @@
 # labels = { region="cloud" }
 
 # [[instances.metrics]]
-# mesurement = "sessions"
+# measurement = "sessions"
 # label_fields = [ "status", "type" ]
 # metric_fields = [ "value" ]
 # timeout = "3s"
@@ -34,7 +34,7 @@
 
 
 [[metrics]]
-mesurement = "sessions"
+measurement = "sessions"
 label_fields = [ "status", "type" ]
 metric_fields = [ "value" ]
 timeout = "3s"
@@ -43,7 +43,7 @@ SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
 '''
 
 [[metrics]]
-mesurement = "lock"
+measurement = "lock"
 metric_fields = [ "cnt" ]
 timeout = "3s"
 request = '''
@@ -54,7 +54,7 @@ SELECT COUNT(*) AS cnt
 '''
 
 [[metrics]]
-mesurement = "slow_queries"
+measurement = "slow_queries"
 metric_fields = [ "p95_time_usecs" , "p99_time_usecs"]
 timeout = "3s"
 request = '''
@@ -64,7 +64,7 @@ from v$sql where last_active_time >= sysdate - 5/(24*60)
 '''
 
 [[metrics]]
-mesurement = "resource"
+measurement = "resource"
 label_fields = [ "resource_name" ]
 metric_fields = [ "current_utilization", "limit_value" ]
 timeout = "3s"
@@ -73,7 +73,7 @@ SELECT resource_name,current_utilization,CASE WHEN TRIM(limit_value) LIKE 'UNLIM
 '''
 
 [[metrics]]
-mesurement = "asm_diskgroup"
+measurement = "asm_diskgroup"
 label_fields = [ "name" ]
 metric_fields = [ "total", "free" ]
 timeout = "3s"
@@ -83,7 +83,7 @@ SELECT name,total_mb*1024*1024 as total,free_mb*1024*1024 as free FROM v$asm_dis
 IgnoreZeroResult = true
 
 [[metrics]]
-mesurement = "activity"
+measurement = "activity"
 metric_fields = [ "value" ]
 field_to_append = "name"
 timeout = "3s"
@@ -92,7 +92,7 @@ SELECT name, value FROM v$sysstat WHERE name IN ('parse count (total)', 'execute
 '''
 
 [[metrics]]
-mesurement = "process"
+measurement = "process"
 metric_fields = [ "count" ]
 timeout = "3s"
 request = '''
@@ -100,7 +100,7 @@ SELECT COUNT(*) as count FROM v$process
 '''
 
 [[metrics]]
-mesurement = "wait_time"
+measurement = "wait_time"
 metric_fields = [ "value" ]
 label_fields = ["wait_class"]
 timeout = "3s"
@@ -115,7 +115,7 @@ WHERE
 '''
 
 [[metrics]]
-mesurement = "tablespace"
+measurement = "tablespace"
 label_fields = [ "tablespace", "type" ]
 metric_fields = [ "bytes", "max_bytes", "free" ]
 timeout = "3s"
@@ -132,7 +132,7 @@ ORDER by tablespace
 '''
 
 [[metrics]]
-mesurement = "sysmetric"
+measurement = "sysmetric"
 metric_fields = [ "value" ]
 field_to_append = "metric_name"
 timeout = "3s"
@@ -141,7 +141,7 @@ select METRIC_NAME,VALUE from v$sysmetric where group_id=2
 '''
 
 [[metrics]]
-mesurement = "applylag"
+measurement = "applylag"
 metric_fields = [ "value" ]
 timeout = "3s"
 request = '''

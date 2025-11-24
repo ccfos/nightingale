@@ -10,7 +10,7 @@ import (
 
 type BuiltinPayload struct {
 	ID          int64  `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Type        string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collet
+	Type        string `json:"type" gorm:"type:varchar(191);not null;index:idx_type,sort:asc;comment:'type of payload'"`                // Alert Dashboard Collect
 	Component   string `json:"component" gorm:"type:varchar(191);not null;index:idx_component,sort:asc;comment:'component of payload'"` //
 	ComponentID uint64 `json:"component_id" gorm:"type:bigint;index:idx_component,sort:asc;comment:'component_id of payload'"`          // ComponentID which the payload belongs to
 	Cate        string `json:"cate" gorm:"type:varchar(191);not null;comment:'category of payload'"`                                    // categraf_v1 telegraf_v1
@@ -18,6 +18,7 @@ type BuiltinPayload struct {
 	Tags        string `json:"tags" gorm:"type:varchar(191);not null;default:'';comment:'tags of payload'"`                             // {"host":"
 	Content     string `json:"content" gorm:"type:longtext;not null;comment:'content of payload'"`
 	UUID        int64  `json:"uuid" gorm:"type:bigint;not null;index:idx_uuid;comment:'uuid of payload'"`
+	Note        string `json:"note" gorm:"type:varchar(1024);not null;default:'';comment:'note of payload'"`
 	CreatedAt   int64  `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
 	CreatedBy   string `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
 	UpdatedAt   int64  `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`

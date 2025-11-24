@@ -265,7 +265,7 @@ type API interface {
 	// LabelNames returns all the unique label names present in the block in sorted order.
 	LabelNames(ctx context.Context) ([]string, Warnings, error)
 	// LabelValues performs a query for the values of the given label.
-	LabelValues(ctx context.Context, label string, matchs []string) (model.LabelValues, Warnings, error)
+	LabelValues(ctx context.Context, label string, matches []string) (model.LabelValues, Warnings, error)
 	// Query performs a query for the given time.
 	Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error)
 	// QueryRange performs a query for the given range.
@@ -675,11 +675,11 @@ func (h *httpAPI) LabelNames(ctx context.Context) ([]string, Warnings, error) {
 	return labelNames, w, json.Unmarshal(body, &labelNames)
 }
 
-func (h *httpAPI) LabelValues(ctx context.Context, label string, matchs []string) (model.LabelValues, Warnings, error) {
+func (h *httpAPI) LabelValues(ctx context.Context, label string, matches []string) (model.LabelValues, Warnings, error) {
 	u := h.client.URL(epLabelValues, map[string]string{"name": label})
 	q := u.Query()
 
-	for _, m := range matchs {
+	for _, m := range matches {
 		q.Add("match[]", m)
 	}
 	u.RawQuery = q.Encode()

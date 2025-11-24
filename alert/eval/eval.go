@@ -1077,15 +1077,15 @@ func exclude(reHashTagIndex1 map[uint64][][]uint64, reHashTagIndex2 map[uint64][
 
 func MakeSeriesMap(series []models.DataResp, seriesTagIndex map[uint64][]uint64, seriesStore map[uint64]models.DataResp) {
 	for i := 0; i < len(series); i++ {
-		serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
+		seriesHash := hash.GetHash(series[i].Metric, series[i].Ref)
 		tagHash := hash.GetTagHash(series[i].Metric)
-		seriesStore[serieHash] = series[i]
+		seriesStore[seriesHash] = series[i]
 
 		// 将曲线按照相同的 tag 分组
 		if _, exists := seriesTagIndex[tagHash]; !exists {
 			seriesTagIndex[tagHash] = make([]uint64, 0)
 		}
-		seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+		seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], seriesHash)
 	}
 }
 
@@ -1508,15 +1508,15 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 			//  此条日志很重要，是告警判断的现场值
 			logger.Infof("rule_eval rid:%d req:%+v resp:%v", rule.Id, query, series)
 			for i := 0; i < len(series); i++ {
-				serieHash := hash.GetHash(series[i].Metric, series[i].Ref)
+				seriesHash := hash.GetHash(series[i].Metric, series[i].Ref)
 				tagHash := hash.GetTagHash(series[i].Metric)
-				seriesStore[serieHash] = series[i]
+				seriesStore[seriesHash] = series[i]
 
 				// 将曲线按照相同的 tag 分组
 				if _, exists := seriesTagIndex[tagHash]; !exists {
 					seriesTagIndex[tagHash] = make([]uint64, 0)
 				}
-				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], serieHash)
+				seriesTagIndex[tagHash] = append(seriesTagIndex[tagHash], seriesHash)
 			}
 			ref, err := GetQueryRef(query)
 			if err != nil {
@@ -1550,8 +1550,8 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					var ts int64
 					var sample models.DataResp
 					var value float64
-					for _, serieHash := range seriesHash {
-						series, exists := seriesStore[serieHash]
+					for _, seriesHash := range seriesHash {
+						series, exists := seriesStore[seriesHash]
 						if !exists {
 							logger.Warningf("rule_eval rid:%d series:%+v not found", rule.Id, series)
 							continue

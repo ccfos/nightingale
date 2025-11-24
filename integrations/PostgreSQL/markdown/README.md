@@ -52,7 +52,7 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 # prepared_statements = true
 #
 # [[instances.metrics]]
-# mesurement = "sessions"
+# measurement = "sessions"
 # label_fields = [ "status", "type" ]
 # metric_fields = [ "value" ]
 # timeout = "3s"
@@ -60,15 +60,3 @@ address = "host=192.168.11.181 port=5432 user=postgres password=123456789 sslmod
 # SELECT status, type, COUNT(*) as value FROM v$session GROUP BY status, type
 # '''
 ```
-
-## 仪表盘
-
-夜莺内置了 Postgres 的仪表盘，克隆到自己的业务组下即可使用。
-
-![20230802073729](https://download.flashcat.cloud/ulric/20230802073729.png)
-
-## 告警规则
-
-夜莺内置了 Postgres 的告警规则，克隆到自己的业务组下即可使用。
-
-![20230802073753](https://download.flashcat.cloud/ulric/20230802073753.png)

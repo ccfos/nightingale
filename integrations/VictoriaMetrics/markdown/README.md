@@ -30,13 +30,3 @@ urls = [
 labels = {service="vminsert"}
 ```
 
-## 告警规则
-
-夜莺内置了 VictoriaMetrics 的告警规则，克隆到自己的业务组下即可使用。
-
-## 仪表盘
-
-夜莺内置了 VictoriaMetrics 的仪表盘，克隆到自己的业务组下即可使用。
-
-![20230802090606](https://download.flashcat.cloud/ulric/20230802090606.png)
-

@@ -24,6 +24,7 @@ type Board struct {
 	Name       string  `json:"name"`
 	Ident      string  `json:"ident"`
 	Tags       string  `json:"tags"`
+	Note       string  `json:"note"`
 	CreateAt   int64   `json:"create_at"`
 	CreateBy   string  `json:"create_by"`
 	UpdateAt   int64   `json:"update_at"`
@@ -56,6 +57,7 @@ func (b *Board) Clone(operatorName string, newBgid int64, suffix string) *Board 
 	clone := &Board{
 		Name:     b.Name,
 		Tags:     b.Tags,
+		Note:     b.Note,
 		GroupId:  newBgid,
 		CreateBy: operatorName,
 		UpdateBy: operatorName,

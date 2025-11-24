@@ -110,12 +110,14 @@ func BuiltinMetricDels(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(BuiltinMetric)).Error
 }
 
-func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string, limit, offset int) ([]*BuiltinMetric, error) {
+func BuiltinMetricGets(ctx *ctx.Context, lang, collector, typ, query, unit string) ([]*BuiltinMetric, error) {
 	session := DB(ctx)
 	session = builtinMetricQueryBuild(lang, collector, session, typ, query, unit)
 	var lst []*BuiltinMetric
-	err := session.Limit(limit).Offset(offset).Order("collector asc, typ asc, name asc").Find(&lst).Error
-	return lst, err
+	if err := session.Order("collector asc, typ asc, name asc").Find(&lst).Error; err != nil {
+		return nil, err
+	}
+	return lst, nil
 }
 
 func builtinMetricQueryBuild(lang, collector string, session *gorm.DB, typ string, query, unit string) *gorm.DB {
@@ -170,7 +172,7 @@ func BuiltinMetricGet(ctx *ctx.Context, where string, args ...interface{}) (*Bui
 }
 
 func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]string, error) {
-	var typs []string
+	var types []string
 	session := DB(ctx).Model(&BuiltinMetric{}).Where("updated_by != ?", SYSTEM)
 	if lang != "" {
 		session = session.Where("lang = ?", lang)
@@ -184,8 +186,8 @@ func BuiltinMetricTypes(ctx *ctx.Context, lang, collector, query string) ([]stri
 		session = session.Where("typ like ?", "%"+query+"%")
 	}
 
-	err := session.Select("distinct(typ)").Pluck("typ", &typs).Error
-	return typs, err
+	err := session.Select("distinct(typ)").Pluck("typ", &types).Error
+	return types, err
 }
 
 func BuiltinMetricCollectors(ctx *ctx.Context, lang, typ, query string) ([]string, error) {

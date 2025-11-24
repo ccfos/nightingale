@@ -21,7 +21,7 @@ type RecordingRule struct {
 	DatasourceIds     string            `json:"-" gorm:"datasource_ids,omitempty"`
 	DatasourceIdsJson []int64           `json:"datasource_ids" gorm:"-"`                             // for open source fe
 	DatasourceQueries []DatasourceQuery `json:"datasource_queries,omitempty" gorm:"serializer:json"` // datasource queries
-	Cluster           string            `json:"cluster"`                                             // take effect by cluster, seperated by space
+	Cluster           string            `json:"cluster"`                                             // take effect by cluster, separated by space
 	Name              string            `json:"name"`                                                // new metric name
 	Disabled          int               `json:"disabled"`                                            // 0: enabled, 1: disabled
 	PromQl            string            `json:"prom_ql"`                                             // just one ql for promql
@@ -165,6 +165,11 @@ func (re *RecordingRule) Verify() error {
 		if len(pair) != 2 || !model.LabelNameRE.MatchString(pair[0]) {
 			return fmt.Errorf("AppendTags(%s) invalid", rer[i])
 		}
+	}
+
+	// Check if query_configs length exceeds TEXT type limit (65535 bytes)
+	if len(re.QueryConfigs) > 65535 {
+		return fmt.Errorf("query_configs length (%d bytes) exceeds TEXT type limit (65535 bytes), please reduce the configuration size", len(re.QueryConfigs))
 	}
 
 	return nil

@@ -67,14 +67,14 @@ var (
 		}, []string{"queueid"},
 	)
 
-	CounterWirteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterWriteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "write_total",
 		Help:      "Number of write.",
 	}, []string{"url"})
 
-	CounterWirteErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	CounterWriteErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "write_error_total",
@@ -126,8 +126,8 @@ func init() {
 		RequestDuration,
 		ForwardDuration,
 		ForwardKafkaDuration,
-		CounterWirteTotal,
-		CounterWirteErrorTotal,
+		CounterWriteTotal,
+		CounterWriteErrorTotal,
 		CounterPushQueueErrorTotal,
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,

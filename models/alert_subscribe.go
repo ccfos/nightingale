@@ -22,7 +22,7 @@ type AlertSubscribe struct {
 	Cate              string       `json:"cate"`
 	DatasourceIds     string       `json:"-" gorm:"datasource_ids"` // datasource ids
 	DatasourceIdsJson []int64      `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string       `json:"cluster"`                 // take effect by clusters, seperated by space
+	Cluster           string       `json:"cluster"`                 // take effect by clusters, separated by space
 	RuleId            int64        `json:"rule_id"`
 	Severities        string       `json:"-" gorm:"severities"` // sub severity
 	SeveritiesJson    []int        `json:"severities" gorm:"-"` // for fe

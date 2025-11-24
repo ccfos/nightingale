@@ -355,6 +355,16 @@ func (rt *Router) usersPhoneEncrypt(c *gin.Context) {
 	}, nil)
 }
 
+func (rt *Router) usersPhoneDecryptRefresh(c *gin.Context) {
+	err := models.RefreshPhoneEncryptionCache(rt.Ctx)
+	if err != nil {
+		ginx.NewRender(c).Message(fmt.Errorf("refresh phone encryption cache failed: %v", err))
+		return
+	}
+
+	ginx.NewRender(c).Message(nil)
+}
+
 // usersPhoneDecrypt 统一手机号解密
 func (rt *Router) usersPhoneDecrypt(c *gin.Context) {
 	// 先关闭手机号加密功能

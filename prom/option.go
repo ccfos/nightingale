@@ -52,6 +52,10 @@ func (po *PromOption) Equal(target PromOption) bool {
 		return false
 	}
 
+	if po.InsecureSkipVerify != target.InsecureSkipVerify {
+		return false
+	}
+
 	if len(po.Headers) != len(target.Headers) {
 		return false
 	}

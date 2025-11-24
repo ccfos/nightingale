@@ -12,7 +12,7 @@ import (
 
 func cleanNotifyRecord(ctx *ctx.Context, day int) {
 	lastWeek := time.Now().Unix() - 86400*int64(day)
-	err := models.DB(ctx).Model(&models.NotificaitonRecord{}).Where("created_at < ?", lastWeek).Delete(&models.NotificaitonRecord{}).Error
+	err := models.DB(ctx).Model(&models.NotificationRecord{}).Where("created_at < ?", lastWeek).Delete(&models.NotificationRecord{}).Error
 	if err != nil {
 		logger.Errorf("Failed to clean notify record: %v", err)
 	}

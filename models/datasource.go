@@ -309,10 +309,10 @@ func GetDatasourcesGetsBy(ctx *ctx.Context, typ, cate, name, status string) ([]*
 	return lst, err
 }
 
-func GetDatasourcesGetsByTypes(ctx *ctx.Context, typs []string) (map[string]*Datasource, error) {
+func GetDatasourcesGetsByTypes(ctx *ctx.Context, types []string) (map[string]*Datasource, error) {
 	var lst []*Datasource
 	m := make(map[string]*Datasource)
-	err := DB(ctx).Where("plugin_type in ?", typs).Find(&lst).Error
+	err := DB(ctx).Where("plugin_type in ?", types).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()

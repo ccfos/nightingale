@@ -332,7 +332,7 @@
         ],
         "cluster": "",
         "name": "[RabbitMQ] Insufficient Established Erlang Distribution Links",
-        "note": "Insuffient establised erland distribution links",
+        "note": "Insufficient established erlang distribution links",
         "prod": "metric",
         "algorithm": "",
         "algo_params": null,

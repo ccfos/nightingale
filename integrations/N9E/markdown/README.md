@@ -15,8 +15,3 @@ urls = [
 ]
 labels = {job="n9e"}
 ```
-
-## Dashboard
-
-夜莺内置了两个 N9E 仪表盘，n9e_server 是给 V5 版本用的，n9e_v6 是给 V6 版本用的。
-

@@ -24,9 +24,3 @@ password = "xxxxxxxx"
 num_most_recent_indices = 1
 labels = { service="es" }
 ```
-
-## 仪表盘效果
-
-夜莺内置仪表盘中已经内置了 Elasticsearch 的仪表盘，导入即可使用。
-
-![](http://download.flashcat.cloud/uPic/es-dashboard.jpeg)

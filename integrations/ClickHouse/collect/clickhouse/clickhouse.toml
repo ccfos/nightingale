@@ -44,7 +44,7 @@
   ##          <replica><host>clickhouse-eu-1.local</host><port>9000</port></replica>
   ##          <replica><host>clickhouse-eu-2.local</host><port>9000</port></replica>
   ##        </shard>
-  ##    </my-onw-cluster>
+  ##    </my-own-cluster>
   ##  </remote_servers>
   ##
   ## </yandex>
@@ -66,7 +66,7 @@
   # insecure_skip_verify = false
 
     # [[instances.metrics]]
-    # mesurement = "sessions"
+    # measurement = "sessions"
     # label_fields = [ "status", "type" ]
     # metric_fields = [ "value" ]
     # timeout = "3s"

@@ -76,7 +76,3 @@ targets = [
 ## expected string in answer
 # expect = "ssh"
 ```
-
-## 监控大盘和告警规则
-
-夜莺内置了仪表盘和告警规则，克隆到自己的业务组即可使用。

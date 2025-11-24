@@ -20,15 +20,3 @@ urls = [
 ]
 labels = {job="minio-cluster"}
 ```
-
-## Dashboard
-
-夜莺内置了 MinIO 的仪表盘，克隆到自己的业务组下即可使用。
-
-![20230801170735](https://download.flashcat.cloud/ulric/20230801170735.png)
-
-## Alerts
-
-夜莺内置了 MinIO 的告警规则，克隆到自己的业务组下即可使用。
-
-![20230801170725](https://download.flashcat.cloud/ulric/20230801170725.png)

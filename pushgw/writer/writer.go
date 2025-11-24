@@ -34,7 +34,7 @@ type WriterType struct {
 }
 
 func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
-	pstat.CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
+	pstat.CounterWriteTotal.WithLabelValues(key).Add(float64(len(items)))
 
 	if forceUseServerTS {
 		ts := int64(fasttime.UnixTimestamp()) * 1000
@@ -125,7 +125,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 			break
 		}
 
-		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
+		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("post to %s got error: %v in %d times", w.Opts.Url, err, i)
 
 		if i == 0 {
@@ -390,7 +390,7 @@ func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.Tim
 		ws.PushConcurrency.Add(-1)
 		logger.Warningf("push concurrency limit exceeded, current: %d, limit: %d, dropping %d series for backend: %s",
 			currentConcurrency-1, ws.pushgw.PushConcurrency, len(series), key)
-		pstat.CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
+		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
 		return
 	}
 
@@ -464,7 +464,7 @@ func (ws *WritersType) initWriters() error {
 	return nil
 }
 
-func initKakfaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
+func initKafkaSASL(cfg *sarama.Config, opt pconf.KafkaWriterOptions) {
 	if opt.SASL != nil && opt.SASL.Enable {
 		cfg.Net.SASL.Enable = true
 		cfg.Net.SASL.User = opt.SASL.User
@@ -481,7 +481,7 @@ func (ws *WritersType) initKafkaWriters() error {
 
 	for i := 0; i < len(opts); i++ {
 		cfg := sarama.NewConfig()
-		initKakfaSASL(cfg, opts[i])
+		initKafkaSASL(cfg, opts[i])
 		if opts[i].Timeout != 0 {
 			cfg.Producer.Timeout = time.Duration(opts[i].Timeout) * time.Second
 		}

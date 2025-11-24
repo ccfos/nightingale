@@ -162,21 +162,6 @@ func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, nil)
 }
 
-type flushDutyChannelsResponse struct {
-	Error struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
-	} `json:"error"`
-	Data struct {
-		Items []struct {
-			ChannelID   int    `json:"channel_id"`
-			ChannelName string `json:"channel_name"`
-			Status      string `json:"status"`
-		} `json:"items"`
-		Total int `json:"total"`
-	} `json:"data"`
-}
-
 func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	cid := ginx.UrlParamInt64(c, "id")
 	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
@@ -196,18 +181,31 @@ func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 		jsonData = []byte(fmt.Sprintf(`{"member_name":"%s","email":"%s","phone":"%s"}`, me.Username, me.Email, me.Phone))
 	}
 
-	items, err := getFlashDutyChannels(nc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, jsonData)
+	items, err := getFlashDutyChannels(nc.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, jsonData, time.Duration(nc.RequestConfig.FlashDutyRequestConfig.Timeout)*time.Millisecond)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(items, nil)
 }
 
-// getFlashDutyChannels 从FlashDuty API获取频道列表
-func getFlashDutyChannels(integrationUrl string, jsonData []byte) ([]struct {
+type flushDutyChannelsResponse struct {
+	Error struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+	Data struct {
+		Items []FlashDutyChannel `json:"items"`
+		Total int                `json:"total"`
+	} `json:"data"`
+}
+
+type FlashDutyChannel struct {
 	ChannelID   int    `json:"channel_id"`
 	ChannelName string `json:"channel_name"`
 	Status      string `json:"status"`
-}, error) {
+}
+
+// getFlashDutyChannels 从FlashDuty API获取频道列表
+func getFlashDutyChannels(integrationUrl string, jsonData []byte, timeout time.Duration) ([]FlashDutyChannel, error) {
 	// 解析URL，提取baseUrl和参数
 	baseUrl, integrationKey, err := parseIntegrationUrl(integrationUrl)
 	if err != nil {
@@ -227,7 +225,9 @@ func getFlashDutyChannels(integrationUrl string, jsonData []byte) ([]struct {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	httpResp, err := (&http.Client{}).Do(req)
+	httpResp, err := (&http.Client{
+		Timeout: timeout,
+	}).Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -265,4 +265,150 @@ func parseIntegrationUrl(urlStr string) (baseUrl string, integrationKey string, 
 	integrationKey = queryParams.Get("integration_key")
 
 	return host, integrationKey, nil
+}
+
+func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if err != nil || nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	items, err := getPagerDutyServices(nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty services: %v", err))
+	}
+	// 服务: []集成，扁平化为服务-集成
+	var flattenedItems []map[string]string
+	for _, svc := range items {
+		for _, integ := range svc.Integrations {
+			flattenedItems = append(flattenedItems, map[string]string{
+				"service_id":          svc.ID,
+				"service_name":        svc.Name,
+				"integration_summary": integ.Summary,
+				"integration_id":      integ.ID,
+				"integration_url":     integ.Self,
+			})
+		}
+	}
+
+	ginx.NewRender(c).Data(flattenedItems, nil)
+}
+
+func (rt *Router) pagerDutyIntegrationKeyGet(c *gin.Context) {
+	serviceId := ginx.UrlParamStr(c, "service_id")
+	integrationId := ginx.UrlParamStr(c, "integration_id")
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if err != nil || nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+
+	integrationUrl := fmt.Sprintf("https://api.pagerduty.com/services/%s/integrations/%s", serviceId, integrationId)
+	integrationKey, err := getPagerDutyIntegrationKey(integrationUrl, nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty integration key: %v", err))
+	}
+
+	ginx.NewRender(c).Data(map[string]string{
+		"integration_key": integrationKey,
+	}, nil)
+}
+
+type PagerDutyIntegration struct {
+	ID             string `json:"id"`
+	IntegrationKey string `json:"integration_key"`
+	Self           string `json:"self"` // integration 的 API URL
+	Summary        string `json:"summary"`
+}
+
+type PagerDutyService struct {
+	Name         string                 `json:"name"`
+	ID           string                 `json:"id"`
+	Integrations []PagerDutyIntegration `json:"integrations"`
+}
+
+// getPagerDutyServices 从 PagerDuty API 分页获取所有服务及其集成信息
+func getPagerDutyServices(apiKey string, timeout time.Duration) ([]PagerDutyService, error) {
+	const limit = 100 // 每页最大数量
+	var offset uint   // 分页偏移量
+	var allServices []PagerDutyService
+
+	for {
+		// 构建带分页参数的 URL
+		url := fmt.Sprintf("https://api.pagerduty.com/services?limit=%d&offset=%d", limit, offset)
+
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", apiKey))
+		req.Header.Set("Accept", "application/vnd.pagerduty+json;version=2")
+
+		httpResp, err := (&http.Client{Timeout: timeout}).Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		body, err := io.ReadAll(httpResp.Body)
+		httpResp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		// 定义包含分页信息的响应结构
+		var serviceRes struct {
+			Services []PagerDutyService `json:"services"`
+			More     bool               `json:"more"` // 是否还有更多数据
+			Limit    uint               `json:"limit"`
+			Offset   uint               `json:"offset"`
+		}
+
+		if err := json.Unmarshal(body, &serviceRes); err != nil {
+			return nil, err
+		}
+		allServices = append(allServices, serviceRes.Services...)
+		// 判断是否还有更多数据
+		if !serviceRes.More || len(serviceRes.Services) < int(limit) {
+			break
+		}
+		offset += limit // 准备请求下一页
+	}
+
+	return allServices, nil
+}
+
+// getPagerDutyIntegrationKey 通过 integration 的 API URL 获取 integration key
+func getPagerDutyIntegrationKey(integrationUrl, apiKey string, timeout time.Duration) (string, error) {
+	req, err := http.NewRequest("GET", integrationUrl, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Token token=%s", apiKey))
+
+	httpResp, err := (&http.Client{
+		Timeout: timeout,
+	}).Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer httpResp.Body.Close()
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var integRes struct {
+		Integration struct {
+			IntegrationKey string `json:"integration_key"`
+		} `json:"integration"`
+	}
+
+	if err := json.Unmarshal(body, &integRes); err != nil {
+		return "", err
+	}
+
+	return integRes.Integration.IntegrationKey, nil
 }

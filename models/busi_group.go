@@ -110,6 +110,12 @@ func BusiGroupGetById(ctx *ctx.Context, id int64) (*BusiGroup, error) {
 	return BusiGroupGet(ctx, "id=?", id)
 }
 
+func BusiGroupGetByIds(ctx *ctx.Context, ids []int64) ([]*BusiGroup, error) {
+	var lst []*BusiGroup
+	err := DB(ctx).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
+}
+
 func BusiGroupExists(ctx *ctx.Context, where string, args ...interface{}) (bool, error) {
 	num, err := Count(DB(ctx).Model(&BusiGroup{}).Where(where, args...))
 	return num > 0, err

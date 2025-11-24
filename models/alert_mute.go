@@ -183,7 +183,7 @@ type AlertMute struct {
 	Prod              string         `json:"prod"`
 	DatasourceIds     string         `json:"-" gorm:"datasource_ids"` // datasource ids
 	DatasourceIdsJson []int64        `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string         `json:"cluster"`                 // take effect by clusters, seperated by space
+	Cluster           string         `json:"cluster"`                 // take effect by clusters, separated by space
 	Tags              ormx.JSONArr   `json:"tags"`
 	Cause             string         `json:"cause"`
 	Btime             int64          `json:"btime"`
@@ -373,11 +373,11 @@ func (m *AlertMute) FE2DB() error {
 	m.PeriodicMutes = string(periodicMutesBytes)
 
 	if len(m.SeveritiesJson) > 0 {
-		severtiesBytes, err := json.Marshal(m.SeveritiesJson)
+		severitiesBytes, err := json.Marshal(m.SeveritiesJson)
 		if err != nil {
 			return err
 		}
-		m.Severities = string(severtiesBytes)
+		m.Severities = string(severitiesBytes)
 	}
 
 	return nil

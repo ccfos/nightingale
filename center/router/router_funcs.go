@@ -128,6 +128,12 @@ func UserGroup(ctx *ctx.Context, id int64) *models.UserGroup {
 		ginx.Bomb(http.StatusNotFound, "No such UserGroup")
 	}
 
+	bgids, err := models.BusiGroupIds(ctx, []int64{id})
+	ginx.Dangerous(err)
+
+	obj.BusiGroups, err = models.BusiGroupGetByIds(ctx, bgids)
+	ginx.Dangerous(err)
+
 	return obj
 }
 
