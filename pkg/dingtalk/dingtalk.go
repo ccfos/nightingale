@@ -315,7 +315,7 @@ func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*dingtalkUs
 		return nil, errors.Errorf("dingTalk get userinfo status code: %d", tea.Int32Value(userInfo.StatusCode))
 	}
 
-	logger.Debugf("dingTalk get userinfo RequestID %s UserID %s ", userInfo.Body.RequestID, req.UserID)
+	logger.Debugf("dingTalk get userinfo RequestID %s UserID %s ", tea.StringValue(userInfo.Body.RequestID), req.UserID)
 
 	return userInfo.Body.Result, nil
 }
