@@ -310,11 +310,12 @@ func (s *SsoClient) GetUserInfo(accessToken string, unionid string) (*dingtalkUs
 	}
 
 	userInfo, err := userClient.GetUser(req, query)
-	logger.Debugf("dingTalk get userinfo req %s", req.UserID)
 
 	if userInfo.Body == nil {
 		return nil, errors.Errorf("dingTalk get userinfo status code: %d", tea.Int32Value(userInfo.StatusCode))
 	}
+
+	logger.Debugf("dingTalk get userinfo RequestID %s UserID %s ", userInfo.Body.RequestID, req.UserID)
 
 	return userInfo.Body.Result, nil
 }
