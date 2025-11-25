@@ -3,11 +3,13 @@ package victorialogs
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
+	"github.com/toolkits/pkg/logger"
 )
 
 type VictoriaLogs struct {
@@ -67,7 +69,57 @@ func (v *VictoriaLogs) QueryMapData(ctx context.Context, query interface{}) ([]m
 }
 
 func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
-	return nil, nil
+	logger.Error("查询数据中")
+	queryMap, ok := query.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid query parameter")
+	}
+	qp := &victorialogs.QueryParam{}
+	if err := mapstructure.Decode(queryMap, qp); err != nil {
+		return nil, fmt.Errorf("failed to decode data query: %v", err)
+	}
+	data, err := v.client.QueryStats(ctx, qp)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]models.DataResp, 0, len(data.Data.Result))
+	for _, item := range data.Data.Result {
+		dr := models.DataResp{
+			Values: make([][]float64, 0, len(item.Values)),
+			Ref:    qp.Ref,
+		}
+
+		if err := mapstructure.Decode(item.Metric, &dr.Metric); err != nil {
+			m := make(map[string]interface{}, len(item.Metric))
+			for k, v := range item.Metric {
+				m[k] = v
+			}
+			_ = mapstructure.Decode(m, &dr.Metric)
+		}
+
+		for _, val := range item.Values {
+			if len(val) >= 2 {
+				ts, ok1 := val[0].(float64)
+				vv, ok2 := val[1].(string)
+				vvFloat := 0.0
+				if ok2 {
+					if f, err := strconv.ParseFloat(vv, 64); err == nil {
+						vvFloat = f
+						ok2 = true
+					} else {
+						ok2 = false
+					}
+				}
+				if ok1 && ok2 {
+					dr.Values = append(dr.Values, []float64{ts, vvFloat})
+				}
+			}
+		}
+		result = append(result, dr)
+	}
+	logger.Error("查询数据完成", result)
+	return result, nil
 }
 
 func (v *VictoriaLogs) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {

@@ -28,12 +28,24 @@ type QueryParam struct {
 	End     int64  `json:"end" mapstructure:"end"`         // unix 秒
 	Time    int64  `json:"time" mapstructure:"time"`       // unix 秒，相对于 now 的时间范围或者绝对时间
 	Timeout int    `json:"timeout" mapstructure:"timeout"` // 超时时间，单位秒
+	Ref     string `json:"ref" mapstructure:"ref"`         // 查询引用 ID
 }
 
 type HitsResult struct {
 	Hits []struct {
 		Total int64 `json:"total"`
 	}
+}
+
+type StateResult struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string `json:"resultType"`
+		Result     []struct {
+			Metric map[string]string `json:"metric"`
+			Values [][]interface{}   `json:"values"`
+		} `json:"result"`
+	} `json:"data"`
 }
 
 func (q *QueryParam) MakeBody() url.Values {
@@ -171,6 +183,46 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 	}
 
 	return results, nil
+}
+
+func (v *VictoriaLogsClient) QueryStats(ctx context.Context, qp *QueryParam) (*StateResult, error) {
+	// 确保已经初始化 client
+	if v.Client == nil {
+		return nil, fmt.Errorf("http client is not initialized")
+	}
+
+	client := *v.Client
+	client.Timeout = time.Duration(qp.Timeout) * time.Second
+
+	// 使用 stats_query_range 端点
+	req, err := http.NewRequestWithContext(ctx, "POST", v.Url+"/select/logsql/stats_query_range", strings.NewReader(qp.MakeBody().Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	if v.User != "" {
+		req.SetBasicAuth(v.User, v.Password)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	var sr StateResult
+	if err := dec.Decode(&sr); err != nil {
+		return nil, fmt.Errorf("failed to decode stats response: %v", err)
+	}
+
+	return &sr, nil
 }
 
 // HitsLogs 返回查询命中的日志数量，用于计算total
