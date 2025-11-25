@@ -16,7 +16,7 @@ import (
 
 type VictoriaLogsClient struct {
 	Url                 string            `json:"victorialogs.url" mapstructure:"victorialogs.url"`
-	User                string            `json:"victorialogs.basic.username" mapstructure:"victorialogs.basic.username"`
+	Username            string            `json:"victorialogs.basic.username" mapstructure:"victorialogs.basic.username"`
 	Password            string            `json:"victorialogs.basic.password" mapstructure:"victorialogs.basic.password"`
 	SkipTLSVerify       bool              `json:"victorialogs.skip_tls_verify" mapstructure:"victorialogs.skip_tls_verify"`
 	DialTimeout         int               `json:"victorialogs.dial_timeout" mapstructure:"victorialogs.dial_timeout"`
@@ -128,8 +128,8 @@ func (v *VictoriaLogsClient) InitCli() error {
 	}
 
 	var basic string
-	if v.User != "" {
-		basic = base64.StdEncoding.EncodeToString([]byte(v.User + ":" + v.Password))
+	if v.Username != "" {
+		basic = base64.StdEncoding.EncodeToString([]byte(v.Username + ":" + v.Password))
 		transport.ProxyConnectHeader = http.Header{
 			"Authorization": []string{fmt.Sprintf("Basic %s", basic)},
 		}
@@ -161,8 +161,8 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
+	if v.Username != "" {
+		req.SetBasicAuth(v.Username, v.Password)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -213,8 +213,8 @@ func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
+	if v.Username != "" {
+		req.SetBasicAuth(v.Username, v.Password)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -247,8 +247,8 @@ func (v *VictoriaLogsClient) StatsQuery(ctx context.Context, qp *QueryParam) (*S
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
+	if v.Username != "" {
+		req.SetBasicAuth(v.Username, v.Password)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -279,8 +279,8 @@ func (v *VictoriaLogsClient) HitsLogs(ctx context.Context, qp *QueryParam) (int6
 		return 0, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
+	if v.Username != "" {
+		req.SetBasicAuth(v.Username, v.Password)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

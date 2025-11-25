@@ -40,7 +40,7 @@ func (v *VictoriaLogs) Equal(other datasource.Datasource) bool {
 		return false
 	}
 	return v.Url == otherDs.Url &&
-		v.User == otherDs.User &&
+		v.Username == otherDs.Username &&
 		v.Password == otherDs.Password &&
 		v.SkipTLSVerify == otherDs.SkipTLSVerify &&
 		v.DialTimeout == otherDs.DialTimeout &&

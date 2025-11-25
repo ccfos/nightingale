@@ -7,7 +7,7 @@ import (
 
 var v = VictoriaLogsClient{
 	Url:      "http://192.168.31.231:9428",
-	User:     "",
+	Username: "",
 	Password: "",
 }
 
