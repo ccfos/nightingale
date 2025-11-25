@@ -181,11 +181,6 @@ func (v *VictoriaLogsClient) Validate() error {
 }
 
 func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
-	// 确保已经初始化 client
-	if v.Client == nil {
-		return nil, fmt.Errorf("http client is not initialized")
-	}
-
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)

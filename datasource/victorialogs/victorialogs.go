@@ -31,7 +31,7 @@ func (v *VictoriaLogs) Init(settings map[string]interface{}) (datasource.Datasou
 }
 
 func (v *VictoriaLogs) Validate(ctx context.Context) error {
-	return nil
+	return v.VictoriaLogsClient.Validate()
 }
 
 func (v *VictoriaLogs) Equal(p datasource.Datasource) bool {
