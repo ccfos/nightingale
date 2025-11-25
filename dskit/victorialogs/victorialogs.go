@@ -91,7 +91,7 @@ func (q *QueryParam) MakeBody() url.Values {
 
 // IsInstantQuery 判断是否为即时查询
 func (q *QueryParam) IsInstantQuery() bool {
-	return q.Time > 0 || (q.Start > 0 && q.Start == q.End)
+	return q.Time > 0 || (q.Start > 0 && q.Start == q.End) || q.Start == 0
 }
 
 type authTransport struct {
@@ -238,8 +238,6 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 }
 
 func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam) (*StatsQueryRangeResult, error) {
-
-	// 使用 stats_query_range 端点
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query_range"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
@@ -271,7 +269,9 @@ func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam
 }
 
 func (v *VictoriaLogsClient) StatsQuery(ctx context.Context, qp *QueryParam) (*StatsQueryResult, error) {
-	// 使用 stats_query 端点
+	if qp.Time == 0 {
+		qp.Time = time.Now().Unix()
+	}
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
