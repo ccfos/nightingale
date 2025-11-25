@@ -9,7 +9,6 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
-	"github.com/prometheus/common/model"
 )
 
 type VictoriaLogs struct {
@@ -116,7 +115,7 @@ func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]mode
 		}
 		result := make([]models.DataResp, 0, len(data.Data.Result))
 		for _, item := range data.Data.Result {
-			// item.Values is already [][]interface{}
+			// Values [][]interface{}
 			dr := buildDataRespFromMetricAndValueSlices(qp, item.Metric, item.Values)
 			result = append(result, dr)
 		}
@@ -146,15 +145,6 @@ func (v *VictoriaLogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 		results[i] = d
 	}
 	return results, total, nil
-}
-
-// MapToMetric 负责把 map[string]string 转换为 model.Metric
-func MapToMetric(m map[string]string) model.Metric {
-	metric := make(model.Metric, len(m))
-	for k, v := range m {
-		metric[model.LabelName(k)] = model.LabelValue(v)
-	}
-	return metric
 }
 
 // ToValue 负责把[ts: float64, value: string] 转换为 []float64
