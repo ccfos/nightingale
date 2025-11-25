@@ -31,7 +31,24 @@ func (v *VictoriaLogs) Init(settings map[string]interface{}) (datasource.Datasou
 }
 
 func (v *VictoriaLogs) Validate(ctx context.Context) error {
-	return v.VictoriaLogsClient.Validate()
+	if v.Url == "" {
+		return fmt.Errorf("url must be provided")
+	}
+	// 必须同时提供用户名和密码
+	if (v.Username != "" && v.Password == "") || (v.Username == "" && v.Password != "") {
+		return fmt.Errorf("both username and password must be provided")
+	}
+	if v.Client.Timeout <= 0 {
+		v.Client.Timeout = 30 // 设置默认超时时间为30秒
+	}
+	if v.DialTimeout <= 0 {
+		v.DialTimeout = 10 // 设置默认拨号超时时间为10秒
+	}
+	if v.MaxIdleConnsPerHost < 0 {
+		return fmt.Errorf("max idle connections per host must be non-negative")
+	}
+
+	return nil
 }
 
 func (v *VictoriaLogs) Equal(other datasource.Datasource) bool {

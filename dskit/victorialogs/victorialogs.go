@@ -144,17 +144,6 @@ func (v *VictoriaLogsClient) InitCli() error {
 	return nil
 }
 
-func (v *VictoriaLogsClient) Validate() error {
-	v.InitCli()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err := v.QueryLogs(ctx, &QueryParam{
-		Query: "*",
-		Time:  time.Now().Unix(),
-	})
-	return err
-}
-
 func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
