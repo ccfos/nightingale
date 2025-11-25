@@ -9,10 +9,11 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
+	"github.com/prometheus/common/model"
 )
 
 type VictoriaLogs struct {
-	client *victorialogs.VictoriaLogsClient
+	victorialogs.VictoriaLogsClient `json:",inline" mapstructure:",squash"`
 }
 
 func init() {
@@ -20,20 +21,17 @@ func init() {
 }
 
 func (v *VictoriaLogs) InitClient() error {
-	return v.client.InitCli()
+	return v.InitCli()
 }
 
 func (v *VictoriaLogs) Init(settings map[string]interface{}) (datasource.Datasource, error) {
-	vl := &VictoriaLogs{}
-	vl.client = &victorialogs.VictoriaLogsClient{}
-	if err := mapstructure.Decode(settings, vl.client); err != nil {
-		return nil, fmt.Errorf("failed to decode victoria logs datasource settings: %v", err)
-	}
-	return vl, nil
+	newest := new(VictoriaLogs)
+	err := mapstructure.Decode(settings, newest)
+	return newest, err
 }
 
 func (v *VictoriaLogs) Validate(ctx context.Context) error {
-	return v.client.InitCli()
+	return nil
 }
 
 func (v *VictoriaLogs) Equal(p datasource.Datasource) bool {
@@ -41,7 +39,7 @@ func (v *VictoriaLogs) Equal(p datasource.Datasource) bool {
 	if !ok {
 		return false
 	}
-	return v.client.Equal(other.client)
+	return (&v.VictoriaLogsClient).Equal(&other.VictoriaLogsClient)
 }
 
 func (v *VictoriaLogs) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
@@ -67,6 +65,48 @@ func (v *VictoriaLogs) QueryMapData(ctx context.Context, query interface{}) ([]m
 	return nil, nil
 }
 
+func toMapStringInterface(in interface{}) map[string]interface{} {
+	switch m := in.(type) {
+	case map[string]interface{}:
+		return m
+	case map[string]string:
+		out := make(map[string]interface{}, len(m))
+		for k, v := range m {
+			out[k] = v
+		}
+		return out
+	case map[interface{}]interface{}:
+		out := make(map[string]interface{}, len(m))
+		for k, v := range m {
+			out[fmt.Sprint(k)] = v
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func buildDataRespFromMetricAndValueSlices(qp *victorialogs.QueryParam, metric interface{}, valueSlices [][]interface{}) models.DataResp {
+	dr := models.DataResp{
+		Values: make([][]float64, 0, len(valueSlices)),
+		Ref:    qp.Ref,
+	}
+	if err := mapstructure.Decode(metric, &dr.Metric); err != nil {
+		if mm := toMapStringInterface(metric); mm != nil {
+			_ = mapstructure.Decode(mm, &dr.Metric)
+		}
+	}
+	for _, val := range valueSlices {
+		if val == nil {
+			continue
+		}
+		if v2, err := ToValue(val); err == nil {
+			dr.Values = append(dr.Values, v2)
+		}
+	}
+	return dr
+}
+
 func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
 	queryMap, ok := query.(map[string]interface{})
 	if !ok {
@@ -76,47 +116,36 @@ func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]mode
 	if err := mapstructure.Decode(queryMap, qp); err != nil {
 		return nil, fmt.Errorf("failed to decode data query: %v", err)
 	}
-	data, err := v.client.QueryStats(ctx, qp)
-	if err != nil {
-		return nil, err
-	}
 
-	result := make([]models.DataResp, 0, len(data.Data.Result))
-	for _, item := range data.Data.Result {
-		dr := models.DataResp{
-			Values: make([][]float64, 0, len(item.Values)),
-			Ref:    qp.Ref,
+	if qp.IsInstantQuery() {
+		data, err := v.StatsQuery(ctx, qp)
+		if err != nil {
+			return nil, err
 		}
-
-		if err := mapstructure.Decode(item.Metric, &dr.Metric); err != nil {
-			m := make(map[string]interface{}, len(item.Metric))
-			for k, v := range item.Metric {
-				m[k] = v
+		result := make([]models.DataResp, 0, len(data.Data.Result))
+		for _, item := range data.Data.Result {
+			// item.Value is a single [ts, value], wrap into [][]interface{} for reuse
+			valueSlices := [][]interface{}{}
+			if item.Value != nil {
+				valueSlices = append(valueSlices, item.Value)
 			}
-			_ = mapstructure.Decode(m, &dr.Metric)
+			dr := buildDataRespFromMetricAndValueSlices(qp, item.Metric, valueSlices)
+			result = append(result, dr)
 		}
-
-		for _, val := range item.Values {
-			if len(val) >= 2 {
-				ts, ok1 := val[0].(float64)
-				vv, ok2 := val[1].(string)
-				vvFloat := 0.0
-				if ok2 {
-					if f, err := strconv.ParseFloat(vv, 64); err == nil {
-						vvFloat = f
-						ok2 = true
-					} else {
-						ok2 = false
-					}
-				}
-				if ok1 && ok2 {
-					dr.Values = append(dr.Values, []float64{ts, vvFloat})
-				}
-			}
+		return result, nil
+	} else {
+		data, err := v.StatsQueryRange(ctx, qp)
+		if err != nil {
+			return nil, err
 		}
-		result = append(result, dr)
+		result := make([]models.DataResp, 0, len(data.Data.Result))
+		for _, item := range data.Data.Result {
+			// item.Values is already [][]interface{}
+			dr := buildDataRespFromMetricAndValueSlices(qp, item.Metric, item.Values)
+			result = append(result, dr)
+		}
+		return result, nil
 	}
-	return result, nil
 }
 
 func (v *VictoriaLogs) QueryLog(ctx context.Context, query interface{}) ([]interface{}, int64, error) {
@@ -128,11 +157,11 @@ func (v *VictoriaLogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 	if err := mapstructure.Decode(queryMap, qp); err != nil {
 		return nil, 0, fmt.Errorf("failed to decode log query: %v", err)
 	}
-	data, err := v.client.QueryLogs(ctx, qp)
+	data, err := v.QueryLogs(ctx, qp)
 	if err != nil {
 		return nil, 0, err
 	}
-	total, err := v.client.HitsLogs(ctx, qp)
+	total, err := v.HitsLogs(ctx, qp)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -141,4 +170,38 @@ func (v *VictoriaLogs) QueryLog(ctx context.Context, query interface{}) ([]inter
 		results[i] = d
 	}
 	return results, total, nil
+}
+
+// MapToMetric 负责把 map[string]string 转换为 model.Metric
+func MapToMetric(m map[string]string) model.Metric {
+	metric := make(model.Metric, len(m))
+	for k, v := range m {
+		metric[model.LabelName(k)] = model.LabelValue(v)
+	}
+	return metric
+}
+
+// ToValue 负责把[ts: float64, value: string] 转换为 []float64
+func ToValue(arr []interface{}) ([]float64, error) {
+	if len(arr) != 2 {
+		return nil, fmt.Errorf("invalid value array length")
+	}
+	ts, ok := arr[0].(float64)
+	if !ok {
+		return nil, fmt.Errorf("invalid timestamp type")
+	}
+	var valueFloat float64
+	switch v := arr[1].(type) {
+	case string:
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value string: %v", err)
+		}
+		valueFloat = f
+	case float64:
+		valueFloat = v
+	default:
+		return nil, fmt.Errorf("invalid value type")
+	}
+	return []float64{ts, valueFloat}, nil
 }

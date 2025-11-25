@@ -3,9 +3,11 @@ package victorialogs
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,12 +15,14 @@ import (
 )
 
 type VictoriaLogsClient struct {
-	Url           string       `json:"vl.url" mapstructure:"vl.url"`
-	User          string       `json:"vl.user" mapstructure:"vl.user"`
-	Password      string       `json:"vl.password" mapstructure:"vl.password"`
-	MaxQueryRows  int          `json:"vl.max_query_rows" mapstructure:"vl.max_query_rows"`
-	SkipTLSVerify bool         `json:"vl.skip_tls_verify" mapstructure:"vl.skip_tls_verify"`
-	Client        *http.Client `json:"-" mapstructure:"-"`
+	Url                 string       `json:"vl.url" mapstructure:"vl.url"`
+	User                string       `json:"vl.user" mapstructure:"vl.user"`
+	Password            string       `json:"vl.password" mapstructure:"vl.password"`
+	MaxQueryRows        int          `json:"vl.max_query_rows" mapstructure:"vl.max_query_rows"`
+	SkipTLSVerify       bool         `json:"vl.skip_tls_verify" mapstructure:"vl.skip_tls_verify"`
+	DialTimeout         int          `json:"vl.dial_timeout" mapstructure:"vl.dial_timeout"`
+	MaxIdleConnsPerHost int          `json:"vl.max_idle_conns_per_host" mapstructure:"vl.max_idle_conns_per_host"`
+	Client              *http.Client `json:"-" mapstructure:"-"`
 }
 
 type QueryParam struct {
@@ -37,13 +41,24 @@ type HitsResult struct {
 	}
 }
 
-type StateResult struct {
+type StatsQueryRangeResult struct {
 	Status string `json:"status"`
 	Data   struct {
 		ResultType string `json:"resultType"`
 		Result     []struct {
 			Metric map[string]string `json:"metric"`
 			Values [][]interface{}   `json:"values"`
+		} `json:"result"`
+	} `json:"data"`
+}
+
+type StatsQueryResult struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string `json:"resultType"`
+		Result     []struct {
+			Metric map[string]string `json:"metric"`
+			Value  []interface{}     `json:"value"`
 		} `json:"result"`
 	} `json:"data"`
 }
@@ -74,42 +89,57 @@ func (q *QueryParam) MakeBody() url.Values {
 	return data
 }
 
+// IsInstantQuery 判断是否为即时查询
+func (q *QueryParam) IsInstantQuery() bool {
+	return q.Time > 0 || (q.Start > 0 && q.Start == q.End)
+}
+
+type authTransport struct {
+	base   http.RoundTripper
+	header string // base64 encoded "user:pass"
+}
+
+func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// 不要直接修改传入的 req，因为可能被复用；克隆后修改 header
+	if t.header != "" && req.Header.Get("Authorization") == "" {
+		req2 := req.Clone(req.Context())
+		req2.Header = req.Header.Clone()
+		req2.Header.Set("Authorization", fmt.Sprintf("Basic %s", t.header))
+		return t.base.RoundTrip(req2)
+	}
+	return t.base.RoundTrip(req)
+}
+
 func (v *VictoriaLogsClient) InitCli() error {
 	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   time.Duration(v.DialTimeout) * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DisableCompression:    true,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: v.SkipTLSVerify,
 		},
-	}
-	v.Client = &http.Client{
-		Transport: transport,
-	}
-	data := url.Values{}
-	data.Set("query", "*")
-	data.Set("limit", "1")
-
-	req, err := http.NewRequest("POST", v.Url+"/select/logsql/query", strings.NewReader(data.Encode()))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %v", err)
+		MaxIdleConnsPerHost: v.MaxIdleConnsPerHost,
 	}
 
+	var basic string
 	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
+		basic = base64.StdEncoding.EncodeToString([]byte(v.User + ":" + v.Password))
+		transport.ProxyConnectHeader = http.Header{
+			"Authorization": []string{fmt.Sprintf("Basic %s", basic)},
+		}
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// 使用 base client 的副本，设置探测超时
-	c := *v.Client
-	c.Timeout = 5 * time.Second
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return fmt.Errorf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	v.Client = &http.Client{
+		Transport: &authTransport{
+			base:   transport,
+			header: basic,
+		},
 	}
 	return nil
 }
@@ -123,7 +153,31 @@ func (v *VictoriaLogsClient) Equal(other *VictoriaLogsClient) bool {
 }
 
 func (v *VictoriaLogsClient) Validate() error {
-	return v.InitCli()
+	data := url.Values{}
+	data.Set("query", "*")
+	data.Set("limit", "1")
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	if v.User != "" {
+		req.SetBasicAuth(v.User, v.Password)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := v.Client.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
 }
 
 func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
@@ -132,9 +186,7 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 		return nil, fmt.Errorf("http client is not initialized")
 	}
 
-	client := *v.Client
-	client.Timeout = time.Duration(qp.Timeout) * time.Second
-	req, err := http.NewRequestWithContext(ctx, "POST", v.Url+"/select/logsql/query", strings.NewReader(qp.MakeBody().Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
@@ -144,7 +196,7 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := client.Do(req)
+	resp, err := v.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
 	}
@@ -185,17 +237,10 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 	return results, nil
 }
 
-func (v *VictoriaLogsClient) QueryStats(ctx context.Context, qp *QueryParam) (*StateResult, error) {
-	// 确保已经初始化 client
-	if v.Client == nil {
-		return nil, fmt.Errorf("http client is not initialized")
-	}
-
-	client := *v.Client
-	client.Timeout = time.Duration(qp.Timeout) * time.Second
+func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam) (*StatsQueryRangeResult, error) {
 
 	// 使用 stats_query_range 端点
-	req, err := http.NewRequestWithContext(ctx, "POST", v.Url+"/select/logsql/stats_query_range", strings.NewReader(qp.MakeBody().Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query_range"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
@@ -205,7 +250,7 @@ func (v *VictoriaLogsClient) QueryStats(ctx context.Context, qp *QueryParam) (*S
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := client.Do(req)
+	resp, err := v.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
 	}
@@ -217,7 +262,39 @@ func (v *VictoriaLogsClient) QueryStats(ctx context.Context, qp *QueryParam) (*S
 	}
 
 	dec := json.NewDecoder(resp.Body)
-	var sr StateResult
+	var sqr StatsQueryRangeResult
+	if err := dec.Decode(&sqr); err != nil {
+		return nil, fmt.Errorf("failed to decode stats response: %v", err)
+	}
+
+	return &sqr, nil
+}
+
+func (v *VictoriaLogsClient) StatsQuery(ctx context.Context, qp *QueryParam) (*StatsQueryResult, error) {
+	// 使用 stats_query 端点
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query"), strings.NewReader(qp.MakeBody().Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	if v.User != "" {
+		req.SetBasicAuth(v.User, v.Password)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := v.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	var sr StatsQueryResult
 	if err := dec.Decode(&sr); err != nil {
 		return nil, fmt.Errorf("failed to decode stats response: %v", err)
 	}
@@ -227,14 +304,7 @@ func (v *VictoriaLogsClient) QueryStats(ctx context.Context, qp *QueryParam) (*S
 
 // HitsLogs 返回查询命中的日志数量，用于计算total
 func (v *VictoriaLogsClient) HitsLogs(ctx context.Context, qp *QueryParam) (int64, error) {
-	// 确保已经初始化 client
-	if v.Client == nil {
-		return 0, fmt.Errorf("http client is not initialized")
-	}
-
-	client := *v.Client
-	client.Timeout = time.Duration(qp.Timeout) * time.Second
-	req, err := http.NewRequestWithContext(ctx, "POST", v.Url+"/select/logsql/hits", strings.NewReader(qp.MakeBody().Encode()))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/hits"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create request: %v", err)
 	}
@@ -244,7 +314,7 @@ func (v *VictoriaLogsClient) HitsLogs(ctx context.Context, qp *QueryParam) (int6
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := client.Do(req)
+	resp, err := v.Client.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("request failed: %v", err)
 	}
