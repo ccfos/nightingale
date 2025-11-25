@@ -9,7 +9,6 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/victorialogs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/mitchellh/mapstructure"
-	"github.com/toolkits/pkg/logger"
 )
 
 type VictoriaLogs struct {
@@ -69,7 +68,6 @@ func (v *VictoriaLogs) QueryMapData(ctx context.Context, query interface{}) ([]m
 }
 
 func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]models.DataResp, error) {
-	logger.Error("查询数据中")
 	queryMap, ok := query.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("invalid query parameter")
@@ -118,7 +116,6 @@ func (v *VictoriaLogs) QueryData(ctx context.Context, query interface{}) ([]mode
 		}
 		result = append(result, dr)
 	}
-	logger.Error("查询数据完成", result)
 	return result, nil
 }
 
