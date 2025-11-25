@@ -46,8 +46,8 @@ type StatsQueryRangeResult struct {
 	Data   struct {
 		ResultType string `json:"resultType"`
 		Result     []struct {
-			Metric map[string]string `json:"metric"`
-			Values [][]interface{}   `json:"values"`
+			Metric map[string]interface{} `json:"metric"`
+			Values [][]interface{}        `json:"values"`
 		} `json:"result"`
 	} `json:"data"`
 }
@@ -57,8 +57,8 @@ type StatsQueryResult struct {
 	Data   struct {
 		ResultType string `json:"resultType"`
 		Result     []struct {
-			Metric map[string]string `json:"metric"`
-			Value  []interface{}     `json:"value"`
+			Metric map[string]interface{} `json:"metric"`
+			Value  []interface{}          `json:"value"`
 		} `json:"result"`
 	} `json:"data"`
 }
@@ -150,34 +150,6 @@ func (v *VictoriaLogsClient) Equal(other *VictoriaLogsClient) bool {
 		v.Password == other.Password &&
 		v.MaxQueryRows == other.MaxQueryRows &&
 		v.SkipTLSVerify == other.SkipTLSVerify
-}
-
-func (v *VictoriaLogsClient) Validate() error {
-	data := url.Values{}
-	data.Set("query", "*")
-	data.Set("limit", "1")
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(data.Encode()))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %v", err)
-	}
-
-	if v.User != "" {
-		req.SetBasicAuth(v.User, v.Password)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := v.Client.Do(req)
-	if err != nil {
-		return fmt.Errorf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-	return nil
 }
 
 func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {

@@ -31,7 +31,7 @@ func (v *VictoriaLogs) Init(settings map[string]interface{}) (datasource.Datasou
 }
 
 func (v *VictoriaLogs) Validate(ctx context.Context) error {
-	return v.VictoriaLogsClient.Validate()
+	return nil
 }
 
 func (v *VictoriaLogs) Equal(p datasource.Datasource) bool {
@@ -65,37 +65,13 @@ func (v *VictoriaLogs) QueryMapData(ctx context.Context, query interface{}) ([]m
 	return nil, nil
 }
 
-func toMapStringInterface(in interface{}) map[string]interface{} {
-	switch m := in.(type) {
-	case map[string]interface{}:
-		return m
-	case map[string]string:
-		out := make(map[string]interface{}, len(m))
-		for k, v := range m {
-			out[k] = v
-		}
-		return out
-	case map[interface{}]interface{}:
-		out := make(map[string]interface{}, len(m))
-		for k, v := range m {
-			out[fmt.Sprint(k)] = v
-		}
-		return out
-	default:
-		return nil
-	}
-}
-
-func buildDataRespFromMetricAndValueSlices(qp *victorialogs.QueryParam, metric interface{}, valueSlices [][]interface{}) models.DataResp {
+func buildDataRespFromMetricAndValueSlices(qp *victorialogs.QueryParam, metric map[string]interface{}, valueSlices [][]interface{}) models.DataResp {
 	dr := models.DataResp{
 		Values: make([][]float64, 0, len(valueSlices)),
 		Ref:    qp.Ref,
 	}
-	if err := mapstructure.Decode(metric, &dr.Metric); err != nil {
-		if mm := toMapStringInterface(metric); mm != nil {
-			_ = mapstructure.Decode(mm, &dr.Metric)
-		}
-	}
+	_ = mapstructure.Decode(metric, &dr.Metric)
+
 	for _, val := range valueSlices {
 		if val == nil {
 			continue
