@@ -95,19 +95,32 @@ func (q *QueryParam) IsInstantQuery() bool {
 }
 
 type authTransport struct {
-	base   http.RoundTripper
-	header string // base64 encoded "user:pass"
+	base    http.RoundTripper
+	header  string            // base64 encoded "user:pass"
+	headers map[string]string // default headers to inject
 }
 
+// RoundTrip 注入认证信息和默认 headers
 func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// 不要直接修改传入的 req，因为可能被复用；克隆后修改 header
-	if t.header != "" && req.Header.Get("Authorization") == "" {
-		req2 := req.Clone(req.Context())
-		req2.Header = req.Header.Clone()
-		req2.Header.Set("Authorization", fmt.Sprintf("Basic %s", t.header))
-		return t.base.RoundTrip(req2)
+
+	if t.header == "" && len(t.headers) == 0 {
+		return t.base.RoundTrip(req)
 	}
-	return t.base.RoundTrip(req)
+
+	req2 := req.Clone(req.Context())
+	req2.Header = req.Header.Clone()
+	// 注入 Basic Auth
+	if t.header != "" && req2.Header.Get("Authorization") == "" {
+		req2.Header.Set("Authorization", fmt.Sprintf("Basic %s", t.header))
+	}
+	// 注入默认 headers
+	for k, v := range t.headers {
+		if req2.Header.Get(k) == "" {
+			req2.Header.Set(k, v)
+		}
+	}
+
+	return t.base.RoundTrip(req2)
 }
 
 func (v *VictoriaLogsClient) InitCli() error {
@@ -137,8 +150,9 @@ func (v *VictoriaLogsClient) InitCli() error {
 
 	v.Client = &http.Client{
 		Transport: &authTransport{
-			base:   transport,
-			header: basic,
+			base:    transport,
+			header:  basic,
+			headers: v.Headers,
 		},
 	}
 	return nil
