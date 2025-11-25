@@ -15,14 +15,14 @@ import (
 )
 
 type VictoriaLogsClient struct {
-	Url                 string       `json:"vl.url" mapstructure:"vl.url"`
-	User                string       `json:"vl.user" mapstructure:"vl.user"`
-	Password            string       `json:"vl.password" mapstructure:"vl.password"`
-	MaxQueryRows        int          `json:"vl.max_query_rows" mapstructure:"vl.max_query_rows"`
-	SkipTLSVerify       bool         `json:"vl.skip_tls_verify" mapstructure:"vl.skip_tls_verify"`
-	DialTimeout         int          `json:"vl.dial_timeout" mapstructure:"vl.dial_timeout"`
-	MaxIdleConnsPerHost int          `json:"vl.max_idle_conns_per_host" mapstructure:"vl.max_idle_conns_per_host"`
-	Client              *http.Client `json:"-" mapstructure:"-"`
+	Url                 string            `json:"victorialogs.url" mapstructure:"victorialogs.url"`
+	User                string            `json:"victorialogs.basic.username" mapstructure:"victorialogs.basic.username"`
+	Password            string            `json:"victorialogs.basic.password" mapstructure:"victorialogs.basic.password"`
+	SkipTLSVerify       bool              `json:"victorialogs.skip_tls_verify" mapstructure:"victorialogs.skip_tls_verify"`
+	DialTimeout         int               `json:"victorialogs.dial_timeout" mapstructure:"victorialogs.dial_timeout"`
+	MaxIdleConnsPerHost int               `json:"victorialogs.max_idle_conns_per_host" mapstructure:"victorialogs.max_idle_conns_per_host"`
+	Headers             map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
+	Client              *http.Client      `json:"-" mapstructure:"-"`
 }
 
 type QueryParam struct {
@@ -144,12 +144,15 @@ func (v *VictoriaLogsClient) InitCli() error {
 	return nil
 }
 
-func (v *VictoriaLogsClient) Equal(other *VictoriaLogsClient) bool {
-	return v.Url == other.Url &&
-		v.User == other.User &&
-		v.Password == other.Password &&
-		v.MaxQueryRows == other.MaxQueryRows &&
-		v.SkipTLSVerify == other.SkipTLSVerify
+func (v *VictoriaLogsClient) Validate() error {
+	v.InitCli()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := v.QueryLogs(ctx, &QueryParam{
+		Query: "*",
+		Time:  time.Now().Unix(),
+	})
+	return err
 }
 
 func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {

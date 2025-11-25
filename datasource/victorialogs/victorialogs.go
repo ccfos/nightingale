@@ -3,6 +3,7 @@ package victorialogs
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/ccfos/nightingale/v6/datasource"
@@ -30,15 +31,21 @@ func (v *VictoriaLogs) Init(settings map[string]interface{}) (datasource.Datasou
 }
 
 func (v *VictoriaLogs) Validate(ctx context.Context) error {
-	return nil
+	return v.VictoriaLogsClient.Validate()
 }
 
-func (v *VictoriaLogs) Equal(p datasource.Datasource) bool {
-	other, ok := p.(*VictoriaLogs)
+func (v *VictoriaLogs) Equal(other datasource.Datasource) bool {
+	otherDs, ok := other.(*VictoriaLogs)
 	if !ok {
 		return false
 	}
-	return (&v.VictoriaLogsClient).Equal(&other.VictoriaLogsClient)
+	return v.Url == otherDs.Url &&
+		v.User == otherDs.User &&
+		v.Password == otherDs.Password &&
+		v.SkipTLSVerify == otherDs.SkipTLSVerify &&
+		v.DialTimeout == otherDs.DialTimeout &&
+		v.MaxIdleConnsPerHost == otherDs.MaxIdleConnsPerHost &&
+		reflect.DeepEqual(v.Headers, otherDs.Headers)
 }
 
 func (v *VictoriaLogs) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
