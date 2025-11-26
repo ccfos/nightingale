@@ -38,9 +38,6 @@ func (v *VictoriaLogs) Validate(ctx context.Context) error {
 	if (v.Username != "" && v.Password == "") || (v.Username == "" && v.Password != "") {
 		return fmt.Errorf("both username and password must be provided")
 	}
-	if v.Client.Timeout <= 0 {
-		v.Client.Timeout = 30 // 设置默认超时时间为30秒
-	}
 	if v.DialTimeout <= 0 {
 		v.DialTimeout = 10 // 设置默认拨号超时时间为10秒
 	}
