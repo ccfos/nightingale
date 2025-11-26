@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var v = VictoriaLogsClient{
+var v = VictoriaLogs{
 	Url:      "http://192.168.31.231:9428",
 	Username: "",
 	Password: "",

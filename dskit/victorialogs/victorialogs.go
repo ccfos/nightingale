@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type VictoriaLogsClient struct {
+type VictoriaLogs struct {
 	Url                 string            `json:"victorialogs.url" mapstructure:"victorialogs.url"`
 	Username            string            `json:"victorialogs.basic.username" mapstructure:"victorialogs.basic.username"`
 	Password            string            `json:"victorialogs.basic.password" mapstructure:"victorialogs.basic.password"`
@@ -123,7 +123,7 @@ func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.base.RoundTrip(req2)
 }
 
-func (v *VictoriaLogsClient) InitCli() error {
+func (v *VictoriaLogs) InitCli() error {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -158,7 +158,7 @@ func (v *VictoriaLogsClient) InitCli() error {
 	return nil
 }
 
-func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
+func (v *VictoriaLogs) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
@@ -210,7 +210,7 @@ func (v *VictoriaLogsClient) QueryLogs(ctx context.Context, qp *QueryParam) ([]m
 	return results, nil
 }
 
-func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam) (*StatsQueryRangeResult, error) {
+func (v *VictoriaLogs) StatsQueryRange(ctx context.Context, qp *QueryParam) (*StatsQueryRangeResult, error) {
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query_range"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
@@ -241,7 +241,7 @@ func (v *VictoriaLogsClient) StatsQueryRange(ctx context.Context, qp *QueryParam
 	return &sqr, nil
 }
 
-func (v *VictoriaLogsClient) StatsQuery(ctx context.Context, qp *QueryParam) (*StatsQueryResult, error) {
+func (v *VictoriaLogs) StatsQuery(ctx context.Context, qp *QueryParam) (*StatsQueryResult, error) {
 	if qp.Time == 0 {
 		qp.Time = time.Now().Unix()
 	}
@@ -276,7 +276,7 @@ func (v *VictoriaLogsClient) StatsQuery(ctx context.Context, qp *QueryParam) (*S
 }
 
 // HitsLogs 返回查询命中的日志数量，用于计算total
-func (v *VictoriaLogsClient) HitsLogs(ctx context.Context, qp *QueryParam) (int64, error) {
+func (v *VictoriaLogs) HitsLogs(ctx context.Context, qp *QueryParam) (int64, error) {
 	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/hits"), strings.NewReader(qp.MakeBody().Encode()))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create request: %v", err)

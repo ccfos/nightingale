@@ -13,7 +13,7 @@ import (
 )
 
 type VictoriaLogs struct {
-	victorialogs.VictoriaLogsClient `json:",inline" mapstructure:",squash"`
+	victorialogs.VictoriaLogs `json:",inline" mapstructure:",squash"`
 }
 
 func init() {
