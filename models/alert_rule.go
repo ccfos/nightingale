@@ -33,7 +33,8 @@ const (
 	DORIS         = "doris"
 	OPENSEARCH    = "opensearch"
 
-	CLICKHOUSE = "ck"
+	CLICKHOUSE   = "ck"
+	VICTORIALOGS = "victorialogs"
 )
 
 const (
@@ -1219,7 +1220,8 @@ func (ar *AlertRule) IsInnerRule() bool {
 		ar.Cate == MYSQL ||
 		ar.Cate == POSTGRESQL ||
 		ar.Cate == DORIS ||
-		ar.Cate == OPENSEARCH
+		ar.Cate == OPENSEARCH ||
+		ar.Cate == VICTORIALOGS
 }
 
 func (ar *AlertRule) GetRuleType() string {
