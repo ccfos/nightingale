@@ -1,309 +1,306 @@
 package victorialogs
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type VictoriaLogs struct {
-	Url                 string            `json:"victorialogs.url" mapstructure:"victorialogs.url"`
-	Username            string            `json:"victorialogs.basic.username" mapstructure:"victorialogs.basic.username"`
-	Password            string            `json:"victorialogs.basic.password" mapstructure:"victorialogs.basic.password"`
-	SkipTLSVerify       bool              `json:"victorialogs.skip_tls_verify" mapstructure:"victorialogs.skip_tls_verify"`
-	DialTimeout         int               `json:"victorialogs.dial_timeout" mapstructure:"victorialogs.dial_timeout"`
-	MaxIdleConnsPerHost int               `json:"victorialogs.max_idle_conns_per_host" mapstructure:"victorialogs.max_idle_conns_per_host"`
-	Headers             map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
-	Client              *http.Client      `json:"-" mapstructure:"-"`
+	VictorialogsAddr  string `json:"victorialogs.addr" mapstructure:"victorialogs.addr"`
+	VictorialogsBasic struct {
+		VictorialogsUser string `json:"victorialogs.user" mapstructure:"victorialogs.user"`
+		VictorialogsPass string `json:"victorialogs.password" mapstructure:"victorialogs.password"`
+		IsEncrypt        bool   `json:"victorialogs.is_encrypt" mapstructure:"victorialogs.is_encrypt"`
+	} `json:"victorialogs.basic" mapstructure:"victorialogs.basic"`
+	VictorialogsTls struct {
+		SkipTlsVerify bool `json:"victorialogs.tls.skip_tls_verify" mapstructure:"victorialogs.tls.skip_tls_verify"`
+	} `json:"victorialogs.tls" mapstructure:"victorialogs.tls"`
+	Headers      map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
+	Timeout      int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"` // millis
+	ClusterName  string            `json:"victorialogs.cluster_name" mapstructure:"victorialogs.cluster_name"`
+	WriteAddr    string            `json:"victorialogs.write_addr" mapstructure:"victorialogs.write_addr"`
+	TsdbType     string            `json:"victorialogs.tsdb_type" mapstructure:"victorialogs.tsdb_type"`
+	InternalAddr string            `json:"victorialogs.internal_addr" mapstructure:"victorialogs.internal_addr"`
+
+	HTTPClient *http.Client `json:"-" mapstructure:"-"`
 }
 
-type QueryParam struct {
-	Query   string `json:"query" mapstructure:"query"`
-	Limit   int    `json:"limit" mapstructure:"limit"`
-	Start   int64  `json:"start" mapstructure:"start"`     // unix 秒
-	End     int64  `json:"end" mapstructure:"end"`         // unix 秒
-	Time    int64  `json:"time" mapstructure:"time"`       // unix 秒，相对于 now 的时间范围或者绝对时间
-	Timeout int    `json:"timeout" mapstructure:"timeout"` // 超时时间，单位秒
-	Ref     string `json:"ref" mapstructure:"ref"`         // 查询引用 ID
+// LogEntry 日志条目
+type LogEntry map[string]interface{}
+
+// PrometheusResponse Prometheus 响应格式
+type PrometheusResponse struct {
+	Status string         `json:"status"`
+	Data   PrometheusData `json:"data"`
+	Error  string         `json:"error,omitempty"`
 }
 
+// PrometheusData Prometheus 数据部分
+type PrometheusData struct {
+	ResultType string           `json:"resultType"`
+	Result     []PrometheusItem `json:"result"`
+}
+
+// PrometheusItem Prometheus 数据项
+type PrometheusItem struct {
+	Metric map[string]string `json:"metric"`
+	Value  []interface{}     `json:"value,omitempty"`  // [timestamp, value]
+	Values [][]interface{}   `json:"values,omitempty"` // [[timestamp, value], ...]
+}
+
+// HitsResult hits 查询响应
 type HitsResult struct {
 	Hits []struct {
 		Total int64 `json:"total"`
 	}
 }
 
-type StatsQueryRangeResult struct {
-	Status string `json:"status"`
-	Data   struct {
-		ResultType string `json:"resultType"`
-		Result     []struct {
-			Metric map[string]interface{} `json:"metric"`
-			Values [][]interface{}        `json:"values"`
-		} `json:"result"`
-	} `json:"data"`
-}
-
-type StatsQueryResult struct {
-	Status string `json:"status"`
-	Data   struct {
-		ResultType string `json:"resultType"`
-		Result     []struct {
-			Metric map[string]interface{} `json:"metric"`
-			Value  []interface{}          `json:"value"`
-		} `json:"result"`
-	} `json:"data"`
-}
-
-func (q *QueryParam) MakeBody() url.Values {
-	data := url.Values{}
-	data.Set("query", q.Query)
-
-	if q.Limit > 0 {
-		data.Set("limit", fmt.Sprintf("%d", q.Limit))
-	}
-
-	if q.Time != 0 {
-		data.Set("time", fmt.Sprintf("%d", q.Time*1000))
-	} else {
-		if q.Start != 0 {
-			data.Set("start", fmt.Sprintf("%d", q.Start*1000))
-		}
-		if q.End != 0 {
-			data.Set("end", fmt.Sprintf("%d", q.End*1000))
-		}
-	}
-
-	if q.Timeout != 0 {
-		data.Set("timeout", fmt.Sprintf("%ds", q.Timeout))
-	}
-
-	return data
-}
-
-// IsInstantQuery 判断是否为即时查询
-func (q *QueryParam) IsInstantQuery() bool {
-	return q.Time > 0 || (q.Start > 0 && q.Start == q.End) || q.Start == 0
-}
-
-type authTransport struct {
-	base    http.RoundTripper
-	header  string            // base64 encoded "user:pass"
-	headers map[string]string // default headers to inject
-}
-
-// RoundTrip 注入认证信息和默认 headers
-func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-
-	if t.header == "" && len(t.headers) == 0 {
-		return t.base.RoundTrip(req)
-	}
-
-	req2 := req.Clone(req.Context())
-	req2.Header = req.Header.Clone()
-	// 注入 Basic Auth
-	if t.header != "" && req2.Header.Get("Authorization") == "" {
-		req2.Header.Set("Authorization", fmt.Sprintf("Basic %s", t.header))
-	}
-	// 注入默认 headers
-	for k, v := range t.headers {
-		if req2.Header.Get(k) == "" {
-			req2.Header.Set(k, v)
-		}
-	}
-
-	return t.base.RoundTrip(req2)
-}
-
-func (v *VictoriaLogs) InitCli() error {
+// InitHTTPClient 初始化 HTTP 客户端
+func (vl *VictoriaLogs) InitHTTPClient() error {
 	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   time.Duration(v.DialTimeout) * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DisableCompression:    true,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: v.SkipTLSVerify,
-		},
-		MaxIdleConnsPerHost: v.MaxIdleConnsPerHost,
-	}
-
-	var basic string
-	if v.Username != "" {
-		basic = base64.StdEncoding.EncodeToString([]byte(v.Username + ":" + v.Password))
-		transport.ProxyConnectHeader = http.Header{
-			"Authorization": []string{fmt.Sprintf("Basic %s", basic)},
-		}
-	}
-
-	v.Client = &http.Client{
-		Transport: &authTransport{
-			base:    transport,
-			header:  basic,
-			headers: v.Headers,
+			InsecureSkipVerify: vl.VictorialogsTls.SkipTlsVerify,
 		},
 	}
+
+	timeout := time.Duration(vl.Timeout) * time.Millisecond
+	if timeout == 0 {
+		timeout = 60 * time.Second
+	}
+
+	vl.HTTPClient = &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+	}
+
 	return nil
 }
 
-func (v *VictoriaLogs) QueryLogs(ctx context.Context, qp *QueryParam) ([]map[string]interface{}, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/query"), strings.NewReader(qp.MakeBody().Encode()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+// Query 执行日志查询
+// GET/POST /select/logsql/query?query=<query>&start=<start>&end=<end>&limit=<limit>
+func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int64, limit int) ([]LogEntry, error) {
+	params := url.Values{}
+	params.Set("query", query)
+
+	if start > 0 {
+		params.Set("start", strconv.FormatInt(start, 10))
+	}
+	if end > 0 {
+		params.Set("end", strconv.FormatInt(end, 10))
+	}
+	if limit > 0 {
+		params.Set("limit", strconv.Itoa(limit))
+	} else {
+		params.Set("limit", "1000") // 默认 1000 条
 	}
 
-	if v.Username != "" {
-		req.SetBasicAuth(v.Username, v.Password)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	endpoint := fmt.Sprintf("%s/select/logsql/query", vl.VictorialogsAddr)
 
-	resp, err := v.Client.Do(req)
+	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body failed: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("query failed: status=%d, body=%s", resp.StatusCode, string(body))
 	}
 
-	dec := json.NewDecoder(resp.Body)
-	results := make([]map[string]interface{}, 0, 16)
-
-	for {
-		// respect context cancellation
-		select {
-		case <-ctx.Done():
-			return results, ctx.Err()
-		default:
+	// VictoriaLogs returns NDJSON format (one JSON object per line)
+	var logs []LogEntry
+	scanner := bufio.NewScanner(strings.NewReader(string(body)))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
 		}
-
-		// respect limit
-		if qp.Limit > 0 && len(results) >= qp.Limit {
-			return results, nil
+		var entry LogEntry
+		if err := json.Unmarshal([]byte(line), &entry); err != nil {
+			return nil, fmt.Errorf("decode log entry failed: %w, line=%s", err, line)
 		}
-
-		var obj map[string]interface{}
-		if err := dec.Decode(&obj); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return results, fmt.Errorf("failed to decode stream: %v", err)
-		}
-
-		results = append(results, obj)
+		logs = append(logs, entry)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scan response failed: %w", err)
 	}
 
-	return results, nil
+	return logs, nil
 }
 
-func (v *VictoriaLogs) StatsQueryRange(ctx context.Context, qp *QueryParam) (*StatsQueryRangeResult, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query_range"), strings.NewReader(qp.MakeBody().Encode()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+// StatsQuery 执行统计查询（单点时间）
+// POST /select/logsql/stats_query?query=<query>&time=<time>
+func (vl *VictoriaLogs) StatsQuery(ctx context.Context, query string, time int64) (*PrometheusResponse, error) {
+	params := url.Values{}
+	params.Set("query", query)
+
+	if time > 0 {
+		params.Set("time", strconv.FormatInt(time, 10))
 	}
 
-	if v.Username != "" {
-		req.SetBasicAuth(v.Username, v.Password)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	endpoint := fmt.Sprintf("%s/select/logsql/stats_query", vl.VictorialogsAddr)
 
-	resp, err := v.Client.Do(req)
+	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body failed: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("stats query failed: status=%d, body=%s", resp.StatusCode, string(body))
 	}
 
-	dec := json.NewDecoder(resp.Body)
-	var sqr StatsQueryRangeResult
-	if err := dec.Decode(&sqr); err != nil {
-		return nil, fmt.Errorf("failed to decode stats response: %v", err)
+	var result PrometheusResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
 	}
 
-	return &sqr, nil
+	if result.Status != "success" {
+		return nil, fmt.Errorf("query failed: %s", result.Error)
+	}
+
+	return &result, nil
 }
 
-func (v *VictoriaLogs) StatsQuery(ctx context.Context, qp *QueryParam) (*StatsQueryResult, error) {
-	if qp.Time == 0 {
-		qp.Time = time.Now().Unix()
+// StatsQueryRange 执行统计查询（时间范围）
+// POST /select/logsql/stats_query_range?query=<query>&start=<start>&end=<end>&step=<step>
+func (vl *VictoriaLogs) StatsQueryRange(ctx context.Context, query string, start, end int64, step string) (*PrometheusResponse, error) {
+	params := url.Values{}
+	params.Set("query", query)
+
+	if start > 0 {
+		params.Set("start", strconv.FormatInt(start, 10))
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/stats_query"), strings.NewReader(qp.MakeBody().Encode()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+	if end > 0 {
+		params.Set("end", strconv.FormatInt(end, 10))
+	}
+	if step != "" {
+		params.Set("step", step)
 	}
 
-	if v.Username != "" {
-		req.SetBasicAuth(v.Username, v.Password)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	endpoint := fmt.Sprintf("%s/select/logsql/stats_query_range", vl.VictorialogsAddr)
 
-	resp, err := v.Client.Do(req)
+	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %v", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body failed: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("stats query range failed: status=%d, body=%s", resp.StatusCode, string(body))
 	}
 
-	dec := json.NewDecoder(resp.Body)
-	var sr StatsQueryResult
-	if err := dec.Decode(&sr); err != nil {
-		return nil, fmt.Errorf("failed to decode stats response: %v", err)
+	var result PrometheusResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
 	}
 
-	return &sr, nil
+	if result.Status != "success" {
+		return nil, fmt.Errorf("query failed: %s", result.Error)
+	}
+
+	return &result, nil
 }
 
-// HitsLogs 返回查询命中的日志数量，用于计算total
-func (v *VictoriaLogs) HitsLogs(ctx context.Context, qp *QueryParam) (int64, error) {
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s%s", v.Url, "/select/logsql/hits"), strings.NewReader(qp.MakeBody().Encode()))
-	if err != nil {
-		return 0, fmt.Errorf("failed to create request: %v", err)
+// HitsLogs 返回查询命中的日志数量，用于计算 total
+// POST /select/logsql/hits?query=<query>&start=<start>&end=<end>
+func (vl *VictoriaLogs) HitsLogs(ctx context.Context, query string, start, end int64) (int64, error) {
+	params := url.Values{}
+	params.Set("query", query)
+
+	if start > 0 {
+		params.Set("start", strconv.FormatInt(start, 10))
+	}
+	if end > 0 {
+		params.Set("end", strconv.FormatInt(end, 10))
 	}
 
-	if v.Username != "" {
-		req.SetBasicAuth(v.Username, v.Password)
-	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	endpoint := fmt.Sprintf("%s/select/logsql/hits", vl.VictorialogsAddr)
 
-	resp, err := v.Client.Do(req)
+	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
 	if err != nil {
-		return 0, fmt.Errorf("request failed: %v", err)
+		return 0, err
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("read response body failed: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("request failed with status %d: %s", resp.StatusCode, string(body))
+		return 0, fmt.Errorf("hits query failed: status=%d, body=%s", resp.StatusCode, string(body))
 	}
-	dec := json.NewDecoder(resp.Body)
-	var hr HitsResult
-	if err := dec.Decode(&hr); err != nil {
-		return 0, fmt.Errorf("failed to decode hits response: %v", err)
+
+	var result HitsResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		return 0, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
 	}
-	if len(hr.Hits) == 0 {
+
+	if len(result.Hits) == 0 {
 		return 0, nil
 	}
-	return hr.Hits[0].Total, nil
+
+	return result.Hits[0].Total, nil
+}
+
+// doRequest 执行 HTTP 请求
+func (vl *VictoriaLogs) doRequest(ctx context.Context, method, endpoint string, params url.Values) (*http.Response, error) {
+	var req *http.Request
+	var err error
+
+	if method == "GET" {
+		fullURL := endpoint
+		if len(params) > 0 {
+			fullURL = fmt.Sprintf("%s?%s", endpoint, params.Encode())
+		}
+		req, err = http.NewRequestWithContext(ctx, method, fullURL, nil)
+	} else {
+		// POST with form data
+		req, err = http.NewRequestWithContext(ctx, method, endpoint, strings.NewReader(params.Encode()))
+		if err == nil {
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		}
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("create request failed: %w", err)
+	}
+
+	if vl.VictorialogsBasic.VictorialogsUser != "" {
+		req.SetBasicAuth(vl.VictorialogsBasic.VictorialogsUser, vl.VictorialogsBasic.VictorialogsPass)
+	}
+
+	// Custom Headers
+	for k, v := range vl.Headers {
+		req.Header.Set(k, v)
+	}
+
+	return vl.HTTPClient.Do(req)
 }
