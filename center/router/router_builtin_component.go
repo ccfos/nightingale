@@ -109,7 +109,6 @@ func (rt *Router) builtinComponentsAndPayloadsGets(c *gin.Context) {
 	allPayloads = append(allPayloads, dbPayloads...)
 	allPayloads = append(allPayloads, filePayloads...)
 
-	// 使用 map[string]map[string]struct{} 来去重 cate
 	compToCatesMap := make(map[string]map[string]struct{})
 
 	for i := range allPayloads {
@@ -128,7 +127,7 @@ func (rt *Router) builtinComponentsAndPayloadsGets(c *gin.Context) {
 			}
 		}
 
-		// 过滤逻辑：如果 query 不为空，检查 component 或 cate 是否包含 query
+		// 查询
 		if lowerQuery != "" {
 			if !strings.Contains(strings.ToLower(compName), lowerQuery) &&
 				!strings.Contains(strings.ToLower(payload.Cate), lowerQuery) {
@@ -136,7 +135,6 @@ func (rt *Router) builtinComponentsAndPayloadsGets(c *gin.Context) {
 			}
 		}
 
-		// 过滤掉空的 cate
 		if payload.Cate == "" {
 			continue
 		}
@@ -171,6 +169,5 @@ func (rt *Router) builtinComponentsAndPayloadsGets(c *gin.Context) {
 		ret = ret[:20]
 	}
 
-	// 返回
 	ginx.NewRender(c).Data(ret, nil)
 }
