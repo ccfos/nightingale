@@ -99,7 +99,7 @@ func (rt *Router) builtinComponentsAndPayloadsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	lowerQuery := strings.ToLower(query)
 
-	dbPayloads, err := models.BuiltinPayloadGetsAll(rt.Ctx)
+	dbPayloads, err := models.BuiltinPayloadGets(rt.Ctx, 0, "", "", "")
 	ginx.Dangerous(err)
 
 	filePayloads, err := integration.BuiltinPayloadInFile.GetAllBuiltinPayloads("")
