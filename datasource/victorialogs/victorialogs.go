@@ -83,6 +83,10 @@ func (vl *VictoriaLogs) Validate(ctx context.Context) error {
 		vl.Timeout = 10000 // 默认 10 秒
 	}
 
+	if vl.MaxQueryRows == 0 {
+		vl.MaxQueryRows = 1000
+	}
+
 	return nil
 }
 

@@ -27,9 +27,7 @@ type VictoriaLogs struct {
 	Headers      map[string]string `json:"victorialogs.headers" mapstructure:"victorialogs.headers"`
 	Timeout      int64             `json:"victorialogs.timeout" mapstructure:"victorialogs.timeout"` // millis
 	ClusterName  string            `json:"victorialogs.cluster_name" mapstructure:"victorialogs.cluster_name"`
-	WriteAddr    string            `json:"victorialogs.write_addr" mapstructure:"victorialogs.write_addr"`
-	TsdbType     string            `json:"victorialogs.tsdb_type" mapstructure:"victorialogs.tsdb_type"`
-	InternalAddr string            `json:"victorialogs.internal_addr" mapstructure:"victorialogs.internal_addr"`
+	MaxQueryRows int               `json:"victorialogs.max_query_rows" mapstructure:"victorialogs.max_query_rows"`
 
 	HTTPClient *http.Client `json:"-" mapstructure:"-"`
 }
@@ -103,7 +101,7 @@ func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int6
 	if limit > 0 {
 		params.Set("limit", strconv.Itoa(limit))
 	} else {
-		params.Set("limit", "1000") // 默认 1000 条
+		params.Set("limit", strconv.Itoa(vl.MaxQueryRows)) // 默认 1000 条
 	}
 
 	endpoint := fmt.Sprintf("%s/select/logsql/query", vl.VictorialogsAddr)
