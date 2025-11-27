@@ -23,6 +23,11 @@ type BuiltinComponent struct {
 	UpdatedBy string `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
+type BuiltinComponentWithPayloads struct {
+	BuiltinComponent
+	Payloads []*BuiltinPayload `json:"payloads"`
+}
+
 type PostgresBuiltinComponent struct {
 	ID        uint64 `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
 	Ident     string `json:"ident" gorm:"type:varchar(191);not null;index:idx_ident;comment:'identifier of component'"`

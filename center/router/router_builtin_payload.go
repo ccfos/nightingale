@@ -210,7 +210,6 @@ func (rt *Router) builtinPayloadsGets(c *gin.Context) {
 
 	lstInFile, err := integration.BuiltinPayloadInFile.GetBuiltinPayload(typ, cate, query, uint64(ComponentID))
 	ginx.Dangerous(err)
-
 	if len(lstInFile) > 0 {
 		lst = append(lst, lstInFile...)
 	}

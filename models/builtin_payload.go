@@ -144,6 +144,12 @@ func BuiltinPayloadGets(ctx *ctx.Context, componentId uint64, typ, cate, query s
 	return lst, err
 }
 
+func BuiltinPayloadGetsAll(ctx *ctx.Context) ([]*BuiltinPayload, error) {
+	var lst []*BuiltinPayload
+	err := DB(ctx).Find(&lst).Error
+	return lst, err
+}
+
 // get cates of BuiltinPayload by type and component, return []string
 func BuiltinPayloadCates(ctx *ctx.Context, typ string, componentID uint64) ([]string, error) {
 	var cates []string
