@@ -131,7 +131,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 	p.inhibit = inhibit
 	cachedRule := p.alertRuleCache.Get(p.rule.Id)
 	if cachedRule == nil {
-		logger.Errorf("rule not found %+v", anomalyPoints)
+		logger.Warningf("process handle error: rule not found %+v rule_id:%d maybe rule has been deleted", anomalyPoints, p.rule.Id)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 		return
 	}
