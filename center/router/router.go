@@ -625,6 +625,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/busi-groups", rt.busiGroupGetsByService)
 
 			service.GET("/datasources", rt.datasourceGetsByService)
+			service.GET("/datasource-rsa-config", rt.datasourceRsaConfigGet)
 			service.GET("/datasource-ids", rt.getDatasourceIds)
 			service.POST("/server-heartbeat", rt.serverHeartbeat)
 			service.GET("/servers-active", rt.serversActive)

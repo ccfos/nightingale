@@ -1,6 +1,10 @@
 package cconf
 
-import "time"
+import (
+	"time"
+
+	"github.com/ccfos/nightingale/v6/pkg/httpx"
+)
 
 type Center struct {
 	Plugins                []Plugin
@@ -15,6 +19,7 @@ type Center struct {
 	EventHistoryGroupView  bool
 	CleanNotifyRecordDay   int
 	MigrateBusiGroupLabel  bool
+	RSA                    httpx.RSAConfig
 }
 
 type Plugin struct {
