@@ -36,11 +36,11 @@ func Init(ctx *ctx.Context, fromAPI bool) {
 		}
 		if c.OpenRSA {
 			logger.Infof("datasource rsa is open in n9e-plus")
-		}
-		rsaConfig.DatasourceRsaConfigResp = c
-		rsaConfig.PrivateKeyBytes, err = base64.StdEncoding.DecodeString(c.RSAPrivateKey)
-		if err != nil {
-			logger.Fatalf("failed to decode rsa-config, error: %v", err)
+			rsaConfig.DatasourceRsaConfigResp = c
+			rsaConfig.PrivateKeyBytes, err = base64.StdEncoding.DecodeString(c.RSAPrivateKey)
+			if err != nil {
+				logger.Fatalf("failed to decode rsa-config, error: %v", err)
+			}
 		}
 		models.SetRsaConfig(rsaConfig)
 	}
