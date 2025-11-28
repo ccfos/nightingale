@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -449,6 +450,10 @@ func (ds *Datasource) Encrypt(openRsa bool, publicKeyData []byte) error {
 
 // Decrypt 用于 edge 将从中心同步的数据源解密，中心不可调用
 func (ds *Datasource) Decrypt() error {
+	if rsaConfig == nil {
+		err := fmt.Errorf("%s", "datasource rsa config is nil")
+		return err
+	}
 	if !rsaConfig.OpenRSA {
 		return nil
 	}
