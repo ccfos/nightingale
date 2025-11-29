@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/secu"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -17,35 +19,63 @@ import (
 )
 
 type Datasource struct {
-	Id             int64                  `json:"id"`
-	Name           string                 `json:"name"`
-	Identifier     string                 `json:"identifier"`
-	Description    string                 `json:"description"`
-	PluginId       int64                  `json:"plugin_id"`
-	PluginType     string                 `json:"plugin_type"`      // prometheus
-	PluginTypeName string                 `json:"plugin_type_name"` // Prometheus Like
-	Category       string                 `json:"category"`         // timeseries
-	ClusterName    string                 `json:"cluster_name"`
-	Settings       string                 `json:"-" gorm:"settings"`
-	SettingsJson   map[string]interface{} `json:"settings" gorm:"-"`
-	Status         string                 `json:"status"`
-	HTTP           string                 `json:"-" gorm:"http"`
-	HTTPJson       HTTP                   `json:"http" gorm:"-"`
-	Auth           string                 `json:"-" gorm:"auth"`
-	AuthJson       Auth                   `json:"auth" gorm:"-"`
-	CreatedAt      int64                  `json:"created_at"`
-	UpdatedAt      int64                  `json:"updated_at"`
-	CreatedBy      string                 `json:"created_by"`
-	UpdatedBy      string                 `json:"updated_by"`
-	IsDefault      bool                   `json:"is_default"`
-	Transport      *http.Transport        `json:"-" gorm:"-"`
-	ForceSave      bool                   `json:"force_save" gorm:"-"`
+	Id              int64                  `json:"id"`
+	Name            string                 `json:"name"`
+	Identifier      string                 `json:"identifier"`
+	Description     string                 `json:"description"`
+	PluginId        int64                  `json:"plugin_id"`
+	PluginType      string                 `json:"plugin_type"`      // prometheus
+	PluginTypeName  string                 `json:"plugin_type_name"` // Prometheus Like
+	Category        string                 `json:"category"`         // timeseries
+	ClusterName     string                 `json:"cluster_name"`
+	Settings        string                 `json:"-" gorm:"settings"`
+	SettingsJson    map[string]interface{} `json:"settings" gorm:"-"`
+	SettingsEncoded string                 `json:"settings_encoded" gorm:"-"`
+	Status          string                 `json:"status"`
+	HTTP            string                 `json:"-" gorm:"http"`
+	HTTPJson        HTTP                   `json:"http" gorm:"-"`
+	Auth            string                 `json:"-" gorm:"auth"`
+	AuthJson        Auth                   `json:"auth" gorm:"-"`
+	AuthEncoded     string                 `json:"auth_encoded" gorm:"-"`
+	CreatedAt       int64                  `json:"created_at"`
+	UpdatedAt       int64                  `json:"updated_at"`
+	CreatedBy       string                 `json:"created_by"`
+	UpdatedBy       string                 `json:"updated_by"`
+	IsDefault       bool                   `json:"is_default"`
+	Transport       *http.Transport        `json:"-" gorm:"-"`
+	ForceSave       bool                   `json:"force_save" gorm:"-"`
 }
 
 type Auth struct {
 	BasicAuth         bool   `json:"basic_auth"`
 	BasicAuthUser     string `json:"basic_auth_user"`
 	BasicAuthPassword string `json:"basic_auth_password"`
+}
+
+var rsaConfig *RsaConfig
+
+type RsaConfig struct {
+	*DatasourceRsaConfigResp
+	PrivateKeyBytes []byte
+}
+
+type DatasourceRsaConfigResp struct {
+	OpenRSA       bool   `json:"open_rsa"`
+	RSAPublicKey  string `json:"rsa_public_key,omitempty"`
+	RSAPrivateKey string `json:"rsa_private_key,omitempty"`
+	RSAPassWord   string `json:"rsa_password,omitempty"`
+}
+
+func SetRsaConfig(cfg *RsaConfig) {
+	if cfg != nil {
+		rsaConfig = cfg
+		return
+	}
+	logger.Warning("Rsa config is nil")
+}
+
+func GetRsaConfig() *RsaConfig {
+	return rsaConfig
 }
 
 type HTTP struct {
@@ -211,6 +241,10 @@ func GetDatasources(ctx *ctx.Context) ([]Datasource, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
+			if err := lst[i].Decrypt(); err != nil {
+				logger.Errorf("decrypt datasource %+v fail: %v", lst[i], err)
+				continue
+			}
 			lst[i].FE2DB()
 		}
 		return lst, nil
@@ -387,6 +421,81 @@ func (ds *Datasource) DB2FE() error {
 	return nil
 }
 
+// Encrypt 数据源密码加密
+func (ds *Datasource) Encrypt(openRsa bool, publicKeyData []byte) error {
+	if !openRsa {
+		return nil
+	}
+
+	if ds.Settings != "" {
+		encVal, err := secu.EncryptValue(ds.Settings, publicKeyData)
+		if err != nil {
+			logger.Errorf("encrypt settings failed: datasource=%s err=%v", ds.Name, err)
+			return err
+		} else {
+			ds.SettingsEncoded = encVal
+		}
+	}
+	if ds.Auth != "" {
+		encVal, err := secu.EncryptValue(ds.Auth, publicKeyData)
+		if err != nil {
+			logger.Errorf("encrypt basic failed: datasource=%s err=%v", ds.Name, err)
+			return err
+		} else {
+			ds.AuthEncoded = encVal
+		}
+	}
+	return nil
+}
+
+// Decrypt 用于 edge 将从中心同步的数据源解密，中心不可调用
+func (ds *Datasource) Decrypt() error {
+	if rsaConfig == nil {
+		err := fmt.Errorf("%s", "datasource rsa config is nil")
+		return err
+	}
+	if !rsaConfig.OpenRSA {
+		return nil
+	}
+
+	privateKeyData := rsaConfig.PrivateKeyBytes
+	password := rsaConfig.RSAPassWord
+	if ds.SettingsEncoded != "" {
+		settings, err := secu.Decrypt(ds.SettingsEncoded, privateKeyData, password)
+		if err != nil {
+			return err
+		}
+		ds.Settings = settings
+		err = json.Unmarshal([]byte(settings), &ds.SettingsJson)
+		if err != nil {
+			return err
+		}
+	}
+
+	if ds.AuthEncoded != "" {
+		auth, err := secu.Decrypt(ds.AuthEncoded, privateKeyData, password)
+		if err != nil {
+			return err
+		}
+		ds.Auth = auth
+		err = json.Unmarshal([]byte(auth), &ds.AuthJson)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ClearPlaintext 清理敏感字段
+func (ds *Datasource) ClearPlaintext() {
+	ds.Settings = ""
+	ds.SettingsJson = nil
+
+	ds.Auth = ""
+	ds.AuthJson.BasicAuthUser = ""
+	ds.AuthJson.BasicAuthPassword = ""
+}
+
 func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 	var lst []*Datasource
 	var err error
@@ -396,6 +505,10 @@ func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
+			if err := lst[i].Decrypt(); err != nil {
+				logger.Errorf("decrypt datasource %+v fail: %v", lst[i], err)
+				continue
+			}
 			lst[i].FE2DB()
 		}
 	} else {
