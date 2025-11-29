@@ -411,6 +411,35 @@ func (b *BuiltinPayloadInFileType) GetBuiltinPayloadCates(typ string, componentI
 	return result, nil
 }
 
+// GetAllBuiltinPayloads 获取所有内置 payload（遍历所有组件、类型和分类）
+// query: 可选，用于过滤 payload 名称或标签
+func (b *BuiltinPayloadInFileType) GetAllBuiltinPayloads(query string) ([]*models.BuiltinPayload, error) {
+	var result []*models.BuiltinPayload
+
+	// 遍历所有组件 (Data map 的 key 是 component_id)
+	for _, source := range b.Data {
+		if source == nil {
+			continue
+		}
+		// 遍历该组件下的所有类型 (type -> cate -> payloads)
+		for _, typeMap := range source {
+			for _, payloads := range typeMap {
+				// 使用已有的 filterByQuery 进行过滤并追加到结果集
+				result = append(result, filterByQuery(payloads, query)...)
+			}
+		}
+	}
+
+	// 对结果按名称排序，保证输出稳定
+	if len(result) > 0 {
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name < result[j].Name
+		})
+	}
+
+	return result, nil
+}
+
 func filterByQuery(payloads []*models.BuiltinPayload, query string) []*models.BuiltinPayload {
 	if query == "" {
 		return payloads
