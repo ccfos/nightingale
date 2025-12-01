@@ -5,7 +5,7 @@ WORKDIR /app
 ADD n9e /app/
 ADD etc /app/etc/
 ADD integrations /app/integrations/
-RUN pip install requests
+RUN pip install requests Jinja2
 
 EXPOSE 17000
 
