@@ -34,9 +34,9 @@ func Init(ctx *ctx.Context, fromAPI bool) {
 		if err != nil || c == nil {
 			logger.Fatalf("failed to get datasource rsa-config, error: %v", err)
 		}
+		rsaConfig.DatasourceRsaConfigResp = c
 		if c.OpenRSA {
 			logger.Infof("datasource rsa is open in n9e-plus")
-			rsaConfig.DatasourceRsaConfigResp = c
 			rsaConfig.PrivateKeyBytes, err = base64.StdEncoding.DecodeString(c.RSAPrivateKey)
 			if err != nil {
 				logger.Fatalf("failed to decode rsa-config, error: %v", err)
