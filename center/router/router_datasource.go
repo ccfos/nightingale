@@ -75,14 +75,14 @@ func (rt *Router) datasourceRsaConfigGet(c *gin.Context) {
 			privateKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPrivateKey)
 		}
 		logger.Debugf("OpenRSA=%v", rt.Center.RSA.OpenRSA)
-		ginx.NewRender(c).Data(models.DatasourceRsaConfigResp{
+		ginx.NewRender(c).Data(models.RsaConfig{
 			OpenRSA:       rt.Center.RSA.OpenRSA,
 			RSAPublicKey:  publicKey,
 			RSAPrivateKey: privateKey,
 			RSAPassWord:   rt.HTTP.RSA.RSAPassWord,
 		}, nil)
 	} else {
-		ginx.NewRender(c).Data(models.DatasourceRsaConfigResp{
+		ginx.NewRender(c).Data(models.RsaConfig{
 			OpenRSA: rt.Center.RSA.OpenRSA,
 		}, nil)
 	}
