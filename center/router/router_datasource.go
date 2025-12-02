@@ -232,6 +232,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 
 	if req.PluginType == models.ELASTICSEARCH {
 		skipAuto := false
+		// 若用户输入了version（version字符串存在且不为空），则不自动获取
 		if req.SettingsJson != nil {
 			if v, ok := req.SettingsJson["version"]; ok {
 				switch vv := v.(type) {
@@ -455,6 +456,8 @@ func (rt *Router) datasourceQuery(c *gin.Context) {
 	ginx.NewRender(c).Data(req, err)
 }
 
+// getElasticsearchVersion 该函数尝试从提供的Elasticsearch数据源中获取版本号，遍历所有URL，
+// 直到成功获取版本号或所有URL均尝试失败为止。
 func getElasticsearchVersion(ds models.Datasource) (string, error) {
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -464,13 +467,11 @@ func getElasticsearchVersion(ds models.Datasource) (string, error) {
 		},
 	}
 
-	// collect urls to try
 	urls := make([]string, 0)
 	if len(ds.HTTPJson.Urls) > 0 {
 		urls = append(urls, ds.HTTPJson.Urls...)
 	}
 	if ds.HTTPJson.Url != "" {
-		// fallback to single Url if Urls empty or also try it
 		urls = append(urls, ds.HTTPJson.Url)
 	}
 	if len(urls) == 0 {
@@ -526,7 +527,6 @@ func getElasticsearchVersion(ds models.Datasource) (string, error) {
 			}
 
 			lastErr = fmt.Errorf("version not found in response from %s", baseURL)
-			// if this attempt didn't work, try again (up to 10)
 		}
 	}
 
