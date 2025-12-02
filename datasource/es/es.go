@@ -110,27 +110,72 @@ func (e *Elasticsearch) InitClient() error {
 		return err
 	}
 
-	if e.Client != nil {
-		for _, addr := range e.Nodes {
-			if addr == "" {
-				continue
-			}
-			if ver, verr := e.Client.ElasticsearchVersion(addr); verr == nil {
-				logger.Infof("detected elasticsearch version from %s: %s", addr, ver)
-				e.Version = ver
-				e.Addr = addr
-				break
-			} else {
-				logger.Debugf("detect version failed from %s: %v", addr, verr)
-			}
-		}
-		if e.Version == "" {
-			logger.Warning("failed to detect elasticsearch version from configured nodes, keep configured version")
-		}
-	}
-
 	return err
 }
+
+// func (e *Elasticsearch) GetVersion() string {
+// 	addrs := e.Nodes
+// 	if len(addrs) == 0 && e.Addr != "" {
+// 		addrs = []string{e.Addr}
+// 	}
+
+// 	if len(addrs) == 0 {
+// 		return e.Version
+// 	}
+
+// 	maxAttempts := 10
+// 	for attempt := 0; attempt < maxAttempts; attempt++ {
+// 		for _, addr := range addrs {
+// 			if addr == "" {
+// 				continue
+// 			}
+
+// 			var ver string
+// 			var err error
+
+// 			if e.Client != nil {
+// 				ver, err = e.Client.ElasticsearchVersion(addr)
+// 			} else {
+// 				// 临时创建 client 以便探测版本（不启用 sniff/healthcheck）
+// 				options := []elastic.ClientOptionFunc{
+// 					elastic.SetURL(addr),
+// 					elastic.SetSniff(false),
+// 					elastic.SetHealthcheck(false),
+// 				}
+// 				if e.Basic.Username != "" {
+// 					options = append(options, elastic.SetBasicAuth(e.Basic.Username, e.Basic.Password))
+// 				}
+// 				if len(e.Headers) > 0 {
+// 					h := http.Header{}
+// 					for k, v := range e.Headers {
+// 						h[k] = []string{v}
+// 					}
+// 					options = append(options, elastic.SetHeaders(h))
+// 				}
+// 				client, cerr := elastic.NewClient(options...)
+// 				if cerr != nil {
+// 					err = cerr
+// 				} else {
+// 					ver, err = client.ElasticsearchVersion(addr)
+// 				}
+// 			}
+
+// 			if err == nil && ver != "" {
+// 				e.Version = ver
+// 				e.Addr = addr
+// 				return ver
+// 			}
+
+// 			logger.Debugf("detect version failed from %s: %v", addr, err)
+// 		}
+
+// 		// 指数退避或递增等待
+// 		time.Sleep(time.Duration(attempt+1) * time.Second)
+// 	}
+
+// 	logger.Warning("failed to detect elasticsearch version from configured nodes, keep configured version")
+// 	return e.Version
+// }
 
 func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 	sort.Strings(e.Nodes)
