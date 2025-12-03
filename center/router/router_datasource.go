@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
@@ -248,7 +249,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 
 		if !skipAuto {
-			version, err := getElasticsearchVersion(req)
+			version, err := getElasticsearchVersion(req, 10*time.Second)
 			if err != nil {
 				logger.Warningf("failed to get elasticsearch version: %v", err)
 			} else {
@@ -457,8 +458,9 @@ func (rt *Router) datasourceQuery(c *gin.Context) {
 
 // getElasticsearchVersion 该函数尝试从提供的Elasticsearch数据源中获取版本号，遍历所有URL，
 // 直到成功获取版本号或所有URL均尝试失败为止。
-func getElasticsearchVersion(ds models.Datasource) (string, error) {
+func getElasticsearchVersion(ds models.Datasource, timeout time.Duration) (string, error) {
 	client := &http.Client{
+		Timeout: timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
@@ -480,53 +482,51 @@ func getElasticsearchVersion(ds models.Datasource) (string, error) {
 	var lastErr error
 	for _, raw := range urls {
 		baseURL := strings.TrimRight(raw, "/") + "/"
-		for attempt := 0; attempt < 10; attempt++ {
-			req, err := http.NewRequest("GET", baseURL, nil)
-			if err != nil {
-				lastErr = err
-				continue
-			}
-
-			if ds.AuthJson.BasicAuthUser != "" {
-				req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
-			}
-
-			for k, v := range ds.HTTPJson.Headers {
-				req.Header.Set(k, v)
-			}
-
-			resp, err := client.Do(req)
-			if err != nil {
-				lastErr = err
-				continue
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				lastErr = err
-				continue
-			}
-
-			if resp.StatusCode != 200 {
-				lastErr = fmt.Errorf("request to %s failed with status: %d body:%s", baseURL, resp.StatusCode, string(body))
-				continue
-			}
-
-			var result map[string]interface{}
-			if err := json.Unmarshal(body, &result); err != nil {
-				lastErr = err
-				continue
-			}
-
-			if version, ok := result["version"].(map[string]interface{}); ok {
-				if number, ok := version["number"].(string); ok && number != "" {
-					return number, nil
-				}
-			}
-
-			lastErr = fmt.Errorf("version not found in response from %s", baseURL)
+		req, err := http.NewRequest("GET", baseURL, nil)
+		if err != nil {
+			lastErr = err
+			continue
 		}
+
+		if ds.AuthJson.BasicAuthUser != "" {
+			req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+		}
+
+		for k, v := range ds.HTTPJson.Headers {
+			req.Header.Set(k, v)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode != 200 {
+			lastErr = fmt.Errorf("request to %s failed with status: %d body:%s", baseURL, resp.StatusCode, string(body))
+			continue
+		}
+
+		var result map[string]interface{}
+		if err := json.Unmarshal(body, &result); err != nil {
+			lastErr = err
+			continue
+		}
+
+		if version, ok := result["version"].(map[string]interface{}); ok {
+			if number, ok := version["number"].(string); ok && number != "" {
+				return number, nil
+			}
+		}
+
+		lastErr = fmt.Errorf("version not found in response from %s", baseURL)
 	}
 
 	if lastErr != nil {
