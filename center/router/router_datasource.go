@@ -56,10 +56,9 @@ func (rt *Router) datasourceGetsByService(c *gin.Context) {
 	openRsa := rt.Center.RSA.OpenRSA
 	for _, item := range lst {
 		if err := item.Encrypt(openRsa, rt.HTTP.RSA.RSAPublicKey); err != nil {
-			logger.Error("datasource %+v encrypt failed: %v", item, err)
+			logger.Errorf("datasource %+v encrypt failed: %v", item, err)
 			continue
 		}
-		item.ClearPlaintext()
 	}
 	ginx.NewRender(c).Data(lst, err)
 }
