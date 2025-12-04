@@ -280,13 +280,16 @@ func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 
 	tagMatch := true
 	if len(pipeline.LabelFilters) > 0 {
-		for i := range pipeline.LabelFilters {
-			if pipeline.LabelFilters[i].Func == "" {
-				pipeline.LabelFilters[i].Func = pipeline.LabelFilters[i].Op
+		// Deep copy to avoid concurrent map writes on cached objects
+		labelFiltersCopy := make([]models.TagFilter, len(pipeline.LabelFilters))
+		copy(labelFiltersCopy, pipeline.LabelFilters)
+		for i := range labelFiltersCopy {
+			if labelFiltersCopy[i].Func == "" {
+				labelFiltersCopy[i].Func = labelFiltersCopy[i].Op
 			}
 		}
 
-		tagFilters, err := models.ParseTagFilter(pipeline.LabelFilters)
+		tagFilters, err := models.ParseTagFilter(labelFiltersCopy)
 		if err != nil {
 			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v", err, event, pipeline)
 			return false
@@ -296,7 +299,11 @@ func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 
 	attributesMatch := true
 	if len(pipeline.AttrFilters) > 0 {
-		tagFilters, err := models.ParseTagFilter(pipeline.AttrFilters)
+		// Deep copy to avoid concurrent map writes on cached objects
+		attrFiltersCopy := make([]models.TagFilter, len(pipeline.AttrFilters))
+		copy(attrFiltersCopy, pipeline.AttrFilters)
+
+		tagFilters, err := models.ParseTagFilter(attrFiltersCopy)
 		if err != nil {
 			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v err:%v", tagFilters, event, pipeline, err)
 			return false
@@ -377,13 +384,16 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 	tagMatch := true
 	if len(notifyConfig.LabelKeys) > 0 {
-		for i := range notifyConfig.LabelKeys {
-			if notifyConfig.LabelKeys[i].Func == "" {
-				notifyConfig.LabelKeys[i].Func = notifyConfig.LabelKeys[i].Op
+		// Deep copy to avoid concurrent map writes on cached objects
+		labelKeysCopy := make([]models.TagFilter, len(notifyConfig.LabelKeys))
+		copy(labelKeysCopy, notifyConfig.LabelKeys)
+		for i := range labelKeysCopy {
+			if labelKeysCopy[i].Func == "" {
+				labelKeysCopy[i].Func = labelKeysCopy[i].Op
 			}
 		}
 
-		tagFilters, err := models.ParseTagFilter(notifyConfig.LabelKeys)
+		tagFilters, err := models.ParseTagFilter(labelKeysCopy)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v", err, event, notifyConfig)
 			return fmt.Errorf("failed to parse tag filter: %v", err)
@@ -397,7 +407,11 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 	attributesMatch := true
 	if len(notifyConfig.Attributes) > 0 {
-		tagFilters, err := models.ParseTagFilter(notifyConfig.Attributes)
+		// Deep copy to avoid concurrent map writes on cached objects
+		attributesCopy := make([]models.TagFilter, len(notifyConfig.Attributes))
+		copy(attributesCopy, notifyConfig.Attributes)
+
+		tagFilters, err := models.ParseTagFilter(attributesCopy)
 		if err != nil {
 			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v err:%v", tagFilters, event, notifyConfig, err)
 			return fmt.Errorf("failed to parse tag filter: %v", err)
