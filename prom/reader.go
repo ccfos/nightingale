@@ -52,6 +52,10 @@ func (pc *PromClientMap) loadFromDatabase() {
 			return
 		}
 		for i := 0; i < len(datasources); i++ {
+			if err := datasources[i].Decrypt(); err != nil {
+				logger.Errorf("decrypt datasource %+v fail: %v", datasources[i], err)
+				continue
+			}
 			datasources[i].FE2DB()
 		}
 	} else {

@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
@@ -52,7 +52,39 @@ func (rt *Router) datasourceList(c *gin.Context) {
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
 	typ := ginx.QueryStr(c, "typ", "")
 	lst, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, "", "", "")
+
+	openRsa := rt.Center.RSA.OpenRSA
+	for _, item := range lst {
+		if err := item.Encrypt(openRsa, rt.HTTP.RSA.RSAPublicKey); err != nil {
+			logger.Errorf("datasource %+v encrypt failed: %v", item, err)
+			continue
+		}
+	}
 	ginx.NewRender(c).Data(lst, err)
+}
+
+func (rt *Router) datasourceRsaConfigGet(c *gin.Context) {
+	if rt.Center.RSA.OpenRSA {
+		publicKey := ""
+		privateKey := ""
+		if len(rt.HTTP.RSA.RSAPublicKey) > 0 {
+			publicKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)
+		}
+		if len(rt.HTTP.RSA.RSAPrivateKey) > 0 {
+			privateKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPrivateKey)
+		}
+		logger.Debugf("OpenRSA=%v", rt.Center.RSA.OpenRSA)
+		ginx.NewRender(c).Data(models.RsaConfig{
+			OpenRSA:       rt.Center.RSA.OpenRSA,
+			RSAPublicKey:  publicKey,
+			RSAPrivateKey: privateKey,
+			RSAPassWord:   rt.HTTP.RSA.RSAPassWord,
+		}, nil)
+	} else {
+		ginx.NewRender(c).Data(models.RsaConfig{
+			OpenRSA: rt.Center.RSA.OpenRSA,
+		}, nil)
+	}
 }
 
 func (rt *Router) datasourceBriefs(c *gin.Context) {

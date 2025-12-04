@@ -420,6 +420,9 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 
 			// 将处理好的 map 添加到 m 切片中
 			result = append(result, mItem)
+			if param.Limit > 0 {
+				continue
+			}
 
 			// 只取第一条数据
 			break
