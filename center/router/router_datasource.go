@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
@@ -229,6 +230,37 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 	}
 
+	if req.PluginType == models.ELASTICSEARCH {
+		skipAuto := false
+		// 若用户输入了version（version字符串存在且不为空），则不自动获取
+		if req.SettingsJson != nil {
+			if v, ok := req.SettingsJson["version"]; ok {
+				switch vv := v.(type) {
+				case string:
+					if strings.TrimSpace(vv) != "" {
+						skipAuto = true
+					}
+				default:
+					if strings.TrimSpace(fmt.Sprint(vv)) != "" {
+						skipAuto = true
+					}
+				}
+			}
+		}
+
+		if !skipAuto {
+			version, err := getElasticsearchVersion(req, 10*time.Second)
+			if err != nil {
+				logger.Warningf("failed to get elasticsearch version: %v", err)
+			} else {
+				if req.SettingsJson == nil {
+					req.SettingsJson = make(map[string]interface{})
+				}
+				req.SettingsJson["version"] = version
+			}
+		}
+	}
+
 	if req.Id == 0 {
 		req.CreatedBy = username
 		req.Status = "enabled"
@@ -422,4 +454,83 @@ func (rt *Router) datasourceQuery(c *gin.Context) {
 		})
 	}
 	ginx.NewRender(c).Data(req, err)
+}
+
+// getElasticsearchVersion 该函数尝试从提供的Elasticsearch数据源中获取版本号，遍历所有URL，
+// 直到成功获取版本号或所有URL均尝试失败为止。
+func getElasticsearchVersion(ds models.Datasource, timeout time.Duration) (string, error) {
+	client := &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
+			},
+		},
+	}
+
+	urls := make([]string, 0)
+	if len(ds.HTTPJson.Urls) > 0 {
+		urls = append(urls, ds.HTTPJson.Urls...)
+	}
+	if ds.HTTPJson.Url != "" {
+		urls = append(urls, ds.HTTPJson.Url)
+	}
+	if len(urls) == 0 {
+		return "", fmt.Errorf("no url provided")
+	}
+
+	var lastErr error
+	for _, raw := range urls {
+		baseURL := strings.TrimRight(raw, "/") + "/"
+		req, err := http.NewRequest("GET", baseURL, nil)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if ds.AuthJson.BasicAuthUser != "" {
+			req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+		}
+
+		for k, v := range ds.HTTPJson.Headers {
+			req.Header.Set(k, v)
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode != 200 {
+			lastErr = fmt.Errorf("request to %s failed with status: %d body:%s", baseURL, resp.StatusCode, string(body))
+			continue
+		}
+
+		var result map[string]interface{}
+		if err := json.Unmarshal(body, &result); err != nil {
+			lastErr = err
+			continue
+		}
+
+		if version, ok := result["version"].(map[string]interface{}); ok {
+			if number, ok := version["number"].(string); ok && number != "" {
+				return number, nil
+			}
+		}
+
+		lastErr = fmt.Errorf("version not found in response from %s", baseURL)
+	}
+
+	if lastErr != nil {
+		return "", lastErr
+	}
+	return "", fmt.Errorf("failed to get elasticsearch version")
 }
