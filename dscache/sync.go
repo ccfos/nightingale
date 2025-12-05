@@ -14,6 +14,7 @@ import (
 	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
 	_ "github.com/ccfos/nightingale/v6/datasource/opensearch"
 	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"
+	_ "github.com/ccfos/nightingale/v6/datasource/victorialogs"
 	"github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
