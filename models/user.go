@@ -40,6 +40,7 @@ const (
 	Lark              = "lark"
 	LarkCard          = "larkcard"
 	Phone             = "phone"
+	Jira              = "jira"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"

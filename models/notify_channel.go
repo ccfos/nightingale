@@ -1640,6 +1640,58 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	{
+		Name: "JIRA", Ident: Jira, RequestType: "http", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     "https://{{$params.username}}:{{$params.password}}@{{$params.domain}}.atlassian.net/rest/api/3/issue",
+				Method:  "POST",
+				Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{
+	"fields": {
+	"project": {
+	"key": "{{$params.project_key}}"
+	},
+	"issuetype": {
+	"name": "{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"
+	},
+	"summary": "{{$event.RuleName}}",
+	"{{$params.customfield}}": "{{$event.Hash}}",
+	"description": {
+	"type": "doc",
+	"version": 1,
+	"content": [
+			{
+			"type": "paragraph",
+			"content": [
+				{
+				"type": "text",
+				"text": "{{$tpl.content}}"
+				}
+			]
+			}
+		]
+	},
+	"labels": {{jsonMarshal $event.TagsJSON}}
+	}
+}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "project_key", CName: "Project Key", Type: "string"},
+					{Key: "domain", CName: "JIRA Domain", Type: "string"},
+					{Key: "username", CName: "JIRA Username", Type: "string"},
+					{Key: "password", CName: "JIRA API Token", Type: "string"},
+					{Key: "customfield", CName: "Custom Field for Event Hash: customfield_xxxxxx", Type: "string"},
+				},
+			},
+		},
+	},
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {

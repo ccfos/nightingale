@@ -622,6 +622,19 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
+
+	Jira: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Notes: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+Annotations:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}\n{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 }
 
 var MsgTplMap = []MessageTemplate{
