@@ -1683,7 +1683,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			Custom: Params{
 				Params: []ParamItem{
 					{Key: "cloud_id", CName: "Cloud ID", Type: "string"},
-					{Key: "domain", CName: "JIRA Domain", Type: "string"},
+					{Key: "project_key", CName: "Project Key", Type: "string"},
 					{Key: "username", CName: "JIRA Username", Type: "string"},
 					{Key: "password", CName: "JIRA API Token", Type: "string"},
 				},
