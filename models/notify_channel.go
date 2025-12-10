@@ -1652,7 +1652,7 @@ var NotiChMap = []*NotifyChannelConfig{
 					Body: `{
 	"fields": {
 	"project": {
-	"key": "##Replace with your project key##"
+	"key": "{{$params.project_key}}"
 	},
 	"issuetype": {
 	"name": "{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"
@@ -1679,7 +1679,15 @@ var NotiChMap = []*NotifyChannelConfig{
 				},
 			},
 		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "project_key", CName: "Project Key", Type: "string"},
+				},
+			},
+		},
 	},
+			
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
