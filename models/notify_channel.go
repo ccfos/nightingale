@@ -1644,7 +1644,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		Name: "JIRA", Ident: Jira, RequestType: "http", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:     "https://{JIRA Service Account Email}:{API Token}@api.atlassian.com/ex/jira/{CloudID}/rest/api/3/issue",
+				URL:     "https://{##Replace with your Service Account Email##}:{##Replace with your API Token##}@api.atlassian.com/ex/jira/{##Replace with your CloudID##}/rest/api/3/issue",
 				Method:  "POST",
 				Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
@@ -1652,7 +1652,7 @@ var NotiChMap = []*NotifyChannelConfig{
 					Body: `{
 	"fields": {
 	"project": {
-	"key": "{Replace with your project key}"
+	"key": "##Replace with your project key##"
 	},
 	"issuetype": {
 	"name": "{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"
