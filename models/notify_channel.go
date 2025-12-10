@@ -1644,7 +1644,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		Name: "JIRA", Ident: Jira, RequestType: "http", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:     "https://{{$params.username}}:{{$params.password}}@api.atlassian.com/ex/jira/{{$params.cloud_id}}/rest/api/3/issue",
+				URL:     "https://{JIRA Service Account Email}:{API Token}@api.atlassian.com/ex/jira/{CloudID}/rest/api/3/issue",
 				Method:  "POST",
 				Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
@@ -1682,10 +1682,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "cloud_id", CName: "Cloud ID", Type: "string"},
 					{Key: "project_key", CName: "Project Key", Type: "string"},
-					{Key: "username", CName: "JIRA Username", Type: "string"},
-					{Key: "password", CName: "JIRA API Token", Type: "string"},
 				},
 			},
 		},
