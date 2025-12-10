@@ -1652,7 +1652,7 @@ var NotiChMap = []*NotifyChannelConfig{
 					Body: `{
 	"fields": {
 	"project": {
-	"key": "{{$params.project_key}}"
+	"key": "{Replace with your project key}"
 	},
 	"issuetype": {
 	"name": "{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"
@@ -1676,13 +1676,6 @@ var NotiChMap = []*NotifyChannelConfig{
 	"labels": ["{{join $event.TagsJSON "\",\""}}", "eventHash={{$event.Hash}}"]
 	}
 }`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "project_key", CName: "Project Key", Type: "string"},
 				},
 			},
 		},
