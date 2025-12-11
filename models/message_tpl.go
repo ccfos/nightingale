@@ -623,20 +623,8 @@ var NewTplMap = map[string]string{
 {{- end -}}
 [Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
 
+	// Jira and JSMAlert share the same template format
 	Jira: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
-Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
-Rule Notes: {{$event.RuleNote}}{{end}}
-Metrics: {{$event.TagsJSON}}
-Annotations:
-{{- range $key, $val := $event.AnnotationsJSON}}
-{{$key}}: {{$val}}
-{{- end}}\n{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
-Trigger Value: {{$event.TriggerValue}}{{end}}
-Send Time: {{timestamp}}
-Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
-Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
-
-	JSMAlert: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
 Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
 Rule Notes: {{$event.RuleNote}}{{end}}
 Metrics: {{$event.TagsJSON}}
@@ -670,7 +658,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 	{Name: "Jira", Ident: Jira, Weight: 0, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert, Weight: 0, Content: map[string]string{"content": NewTplMap[JSMAlert]}},
+	{Name: "JSMAlert", Ident: JSMAlert, Weight: 0, Content: map[string]string{"content": NewTplMap[Jira]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
