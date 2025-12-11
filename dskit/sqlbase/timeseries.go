@@ -257,6 +257,14 @@ func parseTimeFromString(str, format string) (time.Time, error) {
 	if parsedTime, err := time.Parse(time.RFC3339, str); err == nil {
 		return parsedTime, nil
 	}
+
+	if parsedTime, err := time.Parse(time.DateTime, str); err == nil {
+		return parsedTime, nil
+	}
+
+	if parsedTime, err := time.Parse("2006-01-02 15:04:05.000000", str); err == nil {
+		return parsedTime, nil
+	}
 	if parsedTime, err := time.Parse(time.RFC3339Nano, str); err == nil {
 		return parsedTime, nil
 	}
