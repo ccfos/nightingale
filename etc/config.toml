@@ -20,6 +20,11 @@ Output = "stdout"
 Host = "0.0.0.0"
 # http listening port
 Port = 17000
+# Base path for reverse proxy deployment, e.g., "/nightingale"
+# When deploying behind a reverse proxy with a sub-path, set this to match the proxy path.
+# Leave empty for root path deployment. Example: BasePath = "/nightingale"
+# Note: Frontend must be built with matching VITE_PREFIX environment variable.
+BasePath = ""
 # https cert file path
 CertFile = ""
 # https key file path

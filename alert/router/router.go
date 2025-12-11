@@ -43,7 +43,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		return
 	}
 
-	service := r.Group("/v1/n9e")
+	basePath := rt.HTTP.NormalizedBasePath()
+	service := r.Group(basePath + "/v1/n9e")
 	if len(rt.HTTP.APIForService.BasicAuth) > 0 {
 		service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
 	}

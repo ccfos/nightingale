@@ -20,6 +20,7 @@ import (
 type Config struct {
 	Host             string
 	Port             int
+	BasePath         string // Base path prefix for reverse proxy deployment, e.g., "/nightingale"
 	CertFile         string
 	KeyFile          string
 	PProf            bool
@@ -38,6 +39,20 @@ type Config struct {
 	APIForService    BasicAuths
 	RSA              RSAConfig
 	TokenAuth        TokenAuth
+}
+
+// NormalizedBasePath returns the normalized base path.
+// It ensures the path starts with "/" and does not end with "/".
+// Returns empty string if BasePath is not set.
+func (c *Config) NormalizedBasePath() string {
+	if c.BasePath == "" {
+		return ""
+	}
+	basePath := strings.TrimSuffix(c.BasePath, "/")
+	if !strings.HasPrefix(basePath, "/") {
+		basePath = "/" + basePath
+	}
+	return basePath
 }
 
 type RSAConfig struct {
@@ -95,32 +110,34 @@ func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{
 
 	r.Use(loggerMid)
 
+	basePath := cfg.NormalizedBasePath()
+
 	if cfg.PProf {
-		pprof.Register(r, "/api/debug/pprof")
+		pprof.Register(r, basePath+"/api/debug/pprof")
 	}
 
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET(basePath+"/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
 
-	r.GET("/pid", func(c *gin.Context) {
+	r.GET(basePath+"/pid", func(c *gin.Context) {
 		c.String(200, fmt.Sprintf("%d", os.Getpid()))
 	})
 
-	r.GET("/ppid", func(c *gin.Context) {
+	r.GET(basePath+"/ppid", func(c *gin.Context) {
 		c.String(200, fmt.Sprintf("%d", os.Getppid()))
 	})
 
-	r.GET("/addr", func(c *gin.Context) {
+	r.GET(basePath+"/addr", func(c *gin.Context) {
 		c.String(200, c.Request.RemoteAddr)
 	})
 
-	r.GET("/api/n9e/version", func(c *gin.Context) {
+	r.GET(basePath+"/api/n9e/version", func(c *gin.Context) {
 		c.String(200, version.Version)
 	})
 
 	if cfg.ExposeMetrics {
-		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+		r.GET(basePath+"/metrics", gin.WrapH(promhttp.Handler()))
 	}
 
 	return r
