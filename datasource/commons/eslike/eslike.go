@@ -1,6 +1,7 @@
 package eslike
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,13 +11,16 @@ import (
 
 	"github.com/araddon/dateparse"
 	"github.com/bitly/go-simplejson"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
+	"github.com/ccfos/nightingale/v6/dskit/types"
+	"github.com/ccfos/nightingale/v6/memsto"
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/esapi"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
-
-	"github.com/ccfos/nightingale/v6/memsto"
-	"github.com/ccfos/nightingale/v6/models"
 )
 
 type FixedField string
@@ -47,6 +51,12 @@ type Query struct {
 	MaxShard int `json:"max_shard" mapstructure:"max_shard"`
 
 	SearchAfter *SearchAfter `json:"search_after" mapstructure:"search_after"`
+
+	QueryType    string                 `json:"query_type" mapstructure:"query_type"`
+	Query        string                 `json:"query" mapstructure:"query"`
+	CustomParams map[string]interface{} `json:"custom_params" mapstructure:"custom_params"`
+	MaxQueryRows int                    `json:"max_query_rows" mapstructure:"max_query_rows"`
+	Keys         types.Keys             `json:"keys" mapstructure:"keys"`
 }
 
 type SortField struct {
@@ -713,4 +723,122 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	}
 
 	return ret, total, nil
+}
+
+// execSQLQuery executes ES SQL query and returns rows as []map[string]interface{}
+func execSQLQuery(ctx context.Context, param *Query, client *elasticsearch.Client) ([]map[string]interface{}, error) {
+	query := map[string]interface{}{
+		"query": param.Query,
+	}
+
+	for k, v := range param.CustomParams {
+		query[k] = v
+	}
+
+	if param.Timeout > 0 {
+		query["request_timeout"] = fmt.Sprintf("%ds", param.Timeout)
+	}
+
+	if param.MaxQueryRows > 0 {
+		query["fetch_size"] = param.MaxQueryRows
+	}
+
+	queryBytes, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal SQL query: %v", err)
+	}
+
+	req := esapi.SQLQueryRequest{
+		Body: bytes.NewReader(queryBytes),
+	}
+
+	res, err := req.Do(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute SQL query: %v", err)
+	}
+	defer res.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to parse SQL response: %v", err)
+	}
+
+	if res.IsError() {
+		if errObj, ok := result["error"].(map[string]interface{}); ok {
+			return nil, fmt.Errorf("SQL query error: %s", errObj["reason"])
+		}
+		return nil, fmt.Errorf("SQL query error: unknown")
+	}
+
+	columns, _ := result["columns"].([]interface{})
+	rows, _ := result["rows"].([]interface{})
+
+	var rowMaps []map[string]interface{}
+	for _, row := range rows {
+		rowData, _ := row.([]interface{})
+		rowMap := make(map[string]interface{})
+		for i, col := range columns {
+			if colObj, ok := col.(map[string]interface{}); ok {
+				colName, _ := colObj["name"].(string)
+				if i < len(rowData) {
+					rowMap[colName] = rowData[i]
+				}
+			}
+		}
+		rowMaps = append(rowMaps, rowMap)
+	}
+
+	return rowMaps, nil
+}
+
+func QuerySQLData(ctx context.Context, queryParam interface{}, cliTimeout int64, version string, client *elasticsearch.Client) ([]models.DataResp, error) {
+	param := new(Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, err
+	}
+
+	if param.Timeout == 0 {
+		param.Timeout = int(cliTimeout) / 1000
+	}
+
+	rowMaps, err := execSQLQuery(ctx, param, client)
+	if err != nil {
+		return nil, err
+	}
+
+	metricValues := sqlbase.FormatMetricValues(param.Keys, rowMaps)
+
+	var dataResps []models.DataResp
+	for _, mv := range metricValues {
+		dataResps = append(dataResps, models.DataResp{
+			Ref:    param.Ref,
+			Metric: mv.Metric,
+			Values: mv.Values,
+		})
+	}
+
+	return dataResps, nil
+}
+
+func QuerySQLLog(ctx context.Context, queryParam interface{}, timeout int64, version string, client *elasticsearch.Client) ([]interface{}, int64, error) {
+	param := new(Query)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, 0, err
+	}
+
+	if param.Timeout == 0 {
+		param.Timeout = int(timeout) / 1000
+	}
+
+	rowMaps, err := execSQLQuery(ctx, param, client)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	ret := make([]interface{}, len(rowMaps))
+	for i, rowMap := range rowMaps {
+		ret[i] = rowMap
+	}
+
+	return ret, 0, nil
 }
