@@ -91,25 +91,28 @@ func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.
 
 func CallIbex(ctx *ctx.Context, id int64, host string,
 	taskTplCache *memsto.TaskTplCache, targetCache *memsto.TargetCacheType,
-	userCache *memsto.UserCacheType, event *models.AlertCurEvent) {
+	userCache *memsto.UserCacheType, event *models.AlertCurEvent) (int64, error) {
 	logger.Infof("event_callback_ibex: id: %d, host: %s, event: %+v", id, host, event)
 
 	tpl := taskTplCache.Get(id)
 	if tpl == nil {
-		logger.Errorf("event_callback_ibex: no such tpl(%d), event: %+v", id, event)
-		return
+		err := fmt.Errorf("event_callback_ibex: no such tpl(%d), event: %+v", id, event)
+		logger.Errorf("%s", err)
+		return 0, err
 	}
 	// check perm
 	// tpl.GroupId - host - account 三元组校验权限
 	can, err := canDoIbex(tpl.UpdateBy, tpl, host, targetCache, userCache)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: check perm fail: %v, event: %+v", err, event)
-		return
+		err = fmt.Errorf("event_callback_ibex: check perm fail: %v, event: %+v", err, event)
+		logger.Errorf("%s", err)
+		return 0, err
 	}
 
 	if !can {
-		logger.Errorf("event_callback_ibex: user(%s) no permission, event: %+v", tpl.UpdateBy, event)
-		return
+		err = fmt.Errorf("event_callback_ibex: user(%s) no permission, event: %+v", tpl.UpdateBy, event)
+		logger.Errorf("%s", err)
+		return 0, err
 	}
 
 	tagsMap := make(map[string]string)
@@ -133,8 +136,9 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 
 	tags, err := json.Marshal(tagsMap)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: failed to marshal tags to json: %v, event: %+v", tagsMap, event)
-		return
+		err = fmt.Errorf("event_callback_ibex: failed to marshal tags to json: %v, event: %+v", tagsMap, event)
+		logger.Errorf("%s", err)
+		return 0, err
 	}
 
 	// call ibex
@@ -156,8 +160,9 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 
 	id, err = TaskAdd(in, tpl.UpdateBy, ctx.IsCenter)
 	if err != nil {
-		logger.Errorf("event_callback_ibex: call ibex fail: %v, event: %+v", err, event)
-		return
+		err = fmt.Errorf("event_callback_ibex: call ibex fail: %v, event: %+v", err, event)
+		logger.Errorf("%s", err)
+		return 0, err
 	}
 
 	// write db
@@ -178,8 +183,11 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	}
 
 	if err = record.Add(ctx); err != nil {
-		logger.Errorf("event_callback_ibex: persist task_record fail: %v, event: %+v", err, event)
+		err = fmt.Errorf("event_callback_ibex: persist task_record fail: %v, event: %+v", err, event)
+		logger.Errorf("%s", err)
+		return id, err
 	}
+	return id, nil
 }
 
 func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType) (bool, error) {
