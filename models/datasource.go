@@ -55,15 +55,11 @@ type Auth struct {
 var rsaConfig *RsaConfig
 
 type RsaConfig struct {
-	*DatasourceRsaConfigResp
+	OpenRSA         bool   `json:"open_rsa"`
+	RSAPublicKey    string `json:"rsa_public_key,omitempty"`
+	RSAPrivateKey   string `json:"rsa_private_key,omitempty"`
+	RSAPassWord     string `json:"rsa_password,omitempty"`
 	PrivateKeyBytes []byte
-}
-
-type DatasourceRsaConfigResp struct {
-	OpenRSA       bool   `json:"open_rsa"`
-	RSAPublicKey  string `json:"rsa_public_key,omitempty"`
-	RSAPrivateKey string `json:"rsa_private_key,omitempty"`
-	RSAPassWord   string `json:"rsa_password,omitempty"`
 }
 
 func SetRsaConfig(cfg *RsaConfig) {

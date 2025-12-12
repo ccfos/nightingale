@@ -30,11 +30,11 @@ func Init(ctx *ctx.Context, fromAPI bool) {
 	if !ctx.IsCenter {
 		// 从 center 同步密钥
 		var rsaConfig = new(models.RsaConfig)
-		c, err := poster.GetByUrls[*models.DatasourceRsaConfigResp](ctx, "/v1/n9e/datasource-rsa-config")
+		c, err := poster.GetByUrls[*models.RsaConfig](ctx, "/v1/n9e/datasource-rsa-config")
 		if err != nil || c == nil {
 			logger.Fatalf("failed to get datasource rsa-config, error: %v", err)
 		}
-		rsaConfig.DatasourceRsaConfigResp = c
+		rsaConfig = c
 		if c.OpenRSA {
 			logger.Infof("datasource rsa is open in n9e-plus")
 			rsaConfig.PrivateKeyBytes, err = base64.StdEncoding.DecodeString(c.RSAPrivateKey)
