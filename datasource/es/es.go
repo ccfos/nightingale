@@ -110,25 +110,6 @@ func (e *Elasticsearch) InitClient() error {
 		return err
 	}
 
-	if e.Client != nil {
-		for _, addr := range e.Nodes {
-			if addr == "" {
-				continue
-			}
-			if ver, verr := e.Client.ElasticsearchVersion(addr); verr == nil {
-				logger.Infof("detected elasticsearch version from %s: %s", addr, ver)
-				e.Version = ver
-				e.Addr = addr
-				break
-			} else {
-				logger.Debugf("detect version failed from %s: %v", addr, verr)
-			}
-		}
-		if e.Version == "" {
-			logger.Warning("failed to detect elasticsearch version from configured nodes, keep configured version")
-		}
-	}
-
 	return err
 }
 
@@ -188,10 +169,6 @@ func (e *Elasticsearch) Validate(ctx context.Context) (err error) {
 
 	if e.Timeout == 0 {
 		e.Timeout = 60000
-	}
-
-	if !strings.HasPrefix(e.Version, "6") && !strings.HasPrefix(e.Version, "7") {
-		return fmt.Errorf("version must be 6.0+ or 7.0+")
 	}
 
 	return nil

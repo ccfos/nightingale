@@ -1,12 +1,14 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
@@ -142,6 +144,42 @@ func (u *User) CheckGroupPermission(ctx *ctx.Context, groupIds []int64) error {
 	return nil
 }
 
+// stripInvisibleChars removes invisible Unicode characters from a string
+// This includes zero-width spaces, control characters, and other invisible chars
+func stripInvisibleChars(s string) string {
+	return strings.Map(func(r rune) rune {
+		// Keep printable characters and common whitespace (space, tab, newline)
+		if unicode.IsPrint(r) || r == ' ' || r == '\t' || r == '\n' || r == '\r' {
+			return r
+		}
+		// Remove invisible characters
+		return -1
+	}, s)
+}
+
+// stripInvisibleCharsFromContacts removes invisible characters from Contacts JSON values
+func stripInvisibleCharsFromContacts(contacts ormx.JSONObj) ormx.JSONObj {
+	if len(contacts) == 0 {
+		return contacts
+	}
+
+	var contactsMap map[string]string
+	if err := json.Unmarshal(contacts, &contactsMap); err != nil {
+		return contacts
+	}
+
+	for k, v := range contactsMap {
+		contactsMap[k] = stripInvisibleChars(v)
+	}
+
+	result, err := json.Marshal(contactsMap)
+	if err != nil {
+		return contacts
+	}
+
+	return ormx.JSONObj(result)
+}
+
 func (u *User) Verify() error {
 	u.Username = strings.TrimSpace(u.Username)
 
@@ -164,6 +202,9 @@ func (u *User) Verify() error {
 	if u.Email != "" && !str.IsMail(u.Email) {
 		return errors.New("Email invalid")
 	}
+
+	// Strip invisible characters from Contacts values
+	u.Contacts = stripInvisibleCharsFromContacts(u.Contacts)
 
 	if u.Phone != "" {
 		return u.EncryptPhone()

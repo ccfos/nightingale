@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -12,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
+
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -441,15 +441,16 @@ func (ds *Datasource) Encrypt(openRsa bool, publicKeyData []byte) error {
 			ds.AuthEncoded = encVal
 		}
 	}
+	ds.ClearPlaintext()
 	return nil
 }
 
 // Decrypt 用于 edge 将从中心同步的数据源解密，中心不可调用
 func (ds *Datasource) Decrypt() error {
 	if rsaConfig == nil {
-		err := fmt.Errorf("%s", "datasource rsa config is nil")
-		return err
+		return errors.New("rsa config is nil")
 	}
+
 	if !rsaConfig.OpenRSA {
 		return nil
 	}

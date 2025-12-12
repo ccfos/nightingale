@@ -146,6 +146,14 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		return nil, fmt.Errorf("valueKey is required")
 	}
 
+	if strings.Contains(dorisQueryParam.SQL, "$__") {
+		var err error
+		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	items, err := d.QueryTimeseries(context.TODO(), &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,

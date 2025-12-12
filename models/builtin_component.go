@@ -76,6 +76,7 @@ func (bc *BuiltinComponent) Add(ctx *ctx.Context, username string) error {
 	bc.CreatedAt = now
 	bc.UpdatedAt = now
 	bc.CreatedBy = username
+	bc.UpdatedBy = username
 	return Insert(ctx, bc)
 }
 
