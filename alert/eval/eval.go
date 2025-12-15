@@ -458,23 +458,32 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 					curRealQuery = fillVar(curRealQuery, paramKey, val)
 				}
 
-				if _, ok := paramPermutation[strings.Join(cur, JoinMark)]; ok {
-					anomalyPointsMap[strings.Join(cur, JoinMark)] = models.AnomalyPoint{
-						Key:       seqVals[i].Metric.String(),
-						Timestamp: seqVals[i].Timestamp.Unix(),
-						Value:     float64(seqVals[i].Value),
-						Labels:    seqVals[i].Metric,
-						Severity:  query.Severity,
-						Query:     curRealQuery,
-					}
-					// 生成异常点后，删除该参数组合
-					delete(paramPermutation, strings.Join(cur, JoinMark))
+				// 使用 metric.String() 作为 map key，确保不同实例/标签组合不被覆盖
+				metricKey := seqVals[i].Metric.String()
+				anomalyPointsMap[metricKey] = models.AnomalyPoint{
+					Key:       seqVals[i].Metric.String(),
+					Timestamp: seqVals[i].Timestamp.Unix(),
+					Value:     float64(seqVals[i].Value),
+					Labels:    seqVals[i].Metric,
+					Severity:  query.Severity,
+					Query:     curRealQuery,
 				}
 			}
 
 			// 剩余的参数组合为本层筛选不产生异常点的组合，需要覆盖上层筛选中产生的异常点
-			for k, _ := range paramPermutation {
-				delete(anomalyPointsMap, k)
+			// 遍历所有现有异常点，如果其参数组合不在本层的白名单中，则删除
+			for metricKey, point := range anomalyPointsMap {
+				var cur []string
+				for _, paramKey := range ParamKeys {
+					val := string(point.Labels[model.LabelName(varToLabel[paramKey])])
+					cur = append(cur, val)
+				}
+				paramKeyStr := strings.Join(cur, JoinMark)
+
+				// 如果这个参数组合在本层的 paramPermutation 中被排除，则删除该异常点
+				if _, ok := paramPermutation[paramKeyStr]; !ok {
+					delete(anomalyPointsMap, metricKey)
+				}
 			}
 		}
 		curNode = curNode.ChildVarConfigs
