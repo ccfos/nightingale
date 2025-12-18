@@ -106,8 +106,23 @@ func (e *Elasticsearch) InitClient() error {
 	options = append(options, elastic.SetHealthcheck(false))
 
 	e.Client, err = elastic.NewClient(options...)
+
 	if err != nil {
 		return err
+	}
+
+	// 自动获取ES版本
+	if e.Version == "" {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(e.Timeout)*time.Millisecond)
+		defer cancel()
+
+		version := e.GetVersion(ctx)
+		if version != "" {
+			e.Version = version
+			logger.Infof("auto-detected ES version: %s", version)
+		} else {
+			logger.Warningf("failed to auto-detect ES version, using default")
+		}
 	}
 
 	return err
@@ -407,4 +422,84 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 	}
 
 	return result, nil
+}
+
+// GetVersion 并发获取ES集群版本，哪个节点先返回就用哪个
+func (e *Elasticsearch) GetVersion(ctx context.Context) string {
+	if len(e.Nodes) == 0 {
+		return ""
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(e.Timeout)*time.Millisecond)
+	defer cancel()
+
+	resultCh := make(chan string, len(e.Nodes))
+
+	for _, node := range e.Nodes {
+		go func(nodeURL string) {
+			version := e.fetchVersionFromNode(ctx, nodeURL)
+			if version != "" {
+				select {
+				case resultCh <- version:
+				case <-ctx.Done():
+				}
+			}
+		}(node)
+	}
+
+	select {
+	case version := <-resultCh:
+		return version
+	case <-ctx.Done():
+		return ""
+	}
+}
+
+// fetchVersionFromNode 从单个节点获取ES版本
+func (e *Elasticsearch) fetchVersionFromNode(ctx context.Context, nodeURL string) string {
+	options := []elastic.ClientOptionFunc{
+		elastic.SetURL(nodeURL),
+		elastic.SetSniff(false),
+		elastic.SetHealthcheck(false),
+	}
+
+	if e.Basic.Username != "" {
+		options = append(options, elastic.SetBasicAuth(e.Basic.Username, e.Basic.Password))
+	}
+
+	// 设置HTTP transport
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: time.Duration(e.Timeout) * time.Millisecond,
+		}).DialContext,
+		ResponseHeaderTimeout: time.Duration(e.Timeout) * time.Millisecond,
+	}
+
+	if strings.Contains(nodeURL, "https") {
+		tlsConfig := tlsx.ClientConfig{
+			InsecureSkipVerify: e.TLS.SkipTlsVerify,
+			UseTLS:             true,
+		}
+		cfg, err := tlsConfig.TLSConfig()
+		if err == nil {
+			transport.TLSClientConfig = cfg
+		}
+	}
+
+	options = append(options, elastic.SetHttpClient(&http.Client{Transport: transport}))
+
+	client, err := elastic.NewClient(options...)
+	if err != nil {
+		logger.Debugf("failed to create client for node %s: %v", nodeURL, err)
+		return ""
+	}
+
+	version, err := client.ElasticsearchVersion(nodeURL)
+	if err != nil {
+		logger.Debugf("failed to get version from node %s: %v", nodeURL, err)
+		return ""
+	}
+
+	logger.Infof("successfully got ES version %s from node %s", version, nodeURL)
+	return version
 }

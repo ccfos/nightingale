@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
@@ -456,18 +457,10 @@ func (rt *Router) datasourceQuery(c *gin.Context) {
 	ginx.NewRender(c).Data(req, err)
 }
 
-// getElasticsearchVersion 该函数尝试从提供的Elasticsearch数据源中获取版本号，遍历所有URL，
-// 直到成功获取版本号或所有URL均尝试失败为止。
+// getElasticsearchVersion 使用并发方式从多个ES节点获取版本，哪个先返回就用哪个
+// 复用 es.Elasticsearch.GetVersion() 的并发获取逻辑
 func getElasticsearchVersion(ds models.Datasource, timeout time.Duration) (string, error) {
-	client := &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
-			},
-		},
-	}
-
+	// 收集所有URL
 	urls := make([]string, 0)
 	if len(ds.HTTPJson.Urls) > 0 {
 		urls = append(urls, ds.HTTPJson.Urls...)
@@ -479,58 +472,43 @@ func getElasticsearchVersion(ds models.Datasource, timeout time.Duration) (strin
 		return "", fmt.Errorf("no url provided")
 	}
 
-	var lastErr error
-	for _, raw := range urls {
-		baseURL := strings.TrimRight(raw, "/") + "/"
-		req, err := http.NewRequest("GET", baseURL, nil)
-		if err != nil {
-			lastErr = err
-			continue
+	// 从配置中获取timeout，如果没有则使用传入的timeout
+	timeoutMs := timeout.Milliseconds()
+	if ds.HTTPJson.Timeout > 0 {
+		timeoutMs = ds.HTTPJson.Timeout
+	}
+	if ds.SettingsJson != nil {
+		if t, ok := ds.SettingsJson["es.timeout"].(int64); ok && t > 0 {
+			timeoutMs = t
 		}
-
-		if ds.AuthJson.BasicAuthUser != "" {
-			req.SetBasicAuth(ds.AuthJson.BasicAuthUser, ds.AuthJson.BasicAuthPassword)
+		if t, ok := ds.SettingsJson["es.timeout"].(float64); ok && t > 0 {
+			timeoutMs = int64(t)
 		}
-
-		for k, v := range ds.HTTPJson.Headers {
-			req.Header.Set(k, v)
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			lastErr = err
-			continue
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			lastErr = err
-			continue
-		}
-
-		if resp.StatusCode != 200 {
-			lastErr = fmt.Errorf("request to %s failed with status: %d body:%s", baseURL, resp.StatusCode, string(body))
-			continue
-		}
-
-		var result map[string]interface{}
-		if err := json.Unmarshal(body, &result); err != nil {
-			lastErr = err
-			continue
-		}
-
-		if version, ok := result["version"].(map[string]interface{}); ok {
-			if number, ok := version["number"].(string); ok && number != "" {
-				return number, nil
-			}
-		}
-
-		lastErr = fmt.Errorf("version not found in response from %s", baseURL)
 	}
 
-	if lastErr != nil {
-		return "", lastErr
+	// 构造临时的Elasticsearch对象以复用GetVersion逻辑
+	esConfig := &es.Elasticsearch{
+		Nodes:   urls,
+		Timeout: timeoutMs,
+		Basic: es.BasicAuth{
+			Enable:   ds.AuthJson.BasicAuthUser != "",
+			Username: ds.AuthJson.BasicAuthUser,
+			Password: ds.AuthJson.BasicAuthPassword,
+		},
+		TLS: es.TLS{
+			SkipTlsVerify: ds.HTTPJson.TLS.SkipTlsVerify,
+		},
+		Headers: ds.HTTPJson.Headers,
 	}
-	return "", fmt.Errorf("failed to get elasticsearch version")
+
+	// 使用并发获取版本
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	version := esConfig.GetVersion(ctx)
+	if version == "" {
+		return "", fmt.Errorf("failed to get elasticsearch version from any node")
+	}
+
+	return version, nil
 }
