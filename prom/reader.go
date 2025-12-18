@@ -85,15 +85,15 @@ func (pc *PromClientMap) loadFromDatabase() {
 		var internalAddr string
 		for k, v := range ds.SettingsJson {
 			if strings.Contains(k, "write_addr") {
-				writeAddr = v.(string)
+				writeAddr = strings.TrimSpace(v.(string))
 			} else if strings.Contains(k, "internal_addr") && v.(string) != "" {
-				internalAddr = v.(string)
+				internalAddr = strings.TrimSpace(v.(string))
 			}
 		}
 
 		po := PromOption{
 			ClusterName:         ds.Name,
-			Url:                 ds.HTTPJson.Url,
+			Url:                 strings.TrimSpace(ds.HTTPJson.Url),
 			WriteAddr:           writeAddr,
 			BasicAuthUser:       ds.AuthJson.BasicAuthUser,
 			BasicAuthPass:       ds.AuthJson.BasicAuthPassword,
