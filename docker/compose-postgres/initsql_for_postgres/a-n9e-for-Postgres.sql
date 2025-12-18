@@ -804,6 +804,9 @@ CREATE TABLE builtin_metrics (
   lang varchar(191) NOT NULL DEFAULT '',
   note varchar(4096) NOT NULL,
   expression varchar(4096) NOT NULL,
+  expression_type varchar(32) NOT NULL DEFAULT 'promql',
+  metric_type varchar(191) NOT NULL DEFAULT '',
+  extra_fields text,
   created_at bigint NOT NULL DEFAULT 0,
   created_by varchar(191) NOT NULL DEFAULT '',
   updated_at bigint NOT NULL DEFAULT 0,
@@ -826,6 +829,9 @@ COMMENT ON COLUMN builtin_metrics.unit IS 'unit of metric';
 COMMENT ON COLUMN builtin_metrics.lang IS 'language of metric';
 COMMENT ON COLUMN builtin_metrics.note IS 'description of metric in Chinese';
 COMMENT ON COLUMN builtin_metrics.expression IS 'expression of metric';
+COMMENT ON COLUMN builtin_metrics.expression_type IS 'expression type: metric_name or promql';
+COMMENT ON COLUMN builtin_metrics.metric_type IS 'metric type like counter/gauge';
+COMMENT ON COLUMN builtin_metrics.extra_fields IS 'custom extra fields';
 COMMENT ON COLUMN builtin_metrics.created_at IS 'create time';
 COMMENT ON COLUMN builtin_metrics.created_by IS 'creator';
 COMMENT ON COLUMN builtin_metrics.updated_at IS 'update time';
