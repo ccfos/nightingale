@@ -1313,7 +1313,9 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				keyToPromql[paramPermutationKeys] = realPromql
 			}
 
-			// 并发查询
+			// 并发查询,存储到临时map
+			tempResults := make(map[string][]models.AnomalyPoint)
+			var tempMu sync.Mutex
 			wg := sync.WaitGroup{}
 			semaphore := make(chan struct{}, 200)
 			for key, promql := range keyToPromql {
@@ -1342,18 +1344,39 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						points[i].ValuesUnit = map[string]unit.FormattedValue{
 							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
 						}
-						// 每个异常点都需要生成 key，子筛选使用 key 覆盖上层筛选，解决 issue https://github.com/ccfos/nightingale/issues/2433 提的问题
+
 						var cur []string
+						for _, paramKey := range ParamKeys {
+							val := string(points[i].Labels[model.LabelName(varToLabel[paramKey])])
+							cur = append(cur, val)
+						}
 						paramKeyStr := strings.Join(cur, JoinMark)
 
-						// ✅ 改为追加
-						mu.Lock()
-						anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], points[i])
-						mu.Unlock()
+						tempMu.Lock()
+						tempResults[paramKeyStr] = append(tempResults[paramKeyStr], points[i])
+						tempMu.Unlock()
 					}
 				}(key, promql)
 			}
 			wg.Wait()
+
+			// 遍历临时结果，串行合并到anomalyPointsMap
+			for paramKeyStr, points := range tempResults {
+				_, inCurrentWhitelist := paramPermutation[paramKeyStr]
+				if inCurrentWhitelist {
+					// 在当前层白名单中,重置(覆盖父筛选)
+					anomalyPointsMap[paramKeyStr] = points
+					delete(paramPermutation, paramKeyStr)
+				} else if _, existsInMap := anomalyPointsMap[paramKeyStr]; existsInMap {
+					// 不在白名单但map中已有,追加
+					anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], points...)
+				}
+			}
+
+			// 删除本层未匹配的参数组合
+			for k := range paramPermutation {
+				delete(anomalyPointsMap, k)
+			}
 		}
 		curNode = curNode.ChildVarConfigs
 	}
