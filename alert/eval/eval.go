@@ -473,7 +473,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 					delete(paramPermutation, paramKeyStr)
 
 				} else if _, existsInMap := anomalyPointsMap[paramKeyStr]; existsInMap {
-					// 不在当前层白名单中，但在 map 中已存在（父筛选产生的异常点），追加异常点
+					// 同一参数组合的多个实例（如同一host的不同instance），追加异常点
 					anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
@@ -1339,7 +1339,7 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						points[i].ValuesUnit = map[string]unit.FormattedValue{
 							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
 						}
-
+						// 每个异常点都需要生成key，子筛选使用 key 覆盖上层筛选，解决 issue https://github.com/ccfos/nightingale/issues/2433 提的问题
 						var cur []string
 						for _, paramKey := range ParamKeys {
 							val := string(points[i].Labels[model.LabelName(varToLabel[paramKey])])
