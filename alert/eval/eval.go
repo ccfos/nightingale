@@ -461,8 +461,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 				paramKeyStr := strings.Join(cur, JoinMark)
 				_, inCurrentWhitelist := paramPermutation[paramKeyStr]
 				if inCurrentWhitelist {
-					// ✅ 在当前层白名单中（第一次在当前层遇到此参数组合）
-					// 无论 map 中是否已有，都重置（覆盖父筛选）
+					// 在当前层白名单中，加入异常点
 					anomalyPointsMap[paramKeyStr] = []models.AnomalyPoint{{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
@@ -474,8 +473,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 					delete(paramPermutation, paramKeyStr)
 
 				} else if _, existsInMap := anomalyPointsMap[paramKeyStr]; existsInMap {
-					// ✅ 不在当前层白名单，但在 map 中已有
-					// 追加（同一参数组合的多个 metric，如 server1 的多个 instance）
+					// 不在当前层白名单中，但在 map 中已存在（父筛选产生的异常点），追加异常点
 					anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], models.AnomalyPoint{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
@@ -1306,6 +1304,9 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			// 并发查询,存储到临时map
 			tempResults := make(map[string][]models.AnomalyPoint)
 			var tempMu sync.Mutex
+			// 记录没有查询结果的key（用于删除）
+			keysToDelete := make([]string, 0)
+			var deleteKeysMu sync.Mutex
 			wg := sync.WaitGroup{}
 			semaphore := make(chan struct{}, 200)
 			for key, promql := range keyToPromql {
@@ -1326,6 +1327,10 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 
 					points := models.ConvertAnomalyPoints(value)
 					if len(points) == 0 {
+						// 没有查询结果,记录需要删除的key
+						deleteKeysMu.Lock()
+						keysToDelete = append(keysToDelete, key)
+						deleteKeysMu.Unlock()
 						return
 					}
 					for i := 0; i < len(points); i++ {
@@ -1350,22 +1355,12 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 			}
 			wg.Wait()
 
-			// 遍历临时结果，串行合并到anomalyPointsMap
-			for paramKeyStr, points := range tempResults {
-				_, inCurrentWhitelist := paramPermutation[paramKeyStr]
-				if inCurrentWhitelist {
-					// 在当前层白名单中,重置(覆盖父筛选)
-					anomalyPointsMap[paramKeyStr] = points
-					delete(paramPermutation, paramKeyStr)
-				} else if _, existsInMap := anomalyPointsMap[paramKeyStr]; existsInMap {
-					// 不在白名单但map中已有,追加
-					anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], points...)
-				}
+			for _, key := range keysToDelete {
+				delete(anomalyPointsMap, key)
 			}
 
-			// 删除本层未匹配的参数组合
-			for k := range paramPermutation {
-				delete(anomalyPointsMap, k)
+			for paramKeyStr, points := range tempResults {
+				anomalyPointsMap[paramKeyStr] = points
 			}
 		}
 		curNode = curNode.ChildVarConfigs
