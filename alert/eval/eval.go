@@ -417,10 +417,6 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
-		// 这里有个坑，清空map时检查一下到底还有没有查询,有时候有子筛选，但是子筛选变量又为空，这种就没必要清空了
-		if curNode != VarConfigForCalc && len(curNode.ParamVal) > 0 {
-			anomalyPointsMap = make(map[string][]models.AnomalyPoint)
-		}
 		for _, param := range curNode.ParamVal {
 			// curQuery 当前节点的无参数 query，用于时序库查询
 			curQuery := fullQuery
@@ -1251,7 +1247,6 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	varToLabel := ExtractVarMapping(query.PromQl)
 	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
 	anomalyPointsMap := make(map[string][]models.AnomalyPoint)
-	var mu sync.Mutex
 	// 统一变量配置格式
 	VarConfigForCalc := &models.ChildVarConfig{
 		ParamVal:        make([]map[string]models.ParamQuery, 1),
@@ -1278,11 +1273,6 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 	// 遍历变量配置链表
 	curNode := VarConfigForCalc
 	for curNode != nil {
-		if curNode != VarConfigForCalc && len(curNode.ParamVal) > 0 {
-			mu.Lock()
-			anomalyPointsMap = make(map[string][]models.AnomalyPoint)
-			mu.Unlock()
-		}
 		for _, param := range curNode.ParamVal {
 			curPromql := query.PromQl
 			// 取出阈值变量
