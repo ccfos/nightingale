@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dskit/types"
-	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
@@ -38,6 +39,7 @@ type QueryParam struct {
 	To         int64           `json:"to" mapstructure:"to"`
 	TimeField  string          `json:"time_field" mapstructure:"time_field"`
 	TimeFormat string          `json:"time_format" mapstructure:"time_format"`
+	Interval   int64           `json:"interval" mapstructure:"interval"` // 查询时间间隔（秒）
 }
 
 func (d *Doris) InitClient() error {
@@ -145,6 +147,33 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 	if dorisQueryParam.Keys.ValueKey == "" {
 		return nil, fmt.Errorf("valueKey is required")
 	}
+
+	// 设置默认 interval
+	if dorisQueryParam.Interval == 0 {
+		dorisQueryParam.Interval = 60
+	}
+
+	// 计算时间范围
+	now := time.Now().Unix()
+	var start, end int64
+	if dorisQueryParam.To != 0 && dorisQueryParam.From != 0 {
+		// 对齐到 interval
+		end = dorisQueryParam.To - dorisQueryParam.To%dorisQueryParam.Interval
+		start = dorisQueryParam.From - dorisQueryParam.From%dorisQueryParam.Interval
+	} else {
+		end = now
+		start = end - dorisQueryParam.Interval
+	}
+
+	// 从 context 获取 delay, 记录规则统一配置的延迟查询（高级配置下）
+	delay, ok := ctx.Value("delay").(int64)
+	if ok && delay != 0 {
+		end = end - delay
+		start = start - delay
+	}
+
+	dorisQueryParam.From = start
+	dorisQueryParam.To = end
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
 		var err error
