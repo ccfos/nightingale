@@ -157,11 +157,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 	// 计算时间范围
 	now := time.Now().Unix()
 	var start, end int64
-	if dorisQueryParam.To != 0 && dorisQueryParam.From != 0 {
-		// 对齐到 interval
-		end = dorisQueryParam.To - dorisQueryParam.To%dorisQueryParam.Interval
-		start = dorisQueryParam.From - dorisQueryParam.From%dorisQueryParam.Interval
-	} else {
+	if dorisQueryParam.To == 0 && dorisQueryParam.From == 0 {
 		end = now
 		start = end - dorisQueryParam.Interval
 	}
