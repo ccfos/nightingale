@@ -151,7 +151,7 @@ func (arw *AlertRuleWorker) Eval() {
 		if len(message) == 0 {
 			logger.Infof("rule_eval:%s finished, duration:%v", arw.Key(), time.Since(begin))
 		} else {
-			logger.Infof("rule_eval:%s finished, duration:%v, message:%s", arw.Key(), time.Since(begin), message)
+			logger.Warningf("rule_eval:%s finished, duration:%v, message:%s", arw.Key(), time.Since(begin), message)
 		}
 	}()
 
@@ -186,8 +186,7 @@ func (arw *AlertRuleWorker) Eval() {
 	}
 
 	if err != nil {
-		logger.Errorf("rule_eval:%s get anomaly point err:%s", arw.Key(), err.Error())
-		message = "failed to get anomaly points"
+		message = fmt.Sprintf("failed to get anomaly points: %v", err)
 		return
 	}
 
