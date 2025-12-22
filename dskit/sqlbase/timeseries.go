@@ -158,7 +158,10 @@ func FormatMetricValues(keys types.Keys, rows []map[string]interface{}, ignoreDe
 			}
 
 			if !exists {
-				ts = float64(time.Now().Unix()) // Default to current time if not specified
+				// Default to current time if not specified
+				// 大多数情况下offset为空
+				// 对于记录规则延迟计算的情况，统计值的时间戳需要有偏移，以便跟统计值对应
+				ts = float64(time.Now().Unix()) - float64(keys.Offset)
 			}
 
 			valuePair := []float64{ts, value}
