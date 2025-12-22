@@ -122,15 +122,31 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 	}
 }
 
-func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
+func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem, basePath string) {
 	r.NoRoute(func(c *gin.Context) {
-		arr := strings.Split(c.Request.URL.Path, ".")
+		requestPath := c.Request.URL.Path
+
+		// If basePath is set, strip it from the request path for static file matching
+		if basePath != "" {
+			if strings.HasPrefix(requestPath, basePath) {
+				requestPath = strings.TrimPrefix(requestPath, basePath)
+				if requestPath == "" {
+					requestPath = "/"
+				}
+			} else {
+				// Request path doesn't start with basePath, return 404
+				c.String(404, "Not Found")
+				return
+			}
+		}
+
+		arr := strings.Split(requestPath, ".")
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf", "md":
 			if !rt.Center.UseFileAssets {
-				c.FileFromFS(c.Request.URL.Path, *fs)
+				c.FileFromFS(requestPath, *fs)
 			} else {
 				cwdarr := []string{"/"}
 				if runtime.GOOS == "windows" {
@@ -138,7 +154,7 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 				}
 				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 				cwdarr = append(cwdarr, "pub")
-				cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+				cwdarr = append(cwdarr, strings.Split(requestPath, "/")...)
 				c.File(path.Join(cwdarr...))
 			}
 		default:
@@ -169,11 +185,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		logger.Errorf("cannot create statik fs: %v", err)
 	}
 
+	// Get normalized base path for reverse proxy deployment
+	basePath := rt.HTTP.NormalizedBasePath()
+
 	if !rt.Center.UseFileAssets {
-		r.StaticFS("/pub", statikFS)
+		r.StaticFS(basePath+"/pub", statikFS)
 	}
 
-	pagesPrefix := "/api/n9e"
+	pagesPrefix := basePath + "/api/n9e"
 	pages := r.Group(pagesPrefix)
 	{
 
@@ -571,7 +590,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
 	}
 
-	r.GET("/api/n9e/versions", func(c *gin.Context) {
+	r.GET(basePath+"/api/n9e/versions", func(c *gin.Context) {
 		v := version.Version
 		lastIndex := strings.LastIndex(version.Version, "-")
 		if lastIndex != -1 {
@@ -587,7 +606,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	})
 
 	if rt.HTTP.APIForService.Enable {
-		service := r.Group("/v1/n9e")
+		service := r.Group(basePath + "/v1/n9e")
 		if len(rt.HTTP.APIForService.BasicAuth) > 0 {
 			service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
 		}
@@ -694,7 +713,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 
 	if rt.HTTP.APIForAgent.Enable {
-		heartbeat := r.Group("/v1/n9e")
+		heartbeat := r.Group(basePath + "/v1/n9e")
 		{
 			if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 				heartbeat.Use(gin.BasicAuth(rt.HTTP.APIForAgent.BasicAuth))
@@ -703,7 +722,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	}
 
-	rt.configNoRoute(r, &statikFS)
+	rt.configNoRoute(r, &statikFS, basePath)
 
 }
 
