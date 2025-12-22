@@ -20,6 +20,7 @@ type Keys struct {
 	LabelKey   string `json:"labelKey" mapstructure:"labelKey"` // 多个用空格分隔
 	TimeKey    string `json:"timeKey" mapstructure:"timeKey"`
 	TimeFormat string `json:"timeFormat" mapstructure:"timeFormat"`
+	Offset     int    `json:"offset" mapstructure:"offset"` // 延迟计算，不在使用通用配置delay
 }
 
 var DatasourceTypes map[int64]DatasourceType

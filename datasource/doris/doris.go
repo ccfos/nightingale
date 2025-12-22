@@ -40,7 +40,6 @@ type QueryParam struct {
 	TimeField  string          `json:"time_field" mapstructure:"time_field"`
 	TimeFormat string          `json:"time_format" mapstructure:"time_format"`
 	Interval   int64           `json:"interval" mapstructure:"interval"` // 查询时间间隔（秒）
-	Offset     int             `json:"offset" mapstructure:"offset"`     // 延迟计算，不在使用通用配置delay
 }
 
 func (d *Doris) InitClient() error {
@@ -165,9 +164,9 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		start = end - dorisQueryParam.Interval
 	}
 
-	if dorisQueryParam.Offset != 0 {
-		end -= int64(dorisQueryParam.Offset)
-		start -= int64(dorisQueryParam.Offset)
+	if dorisQueryParam.Keys.Offset != 0 {
+		end -= int64(dorisQueryParam.Keys.Offset)
+		start -= int64(dorisQueryParam.Keys.Offset)
 	}
 
 	dorisQueryParam.From = start
@@ -188,7 +187,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 			ValueKey: dorisQueryParam.Keys.ValueKey,
 			LabelKey: dorisQueryParam.Keys.LabelKey,
 			TimeKey:  dorisQueryParam.Keys.TimeKey,
-			Offset:   dorisQueryParam.Offset,
+			Offset:   dorisQueryParam.Keys.Offset,
 		},
 	})
 	if err != nil {
