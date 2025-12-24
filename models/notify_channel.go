@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"net"
@@ -969,7 +970,7 @@ func (ncc *NotifyChannelConfig) replaceVariables(tpl map[string]interface{}) (st
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
-			headers[key] = getParsedString(key, value, tpl)
+			headers[key] = html.UnescapeString(getParsedString(key, value, tpl))
 		} else {
 			headers[key] = value
 		}
@@ -1637,6 +1638,37 @@ var NotiChMap = []*NotifyChannelConfig{
 				ApiKey:     "pagerduty api key",
 				Timeout:    5000,
 				RetryTimes: 3,
+			},
+		},
+	},
+	{
+		Name: "ServiceNow", Ident: "servicenow", RequestType: "http", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Method:  "POST",
+				URL: "https://<your-instance>.service-now.com/em_event.do?JSONv2&sysparm_action=insert",
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{
+	"source": "nightingale",
+	"event_class": "{{$event.Cate}}",
+	"severity": "{{if $event.IsRecovered}}0{{else if eq $event.Severity 1}}1{{else if eq $event.Severity 2}}2{{else}}3{{end}}",
+	"resolution_state": "{{if $event.IsRecovered}}Closing{{else}}New{{end}}",
+	"message_key": "{{$event.Hash}}",
+	"node": "{{$event.TargetIdent}}",
+	"resource": "{{$event.Cluster}}",
+	"type": "{{$event.RuleProd}}",
+	"metric_name": "{{$event.RuleName}}",
+	"description": "{{if $event.IsRecovered}}[Recovered] {{end}}{{$event.RuleName}} - {{$event.TargetIdent}} {{if not $event.IsRecovered}}Trigger Value: {{$event.TriggerValue}}{{end}}",
+ 	"time_of_event": "{{timeformat $event.TriggerTime}}",
+ 	"additional_info": {"n9e_id":{{$event.Id}},"rule_id":{{$event.RuleId}},"rule_name":"{{$event.RuleName}}","rule_note":"{{$event.RuleNote}}","group_id":{{$event.GroupId}},"group_name":"{{$event.GroupName}}","datasource_id":{{$event.DatasourceId}},"cluster":"{{$event.Cluster}}","cate":"{{$event.Cate}}","prom_ql":"{{$event.PromQl}}","trigger_value":"{{$event.TriggerValue}}","runbook_url":"{{$event.RunbookUrl}}","tags":"{{$event.Tags}}","target_note":"{{$event.TargetNote}}","first_trigger_time":{{$event.FirstTriggerTime}},"notify_cur_number":{{$event.NotifyCurNumber}}}
+}`,
+				},
+				Headers: map[string]string{
+					"Content-Type":  "application/json",
+					"Accept":        "application/json",
+					"Authorization": "Basic {{ basicAuth \"user_n9e\" \"lifap><NaToK^[O6^>MKWJ$7?Iz1,H$Hit)%1GsD>]0%wb@0!%B9h+u[?FV$CQ=6D#E#23R!_BVckLZNm4R:;1#e{-rbRfi&us:N\" }}",
+				},
 			},
 		},
 	},

@@ -622,6 +622,8 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
+	ServiceNow: ``,
+	
 }
 
 var MsgTplMap = []MessageTemplate{
@@ -643,6 +645,7 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	{Name: "ServiceNow", Ident: ServiceNow, Weight: 0, Content: map[string]string{"content": NewTplMap[ServiceNow]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
