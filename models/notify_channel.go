@@ -1667,7 +1667,7 @@ var NotiChMap = []*NotifyChannelConfig{
 				Headers: map[string]string{
 					"Content-Type":  "application/json",
 					"Accept":        "application/json",
-					"Authorization": "Basic {{ basicAuth \"user_n9e\" \"lifap><NaToK^[O6^>MKWJ$7?Iz1,H$Hit)%1GsD>]0%wb@0!%B9h+u[?FV$CQ=6D#E#23R!_BVckLZNm4R:;1#e{-rbRfi&us:N\" }}",
+					"Authorization": "Basic {{ basicAuth \"<username>\" \"<password>\" }}",
 				},
 			},
 		},
