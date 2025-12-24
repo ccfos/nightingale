@@ -217,20 +217,16 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 	}
 
 	// 记录规则预览，只传了interval, 没有传From和To //
-	var start, end int64
 	now := time.Now().Unix()
 	if dorisQueryParam.To == 0 && dorisQueryParam.From == 0 && dorisQueryParam.Interval != 0 {
-		end = now
-		start = end - dorisQueryParam.Interval
+		dorisQueryParam.To = now
+		dorisQueryParam.From = now - dorisQueryParam.Interval
 	}
 
 	if dorisQueryParam.Offset != 0 {
-		end -= int64(dorisQueryParam.Offset)
-		start -= int64(dorisQueryParam.Offset)
+		dorisQueryParam.To -= int64(dorisQueryParam.Offset)
+		dorisQueryParam.From -= int64(dorisQueryParam.Offset)
 	}
-
-	dorisQueryParam.From = start
-	dorisQueryParam.To = end
 	// 记录规则预览，只传了interval, 没有传From和To //
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
