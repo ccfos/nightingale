@@ -13,13 +13,11 @@ import (
 // GET /api/n9e/saved-views?page=xxx&filter=mine|team&query=xxx
 func (rt *Router) savedViewGets(c *gin.Context) {
 	page := ginx.QueryStr(c, "page", "")
-	filter := ginx.QueryStr(c, "filter", "")
-	query := ginx.QueryStr(c, "query", "")
 
 	me := c.MustGet("user").(*models.User)
 
 	// 获取所有视图
-	lst, err := models.SavedViewGets(rt.Ctx, page, query)
+	lst, err := models.SavedViewGets(rt.Ctx, page)
 	if err != nil {
 		ginx.NewRender(c).Data(nil, err)
 		return
@@ -44,22 +42,9 @@ func (rt *Router) savedViewGets(c *gin.Context) {
 	normalViews := make([]models.SavedView, 0)
 
 	for _, view := range lst {
-		// 判断是否可见
-		visible := false
-		switch filter {
-		case "mine":
-			// 仅显示我创建的
-			visible = view.CreateBy == me.Username
-		case "team":
-			// 显示团队可见的（包括我创建的）
-			visible = view.CreateBy == me.Username ||
-				(view.PublicCate == 1 && slice.HaveIntersection[int64](userGids, view.Gids))
-		default:
-			// 全部可见：我创建的 + 全员公开 + 我所在团队可见的
-			visible = view.CreateBy == me.Username ||
-				view.PublicCate == 2 ||
-				(view.PublicCate == 1 && slice.HaveIntersection[int64](userGids, view.Gids))
-		}
+		visible := view.CreateBy == me.Username ||
+			view.PublicCate == 2 ||
+			(view.PublicCate == 1 && slice.HaveIntersection[int64](userGids, view.Gids))
 
 		if !visible {
 			continue

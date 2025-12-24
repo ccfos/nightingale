@@ -87,15 +87,10 @@ func SavedViewGetById(c *ctx.Context, id int64) (*SavedView, error) {
 }
 
 // SavedViewGets 获取视图列表
-func SavedViewGets(c *ctx.Context, page string, query string) ([]SavedView, error) {
+func SavedViewGets(c *ctx.Context, page string) ([]SavedView, error) {
 	var views []SavedView
 
 	session := DB(c).Where("page = ?", page)
-
-	// 名称搜索
-	if query != "" {
-		session = session.Where("name LIKE ?", "%"+query+"%")
-	}
 
 	if err := session.Order("update_at DESC").Find(&views).Error; err != nil {
 		return nil, err
