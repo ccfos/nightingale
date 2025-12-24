@@ -135,7 +135,6 @@ func (rt *Router) savedViewFavoriteAdd(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 }
 
-// savedViewFavoriteDel 取消收藏
 func (rt *Router) savedViewFavoriteDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 	me := c.MustGet("user").(*models.User)
