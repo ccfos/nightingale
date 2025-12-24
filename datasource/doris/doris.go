@@ -216,7 +216,7 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		return nil, 0, err
 	}
 
-	// 记录规则预览，只传了interval, 没有传From和To //
+	// 记录规则预览场景下，只传了interval, 没有传From和To
 	now := time.Now().Unix()
 	if dorisQueryParam.To == 0 && dorisQueryParam.From == 0 && dorisQueryParam.Interval != 0 {
 		dorisQueryParam.To = now
@@ -227,7 +227,6 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		dorisQueryParam.To -= int64(dorisQueryParam.Offset)
 		dorisQueryParam.From -= int64(dorisQueryParam.Offset)
 	}
-	// 记录规则预览，只传了interval, 没有传From和To //
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
 		var err error
