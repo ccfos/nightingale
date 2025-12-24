@@ -201,6 +201,10 @@ var I18N = `{
     "Some recovery scripts still in the BusiGroup": "业务组中仍有自愈脚本",
     "Some target busigroups still in the BusiGroup": "业务组中仍有监控对象",
 
+    "saved view not found": "保存的视图不存在",
+    "saved view name is blank": "视图名称不能为空",
+    "saved view page is blank": "视图页面不能为空",
+
     "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
@@ -405,6 +409,10 @@ var I18N = `{
     "Some recovery scripts still in the BusiGroup": "業務組中仍有自愈腳本",
     "Some target busigroups still in the BusiGroup": "業務組中仍有監控對象",
 
+    "saved view not found": "保存的視圖不存在",
+    "saved view name is blank": "視圖名稱不能為空",
+    "saved view page is blank": "視圖頁面不能為空",
+
     "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
@@ -606,6 +614,10 @@ var I18N = `{
     "Some recovery scripts still in the BusiGroup": "ビジネスグループにまだ自己回復スクリプトがあります",
     "Some target busigroups still in the BusiGroup": "ビジネスグループにまだ監視対象があります",
 
+    "saved view not found": "保存されたビューが見つかりません",
+    "saved view name is blank": "ビュー名を空にすることはできません",
+    "saved view page is blank": "ビューページを空にすることはできません",
+
     "---------ja_JP--------": "---------ja_JP--------"
   },
   "ru_RU": {
@@ -806,6 +818,10 @@ var I18N = `{
     "Some recording rules still in the BusiGroup": "В бизнес-группе еще есть правила записи",
     "Some recovery scripts still in the BusiGroup": "В бизнес-группе еще есть скрипты самоисцеления",
     "Some target busigroups still in the BusiGroup": "В бизнес-группе еще есть объекты мониторинга",
+
+    "saved view not found": "Сохраненный вид не найден",
+    "saved view name is blank": "Название вида не может быть пустым",
+    "saved view page is blank": "Страница вида не может быть пустой",
 
     "---------ru_RU--------": "---------ru_RU--------"
   }
