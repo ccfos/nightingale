@@ -569,6 +569,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
 		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
+
+		// saved view 查询条件保存相关路由
+		pages.GET("/saved-views", rt.auth(), rt.user(), rt.savedViewGets)
+		pages.POST("/saved-views", rt.auth(), rt.user(), rt.savedViewAdd)
+		pages.PUT("/saved-view/:id", rt.auth(), rt.user(), rt.savedViewPut)
+		pages.DELETE("/saved-view/:id", rt.auth(), rt.user(), rt.savedViewDel)
+		pages.POST("/saved-view/:id/favorite", rt.auth(), rt.user(), rt.savedViewFavoriteAdd)
+		pages.DELETE("/saved-view/:id/favorite", rt.auth(), rt.user(), rt.savedViewFavoriteDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
