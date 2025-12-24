@@ -93,7 +93,7 @@ func (rt *Router) savedViewPut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	// 只有创建者可以更新
 	if view.CreateBy != me.Username && !me.IsAdmin() {
-		ginx.NewRender(c, http.StatusForbidden).Message("forbidden: only creator can update")
+		ginx.NewRender(c, http.StatusForbidden).Message("forbidden")
 		return
 	}
 
@@ -125,7 +125,7 @@ func (rt *Router) savedViewDel(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	// 只有创建者或管理员可以删除
 	if view.CreateBy != me.Username && !me.IsAdmin() {
-		ginx.NewRender(c, http.StatusForbidden).Message("forbidden: only creator can delete")
+		ginx.NewRender(c, http.StatusForbidden).Message("forbidden")
 		return
 	}
 

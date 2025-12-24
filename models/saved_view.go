@@ -14,7 +14,6 @@ var (
 	ErrSavedViewNotFound  = errors.New("saved view not found")
 )
 
-// SavedView 保存的查询视图
 type SavedView struct {
 	Id         int64   `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name       string  `json:"name" gorm:"type:varchar(255);not null"`
@@ -46,7 +45,6 @@ func (sv *SavedView) Verify() error {
 	return nil
 }
 
-// SavedViewAdd 创建保存的视图
 func SavedViewAdd(c *ctx.Context, sv *SavedView) error {
 	if err := sv.Verify(); err != nil {
 		return err
@@ -57,7 +55,6 @@ func SavedViewAdd(c *ctx.Context, sv *SavedView) error {
 	return Insert(c, sv)
 }
 
-// SavedViewUpdate 更新保存的视图
 func SavedViewUpdate(c *ctx.Context, sv *SavedView, username string) error {
 	if err := sv.Verify(); err != nil {
 		return err
@@ -67,7 +64,6 @@ func SavedViewUpdate(c *ctx.Context, sv *SavedView, username string) error {
 	return DB(c).Model(sv).Select("name", "filter", "public_cate", "gids", "update_at", "update_by").Updates(sv).Error
 }
 
-// SavedViewDel 删除保存的视图
 func SavedViewDel(c *ctx.Context, id int64) error {
 	// 先删除收藏关联
 	if err := DB(c).Where("view_id = ?", id).Delete(&UserViewFavorite{}).Error; err != nil {
@@ -76,7 +72,6 @@ func SavedViewDel(c *ctx.Context, id int64) error {
 	return DB(c).Where("id = ?", id).Delete(&SavedView{}).Error
 }
 
-// SavedViewGetById 根据 ID 获取视图
 func SavedViewGetById(c *ctx.Context, id int64) (*SavedView, error) {
 	var sv SavedView
 	err := DB(c).Where("id = ?", id).First(&sv).Error
@@ -86,7 +81,6 @@ func SavedViewGetById(c *ctx.Context, id int64) (*SavedView, error) {
 	return &sv, nil
 }
 
-// SavedViewGets 获取视图列表
 func SavedViewGets(c *ctx.Context, page string) ([]SavedView, error) {
 	var views []SavedView
 
@@ -99,7 +93,6 @@ func SavedViewGets(c *ctx.Context, page string) ([]SavedView, error) {
 	return views, nil
 }
 
-// SavedViewFavoriteGetByUserId 获取用户收藏的视图ID列表
 func SavedViewFavoriteGetByUserId(c *ctx.Context, userId int64) (map[int64]bool, error) {
 	var favorites []UserViewFavorite
 	if err := DB(c).Where("user_id = ?", userId).Find(&favorites).Error; err != nil {
@@ -113,7 +106,6 @@ func SavedViewFavoriteGetByUserId(c *ctx.Context, userId int64) (map[int64]bool,
 	return result, nil
 }
 
-// UserViewFavorite 用户视图收藏
 type UserViewFavorite struct {
 	Id       int64 `json:"id" gorm:"primaryKey;autoIncrement"`
 	ViewId   int64 `json:"view_id" gorm:"index"`
@@ -125,7 +117,6 @@ func (UserViewFavorite) TableName() string {
 	return "user_view_favorite"
 }
 
-// UserViewFavoriteAdd 添加收藏
 func UserViewFavoriteAdd(c *ctx.Context, viewId, userId int64) error {
 	// 检查视图是否存在
 	var count int64
@@ -152,7 +143,6 @@ func UserViewFavoriteAdd(c *ctx.Context, viewId, userId int64) error {
 	return DB(c).Create(fav).Error
 }
 
-// UserViewFavoriteDel 取消收藏
 func UserViewFavoriteDel(c *ctx.Context, viewId, userId int64) error {
 	return DB(c).Where("view_id = ? AND user_id = ?", viewId, userId).Delete(&UserViewFavorite{}).Error
 }
