@@ -118,7 +118,6 @@ func (UserViewFavorite) TableName() string {
 }
 
 func UserViewFavoriteAdd(c *ctx.Context, viewId, userId int64) error {
-	// 检查视图是否存在
 	var count int64
 	if err := DB(c).Model(&SavedView{}).Where("id = ?", viewId).Count(&count).Error; err != nil {
 		return err
@@ -127,7 +126,6 @@ func UserViewFavoriteAdd(c *ctx.Context, viewId, userId int64) error {
 		return ErrSavedViewNotFound
 	}
 
-	// 检查是否已收藏
 	if err := DB(c).Model(&UserViewFavorite{}).Where("view_id = ? AND user_id = ?", viewId, userId).Count(&count).Error; err != nil {
 		return err
 	}

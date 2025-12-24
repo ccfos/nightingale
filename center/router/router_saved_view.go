@@ -10,34 +10,29 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-// GET /api/n9e/saved-views?page=xxx&filter=mine|team&query=xxx
 func (rt *Router) savedViewGets(c *gin.Context) {
 	page := ginx.QueryStr(c, "page", "")
 
 	me := c.MustGet("user").(*models.User)
 
-	// 获取所有视图
 	lst, err := models.SavedViewGets(rt.Ctx, page)
 	if err != nil {
 		ginx.NewRender(c).Data(nil, err)
 		return
 	}
 
-	// 获取用户所属的业务组 ID
 	userGids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
 	if err != nil {
 		ginx.NewRender(c).Data(nil, err)
 		return
 	}
 
-	// 获取用户收藏的视图
 	favoriteMap, err := models.SavedViewFavoriteGetByUserId(rt.Ctx, me.Id)
 	if err != nil {
 		ginx.NewRender(c).Data(nil, err)
 		return
 	}
 
-	// 过滤视图
 	favoriteViews := make([]models.SavedView, 0)
 	normalViews := make([]models.SavedView, 0)
 
@@ -50,7 +45,6 @@ func (rt *Router) savedViewGets(c *gin.Context) {
 			continue
 		}
 
-		// 设置收藏状态
 		view.IsFavorite = favoriteMap[view.Id]
 
 		// 收藏的排前面
