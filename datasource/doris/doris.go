@@ -224,9 +224,9 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		start = end - dorisQueryParam.Interval
 	}
 
-	if dorisQueryParam.Keys.Offset != 0 {
-		end -= int64(dorisQueryParam.Keys.Offset)
-		start -= int64(dorisQueryParam.Keys.Offset)
+	if dorisQueryParam.Offset != 0 {
+		end -= int64(dorisQueryParam.Offset)
+		start -= int64(dorisQueryParam.Offset)
 	}
 
 	dorisQueryParam.From = start
