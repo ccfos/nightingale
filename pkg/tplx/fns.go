@@ -66,7 +66,7 @@ func Urlconvert(str string) interface{} {
 }
 
 func BasicAuth(username, password string) string {
-    return base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+    return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
 }
 
 func Timeformat(ts int64, pattern ...string) string {
