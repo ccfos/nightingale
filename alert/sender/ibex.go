@@ -102,7 +102,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	}
 	// check perm
 	// tpl.GroupId - host - account 三元组校验权限
-	can, err := canDoIbex(tpl.UpdateBy, tpl, host, targetCache, userCache)
+	can, err := CanDoIbex(tpl.UpdateBy, tpl, host, targetCache, userCache)
 	if err != nil {
 		err = fmt.Errorf("event_callback_ibex: check perm fail: %v, event: %+v", err, event)
 		logger.Errorf("%s", err)
@@ -190,7 +190,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	return id, nil
 }
 
-func canDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType) (bool, error) {
+func CanDoIbex(username string, tpl *models.TaskTpl, host string, targetCache *memsto.TargetCacheType, userCache *memsto.UserCacheType) (bool, error) {
 	user := userCache.GetByUsername(username)
 	if user != nil && user.IsAdmin() {
 		return true, nil
