@@ -92,7 +92,7 @@ func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.
 func CallIbex(ctx *ctx.Context, id int64, host string,
 	taskTplCache *memsto.TaskTplCache, targetCache *memsto.TargetCacheType,
 	userCache *memsto.UserCacheType, event *models.AlertCurEvent, args string) (int64, error) {
-	logger.Infof("event_callback_ibex: id: %d, host: %s, event: %+v", id, host, event)
+	logger.Infof("event_callback_ibex: id: %d, host: %s, args: %s, event: %+v", id, host, args, event)
 
 	tpl := taskTplCache.Get(id)
 	if tpl == nil {
