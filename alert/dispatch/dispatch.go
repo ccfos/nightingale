@@ -825,12 +825,12 @@ func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEven
 
 		if len(t.Host) == 0 {
 			sender.CallIbex(e.ctx, t.TplId, event.TargetIdent,
-				e.taskTplsCache, e.targetCache, e.userCache, event)
+				e.taskTplsCache, e.targetCache, e.userCache, event, "")
 			continue
 		}
 		for _, host := range t.Host {
 			sender.CallIbex(e.ctx, t.TplId, host,
-				e.taskTplsCache, e.targetCache, e.userCache, event)
+				e.taskTplsCache, e.targetCache, e.userCache, event, "")
 		}
 	}
 }

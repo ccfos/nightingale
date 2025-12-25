@@ -86,12 +86,12 @@ func (c *IbexCallBacker) handleIbex(ctx *ctx.Context, url string, event *models.
 		return
 	}
 
-	CallIbex(ctx, id, host, c.taskTplCache, c.targetCache, c.userCache, event)
+	CallIbex(ctx, id, host, c.taskTplCache, c.targetCache, c.userCache, event, "")
 }
 
 func CallIbex(ctx *ctx.Context, id int64, host string,
 	taskTplCache *memsto.TaskTplCache, targetCache *memsto.TargetCacheType,
-	userCache *memsto.UserCacheType, event *models.AlertCurEvent) (int64, error) {
+	userCache *memsto.UserCacheType, event *models.AlertCurEvent, args string) (int64, error) {
 	logger.Infof("event_callback_ibex: id: %d, host: %s, event: %+v", id, host, event)
 
 	tpl := taskTplCache.Get(id)
@@ -142,6 +142,10 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 	}
 
 	// call ibex
+	taskArgs := tpl.Args
+	if args != "" {
+		taskArgs = args
+	}
 	in := models.TaskForm{
 		Title:          tpl.Title + " FH: " + host,
 		Account:        tpl.Account,
@@ -150,7 +154,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 		Timeout:        tpl.Timeout,
 		Pause:          tpl.Pause,
 		Script:         tpl.Script,
-		Args:           tpl.Args,
+		Args:           taskArgs,
 		Stdin:          string(tags),
 		Action:         "start",
 		Creator:        tpl.UpdateBy,
