@@ -1,6 +1,7 @@
 package tplx
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,6 +63,10 @@ func Unescaped(str string) interface{} {
 
 func Urlconvert(str string) interface{} {
 	return template.URL(str)
+}
+
+func BasicAuth(username, password string) string {
+    return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
 }
 
 func Timeformat(ts int64, pattern ...string) string {

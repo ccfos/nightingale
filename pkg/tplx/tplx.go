@@ -64,6 +64,7 @@ var TemplateFuncMap = template.FuncMap{
 	"jsonMarshal":                   JsonMarshal,
 	"mapDifference":                 MapDifference,
 	"tagsMapToStr":                  TagsMapToStr,
+	"basicAuth":                      BasicAuth,
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap

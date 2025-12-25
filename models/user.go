@@ -42,6 +42,7 @@ const (
 	Lark              = "lark"
 	LarkCard          = "larkcard"
 	Phone             = "phone"
+	ServiceNow 	 = "servicenow"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"
