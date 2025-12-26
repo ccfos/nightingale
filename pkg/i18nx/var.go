@@ -204,6 +204,7 @@ var I18N = `{
     "saved view not found": "保存的视图不存在",
     "saved view name is blank": "视图名称不能为空",
     "saved view page is blank": "视图页面不能为空",
+    "saved view name already exists in this page": "该页面下已存在同名的公开视图",
 
     "---------zh_CN--------": "---------zh_CN--------"
   },
@@ -412,6 +413,7 @@ var I18N = `{
     "saved view not found": "保存的視圖不存在",
     "saved view name is blank": "視圖名稱不能為空",
     "saved view page is blank": "視圖頁面不能為空",
+    "saved view name already exists in this page": "該頁面下已存在同名的公開視圖",
 
     "---------zh_HK--------": "---------zh_HK--------"
   },
@@ -617,6 +619,7 @@ var I18N = `{
     "saved view not found": "保存されたビューが見つかりません",
     "saved view name is blank": "ビュー名を空にすることはできません",
     "saved view page is blank": "ビューページを空にすることはできません",
+    "saved view name already exists in this page": "このページには同名の公開ビューが既に存在します",
 
     "---------ja_JP--------": "---------ja_JP--------"
   },
@@ -822,6 +825,7 @@ var I18N = `{
     "saved view not found": "Сохраненный вид не найден",
     "saved view name is blank": "Название вида не может быть пустым",
     "saved view page is blank": "Страница вида не может быть пустой",
+    "saved view name already exists in this page": "На этой странице уже существует публичный вид с таким названием",
 
     "---------ru_RU--------": "---------ru_RU--------"
   }
