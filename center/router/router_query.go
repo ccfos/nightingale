@@ -128,9 +128,10 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 			logger.Warningf("cluster:%d not exists", f.DatasourceId)
 			return nil, fmt.Errorf("cluster not exists")
 		}
-		var vCtx context.Context
+		
+		vCtx := rCtx
 		if f.Cate == models.DORIS {
-			vCtx = context.WithValue(rCtx, doris.NoNeedCheckMaxRow, true)
+			vCtx = context.WithValue(vCtx, doris.NoNeedCheckMaxRow, true)
 		}
 
 		wg.Add(1)
