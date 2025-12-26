@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	ErrSavedViewNameEmpty = errors.New("saved view name is blank")
-	ErrSavedViewPageEmpty = errors.New("saved view page is blank")
-	ErrSavedViewNotFound  = errors.New("saved view not found")
+	ErrSavedViewNameEmpty     = errors.New("saved view name is blank")
+	ErrSavedViewPageEmpty     = errors.New("saved view page is blank")
+	ErrSavedViewNotFound      = errors.New("saved view not found")
+	ErrSavedViewNameDuplicate = errors.New("saved view name already exists in this page")
 )
 
 type SavedView struct {
@@ -45,9 +46,30 @@ func (sv *SavedView) Verify() error {
 	return nil
 }
 
+func SavedViewCheckDuplicateName(c *ctx.Context, page, name string, excludeId int64) error {
+	var count int64
+	session := DB(c).Model(&SavedView{}).Where("page = ? AND name = ? AND public_cate = 2", page, name)
+	if excludeId > 0 {
+		session = session.Where("id != ?", excludeId)
+	}
+	if err := session.Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return ErrSavedViewNameDuplicate
+	}
+	return nil
+}
+
 func SavedViewAdd(c *ctx.Context, sv *SavedView) error {
 	if err := sv.Verify(); err != nil {
 		return err
+	}
+	// 当 PublicCate 为 all(2) 时，检查同一个 page 下 name 是否重复
+	if sv.PublicCate == 2 {
+		if err := SavedViewCheckDuplicateName(c, sv.Page, sv.Name, 0); err != nil {
+			return err
+		}
 	}
 	now := time.Now().Unix()
 	sv.CreateAt = now
@@ -58,6 +80,12 @@ func SavedViewAdd(c *ctx.Context, sv *SavedView) error {
 func SavedViewUpdate(c *ctx.Context, sv *SavedView, username string) error {
 	if err := sv.Verify(); err != nil {
 		return err
+	}
+	// 当 PublicCate 为 all(2) 时，检查同一个 page 下 name 是否重复（排除自身）
+	if sv.PublicCate == 2 {
+		if err := SavedViewCheckDuplicateName(c, sv.Page, sv.Name, sv.Id); err != nil {
+			return err
+		}
 	}
 	sv.UpdateAt = time.Now().Unix()
 	sv.UpdateBy = username
