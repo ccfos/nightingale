@@ -1,12 +1,15 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
@@ -107,10 +110,13 @@ func (rt *Router) QueryLogBatch(c *gin.Context) {
 }
 
 func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.QueryParam) ([]models.DataResp, error) {
-	var resp []models.DataResp
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	var errs []error
+	var (
+		resp []models.DataResp
+		mu   sync.Mutex
+		wg   sync.WaitGroup
+		errs []error
+		rCtx = ctx.Request.Context()
+	)
 
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, f.DatasourceId, f.Cate, q) {
@@ -122,12 +128,16 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 			logger.Warningf("cluster:%d not exists", f.DatasourceId)
 			return nil, fmt.Errorf("cluster not exists")
 		}
+		var vCtx context.Context
+		if f.Cate == models.DORIS {
+			vCtx = context.WithValue(rCtx, doris.NoNeedCheckMaxRow, true)
+		}
 
 		wg.Add(1)
 		go func(query interface{}) {
 			defer wg.Done()
 
-			data, err := plug.QueryData(ctx.Request.Context(), query)
+			data, err := plug.QueryData(vCtx, query)
 			if err != nil {
 				logger.Warningf("query data error: req:%+v err:%v", query, err)
 				mu.Lock()
