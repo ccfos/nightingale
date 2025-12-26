@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dskit/types"
-	"github.com/ccfos/nightingale/v6/pkg/macros"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
@@ -38,6 +39,8 @@ type QueryParam struct {
 	To         int64           `json:"to" mapstructure:"to"`
 	TimeField  string          `json:"time_field" mapstructure:"time_field"`
 	TimeFormat string          `json:"time_format" mapstructure:"time_format"`
+	Interval   int64           `json:"interval" mapstructure:"interval"` // 查询时间间隔（秒）
+	Offset     int             `json:"offset" mapstructure:"offset"`     // 延迟计算，不在使用通用配置delay
 }
 
 func (d *Doris) InitClient() error {
@@ -146,6 +149,30 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		return nil, fmt.Errorf("valueKey is required")
 	}
 
+	// 设置默认 interval
+	if dorisQueryParam.Interval == 0 {
+		dorisQueryParam.Interval = 60
+	}
+
+	// 计算时间范围
+	now := time.Now().Unix()
+	var start, end int64
+	if dorisQueryParam.To != 0 && dorisQueryParam.From != 0 {
+		end = dorisQueryParam.To
+		start = dorisQueryParam.From
+	} else {
+		end = now
+		start = end - dorisQueryParam.Interval
+	}
+
+	if dorisQueryParam.Offset != 0 {
+		end -= int64(dorisQueryParam.Offset)
+		start -= int64(dorisQueryParam.Offset)
+	}
+
+	dorisQueryParam.From = start
+	dorisQueryParam.To = end
+
 	if strings.Contains(dorisQueryParam.SQL, "$__") {
 		var err error
 		dorisQueryParam.SQL, err = macros.Macro(dorisQueryParam.SQL, dorisQueryParam.From, dorisQueryParam.To)
@@ -154,13 +181,14 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		}
 	}
 
-	items, err := d.QueryTimeseries(context.TODO(), &doris.QueryParam{
+	items, err := d.QueryTimeseries(ctx, &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,
 		Keys: types.Keys{
 			ValueKey: dorisQueryParam.Keys.ValueKey,
 			LabelKey: dorisQueryParam.Keys.LabelKey,
 			TimeKey:  dorisQueryParam.Keys.TimeKey,
+			Offset:   dorisQueryParam.Offset,
 		},
 	})
 	if err != nil {
@@ -186,6 +214,18 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 	dorisQueryParam := new(QueryParam)
 	if err := mapstructure.Decode(query, dorisQueryParam); err != nil {
 		return nil, 0, err
+	}
+
+	// 记录规则预览场景下，只传了interval, 没有传From和To
+	now := time.Now().Unix()
+	if dorisQueryParam.To == 0 && dorisQueryParam.From == 0 && dorisQueryParam.Interval != 0 {
+		dorisQueryParam.To = now
+		dorisQueryParam.From = now - dorisQueryParam.Interval
+	}
+
+	if dorisQueryParam.Offset != 0 {
+		dorisQueryParam.To -= int64(dorisQueryParam.Offset)
+		dorisQueryParam.From -= int64(dorisQueryParam.Offset)
 	}
 
 	if strings.Contains(dorisQueryParam.SQL, "$__") {

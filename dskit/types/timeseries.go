@@ -48,4 +48,5 @@ type Keys struct {
 	LabelKey   string `json:"labelKey" mapstructure:"labelKey"` // 多个用空格分隔
 	TimeKey    string `json:"timeKey" mapstructure:"timeKey"`
 	TimeFormat string `json:"timeFormat" mapstructure:"timeFormat"` // not used anymore
+	Offset     int    `json:"offset" mapstructure:"offset"`
 }
