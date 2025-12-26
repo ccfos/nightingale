@@ -181,7 +181,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		}
 	}
 
-	items, err := d.QueryTimeseries(context.TODO(), &doris.QueryParam{
+	items, err := d.QueryTimeseries(ctx, &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,
 		Keys: types.Keys{
