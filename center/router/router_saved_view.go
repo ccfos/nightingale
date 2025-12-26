@@ -21,7 +21,7 @@ func (rt *Router) savedViewGets(c *gin.Context) {
 		return
 	}
 
-	userGids, err := models.MyBusiGroupIds(rt.Ctx, me.Id)
+	userGids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	if err != nil {
 		ginx.NewRender(c).Data(nil, err)
 		return
