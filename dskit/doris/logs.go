@@ -10,13 +10,14 @@ const (
 	TimeseriesAggregationTimestamp = "__ts__"
 )
 
+// QueryLogs 查询日志
 // TODO: 待测试, MAP/ARRAY/STRUCT/JSON 等类型能否处理
 func (d *Doris) QueryLogs(ctx context.Context, query *QueryParam) ([]map[string]interface{}, error) {
 	// 等同于 Query()
-	return d.Query(ctx, query)
+	return d.Query(ctx, query, true)
 }
 
-// 本质是查询时序数据, 取第一组, SQL由上层封装, 不再做复杂的解析和截断
+// QueryHistogram 本质是查询时序数据, 取第一组, SQL由上层封装, 不再做复杂的解析和截断
 func (d *Doris) QueryHistogram(ctx context.Context, query *QueryParam) ([][]float64, error) {
 	values, err := d.QueryTimeseries(ctx, query)
 	if err != nil {
