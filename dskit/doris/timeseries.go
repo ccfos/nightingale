@@ -15,6 +15,10 @@ const (
 	TimeFieldFormatDateTime    = "datetime"
 )
 
+type noNeedCheckMaxRowKey struct{}
+
+var NoNeedCheckMaxRow = noNeedCheckMaxRowKey{}
+
 // 不再拼接SQL, 完全信赖用户的输入
 type QueryParam struct {
 	Database string     `json:"database"`
@@ -65,8 +69,12 @@ func (d *Doris) Query(ctx context.Context, query *QueryParam, checkMaxRow bool) 
 
 // QueryTimeseries executes a time series data query using the given parameters with MaxQueryRows check
 func (d *Doris) QueryTimeseries(ctx context.Context, query *QueryParam) ([]types.MetricValues, error) {
-	// 使用 Query 方法执行查询，Query方法内部已包含MaxQueryRows检查
-	rows, err := d.Query(ctx, query, false)
+	// 默认需要检查，除非调用方声明不需要检查
+	checkMaxRow := true
+	if noCheck, ok := ctx.Value(NoNeedCheckMaxRow).(bool); ok && noCheck {
+		checkMaxRow = false
+	}
+	rows, err := d.Query(ctx, query, checkMaxRow)
 	if err != nil {
 		return nil, err
 	}
