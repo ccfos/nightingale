@@ -39,7 +39,7 @@ var (
 )
 
 // Query executes a given SQL query in Doris and returns the results with MaxQueryRows check
-func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]interface{}, error) {
+func (d *Doris) Query(ctx context.Context, query *QueryParam, checkMaxRow bool) ([]map[string]interface{}, error) {
 	// 校验SQL的合法性, 过滤掉 write请求
 	sqlItem := strings.Split(strings.ToUpper(query.Sql), " ")
 	for _, item := range sqlItem {
@@ -48,10 +48,12 @@ func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]inte
 		}
 	}
 
-	// 检查查询结果行数
-	err := d.CheckMaxQueryRows(ctx, query.Database, query.Sql)
-	if err != nil {
-		return nil, err
+	if checkMaxRow {
+		// 检查查询结果行数
+		err := d.CheckMaxQueryRows(ctx, query.Database, query.Sql)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rows, err := d.ExecQuery(ctx, query.Database, query.Sql)
@@ -64,7 +66,7 @@ func (d *Doris) Query(ctx context.Context, query *QueryParam) ([]map[string]inte
 // QueryTimeseries executes a time series data query using the given parameters with MaxQueryRows check
 func (d *Doris) QueryTimeseries(ctx context.Context, query *QueryParam) ([]types.MetricValues, error) {
 	// 使用 Query 方法执行查询，Query方法内部已包含MaxQueryRows检查
-	rows, err := d.Query(ctx, query)
+	rows, err := d.Query(ctx, query, false)
 	if err != nil {
 		return nil, err
 	}
