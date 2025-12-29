@@ -558,6 +558,20 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/event-pipeline-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventPipeline)
 		pages.POST("/event-processor-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventProcessor)
 
+		// API 触发工作流
+		pages.POST("/event-pipeline/:id/trigger", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.triggerEventPipelineByAPI)
+		// SSE 流式执行工作流
+		pages.POST("/event-pipeline/:id/stream", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.streamEventPipeline)
+
+		// 事件Pipeline执行记录路由
+		pages.GET("/event-pipeline/:id/executions", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.listEventPipelineExecutions)
+		pages.GET("/event-pipeline/:id/execution/:exec_id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecution)
+		pages.GET("/event-pipeline/:id/execution-stats", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecutionStats)
+		pages.POST("/event-pipeline-executions/clean", rt.auth(), rt.user(), rt.admin(), rt.cleanEventPipelineExecutions)
+
+		// AI Agent 技能列表
+		pages.GET("/aiagent-skills", rt.auth(), rt.user(), rt.getAIAgentSkillNames)
+
 		pages.POST("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelsAdd)
 		pages.DELETE("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/del"), rt.notifyChannelsDel)
 		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels/put"), rt.notifyChannelPut)
@@ -682,6 +696,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/message-templates", rt.messageTemplateGets)
 
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
+			service.POST("/event-pipeline/:id/trigger", rt.triggerEventPipelineByService)
+			service.POST("/event-pipeline/:id/stream", rt.streamEventPipelineByService)
 
 			// 手机号加密存储配置接口
 			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)
