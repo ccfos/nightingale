@@ -1,13 +1,9 @@
 package router
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
@@ -18,7 +14,6 @@ import (
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
-	"gopkg.in/yaml.v3"
 )
 
 // 获取事件Pipeline列表
@@ -449,116 +444,6 @@ func (rt *Router) cleanEventPipelineExecutions(c *gin.Context) {
 	ginx.NewRender(c).Data(gin.H{
 		"deleted": affected,
 	}, nil)
-}
-
-// 获取 AI Agent 可用的技能列表
-func (rt *Router) getAIAgentSkillNames(c *gin.Context) {
-	skillsPath := rt.Center.AIAgentSkillsPath
-	if skillsPath == "" {
-		// 默认路径
-		skillsPath = "etc/skills"
-	}
-
-	skillNames, err := loadSkillNamesFromPath(skillsPath)
-	if err != nil {
-		logger.Warningf("Failed to load skill names from %s: %v", skillsPath, err)
-		ginx.NewRender(c).Data([]string{}, nil)
-		return
-	}
-
-	ginx.NewRender(c).Data(skillNames, nil)
-}
-
-// loadSkillNamesFromPath 从技能目录加载所有技能名称
-func loadSkillNamesFromPath(skillsPath string) ([]string, error) {
-	// 检查目录是否存在
-	if _, err := os.Stat(skillsPath); os.IsNotExist(err) {
-		return []string{}, nil
-	}
-
-	// 遍历技能目录
-	entries, err := os.ReadDir(skillsPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read skills directory: %v", err)
-	}
-
-	var skillNames []string
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		skillFile := filepath.Join(skillsPath, entry.Name(), "SKILL.md")
-
-		// 检查 SKILL.md 是否存在
-		if _, err := os.Stat(skillFile); os.IsNotExist(err) {
-			continue
-		}
-
-		// 解析技能名称
-		name, err := parseSkillNameFromFile(skillFile)
-		if err != nil {
-			logger.Warningf("Failed to parse skill name from %s: %v", skillFile, err)
-			continue
-		}
-
-		if name != "" {
-			skillNames = append(skillNames, name)
-		}
-	}
-
-	return skillNames, nil
-}
-
-// parseSkillNameFromFile 从 SKILL.md 文件解析技能名称
-func parseSkillNameFromFile(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	// 解析 YAML frontmatter
-	scanner := bufio.NewScanner(file)
-	var inFrontmatter bool
-	var frontmatterLines []string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if line == "---" {
-			if !inFrontmatter {
-				inFrontmatter = true
-				continue
-			} else {
-				// frontmatter 结束
-				break
-			}
-		}
-
-		if inFrontmatter {
-			frontmatterLines = append(frontmatterLines, line)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	if len(frontmatterLines) == 0 {
-		return "", nil
-	}
-
-	// 解析 YAML
-	frontmatter := strings.Join(frontmatterLines, "\n")
-	var metadata struct {
-		Name string `yaml:"name"`
-	}
-	if err := yaml.Unmarshal([]byte(frontmatter), &metadata); err != nil {
-		return "", err
-	}
-
-	return metadata.Name, nil
 }
 
 // ========== SSE 流式执行接口 ==========

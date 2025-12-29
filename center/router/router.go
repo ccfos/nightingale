@@ -569,9 +569,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-pipeline/:id/execution-stats", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecutionStats)
 		pages.POST("/event-pipeline-executions/clean", rt.auth(), rt.user(), rt.admin(), rt.cleanEventPipelineExecutions)
 
-		// AI Agent 技能列表
-		pages.GET("/aiagent-skills", rt.auth(), rt.user(), rt.getAIAgentSkillNames)
-
 		pages.POST("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelsAdd)
 		pages.DELETE("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/del"), rt.notifyChannelsDel)
 		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels/put"), rt.notifyChannelPut)

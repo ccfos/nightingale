@@ -20,7 +20,6 @@ type Center struct {
 	CleanNotifyRecordDay   int
 	MigrateBusiGroupLabel  bool
 	RSA                    httpx.RSAConfig
-	AIAgentSkillsPath      string // AI Agent 技能目录路径
 }
 
 type Plugin struct {
