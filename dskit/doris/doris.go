@@ -32,7 +32,7 @@ type Doris struct {
 	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe http endpoint
 	User            string `json:"doris.user" mapstructure:"doris.user"`         //
 	Password        string `json:"doris.password" mapstructure:"doris.password"` //
-	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`
+	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`   // ms
 	MaxIdleConns    int    `json:"doris.max_idle_conns" mapstructure:"doris.max_idle_conns"`
 	MaxOpenConns    int    `json:"doris.max_open_conns" mapstructure:"doris.max_open_conns"`
 	ConnMaxLifetime int    `json:"doris.conn_max_lifetime" mapstructure:"doris.conn_max_lifetime"`
@@ -127,7 +127,7 @@ func (d *Doris) createTimeoutContext(ctx context.Context) (context.Context, cont
 	if timeout == 0 {
 		timeout = 60
 	}
-	return context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	return context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
 }
 
 // ShowDatabases lists all databases in Doris
