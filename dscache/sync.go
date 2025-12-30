@@ -173,7 +173,10 @@ func esN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 }
 
 func PutDatasources(items []datasource.DatasourceInfo) {
+	// 记录当前有效的数据源 ID，按类型分组
+	validIds := make(map[string]map[int64]struct{})
 	ids := make([]int64, 0)
+
 	for _, item := range items {
 		if item.Type == "prometheus" {
 			continue
@@ -202,6 +205,12 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 		}
 		ids = append(ids, item.Id)
 
+		// 记录有效的数据源 ID
+		if _, ok := validIds[typ]; !ok {
+			validIds[typ] = make(map[int64]struct{})
+		}
+		validIds[typ][item.Id] = struct{}{}
+
 		// 异步初始化 client 不然数据源同步的会很慢
 		go func() {
 			defer func() {
@@ -211,6 +220,20 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 			}()
 			DsCache.Put(typ, item.Id, ds)
 		}()
+	}
+
+	// 删除 items 中不存在但 DsCache 中存在的数据源
+	cachedIds := DsCache.GetAllIds()
+	for cate, dsIds := range cachedIds {
+		for _, dsId := range dsIds {
+			if _, ok := validIds[cate]; !ok {
+				// 该类型在 items 中完全不存在，删除缓存中的所有该类型数据源
+				DsCache.Delete(cate, dsId)
+			} else if _, ok := validIds[cate][dsId]; !ok {
+				// 该数据源 ID 在 items 中不存在，删除
+				DsCache.Delete(cate, dsId)
+			}
+		}
 	}
 
 	logger.Debugf("get plugin by type success Ids:%v", ids)
