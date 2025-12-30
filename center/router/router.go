@@ -211,8 +211,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.GET("/datasource/brief", rt.auth(), rt.user(), rt.datasourceBriefs)
 			pages.POST("/datasource/query", rt.auth(), rt.user(), rt.datasourceQuery)
 
-			pages.POST("/ds-query", rt.auth(), rt.QueryData)
-			pages.POST("/logs-query", rt.auth(), rt.QueryLogV2)
+			pages.POST("/ds-query", rt.auth(), rt.user(), rt.QueryData)
+			pages.POST("/logs-query", rt.auth(), rt.user(), rt.QueryLogV2)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
