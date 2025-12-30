@@ -57,3 +57,29 @@ func (cs *Cache) Get(cate string, dsId int64) (datasource.Datasource, bool) {
 
 	return cs.datas[cate][dsId], true
 }
+
+func (cs *Cache) Delete(cate string, dsId int64) {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+	if _, found := cs.datas[cate]; !found {
+		return
+	}
+	delete(cs.datas[cate], dsId)
+
+	logger.Debugf("delete plugin:%s %d from cache", cate, dsId)
+}
+
+// GetAllIds 返回缓存中所有数据源的 ID，按类型分组
+func (cs *Cache) GetAllIds() map[string][]int64 {
+	cs.mutex.RLock()
+	defer cs.mutex.RUnlock()
+	result := make(map[string][]int64)
+	for cate, dsMap := range cs.datas {
+		ids := make([]int64, 0, len(dsMap))
+		for dsId := range dsMap {
+			ids = append(ids, dsId)
+		}
+		result[cate] = ids
+	}
+	return result
+}
