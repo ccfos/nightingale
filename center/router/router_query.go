@@ -15,7 +15,9 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-func CheckDsPerm(c *gin.Context, dsId int64, cate string, q interface{}) bool {
+type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
+
+var CheckDsPerm CheckDsPermFunc = func(c *gin.Context, dsId int64, cate string, q interface{}) bool {
 	// todo: 后续需要根据 cate 判断是否需要权限
 	return true
 }
