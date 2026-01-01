@@ -13,8 +13,10 @@ import (
 type EventPipeline struct {
 	ID               int64             `json:"id" gorm:"primaryKey"`
 	Name             string            `json:"name" gorm:"type:varchar(128)"`
-	Typ              string            `json:"typ" gorm:"type:varchar(128)"`      // builtin, user-defined    // event_pipeline, event_summary, metric_explorer
-	UseCase          string            `json:"use_case" gorm:"type:varchar(128)"` // metric_explorer, event_summary, event_pipeline
+	Typ              string            `json:"typ" gorm:"type:varchar(128)"`          // builtin, user-defined    // event_pipeline, event_summary, metric_explorer
+	UseCase          string            `json:"use_case" gorm:"type:varchar(128)"`     // metric_explorer, event_summary, event_pipeline
+	TriggerMode      string            `json:"trigger_mode" gorm:"type:varchar(128)"` // event, api, cron
+	Disabled         bool              `json:"disabled" gorm:"type:boolean"`
 	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
 	TeamNames        []string          `json:"team_names" gorm:"-"`
 	Description      string            `json:"description" gorm:"type:varchar(255)"`

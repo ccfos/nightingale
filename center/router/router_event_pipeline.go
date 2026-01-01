@@ -380,6 +380,30 @@ func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
 
 // ========== 执行记录 API ==========
 
+// 获取所有Pipeline执行记录列表
+func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
+	pipelineName := ginx.QueryStr(c, "pipeline_name", "")
+	mode := ginx.QueryStr(c, "mode", "")
+	status := ginx.QueryStr(c, "status", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+	offset := ginx.QueryInt(c, "p", 1)
+
+	if limit <= 0 || limit > 1000 {
+		limit = 20
+	}
+	if offset <= 0 {
+		offset = 1
+	}
+
+	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineName, mode, status, limit, (offset-1)*limit)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  executions,
+		"total": total,
+	}, nil)
+}
+
 // 获取Pipeline执行记录列表
 func (rt *Router) listEventPipelineExecutions(c *gin.Context) {
 	pipelineID := ginx.UrlParamInt64(c, "id")
@@ -388,7 +412,7 @@ func (rt *Router) listEventPipelineExecutions(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	offset := ginx.QueryInt(c, "p", 1)
 
-	if limit <= 0 || limit > 100 {
+	if limit <= 0 || limit > 1000 {
 		limit = 20
 	}
 	if offset <= 0 {

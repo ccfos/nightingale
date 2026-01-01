@@ -144,6 +144,36 @@ func ListEventPipelineExecutionsByEventID(c *ctx.Context, eventID int64) ([]*Eve
 	return executions, err
 }
 
+// ListAllEventPipelineExecutions 获取所有 Pipeline 的执行记录列表
+func ListAllEventPipelineExecutions(c *ctx.Context, pipelineName, mode, status string, limit, offset int) ([]*EventPipelineExecution, int64, error) {
+	var executions []*EventPipelineExecution
+	var total int64
+
+	session := DB(c).Model(&EventPipelineExecution{})
+
+	if pipelineName != "" {
+		session = session.Where("pipeline_name LIKE ?", "%"+pipelineName+"%")
+	}
+	if mode != "" {
+		session = session.Where("mode = ?", mode)
+	}
+	if status != "" {
+		session = session.Where("status = ?", status)
+	}
+
+	err := session.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = session.Order("created_at desc").Limit(limit).Offset(offset).Find(&executions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return executions, total, nil
+}
+
 // DeleteEventPipelineExecutions 批量删除执行记录（按时间）
 func DeleteEventPipelineExecutions(c *ctx.Context, beforeTime int64) (int64, error) {
 	result := DB(c).Where("created_at < ?", beforeTime).Delete(&EventPipelineExecution{})
