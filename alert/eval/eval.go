@@ -17,10 +17,6 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
-	"github.com/ccfos/nightingale/v6/datasource/ck"
-	"github.com/ccfos/nightingale/v6/datasource/doris"
-	"github.com/ccfos/nightingale/v6/datasource/mysql"
-	"github.com/ccfos/nightingale/v6/datasource/postgresql"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -1498,7 +1494,6 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
 					fmt.Sprintf("%v", i),
 				).Set(-3)
-				return points, recoverPoints, fmt.Errorf("rule_eval:%d execute query template error: %v", rule.Id, err)
 			}
 
 			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
@@ -1722,15 +1717,6 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 // query: 查询对象，如果是数据库类型的数据源，会处理其中的 sql 字段
 // data: 模板数据对象，如果为 nil 则使用空结构体（不支持变量渲染），如果不为 nil 则使用传入的数据（支持变量渲染）
 func ExecuteQueryTemplate(cate string, query interface{}, data interface{}) error {
-	// 判断是否是数据库类型的数据源
-	isDatabase := cate == mysql.MySQLType ||
-		cate == postgresql.PostgreSQLType ||
-		cate == ck.CKType ||
-		cate == doris.DorisType
-	if !isDatabase {
-		return nil
-	}
-
 	// 检查 query 是否是 map，且包含 sql 字段
 	queryMap, ok := query.(map[string]interface{})
 	if !ok {
