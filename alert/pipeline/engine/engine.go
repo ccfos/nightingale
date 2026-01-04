@@ -10,25 +10,19 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// WorkflowEngine 工作流引擎
 type WorkflowEngine struct {
 	ctx *ctx.Context
 }
 
-// NewWorkflowEngine 创建工作流引擎
 func NewWorkflowEngine(c *ctx.Context) *WorkflowEngine {
 	return &WorkflowEngine{ctx: c}
 }
 
-// Execute 执行工作流
-// 返回：处理后的事件、工作流执行结果、错误
 func (e *WorkflowEngine) Execute(pipeline *models.EventPipeline, event *models.AlertCurEvent, triggerCtx *models.WorkflowTriggerContext) (*models.AlertCurEvent, *models.WorkflowResult, error) {
 	startTime := time.Now()
 
-	// 初始化工作流执行上下文
 	wfCtx := e.initWorkflowContext(pipeline, event, triggerCtx)
 
-	// 获取标准化的节点和连接
 	nodes := pipeline.GetWorkflowNodes()
 	connections := pipeline.GetWorkflowConnections()
 
@@ -40,20 +34,16 @@ func (e *WorkflowEngine) Execute(pipeline *models.EventPipeline, event *models.A
 		}, nil
 	}
 
-	// 构建节点映射
 	nodeMap := make(map[string]*models.WorkflowNode)
 	for i := range nodes {
 		nodeMap[nodes[i].ID] = &nodes[i]
 	}
 
-	// 使用 Kahn 算法执行 DAG
 	result := e.executeDAG(nodeMap, connections, wfCtx)
 	result.Event = wfCtx.Event
 
-	// 计算执行时间
 	duration := time.Since(startTime).Milliseconds()
 
-	// 保存执行记录
 	if triggerCtx != nil && triggerCtx.Mode != "" {
 		e.saveExecutionRecord(pipeline, wfCtx, result, triggerCtx, startTime.Unix(), duration)
 	}
@@ -61,7 +51,6 @@ func (e *WorkflowEngine) Execute(pipeline *models.EventPipeline, event *models.A
 	return wfCtx.Event, result, nil
 }
 
-// initWorkflowContext 初始化工作流执行上下文
 func (e *WorkflowEngine) initWorkflowContext(pipeline *models.EventPipeline, event *models.AlertCurEvent, triggerCtx *models.WorkflowTriggerContext) *models.WorkflowContext {
 	// 合并环境变量
 	env := pipeline.GetEnvMap()
@@ -71,7 +60,6 @@ func (e *WorkflowEngine) initWorkflowContext(pipeline *models.EventPipeline, eve
 		}
 	}
 
-	// 初始化 metadata
 	metadata := map[string]string{
 		"start_time":  fmt.Sprintf("%d", time.Now().Unix()),
 		"pipeline_id": fmt.Sprintf("%d", pipeline.ID),
@@ -157,7 +145,6 @@ func (e *WorkflowEngine) executeDAG(nodeMap map[string]*models.WorkflowNode, con
 		nodeResult, nodeOutput := e.executeNode(node, wfCtx)
 		result.NodeResults = append(result.NodeResults, nodeResult)
 
-		// === 检测流式输出 ===
 		if nodeOutput != nil && nodeOutput.Stream && nodeOutput.StreamChan != nil {
 			// 流式输出节点通常是最后一个节点
 			// 直接传递 StreamChan 给 WorkflowResult，不阻塞等待
@@ -348,9 +335,7 @@ func (e *WorkflowEngine) shouldFollowBranch(nodeID string, outputIndex int, bran
 	return outputIndex == *branchIndex
 }
 
-// saveExecutionRecord 保存执行记录
 func (e *WorkflowEngine) saveExecutionRecord(pipeline *models.EventPipeline, wfCtx *models.WorkflowContext, result *models.WorkflowResult, triggerCtx *models.WorkflowTriggerContext, startTime int64, duration int64) {
-	// 如果提供了 RequestID，则使用它作为执行ID；否则生成新的UUID
 	executionID := triggerCtx.RequestID
 	if executionID == "" {
 		executionID = uuid.New().String()
@@ -370,24 +355,20 @@ func (e *WorkflowEngine) saveExecutionRecord(pipeline *models.EventPipeline, wfC
 		TriggerBy:    triggerCtx.TriggerBy,
 	}
 
-	// 设置事件 ID
 	if wfCtx.Event != nil {
 		execution.EventID = wfCtx.Event.Id
 	}
 
-	// 设置节点结果
 	if err := execution.SetNodeResults(result.NodeResults); err != nil {
 		logger.Errorf("workflow: failed to set node results: pipeline_id=%d, error=%v", pipeline.ID, err)
 	}
 
-	// 设置脱敏后的环境变量快照
 	secretKeys := pipeline.GetSecretKeys()
 	sanitizedEnv := wfCtx.SanitizedEnv(secretKeys)
 	if err := execution.SetEnvSnapshot(sanitizedEnv); err != nil {
 		logger.Errorf("workflow: failed to set env snapshot: pipeline_id=%d, error=%v", pipeline.ID, err)
 	}
 
-	// 保存到数据库
 	if err := models.CreateEventPipelineExecution(e.ctx, execution); err != nil {
 		logger.Errorf("workflow: failed to save execution record: pipeline_id=%d, error=%v", pipeline.ID, err)
 	}
