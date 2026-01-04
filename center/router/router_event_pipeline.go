@@ -276,7 +276,6 @@ func (rt *Router) eventPipelinesListByService(c *gin.Context) {
 	ginx.NewRender(c).Data(pipelines, err)
 }
 
-// ========== API 触发工作流 ==========
 type EventPipelineRequest struct {
 	// 事件数据（可选，如果不传则使用空事件）
 	Event *models.AlertCurEvent `json:"event,omitempty"`
@@ -378,9 +377,6 @@ func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
 	}, nil)
 }
 
-// ========== 执行记录 API ==========
-
-// 获取所有Pipeline执行记录列表
 func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
 	pipelineName := ginx.QueryStr(c, "pipeline_name", "")
 	mode := ginx.QueryStr(c, "mode", "")
@@ -404,7 +400,6 @@ func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
 	}, nil)
 }
 
-// 获取Pipeline执行记录列表
 func (rt *Router) listEventPipelineExecutions(c *gin.Context) {
 	pipelineID := ginx.UrlParamInt64(c, "id")
 	mode := ginx.QueryStr(c, "mode", "")
@@ -428,7 +423,6 @@ func (rt *Router) listEventPipelineExecutions(c *gin.Context) {
 	}, nil)
 }
 
-// 获取单条执行记录详情
 func (rt *Router) getEventPipelineExecution(c *gin.Context) {
 	execID := ginx.UrlParamStr(c, "exec_id")
 
@@ -440,7 +434,6 @@ func (rt *Router) getEventPipelineExecution(c *gin.Context) {
 	ginx.NewRender(c).Data(detail, nil)
 }
 
-// 获取Pipeline执行统计
 func (rt *Router) getEventPipelineExecutionStats(c *gin.Context) {
 	pipelineID := ginx.UrlParamInt64(c, "id")
 
@@ -450,7 +443,6 @@ func (rt *Router) getEventPipelineExecutionStats(c *gin.Context) {
 	ginx.NewRender(c).Data(stats, nil)
 }
 
-// 清理历史执行记录
 func (rt *Router) cleanEventPipelineExecutions(c *gin.Context) {
 	var f struct {
 		BeforeDays int `json:"before_days"`
@@ -470,9 +462,6 @@ func (rt *Router) cleanEventPipelineExecutions(c *gin.Context) {
 	}, nil)
 }
 
-// ========== SSE 流式执行接口 ==========
-
-// streamEventPipeline SSE 流式执行工作流
 func (rt *Router) streamEventPipeline(c *gin.Context) {
 	pipelineID := ginx.UrlParamInt64(c, "id")
 
@@ -518,7 +507,6 @@ func (rt *Router) streamEventPipeline(c *gin.Context) {
 	ginx.NewRender(c).Data(result, nil)
 }
 
-// handleStreamResponse 处理 SSE 流式响应
 func (rt *Router) handleStreamResponse(c *gin.Context, result *models.WorkflowResult, requestID string) {
 	// 设置 SSE 响应头
 	c.Header("Content-Type", "text/event-stream")
@@ -568,20 +556,17 @@ func (rt *Router) handleStreamResponse(c *gin.Context, result *models.WorkflowRe
 	}
 }
 
-// streamEventPipelineByService Service 调用的 SSE 流式执行接口
 func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 	pipelineID := ginx.UrlParamInt64(c, "id")
 
 	var f EventPipelineRequest
 	ginx.BindJSON(c, &f)
 
-	// 获取 Pipeline
 	pipeline, err := models.GetEventPipeline(rt.Ctx, pipelineID)
 	if err != nil {
 		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
 	}
 
-	// 准备事件
 	var event *models.AlertCurEvent
 	if f.Event != nil {
 		event = f.Event
@@ -591,7 +576,6 @@ func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 		}
 	}
 
-	// 创建触发上下文（流式模式）
 	triggerCtx := &models.WorkflowTriggerContext{
 		Mode:         models.TriggerModeAPI,
 		TriggerBy:    f.Username,
@@ -600,7 +584,6 @@ func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 		Stream:       true, // 流式端点强制启用流式输出
 	}
 
-	// 执行工作流
 	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
 	_, result, err := workflowEngine.Execute(pipeline, event, triggerCtx)
 	if err != nil {
@@ -613,6 +596,5 @@ func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 		return
 	}
 
-	// 非流式：普通 JSON 响应（如果 processor 不支持流式）
 	ginx.NewRender(c).Data(result, nil)
 }

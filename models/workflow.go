@@ -136,8 +136,6 @@ func (ctx *WorkflowContext) SanitizedEnv(secretKeys map[string]bool) map[string]
 	return sanitized
 }
 
-// ========== 流式输出支持 ==========
-
 // StreamChunk 类型常量
 const (
 	StreamTypeThinking   = "thinking"    // AI 思考过程（ReAct Thought）

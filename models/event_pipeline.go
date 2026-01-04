@@ -25,7 +25,6 @@ type EventPipeline struct {
 	AttrFilters      []TagFilter       `json:"attribute_filters" gorm:"type:text;serializer:json"`
 	ProcessorConfigs []ProcessorConfig `json:"processors" gorm:"type:text;serializer:json"`
 
-	// ========== 工作流字段 ==========
 	// 工作流节点列表
 	Nodes []WorkflowNode `json:"nodes,omitempty" gorm:"type:text;serializer:json"`
 	// 节点连接关系
