@@ -36,6 +36,14 @@ func (e *WorkflowEngine) Execute(pipeline *models.EventPipeline, event *models.A
 
 	nodeMap := make(map[string]*models.WorkflowNode)
 	for i := range nodes {
+		if nodes[i].RetryInterval == 0 {
+			nodes[i].RetryInterval = 1
+		}
+
+		if nodes[i].MaxRetries == 0 {
+			nodes[i].MaxRetries = 1
+		}
+
 		nodeMap[nodes[i].ID] = &nodes[i]
 	}
 

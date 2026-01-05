@@ -294,15 +294,16 @@ ALTER TABLE `alert_rule` ADD COLUMN `pipeline_configs` text COMMENT 'pipeline co
 ALTER TABLE `board` ADD COLUMN `note` varchar(1024) not null default '' comment 'note';
 ALTER TABLE `builtin_payloads` ADD COLUMN `note` varchar(1024) not null default '' comment 'note of payload';
 
-/* v8.5.0 2025-12-12 - Event Pipeline Workflow Support */
--- event_pipeline 表添加工作流字段
-ALTER TABLE `event_pipeline` ADD COLUMN `workflow_mode` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'workflow mode switch';
+/* v9 2026-01-09 */
+ALTER TABLE `event_pipeline` ADD COLUMN `typ` varchar(128) NOT NULL DEFAULT '' COMMENT 'pipeline type: builtin, user-defined';
+ALTER TABLE `event_pipeline` ADD COLUMN `use_case` varchar(128) NOT NULL DEFAULT '' COMMENT 'use case: metric_explorer, event_summary, event_pipeline';
+ALTER TABLE `event_pipeline` ADD COLUMN `trigger_mode` varchar(128) NOT NULL DEFAULT 'event' COMMENT 'trigger mode: event, api, cron';
+ALTER TABLE `event_pipeline` ADD COLUMN `disabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'disabled flag';
 ALTER TABLE `event_pipeline` ADD COLUMN `nodes` text COMMENT 'workflow nodes (JSON)';
 ALTER TABLE `event_pipeline` ADD COLUMN `connections` text COMMENT 'node connections (JSON)';
 ALTER TABLE `event_pipeline` ADD COLUMN `env_variables` text COMMENT 'environment variables (JSON)';
 ALTER TABLE `event_pipeline` ADD COLUMN `label_filters` text COMMENT 'label filters (JSON)';
 
--- 执行记录表
 CREATE TABLE `event_pipeline_execution` (
     `id` varchar(36) NOT NULL COMMENT 'execution id',
     `pipeline_id` bigint NOT NULL COMMENT 'pipeline id',

@@ -56,9 +56,6 @@ func (e *EventPipeline) Verify() error {
 		return errors.New("team_ids cannot be empty")
 	}
 
-	if len(e.TeamIds) == 0 {
-		e.TeamIds = make([]int64, 0)
-	}
 	if len(e.LabelFilters) == 0 {
 		e.LabelFilters = make([]TagFilter, 0)
 	}

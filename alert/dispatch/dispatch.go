@@ -61,9 +61,6 @@ type Dispatch struct {
 	ctx              *ctx.Context
 	Astats           *astats.Stats
 
-	// WorkflowEngine 工作流引擎
-	workflowEngine *engine.WorkflowEngine
-
 	RwLock sync.RWMutex
 }
 
@@ -93,9 +90,8 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
 
-		ctx:            c,
-		Astats:         astats,
-		workflowEngine: engine.NewWorkflowEngine(c),
+		ctx:    c,
+		Astats: astats,
 	}
 
 	pipeline.Init()

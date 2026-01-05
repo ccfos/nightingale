@@ -527,6 +527,7 @@ func (rt *Router) handleStreamResponse(c *gin.Context, result *models.WorkflowRe
 	flusher.Flush()
 
 	// 从 channel 读取并发送 SSE
+	timeout := time.After(30 * time.Minute) // 最长流式输出时间
 	for {
 		select {
 		case chunk, ok := <-result.StreamChan:
@@ -551,6 +552,9 @@ func (rt *Router) handleStreamResponse(c *gin.Context, result *models.WorkflowRe
 		case <-c.Request.Context().Done():
 			// 客户端断开连接
 			logger.Infof("stream: client disconnected, request_id=%s", requestID)
+			return
+		case <-timeout:
+			logger.Errorf("stream: timeout, request_id=%s", requestID)
 			return
 		}
 	}
