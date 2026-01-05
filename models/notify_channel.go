@@ -725,10 +725,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
 		}
 		if resp.StatusCode == http.StatusOK {
-			return string(body), nil
+			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
 		}
 
-		return "", fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
+		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	return lastErrorMessage, errors.New("all retries failed, last error: " + lastErrorMessage)
