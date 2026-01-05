@@ -5,6 +5,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/ccfos/nightingale/v6/alert/eval"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -56,6 +57,13 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 		if !exists {
 			logger.Warningf("cluster:%d not exists query:%+v", q.Did, q)
 			return LogResp{}, fmt.Errorf("cluster not exists")
+		}
+
+		// 根据数据源类型对 Query 进行模板渲染处理
+		err := eval.ExecuteQueryTemplate(q.DsCate, q.Query, nil)
+		if err != nil {
+			logger.Warningf("query template execute error: %v", err)
+			return LogResp{}, fmt.Errorf("query template execute error: %v", err)
 		}
 
 		wg.Add(1)
