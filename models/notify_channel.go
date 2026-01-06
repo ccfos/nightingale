@@ -1227,6 +1227,48 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "JIRA", Ident: Jira, RequestType: "http", Weight: 18, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     "https://{JIRA Service Account Email}:{API Token}@api.atlassian.com/ex/jira/{CloudID}/rest/api/3/issue",
+				Method:  "POST",
+				Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"fields":{"project":{"key":"{{$params.project_key}}"},"issuetype":{"name":"{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"},"summary":"{{$event.RuleName}}","description":{"type":"doc","version":1,"content":[{"type":"paragraph","content":[{"type":"text","text":"{{$tpl.content}}"}]}]},"labels":["{{join $event.TagsJSON "\",\""}}", "eventHash={{$event.Hash}}"]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "project_key", CName: "Project Key", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "JSM Alert", Ident: JSMAlert, RequestType: "http", Weight: 18, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     `https://api.atlassian.com/jsm/ops/integration/v2/alerts{{if $event.IsRecovered}}/{{$event.Hash}}/close?identifierType=alias{{else}}{{end}}`,
+				Method:  "POST",
+				Headers: map[string]string{"Content-Type": "application/json", "Authorization": "GenieKey {{$params.api_key}}"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{if $event.IsRecovered}}{"note":"{{$tpl.content}}","source":"{{$event.Cluster}}"}{{else}}{"message":"{{$event.RuleName}}","description":"{{$tpl.content}}","alias":"{{$event.Hash}}","priority":"P{{$event.Severity}}","tags":[{{range $i, $v := $event.TagsJSON}}{{if $i}},{{end}}"{{$v}}"{{end}}],"details":{{jsonMarshal $event.AnnotationsJSON}},"entity":"{{$event.TargetIdent}}","source":"{{$event.Cluster}}"}{{end}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "api_key", CName: "API Key", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "Discord", Ident: Discord, RequestType: "http", Weight: 16, Enable: false,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1640,6 +1682,7 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
+	
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {

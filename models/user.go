@@ -42,6 +42,8 @@ const (
 	Lark              = "lark"
 	LarkCard          = "larkcard"
 	Phone             = "phone"
+	Jira              = "jira"
+	JSMAlert          = "jsm_alert"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"
