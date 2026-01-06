@@ -293,11 +293,15 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 		}
 	}
 
+	// 使用 TLS 配置（支持 mTLS）
+	tlsConfig, err := ds.HTTPJson.TLS.TLSConfig()
+	if err != nil {
+		return fmt.Errorf("failed to create TLS config: %v", err)
+	}
+
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify,
-			},
+			TLSClientConfig: tlsConfig,
 		},
 	}
 

@@ -101,11 +101,7 @@ func (pc *PromClientMap) loadFromDatabase() {
 			DialTimeout:         ds.HTTPJson.DialTimeout,
 			MaxIdleConnsPerHost: ds.HTTPJson.MaxIdleConnsPerHost,
 			Headers:             header,
-		}
-
-		if strings.HasPrefix(ds.HTTPJson.Url, "https") {
-			po.UseTLS = true
-			po.InsecureSkipVerify = ds.HTTPJson.TLS.SkipTlsVerify
+			TLS:                 ds.HTTPJson.TLS,
 		}
 
 		if internalAddr != "" && !pc.ctx.IsCenter {
@@ -149,7 +145,10 @@ func (pc *PromClientMap) loadFromDatabase() {
 }
 
 func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Client, error) {
-	tlsConfig, _ := po.TLSConfig()
+	tlsConfig, err := po.TLS.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS config: %v", err)
+	}
 
 	return api.NewClient(api.Config{
 		Address: po.Url,
@@ -166,7 +165,10 @@ func (pc *PromClientMap) newReaderClientFromPromOption(po PromOption) (api.Clien
 }
 
 func (pc *PromClientMap) newWriterClientFromPromOption(po PromOption) (api.Client, error) {
-	tlsConfig, _ := po.TLSConfig()
+	tlsConfig, err := po.TLS.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS config: %v", err)
+	}
 
 	return api.NewClient(api.Config{
 		Address: po.WriteAddr,

@@ -1,7 +1,10 @@
 package models
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -144,6 +147,72 @@ func (h HTTP) ParseUrl() (target *url.URL, err error) {
 
 type TLS struct {
 	SkipTlsVerify bool `json:"skip_tls_verify"`
+	// mTLS 配置
+	CACert            string `json:"ca_cert"`             // CA 证书内容 (PEM 格式)
+	ClientCert        string `json:"client_cert"`         // 客户端证书内容 (PEM 格式)
+	ClientKey         string `json:"client_key"`          // 客户端密钥内容 (PEM 格式)
+	ClientKeyPassword string `json:"client_key_password"` // 密钥密码（可选）
+	ServerName        string `json:"server_name"`         // TLS ServerName（可选，用于证书验证）
+	MinVersion        string `json:"min_version"`         // TLS 最小版本 (1.0, 1.1, 1.2, 1.3)
+	MaxVersion        string `json:"max_version"`         // TLS 最大版本
+}
+
+// TLSConfig 从证书内容创建 tls.Config
+// 证书内容为 PEM 格式字符串
+func (t *TLS) TLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: t.SkipTlsVerify,
+	}
+
+	// 设置 ServerName
+	if t.ServerName != "" {
+		tlsConfig.ServerName = t.ServerName
+	}
+
+	// 设置 TLS 版本
+	if t.MinVersion != "" {
+		if v, ok := tlsVersionMap[t.MinVersion]; ok {
+			tlsConfig.MinVersion = v
+		}
+	}
+	if t.MaxVersion != "" {
+		if v, ok := tlsVersionMap[t.MaxVersion]; ok {
+			tlsConfig.MaxVersion = v
+		}
+	}
+
+	// 如果配置了客户端证书，则加载 mTLS 配置
+	clientCert := strings.TrimSpace(t.ClientCert)
+	clientKey := strings.TrimSpace(t.ClientKey)
+	caCert := strings.TrimSpace(t.CACert)
+
+	if clientCert != "" && clientKey != "" {
+		// 加载客户端证书和密钥
+		cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
+		if err != nil {
+			return nil, fmt.Errorf("failed to load client certificate: %w", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// 加载 CA 证书
+	if caCert != "" {
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM([]byte(caCert)) {
+			return nil, fmt.Errorf("failed to parse CA certificate")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	return tlsConfig, nil
+}
+
+// tlsVersionMap TLS 版本映射
+var tlsVersionMap = map[string]uint16{
+	"1.0": tls.VersionTLS10,
+	"1.1": tls.VersionTLS11,
+	"1.2": tls.VersionTLS12,
+	"1.3": tls.VersionTLS13,
 }
 
 func (ds *Datasource) TableName() string {

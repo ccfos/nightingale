@@ -293,3 +293,8 @@ ALTER TABLE `alert_rule` ADD COLUMN `pipeline_configs` text COMMENT 'pipeline co
 /* v8.4.2 2025-11-13 */
 ALTER TABLE `board` ADD COLUMN `note` varchar(1024) not null default '' comment 'note';
 ALTER TABLE `builtin_payloads` ADD COLUMN `note` varchar(1024) not null default '' comment 'note of payload';
+
+/* v8.5.0 builtin_metrics new fields */
+ALTER TABLE `builtin_metrics` ADD COLUMN `expression_type` varchar(32) NOT NULL DEFAULT 'promql' COMMENT 'expression type: metric_name or promql';
+ALTER TABLE `builtin_metrics` ADD COLUMN `metric_type` varchar(191) NOT NULL DEFAULT '' COMMENT 'metric type like counter/gauge';
+ALTER TABLE `builtin_metrics` ADD COLUMN `extra_fields` text COMMENT 'custom extra fields';

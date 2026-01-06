@@ -3,7 +3,7 @@ package prom
 import (
 	"sync"
 
-	"github.com/ccfos/nightingale/v6/pkg/tlsx"
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 type PromOption struct {
@@ -20,7 +20,8 @@ type PromOption struct {
 
 	Headers []string
 
-	tlsx.ClientConfig
+	// TLS 配置（支持 mTLS）
+	TLS models.TLS
 }
 
 func (po *PromOption) Equal(target PromOption) bool {
@@ -52,10 +53,6 @@ func (po *PromOption) Equal(target PromOption) bool {
 		return false
 	}
 
-	if po.InsecureSkipVerify != target.InsecureSkipVerify {
-		return false
-	}
-
 	if len(po.Headers) != len(target.Headers) {
 		return false
 	}
@@ -64,6 +61,29 @@ func (po *PromOption) Equal(target PromOption) bool {
 		if po.Headers[i] != target.Headers[i] {
 			return false
 		}
+	}
+
+	// 比较 TLS 配置
+	if po.TLS.SkipTlsVerify != target.TLS.SkipTlsVerify {
+		return false
+	}
+	if po.TLS.CACert != target.TLS.CACert {
+		return false
+	}
+	if po.TLS.ClientCert != target.TLS.ClientCert {
+		return false
+	}
+	if po.TLS.ClientKey != target.TLS.ClientKey {
+		return false
+	}
+	if po.TLS.ServerName != target.TLS.ServerName {
+		return false
+	}
+	if po.TLS.MinVersion != target.TLS.MinVersion {
+		return false
+	}
+	if po.TLS.MaxVersion != target.TLS.MaxVersion {
+		return false
 	}
 
 	return true

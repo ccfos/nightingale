@@ -71,7 +71,7 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 
 	// Set default values similar to postgres implementation
 	if d.Timeout == 0 {
-		d.Timeout = 60
+		d.Timeout = 60000
 	}
 	if d.MaxIdleConns == 0 {
 		d.MaxIdleConns = 10

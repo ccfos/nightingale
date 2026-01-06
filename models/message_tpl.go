@@ -622,9 +622,26 @@ var NewTplMap = map[string]string{
 {{if $event.RuleNote }}**Alarm description:** **{{$event.RuleNote}}**{{end}}   
 {{- end -}}
 [Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Block for 1 hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})|[View Curve]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph)`,
+
+	// Jira and JSMAlert share the same template format
+	Jira: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Notes: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+Annotations:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}\n{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 }
 
+// Weight 用于页面元素排序，weight 越大 排序越靠后
 var MsgTplMap = []MessageTemplate{
+	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
