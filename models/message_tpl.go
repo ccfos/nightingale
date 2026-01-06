@@ -638,7 +638,10 @@ Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
 Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 }
 
+// Weight 用于页面元素排序，weight 越大 排序越靠后
 var MsgTplMap = []MessageTemplate{
+	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
 	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
 	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
 	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
@@ -657,8 +660,6 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
-	{Name: "Jira", Ident: Jira, Weight: 0, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert, Weight: 0, Content: map[string]string{"content": NewTplMap[Jira]}},
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {

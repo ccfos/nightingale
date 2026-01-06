@@ -1204,25 +1204,15 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 	return false
 }
 
+// Weight 用于页面元素排序，weight 越大 排序越靠后
 var NotiChMap = []*NotifyChannelConfig{
 	{
-		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 19, Enable: true,
 		RequestConfig: &RequestConfig{
-			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "{{$params.callback_url}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-				Request: RequestDetail{
-					Body: `{{ jsonMarshal $events }}`,
-				},
-			},
-		},
-		ParamConfig: &NotifyParamConfig{
-			Custom: Params{
-				Params: []ParamItem{
-					{Key: "callback_url", CName: "Callback Url", Type: "string"},
-					{Key: "note", CName: "Note", Type: "string"},
-				},
+			PagerDutyRequestConfig: &PagerDutyRequestConfig{
+				ApiKey:     "pagerduty api key",
+				Timeout:    5000,
+				RetryTimes: 3,
 			},
 		},
 	},
@@ -1248,7 +1238,7 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
-		Name: "JSM Alert", Ident: JSMAlert, RequestType: "http", Weight: 18, Enable: true,
+		Name: "JSM Alert", Ident: JSMAlert, RequestType: "http", Weight: 17, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
 				URL:     `https://api.atlassian.com/jsm/ops/integration/v2/alerts{{if $event.IsRecovered}}/{{$event.Hash}}/close?identifierType=alias{{else}}{{end}}`,
@@ -1657,6 +1647,27 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.callback_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{ jsonMarshal $events }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "callback_url", CName: "Callback Url", Type: "string"},
+					{Key: "note", CName: "Note", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1672,17 +1683,6 @@ var NotiChMap = []*NotifyChannelConfig{
 			},
 		},
 	},
-	{
-		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 1, Enable: true,
-		RequestConfig: &RequestConfig{
-			PagerDutyRequestConfig: &PagerDutyRequestConfig{
-				ApiKey:     "pagerduty api key",
-				Timeout:    5000,
-				RetryTimes: 3,
-			},
-		},
-	},
-	
 }
 
 func InitNotifyChannel(ctx *ctx.Context) {
