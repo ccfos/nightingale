@@ -1084,7 +1084,7 @@ type InitPostgresDatasource struct {
 	Status         string `gorm:"size:255;not null;default:''"`
 	HTTP           string `gorm:"size:4096;not null;default:''"`
 	Auth           string `gorm:"size:8192;not null;default:''"`
-	IsDefault      bool   `gorm:"typr:boolean;not null;default:0"`
+	IsDefault      bool   `gorm:"type:boolean;not null;default:0"`
 	CreatedAt      int64  `gorm:"not null;default:0"`
 	CreatedBy      string `gorm:"size:64;not null;default:''"`
 	UpdatedAt      int64  `gorm:"not null;default:0"`
