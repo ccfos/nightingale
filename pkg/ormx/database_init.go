@@ -1655,8 +1655,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
 		if err != nil {
-			fmt.Printf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
-			return err
+			logger.Errorf("mysqlDataBaseInit AutoMigrate error: %v\n", err)
 		}
 	}
 
@@ -1664,7 +1663,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		tableName := "task_host_" + strconv.Itoa(i)
 		err := db.Table(tableName).AutoMigrate(&InitTaskHost{})
 		if err != nil {
-			return err
+			logger.Errorf("mysqlDataBaseInit AutoMigrate task_host_%d error: %v\n", i, err)
 		}
 	}
 
