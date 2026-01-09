@@ -33,6 +33,7 @@ type Query struct {
 	Time  int64  `json:"time" mapstructure:"time"`   // 单点时间（秒）- 用于告警
 	Step  string `json:"step" mapstructure:"step"`   // 步长，如 "1m", "5m"
 	Limit int    `json:"limit" mapstructure:"limit"` // 限制返回数量
+	Ref   string `json:"ref" mapstructure:"ref"`     // 变量引用名（如 A、B）
 }
 
 // IsInstantQuery 判断是否为即时查询（告警场景）
@@ -162,7 +163,7 @@ func (vl *VictoriaLogs) queryDataInstant(ctx context.Context, param *Query) ([]m
 		return nil, err
 	}
 
-	return convertPrometheusInstantToDataResp(result), nil
+	return convertPrometheusInstantToDataResp(result, param.Ref), nil
 }
 
 // queryDataRange 看图场景，调用 /select/logsql/stats_query_range
@@ -185,15 +186,17 @@ func (vl *VictoriaLogs) queryDataRange(ctx context.Context, param *Query) ([]mod
 		return nil, err
 	}
 
-	return convertPrometheusRangeToDataResp(result), nil
+	return convertPrometheusRangeToDataResp(result, param.Ref), nil
 }
 
 // convertPrometheusInstantToDataResp 将 Prometheus Instant Query 格式转换为 DataResp
-func convertPrometheusInstantToDataResp(resp *victorialogs.PrometheusResponse) []models.DataResp {
+func convertPrometheusInstantToDataResp(resp *victorialogs.PrometheusResponse, ref string) []models.DataResp {
 	var dataResps []models.DataResp
 
 	for _, item := range resp.Data.Result {
-		dataResp := models.DataResp{}
+		dataResp := models.DataResp{
+			Ref: ref,
+		}
 
 		// 转换 Metric
 		dataResp.Metric = make(model.Metric)
@@ -218,11 +221,13 @@ func convertPrometheusInstantToDataResp(resp *victorialogs.PrometheusResponse) [
 }
 
 // convertPrometheusRangeToDataResp 将 Prometheus Range Query 格式转换为 DataResp
-func convertPrometheusRangeToDataResp(resp *victorialogs.PrometheusResponse) []models.DataResp {
+func convertPrometheusRangeToDataResp(resp *victorialogs.PrometheusResponse, ref string) []models.DataResp {
 	var dataResps []models.DataResp
 
 	for _, item := range resp.Data.Result {
-		dataResp := models.DataResp{}
+		dataResp := models.DataResp{
+			Ref: ref,
+		}
 
 		// 转换 Metric
 		dataResp.Metric = make(model.Metric)

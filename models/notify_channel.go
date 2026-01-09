@@ -725,10 +725,10 @@ func (ncc *NotifyChannelConfig) SendHTTP(events []*AlertCurEvent, tpl map[string
 			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
 		}
 		if resp.StatusCode == http.StatusOK {
-			return string(body), nil
+			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
 		}
 
-		return "", fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
+		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
 	}
 
 	return lastErrorMessage, errors.New("all retries failed, last error: " + lastErrorMessage)
@@ -1204,24 +1204,56 @@ func (c NotiChList) IfUsed(nr *NotifyRule) bool {
 	return false
 }
 
+// Weight 用于页面元素排序，weight 越大 排序越靠后
 var NotiChMap = []*NotifyChannelConfig{
 	{
-		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 19, Enable: true,
+		RequestConfig: &RequestConfig{
+			PagerDutyRequestConfig: &PagerDutyRequestConfig{
+				ApiKey:     "pagerduty api key",
+				Timeout:    5000,
+				RetryTimes: 3,
+			},
+		},
+	},
+	{
+		Name: "JIRA", Ident: Jira, RequestType: "http", Weight: 18, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
-				URL:    "{{$params.callback_url}}",
-				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				URL:     "https://{JIRA Service Account Email}:{API Token}@api.atlassian.com/ex/jira/{CloudID}/rest/api/3/issue",
+				Method:  "POST",
+				Headers: map[string]string{"Content-Type": "application/json"},
 				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
 				Request: RequestDetail{
-					Body: `{{ jsonMarshal $events }}`,
+					Body: `{"fields":{"project":{"key":"{{$params.project_key}}"},"issuetype":{"name":"{{if $event.IsRecovered}}Recovery{{else}}Alert{{end}}"},"summary":"{{$event.RuleName}}","description":{"type":"doc","version":1,"content":[{"type":"paragraph","content":[{"type":"text","text":"{{$tpl.content}}"}]}]},"labels":["{{join $event.TagsJSON "\",\""}}", "eventHash={{$event.Hash}}"]}}`,
 				},
 			},
 		},
 		ParamConfig: &NotifyParamConfig{
 			Custom: Params{
 				Params: []ParamItem{
-					{Key: "callback_url", CName: "Callback Url", Type: "string"},
-					{Key: "note", CName: "Note", Type: "string"},
+					{Key: "project_key", CName: "Project Key", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "JSM Alert", Ident: JSMAlert, RequestType: "http", Weight: 17, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:     `https://api.atlassian.com/jsm/ops/integration/v2/alerts{{if $event.IsRecovered}}/{{$event.Hash}}/close?identifierType=alias{{else}}{{end}}`,
+				Method:  "POST",
+				Headers: map[string]string{"Content-Type": "application/json", "Authorization": "GenieKey {{$params.api_key}}"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{if $event.IsRecovered}}{"note":"{{$tpl.content}}","source":"{{$event.Cluster}}"}{{else}}{"message":"{{$event.RuleName}}","description":"{{$tpl.content}}","alias":"{{$event.Hash}}","priority":"P{{$event.Severity}}","tags":[{{range $i, $v := $event.TagsJSON}}{{if $i}},{{end}}"{{$v}}"{{end}}],"details":{{jsonMarshal $event.AnnotationsJSON}},"entity":"{{$event.TargetIdent}}","source":"{{$event.Cluster}}"}{{end}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "api_key", CName: "API Key", Type: "string"},
 				},
 			},
 		},
@@ -1615,6 +1647,27 @@ var NotiChMap = []*NotifyChannelConfig{
 		},
 	},
 	{
+		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.callback_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{ jsonMarshal $events }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "callback_url", CName: "Callback Url", Type: "string"},
+					{Key: "note", CName: "Note", Type: "string"},
+				},
+			},
+		},
+	},
+	{
 		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
 		RequestConfig: &RequestConfig{
 			HTTPRequestConfig: &HTTPRequestConfig{
@@ -1627,16 +1680,6 @@ var NotiChMap = []*NotifyChannelConfig{
 				IntegrationUrl: "flashduty integration url",
 				Timeout:        5000, // 默认5秒超时
 				RetryTimes:     3,    // 默认重试3次
-			},
-		},
-	},
-	{
-		Name: "PagerDuty", Ident: "pagerduty", RequestType: "pagerduty", Weight: 1, Enable: true,
-		RequestConfig: &RequestConfig{
-			PagerDutyRequestConfig: &PagerDutyRequestConfig{
-				ApiKey:     "pagerduty api key",
-				Timeout:    5000,
-				RetryTimes: 3,
 			},
 		},
 	},

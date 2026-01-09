@@ -2,13 +2,14 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/datasource/tdengine"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"net/http"
 )
 
 type databasesQueryForm struct {

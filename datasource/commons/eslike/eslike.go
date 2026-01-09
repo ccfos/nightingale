@@ -26,6 +26,10 @@ const (
 	FieldId    FixedField = "_id"
 )
 
+// LabelSeparator 用于分隔多个标签的分隔符
+// 使用 ASCII 控制字符 Record Separator (0x1E)，避免与用户数据中的 "--" 冲突
+const LabelSeparator = "\x1e"
+
 type Query struct {
 	Ref            string     `json:"ref" mapstructure:"ref"`
 	IndexType      string     `json:"index_type" mapstructure:"index_type"` // 普通索引:index 索引模式:index_pattern
@@ -128,7 +132,7 @@ func TransferData(metric, ref string, m map[string][][]float64) []models.DataRes
 		}
 
 		data.Metric["__name__"] = model.LabelValue(metric)
-		labels := strings.Split(k, "--")
+		labels := strings.Split(k, LabelSeparator)
 		for _, label := range labels {
 			arr := strings.SplitN(label, "=", 2)
 			if len(arr) == 2 {
@@ -197,7 +201,7 @@ func GetBuckets(labelKey string, keys []string, arr []interface{}, metrics *Metr
 		case json.Number, string:
 			if !getTs {
 				if labels != "" {
-					newlabels = fmt.Sprintf("%s--%s=%v", labels, labelKey, keyValue)
+					newlabels = fmt.Sprintf("%s%s%s=%v", labels, LabelSeparator, labelKey, keyValue)
 				} else {
 					newlabels = fmt.Sprintf("%s=%v", labelKey, keyValue)
 				}

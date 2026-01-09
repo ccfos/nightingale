@@ -68,7 +68,8 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
-		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{}}
+		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
+		&models.SavedView{}, &models.UserViewFavorite{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -98,7 +99,11 @@ func MigrateTables(db *gorm.DB) error {
 	}()
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
-		dts = append(dts, &models.BuiltinPayload{})
+		if isPostgres(db) {
+			dts = append(dts, &models.PostgresBuiltinPayload{})
+		} else {
+			dts = append(dts, &models.BuiltinPayload{})
+		}
 	} else {
 		dts = append(dts, &BuiltinPayloads{})
 	}

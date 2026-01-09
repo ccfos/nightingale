@@ -42,6 +42,8 @@ const (
 	Lark              = "lark"
 	LarkCard          = "larkcard"
 	Phone             = "phone"
+	Jira              = "jira"
+	JSMAlert          = "jsm_alert"
 
 	DingtalkKey  = "dingtalk_robot_token"
 	WecomKey     = "wecom_robot_token"
@@ -339,6 +341,11 @@ func (u *User) Del(ctx *ctx.Context) error {
 }
 
 func (u *User) ChangePassword(ctx *ctx.Context, oldpass, newpass string) error {
+	// SSO 用户（ldap/oidc/cas/oauth2/dingtalk等）且未设置本地密码，不支持本地修改密码
+	if u.Belong != "" && u.Password == "******" {
+		return fmt.Errorf("SSO user(%s) cannot change password locally, please change password in %s", u.Username, u.Belong)
+	}
+
 	_oldpass, err := CryptoPass(ctx, oldpass)
 	if err != nil {
 		return err

@@ -125,6 +125,7 @@ type SiteInfo struct {
 	PrintBodyPaths []string `json:"print_body_paths"`
 	PrintAccessLog bool     `json:"print_access_log"`
 	SiteUrl        string   `json:"site_url"`
+	ReportHostNIC  bool     `json:"report_host_nic"`
 }
 
 func (c *CvalCache) GetSiteInfo() *SiteInfo {

@@ -538,7 +538,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		for i := range flashDutyChannelIDs {
 			start := time.Now()
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
+			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
 			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
 		}
@@ -547,7 +547,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		for _, routingKey := range pagerdutyRoutingKeys {
 			start := time.Now()
 			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), respBody)
+			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
 			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
 		}
@@ -578,7 +578,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	case "script":
 		start := time.Now()
 		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
-		res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+		res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:
@@ -825,12 +825,12 @@ func (e *Dispatch) HandleIbex(rule *models.AlertRule, event *models.AlertCurEven
 
 		if len(t.Host) == 0 {
 			sender.CallIbex(e.ctx, t.TplId, event.TargetIdent,
-				e.taskTplsCache, e.targetCache, e.userCache, event)
+				e.taskTplsCache, e.targetCache, e.userCache, event, "")
 			continue
 		}
 		for _, host := range t.Host {
 			sender.CallIbex(e.ctx, t.TplId, host,
-				e.taskTplsCache, e.targetCache, e.userCache, event)
+				e.taskTplsCache, e.targetCache, e.userCache, event, "")
 		}
 	}
 }

@@ -13,9 +13,52 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
 )
+
+// webhookClientCache 缓存 http.Client，避免每次请求都创建新的 Client 导致连接泄露
+var webhookClientCache sync.Map // key: clientKey (string), value: *http.Client
+
+// 相同配置的 webhook 会复用同一个 Client
+func getWebhookClient(webhook *models.Webhook) *http.Client {
+	clientKey := webhook.Hash()
+
+	if client, ok := webhookClientCache.Load(clientKey); ok {
+		return client.(*http.Client)
+	}
+
+	// 创建新的 Client
+	transport := &http.Transport{
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: webhook.SkipVerify},
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	}
+
+	if poster.UseProxy(webhook.Url) {
+		transport.Proxy = http.ProxyFromEnvironment
+	}
+
+	timeout := webhook.Timeout
+	if timeout <= 0 {
+		timeout = 10
+	}
+
+	newClient := &http.Client{
+		Timeout:   time.Duration(timeout) * time.Second,
+		Transport: transport,
+	}
+
+	// 使用 LoadOrStore 确保并发安全，避免重复创建
+	actual, loaded := webhookClientCache.LoadOrStore(clientKey, newClient)
+	if loaded {
+		return actual.(*http.Client)
+	}
+
+	return newClient
+}
 
 func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats) (bool, string, error) {
 	channel := "webhook"
@@ -55,25 +98,13 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 			req.Header.Set(conf.Headers[i], conf.Headers[i+1])
 		}
 	}
-	insecureSkipVerify := false
-	if webhook != nil {
-		insecureSkipVerify = webhook.SkipVerify
-	}
-
-	if conf.Client == nil {
-		logger.Warningf("event_%s, event:%s, url: [%s], error: [%s]", channel, string(bs), conf.Url, "client is nil")
-		conf.Client = &http.Client{
-			Timeout: time.Duration(conf.Timeout) * time.Second,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-			},
-		}
-	}
+	// 使用全局 Client 缓存，避免每次请求都创建新的 Client 导致连接泄露
+	client := getWebhookClient(conf)
 
 	stats.AlertNotifyTotal.WithLabelValues(channel).Inc()
 	var resp *http.Response
 	var body []byte
-	resp, err = conf.Client.Do(req)
+	resp, err = client.Do(req)
 
 	if err != nil {
 		stats.AlertNotifyErrorTotal.WithLabelValues(channel).Inc()
@@ -88,11 +119,11 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 
 	if resp.StatusCode == 429 {
 		logger.Errorf("event_%s_fail, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
-		return true, string(body), fmt.Errorf("status code is 429")
+		return true, fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("status code is 429")
 	}
 
 	logger.Debugf("event_%s_succ, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
-	return false, string(body), nil
+	return false, fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
 }
 
 func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
@@ -101,7 +132,7 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, e
 		for retryCount < 3 {
 			start := time.Now()
 			needRetry, res, err := sendWebhook(conf, event, stats)
-			res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+			res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 			NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "webhook", conf.Url, res, err)
 			if !needRetry {
 				break
@@ -173,7 +204,7 @@ func StartConsumer(ctx *ctx.Context, queue *WebhookQueue, popSize int, webhook *
 			for retryCount < webhook.RetryCount {
 				start := time.Now()
 				needRetry, res, err := sendWebhook(webhook, events, stats)
-				res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+				res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 				go NotifyRecord(ctx, events, 0, "webhook", webhook.Url, res, err)
 				if !needRetry {
 					break

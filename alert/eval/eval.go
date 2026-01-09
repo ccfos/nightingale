@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/astats"
@@ -24,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	promql2 "github.com/ccfos/nightingale/v6/pkg/promql"
+	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/prometheus/common/model"
@@ -60,6 +62,7 @@ const (
 	CHECK_QUERY     = "check_query_config"
 	GET_CLIENT      = "get_client"
 	QUERY_DATA      = "query_data"
+	EXEC_TEMPLATE   = "exec_template"
 )
 
 const (
@@ -151,7 +154,7 @@ func (arw *AlertRuleWorker) Eval() {
 		if len(message) == 0 {
 			logger.Infof("rule_eval:%s finished, duration:%v", arw.Key(), time.Since(begin))
 		} else {
-			logger.Infof("rule_eval:%s finished, duration:%v, message:%s", arw.Key(), time.Since(begin), message)
+			logger.Warningf("rule_eval:%s finished, duration:%v, message:%s", arw.Key(), time.Since(begin), message)
 		}
 	}()
 
@@ -186,8 +189,7 @@ func (arw *AlertRuleWorker) Eval() {
 	}
 
 	if err != nil {
-		logger.Errorf("rule_eval:%s get anomaly point err:%s", arw.Key(), err.Error())
-		message = "failed to get anomaly points"
+		message = fmt.Sprintf("failed to get anomaly points: %v", err)
 		return
 	}
 
@@ -1484,6 +1486,16 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 				return points, recoverPoints, fmt.Errorf("rule_eval:%d datasource:%d not exists", rule.Id, dsId)
 			}
 
+			if err = ExecuteQueryTemplate(rule.Cate, query, nil); err != nil {
+				logger.Warningf("rule_eval rid:%d execute query template error: %v", rule.Id, err)
+				arw.Processor.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", arw.Processor.DatasourceId()), EXEC_TEMPLATE, arw.Processor.BusiGroupCache.GetNameByBusiGroupId(arw.Rule.GroupId), fmt.Sprintf("%v", arw.Rule.Id)).Inc()
+				arw.Processor.Stats.GaugeQuerySeriesCount.WithLabelValues(
+					fmt.Sprintf("%v", arw.Rule.Id),
+					fmt.Sprintf("%v", arw.Processor.DatasourceId()),
+					fmt.Sprintf("%v", i),
+				).Set(-3)
+			}
+
 			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
 			series, err := plug.QueryData(ctx, query)
 			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", rule.Id)).Inc()
@@ -1698,4 +1710,62 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 	}
 
 	return points, recoverPoints, nil
+}
+
+// ExecuteQueryTemplate 根据数据源类型对 Query 进行模板渲染处理
+// cate: 数据源类别，如 "mysql", "pgsql" 等
+// query: 查询对象，如果是数据库类型的数据源，会处理其中的 sql 字段
+// data: 模板数据对象，如果为 nil 则使用空结构体（不支持变量渲染），如果不为 nil 则使用传入的数据（支持变量渲染）
+func ExecuteQueryTemplate(cate string, query interface{}, data interface{}) error {
+	// 检查 query 是否是 map，且包含 sql 字段
+	queryMap, ok := query.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	sqlVal, exists := queryMap["sql"]
+	if !exists {
+		return nil
+	}
+
+	sqlStr, ok := sqlVal.(string)
+	if !ok {
+		return nil
+	}
+
+	// 调用 ExecuteSqlTemplate 处理 sql 字段
+	processedSQL, err := ExecuteSqlTemplate(sqlStr, data)
+	if err != nil {
+		return fmt.Errorf("execute sql template error: %w", err)
+	}
+
+	// 更新 query 中的 sql 字段
+	queryMap["sql"] = processedSQL
+	return nil
+}
+
+// ExecuteSqlTemplate 执行 query 中的 golang 模板语法函数
+// query: 要处理的 query 字符串
+// data: 模板数据对象，如果为 nil 则使用空结构体（不支持变量渲染），如果不为 nil 则使用传入的数据（支持变量渲染）
+func ExecuteSqlTemplate(query string, data interface{}) (string, error) {
+	if !strings.Contains(query, "{{") || !strings.Contains(query, "}}") {
+		return query, nil
+	}
+
+	tmpl, err := template.New("query").Funcs(tplx.TemplateFuncMap).Parse(query)
+	if err != nil {
+		return "", fmt.Errorf("query tmpl parse error: %w", err)
+	}
+
+	var buf strings.Builder
+	templateData := data
+	if templateData == nil {
+		templateData = struct{}{}
+	}
+
+	if err := tmpl.Execute(&buf, templateData); err != nil {
+		return "", fmt.Errorf("query tmpl execute error: %w", err)
+	}
+
+	return buf.String(), nil
 }
