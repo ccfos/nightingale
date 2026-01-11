@@ -68,18 +68,6 @@ func (epc *EventProcessorCacheType) Get(processorId int64) *models.EventPipeline
 	return epc.eventPipelines[processorId]
 }
 
-func (epc *EventProcessorCacheType) GetProcessorsById(processorId int64) []models.Processor {
-	epc.RLock()
-	defer epc.RUnlock()
-
-	eventPipeline, ok := epc.eventPipelines[processorId]
-	if !ok {
-		return []models.Processor{}
-	}
-
-	return eventPipeline.Processors
-}
-
 func (epc *EventProcessorCacheType) GetProcessorIds() []int64 {
 	epc.RLock()
 	defer epc.RUnlock()
@@ -137,18 +125,7 @@ func (epc *EventProcessorCacheType) syncEventProcessors() error {
 
 	m := make(map[int64]*models.EventPipeline)
 	for i := 0; i < len(lst); i++ {
-		eventPipeline := lst[i]
-		for _, p := range eventPipeline.ProcessorConfigs {
-			processor, err := models.GetProcessorByType(p.Typ, p.Config)
-			if err != nil {
-				logger.Warningf("event_pipeline_id: %d, event:%+v, processor:%+v get processor err: %+v", eventPipeline.ID, eventPipeline, p, err)
-				continue
-			}
-
-			eventPipeline.Processors = append(eventPipeline.Processors, processor)
-		}
-
-		m[lst[i].ID] = eventPipeline
+		m[lst[i].ID] = lst[i]
 	}
 
 	epc.Set(m, stat.Total, stat.LastUpdated)
