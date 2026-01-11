@@ -18,13 +18,21 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+const (
+	ShowIndexFieldIndexType  = "index_type"
+	ShowIndexFieldColumnName = "column_name"
+	ShowIndexKeyName         = "key_name"
+
+	SQLShowIndex = "SHOW INDEX FROM "
+)
+
 // Doris struct to hold connection details and the connection object
 type Doris struct {
 	Addr            string `json:"doris.addr" mapstructure:"doris.addr"`         // fe mysql endpoint
 	FeAddr          string `json:"doris.fe_addr" mapstructure:"doris.fe_addr"`   // fe http endpoint
 	User            string `json:"doris.user" mapstructure:"doris.user"`         //
 	Password        string `json:"doris.password" mapstructure:"doris.password"` //
-	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`
+	Timeout         int    `json:"doris.timeout" mapstructure:"doris.timeout"`   // ms
 	MaxIdleConns    int    `json:"doris.max_idle_conns" mapstructure:"doris.max_idle_conns"`
 	MaxOpenConns    int    `json:"doris.max_open_conns" mapstructure:"doris.max_open_conns"`
 	ConnMaxLifetime int    `json:"doris.conn_max_lifetime" mapstructure:"doris.conn_max_lifetime"`
@@ -63,7 +71,7 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 
 	// Set default values similar to postgres implementation
 	if d.Timeout == 0 {
-		d.Timeout = 60
+		d.Timeout = 60000
 	}
 	if d.MaxIdleConns == 0 {
 		d.MaxIdleConns = 10
@@ -119,7 +127,7 @@ func (d *Doris) createTimeoutContext(ctx context.Context) (context.Context, cont
 	if timeout == 0 {
 		timeout = 60
 	}
-	return context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	return context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
 }
 
 // ShowDatabases lists all databases in Doris
@@ -310,6 +318,88 @@ func (d *Doris) DescTable(ctx context.Context, database, table string) ([]*types
 		})
 	}
 	return columns, nil
+}
+
+type TableIndexInfo struct {
+	ColumnName string `json:"column_name"`
+	IndexName  string `json:"index_name"`
+	IndexType  string `json:"index_type"`
+}
+
+// ShowIndexes 查询表的所有索引信息
+func (d *Doris) ShowIndexes(ctx context.Context, database, table string) ([]TableIndexInfo, error) {
+	if database == "" || table == "" {
+		return nil, fmt.Errorf("database and table names cannot be empty")
+	}
+
+	tCtx, cancel := d.createTimeoutContext(ctx)
+	defer cancel()
+
+	db, err := d.NewConn(tCtx, database)
+	if err != nil {
+		return nil, err
+	}
+
+	querySQL := fmt.Sprintf("%s `%s`.`%s`", SQLShowIndex, database, table)
+	rows, err := db.QueryContext(tCtx, querySQL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query indexes: %w", err)
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get columns: %w", err)
+	}
+	count := len(columns)
+
+	// 预映射列索引
+	colIdx := map[string]int{
+		ShowIndexKeyName:         -1,
+		ShowIndexFieldColumnName: -1,
+		ShowIndexFieldIndexType:  -1,
+	}
+	for i, col := range columns {
+		lCol := strings.ToLower(col)
+		if lCol == ShowIndexKeyName || lCol == ShowIndexFieldColumnName || lCol == ShowIndexFieldIndexType {
+			colIdx[lCol] = i
+		}
+	}
+
+	var result []TableIndexInfo
+	for rows.Next() {
+		// 使用 sql.RawBytes 可以接受任何类型并转为 string，避免复杂的类型断言
+		scanArgs := make([]interface{}, count)
+		values := make([]sql.RawBytes, count)
+		for i := range values {
+			scanArgs[i] = &values[i]
+		}
+
+		if err = rows.Scan(scanArgs...); err != nil {
+			return nil, err
+		}
+
+		info := TableIndexInfo{}
+		if i := colIdx[ShowIndexFieldColumnName]; i != -1 && i < count {
+			info.ColumnName = string(values[i])
+		}
+		if i := colIdx[ShowIndexKeyName]; i != -1 && i < count {
+			info.IndexName = string(values[i])
+		}
+		if i := colIdx[ShowIndexFieldIndexType]; i != -1 && i < count {
+			info.IndexType = string(values[i])
+		}
+
+		if info.ColumnName != "" {
+			result = append(result, info)
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return result, nil
 }
 
 // SelectRows selects rows from a specified table in Doris based on a given query with MaxQueryRows check

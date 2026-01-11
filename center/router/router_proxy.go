@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -169,8 +168,15 @@ func (rt *Router) dsProxy(c *gin.Context) {
 
 	transport, has := transportGet(dsId, ds.UpdatedAt)
 	if !has {
+		// 使用 TLS 配置（支持 mTLS）
+		tlsConfig, err := ds.HTTPJson.TLS.TLSConfig()
+		if err != nil {
+			c.String(http.StatusInternalServerError, "failed to create TLS config: %s", err.Error())
+			return
+		}
+
 		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: ds.HTTPJson.TLS.SkipTlsVerify},
+			TLSClientConfig: tlsConfig,
 			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(ds.HTTPJson.DialTimeout) * time.Millisecond,

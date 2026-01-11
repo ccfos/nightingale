@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -12,20 +13,23 @@ import (
 
 // BuiltinMetric represents a metric along with its metadata.
 type BuiltinMetric struct {
-	ID          int64         `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	UUID        int64         `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
-	Collector   string        `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
-	Typ         string        `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
-	Name        string        `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
-	Unit        string        `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
-	Note        string        `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
-	Lang        string        `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
-	Translation []Translation `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
-	Expression  string        `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
-	CreatedAt   int64         `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreatedBy   string        `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdatedAt   int64         `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdatedBy   string        `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID             int64           `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	UUID           int64           `json:"uuid" gorm:"type:bigint;not null;default:0;comment:'uuid'"`
+	Collector      string          `json:"collector" gorm:"type:varchar(191);not null;index:idx_collector,sort:asc;comment:'type of collector'"`
+	Typ            string          `json:"typ" gorm:"type:varchar(191);not null;index:idx_typ,sort:asc;comment:'type of metric'"`
+	Name           string          `json:"name" gorm:"type:varchar(191);not null;index:idx_builtinmetric_name,sort:asc;comment:'name of metric'"`
+	Unit           string          `json:"unit" gorm:"type:varchar(191);not null;comment:'unit of metric'"`
+	Note           string          `json:"note" gorm:"type:varchar(4096);not null;comment:'description of metric'"`
+	Lang           string          `json:"lang" gorm:"type:varchar(191);not null;default:'zh';index:idx_lang,sort:asc;comment:'language'"`
+	Translation    []Translation   `json:"translation" gorm:"type:text;serializer:json;comment:'translation of metric'"`
+	Expression     string          `json:"expression" gorm:"type:varchar(4096);not null;comment:'expression of metric'"`
+	ExpressionType string          `json:"expression_type" gorm:"type:varchar(32);not null;default:'promql';comment:'expression type: metric_name or promql'"`
+	MetricType     string          `json:"metric_type" gorm:"type:varchar(191);not null;default:'';comment:'metric type like counter/gauge'"`
+	ExtraFields    json.RawMessage `json:"extra_fields" gorm:"type:text;serializer:json;comment:'custom extra fields'"`
+	CreatedAt      int64           `json:"created_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreatedBy      string          `json:"created_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdatedAt      int64           `json:"updated_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdatedBy      string          `json:"updated_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
 }
 
 type Translation struct {

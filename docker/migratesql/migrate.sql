@@ -326,3 +326,8 @@ CREATE TABLE `event_pipeline_execution` (
     KEY `idx_status` (`status`),
     KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='event pipeline execution records';
+
+/* v8.5.0 builtin_metrics new fields */
+ALTER TABLE `builtin_metrics` ADD COLUMN `expression_type` varchar(32) NOT NULL DEFAULT 'promql' COMMENT 'expression type: metric_name or promql';
+ALTER TABLE `builtin_metrics` ADD COLUMN `metric_type` varchar(191) NOT NULL DEFAULT '' COMMENT 'metric type like counter/gauge';
+ALTER TABLE `builtin_metrics` ADD COLUMN `extra_fields` text COMMENT 'custom extra fields';
