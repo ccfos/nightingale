@@ -392,7 +392,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 	varToLabel := ExtractVarMapping(query.PromQl)
 	fullQuery := removeVal(query.PromQl)
 	// 存储所有的异常点，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
-	anomalyPointsMap := make(map[string]models.AnomalyPoint)
+	anomalyPointsMap := make(map[string][]models.AnomalyPoint)
 	// 统一变量配置格式
 	VarConfigForCalc := &models.ChildVarConfig{
 		ParamVal:        make([]map[string]models.ParamQuery, 1),
@@ -460,17 +460,30 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 					curRealQuery = fillVar(curRealQuery, paramKey, val)
 				}
 
-				if _, ok := paramPermutation[strings.Join(cur, JoinMark)]; ok {
-					anomalyPointsMap[strings.Join(cur, JoinMark)] = models.AnomalyPoint{
+				paramKeyStr := strings.Join(cur, JoinMark)
+				_, inCurrentWhitelist := paramPermutation[paramKeyStr]
+				if inCurrentWhitelist {
+					// 在当前层白名单中，加入异常点
+					anomalyPointsMap[paramKeyStr] = []models.AnomalyPoint{{
 						Key:       seqVals[i].Metric.String(),
 						Timestamp: seqVals[i].Timestamp.Unix(),
 						Value:     float64(seqVals[i].Value),
 						Labels:    seqVals[i].Metric,
 						Severity:  query.Severity,
 						Query:     curRealQuery,
-					}
-					// 生成异常点后，删除该参数组合
-					delete(paramPermutation, strings.Join(cur, JoinMark))
+					}}
+					delete(paramPermutation, paramKeyStr)
+
+				} else if _, existsInMap := anomalyPointsMap[paramKeyStr]; existsInMap {
+					// 同一参数组合的多个实例（如同一host的不同instance），追加异常点
+					anomalyPointsMap[paramKeyStr] = append(anomalyPointsMap[paramKeyStr], models.AnomalyPoint{
+						Key:       seqVals[i].Metric.String(),
+						Timestamp: seqVals[i].Timestamp.Unix(),
+						Value:     float64(seqVals[i].Value),
+						Labels:    seqVals[i].Metric,
+						Severity:  query.Severity,
+						Query:     curRealQuery,
+					})
 				}
 			}
 
@@ -484,7 +497,7 @@ func (arw *AlertRuleWorker) VarFillingAfterQuery(query models.PromQuery, readerC
 
 	anomalyPoints := make([]models.AnomalyPoint, 0)
 	for _, point := range anomalyPointsMap {
-		anomalyPoints = append(anomalyPoints, point)
+		anomalyPoints = append(anomalyPoints, point...)
 	}
 	return anomalyPoints
 }
@@ -1233,7 +1246,7 @@ func GetQueryRefAndUnit(query interface{}) (string, string, error) {
 func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, readerClient promsdk.API) []models.AnomalyPoint {
 	varToLabel := ExtractVarMapping(query.PromQl)
 	// 存储异常点的 map，key 为参数变量的组合，可以实现子筛选对上一层筛选的覆盖
-	anomalyPointsMap := sync.Map{}
+	anomalyPointsMap := make(map[string][]models.AnomalyPoint)
 	// 统一变量配置格式
 	VarConfigForCalc := &models.ChildVarConfig{
 		ParamVal:        make([]map[string]models.ParamQuery, 1),
@@ -1290,7 +1303,12 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 				keyToPromql[paramPermutationKeys] = realPromql
 			}
 
-			// 并发查询
+			// 并发查询,存储到临时map
+			tempResults := make(map[string][]models.AnomalyPoint)
+			var tempMu sync.Mutex
+			// 记录没有查询结果的key（用于删除）
+			keysToDelete := make([]string, 0)
+			var deleteKeysMu sync.Mutex
 			wg := sync.WaitGroup{}
 			semaphore := make(chan struct{}, 200)
 			for key, promql := range keyToPromql {
@@ -1311,7 +1329,10 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 
 					points := models.ConvertAnomalyPoints(value)
 					if len(points) == 0 {
-						anomalyPointsMap.Delete(key)
+						// 没有查询结果,记录需要删除的key
+						deleteKeysMu.Lock()
+						keysToDelete = append(keysToDelete, key)
+						deleteKeysMu.Unlock()
 						return
 					}
 					for i := 0; i < len(points); i++ {
@@ -1320,27 +1341,36 @@ func (arw *AlertRuleWorker) VarFillingBeforeQuery(query models.PromQuery, reader
 						points[i].ValuesUnit = map[string]unit.FormattedValue{
 							"v": unit.ValueFormatter(query.Unit, 2, points[i].Value),
 						}
-						// 每个异常点都需要生成 key，子筛选使用 key 覆盖上层筛选，解决 issue https://github.com/ccfos/nightingale/issues/2433 提的问题
+						// 每个异常点都需要生成key，子筛选使用 key 覆盖上层筛选，解决 issue https://github.com/ccfos/nightingale/issues/2433 提的问题
 						var cur []string
 						for _, paramKey := range ParamKeys {
 							val := string(points[i].Labels[model.LabelName(varToLabel[paramKey])])
 							cur = append(cur, val)
 						}
-						anomalyPointsMap.Store(strings.Join(cur, JoinMark), points[i])
+						paramKeyStr := strings.Join(cur, JoinMark)
+
+						tempMu.Lock()
+						tempResults[paramKeyStr] = append(tempResults[paramKeyStr], points[i])
+						tempMu.Unlock()
 					}
 				}(key, promql)
 			}
 			wg.Wait()
+
+			for _, key := range keysToDelete {
+				delete(anomalyPointsMap, key)
+			}
+
+			for paramKeyStr, points := range tempResults {
+				anomalyPointsMap[paramKeyStr] = points
+			}
 		}
 		curNode = curNode.ChildVarConfigs
 	}
 	anomalyPoints := make([]models.AnomalyPoint, 0)
-	anomalyPointsMap.Range(func(key, value any) bool {
-		if point, ok := value.(models.AnomalyPoint); ok {
-			anomalyPoints = append(anomalyPoints, point)
-		}
-		return true
-	})
+	for _, points := range anomalyPointsMap {
+		anomalyPoints = append(anomalyPoints, points...) // 展开数组
+	}
 	return anomalyPoints
 }
 
