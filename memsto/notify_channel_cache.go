@@ -283,7 +283,7 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
 			start := time.Now()
 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
-			resp = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), resp)
+			resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
 			logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%+v, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0], task.TplContent, task.CustomParams, task.Sendtos, resp, err)
 

@@ -119,11 +119,11 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 
 	if resp.StatusCode == 429 {
 		logger.Errorf("event_%s_fail, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
-		return true, string(body), fmt.Errorf("status code is 429")
+		return true, fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("status code is 429")
 	}
 
 	logger.Debugf("event_%s_succ, url: %s, response code: %d, body: %s event:%s", channel, conf.Url, resp.StatusCode, string(body), string(bs))
-	return false, string(body), nil
+	return false, fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
 }
 
 func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
@@ -132,7 +132,7 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, e
 		for retryCount < 3 {
 			start := time.Now()
 			needRetry, res, err := sendWebhook(conf, event, stats)
-			res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+			res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 			NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "webhook", conf.Url, res, err)
 			if !needRetry {
 				break
@@ -204,7 +204,7 @@ func StartConsumer(ctx *ctx.Context, queue *WebhookQueue, popSize int, webhook *
 			for retryCount < webhook.RetryCount {
 				start := time.Now()
 				needRetry, res, err := sendWebhook(webhook, events, stats)
-				res = fmt.Sprintf("duration: %d ms %s", time.Since(start).Milliseconds(), res)
+				res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
 				go NotifyRecord(ctx, events, 0, "webhook", webhook.Url, res, err)
 				if !needRetry {
 					break

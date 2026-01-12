@@ -99,7 +99,11 @@ func MigrateTables(db *gorm.DB) error {
 	}()
 
 	if !db.Migrator().HasTable(&models.BuiltinPayload{}) {
-		dts = append(dts, &models.BuiltinPayload{})
+		if isPostgres(db) {
+			dts = append(dts, &models.PostgresBuiltinPayload{})
+		} else {
+			dts = append(dts, &models.BuiltinPayload{})
+		}
 	} else {
 		dts = append(dts, &BuiltinPayloads{})
 	}
