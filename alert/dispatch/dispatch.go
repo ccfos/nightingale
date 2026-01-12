@@ -16,6 +16,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/pipeline"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -231,6 +232,8 @@ func shouldSkipNotify(ctx *ctx.Context, event *models.AlertCurEvent, notifyRuleI
 }
 
 func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, event *models.AlertCurEvent, eventProcessorCache *memsto.EventProcessorCacheType, ctx *ctx.Context, id int64, from string) *models.AlertCurEvent {
+	workflowEngine := engine.NewWorkflowEngine(ctx)
+
 	for _, pipelineConfig := range pipelineConfigs {
 		if !pipelineConfig.Enable {
 			continue
@@ -247,23 +250,28 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 			continue
 		}
 
-		processors := eventProcessorCache.GetProcessorsById(pipelineConfig.PipelineId)
-		for _, processor := range processors {
-			var res string
-			var err error
-			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, before processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, event)
-			event, res, err = processor.Process(ctx, event)
-			if event == nil {
-				logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, after processor:%+v, event: %+v", from, id, pipelineConfig.PipelineId, processor, eventOrigin)
-
-				if from == "notify_rule" {
-					// alert_rule 获取不到 eventId 记录没有意义
-					sender.NotifyRecord(ctx, []*models.AlertCurEvent{eventOrigin}, id, "", "", res, fmt.Errorf("processor_by_%s_id:%d pipeline_id:%d, drop by processor", from, id, pipelineConfig.PipelineId))
-				}
-				return nil
-			}
-			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, after processor:%+v, event: %+v, res:%v, err:%v", from, id, pipelineConfig.PipelineId, processor, event, res, err)
+		// 统一使用工作流引擎执行（兼容线性模式和工作流模式）
+		triggerCtx := &models.WorkflowTriggerContext{
+			Mode:      models.TriggerModeEvent,
+			TriggerBy: from,
 		}
+
+		resultEvent, result, err := workflowEngine.Execute(eventPipeline, event, triggerCtx)
+		if err != nil {
+			logger.Errorf("processor_by_%s_id:%d pipeline_id:%d, pipeline execute error: %v", from, id, pipelineConfig.PipelineId, err)
+			continue
+		}
+
+		if resultEvent == nil {
+			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, event: %+v", from, id, pipelineConfig.PipelineId, eventOrigin)
+			if from == "notify_rule" {
+				sender.NotifyRecord(ctx, []*models.AlertCurEvent{eventOrigin}, id, "", "", result.Message, fmt.Errorf("processor_by_%s_id:%d pipeline_id:%d, drop by pipeline", from, id, pipelineConfig.PipelineId))
+			}
+			return nil
+		}
+
+		event = resultEvent
+		logger.Infof("processor_by_%s_id:%d pipeline_id:%d, pipeline executed, status:%s, message:%s", from, id, pipelineConfig.PipelineId, result.Status, result.Message)
 	}
 
 	event.FE2DB()

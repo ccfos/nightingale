@@ -42,8 +42,14 @@ func TestAISummaryConfig_Process(t *testing.T) {
 		},
 	}
 
+	// 创建 WorkflowContext
+	wfCtx := &models.WorkflowContext{
+		Event: event,
+		Env:   map[string]string{},
+	}
+
 	// 测试模板处理
-	eventInfo, err := config.prepareEventInfo(event)
+	eventInfo, err := config.prepareEventInfo(wfCtx)
 	assert.NoError(t, err)
 	assert.Contains(t, eventInfo, "Test Rule")
 	assert.Contains(t, eventInfo, "1")
@@ -54,18 +60,18 @@ func TestAISummaryConfig_Process(t *testing.T) {
 	assert.NotNil(t, processor)
 
 	// 测试处理函数
-	result, _, err := processor.Process(&ctx.Context{}, event)
+	result, _, err := processor.Process(&ctx.Context{}, wfCtx)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.NotEmpty(t, result.AnnotationsJSON["ai_summary"])
+	assert.NotEmpty(t, result.Event.AnnotationsJSON["ai_summary"])
 
 	// 展示处理结果
 	t.Log("\n=== 处理结果 ===")
-	t.Logf("告警规则: %s", result.RuleName)
-	t.Logf("严重程度: %d", result.Severity)
-	t.Logf("标签: %v", result.TagsMap)
-	t.Logf("原始注释: %v", result.AnnotationsJSON["description"])
-	t.Logf("AI总结: %s", result.AnnotationsJSON["ai_summary"])
+	t.Logf("告警规则: %s", result.Event.RuleName)
+	t.Logf("严重程度: %d", result.Event.Severity)
+	t.Logf("标签: %v", result.Event.TagsMap)
+	t.Logf("原始注释: %v", result.Event.AnnotationsJSON["description"])
+	t.Logf("AI总结: %s", result.Event.AnnotationsJSON["ai_summary"])
 }
 
 func TestConvertCustomParam(t *testing.T) {

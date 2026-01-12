@@ -348,6 +348,15 @@ func New(c DBConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
+	// 检查 user 表是否存在，可能用户自己创建了空的数据库，如果不存在也执行 DataBaseInit
+	if dbExist && !db.Migrator().HasTable("users") {
+		fmt.Printf("Database exists but user table not found, initializing tables for %s\n", c.DBType)
+		err = DataBaseInit(c, db)
+		if err != nil {
+			return nil, fmt.Errorf("failed to init database: %v", err)
+		}
+	}
+
 	if c.Debug {
 		db = db.Debug()
 	}

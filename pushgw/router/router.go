@@ -32,7 +32,7 @@ type Router struct {
 	Writers        *writer.WritersType
 	Ctx            *ctx.Context
 	HandleTS       HandleTSFunc
-	HeartbeatApi  string
+	HeartbeatApi   string
 }
 
 func stat() gin.HandlerFunc {
