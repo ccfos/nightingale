@@ -301,6 +301,12 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 		email = *user.Email
 	}
 
+	if email == "" {
+		if user.EnterpriseEmail != nil {
+			email = *user.EnterpriseEmail
+		}
+	}
+
 	callbackOutput.Redirect = redirect
 	callbackOutput.AccessToken = accessToken
 
