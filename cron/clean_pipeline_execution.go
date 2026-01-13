@@ -46,7 +46,7 @@ func cleanPipelineExecutionInBatches(ctx *ctx.Context, day int) {
 // CleanPipelineExecution starts a cron job to clean old pipeline execution records in batches
 // Runs daily at 6:00 AM
 // day: 数据保留天数，默认 7 天
-// 使用分批删除方式，每批 1000 条，间隔 100ms，避免大批量删除影响数据库性能
+// 使用分批删除方式，每批 100 条，间隔 10ms，避免大批量删除影响数据库性能
 func CleanPipelineExecution(ctx *ctx.Context, day int) {
 	c := cron.New()
 	if day < 1 {
