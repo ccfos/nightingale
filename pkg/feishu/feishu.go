@@ -20,7 +20,7 @@ import (
 	larkcontact "github.com/larksuite/oapi-sdk-go/v3/service/contact/v3"
 )
 
-const defaultAuthURL = "https://open.feishu.cn/open-apis/authen/v1/index"
+const defaultAuthURL = "https://accounts.feishu.cn/open-apis/authen/v1/authorize"
 const SsoTypeName = "feishu"
 
 type SsoClient struct {
@@ -38,10 +38,9 @@ type Config struct {
 	AppID           string   `json:"app_id"`
 	AppSecret       string   `json:"app_secret"`
 	RedirectURL     string   `json:"redirect_url"`
-	UsernameField   string   `json:"username_field"`  // name, email, phone, user_id
+	UsernameField   string   `json:"username_field"`  // name, email, phone
 	FeiShuEndpoint  string   `json:"feishu_endpoint"` // 飞书API端点，默认为 open.feishu.cn
 	Proxy           string   `json:"proxy"`
-	SkipTlsVerify   bool     `json:"skip_tls_verify"`
 	CoverAttributes bool     `json:"cover_attributes"`
 	DefaultRoles    []string `json:"default_roles"`
 }
@@ -67,8 +66,6 @@ func (c *Config) createClient() (*lark.Client, error) {
 		lark.WithEnableTokenCache(true), // 启用token缓存
 	}
 
-	// 如果配置了自定义端点，可以通过环境变量或SDK配置设置
-	// 注意：v3 SDK 目前不支持直接设置自定义端点，此配置保留用于未来扩展
 	if c.FeiShuEndpoint != "" {
 		lark.FeishuBaseUrl = c.FeiShuEndpoint
 	}
@@ -314,16 +311,16 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 			return nil, errors.New("feishu user name is empty")
 		}
 		callbackOutput.Username = nickname
-	case "email":
-		if email == "" {
-			return nil, errors.New("feishu user email is empty")
-		}
-		callbackOutput.Username = email
-	default:
+	case "phone":
 		if phone == "" {
 			return nil, errors.New("feishu user phone is empty")
 		}
 		callbackOutput.Username = phone
+	default:
+		if email == "" {
+			return nil, errors.New("feishu user email is empty")
+		}
+		callbackOutput.Username = email
 	}
 
 	callbackOutput.Nickname = nickname
