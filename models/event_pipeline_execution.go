@@ -180,6 +180,13 @@ func DeleteEventPipelineExecutions(c *ctx.Context, beforeTime int64) (int64, err
 	return result.RowsAffected, result.Error
 }
 
+// DeleteEventPipelineExecutionsInBatches 分批删除执行记录（按时间）
+// 每次删除 limit 条记录，返回本次删除的数量
+func DeleteEventPipelineExecutionsInBatches(c *ctx.Context, beforeTime int64, limit int) (int64, error) {
+	result := DB(c).Where("created_at < ?", beforeTime).Limit(limit).Delete(&EventPipelineExecution{})
+	return result.RowsAffected, result.Error
+}
+
 // DeleteEventPipelineExecutionsByPipelineID 删除指定 Pipeline 的所有执行记录
 func DeleteEventPipelineExecutionsByPipelineID(c *ctx.Context, pipelineID int64) error {
 	return DB(c).Where("pipeline_id = ?", pipelineID).Delete(&EventPipelineExecution{}).Error
