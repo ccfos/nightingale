@@ -40,12 +40,29 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if me.IsAdmin() {
+		for _, pipeline := range pipelines {
+			if pipeline.TriggerMode == "" {
+				pipeline.TriggerMode = models.TriggerModeEvent
+			}
+
+			if pipeline.UseCase == "" {
+				pipeline.UseCase = models.UseCaseEventPipeline
+			}
+		}
 		ginx.NewRender(c).Data(pipelines, nil)
 		return
 	}
 
 	res := make([]*models.EventPipeline, 0)
 	for _, pipeline := range pipelines {
+		if pipeline.TriggerMode == "" {
+			pipeline.TriggerMode = models.TriggerModeEvent
+		}
+
+		if pipeline.UseCase == "" {
+			pipeline.UseCase = models.UseCaseEventPipeline
+		}
+
 		for _, tid := range pipeline.TeamIds {
 			if _, ok := gids[tid]; ok {
 				res = append(res, pipeline)
@@ -70,6 +87,12 @@ func (rt *Router) getEventPipeline(c *gin.Context) {
 
 	// 兼容处理：自动填充工作流字段
 	pipeline.FillWorkflowFields()
+	if pipeline.TriggerMode == "" {
+		pipeline.TriggerMode = models.TriggerModeEvent
+	}
+	if pipeline.UseCase == "" {
+		pipeline.UseCase = models.UseCaseEventPipeline
+	}
 
 	ginx.NewRender(c).Data(pipeline, nil)
 }
