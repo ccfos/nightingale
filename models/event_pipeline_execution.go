@@ -180,6 +180,27 @@ func DeleteEventPipelineExecutions(c *ctx.Context, beforeTime int64) (int64, err
 	return result.RowsAffected, result.Error
 }
 
+// DeleteEventPipelineExecutionsInBatches 分批删除执行记录（按时间）
+// 每次删除 limit 条记录，返回本次删除的数量
+// 使用子查询方式实现，兼容 MySQL、PostgreSQL、SQLite
+func DeleteEventPipelineExecutionsInBatches(c *ctx.Context, beforeTime int64, limit int) (int64, error) {
+	// 先查询要删除的 ID
+	var ids []string
+	err := DB(c).Model(&EventPipelineExecution{}).
+		Where("created_at < ?", beforeTime).
+		Limit(limit).
+		Pluck("id", &ids).Error
+	if err != nil {
+		return 0, err
+	}
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	// 按 ID 删除
+	result := DB(c).Where("id IN ?", ids).Delete(&EventPipelineExecution{})
+	return result.RowsAffected, result.Error
+}
+
 // DeleteEventPipelineExecutionsByPipelineID 删除指定 Pipeline 的所有执行记录
 func DeleteEventPipelineExecutionsByPipelineID(c *ctx.Context, pipelineID int64) error {
 	return DB(c).Where("pipeline_id = ?", pipelineID).Delete(&EventPipelineExecution{}).Error

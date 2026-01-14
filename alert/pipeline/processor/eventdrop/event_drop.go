@@ -54,8 +54,9 @@ func (c *EventDropConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContex
 	result := strings.TrimSpace(body.String())
 	logger.Infof("processor eventdrop result: %v", result)
 	if result == "true" {
+		wfCtx.Event = nil
 		logger.Infof("processor eventdrop drop event: %v", event)
-		return nil, "drop event success", nil
+		return wfCtx, "drop event success", nil
 	}
 
 	return wfCtx, "drop event failed", nil

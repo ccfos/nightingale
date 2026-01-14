@@ -134,6 +134,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go version.GetGithubVersion()
 
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
+	go cron.CleanPipelineExecution(ctx, config.Center.CleanPipelineExecutionDay)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,

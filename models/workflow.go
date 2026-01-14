@@ -88,6 +88,11 @@ const (
 	TriggerModeCron  = "cron"  // 定时触发（后续支持）
 )
 
+const (
+	UseCaseEventPipeline = "event_pipeline"
+	UseCaseEventSummary  = "firemap"
+)
+
 // WorkflowTriggerContext 工作流触发上下文
 type WorkflowTriggerContext struct {
 	// 触发模式
