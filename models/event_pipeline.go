@@ -29,8 +29,8 @@ type EventPipeline struct {
 	Nodes []WorkflowNode `json:"nodes,omitempty" gorm:"type:text;serializer:json"`
 	// 节点连接关系
 	Connections Connections `json:"connections,omitempty" gorm:"type:text;serializer:json"`
-	// 环境变量（工作流级别的配置变量）
-	EnvVariables []EnvVariable `json:"env_variables,omitempty" gorm:"type:text;serializer:json"`
+	// 输入参数（工作流级别的配置变量）
+	InputVariables []InputVariable `json:"input_variables,omitempty" gorm:"type:text;serializer:json"`
 
 	CreateAt int64  `json:"create_at" gorm:"type:bigint"`
 	CreateBy string `json:"create_by" gorm:"type:varchar(64)"`
@@ -73,8 +73,8 @@ func (e *EventPipeline) Verify() error {
 	if e.Connections == nil {
 		e.Connections = make(Connections)
 	}
-	if e.EnvVariables == nil {
-		e.EnvVariables = make([]EnvVariable, 0)
+	if e.InputVariables == nil {
+		e.InputVariables = make([]InputVariable, 0)
 	}
 
 	return nil
@@ -245,36 +245,10 @@ func (e *EventPipeline) FillWorkflowFields() {
 	}
 }
 
-func (e *EventPipeline) GetEnvMap() map[string]string {
-	envMap := make(map[string]string)
-	for _, v := range e.EnvVariables {
-		envMap[v.Key] = v.Value
+func (e *EventPipeline) GetInputsMap() map[string]string {
+	inputsMap := make(map[string]string)
+	for _, v := range e.InputVariables {
+		inputsMap[v.Key] = v.Value
 	}
-	return envMap
-}
-
-func (e *EventPipeline) GetSecretKeys() map[string]bool {
-	secretKeys := make(map[string]bool)
-	for _, v := range e.EnvVariables {
-		if v.Secret {
-			secretKeys[v.Key] = true
-		}
-	}
-	return secretKeys
-}
-
-func (e *EventPipeline) ValidateEnvVariables(overrides map[string]string) error {
-	// 合并默认值和覆盖值
-	merged := e.GetEnvMap()
-	for k, v := range overrides {
-		merged[k] = v
-	}
-
-	// 校验必填项
-	for _, v := range e.EnvVariables {
-		if v.Required && merged[v.Key] == "" {
-			return fmt.Errorf("required env variable %s is missing", v.Key)
-		}
-	}
-	return nil
+	return inputsMap
 }
