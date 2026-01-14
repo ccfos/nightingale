@@ -1602,11 +1602,15 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 							continue
 						}
 
-						switch v.(type) {
-						case float64:
-							values += fmt.Sprintf("%s:%.3f ", k, v)
-						case string:
-							values += fmt.Sprintf("%s:%s ", k, v)
+						if u, exists := valuesUnitMap[k]; exists { // 配置了单位，优先用配置了单位的值
+							values += fmt.Sprintf("%s:%s ", k, u.Text)
+						} else {
+							switch v.(type) {
+							case float64:
+								values += fmt.Sprintf("%s:%.3f ", k, v)
+							case string:
+								values += fmt.Sprintf("%s:%s ", k, v)
+							}
 						}
 					}
 
