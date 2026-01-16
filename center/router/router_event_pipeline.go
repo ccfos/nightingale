@@ -396,6 +396,7 @@ func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
 }
 
 func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
+	pipelineId := ginx.QueryInt64(c, "pipeline_id", 0)
 	pipelineName := ginx.QueryStr(c, "pipeline_name", "")
 	mode := ginx.QueryStr(c, "mode", "")
 	status := ginx.QueryStr(c, "status", "")
@@ -409,7 +410,7 @@ func (rt *Router) listAllEventPipelineExecutions(c *gin.Context) {
 		offset = 1
 	}
 
-	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineName, mode, status, limit, (offset-1)*limit)
+	executions, total, err := models.ListAllEventPipelineExecutions(rt.Ctx, pipelineId, pipelineName, mode, status, limit, (offset-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
