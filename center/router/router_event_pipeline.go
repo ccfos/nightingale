@@ -164,7 +164,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	var f struct {
 		EventId        int64                `json:"event_id"`
 		PipelineConfig models.EventPipeline `json:"pipeline_config"`
-		EnvVariables   map[string]string    `json:"env_variables,omitempty"`
+		InputVariables map[string]string    `json:"input_variables,omitempty"`
 	}
 
 	ginx.BindJSON(c, &f)
@@ -182,9 +182,9 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
 
 	triggerCtx := &models.WorkflowTriggerContext{
-		Mode:         models.TriggerModeAPI,
-		TriggerBy:    me.Username,
-		EnvOverrides: f.EnvVariables,
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       me.Username,
+		InputsOverrides: f.InputVariables,
 	}
 
 	resultEvent, result, err := workflowEngine.Execute(&f.PipelineConfig, event, triggerCtx)
@@ -302,8 +302,8 @@ func (rt *Router) eventPipelinesListByService(c *gin.Context) {
 type EventPipelineRequest struct {
 	// 事件数据（可选，如果不传则使用空事件）
 	Event *models.AlertCurEvent `json:"event,omitempty"`
-	// 环境变量覆盖
-	EnvOverrides map[string]string `json:"env_overrides,omitempty"`
+	// 输入参数覆盖
+	InputsOverrides map[string]string `json:"inputs_overrides,omitempty"`
 
 	Username string `json:"username,omitempty"`
 }
@@ -321,20 +321,15 @@ func (rt *Router) executePipelineTrigger(pipeline *models.EventPipeline, req *Ev
 		}
 	}
 
-	// 校验必填环境变量
-	if err := pipeline.ValidateEnvVariables(req.EnvOverrides); err != nil {
-		return "", fmt.Errorf("env validation failed: %v", err)
-	}
-
 	// 生成执行ID
 	executionID := uuid.New().String()
 
 	// 创建触发上下文
 	triggerCtx := &models.WorkflowTriggerContext{
-		Mode:         models.TriggerModeAPI,
-		TriggerBy:    triggerBy,
-		EnvOverrides: req.EnvOverrides,
-		RequestID:    executionID,
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       triggerBy,
+		InputsOverrides: req.InputsOverrides,
+		RequestID:       executionID,
 	}
 
 	// 异步执行工作流
@@ -509,11 +504,11 @@ func (rt *Router) streamEventPipeline(c *gin.Context) {
 	}
 
 	triggerCtx := &models.WorkflowTriggerContext{
-		Mode:         models.TriggerModeAPI,
-		TriggerBy:    me.Username,
-		EnvOverrides: f.EnvOverrides,
-		RequestID:    uuid.New().String(),
-		Stream:       true, // 流式端点强制启用流式输出
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       me.Username,
+		InputsOverrides: f.InputsOverrides,
+		RequestID:       uuid.New().String(),
+		Stream:          true, // 流式端点强制启用流式输出
 	}
 
 	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
@@ -604,11 +599,11 @@ func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 	}
 
 	triggerCtx := &models.WorkflowTriggerContext{
-		Mode:         models.TriggerModeAPI,
-		TriggerBy:    f.Username,
-		EnvOverrides: f.EnvOverrides,
-		RequestID:    uuid.New().String(),
-		Stream:       true, // 流式端点强制启用流式输出
+		Mode:            models.TriggerModeAPI,
+		TriggerBy:       f.Username,
+		InputsOverrides: f.InputsOverrides,
+		RequestID:       uuid.New().String(),
+		Stream:          true, // 流式端点强制启用流式输出
 	}
 
 	workflowEngine := engine.NewWorkflowEngine(rt.Ctx)
