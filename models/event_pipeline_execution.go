@@ -2,9 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // 执行状态常量
@@ -105,6 +107,9 @@ func GetEventPipelineExecution(c *ctx.Context, id string) (*EventPipelineExecuti
 	var execution EventPipelineExecution
 	err := DB(c).Where("id = ?", id).First(&execution).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &execution, nil
@@ -279,6 +284,10 @@ func GetEventPipelineExecutionDetail(c *ctx.Context, id string) (*EventPipelineE
 	execution, err := GetEventPipelineExecution(c, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if execution == nil {
+		return &EventPipelineExecutionDetail{}, nil
 	}
 
 	detail := &EventPipelineExecutionDetail{
