@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 	templateT "text/template"
-
+    "encoding/base64"
 	"github.com/toolkits/pkg/logger"
 )
 
