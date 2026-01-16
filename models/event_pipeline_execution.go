@@ -150,12 +150,15 @@ func ListEventPipelineExecutionsByEventID(c *ctx.Context, eventID int64) ([]*Eve
 }
 
 // ListAllEventPipelineExecutions 获取所有 Pipeline 的执行记录列表
-func ListAllEventPipelineExecutions(c *ctx.Context, pipelineName, mode, status string, limit, offset int) ([]*EventPipelineExecution, int64, error) {
+func ListAllEventPipelineExecutions(c *ctx.Context, pipelineId int64, pipelineName, mode, status string, limit, offset int) ([]*EventPipelineExecution, int64, error) {
 	var executions []*EventPipelineExecution
 	var total int64
 
 	session := DB(c).Model(&EventPipelineExecution{})
 
+	if pipelineId > 0 {
+		session = session.Where("pipeline_id = ?", pipelineId)
+	}
 	if pipelineName != "" {
 		session = session.Where("pipeline_name LIKE ?", "%"+pipelineName+"%")
 	}
