@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
+	"github.com/ccfos/nightingale/v6/pkg/feishu"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
@@ -519,6 +520,85 @@ func (rt *Router) loginCallbackDingTalk(c *gin.Context) {
 
 }
 
+func (rt *Router) loginRedirectFeiShu(c *gin.Context) {
+	redirect := ginx.QueryStr(c, "redirect", "/")
+
+	v, exists := c.Get("userid")
+	if exists {
+		userid := v.(int64)
+		user, err := models.UserGetById(rt.Ctx, userid)
+		ginx.Dangerous(err)
+		if user == nil {
+			ginx.Bomb(200, "user not found")
+		}
+
+		if user.Username != "" { // already login
+			ginx.NewRender(c).Data(redirect, nil)
+			return
+		}
+	}
+
+	if rt.Sso.FeiShu == nil || !rt.Sso.FeiShu.Enable {
+		ginx.NewRender(c).Data("", nil)
+		return
+	}
+
+	redirect, err := rt.Sso.FeiShu.Authorize(rt.Redis, redirect)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(redirect, err)
+}
+
+func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
+	code := ginx.QueryStr(c, "code", "")
+	state := ginx.QueryStr(c, "state", "")
+
+	ret, err := rt.Sso.FeiShu.Callback(rt.Redis, c.Request.Context(), code, state)
+	if err != nil {
+		logger.Errorf("sso_callback FeiShu fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
+		ginx.NewRender(c).Data(CallbackOutput{}, err)
+		return
+	}
+
+	user, err := models.UserGet(rt.Ctx, "username=?", ret.Username)
+	ginx.Dangerous(err)
+
+	if user != nil {
+		if rt.Sso.FeiShu != nil && rt.Sso.FeiShu.FeiShuConfig != nil && rt.Sso.FeiShu.FeiShuConfig.CoverAttributes {
+			updatedFields := user.UpdateSsoFields(feishu.SsoTypeName, ret.Nickname, ret.Phone, ret.Email)
+			ginx.Dangerous(user.Update(rt.Ctx, "update_at", updatedFields...))
+		}
+	} else {
+		user = new(models.User)
+		defaultRoles := []string{}
+		if rt.Sso.FeiShu != nil && rt.Sso.FeiShu.FeiShuConfig != nil {
+			defaultRoles = rt.Sso.FeiShu.FeiShuConfig.DefaultRoles
+		}
+		user.FullSsoFields(feishu.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, defaultRoles)
+		// create user from feishu
+		ginx.Dangerous(user.Add(rt.Ctx))
+	}
+
+	// set user login state
+	userIdentity := fmt.Sprintf("%d-%s", user.Id, user.Username)
+	ts, err := rt.createTokens(rt.HTTP.JWTAuth.SigningKey, userIdentity)
+	ginx.Dangerous(err)
+	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
+
+	redirect := "/"
+	if ret.Redirect != "/login" {
+		redirect = ret.Redirect
+	}
+
+	ginx.NewRender(c).Data(CallbackOutput{
+		Redirect:     redirect,
+		User:         user,
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	}, nil)
+
+}
+
 func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 	code := ginx.QueryStr(c, "code", "")
 	state := ginx.QueryStr(c, "state", "")
@@ -569,10 +649,11 @@ type SsoConfigOutput struct {
 	CasDisplayName      string `json:"casDisplayName"`
 	OauthDisplayName    string `json:"oauthDisplayName"`
 	DingTalkDisplayName string `json:"dingTalkDisplayName"`
+	FeiShuDisplayName   string `json:"feishuDisplayName"`
 }
 
 func (rt *Router) ssoConfigNameGet(c *gin.Context) {
-	var oidcDisplayName, casDisplayName, oauthDisplayName, dingTalkDisplayName string
+	var oidcDisplayName, casDisplayName, oauthDisplayName, dingTalkDisplayName, feiShuDisplayName string
 	if rt.Sso.OIDC != nil {
 		oidcDisplayName = rt.Sso.OIDC.GetDisplayName()
 	}
@@ -589,11 +670,16 @@ func (rt *Router) ssoConfigNameGet(c *gin.Context) {
 		dingTalkDisplayName = rt.Sso.DingTalk.GetDisplayName()
 	}
 
+	if rt.Sso.FeiShu != nil {
+		feiShuDisplayName = rt.Sso.FeiShu.GetDisplayName()
+	}
+
 	ginx.NewRender(c).Data(SsoConfigOutput{
 		OidcDisplayName:     oidcDisplayName,
 		CasDisplayName:      casDisplayName,
 		OauthDisplayName:    oauthDisplayName,
 		DingTalkDisplayName: dingTalkDisplayName,
+		FeiShuDisplayName:   feiShuDisplayName,
 	}, nil)
 }
 
@@ -608,6 +694,7 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 
 	// TODO: dingTalkExist 为了兼容当前前端配置, 后期单点登陆统一调整后不在预先设置默认内容
 	dingTalkExist := false
+	feiShuExist := false
 	for _, config := range lst {
 		var ssoReqConfig models.SsoConfig
 		ssoReqConfig.Id = config.Id
@@ -616,6 +703,10 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 		switch config.Name {
 		case dingtalk.SsoTypeName:
 			dingTalkExist = true
+			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
+			ginx.Dangerous(err)
+		case feishu.SsoTypeName:
+			feiShuExist = true
 			err := json.Unmarshal([]byte(config.Content), &ssoReqConfig.SettingJson)
 			ginx.Dangerous(err)
 		default:
@@ -630,6 +721,11 @@ func (rt *Router) ssoConfigGets(c *gin.Context) {
 		ssoConfig.Name = dingtalk.SsoTypeName
 		ssoConfigs = append(ssoConfigs, ssoConfig)
 	}
+	if !feiShuExist {
+		var ssoConfig models.SsoConfig
+		ssoConfig.Name = feishu.SsoTypeName
+		ssoConfigs = append(ssoConfigs, ssoConfig)
+	}
 
 	ginx.NewRender(c).Data(ssoConfigs, nil)
 }
@@ -641,6 +737,23 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 
 	switch ssoConfig.Name {
 	case dingtalk.SsoTypeName:
+		f.Name = ssoConfig.Name
+		setting, err := json.Marshal(ssoConfig.SettingJson)
+		ginx.Dangerous(err)
+		f.Content = string(setting)
+		f.UpdateAt = time.Now().Unix()
+		sso, err := f.Query(rt.Ctx)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			ginx.Dangerous(err)
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = f.Create(rt.Ctx)
+		} else {
+			f.Id = sso.Id
+			err = f.Update(rt.Ctx)
+		}
+		ginx.Dangerous(err)
+	case feishu.SsoTypeName:
 		f.Name = ssoConfig.Name
 		setting, err := json.Marshal(ssoConfig.SettingJson)
 		ginx.Dangerous(err)
@@ -695,6 +808,14 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 			rt.Sso.DingTalk = dingtalk.New(config)
 		}
 		rt.Sso.DingTalk.Reload(config)
+	case feishu.SsoTypeName:
+		var config feishu.Config
+		err := json.Unmarshal([]byte(f.Content), &config)
+		ginx.Dangerous(err)
+		if rt.Sso.FeiShu == nil {
+			rt.Sso.FeiShu = feishu.New(config)
+		}
+		rt.Sso.FeiShu.Reload(config)
 	}
 
 	ginx.NewRender(c).Message(nil)
