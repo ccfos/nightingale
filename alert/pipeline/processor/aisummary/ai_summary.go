@@ -114,7 +114,7 @@ func (c *AISummaryConfig) initHTTPClient() error {
 func (c *AISummaryConfig) prepareEventInfo(wfCtx *models.WorkflowContext) (string, error) {
 	var defs = []string{
 		"{{$event := .Event}}",
-		"{{$inputs := .Inputs}}",
+		"{{$env := .Env}}",
 	}
 
 	text := strings.Join(append(defs, c.PromptTemplate), "")

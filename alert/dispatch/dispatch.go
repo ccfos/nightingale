@@ -253,7 +253,7 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		// 统一使用工作流引擎执行（兼容线性模式和工作流模式）
 		triggerCtx := &models.WorkflowTriggerContext{
 			Mode:      models.TriggerModeEvent,
-			TriggerBy: from + "_" + strconv.FormatInt(id, 10),
+			TriggerBy: from,
 		}
 
 		resultEvent, result, err := workflowEngine.Execute(eventPipeline, event, triggerCtx)

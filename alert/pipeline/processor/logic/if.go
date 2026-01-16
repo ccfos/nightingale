@@ -148,7 +148,7 @@ func (c *IfConfig) evaluateExpressionCondition(wfCtx *models.WorkflowContext) (b
 		"{{ $event := .Event }}",
 		"{{ $labels := .Event.TagsMap }}",
 		"{{ $value := .Event.TriggerValue }}",
-		"{{ $inputs := .Inputs }}",
+		"{{ $env := .Env }}",
 	}
 
 	text := strings.Join(append(defs, c.Condition), "")
