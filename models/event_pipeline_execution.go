@@ -42,8 +42,8 @@ type EventPipelineExecution struct {
 	// 触发者信息
 	TriggerBy string `json:"trigger_by" gorm:"type:varchar(64)"`
 
-	// 输入参数快照（脱敏后存储）
-	InputsSnapshot string `json:"inputs_snapshot,omitempty" gorm:"type:text"`
+	// 环境变量快照（脱敏后存储）
+	EnvSnapshot string `json:"env_snapshot,omitempty" gorm:"type:text"`
 }
 
 func (e *EventPipelineExecution) TableName() string {
@@ -70,24 +70,24 @@ func (e *EventPipelineExecution) GetNodeResults() ([]*NodeExecutionResult, error
 	return results, err
 }
 
-// SetInputsSnapshot 设置输入参数快照（脱敏后存储）
-func (e *EventPipelineExecution) SetInputsSnapshot(inputs map[string]string) error {
-	data, err := json.Marshal(inputs)
+// SetEnvSnapshot 设置环境变量快照（脱敏后存储）
+func (e *EventPipelineExecution) SetEnvSnapshot(env map[string]string) error {
+	data, err := json.Marshal(env)
 	if err != nil {
 		return err
 	}
-	e.InputsSnapshot = string(data)
+	e.EnvSnapshot = string(data)
 	return nil
 }
 
-// GetInputsSnapshot 获取输入参数快照
-func (e *EventPipelineExecution) GetInputsSnapshot() (map[string]string, error) {
-	if e.InputsSnapshot == "" {
+// GetEnvSnapshot 获取环境变量快照
+func (e *EventPipelineExecution) GetEnvSnapshot() (map[string]string, error) {
+	if e.EnvSnapshot == "" {
 		return nil, nil
 	}
-	var inputs map[string]string
-	err := json.Unmarshal([]byte(e.InputsSnapshot), &inputs)
-	return inputs, err
+	var env map[string]string
+	err := json.Unmarshal([]byte(e.EnvSnapshot), &env)
+	return env, err
 }
 
 // CreateEventPipelineExecution 创建执行记录
@@ -270,8 +270,8 @@ func GetEventPipelineExecutionStatistics(c *ctx.Context, pipelineID int64) (*Eve
 // EventPipelineExecutionDetail 执行详情（包含解析后的节点结果）
 type EventPipelineExecutionDetail struct {
 	EventPipelineExecution
-	NodeResultsParsed    []*NodeExecutionResult `json:"node_results_parsed"`
-	InputsSnapshotParsed map[string]string      `json:"inputs_snapshot_parsed"`
+	NodeResultsParsed []*NodeExecutionResult `json:"node_results_parsed"`
+	EnvSnapshotParsed map[string]string      `json:"env_snapshot_parsed"`
 }
 
 // GetEventPipelineExecutionDetail 获取执行详情
@@ -292,12 +292,12 @@ func GetEventPipelineExecutionDetail(c *ctx.Context, id string) (*EventPipelineE
 	}
 	detail.NodeResultsParsed = nodeResults
 
-	// 解析输入参数快照
-	inputsSnapshot, err := execution.GetInputsSnapshot()
+	// 解析环境变量快照
+	envSnapshot, err := execution.GetEnvSnapshot()
 	if err != nil {
-		return nil, fmt.Errorf("parse inputs snapshot error: %w", err)
+		return nil, fmt.Errorf("parse env snapshot error: %w", err)
 	}
-	detail.InputsSnapshotParsed = inputsSnapshot
+	detail.EnvSnapshotParsed = envSnapshot
 
 	return detail, nil
 }

@@ -175,7 +175,7 @@ func (c *SwitchConfig) evaluateExpressionCondition(condition string, wfCtx *mode
 		"{{ $event := .Event }}",
 		"{{ $labels := .Event.TagsMap }}",
 		"{{ $value := .Event.TriggerValue }}",
-		"{{ $inputs := .Inputs }}",
+		"{{ $env := .Env }}",
 	}
 
 	text := strings.Join(append(defs, condition), "")

@@ -301,7 +301,7 @@ ALTER TABLE `event_pipeline` ADD COLUMN `trigger_mode` varchar(128) NOT NULL DEF
 ALTER TABLE `event_pipeline` ADD COLUMN `disabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'disabled flag';
 ALTER TABLE `event_pipeline` ADD COLUMN `nodes` text COMMENT 'workflow nodes (JSON)';
 ALTER TABLE `event_pipeline` ADD COLUMN `connections` text COMMENT 'node connections (JSON)';
-ALTER TABLE `event_pipeline` ADD COLUMN `input_variables` text COMMENT 'input variables (JSON)';
+ALTER TABLE `event_pipeline` ADD COLUMN `env_variables` text COMMENT 'environment variables (JSON)';
 ALTER TABLE `event_pipeline` ADD COLUMN `label_filters` text COMMENT 'label filters (JSON)';
 
 CREATE TABLE `event_pipeline_execution` (
@@ -318,7 +318,7 @@ CREATE TABLE `event_pipeline_execution` (
     `finished_at` bigint DEFAULT 0 COMMENT 'finish timestamp',
     `duration_ms` bigint DEFAULT 0 COMMENT 'duration in milliseconds',
     `trigger_by` varchar(64) DEFAULT '' COMMENT 'trigger by',
-    `inputs_snapshot` text COMMENT 'inputs snapshot',
+    `env_snapshot` text COMMENT 'environment variables snapshot (sanitized)',
     PRIMARY KEY (`id`),
     KEY `idx_pipeline_id` (`pipeline_id`),
     KEY `idx_event_id` (`event_id`),

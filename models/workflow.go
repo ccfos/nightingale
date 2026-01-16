@@ -33,11 +33,13 @@ type ConnectionTarget struct {
 	Index int    `json:"index"` // 目标节点的输入端口索引
 }
 
-// InputVariable 输入参数
-type InputVariable struct {
+// EnvVariable 环境变量
+type EnvVariable struct {
 	Key         string `json:"key"`                   // 变量名
 	Value       string `json:"value"`                 // 默认值
 	Description string `json:"description,omitempty"` // 描述
+	Secret      bool   `json:"secret,omitempty"`      // 是否敏感（日志脱敏）
+	Required    bool   `json:"required,omitempty"`    // 是否必填
 }
 
 // NodeOutput 节点执行输出
@@ -102,8 +104,8 @@ type WorkflowTriggerContext struct {
 	// 请求ID（API/Cron 触发使用）
 	RequestID string `json:"request_id"`
 
-	// 输入参数覆盖
-	InputsOverrides map[string]string `json:"inputs_overrides"`
+	// 环境变量覆盖
+	EnvOverrides map[string]string `json:"env_overrides"`
 
 	// 流式输出（API 调用时动态指定）
 	Stream bool `json:"stream"`
@@ -116,7 +118,7 @@ type WorkflowTriggerContext struct {
 
 type WorkflowContext struct {
 	Event    *AlertCurEvent         `json:"event"`            // 当前事件
-	Inputs   map[string]string      `json:"inputs"`           // 前置输入参数（静态，用户配置）
+	Env      map[string]string      `json:"env"`              // 环境变量/配置（静态，来自 Pipeline 配置）
 	Vars     map[string]interface{} `json:"vars"`             // 节点间传递的数据（动态，运行时产生）
 	Metadata map[string]string      `json:"metadata"`         // 执行元数据（request_id、start_time 等）
 	Output   map[string]interface{} `json:"output,omitempty"` // 输出结果（非告警场景使用）
@@ -124,6 +126,19 @@ type WorkflowContext struct {
 	// 流式输出支持
 	Stream     bool              `json:"-"` // 是否启用流式输出（不序列化）
 	StreamChan chan *StreamChunk `json:"-"` // 流式数据通道（不序列化）
+}
+
+// SanitizedEnv 返回脱敏后的环境变量（用于日志和存储）
+func (ctx *WorkflowContext) SanitizedEnv(secretKeys map[string]bool) map[string]string {
+	sanitized := make(map[string]string)
+	for k, v := range ctx.Env {
+		if secretKeys[k] {
+			sanitized[k] = "******"
+		} else {
+			sanitized[k] = v
+		}
+	}
+	return sanitized
 }
 
 // StreamChunk 类型常量
