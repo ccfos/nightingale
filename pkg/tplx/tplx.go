@@ -64,6 +64,16 @@ var TemplateFuncMap = template.FuncMap{
 	"jsonMarshal":                   JsonMarshal,
 	"mapDifference":                 MapDifference,
 	"tagsMapToStr":                  TagsMapToStr,
+    "b64enc": func(s string) string {
+        return base64.StdEncoding.EncodeToString([]byte(s))
+    },
+    "b64dec": func(s string) string {
+        data, err := base64.StdEncoding.DecodeString(s)
+        if err != nil {
+            return "" 
+        }
+        return string(data)
+    },
 }
 
 // NewTemplateFuncMap copy on write for TemplateFuncMap
