@@ -30,7 +30,7 @@ type EventPipeline struct {
 	// 节点连接关系
 	Connections Connections `json:"connections,omitempty" gorm:"type:text;serializer:json"`
 	// 输入参数（工作流级别的配置变量）
-	InputVariables []InputVariable `json:"input_variables,omitempty" gorm:"type:text;serializer:json"`
+	Inputs []InputVariable `json:"inputs,omitempty" gorm:"type:text;serializer:json"`
 
 	CreateAt int64  `json:"create_at" gorm:"type:bigint"`
 	CreateBy string `json:"create_by" gorm:"type:varchar(64)"`
@@ -73,8 +73,8 @@ func (e *EventPipeline) Verify() error {
 	if e.Connections == nil {
 		e.Connections = make(Connections)
 	}
-	if e.InputVariables == nil {
-		e.InputVariables = make([]InputVariable, 0)
+	if e.Inputs == nil {
+		e.Inputs = make([]InputVariable, 0)
 	}
 
 	return nil
@@ -247,7 +247,7 @@ func (e *EventPipeline) FillWorkflowFields() {
 
 func (e *EventPipeline) GetInputsMap() map[string]string {
 	inputsMap := make(map[string]string)
-	for _, v := range e.InputVariables {
+	for _, v := range e.Inputs {
 		inputsMap[v.Key] = v.Value
 	}
 	return inputsMap
