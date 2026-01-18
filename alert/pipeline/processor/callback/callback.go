@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/common"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/utils"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
@@ -71,12 +72,17 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext
 		headers[k] = v
 	}
 
+	url, err := utils.TplRender(wfCtx, c.URL)
+	if err != nil {
+		return wfCtx, "", fmt.Errorf("failed to render url template: %v processor: %v", err, c)
+	}
+
 	body, err := json.Marshal(event)
 	if err != nil {
 		return wfCtx, "", fmt.Errorf("failed to marshal event: %v processor: %v", err, c)
 	}
 
-	req, err := http.NewRequest("POST", c.URL, strings.NewReader(string(body)))
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(body)))
 	if err != nil {
 		return wfCtx, "", fmt.Errorf("failed to create request: %v processor: %v", err, c)
 	}

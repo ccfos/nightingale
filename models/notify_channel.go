@@ -354,8 +354,17 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 
 	// 设置代理
 	var proxyFunc func(*http.Request) (*url.URL, error)
-	if httpConfig.Proxy != "" {
-		proxyURL, err := url.Parse(httpConfig.Proxy)
+	proxy := httpConfig.Proxy
+	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的代理
+	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil && nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
+		proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
+	}
+	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
+	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
+		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
+	}
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
 		if err != nil {
 			return nil, fmt.Errorf("invalid proxy URL: %v", err)
 		}
