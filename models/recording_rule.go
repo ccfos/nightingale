@@ -44,6 +44,7 @@ type QueryConfig struct {
 	Exp               string  `json:"exp"`
 	WriteDatasourceId int64   `json:"write_datasource_id"`
 	Delay             int     `json:"delay"`
+	WritebackEnabled  bool    `json:"writeback_enabled"` // 是否写入与查询数据源相同的数据源
 }
 
 type Query struct {
