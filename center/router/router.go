@@ -707,6 +707,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
 			service.POST("/event-pipeline/:id/trigger", rt.triggerEventPipelineByService)
 			service.POST("/event-pipeline/:id/stream", rt.streamEventPipelineByService)
+			service.POST("/event-pipeline-execution", rt.eventPipelineExecutionAdd)
 
 			// 手机号加密存储配置接口
 			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)

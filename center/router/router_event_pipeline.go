@@ -625,3 +625,18 @@ func (rt *Router) streamEventPipelineByService(c *gin.Context) {
 
 	ginx.NewRender(c).Data(result, nil)
 }
+
+// eventPipelineExecutionAdd 接收 edge 节点同步的 Pipeline 执行记录
+func (rt *Router) eventPipelineExecutionAdd(c *gin.Context) {
+	var execution models.EventPipelineExecution
+	ginx.BindJSON(c, &execution)
+
+	if execution.ID == "" {
+		ginx.Bomb(http.StatusBadRequest, "id is required")
+	}
+	if execution.PipelineID <= 0 {
+		ginx.Bomb(http.StatusBadRequest, "pipeline_id is required")
+	}
+
+	ginx.NewRender(c).Message(models.DB(rt.Ctx).Create(&execution).Error)
+}
