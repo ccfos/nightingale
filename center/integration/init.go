@@ -271,10 +271,8 @@ func Init(ctx *ctx.Context, builtinIntegrationsDir string) {
 				}
 
 				for _, metric := range metrics {
-					if metric.UUID == 0 {
-						time.Sleep(time.Microsecond)
-						metric.UUID = time.Now().UnixMicro()
-					}
+					time.Sleep(time.Microsecond)
+					metric.UUID = time.Now().UnixMicro()
 					metric.ID = metric.UUID
 					metric.CreatedBy = SYSTEM
 					metric.UpdatedBy = SYSTEM
