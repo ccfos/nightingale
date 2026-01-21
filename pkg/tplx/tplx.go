@@ -70,7 +70,7 @@ var TemplateFuncMap = template.FuncMap{
     "b64dec": func(s string) string {
         data, err := base64.StdEncoding.DecodeString(s)
         if err != nil {
-            return "" 
+            return s
         }
         return string(data)
     },
