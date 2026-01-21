@@ -1,12 +1,24 @@
 package doris
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/pingcap/tidb/pkg/parser"
 	"github.com/pingcap/tidb/pkg/parser/ast"
 	_ "github.com/pingcap/tidb/pkg/parser/test_driver" // required for parser
 )
+
+// mapAccessPattern matches Doris map/array access syntax like `col['key']` or col["key"]
+var mapAccessPattern = regexp.MustCompile(`\[['"]\w+['"]\]`)
+
+// castStringPattern matches Doris CAST(... AS STRING) syntax
+var castStringPattern = regexp.MustCompile(`(?i)\bAS\s+STRING\b`)
+
+// macro patterns
+var timeGroupPattern = regexp.MustCompile(`\$__timeGroup\([^)]+\)`)
+var timeFilterPattern = regexp.MustCompile(`\$__timeFilter\([^)]+\)`)
+var intervalPattern = regexp.MustCompile(`\$__interval`)
 
 // SQLAnalyzeResult holds the analysis result of a SQL statement
 type SQLAnalyzeResult struct {
@@ -17,8 +29,11 @@ type SQLAnalyzeResult struct {
 
 // AnalyzeSQL analyzes a SQL statement and extracts top-level features
 func AnalyzeSQL(sql string) (*SQLAnalyzeResult, error) {
+	// Preprocess SQL to remove Doris-specific syntax that TiDB parser doesn't support
+	preprocessedSQL := preprocessDorisSQL(sql)
+
 	p := parser.New()
-	stmtNodes, _, err := p.Parse(sql, "", "")
+	stmtNodes, _, err := p.Parse(preprocessedSQL, "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +70,51 @@ func analyzeSelectStmt(sel *ast.SelectStmt, result *SQLAnalyzeResult) {
 		}
 	}
 
+	// Check if any CTE has aggregate functions
+	if !result.HasTopAgg && sel.With != nil {
+		for _, cte := range sel.With.CTEs {
+			if selectHasAggregate(cte.Query) {
+				result.HasTopAgg = true
+				break
+			}
+		}
+	}
+
 	// Extract top-level LIMIT
 	if sel.Limit != nil && sel.Limit.Count != nil {
 		if val, ok := extractConstValue(sel.Limit.Count); ok {
 			result.LimitConst = &val
 		}
 	}
+}
+
+// selectHasAggregate checks if a node (SELECT, UNION, or SubqueryExpr) has aggregate functions
+func selectHasAggregate(node ast.Node) bool {
+	switch n := node.(type) {
+	case *ast.SelectStmt:
+		if n.Fields != nil {
+			for _, field := range n.Fields.Fields {
+				if field.Expr != nil && hasAggregateFunc(field.Expr) {
+					return true
+				}
+			}
+		}
+	case *ast.SetOprStmt:
+		// For UNION, check all branches
+		if n.SelectList != nil {
+			for _, sel := range n.SelectList.Selects {
+				if selectHasAggregate(sel) {
+					return true
+				}
+			}
+		}
+	case *ast.SubqueryExpr:
+		// CTE query is wrapped in SubqueryExpr
+		if n.Query != nil {
+			return selectHasAggregate(n.Query)
+		}
+	}
+	return false
 }
 
 // analyzeSetOprStmt analyzes UNION/INTERSECT/EXCEPT statements
@@ -222,6 +276,23 @@ func extractConstValue(expr ast.ExprNode) (int64, bool) {
 		}
 	}
 	return 0, false
+}
+
+// preprocessDorisSQL removes Doris-specific syntax that TiDB parser doesn't support
+func preprocessDorisSQL(sql string) string {
+	// Remove map/array access syntax like ['key'] or ["key"]
+	// This is used in Doris for accessing map/variant/json fields
+	sql = mapAccessPattern.ReplaceAllString(sql, "")
+
+	// Replace Doris CAST(... AS STRING) with CAST(... AS CHAR)
+	sql = castStringPattern.ReplaceAllString(sql, "AS CHAR")
+
+	// Replace  macros with valid SQL equivalents
+	sql = timeGroupPattern.ReplaceAllString(sql, "ts")
+	sql = timeFilterPattern.ReplaceAllString(sql, "1=1")
+	sql = intervalPattern.ReplaceAllString(sql, "60")
+
+	return sql
 }
 
 // NeedsRowCountCheck determines if a SQL query needs row count checking
