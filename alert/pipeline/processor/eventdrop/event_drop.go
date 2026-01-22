@@ -36,7 +36,7 @@ func (c *EventDropConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContex
 		"{{ $event := .Event }}",
 		"{{ $labels := .Event.TagsMap }}",
 		"{{ $value := .Event.TriggerValue }}",
-		"{{ $env := .Env }}",
+		"{{ $inputs := .Inputs }}",
 	}
 
 	text := strings.Join(append(defs, c.Content), "")

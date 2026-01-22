@@ -44,8 +44,8 @@ func TestAISummaryConfig_Process(t *testing.T) {
 
 	// 创建 WorkflowContext
 	wfCtx := &models.WorkflowContext{
-		Event: event,
-		Env:   map[string]string{},
+		Event:  event,
+		Inputs: map[string]string{},
 	}
 
 	// 测试模板处理
