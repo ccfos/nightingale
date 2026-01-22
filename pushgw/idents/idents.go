@@ -184,7 +184,8 @@ func (s *Set) updateDBTargetTs(ident string, now int64) {
 
 func (s *Set) updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis) error {
 	if redis == nil {
-		return fmt.Errorf("redis is nil")
+		logger.Debugf("update_ts: redis is nil")
+		return nil
 	}
 
 	newMap := make(map[string]interface{}, len(lst))

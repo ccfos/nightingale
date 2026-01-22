@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+  "github.com/ccfos/nightingale/v6/pkg/poster"
+
 	"gorm.io/gorm"
 )
 
@@ -94,6 +96,9 @@ func (e *EventPipelineExecution) GetInputsSnapshot() (map[string]string, error) 
 
 // CreateEventPipelineExecution 创建执行记录
 func CreateEventPipelineExecution(c *ctx.Context, execution *EventPipelineExecution) error {
+	if !c.IsCenter {
+		return poster.PostByUrls(c, "/v1/n9e/event-pipeline-execution", execution)
+	}
 	return DB(c).Create(execution).Error
 }
 
