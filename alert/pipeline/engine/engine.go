@@ -60,11 +60,11 @@ func (e *WorkflowEngine) Execute(pipeline *models.EventPipeline, event *models.A
 }
 
 func (e *WorkflowEngine) initWorkflowContext(pipeline *models.EventPipeline, event *models.AlertCurEvent, triggerCtx *models.WorkflowTriggerContext) *models.WorkflowContext {
-	// 合并环境变量
-	env := pipeline.GetEnvMap()
-	if triggerCtx != nil && triggerCtx.EnvOverrides != nil {
-		for k, v := range triggerCtx.EnvOverrides {
-			env[k] = v
+	// 合并输入参数
+	inputs := pipeline.GetInputsMap()
+	if triggerCtx != nil && triggerCtx.InputsOverrides != nil {
+		for k, v := range triggerCtx.InputsOverrides {
+			inputs[k] = v
 		}
 	}
 
@@ -84,7 +84,7 @@ func (e *WorkflowEngine) initWorkflowContext(pipeline *models.EventPipeline, eve
 
 	return &models.WorkflowContext{
 		Event:    event,
-		Env:      env,
+		Inputs:   inputs,
 		Vars:     make(map[string]interface{}), // 初始化空的 Vars，供节点间传递数据
 		Metadata: metadata,
 		Stream:   stream,
@@ -182,7 +182,6 @@ func (e *WorkflowEngine) executeDAG(nodeMap map[string]*models.WorkflowNode, con
 				result.Status = models.ExecutionStatusFailed
 				result.ErrorNode = nodeID
 				result.Message = fmt.Sprintf("node %s failed: %s", node.Name, nodeResult.Error)
-				return result
 			}
 		}
 
@@ -371,10 +370,8 @@ func (e *WorkflowEngine) saveExecutionRecord(pipeline *models.EventPipeline, wfC
 		logger.Errorf("workflow: failed to set node results: pipeline_id=%d, error=%v", pipeline.ID, err)
 	}
 
-	secretKeys := pipeline.GetSecretKeys()
-	sanitizedEnv := wfCtx.SanitizedEnv(secretKeys)
-	if err := execution.SetEnvSnapshot(sanitizedEnv); err != nil {
-		logger.Errorf("workflow: failed to set env snapshot: pipeline_id=%d, error=%v", pipeline.ID, err)
+	if err := execution.SetInputsSnapshot(wfCtx.Inputs); err != nil {
+		logger.Errorf("workflow: failed to set inputs snapshot: pipeline_id=%d, error=%v", pipeline.ID, err)
 	}
 
 	if err := models.CreateEventPipelineExecution(e.ctx, execution); err != nil {
