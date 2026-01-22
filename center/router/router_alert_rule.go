@@ -882,3 +882,131 @@ func (rt *Router) batchAlertRuleClone(c *gin.Context) {
 
 	ginx.NewRender(c).Data(reterr, nil)
 }
+
+func (rt *Router) timezonesGet(c *gin.Context) {
+	// 返回常用时区列表（按时差去重，每个时差只保留一个代表性时区）
+	timezones := []string{
+		"UTC",
+		"Asia/Shanghai",       // UTC+8 (代表 Asia/Hong_Kong, Asia/Singapore 等)
+		"Asia/Tokyo",          // UTC+9 (代表 Asia/Seoul 等)
+		"Asia/Dubai",          // UTC+4
+		"Asia/Kolkata",        // UTC+5:30
+		"Asia/Bangkok",        // UTC+7 (代表 Asia/Jakarta 等)
+		"Europe/London",       // UTC+0 (代表 UTC)
+		"Europe/Paris",        // UTC+1 (代表 Europe/Berlin, Europe/Rome, Europe/Madrid 等)
+		"Europe/Moscow",       // UTC+3
+		"America/New_York",    // UTC-5 (代表 America/Toronto 等)
+		"America/Chicago",     // UTC-6 (代表 America/Mexico_City 等)
+		"America/Denver",      // UTC-7
+		"America/Los_Angeles", // UTC-8
+		"America/Sao_Paulo",   // UTC-3
+		"Australia/Sydney",    // UTC+10 (代表 Australia/Melbourne 等)
+		"Pacific/Auckland",    // UTC+12
+	}
+
+	ginx.NewRender(c).Data(timezones, nil)
+}
+
+type timezoneConvertForm struct {
+	Times    [][]string `json:"times" binding:"required"`    // 时间列表组，每个组必须包含且仅包含两个时间点（开始时间和结束时间），支持 "HH:MM"格式
+	Timezone string     `json:"timezone" binding:"required"` // 源时区，如 "America/New_York"
+}
+
+type timezoneConvertResult struct {
+	Results [][]string `json:"results"` // 转换结果列表组，每个组包含两个时间字符串（开始时间和结束时间），格式为 "YYYY-MM-DD HH:MM"
+}
+
+func (rt *Router) timezonesConvert(c *gin.Context) {
+	var f timezoneConvertForm
+	ginx.BindJSON(c, &f)
+
+	// 加载源时区
+	srcLoc, err := time.LoadLocation(f.Timezone)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "Invalid timezone: %s", f.Timezone)
+	}
+
+	// 加载目标时区（Asia/Shanghai）
+	dstLoc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		ginx.Bomb(http.StatusInternalServerError, "Failed to load Asia/Shanghai timezone")
+	}
+
+	result := timezoneConvertResult{
+		Results: make([][]string, 0, len(f.Times)),
+	}
+
+	// 使用今天的日期作为基准日期
+	now := time.Now()
+	baseDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, srcLoc)
+
+	// 遍历每个时间组
+	for _, timeGroup := range f.Times {
+		// 验证每个时间组必须包含且仅包含两个时间点（开始时间和结束时间）
+		if len(timeGroup) != 2 {
+			ginx.Bomb(http.StatusBadRequest, "Each time group must contain exactly 2 time points (start time and end time), got %d", len(timeGroup))
+		}
+
+		groupResults := make([]string, 0, 2)
+
+		// 解析开始时间和结束时间
+		startTimeStr := timeGroup[0]
+		endTimeStr := timeGroup[1]
+
+		// 解析开始时间
+		startParsed, err := time.ParseInLocation("15:04", startTimeStr, srcLoc)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "Invalid time format: %s, expected format: HH:MM", startTimeStr)
+		}
+
+		// 解析结束时间
+		endParsed, err := time.ParseInLocation("15:04", endTimeStr, srcLoc)
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "Invalid time format: %s, expected format: HH:MM", endTimeStr)
+		}
+
+		// 判断是否需要跨天：如果开始时间大于结束时间，则结束时间使用下一天的日期
+		startDate := baseDate
+		endDate := baseDate
+		if startTimeStr > endTimeStr {
+			// 跨天情况：结束时间使用下一天的日期
+			endDate = baseDate.AddDate(0, 0, 1)
+		}
+
+		// 处理开始时间
+		startTime := time.Date(
+			startDate.Year(),
+			startDate.Month(),
+			startDate.Day(),
+			startParsed.Hour(),
+			startParsed.Minute(),
+			0,
+			0,
+			srcLoc,
+		)
+
+		// 处理结束时间
+		endTime := time.Date(
+			endDate.Year(),
+			endDate.Month(),
+			endDate.Day(),
+			endParsed.Hour(),
+			endParsed.Minute(),
+			0,
+			0,
+			srcLoc,
+		)
+
+		// 转换开始时间到 Asia/Shanghai 时区
+		startConverted := startTime.In(dstLoc)
+		groupResults = append(groupResults, startConverted.Format("2006-01-02 15:04"))
+
+		// 转换结束时间到 Asia/Shanghai 时区
+		endConverted := endTime.In(dstLoc)
+		groupResults = append(groupResults, endConverted.Format("2006-01-02 15:04"))
+
+		result.Results = append(result.Results, groupResults)
+	}
+
+	ginx.NewRender(c).Data(result, nil)
+}

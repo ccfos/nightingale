@@ -119,6 +119,7 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	TimeZone              string                 `json:"time_zone" gorm:"default:'Asia/Shanghai'"` // timezone for alert rule, e.g. "Asia/Shanghai", "UTC"
 	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
 	PipelineConfigs       []PipelineConfig       `json:"pipeline_configs" gorm:"serializer:json"`
 	NotifyVersion         int                    `json:"notify_version"` // 0: old, 1: new

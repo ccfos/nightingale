@@ -376,6 +376,7 @@ type InitAlertRule struct {
 	CreateBy          string `gorm:"size:64;not null;default:''"`
 	UpdateAt          int64  `gorm:"not null;default:0;index"`
 	UpdateBy          string `gorm:"size:64;not null;default:''"`
+	TimeZone          string `gorm:"size:64;not null;default:'Asia/Shanghai'"`
 	DatasourceQueries string `gorm:"type:text"`
 }
 
@@ -424,6 +425,7 @@ type InitPostgresAlertRule struct {
 	CreateBy          string `gorm:"size:64;not null;default:''"`
 	UpdateAt          int64  `gorm:"not null;default:0;index"`
 	UpdateBy          string `gorm:"size:64;not null;default:''"`
+	TimeZone          string `gorm:"size:64;not null;default:'Asia/Shanghai'"`
 	DatasourceQueries string `gorm:"type:text"`
 }
 

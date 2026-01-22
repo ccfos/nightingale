@@ -253,6 +253,7 @@ CREATE TABLE `alert_rule` (
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
     `cron_pattern` varchar(64),
+    `time_zone` varchar(64) not null default 'Asia/Shanghai',
     `datasource_queries` text
 );
 CREATE INDEX `idx_alert_rule_group_id` ON `alert_rule` (`group_id` asc);

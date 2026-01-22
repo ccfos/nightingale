@@ -174,6 +174,7 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 type AlertRule struct {
 	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
 	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
+	TimeZone          string                   `gorm:"type:varchar(64);column:time_zone;not null;default:'Asia/Shanghai'"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
