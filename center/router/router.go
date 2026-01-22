@@ -251,10 +251,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
 		pages.GET("/auth/redirect/dingtalk", rt.loginRedirectDingTalk)
+		pages.GET("/auth/redirect/feishu", rt.loginRedirectFeiShu)
 		pages.GET("/auth/callback", rt.loginCallback)
 		pages.GET("/auth/callback/cas", rt.loginCallbackCas)
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
 		pages.GET("/auth/callback/dingtalk", rt.loginCallbackDingTalk)
+		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
 		pages.GET("/auth/perms", rt.allPerms)
 
 		pages.GET("/metrics/desc", rt.metricsDescGetFile)
@@ -705,6 +707,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
 			service.POST("/event-pipeline/:id/trigger", rt.triggerEventPipelineByService)
 			service.POST("/event-pipeline/:id/stream", rt.streamEventPipelineByService)
+			service.POST("/event-pipeline-execution", rt.eventPipelineExecutionAdd)
 
 			// 手机号加密存储配置接口
 			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)
