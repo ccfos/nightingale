@@ -35,6 +35,12 @@ type Pushgw struct {
 	WriterOpt           WriterGlobalOpt
 	Writers             []WriterOptions
 	KafkaWriters        []KafkaWriterOptions
+
+	// 预处理的字段，用于快速匹配只有 __name__ 的 DropSample 规则
+	// key: metric name, value: struct{}
+	DropMetricNames map[string]struct{}
+	// 包含多个标签的复杂 DropSample 规则
+	DropSampleComplex []map[string]string
 }
 
 type WriterGlobalOpt struct {
