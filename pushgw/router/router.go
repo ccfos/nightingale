@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/metas"
@@ -33,6 +34,10 @@ type Router struct {
 	Ctx            *ctx.Context
 	HandleTS       HandleTSFunc
 	HeartbeartApi  string
+
+	// 预编译的 DropSample 过滤器
+	dropByNameOnly map[string]struct{} // 仅 __name__ 条件的快速匹配
+	dropComplex    []map[string]string // 多条件的复杂匹配
 }
 
 func stat() gin.HandlerFunc {
@@ -51,7 +56,7 @@ func stat() gin.HandlerFunc {
 func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType,
 	idents *idents.Set, metas *metas.Set,
 	writers *writer.WritersType, ctx *ctx.Context) *Router {
-	return &Router{
+	rt := &Router{
 		HTTP:           httpConfig,
 		Pushgw:         pushgw,
 		Aconf:          aconf,
@@ -63,6 +68,38 @@ func New(httpConfig httpx.Config, pushgw pconf.Pushgw, aconf aconf.Alert, tc *me
 		MetaSet:        metas,
 		HandleTS:       func(pt *prompb.TimeSeries) *prompb.TimeSeries { return pt },
 	}
+
+	// 预编译 DropSample 过滤器
+	rt.initDropSampleFilters()
+
+	return rt
+}
+
+// initDropSampleFilters 预编译 DropSample 过滤器，将单条件 __name__ 过滤器
+// 放入 map 实现 O(1) 查找，多条件过滤器保留原有逻辑
+func (rt *Router) initDropSampleFilters() {
+	rt.dropByNameOnly = make(map[string]struct{})
+	rt.dropComplex = make([]map[string]string, 0)
+
+	for _, filter := range rt.Pushgw.DropSample {
+		if len(filter) == 0 {
+			continue
+		}
+
+		// 如果只有一个条件且是 __name__，放入快速匹配 map
+		if len(filter) == 1 {
+			if name, ok := filter["__name__"]; ok {
+				rt.dropByNameOnly[name] = struct{}{}
+				continue
+			}
+		}
+
+		// 其他情况放入复杂匹配列表
+		rt.dropComplex = append(rt.dropComplex, filter)
+	}
+
+	logger.Infof("DropSample filters initialized: %d name-only, %d complex",
+		len(rt.dropByNameOnly), len(rt.dropComplex))
 }
 
 func (rt *Router) Config(r *gin.Engine) {
