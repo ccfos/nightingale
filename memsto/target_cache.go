@@ -27,7 +27,8 @@ type TargetCacheType struct {
 	redis           storage.Redis
 
 	sync.RWMutex
-	targets map[string]*models.Target // key: ident
+	targets      map[string]*models.Target // key: ident
+	targetsIndex map[string][]string       // key: ip, value: ident list
 }
 
 func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *TargetCacheType {
@@ -38,6 +39,7 @@ func NewTargetCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *Target
 		stats:           stats,
 		redis:           redis,
 		targets:         make(map[string]*models.Target),
+		targetsIndex:    make(map[string][]string),
 	}
 
 	tc.SyncTargets()
@@ -51,6 +53,7 @@ func (tc *TargetCacheType) Reset() {
 	tc.statTotal = -1
 	tc.statLastUpdated = -1
 	tc.targets = make(map[string]*models.Target)
+	tc.targetsIndex = make(map[string][]string)
 }
 
 func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -62,8 +65,17 @@ func (tc *TargetCacheType) StatChanged(total, lastUpdated int64) bool {
 }
 
 func (tc *TargetCacheType) Set(m map[string]*models.Target, total, lastUpdated int64) {
+	idx := make(map[string][]string, len(m))
+	for ident, target := range m {
+		if _, ok := idx[target.HostIp]; !ok {
+			idx[target.HostIp] = []string{}
+		}
+		idx[target.HostIp] = append(idx[target.HostIp], ident)
+	}
+
 	tc.Lock()
 	tc.targets = m
+	tc.targetsIndex = idx
 	tc.Unlock()
 
 	// only one goroutine used, so no need lock
@@ -76,6 +88,75 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	defer tc.RUnlock()
 	val, has := tc.targets[ident]
 	return val, has
+}
+
+func (tc *TargetCacheType) GetByIp(ip string) ([]*models.Target, bool) {
+	tc.RLock()
+	defer tc.RUnlock()
+	idents, has := tc.targetsIndex[ip]
+	if !has {
+		return nil, false
+	}
+	targs := make([]*models.Target, 0, len(idents))
+	for _, ident := range idents {
+		if val, has := tc.targets[ident]; has {
+			targs = append(targs, val)
+		}
+	}
+	return targs, len(targs) > 0
+}
+
+func (tc *TargetCacheType) GetAll() []*models.Target {
+	tc.RLock()
+	defer tc.RUnlock()
+	lst := make([]*models.Target, 0, len(tc.targets))
+	for _, target := range tc.targets {
+		lst = append(lst, target)
+	}
+	return lst
+}
+
+// GetAllBeatTime 返回所有 target 的心跳时间 map，key 为 ident，value 为 BeatTime
+func (tc *TargetCacheType) GetAllBeatTime() map[string]int64 {
+	tc.RLock()
+	defer tc.RUnlock()
+	beatTimeMap := make(map[string]int64, len(tc.targets))
+	for ident, target := range tc.targets {
+		beatTimeMap[ident] = target.BeatTime
+	}
+	return beatTimeMap
+}
+
+// refreshBeatTime 从 Redis 刷新缓存中所有 target 的 BeatTime
+func (tc *TargetCacheType) refreshBeatTime() {
+	if tc.redis == nil {
+		return
+	}
+
+	// 快照 ident 列表，避免持锁访问 Redis
+	tc.RLock()
+	idents := make([]string, 0, len(tc.targets))
+	for ident := range tc.targets {
+		idents = append(idents, ident)
+	}
+	tc.RUnlock()
+
+	if len(idents) == 0 {
+		return
+	}
+
+	beatTimes := models.FetchBeatTimesFromRedis(tc.redis, idents)
+	if len(beatTimes) == 0 {
+		return
+	}
+
+	tc.Lock()
+	for ident, ts := range beatTimes {
+		if target, ok := tc.targets[ident]; ok {
+			target.BeatTime = ts
+		}
+	}
+	tc.Unlock()
 }
 
 func (tc *TargetCacheType) Gets(idents []string) []*models.Target {
@@ -105,7 +186,7 @@ func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset i
 			continue
 		}
 
-		if now-target.UpdateAt > 120 {
+		if now-target.BeatTime > 120 {
 			// means this target is not a active host, do not check offset
 			continue
 		}
@@ -147,6 +228,7 @@ func (tc *TargetCacheType) syncTargets() error {
 	}
 
 	if !tc.StatChanged(stat.Total, stat.LastUpdated) {
+		tc.refreshBeatTime()
 		tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
 		tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "not changed")
@@ -170,6 +252,9 @@ func (tc *TargetCacheType) syncTargets() error {
 		}
 	}
 
+	// 从 Redis 批量获取心跳时间填充 BeatTime
+	models.FillTargetsBeatTime(tc.redis, lst)
+
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Ident] = lst[i]
 	}
@@ -186,57 +271,18 @@ func (tc *TargetCacheType) syncTargets() error {
 
 // get host update time
 func (tc *TargetCacheType) GetHostUpdateTime(targets []string) map[string]int64 {
-	metaMap := make(map[string]int64)
 	if tc.redis == nil {
-		return metaMap
+		return make(map[string]int64)
 	}
 
-	num := 0
-	var keys []string
-	for i := 0; i < len(targets); i++ {
-		keys = append(keys, models.WrapIdentUpdateTime(targets[i]))
-		num++
-		if num == 100 {
-			vals := storage.MGet(context.Background(), tc.redis, keys)
-			for _, value := range vals {
-				var hostUpdateTime models.HostUpdateTime
-				if value == nil {
-					continue
-				}
-
-				err := json.Unmarshal(value, &hostUpdateTime)
-				if err != nil {
-					logger.Errorf("failed to unmarshal host meta: %s value:%v", err, value)
-					continue
-				}
-				metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime
-			}
-			keys = keys[:0]
-			num = 0
-		}
-	}
-
-	vals := storage.MGet(context.Background(), tc.redis, keys)
-	for _, value := range vals {
-		var hostUpdateTime models.HostUpdateTime
-		if value == nil {
-			continue
-		}
-
-		err := json.Unmarshal(value, &hostUpdateTime)
-		if err != nil {
-			logger.Warningf("failed to unmarshal host err:%v value:%s", err, string(value))
-			continue
-		}
-		metaMap[hostUpdateTime.Ident] = hostUpdateTime.UpdateTime
-	}
+	metaMap := models.FetchBeatTimesFromRedis(tc.redis, targets)
 
 	for _, ident := range targets {
 		if _, ok := metaMap[ident]; !ok {
 			// if not exists, get from cache
 			target, exists := tc.Get(ident)
 			if exists {
-				metaMap[ident] = target.UpdateAt
+				metaMap[ident] = target.BeatTime
 			}
 		}
 	}
