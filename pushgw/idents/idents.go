@@ -106,6 +106,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		return nil
 	}
 
+	// 心跳时间只写入 Redis，不再写入 MySQL update_at
 	err := s.updateTargetsUpdateTs(lst, now, s.redis)
 	if err != nil {
 		logger.Errorf("update_ts: failed to update targets: %v error: %v", lst, err)
@@ -133,12 +134,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		return nil
 	}
 
-	if s.configs.UpdateDBTargetTimestampDisable {
-		// 如果 mysql 压力太大，关闭更新 db 的操作
-		return nil
-	}
-
-	// there are some idents not found in db, so insert them
+	// 新 target 仍需 INSERT 注册到 MySQL
 	var exists []string
 	err = s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
 	if err != nil {
@@ -153,33 +149,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		}
 	}
 
-	// 从批量更新一批机器的时间戳，改成逐台更新，是为了避免批量更新时，mysql的锁竞争问题
-	start := time.Now()
-	duration := time.Since(start).Seconds()
-	if len(exists) > 0 {
-		sema := semaphore.NewSemaphore(s.configs.UpdateDBTargetConcurrency)
-		wg := sync.WaitGroup{}
-		for i := 0; i < len(exists); i++ {
-			sema.Acquire()
-			wg.Add(1)
-			go func(ident string) {
-				defer sema.Release()
-				defer wg.Done()
-				s.updateDBTargetTs(ident, now)
-			}(exists[i])
-		}
-		wg.Wait()
-	}
-	pstat.DBOperationLatency.WithLabelValues("update_targets_ts").Observe(duration)
-
 	return nil
-}
-
-func (s *Set) updateDBTargetTs(ident string, now int64) {
-	err := s.ctx.DB.Exec("UPDATE target SET update_at = ? WHERE ident = ?", now, ident).Error
-	if err != nil {
-		logger.Error("update_target: failed to update target:", ident, "error:", err)
-	}
 }
 
 func (s *Set) updateTargetsUpdateTs(lst []string, now int64, redis storage.Redis) error {
