@@ -212,7 +212,6 @@ func (re *RecordingRule) Update(ctx *ctx.Context, ref RecordingRule) error {
 
 	ref.FE2DB()
 	ref.Id = re.Id
-	ref.GroupId = re.GroupId
 	ref.CreateAt = re.CreateAt
 	ref.CreateBy = re.CreateBy
 	ref.UpdateAt = time.Now().Unix()

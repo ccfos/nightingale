@@ -218,7 +218,7 @@ func (s *Set) writeTargetTsInRedis(ctx context.Context, redis storage.Redis, con
 
 	for i := 0; i < retryCount; i++ {
 		start := time.Now()
-		err := storage.MSet(ctx, redis, content)
+		err := storage.MSet(ctx, redis, content, 24*time.Hour)
 		duration := time.Since(start).Seconds()
 
 		logger.Debugf("update_ts: write target ts in redis, keys: %v, retryCount: %d, retryInterval: %v, error: %v", keys, retryCount, retryInterval, err)

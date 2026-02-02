@@ -163,10 +163,10 @@ func MGet(ctx context.Context, r Redis, keys []string) [][]byte {
 	return vals
 }
 
-func MSet(ctx context.Context, r Redis, m map[string]interface{}) error {
+func MSet(ctx context.Context, r Redis, m map[string]interface{}, expiration time.Duration) error {
 	pipe := r.Pipeline()
 	for k, v := range m {
-		pipe.Set(ctx, k, v, 0)
+		pipe.Set(ctx, k, v, expiration)
 	}
 	_, err := pipe.Exec(ctx)
 	return err
