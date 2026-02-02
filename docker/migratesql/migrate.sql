@@ -331,3 +331,30 @@ CREATE TABLE `event_pipeline_execution` (
 ALTER TABLE `builtin_metrics` ADD COLUMN `expression_type` varchar(32) NOT NULL DEFAULT 'promql' COMMENT 'expression type: metric_name or promql';
 ALTER TABLE `builtin_metrics` ADD COLUMN `metric_type` varchar(191) NOT NULL DEFAULT '' COMMENT 'metric type like counter/gauge';
 ALTER TABLE `builtin_metrics` ADD COLUMN `extra_fields` text COMMENT 'custom extra fields';
+
+/* v9 2026-01-16 saved_view */
+CREATE TABLE `saved_view` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL COMMENT 'view name',
+    `page` varchar(64) NOT NULL COMMENT 'page identifier',
+    `filter` text COMMENT 'filter config (JSON)',
+    `public_cate` int NOT NULL DEFAULT 0 COMMENT 'public category: 0-self, 1-team, 2-all',
+    `gids` text COMMENT 'team group ids (JSON)',
+    `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
+    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `update_at` bigint NOT NULL DEFAULT 0 COMMENT 'update timestamp',
+    `update_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_page` (`page`),
+    KEY `idx_create_by` (`create_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='saved views for pages';
+
+CREATE TABLE `user_view_favorite` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `view_id` bigint NOT NULL COMMENT 'saved view id',
+    `user_id` bigint NOT NULL COMMENT 'user id',
+    `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
+    PRIMARY KEY (`id`),
+    KEY `idx_view_id` (`view_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='user favorite views';

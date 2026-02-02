@@ -182,7 +182,6 @@ func (e *WorkflowEngine) executeDAG(nodeMap map[string]*models.WorkflowNode, con
 				result.Status = models.ExecutionStatusFailed
 				result.ErrorNode = nodeID
 				result.Message = fmt.Sprintf("node %s failed: %s", node.Name, nodeResult.Error)
-				return result
 			}
 		}
 

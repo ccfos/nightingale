@@ -509,10 +509,16 @@ func (ar *AlertRule) Verify() error {
 
 	ar.AppendTags = strings.TrimSpace(ar.AppendTags)
 	arr := strings.Fields(ar.AppendTags)
+	appendTagKeys := make(map[string]struct{})
 	for i := 0; i < len(arr); i++ {
 		if !strings.Contains(arr[i], "=") {
 			return fmt.Errorf("AppendTags(%s) invalid", arr[i])
 		}
+		pair := strings.SplitN(arr[i], "=", 2)
+		if _, exists := appendTagKeys[pair[0]]; exists {
+			return fmt.Errorf("AppendTags has duplicate key: %s", pair[0])
+		}
+		appendTagKeys[pair[0]] = struct{}{}
 	}
 
 	gids := strings.Fields(ar.NotifyGroups)
