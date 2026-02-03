@@ -112,6 +112,7 @@ func (rt *Router) recordingRulePutByFE(c *gin.Context) {
 	}
 
 	rt.bgrwCheck(c, ar.GroupId)
+	rt.bgroCheck(c, f.GroupId)
 
 	f.UpdateBy = c.MustGet("username").(string)
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))

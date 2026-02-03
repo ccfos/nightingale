@@ -312,6 +312,8 @@ func (s *SsoClient) Callback(redis storage.Redis, ctx context.Context, code, sta
 
 	// 根据UsernameField配置确定username
 	switch s.FeiShuConfig.UsernameField {
+	case "userid":
+		callbackOutput.Username = username
 	case "name":
 		if nickname == "" {
 			return nil, errors.New("feishu user name is empty")

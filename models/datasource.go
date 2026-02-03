@@ -517,7 +517,8 @@ func (ds *Datasource) Encrypt(openRsa bool, publicKeyData []byte) error {
 // Decrypt 用于 edge 将从中心同步的数据源解密，中心不可调用
 func (ds *Datasource) Decrypt() error {
 	if rsaConfig == nil {
-		return errors.New("rsa config is nil")
+		logger.Debugf("datasource %s rsa config is nil", ds.Name)
+		return nil
 	}
 
 	if !rsaConfig.OpenRSA {

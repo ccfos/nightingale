@@ -38,6 +38,16 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 	total, err := models.TargetCountByFilter(rt.Ctx, query)
 	ginx.Dangerous(err)
 
+	models.FillTargetsBeatTime(rt.Redis, hosts)
+	now := time.Now().Unix()
+	for i := 0; i < len(hosts); i++ {
+		if now-hosts[i].BeatTime < 60 {
+			hosts[i].TargetUp = 2
+		} else if now-hosts[i].BeatTime < 180 {
+			hosts[i].TargetUp = 1
+		}
+	}
+
 	ginx.NewRender(c).Data(gin.H{
 		"list":  hosts,
 		"total": total,
@@ -81,9 +91,24 @@ func (rt *Router) targetGets(c *gin.Context) {
 		models.BuildTargetWhereWithBgids(bgids),
 		models.BuildTargetWhereWithDsIds(dsIds),
 		models.BuildTargetWhereWithQuery(query),
-		models.BuildTargetWhereWithDowntime(downtime),
 		models.BuildTargetWhereWithHosts(hosts),
 	}
+
+	// downtime 筛选：从缓存获取心跳时间，选择较小的集合用 IN 或 NOT IN 过滤
+	if downtime != 0 {
+		downtimeOpt, hasMatch := rt.downtimeFilter(downtime)
+		if !hasMatch {
+			ginx.NewRender(c).Data(gin.H{
+				"list":  []*models.Target{},
+				"total": 0,
+			}, nil)
+			return
+		}
+		if downtimeOpt != nil {
+			options = append(options, downtimeOpt)
+		}
+	}
+
 	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
 
@@ -102,14 +127,17 @@ func (rt *Router) targetGets(c *gin.Context) {
 		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
 
+		// 从 Redis 补全 BeatTime
+		models.FillTargetsBeatTime(rt.Redis, list)
+
 		var keys []string
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
 
-			if now.Unix()-list[i].UpdateAt < 60 {
+			if now.Unix()-list[i].BeatTime < 60 {
 				list[i].TargetUp = 2
-			} else if now.Unix()-list[i].UpdateAt < 180 {
+			} else if now.Unix()-list[i].BeatTime < 180 {
 				list[i].TargetUp = 1
 			}
 		}
@@ -146,6 +174,43 @@ func (rt *Router) targetGets(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+// downtimeFilter 从缓存获取心跳时间，生成 downtime 筛选条件
+// 选择匹配集和非匹配集中较小的一方，用 IN 或 NOT IN 来减少 SQL 参数量
+// 返回值：
+//   - option: 筛选条件，nil 表示所有 target 都符合条件（无需过滤）
+//   - hasMatch: 是否有符合条件的 target，false 表示无匹配应返回空结果
+func (rt *Router) downtimeFilter(downtime int64) (option models.BuildTargetWhereOption, hasMatch bool) {
+	now := time.Now().Unix()
+	targets := rt.TargetCache.GetAll()
+	var matchIdents, nonMatchIdents []string
+	for _, target := range targets {
+		matched := false
+		if downtime > 0 {
+			matched = target.BeatTime < now-downtime
+		} else if downtime < 0 {
+			matched = target.BeatTime > now+downtime
+		}
+		if matched {
+			matchIdents = append(matchIdents, target.Ident)
+		} else {
+			nonMatchIdents = append(nonMatchIdents, target.Ident)
+		}
+	}
+
+	if len(matchIdents) == 0 {
+		return nil, false
+	}
+
+	if len(nonMatchIdents) == 0 {
+		return nil, true
+	}
+
+	if len(matchIdents) <= len(nonMatchIdents) {
+		return models.BuildTargetWhereWithIdents(matchIdents), true
+	}
+	return models.BuildTargetWhereExcludeIdents(nonMatchIdents), true
 }
 
 func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {

@@ -90,7 +90,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					foundDefaultDatasource = true
 				}
 
-				logger.Debugf("get datasource: %+v", item)
+				// logger.Debugf("get datasource: %+v", item)
 				ds := datasource.DatasourceInfo{
 					Id:             item.Id,
 					Name:           item.Name,
@@ -236,5 +236,5 @@ func PutDatasources(items []datasource.DatasourceInfo) {
 		}
 	}
 
-	logger.Debugf("get plugin by type success Ids:%v", ids)
+	// logger.Debugf("get plugin by type success Ids:%v", ids)
 }
