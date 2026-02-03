@@ -39,6 +39,9 @@ type Doris struct {
 	MaxQueryRows    int    `json:"doris.max_query_rows" mapstructure:"doris.max_query_rows"`
 	ClusterName     string `json:"doris.cluster_name" mapstructure:"doris.cluster_name"`
 	EnableWrite     bool   `json:"doris.enable_write" mapstructure:"doris.enable_write"`
+	// 写用户，用来区分读写用户，减少数据源
+	UserWrite     string `json:"doris.user_write" mapstructure:"doris.user_write"`
+	PasswordWrite string `json:"doris.password_write" mapstructure:"doris.password_write"`
 }
 
 // NewDorisWithSettings initializes a new Doris instance with the given settings
