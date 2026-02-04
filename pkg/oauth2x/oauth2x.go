@@ -240,6 +240,13 @@ func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, Tran
 		}
 		r.Header.Add("Authorization", "Bearer "+accessToken)
 		req = r
+	} else if TranTokenMethod == "access_token_header" {
+		r, err := http.NewRequest("GET", UserInfoAddr, nil)
+		if err != nil {
+			return nil, err
+		}
+		r.Header.Add("access_token", accessToken)
+		req = r
 	} else {
 		r, err := http.NewRequest("GET", UserInfoAddr, nil)
 		if err != nil {
