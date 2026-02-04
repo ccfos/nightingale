@@ -589,6 +589,7 @@ CREATE TABLE `datasource`
     `http` varchar(4096) not null default '',
     `auth` varchar(8192) not null default '',
     `is_default` tinyint not null default 0,
+    `weight` int not null default 0,
     `created_at` bigint not null default 0,
     `created_by` varchar(64) not null default '',
     `updated_at` bigint not null default 0,

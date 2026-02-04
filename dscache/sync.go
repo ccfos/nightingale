@@ -104,6 +104,7 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					AuthJson:       item.AuthJson,
 					Status:         item.Status,
 					IsDefault:      item.IsDefault,
+					Weight:         item.Weight,
 				}
 
 				if item.PluginType == "elasticsearch" {

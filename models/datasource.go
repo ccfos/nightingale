@@ -45,6 +45,7 @@ type Datasource struct {
 	CreatedBy       string                 `json:"created_by"`
 	UpdatedBy       string                 `json:"updated_by"`
 	IsDefault       bool                   `json:"is_default"`
+	Weight          int                    `json:"weight"`
 	Transport       *http.Transport        `json:"-" gorm:"-"`
 	ForceSave       bool                   `json:"force_save" gorm:"-"`
 }

@@ -234,6 +234,7 @@ type Target struct {
 type Datasource struct {
 	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
 	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
+	Weight     int    `gorm:"column:weight;type:int;default:0;comment:weight for sorting"`
 }
 
 type Configs struct {

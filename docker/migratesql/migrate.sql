@@ -358,3 +358,6 @@ CREATE TABLE `user_view_favorite` (
     KEY `idx_view_id` (`view_id`),
     KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='user favorite views';
+
+/* v9 2026-01-20 datasource weight */
+ALTER TABLE `datasource` ADD COLUMN `weight` int not null default 0 COMMENT 'weight for sorting';

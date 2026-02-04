@@ -71,7 +71,10 @@ CREATE TABLE `datasource`
     `updated_at` bigint not null default 0,
     `updated_by` varchar(64) not null default '',
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4; 
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- datasource add weight field
+alter table `datasource` add `weight` int not null default 0;
 
 CREATE TABLE `builtin_cate` (
     `id` bigint unsigned not null auto_increment,

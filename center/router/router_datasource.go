@@ -276,7 +276,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 		err = req.Add(rt.Ctx)
 	} else {
-		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default")
+		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default", "weight")
 	}
 
 	Render(c, nil, err)

@@ -133,4 +133,5 @@ type DatasourceInfo struct {
 	CreatedAt      int64                  `json:"created_at"`
 	UpdatedAt      int64                  `json:"updated_at"`
 	IsDefault      bool                   `json:"is_default"`
+	Weight         int                    `json:"weight"`
 }
