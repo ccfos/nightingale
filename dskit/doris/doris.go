@@ -89,15 +89,22 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 		d.MaxQueryRows = 500
 	}
 
+	user := d.User
+	password := d.Password
+	if d.EnableWrite && len(d.UserWrite) > 0 {
+		user = d.UserWrite
+		password = d.PasswordWrite
+	}
+
 	var keys []string
 	keys = append(keys, d.Addr)
-	keys = append(keys, d.Password, d.User)
+	keys = append(keys, user, password)
 	if len(database) > 0 {
 		keys = append(keys, database)
 	}
-	cachedkey := strings.Join(keys, ":")
+	cachedKey := strings.Join(keys, ":")
 	// cache conn with database
-	conn, ok := pool.PoolClient.Load(cachedkey)
+	conn, ok := pool.PoolClient.Load(cachedKey)
 	if ok {
 		return conn.(*sql.DB), nil
 	}
@@ -105,12 +112,12 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	var err error
 	defer func() {
 		if db != nil && err == nil {
-			pool.PoolClient.Store(cachedkey, db)
+			pool.PoolClient.Store(cachedKey, db)
 		}
 	}()
 
 	// Simplified connection logic for Doris using MySQL driver
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", d.User, d.Password, d.Addr, database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", user, password, d.Addr, database)
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
