@@ -79,52 +79,19 @@ func (d *Doris) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
-	// only compare first shard
-	if d.Addr != newest.Addr {
-		return false
-	}
-
-	if d.User != newest.User {
-		return false
-	}
-
-	if d.Password != newest.Password {
-		return false
-	}
-
-	if d.EnableWrite != newest.EnableWrite {
-		return false
-	}
-
-	if d.FeAddr != newest.FeAddr {
-		return false
-	}
-
-	if d.MaxQueryRows != newest.MaxQueryRows {
-		return false
-	}
-
-	if d.Timeout != newest.Timeout {
-		return false
-	}
-
-	if d.MaxIdleConns != newest.MaxIdleConns {
-		return false
-	}
-
-	if d.MaxOpenConns != newest.MaxOpenConns {
-		return false
-	}
-
-	if d.ConnMaxLifetime != newest.ConnMaxLifetime {
-		return false
-	}
-
-	if d.ClusterName != newest.ClusterName {
-		return false
-	}
-
-	return true
+	return d.Addr == newest.Addr &&
+		d.FeAddr == newest.FeAddr &&
+		d.User == newest.User &&
+		d.Password == newest.Password &&
+		d.EnableWrite == newest.EnableWrite &&
+		d.UserWrite == newest.UserWrite &&
+		d.PasswordWrite == newest.PasswordWrite &&
+		d.MaxQueryRows == newest.MaxQueryRows &&
+		d.Timeout == newest.Timeout &&
+		d.MaxIdleConns == newest.MaxIdleConns &&
+		d.MaxOpenConns == newest.MaxOpenConns &&
+		d.ConnMaxLifetime == newest.ConnMaxLifetime &&
+		d.ClusterName == newest.ClusterName
 }
 
 func (d *Doris) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
