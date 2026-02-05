@@ -91,13 +91,13 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 
 	var keys []string
 	keys = append(keys, d.Addr)
-	keys = append(keys, d.Password, d.User)
+	keys = append(keys, d.User, d.Password)
 	if len(database) > 0 {
 		keys = append(keys, database)
 	}
-	cachedkey := strings.Join(keys, ":")
+	cachedKey := strings.Join(keys, ":")
 	// cache conn with database
-	conn, ok := pool.PoolClient.Load(cachedkey)
+	conn, ok := pool.PoolClient.Load(cachedKey)
 	if ok {
 		return conn.(*sql.DB), nil
 	}
@@ -105,7 +105,7 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	var err error
 	defer func() {
 		if db != nil && err == nil {
-			pool.PoolClient.Store(cachedkey, db)
+			pool.PoolClient.Store(cachedKey, db)
 		}
 	}()
 
@@ -119,6 +119,79 @@ func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	// Set connection pool configuration
 	db.SetMaxIdleConns(d.MaxIdleConns)
 	db.SetMaxOpenConns(d.MaxOpenConns)
+	db.SetConnMaxLifetime(time.Duration(d.ConnMaxLifetime) * time.Second)
+
+	return db, nil
+}
+
+// NewWriteConn establishes a new connection to Doris for write operations
+// When EnableWrite is true and UserWrite is configured, it uses the write user credentials
+// Otherwise, it reuses the read connection from NewConn
+func (d *Doris) NewWriteConn(ctx context.Context, database string) (*sql.DB, error) {
+	// If write user is not configured, reuse the read connection
+	if !d.EnableWrite || len(d.UserWrite) == 0 {
+		return d.NewConn(ctx, database)
+	}
+
+	if len(d.Addr) == 0 {
+		return nil, errors.New("empty fe-node addr")
+	}
+
+	// Set default values similar to postgres implementation
+	if d.Timeout == 0 {
+		d.Timeout = 60000
+	}
+	if d.MaxIdleConns == 0 {
+		d.MaxIdleConns = 10
+	}
+	if d.MaxOpenConns == 0 {
+		d.MaxOpenConns = 100
+	}
+	if d.ConnMaxLifetime == 0 {
+		d.ConnMaxLifetime = 14400
+	}
+	if d.MaxQueryRows == 0 {
+		d.MaxQueryRows = 500
+	}
+
+	// Use write user credentials
+	user := d.UserWrite
+	password := d.PasswordWrite
+
+	var keys []string
+	keys = append(keys, d.Addr)
+	keys = append(keys, user, password)
+	if len(database) > 0 {
+		keys = append(keys, database)
+	}
+	cachedKey := strings.Join(keys, ":")
+	// cache conn with database
+	conn, ok := pool.PoolClient.Load(cachedKey)
+	if ok {
+		return conn.(*sql.DB), nil
+	}
+	var db *sql.DB
+	var err error
+	defer func() {
+		if db != nil && err == nil {
+			pool.PoolClient.Store(cachedKey, db)
+		}
+	}()
+
+	// Simplified connection logic for Doris using MySQL driver
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8", user, password, d.Addr, database)
+	db, err = sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set connection pool configuration for write connections
+	// Use more conservative values since write operations are typically less frequent
+	writeMaxIdleConns := max(d.MaxIdleConns/5, 2)
+	writeMaxOpenConns := max(d.MaxOpenConns/10, 5)
+
+	db.SetMaxIdleConns(writeMaxIdleConns)
+	db.SetMaxOpenConns(writeMaxOpenConns)
 	db.SetConnMaxLifetime(time.Duration(d.ConnMaxLifetime) * time.Second)
 
 	return db, nil
@@ -475,7 +548,7 @@ func (d *Doris) ExecContext(ctx context.Context, database string, sql string) er
 	timeoutCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
 
-	db, err := d.NewConn(timeoutCtx, database)
+	db, err := d.NewWriteConn(timeoutCtx, database)
 	if err != nil {
 		return err
 	}
