@@ -983,24 +983,20 @@ func (ar *AlertRule) DB2FE() error {
 		if extraConfigMap, ok := ar.ExtraConfigJSON.(map[string]interface{}); ok {
 			serviceCalConfig := make(map[string]interface{})
 
-			// 提取 service_cal_ids
 			if serviceCalIds, exists := extraConfigMap["service_cal_ids"]; exists {
 				if idsArray, ok := serviceCalIds.([]interface{}); ok {
 					if len(idsArray) > 0 {
-						serviceCalConfig["service_cal_ids"] = [][]interface{}{idsArray}
-						serviceCalConfig["time_ranges"] = []map[string]string{
-							{
-								"start": "00:00",
-								"end":   "23:59",
-							},
+						serviceCalConfig["service_cal_ids"] = idsArray
+						serviceCalConfig["time_range"] = map[string]string{
+							"start": "00:00",
+							"end":   "23:59",
 						}
 					}
 				}
 			}
 
-			// 如果不存在 service_cal_config 才设置 service_cal_config
-			if _, exists := extraConfigMap["service_cal_config"]; !exists {
-				extraConfigMap["service_cal_config"] = serviceCalConfig
+			if _, exists := extraConfigMap["service_cal_configs"]; !exists && len(serviceCalConfig) > 0 {
+				extraConfigMap["service_cal_configs"] = []interface{}{serviceCalConfig}
 			}
 		}
 	}

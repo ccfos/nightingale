@@ -41,15 +41,15 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
 // 时间范围，左闭右开，默认范围：00:00-24:00
-// 如果规则配置了时区，则在该时区下进行时间判断；如果时区为空或为 "Asia/Shanghai"，则使用系统时区
+// 如果规则配置了时区，则在该时区下进行时间判断；如果时区为空，则使用系统时区
 func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
 	// 确定使用的时区
 	var targetLoc *time.Location
 	var err error
 
 	timezone := rule.TimeZone
-	if timezone == "" || timezone == "Asia/Shanghai" {
-		// 如果时区为空或为 "Asia/Shanghai"，使用系统时区（保持原有逻辑）
+	if timezone == "" {
+		// 如果时区为空，使用系统时区（保持原有逻辑）
 		targetLoc = time.Local
 	} else {
 		// 加载规则配置的时区
