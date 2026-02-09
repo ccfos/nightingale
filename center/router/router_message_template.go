@@ -154,6 +154,7 @@ func (rt *Router) messageTemplatesGet(c *gin.Context) {
 
 	lst, err := models.MessageTemplatesGetBy(rt.Ctx, notifyChannelIdents)
 	ginx.Dangerous(err)
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	if me.IsAdmin() {
 		ginx.NewRender(c).Data(lst, nil)

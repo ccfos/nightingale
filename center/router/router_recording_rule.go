@@ -15,6 +15,9 @@ import (
 func (rt *Router) recordingRuleGets(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	ars, err := models.RecordingRuleGets(rt.Ctx, busiGroupId)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, ars)
+	}
 	ginx.NewRender(c).Data(ars, err)
 }
 
@@ -39,6 +42,9 @@ func (rt *Router) recordingRuleGetsByGids(c *gin.Context) {
 	}
 
 	ars, err := models.RecordingRuleGetsByBGIds(rt.Ctx, gids)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, ars)
+	}
 	ginx.NewRender(c).Data(ars, err)
 }
 

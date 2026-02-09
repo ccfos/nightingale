@@ -27,6 +27,8 @@ func (rt *Router) metricFilterGets(c *gin.Context) {
 		}
 	}
 
+	models.FillUpdateByNicknames(rt.Ctx, arr)
+
 	ginx.NewRender(c).Data(arr, err)
 }
 

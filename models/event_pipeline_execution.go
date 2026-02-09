@@ -7,8 +7,8 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
-  
-  "gorm.io/gorm"
+
+	"gorm.io/gorm"
 )
 
 // 执行状态常量

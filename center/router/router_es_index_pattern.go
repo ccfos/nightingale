@@ -69,6 +69,10 @@ func (rt *Router) esIndexPatternGetList(c *gin.Context) {
 		lst, err = models.EsIndexPatternGets(rt.Ctx, "")
 	}
 
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
+
 	ginx.NewRender(c).Data(lst, err)
 }
 

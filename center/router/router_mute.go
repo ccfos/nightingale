@@ -22,6 +22,9 @@ func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	expired := ginx.QueryInt(c, "expired", -1)
 	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, -1, expired, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -47,6 +50,9 @@ func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
 	}
 
 	lst, err := models.AlertMuteGetsByBGIds(rt.Ctx, gids)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -58,6 +64,9 @@ func (rt *Router) alertMuteGets(c *gin.Context) {
 	disabled := ginx.QueryInt(c, "disabled", -1)
 	expired := ginx.QueryInt(c, "expired", -1)
 	lst, err := models.AlertMuteGets(rt.Ctx, prods, bgid, disabled, expired, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }
