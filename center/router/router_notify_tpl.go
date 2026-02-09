@@ -25,11 +25,14 @@ func (rt *Router) notifyTplGets(c *gin.Context) {
 	m[models.EmailSubject] = struct{}{}
 
 	lst, err := models.NotifyTplGets(rt.Ctx)
+	ginx.Dangerous(err)
+
 	for i := 0; i < len(lst); i++ {
 		if _, exists := m[lst[i].Channel]; exists {
 			lst[i].BuiltIn = true
 		}
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -200,6 +203,9 @@ func (rt *Router) messageTemplateGets(c *gin.Context) {
 	ident := ginx.QueryStr(c, "ident", "")
 
 	tpls, err := models.MessageTemplateGets(rt.Ctx, id, name, ident)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, tpls)
+	}
 
 	ginx.NewRender(c).Data(tpls, err)
 }

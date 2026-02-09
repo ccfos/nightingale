@@ -30,6 +30,7 @@ func (rt *Router) alertSubscribeGets(c *gin.Context) {
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -66,6 +67,7 @@ func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	ginx.NewRender(c).Data(lst, err)
 }

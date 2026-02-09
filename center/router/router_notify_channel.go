@@ -118,6 +118,9 @@ func (rt *Router) notifyChannelGetBy(c *gin.Context) {
 
 func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 	ginx.NewRender(c).Data(lst, err)
 }
 

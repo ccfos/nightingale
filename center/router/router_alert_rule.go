@@ -36,6 +36,7 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 		}
+		models.FillUpdateByNicknames(rt.Ctx, ars)
 	}
 	ginx.NewRender(c).Data(ars, err)
 }
@@ -76,7 +77,6 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		rids := make([]int64, 0, len(ars))
-		names := make([]string, 0, len(ars))
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 
@@ -85,7 +85,6 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 			}
 
 			rids = append(rids, ars[i].Id)
-			names = append(names, ars[i].UpdateBy)
 		}
 
 		stime, etime := GetAlertCueEventTimeRange(c)
@@ -96,14 +95,7 @@ func (rt *Router) alertRuleGetsByGids(c *gin.Context) {
 			}
 		}
 
-		users := models.UserMapGet(rt.Ctx, "username in (?)", names)
-		if users != nil {
-			for i := 0; i < len(ars); i++ {
-				if user, exist := users[ars[i].UpdateBy]; exist {
-					ars[i].UpdateByNickname = user.Nickname
-				}
-			}
-		}
+		models.FillUpdateByNicknames(rt.Ctx, ars)
 	}
 	ginx.NewRender(c).Data(ars, err)
 }
@@ -135,6 +127,7 @@ func (rt *Router) alertRulesGetByService(c *gin.Context) {
 				ars[i].DatasourceIdsJson = rt.DatasourceCache.GetIDsByDsCateAndQueries(ars[i].Cate, ars[i].DatasourceQueries)
 			}
 		}
+		models.FillUpdateByNicknames(rt.Ctx, ars)
 	}
 	ginx.NewRender(c).Data(ars, err)
 }

@@ -15,22 +15,23 @@ import (
 )
 
 type TaskTpl struct {
-	Id        int64    `json:"id" gorm:"primaryKey"`
-	GroupId   int64    `json:"group_id"`
-	Title     string   `json:"title"`
-	Batch     int      `json:"batch"`
-	Tolerance int      `json:"tolerance"`
-	Timeout   int      `json:"timeout"`
-	Pause     string   `json:"pause"`
-	Script    string   `json:"script"`
-	Args      string   `json:"args"`
-	Tags      string   `json:"-"`
-	TagsJSON  []string `json:"tags" gorm:"-"`
-	Account   string   `json:"account"`
-	CreateAt  int64    `json:"create_at"`
-	CreateBy  string   `json:"create_by"`
-	UpdateAt  int64    `json:"update_at"`
-	UpdateBy  string   `json:"update_by"`
+	Id               int64    `json:"id" gorm:"primaryKey"`
+	GroupId          int64    `json:"group_id"`
+	Title            string   `json:"title"`
+	Batch            int      `json:"batch"`
+	Tolerance        int      `json:"tolerance"`
+	Timeout          int      `json:"timeout"`
+	Pause            string   `json:"pause"`
+	Script           string   `json:"script"`
+	Args             string   `json:"args"`
+	Tags             string   `json:"-"`
+	TagsJSON         []string `json:"tags" gorm:"-"`
+	Account          string   `json:"account"`
+	CreateAt         int64    `json:"create_at"`
+	CreateBy         string   `json:"create_by"`
+	UpdateAt         int64    `json:"update_at"`
+	UpdateBy         string   `json:"update_by"`
+	UpdateByNickname string   `json:"update_by_nickname" gorm:"-"`
 }
 
 func (t *TaskTpl) TableName() string {

@@ -20,6 +20,7 @@ func (rt *Router) savedViewGets(c *gin.Context) {
 		ginx.NewRender(c).Data(nil, err)
 		return
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	userGids, err := models.MyGroupIds(rt.Ctx, me.Id)
 	if err != nil {

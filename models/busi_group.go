@@ -12,16 +12,17 @@ import (
 )
 
 type BusiGroup struct {
-	Id          int64                   `json:"id" gorm:"primaryKey"`
-	Name        string                  `json:"name"`
-	LabelEnable int                     `json:"label_enable"`
-	LabelValue  string                  `json:"label_value"`
-	CreateAt    int64                   `json:"create_at"`
-	CreateBy    string                  `json:"create_by"`
-	UpdateAt    int64                   `json:"update_at"`
-	UpdateBy    string                  `json:"update_by"`
-	UserGroups  []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
-	DB          *gorm.DB                `json:"-" gorm:"-"`
+	Id               int64                   `json:"id" gorm:"primaryKey"`
+	Name             string                  `json:"name"`
+	LabelEnable      int                     `json:"label_enable"`
+	LabelValue       string                  `json:"label_value"`
+	CreateAt         int64                   `json:"create_at"`
+	CreateBy         string                  `json:"create_by"`
+	UpdateAt         int64                   `json:"update_at"`
+	UpdateBy         string                  `json:"update_by"`
+	UpdateByNickname string                  `json:"update_by_nickname" gorm:"-"`
+	UserGroups       []UserGroupWithPermFlag `json:"user_groups" gorm:"-"`
+	DB               *gorm.DB                `json:"-" gorm:"-"`
 }
 
 func New(db *gorm.DB) *BusiGroup {
