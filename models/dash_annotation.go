@@ -7,19 +7,20 @@ import (
 )
 
 type DashAnnotation struct {
-	Id          int64    `json:"id" gorm:"primaryKey"`
-	DashboardId int64    `json:"dashboard_id"`
-	PanelId     string   `json:"panel_id"`
-	Tags        string   `json:"-"`
-	TagsJSON    []string `json:"tags" gorm:"-"`
-	Description string   `json:"description"`
-	Config      string   `json:"config"`
-	TimeStart   int64    `json:"time_start"`
-	TimeEnd     int64    `json:"time_end"`
-	CreateAt    int64    `json:"create_at"`
-	CreateBy    string   `json:"create_by"`
-	UpdateAt    int64    `json:"update_at"`
-	UpdateBy    string   `json:"update_by"`
+	Id               int64    `json:"id" gorm:"primaryKey"`
+	DashboardId      int64    `json:"dashboard_id"`
+	PanelId          string   `json:"panel_id"`
+	Tags             string   `json:"-"`
+	TagsJSON         []string `json:"tags" gorm:"-"`
+	Description      string   `json:"description"`
+	Config           string   `json:"config"`
+	TimeStart        int64    `json:"time_start"`
+	TimeEnd          int64    `json:"time_end"`
+	CreateAt         int64    `json:"create_at"`
+	CreateBy         string   `json:"create_by"`
+	UpdateAt         int64    `json:"update_at"`
+	UpdateBy         string   `json:"update_by"`
+	UpdateByNickname string   `json:"update_by_nickname" gorm:"-"`
 }
 
 func (da *DashAnnotation) TableName() string {

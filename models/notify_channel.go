@@ -57,11 +57,12 @@ type NotifyChannelConfig struct {
 	RequestType   string         `json:"request_type"` // http, stmp, script, flashduty
 	RequestConfig *RequestConfig `json:"request_config,omitempty" gorm:"serializer:json"`
 
-	Weight   int    `json:"weight"` // 权重，根据此字段对内置模板进行排序
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
+	Weight           int    `json:"weight"` // 权重，根据此字段对内置模板进行排序
+	CreateAt         int64  `json:"create_at"`
+	CreateBy         string `json:"create_by"`
+	UpdateAt         int64  `json:"update_at"`
+	UpdateBy         string `json:"update_by"`
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 func (ncc *NotifyChannelConfig) TableName() string {

@@ -118,6 +118,7 @@ func (rt *Router) notifyRulesGet(c *gin.Context) {
 
 	lst, err := models.NotifyRulesGet(rt.Ctx, "", nil)
 	ginx.Dangerous(err)
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 	if me.IsAdmin() {
 		ginx.NewRender(c).Data(lst, nil)
 		return

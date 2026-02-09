@@ -119,6 +119,9 @@ func (rt *Router) busiGroupGets(c *gin.Context) {
 	if len(lst) == 0 {
 		lst = []models.BusiGroup{}
 	}
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }

@@ -45,6 +45,7 @@ type AlertSubscribe struct {
 	CreateAt          int64        `json:"create_at"`
 	UpdateBy          string       `json:"update_by"`
 	UpdateAt          int64        `json:"update_at"`
+	UpdateByNickname  string       `json:"update_by_nickname" gorm:"-"`
 	ITags             []TagFilter  `json:"-" gorm:"-"` // inner tags
 	BusiGroups        ormx.JSONArr `json:"busi_groups"`
 	IBusiGroups       []TagFilter  `json:"-" gorm:"-"` // inner busiGroups

@@ -35,6 +35,7 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 		// 兼容处理：自动填充工作流字段
 		pipeline.FillWorkflowFields()
 	}
+	models.FillUpdateByNicknames(rt.Ctx, pipelines)
 
 	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
 	ginx.Dangerous(err)

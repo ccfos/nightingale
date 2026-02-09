@@ -32,10 +32,11 @@ type EventPipeline struct {
 	// 输入参数（工作流级别的配置变量）
 	Inputs []InputVariable `json:"inputs,omitempty" gorm:"type:text;serializer:json"`
 
-	CreateAt int64  `json:"create_at" gorm:"type:bigint"`
-	CreateBy string `json:"create_by" gorm:"type:varchar(64)"`
-	UpdateAt int64  `json:"update_at" gorm:"type:bigint"`
-	UpdateBy string `json:"update_by" gorm:"type:varchar(64)"`
+	CreateAt         int64  `json:"create_at" gorm:"type:bigint"`
+	CreateBy         string `json:"create_by" gorm:"type:varchar(64)"`
+	UpdateAt         int64  `json:"update_at" gorm:"type:bigint"`
+	UpdateBy         string `json:"update_by" gorm:"type:varchar(64)"`
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 type ProcessorConfig struct {

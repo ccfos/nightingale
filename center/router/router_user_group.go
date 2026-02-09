@@ -27,6 +27,9 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 	lst, err := me.UserGroups(rt.Ctx, limit, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }

@@ -16,16 +16,17 @@ var (
 )
 
 type SavedView struct {
-	Id         int64   `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name       string  `json:"name" gorm:"type:varchar(255);not null"`
-	Page       string  `json:"page" gorm:"type:varchar(64);not null;index"`
-	Filter     string  `json:"filter" gorm:"type:text"`
-	PublicCate int     `json:"public_cate" gorm:"default:0"` // 0: self, 1: team, 2: all
-	Gids       []int64 `json:"gids" gorm:"column:gids;type:text;serializer:json"`
-	CreateAt   int64   `json:"create_at" gorm:"type:bigint;not null;default:0"`
-	CreateBy   string  `json:"create_by" gorm:"type:varchar(64);index"`
-	UpdateAt   int64   `json:"update_at" gorm:"type:bigint;not null;default:0"`
-	UpdateBy   string  `json:"update_by" gorm:"type:varchar(64)"`
+	Id               int64   `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name             string  `json:"name" gorm:"type:varchar(255);not null"`
+	Page             string  `json:"page" gorm:"type:varchar(64);not null;index"`
+	Filter           string  `json:"filter" gorm:"type:text"`
+	PublicCate       int     `json:"public_cate" gorm:"default:0"` // 0: self, 1: team, 2: all
+	Gids             []int64 `json:"gids" gorm:"column:gids;type:text;serializer:json"`
+	CreateAt         int64   `json:"create_at" gorm:"type:bigint;not null;default:0"`
+	CreateBy         string  `json:"create_by" gorm:"type:varchar(64);index"`
+	UpdateAt         int64   `json:"update_at" gorm:"type:bigint;not null;default:0"`
+	UpdateBy         string  `json:"update_by" gorm:"type:varchar(64)"`
+	UpdateByNickname string  `json:"update_by_nickname" gorm:"-"`
 
 	// 查询时填充的字段
 	IsFavorite bool `json:"is_favorite" gorm:"-"`

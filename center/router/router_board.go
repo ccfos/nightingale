@@ -260,6 +260,9 @@ func (rt *Router) boardGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 
 	boards, err := models.BoardGetsByGroupId(rt.Ctx, bgid, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, boards)
+	}
 	ginx.NewRender(c).Data(boards, err)
 }
 
@@ -273,6 +276,9 @@ func (rt *Router) publicBoardGets(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	boards, err := models.BoardGets(rt.Ctx, "", "public=1 and (public_cate in (?) or id in (?))", []int64{0, 1}, boardIds)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, boards)
+	}
 	ginx.NewRender(c).Data(boards, err)
 }
 
@@ -312,6 +318,7 @@ func (rt *Router) boardGetsByGids(c *gin.Context) {
 			boards[i].Bgids = ids
 		}
 	}
+	models.FillUpdateByNicknames(rt.Ctx, boards)
 
 	ginx.NewRender(c).Data(boards, err)
 }

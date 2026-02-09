@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-  "github.com/ccfos/nightingale/v6/pkg/poster"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"gorm.io/gorm"
 )
