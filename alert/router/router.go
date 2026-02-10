@@ -22,10 +22,11 @@ type Router struct {
 	AlertStats         *astats.Stats
 	Ctx                *ctx.Context
 	ExternalProcessors *process.ExternalProcessorsType
+	LogDir             string
 }
 
 func New(httpConfig httpx.Config, alert aconf.Alert, amc *memsto.AlertMuteCacheType, tc *memsto.TargetCacheType, bgc *memsto.BusiGroupCacheType,
-	astats *astats.Stats, ctx *ctx.Context, externalProcessors *process.ExternalProcessorsType) *Router {
+	astats *astats.Stats, ctx *ctx.Context, externalProcessors *process.ExternalProcessorsType, logDir string) *Router {
 	return &Router{
 		HTTP:               httpConfig,
 		Alert:              alert,
@@ -35,6 +36,7 @@ func New(httpConfig httpx.Config, alert aconf.Alert, amc *memsto.AlertMuteCacheT
 		AlertStats:         astats,
 		Ctx:                ctx,
 		ExternalProcessors: externalProcessors,
+		LogDir:             logDir,
 	}
 }
 
@@ -50,6 +52,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	service.POST("/event", rt.pushEventToQueue)
 	service.POST("/event-persist", rt.eventPersist)
 	service.POST("/make-event", rt.makeEvent)
+	service.GET("/event-detail/:hash", rt.eventDetail)
 }
 
 func Render(c *gin.Context, data, msg interface{}) {

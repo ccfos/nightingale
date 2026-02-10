@@ -131,7 +131,7 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 		var err error
 		event.Id, err = poster.PostByUrlsWithResp[int64](e.ctx, "/v1/n9e/event-persist", event)
 		if err != nil {
-			logger.Errorf("event:%+v persist err:%v", event, err)
+			logger.Errorf("event:%s persist err:%v", event.Hash, err)
 			e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()
 		}
 		return
@@ -139,7 +139,7 @@ func (e *Consumer) persist(event *models.AlertCurEvent) {
 
 	err := models.EventPersist(e.ctx, event)
 	if err != nil {
-		logger.Errorf("event%+v persist err:%v", event, err)
+		logger.Errorf("event:%s persist err:%v", event.Hash, err)
 		e.dispatch.Astats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", event.DatasourceId), "persist_event", event.GroupName, fmt.Sprintf("%v", event.RuleId)).Inc()
 	}
 }

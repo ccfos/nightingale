@@ -156,14 +156,14 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		eventCopy := event.DeepCopy()
 		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
 		if event == nil {
-			logger.Infof("rule_eval:%s is muted drop by pipeline event:%v", p.Key(), eventCopy)
+			logger.Infof("rule_eval:%s is muted drop by pipeline event:%s", p.Key(), eventCopy.Hash)
 			continue
 		}
 
 		// event mute
 		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			logger.Infof("rule_eval:%s is muted, detail:%s event:%v", p.Key(), detail, event)
+			logger.Infof("rule_eval:%s is muted, detail:%s event:%s", p.Key(), detail, event.Hash)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -174,7 +174,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		}
 
 		if dispatch.EventMuteHook(event) {
-			logger.Infof("rule_eval:%s is muted by hook event:%v", p.Key(), event)
+			logger.Infof("rule_eval:%s is muted by hook event:%s", p.Key(), event.Hash)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -371,19 +371,19 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 		lastPendingEvent, has := p.pendingsUseByRecover.Get(hash)
 		if !has {
 			// 说明没有产生过异常点，就不需要恢复了
-			logger.Debugf("rule_eval:%s event:%v do not has pending event, not recover", p.Key(), event)
+			logger.Debugf("rule_eval:%s event:%s do not has pending event, not recover", p.Key(), event.Hash)
 			return
 		}
 
 		if now-lastPendingEvent.LastEvalTime < cachedRule.RecoverDuration {
-			logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+			logger.Debugf("rule_eval:%s event:%s not recover", p.Key(), event.Hash)
 			return
 		}
 	}
 
 	// 如果设置了恢复条件，则不能在此处恢复，必须依靠 recoverPoint 来恢复
 	if event.RecoverConfig.JudgeType != models.Origin && !byRecover {
-		logger.Debugf("rule_eval:%s event:%v not recover", p.Key(), event)
+		logger.Debugf("rule_eval:%s event:%s not recover", p.Key(), event.Hash)
 		return
 	}
 
@@ -460,7 +460,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity int) {
 	for _, event := range events {
 		if p.inhibit && event.Severity > highSeverity {
-			logger.Debugf("rule_eval:%s event:%+v inhibit highSeverity:%d", p.Key(), event, highSeverity)
+			logger.Debugf("rule_eval:%s event:%s inhibit highSeverity:%d", p.Key(), event.Hash, highSeverity)
 			continue
 		}
 		p.fireEvent(event)
@@ -527,7 +527,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 	dispatch.LogEvent(e, "push_queue")
 	if !queue.EventQueue.PushFront(e) {
-		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
+		logger.Warningf("event_push_queue: queue is full, event:%s", e.Hash)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 	}
 }

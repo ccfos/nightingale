@@ -51,6 +51,7 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
+	LogDir            string
 
 	HeartbeatHook       HeartbeatHookFunc
 	TargetDeleteHook    models.TargetDeleteHookFunc
@@ -61,7 +62,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, logDir string) *Router {
 	return &Router{
 		HTTP:                httpConfig,
 		Center:              center,
@@ -80,6 +81,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserGroupCache:      ugc,
 		UserTokenCache:      utc,
 		Ctx:                 ctx,
+		LogDir:              logDir,
 		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
 		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
 		AlertRuleModifyHook: func(ar *models.AlertRule) {},
@@ -416,6 +418,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.GET("/event-detail/:hash", rt.eventDetailPage)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
@@ -664,6 +667,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+			service.GET("/event-detail/:hash", rt.eventDetailJSON)
 
 			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
 			service.GET("/task-tpls", rt.taskTplGetsByService)
