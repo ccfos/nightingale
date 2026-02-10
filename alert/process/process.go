@@ -131,7 +131,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 	p.inhibit = inhibit
 	cachedRule := p.alertRuleCache.Get(p.rule.Id)
 	if cachedRule == nil {
-		logger.Warningf("process handle error: rule not found %+v rule_id:%d maybe rule has been deleted", anomalyPoints, p.rule.Id)
+		logger.Warningf("alert_eval_%d datasource_%d handle error: rule not found, maybe rule has been deleted, anomalyPoints:%+v", p.rule.Id, p.datasourceId, anomalyPoints)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 		return
 	}
@@ -156,14 +156,14 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		eventCopy := event.DeepCopy()
 		event = dispatch.HandleEventPipeline(cachedRule.PipelineConfigs, eventCopy, event, dispatch.EventProcessorCache, p.ctx, cachedRule.Id, "alert_rule")
 		if event == nil {
-			logger.Infof("rule_eval:%s is muted drop by pipeline event:%s", p.Key(), eventCopy.Hash)
+			logger.Infof("alert_eval_%d datasource_%d is muted drop by pipeline event:%s", p.rule.Id, p.datasourceId, eventCopy.Hash)
 			continue
 		}
 
 		// event mute
 		isMuted, detail, muteId := mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache)
 		if isMuted {
-			logger.Infof("rule_eval:%s is muted, detail:%s event:%s", p.Key(), detail, event.Hash)
+			logger.Infof("alert_eval_%d datasource_%d is muted, detail:%s event:%s", p.rule.Id, p.datasourceId, detail, event.Hash)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -174,7 +174,7 @@ func (p *Processor) Handle(anomalyPoints []models.AnomalyPoint, from string, inh
 		}
 
 		if dispatch.EventMuteHook(event) {
-			logger.Infof("rule_eval:%s is muted by hook event:%s", p.Key(), event.Hash)
+			logger.Infof("alert_eval_%d datasource_%d is muted by hook event:%s", p.rule.Id, p.datasourceId, event.Hash)
 			p.Stats.CounterMuteTotal.WithLabelValues(
 				fmt.Sprintf("%v", event.GroupName),
 				fmt.Sprintf("%v", p.rule.Id),
@@ -247,7 +247,7 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 
 	if err := json.Unmarshal([]byte(p.rule.Annotations), &event.AnnotationsJSON); err != nil {
 		event.AnnotationsJSON = make(map[string]string) // 解析失败时使用空 map
-		logger.Warningf("unmarshal annotations json failed: %v, rule: %d", err, p.rule.Id)
+		logger.Warningf("alert_eval_%d datasource_%d unmarshal annotations json failed: %v", p.rule.Id, p.datasourceId, err)
 	}
 
 	if event.TriggerValues != "" && strings.Count(event.TriggerValues, "$") > 1 {
@@ -272,7 +272,7 @@ func (p *Processor) BuildEvent(anomalyPoint models.AnomalyPoint, from string, no
 			pt.GroupNames = p.BusiGroupCache.GetNamesByBusiGroupIds(pt.GroupIds)
 			event.Target = pt
 		} else {
-			logger.Infof("fill event target error, ident: %s doesn't exist in cache.", event.TargetIdent)
+			logger.Infof("alert_eval_%d datasource_%d fill event target error, ident: %s doesn't exist in cache.", p.rule.Id, p.datasourceId, event.TargetIdent)
 		}
 	}
 
@@ -371,19 +371,19 @@ func (p *Processor) RecoverSingle(byRecover bool, hash string, now int64, value 
 		lastPendingEvent, has := p.pendingsUseByRecover.Get(hash)
 		if !has {
 			// 说明没有产生过异常点，就不需要恢复了
-			logger.Debugf("rule_eval:%s event:%s do not has pending event, not recover", p.Key(), event.Hash)
+			logger.Debugf("alert_eval_%d datasource_%d event:%s do not has pending event, not recover", p.rule.Id, p.datasourceId, event.Hash)
 			return
 		}
 
 		if now-lastPendingEvent.LastEvalTime < cachedRule.RecoverDuration {
-			logger.Debugf("rule_eval:%s event:%s not recover", p.Key(), event.Hash)
+			logger.Debugf("alert_eval_%d datasource_%d event:%s not recover", p.rule.Id, p.datasourceId, event.Hash)
 			return
 		}
 	}
 
 	// 如果设置了恢复条件，则不能在此处恢复，必须依靠 recoverPoint 来恢复
 	if event.RecoverConfig.JudgeType != models.Origin && !byRecover {
-		logger.Debugf("rule_eval:%s event:%s not recover", p.Key(), event.Hash)
+		logger.Debugf("alert_eval_%d datasource_%d event:%s not recover", p.rule.Id, p.datasourceId, event.Hash)
 		return
 	}
 
@@ -460,7 +460,7 @@ func (p *Processor) handleEvent(events []*models.AlertCurEvent) {
 func (p *Processor) inhibitEvent(events []*models.AlertCurEvent, highSeverity int) {
 	for _, event := range events {
 		if p.inhibit && event.Severity > highSeverity {
-			logger.Debugf("rule_eval:%s event:%s inhibit highSeverity:%d", p.Key(), event.Hash, highSeverity)
+			logger.Debugf("alert_eval_%d datasource_%d event:%s inhibit highSeverity:%d", p.rule.Id, p.datasourceId, event.Hash, highSeverity)
 			continue
 		}
 		p.fireEvent(event)
@@ -476,7 +476,7 @@ func (p *Processor) fireEvent(event *models.AlertCurEvent) {
 
 	message := "unknown"
 	defer func() {
-		logger.Infof("rule_eval:%s event-hash-%s %s", p.Key(), event.Hash, message)
+		logger.Infof("alert_eval_%d datasource_%d event-hash-%s %s", p.rule.Id, p.datasourceId, event.Hash, message)
 	}()
 
 	if fired, has := p.fires.Get(event.Hash); has {
@@ -527,7 +527,7 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 	dispatch.LogEvent(e, "push_queue")
 	if !queue.EventQueue.PushFront(e) {
-		logger.Warningf("event_push_queue: queue is full, event:%s", e.Hash)
+		logger.Warningf("alert_eval_%d datasource_%d event_push_queue: queue is full, event:%s", p.rule.Id, p.datasourceId, e.Hash)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 	}
 }
@@ -538,7 +538,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
-		logger.Errorf("recover event from db for rule:%s failed, err:%s", p.Key(), err)
+		logger.Errorf("alert_eval_%d datasource_%d recover event from db failed, err:%s", p.rule.Id, p.datasourceId, err)
 		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "get_recover_event", p.BusiGroupCache.GetNameByBusiGroupId(p.rule.GroupId), fmt.Sprintf("%v", p.rule.Id)).Inc()
 		p.fires = NewAlertCurEventMap(nil)
 		return

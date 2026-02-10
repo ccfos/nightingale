@@ -102,7 +102,7 @@ func IdentNotExistsMuteStrategy(rule *models.AlertRule, event *models.AlertCurEv
 	// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
 	// 这里的判断有点太粗暴了,但是目前没有更好的办法
 	if !exists && strings.Contains(rule.PromQl, "target_up") {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s ident:%s", "IdentNotExistsMuteStrategy", rule.Id, event.Cluster, ident)
+		logger.Debugf("alert_eval_%d [IdentNotExistsMuteStrategy] mute: cluster:%s ident:%s", rule.Id, event.Cluster, ident)
 		return true
 	}
 	return false
@@ -124,7 +124,7 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 	if exists && !target.MatchGroupId(rule.GroupId) {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s", "BgNotMatchMuteStrategy", rule.Id, event.Cluster)
+		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s", rule.Id, event.Cluster)
 		return true
 	}
 	return false

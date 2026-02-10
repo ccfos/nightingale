@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
-	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
@@ -99,12 +98,12 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.dispatch.Astats.CounterAlertsTotal.WithLabelValues(event.Cluster, eventType, event.GroupName).Inc()
 
 	if err := event.ParseRule("rule_name"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule name: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse rule name: %v", event.RuleId, event.DatasourceId, err)
 		event.RuleName = fmt.Sprintf("failed to parse rule name: %v", err)
 	}
 
 	if err := event.ParseRule("annotations"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse annotations: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse annotations: %v", event.RuleId, event.DatasourceId, err)
 		event.Annotations = fmt.Sprintf("failed to parse annotations: %v", err)
 		event.AnnotationsJSON["error"] = event.Annotations
 	}
@@ -112,7 +111,7 @@ func (e *Consumer) consumeOne(event *models.AlertCurEvent) {
 	e.queryRecoveryVal(event)
 
 	if err := event.ParseRule("rule_note"); err != nil {
-		logger.Warningf("ruleid:%d failed to parse rule note: %v", event.RuleId, err)
+		logger.Warningf("alert_eval_%d datasource_%d failed to parse rule note: %v", event.RuleId, event.DatasourceId, err)
 		event.RuleNote = fmt.Sprintf("failed to parse rule note: %v", err)
 	}
 
@@ -157,12 +156,12 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 
 	promql = strings.TrimSpace(promql)
 	if promql == "" {
-		logger.Warningf("rule_eval:%s promql is blank", getKey(event))
+		logger.Warningf("alert_eval_%d datasource_%d promql is blank", event.RuleId, event.DatasourceId)
 		return
 	}
 
 	if e.promClients.IsNil(event.DatasourceId) {
-		logger.Warningf("rule_eval:%s error reader client is nil", getKey(event))
+		logger.Warningf("alert_eval_%d datasource_%d error reader client is nil", event.RuleId, event.DatasourceId)
 		return
 	}
 
@@ -171,7 +170,7 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	var warnings promsdk.Warnings
 	value, warnings, err := readerClient.Query(e.ctx.Ctx, promql, time.Now())
 	if err != nil {
-		logger.Errorf("rule_eval:%s promql:%s, error:%v", getKey(event), promql, err)
+		logger.Errorf("alert_eval_%d datasource_%d promql:%s, error:%v", event.RuleId, event.DatasourceId, promql, err)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%v", promql, err)
 
 		b, err := json.Marshal(event.AnnotationsJSON)
@@ -185,12 +184,12 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("rule_eval:%s promql:%s, warnings:%v", getKey(event), promql, warnings)
+		logger.Errorf("alert_eval_%d datasource_%d promql:%s, warnings:%v", event.RuleId, event.DatasourceId, promql, warnings)
 	}
 
 	anomalyPoints := models.ConvertAnomalyPoints(value)
 	if len(anomalyPoints) == 0 {
-		logger.Warningf("rule_eval:%s promql:%s, result is empty", getKey(event), promql)
+		logger.Warningf("alert_eval_%d datasource_%d promql:%s, result is empty", event.RuleId, event.DatasourceId, promql)
 		event.AnnotationsJSON["recovery_promql_error"] = fmt.Sprintf("promql:%s error:%s", promql, "result is empty")
 	} else {
 		event.AnnotationsJSON["recovery_value"] = fmt.Sprintf("%v", anomalyPoints[0].Value)
@@ -205,6 +204,3 @@ func (e *Consumer) queryRecoveryVal(event *models.AlertCurEvent) {
 	}
 }
 
-func getKey(event *models.AlertCurEvent) string {
-	return common.RuleKey(event.DatasourceId, event.RuleId)
-}
