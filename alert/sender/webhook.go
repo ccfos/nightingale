@@ -72,7 +72,7 @@ func sendWebhook(webhook *models.Webhook, event interface{}, stats *astats.Stats
 	}
 	bs, err := json.Marshal(event)
 	if err != nil {
-		logger.Errorf("%s alertingWebhook failed to marshal event:%+v err:%v", channel, event, err)
+		logger.Errorf("%s alertingWebhook failed to marshal event err:%v", channel, err)
 		return false, "", err
 	}
 
@@ -145,7 +145,7 @@ func SingleSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, e
 
 func BatchSendWebhooks(ctx *ctx.Context, webhooks map[string]*models.Webhook, event *models.AlertCurEvent, stats *astats.Stats) {
 	for _, conf := range webhooks {
-		logger.Infof("push event:%+v to queue:%v", event, conf)
+		logger.Infof("push event:%s to queue:%v", event.Hash, conf)
 		PushEvent(ctx, conf, event, stats)
 	}
 }
@@ -183,7 +183,7 @@ func PushEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.AlertCur
 	succ := queue.eventQueue.Push(event)
 	if !succ {
 		stats.AlertNotifyErrorTotal.WithLabelValues("push_event_queue").Inc()
-		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.eventQueue.Len(), event)
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%s", webhook.Url, queue.eventQueue.Len(), event.Hash)
 	}
 }
 

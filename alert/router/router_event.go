@@ -75,7 +75,7 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 
 	dispatch.LogEvent(event, "http_push_queue")
 	if !queue.EventQueue.PushFront(event) {
-		msg := fmt.Sprintf("event:%+v push_queue err: queue is full", event)
+		msg := fmt.Sprintf("event:%s push_queue err: queue is full", event.Hash)
 		ginx.Bomb(200, msg)
 		logger.Warningf(msg)
 	}
@@ -105,21 +105,21 @@ func (rt *Router) makeEvent(c *gin.Context) {
 	for i := 0; i < len(events); i++ {
 		node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(events[i].DatasourceId, 10), fmt.Sprintf("%d", events[i].RuleId))
 		if err != nil {
-			logger.Warningf("event:%+v get node err:%v", events[i], err)
+			logger.Warningf("event(rule_id=%d ds_id=%d) get node err:%v", events[i].RuleId, events[i].DatasourceId, err)
 			ginx.Bomb(200, "event node not exists")
 		}
 
 		if node != rt.Alert.Heartbeat.Endpoint {
 			err := forwardEvent(events[i], node)
 			if err != nil {
-				logger.Warningf("event:%+v forward err:%v", events[i], err)
+				logger.Warningf("event(rule_id=%d ds_id=%d) forward err:%v", events[i].RuleId, events[i].DatasourceId, err)
 				ginx.Bomb(200, "event forward error")
 			}
 			continue
 		}
 
 		ruleWorker, exists := rt.ExternalProcessors.GetExternalAlertRule(events[i].DatasourceId, events[i].RuleId)
-		logger.Debugf("handle event:%+v exists:%v", events[i], exists)
+		logger.Debugf("handle event(rule_id=%d ds_id=%d) exists:%v", events[i].RuleId, events[i].DatasourceId, exists)
 		if !exists {
 			ginx.Bomb(200, "rule not exists")
 		}
@@ -143,6 +143,6 @@ func forwardEvent(event *eventForm, instance string) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("forward event: result=succ url=%s code=%d event:%v response=%s", ur, code, event, string(res))
+	logger.Infof("forward event: result=succ url=%s code=%d rule_id=%d response=%s", ur, code, event.RuleId, string(res))
 	return nil
 }

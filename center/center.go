@@ -136,10 +136,10 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 	go cron.CleanPipelineExecution(ctx, config.Center.CleanPipelineExecutionDay)
 
-	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
+	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
-		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache)
+		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache, config.Log.Dir)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)

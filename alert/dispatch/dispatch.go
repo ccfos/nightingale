@@ -171,7 +171,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			// 深拷贝新的 event，避免并发修改 event 冲突
 			eventCopy := eventOrigin.DeepCopy()
 
-			logger.Infof("notify rule ids: %v, event: %+v", notifyRuleId, eventCopy)
+			logger.Infof("notify rule ids: %v, event: %s", notifyRuleId, eventCopy.Hash)
 			notifyRule := e.notifyRuleCache.Get(notifyRuleId)
 			if notifyRule == nil {
 				continue
@@ -185,7 +185,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 
 			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule")
 			if ShouldSkipNotify(e.ctx, eventCopy, notifyRuleId) {
-				logger.Infof("notify_id: %d, event:%+v, should skip notify", notifyRuleId, eventCopy)
+				logger.Infof("notify_id: %d, event:%s, should skip notify", notifyRuleId, eventCopy.Hash)
 				continue
 			}
 
@@ -193,7 +193,7 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			for i := range notifyRule.NotifyConfigs {
 				err := NotifyRuleMatchCheck(&notifyRule.NotifyConfigs[i], eventCopy)
 				if err != nil {
-					logger.Errorf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
+					logger.Errorf("notify_id: %d, event:%s, channel_id:%d, template_id: %d, notify_config:%+v, err:%v", notifyRuleId, eventCopy.Hash, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID, notifyRule.NotifyConfigs[i], err)
 					continue
 				}
 
@@ -201,12 +201,12 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 				messageTemplate := e.messageTemplateCache.Get(notifyRule.NotifyConfigs[i].TemplateID)
 				if notifyChannel == nil {
 					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, fmt.Sprintf("notify_channel_id:%d", notifyRule.NotifyConfigs[i].ChannelID), "", "", errors.New("notify_channel not found"))
-					logger.Warningf("notify_id: %d, event:%+v, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
+					logger.Warningf("notify_id: %d, event:%s, channel_id:%d, template_id: %d, notify_channel not found", notifyRuleId, eventCopy.Hash, notifyRule.NotifyConfigs[i].ChannelID, notifyRule.NotifyConfigs[i].TemplateID)
 					continue
 				}
 
 				if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate == nil {
-					logger.Warningf("notify_id: %d, channel_name: %v, event:%+v, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy, notifyRule.NotifyConfigs[i].TemplateID)
+					logger.Warningf("notify_id: %d, channel_name: %v, event:%s, template_id: %d, message_template not found", notifyRuleId, notifyChannel.Ident, eventCopy.Hash, notifyRule.NotifyConfigs[i].TemplateID)
 					sender.NotifyRecord(e.ctx, []*models.AlertCurEvent{eventCopy}, notifyRuleId, notifyChannel.Name, "", "", errors.New("message_template not found"))
 
 					continue
@@ -241,12 +241,12 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 
 		eventPipeline := eventProcessorCache.Get(pipelineConfig.PipelineId)
 		if eventPipeline == nil {
-			logger.Warningf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not found, event: %+v", from, id, pipelineConfig.PipelineId, event)
+			logger.Warningf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not found, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
 			continue
 		}
 
 		if !PipelineApplicable(eventPipeline, event) {
-			logger.Debugf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not applicable, event: %+v", from, id, pipelineConfig.PipelineId, event)
+			logger.Debugf("processor_by_%s_id:%d pipeline_id:%d, event pipeline not applicable, event: %s", from, id, pipelineConfig.PipelineId, event.Hash)
 			continue
 		}
 
@@ -263,7 +263,7 @@ func HandleEventPipeline(pipelineConfigs []models.PipelineConfig, eventOrigin, e
 		}
 
 		if resultEvent == nil {
-			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, event: %+v", from, id, pipelineConfig.PipelineId, eventOrigin)
+			logger.Infof("processor_by_%s_id:%d pipeline_id:%d, event dropped, event: %s", from, id, pipelineConfig.PipelineId, eventOrigin.Hash)
 			if from == "notify_rule" {
 				sender.NotifyRecord(ctx, []*models.AlertCurEvent{eventOrigin}, id, "", "", result.Message, fmt.Errorf("processor_by_%s_id:%d pipeline_id:%d, drop by pipeline", from, id, pipelineConfig.PipelineId))
 			}
@@ -301,7 +301,7 @@ func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 
 		tagFilters, err := models.ParseTagFilter(labelFiltersCopy)
 		if err != nil {
-			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v", err, event, pipeline)
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%s pipeline:%+v", err, event.Hash, pipeline)
 			return false
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
@@ -315,7 +315,7 @@ func PipelineApplicable(pipeline *models.EventPipeline, event *models.AlertCurEv
 
 		tagFilters, err := models.ParseTagFilter(attrFiltersCopy)
 		if err != nil {
-			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%+v pipeline:%+v err:%v", tagFilters, event, pipeline, err)
+			logger.Errorf("pipeline applicable failed to parse tag filter: %v event:%s pipeline:%+v err:%v", tagFilters, event.Hash, pipeline, err)
 			return false
 		}
 
@@ -405,7 +405,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 		tagFilters, err := models.ParseTagFilter(labelKeysCopy)
 		if err != nil {
-			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v", err, event, notifyConfig)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v", err, event.Hash, notifyConfig)
 			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 		tagMatch = common.MatchTags(event.TagsMap, tagFilters)
@@ -423,7 +423,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 
 		tagFilters, err := models.ParseTagFilter(attributesCopy)
 		if err != nil {
-			logger.Errorf("notify send failed to parse tag filter: %v event:%+v notify_config:%+v err:%v", tagFilters, event, notifyConfig, err)
+			logger.Errorf("notify send failed to parse tag filter: %v event:%s notify_config:%+v err:%v", tagFilters, event.Hash, notifyConfig, err)
 			return fmt.Errorf("failed to parse tag filter: %v", err)
 		}
 
@@ -434,7 +434,7 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 		return fmt.Errorf("event attributes not match attributes filter")
 	}
 
-	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%+v notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event, notifyConfig)
+	logger.Infof("notify send timeMatch:%v severityMatch:%v tagMatch:%v attributesMatch:%v event:%s notify_config:%+v", timeMatch, severityMatch, tagMatch, attributesMatch, event.Hash, notifyConfig)
 	return nil
 }
 
@@ -547,7 +547,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 			start := time.Now()
 			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%+v, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
+			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%s, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
 		}
 
@@ -556,7 +556,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 			start := time.Now()
 			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
 			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%+v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0], respBody, err)
+			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%s, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, respBody, err)
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
 		}
 
@@ -587,10 +587,10 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		start := time.Now()
 		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
 		res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
-		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%+v, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0], tplContent, customParams, target, res, err)
+		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0].Hash, tplContent, customParams, target, res, err)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
 	default:
-		logger.Warningf("notify_id: %d, channel_name: %v, event:%+v send type not found", notifyRuleId, notifyChannel.Name, events[0])
+		logger.Warningf("notify_id: %d, channel_name: %v, event:%s send type not found", notifyRuleId, notifyChannel.Name, events[0].Hash)
 	}
 }
 
@@ -734,7 +734,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 				event = msgCtx.Events[0]
 			}
 
-			logger.Debugf("send to channel:%s event:%+v users:%+v", channel, event, msgCtx.Users)
+			logger.Debugf("send to channel:%s event:%s users:%+v", channel, event.Hash, msgCtx.Users)
 			s.Send(msgCtx)
 		}
 	}
