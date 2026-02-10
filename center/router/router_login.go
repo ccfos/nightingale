@@ -571,12 +571,22 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 	} else {
 		user = new(models.User)
 		defaultRoles := []string{}
+		defaultUserGroups := []int64{}
 		if rt.Sso.FeiShu != nil && rt.Sso.FeiShu.FeiShuConfig != nil {
 			defaultRoles = rt.Sso.FeiShu.FeiShuConfig.DefaultRoles
+			defaultUserGroups = rt.Sso.FeiShu.FeiShuConfig.DefaultUserGroups
 		}
+
 		user.FullSsoFields(feishu.SsoTypeName, ret.Username, ret.Nickname, ret.Phone, ret.Email, defaultRoles)
-		// create user from feishu
 		ginx.Dangerous(user.Add(rt.Ctx))
+
+		if len(defaultUserGroups) > 0 {
+			err = user.AddToUserGroups(rt.Ctx, defaultUserGroups)
+			if err != nil {
+				logger.Errorf("sso feishu add user group error %v", ret, err)
+			}
+		}
+
 	}
 
 	// set user login state
