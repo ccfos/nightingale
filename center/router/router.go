@@ -667,7 +667,6 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
-			service.GET("/event-detail/:hash", rt.eventDetailJSON)
 
 			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
 			service.GET("/task-tpls", rt.taskTplGetsByService)
