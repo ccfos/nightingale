@@ -581,7 +581,10 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 		ginx.Dangerous(user.Add(rt.Ctx))
 
 		if len(defaultUserGroups) > 0 {
-			ginx.Dangerous(user.UpdateUserGroup(rt.Ctx, defaultUserGroups))
+			err = user.AddToUserGroups(rt.Ctx, defaultUserGroups)
+			if err != nil {
+				logger.Errorf("sso feishu add user group error %v", ret, err)
+			}
 		}
 
 	}

@@ -316,7 +316,7 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 	}).Error
 }
 
-func (u *User) UpdateUserGroup(ctx *ctx.Context, userGroupIds []int64) error {
+func (u *User) AddToUserGroups(ctx *ctx.Context, userGroupIds []int64) error {
 
 	count := len(userGroupIds)
 	for i := 0; i < count; i++ {
