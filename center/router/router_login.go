@@ -581,8 +581,6 @@ func (rt *Router) loginCallbackFeiShu(c *gin.Context) {
 		ginx.Dangerous(user.Add(rt.Ctx))
 
 		if len(defaultUserGroups) > 0 {
-			user, err = models.UserGet(rt.Ctx, "username=?", ret.Username)
-			ginx.Dangerous(err)
 			ginx.Dangerous(user.UpdateUserGroup(rt.Ctx, defaultUserGroups))
 		}
 
