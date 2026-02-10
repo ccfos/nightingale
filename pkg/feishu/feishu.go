@@ -32,17 +32,18 @@ type SsoClient struct {
 }
 
 type Config struct {
-	Enable          bool     `json:"enable"`
-	AuthURL         string   `json:"auth_url"`
-	DisplayName     string   `json:"display_name"`
-	AppID           string   `json:"app_id"`
-	AppSecret       string   `json:"app_secret"`
-	RedirectURL     string   `json:"redirect_url"`
-	UsernameField   string   `json:"username_field"`  // name, email, phone
-	FeiShuEndpoint  string   `json:"feishu_endpoint"` // 飞书API端点，默认为 open.feishu.cn
-	Proxy           string   `json:"proxy"`
-	CoverAttributes bool     `json:"cover_attributes"`
-	DefaultRoles    []string `json:"default_roles"`
+	Enable            bool     `json:"enable"`
+	AuthURL           string   `json:"auth_url"`
+	DisplayName       string   `json:"display_name"`
+	AppID             string   `json:"app_id"`
+	AppSecret         string   `json:"app_secret"`
+	RedirectURL       string   `json:"redirect_url"`
+	UsernameField     string   `json:"username_field"`  // name, email, phone
+	FeiShuEndpoint    string   `json:"feishu_endpoint"` // 飞书API端点，默认为 open.feishu.cn
+	Proxy             string   `json:"proxy"`
+	CoverAttributes   bool     `json:"cover_attributes"`
+	DefaultRoles      []string `json:"default_roles"`
+	DefaultUserGroups []int64  `json:"default_user_groups"`
 }
 
 type CallbackOutput struct {

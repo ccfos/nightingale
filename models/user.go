@@ -315,6 +315,18 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 	}).Error
 }
 
+func (u *User) UpdateUserGroup(ctx *ctx.Context, userGroupIds []int64) error {
+
+	count := len(userGroupIds)
+	for i := 0; i < count; i++ {
+		err := UserGroupMemberAdd(ctx, userGroupIds[i], u.Id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int64) error {
 	return DB(ctx).Model(&User{}).Where("id = ?", userId).Updates(map[string]interface{}{
 		"last_active_time": lastActiveTime,
