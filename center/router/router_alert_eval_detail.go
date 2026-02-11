@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
@@ -82,10 +81,10 @@ func (rt *Router) getAlertEvalLogs(id string) ([]string, string, error) {
 		return logs, instance, err
 	}
 
-	// Find unique target nodes via hash ring
+	// Find unique target nodes via hash ring, with DB fallback
 	nodeSet := make(map[string]struct{})
 	for _, dsId := range dsIds {
-		node, err := naming.DatasourceHashRing.GetNode(strconv.FormatInt(dsId, 10), id)
+		node, err := rt.getNodeForDatasource(dsId, id)
 		if err != nil {
 			continue
 		}

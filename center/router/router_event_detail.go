@@ -58,6 +58,33 @@ func (rt *Router) eventDetailJSON(c *gin.Context) {
 	}, nil)
 }
 
+// getNodeForDatasource returns the alert engine instance responsible for the given
+// datasource and primary key. It first checks the local hashring, and falls back
+// to querying the database for active instances if the hashring is empty
+// (e.g. when the datasource belongs to another engine cluster).
+func (rt *Router) getNodeForDatasource(datasourceId int64, pk string) (string, error) {
+	dsIdStr := strconv.FormatInt(datasourceId, 10)
+	node, err := naming.DatasourceHashRing.GetNode(dsIdStr, pk)
+	if err == nil {
+		return node, nil
+	}
+
+	// Hashring is empty for this datasource (likely belongs to another engine cluster).
+	// Query the DB for active instances.
+	servers, dbErr := models.AlertingEngineGetsInstances(rt.Ctx,
+		"datasource_id = ? and clock > ?",
+		datasourceId, time.Now().Unix()-30)
+	if dbErr != nil {
+		return "", dbErr
+	}
+	if len(servers) == 0 {
+		return "", fmt.Errorf("no active instances for datasource %d", datasourceId)
+	}
+
+	ring := naming.NewConsistentHashRing(int32(naming.NodeReplicas), servers)
+	return ring.Get(pk)
+}
+
 // getEventLogs resolves the target instance and retrieves logs.
 func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
@@ -68,12 +95,11 @@ func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
 		return nil, "", fmt.Errorf("no such alert event")
 	}
 
-	dsId := strconv.FormatInt(event.DatasourceId, 10)
 	ruleId := strconv.FormatInt(event.RuleId, 10)
 
 	instance := fmt.Sprintf("%s:%d", rt.Alert.Heartbeat.IP, rt.HTTP.Port)
 
-	node, err := naming.DatasourceHashRing.GetNode(dsId, ruleId)
+	node, err := rt.getNodeForDatasource(event.DatasourceId, ruleId)
 	if err != nil || node == instance {
 		// hashring not ready or target is self, handle locally
 		logs, err := loggrep.GrepLogDir(rt.LogDir, hash)

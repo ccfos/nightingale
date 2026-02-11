@@ -140,7 +140,7 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 				logger.Infof("updating channel %d (new: %t)", chID, !exists)
 				ncc.stopChannelResources(chID)
 			} else {
-				logger.Infof("channel %d config not changed", chID)
+				logger.Debugf("channel %d config not changed", chID)
 				continue
 			}
 		}
