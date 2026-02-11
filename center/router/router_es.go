@@ -3,9 +3,9 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 

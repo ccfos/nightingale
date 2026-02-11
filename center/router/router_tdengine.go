@@ -8,8 +8,8 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/tdengine"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 type databasesQueryForm struct {

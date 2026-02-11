@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/pkg/loggrep"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 func (rt *Router) alertEvalDetail(c *gin.Context) {

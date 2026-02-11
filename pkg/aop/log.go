@@ -320,12 +320,20 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			param.Path = path
 
-			// fmt.Fprint(out, formatter(param))
-			logger.Info(formatter(param))
+			traceId, _ := c.Keys["trace_id"].(string)
+			if traceId != "" {
+				logger.Infof("trace_id=%s %s", traceId, formatter(param))
+			} else {
+				logger.Info(formatter(param))
+			}
 			if conf.ContainsPath(c.Request.RequestURI) {
 				respBody := readBody(bytes.NewReader(bodyWriter.body.Bytes()), c.Writer.Header().Get("Content-Encoding"))
 				reqBody := readBody(rdr1, c.Request.Header.Get("Content-Encoding"))
-				logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)
+				if traceId != "" {
+					logger.Debugf("trace_id=%s path:%s req body:%s resp:%s", traceId, path, reqBody, respBody)
+				} else {
+					logger.Debugf("path:%s req body:%s resp:%s", path, reqBody, respBody)
+				}
 			}
 		}
 	}
