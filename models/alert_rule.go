@@ -978,29 +978,6 @@ func (ar *AlertRule) DB2FE() error {
 	json.Unmarshal([]byte(ar.Annotations), &ar.AnnotationsJSON)
 	json.Unmarshal([]byte(ar.ExtraConfig), &ar.ExtraConfigJSON)
 
-	// 从 ExtraConfigJSON 中提取 service_cal_ids 并构建 service_cal_config
-	if ar.ExtraConfigJSON != nil {
-		if extraConfigMap, ok := ar.ExtraConfigJSON.(map[string]interface{}); ok {
-			serviceCalConfig := make(map[string]interface{})
-
-			if serviceCalIds, exists := extraConfigMap["service_cal_ids"]; exists {
-				if idsArray, ok := serviceCalIds.([]interface{}); ok {
-					if len(idsArray) > 0 {
-						serviceCalConfig["service_cal_ids"] = idsArray
-						serviceCalConfig["time_range"] = map[string]string{
-							"start": "00:00",
-							"end":   "23:59",
-						}
-					}
-				}
-			}
-
-			if _, exists := extraConfigMap["service_cal_configs"]; !exists && len(serviceCalConfig) > 0 {
-				extraConfigMap["service_cal_configs"] = []interface{}{serviceCalConfig}
-			}
-		}
-	}
-
 	// 解析 RuleConfig 字段
 	var ruleConfig struct {
 		EventRelabelConfig []*pconf.RelabelConfig `json:"event_relabel_config"`
