@@ -321,7 +321,7 @@ CREATE TABLE alert_rule (
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
-    time_zone varchar(64) not null default 'Asia/Shanghai',
+    time_zone varchar(64) not null default '',
     PRIMARY KEY (id)
 ) ;
 CREATE INDEX alert_rule_group_id_idx ON alert_rule (group_id);

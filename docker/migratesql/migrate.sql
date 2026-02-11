@@ -363,4 +363,4 @@ CREATE TABLE `user_view_favorite` (
 ALTER TABLE `datasource` ADD COLUMN `weight` int not null default 0 COMMENT 'weight for sorting';
 
 /* v9 2026-01-20 alert_rule time_zone support */
-ALTER TABLE `alert_rule` ADD COLUMN `time_zone` varchar(64) not null default 'Asia/Shanghai';
+ALTER TABLE `alert_rule` ADD COLUMN `time_zone` varchar(64) not null default '';
