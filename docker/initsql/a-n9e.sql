@@ -293,6 +293,7 @@ CREATE TABLE `alert_rule` (
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
     `cron_pattern` varchar(64),
+    `time_zone` varchar(64) not null default '',
     `datasource_queries` text,
     PRIMARY KEY (`id`),
     KEY (`group_id`),

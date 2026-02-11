@@ -882,3 +882,27 @@ func (rt *Router) batchAlertRuleClone(c *gin.Context) {
 
 	ginx.NewRender(c).Data(reterr, nil)
 }
+
+func (rt *Router) timezonesGet(c *gin.Context) {
+	// 返回常用时区列表（按时差去重，每个时差只保留一个代表性时区）
+	timezones := []string{
+		"UTC",
+		"Asia/Shanghai",       // UTC+8 (代表 Asia/Hong_Kong, Asia/Singapore 等)
+		"Asia/Tokyo",          // UTC+9 (代表 Asia/Seoul 等)
+		"Asia/Dubai",          // UTC+4
+		"Asia/Kolkata",        // UTC+5:30
+		"Asia/Bangkok",        // UTC+7 (代表 Asia/Jakarta 等)
+		"Europe/London",       // UTC+0 (代表 UTC)
+		"Europe/Paris",        // UTC+1 (代表 Europe/Berlin, Europe/Rome, Europe/Madrid 等)
+		"Europe/Moscow",       // UTC+3
+		"America/New_York",    // UTC-5 (代表 America/Toronto 等)
+		"America/Chicago",     // UTC-6 (代表 America/Mexico_City 等)
+		"America/Denver",      // UTC-7
+		"America/Los_Angeles", // UTC-8
+		"America/Sao_Paulo",   // UTC-3
+		"Australia/Sydney",    // UTC+10 (代表 Australia/Melbourne 等)
+		"Pacific/Auckland",    // UTC+12
+	}
+
+	ginx.NewRender(c).Data(timezones, nil)
+}
