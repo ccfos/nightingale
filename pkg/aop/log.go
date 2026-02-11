@@ -320,7 +320,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 			param.Path = path
 
-			traceId, _ := c.Keys["trace_id"].(string)
+			traceId := c.GetString("trace_id")
 			if traceId != "" {
 				logger.Infof("trace_id=%s %s", traceId, formatter(param))
 			} else {

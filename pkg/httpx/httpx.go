@@ -133,7 +133,7 @@ func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{
 func traceIdMid() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.GetHeader("X-Trace-Id")
-		if id == "" {
+		if !isValidTraceId(id) {
 			id = uuid.New().String()
 		}
 		c.Set("trace_id", id)
@@ -142,6 +142,18 @@ func traceIdMid() gin.HandlerFunc {
 		c.Header("X-Trace-Id", id)
 		c.Next()
 	}
+}
+
+func isValidTraceId(id string) bool {
+	if id == "" || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
 }
 
 func Init(cfg Config, handler http.Handler) func() {

@@ -58,8 +58,8 @@ func (r Render) Data(data interface{}, err interface{}, a ...interface{}) {
 	r.Message(err, a...)
 }
 
-func (r Render) ZeroPage(c *gin.Context) {
-	r.Data(c, gin.H{
+func (r Render) ZeroPage() {
+	r.Data(gin.H{
 		"list":  []int{},
 		"total": 0,
 	}, nil)
