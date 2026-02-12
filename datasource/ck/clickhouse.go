@@ -12,6 +12,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -178,13 +180,8 @@ func (c *Clickhouse) QueryData(ctx context.Context, query interface{}) ([]models
 
 	rows, err := c.QueryTimeseries(ctx, ckQueryParam)
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", ckQueryParam, err)
 		return nil, err
-	}
-
-	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
-		return []models.DataResp{}, err
 	}
 	data := make([]models.DataResp, 0)
 	for i := range rows {
@@ -214,7 +211,7 @@ func (c *Clickhouse) QueryLog(ctx context.Context, query interface{}) ([]interfa
 
 	rows, err := c.Query(ctx, ckQueryParam)
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", ckQueryParam, err)
 		return nil, 0, err
 	}
 

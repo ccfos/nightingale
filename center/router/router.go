@@ -420,6 +420,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
 		pages.GET("/event-detail/:hash", rt.eventDetailPage)
 		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)

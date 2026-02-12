@@ -7,9 +7,9 @@ import (
 	"github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/logger"
 )
 
 func (rt *Router) ShowDatabases(c *gin.Context) {
@@ -18,7 +18,7 @@ func (rt *Router) ShowDatabases(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 
@@ -48,7 +48,7 @@ func (rt *Router) ShowTables(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 
@@ -78,7 +78,7 @@ func (rt *Router) DescribeTable(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 	// 只接受一个入参
