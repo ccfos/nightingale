@@ -43,3 +43,14 @@ func (c *Context) GetContext() context.Context {
 func (c *Context) GetDB() *gorm.DB {
 	return c.DB
 }
+
+// WithContext returns a shallow copy with a different standard context.
+// Useful for carrying per-request values (e.g. traceId) without mutating the global instance.
+func (c *Context) WithContext(stdCtx context.Context) *Context {
+	return &Context{
+		DB:        c.DB,
+		CenterApi: c.CenterApi,
+		Ctx:       stdCtx,
+		IsCenter:  c.IsCenter,
+	}
+}

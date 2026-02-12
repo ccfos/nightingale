@@ -12,10 +12,10 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/slice"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/toolkits/pkg/ginx"
 )
 
 func (rt *Router) messageTemplatesAdd(c *gin.Context) {

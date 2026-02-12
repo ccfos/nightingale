@@ -19,7 +19,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
-	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -380,14 +381,14 @@ func (e *Elasticsearch) QueryMapData(ctx context.Context, query interface{}) ([]
 
 	var result []map[string]string
 	for _, item := range res {
-		logger.Debugf("query:%v item:%v", query, item)
+		logx.Debugf(ctx, "query:%v item:%v", query, item)
 		if itemMap, ok := item.(*elastic.SearchHit); ok {
 			mItem := make(map[string]string)
 			// 遍历 fields 字段的每个键值对
 			sourceMap := make(map[string]interface{})
 			err := json.Unmarshal(itemMap.Source, &sourceMap)
 			if err != nil {
-				logger.Warningf("unmarshal source%s error:%v", string(itemMap.Source), err)
+				logx.Warningf(ctx, "unmarshal source%s error:%v", string(itemMap.Source), err)
 				continue
 			}
 

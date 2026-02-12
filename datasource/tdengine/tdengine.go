@@ -12,6 +12,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
 
+	"github.com/ccfos/nightingale/v6/pkg/logx"
+
 	"github.com/ccfos/nightingale/v6/datasource"
 	td "github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
@@ -118,7 +120,7 @@ func (td *TDengine) MakeTSQuery(ctx context.Context, query interface{}, eventTag
 }
 
 func (td *TDengine) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
-	return td.Query(queryParam, 0)
+	return td.Query(ctx, queryParam, 0)
 }
 
 func (td *TDengine) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
@@ -170,7 +172,7 @@ func (td *TDengine) QueryMapData(ctx context.Context, query interface{}) ([]map[
 	return nil, nil
 }
 
-func (td *TDengine) Query(query interface{}, delay ...int) ([]models.DataResp, error) {
+func (td *TDengine) Query(ctx context.Context, query interface{}, delay ...int) ([]models.DataResp, error) {
 	b, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
@@ -212,7 +214,7 @@ func (td *TDengine) Query(query interface{}, delay ...int) ([]models.DataResp, e
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("tdengine query:%s result: %+v", q.Query, data)
+	logx.Debugf(ctx, "tdengine query:%s result: %+v", q.Query, data)
 
 	return ConvertToTStData(data, q.Keys, q.Ref)
 }

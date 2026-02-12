@@ -3,10 +3,10 @@ package router
 import (
 	"github.com/ccfos/nightingale/v6/datasource/es"
 	"github.com/ccfos/nightingale/v6/dscache"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 type IndexReq struct {
@@ -34,7 +34,7 @@ func (rt *Router) QueryIndices(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 
@@ -50,7 +50,7 @@ func (rt *Router) QueryFields(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 
@@ -66,7 +66,7 @@ func (rt *Router) QueryESVariable(c *gin.Context) {
 
 	plug, exists := dscache.DsCache.Get(f.Cate, f.DatasourceId)
 	if !exists {
-		logger.Warningf("cluster:%d not exists", f.DatasourceId)
+		logx.Warningf(c.Request.Context(), "cluster:%d not exists", f.DatasourceId)
 		ginx.Bomb(200, "cluster not exists")
 	}
 

@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
@@ -601,14 +602,14 @@ func incrLoginFailCount(ctx *ctx.Context, redisObj storage.Redis, username strin
 	}
 
 	if err != nil {
-		logger.Warningf("login_fail_count: failed to get redis value. key:%s, error:%s", key, err)
+		logx.Warningf(ctx.Ctx, "login_fail_count: failed to get redis value. key:%s, error:%s", key, err)
 		redisObj.Set(ctx.GetContext(), key, "1", duration)
 		return
 	}
 
 	count, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		logger.Warningf("login_fail_count: failed to parse int64. key:%s, error:%s", key, err)
+		logx.Warningf(ctx.Ctx, "login_fail_count: failed to parse int64. key:%s, error:%s", key, err)
 		redisObj.Set(ctx.GetContext(), key, "1", duration)
 		return
 	}
@@ -633,18 +634,18 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 	if needCheck {
 		pair := strings.Fields(val)
 		if len(pair) != 2 {
-			logger.Warningf("login_fail_count config invalid: %s", val)
+			logx.Warningf(ctx.Ctx, "login_fail_count config invalid: %s", val)
 			needCheck = false
 		} else {
 			seconds, err = strconv.ParseInt(pair[0], 10, 64)
 			if err != nil {
-				logger.Warningf("login_fail_count seconds invalid: %s", pair[0])
+				logx.Warningf(ctx.Ctx, "login_fail_count seconds invalid: %s", pair[0])
 				needCheck = false
 			}
 
 			count, err = strconv.ParseInt(pair[1], 10, 64)
 			if err != nil {
-				logger.Warningf("login_fail_count count invalid: %s", pair[1])
+				logx.Warningf(ctx.Ctx, "login_fail_count count invalid: %s", pair[1])
 				needCheck = false
 			}
 		}

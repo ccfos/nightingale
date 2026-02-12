@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/aop"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -91,6 +93,8 @@ func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{
 
 	r := gin.New()
 
+	r.Use(traceIdMid())
+
 	r.Use(recoveryMid)
 
 	r.Use(loggerMid)
@@ -124,6 +128,32 @@ func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{
 	}
 
 	return r
+}
+
+func traceIdMid() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.GetHeader("X-Trace-Id")
+		if !isValidTraceId(id) {
+			id = uuid.New().String()
+		}
+		c.Set("trace_id", id)
+		ctx := logx.NewTraceContext(c.Request.Context(), id)
+		c.Request = c.Request.WithContext(ctx)
+		c.Header("X-Trace-Id", id)
+		c.Next()
+	}
+}
+
+func isValidTraceId(id string) bool {
+	if id == "" || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
 }
 
 func Init(cfg Config, handler http.Handler) func() {

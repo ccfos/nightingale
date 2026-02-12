@@ -14,6 +14,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -148,7 +150,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		}
 	}
 
-	items, err := d.QueryTimeseries(context.TODO(), &doris.QueryParam{
+	items, err := d.QueryTimeseries(ctx, &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,
 		Keys: types.Keys{
@@ -159,7 +161,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		},
 	})
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", dorisQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", dorisQueryParam, err)
 		return []models.DataResp{}, err
 	}
 	data := make([]models.DataResp, 0)
@@ -172,7 +174,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 	}
 
 	// parse resp to time series data
-	logger.Infof("req:%+v keys:%+v \n data:%v", dorisQueryParam, dorisQueryParam.Keys, data)
+	logx.Infof(ctx, "req:%+v keys:%+v \n data:%v", dorisQueryParam, dorisQueryParam.Keys, data)
 
 	return data, nil
 }
@@ -208,7 +210,7 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		Sql:      dorisQueryParam.SQL,
 	})
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", dorisQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", dorisQueryParam, err)
 		return []interface{}{}, 0, err
 	}
 	logs := make([]interface{}, 0)

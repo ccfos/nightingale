@@ -10,10 +10,10 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/str"
 )
 
