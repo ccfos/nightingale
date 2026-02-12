@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/loggrep"
+	"github.com/toolkits/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -85,6 +86,7 @@ func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
 
 		logs, nodeAddr, err := rt.forwardTraceLogs(node, traceId)
 		if err != nil {
+			logger.Errorf("forwardTraceLogs failed: %v", err)
 			continue
 		}
 		if len(logs) > 0 {
@@ -92,7 +94,6 @@ func (rt *Router) getTraceLogs(traceId string) ([]string, string, error) {
 		}
 	}
 
-	// no logs found on any instance
 	return nil, instance, nil
 }
 
