@@ -201,7 +201,7 @@ func (d *Doris) NewWriteConn(ctx context.Context, database string) (*sql.DB, err
 func (d *Doris) createTimeoutContext(ctx context.Context) (context.Context, context.CancelFunc) {
 	timeout := d.Timeout
 	if timeout == 0 {
-		timeout = 6000
+		timeout = 60000
 	}
 	return context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
 }
