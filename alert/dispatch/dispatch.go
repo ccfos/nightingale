@@ -18,6 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
 	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -537,60 +538,99 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
+	// switch notifyChannel.RequestType {
+	// case "flashduty":
+	// 	if len(flashDutyChannelIDs) == 0 {
+	// 		flashDutyChannelIDs = []int64{0} // 如果 flashduty 通道没有配置，则使用 0, 给 SendFlashDuty 判断使用, 不给 flashduty 传 channel_id 参数
+	// 	}
+
+	// 	for i := range flashDutyChannelIDs {
+	// 		start := time.Now()
+	// 		respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
+	// 		respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
+	// 		logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%s, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
+	// 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
+	// 	}
+
+	// case "pagerduty":
+	// 	for _, routingKey := range pagerdutyRoutingKeys {
+	// 		start := time.Now()
+	// 		respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
+	// 		respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
+	// 		logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%s, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, respBody, err)
+	// 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
+	// 	}
+
+	// case "http":
+	// 	// 使用队列模式处理 http 通知
+	// 	// 创建通知任务
+	// 	task := &memsto.NotifyTask{
+	// 		Events:        events,
+	// 		NotifyRuleId:  notifyRuleId,
+	// 		NotifyChannel: notifyChannel,
+	// 		TplContent:    tplContent,
+	// 		CustomParams:  customParams,
+	// 		Sendtos:       sendtos,
+	// 	}
+
+	// 	// 将任务加入队列
+	// 	success := notifyChannelCache.EnqueueNotifyTask(task)
+	// 	if !success {
+	// 		logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
+	// 		// 如果入队失败，记录错误通知
+	// 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
+	// 	}
+
+	// case "smtp":
+	// 	notifyChannel.SendEmail(notifyRuleId, events, tplContent, sendtos, notifyChannelCache.GetSmtpClient(notifyChannel.ID))
+
+	// case "script":
+	// 	start := time.Now()
+	// 	target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
+	// 	res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
+	// 	logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0].Hash, tplContent, customParams, target, res, err)
+	// 	sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
+	// default:
+	// 	logger.Warningf("notify_id: %d, channel_name: %v, event:%s send type not found", notifyRuleId, notifyChannel.Name, events[0].Hash)
+	// }
+	p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident) // ← 按 ident 查找
+	if !ok {
+		logger.Warningf("unknown channel ident: %s", notifyChannel.Ident)
+		return
+	}
+
+	req := &provider.NotifyRequest{
+		Config:       notifyChannel,
+		Events:       events,
+		TplContent:   tplContent,
+		CustomParams: customParams,
+		Sendtos:      sendtos,
+		HttpClient:   notifyChannelCache.GetHttpClient(notifyChannel.ID),
+	}
+	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {
-	case "flashduty":
-		if len(flashDutyChannelIDs) == 0 {
-			flashDutyChannelIDs = []int64{0} // 如果 flashduty 通道没有配置，则使用 0, 给 SendFlashDuty 判断使用, 不给 flashduty 传 channel_id 参数
-		}
-
-		for i := range flashDutyChannelIDs {
-			start := time.Now()
-			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%s, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
-		}
-
-	case "pagerduty":
-		for _, routingKey := range pagerdutyRoutingKeys {
-			start := time.Now()
-			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%s, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, respBody, err)
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
-		}
-
 	case "http":
-		// 使用队列模式处理 http 通知
-		// 创建通知任务
+		// HTTP 类型走并发队列 (dingtalk/wecom/feishu/通用http 等都走这里)
 		task := &memsto.NotifyTask{
-			Events:        events,
-			NotifyRuleId:  notifyRuleId,
-			NotifyChannel: notifyChannel,
-			TplContent:    tplContent,
-			CustomParams:  customParams,
-			Sendtos:       sendtos,
+			NotifyRuleId: notifyRuleId,
+			Provider:     p,
+			Request:      req,
 		}
-
-		// 将任务加入队列
 		success := notifyChannelCache.EnqueueNotifyTask(task)
 		if !success {
 			logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
 			// 如果入队失败，记录错误通知
 			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
 		}
-
 	case "smtp":
-		notifyChannel.SendEmail(notifyRuleId, events, tplContent, sendtos, notifyChannelCache.GetSmtpClient(notifyChannel.ID))
-
-	case "script":
-		start := time.Now()
-		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
-		res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
-		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0].Hash, tplContent, customParams, target, res, err)
-		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
+		// SMTP 走邮件连接池
+		// req.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
+		// result := p.Notify(ctx, req)
+		// sender.NotifyRecord()
 	default:
-		logger.Warningf("notify_id: %d, channel_name: %v, event:%s send type not found", notifyRuleId, notifyChannel.Name, events[0].Hash)
+		// flashduty/pagerduty/script 等直接调用
+		// result := p.Notify(ctx, req)
+		// sender.NotifyRecord(...)
 	}
 }
 

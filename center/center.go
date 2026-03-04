@@ -14,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cconf/rsa"
 	"github.com/ccfos/nightingale/v6/center/integration"
@@ -127,6 +128,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	macros.RegisterMacro(macros.MacroInVain)
 	dscache.Init(ctx, false)
+	models.VerifyByProvider = provider.VerifyChannelConfig
 	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
 	writers := writer.NewWriters(config.Pushgw)
