@@ -289,10 +289,50 @@ func (rt *Router) mcpServerDel(c *gin.Context) {
 
 func (rt *Router) llmProviderTest(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
-	obj, err := models.LLMProviderGetById(rt.Ctx, id)
-	ginx.Dangerous(err)
-	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "llm provider not found")
+
+	// Try to read override values from request body
+	var body struct {
+		APIType string `json:"api_type"`
+		APIURL  string `json:"api_url"`
+		APIKey  string `json:"api_key"`
+		Model   string `json:"model"`
+	}
+	c.ShouldBindJSON(&body)
+
+	var obj *models.LLMProvider
+
+	if id > 0 {
+		// Load from database as base
+		var err error
+		obj, err = models.LLMProviderGetById(rt.Ctx, id)
+		ginx.Dangerous(err)
+		if obj == nil {
+			ginx.Bomb(http.StatusNotFound, "llm provider not found")
+		}
+		// Override with body values if provided
+		if body.APIType != "" {
+			obj.APIType = body.APIType
+		}
+		if body.APIURL != "" {
+			obj.APIURL = body.APIURL
+		}
+		if body.APIKey != "" {
+			obj.APIKey = body.APIKey
+		}
+		if body.Model != "" {
+			obj.Model = body.Model
+		}
+	} else {
+		// No id, use body values directly (new provider test)
+		if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
+			ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
+		}
+		obj = &models.LLMProvider{
+			APIType: body.APIType,
+			APIURL:  body.APIURL,
+			APIKey:  body.APIKey,
+			Model:   body.Model,
+		}
 	}
 
 	start := time.Now()
@@ -318,7 +358,12 @@ func testLLMProvider(p *models.LLMProvider) error {
 
 	switch p.APIType {
 	case "openai":
-		reqURL = strings.TrimRight(p.APIURL, "/") + "/chat/completions"
+		base := strings.TrimRight(p.APIURL, "/")
+		if strings.HasSuffix(base, "/chat/completions") {
+			reqURL = base
+		} else {
+			reqURL = base + "/chat/completions"
+		}
 		reqBody, _ = json.Marshal(map[string]interface{}{
 			"model":      p.Model,
 			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},

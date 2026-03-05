@@ -27,13 +27,18 @@ type QueryGeneratorRequest struct {
 }
 
 func (rt *Router) queryGenerator(c *gin.Context) {
+	logger.Infof("[QGen] === Request received ===")
+
 	if !rt.Center.AIAgent.Enable {
+		logger.Warningf("[QGen] AI Agent is not enabled, returning 503")
 		ginx.Bomb(http.StatusServiceUnavailable, "AI Agent is not enabled")
 		return
 	}
 
 	var req QueryGeneratorRequest
 	ginx.BindJSON(c, &req)
+	logger.Infof("[QGen] Request params: datasource_type=%s, datasource_id=%d, database=%s, table=%s, user_input=%q, history_len=%d",
+		req.DatasourceType, req.DatasourceID, req.DatabaseName, req.TableName, req.UserInput, len(req.History))
 
 	if req.UserInput == "" {
 		ginx.Bomb(http.StatusBadRequest, "user_input is required")
@@ -51,9 +56,11 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 	// Get default LLM provider
 	provider, err := models.LLMProviderGetDefault(rt.Ctx)
 	if err != nil || provider == nil {
+		logger.Errorf("[QGen] No default LLM provider: err=%v, provider=%v", err, provider)
 		ginx.Bomb(http.StatusBadRequest, "no default LLM provider configured")
 		return
 	}
+	logger.Infof("[QGen] LLM provider: api_type=%s, model=%s, api_url=%s", provider.APIType, provider.Model, provider.APIURL)
 
 	// Build tools based on datasource type
 	var builtinToolNames []string
@@ -68,6 +75,7 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 	}
 
 	tools := aiagent.GetBuiltinToolDefs(builtinToolNames)
+	logger.Infof("[QGen] Built-in tools: %v, tool_count=%d", builtinToolNames, len(tools))
 
 	// Parse extra config for temperature/max_tokens etc
 	var extraConfig struct {
@@ -84,34 +92,27 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 		timeout = extraConfig.TimeoutSeconds * 1000
 	}
 
+	// Build user prompt with context
+	userPrompt := buildQueryGeneratorPrompt(req)
+	logger.Infof("[QGen] User prompt built: length=%d, first_200=%q", len(userPrompt), truncStr(userPrompt, 200))
+
 	// Create agent config
+	logger.Infof("[QGen] Creating agent: mode=ReAct, stream=true, timeout=%dms", timeout)
 	agentCfg := aiagent.NewAgent(&aiagent.AIAgentConfig{
-		Provider:  provider.APIType,
-		LLMURL:    provider.APIURL,
-		Model:     provider.Model,
-		APIKey:    provider.APIKey,
-		AgentMode: aiagent.AgentModeReAct,
-		Tools:     tools,
-		Timeout:   timeout,
-		Stream:    true,
+		Provider:           provider.APIType,
+		LLMURL:             provider.APIURL,
+		Model:              provider.Model,
+		APIKey:             provider.APIKey,
+		AgentMode:          aiagent.AgentModeReAct,
+		Tools:              tools,
+		Timeout:            timeout,
+		Stream:             true,
+		UserPromptTemplate: userPrompt,
 	})
 
 	// Inject PromClient getter from Router
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)
-	})
-
-	// Build user prompt with context
-	userMessage := buildQueryGeneratorPrompt(req)
-
-	// Build conversation history
-	messages := make([]aiagent.ChatMessage, 0, len(req.History)+1)
-	for _, h := range req.History {
-		messages = append(messages, h)
-	}
-	messages = append(messages, aiagent.ChatMessage{
-		Role:    "user",
-		Content: userMessage,
 	})
 
 	// Create WorkflowContext with streaming
@@ -135,12 +136,13 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 	c.Header("X-Accel-Buffering", "no")
 
 	startTime := time.Now()
+	logger.Infof("[QGen] Starting agent goroutine, wfCtx.Inputs=%v", wfCtx.Inputs)
 
 	// Execute agent in goroutine
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Errorf("query-generator panic: %v", r)
+				logger.Errorf("[QGen] PANIC in agent goroutine: %v", r)
 				streamChan <- &models.StreamChunk{
 					Type:      models.StreamTypeError,
 					Content:   fmt.Sprintf("internal error: %v", r),
@@ -150,33 +152,55 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 				close(streamChan)
 			}
 		}()
-		agentCfg.Process(rt.Ctx, wfCtx)
+		logger.Infof("[QGen] Agent goroutine started, calling Process()")
+		result, msg, err := agentCfg.Process(rt.Ctx, wfCtx)
+		logger.Infof("[QGen] Agent Process() returned: msg=%q, err=%v, result_stream=%v", msg, err, result != nil && result.Stream)
 	}()
 
 	// Stream SSE events
+	logger.Infof("[QGen] Starting SSE stream loop")
+	chunkCount := 0
+	var accumulatedMessage string // accumulate reasoning/thinking text
 	c.Stream(func(w io.Writer) bool {
 		chunk, ok := <-streamChan
 		if !ok {
+			logger.Infof("[QGen] StreamChan closed, total chunks=%d, elapsed=%dms", chunkCount, time.Since(startTime).Milliseconds())
 			return false
 		}
 
+		chunkCount++
 		data, _ := json.Marshal(chunk)
+		logger.Infof("[QGen] Chunk #%d: type=%s, done=%v, content_len=%d, error=%q",
+			chunkCount, chunk.Type, chunk.Done, len(chunk.Content), chunk.Error)
 
-		if chunk.Done || chunk.Type == models.StreamTypeDone {
-			// Send the final done event with duration
-			doneData := map[string]interface{}{
-				"type":        "done",
-				"duration_ms": time.Since(startTime).Milliseconds(),
-				"content":     chunk.Content,
+		// Accumulate text/thinking content as reasoning message
+		if chunk.Type == models.StreamTypeText || chunk.Type == models.StreamTypeThinking {
+			if chunk.Delta != "" {
+				accumulatedMessage += chunk.Delta
+			} else if chunk.Content != "" {
+				accumulatedMessage += chunk.Content
 			}
-			finalData, _ := json.Marshal(doneData)
-			fmt.Fprintf(w, "event: done\ndata: %s\n\n", finalData)
+		}
+
+		if chunk.Type == models.StreamTypeError {
+			logger.Errorf("[QGen] Sending ERROR event: %s", string(data))
+			fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
 			c.Writer.Flush()
 			return false
 		}
 
-		if chunk.Type == models.StreamTypeError {
-			fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
+		if chunk.Done || chunk.Type == models.StreamTypeDone {
+			// Send the final done event with message (reasoning) and response (final answer) separated
+			doneData := map[string]interface{}{
+				"type":        "done",
+				"duration_ms": time.Since(startTime).Milliseconds(),
+				"message":     accumulatedMessage,
+				"response":    chunk.Content,
+			}
+			finalData, _ := json.Marshal(doneData)
+			logger.Infof("[QGen] Sending DONE event: duration=%dms, message_len=%d, response_len=%d, response_first200=%q",
+				time.Since(startTime).Milliseconds(), len(accumulatedMessage), len(chunk.Content), truncStr(chunk.Content, 200))
+			fmt.Fprintf(w, "event: done\ndata: %s\n\n", finalData)
 			c.Writer.Flush()
 			return false
 		}
@@ -185,6 +209,13 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 		c.Writer.Flush()
 		return true
 	})
+}
+
+func truncStr(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 func buildQueryGeneratorPrompt(req QueryGeneratorRequest) string {

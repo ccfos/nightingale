@@ -306,6 +306,13 @@ func NewAgent(cfg *AIAgentConfig) *AIAgentConfig {
 	return cfg
 }
 
+func truncStr(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
+}
+
 // applyDefaults sets default values for the agent configuration
 func (c *AIAgentConfig) applyDefaults() {
 	if c.MaxIterations <= 0 {
@@ -2589,10 +2596,14 @@ func (c *AIAgentConfig) buildSkillEnhancedReActPrompt(skills []*SkillContent) st
 // processWithStream 流式处理 - 立即返回 StreamChan
 // 支持 ReAct 和 Plan+ReAct 两种模式
 func (c *AIAgentConfig) processWithStream(ctx context.Context, cancel context.CancelFunc, wfCtx *models.WorkflowContext, activeSkills []*SkillContent) (*models.WorkflowContext, string, error) {
+	logger.Infof("[QGen] Entering, mode=%s, skills=%d, stream=%v, streamChan_exists=%v",
+		c.AgentMode, len(activeSkills), wfCtx.Stream, wfCtx.StreamChan != nil)
+
 	// 复用已有的 StreamChan（如果调用方已创建），避免 channel 替换导致的死锁
 	streamChan := wfCtx.StreamChan
 	if streamChan == nil {
 		streamChan = make(chan *models.StreamChunk, 100)
+		logger.Infof("[QGen] Created new streamChan")
 	}
 
 	// 获取 request_id（用于日志追踪）
@@ -2608,6 +2619,7 @@ func (c *AIAgentConfig) processWithStream(ctx context.Context, cancel context.Ca
 		if cancel != nil {
 			defer cancel()
 		}
+		logger.Infof("[QGen] Goroutine started, mode=%s", c.AgentMode)
 		switch c.AgentMode {
 		case AgentModePlanReAct:
 			c.executePlanReActWithStream(ctx, wfCtx, activeSkills, streamChan, requestID)
@@ -2615,6 +2627,7 @@ func (c *AIAgentConfig) processWithStream(ctx context.Context, cancel context.Ca
 			// 默认使用 ReAct 模式
 			c.executeReActWithStream(ctx, wfCtx, activeSkills, streamChan, requestID)
 		}
+		logger.Infof("[QGen] Goroutine finished, about to close streamChan")
 	}()
 
 	// 设置流式输出标记
@@ -2627,6 +2640,7 @@ func (c *AIAgentConfig) processWithStream(ctx context.Context, cancel context.Ca
 
 // executeReActWithStream 带流式输出的 ReAct 执行
 func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *models.WorkflowContext, activeSkills []*SkillContent, streamChan chan *models.StreamChunk, requestID string) {
+	logger.Infof("[QGen] === Starting ReAct execution === maxIterations=%d", c.MaxIterations)
 	var fullAnalysis strings.Builder
 
 	// 初始化工作记忆
@@ -2634,10 +2648,12 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 
 	// 构建系统提示词
 	systemPrompt := c.buildSkillEnhancedReActPrompt(activeSkills)
+	logger.Infof("[QGen] System prompt built: length=%d", len(systemPrompt))
 
 	// 构建用户消息
 	userMessage, err := c.buildUserMessage(wfCtx)
 	if err != nil {
+		logger.Errorf("[QGen] Failed to build user message: %v", err)
 		streamChan <- &models.StreamChunk{
 			Type:      models.StreamTypeError,
 			Error:     "failed to build user message: " + err.Error(),
@@ -2647,19 +2663,24 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 		}
 		return
 	}
+	logger.Infof("[QGen] User message built: length=%d, first_300=%q", len(userMessage), truncStr(userMessage, 300))
 
 	// 初始化消息列表
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userMessage},
 	}
+	logger.Infof("[QGen] Initial messages: count=%d, system_len=%d, user_len=%d", len(messages), len(systemPrompt), len(userMessage))
 
 	steps := make([]ReActStep, 0)
 
 	for iteration := 0; iteration < c.MaxIterations; iteration++ {
+		logger.Infof("[QGen] === Iteration %d/%d ===", iteration+1, c.MaxIterations)
+
 		// 检查 context 是否取消
 		select {
 		case <-ctx.Done():
+			logger.Warningf("[QGen] Context cancelled at iteration %d: %v", iteration+1, ctx.Err())
 			streamChan <- &models.StreamChunk{
 				Type:      models.StreamTypeError,
 				Error:     "context cancelled: " + ctx.Err().Error(),
@@ -2672,8 +2693,12 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 		}
 
 		// 调用 LLM（流式）
+		logger.Infof("[QGen] Calling LLM (stream), messages_count=%d", len(messages))
+		llmStart := time.Now()
 		responseContent, err := c.callLLMWithStreamOutput(ctx, messages, streamChan, requestID)
+		llmElapsed := time.Since(llmStart)
 		if err != nil {
+			logger.Errorf("[QGen] LLM call failed after %v: %v", llmElapsed, err)
 			streamChan <- &models.StreamChunk{
 				Type:      models.StreamTypeError,
 				Error:     err.Error(),
@@ -2683,10 +2708,14 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 			}
 			return
 		}
+		logger.Infof("[QGen] LLM returned after %v, response_len=%d, first_500=%q",
+			llmElapsed, len(responseContent), truncStr(responseContent, 500))
 
 		// 解析 ReAct 响应
 		step := c.parseReActResponse(responseContent)
 		steps = append(steps, step)
+		logger.Infof("[QGen] Parsed step: thought_len=%d, action=%q, action_input_len=%d",
+			len(step.Thought), step.Action, len(step.ActionInput))
 
 		// 发送 thinking
 		if step.Thought != "" {
@@ -2700,6 +2729,7 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 
 		// 检查是否是 Final Answer
 		if step.Action == ActionFinalAnswer {
+			logger.Infof("[QGen] Got Final Answer, length=%d", len(step.ActionInput))
 			fullAnalysis.WriteString(step.ActionInput)
 
 			// 更新事件 annotations 或 wfCtx.Output
@@ -2718,6 +2748,7 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 
 		// 检查 Action 是否为空（LLM 响应格式不正确）
 		if step.Action == "" {
+			logger.Warningf("[QGen] Empty action, treating raw response as final answer. response_len=%d", len(responseContent))
 			// 将原始响应作为 Final Answer 处理
 			fullAnalysis.WriteString(responseContent)
 			c.updateEventWithAnalysis(wfCtx, fullAnalysis.String(), steps, nil, workingMemory)
@@ -3168,8 +3199,10 @@ func (c *AIAgentConfig) synthesizeResultsWithStream(ctx context.Context, wfCtx *
 func (c *AIAgentConfig) callLLMWithStreamOutput(ctx context.Context, messages []ChatMessage, streamChan chan *models.StreamChunk, requestID string) (string, error) {
 	// 确保 LLM 客户端已初始化
 	if err := c.initLLMClient(); err != nil {
+		logger.Errorf("[QGen] Failed to init LLM client: %v", err)
 		return "", err
 	}
+	logger.Infof("[QGen] LLM client ready, provider=%s, model=%s", c.Provider, c.Model)
 
 	// 转换消息格式
 	llmMessages := make([]llm.Message, len(messages))
@@ -3178,22 +3211,31 @@ func (c *AIAgentConfig) callLLMWithStreamOutput(ctx context.Context, messages []
 			Role:    msg.Role,
 			Content: msg.Content,
 		}
+		logger.Infof("[QGen] Message[%d]: role=%s, content_len=%d", i, msg.Role, len(msg.Content))
 	}
 
 	// 调用 LLM 流式接口
+	logger.Infof("[QGen] Calling GenerateStream with %d messages", len(llmMessages))
+	streamStart := time.Now()
 	stream, err := c.llmClient.GenerateStream(ctx, &llm.GenerateRequest{
 		Messages: llmMessages,
 	})
 	if err != nil {
+		logger.Errorf("[QGen] GenerateStream failed after %v: %v", time.Since(streamStart), err)
 		return "", fmt.Errorf("LLM stream error: %w", err)
 	}
+	logger.Infof("[QGen] GenerateStream returned stream channel after %v", time.Since(streamStart))
 
 	// 处理流式响应
 	var fullContent strings.Builder
+	chunkCount := 0
 
 	for chunk := range stream {
+		chunkCount++
 		// 检查错误
 		if chunk.Error != nil {
+			logger.Errorf("[QGen] Stream error at chunk #%d: %v, accumulated_content_len=%d",
+				chunkCount, chunk.Error, fullContent.Len())
 			return fullContent.String(), fmt.Errorf("stream error: %w", chunk.Error)
 		}
 
@@ -3213,9 +3255,13 @@ func (c *AIAgentConfig) callLLMWithStreamOutput(ctx context.Context, messages []
 
 		// 检查是否结束
 		if chunk.Done {
+			logger.Infof("[QGen] Stream done at chunk #%d", chunkCount)
 			break
 		}
 	}
+
+	logger.Infof("[QGen] Stream completed: total_chunks=%d, total_content_len=%d, elapsed=%v, first_500=%q",
+		chunkCount, fullContent.Len(), time.Since(streamStart), truncStr(fullContent.String(), 500))
 
 	return fullContent.String(), nil
 }
