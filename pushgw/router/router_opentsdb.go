@@ -195,8 +195,10 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 
 		host, has := arr[i].Tags["ident"]
 		if has {
-			// register host
-			ids[host] = struct{}{}
+			if rt.Pushgw.GetHeartbeatFromMetric {
+				// register host
+				ids[host] = struct{}{}
+			}
 
 			// fill tags
 			target, has := rt.TargetCache.Get(host)

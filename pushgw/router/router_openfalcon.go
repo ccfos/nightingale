@@ -200,8 +200,10 @@ func (rt *Router) falconPush(c *gin.Context) {
 		}
 
 		if ident != "" {
-			// register host
-			ids[ident] = struct{}{}
+			if rt.Pushgw.GetHeartbeatFromMetric {
+				// register host
+				ids[ident] = struct{}{}
+			}
 
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)
