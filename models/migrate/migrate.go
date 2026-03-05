@@ -69,7 +69,8 @@ func MigrateTables(db *gorm.DB) error {
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
 		&models.EventPipeline{}, &models.EventPipelineExecution{}, &models.EmbeddedProduct{}, &models.SourceToken{},
-		&models.SavedView{}, &models.UserViewFavorite{}}
+		&models.SavedView{}, &models.UserViewFavorite{},
+		&models.LLMProvider{}, &models.AISkill{}, &models.AISkillFile{}, &models.MCPServer{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})

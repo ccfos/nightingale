@@ -21,6 +21,12 @@ type Center struct {
 	CleanPipelineExecutionDay int
 	MigrateBusiGroupLabel     bool
 	RSA                       httpx.RSAConfig
+	AIAgent                   AIAgent
+}
+
+type AIAgent struct {
+	Enable     bool   `toml:"Enable"`
+	SkillsPath string `toml:"SkillsPath"`
 }
 
 type Plugin struct {

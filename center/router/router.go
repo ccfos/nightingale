@@ -520,6 +520,34 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/config", rt.auth(), rt.admin(), rt.configPutByKey)
 		pages.GET("/site-info", rt.siteInfo)
 
+		// AI Config management
+		pages.GET("/llm-providers", rt.auth(), rt.admin(), rt.llmProviderGets)
+		pages.POST("/llm-providers", rt.auth(), rt.admin(), rt.llmProviderAdd)
+		pages.PUT("/llm-provider/:id", rt.auth(), rt.admin(), rt.llmProviderPut)
+		pages.DELETE("/llm-provider/:id", rt.auth(), rt.admin(), rt.llmProviderDel)
+
+		pages.GET("/ai-skills", rt.auth(), rt.admin(), rt.aiSkillGets)
+		pages.GET("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillGet)
+		pages.POST("/ai-skills", rt.auth(), rt.admin(), rt.aiSkillAdd)
+		pages.PUT("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillPut)
+		pages.DELETE("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillDel)
+		pages.POST("/ai-skills/import", rt.auth(), rt.admin(), rt.aiSkillImport)
+		pages.GET("/ai-skill/:id/files", rt.auth(), rt.admin(), rt.aiSkillFileGets)
+		pages.POST("/ai-skill/:id/files", rt.auth(), rt.admin(), rt.aiSkillFileAdd)
+		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileGet)
+		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileDel)
+
+		pages.GET("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerGets)
+		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
+		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
+		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
+		pages.POST("/llm-provider/:id/test", rt.auth(), rt.admin(), rt.llmProviderTest)
+		pages.POST("/mcp-server/:id/test", rt.auth(), rt.admin(), rt.mcpServerTest)
+		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
+
+		// AI Agent query generator (SSE)
+		pages.POST("/query-generator", rt.auth(), rt.user(), rt.queryGenerator)
+
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
 
