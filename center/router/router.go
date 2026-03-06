@@ -545,6 +545,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/mcp-server/:id/test", rt.auth(), rt.admin(), rt.mcpServerTest)
 		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
 
+		// AI Conversations
+		pages.GET("/ai-conversations", rt.auth(), rt.user(), rt.aiConversationGets)
+		pages.POST("/ai-conversations", rt.auth(), rt.user(), rt.aiConversationAdd)
+		pages.GET("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationGet)
+		pages.PUT("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationPut)
+		pages.DELETE("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationDel)
+		pages.POST("/ai-conversation/:id/messages", rt.auth(), rt.user(), rt.aiConversationMessageAdd)
+
 		// AI Agent query generator (SSE)
 		pages.POST("/query-generator", rt.auth(), rt.user(), rt.queryGenerator)
 
