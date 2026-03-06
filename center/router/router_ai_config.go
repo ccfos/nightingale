@@ -14,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/yaml.v3"
 )
 
 // ========================
@@ -145,17 +146,50 @@ func (rt *Router) aiSkillImport(c *gin.Context) {
 	content, err := io.ReadAll(file)
 	ginx.Dangerous(err)
 
-	name := strings.TrimSuffix(header.Filename, ext)
+	name, description, instructions := parseSkillMarkdown(string(content), header.Filename, ext)
 	me := c.MustGet("user").(*models.User)
 
 	skill := models.AISkill{
 		Name:         name,
-		Instructions: string(content),
+		Description:  description,
+		Instructions: instructions,
 		CreatedBy:    me.Username,
 		UpdatedBy:    me.Username,
 	}
 	ginx.Dangerous(skill.Create(rt.Ctx))
 	ginx.NewRender(c).Data(skill.Id, nil)
+}
+
+// parseSkillMarkdown parses a SKILL.md file with optional YAML frontmatter.
+// Frontmatter format:
+//
+//	---
+//	name: my-skill
+//	description: what this skill does
+//	---
+//	# Actual instructions content...
+func parseSkillMarkdown(content, filename, ext string) (name, description, instructions string) {
+	text := strings.TrimSpace(content)
+
+	// Try to parse YAML frontmatter (between --- delimiters)
+	if strings.HasPrefix(text, "---") {
+		endIdx := strings.Index(text[3:], "\n---")
+		if endIdx >= 0 {
+			frontmatter := text[3 : 3+endIdx]
+			body := strings.TrimSpace(text[3+endIdx+4:]) // skip past closing ---
+
+			var meta struct {
+				Name        string `yaml:"name"`
+				Description string `yaml:"description"`
+			}
+			if yaml.Unmarshal([]byte(frontmatter), &meta) == nil && meta.Name != "" {
+				return meta.Name, meta.Description, body
+			}
+		}
+	}
+
+	// No valid frontmatter, fallback: filename as name, entire content as instructions
+	return strings.TrimSuffix(filename, ext), "", content
 }
 
 // ========================
