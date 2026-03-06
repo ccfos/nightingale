@@ -17,52 +17,49 @@ import (
 )
 
 // ========================
-// LLM Provider handlers
+// AI Agent handlers
 // ========================
 
-func (rt *Router) llmProviderGets(c *gin.Context) {
-	lst, err := models.LLMProviderGets(rt.Ctx)
+func (rt *Router) aiAgentGets(c *gin.Context) {
+	lst, err := models.AIAgentGets(rt.Ctx)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(lst, nil)
 }
 
-func (rt *Router) llmProviderAdd(c *gin.Context) {
-	var obj models.LLMProvider
+func (rt *Router) aiAgentAdd(c *gin.Context) {
+	var obj models.AIAgent
 	ginx.BindJSON(c, &obj)
 	ginx.Dangerous(obj.Verify())
 
 	me := c.MustGet("user").(*models.User)
-	obj.CreatedBy = me.Username
-	obj.UpdatedBy = me.Username
 
-	ginx.Dangerous(obj.Create(rt.Ctx))
+	ginx.Dangerous(obj.Create(rt.Ctx, me.Username))
 	ginx.NewRender(c).Data(obj.Id, nil)
 }
 
-func (rt *Router) llmProviderPut(c *gin.Context) {
+func (rt *Router) aiAgentPut(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
-	obj, err := models.LLMProviderGetById(rt.Ctx, id)
+	obj, err := models.AIAgentGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "llm provider not found")
+		ginx.Bomb(http.StatusNotFound, "ai agent not found")
 	}
 
-	var ref models.LLMProvider
+	var ref models.AIAgent
 	ginx.BindJSON(c, &ref)
 	ginx.Dangerous(ref.Verify())
 
 	me := c.MustGet("user").(*models.User)
-	ref.UpdatedBy = me.Username
 
-	ginx.NewRender(c).Message(obj.Update(rt.Ctx, ref))
+	ginx.NewRender(c).Message(obj.Update(rt.Ctx, me.Username, ref))
 }
 
-func (rt *Router) llmProviderDel(c *gin.Context) {
+func (rt *Router) aiAgentDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
-	obj, err := models.LLMProviderGetById(rt.Ctx, id)
+	obj, err := models.AIAgentGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "llm provider not found")
+		ginx.Bomb(http.StatusNotFound, "ai agent not found")
 	}
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
@@ -284,10 +281,10 @@ func (rt *Router) mcpServerDel(c *gin.Context) {
 }
 
 // ========================
-// LLM Provider test
+// AI Agent test
 // ========================
 
-func (rt *Router) llmProviderTest(c *gin.Context) {
+func (rt *Router) aiAgentTest(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 
 	// Try to read override values from request body
@@ -299,15 +296,15 @@ func (rt *Router) llmProviderTest(c *gin.Context) {
 	}
 	c.ShouldBindJSON(&body)
 
-	var obj *models.LLMProvider
+	var obj *models.AIAgent
 
 	if id > 0 {
 		// Load from database as base
 		var err error
-		obj, err = models.LLMProviderGetById(rt.Ctx, id)
+		obj, err = models.AIAgentGetById(rt.Ctx, id)
 		ginx.Dangerous(err)
 		if obj == nil {
-			ginx.Bomb(http.StatusNotFound, "llm provider not found")
+			ginx.Bomb(http.StatusNotFound, "ai agent not found")
 		}
 		// Override with body values if provided
 		if body.APIType != "" {
@@ -323,11 +320,11 @@ func (rt *Router) llmProviderTest(c *gin.Context) {
 			obj.Model = body.Model
 		}
 	} else {
-		// No id, use body values directly (new provider test)
+		// No id, use body values directly (new agent test)
 		if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
 			ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
 		}
-		obj = &models.LLMProvider{
+		obj = &models.AIAgent{
 			APIType: body.APIType,
 			APIURL:  body.APIURL,
 			APIKey:  body.APIKey,
@@ -336,7 +333,7 @@ func (rt *Router) llmProviderTest(c *gin.Context) {
 	}
 
 	start := time.Now()
-	testErr := testLLMProvider(obj)
+	testErr := testAIAgent(obj)
 	durationMs := time.Since(start).Milliseconds()
 
 	result := gin.H{
@@ -349,7 +346,7 @@ func (rt *Router) llmProviderTest(c *gin.Context) {
 	ginx.NewRender(c).Data(result, nil)
 }
 
-func testLLMProvider(p *models.LLMProvider) error {
+func testAIAgent(p *models.AIAgent) error {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	var reqURL string

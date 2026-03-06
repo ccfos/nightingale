@@ -53,14 +53,14 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 		return
 	}
 
-	// Get default LLM provider
-	provider, err := models.LLMProviderGetDefault(rt.Ctx)
-	if err != nil || provider == nil {
-		logger.Errorf("[QGen] No default LLM provider: err=%v, provider=%v", err, provider)
-		ginx.Bomb(http.StatusBadRequest, "no default LLM provider configured")
+	// Get default AI agent
+	agent, err := models.AIAgentGetDefault(rt.Ctx)
+	if err != nil || agent == nil {
+		logger.Errorf("[QGen] No default AI agent: err=%v, agent=%v", err, agent)
+		ginx.Bomb(http.StatusBadRequest, "no default AI agent configured")
 		return
 	}
-	logger.Infof("[QGen] LLM provider: api_type=%s, model=%s, api_url=%s", provider.APIType, provider.Model, provider.APIURL)
+	logger.Infof("[QGen] AI agent: api_type=%s, model=%s, api_url=%s", agent.APIType, agent.Model, agent.APIURL)
 
 	// Build tools based on datasource type
 	var builtinToolNames []string
@@ -83,8 +83,8 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 		MaxTokens      int     `json:"max_tokens"`
 		TimeoutSeconds int     `json:"timeout_seconds"`
 	}
-	if provider.ExtraConfig != "" {
-		json.Unmarshal([]byte(provider.ExtraConfig), &extraConfig)
+	if agent.ExtraConfig != "" {
+		json.Unmarshal([]byte(agent.ExtraConfig), &extraConfig)
 	}
 
 	timeout := 120000 // 120s default
@@ -99,10 +99,10 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 	// Create agent config
 	logger.Infof("[QGen] Creating agent: mode=ReAct, stream=true, timeout=%dms", timeout)
 	agentCfg := aiagent.NewAgent(&aiagent.AIAgentConfig{
-		Provider:           provider.APIType,
-		LLMURL:             provider.APIURL,
-		Model:              provider.Model,
-		APIKey:             provider.APIKey,
+		Provider:           agent.APIType,
+		LLMURL:             agent.APIURL,
+		Model:              agent.Model,
+		APIKey:             agent.APIKey,
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            timeout,

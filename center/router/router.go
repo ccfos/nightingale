@@ -521,10 +521,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/site-info", rt.siteInfo)
 
 		// AI Config management
-		pages.GET("/llm-providers", rt.auth(), rt.admin(), rt.llmProviderGets)
-		pages.POST("/llm-providers", rt.auth(), rt.admin(), rt.llmProviderAdd)
-		pages.PUT("/llm-provider/:id", rt.auth(), rt.admin(), rt.llmProviderPut)
-		pages.DELETE("/llm-provider/:id", rt.auth(), rt.admin(), rt.llmProviderDel)
+		pages.GET("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentGets)
+		pages.POST("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentAdd)
+		pages.PUT("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentPut)
+		pages.DELETE("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentDel)
 
 		pages.GET("/ai-skills", rt.auth(), rt.admin(), rt.aiSkillGets)
 		pages.GET("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillGet)
@@ -541,7 +541,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
 		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
 		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
-		pages.POST("/llm-provider/:id/test", rt.auth(), rt.admin(), rt.llmProviderTest)
+		pages.POST("/ai-agent/:id/test", rt.auth(), rt.admin(), rt.aiAgentTest)
 		pages.POST("/mcp-server/:id/test", rt.auth(), rt.admin(), rt.mcpServerTest)
 		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
 

@@ -300,8 +300,8 @@ ops:
       cname: View Alerting Engines
     - name: /system/version
       cname: View Product Version
-    - name: /ai-config/llm-providers
-      cname: AI Config - LLM Providers
+    - name: /ai-config/agents
+      cname: AI Config - Agents
     - name: /ai-config/skills
       cname: AI Config - Skills
     - name: /ai-config/mcp-servers
