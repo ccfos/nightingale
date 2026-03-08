@@ -18,7 +18,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/expr-lang/expr v1.16.1
+	github.com/expr-lang/expr v1.17.7
 	github.com/flashcatcloud/ibex v1.3.6
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
