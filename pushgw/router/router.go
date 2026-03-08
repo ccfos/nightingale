@@ -103,7 +103,9 @@ func (rt *Router) initDropSampleFilters() {
 }
 
 func (rt *Router) Config(r *gin.Engine) {
-	service := r.Group("/v1/n9e")
+	basePath := rt.HTTP.NormalizedBasePath()
+
+	service := r.Group(basePath + "/v1/n9e")
 	if len(rt.HTTP.APIForService.BasicAuth) > 0 {
 		service.Use(gin.BasicAuth(rt.HTTP.APIForService.BasicAuth))
 	}
@@ -116,11 +118,11 @@ func (rt *Router) Config(r *gin.Engine) {
 	r.Use(stat())
 	// datadog url: http://n9e-pushgw.foo.com/datadog
 	// use apiKey not basic auth
-	r.POST("/datadog/api/v1/series", rt.datadogSeries)
-	r.POST("/datadog/api/v1/check_run", datadogCheckRun)
-	r.GET("/datadog/api/v1/validate", datadogValidate)
-	r.POST("/datadog/api/v1/metadata", datadogMetadata)
-	r.POST("/datadog/intake/", datadogIntake)
+	r.POST(basePath+"/datadog/api/v1/series", rt.datadogSeries)
+	r.POST(basePath+"/datadog/api/v1/check_run", datadogCheckRun)
+	r.GET(basePath+"/datadog/api/v1/validate", datadogValidate)
+	r.POST(basePath+"/datadog/api/v1/metadata", datadogMetadata)
+	r.POST(basePath+"/datadog/intake/", datadogIntake)
 
 	if len(rt.HTTP.APIForAgent.BasicAuth) > 0 {
 		// enable basic auth
@@ -140,25 +142,25 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 
 		auth := ginx.BasicAuth(accounts)
-		r.POST("/opentsdb/put", auth, rt.openTSDBPut)
-		r.POST("/openfalcon/push", auth, rt.falconPush)
-		r.POST("/prometheus/v1/write", auth, rt.remoteWrite)
-		r.POST("/proxy/v1/write", auth, rt.proxyRemoteWrite)
-		r.POST("/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
+		r.POST(basePath+"/opentsdb/put", auth, rt.openTSDBPut)
+		r.POST(basePath+"/openfalcon/push", auth, rt.falconPush)
+		r.POST(basePath+"/prometheus/v1/write", auth, rt.remoteWrite)
+		r.POST(basePath+"/proxy/v1/write", auth, rt.proxyRemoteWrite)
+		r.POST(basePath+"/v1/n9e/edge/heartbeat", auth, rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {
-			r.POST("/v1/n9e/heartbeat", auth, rt.heartbeat)
+			r.POST(basePath+"/v1/n9e/heartbeat", auth, rt.heartbeat)
 		}
 	} else {
 		// no need basic auth
-		r.POST("/opentsdb/put", rt.openTSDBPut)
-		r.POST("/openfalcon/push", rt.falconPush)
-		r.POST("/prometheus/v1/write", rt.remoteWrite)
-		r.POST("/proxy/v1/write", rt.proxyRemoteWrite)
-		r.POST("/v1/n9e/edge/heartbeat", rt.heartbeat)
+		r.POST(basePath+"/opentsdb/put", rt.openTSDBPut)
+		r.POST(basePath+"/openfalcon/push", rt.falconPush)
+		r.POST(basePath+"/prometheus/v1/write", rt.remoteWrite)
+		r.POST(basePath+"/proxy/v1/write", rt.proxyRemoteWrite)
+		r.POST(basePath+"/v1/n9e/edge/heartbeat", rt.heartbeat)
 
 		if len(rt.Ctx.CenterApi.Addrs) > 0 {
-			r.POST("/v1/n9e/heartbeat", rt.heartbeat)
+			r.POST(basePath+"/v1/n9e/heartbeat", rt.heartbeat)
 		}
 	}
 }
