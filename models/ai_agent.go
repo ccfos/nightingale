@@ -11,6 +11,8 @@ type AIAgent struct {
 	Id           int64  `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name         string `json:"name"`
 	Description  string `json:"description"`
+	UseCase      string `json:"use_case"`
+	LLMConfigId  int64  `json:"llm_config_id"`
 	APIType      string `json:"api_type"`
 	APIURL       string `json:"api_url"`
 	APIKey       string `json:"api_key"`
@@ -34,6 +36,10 @@ func (a *AIAgent) TableName() string {
 func (a *AIAgent) Verify() error {
 	if a.Name == "" {
 		return fmt.Errorf("name is required")
+	}
+	// If llm_config_id is set, no need to validate inline LLM fields
+	if a.LLMConfigId > 0 {
+		return nil
 	}
 	if a.APIType == "" {
 		return fmt.Errorf("api_type is required")
@@ -104,7 +110,7 @@ func (a *AIAgent) Update(c *ctx.Context, username string, data AIAgent) error {
 		data.APIKey = a.APIKey
 	}
 
-	return DB(c).Model(a).Select("name", "description", "api_type", "api_url", "api_key", "model",
+	return DB(c).Model(a).Select("name", "description", "use_case", "llm_config_id", "api_type", "api_url", "api_key", "model",
 		"extra_config", "skill_ids", "mcp_server_ids", "im_config",
 		"is_default", "enabled", "updated_at", "updated_by").Updates(data).Error
 }
@@ -115,6 +121,10 @@ func (a *AIAgent) Delete(c *ctx.Context) error {
 
 func AIAgentGetDefault(c *ctx.Context) (*AIAgent, error) {
 	return AIAgentGet(c, "is_default = 1 and enabled = 1")
+}
+
+func AIAgentGetByUseCase(c *ctx.Context, useCase string) (*AIAgent, error) {
+	return AIAgentGet(c, "use_case = ? and enabled = 1", useCase)
 }
 
 func AIAgentStatistics(c *ctx.Context) (*Statistics, error) {

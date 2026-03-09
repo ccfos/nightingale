@@ -53,12 +53,33 @@ func (rt *Router) queryGenerator(c *gin.Context) {
 		return
 	}
 
-	// Get default AI agent
-	agent, err := models.AIAgentGetDefault(rt.Ctx)
+	// Get AI agent by use_case, fallback to default
+	agent, err := models.AIAgentGetByUseCase(rt.Ctx, "chat")
 	if err != nil || agent == nil {
-		logger.Errorf("[QGen] No default AI agent: err=%v, agent=%v", err, agent)
-		ginx.Bomb(http.StatusBadRequest, "no default AI agent configured")
+		// Fallback to legacy is_default
+		agent, err = models.AIAgentGetDefault(rt.Ctx)
+	}
+	if err != nil || agent == nil {
+		logger.Errorf("[QGen] No AI agent found for use_case=chat: err=%v, agent=%v", err, agent)
+		ginx.Bomb(http.StatusBadRequest, "no AI agent configured for chat")
 		return
+	}
+
+	// If agent references an LLM config, resolve LLM fields from it
+	if agent.LLMConfigId > 0 {
+		llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
+		if err != nil || llmCfg == nil {
+			logger.Errorf("[QGen] Failed to get LLM config id=%d: err=%v", agent.LLMConfigId, err)
+			ginx.Bomb(http.StatusBadRequest, "referenced LLM config not found")
+			return
+		}
+		agent.APIType = llmCfg.APIType
+		agent.APIURL = llmCfg.APIURL
+		agent.APIKey = llmCfg.APIKey
+		agent.Model = llmCfg.Model
+		if llmCfg.ExtraConfig != "" && agent.ExtraConfig == "" {
+			agent.ExtraConfig = llmCfg.ExtraConfig
+		}
 	}
 	logger.Infof("[QGen] AI agent: api_type=%s, model=%s, api_url=%s", agent.APIType, agent.Model, agent.APIURL)
 

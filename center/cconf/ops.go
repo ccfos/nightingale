@@ -302,6 +302,8 @@ ops:
       cname: View Product Version
     - name: /ai-config/agents
       cname: AI Config - Agents
+    - name: /ai-config/llm-configs
+      cname: AI Config - LLM Configs
     - name: /ai-config/skills
       cname: AI Config - Skills
     - name: /ai-config/mcp-servers
