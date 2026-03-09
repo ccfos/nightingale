@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
@@ -124,6 +125,20 @@ func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+// notifyChannelDefaultChannelsGet 根据 ident 获取对应 Provider 的 DefaultChannels()
+func (rt *Router) notifyChannelDefaultChannelsGet(c *gin.Context) {
+	ident := ginx.QueryStr(c, "ident", "")
+	if ident == "" {
+		ginx.Bomb(http.StatusBadRequest, "ident is required")
+	}
+	p, ok := provider.DefaultRegistry.Get(ident)
+	if !ok {
+		ginx.Bomb(http.StatusNotFound, "provider not found for ident: "+ident)
+	}
+	channels := p.DefaultChannels()
+	ginx.NewRender(c).Data(channels, nil)
+}
+
 func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "")
 	ginx.Dangerous(err)
@@ -143,25 +158,16 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
-	// 获取所有通知渠道
-	channels, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
-	ginx.Dangerous(err)
-
-	// ident 去重
-	idents := make(map[string]struct{})
-	for _, channel := range channels {
-		if channel.Ident != "" {
-			idents[channel.Ident] = struct{}{}
+	// 从 DefaultRegistry 获取所有已注册 Provider 的 ident
+	providers := provider.DefaultRegistry.All()
+	lst := make([]string, 0, len(providers))
+	for _, p := range providers {
+		ident := p.Ident()
+		if ident != "" {
+			lst = append(lst, ident)
 		}
 	}
-
-	lst := make([]string, 0, len(idents))
-	for ident := range idents {
-		lst = append(lst, ident)
-	}
-
 	sort.Strings(lst)
-
 	ginx.NewRender(c).Data(lst, nil)
 }
 

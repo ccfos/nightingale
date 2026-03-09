@@ -25,13 +25,15 @@ type NotifyChannelProvider interface {
 }
 
 type NotifyRequest struct {
-	Config       *models.NotifyChannelConfig
-	Events       []*models.AlertCurEvent
-	TplContent   map[string]interface{}
-	CustomParams map[string]string
-	Sendtos      []string
-	HttpClient   *http.Client              // 由 cache 层提供
-	SmtpChan     chan *models.EmailContext // 由 cache 层提供 (仅 smtp 类型)
+	Config               *models.NotifyChannelConfig
+	Events               []*models.AlertCurEvent
+	TplContent           map[string]interface{}
+	FlashDutyChannelIDs  []int64
+	PagerDutyRoutingKeys []string
+	CustomParams         map[string]string
+	Sendtos              []string
+	HttpClient           *http.Client              // 由 cache 层提供
+	SmtpChan             chan *models.EmailContext // 由 cache 层提供 (仅 smtp 类型)
 }
 
 type NotifyResult struct {

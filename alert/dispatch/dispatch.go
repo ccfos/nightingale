@@ -536,6 +536,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
+	//sendtos, _, _, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
 	// switch notifyChannel.RequestType {
@@ -600,12 +601,14 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	}
 
 	req := &provider.NotifyRequest{
-		Config:       notifyChannel,
-		Events:       events,
-		TplContent:   tplContent,
-		CustomParams: customParams,
-		Sendtos:      sendtos,
-		HttpClient:   notifyChannelCache.GetHttpClient(notifyChannel.ID),
+		Config:               notifyChannel,
+		Events:               events,
+		TplContent:           tplContent,
+		FlashDutyChannelIDs:  flashDutyChannelIDs,
+		PagerDutyRoutingKeys: pagerdutyRoutingKeys,
+		CustomParams:         customParams,
+		Sendtos:              sendtos,
+		HttpClient:           notifyChannelCache.GetHttpClient(notifyChannel.ID),
 	}
 	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {
@@ -624,13 +627,13 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		}
 	case "smtp":
 		// SMTP 走邮件连接池
-		// req.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
-		// result := p.Notify(ctx, req)
-		// sender.NotifyRecord()
+		req.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
+		result := p.Notify(ctx.Ctx, req)
+		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	default:
 		// flashduty/pagerduty/script 等直接调用
-		// result := p.Notify(ctx, req)
-		// sender.NotifyRecord(...)
+		result := p.Notify(ctx.Ctx, req)
+		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	}
 }
 
