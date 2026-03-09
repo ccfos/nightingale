@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/slice"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -207,7 +208,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	}
 
 	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
-
+	
 	var resp string
 	switch notifyChannel.RequestType {
 	case "flashduty":
@@ -217,7 +218,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		}
 
 		for i := range flashDutyChannelIDs {
-			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
+			resp, err = provider.SendFlashDuty(notifyChannel.RequestConfig.FlashDutyRequestConfig, events, flashDutyChannelIDs[i], client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
 			}
@@ -231,7 +232,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		}
 
 		for _, routingKey := range pagerDutyRoutingKeys {
-			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)
+			resp, err = provider.SendPagerDuty(notifyChannel.RequestConfig.PagerDutyRequestConfig, events, routingKey, siteUrl, client)
 			if err != nil {
 				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
 			}
@@ -253,7 +254,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		}
 
 		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
+			resp, err = provider.SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tplContent, customParams, sendtos, client)
 			logger.Infof("channel_name: %v, event:%s, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, sendtos, tplContent, customParams, resp, err)
 			if err != nil {
 				return "", fmt.Errorf("failed to send http notify: %v", err)
@@ -261,7 +262,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 			return resp, nil
 		} else {
 			for i := range sendtos {
-				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
+				resp, err = provider.SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tplContent, customParams, []string{sendtos[i]}, client)
 				logger.Infof("channel_name: %v, event:%s,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, sendtos[i], resp, err)
 				if err != nil {
 					return "", fmt.Errorf("failed to send http notify: %v", err)
@@ -274,13 +275,13 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if len(sendtos) == 0 {
 			return "", fmt.Errorf("no valid email address in the user and team")
 		}
-		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
+		err := provider.SendEmailNow(notifyChannel, events, tplContent, sendtos)
 		if err != nil {
 			return "", fmt.Errorf("failed to send email notify: %v", err)
 		}
 		return resp, nil
 	case "script":
-		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
+		resp, _, err := provider.SendScript(notifyChannel, events, tplContent, customParams, sendtos)
 		logger.Infof("channel_name: %v, event:%s, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, resp, err)
 		return resp, err
 	default:

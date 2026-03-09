@@ -1,0 +1,187 @@
+package provider
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/toolkits/pkg/logger"
+)
+
+const AliyunVoiceIdent = "ali-voice"
+
+type AliyunVoiceProvider struct{}
+
+func (p *AliyunVoiceProvider) Ident() string {
+	return AliyunVoiceIdent
+}
+
+func (p *AliyunVoiceProvider) Check(config *models.NotifyChannelConfig) error {
+	if err := config.ValidateHTTPRequestConfig(); err != nil {
+		return err
+	}
+
+	httpConfig := config.RequestConfig.HTTPRequestConfig
+
+	if httpConfig.Method != "POST" {
+		return errors.New("aliyun voice provider requires POST method")
+	}
+
+	if httpConfig.URL == "" {
+		return errors.New("aliyun voice provider requires URL")
+	}
+
+	if httpConfig.Headers == nil || httpConfig.Headers["Content-Type"] != "application/json" {
+		return errors.New("aliyun voice provider requires Content-Type: application/json header")
+	}
+
+	if httpConfig.Request.Body == "" && len(httpConfig.Request.Parameters) == 0 {
+		return errors.New("aliyun voice provider requires request body or parameters")
+	}
+
+	return nil
+}
+
+func (p *AliyunVoiceProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {
+	httpConfig := req.Config.RequestConfig.HTTPRequestConfig
+	resp, err := p.sendHTTPRequest(httpConfig, req.Events, req.TplContent,
+		req.CustomParams, req.Sendtos, req.HttpClient)
+	return &NotifyResult{Target: "todo: todo", Response: resp, Err: err}
+}
+
+func (p *AliyunVoiceProvider) DefaultChannels() []*models.NotifyChannelConfig {
+	return []*models.NotifyChannelConfig{
+		{
+			Name: "Aliyun Voice", Ident: AliyunVoiceIdent, RequestType: "http", Weight: 8, Enable: true,
+			RequestConfig: &models.RequestConfig{
+				HTTPRequestConfig: &models.HTTPRequestConfig{
+					Method:  "POST",
+					URL:     "https://dyvmsapi.aliyuncs.com",
+					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+					Request: models.RequestDetail{
+						Parameters: map[string]string{
+							"TtsCode":          "需要改为实际的voice_code",
+							"TtsParam":         `{"incident":"故障{{$tpl.incident}}，一键认领请按1"}`,
+							"CalledNumber":     `{{ $sendto }}`,
+							"CalledShowNumber": `需要改为实际的show_number, 如果为空则不显示`,
+							"AccessKeyId":      "需要改为实际的access_key_id",
+							"AccessKeySecret":  "需要改为实际的access_key_secret",
+						},
+					},
+					Headers: map[string]string{
+						"Content-Type": "application/json",
+						"Host":         "dyvmsapi.aliyuncs.com",
+					},
+				},
+			},
+			ParamConfig: &models.NotifyParamConfig{
+				UserInfo: &models.UserInfo{
+					ContactKey: "phone",
+				},
+			},
+		},
+	}
+}
+
+// 从原 NotifyChannelConfig.SendHTTP 提取，供各 HTTP 类 Provider 复用
+func (p *AliyunVoiceProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.AlertCurEvent,
+	tpl map[string]interface{}, params map[string]string, sendtos []string,
+	client *http.Client) (string, error) {
+
+	if client == nil {
+		return "", fmt.Errorf("http client not found")
+	}
+
+	if len(events) == 0 {
+		return "", fmt.Errorf("events is empty")
+	}
+
+	// MessageTemplate
+	fullTpl := make(map[string]interface{})
+
+	fullTpl["sendtos"] = sendtos // 发送对象
+	fullTpl["params"] = params   // 自定义参数
+	fullTpl["tpl"] = tpl
+	fullTpl["events"] = events
+	fullTpl["event"] = events[0]
+
+	if len(sendtos) > 0 {
+		fullTpl["sendto"] = sendtos[0]
+	}
+
+	// 将 MessageTemplate 与变量配置的信息渲染进 reqBody
+	body, err := parseRequestBody(httpConfig, fullTpl)
+	if err != nil {
+		logger.Errorf("failed to parse request body: %v, event: %v", err, events)
+		return "", err
+	}
+
+	// 替换 URL Header Parameters 中的变量
+	url, headers, parameters := replaceVariables(httpConfig, fullTpl)
+	logger.Infof("url: %v, headers: %v, parameters: %v", url, headers, parameters)
+
+	// 重试机制
+	var lastErrorMessage string
+	for i := 0; i < httpConfig.RetryTimes; i++ {
+		var resp *http.Response
+		req, err := p.makeHTTPRequest(httpConfig, url, headers, parameters, body)
+		if err != nil {
+			logger.Errorf("send_http: failed to create request. url=%s request_body=%s error=%v", url, string(body), err)
+			return fmt.Sprintf("failed to create request. error: %v", err), err
+		}
+
+		resp, err = client.Do(req)
+		if err != nil {
+			logger.Errorf("send_http: failed to send http notify. url=%s request_body=%s error=%v", url, string(body), err)
+			lastErrorMessage = err.Error()
+			time.Sleep(time.Duration(httpConfig.RetryInterval) * time.Millisecond)
+			continue
+		}
+		defer resp.Body.Close()
+
+		// 读取响应
+		body, err := io.ReadAll(resp.Body)
+		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(body))
+		if err != nil {
+			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
+		}
+		if resp.StatusCode == http.StatusOK {
+			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
+		}
+
+		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	return lastErrorMessage, errors.New("all retries failed, last error: " + lastErrorMessage)
+}
+
+func (p *AliyunVoiceProvider) makeHTTPRequest(httpConfig *models.HTTPRequestConfig, url string, headers map[string]string, parameters map[string]string, body []byte) (*http.Request, error) {
+	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
+	if err != nil {
+		logger.Errorf("failed to create request: %v", err)
+		return nil, err
+	}
+
+	query := req.URL.Query()
+	// 设置签名
+	req, err = http.NewRequest(httpConfig.Method, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	query, headers = getAliQuery(p.Ident(), query, httpConfig, parameters)
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	req.URL.RawQuery = query.Encode()
+	// 记录完整的请求信息
+	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
+
+	return req, nil
+}

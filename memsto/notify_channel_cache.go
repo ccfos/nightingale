@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/gomail.v2"
 
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -22,12 +23,14 @@ import (
 
 // NotifyTask 表示一个通知发送任务
 type NotifyTask struct {
-	Events        []*models.AlertCurEvent
-	NotifyRuleId  int64
-	NotifyChannel *models.NotifyChannelConfig
-	TplContent    map[string]interface{}
-	CustomParams  map[string]string
-	Sendtos       []string
+	// Events        []*models.AlertCurEvent
+	// NotifyChannel *models.NotifyChannelConfig
+	// TplContent    map[string]interface{}
+	// CustomParams  map[string]string
+	// Sendtos       []string
+	NotifyRuleId int64
+	Request      *provider.NotifyRequest
+	Provider     provider.NotifyChannelProvider
 }
 
 // NotifyRecordFunc 通知记录函数类型
@@ -275,36 +278,41 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 
 // processNotifyTask 处理通知任务（仅处理 http 类型）
 func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
-	httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
+	// httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
+	// // 现在只处理 http 类型，flashduty 保持直接发送
+	// if task.NotifyChannel.RequestType == "http" {
+	// 	if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
+	// 		start := time.Now()
+	// 		resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
+	// 		resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
+	// 		logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+	// 			task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos, resp, err)
+
+	// 		// 调用通知记录回调函数
+	// 		if ncc.notifyRecordFunc != nil {
+	// 			ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, task.Sendtos), resp, err)
+	// 		}
+	// 	} else {
+	// 		for i := range task.Sendtos {
+	// 			start := time.Now()
+	// 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
+	// 			resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
+	// 			logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+	// 				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
+
+	// 			// 调用通知记录回调函数
+	// 			if ncc.notifyRecordFunc != nil {
+	// 				ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, []string{task.Sendtos[i]}), resp, err)
+	// 			}
+	// 		}
+	// 	}
+	// }
 	logger.Debugf("processNotifyTask: task: %+v", task)
-
-	// 现在只处理 http 类型，flashduty 保持直接发送
-	if task.NotifyChannel.RequestType == "http" {
-		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
-			start := time.Now()
-			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
-			resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
-			logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos, resp, err)
-
-			// 调用通知记录回调函数
-			if ncc.notifyRecordFunc != nil {
-				ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, task.Sendtos), resp, err)
-			}
-		} else {
-			for i := range task.Sendtos {
-				start := time.Now()
-				resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
-				resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
-				logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-					task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
-
-				// 调用通知记录回调函数
-				if ncc.notifyRecordFunc != nil {
-					ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, []string{task.Sendtos[i]}), resp, err)
-				}
-			}
-		}
+	start := time.Now()
+	result := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
+	resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), result.Response)
+	if ncc.notifyRecordFunc != nil {
+		ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, task.Request.Sendtos), resp, result.Err)
 	}
 }
 
@@ -371,17 +379,17 @@ func (ncc *NotifyChannelCacheType) GetChannelIds() []int64 {
 // 新增：将通知任务加入队列
 func (ncc *NotifyChannelCacheType) EnqueueNotifyTask(task *NotifyTask) bool {
 	ncc.RLock()
-	queue := ncc.channelsQueue[task.NotifyChannel.ID]
+	queue := ncc.channelsQueue[task.Request.Config.ID]
 	ncc.RUnlock()
 
 	if queue == nil {
-		logger.Errorf("no queue found for channel %d", task.NotifyChannel.ID)
+		logger.Errorf("no queue found for channel %d", task.Request.Config.ID)
 		return false
 	}
 
 	success := queue.PushFront(task)
 	if !success {
-		logger.Warningf("failed to enqueue notify task for channel %d, queue is full", task.NotifyChannel.ID)
+		logger.Warningf("failed to enqueue notify task for channel %d, queue is full", task.Request.Config.ID)
 	}
 
 	return success
