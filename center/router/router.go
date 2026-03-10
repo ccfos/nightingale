@@ -559,8 +559,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationDel)
 		pages.POST("/ai-conversation/:id/messages", rt.auth(), rt.user(), rt.aiConversationMessageAdd)
 
-		// AI Agent query generator (SSE)
-		pages.POST("/query-generator", rt.auth(), rt.user(), rt.queryGenerator)
+		// AI chat (SSE), dispatches by action_key
+		pages.POST("/ai-chat", rt.auth(), rt.user(), rt.aiChat)
 
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)
