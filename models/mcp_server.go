@@ -13,7 +13,6 @@ type MCPServer struct {
 	Name        string `json:"name"`
 	URL         string `json:"url"`
 	Headers     string `json:"headers" gorm:"type:text"`
-	EnvVars     string `json:"env_vars" gorm:"type:text"`
 	Description string `json:"description" gorm:"type:text"`
 	Enabled     int    `json:"enabled"`
 	CreatedAt   int64  `json:"created_at"`

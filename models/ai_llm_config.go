@@ -7,20 +7,31 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
+type LLMExtraConfig struct {
+	TimeoutSeconds int                `json:"timeout_seconds,omitempty"`
+	SkipTLSVerify  bool               `json:"skip_tls_verify,omitempty"`
+	Proxy          string             `json:"proxy,omitempty"`
+	CustomHeaders  map[string]string  `json:"custom_headers,omitempty"`
+	CustomParams   map[string]any     `json:"custom_params,omitempty"`
+	Temperature    *float64           `json:"temperature,omitempty"`
+	MaxTokens      *int               `json:"max_tokens,omitempty"`
+	ContextLength  *int               `json:"context_length,omitempty"`
+}
+
 type AILLMConfig struct {
-	Id          int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	APIType     string `json:"api_type"`
-	APIURL      string `json:"api_url"`
-	APIKey      string `json:"api_key"`
-	Model       string `json:"model"`
-	ExtraConfig string `json:"extra_config"`
-	Enabled     int    `json:"enabled"`
-	CreatedAt   int64  `json:"created_at"`
-	CreatedBy   string `json:"created_by"`
-	UpdatedAt   int64  `json:"updated_at"`
-	UpdatedBy   string `json:"updated_by"`
+	Id          int64          `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	APIType     string         `json:"api_type"`
+	APIURL      string         `json:"api_url"`
+	APIKey      string         `json:"api_key"`
+	Model       string         `json:"model"`
+	ExtraConfig LLMExtraConfig `json:"extra_config" gorm:"serializer:json"`
+	Enabled     int            `json:"enabled"`
+	CreatedAt   int64          `json:"created_at"`
+	CreatedBy   string         `json:"created_by"`
+	UpdatedAt   int64          `json:"updated_at"`
+	UpdatedBy   string         `json:"updated_by"`
 }
 
 func (a *AILLMConfig) TableName() string {

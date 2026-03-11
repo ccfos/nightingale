@@ -218,14 +218,7 @@ func (rt *Router) aiChat(c *gin.Context) {
 	}
 
 	// Parse extra config
-	var extraConfig struct {
-		Temperature    float64 `json:"temperature"`
-		MaxTokens      int     `json:"max_tokens"`
-		TimeoutSeconds int     `json:"timeout_seconds"`
-	}
-	if llmCfg.ExtraConfig != "" {
-		json.Unmarshal([]byte(llmCfg.ExtraConfig), &extraConfig)
-	}
+	extraConfig := llmCfg.ExtraConfig
 
 	timeout := 120000
 	if extraConfig.TimeoutSeconds > 0 {
