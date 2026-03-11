@@ -13,7 +13,6 @@ type AISkill struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	Instructions string `json:"instructions" gorm:"type:text"`
-	IsBuiltin    int    `json:"is_builtin"`
 	Enabled      int    `json:"enabled"`
 	CreatedAt    int64  `json:"created_at"`
 	CreatedBy    string `json:"created_by"`
@@ -39,7 +38,7 @@ func (s *AISkill) Verify() error {
 
 func AISkillGets(c *ctx.Context, search string) ([]*AISkill, error) {
 	var lst []*AISkill
-	session := DB(c).Order("is_builtin desc, id")
+	session := DB(c).Order("id")
 	if search != "" {
 		session = session.Where("name like ? or description like ?", "%"+search+"%", "%"+search+"%")
 	}
@@ -79,8 +78,5 @@ func (s *AISkill) Update(c *ctx.Context, ref AISkill) error {
 }
 
 func (s *AISkill) Delete(c *ctx.Context) error {
-	if s.IsBuiltin == 1 {
-		return fmt.Errorf("builtin skill cannot be deleted")
-	}
 	return DB(c).Where("id = ?", s.Id).Delete(&AISkill{}).Error
 }

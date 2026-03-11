@@ -124,9 +124,6 @@ func (rt *Router) aiSkillDel(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
-	if obj.IsBuiltin == 1 {
-		ginx.Bomb(http.StatusForbidden, "builtin skill cannot be deleted")
-	}
 
 	// Cascade delete skill files
 	ginx.Dangerous(models.AISkillFileDeleteBySkillId(rt.Ctx, id))
@@ -566,10 +563,7 @@ type mcpTool struct {
 func listMCPTools(s *models.MCPServer) ([]mcpTool, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
 
-	hdrs := make(map[string]string)
-	if s.Headers != "" {
-		json.Unmarshal([]byte(s.Headers), &hdrs)
-	}
+	hdrs := s.Headers
 
 	// Step 1: Initialize
 	initResp, initSessionID, err := sendMCPRPC(client, s.URL, hdrs, "", 1, "initialize", map[string]interface{}{
