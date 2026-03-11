@@ -373,19 +373,14 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 	}
 	c.ShouldBindJSON(&body)
 
-	var obj *models.AIAgent
+	var obj *models.AILLMConfig
 
 	if id > 0 {
-		llmCfg, err := models.AILLMConfigGetById(rt.Ctx, id)
+		var err error
+		obj, err = models.AILLMConfigGetById(rt.Ctx, id)
 		ginx.Dangerous(err)
-		if llmCfg == nil {
+		if obj == nil {
 			ginx.Bomb(http.StatusNotFound, "ai llm config not found")
-		}
-		obj = &models.AIAgent{
-			APIType: llmCfg.APIType,
-			APIURL:  llmCfg.APIURL,
-			APIKey:  llmCfg.APIKey,
-			Model:   llmCfg.Model,
 		}
 		if body.APIType != "" {
 			obj.APIType = body.APIType
@@ -403,7 +398,7 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 		if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
 			ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
 		}
-		obj = &models.AIAgent{
+		obj = &models.AILLMConfig{
 			APIType: body.APIType,
 			APIURL:  body.APIURL,
 			APIKey:  body.APIKey,
@@ -432,53 +427,20 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 func (rt *Router) aiAgentTest(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 
-	// Try to read override values from request body
-	var body struct {
-		APIType string `json:"api_type"`
-		APIURL  string `json:"api_url"`
-		APIKey  string `json:"api_key"`
-		Model   string `json:"model"`
+	agent, err := models.AIAgentGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if agent == nil {
+		ginx.Bomb(http.StatusNotFound, "ai agent not found")
 	}
-	c.ShouldBindJSON(&body)
 
-	var obj *models.AIAgent
-
-	if id > 0 {
-		// Load from database as base
-		var err error
-		obj, err = models.AIAgentGetById(rt.Ctx, id)
-		ginx.Dangerous(err)
-		if obj == nil {
-			ginx.Bomb(http.StatusNotFound, "ai agent not found")
-		}
-		// Override with body values if provided
-		if body.APIType != "" {
-			obj.APIType = body.APIType
-		}
-		if body.APIURL != "" {
-			obj.APIURL = body.APIURL
-		}
-		if body.APIKey != "" {
-			obj.APIKey = body.APIKey
-		}
-		if body.Model != "" {
-			obj.Model = body.Model
-		}
-	} else {
-		// No id, use body values directly (new agent test)
-		if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
-			ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
-		}
-		obj = &models.AIAgent{
-			APIType: body.APIType,
-			APIURL:  body.APIURL,
-			APIKey:  body.APIKey,
-			Model:   body.Model,
-		}
+	llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
+	ginx.Dangerous(err)
+	if llmCfg == nil {
+		ginx.Bomb(http.StatusBadRequest, "referenced LLM config not found")
 	}
 
 	start := time.Now()
-	testErr := testAIAgent(obj)
+	testErr := testAIAgent(llmCfg)
 	durationMs := time.Since(start).Milliseconds()
 
 	result := gin.H{
@@ -491,7 +453,7 @@ func (rt *Router) aiAgentTest(c *gin.Context) {
 	ginx.NewRender(c).Data(result, nil)
 }
 
-func testAIAgent(p *models.AIAgent) error {
+func testAIAgent(p *models.AILLMConfig) error {
 	client := &http.Client{Timeout: 30 * time.Second}
 
 	var reqURL string

@@ -196,28 +196,17 @@ func (rt *Router) aiChat(c *gin.Context) {
 	// Find AI agent by use_case
 	agent, err := models.AIAgentGetByUseCase(rt.Ctx, handler.useCase)
 	if err != nil || agent == nil {
-		agent, err = models.AIAgentGetDefault(rt.Ctx)
-	}
-	if err != nil || agent == nil {
 		ginx.Bomb(http.StatusBadRequest, "no AI agent configured for use_case=%s", handler.useCase)
 		return
 	}
 
 	// Resolve LLM config
-	if agent.LLMConfigId > 0 {
-		llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
-		if err != nil || llmCfg == nil {
-			ginx.Bomb(http.StatusBadRequest, "referenced LLM config not found")
-			return
-		}
-		agent.APIType = llmCfg.APIType
-		agent.APIURL = llmCfg.APIURL
-		agent.APIKey = llmCfg.APIKey
-		agent.Model = llmCfg.Model
-		if llmCfg.ExtraConfig != "" && agent.ExtraConfig == "" {
-			agent.ExtraConfig = llmCfg.ExtraConfig
-		}
+	llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
+	if err != nil || llmCfg == nil {
+		ginx.Bomb(http.StatusBadRequest, "referenced LLM config not found")
+		return
 	}
+	agent.LLMConfig = llmCfg
 
 	// Select tools
 	var tools []aiagent.AgentTool
@@ -234,8 +223,8 @@ func (rt *Router) aiChat(c *gin.Context) {
 		MaxTokens      int     `json:"max_tokens"`
 		TimeoutSeconds int     `json:"timeout_seconds"`
 	}
-	if agent.ExtraConfig != "" {
-		json.Unmarshal([]byte(agent.ExtraConfig), &extraConfig)
+	if llmCfg.ExtraConfig != "" {
+		json.Unmarshal([]byte(llmCfg.ExtraConfig), &extraConfig)
 	}
 
 	timeout := 120000
@@ -257,10 +246,10 @@ func (rt *Router) aiChat(c *gin.Context) {
 
 	// Create agent
 	agentCfg := aiagent.NewAgent(&aiagent.AIAgentConfig{
-		Provider:           agent.APIType,
-		LLMURL:             agent.APIURL,
-		Model:              agent.Model,
-		APIKey:             agent.APIKey,
+		Provider:           llmCfg.APIType,
+		LLMURL:             llmCfg.APIURL,
+		Model:              llmCfg.Model,
+		APIKey:             llmCfg.APIKey,
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            timeout,
