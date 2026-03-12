@@ -71,7 +71,7 @@ func (s *MCPServer) Create(c *ctx.Context) error {
 
 func (s *MCPServer) Update(c *ctx.Context, ref MCPServer) error {
 	ref.UpdatedAt = time.Now().Unix()
-	return DB(c).Model(s).Select("name", "url", "headers", "env_vars", "description",
+	return DB(c).Model(s).Select("name", "url", "headers", "description",
 		"enabled", "updated_at", "updated_by").Updates(ref).Error
 }
 

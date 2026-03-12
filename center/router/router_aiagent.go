@@ -243,11 +243,16 @@ func (rt *Router) aiChat(c *gin.Context) {
 		LLMURL:             llmCfg.APIURL,
 		Model:              llmCfg.Model,
 		APIKey:             llmCfg.APIKey,
+		Headers:            extraConfig.CustomHeaders,
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            timeout,
 		Stream:             true,
 		UserPromptTemplate: userPrompt,
+		SkipSSLVerify:      extraConfig.SkipTLSVerify,
+		Proxy:              extraConfig.Proxy,
+		Temperature:        extraConfig.Temperature,
+		MaxTokens:          extraConfig.MaxTokens,
 	})
 
 	// Inject PromClient getter

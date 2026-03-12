@@ -548,7 +548,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
 		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
 		pages.POST("/ai-agent/:id/test", rt.auth(), rt.admin(), rt.aiAgentTest)
-		pages.POST("/mcp-server/:id/test", rt.auth(), rt.admin(), rt.mcpServerTest)
+		pages.POST("/mcp-server/test", rt.auth(), rt.admin(), rt.mcpServerTest)
 		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
 
 		// AI Conversations

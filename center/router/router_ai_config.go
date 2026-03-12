@@ -2,10 +2,12 @@ package router
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -451,7 +453,25 @@ func (rt *Router) aiAgentTest(c *gin.Context) {
 }
 
 func testAIAgent(p *models.AILLMConfig) error {
-	client := &http.Client{Timeout: 30 * time.Second}
+	extra := p.ExtraConfig
+
+	// Build HTTP client with ExtraConfig settings
+	timeout := 30 * time.Second
+	if extra.TimeoutSeconds > 0 {
+		timeout = time.Duration(extra.TimeoutSeconds) * time.Second
+	}
+
+	transport := &http.Transport{}
+	if extra.SkipTLSVerify {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	if extra.Proxy != "" {
+		if proxyURL, err := url.Parse(extra.Proxy); err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		}
+	}
+
+	client := &http.Client{Timeout: timeout, Transport: transport}
 
 	var reqURL string
 	var reqBody []byte
@@ -498,6 +518,10 @@ func testAIAgent(p *models.AILLMConfig) error {
 	for k, v := range hdrs {
 		req.Header.Set(k, v)
 	}
+	// Apply custom headers from ExtraConfig
+	for k, v := range extra.CustomHeaders {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -520,11 +544,19 @@ func testAIAgent(p *models.AILLMConfig) error {
 // ========================
 
 func (rt *Router) mcpServerTest(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-	obj, err := models.MCPServerGetById(rt.Ctx, id)
-	ginx.Dangerous(err)
-	if obj == nil {
-		ginx.Bomb(http.StatusNotFound, "mcp server not found")
+	var body struct {
+		URL     string            `json:"url"`
+		Headers map[string]string `json:"headers"`
+	}
+	ginx.BindJSON(c, &body)
+
+	if body.URL == "" {
+		ginx.Bomb(http.StatusBadRequest, "url is required")
+	}
+
+	obj := &models.MCPServer{
+		URL:     body.URL,
+		Headers: body.Headers,
 	}
 
 	start := time.Now()

@@ -105,6 +105,10 @@ type AIAgentConfig struct {
 	SkipSSLVerify bool   `json:"skip_ssl_verify"`
 	Proxy         string `json:"proxy"`
 
+	// LLM 参数（来自 LLMExtraConfig）
+	Temperature *float64 `json:"temperature,omitempty"`
+	MaxTokens   *int     `json:"max_tokens,omitempty"`
+
 	// 内部使用
 	llmClient        llm.LLM                     `json:"-"` // 多 Provider LLM 客户端
 	skillRegistry    *SkillRegistry              `json:"-"`
@@ -706,9 +710,16 @@ func (c *AIAgentConfig) callLLM(ctx context.Context, messages []ChatMessage) (st
 	}
 
 	// 调用 LLM
-	resp, err := c.llmClient.Generate(ctx, &llm.GenerateRequest{
+	req := &llm.GenerateRequest{
 		Messages: llmMessages,
-	})
+	}
+	if c.Temperature != nil {
+		req.Temperature = *c.Temperature
+	}
+	if c.MaxTokens != nil {
+		req.MaxTokens = *c.MaxTokens
+	}
+	resp, err := c.llmClient.Generate(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("LLM generate error: %w", err)
 	}
@@ -3217,9 +3228,16 @@ func (c *AIAgentConfig) callLLMWithStreamOutput(ctx context.Context, messages []
 	// 调用 LLM 流式接口
 	logger.Infof("[QGen] Calling GenerateStream with %d messages", len(llmMessages))
 	streamStart := time.Now()
-	stream, err := c.llmClient.GenerateStream(ctx, &llm.GenerateRequest{
+	streamReq := &llm.GenerateRequest{
 		Messages: llmMessages,
-	})
+	}
+	if c.Temperature != nil {
+		streamReq.Temperature = *c.Temperature
+	}
+	if c.MaxTokens != nil {
+		streamReq.MaxTokens = *c.MaxTokens
+	}
+	stream, err := c.llmClient.GenerateStream(ctx, streamReq)
 	if err != nil {
 		logger.Errorf("[QGen] GenerateStream failed after %v: %v", time.Since(streamStart), err)
 		return "", fmt.Errorf("LLM stream error: %w", err)
