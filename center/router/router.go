@@ -530,7 +530,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/ai-llm-configs", rt.auth(), rt.admin(), rt.aiLLMConfigAdd)
 		pages.PUT("/ai-llm-config/:id", rt.auth(), rt.admin(), rt.aiLLMConfigPut)
 		pages.DELETE("/ai-llm-config/:id", rt.auth(), rt.admin(), rt.aiLLMConfigDel)
-		pages.POST("/ai-llm-config/:id/test", rt.auth(), rt.admin(), rt.aiLLMConfigTest)
+		pages.POST("/ai-llm-config/test", rt.auth(), rt.admin(), rt.aiLLMConfigTest)
 
 		pages.GET("/ai-skills", rt.auth(), rt.admin(), rt.aiSkillGets)
 		pages.GET("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillGet)

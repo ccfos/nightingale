@@ -362,47 +362,25 @@ func (rt *Router) aiLLMConfigDel(c *gin.Context) {
 }
 
 func (rt *Router) aiLLMConfigTest(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-
 	var body struct {
-		APIType string `json:"api_type"`
-		APIURL  string `json:"api_url"`
-		APIKey  string `json:"api_key"`
-		Model   string `json:"model"`
+		APIType     string                `json:"api_type"`
+		APIURL      string                `json:"api_url"`
+		APIKey      string                `json:"api_key"`
+		Model       string                `json:"model"`
+		ExtraConfig models.LLMExtraConfig `json:"extra_config"`
 	}
-	c.ShouldBindJSON(&body)
+	ginx.BindJSON(c, &body)
 
-	var obj *models.AILLMConfig
+	if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
+		ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
+	}
 
-	if id > 0 {
-		var err error
-		obj, err = models.AILLMConfigGetById(rt.Ctx, id)
-		ginx.Dangerous(err)
-		if obj == nil {
-			ginx.Bomb(http.StatusNotFound, "ai llm config not found")
-		}
-		if body.APIType != "" {
-			obj.APIType = body.APIType
-		}
-		if body.APIURL != "" {
-			obj.APIURL = body.APIURL
-		}
-		if body.APIKey != "" {
-			obj.APIKey = body.APIKey
-		}
-		if body.Model != "" {
-			obj.Model = body.Model
-		}
-	} else {
-		if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
-			ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
-		}
-		obj = &models.AILLMConfig{
-			APIType: body.APIType,
-			APIURL:  body.APIURL,
-			APIKey:  body.APIKey,
-			Model:   body.Model,
-		}
+	obj := &models.AILLMConfig{
+		APIType:     body.APIType,
+		APIURL:      body.APIURL,
+		APIKey:      body.APIKey,
+		Model:       body.Model,
+		ExtraConfig: body.ExtraConfig,
 	}
 
 	start := time.Now()
@@ -413,10 +391,7 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 		"success":     testErr == nil,
 		"duration_ms": durationMs,
 	}
-	if testErr != nil {
-		result["error"] = testErr.Error()
-	}
-	ginx.NewRender(c).Data(result, nil)
+	ginx.NewRender(c).Data(result, testErr)
 }
 
 // ========================
