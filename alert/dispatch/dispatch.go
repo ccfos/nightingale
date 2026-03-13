@@ -604,11 +604,12 @@ func NeedBatchContacts(requestConfig *models.HTTPRequestConfig) bool {
 // isSubscribe: 告警事件是否由subscribe的配置产生
 func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bool) {
 	go e.HandleEventWithNotifyRule(event)
-	if !isSubscribe {
-		go sender.SendStaticGlobalWebhook(e.ctx, event.DeepCopy(), e.Astats)
-	}
 	if event.IsRecovered && event.NotifyRecovered == 0 {
 		return
+	}
+
+	if !isSubscribe {
+		go sender.SendStaticGlobalWebhook(e.ctx, event.DeepCopy(), e.Astats)
 	}
 
 	rule := e.alertRuleCache.Get(event.RuleId)

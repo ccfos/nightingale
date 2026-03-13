@@ -21,6 +21,8 @@ import (
 var staticGlobalWebhookClient *http.Client
 var staticGlobalWebhookConf aconf.GlobalWebhook
 
+const staticGlobalWebhookChannel = "static_global_webhook"
+
 func InitStaticGlobalWebhook(conf aconf.GlobalWebhook) {
 	staticGlobalWebhookConf = conf
 	if !conf.Enable || conf.Url == "" {
@@ -62,13 +64,15 @@ func SendStaticGlobalWebhook(ctx *ctx.Context, event *models.AlertCurEvent, stat
 
 	bs, err := json.Marshal(event)
 	if err != nil {
-		logger.Errorf("static_global_webhook failed to marshal event err:%v", err)
+		logger.Errorf("%s failed to marshal event err:%v", staticGlobalWebhookChannel, err)
+		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, "", err)
 		return
 	}
 
 	req, err := http.NewRequest("POST", staticGlobalWebhookConf.Url, bytes.NewBuffer(bs))
 	if err != nil {
-		logger.Warningf("static_global_webhook failed to new request event:%s err:%v", string(bs), err)
+		logger.Warningf("%s failed to new request event:%s err:%v", staticGlobalWebhookChannel, string(bs), err)
+		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, "", err)
 		return
 	}
 
@@ -87,11 +91,12 @@ func SendStaticGlobalWebhook(ctx *ctx.Context, event *models.AlertCurEvent, stat
 		}
 	}
 
-	stats.AlertNotifyTotal.WithLabelValues("static_global_webhook").Inc()
+	stats.AlertNotifyTotal.WithLabelValues(staticGlobalWebhookChannel).Inc()
 	resp, err := staticGlobalWebhookClient.Do(req)
 	if err != nil {
-		stats.AlertNotifyErrorTotal.WithLabelValues("static_global_webhook").Inc()
-		logger.Errorf("static_global_webhook_fail url:%s event:%s error:%v", staticGlobalWebhookConf.Url, event.Hash, err)
+		stats.AlertNotifyErrorTotal.WithLabelValues(staticGlobalWebhookChannel).Inc()
+		logger.Errorf("%s_fail url:%s event:%s error:%v", staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, event.Hash, err)
+		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, "", err)
 		return
 	}
 
@@ -100,12 +105,12 @@ func SendStaticGlobalWebhook(ctx *ctx.Context, event *models.AlertCurEvent, stat
 
 	res := fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body))
 	if resp.StatusCode >= 400 {
-		stats.AlertNotifyErrorTotal.WithLabelValues("static_global_webhook").Inc()
-		logger.Errorf("static_global_webhook_fail url:%s status:%d body:%s event:%s", staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
-		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "static_global_webhook", staticGlobalWebhookConf.Url, res, fmt.Errorf("status code %d", resp.StatusCode))
+		stats.AlertNotifyErrorTotal.WithLabelValues(staticGlobalWebhookChannel).Inc()
+		logger.Errorf("%s_fail url:%s status:%d body:%s event:%s", staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, res, fmt.Errorf("status code %d", resp.StatusCode))
 		return
 	}
 
-	logger.Debugf("static_global_webhook_succ url:%s status:%d body:%s event:%s", staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
-	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "static_global_webhook", staticGlobalWebhookConf.Url, res, nil)
+	logger.Debugf("%s_succ url:%s status:%d body:%s event:%s", staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, staticGlobalWebhookChannel, staticGlobalWebhookConf.Url, res, nil)
 }
