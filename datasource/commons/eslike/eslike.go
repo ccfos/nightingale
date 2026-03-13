@@ -599,6 +599,19 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	GetBuckets("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
 
+	// Drop the last incomplete bucket to avoid inaccurate values at the boundary.
+	// When the last bucket's time range extends beyond or reaches the query end time,
+	// it may contain only partial data, making aggregated values (count, sum, etc.) artificially low.
+	for k, v := range metrics.Data {
+		if len(v) <= 1 {
+			continue
+		}
+		lastTs := v[len(v)-1][0]
+		if int64(lastTs)+param.Interval > end {
+			metrics.Data[k] = v[:len(v)-1]
+		}
+	}
+
 	items, err := TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
 
 	var m map[string]interface{}
