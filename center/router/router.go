@@ -522,11 +522,13 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// AI Config management
 		pages.GET("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentGets)
+		pages.GET("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentGet)
 		pages.POST("/ai-agents", rt.auth(), rt.admin(), rt.aiAgentAdd)
 		pages.PUT("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentPut)
 		pages.DELETE("/ai-agent/:id", rt.auth(), rt.admin(), rt.aiAgentDel)
 
 		pages.GET("/ai-llm-configs", rt.auth(), rt.admin(), rt.aiLLMConfigGets)
+		pages.GET("/ai-llm-config/:id", rt.auth(), rt.admin(), rt.aiLLMConfigGet)
 		pages.POST("/ai-llm-configs", rt.auth(), rt.admin(), rt.aiLLMConfigAdd)
 		pages.PUT("/ai-llm-config/:id", rt.auth(), rt.admin(), rt.aiLLMConfigPut)
 		pages.DELETE("/ai-llm-config/:id", rt.auth(), rt.admin(), rt.aiLLMConfigDel)
@@ -538,12 +540,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillPut)
 		pages.DELETE("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillDel)
 		pages.POST("/ai-skills/import", rt.auth(), rt.admin(), rt.aiSkillImport)
-		pages.GET("/ai-skill/:id/files", rt.auth(), rt.admin(), rt.aiSkillFileGets)
 		pages.POST("/ai-skill/:id/files", rt.auth(), rt.admin(), rt.aiSkillFileAdd)
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileDel)
 
 		pages.GET("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerGets)
+		pages.GET("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerGet)
 		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
 		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
 		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)

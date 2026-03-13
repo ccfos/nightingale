@@ -29,6 +29,16 @@ func (rt *Router) aiAgentGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, nil)
 }
 
+func (rt *Router) aiAgentGet(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.AIAgentGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "ai agent not found")
+	}
+	ginx.NewRender(c).Data(obj, nil)
+}
+
 func (rt *Router) aiAgentAdd(c *gin.Context) {
 	var obj models.AIAgent
 	ginx.BindJSON(c, &obj)
@@ -85,6 +95,12 @@ func (rt *Router) aiSkillGet(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
+
+	// Include associated files (without content)
+	files, err := models.AISkillFileGets(rt.Ctx, id)
+	ginx.Dangerous(err)
+	obj.Files = files
+
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -145,15 +161,19 @@ func (rt *Router) aiSkillImport(c *gin.Context) {
 	content, err := io.ReadAll(file)
 	ginx.Dangerous(err)
 
-	name, description, instructions := parseSkillMarkdown(string(content), header.Filename, ext)
+	meta, instructions := parseSkillMarkdown(string(content), header.Filename, ext)
 	me := c.MustGet("user").(*models.User)
 
 	skill := models.AISkill{
-		Name:         name,
-		Description:  description,
-		Instructions: instructions,
-		CreatedBy:    me.Username,
-		UpdatedBy:    me.Username,
+		Name:          meta.Name,
+		Description:   meta.Description,
+		Instructions:  instructions,
+		License:       meta.License,
+		Compatibility: meta.Compatibility,
+		Metadata:      meta.Metadata,
+		AllowedTools:  meta.AllowedTools,
+		CreatedBy:     me.Username,
+		UpdatedBy:     me.Username,
 	}
 	ginx.Dangerous(skill.Create(rt.Ctx))
 	ginx.NewRender(c).Data(skill.Id, nil)
@@ -167,7 +187,16 @@ func (rt *Router) aiSkillImport(c *gin.Context) {
 //	description: what this skill does
 //	---
 //	# Actual instructions content...
-func parseSkillMarkdown(content, filename, ext string) (name, description, instructions string) {
+type skillFrontmatter struct {
+	Name          string            `yaml:"name"`
+	Description   string            `yaml:"description"`
+	License       string            `yaml:"license"`
+	Compatibility string            `yaml:"compatibility"`
+	Metadata      map[string]string `yaml:"metadata"`
+	AllowedTools  string            `yaml:"allowed-tools"`
+}
+
+func parseSkillMarkdown(content, filename, ext string) (meta skillFrontmatter, instructions string) {
 	text := strings.TrimSpace(content)
 
 	// Try to parse YAML frontmatter (between --- delimiters)
@@ -177,30 +206,20 @@ func parseSkillMarkdown(content, filename, ext string) (name, description, instr
 			frontmatter := text[3 : 3+endIdx]
 			body := strings.TrimSpace(text[3+endIdx+4:]) // skip past closing ---
 
-			var meta struct {
-				Name        string `yaml:"name"`
-				Description string `yaml:"description"`
-			}
 			if yaml.Unmarshal([]byte(frontmatter), &meta) == nil && meta.Name != "" {
-				return meta.Name, meta.Description, body
+				return meta, body
 			}
 		}
 	}
 
 	// No valid frontmatter, fallback: filename as name, entire content as instructions
-	return strings.TrimSuffix(filename, ext), "", content
+	meta.Name = strings.TrimSuffix(filename, ext)
+	return meta, content
 }
 
 // ========================
 // AI Skill File handlers
 // ========================
-
-func (rt *Router) aiSkillFileGets(c *gin.Context) {
-	skillId := ginx.UrlParamInt64(c, "id")
-	lst, err := models.AISkillFileGets(rt.Ctx, skillId)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(lst, nil)
-}
 
 func (rt *Router) aiSkillFileAdd(c *gin.Context) {
 	skillId := ginx.UrlParamInt64(c, "id")
@@ -272,6 +291,16 @@ func (rt *Router) mcpServerGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, nil)
 }
 
+func (rt *Router) mcpServerGet(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.MCPServerGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "mcp server not found")
+	}
+	ginx.NewRender(c).Data(obj, nil)
+}
+
 func (rt *Router) mcpServerAdd(c *gin.Context) {
 	var obj models.MCPServer
 	ginx.BindJSON(c, &obj)
@@ -321,6 +350,16 @@ func (rt *Router) aiLLMConfigGets(c *gin.Context) {
 	lst, err := models.AILLMConfigGets(rt.Ctx)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(lst, nil)
+}
+
+func (rt *Router) aiLLMConfigGet(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.AILLMConfigGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "ai llm config not found")
+	}
+	ginx.NewRender(c).Data(obj, nil)
 }
 
 func (rt *Router) aiLLMConfigAdd(c *gin.Context) {

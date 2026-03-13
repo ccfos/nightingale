@@ -9,15 +9,22 @@ import (
 )
 
 type AISkill struct {
-	Id           int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Instructions string `json:"instructions" gorm:"type:text"`
-	Enabled      int    `json:"enabled"`
-	CreatedAt    int64  `json:"created_at"`
-	CreatedBy    string `json:"created_by"`
-	UpdatedAt    int64  `json:"updated_at"`
-	UpdatedBy    string `json:"updated_by"`
+	Id            int64             `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description"`
+	Instructions  string            `json:"instructions" gorm:"type:text"`
+	License       string            `json:"license,omitempty"`
+	Compatibility string            `json:"compatibility,omitempty"`
+	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
+	AllowedTools  string            `json:"allowed_tools,omitempty"`
+	Enabled       int               `json:"enabled"`
+	CreatedAt     int64             `json:"created_at"`
+	CreatedBy     string            `json:"created_by"`
+	UpdatedAt     int64             `json:"updated_at"`
+	UpdatedBy     string            `json:"updated_by"`
+
+	// Runtime fields, not stored in DB
+	Files []*AISkillFile `json:"files,omitempty" gorm:"-"`
 }
 
 func (s *AISkill) TableName() string {
@@ -74,7 +81,9 @@ func (s *AISkill) Create(c *ctx.Context) error {
 
 func (s *AISkill) Update(c *ctx.Context, ref AISkill) error {
 	ref.UpdatedAt = time.Now().Unix()
-	return DB(c).Model(s).Select("name", "description", "instructions", "enabled", "updated_at", "updated_by").Updates(ref).Error
+	return DB(c).Model(s).Select("name", "description", "instructions",
+		"license", "compatibility", "metadata", "allowed_tools",
+		"enabled", "updated_at", "updated_by").Updates(ref).Error
 }
 
 func (s *AISkill) Delete(c *ctx.Context) error {
