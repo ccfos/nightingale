@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -11,22 +12,23 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/toolkits/pkg/logger"
 )
 
-var globalWebhookClient *http.Client
-var globalWebhookConf aconf.GlobalWebhook
+var staticGlobalWebhookClient *http.Client
+var staticGlobalWebhookConf aconf.GlobalWebhook
 
-func InitGlobalWebhook(conf aconf.GlobalWebhook) {
-	globalWebhookConf = conf
+func InitStaticGlobalWebhook(conf aconf.GlobalWebhook) {
+	staticGlobalWebhookConf = conf
 	if !conf.Enable || conf.Url == "" {
 		return
 	}
 
 	if len(conf.Headers) > 0 && len(conf.Headers)%2 != 0 {
-		logger.Warningf("global_webhook headers count is odd(%d), headers will be ignored", len(conf.Headers))
+		logger.Warningf("static_global_webhook headers count is odd(%d), headers will be ignored", len(conf.Headers))
 	}
 
 	timeout := conf.Timeout
@@ -45,62 +47,65 @@ func InitGlobalWebhook(conf aconf.GlobalWebhook) {
 		transport.Proxy = http.ProxyFromEnvironment
 	}
 
-	globalWebhookClient = &http.Client{
+	staticGlobalWebhookClient = &http.Client{
 		Timeout:   time.Duration(timeout) * time.Second,
 		Transport: transport,
 	}
 
-	logger.Infof("global_webhook initialized, url:%s", conf.Url)
+	logger.Infof("static_global_webhook initialized, url:%s", conf.Url)
 }
 
-func SendGlobalWebhook(event *models.AlertCurEvent, stats *astats.Stats) {
-	if globalWebhookClient == nil {
+func SendStaticGlobalWebhook(ctx *ctx.Context, event *models.AlertCurEvent, stats *astats.Stats) {
+	if staticGlobalWebhookClient == nil {
 		return
 	}
 
 	bs, err := json.Marshal(event)
 	if err != nil {
-		logger.Errorf("global_webhook failed to marshal event err:%v", err)
+		logger.Errorf("static_global_webhook failed to marshal event err:%v", err)
 		return
 	}
 
-	req, err := http.NewRequest("POST", globalWebhookConf.Url, bytes.NewBuffer(bs))
+	req, err := http.NewRequest("POST", staticGlobalWebhookConf.Url, bytes.NewBuffer(bs))
 	if err != nil {
-		logger.Warningf("global_webhook failed to new request event:%s err:%v", string(bs), err)
+		logger.Warningf("static_global_webhook failed to new request event:%s err:%v", string(bs), err)
 		return
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if globalWebhookConf.BasicAuthUser != "" && globalWebhookConf.BasicAuthPass != "" {
-		req.SetBasicAuth(globalWebhookConf.BasicAuthUser, globalWebhookConf.BasicAuthPass)
+	if staticGlobalWebhookConf.BasicAuthUser != "" && staticGlobalWebhookConf.BasicAuthPass != "" {
+		req.SetBasicAuth(staticGlobalWebhookConf.BasicAuthUser, staticGlobalWebhookConf.BasicAuthPass)
 	}
 
-	if len(globalWebhookConf.Headers) > 0 && len(globalWebhookConf.Headers)%2 == 0 {
-		for i := 0; i < len(globalWebhookConf.Headers); i += 2 {
-			if globalWebhookConf.Headers[i] == "Host" || globalWebhookConf.Headers[i] == "host" {
-				req.Host = globalWebhookConf.Headers[i+1]
+	if len(staticGlobalWebhookConf.Headers) > 0 && len(staticGlobalWebhookConf.Headers)%2 == 0 {
+		for i := 0; i < len(staticGlobalWebhookConf.Headers); i += 2 {
+			if staticGlobalWebhookConf.Headers[i] == "Host" || staticGlobalWebhookConf.Headers[i] == "host" {
+				req.Host = staticGlobalWebhookConf.Headers[i+1]
 				continue
 			}
-			req.Header.Set(globalWebhookConf.Headers[i], globalWebhookConf.Headers[i+1])
+			req.Header.Set(staticGlobalWebhookConf.Headers[i], staticGlobalWebhookConf.Headers[i+1])
 		}
 	}
 
-	stats.AlertNotifyTotal.WithLabelValues("global_webhook").Inc()
-	resp, err := globalWebhookClient.Do(req)
+	stats.AlertNotifyTotal.WithLabelValues("static_global_webhook").Inc()
+	resp, err := staticGlobalWebhookClient.Do(req)
 	if err != nil {
-		stats.AlertNotifyErrorTotal.WithLabelValues("global_webhook").Inc()
-		logger.Errorf("global_webhook_fail url:%s event:%s error:%v", globalWebhookConf.Url, event.Hash, err)
+		stats.AlertNotifyErrorTotal.WithLabelValues("static_global_webhook").Inc()
+		logger.Errorf("static_global_webhook_fail url:%s event:%s error:%v", staticGlobalWebhookConf.Url, event.Hash, err)
 		return
 	}
 
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 
+	res := fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body))
 	if resp.StatusCode >= 400 {
-		stats.AlertNotifyErrorTotal.WithLabelValues("global_webhook").Inc()
-		logger.Errorf("global_webhook_fail url:%s status:%d body:%s event:%s", globalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+		stats.AlertNotifyErrorTotal.WithLabelValues("static_global_webhook").Inc()
+		logger.Errorf("static_global_webhook_fail url:%s status:%d body:%s event:%s", staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+		NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "static_global_webhook", staticGlobalWebhookConf.Url, res, fmt.Errorf("status code %d", resp.StatusCode))
 		return
 	}
 
-	logger.Debugf("global_webhook_succ url:%s status:%d body:%s event:%s", globalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+	logger.Debugf("static_global_webhook_succ url:%s status:%d body:%s event:%s", staticGlobalWebhookConf.Url, resp.StatusCode, string(body), event.Hash)
+	NotifyRecord(ctx, []*models.AlertCurEvent{event}, 0, "static_global_webhook", staticGlobalWebhookConf.Url, res, nil)
 }
