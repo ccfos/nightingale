@@ -608,6 +608,10 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 		return
 	}
 
+	if !isSubscribe {
+		go sender.SendStaticGlobalWebhook(e.ctx, event.DeepCopy(), e.Astats)
+	}
+
 	rule := e.alertRuleCache.Get(event.RuleId)
 	if rule == nil {
 		return
