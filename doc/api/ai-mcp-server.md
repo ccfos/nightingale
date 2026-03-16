@@ -13,7 +13,7 @@
 | url | string | 是 | MCP Server 地址 |
 | headers | map[string]string | 否 | 自定义 HTTP 请求头，用于认证等 |
 | description | string | 否 | 描述 |
-| enabled | int | 否 | 是否启用，默认 1 |
+| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
@@ -40,7 +40,7 @@ GET /api/n9e/mcp-servers
         "Authorization": "Bearer xxx"
       },
       "description": "示例 MCP Server",
-      "enabled": 1,
+      "enabled": true,
       "created_at": 1710000000,
       "created_by": "admin",
       "updated_at": 1710000000,
@@ -77,7 +77,7 @@ GET /api/n9e/mcp-server/:id
       "Authorization": "Bearer xxx"
     },
     "description": "示例 MCP Server",
-    "enabled": 1,
+    "enabled": true,
     "created_at": 1710000000,
     "created_by": "admin",
     "updated_at": 1710000000,
@@ -109,7 +109,7 @@ POST /api/n9e/mcp-servers
     "Authorization": "Bearer xxx"
   },
   "description": "示例 MCP Server",
-  "enabled": 1
+  "enabled": true
 }
 ```
 

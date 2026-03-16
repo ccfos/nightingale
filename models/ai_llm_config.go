@@ -27,7 +27,7 @@ type AILLMConfig struct {
 	APIKey      string         `json:"api_key"`
 	Model       string         `json:"model"`
 	ExtraConfig LLMExtraConfig `json:"extra_config" gorm:"serializer:json"`
-	Enabled     int            `json:"enabled"`
+	Enabled     bool           `json:"enabled"`
 	CreatedAt   int64          `json:"created_at"`
 	CreatedBy   string         `json:"created_by"`
 	UpdatedAt   int64          `json:"updated_at"`
@@ -81,7 +81,7 @@ func AILLMConfigGetById(c *ctx.Context, id int64) (*AILLMConfig, error) {
 
 func AILLMConfigGetEnabled(c *ctx.Context) ([]*AILLMConfig, error) {
 	var lst []*AILLMConfig
-	err := DB(c).Where("enabled = 1").Order("id").Find(&lst).Error
+	err := DB(c).Where("enabled = ?", true).Order("id").Find(&lst).Error
 	return lst, err
 }
 
@@ -91,9 +91,6 @@ func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
 	a.UpdatedAt = now
 	a.CreatedBy = username
 	a.UpdatedBy = username
-	if a.Enabled == 0 {
-		a.Enabled = 1
-	}
 	return Insert(c, a)
 }
 

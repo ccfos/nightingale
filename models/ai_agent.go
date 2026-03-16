@@ -15,7 +15,7 @@ type AIAgent struct {
 	LLMConfigId  int64   `json:"llm_config_id"`
 	SkillIds     []int64 `json:"skill_ids" gorm:"serializer:json"`
 	MCPServerIds []int64 `json:"mcp_server_ids" gorm:"serializer:json"`
-	Enabled      int     `json:"enabled"`
+	Enabled      bool    `json:"enabled"`
 	CreatedAt    int64   `json:"created_at"`
 	CreatedBy    string  `json:"created_by"`
 	UpdatedAt    int64   `json:"updated_at"`
@@ -67,10 +67,6 @@ func (a *AIAgent) Create(c *ctx.Context, username string) error {
 	a.UpdatedAt = now
 	a.CreatedBy = username
 	a.UpdatedBy = username
-	if a.Enabled == 0 {
-		a.Enabled = 1
-	}
-
 	return Insert(c, a)
 }
 
@@ -88,7 +84,7 @@ func (a *AIAgent) Delete(c *ctx.Context) error {
 }
 
 func AIAgentGetByUseCase(c *ctx.Context, useCase string) (*AIAgent, error) {
-	return AIAgentGet(c, "use_case = ? and enabled = 1", useCase)
+	return AIAgentGet(c, "use_case = ? and enabled = ?", useCase, true)
 }
 
 func AIAgentStatistics(c *ctx.Context) (*Statistics, error) {

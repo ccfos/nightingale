@@ -15,7 +15,7 @@
 | llm_config_id | int64 | 是 | 关联的 LLM 配置 ID |
 | skill_ids | int64[] | 否 | 关联的 Skill ID 列表 |
 | mcp_server_ids | int64[] | 否 | 关联的 MCP Server ID 列表 |
-| enabled | int | 否 | 是否启用，默认 1 |
+| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
@@ -43,7 +43,7 @@ GET /api/n9e/ai-agents
       "llm_config_id": 1,
       "skill_ids": [1, 2],
       "mcp_server_ids": [1],
-      "enabled": 1,
+      "enabled": true,
       "created_at": 1710000000,
       "created_by": "admin",
       "updated_at": 1710000000,
@@ -80,7 +80,7 @@ GET /api/n9e/ai-agent/:id
     "llm_config_id": 1,
     "skill_ids": [1, 2],
     "mcp_server_ids": [1],
-    "enabled": 1,
+    "enabled": true,
     "created_at": 1710000000,
     "created_by": "admin",
     "updated_at": 1710000000,
@@ -112,7 +112,7 @@ POST /api/n9e/ai-agents
   "llm_config_id": 1,
   "skill_ids": [1, 2],
   "mcp_server_ids": [1],
-  "enabled": 1
+  "enabled": true
 }
 ```
 
@@ -156,7 +156,7 @@ PUT /api/n9e/ai-agent/:id
   "llm_config_id": 2,
   "skill_ids": [1, 3],
   "mcp_server_ids": [],
-  "enabled": 1
+  "enabled": true
 }
 ```
 

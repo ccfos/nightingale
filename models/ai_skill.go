@@ -17,7 +17,7 @@ type AISkill struct {
 	Compatibility string            `json:"compatibility,omitempty"`
 	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
 	AllowedTools  string            `json:"allowed_tools,omitempty"`
-	Enabled       int               `json:"enabled"`
+	Enabled       bool              `json:"enabled"`
 	CreatedAt     int64             `json:"created_at"`
 	CreatedBy     string            `json:"created_by"`
 	UpdatedAt     int64             `json:"updated_at"`
@@ -73,9 +73,6 @@ func (s *AISkill) Create(c *ctx.Context) error {
 	now := time.Now().Unix()
 	s.CreatedAt = now
 	s.UpdatedAt = now
-	if s.Enabled == 0 {
-		s.Enabled = 1
-	}
 	return Insert(c, s)
 }
 

@@ -16,7 +16,7 @@
 | compatibility | string | 否 | 兼容性说明，如环境依赖、网络需求等 |
 | metadata | map[string]string | 否 | 扩展元数据，如 `{"author": "org", "version": "1.0"}` |
 | allowed_tools | string | 否 | 预授权工具列表，空格分隔，如 `Bash(git:*) Read` |
-| enabled | int | 否 | 是否启用，默认 1 |
+| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
@@ -68,7 +68,7 @@ GET /api/n9e/ai-skills
         "version": "1.0"
       },
       "allowed_tools": "Bash(git:*) Read",
-      "enabled": 1,
+      "enabled": true,
       "created_at": 1710000000,
       "created_by": "admin",
       "updated_at": 1710000000,
@@ -113,7 +113,7 @@ GET /api/n9e/ai-skill/:id
       "version": "1.0"
     },
     "allowed_tools": "Bash(git:*) Read",
-    "enabled": 1,
+    "enabled": true,
     "created_at": 1710000000,
     "created_by": "admin",
     "updated_at": 1710000000,
@@ -159,7 +159,7 @@ POST /api/n9e/ai-skills
     "version": "1.0"
   },
   "allowed_tools": "Bash(git:*) Read",
-  "enabled": 1
+  "enabled": true
 }
 ```
 

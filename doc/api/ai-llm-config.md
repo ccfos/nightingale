@@ -16,7 +16,7 @@
 | api_key | string | 是 | API 密钥 |
 | model | string | 是 | 模型名称 |
 | extra_config | object | 否 | 高级配置，见 LLMExtraConfig |
-| enabled | int | 否 | 是否启用，默认 1 |
+| enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
@@ -60,7 +60,7 @@ GET /api/n9e/ai-llm-configs
         "temperature": 0.7,
         "max_tokens": 4096
       },
-      "enabled": 1,
+      "enabled": true,
       "created_at": 1710000000,
       "created_by": "admin",
       "updated_at": 1710000000,
@@ -101,7 +101,7 @@ GET /api/n9e/ai-llm-config/:id
       "temperature": 0.7,
       "max_tokens": 4096
     },
-    "enabled": 1,
+    "enabled": true,
     "created_at": 1710000000,
     "created_by": "admin",
     "updated_at": 1710000000,
@@ -141,7 +141,7 @@ POST /api/n9e/ai-llm-configs
       "X-Custom": "value"
     }
   },
-  "enabled": 1
+  "enabled": true
 }
 ```
 
