@@ -177,34 +177,12 @@ func makeHTTPRequest(httpConfig *models.HTTPRequestConfig, url string, headers m
 	}
 
 	query := req.URL.Query()
-	// 设置请求头 腾讯云短信、语音特殊处理
-	// if ncc.Ident == "tx-sms" || ncc.Ident == "tx-voice" {
-	// 	headers = ncc.setTxHeader(headers, body)
-	// 	for key, value := range headers {
-	// 		req.Header.Add(key, value)
-	// 	}
-	// } else if ncc.Ident == "ali-sms" || ncc.Ident == "ali-voice" {
-	// 	req, err = http.NewRequest(httpConfig.Method, url, nil)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	query, headers = ncc.getAliQuery(ncc.Ident, query, httpConfig.Request.Parameters["AccessKeyId"], httpConfig.Request.Parameters["AccessKeySecret"], parameters)
-	// 	for key, value := range headers {
-	// 		req.Header.Set(key, value)
-	// 	}
-	// } else {
-	// 	for key, value := range headers {
-	// 		req.Header.Add(key, value)
-	// 	}
-	// }
-
-	// if ncc.Ident != "ali-sms" && ncc.Ident != "ali-voice" {
-	// 	for key, value := range parameters {
-	// 		query.Add(key, value)
-	// 	}
-	// }
-
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+	for key, value := range parameters {
+		query.Add(key, value)
+	}
 	req.URL.RawQuery = query.Encode()
 	// 记录完整的请求信息
 	logger.Debugf("URL: %v, Method: %s, Headers: %+v, params: %+v, Body: %s", req.URL, req.Method, req.Header, query, string(body))
