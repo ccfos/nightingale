@@ -278,41 +278,34 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 
 // processNotifyTask 处理通知任务（仅处理 http 类型）
 func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
-	// httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
-	// // 现在只处理 http 类型，flashduty 保持直接发送
-	// if task.NotifyChannel.RequestType == "http" {
-	// 	if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
-	// 		start := time.Now()
-	// 		resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
-	// 		resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
-	// 		logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-	// 			task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos, resp, err)
-
-	// 		// 调用通知记录回调函数
-	// 		if ncc.notifyRecordFunc != nil {
-	// 			ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, task.Sendtos), resp, err)
-	// 		}
-	// 	} else {
-	// 		for i := range task.Sendtos {
-	// 			start := time.Now()
-	// 			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
-	// 			resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
-	// 			logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-	// 				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
-
-	// 			// 调用通知记录回调函数
-	// 			if ncc.notifyRecordFunc != nil {
-	// 				ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, []string{task.Sendtos[i]}), resp, err)
-	// 			}
-	// 		}
-	// 	}
-	// }
+	// 现在只处理 http 类型，flashduty 保持直接发送
 	logger.Debugf("processNotifyTask: task: %+v", task)
-	start := time.Now()
-	result := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
-	resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), result.Response)
-	if ncc.notifyRecordFunc != nil {
-		ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, task.Request.Sendtos), resp, result.Err)
+	if task.Request.Config.RequestType == "http" {
+		if len(task.Request.Sendtos) == 0 || ncc.needBatchContacts(task.Request.Config.RequestConfig.HTTPRequestConfig) {
+			start := time.Now()
+			resut := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
+			resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resut.Response)
+			logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+				task.NotifyRuleId, task.Request.Config.Name, task.Request.Events[0].Hash, task.Request.TplContent, task.Request.CustomParams, task.Request.Sendtos, resp, resut.Err)
+
+			// 调用通知记录回调函数
+			if ncc.notifyRecordFunc != nil {
+				ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, task.Request.Sendtos), resp, resut.Err)
+			}
+		} else {
+			for i := range task.Request.Sendtos {
+				start := time.Now()
+				result := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
+				resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), result.Response)
+				logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
+					task.NotifyRuleId, task.Request.Config.Name, task.Request.Events[0].Hash, task.Request.TplContent, task.Request.CustomParams, task.Request.Sendtos[i], resp, result.Err)
+
+				// 调用通知记录回调函数
+				if ncc.notifyRecordFunc != nil {
+					ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, []string{task.Request.Sendtos[i]}), resp, result.Err)
+				}
+			}
+		}
 	}
 }
 
