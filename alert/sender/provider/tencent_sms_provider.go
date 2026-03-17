@@ -55,7 +55,7 @@ func (p *TencentSmsProvider) Notify(ctx context.Context, req *NotifyRequest) *No
 	httpConfig := req.Config.RequestConfig.HTTPRequestConfig
 	resp, err := p.sendHTTPRequest(httpConfig, req.Events, req.TplContent,
 		req.CustomParams, req.Sendtos, req.HttpClient)
-	return &NotifyResult{Target: "todo: todo", Response: resp, Err: err}
+	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
 func (p *TencentSmsProvider) DefaultChannels() []*models.NotifyChannelConfig {

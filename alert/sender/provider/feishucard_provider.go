@@ -43,7 +43,7 @@ func (p *FeishuCardProvider) Notify(ctx context.Context, req *NotifyRequest) *No
 	httpConfig := req.Config.RequestConfig.HTTPRequestConfig
 	resp, err := SendHTTPRequest(httpConfig, req.Events, req.TplContent,
 		req.CustomParams, req.Sendtos, req.HttpClient)
-	return &NotifyResult{Target: "todo: todo", Response: resp, Err: err}
+	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
 func (p *FeishuCardProvider) DefaultChannels() []*models.NotifyChannelConfig {

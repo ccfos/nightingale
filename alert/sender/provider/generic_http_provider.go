@@ -29,18 +29,6 @@ func (p *GenericHTTPProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
-func getNotifyTarget(customParams map[string]string, sendtos []string) string {
-	if len(customParams) > 0 {
-		if u, ok := customParams["callback_url"]; ok && u != "" {
-			return u
-		}
-	}
-	if len(sendtos) > 0 {
-		return sendtos[0]
-	}
-	return ""
-}
-
 func (p *GenericHTTPProvider) DefaultChannels() []*models.NotifyChannelConfig {
 	return []*models.NotifyChannelConfig{
 		{

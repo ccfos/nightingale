@@ -189,3 +189,15 @@ func makeHTTPRequest(httpConfig *models.HTTPRequestConfig, url string, headers m
 
 	return req, nil
 }
+
+func getNotifyTarget(customParams map[string]string, sendtos []string) string {
+	if len(customParams) > 0 {
+		if u, ok := customParams["callback_url"]; ok && u != "" {
+			return u
+		}
+	}
+	if len(sendtos) > 0 {
+		return sendtos[0]
+	}
+	return ""
+}
