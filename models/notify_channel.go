@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -272,55 +273,31 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 }
 
 func (ncc *NotifyChannelConfig) Verify() error {
-	// if ncc.Name == "" {
-	// 	return errors.New("channel name cannot be empty")
-	// }
+	if ncc.Name == "" {
+		return errors.New("channel name cannot be empty")
+	}
 
-	// if ncc.Ident == "" {
-	// 	return errors.New("channel identifier cannot be empty")
-	// }
+	if ncc.Ident == "" {
+		return errors.New("channel identifier cannot be empty")
+	}
 
-	// if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(ncc.Ident) {
-	// 	return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
-	// }
+	if !regexp.MustCompile("^[a-zA-Z0-9_-]+$").MatchString(ncc.Ident) {
+		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
+	}
 
-	// if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" && ncc.RequestType != "pagerduty" {
-	// 	return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
-	// }
+	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" && ncc.RequestType != "pagerduty" {
+		return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
+	}
 
-	// if ncc.ParamConfig != nil {
-	// 	for _, param := range ncc.ParamConfig.Custom.Params {
-	// 		if param.Key != "" && param.CName == "" {
-	// 			return errors.New("param items must have valid cname")
-	// 		}
-	// 	}
-	// }
+	if ncc.ParamConfig != nil {
+		for _, param := range ncc.ParamConfig.Custom.Params {
+			if param.Key != "" && param.CName == "" {
+				return errors.New("param items must have valid cname")
+			}
+		}
+	}
 
-	// // 校验 Request 配置
-	// switch ncc.RequestType {
-	// case "http":
-	// 	if err := ncc.ValidateHTTPRequestConfig(); err != nil {
-	// 		return err
-	// 	}
-	// case "smtp":
-	// 	if err := ncc.ValidateSMTPRequestConfig(); err != nil {
-	// 		return err
-	// 	}
-	// case "script":
-	// 	if err := ncc.ValidateScriptRequestConfig(); err != nil {
-	// 		return err
-	// 	}
-	// case "flashduty":
-	// 	if err := ncc.ValidateFlashDutyRequestConfig(); err != nil {
-	// 		return err
-	// 	}
-	// case "pagerduty":
-	// 	if err := ncc.ValidatePagerDutyRequestConfig(); err != nil {
-	// 		return err
-	// 	}
-	// }
-	// return nil
-
+	// 校验 Request 配置
 	if VerifyByProvider != nil {
 		return VerifyByProvider(ncc)
 	}
