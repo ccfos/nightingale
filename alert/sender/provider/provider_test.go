@@ -16,7 +16,7 @@ var events = []*models.AlertCurEvent{
 	{
 		Id:           1,
 		Hash:         "test-hash",
-		RuleName:     "测试规则",
+		RuleName:     "夜莺告警单元测试",
 		RuleNote:     "这是一个测试告警规则",
 		Severity:     3,
 		GroupId:      1,
@@ -29,6 +29,10 @@ var events = []*models.AlertCurEvent{
 			"service":  "test-service",
 			"env":      "test",
 			"instance": "127.0.0.1",
+		},
+		RuleConfigJson: map[string]interface{}{
+			"summary":     "夜莺告警测试",
+			"description": "这是一个详细的告警描述",
 		},
 		AnnotationsJSON: map[string]string{
 			"summary":     "测试告警摘要",
