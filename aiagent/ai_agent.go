@@ -109,6 +109,9 @@ type AIAgentConfig struct {
 	Temperature *float64 `json:"temperature,omitempty"`
 	MaxTokens   *int     `json:"max_tokens,omitempty"`
 
+	// 多轮对话历史（可选），会被注入到 system 和当前 user 消息之间
+	History []ChatMessage `json:"history,omitempty"`
+
 	// 内部使用
 	llmClient        llm.LLM                     `json:"-"` // 多 Provider LLM 客户端
 	skillRegistry    *SkillRegistry              `json:"-"`
@@ -397,8 +400,12 @@ func (c *AIAgentConfig) SetSkillRegistry(registry *SkillRegistry) {
 func (c *AIAgentConfig) Process(ctxObj *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
 	event := wfCtx.Event
 
-	// 创建带超时的 context
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Timeout)*time.Millisecond)
+	// 创建带超时的 context；如果调用方注入了 ParentCtx 则以它为父，否则用 Background
+	parentCtx := wfCtx.ParentCtx
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	timeoutCtx, cancel := context.WithTimeout(parentCtx, time.Duration(c.Timeout)*time.Millisecond)
 
 	// === Skills 选择与加载 ===
 	var activeSkills []*SkillContent
@@ -2676,12 +2683,15 @@ func (c *AIAgentConfig) executeReActWithStream(ctx context.Context, wfCtx *model
 	}
 	logger.Infof("[QGen] User message built: length=%d, first_300=%q", len(userMessage), truncStr(userMessage, 300))
 
-	// 初始化消息列表
+	// 初始化消息列表：system → 历史对话（如果有）→ 当前 user
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
-		{Role: "user", Content: userMessage},
 	}
-	logger.Infof("[QGen] Initial messages: count=%d, system_len=%d, user_len=%d", len(messages), len(systemPrompt), len(userMessage))
+	if len(c.History) > 0 {
+		messages = append(messages, c.History...)
+	}
+	messages = append(messages, ChatMessage{Role: "user", Content: userMessage})
+	logger.Infof("[QGen] Initial messages: count=%d, system_len=%d, user_len=%d, history_len=%d", len(messages), len(systemPrompt), len(userMessage), len(c.History))
 
 	steps := make([]ReActStep, 0)
 

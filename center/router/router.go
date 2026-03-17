@@ -56,6 +56,8 @@ type Router struct {
 	HeartbeatHook       HeartbeatHookFunc
 	TargetDeleteHook    models.TargetDeleteHookFunc
 	AlertRuleModifyHook AlertRuleModifyHookFunc
+
+	msgStateManager *MessageStateManager
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
@@ -85,6 +87,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
 		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
 		AlertRuleModifyHook: func(ar *models.AlertRule) {},
+		msgStateManager:     NewMessageStateManager(),
 	}
 }
 
@@ -553,16 +556,19 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/mcp-server/test", rt.auth(), rt.admin(), rt.mcpServerTest)
 		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
 
-		// AI Conversations
-		pages.GET("/ai-conversations", rt.auth(), rt.user(), rt.aiConversationGets)
-		pages.POST("/ai-conversations", rt.auth(), rt.user(), rt.aiConversationAdd)
-		pages.GET("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationGet)
-		pages.PUT("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationPut)
-		pages.DELETE("/ai-conversation/:id", rt.auth(), rt.user(), rt.aiConversationDel)
-		pages.POST("/ai-conversation/:id/messages", rt.auth(), rt.user(), rt.aiConversationMessageAdd)
+		// AI Assistant Chat
+		pages.POST("/assistant/chat/new", rt.auth(), rt.user(), rt.assistantChatNew)
+		pages.GET("/assistant/chat/history", rt.auth(), rt.user(), rt.assistantChatHistory)
+		pages.DELETE("/assistant/chat/:chatId", rt.auth(), rt.user(), rt.assistantChatDel)
 
-		// AI chat (SSE), dispatches by action_key
-		pages.POST("/ai-chat", rt.auth(), rt.user(), rt.aiChat)
+		// AI Assistant Message
+		pages.POST("/assistant/message/new", rt.auth(), rt.user(), rt.assistantMessageNew)
+		pages.POST("/assistant/message/detail", rt.auth(), rt.user(), rt.assistantMessageDetail)
+		pages.POST("/assistant/message/history", rt.auth(), rt.user(), rt.assistantMessageHistory)
+		pages.POST("/assistant/message/cancel", rt.auth(), rt.user(), rt.assistantMessageCancel)
+
+		// SSE Stream
+		pages.POST("/stream", rt.auth(), rt.user(), rt.assistantStream)
 
 		// source token 相关路由
 		pages.POST("/source-token", rt.auth(), rt.user(), rt.sourceTokenAdd)

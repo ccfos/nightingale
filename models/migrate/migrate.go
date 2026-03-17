@@ -71,7 +71,7 @@ func MigrateTables(db *gorm.DB) error {
 		&models.EventPipeline{}, &models.EventPipelineExecution{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
 		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.AISkillFile{}, &models.MCPServer{},
-		&models.AIConversation{}, &models.AIConversationMessage{}}
+		&models.AssistantChatRow{}, &models.AssistantMessageRow{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
@@ -136,6 +136,10 @@ func MigrateTables(db *gorm.DB) error {
 
 	return nil
 }
+
+// AssistantChat / AssistantMessage row structs live in models package
+// (models.AssistantChatRow / models.AssistantMessageRow) so both
+// migrate and storage can share them.
 
 func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string, pgUniqueFiled string) { // UNIQUE KEY (`ckey`)
 	// 先检查表是否存在，如果不存在则直接返回
