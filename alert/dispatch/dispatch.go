@@ -184,6 +184,9 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			eventCopy.NotifyRuleName = notifyRule.Name
 
 			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule")
+			if eventCopy == nil {
+				continue
+			}
 			if ShouldSkipNotify(e.ctx, eventCopy, notifyRuleId) {
 				logger.Infof("notify_id: %d, event:%s, should skip notify", notifyRuleId, eventCopy.Hash)
 				continue
