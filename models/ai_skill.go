@@ -69,7 +69,19 @@ func AISkillGetById(c *ctx.Context, id int64) (*AISkill, error) {
 	return AISkillGet(c, "id = ?", id)
 }
 
+func AISkillGetByName(c *ctx.Context, name string) (*AISkill, error) {
+	return AISkillGet(c, "name = ?", name)
+}
+
 func (s *AISkill) Create(c *ctx.Context) error {
+	exist, err := AISkillGetByName(c, s.Name)
+	if err != nil {
+		return err
+	}
+	if exist != nil {
+		return fmt.Errorf("ai skill name %s already exists", s.Name)
+	}
+
 	now := time.Now().Unix()
 	s.CreatedAt = now
 	s.UpdatedAt = now
@@ -77,6 +89,16 @@ func (s *AISkill) Create(c *ctx.Context) error {
 }
 
 func (s *AISkill) Update(c *ctx.Context, ref AISkill) error {
+	if ref.Name != s.Name {
+		exist, err := AISkillGetByName(c, ref.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return fmt.Errorf("ai skill name %s already exists", ref.Name)
+		}
+	}
+
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "description", "instructions",
 		"license", "compatibility", "metadata", "allowed_tools",

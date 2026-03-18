@@ -1,22 +1,14 @@
 package models
 
-// assistant.go — Proto structs for AI assistant, aligned with fc-model.
-// These structs are serialized as JSON into the DB `data` column (gzip encoded).
-// They are also the API response shapes — no separate "view" layer needed.
-
-// ==================== Chat ====================
-
 type AssistantChat struct {
-	ChatID          string          `json:"chat_id"`
-	Title           string          `json:"title"`
-	LastUpdate      int64           `json:"last_update"`
+	ChatID          string            `json:"chat_id"`
+	Title           string            `json:"title"`
+	LastUpdate      int64             `json:"last_update"`
 	PageFrom        AssistantPageInfo `json:"page_from"`
 	RecommendAction []AssistantAction `json:"recommend_action"`
-	UserID          int64           `json:"user_id"`
-	IsNew           bool            `json:"is_new"`
+	UserID          int64             `json:"user_id"`
+	IsNew           bool              `json:"is_new"`
 }
-
-// ==================== Page Info ====================
 
 type AssistantPageType string
 
@@ -33,17 +25,8 @@ type AssistantPageInfo struct {
 }
 
 type AssistantPageInfoParam struct {
-	WorkspaceID    int64                          `json:"workspace_id,omitempty"`
-	Dashboard      *AssistantPageParamDashboard   `json:"dashboard,omitempty"`
-	DatasourceType string                         `json:"datasource_type,omitempty"`
-	DatasourceID   int64                          `json:"datasource_id,omitempty"`
-}
-
-type AssistantPageParamDashboard struct {
-	ID    any              `json:"id"`
-	Var   map[string][]any `json:"var,omitempty"`
-	Start int64            `json:"start,omitempty"`
-	End   int64            `json:"end,omitempty"`
+	DatasourceType string `json:"datasource_type,omitempty"`
+	DatasourceID   int64  `json:"datasource_id,omitempty"`
 }
 
 // ==================== Message ====================
@@ -54,9 +37,8 @@ type AssistantMessage struct {
 	Query           AssistantMessageQuery      `json:"query"`
 	Response        []AssistantMessageResponse `json:"response"`
 	CurStep         string                     `json:"cur_step"`
-	IsFinish        bool                       `json:"is_finish"`
-	Feedback        AssistantMessageFeedback   `json:"feedback"`
-	RecommendAction []AssistantAction          `json:"recommend_action"`
+	IsFinish        bool              `json:"is_finish"`
+	RecommendAction []AssistantAction `json:"recommend_action"`
 	ErrCode         int                        `json:"err_code"`
 	ErrTitle        string                     `json:"err_title"`
 	ErrMsg          string                     `json:"err_msg"`
@@ -109,8 +91,8 @@ const (
 )
 
 type AssistantAction struct {
-	Content string             `json:"content"`
-	Key     AssistantActionKey `json:"key"`
+	Content string               `json:"content"`
+	Key     AssistantActionKey   `json:"key"`
 	Param   AssistantActionParam `json:"param"`
 }
 
@@ -121,21 +103,14 @@ type AssistantActionParam struct {
 	TableName      string `json:"table_name,omitempty"`
 }
 
-// ==================== Feedback / Status ====================
+// ==================== Message Status ====================
 
 type AssistantMessageStatus int
 
 const (
-	MessageStatusNone    AssistantMessageStatus = 0
-	MessageStatusLike    AssistantMessageStatus = 1
-	MessageStatusDislike AssistantMessageStatus = -1
-	MessageStatusCancel  AssistantMessageStatus = -2
+	MessageStatusNone   AssistantMessageStatus = 0
+	MessageStatusCancel AssistantMessageStatus = -2
 )
-
-type AssistantMessageFeedback struct {
-	AssistantMessageMeta
-	Status AssistantMessageStatus `json:"status"`
-}
 
 // ==================== Lock Key ====================
 

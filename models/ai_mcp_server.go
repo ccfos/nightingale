@@ -59,7 +59,19 @@ func MCPServerGetById(c *ctx.Context, id int64) (*MCPServer, error) {
 	return MCPServerGet(c, "id = ?", id)
 }
 
+func MCPServerGetByName(c *ctx.Context, name string) (*MCPServer, error) {
+	return MCPServerGet(c, "name = ?", name)
+}
+
 func (s *MCPServer) Create(c *ctx.Context) error {
+	exist, err := MCPServerGetByName(c, s.Name)
+	if err != nil {
+		return err
+	}
+	if exist != nil {
+		return fmt.Errorf("mcp server name %s already exists", s.Name)
+	}
+
 	now := time.Now().Unix()
 	s.CreatedAt = now
 	s.UpdatedAt = now
@@ -67,6 +79,16 @@ func (s *MCPServer) Create(c *ctx.Context) error {
 }
 
 func (s *MCPServer) Update(c *ctx.Context, ref MCPServer) error {
+	if ref.Name != s.Name {
+		exist, err := MCPServerGetByName(c, ref.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return fmt.Errorf("mcp server name %s already exists", ref.Name)
+		}
+	}
+
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "url", "headers", "description",
 		"enabled", "updated_at", "updated_by").Updates(ref).Error

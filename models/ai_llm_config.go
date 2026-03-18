@@ -79,6 +79,10 @@ func AILLMConfigGetById(c *ctx.Context, id int64) (*AILLMConfig, error) {
 	return AILLMConfigGet(c, "id = ?", id)
 }
 
+func AILLMConfigGetByName(c *ctx.Context, name string) (*AILLMConfig, error) {
+	return AILLMConfigGet(c, "name = ?", name)
+}
+
 func AILLMConfigGetEnabled(c *ctx.Context) ([]*AILLMConfig, error) {
 	var lst []*AILLMConfig
 	err := DB(c).Where("enabled = ?", true).Order("id").Find(&lst).Error
@@ -86,6 +90,14 @@ func AILLMConfigGetEnabled(c *ctx.Context) ([]*AILLMConfig, error) {
 }
 
 func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
+	exist, err := AILLMConfigGetByName(c, a.Name)
+	if err != nil {
+		return err
+	}
+	if exist != nil {
+		return fmt.Errorf("ai llm config name %s already exists", a.Name)
+	}
+
 	now := time.Now().Unix()
 	a.CreatedAt = now
 	a.UpdatedAt = now
@@ -95,6 +107,16 @@ func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
 }
 
 func (a *AILLMConfig) Update(c *ctx.Context, username string, data AILLMConfig) error {
+	if data.Name != a.Name {
+		exist, err := AILLMConfigGetByName(c, data.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return fmt.Errorf("ai llm config name %s already exists", data.Name)
+		}
+	}
+
 	data.UpdatedAt = time.Now().Unix()
 	data.UpdatedBy = username
 

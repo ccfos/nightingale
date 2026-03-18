@@ -21,6 +21,22 @@ func (f *AISkillFile) TableName() string {
 	return "ai_skill_file"
 }
 
+// PostgresAISkillFile is the PostgreSQL-compatible variant of AISkillFile.
+// PostgreSQL does not support mediumtext; its text type is unlimited.
+type PostgresAISkillFile struct {
+	Id        int64  `json:"id" gorm:"primaryKey;autoIncrement"`
+	SkillId   int64  `json:"skill_id"`
+	Name      string `json:"name"`
+	Content   string `json:"content" gorm:"type:text"`
+	Size      int64  `json:"size"`
+	CreatedAt int64  `json:"created_at"`
+	CreatedBy string `json:"created_by"`
+}
+
+func (f *PostgresAISkillFile) TableName() string {
+	return "ai_skill_file"
+}
+
 func AISkillFileGets(c *ctx.Context, skillId int64) ([]*AISkillFile, error) {
 	var lst []*AISkillFile
 	err := DB(c).Select("id, skill_id, name, size, created_at, created_by").Where("skill_id = ?", skillId).Order("id").Find(&lst).Error

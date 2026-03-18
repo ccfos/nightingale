@@ -13,16 +13,15 @@ type AIAgent struct {
 	Description  string  `json:"description"`
 	UseCase      string  `json:"use_case"`
 	LLMConfigId  int64   `json:"llm_config_id"`
-	SkillIds     []int64 `json:"skill_ids" gorm:"serializer:json"`
-	MCPServerIds []int64 `json:"mcp_server_ids" gorm:"serializer:json"`
+	SkillIds     []int64 `json:"skill_ids,omitempty" gorm:"serializer:json"`
+	MCPServerIds []int64 `json:"mcp_server_ids,omitempty" gorm:"serializer:json"`
 	Enabled      bool    `json:"enabled"`
 	CreatedAt    int64   `json:"created_at"`
 	CreatedBy    string  `json:"created_by"`
 	UpdatedAt    int64   `json:"updated_at"`
 	UpdatedBy    string  `json:"updated_by"`
 
-	// Runtime: resolved from LLMConfigId, not stored in DB
-	LLMConfig *AILLMConfig `json:"llm_config,omitempty" gorm:"-"`
+	LLMConfigName string `json:"llm_config_name" gorm:"-"`
 }
 
 func (a *AIAgent) TableName() string {
@@ -61,7 +60,19 @@ func AIAgentGetById(c *ctx.Context, id int64) (*AIAgent, error) {
 	return AIAgentGet(c, "id = ?", id)
 }
 
+func AIAgentGetByName(c *ctx.Context, name string) (*AIAgent, error) {
+	return AIAgentGet(c, "name = ?", name)
+}
+
 func (a *AIAgent) Create(c *ctx.Context, username string) error {
+	exist, err := AIAgentGetByName(c, a.Name)
+	if err != nil {
+		return err
+	}
+	if exist != nil {
+		return fmt.Errorf("ai agent name %s already exists", a.Name)
+	}
+
 	now := time.Now().Unix()
 	a.CreatedAt = now
 	a.UpdatedAt = now
@@ -71,6 +82,16 @@ func (a *AIAgent) Create(c *ctx.Context, username string) error {
 }
 
 func (a *AIAgent) Update(c *ctx.Context, username string, data AIAgent) error {
+	if data.Name != a.Name {
+		exist, err := AIAgentGetByName(c, data.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return fmt.Errorf("ai agent name %s already exists", data.Name)
+		}
+	}
+
 	data.UpdatedAt = time.Now().Unix()
 	data.UpdatedBy = username
 

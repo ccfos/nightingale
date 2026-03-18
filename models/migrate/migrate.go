@@ -68,16 +68,20 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
-		&models.EventPipeline{}, &models.EventPipelineExecution{}, &models.EmbeddedProduct{}, &models.SourceToken{},
+		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
-		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.AISkillFile{}, &models.MCPServer{},
+		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
 		&models.AssistantChatRow{}, &models.AssistantMessageRow{}}
 
 	if isPostgres(db) {
 		dts = append(dts, &models.PostgresBuiltinComponent{})
+		dts = append(dts, &models.PostgresAISkillFile{})
+		dts = append(dts, &models.PostgresEventPipelineExecution{})
 		DropUniqueFiledLimit(db, &models.PostgresBuiltinComponent{}, "idx_ident", "idx_ident")
 	} else {
 		dts = append(dts, &models.BuiltinComponent{})
+		dts = append(dts, &models.AISkillFile{})
+		dts = append(dts, &models.EventPipelineExecution{})
 		DropUniqueFiledLimit(db, &models.BuiltinComponent{}, "idx_ident", "idx_ident")
 	}
 

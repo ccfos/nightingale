@@ -119,7 +119,6 @@ func decodeMessage(row *AssistantMessageRow) (*AssistantMessage, error) {
 			json.Unmarshal(decodedExtra, &msg.Extra)
 		}
 	}
-	msg.Feedback.Status = AssistantMessageStatus(row.Status)
 	return &msg, nil
 }
 

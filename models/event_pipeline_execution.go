@@ -54,6 +54,29 @@ func (e *EventPipelineExecution) TableName() string {
 	return "event_pipeline_execution"
 }
 
+// PostgresEventPipelineExecution is the PostgreSQL-compatible variant.
+// PostgreSQL does not support mediumtext; its text type is unlimited.
+type PostgresEventPipelineExecution struct {
+	ID           string `json:"id" gorm:"primaryKey;type:varchar(36)"`
+	PipelineID   int64  `json:"pipeline_id" gorm:"index"`
+	PipelineName string `json:"pipeline_name" gorm:"type:varchar(128)"`
+	EventID      int64  `json:"event_id" gorm:"index"`
+	Mode         string `json:"mode" gorm:"type:varchar(16);index"`
+	Status       string `json:"status" gorm:"type:varchar(16);index"`
+	NodeResults  string `json:"node_results" gorm:"type:text"`
+	ErrorMessage string `json:"error_message" gorm:"type:varchar(1024)"`
+	ErrorNode    string `json:"error_node" gorm:"type:varchar(36)"`
+	CreatedAt    int64  `json:"created_at" gorm:"index"`
+	FinishedAt   int64  `json:"finished_at"`
+	DurationMs   int64  `json:"duration_ms"`
+	TriggerBy    string `json:"trigger_by" gorm:"type:varchar(64)"`
+	InputsSnapshot string `json:"inputs_snapshot,omitempty" gorm:"type:text"`
+}
+
+func (e *PostgresEventPipelineExecution) TableName() string {
+	return "event_pipeline_execution"
+}
+
 // SetNodeResults 设置节点执行结果（序列化为 JSON）
 func (e *EventPipelineExecution) SetNodeResults(results []*NodeExecutionResult) error {
 	data, err := json.Marshal(results)

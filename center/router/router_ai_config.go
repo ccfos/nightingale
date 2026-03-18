@@ -19,13 +19,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ========================
-// AI Agent handlers
-// ========================
-
 func (rt *Router) aiAgentGets(c *gin.Context) {
 	lst, err := models.AIAgentGets(rt.Ctx)
 	ginx.Dangerous(err)
+
+	for _, obj := range lst {
+		llmConfig, err := models.AILLMConfigGetById(rt.Ctx, obj.LLMConfigId)
+		ginx.Dangerous(err)
+		if llmConfig != nil {
+			obj.LLMConfigName = llmConfig.Name
+		}
+	}
+
 	ginx.NewRender(c).Data(lst, nil)
 }
 
@@ -36,6 +41,13 @@ func (rt *Router) aiAgentGet(c *gin.Context) {
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "ai agent not found")
 	}
+
+	llmConfig, err := models.AILLMConfigGetById(rt.Ctx, obj.LLMConfigId)
+	ginx.Dangerous(err)
+	if llmConfig != nil {
+		obj.LLMConfigName = llmConfig.Name
+	}
+
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -77,15 +89,10 @@ func (rt *Router) aiAgentDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
-// ========================
-// AI Skill handlers
-// ========================
-
 func (rt *Router) aiSkillGets(c *gin.Context) {
 	search := ginx.QueryStr(c, "search", "")
 	lst, err := models.AISkillGets(rt.Ctx, search)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(lst, nil)
+	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) aiSkillGet(c *gin.Context) {
@@ -217,10 +224,6 @@ func parseSkillMarkdown(content, filename, ext string) (meta skillFrontmatter, i
 	return meta, content
 }
 
-// ========================
-// AI Skill File handlers
-// ========================
-
 func (rt *Router) aiSkillFileAdd(c *gin.Context) {
 	skillId := ginx.UrlParamInt64(c, "id")
 
@@ -281,14 +284,9 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
-// ========================
-// MCP Server handlers
-// ========================
-
 func (rt *Router) mcpServerGets(c *gin.Context) {
 	lst, err := models.MCPServerGets(rt.Ctx)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(lst, nil)
+	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) mcpServerGet(c *gin.Context) {
@@ -342,14 +340,9 @@ func (rt *Router) mcpServerDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
-// ========================
-// AI LLM Config handlers
-// ========================
-
 func (rt *Router) aiLLMConfigGets(c *gin.Context) {
 	lst, err := models.AILLMConfigGets(rt.Ctx)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(lst, nil)
+	ginx.NewRender(c).Data(lst, err)
 }
 
 func (rt *Router) aiLLMConfigGet(c *gin.Context) {
@@ -423,7 +416,7 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 	}
 
 	start := time.Now()
-	testErr := testAIAgent(obj)
+	testErr := testAILLMConfig(obj)
 	durationMs := time.Since(start).Milliseconds()
 
 	result := gin.H{
@@ -433,44 +426,11 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 	ginx.NewRender(c).Data(result, testErr)
 }
 
-// ========================
-// AI Agent test
-// ========================
-
-func (rt *Router) aiAgentTest(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-
-	agent, err := models.AIAgentGetById(rt.Ctx, id)
-	ginx.Dangerous(err)
-	if agent == nil {
-		ginx.Bomb(http.StatusNotFound, "ai agent not found")
-	}
-
-	llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
-	ginx.Dangerous(err)
-	if llmCfg == nil {
-		ginx.Bomb(http.StatusBadRequest, "referenced LLM config not found")
-	}
-
-	start := time.Now()
-	testErr := testAIAgent(llmCfg)
-	durationMs := time.Since(start).Milliseconds()
-
-	result := gin.H{
-		"success":     testErr == nil,
-		"duration_ms": durationMs,
-	}
-	if testErr != nil {
-		result["error"] = testErr.Error()
-	}
-	ginx.NewRender(c).Data(result, nil)
-}
-
-func testAIAgent(p *models.AILLMConfig) error {
+func testAILLMConfig(p *models.AILLMConfig) error {
 	extra := p.ExtraConfig
 
 	// Build HTTP client with ExtraConfig settings
-	timeout := 30 * time.Second
+	timeout := 5 * time.Second
 	if extra.TimeoutSeconds > 0 {
 		timeout = time.Duration(extra.TimeoutSeconds) * time.Second
 	}
@@ -553,10 +513,6 @@ func testAIAgent(p *models.AILLMConfig) error {
 	return nil
 }
 
-// ========================
-// MCP Server test & tools
-// ========================
-
 func (rt *Router) mcpServerTest(c *gin.Context) {
 	var body struct {
 		URL     string            `json:"url"`
@@ -596,9 +552,7 @@ func (rt *Router) mcpServerTools(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "mcp server not found")
 	}
 
-	tools, err := listMCPTools(obj)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(tools, nil)
+	ginx.NewRender(c).Data(listMCPTools(obj))
 }
 
 type mcpTool struct {

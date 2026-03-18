@@ -19,12 +19,12 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
@@ -552,7 +552,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/mcp-servers", rt.auth(), rt.admin(), rt.mcpServerAdd)
 		pages.PUT("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerPut)
 		pages.DELETE("/mcp-server/:id", rt.auth(), rt.admin(), rt.mcpServerDel)
-		pages.POST("/ai-agent/:id/test", rt.auth(), rt.admin(), rt.aiAgentTest)
 		pages.POST("/mcp-server/test", rt.auth(), rt.admin(), rt.mcpServerTest)
 		pages.GET("/mcp-server/:id/tools", rt.auth(), rt.admin(), rt.mcpServerTools)
 
