@@ -20,7 +20,7 @@
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
 | updated_by | string | - | 更新人 |
-| llm_config | object | - | 运行时字段，关联的 LLM 配置对象（不存储） |
+| llm_config_name | string | - | 运行时字段，关联的 LLM 配置名称（不存储） |
 
 ---
 
@@ -204,48 +204,3 @@ DELETE /api/n9e/ai-agent/:id
 
 - `404` Agent 不存在
 
----
-
-## 测试 Agent
-
-通过 Agent 关联的 LLM 配置发送测试请求，验证连通性。
-
-```
-POST /api/n9e/ai-agent/:id/test
-```
-
-### 路径参数
-
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| id | int64 | Agent ID |
-
-### 响应
-
-```json
-{
-  "dat": {
-    "success": true,
-    "duration_ms": 1234
-  },
-  "err": ""
-}
-```
-
-失败时：
-
-```json
-{
-  "dat": {
-    "success": false,
-    "duration_ms": 5000,
-    "error": "HTTP 401: Unauthorized"
-  },
-  "err": ""
-}
-```
-
-### 错误
-
-- `404` Agent 不存在
-- `400` 关联的 LLM 配置不存在

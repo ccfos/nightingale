@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -39,6 +40,7 @@ func (a *AILLMConfig) TableName() string {
 }
 
 func (a *AILLMConfig) Verify() error {
+	a.Name = strings.TrimSpace(a.Name)
 	if a.Name == "" {
 		return fmt.Errorf("name is required")
 	}
@@ -77,6 +79,15 @@ func AILLMConfigGet(c *ctx.Context, where string, args ...interface{}) (*AILLMCo
 
 func AILLMConfigGetById(c *ctx.Context, id int64) (*AILLMConfig, error) {
 	return AILLMConfigGet(c, "id = ?", id)
+}
+
+func AILLMConfigGetByIds(c *ctx.Context, ids []int64) ([]*AILLMConfig, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var lst []*AILLMConfig
+	err := DB(c).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }
 
 func AILLMConfigGetByName(c *ctx.Context, name string) (*AILLMConfig, error) {

@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -29,6 +30,7 @@ func (a *AIAgent) TableName() string {
 }
 
 func (a *AIAgent) Verify() error {
+	a.Name = strings.TrimSpace(a.Name)
 	if a.Name == "" {
 		return fmt.Errorf("name is required")
 	}

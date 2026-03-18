@@ -23,12 +23,21 @@ func (rt *Router) aiAgentGets(c *gin.Context) {
 	lst, err := models.AIAgentGets(rt.Ctx)
 	ginx.Dangerous(err)
 
+	ids := make([]int64, 0, len(lst))
 	for _, obj := range lst {
-		llmConfig, err := models.AILLMConfigGetById(rt.Ctx, obj.LLMConfigId)
-		ginx.Dangerous(err)
-		if llmConfig != nil {
-			obj.LLMConfigName = llmConfig.Name
-		}
+		ids = append(ids, obj.LLMConfigId)
+	}
+
+	configs, err := models.AILLMConfigGetByIds(rt.Ctx, ids)
+	ginx.Dangerous(err)
+
+	configMap := make(map[int64]string, len(configs))
+	for _, cfg := range configs {
+		configMap[cfg.Id] = cfg.Name
+	}
+
+	for _, obj := range lst {
+		obj.LLMConfigName = configMap[obj.LLMConfigId]
 	}
 
 	ginx.NewRender(c).Data(lst, nil)
@@ -430,7 +439,7 @@ func testAILLMConfig(p *models.AILLMConfig) error {
 	extra := p.ExtraConfig
 
 	// Build HTTP client with ExtraConfig settings
-	timeout := 5 * time.Second
+	timeout := 10 * time.Second
 	if extra.TimeoutSeconds > 0 {
 		timeout = time.Duration(extra.TimeoutSeconds) * time.Second
 	}
