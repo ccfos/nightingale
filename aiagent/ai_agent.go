@@ -12,11 +12,11 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/prompts"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/ccfos/nightingale/v6/aiagent/llm"
-	"github.com/ccfos/nightingale/v6/aiagent/prompts"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -120,12 +120,10 @@ type AIAgentConfig struct {
 	mcpServers       map[string]*MCPServerConfig `json:"-"` // 服务器名 -> 配置
 }
 
-// MemoryConfig 记忆系统配置
 type MemoryConfig struct {
 	// 是否启用工作记忆
 	Enabled bool `json:"enabled"`
 
-	// === 短期记忆配置（Working Memory）===
 	// 在单次执行中保留的关键信息数量
 	MaxFindings   int `json:"max_findings,omitempty"`   // 最大关键发现数量，默认 10
 	MaxHypotheses int `json:"max_hypotheses,omitempty"` // 最大假设数量，默认 5
@@ -135,7 +133,6 @@ type MemoryConfig struct {
 	IncludeInPrompt bool `json:"include_in_prompt,omitempty"` // 默认 true
 }
 
-// WorkingMemory 工作记忆（单次执行中的短期记忆）
 type WorkingMemory struct {
 	// 关键发现列表
 	KeyFindings []KeyFinding `json:"key_findings"`
