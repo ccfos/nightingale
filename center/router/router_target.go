@@ -68,9 +68,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	var err error
 	if len(bgids) > 0 {
-		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
-		if !(len(bgids) == 1 && bgids[0] == 0) {
-			for _, gid := range bgids {
+		for _, gid := range bgids {
+			if gid > 0 {
 				rt.bgroCheck(c, gid)
 			}
 		}
@@ -666,6 +665,106 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(lst, nil)
+}
+
+func (rt *Router) targetStats(c *gin.Context) {
+	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
+
+	var err error
+	if len(bgids) > 0 {
+		for _, gid := range bgids {
+			if gid > 0 {
+				rt.bgroCheck(c, gid)
+			}
+		}
+	} else {
+		user := c.MustGet("user").(*models.User)
+		if !user.IsAdmin() {
+			bgids, err = models.MyBusiGroupIds(rt.Ctx, user.Id)
+			ginx.Dangerous(err)
+			bgids = append(bgids, 0)
+		}
+	}
+
+	targets := rt.TargetCache.GetAll()
+	now := time.Now().Unix()
+
+	var count, aliveCount, deadCount int64
+	memUsage := map[string]int64{"-1": 0, "20": 0, "40": 0, "60": 0, "80": 0, "100": 0}
+	cpuUsage := map[string]int64{"-1": 0, "20": 0, "40": 0, "60": 0, "80": 0, "100": 0}
+	versions := make(map[string]int64)
+
+	bgidSet := make(map[int64]struct{}, len(bgids))
+	for _, gid := range bgids {
+		bgidSet[gid] = struct{}{}
+	}
+	hasBgidFilter := len(bgids) > 0
+
+	for _, t := range targets {
+		if hasBgidFilter {
+			matched := false
+			if _, ok := bgidSet[0]; ok && len(t.GroupIds) == 0 {
+				matched = true
+			}
+			if !matched {
+				for _, gid := range t.GroupIds {
+					if _, ok := bgidSet[gid]; ok {
+						matched = true
+						break
+					}
+				}
+			}
+			if !matched {
+				continue
+			}
+		}
+
+		count++
+
+		if now-t.BeatTime < 180 {
+			aliveCount++
+		} else {
+			deadCount++
+		}
+
+		if t.CpuNum <= 0 {
+			cpuUsage["-1"]++
+			memUsage["-1"]++
+		} else {
+			cpuUsage[usageBucket(t.CpuUtil)]++
+			memUsage[usageBucket(t.MemUtil)]++
+		}
+
+		ver := t.AgentVersion
+		if ver == "" {
+			ver = "unknown"
+		}
+		versions[ver]++
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"count":       count,
+		"alive_count": aliveCount,
+		"dead_count":  deadCount,
+		"mem_usage":   memUsage,
+		"cpu_usage":   cpuUsage,
+		"versions":    versions,
+	}, nil)
+}
+
+func usageBucket(val float64) string {
+	switch {
+	case val < 20:
+		return "20"
+	case val < 40:
+		return "40"
+	case val < 60:
+		return "60"
+	case val < 80:
+		return "80"
+	default:
+		return "100"
+	}
 }
 
 func (rt *Router) targetUpdate(c *gin.Context) {
