@@ -439,7 +439,7 @@ func testAILLMConfig(p *models.AILLMConfig) error {
 	extra := p.ExtraConfig
 
 	// Build HTTP client with ExtraConfig settings
-	timeout := 10 * time.Second
+	timeout := 30 * time.Second
 	if extra.TimeoutSeconds > 0 {
 		timeout = time.Duration(extra.TimeoutSeconds) * time.Second
 	}

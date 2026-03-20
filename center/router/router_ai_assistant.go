@@ -97,7 +97,7 @@ func (rt *Router) assistantChatNew(c *gin.Context) {
 
 	var req struct {
 		Page  models.AssistantPageType `json:"page"`
-		Param json.RawMessage         `json:"param"`
+		Param json.RawMessage          `json:"param"`
 	}
 	ginx.BindJSON(c, &req)
 
@@ -159,9 +159,9 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 		ChatID  string `json:"chat_id"`
 		ModelID int64  `json:"model_id"`
 		Query   struct {
-			Content  string                    `json:"content"`
-			Action   models.AssistantAction    `json:"action"`
-			PageFrom models.AssistantPageInfo  `json:"page_from"`
+			Content  string                   `json:"content"`
+			Action   models.AssistantAction   `json:"action"`
+			PageFrom models.AssistantPageInfo `json:"page_from"`
 		} `json:"query"`
 	}
 	ginx.BindJSON(c, &req)
