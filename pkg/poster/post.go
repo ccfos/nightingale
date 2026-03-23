@@ -247,8 +247,6 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 		return
 	}
 
-	bf := bytes.NewBuffer(bs)
-
 	client := http.Client{
 		Timeout: timeout,
 	}
@@ -257,16 +255,25 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 		client.Transport = ProxyTransporter
 	}
 
-	req, err := http.NewRequest("POST", url, bf)
-	if err != nil {
-		return
+	newRequest := func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(bs))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		return req, nil
 	}
-	req.Header.Set("Content-Type", "application/json")
 
 	var resp *http.Response
 
 	if len(retries) > 0 {
 		for i := 0; i < retries[0]; i++ {
+			var req *http.Request
+			req, err = newRequest()
+			if err != nil {
+				return
+			}
+
 			resp, err = client.Do(req)
 			if err == nil {
 				break
@@ -284,6 +291,11 @@ func PostJSON(url string, timeout time.Duration, v interface{}, retries ...int) 
 			}
 		}
 	} else {
+		var req *http.Request
+		req, err = newRequest()
+		if err != nil {
+			return
+		}
 		resp, err = client.Do(req)
 	}
 
