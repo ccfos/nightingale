@@ -58,7 +58,7 @@ func (p *AliyunSmsProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	httpConfig := req.Config.RequestConfig.HTTPRequestConfig
 	resp, err := p.sendHTTPRequest(httpConfig, req.Events, req.TplContent,
 		req.CustomParams, req.Sendtos, req.HttpClient)
-	return &NotifyResult{Target: "todo: todo", Response: resp, Err: err}
+	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
 func (p *AliyunSmsProvider) DefaultChannels() []*models.NotifyChannelConfig {
