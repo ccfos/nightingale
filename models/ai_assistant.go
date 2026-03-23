@@ -29,26 +29,28 @@ type AssistantPageInfoParam struct {
 	DatasourceID   int64  `json:"datasource_id,omitempty"`
 }
 
+// ==================== Send Request ====================
+
+type AssistantSendRequest struct {
+	ChatID string                `json:"chat_id"`
+	Query  AssistantMessageQuery `json:"query"`
+}
+
 // ==================== Message ====================
 
 type AssistantMessage struct {
-	AssistantMessageMeta
-	ModelID         int64                      `json:"model_id"`
+	ChatID          string                     `json:"chat_id"`
+	SeqID           int64                      `json:"seq_id"`
 	Query           AssistantMessageQuery      `json:"query"`
 	Response        []AssistantMessageResponse `json:"response"`
 	CurStep         string                     `json:"cur_step"`
-	IsFinish        bool              `json:"is_finish"`
-	RecommendAction []AssistantAction `json:"recommend_action"`
+	IsFinish        bool                       `json:"is_finish"`
+	RecommendAction []AssistantAction          `json:"recommend_action"`
 	ErrCode         int                        `json:"err_code"`
 	ErrTitle        string                     `json:"err_title"`
 	ErrMsg          string                     `json:"err_msg"`
 	ExecutedTools   bool                       `json:"executed_tools"`
 	Extra           AssistantMessageExtra      `json:"-"` // internal, not exposed to frontend
-}
-
-type AssistantMessageMeta struct {
-	ChatID string `json:"chat_id"`
-	SeqID  int64  `json:"seq_id"`
 }
 
 type AssistantMessageExtra struct {
@@ -75,10 +77,8 @@ const (
 type AssistantMessageResponse struct {
 	ContentType AssistantContentType `json:"content_type"`
 	Content     string               `json:"content"`
-	HintText    string               `json:"hint_text,omitempty"`
 	StreamID    string               `json:"stream_id,omitempty"`
 	IsFinish    bool                 `json:"is_finish"`
-	Param       any                  `json:"param,omitempty"`
 	IsFromAI    bool                 `json:"is_from_ai"`
 }
 

@@ -148,22 +148,8 @@ func inferActionKey(pageFrom models.AssistantPageInfo) models.AssistantActionKey
 }
 
 func (rt *Router) assistantMessageNew(c *gin.Context) {
-	if !rt.Center.AIAgent.Enable {
-		ginx.Bomb(http.StatusServiceUnavailable, "AI Agent is not enabled")
-		return
-	}
-
 	me := c.MustGet("user").(*models.User)
-
-	var req struct {
-		ChatID  string `json:"chat_id"`
-		ModelID int64  `json:"model_id"`
-		Query   struct {
-			Content  string                   `json:"content"`
-			Action   models.AssistantAction   `json:"action"`
-			PageFrom models.AssistantPageInfo `json:"page_from"`
-		} `json:"query"`
-	}
+	var req models.AssistantSendRequest
 	ginx.BindJSON(c, &req)
 
 	if req.ChatID == "" {
@@ -200,13 +186,9 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	// Build message
 	streamID := uuid.New().String()
 	msg := models.AssistantMessage{
-		AssistantMessageMeta: models.AssistantMessageMeta{ChatID: req.ChatID, SeqID: seqID},
-		ModelID:              req.ModelID,
-		Query: models.AssistantMessageQuery{
-			Content:  req.Query.Content,
-			Action:   req.Query.Action,
-			PageFrom: req.Query.PageFrom,
-		},
+		ChatID: req.ChatID,
+		SeqID:  seqID,
+		Query:  req.Query,
 		Response: []models.AssistantMessageResponse{
 			{ContentType: models.ContentTypeMarkdown, StreamID: streamID, IsFromAI: true},
 		},

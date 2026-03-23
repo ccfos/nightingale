@@ -25,7 +25,6 @@ type Center struct {
 }
 
 type AIAgent struct {
-	Enable     bool   `toml:"Enable"`
 	SkillsPath string `toml:"SkillsPath"`
 }
 
