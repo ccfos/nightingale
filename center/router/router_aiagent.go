@@ -3,8 +3,10 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/models"
 )
 
 // AIChatRequest is the generic chat request dispatched by action_key.
@@ -17,20 +19,22 @@ type AIChatRequest struct {
 
 // actionHandler defines how each action_key is processed.
 type actionHandler struct {
-	useCase     string // maps to AIAgent.UseCase for finding the right agent config
-	validate    func(req *AIChatRequest) error
-	selectTools func(req *AIChatRequest) []string
-	buildPrompt func(req *AIChatRequest) string
-	buildInputs func(req *AIChatRequest) map[string]string
+	useCase       string // maps to AIAgent.UseCase for finding the right agent config
+	validate      func(req *AIChatRequest) error
+	selectTools   func(req *AIChatRequest) []string
+	buildPrompt   func(req *AIChatRequest) string
+	buildInputs   func(req *AIChatRequest) map[string]string
+	parseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
 }
 
 var actionRegistry = map[string]*actionHandler{
 	"query_generator": {
-		useCase:     "chat",
-		validate:    validateQueryGenerator,
-		selectTools: selectQueryGeneratorTools,
-		buildPrompt: buildQueryGeneratorPrompt,
-		buildInputs: buildQueryGeneratorInputs,
+		useCase:       "chat",
+		validate:      validateQueryGenerator,
+		selectTools:   selectQueryGeneratorTools,
+		buildPrompt:   buildQueryGeneratorPrompt,
+		buildInputs:   buildQueryGeneratorInputs,
+		parseResponse: parseQueryGeneratorResponse,
 	},
 }
 
@@ -143,5 +147,46 @@ func buildQueryGeneratorInputs(req *AIChatRequest) map[string]string {
 		}
 	}
 	return inputs
+}
+
+// parseQueryGeneratorResponse parses the AI JSON output {"query":"...", "explanation":"..."}
+// and splits it into a query element + a markdown element.
+// Returns nil if parsing fails, so the caller can fall back to a single markdown element.
+func parseQueryGeneratorResponse(content string) []models.AssistantMessageResponse {
+	cleaned := stripCodeFence(strings.TrimSpace(content))
+
+	var result struct {
+		Query       string `json:"query"`
+		Explanation string `json:"explanation"`
+	}
+	if err := json.Unmarshal([]byte(cleaned), &result); err != nil || result.Query == "" {
+		return nil
+	}
+
+	resp := []models.AssistantMessageResponse{
+		{ContentType: models.ContentTypeQuery, Content: result.Query, IsFinish: true, IsFromAI: true},
+	}
+	if result.Explanation != "" {
+		resp = append(resp, models.AssistantMessageResponse{
+			ContentType: models.ContentTypeMarkdown, Content: result.Explanation, IsFinish: true, IsFromAI: true,
+		})
+	}
+	return resp
+}
+
+// stripCodeFence removes markdown code fences (```json ... ```) that LLMs sometimes wrap around JSON.
+func stripCodeFence(s string) string {
+	if !strings.HasPrefix(s, "```") {
+		return s
+	}
+	// Remove opening fence line
+	if idx := strings.Index(s, "\n"); idx != -1 {
+		s = s[idx+1:]
+	}
+	// Remove closing fence
+	if strings.HasSuffix(s, "```") {
+		s = strings.TrimSuffix(s, "```")
+	}
+	return strings.TrimSpace(s)
 }
 

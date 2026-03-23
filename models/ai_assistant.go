@@ -72,6 +72,7 @@ type AssistantContentType string
 const (
 	ContentTypeMarkdown AssistantContentType = "markdown"
 	ContentTypeHint     AssistantContentType = "hint"
+	ContentTypeQuery    AssistantContentType = "query"
 )
 
 type AssistantMessageResponse struct {

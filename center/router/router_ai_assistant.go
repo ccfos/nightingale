@@ -427,10 +427,20 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	streamCache.Finish(streamID)
 
-	// Build final response
-	msg.Response = []models.AssistantMessageResponse{
-		{ContentType: models.ContentTypeMarkdown, Content: fullContent, StreamID: streamID, IsFinish: true, IsFromAI: true},
+	// Build final response: try action-specific parsing first, fall back to single markdown
+	var responses []models.AssistantMessageResponse
+	if handler.parseResponse != nil {
+		responses = handler.parseResponse(fullContent)
 	}
+	if len(responses) == 0 {
+		responses = []models.AssistantMessageResponse{
+			{ContentType: models.ContentTypeMarkdown, Content: fullContent, StreamID: streamID, IsFinish: true, IsFromAI: true},
+		}
+	} else {
+		// Attach streamID to the first element for frontend stream matching
+		responses[0].StreamID = streamID
+	}
+	msg.Response = responses
 	msg.IsFinish = true
 	msg.CurStep = ""
 	msg.ExecutedTools = executedTools
