@@ -7,6 +7,7 @@ import (
 func init() {
 	// 独立媒介 Provider
 	DefaultRegistry.Register(&DingtalkProvider{})
+	DefaultRegistry.Register(&DingtalkAppProvider{})
 	DefaultRegistry.Register(&WecomProvider{})
 	DefaultRegistry.Register(&FeishuCardProvider{})
 	DefaultRegistry.Register(&LarkCardProvider{})

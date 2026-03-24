@@ -207,8 +207,8 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
-	
+	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, _ := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
+
 	var resp string
 	switch notifyChannel.RequestType {
 	case "flashduty":

@@ -52,11 +52,12 @@ func (ncc *NotifyChannelConfig) TableName() string {
 }
 
 type RequestConfig struct {
-	HTTPRequestConfig      *HTTPRequestConfig      `json:"http_request_config,omitempty" gorm:"serializer:json"`
-	SMTPRequestConfig      *SMTPRequestConfig      `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
-	ScriptRequestConfig    *ScriptRequestConfig    `json:"script_request_config,omitempty" gorm:"serializer:json"`
-	FlashDutyRequestConfig *FlashDutyRequestConfig `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
-	PagerDutyRequestConfig *PagerDutyRequestConfig `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
+	HTTPRequestConfig        *HTTPRequestConfig        `json:"http_request_config,omitempty" gorm:"serializer:json"`
+	SMTPRequestConfig        *SMTPRequestConfig        `json:"smtp_request_config,omitempty" gorm:"serializer:json"`
+	ScriptRequestConfig      *ScriptRequestConfig      `json:"script_request_config,omitempty" gorm:"serializer:json"`
+	FlashDutyRequestConfig   *FlashDutyRequestConfig   `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
+	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
+	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -127,6 +128,16 @@ type HTTPRequestConfig struct {
 	RetryInterval int               `json:"retry_interval"` // 重试间隔（毫秒）
 	TLS           *TLSConfig        `json:"tls,omitempty"`
 	Request       RequestDetail     `json:"request"`
+}
+
+type DingtalkAppRequestConfig struct {
+	AppKey     string `json:"app_key"`
+	AppSecret  string `json:"app_secret"`
+	ContactKey string `json:"contact_key"`
+	Proxy      string `json:"proxy"`
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes int    `json:"retry_times"` // 重试次数
+	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // TLSConfig TLS 配置
@@ -243,6 +254,10 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
 	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
 		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
+	}
+	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的代理
+	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil && nc.RequestConfig.DingtalkAppRequestConfig.Proxy != "" {
+		proxy = nc.RequestConfig.DingtalkAppRequestConfig.Proxy
 	}
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)

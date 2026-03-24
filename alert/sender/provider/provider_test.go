@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -312,7 +313,7 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 				Timeout: 10000,
 				Request: models.RequestDetail{
 					Parameters: map[string]string{
-						"PhoneNumbers":    "{{ $sendto }}",
+						"PhoneNumbers":    "18291906071",
 						"SignName":        data["SignName"],
 						"TemplateCode":    data["TemplateCode"],
 						"TemplateParam":   `{"name":"text","tag":"text"}`,
@@ -346,12 +347,26 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 	}
 
 	// 调用SendHTTP方法
-	resp, err := SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tpl, map[string]string{}, []string{data["Phone"]}, client)
-	if err != nil {
-		t.Fatalf("SendHTTP失败: %v", err)
+	p := AliyunSmsProvider{}
+	result := p.Notify(context.Background(), &NotifyRequest{
+		Config:       notifyChannel,
+		Events:       events,
+		TplContent:   tpl,
+		CustomParams: map[string]string{},
+		Sendtos:      []string{data["Phone"]},
+		HttpClient:   client,
+	})
+	if result.Err != nil {
+		t.Fatalf("SendHTTP失败: %v", result.Err)
 	}
 
+	//resp, err := SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tpl, map[string]string{}, []string{data["Phone"]}, client)
+	//if err != nil {
+	//	t.Fatalf("SendHTTP失败: %v", err)
+	//}
+
 	// 验证响应
+	resp := result.Response
 	if !strings.Contains(resp, "BizId") || !strings.Contains(resp, "RequestId") {
 		t.Errorf("响应不包含预期内容，得到: %s", resp)
 	}

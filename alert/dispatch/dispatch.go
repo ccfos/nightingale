@@ -439,11 +439,12 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 	return nil
 }
 
-func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string) {
+func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string, []string) {
 	customParams := make(map[string]string)
 	var flashDutyChannelIDs []int64
 	var pagerDutyRoutingKeys []string
 	var userInfoParams models.CustomParams
+	var imGroupIDs []string
 
 	for key, value := range notifyConfig.Params {
 		switch key {
@@ -472,6 +473,14 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					break
 				}
 			}
+		case "im_group_ids":
+			// 发送到指定的飞书群/钉钉群
+			if data, err := json.Marshal(value); err == nil {
+				var ids []string
+				if json.Unmarshal(data, &ids) == nil {
+					imGroupIDs = ids
+				}
+			}
 		default:
 			// 避免直接 value.(string) 导致 panic，支持多种类型并统一为字符串
 			customParams[key] = value.(string)
@@ -479,7 +488,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	}
 
 	if len(userInfoParams.UserIDs) == 0 && len(userInfoParams.UserGroupIDs) == 0 {
-		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
+		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 	}
 
 	userIds := make([]int64, 0)
@@ -515,7 +524,7 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 		visited[user.Id] = true
 	}
 
-	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
+	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 }
 
 func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, configCvalCache *memsto.CvalCache,
@@ -536,7 +545,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
 	}
 
-	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams, imGroupIDs := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
 	p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident) // ← 按 ident 查找
 	if !ok {
@@ -552,6 +561,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		PagerDutyRoutingKeys: pagerdutyRoutingKeys,
 		CustomParams:         customParams,
 		Sendtos:              sendtos,
+		ImGroupIDs:           imGroupIDs,
 		HttpClient:           notifyChannelCache.GetHttpClient(notifyChannel.ID),
 	}
 	// 传输层路由：根据 request_type 决定同步/异步
@@ -575,7 +585,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		result := p.Notify(ctx.Ctx, req)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	default:
-		// flashduty/pagerduty/script 等直接调用
+		// flashduty/pagerduty/script/dingtalkapp 等直接调用
 		result := p.Notify(ctx.Ctx, req)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	}

@@ -32,6 +32,7 @@ type NotifyRequest struct {
 	PagerDutyRoutingKeys []string
 	CustomParams         map[string]string
 	Sendtos              []string
+	ImGroupIDs           []string                  // 飞书群/钉钉群ID
 	HttpClient           *http.Client              // 由 cache 层提供
 	SmtpChan             chan *models.EmailContext // 由 cache 层提供 (仅 smtp 类型)
 }
