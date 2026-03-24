@@ -608,6 +608,8 @@ var alertEvalHtmlTpl = template.Must(template.New("alert-eval-detail").Parse(`<!
   .line-content .lv-ERROR { color: #f5222d; }
   .line-content .lv-ERRORF { color: #f5222d; }
   .line-content .hl { background: #fff7e6; color: #d46b08; border-radius: 2px; padding: 0 2px; }
+  .line-content a.event-hash { color: #6C53B1; text-decoration: underline; text-decoration-style: dotted; }
+  .line-content a.event-hash:hover { color: #531dab; text-decoration-style: solid; }
   .hidden { display: none !important; }
   .empty-state {
     text-align: center; padding: 64px 24px; color: #bfbfbf; font-size: 14px;
@@ -661,6 +663,7 @@ var alertEvalHtmlTpl = template.Must(template.New("alert-eval-detail").Parse(`<!
   var LEVELS = ['DEBUG','INFO','WARNING','WARNINGF','ERROR','ERRORF'];
   var LEVEL_RE = /\b(DEBUG|INFO|WARNING|WARNINGF|ERROR|ERRORF)\b/;
   var TS_RE = /^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}[.\d]*)/;
+  var HASH_RE = /\b([0-9a-f]{32})\b/g;
 
   // colorize on load
   lines.forEach(function(el) {
@@ -678,6 +681,9 @@ var alertEvalHtmlTpl = template.Must(template.New("alert-eval-detail").Parse(`<!
     if (keyword) {
       html = html.split(escapeHtml(keyword)).join('<span class="hl">'+escapeHtml(keyword)+'</span>');
     }
+
+    // linkify event hash
+    html = html.replace(HASH_RE, function(m) { return '<a class="event-hash" href="../event-detail/'+m+'" target="_blank">'+m+'</a>'; });
 
     content.innerHTML = html;
     el.dataset.level = detectLevel(text);
