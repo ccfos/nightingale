@@ -1,6 +1,6 @@
 # AI Skill API
 
-所有接口需要管理员权限（`auth` + `admin`）。
+页面接口需要管理员权限（`auth` + `admin`），Service 接口（`/v1/n9e`）使用 BasicAuth 认证。
 
 ## 数据结构
 
@@ -407,3 +407,97 @@ DELETE /api/n9e/ai-skill-file/:fileId
 ### 错误
 
 - `404` 文件不存在
+
+---
+
+## Service API（v1）
+
+以下接口供其他服务调用，使用 BasicAuth 认证（需开启 `APIForService`），`created_by` / `updated_by` 固定为 `system`。
+
+---
+
+### 创建/更新 Skill（Upsert）
+
+```
+POST /v1/n9e/ai-skills
+```
+
+按 `name` 做 Upsert：同名 Skill 已存在则更新，不存在则创建。
+
+#### 请求体
+
+```json
+{
+  "name": "query-generator",
+  "description": "生成 PromQL/SQL 查询语句",
+  "instructions": "# Query Generator\n根据用户输入生成查询语句...",
+  "license": "Apache-2.0",
+  "compatibility": "Requires network access",
+  "metadata": {
+    "author": "nightingale",
+    "version": "1.0"
+  },
+  "allowed_tools": "Bash(git:*) Read",
+  "enabled": true
+}
+```
+
+#### 校验规则
+
+- `name` 必填（自动 trim）
+- `instructions` 必填（自动 trim）
+
+#### 响应
+
+```json
+{
+  "dat": 1,
+  "err": ""
+}
+```
+
+返回 Skill ID（创建时为新 ID，更新时为已有 ID）。
+
+---
+
+### 上传 Skill 资源文件
+
+```
+POST /v1/n9e/ai-skill/:id/files
+```
+
+#### 路径参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | Skill ID |
+
+#### 请求格式
+
+`multipart/form-data`
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| file | file | 资源文件 |
+
+#### 限制
+
+- 允许的文件类型：`.md`、`.txt`、`.json`、`.yaml`、`.yml`、`.csv`
+- 单文件最大 2MB
+- 每个 Skill 最多 20 个资源文件
+
+#### 响应
+
+```json
+{
+  "dat": 10,
+  "err": ""
+}
+```
+
+返回新创建的文件 ID。
+
+#### 错误
+
+- `404` Skill 不存在
+- `400` 文件类型不支持 / 文件超过 2MB / 文件数量超过 20

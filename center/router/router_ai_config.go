@@ -293,6 +293,66 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
+// ==================== Service API (v1) ====================
+
+func (rt *Router) aiSkillAddByService(c *gin.Context) {
+	var obj models.AISkill
+	ginx.BindJSON(c, &obj)
+	ginx.Dangerous(obj.Verify())
+
+	obj.CreatedBy = "system"
+	obj.UpdatedBy = "system"
+
+	// Upsert: if skill with same name exists, update it; otherwise create.
+	exist, err := models.AISkillGetByName(rt.Ctx, obj.Name)
+	ginx.Dangerous(err)
+
+	if exist != nil {
+		ginx.Dangerous(exist.Update(rt.Ctx, obj))
+		ginx.NewRender(c).Data(exist.Id, nil)
+		return
+	}
+
+	ginx.Dangerous(obj.Create(rt.Ctx))
+	ginx.NewRender(c).Data(obj.Id, nil)
+}
+
+func (rt *Router) aiSkillFileAddByService(c *gin.Context) {
+	skillId := ginx.UrlParamInt64(c, "id")
+
+	skill, err := models.AISkillGetById(rt.Ctx, skillId)
+	ginx.Dangerous(err)
+	if skill == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+
+	file, header, err := c.Request.FormFile("file")
+	ginx.Dangerous(err)
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	allowed := map[string]bool{".md": true, ".txt": true, ".json": true, ".yaml": true, ".yml": true, ".csv": true}
+	if !allowed[ext] {
+		ginx.Bomb(http.StatusBadRequest, "file type not allowed, only .md/.txt/.json/.yaml/.csv")
+	}
+
+	if header.Size > 2*1024*1024 {
+		ginx.Bomb(http.StatusBadRequest, "file size exceeds 2MB limit")
+	}
+
+	content, err := io.ReadAll(file)
+	ginx.Dangerous(err)
+
+	skillFile := models.AISkillFile{
+		SkillId:   skillId,
+		Name:      header.Filename,
+		Content:   string(content),
+		CreatedBy: "system",
+	}
+	ginx.Dangerous(skillFile.Create(rt.Ctx))
+	ginx.NewRender(c).Data(skillFile.Id, nil)
+}
+
 func (rt *Router) mcpServerGets(c *gin.Context) {
 	lst, err := models.MCPServerGets(rt.Ctx)
 	ginx.NewRender(c).Data(lst, err)
