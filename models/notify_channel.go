@@ -228,6 +228,13 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 			timeout = flashDutyTimeout
 		}
 	}
+	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的超时时间
+	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
+		dingtalkAppTimeout := nc.RequestConfig.DingtalkAppRequestConfig.Timeout
+		if dingtalkAppTimeout > 0 {
+			timeout = dingtalkAppTimeout
+		}
+	}
 
 	if timeout == 0 {
 		timeout = 10000 // HTTP 默认 10 秒

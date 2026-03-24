@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -30,6 +31,13 @@ type DingtalkAppProvider struct {
 	appConfig   *models.DingtalkAppRequestConfig
 	AccessToken string
 }
+
+type dingtalkTargetKind string
+
+const (
+	dingtalkTargetUser  dingtalkTargetKind = "user"
+	dingtalkTargetGroup dingtalkTargetKind = "group"
+)
 
 func (p *DingtalkAppProvider) Ident() string {
 	return "dingtalkapp"
@@ -73,7 +81,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	if err != nil {
 		return &NotifyResult{
 			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
-			Response: "",
+			Response: "get access token failed: " + err.Error(),
 			Err:      err,
 		}
 	}
@@ -89,7 +97,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			if userErr != nil {
 				return &NotifyResult{
 					Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
-					Response: "",
+					Response: "get user id by mobile failed: " + userErr.Error(),
 					Err:      userErr,
 				}
 			}
@@ -98,21 +106,36 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			userIDs = append(userIDs, s)
 		}
 	}
-	if len(userIDs) == 0 {
-		return &NotifyResult{
-			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
-			Response: "",
-			Err:      errors.New("no valid dingtalk user id found"),
+	groupIDs := make([]string, 0, len(req.ImGroupIDs))
+	for _, gid := range req.ImGroupIDs {
+		s := strings.TrimSpace(gid)
+		if s != "" {
+			groupIDs = append(groupIDs, s)
 		}
 	}
 
-	title := strings.TrimSpace(fmt.Sprint(req.TplContent["title"]))
-	content := strings.TrimSpace(fmt.Sprint(req.TplContent["content"]))
+	if len(userIDs) == 0 && len(groupIDs) == 0 {
+		return &NotifyResult{
+			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
+			Response: "",
+			Err:      errors.New("no valid dingtalk target found"),
+		}
+	}
+
+	tplData := buildDingtalkAppTplData(req, userIDs, groupIDs)
+	title := getMapString(req.TplContent, "title")
+	content := getMapString(req.TplContent, "content")
+	if needsTemplateRendering(title) {
+		title = getParsedString("dingtalkapp_title", title, tplData)
+	}
+	if needsTemplateRendering(content) {
+		content = getParsedString("dingtalkapp_content", content, tplData)
+	}
 	if title == "" {
 		title = "Alert"
 	}
 
-	imageBase64 := pickImageBase64(req.CustomParams, req.TplContent)
+	imageBase64 := pickImageBase64(req.Events)
 	mediaID := ""
 	if imageBase64 != "" {
 		var uploadErr error
@@ -125,19 +148,43 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			}
 		}
 	}
+	cardData := map[string]interface{}{
+		"msg_title":      title,
+		"msg_body":       content,
+		"shot_image_key": mediaID,
+	}
 
-	msgResp, sendErr := p.sendInteractiveCardMessage(ctx, req.HttpClient, userIDs, title, content, mediaID, req.CustomParams)
-	if sendErr != nil {
-		return &NotifyResult{
-			Target:   strings.Join(userIDs, ","),
-			Response: msgResp,
-			Err:      sendErr,
+	parts := make([]string, 0, 2)
+	targets := make([]string, 0, len(userIDs)+len(groupIDs))
+	targets = append(targets, userIDs...)
+	targets = append(targets, groupIDs...)
+
+	if len(userIDs) > 0 {
+		msgResp, sendErr := p.sendInteractiveCardMessage(ctx, req.HttpClient, dingtalkTargetUser, userIDs, cardData, req.CustomParams)
+		if sendErr != nil {
+			return &NotifyResult{
+				Target:   strings.Join(targets, ","),
+				Response: msgResp,
+				Err:      sendErr,
+			}
 		}
+		parts = append(parts, "user:"+msgResp)
+	}
+	if len(groupIDs) > 0 {
+		msgResp, sendErr := p.sendInteractiveCardMessage(ctx, req.HttpClient, dingtalkTargetGroup, groupIDs, cardData, req.CustomParams)
+		if sendErr != nil {
+			return &NotifyResult{
+				Target:   strings.Join(targets, ","),
+				Response: strings.Join(parts, "; "),
+				Err:      sendErr,
+			}
+		}
+		parts = append(parts, "group:"+msgResp)
 	}
 
 	return &NotifyResult{
-		Target:   strings.Join(userIDs, ","),
-		Response: msgResp,
+		Target:   strings.Join(targets, ","),
+		Response: strings.Join(parts, "; "),
 		Err:      nil,
 	}
 }
@@ -332,39 +379,29 @@ func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Clie
 	return result.MediaID, nil
 }
 
-func (p *DingtalkAppProvider) sendInteractiveCardMessage(ctx context.Context, client *http.Client, userIDs []string, title, content, mediaID string, customParams map[string]string) (string, error) {
+func (p *DingtalkAppProvider) sendInteractiveCardMessage(ctx context.Context, client *http.Client, targetKind dingtalkTargetKind, targetIDs []string, cardData map[string]interface{}, customParams map[string]string) (string, error) {
 	cardTemplateID := strings.TrimSpace(customParams["card_template_id"])
 
 	if cardTemplateID == "" {
 		return "", errors.New("card_template_id cannot be empty when sending dingtalk interactive card")
 	}
 
-	cardData := map[string]string{
-		"title":   title,
-		"content": content,
-	}
-	if mediaID != "" {
-		cardData["image_media_id"] = mediaID
-	}
-
-	isGroup := isGroupContactKey(p.appConfig.ContactKey)
 	robotCode := p.appConfig.AppKey
-
-	results := make([]string, 0, len(userIDs))
-	for _, userID := range userIDs {
+	results := make([]string, 0, len(targetIDs))
+	for _, targetID := range targetIDs {
 		payload := map[string]interface{}{
 			"cardTemplateId": cardTemplateID,
-			"outTrackId":     fmt.Sprintf("n9e_%d_%s", time.Now().UnixNano(), userID),
+			"outTrackId":     fmt.Sprintf("n9e_%d_%s", time.Now().UnixNano(), targetID),
 			"cardData": map[string]interface{}{
 				"cardParamMap": cardData,
 			},
 		}
-		if isGroup {
-			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_GROUP.%s", userID)
+		if targetKind == dingtalkTargetGroup {
+			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_GROUP.%s", targetID)
 			payload["imGroupOpenSpaceModel"] = map[string]bool{"supportForward": true}
 			payload["imGroupOpenDeliverModel"] = map[string]string{"robotCode": robotCode}
 		} else {
-			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_ROBOT.%s", userID)
+			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_ROBOT.%s", targetID)
 			payload["imRobotOpenSpaceModel"] = map[string]bool{"supportForward": true}
 			payload["imRobotOpenDeliverModel"] = map[string]string{"spaceType": "IM_ROBOT"}
 		}
@@ -390,52 +427,77 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, dingtalkAppSendMessageURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return "", err
+	retrySleep := time.Second
+	if p.appConfig != nil && p.appConfig.RetrySleep > 0 {
+		retrySleep = time.Duration(p.appConfig.RetrySleep) * time.Millisecond
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-acs-dingtalk-access-token", p.AccessToken)
+	retryTimes := 3
+	if p.appConfig != nil && p.appConfig.RetryTimes > 0 {
+		retryTimes = p.appConfig.RetryTimes
+	}
+	logger.Infof("send app message payload: %v", string(reqBody))
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
+	var lastErrorMessage string
+	for i := 0; i <= retryTimes; i++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, dingtalkAppSendMessageURL, bytes.NewReader(reqBody))
+		if err != nil {
+			return "", err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("x-acs-dingtalk-access-token", p.AccessToken)
 
-	// 互动卡片新接口返回格式：
-	// {"success": true, "result": {"deliverResults":[{"success": true, ...}]}}
-	var result struct {
-		Success bool `json:"success"`
-		Result  struct {
-			OutTrackID     string `json:"outTrackId"`
-			DeliverResults []struct {
-				Success   bool   `json:"success"`
-				SpaceType string `json:"spaceType"`
-				SpaceID   string `json:"spaceId"`
-				CarrierID string `json:"carrierId"`
-				ErrorMsg  string `json:"errorMsg"`
-			} `json:"deliverResults"`
-		} `json:"result"`
-	}
-	if err = json.Unmarshal(bs, &result); err != nil {
-		return "", fmt.Errorf("parse dingtalk send message response failed: %w, body: %s", err, string(bs))
-	}
-	if !result.Success {
-		return string(bs), fmt.Errorf("dingtalk send message failed: success=false body=%s", string(bs))
-	}
-	if len(result.Result.DeliverResults) > 0 {
-		for _, dr := range result.Result.DeliverResults {
-			if !dr.Success {
-				return string(bs), fmt.Errorf("dingtalk deliver failed: space_id=%s error=%s", dr.SpaceID, dr.ErrorMsg)
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErrorMessage = err.Error()
+			if i < retryTimes {
+				time.Sleep(retrySleep)
+			}
+			continue
+		}
+
+		bs, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			lastErrorMessage = readErr.Error()
+			if i < retryTimes {
+				time.Sleep(retrySleep)
+				continue
+			}
+			return "", readErr
+		}
+
+		// 互动卡片新接口返回格式：
+		// {"success": true, "result": {"deliverResults":[{"success": true, ...}]}}
+		var result struct {
+			Success bool `json:"success"`
+			Result  struct {
+				OutTrackID     string `json:"outTrackId"`
+				DeliverResults []struct {
+					Success   bool   `json:"success"`
+					SpaceType string `json:"spaceType"`
+					SpaceID   string `json:"spaceId"`
+					CarrierID string `json:"carrierId"`
+					ErrorMsg  string `json:"errorMsg"`
+				} `json:"deliverResults"`
+			} `json:"result"`
+		}
+		if err = json.Unmarshal(bs, &result); err != nil {
+			return "", fmt.Errorf("parse dingtalk send message response failed: %w, body: %s", err, string(bs))
+		}
+		if !result.Success {
+			return string(bs), fmt.Errorf("dingtalk send message failed: success=false body=%s", string(bs))
+		}
+		if len(result.Result.DeliverResults) > 0 {
+			for _, dr := range result.Result.DeliverResults {
+				if !dr.Success {
+					return string(bs), fmt.Errorf("dingtalk deliver failed: space_id=%s error=%s", dr.SpaceID, dr.ErrorMsg)
+				}
 			}
 		}
+		return string(bs), nil
 	}
-	return string(bs), nil
+
+	return lastErrorMessage, errors.New("failed to send dingtalk interactive card")
 }
 
 func decodeBase64Payload(payload string) ([]byte, error) {
@@ -464,33 +526,58 @@ func isPhoneContactKey(contactKey string) bool {
 	return key == models.Phone || strings.Contains(key, "phone") || strings.Contains(key, "mobile")
 }
 
-func isGroupContactKey(contactKey string) bool {
-	key := strings.ToLower(strings.TrimSpace(contactKey))
-	return strings.Contains(key, "group") || strings.Contains(key, "conversation")
-}
+func pickImageBase64(events []*models.AlertCurEvent) string {
+	// 优先从事件注解中提取图片字段。
+	for _, evt := range events {
+		if evt == nil || evt.AnnotationsJSON == nil {
+			continue
+		}
+		if v := strings.TrimSpace(evt.AnnotationsJSON["alert_image_base64"]); v != "" {
+			return v
+		}
+		if v := strings.TrimSpace(evt.AnnotationsJSON["image_base64"]); v != "" {
+			return v
+		}
+	}
 
-func pickImageBase64(customParams map[string]string, tpl map[string]interface{}) string {
-	if v := strings.TrimSpace(customParams["image_base64"]); v != "" {
-		return v
-	}
-	if v := strings.TrimSpace(customParams["alert_image_base64"]); v != "" {
-		return v
-	}
-	if raw, ok := tpl["image_base64"]; ok {
-		if s, ok := raw.(string); ok {
-			return strings.TrimSpace(s)
-		}
-	}
-	if raw, ok := tpl["alert_image_base64"]; ok {
-		if s, ok := raw.(string); ok {
-			return strings.TrimSpace(s)
-		}
-	}
 	return ""
 }
 
 func normalizeErrCode(code json.RawMessage) string {
 	return strings.Trim(strings.TrimSpace(string(code)), "\"")
+}
+
+func getMapString(m map[string]interface{}, key string) string {
+	if m == nil {
+		return ""
+	}
+	v, ok := m[key]
+	if !ok || v == nil {
+		return ""
+	}
+	if s, ok := v.(string); ok {
+		return strings.TrimSpace(s)
+	}
+	return strings.TrimSpace(fmt.Sprint(v))
+}
+
+func buildDingtalkAppTplData(req *NotifyRequest, userIDs, groupIDs []string) map[string]interface{} {
+	data := map[string]interface{}{
+		"tpl":        req.TplContent,
+		"params":     req.CustomParams,
+		"events":     req.Events,
+		"sendtos":    req.Sendtos,
+		"imGroupIDs": req.ImGroupIDs,
+		"userIDs":    userIDs,
+		"groupIDs":   groupIDs,
+	}
+	if len(req.Events) > 0 {
+		data["event"] = req.Events[0]
+	}
+	if len(req.Sendtos) > 0 {
+		data["sendto"] = req.Sendtos[0]
+	}
+	return data
 }
 
 func (p *DingtalkAppProvider) DefaultChannels() []*models.NotifyChannelConfig {

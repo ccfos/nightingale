@@ -585,7 +585,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		result := p.Notify(ctx.Ctx, req)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	default:
-		// flashduty/pagerduty/script/dingtalkapp 等直接调用
+		// flashduty/pagerduty/script 等直接调用
 		result := p.Notify(ctx.Ctx, req)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	}
