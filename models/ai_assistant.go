@@ -1,5 +1,7 @@
 package models
 
+import "encoding/json"
+
 type AssistantChat struct {
 	ChatID          string            `json:"chat_id"`
 	Title           string            `json:"title"`
@@ -19,14 +21,14 @@ const (
 	PageTypeExplorer     AssistantPageType = "explorer"
 )
 
+// AssistantPageInfo describes which page the user opened the AI assistant from.
+// Page identifies the page type (e.g. explorer, dashboards).
+// Param carries optional page-level context whose schema varies by page type;
+// for example, the explorer page may include datasource_type and datasource_id,
+// while other pages may omit it entirely.
 type AssistantPageInfo struct {
-	Page  AssistantPageType      `json:"page"`
-	Param AssistantPageInfoParam `json:"param"`
-}
-
-type AssistantPageInfoParam struct {
-	DatasourceType string `json:"datasource_type,omitempty"`
-	DatasourceID   int64  `json:"datasource_id,omitempty"`
+	Page  AssistantPageType `json:"page"`
+	Param json.RawMessage   `json:"param,omitempty"`
 }
 
 // ==================== Send Request ====================

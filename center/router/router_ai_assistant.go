@@ -19,8 +19,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// ==================== MessageStateManager ====================
-
 // MessageStateManager manages in-flight assistant messages.
 type MessageStateManager struct {
 	mu      sync.RWMutex
@@ -90,8 +88,6 @@ func (m *MessageStateManager) GetStreamID(key string) string {
 	return ""
 }
 
-// ==================== Chat Handlers ====================
-
 func (rt *Router) assistantChatNew(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
@@ -101,16 +97,11 @@ func (rt *Router) assistantChatNew(c *gin.Context) {
 	}
 	ginx.BindJSON(c, &req)
 
-	var param models.AssistantPageInfoParam
-	if len(req.Param) > 0 {
-		json.Unmarshal(req.Param, &param)
-	}
-
 	chat := models.AssistantChat{
 		ChatID:          uuid.New().String(),
 		Title:           "New Chat",
 		LastUpdate:      time.Now().Unix(),
-		PageFrom:        models.AssistantPageInfo{Page: req.Page, Param: param},
+		PageFrom:        models.AssistantPageInfo{Page: req.Page, Param: req.Param},
 		RecommendAction: []models.AssistantAction{},
 		UserID:          me.Id,
 		IsNew:           true,
