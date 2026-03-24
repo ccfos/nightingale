@@ -361,6 +361,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Consume stream chunks
 	var fullContent string
+	var fullReasoning string
 	executedTools := false
 	for chunk := range wfCtx.StreamChan {
 		select {
@@ -377,6 +378,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				fullReasoning += delta
 				streamCache.AddReason(streamID, delta)
 			}
 		case models.StreamTypeText:
@@ -385,6 +387,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				fullReasoning += delta
 				streamCache.AddReason(streamID, delta)
 			}
 		case models.StreamTypeToolCall:
@@ -431,6 +434,19 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		// Attach streamID to the first element for frontend stream matching
 		responses[0].StreamID = streamID
 	}
+
+	// Prepend reasoning as the first response item so it is persisted and
+	// returned when loading historical conversations.
+	if fullReasoning != "" {
+		reasoningResp := models.AssistantMessageResponse{
+			ContentType: models.ContentTypeReasoning,
+			Content:     fullReasoning,
+			IsFinish:    true,
+			IsFromAI:    true,
+		}
+		responses = append([]models.AssistantMessageResponse{reasoningResp}, responses...)
+	}
+
 	msg.Response = responses
 	msg.IsFinish = true
 	msg.CurStep = ""

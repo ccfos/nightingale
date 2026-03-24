@@ -72,9 +72,10 @@ type AssistantMessageQuery struct {
 type AssistantContentType string
 
 const (
-	ContentTypeMarkdown AssistantContentType = "markdown"
-	ContentTypeHint     AssistantContentType = "hint"
-	ContentTypeQuery    AssistantContentType = "query"
+	ContentTypeMarkdown  AssistantContentType = "markdown"
+	ContentTypeHint      AssistantContentType = "hint"
+	ContentTypeQuery     AssistantContentType = "query"
+	ContentTypeReasoning AssistantContentType = "reasoning"
 )
 
 type AssistantMessageResponse struct {

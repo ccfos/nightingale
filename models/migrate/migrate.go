@@ -71,14 +71,16 @@ func MigrateTables(db *gorm.DB) error {
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
 		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
-		&models.AssistantChatRow{}, &models.AssistantMessageRow{}}
+		&models.AssistantChatRow{}}
 
 	if isPostgres(db) {
+		dts = append(dts, &models.AssistantMessageRow{})        // PostgreSQL: text is unlimited
 		dts = append(dts, &models.PostgresBuiltinComponent{})
 		dts = append(dts, &models.PostgresAISkillFile{})
 		dts = append(dts, &models.PostgresEventPipelineExecution{})
 		DropUniqueFiledLimit(db, &models.PostgresBuiltinComponent{}, "idx_ident", "idx_ident")
 	} else {
+		dts = append(dts, &models.MysqlAssistantMessageRow{})   // MySQL: mediumtext; SQLite: treated as text
 		dts = append(dts, &models.BuiltinComponent{})
 		dts = append(dts, &models.AISkillFile{})
 		dts = append(dts, &models.EventPipelineExecution{})

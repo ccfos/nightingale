@@ -34,6 +34,21 @@ type AssistantMessageRow struct {
 
 func (AssistantMessageRow) TableName() string { return "ai_assistant_message" }
 
+// MysqlAssistantMessageRow is used only for MySQL AutoMigrate to upgrade
+// data/extra columns from TEXT (64KB) to MEDIUMTEXT (16MB), because reasoning
+// content can be very long. PostgreSQL/SQLite text is already unlimited;
+// SQLite treats mediumtext as text affinity so the else branch covers both.
+type MysqlAssistantMessageRow struct {
+	Id     int64  `gorm:"column:id;primaryKey;autoIncrement"`
+	ChatID string `gorm:"column:chat_id;type:varchar(255);not null;uniqueIndex:uk_chat_seq,priority:1"`
+	SeqID  int64  `gorm:"column:seq_id;not null;default:0;uniqueIndex:uk_chat_seq,priority:2"`
+	Data   string `gorm:"column:data;type:mediumtext"`
+	Extra  string `gorm:"column:extra;type:mediumtext"`
+	Status int    `gorm:"column:status;type:int;not null;default:0;index:idx_am_status"`
+}
+
+func (MysqlAssistantMessageRow) TableName() string { return "ai_assistant_message" }
+
 // ==================== Gzip helpers ====================
 
 func gzipBase64Encode(data []byte) string {
