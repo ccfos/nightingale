@@ -58,6 +58,7 @@ type RequestConfig struct {
 	FlashDutyRequestConfig   *FlashDutyRequestConfig   `json:"flashduty_request_config,omitempty" gorm:"serializer:json"`
 	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
+	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -132,6 +133,16 @@ type HTTPRequestConfig struct {
 
 type DingtalkAppRequestConfig struct {
 	AppKey     string `json:"app_key"`
+	AppSecret  string `json:"app_secret"`
+	ContactKey string `json:"contact_key"`
+	Proxy      string `json:"proxy"`
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes int    `json:"retry_times"` // 重试次数
+	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+type FeishuAppRequestConfig struct {
+	AppID      string `json:"app_id"`
 	AppSecret  string `json:"app_secret"`
 	ContactKey string `json:"contact_key"`
 	Proxy      string `json:"proxy"`
