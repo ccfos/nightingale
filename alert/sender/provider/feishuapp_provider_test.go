@@ -12,12 +12,13 @@ func TestFeishuAppProviderNotify(t *testing.T) {
 		RequestType: "feishuapp",
 		RequestConfig: &models.RequestConfig{
 			FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
-				AppID:      "cli_a9303433f8f8dcc4",
-				AppSecret:  "qPDd0wwxyqykI9FhrlQCLbNmSamRyA1k",
-				ContactKey: "user_id",
-				Timeout:    10000,
-				RetryTimes: 1,
-				RetrySleep: 10,
+				AppID:         "cli_a9303433f8f8dcc4",
+				AppSecret:     "qPDd0wwxyqykI9FhrlQCLbNmSamRyA1k",
+				ContactKey:    "user_id",
+				ReceiveIDType: "user_id",
+				Timeout:       10000,
+				RetryTimes:    1,
+				RetrySleep:    10,
 			},
 			HTTPRequestConfig: &models.HTTPRequestConfig{
 				Timeout:       10000,

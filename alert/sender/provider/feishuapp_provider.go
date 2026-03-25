@@ -70,6 +70,11 @@ func (p *FeishuAppProvider) Check(config *models.NotifyChannelConfig) error {
 	if strings.TrimSpace(c.ContactKey) == "" {
 		return errors.New("feishu app provider requires contact_key")
 	}
+	if v := strings.TrimSpace(c.ReceiveIDType); v != "" {
+		if !isFeishuReceiveIDTypeAllowed(strings.ToLower(v)) {
+			return errors.New("feishu app provider receive_id_type must be user_id, email, or chat_id")
+		}
+	}
 	if c.Timeout <= 0 {
 		c.Timeout = 10000
 	}
@@ -117,8 +122,8 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	targets := make([]string, 0, len(req.Sendtos)+len(req.ImGroupIDs))
 	resps := make([]string, 0, len(req.Sendtos)+len(req.ImGroupIDs))
 
-	// 个人: 使用配置/参数指定的 receive_id_type（如 user_id/email）。
-	receiveIDType := resolveFeishuReceiveIDType(p.appConfig.ContactKey, req.CustomParams)
+	// 个人: 使用 feishuapp_request_config.receive_id_type；未填时与历史一致，按 contact_key 推断。
+	receiveIDType := resolveFeishuReceiveIDType(p.appConfig.ReceiveIDType, p.appConfig.ContactKey)
 	for _, rid := range req.Sendtos {
 		receiveID := strings.TrimSpace(rid)
 		if receiveID == "" {
@@ -287,19 +292,26 @@ func SendFeishuCardMessage(ctx context.Context, client *http.Client, token, rece
 	return string(bs), nil
 }
 
-func resolveFeishuReceiveIDType(contactKey string, customParams map[string]string) string {
-	if customParams != nil {
-		if v := strings.TrimSpace(customParams["receive_id_type"]); v != "" {
-			return normalizeFeishuReceiveIDType(v)
-		}
+func resolveFeishuReceiveIDType(receiveIDType, contactKey string) string {
+	if v := strings.TrimSpace(receiveIDType); v != "" {
+		return normalizeFeishuReceiveIDType(v)
 	}
 	return normalizeFeishuReceiveIDType(contactKey)
+}
+
+func isFeishuReceiveIDTypeAllowed(s string) bool {
+	switch s {
+	case "user_id", "email", "chat_id":
+		return true
+	default:
+		return false
+	}
 }
 
 func normalizeFeishuReceiveIDType(v string) string {
 	s := strings.ToLower(strings.TrimSpace(v))
 	switch s {
-	case "user_id", "userid", "open_id", "openid":
+	case "user_id":
 		return "user_id"
 	case "email":
 		return "email"
@@ -388,9 +400,9 @@ func SearchFeishuVisibleChats(ctx context.Context, client *http.Client, token, q
 	return &out.Data, nil
 }
 
-// BatchGetFeishuUserIDByEmailOrMobile 通过手机号/邮箱批量查询用户 ID。
+// GetFeishuUserID 通过手机号/邮箱批量查询用户 ID。
 // userIDType 可选 user_id/open_id，默认 open_id。
-func BatchGetFeishuUserIDByEmailOrMobile(ctx context.Context, client *http.Client, token string, emails, mobiles []string, includeResigned bool, userIDType string) ([]FeishuUserIDItem, error) {
+func GetFeishuUserID(ctx context.Context, client *http.Client, token string, emails, mobiles []string, includeResigned bool, userIDType string) ([]FeishuUserIDItem, error) {
 	if client == nil {
 		return nil, errors.New("http client not found")
 	}
@@ -454,12 +466,13 @@ func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 			Name: "Feishu App", Ident: p.Ident(), RequestType: "http", Weight: 4, Enable: true,
 			RequestConfig: &models.RequestConfig{
 				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
-					AppID:      "cli_xxx",
-					AppSecret:  "xxx",
-					ContactKey: "open_id",
-					Timeout:    10000,
-					RetryTimes: 1,
-					RetrySleep: 1000,
+					AppID:         "cli_xxx",
+					AppSecret:     "xxx",
+					ContactKey:    "open_id",
+					ReceiveIDType: "open_id",
+					Timeout:       10000,
+					RetryTimes:    1,
+					RetrySleep:    1000,
 				},
 			},
 			ParamConfig: &models.NotifyParamConfig{

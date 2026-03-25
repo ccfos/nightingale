@@ -142,13 +142,14 @@ type DingtalkAppRequestConfig struct {
 }
 
 type FeishuAppRequestConfig struct {
-	AppID      string `json:"app_id"`
-	AppSecret  string `json:"app_secret"`
-	ContactKey string `json:"contact_key"`
-	Proxy      string `json:"proxy"`
-	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
-	RetryTimes int    `json:"retry_times"` // 重试次数
-	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+	AppID         string `json:"app_id"`
+	AppSecret     string `json:"app_secret"`
+	ContactKey    string `json:"contact_key"`
+	ReceiveIDType string `json:"receive_id_type,omitempty"`
+	Proxy         string `json:"proxy"`
+	Timeout       int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes    int    `json:"retry_times"` // 重试次数
+	RetrySleep    int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // TLSConfig TLS 配置
