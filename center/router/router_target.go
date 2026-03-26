@@ -470,6 +470,7 @@ type targetBgidsForm struct {
 	Bgids   []int64  `json:"bgids"`
 	Tags    []string `json:"tags"`
 	Action  string   `json:"action"` // add del reset
+	Force   bool     `json:"force"`  // 强制执行，跳过采集任务关联检查
 }
 
 func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
@@ -545,8 +546,18 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	case "add":
 		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	case "del":
+		if !f.Force {
+			if err := rt.TargetBgidChangeCheck(f.Idents, "del", f.Bgids); err != nil {
+				ginx.Bomb(http.StatusBadRequest, err.Error())
+			}
+		}
 		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 	case "reset":
+		if !f.Force {
+			if err := rt.TargetBgidChangeCheck(f.Idents, "reset", f.Bgids); err != nil {
+				ginx.Bomb(http.StatusBadRequest, err.Error())
+			}
+		}
 		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid action")
@@ -575,6 +586,7 @@ func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 type identsForm struct {
 	Idents  []string `json:"idents" binding:"required_without=HostIps"`
 	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Force   bool     `json:"force"` // 强制执行，跳过采集任务关联检查
 }
 
 func (rt *Router) targetDel(c *gin.Context) {
@@ -593,7 +605,7 @@ func (rt *Router) targetDel(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, f.Force, rt.TargetDeleteHook))
 }
 
 func (rt *Router) targetDelByService(c *gin.Context) {
@@ -612,7 +624,7 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, true, rt.TargetDeleteHook))
 }
 
 func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {

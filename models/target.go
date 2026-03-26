@@ -21,7 +21,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type TargetDeleteHookFunc func(tx *gorm.DB, idents []string) error
+type TargetDeleteHookFunc func(tx *gorm.DB, idents []string, force bool) error
 
 type Target struct {
 	Id           int64             `json:"id" gorm:"primaryKey"`
@@ -120,17 +120,17 @@ func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func TargetDel(ctx *ctx.Context, idents []string, deleteHook TargetDeleteHookFunc) error {
+func TargetDel(ctx *ctx.Context, idents []string, force bool, deleteHook TargetDeleteHookFunc) error {
 	if len(idents) == 0 {
 		return errors.New("idents cannot be empty")
 	}
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
-		txErr := tx.Where("ident in ?", idents).Delete(new(Target)).Error
+		txErr := deleteHook(tx, idents, force)
 		if txErr != nil {
 			return txErr
 		}
-		txErr = deleteHook(tx, idents)
+		txErr = tx.Where("ident in ?", idents).Delete(new(Target)).Error
 		if txErr != nil {
 			return txErr
 		}

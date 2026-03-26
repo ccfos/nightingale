@@ -53,10 +53,13 @@ type Router struct {
 	Ctx               *ctx.Context
 	LogDir            string
 
-	HeartbeatHook       HeartbeatHookFunc
-	TargetDeleteHook    models.TargetDeleteHookFunc
-	AlertRuleModifyHook AlertRuleModifyHookFunc
+	HeartbeatHook         HeartbeatHookFunc
+	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetBgidChangeCheck TargetBgidChangeCheckFunc
+	AlertRuleModifyHook   AlertRuleModifyHookFunc
 }
+
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
@@ -82,9 +85,10 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserTokenCache:      utc,
 		Ctx:                 ctx,
 		LogDir:              logDir,
-		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook: func(ar *models.AlertRule) {},
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
+		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
 	}
 }
 
