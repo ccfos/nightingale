@@ -7,20 +7,42 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
+// TestFeishuAppProviderNotify 从 alert/sender/.env.json 读取飞书应用参数后真实发送。
+// 需要：FeishuAppID、FeishuAppSecret、FeishuImGroupID；可选 FeishuContactKey（默认 user_id）、FeishuReceiveIDType（默认与 ContactKey 一致时可填 user_id）。
 func TestFeishuAppProviderNotify(t *testing.T) {
+	env := readSenderDotEnv(t)
+	appID := senderEnvString(env, "FeishuAppID")
+	appSecret := senderEnvString(env, "FeishuAppSecret")
+	groupID := senderEnvString(env, "FeishuImGroupID")
+	contactKey := senderEnvString(env, "FeishuContactKey")
+	if contactKey == "" {
+		contactKey = "user_id"
+	}
+	receiveIDType := senderEnvString(env, "FeishuReceiveIDType")
+	if receiveIDType == "" {
+		receiveIDType = contactKey
+	}
+
+	if appID == "" || appSecret == "" || groupID == "" {
+		t.Skip("跳过：在 .env.json 填写 FeishuAppID、FeishuAppSecret、FeishuImGroupID")
+	}
+
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "feishuapp",
 		RequestConfig: &models.RequestConfig{
 			FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
-				AppID:         "cli_a9303433f8f8dcc4",
-				AppSecret:     "qPDd0wwxyqykI9FhrlQCLbNmSamRyA1k",
-				ContactKey:    "user_id",
-				ReceiveIDType: "user_id",
+				AppID:         appID,
+				AppSecret:     appSecret,
+				ContactKey:    contactKey,
+				ReceiveIDType: receiveIDType,
 				Timeout:       10000,
 				RetryTimes:    1,
 				RetrySleep:    10,
 			},
 			HTTPRequestConfig: &models.HTTPRequestConfig{
+				URL:           "https://open.feishu.cn",
+				Method:        "POST",
+				Headers:       map[string]string{"Content-Type": "application/json"},
 				Timeout:       10000,
 				RetryTimes:    1,
 				RetryInterval: 10,
@@ -46,7 +68,7 @@ func TestFeishuAppProviderNotify(t *testing.T) {
 			"content": "## test markdown content",
 		},
 		Sendtos:    []string{},
-		ImGroupIDs: []string{"oc_a44a1c1fee24e3b3d985a358d26067ea"},
+		ImGroupIDs: []string{groupID},
 		HttpClient: client,
 	}
 

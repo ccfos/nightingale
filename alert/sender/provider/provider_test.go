@@ -3,8 +3,11 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -429,6 +432,58 @@ func TestSendFlashDuty(t *testing.T) {
 	_, err = SendFlashDuty(invalidNotifyChannel.RequestConfig.FlashDutyRequestConfig, events, flashDutyChannelID, client)
 	if err == nil {
 		t.Errorf("预期请求失败，但未返回错误")
+	}
+}
+
+// senderDotEnvPath 返回 alert/sender/.env.json 路径（在 provider 目录跑测时为 ../.env.json）。
+func senderDotEnvPath() string {
+	for _, p := range []string{
+		"../.env.json",
+		filepath.Join("alert", "sender", ".env.json"),
+	} {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return "../.env.json"
+}
+
+// readSenderDotEnv 读取 .env.json，支持值为字符串或数字（与 encoding/json 一致）。
+func readSenderDotEnv(t *testing.T) map[string]interface{} {
+	t.Helper()
+	path := senderDotEnvPath()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Skipf("未读取到 %s: %v", path, err)
+		return nil
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("解析 %s: %v", path, err)
+	}
+	return m
+}
+
+func senderEnvString(m map[string]interface{}, key string) string {
+	if m == nil {
+		return ""
+	}
+	v, ok := m[key]
+	if !ok || v == nil {
+		return ""
+	}
+	switch x := v.(type) {
+	case string:
+		return strings.TrimSpace(x)
+	case float64:
+		if x == float64(int64(x)) {
+			return strconv.FormatInt(int64(x), 10)
+		}
+		return strconv.FormatFloat(x, 'g', -1, 64)
+	case json.Number:
+		return strings.TrimSpace(x.String())
+	default:
+		return strings.TrimSpace(fmt.Sprint(x))
 	}
 }
 

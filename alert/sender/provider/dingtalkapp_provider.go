@@ -543,10 +543,6 @@ func pickImageBase64(events []*models.AlertCurEvent) string {
 	return ""
 }
 
-func normalizeErrCode(code json.RawMessage) string {
-	return strings.Trim(strings.TrimSpace(string(code)), "\"")
-}
-
 func getMapString(m map[string]interface{}, key string) string {
 	if m == nil {
 		return ""

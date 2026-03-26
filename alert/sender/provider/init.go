@@ -10,6 +10,7 @@ func init() {
 	DefaultRegistry.Register(&DingtalkAppProvider{})
 	DefaultRegistry.Register(&FeishuAppProvider{})
 	DefaultRegistry.Register(&WecomProvider{})
+	DefaultRegistry.Register(&WecomAppProvider{})
 	DefaultRegistry.Register(&FeishuCardProvider{})
 	DefaultRegistry.Register(&LarkCardProvider{})
 	DefaultRegistry.Register(&TencentSmsProvider{})

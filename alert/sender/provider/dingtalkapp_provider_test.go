@@ -7,24 +7,37 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-var (
-	appCfg = &models.DingtalkAppRequestConfig{
-		AppKey:     "dingosbj1hmokzniirku",
-		AppSecret:  "_VmS_fchCwx2_qpszmdOuBMBivMrIDJJj9kGaFYbQfLYb0huQgiEWSdJZ3RLlsbJ",
+// TestDingtalkAppProviderNotify 从 alert/sender/.env.json 读取钉钉应用参数后真实发送。
+// 需要：DingtalkAppKey、DingtalkAppSecret、DingtalkCardTemplateId、Phone（接收手机号，与 ContactKey=phone 一致）。
+func TestDingtalkAppProviderNotify(t *testing.T) {
+	env := readSenderDotEnv(t)
+	appKey := senderEnvString(env, "DingtalkAppKey")
+	appSecret := senderEnvString(env, "DingtalkAppSecret")
+	cardTpl := senderEnvString(env, "DingtalkCardTemplateId")
+	phone := senderEnvString(env, "Phone")
+
+	if appKey == "" || appSecret == "" || cardTpl == "" || phone == "" {
+		t.Skip("跳过：在 .env.json 填写 DingtalkAppKey、DingtalkAppSecret、DingtalkCardTemplateId、Phone")
+	}
+
+	appCfg := &models.DingtalkAppRequestConfig{
+		AppKey:     appKey,
+		AppSecret:  appSecret,
 		ContactKey: "phone",
 		Timeout:    10000,
 		RetryTimes: 1,
 		RetrySleep: 1,
 	}
-)
 
-func TestDingtalkAppProviderNotify(t *testing.T) {
 	p := &DingtalkAppProvider{}
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "dingtalkapp",
 		RequestConfig: &models.RequestConfig{
 			DingtalkAppRequestConfig: appCfg,
 			HTTPRequestConfig: &models.HTTPRequestConfig{
+				URL:           "https://oapi.dingtalk.com",
+				Method:        "POST",
+				Headers:       map[string]string{"Content-Type": "application/json"},
 				Timeout:       10000,
 				RetryTimes:    1,
 				RetryInterval: 1,
@@ -47,9 +60,9 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 			"title":   "test alert",
 			"content": "{{ $event.Hash }}\n\n- item 1\n- item 2\n\n`code`",
 		},
-		Sendtos: []string{"18291906071"},
+		Sendtos: []string{phone},
 		CustomParams: map[string]string{
-			"card_template_id": "423abee6-e7ca-4d64-8c61-7a4597976d4b.schema",
+			"card_template_id": cardTpl,
 		},
 		HttpClient: client,
 	}

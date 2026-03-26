@@ -59,6 +59,7 @@ type RequestConfig struct {
 	PagerDutyRequestConfig   *PagerDutyRequestConfig   `json:"pagerduty_request_config,omitempty" gorm:"serializer:json"`
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
+	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -150,6 +151,17 @@ type FeishuAppRequestConfig struct {
 	Timeout       int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes    int    `json:"retry_times"` // 重试次数
 	RetrySleep    int    `json:"retry_sleep"` // 重试等待时间（毫秒）
+}
+
+type WecomAppRequestConfig struct {
+	CorpID     string `json:"corp_id"`
+	CorpSecret string `json:"corp_secret"`
+	AgentID    int    `json:"agent_id"`
+	ContactKey string `json:"contact_key"`
+	Proxy      string `json:"proxy"`
+	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
+	RetryTimes int    `json:"retry_times"` // 重试次数
+	RetrySleep int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
 // TLSConfig TLS 配置
