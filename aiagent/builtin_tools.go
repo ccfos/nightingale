@@ -9,69 +9,47 @@ import (
 
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/dscache"
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/toolkits/pkg/logger"
-)
-
-const (
-	// ToolTypeBuiltin 内置工具类型
-	ToolTypeBuiltin = "builtin"
 )
 
 // =============================================================================
 // 数据源获取函数（支持注入，便于测试）
 // =============================================================================
 
-// PromClientGetter Prometheus 客户端获取函数类型
 type PromClientGetter func(dsId int64) prom.API
-
-// SQLDatasourceGetter SQL 数据源获取函数类型
 type SQLDatasourceGetter func(dsType string, dsId int64) (datasource.Datasource, bool)
 
-// 默认使用 GlobalCache，可通过 SetPromClientGetter/SetSQLDatasourceGetter 替换
 var (
-	getPromClientFunc     PromClientGetter     = defaultGetPromClient
-	getSQLDatasourceFunc  SQLDatasourceGetter  = defaultGetSQLDatasource
+	getPromClientFunc    PromClientGetter    = defaultGetPromClient
+	getSQLDatasourceFunc SQLDatasourceGetter = defaultGetSQLDatasource
 )
 
-// SetPromClientGetter 设置 Prometheus 客户端获取函数（用于测试）
-func SetPromClientGetter(getter PromClientGetter) {
-	getPromClientFunc = getter
-}
+func SetPromClientGetter(getter PromClientGetter)       { getPromClientFunc = getter }
+func SetSQLDatasourceGetter(getter SQLDatasourceGetter)  { getSQLDatasourceFunc = getter }
 
-// SetSQLDatasourceGetter 设置 SQL 数据源获取函数（用于测试）
-func SetSQLDatasourceGetter(getter SQLDatasourceGetter) {
-	getSQLDatasourceFunc = getter
-}
-
-// ResetDatasourceGetters 重置为默认的数据源获取函数
 func ResetDatasourceGetters() {
 	getPromClientFunc = defaultGetPromClient
 	getSQLDatasourceFunc = defaultGetSQLDatasource
 }
 
-func defaultGetPromClient(dsId int64) prom.API {
-	// Default: no PromClient available. Use SetPromClientGetter to inject.
-	return nil
-}
+func defaultGetPromClient(dsId int64) prom.API { return nil }
 
 func defaultGetSQLDatasource(dsType string, dsId int64) (datasource.Datasource, bool) {
 	return dscache.DsCache.Get(dsType, dsId)
 }
 
-// BuiltinToolHandler 内置工具处理函数
-type BuiltinToolHandler func(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error)
+// =============================================================================
+// 内置工具注册表
+// =============================================================================
 
 // BuiltinTool 内置工具定义
 type BuiltinTool struct {
 	Definition AgentTool
-	Handler    BuiltinToolHandler
+	Handler    BuiltinToolFunc
 }
 
-// builtinTools 内置工具注册表
 var builtinTools = map[string]*BuiltinTool{
-	// Prometheus 相关工具
 	"list_metrics": {
 		Definition: AgentTool{
 			Name:        "list_metrics",
@@ -95,8 +73,6 @@ var builtinTools = map[string]*BuiltinTool{
 		},
 		Handler: getMetricLabels,
 	},
-
-	// SQL 类数据源相关工具
 	"list_databases": {
 		Definition: AgentTool{
 			Name:        "list_databases",
@@ -161,18 +137,15 @@ func GetAllBuiltinToolDefs() []AgentTool {
 
 // ExecuteBuiltinTool 执行内置工具
 // 返回值：result, handled, error
-// handled 表示是否是内置工具（true 表示已处理，false 表示不是内置工具需要继续查找）
-func ExecuteBuiltinTool(ctx context.Context, name string, wfCtx *models.WorkflowContext, argsJSON string) (string, bool, error) {
+func ExecuteBuiltinTool(ctx context.Context, name string, params map[string]string, argsJSON string) (string, bool, error) {
 	tool, exists := builtinTools[name]
 	if !exists {
 		return "", false, nil
 	}
 
-	// 解析参数
 	var args map[string]interface{}
 	if argsJSON != "" {
 		if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
-			// 如果不是 JSON，尝试作为简单字符串参数
 			args = map[string]interface{}{"input": argsJSON}
 		}
 	}
@@ -180,39 +153,40 @@ func ExecuteBuiltinTool(ctx context.Context, name string, wfCtx *models.Workflow
 		args = make(map[string]interface{})
 	}
 
-	result, err := tool.Handler(ctx, wfCtx, args)
+	result, err := tool.Handler(ctx, args, params)
 	return result, true, err
 }
 
-// getDatasourceId 从 wfCtx.Inputs 中获取 datasource_id
-func getDatasourceId(wfCtx *models.WorkflowContext) int64 {
-	if wfCtx == nil || wfCtx.Inputs == nil {
+// =============================================================================
+// 参数提取辅助函数
+// =============================================================================
+
+func getDatasourceId(params map[string]string) int64 {
+	if params == nil {
 		return 0
 	}
 	var dsId int64
-	if dsIdStr, ok := wfCtx.Inputs["datasource_id"]; ok {
+	if dsIdStr, ok := params["datasource_id"]; ok {
 		fmt.Sscanf(dsIdStr, "%d", &dsId)
 	}
 	return dsId
 }
 
-// getDatasourceType 从 wfCtx.Inputs 中获取 datasource_type
-func getDatasourceType(wfCtx *models.WorkflowContext) string {
-	if wfCtx == nil || wfCtx.Inputs == nil {
+func getDatasourceType(params map[string]string) string {
+	if params == nil {
 		return ""
 	}
-	return wfCtx.Inputs["datasource_type"]
+	return params["datasource_type"]
 }
 
 // =============================================================================
 // Prometheus 工具实现
 // =============================================================================
 
-// listMetrics 列出 Prometheus 指标
-func listMetrics(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error) {
-	dsId := getDatasourceId(wfCtx)
+func listMetrics(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId := getDatasourceId(params)
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in inputs")
+		return "", fmt.Errorf("datasource_id not found in params")
 	}
 
 	keyword, _ := args["keyword"].(string)
@@ -221,19 +195,16 @@ func listMetrics(ctx context.Context, wfCtx *models.WorkflowContext, args map[st
 		limit = int(l)
 	}
 
-	// 获取 Prometheus 客户端
 	client := getPromClientFunc(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
 	}
 
-	// 调用 LabelValues 获取 __name__ 的所有值（即所有指标名）
 	values, _, err := client.LabelValues(ctx, "__name__", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to get metrics: %v", err)
 	}
 
-	// 过滤和限制
 	result := make([]string, 0)
 	keyword = strings.ToLower(keyword)
 	for _, v := range values {
@@ -252,11 +223,10 @@ func listMetrics(ctx context.Context, wfCtx *models.WorkflowContext, args map[st
 	return string(bytes), nil
 }
 
-// getMetricLabels 获取指标的标签
-func getMetricLabels(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error) {
-	dsId := getDatasourceId(wfCtx)
+func getMetricLabels(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId := getDatasourceId(params)
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in inputs")
+		return "", fmt.Errorf("datasource_id not found in params")
 	}
 
 	metric, ok := args["metric"].(string)
@@ -269,7 +239,6 @@ func getMetricLabels(ctx context.Context, wfCtx *models.WorkflowContext, args ma
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
 	}
 
-	// 使用 Series 接口获取指标的所有 series
 	endTime := time.Now()
 	startTime := endTime.Add(-1 * time.Hour)
 	series, _, err := client.Series(ctx, []string{metric}, startTime, endTime)
@@ -277,7 +246,6 @@ func getMetricLabels(ctx context.Context, wfCtx *models.WorkflowContext, args ma
 		return "", fmt.Errorf("failed to get metric series: %v", err)
 	}
 
-	// 聚合标签键值
 	labels := make(map[string][]string)
 	seen := make(map[string]map[string]bool)
 
@@ -308,22 +276,34 @@ func getMetricLabels(ctx context.Context, wfCtx *models.WorkflowContext, args ma
 // SQL 数据源工具实现
 // =============================================================================
 
-// SQLMetadataQuerier SQL 元数据查询接口
 type SQLMetadataQuerier interface {
 	ListDatabases(ctx context.Context) ([]string, error)
 	ListTables(ctx context.Context, database string) ([]string, error)
 	DescribeTable(ctx context.Context, database, table string) ([]map[string]interface{}, error)
 }
 
-// listDatabases 列出数据库
-func listDatabases(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error) {
-	dsId := getDatasourceId(wfCtx)
-	dsType := getDatasourceType(wfCtx)
+// isValidIdentifier 校验 SQL 标识符，拒绝注入关键字符
+// 允许字母、数字、下划线、点号、连字符等合法字符（如 order-events）
+func isValidIdentifier(s string) bool {
+	if len(s) == 0 || len(s) > 128 {
+		return false
+	}
+	for _, c := range s {
+		if c == ';' || c == '\'' || c == '"' || c == '`' || c == '\\' || c == 0 {
+			return false
+		}
+	}
+	return !strings.ContainsAny(s, "/*")
+}
+
+func listDatabases(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId := getDatasourceId(params)
+	dsType := getDatasourceType(params)
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in inputs")
+		return "", fmt.Errorf("datasource_id not found in params")
 	}
 	if dsType == "" {
-		return "", fmt.Errorf("datasource_type not found in inputs")
+		return "", fmt.Errorf("datasource_type not found in params")
 	}
 
 	plug, exists := getSQLDatasourceFunc(dsType, dsId)
@@ -331,7 +311,6 @@ func listDatabases(ctx context.Context, wfCtx *models.WorkflowContext, args map[
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
 
-	// 构建查询 SQL
 	var sql string
 	switch dsType {
 	case "mysql", "doris":
@@ -344,33 +323,32 @@ func listDatabases(ctx context.Context, wfCtx *models.WorkflowContext, args map[
 		return "", fmt.Errorf("unsupported datasource type for list_databases: %s", dsType)
 	}
 
-	// 执行查询
 	query := map[string]interface{}{"sql": sql}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to list databases: %v", err)
 	}
 
-	// 提取数据库名
 	databases := extractColumnValues(data, dsType, "database")
-
 	logger.Debugf("list_databases: dsType=%s, found %d databases", dsType, len(databases))
 
 	bytes, _ := json.Marshal(databases)
 	return string(bytes), nil
 }
 
-// listTables 列出表
-func listTables(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error) {
-	dsId := getDatasourceId(wfCtx)
-	dsType := getDatasourceType(wfCtx)
+func listTables(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId := getDatasourceId(params)
+	dsType := getDatasourceType(params)
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in inputs")
+		return "", fmt.Errorf("datasource_id not found in params")
 	}
 
 	database, ok := args["database"].(string)
 	if !ok || database == "" {
 		return "", fmt.Errorf("database parameter is required")
+	}
+	if !isValidIdentifier(database) {
+		return "", fmt.Errorf("invalid database name: %s", database)
 	}
 
 	plug, exists := getSQLDatasourceFunc(dsType, dsId)
@@ -378,7 +356,6 @@ func listTables(ctx context.Context, wfCtx *models.WorkflowContext, args map[str
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
 
-	// 构建查询 SQL
 	var sql string
 	switch dsType {
 	case "mysql", "doris":
@@ -386,42 +363,44 @@ func listTables(ctx context.Context, wfCtx *models.WorkflowContext, args map[str
 	case "ck", "clickhouse":
 		sql = fmt.Sprintf("SHOW TABLES FROM `%s`", database)
 	case "pgsql", "postgresql":
-		sql = fmt.Sprintf("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+		sql = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
 	default:
 		return "", fmt.Errorf("unsupported datasource type for list_tables: %s", dsType)
 	}
 
-	// 执行查询
 	query := map[string]interface{}{"sql": sql, "database": database}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to list tables: %v", err)
 	}
 
-	// 提取表名
 	tables := extractColumnValues(data, dsType, "table")
-
 	logger.Debugf("list_tables: dsType=%s, database=%s, found %d tables", dsType, database, len(tables))
 
 	bytes, _ := json.Marshal(tables)
 	return string(bytes), nil
 }
 
-// describeTable 获取表结构
-func describeTable(ctx context.Context, wfCtx *models.WorkflowContext, args map[string]interface{}) (string, error) {
-	dsId := getDatasourceId(wfCtx)
-	dsType := getDatasourceType(wfCtx)
+func describeTable(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId := getDatasourceId(params)
+	dsType := getDatasourceType(params)
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in inputs")
+		return "", fmt.Errorf("datasource_id not found in params")
 	}
 
 	database, ok := args["database"].(string)
 	if !ok || database == "" {
 		return "", fmt.Errorf("database parameter is required")
 	}
+	if !isValidIdentifier(database) {
+		return "", fmt.Errorf("invalid database name: %s", database)
+	}
 	table, ok := args["table"].(string)
 	if !ok || table == "" {
 		return "", fmt.Errorf("table parameter is required")
+	}
+	if !isValidIdentifier(table) {
+		return "", fmt.Errorf("invalid table name: %s", table)
 	}
 
 	plug, exists := getSQLDatasourceFunc(dsType, dsId)
@@ -429,7 +408,6 @@ func describeTable(ctx context.Context, wfCtx *models.WorkflowContext, args map[
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
 
-	// 构建查询 SQL
 	var sql string
 	switch dsType {
 	case "mysql", "doris":
@@ -442,35 +420,33 @@ func describeTable(ctx context.Context, wfCtx *models.WorkflowContext, args map[
 		return "", fmt.Errorf("unsupported datasource type for describe_table: %s", dsType)
 	}
 
-	// 执行查询
 	query := map[string]interface{}{"sql": sql, "database": database}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to describe table: %v", err)
 	}
 
-	// 转换为统一的列结构
 	columns := convertToColumnInfo(data, dsType)
-
 	logger.Debugf("describe_table: dsType=%s, table=%s.%s, found %d columns", dsType, database, table, len(columns))
 
 	bytes, _ := json.Marshal(columns)
 	return string(bytes), nil
 }
 
-// ColumnInfo 列信息
+// =============================================================================
+// 辅助函数
+// =============================================================================
+
 type ColumnInfo struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	Comment string `json:"comment,omitempty"`
 }
 
-// extractColumnValues 从查询结果中提取列值
 func extractColumnValues(data []interface{}, dsType string, columnType string) []string {
 	result := make([]string, 0)
 	for _, row := range data {
 		if rowMap, ok := row.(map[string]interface{}); ok {
-			// 尝试多种可能的列名
 			var value string
 			for _, key := range getPossibleColumnNames(dsType, columnType) {
 				if v, ok := rowMap[key]; ok {
@@ -488,7 +464,6 @@ func extractColumnValues(data []interface{}, dsType string, columnType string) [
 	return result
 }
 
-// getPossibleColumnNames 获取可能的列名
 func getPossibleColumnNames(dsType string, columnType string) []string {
 	switch columnType {
 	case "database":
@@ -500,14 +475,12 @@ func getPossibleColumnNames(dsType string, columnType string) []string {
 	}
 }
 
-// convertToColumnInfo 将查询结果转换为统一的列信息格式
 func convertToColumnInfo(data []interface{}, dsType string) []ColumnInfo {
 	result := make([]ColumnInfo, 0)
 	for _, row := range data {
 		if rowMap, ok := row.(map[string]interface{}); ok {
 			col := ColumnInfo{}
 
-			// 提取列名
 			for _, key := range []string{"Field", "field", "column_name", "name"} {
 				if v, ok := rowMap[key]; ok {
 					if s, ok := v.(string); ok {
@@ -516,8 +489,6 @@ func convertToColumnInfo(data []interface{}, dsType string) []ColumnInfo {
 					}
 				}
 			}
-
-			// 提取类型
 			for _, key := range []string{"Type", "type", "data_type"} {
 				if v, ok := rowMap[key]; ok {
 					if s, ok := v.(string); ok {
@@ -526,8 +497,6 @@ func convertToColumnInfo(data []interface{}, dsType string) []ColumnInfo {
 					}
 				}
 			}
-
-			// 提取注释（可选）
 			for _, key := range []string{"Comment", "comment", "column_comment"} {
 				if v, ok := rowMap[key]; ok {
 					if s, ok := v.(string); ok {

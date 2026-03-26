@@ -324,7 +324,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
-	agentCfg := aiagent.NewAgent(&aiagent.AIAgentConfig{
+	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		Provider:           llmCfg.APIType,
 		LLMURL:             llmCfg.APIURL,
 		Model:              llmCfg.Model,
@@ -339,22 +339,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Proxy:              extraConfig.Proxy,
 		Temperature:        extraConfig.Temperature,
 		MaxTokens:          extraConfig.MaxTokens,
-		History:            history,
 	})
 
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)
 	})
 
-	wfStreamChan := make(chan *models.StreamChunk, 100)
-	wfCtx := &models.WorkflowContext{
-		Stream:     true,
-		StreamChan: wfStreamChan,
-		Inputs:     inputs,
+	streamChan := make(chan *aiagent.StreamChunk, 100)
+	agentReq := &aiagent.AgentRequest{
+		Params:     inputs,
+		History:    history,
+		StreamChan: streamChan,
 		ParentCtx:  parentCtx,
 	}
 
-	_, _, processErr := agentCfg.Process(rt.Ctx, wfCtx)
+	_, processErr := agentRunner.Run(parentCtx, agentReq)
 	if processErr != nil {
 		logger.Errorf("[Assistant] Process error: %v", processErr)
 	}
@@ -363,7 +362,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var fullContent string
 	var fullReasoning string
 	executedTools := false
-	for chunk := range wfCtx.StreamChan {
+	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
 			rt.finishMessage(stateKey, streamID, msg, -2, "cancelled")
@@ -372,7 +371,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 
 		switch chunk.Type {
-		case models.StreamTypeThinking:
+		case aiagent.StreamTypeThinking:
 			delta := chunk.Delta
 			if delta == "" {
 				delta = chunk.Content
@@ -381,7 +380,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				fullReasoning += delta
 				streamCache.AddReason(streamID, delta)
 			}
-		case models.StreamTypeText:
+		case aiagent.StreamTypeText:
 			delta := chunk.Delta
 			if delta == "" {
 				delta = chunk.Content
@@ -390,7 +389,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				fullReasoning += delta
 				streamCache.AddReason(streamID, delta)
 			}
-		case models.StreamTypeToolCall:
+		case aiagent.StreamTypeToolCall:
 			executedTools = true
 			step := "Using tools..."
 			if chunk.Content != "" {
@@ -400,18 +399,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				m.CurStep = step
 				m.ExecutedTools = true
 			})
-		case models.StreamTypeToolResult:
+		case aiagent.StreamTypeToolResult:
 			rt.msgStateManager.UpdateMsg(stateKey, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
-		case models.StreamTypeError:
+		case aiagent.StreamTypeError:
 			errMsg := chunk.Error
 			if errMsg == "" {
 				errMsg = chunk.Content
 			}
 			rt.finishMessage(stateKey, streamID, msg, 500, errMsg)
 			return
-		case models.StreamTypeDone:
+		case aiagent.StreamTypeDone:
 			if chunk.Content != "" {
 				fullContent = chunk.Content
 				streamCache.AddContent(streamID, chunk.Content)
@@ -478,8 +477,6 @@ func (rt *Router) finishMessage(stateKey, streamID string, msg *models.Assistant
 
 	rt.msgStateManager.Remove(stateKey)
 }
-
-// ==================== Detail / History / Cancel ====================
 
 func (rt *Router) assistantMessageDetail(c *gin.Context) {
 	var req struct {
