@@ -556,8 +556,6 @@ func (rt *Router) assistantMessageCancel(c *gin.Context) {
 	ginx.NewRender(c).Message(nil)
 }
 
-// ==================== Stream Handler ====================
-
 func (rt *Router) assistantStream(c *gin.Context) {
 	var req struct {
 		StreamID string `json:"stream_id"`

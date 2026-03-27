@@ -492,7 +492,10 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 		"success":     testErr == nil,
 		"duration_ms": durationMs,
 	}
-	ginx.NewRender(c).Data(result, testErr)
+	if testErr != nil {
+		result["error"] = testErr.Error()
+	}
+	ginx.NewRender(c).Data(result, nil)
 }
 
 func testAILLMConfig(p *models.AILLMConfig) error {
