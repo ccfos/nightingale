@@ -6,12 +6,39 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/toolkits/pkg/logger"
 )
 
+// 包级 LLM Client 缓存（供 adapter 等无法从外部注入缓存的路径使用）
+var defaultClientCache = llm.NewClientCache()
+
+// AgentOption 用于在创建 Agent 时注入可选依赖
+type AgentOption func(*Agent)
+
+// WithLLMClient 注入已有的 LLM 客户端（跳过内部创建，复用连接池）
+func WithLLMClient(c llm.LLM) AgentOption {
+	return func(a *Agent) { a.llmClient = c }
+}
+
+// WithLLMConfig 根据 llm.Config 从包级缓存获取或创建 LLM 客户端
+func WithLLMConfig(cfg *llm.Config) AgentOption {
+	return func(a *Agent) {
+		client, err := defaultClientCache.GetOrCreate(cfg)
+		if err != nil {
+			logger.Errorf("Failed to create LLM client from config: %v %v", cfg, err)
+			return
+		}
+		a.llmClient = client
+	}
+}
+
 // NewAgent 创建 Agent 实例
-func NewAgent(cfg *AgentConfig) *Agent {
+func NewAgent(cfg *AgentConfig, opts ...AgentOption) *Agent {
 	a := &Agent{cfg: cfg}
+	for _, opt := range opts {
+		opt(a)
+	}
 	a.applyDefaults()
 	return a
 }

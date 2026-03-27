@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -324,22 +325,30 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
+	llmClient, err := rt.llmClientCache.GetOrCreate(&llm.Config{
+		Provider:      llmCfg.APIType,
+		BaseURL:       llmCfg.APIURL,
+		Model:         llmCfg.Model,
+		APIKey:        llmCfg.APIKey,
+		Headers:       extraConfig.CustomHeaders,
+		Timeout:       timeout,
+		SkipSSLVerify: extraConfig.SkipTLSVerify,
+		Proxy:         extraConfig.Proxy,
+		Temperature:   extraConfig.Temperature,
+		MaxTokens:     extraConfig.MaxTokens,
+	})
+	if err != nil {
+		rt.finishMessage(stateKey, streamID, msg, 500, fmt.Sprintf("failed to create LLM client: %v", err))
+		return
+	}
+
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
-		Provider:           llmCfg.APIType,
-		LLMURL:             llmCfg.APIURL,
-		Model:              llmCfg.Model,
-		APIKey:             llmCfg.APIKey,
-		Headers:            extraConfig.CustomHeaders,
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            timeout,
 		Stream:             true,
 		UserPromptTemplate: userPrompt,
-		SkipSSLVerify:      extraConfig.SkipTLSVerify,
-		Proxy:              extraConfig.Proxy,
-		Temperature:        extraConfig.Temperature,
-		MaxTokens:          extraConfig.MaxTokens,
-	})
+	}, aiagent.WithLLMClient(llmClient))
 
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)

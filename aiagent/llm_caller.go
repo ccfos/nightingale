@@ -11,48 +11,10 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// initLLMClient 初始化 LLM 客户端
-func (a *Agent) initLLMClient() error {
-	if a.llmClient != nil {
-		return nil
-	}
-
-	provider := a.cfg.Provider
-	if provider == "" {
-		if a.cfg.LLMURL != "" {
-			provider = llm.DetectProvider(a.cfg.LLMURL)
-		} else if a.cfg.Model != "" {
-			provider = llm.DetectProviderFromModel(a.cfg.Model)
-		} else {
-			provider = llm.ProviderOpenAI
-		}
-	}
-
-	cfg := &llm.Config{
-		Provider:      provider,
-		BaseURL:       a.cfg.LLMURL,
-		APIKey:        a.cfg.APIKey,
-		Model:         a.cfg.Model,
-		Headers:       a.cfg.Headers,
-		Timeout:       a.cfg.Timeout,
-		SkipSSLVerify: a.cfg.SkipSSLVerify,
-		Proxy:         a.cfg.Proxy,
-	}
-
-	client, err := llm.New(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to create LLM client: %w", err)
-	}
-
-	a.llmClient = client
-	logger.Infof("AI Agent LLM client initialized: provider=%s, model=%s", provider, a.cfg.Model)
-	return nil
-}
-
 // callLLM 调用 LLM（非流式）
 func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, error) {
-	if err := a.initLLMClient(); err != nil {
-		return "", err
+	if a.llmClient == nil {
+		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
 	}
 
 	llmMessages := make([]llm.Message, len(messages))
@@ -66,12 +28,6 @@ func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, er
 	req := &llm.GenerateRequest{
 		Messages: llmMessages,
 	}
-	if a.cfg.Temperature != nil {
-		req.Temperature = *a.cfg.Temperature
-	}
-	if a.cfg.MaxTokens != nil {
-		req.MaxTokens = *a.cfg.MaxTokens
-	}
 
 	resp, err := a.llmClient.Generate(ctx, req)
 	if err != nil {
@@ -83,11 +39,10 @@ func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, er
 
 // callLLMWithStreamOutput 调用 LLM 并将流式输出转发到 streamChan
 func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string) (string, error) {
-	if err := a.initLLMClient(); err != nil {
-		logger.Errorf("[Agent] Failed to init LLM client: %v", err)
-		return "", err
+	if a.llmClient == nil {
+		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
 	}
-	logger.Infof("[Agent] LLM client ready, provider=%s, model=%s", a.cfg.Provider, a.cfg.Model)
+	logger.Infof("[Agent] LLM client ready, provider=%s", a.llmClient.Name())
 
 	llmMessages := make([]llm.Message, len(messages))
 	for i, msg := range messages {
@@ -102,12 +57,6 @@ func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMess
 	streamStart := time.Now()
 	streamReq := &llm.GenerateRequest{
 		Messages: llmMessages,
-	}
-	if a.cfg.Temperature != nil {
-		streamReq.Temperature = *a.cfg.Temperature
-	}
-	if a.cfg.MaxTokens != nil {
-		streamReq.MaxTokens = *a.cfg.MaxTokens
 	}
 
 	stream, err := a.llmClient.GenerateStream(ctx, streamReq)

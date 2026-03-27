@@ -236,13 +236,27 @@ func (g *Gemini) streamResponse(ctx context.Context, resp *http.Response, ch cha
 }
 
 func (g *Gemini) convertRequest(req *GenerateRequest) *geminiRequest {
+	genCfg := &geminiGenerationConfig{
+		TopP:          req.TopP,
+		StopSequences: req.Stop,
+	}
+
+	switch {
+	case req.Temperature != nil:
+		genCfg.Temperature = *req.Temperature
+	case g.config.Temperature != nil:
+		genCfg.Temperature = *g.config.Temperature
+	}
+
+	switch {
+	case req.MaxTokens != nil:
+		genCfg.MaxOutputTokens = *req.MaxTokens
+	case g.config.MaxTokens != nil:
+		genCfg.MaxOutputTokens = *g.config.MaxTokens
+	}
+
 	geminiReq := &geminiRequest{
-		GenerationConfig: &geminiGenerationConfig{
-			Temperature:     req.Temperature,
-			TopP:            req.TopP,
-			MaxOutputTokens: req.MaxTokens,
-			StopSequences:   req.Stop,
-		},
+		GenerationConfig: genCfg,
 	}
 
 	// Convert messages

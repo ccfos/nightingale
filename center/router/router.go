@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -57,7 +58,8 @@ type Router struct {
 	TargetDeleteHook    models.TargetDeleteHookFunc
 	AlertRuleModifyHook AlertRuleModifyHookFunc
 
-	msgStateManager *MessageStateManager
+	msgStateManager  *MessageStateManager
+	llmClientCache   *llm.ClientCache
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
@@ -88,6 +90,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
 		AlertRuleModifyHook: func(ar *models.AlertRule) {},
 		msgStateManager:     NewMessageStateManager(),
+		llmClientCache:      llm.NewClientCache(),
 	}
 }
 

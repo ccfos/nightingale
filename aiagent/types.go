@@ -71,15 +71,8 @@ type Agent struct {
 	externalToolHandler ExternalToolHandler
 }
 
-// AgentConfig Agent 配置
+// AgentConfig Agent 配置（仅包含 Agent 行为相关字段，LLM 配置通过 WithLLMClient 注入）
 type AgentConfig struct {
-	// LLM 配置
-	Provider string            `json:"provider"` // openai, claude, gemini, ollama
-	LLMURL   string            `json:"llm_url"`
-	Model    string            `json:"model"`
-	APIKey   string            `json:"api_key"`
-	Headers  map[string]string `json:"headers"`
-
 	// Agent 行为
 	AgentMode     string `json:"agent_mode,omitempty"`
 	MaxIterations int    `json:"max_iterations"`
@@ -96,14 +89,6 @@ type AgentConfig struct {
 	Skills *SkillConfig  `json:"skills,omitempty"`
 	MCP    *MCPConfig    `json:"mcp,omitempty"`
 	Stream bool          `json:"stream,omitempty"`
-
-	// LLM 参数
-	Temperature *float64 `json:"temperature,omitempty"`
-	MaxTokens   *int     `json:"max_tokens,omitempty"`
-
-	// HTTP 配置
-	SkipSSLVerify bool   `json:"skip_ssl_verify"`
-	Proxy         string `json:"proxy"`
 
 	// 用户提示词模板（支持 Go 模板语法）
 	UserPromptTemplate string `json:"user_prompt_template"`

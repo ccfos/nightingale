@@ -284,11 +284,25 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
-		Model:       o.config.Model,
-		MaxTokens:   req.MaxTokens,
-		Temperature: req.Temperature,
-		TopP:        req.TopP,
-		Stop:        req.Stop,
+		Model: o.config.Model,
+		TopP:  req.TopP,
+		Stop:  req.Stop,
+	}
+
+	// Temperature: request 优先，fallback 到 config 默认值
+	switch {
+	case req.Temperature != nil:
+		openAIReq.Temperature = *req.Temperature
+	case o.config.Temperature != nil:
+		openAIReq.Temperature = *o.config.Temperature
+	}
+
+	// MaxTokens: 同上
+	switch {
+	case req.MaxTokens != nil:
+		openAIReq.MaxTokens = *req.MaxTokens
+	case o.config.MaxTokens != nil:
+		openAIReq.MaxTokens = *o.config.MaxTokens
 	}
 
 	// Convert messages

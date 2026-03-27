@@ -13,12 +13,12 @@ import (
 
 // Provider types
 const (
-	ProviderOpenAI    = "openai"    // OpenAI and compatible APIs (Azure, vLLM, etc.)
-	ProviderClaude    = "claude"    // Anthropic Claude
-	ProviderGemini    = "gemini"    // Google Gemini
-	ProviderOllama    = "ollama"    // Ollama local models
-	ProviderBedrock   = "bedrock"   // AWS Bedrock
-	ProviderVertex    = "vertex"    // Google Vertex AI
+	ProviderOpenAI  = "openai"  // OpenAI and compatible APIs (Azure, vLLM, etc.)
+	ProviderClaude  = "claude"  // Anthropic Claude
+	ProviderGemini  = "gemini"  // Google Gemini
+	ProviderOllama  = "ollama"  // Ollama local models
+	ProviderBedrock = "bedrock" // AWS Bedrock
+	ProviderVertex  = "vertex"  // Google Vertex AI
 )
 
 // Role constants
@@ -50,13 +50,13 @@ type ToolDefinition struct {
 
 // GenerateRequest is the unified request for LLM generation
 type GenerateRequest struct {
-	Messages    []Message         `json:"messages"`
-	Tools       []ToolDefinition  `json:"tools,omitempty"`
-	MaxTokens   int               `json:"max_tokens,omitempty"`
-	Temperature float64           `json:"temperature,omitempty"`
-	TopP        float64           `json:"top_p,omitempty"`
-	Stop        []string          `json:"stop,omitempty"`
-	Stream      bool              `json:"stream,omitempty"`
+	Messages    []Message        `json:"messages"`
+	Tools       []ToolDefinition `json:"tools,omitempty"`
+	MaxTokens   *int             `json:"max_tokens,omitempty"`
+	Temperature *float64         `json:"temperature,omitempty"`
+	TopP        float64          `json:"top_p,omitempty"`
+	Stop        []string         `json:"stop,omitempty"`
+	Stream      bool             `json:"stream,omitempty"`
 }
 
 // GenerateResponse is the unified response from LLM generation
@@ -121,8 +121,10 @@ type Config struct {
 	// HTTP proxy URL
 	Proxy string `json:"proxy,omitempty"`
 
-	// Provider-specific options
-	Options map[string]interface{} `json:"options,omitempty"`
+	// LLM generation defaults (applied when GenerateRequest does not set them)
+	Temperature *float64 `json:"temperature,omitempty"`
+	MaxTokens   *int     `json:"max_tokens,omitempty"`
+
 }
 
 // DefaultConfig returns a config with default values

@@ -6,9 +6,27 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
+
+// processorSettings 用于从 Processor 的 JSON settings 中拆分出 LLM 配置和 Agent 配置
+type processorSettings struct {
+	// LLM 配置字段
+	Provider      string            `json:"provider"`
+	LLMURL        string            `json:"llm_url"`
+	Model         string            `json:"model"`
+	APIKey        string            `json:"api_key"`
+	Headers       map[string]string `json:"headers"`
+	SkipSSLVerify bool              `json:"skip_ssl_verify"`
+	Proxy         string            `json:"proxy"`
+	Temperature   *float64          `json:"temperature,omitempty"`
+	MaxTokens     *int              `json:"max_tokens,omitempty"`
+
+	// Agent 配置字段（直接嵌入 AgentConfig）
+	AgentConfig
+}
 
 // ==================== Processor 适配器 ====================
 // 将通用 Agent 适配为 models.Processor 接口，用于事件处理器场景
@@ -27,13 +45,27 @@ func (p *ProcessorAdapter) Init(settings interface{}) (models.Processor, error) 
 	if err != nil {
 		return nil, err
 	}
-	var cfg *AgentConfig
-	if err = json.Unmarshal(b, &cfg); err != nil {
+	var s processorSettings
+	if err = json.Unmarshal(b, &s); err != nil {
 		return nil, err
 	}
 
+	// 构造 LLM 配置
+	llmCfg := &llm.Config{
+		Provider:      s.Provider,
+		BaseURL:       s.LLMURL,
+		Model:         s.Model,
+		APIKey:        s.APIKey,
+		Headers:       s.Headers,
+		Timeout:       s.AgentConfig.Timeout,
+		SkipSSLVerify: s.SkipSSLVerify,
+		Proxy:         s.Proxy,
+		Temperature:   s.Temperature,
+		MaxTokens:     s.MaxTokens,
+	}
+
 	return &ProcessorAdapter{
-		agent: NewAgent(cfg),
+		agent: NewAgent(&s.AgentConfig, WithLLMConfig(llmCfg)),
 	}, nil
 }
 

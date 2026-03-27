@@ -257,11 +257,23 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (c *Claude) convertRequest(req *GenerateRequest) *claudeRequest {
 	claudeReq := &claudeRequest{
-		Model:       c.config.Model,
-		MaxTokens:   req.MaxTokens,
-		Temperature: req.Temperature,
-		TopP:        req.TopP,
-		Stop:        req.Stop,
+		Model: c.config.Model,
+		TopP:  req.TopP,
+		Stop:  req.Stop,
+	}
+
+	switch {
+	case req.Temperature != nil:
+		claudeReq.Temperature = *req.Temperature
+	case c.config.Temperature != nil:
+		claudeReq.Temperature = *c.config.Temperature
+	}
+
+	switch {
+	case req.MaxTokens != nil:
+		claudeReq.MaxTokens = *req.MaxTokens
+	case c.config.MaxTokens != nil:
+		claudeReq.MaxTokens = *c.config.MaxTokens
 	}
 
 	if claudeReq.MaxTokens <= 0 {
