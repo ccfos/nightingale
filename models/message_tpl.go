@@ -639,32 +639,35 @@ Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
 Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
 }
 
-// Weight 用于页面元素排序，weight 越大 排序越靠后
-var MsgTplMap = []MessageTemplate{
-	{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
-	{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
-	{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
-	{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
-	{Name: "SlackWebhook", Ident: SlackWebhook, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
-	{Name: "SlackBot", Ident: SlackBot, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
-	{Name: "Discord", Ident: Discord, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
-	{Name: "Aliyun Voice", Ident: "ali-voice", Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
-	{Name: "Aliyun SMS", Ident: "ali-sms", Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
-	{Name: "Tencent Voice", Ident: "tx-voice", Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
-	{Name: "Tencent SMS", Ident: "tx-sms", Weight: 7, Content: map[string]string{"content": NewTplMap["tx-sms"]}},
-	{Name: "Telegram", Ident: Telegram, Weight: 6, Content: map[string]string{"content": NewTplMap[Telegram]}},
-	{Name: "LarkCard", Ident: LarkCard, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
-	{Name: "Lark", Ident: Lark, Weight: 5, Content: map[string]string{"content": NewTplMap[Lark]}},
-	{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
-	{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
-	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
-	//{Name: "WecomApp", Ident: "wecomapp", Weight: 3, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Wecom]}},
-	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
-	// TODO(dingtalkapp): 钉钉应用本次不上线，默认模板先注释；上线时恢复。
-	// {Name: "DingtalkApp", Ident: "dingtalkapp", Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
-	//{Name: "FeishuApp", Ident: "feishuapp", Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
-	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+// buildMsgTplMap builds the template list from NewTplMap at call time,
+// ensuring it reflects any language overrides applied by ApplyNotificationLang.
+func buildMsgTplMap() []MessageTemplate {
+	return []MessageTemplate{
+		{Name: "Jira", Ident: Jira, Weight: 18, Content: map[string]string{"content": NewTplMap[Jira]}},
+		{Name: "JSMAlert", Ident: JSMAlert, Weight: 17, Content: map[string]string{"content": NewTplMap[Jira]}},
+		{Name: "Callback", Ident: "callback", Weight: 16, Content: map[string]string{"content": ""}},
+		{Name: "MattermostWebhook", Ident: MattermostWebhook, Weight: 15, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+		{Name: "MattermostBot", Ident: MattermostBot, Weight: 14, Content: map[string]string{"content": NewTplMap[MattermostWebhook]}},
+		{Name: "SlackWebhook", Ident: SlackWebhook, Weight: 13, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+		{Name: "SlackBot", Ident: SlackBot, Weight: 12, Content: map[string]string{"content": NewTplMap[SlackWebhook]}},
+		{Name: "Discord", Ident: Discord, Weight: 11, Content: map[string]string{"content": NewTplMap[Discord]}},
+		{Name: "Aliyun Voice", Ident: "ali-voice", Weight: 10, Content: map[string]string{"incident": NewTplMap["ali-voice"]}},
+		{Name: "Aliyun SMS", Ident: "ali-sms", Weight: 9, Content: map[string]string{"incident": NewTplMap["ali-sms"]}},
+		{Name: "Tencent Voice", Ident: "tx-voice", Weight: 8, Content: map[string]string{"content": NewTplMap["tx-voice"]}},
+		{Name: "Tencent SMS", Ident: "tx-sms", Weight: 7, Content: map[string]string{"content": NewTplMap["tx-sms"]}},
+		{Name: "Telegram", Ident: Telegram, Weight: 6, Content: map[string]string{"content": NewTplMap[Telegram]}},
+		{Name: "LarkCard", Ident: LarkCard, Weight: 5, Content: map[string]string{"title": LarkCardTitle, "content": NewTplMap[LarkCard]}},
+		{Name: "Lark", Ident: Lark, Weight: 5, Content: map[string]string{"content": NewTplMap[Lark]}},
+		{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
+		{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+		{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
+		// {Name: "WecomApp", Ident: "wecomapp", Weight: 3, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Wecom]}},
+		{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+		// TODO(dingtalkapp): 钉钉应用本次不上线，默认模板先注释；上线时恢复。
+		// {Name: "DingtalkApp", Ident: "dingtalkapp", Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+		// {Name: "FeishuApp", Ident: "feishuapp", Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
+		{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
+	}
 }
 
 func InitMessageTemplate(ctx *ctx.Context) {
@@ -672,7 +675,7 @@ func InitMessageTemplate(ctx *ctx.Context) {
 		return
 	}
 
-	for _, tpl := range MsgTplMap {
+	for _, tpl := range buildMsgTplMap() {
 		msgTpl := MessageTemplate{
 			Name:               tpl.Name,
 			Ident:              tpl.Ident,
@@ -718,8 +721,261 @@ func getDefs(renderData map[string]interface{}) []string {
 	}
 }
 
+// newTplMapEn provides English translations for notification templates.
+// Terminology is aligned with the existing upstream English templates (Jira, Discord,
+// Slack, Mattermost) for consistency. Channels already in English are omitted and
+// fall back to NewTplMap.
+//
+// Standard labels (sourced from Jira/Discord upstream templates):
+//   Severity, Rule Name, Rule Note, Metrics, Monitor Target, Trigger Value,
+//   Trigger Time, First Trigger Time, Recovery Time, Send Time, Duration,
+//   Annotations, Event Details, Mute for 1 Hour, View Graph
+var newTplMapEn = map[string]string{
+	"tx-sms": `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} Rule Name: {{$event.RuleName}}`,
+	Dingtalk: `#### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
+---
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}
+- **Severity**: S{{$event.Severity}}
+{{- if $event.RuleNote}}
+	- **Rule Note**: {{$event.RuleNote}}
+{{- end}}
+{{- if not $event.IsRecovered}}
+- **Trigger Value**: {{$event.TriggerValue}}
+- **Trigger Time**: {{timeformat $event.TriggerTime}}
+- **Duration**: {{humanizeDurationInterface $time_duration}}
+{{- else}}
+{{- if $event.AnnotationsJSON.recovery_value}}
+- **Recovery Value**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+{{- end}}
+- **Recovery Time**: {{timeformat $event.LastEvalTime}}
+- **Duration**: {{humanizeDurationInterface $time_duration}}
+{{- end}}
+- **Metrics**:
+{{- range $key, $val := $event.TagsMap}}
+{{- if ne $key "rulename" }}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+{{if $event.AnnotationsJSON}}
+- **Annotations**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+	- {{$key}}: {{$val}}
+{{- end}}
+{{end}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Mute for 1 Hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}} | [View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Email: `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Nightingale Alert</title>
+		<style type="text/css">
+			.wrapper { background-color: #f8f8f8; padding: 15px; height: 100%; }
+			.main { width: 600px; padding: 30px; margin: 0 auto; background-color: #fff; font-size: 12px; font-family: verdana,'Microsoft YaHei',Consolas,'Deja Vu Sans Mono','Bitstream Vera Sans Mono'; }
+			header { border-radius: 2px 2px 0 0; }
+			header .title { font-size: 14px; color: #333333; margin: 0; }
+			header .sub-desc { color: #333; font-size: 14px; margin-top: 6px; margin-bottom: 0; }
+			hr { margin: 20px 0; height: 0; border: none; border-top: 1px solid #e5e5e5; }
+			em { font-weight: 600; }
+			table { margin: 20px 0; width: 100%; }
+			table tbody tr{ font-weight: 200; font-size: 12px; color: #666; height: 32px; }
+			.succ { background-color: green; color: #fff; }
+			.fail { background-color: red; color: #fff; }
+			.succ th, .succ td, .fail th, .fail td { color: #fff; }
+			table tbody tr th { width: 80px; text-align: right; }
+			.text-right { text-align: right; }
+			.body { margin-top: 24px; }
+		</style>
+	</head>
+	<body>
+	<div class="wrapper">
+		<div class="main">
+			<header>
+				<h3 class="title">{{$event.RuleName}}</h3>
+				<p class="sub-desc"></p>
+			</header>
+			<hr>
+			<div class="body">
+				<table cellspacing="0" cellpadding="0" border="0">
+					<tbody>
+					{{if $event.IsRecovered}}
+					<tr class="succ">
+						<th>Severity:</th>
+						<td>S{{$event.Severity}} Recovered</td>
+					</tr>
+					{{else}}
+					<tr class="fail">
+						<th>Severity:</th>
+						<td>S{{$event.Severity}} Triggered</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>Rule Note:</th>
+						<td>{{$event.RuleNote}}</td>
+					</tr>
+					<tr>
+						<th>Target Note:</th>
+						<td>{{$event.TargetNote}}</td>
+					</tr>
+					{{if not $event.IsRecovered}}
+					<tr>
+						<th>Trigger Value:</th>
+						<td>{{$event.TriggerValue}}</td>
+					</tr>
+					{{end}}
+					{{if $event.TargetIdent}}
+					<tr>
+						<th>Monitor Target:</th>
+						<td>{{$event.TargetIdent}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>Metrics:</th>
+						<td>{{$event.TagsJSON}}</td>
+					</tr>
+					{{if $event.IsRecovered}}
+					<tr>
+						<th>Recovery Time:</th>
+						<td>{{timeformat $event.LastEvalTime}}</td>
+					</tr>
+					{{else}}
+					<tr>
+						<th>Trigger Time:</th>
+						<td>{{timeformat $event.TriggerTime}}</td>
+					</tr>
+					{{end}}
+					<tr>
+						<th>Send Time:</th>
+						<td>{{timestamp}}</td>
+					</tr>
+					</tbody>
+				</table>
+				<hr>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>`,
+	Feishu: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Note: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+Annotations:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	FeishuCard: `{{- if $event.IsRecovered -}}
+{{- if ne $event.Cate "host" -}}
+**Cluster:** {{$event.Cluster}}{{end}}
+**Severity:** S{{$event.Severity}} Recovered
+**Rule Name:** {{$event.RuleName}}
+**Metrics:** {{$event.TagsJSON}}
+**Recovery Time:** {{timeformat $event.LastEvalTime}}
+**Description:** Service recovered.
+{{- else -}}
+{{- if ne $event.Cate "host"}}**Cluster:** {{$event.Cluster}}
+{{end -}}
+**Severity:** S{{$event.Severity}} Triggered
+**Rule Name:** {{$event.RuleName}}
+**Metrics:** {{$event.TagsJSON}}
+**Trigger Time:** {{timeformat $event.TriggerTime}}
+**Send Time:** {{timestamp}}
+**Trigger Value:** {{$event.TriggerValue}}
+{{if $event.RuleNote }}**Description:** **{{$event.RuleNote}}**
+{{end -}}
+{{- end }}
+{{if $event.AnnotationsJSON}}
+**Annotations**:
+{{- range $key, $val := $event.AnnotationsJSON}}
+{{$key}}: {{$val}}
+{{- end}}
+{{- end}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute for 1 Hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Mm: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Note: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}`,
+	Telegram: `<b>Severity: {{if $event.IsRecovered}}💚 S{{$event.Severity}} Recovered{{else}}⚠️ S{{$event.Severity}} Triggered{{end}}</b>
+<b>Rule Name</b>: {{$event.RuleName}}{{if $event.RuleNote}}
+<b>Rule Note</b>: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+<b>Monitor Target</b>: {{$event.TargetIdent}}{{end}}
+<b>Metrics</b>: {{$event.TagsJSON}}{{if not $event.IsRecovered}}
+<b>Trigger Value</b>: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}<b>Recovery Time</b>: {{timeformat $event.LastEvalTime}}{{else}}<b>First Trigger Time</b>: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}<b>Duration</b>: {{humanizeDurationInterface $time_duration}}
+<b>Send Time</b>: {{timestamp}}`,
+	Wecom: `**Severity**: {{if $event.IsRecovered}}<font color="info">💚S{{$event.Severity}} Recovered</font>{{else}}<font color="warning">💔S{{$event.Severity}} Triggered</font>{{end}}
+**Rule Name**: {{$event.RuleName}}{{if $event.RuleNote}}
+**Rule Note**: {{$event.RuleNote}}{{end}}{{if $event.TargetIdent}}
+**Monitor Target**: {{$event.TargetIdent}}{{end}}
+**Metrics**: {{$event.TagsJSON}}
+{{if $event.AnnotationsJSON}}**Annotations**:{{range $key, $val := $event.AnnotationsJSON}}{{$key}}:{{$val}}  {{end}}   {{end}}{{if not $event.IsRecovered}}
+**Trigger Value**: {{$event.TriggerValue}}{{end}}
+{{if $event.IsRecovered}}**Recovery Time**: {{timeformat $event.LastEvalTime}}{{else}}**First Trigger Time**: {{timeformat $event.FirstTriggerTime}}{{end}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}
+**Send Time**: {{timestamp}}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute for 1 Hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+	Lark: `Severity: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}}
+Rule Name: {{$event.RuleName}}{{if $event.RuleNote}}
+Rule Note: {{$event.RuleNote}}{{end}}
+Metrics: {{$event.TagsJSON}}
+{{if $event.IsRecovered}}Recovery Time: {{timeformat $event.LastEvalTime}}{{else}}Trigger Time: {{timeformat $event.TriggerTime}}
+Trigger Value: {{$event.TriggerValue}}{{end}}
+Send Time: {{timestamp}}
+Event Details: {{.domain}}/share/alert-his-events/{{$event.Id}}
+Mute for 1 Hour: {{.domain}}/alert-mutes/add?__event_id={{$event.Id}}`,
+	LarkCard: `{{ if $event.IsRecovered -}}
+{{- if ne $event.Cate "host"}}**Cluster:** {{$event.Cluster}}
+{{end -}}
+**Severity:** S{{$event.Severity}} Recovered
+**Rule Name:** {{$event.RuleName}}
+**Metrics:** {{$event.TagsJSON}}
+**Recovery Time:** {{timeformat $event.LastEvalTime}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}
+**Description:** Service recovered.
+{{- else -}}
+{{- if ne $event.Cate "host"}}**Cluster:** {{$event.Cluster}}
+{{end -}}
+**Severity:** S{{$event.Severity}} Triggered
+**Rule Name:** {{$event.RuleName}}
+**Metrics:** {{$event.TagsJSON}}
+**Trigger Time:** {{timeformat $event.TriggerTime}}
+**Send Time:** {{timestamp}}
+**Trigger Value:** {{$event.TriggerValue}}
+{{$time_duration := sub now.Unix $event.FirstTriggerTime }}{{if $event.IsRecovered}}{{$time_duration = sub $event.LastEvalTime $event.FirstTriggerTime }}{{end}}**Duration**: {{humanizeDurationInterface $time_duration}}
+{{if $event.RuleNote }}**Description:** {{$event.RuleNote}}
+{{end -}}
+{{- end }}
+[Event Details]({{.domain}}/share/alert-his-events/{{$event.Id}})|[Mute for 1 Hour]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}}){{if eq $event.Cate "prometheus"}}|[View Graph]({{.domain}}/metric/explorer?__event_id={{$event.Id}}&mode=graph){{end}}`,
+}
+
 func init() {
 	GetDefs = getDefs
+}
+
+// ApplyNotificationLang overrides NewTplMap with localized templates based on
+// the configured language. Supported values: "en" for English (also accepts
+// "en_US", "EN", etc.). Any other value (including empty string) keeps the
+// default Chinese templates unchanged.
+// This should be called before InitMessageTemplate.
+func ApplyNotificationLang(lang string) {
+	lang = strings.TrimSpace(strings.ToLower(lang))
+	if lang == "" || strings.HasPrefix(lang, "zh") {
+		return
+	}
+	if strings.HasPrefix(lang, "en") {
+		for k, v := range newTplMapEn {
+			NewTplMap[k] = v
+		}
+	}
 }
 
 func (t *MessageTemplate) RenderEvent(events []*AlertCurEvent, siteUrl string) map[string]interface{} {
