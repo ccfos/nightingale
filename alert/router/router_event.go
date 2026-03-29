@@ -12,8 +12,8 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -76,8 +76,8 @@ func (rt *Router) pushEventToQueue(c *gin.Context) {
 	dispatch.LogEvent(event, "http_push_queue")
 	if !queue.EventQueue.PushFront(event) {
 		msg := fmt.Sprintf("event:%s push_queue err: queue is full", event.Hash)
-		ginx.Bomb(200, msg)
-		logger.Warningf(msg)
+		ginx.Bomb(200, "%s", msg)
+		logger.Warningf("%s", msg)
 	}
 	ginx.NewRender(c).Message(nil)
 }

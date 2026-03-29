@@ -10,8 +10,8 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,7 +46,7 @@ func (rt *Router) eventDetailPage(c *gin.Context) {
 func (rt *Router) eventDetailJSON(c *gin.Context) {
 	hash := ginx.UrlParamStr(c, "hash")
 	if !loggrep.IsValidHash(hash) {
-		ginx.Bomb(200, "invalid hash format")
+		ginx.Bomb(http.StatusBadRequest, "invalid hash format")
 	}
 
 	logs, instance, err := rt.getEventLogs(hash)

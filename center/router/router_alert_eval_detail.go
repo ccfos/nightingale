@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/loggrep"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,7 +47,7 @@ func (rt *Router) alertEvalDetailPage(c *gin.Context) {
 func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 	id := ginx.UrlParamStr(c, "id")
 	if !loggrep.IsValidRuleID(id) {
-		ginx.Bomb(200, "invalid rule id format")
+		ginx.Bomb(http.StatusBadRequest, "invalid rule id format")
 	}
 
 	logs, instance, err := rt.getAlertEvalLogs(id)

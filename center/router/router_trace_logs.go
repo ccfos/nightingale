@@ -45,7 +45,7 @@ func (rt *Router) traceLogsPage(c *gin.Context) {
 func (rt *Router) traceLogsJSON(c *gin.Context) {
 	traceId := ginx.UrlParamStr(c, "traceid")
 	if !loggrep.IsValidTraceID(traceId) {
-		ginx.Bomb(200, "invalid trace id format")
+		ginx.Bomb(http.StatusBadRequest, "invalid trace id format")
 	}
 
 	logs, instance, err := rt.getTraceLogs(traceId)
