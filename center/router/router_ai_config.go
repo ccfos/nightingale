@@ -226,14 +226,10 @@ func extractSkillArchive(c *gin.Context) (meta skillFrontmatter, instructions st
 	return
 }
 
-// aiSkillImport creates a new skill from an uploaded archive.
-// Rejects if skill name already exists. Name uniqueness is checked inside the transaction.
-func (rt *Router) aiSkillImport(c *gin.Context) {
-	meta, instructions, files := extractSkillArchive(c)
-	me := c.MustGet("user").(*models.User)
-
+// doSkillImport creates a new skill inside a transaction and returns the new skill ID.
+func (rt *Router) doSkillImport(meta skillFrontmatter, instructions string, files map[string]string, username string) (int64, error) {
 	var skillId int64
-	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 
 		skill := models.AISkill{
@@ -244,10 +240,9 @@ func (rt *Router) aiSkillImport(c *gin.Context) {
 			Compatibility: meta.Compatibility,
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
-			CreatedBy:     me.Username,
-			UpdatedBy:     me.Username,
+			CreatedBy:     username,
+			UpdatedBy:     username,
 		}
-		// Create checks name uniqueness internally
 		if err := skill.Create(tCtx); err != nil {
 			return err
 		}
@@ -258,29 +253,17 @@ func (rt *Router) aiSkillImport(c *gin.Context) {
 			skillFiles = append(skillFiles, &models.AISkillFile{
 				Name:      relPath,
 				Content:   content,
-				CreatedBy: me.Username,
+				CreatedBy: username,
 			})
 		}
 		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, false)
-	}))
-
-	ginx.NewRender(c).Data(skillId, nil)
+	})
+	return skillId, err
 }
 
-// aiSkillImportUpdate updates an existing skill by ID from an uploaded archive.
-// Rejects if the parsed name conflicts with a different skill.
-func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
-	skillId := ginx.UrlParamInt64(c, "id")
-	skill, err := models.AISkillGetById(rt.Ctx, skillId)
-	ginx.Dangerous(err)
-	if skill == nil {
-		ginx.Bomb(http.StatusNotFound, "ai skill not found")
-	}
-
-	meta, instructions, files := extractSkillArchive(c)
-	me := c.MustGet("user").(*models.User)
-
-	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+// doSkillImportUpdate updates an existing skill inside a transaction.
+func (rt *Router) doSkillImportUpdate(skill *models.AISkill, meta skillFrontmatter, instructions string, files map[string]string, username string) error {
+	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 
 		ref := models.AISkill{
@@ -292,9 +275,8 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
 			Enabled:       skill.Enabled,
-			UpdatedBy:     me.Username,
+			UpdatedBy:     username,
 		}
-		// Update checks name uniqueness internally when name changes
 		if err := skill.Update(tCtx, ref); err != nil {
 			return err
 		}
@@ -304,12 +286,31 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 			skillFiles = append(skillFiles, &models.AISkillFile{
 				Name:      relPath,
 				Content:   content,
-				CreatedBy: me.Username,
+				CreatedBy: username,
 			})
 		}
-		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, true)
-	}))
+		return models.AISkillFileBatchUpsert(tCtx, skill.Id, skillFiles, true)
+	})
+}
 
+func (rt *Router) aiSkillImport(c *gin.Context) {
+	meta, instructions, files := extractSkillArchive(c)
+	me := c.MustGet("user").(*models.User)
+	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(skillId, nil)
+}
+
+func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
+	skillId := ginx.UrlParamInt64(c, "id")
+	skill, err := models.AISkillGetById(rt.Ctx, skillId)
+	ginx.Dangerous(err)
+	if skill == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+	meta, instructions, files := extractSkillArchive(c)
+	me := c.MustGet("user").(*models.User)
+	ginx.Dangerous(rt.doSkillImportUpdate(skill, meta, instructions, files, me.Username))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
@@ -516,6 +517,13 @@ func archiveRoot(dir string) string {
 		return dir
 	}
 
+	// If any non-hidden regular file exists at root, this is not a wrapper
+	for _, e := range entries {
+		if !e.IsDir() && !strings.HasPrefix(e.Name(), ".") {
+			return dir
+		}
+	}
+
 	var candidate string
 	for _, e := range entries {
 		if !e.IsDir() {
@@ -633,45 +641,13 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 
 // ==================== Service API (v1) ====================
 
-// aiSkillImportByService creates a new skill from an uploaded archive (service API).
 func (rt *Router) aiSkillImportByService(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
-
-	var skillId int64
-	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
-
-		skill := models.AISkill{
-			Name:          meta.Name,
-			Description:   meta.Description,
-			Instructions:  instructions,
-			License:       meta.License,
-			Compatibility: meta.Compatibility,
-			Metadata:      meta.Metadata,
-			AllowedTools:  meta.AllowedTools,
-			CreatedBy:     "system",
-			UpdatedBy:     "system",
-		}
-		if err := skill.Create(tCtx); err != nil {
-			return err
-		}
-		skillId = skill.Id
-
-		skillFiles := make([]*models.AISkillFile, 0, len(files))
-		for relPath, content := range files {
-			skillFiles = append(skillFiles, &models.AISkillFile{
-				Name:      relPath,
-				Content:   content,
-				CreatedBy: "system",
-			})
-		}
-		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, false)
-	}))
-
+	skillId, err := rt.doSkillImport(meta, instructions, files, "system")
+	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
-// aiSkillImportUpdateByService updates an existing skill by ID from an uploaded archive (service API).
 func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
 	skillId := ginx.UrlParamInt64(c, "id")
 	skill, err := models.AISkillGetById(rt.Ctx, skillId)
@@ -679,38 +655,8 @@ func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
 	if skill == nil {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
-
 	meta, instructions, files := extractSkillArchive(c)
-
-	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
-
-		ref := models.AISkill{
-			Name:          meta.Name,
-			Description:   meta.Description,
-			Instructions:  instructions,
-			License:       meta.License,
-			Compatibility: meta.Compatibility,
-			Metadata:      meta.Metadata,
-			AllowedTools:  meta.AllowedTools,
-			Enabled:       skill.Enabled,
-			UpdatedBy:     "system",
-		}
-		if err := skill.Update(tCtx, ref); err != nil {
-			return err
-		}
-
-		skillFiles := make([]*models.AISkillFile, 0, len(files))
-		for relPath, content := range files {
-			skillFiles = append(skillFiles, &models.AISkillFile{
-				Name:      relPath,
-				Content:   content,
-				CreatedBy: "system",
-			})
-		}
-		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, true)
-	}))
-
+	ginx.Dangerous(rt.doSkillImportUpdate(skill, meta, instructions, files, "system"))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 

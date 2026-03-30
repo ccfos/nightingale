@@ -103,43 +103,30 @@ func AILLMConfigGetEnabled(c *ctx.Context) ([]*AILLMConfig, error) {
 }
 
 func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
-	exist, err := AILLMConfigGetByName(c, a.Name)
-	if err != nil {
-		return err
-	}
-	if exist != nil {
-		return fmt.Errorf("ai llm config name %s already exists", a.Name)
-	}
-
 	now := time.Now().Unix()
 	a.CreatedAt = now
 	a.UpdatedAt = now
 	a.CreatedBy = username
 	a.UpdatedBy = username
 
-	if a.IsDefault {
-		return DB(c).Transaction(func(tx *gorm.DB) error {
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&AILLMConfig{}).Where("name = ?", a.Name).Count(&count).Error; err != nil {
+			return err
+		}
+		if count > 0 {
+			return fmt.Errorf("ai llm config name %s already exists", a.Name)
+		}
+		if a.IsDefault {
 			if err := tx.Model(&AILLMConfig{}).Where("is_default = ?", true).Update("is_default", false).Error; err != nil {
 				return err
 			}
-			return tx.Create(a).Error
-		})
-	}
-
-	return Insert(c, a)
+		}
+		return tx.Create(a).Error
+	})
 }
 
 func (a *AILLMConfig) Update(c *ctx.Context, username string, data AILLMConfig) error {
-	if data.Name != a.Name {
-		exist, err := AILLMConfigGetByName(c, data.Name)
-		if err != nil {
-			return err
-		}
-		if exist != nil {
-			return fmt.Errorf("ai llm config name %s already exists", data.Name)
-		}
-	}
-
 	data.UpdatedAt = time.Now().Unix()
 	data.UpdatedBy = username
 
@@ -149,6 +136,15 @@ func (a *AILLMConfig) Update(c *ctx.Context, username string, data AILLMConfig) 
 	}
 
 	return DB(c).Transaction(func(tx *gorm.DB) error {
+		if data.Name != a.Name {
+			var count int64
+			if err := tx.Model(&AILLMConfig{}).Where("name = ?", data.Name).Count(&count).Error; err != nil {
+				return err
+			}
+			if count > 0 {
+				return fmt.Errorf("ai llm config name %s already exists", data.Name)
+			}
+		}
 		if data.IsDefault {
 			if err := tx.Model(&AILLMConfig{}).Where("is_default = ? AND id != ?", true, a.Id).Update("is_default", false).Error; err != nil {
 				return err
