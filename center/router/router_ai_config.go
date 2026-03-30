@@ -1,21 +1,27 @@
 package router
 
 import (
+	"archive/tar"
+	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"gopkg.in/yaml.v3"
 )
 
@@ -164,35 +170,147 @@ func (rt *Router) aiSkillDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
-func (rt *Router) aiSkillImport(c *gin.Context) {
+// extractSkillArchive validates, extracts, and parses a skill archive upload.
+// SKILL.md must contain valid YAML frontmatter with a non-empty name field.
+func extractSkillArchive(c *gin.Context) (meta skillFrontmatter, instructions string, files map[string]string) {
 	file, header, err := c.Request.FormFile("file")
 	ginx.Dangerous(err)
 	defer file.Close()
 
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	if ext != ".md" {
-		ginx.Bomb(http.StatusBadRequest, "only .md files are supported")
+	lowerName := strings.ToLower(header.Filename)
+	isZip := strings.HasSuffix(lowerName, ".zip")
+	isTarGz := strings.HasSuffix(lowerName, ".tar.gz") || strings.HasSuffix(lowerName, ".tgz")
+	if !isZip && !isTarGz {
+		ginx.Bomb(http.StatusBadRequest, "only .zip and .tar.gz/.tgz files are supported")
 	}
 
-	content, err := io.ReadAll(file)
+	const maxArchiveSize = 10 * 1024 * 1024 // 10MB
+	if header.Size > maxArchiveSize {
+		ginx.Bomb(http.StatusBadRequest, "archive size exceeds 10MB limit")
+	}
+
+	// Use LimitReader to enforce size regardless of header.Size (which can be forged)
+	data, err := io.ReadAll(io.LimitReader(file, maxArchiveSize+1))
+	ginx.Dangerous(err)
+	if int64(len(data)) > maxArchiveSize {
+		ginx.Bomb(http.StatusBadRequest, "archive size exceeds 10MB limit")
+	}
+
+	tmpDir, err := os.MkdirTemp("", "skill-import-*")
+	ginx.Dangerous(err)
+	defer os.RemoveAll(tmpDir)
+
+	if isZip {
+		err = extractZip(data, tmpDir)
+	} else {
+		err = extractTarGz(bytes.NewReader(data), tmpDir)
+	}
 	ginx.Dangerous(err)
 
-	meta, instructions := parseSkillMarkdown(string(content), header.Filename, ext)
+	skillContent, files, err := walkSkillArchive(tmpDir)
+	ginx.Dangerous(err)
+
+	if skillContent == "" {
+		ginx.Bomb(http.StatusBadRequest, "SKILL.md not found in archive root")
+	}
+
+	meta, instructions, ok := parseSkillMarkdown(skillContent)
+	if !ok {
+		ginx.Bomb(http.StatusBadRequest, "SKILL.md must contain valid YAML frontmatter with a non-empty 'name' field")
+	}
+
+	// Validate required fields (same rules as manual create/edit)
+	skill := models.AISkill{Name: meta.Name, Instructions: instructions}
+	ginx.Dangerous(skill.Verify())
+
+	return
+}
+
+// aiSkillImport creates a new skill from an uploaded archive.
+// Rejects if skill name already exists. Name uniqueness is checked inside the transaction.
+func (rt *Router) aiSkillImport(c *gin.Context) {
+	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
 
-	skill := models.AISkill{
-		Name:          meta.Name,
-		Description:   meta.Description,
-		Instructions:  instructions,
-		License:       meta.License,
-		Compatibility: meta.Compatibility,
-		Metadata:      meta.Metadata,
-		AllowedTools:  meta.AllowedTools,
-		CreatedBy:     me.Username,
-		UpdatedBy:     me.Username,
+	var skillId int64
+	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+
+		skill := models.AISkill{
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			CreatedBy:     me.Username,
+			UpdatedBy:     me.Username,
+		}
+		// Create checks name uniqueness internally
+		if err := skill.Create(tCtx); err != nil {
+			return err
+		}
+		skillId = skill.Id
+
+		skillFiles := make([]*models.AISkillFile, 0, len(files))
+		for relPath, content := range files {
+			skillFiles = append(skillFiles, &models.AISkillFile{
+				Name:      relPath,
+				Content:   content,
+				CreatedBy: me.Username,
+			})
+		}
+		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, false)
+	}))
+
+	ginx.NewRender(c).Data(skillId, nil)
+}
+
+// aiSkillImportUpdate updates an existing skill by ID from an uploaded archive.
+// Rejects if the parsed name conflicts with a different skill.
+func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
+	skillId := ginx.UrlParamInt64(c, "id")
+	skill, err := models.AISkillGetById(rt.Ctx, skillId)
+	ginx.Dangerous(err)
+	if skill == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
-	ginx.Dangerous(skill.Create(rt.Ctx))
-	ginx.NewRender(c).Data(skill.Id, nil)
+
+	meta, instructions, files := extractSkillArchive(c)
+	me := c.MustGet("user").(*models.User)
+
+	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+
+		ref := models.AISkill{
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			Enabled:       skill.Enabled,
+			UpdatedBy:     me.Username,
+		}
+		// Update checks name uniqueness internally when name changes
+		if err := skill.Update(tCtx, ref); err != nil {
+			return err
+		}
+
+		skillFiles := make([]*models.AISkillFile, 0, len(files))
+		for relPath, content := range files {
+			skillFiles = append(skillFiles, &models.AISkillFile{
+				Name:      relPath,
+				Content:   content,
+				CreatedBy: me.Username,
+			})
+		}
+		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, true)
+	}))
+
+	ginx.NewRender(c).Data(skillId, nil)
 }
 
 // parseSkillMarkdown parses a SKILL.md file with optional YAML frontmatter.
@@ -212,65 +330,235 @@ type skillFrontmatter struct {
 	AllowedTools  string            `yaml:"allowed-tools"`
 }
 
-func parseSkillMarkdown(content, filename, ext string) (meta skillFrontmatter, instructions string) {
+func parseSkillMarkdown(content string) (meta skillFrontmatter, instructions string, ok bool) {
 	text := strings.TrimSpace(content)
 
-	// Try to parse YAML frontmatter (between --- delimiters)
-	if strings.HasPrefix(text, "---") {
-		endIdx := strings.Index(text[3:], "\n---")
-		if endIdx >= 0 {
-			frontmatter := text[3 : 3+endIdx]
-			body := strings.TrimSpace(text[3+endIdx+4:]) // skip past closing ---
+	if !strings.HasPrefix(text, "---") {
+		return meta, text, false
+	}
 
-			if yaml.Unmarshal([]byte(frontmatter), &meta) == nil && meta.Name != "" {
-				return meta, body
-			}
+	endIdx := strings.Index(text[3:], "\n---")
+	if endIdx < 0 {
+		return meta, text, false
+	}
+
+	frontmatter := text[3 : 3+endIdx]
+	body := strings.TrimSpace(text[3+endIdx+4:]) // skip past closing ---
+
+	if yaml.Unmarshal([]byte(frontmatter), &meta) != nil || meta.Name == "" {
+		return meta, body, false
+	}
+
+	return meta, body, true
+}
+
+const (
+	maxFileCount       = 50                // max files per archive (excluding SKILL.md)
+	maxTotalExtracted  = 50 * 1024 * 1024  // 50MB total extracted size
+	maxSingleFile      = 16 * 1024 * 1024  // 16MB per file (MEDIUMTEXT)
+	maxSkillInstruction = 64 * 1024        // 64KB for SKILL.md (TEXT)
+)
+
+// extractZip extracts a zip archive from data into destDir.
+func extractZip(data []byte, destDir string) error {
+	r, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return fmt.Errorf("failed to open zip: %w", err)
+	}
+
+	// Pre-scan: check file count and declared sizes before any extraction
+	var fileCount int
+	var declaredTotal uint64
+	for _, f := range r.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		fileCount++
+		if fileCount > maxFileCount+1 {
+			return fmt.Errorf("too many files in archive, max %d", maxFileCount)
+		}
+		if f.UncompressedSize64 > uint64(maxSingleFile) {
+			return fmt.Errorf("file %s exceeds %dMB limit (%d bytes)", f.Name, maxSingleFile/1024/1024, f.UncompressedSize64)
+		}
+		declaredTotal += f.UncompressedSize64
+		if declaredTotal > uint64(maxTotalExtracted) {
+			return fmt.Errorf("total extracted size exceeds %dMB limit", maxTotalExtracted/1024/1024)
 		}
 	}
 
-	// No valid frontmatter, fallback: filename as name, entire content as instructions
-	meta.Name = strings.TrimSuffix(filename, ext)
-	return meta, content
+	// Extract with runtime safety net (headers can be forged)
+	var actualTotal int64
+	for _, f := range r.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+
+		relPath := filepath.Clean(f.Name)
+		if strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
+			return fmt.Errorf("invalid path in archive: %s", f.Name)
+		}
+
+		destPath := filepath.Join(destDir, relPath)
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		outFile, err := os.Create(destPath)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+
+		n, err := io.Copy(outFile, io.LimitReader(rc, maxSingleFile+1))
+		outFile.Close()
+		rc.Close()
+		if err != nil {
+			return err
+		}
+		if n > maxSingleFile {
+			return fmt.Errorf("file %s exceeds %dMB limit (declared size forged)", f.Name, maxSingleFile/1024/1024)
+		}
+
+		actualTotal += n
+		if actualTotal > maxTotalExtracted {
+			return fmt.Errorf("total extracted size exceeds %dMB limit", maxTotalExtracted/1024/1024)
+		}
+	}
+	return nil
 }
 
-func (rt *Router) aiSkillFileAdd(c *gin.Context) {
-	skillId := ginx.UrlParamInt64(c, "id")
-
-	// Verify skill exists
-	skill, err := models.AISkillGetById(rt.Ctx, skillId)
-	ginx.Dangerous(err)
-	if skill == nil {
-		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+// extractTarGz extracts a tar.gz archive from reader into destDir.
+func extractTarGz(r io.Reader, destDir string) error {
+	gz, err := gzip.NewReader(r)
+	if err != nil {
+		return fmt.Errorf("failed to open gzip: %w", err)
 	}
+	defer gz.Close()
 
-	file, header, err := c.Request.FormFile("file")
-	ginx.Dangerous(err)
-	defer file.Close()
+	var fileCount int
+	var totalSize int64
 
-	// Validate file extension
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	allowed := map[string]bool{".md": true, ".txt": true, ".json": true, ".yaml": true, ".yml": true, ".csv": true}
-	if !allowed[ext] {
-		ginx.Bomb(http.StatusBadRequest, "file type not allowed, only .md/.txt/.json/.yaml/.csv")
+	tr := tar.NewReader(gz)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if hdr.Typeflag == tar.TypeDir {
+			continue
+		}
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		fileCount++
+		if fileCount > maxFileCount+1 {
+			return fmt.Errorf("too many files in archive, max %d", maxFileCount)
+		}
+
+		// Pre-check declared size from tar header
+		if hdr.Size > maxSingleFile {
+			return fmt.Errorf("file %s exceeds %dMB limit (%d bytes)", hdr.Name, maxSingleFile/1024/1024, hdr.Size)
+		}
+		if totalSize+hdr.Size > maxTotalExtracted {
+			return fmt.Errorf("total extracted size exceeds %dMB limit", maxTotalExtracted/1024/1024)
+		}
+
+		relPath := filepath.Clean(hdr.Name)
+		if strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
+			return fmt.Errorf("invalid path in archive: %s", hdr.Name)
+		}
+
+		destPath := filepath.Join(destDir, relPath)
+		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+			return err
+		}
+
+		outFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+
+		// Runtime safety net: limit actual bytes in case header size is forged
+		n, err := io.Copy(outFile, io.LimitReader(tr, maxSingleFile+1))
+		outFile.Close()
+		if err != nil {
+			return err
+		}
+		if n > maxSingleFile {
+			return fmt.Errorf("file %s exceeds %dMB limit (declared size forged)", hdr.Name, maxSingleFile/1024/1024)
+		}
+
+		totalSize += n
+		if totalSize > maxTotalExtracted {
+			return fmt.Errorf("total extracted size exceeds %dMB limit", maxTotalExtracted/1024/1024)
+		}
 	}
+	return nil
+}
 
-	// Validate file size (2MB max)
-	if header.Size > 2*1024*1024 {
-		ginx.Bomb(http.StatusBadRequest, "file size exceeds 2MB limit")
-	}
+// walkSkillArchive walks the extracted archive directory and returns:
+// - skillContent: the content of root SKILL.md (empty if not found)
+// - files: map of relative path -> file content for all other files
+func walkSkillArchive(dir string) (skillContent string, files map[string]string, err error) {
+	files = make(map[string]string)
 
-	content, err := io.ReadAll(file)
-	ginx.Dangerous(err)
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
 
-	me := c.MustGet("user").(*models.User)
-	skillFile := models.AISkillFile{
-		SkillId:   skillId,
-		Name:      header.Filename,
-		Content:   string(content),
-		CreatedBy: me.Username,
-	}
-	ginx.Dangerous(skillFile.Create(rt.Ctx))
-	ginx.NewRender(c).Data(skillFile.Id, nil)
+		relPath, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		relPath = filepath.ToSlash(relPath)
+
+		// Root directory itself, continue walking
+		if relPath == "." {
+			return nil
+		}
+
+		// Skip hidden files/dirs (e.g. .DS_Store) and macOS archive artifacts
+		if strings.HasPrefix(filepath.Base(relPath), ".") || strings.HasPrefix(relPath, "__MACOSX") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "SKILL.md" {
+			if len(content) > maxSkillInstruction {
+				return fmt.Errorf("SKILL.md exceeds 64KB limit (%d bytes)", len(content))
+			}
+			skillContent = string(content)
+		} else {
+			if int64(len(content)) > maxSingleFile {
+				return fmt.Errorf("file %s exceeds %dMB limit (%d bytes)", relPath, maxSingleFile/1024/1024, len(content))
+			}
+			files[relPath] = string(content)
+		}
+		return nil
+	})
+	return
 }
 
 func (rt *Router) aiSkillFileGet(c *gin.Context) {
@@ -295,6 +583,87 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 
 // ==================== Service API (v1) ====================
 
+// aiSkillImportByService creates a new skill from an uploaded archive (service API).
+func (rt *Router) aiSkillImportByService(c *gin.Context) {
+	meta, instructions, files := extractSkillArchive(c)
+
+	var skillId int64
+	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+
+		skill := models.AISkill{
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			CreatedBy:     "system",
+			UpdatedBy:     "system",
+		}
+		if err := skill.Create(tCtx); err != nil {
+			return err
+		}
+		skillId = skill.Id
+
+		skillFiles := make([]*models.AISkillFile, 0, len(files))
+		for relPath, content := range files {
+			skillFiles = append(skillFiles, &models.AISkillFile{
+				Name:      relPath,
+				Content:   content,
+				CreatedBy: "system",
+			})
+		}
+		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, false)
+	}))
+
+	ginx.NewRender(c).Data(skillId, nil)
+}
+
+// aiSkillImportUpdateByService updates an existing skill by ID from an uploaded archive (service API).
+func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
+	skillId := ginx.UrlParamInt64(c, "id")
+	skill, err := models.AISkillGetById(rt.Ctx, skillId)
+	ginx.Dangerous(err)
+	if skill == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+
+	meta, instructions, files := extractSkillArchive(c)
+
+	ginx.Dangerous(models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
+		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+
+		ref := models.AISkill{
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			Enabled:       skill.Enabled,
+			UpdatedBy:     "system",
+		}
+		if err := skill.Update(tCtx, ref); err != nil {
+			return err
+		}
+
+		skillFiles := make([]*models.AISkillFile, 0, len(files))
+		for relPath, content := range files {
+			skillFiles = append(skillFiles, &models.AISkillFile{
+				Name:      relPath,
+				Content:   content,
+				CreatedBy: "system",
+			})
+		}
+		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, true)
+	}))
+
+	ginx.NewRender(c).Data(skillId, nil)
+}
+
 func (rt *Router) aiSkillAddByService(c *gin.Context) {
 	var obj models.AISkill
 	ginx.BindJSON(c, &obj)
@@ -315,42 +684,6 @@ func (rt *Router) aiSkillAddByService(c *gin.Context) {
 
 	ginx.Dangerous(obj.Create(rt.Ctx))
 	ginx.NewRender(c).Data(obj.Id, nil)
-}
-
-func (rt *Router) aiSkillFileAddByService(c *gin.Context) {
-	skillId := ginx.UrlParamInt64(c, "id")
-
-	skill, err := models.AISkillGetById(rt.Ctx, skillId)
-	ginx.Dangerous(err)
-	if skill == nil {
-		ginx.Bomb(http.StatusNotFound, "ai skill not found")
-	}
-
-	file, header, err := c.Request.FormFile("file")
-	ginx.Dangerous(err)
-	defer file.Close()
-
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	allowed := map[string]bool{".md": true, ".txt": true, ".json": true, ".yaml": true, ".yml": true, ".csv": true}
-	if !allowed[ext] {
-		ginx.Bomb(http.StatusBadRequest, "file type not allowed, only .md/.txt/.json/.yaml/.csv")
-	}
-
-	if header.Size > 2*1024*1024 {
-		ginx.Bomb(http.StatusBadRequest, "file size exceeds 2MB limit")
-	}
-
-	content, err := io.ReadAll(file)
-	ginx.Dangerous(err)
-
-	skillFile := models.AISkillFile{
-		SkillId:   skillId,
-		Name:      header.Filename,
-		Content:   string(content),
-		CreatedBy: "system",
-	}
-	ginx.Dangerous(skillFile.Create(rt.Ctx))
-	ginx.NewRender(c).Data(skillFile.Id, nil)
 }
 
 func (rt *Router) mcpServerGets(c *gin.Context) {
