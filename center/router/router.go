@@ -546,7 +546,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillPut)
 		pages.DELETE("/ai-skill/:id", rt.auth(), rt.admin(), rt.aiSkillDel)
 		pages.POST("/ai-skills/import", rt.auth(), rt.admin(), rt.aiSkillImport)
-		pages.POST("/ai-skill/:id/files", rt.auth(), rt.admin(), rt.aiSkillFileAdd)
+		pages.PUT("/ai-skill/:id/import", rt.auth(), rt.admin(), rt.aiSkillImportUpdate)
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.admin(), rt.aiSkillFileDel)
 
@@ -775,8 +775,11 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/builtin-components", rt.builtinComponentsGets)
 			service.GET("/builtin-payloads", rt.builtinPayloadsGets)
 
+			service.GET("/ai-skills", rt.aiSkillGets)
+			service.GET("/ai-skill/:id", rt.aiSkillGetWithFileContents)
 			service.POST("/ai-skills", rt.aiSkillAddByService)
-			service.POST("/ai-skill/:id/files", rt.aiSkillFileAddByService)
+			service.POST("/ai-skills/import", rt.aiSkillImportByService)
+			service.PUT("/ai-skill/:id/import", rt.aiSkillImportUpdateByService)
 		}
 	}
 
