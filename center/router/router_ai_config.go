@@ -506,10 +506,43 @@ func extractTarGz(r io.Reader, destDir string) error {
 	return nil
 }
 
+// archiveRoot returns the effective root directory of an extracted archive.
+// If the archive contains a single top-level directory (excluding __MACOSX and
+// hidden dirs), that directory is returned so that callers can skip the wrapper.
+// Otherwise the original dir is returned unchanged.
+func archiveRoot(dir string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return dir
+	}
+
+	var candidate string
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasPrefix(name, ".") || name == "__MACOSX" {
+			continue
+		}
+		if candidate != "" {
+			// More than one real top-level directory — no single wrapper
+			return dir
+		}
+		candidate = name
+	}
+
+	if candidate != "" {
+		return filepath.Join(dir, candidate)
+	}
+	return dir
+}
+
 // walkSkillArchive walks the extracted archive directory and returns:
 // - skillContent: the content of root SKILL.md (empty if not found)
 // - files: map of relative path -> file content for all other files
 func walkSkillArchive(dir string) (skillContent string, files map[string]string, err error) {
+	dir = archiveRoot(dir)
 	files = make(map[string]string)
 
 	err = filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {

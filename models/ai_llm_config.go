@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 type LLMExtraConfig struct {
@@ -29,6 +30,7 @@ type AILLMConfig struct {
 	Model       string         `json:"model"`
 	ExtraConfig LLMExtraConfig `json:"extra_config" gorm:"serializer:json"`
 	Enabled     bool           `json:"enabled"`
+	IsDefault   bool           `json:"is_default" gorm:"column:is_default;type:boolean;default:false"`
 	CreatedAt   int64          `json:"created_at"`
 	CreatedBy   string         `json:"created_by"`
 	UpdatedAt   int64          `json:"updated_at"`
@@ -114,6 +116,16 @@ func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
 	a.UpdatedAt = now
 	a.CreatedBy = username
 	a.UpdatedBy = username
+
+	if a.IsDefault {
+		return DB(c).Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&AILLMConfig{}).Where("is_default = ?", true).Update("is_default", false).Error; err != nil {
+				return err
+			}
+			return tx.Create(a).Error
+		})
+	}
+
 	return Insert(c, a)
 }
 
@@ -136,8 +148,15 @@ func (a *AILLMConfig) Update(c *ctx.Context, username string, data AILLMConfig) 
 		data.APIKey = a.APIKey
 	}
 
-	return DB(c).Model(a).Select("name", "description", "api_type", "api_url", "api_key", "model",
-		"extra_config", "enabled", "updated_at", "updated_by").Updates(data).Error
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		if data.IsDefault {
+			if err := tx.Model(&AILLMConfig{}).Where("is_default = ? AND id != ?", true, a.Id).Update("is_default", false).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Model(a).Select("name", "description", "api_type", "api_url", "api_key", "model",
+			"extra_config", "enabled", "is_default", "updated_at", "updated_by").Updates(data).Error
+	})
 }
 
 func (a *AILLMConfig) Delete(c *ctx.Context) error {
