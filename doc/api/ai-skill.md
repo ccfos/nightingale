@@ -462,7 +462,111 @@ DELETE /api/n9e/ai-skill-file/:fileId
 
 ## Service API（v1）
 
-以下接口供其他服务调用，使用 BasicAuth 认证（需开启 `APIForService`），`created_by` / `updated_by` 固定为 `system`。
+以下接口供其他服务调用，使用 BasicAuth 认证（需开启 `APIForService`）。写入类接口的 `created_by` / `updated_by` 固定为 `system`。
+
+---
+
+### 获取 Skill 列表
+
+```
+GET /v1/n9e/ai-skills
+```
+
+行为与页面接口 `GET /api/n9e/ai-skills` 一致。
+
+#### 查询参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| search | string | 可选，按 name 或 description 模糊搜索 |
+
+#### 响应
+
+```json
+{
+  "dat": [
+    {
+      "id": 1,
+      "name": "firemap-skill",
+      "description": "灭火图分析技能",
+      "instructions": "# Firemap Skill\n...",
+      "enabled": true,
+      "created_at": 1710000000,
+      "created_by": "admin",
+      "updated_at": 1710000000,
+      "updated_by": "admin"
+    }
+  ],
+  "err": ""
+}
+```
+
+> 列表接口不返回 `files` 字段。
+
+---
+
+### 获取 Skill 详情（含文件内容）
+
+```
+GET /v1/n9e/ai-skill/:id
+```
+
+返回 Skill 完整信息及所有资源文件（**含 `content` 字段**），服务端可一次请求获取全部数据。
+
+> 与页面接口 `GET /api/n9e/ai-skill/:id` 的区别：页面接口的 files 不含 `content`（前端按需加载），Service 接口的 files 含 `content`（一次拿齐）。
+
+#### 路径参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | Skill ID |
+
+#### 响应
+
+```json
+{
+  "dat": {
+    "id": 1,
+    "name": "firemap-skill",
+    "description": "灭火图分析技能",
+    "instructions": "# Firemap Skill\n...",
+    "enabled": true,
+    "created_at": 1710000000,
+    "created_by": "admin",
+    "updated_at": 1710000000,
+    "updated_by": "admin",
+    "files": [
+      {
+        "id": 10,
+        "skill_id": 1,
+        "name": "references/common/llm.md",
+        "content": "# LLM Reference\n模型调用说明...",
+        "size": 1024,
+        "created_at": 1710000000,
+        "created_by": "admin",
+        "updated_at": 1710000000,
+        "updated_by": "admin"
+      },
+      {
+        "id": 11,
+        "skill_id": 1,
+        "name": "scripts/api.py",
+        "content": "print('hello from api.py')\n",
+        "size": 27,
+        "created_at": 1710000000,
+        "created_by": "admin",
+        "updated_at": 1710000000,
+        "updated_by": "admin"
+      }
+    ]
+  },
+  "err": ""
+}
+```
+
+#### 错误
+
+- `404` Skill 不存在
 
 ---
 

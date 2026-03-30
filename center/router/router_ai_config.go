@@ -581,6 +581,23 @@ func (rt *Router) aiSkillFileDel(c *gin.Context) {
 	ginx.NewRender(c).Message(obj.Delete(rt.Ctx))
 }
 
+// aiSkillGetWithFileContents returns skill detail with all file contents included.
+// Used by service API where the caller needs the full skill data in one request.
+func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	obj, err := models.AISkillGetById(rt.Ctx, id)
+	ginx.Dangerous(err)
+	if obj == nil {
+		ginx.Bomb(http.StatusNotFound, "ai skill not found")
+	}
+
+	files, err := models.AISkillFileGetContents(rt.Ctx, id)
+	ginx.Dangerous(err)
+	obj.Files = files
+
+	ginx.NewRender(c).Data(obj, nil)
+}
+
 // ==================== Service API (v1) ====================
 
 // aiSkillImportByService creates a new skill from an uploaded archive (service API).

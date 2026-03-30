@@ -775,6 +775,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/builtin-components", rt.builtinComponentsGets)
 			service.GET("/builtin-payloads", rt.builtinPayloadsGets)
 
+			service.GET("/ai-skills", rt.aiSkillGets)
+			service.GET("/ai-skill/:id", rt.aiSkillGetWithFileContents)
 			service.POST("/ai-skills", rt.aiSkillAddByService)
 			service.POST("/ai-skills/import", rt.aiSkillImportByService)
 			service.PUT("/ai-skill/:id/import", rt.aiSkillImportUpdateByService)
