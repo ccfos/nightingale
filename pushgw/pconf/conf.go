@@ -21,6 +21,7 @@ type Pushgw struct {
 	PushConcurrency                int
 	UpdateTargetByUrlConcurrency   int
 
+	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
 	IdentStatsThreshold int

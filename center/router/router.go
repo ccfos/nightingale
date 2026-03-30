@@ -54,13 +54,15 @@ type Router struct {
 	Ctx               *ctx.Context
 	LogDir            string
 
-	HeartbeatHook       HeartbeatHookFunc
-	TargetDeleteHook    models.TargetDeleteHookFunc
-	AlertRuleModifyHook AlertRuleModifyHookFunc
-
-	msgStateManager  *MessageStateManager
-	llmClientCache   *llm.ClientCache
+	HeartbeatHook         HeartbeatHookFunc
+	msgStateManager       *MessageStateManager
+	llmClientCache        *llm.ClientCache
+	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetBgidChangeCheck TargetBgidChangeCheckFunc
+	AlertRuleModifyHook   AlertRuleModifyHookFunc
 }
+
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
@@ -68,29 +70,30 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
 	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, logDir string) *Router {
 	return &Router{
-		HTTP:                httpConfig,
-		Center:              center,
-		Alert:               alert,
-		Ibex:                ibex,
-		Operations:          operations,
-		DatasourceCache:     ds,
-		NotifyConfigCache:   ncc,
-		PromClients:         pc,
-		Redis:               redis,
-		MetaSet:             metaSet,
-		IdentSet:            idents,
-		TargetCache:         tc,
-		Sso:                 sso,
-		UserCache:           uc,
-		UserGroupCache:      ugc,
-		UserTokenCache:      utc,
-		Ctx:                 ctx,
-		LogDir:              logDir,
-		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook: func(ar *models.AlertRule) {},
-		msgStateManager:     NewMessageStateManager(),
-		llmClientCache:      llm.NewClientCache(),
+		HTTP:                  httpConfig,
+		Center:                center,
+		Alert:                 alert,
+		Ibex:                  ibex,
+		Operations:            operations,
+		DatasourceCache:       ds,
+		NotifyConfigCache:     ncc,
+		PromClients:           pc,
+		Redis:                 redis,
+		MetaSet:               metaSet,
+		IdentSet:              idents,
+		TargetCache:           tc,
+		Sso:                   sso,
+		UserCache:             uc,
+		UserGroupCache:        ugc,
+		UserTokenCache:        utc,
+		Ctx:                   ctx,
+		LogDir:                logDir,
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
+		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
+		msgStateManager:       NewMessageStateManager(),
+		llmClientCache:        llm.NewClientCache(),
+		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
 	}
 }
 
@@ -328,6 +331,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-groups/tags", rt.auth(), rt.user(), rt.busiGroupsGetTags)
 
 		pages.GET("/targets", rt.auth(), rt.user(), rt.targetGets)
+		pages.GET("/targets/stats", rt.auth(), rt.user(), rt.targetStats)
 		pages.POST("/target-update", rt.auth(), rt.targetUpdate)
 		pages.GET("/target/extra-meta", rt.auth(), rt.user(), rt.targetExtendInfoByIdent)
 		pages.POST("/target/list", rt.auth(), rt.user(), rt.targetGetsByHostFilter)
