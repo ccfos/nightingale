@@ -240,6 +240,7 @@ func (rt *Router) doSkillImport(meta skillFrontmatter, instructions string, file
 			Compatibility: meta.Compatibility,
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
+			Enabled:       true,
 			CreatedBy:     username,
 			UpdatedBy:     username,
 		}

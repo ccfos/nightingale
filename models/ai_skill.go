@@ -24,7 +24,8 @@ type AISkill struct {
 	UpdatedBy     string            `json:"updated_by"`
 
 	// Runtime fields, not stored in DB
-	Files []*AISkillFile `json:"files,omitempty" gorm:"-"`
+	Files   []*AISkillFile `json:"files,omitempty" gorm:"-"`
+	Builtin bool           `json:"builtin" gorm:"-"`
 }
 
 func (s *AISkill) TableName() string {
@@ -50,6 +51,9 @@ func AISkillGets(c *ctx.Context, search string) ([]*AISkill, error) {
 		session = session.Where("name like ? or description like ?", "%"+search+"%", "%"+search+"%")
 	}
 	err := session.Find(&lst).Error
+	for _, s := range lst {
+		s.Builtin = s.CreatedBy == "system"
+	}
 	return lst, err
 }
 
