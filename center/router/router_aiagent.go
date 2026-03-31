@@ -1,12 +1,16 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/toolkits/pkg/logger"
 )
 
 // AIChatRequest is the generic chat request dispatched by action_key.
@@ -18,8 +22,9 @@ type AIChatRequest struct {
 }
 
 // actionHandler defines how each action_key is processed.
+// The LLM agent config is always resolved via "chat" useCase in processAssistantMessage.
 type actionHandler struct {
-	useCase       string // maps to AIAgent.UseCase for finding the right agent config
+	description   string // human-readable description used by LLM intent inference
 	validate      func(req *AIChatRequest) error
 	selectTools   func(req *AIChatRequest) []string
 	buildPrompt   func(req *AIChatRequest) string
@@ -29,13 +34,23 @@ type actionHandler struct {
 
 var actionRegistry = map[string]*actionHandler{
 	"query_generator": {
-		useCase:       "chat",
+		description:   "Generate PromQL or SQL queries based on user requirements; requires datasource context (datasource_type, datasource_id)",
 		validate:      validateQueryGenerator,
 		selectTools:   selectQueryGeneratorTools,
 		buildPrompt:   buildQueryGeneratorPrompt,
 		buildInputs:   buildQueryGeneratorInputs,
 		parseResponse: parseQueryGeneratorResponse,
 	},
+	"general_chat": {
+		description:   "General Q&A for operations, monitoring, observability, and other technical questions; no special context required",
+		buildPrompt:   buildGeneralChatPrompt,
+	},
+}
+
+func init() {
+	if _, ok := actionRegistry[string(models.ActionKeyGeneralChat)]; !ok {
+		panic("actionRegistry must contain general_chat as fallback")
+	}
 }
 
 // --- query_generator action ---
@@ -188,4 +203,83 @@ func stripCodeFence(s string) string {
 		s = strings.TrimSuffix(s, "```")
 	}
 	return strings.TrimSpace(s)
+}
+
+// --- general_chat action ---
+
+func buildGeneralChatPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a helpful assistant specializing in IT operations, monitoring, observability, and general technical topics.
+Please answer the user's question clearly and concisely in the user's language.
+
+User request: %s`, req.UserInput)
+}
+
+// --- LLM intent inference ---
+
+// buildIntentInferencePrompt constructs a system prompt that lists all available
+// action keys with descriptions, asking the LLM to pick the best match.
+func buildIntentInferencePrompt() string {
+	var sb strings.Builder
+	sb.WriteString("You are an intent classifier. Based on the user's message and conversation history, decide which action to take.\n\n")
+	sb.WriteString("Available actions:\n")
+	keys := make([]string, 0, len(actionRegistry))
+	for key := range actionRegistry {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		handler := actionRegistry[key]
+		sb.WriteString(fmt.Sprintf("- %s: %s\n", key, handler.description))
+	}
+	sb.WriteString("\nRespond with ONLY a JSON object: {\"action_key\": \"<chosen_key>\"}\n")
+	sb.WriteString("Do not include any other text.")
+	return sb.String()
+}
+
+// inferActionKeyByLLM uses a lightweight LLM call to classify user intent
+// into one of the registered action keys. Falls back to "general_chat" on error.
+func inferActionKeyByLLM(ctx context.Context, llmClient llm.LLM, userInput string, history []aiagent.ChatMessage) string {
+	// Optimisation: if only one handler is registered, skip inference.
+	if len(actionRegistry) <= 1 {
+		for key := range actionRegistry {
+			return key
+		}
+	}
+
+	systemPrompt := buildIntentInferencePrompt()
+
+	// Build user message with recent history context (last 4 turns max).
+	var userMsg strings.Builder
+	start := 0
+	if len(history) > 4 {
+		start = len(history) - 4
+	}
+	if len(history) > 0 {
+		userMsg.WriteString("Recent conversation:\n")
+		for _, h := range history[start:] {
+			userMsg.WriteString(fmt.Sprintf("[%s]: %s\n", h.Role, h.Content))
+		}
+		userMsg.WriteString("\n")
+	}
+	userMsg.WriteString("Current user message: ")
+	userMsg.WriteString(userInput)
+
+	resp, err := llm.ChatWithSystem(ctx, llmClient, systemPrompt, userMsg.String())
+	if err != nil {
+		logger.Warningf("[Assistant] intent inference failed: %v, falling back to general_chat", err)
+		return string(models.ActionKeyGeneralChat)
+	}
+
+	cleaned := stripCodeFence(strings.TrimSpace(resp))
+	var result struct {
+		ActionKey string `json:"action_key"`
+	}
+	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {
+		return string(models.ActionKeyGeneralChat)
+	}
+
+	if _, ok := actionRegistry[result.ActionKey]; !ok {
+		return string(models.ActionKeyGeneralChat)
+	}
+	return result.ActionKey
 }

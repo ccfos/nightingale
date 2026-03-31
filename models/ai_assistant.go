@@ -92,6 +92,7 @@ type AssistantActionKey string
 
 const (
 	ActionKeyQueryGenerator AssistantActionKey = "query_generator"
+	ActionKeyGeneralChat    AssistantActionKey = "general_chat"
 )
 
 type AssistantAction struct {

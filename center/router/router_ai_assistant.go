@@ -132,13 +132,6 @@ func (rt *Router) assistantChatDel(c *gin.Context) {
 
 // ==================== Message Handlers ====================
 
-func inferActionKey(pageFrom models.AssistantPageInfo) models.AssistantActionKey {
-	switch pageFrom.Page {
-	default:
-		return models.ActionKeyQueryGenerator
-	}
-}
-
 func (rt *Router) assistantMessageNew(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	var req models.AssistantSendRequest
@@ -236,16 +229,71 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	streamCache := aiagent.GetStreamCache()
 
-	// Resolve action key
-	actionKey := string(msg.Query.Action.Key)
-	if actionKey == "" {
-		actionKey = string(inferActionKey(msg.Query.PageFrom))
+	// ① Load multi-turn history early (needed for LLM intent inference)
+	var history []aiagent.ChatMessage
+	if msg.SeqID > 1 {
+		prevMsg, _ := models.AssistantMessageGet(rt.Ctx, msg.ChatID, msg.SeqID-1)
+		if prevMsg != nil && len(prevMsg.Extra.HistoryMessages) > 0 {
+			if err := json.Unmarshal(prevMsg.Extra.HistoryMessages, &history); err != nil {
+				logger.Warningf("[Assistant] failed to unmarshal history for chat=%s seq=%d: %v", msg.ChatID, msg.SeqID-1, err)
+			}
+		}
+	}
+
+	// ② Create LLM client early (shared by intent inference and agent execution)
+	// Always use "chat" useCase to find the agent config for the LLM client.
+	agent, err := models.AIAgentGetByUseCase(rt.Ctx, "chat")
+	if err != nil || agent == nil {
+		rt.finishMessage(stateKey, streamID, msg, 400, "no AI agent configured for use_case=chat")
+		return
+	}
+
+	llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
+	if err != nil || llmCfg == nil {
+		rt.finishMessage(stateKey, streamID, msg, 400, "referenced LLM config not found")
+		return
+	}
+
+	extraConfig := llmCfg.ExtraConfig
+	timeout := 120000
+	if extraConfig.TimeoutSeconds > 0 {
+		timeout = extraConfig.TimeoutSeconds * 1000
+	}
+
+	llmClient, err := rt.llmClientCache.GetOrCreate(&llm.Config{
+		Provider:      llmCfg.APIType,
+		BaseURL:       llmCfg.APIURL,
+		Model:         llmCfg.Model,
+		APIKey:        llmCfg.APIKey,
+		Headers:       extraConfig.CustomHeaders,
+		Timeout:       timeout,
+		SkipSSLVerify: extraConfig.SkipTLSVerify,
+		Proxy:         extraConfig.Proxy,
+		Temperature:   extraConfig.Temperature,
+		MaxTokens:     extraConfig.MaxTokens,
+	})
+	if err != nil {
+		rt.finishMessage(stateKey, streamID, msg, 500, fmt.Sprintf("failed to create LLM client: %v", err))
+		return
+	}
+
+	// ③ Resolve action key:
+	//   - First message of a new chat with an explicit key: use the frontend-provided key
+	//   - Otherwise (key empty or subsequent messages): LLM intent inference
+	var actionKey string
+	if msg.SeqID == 1 && msg.Query.Action.Key != "" {
+		actionKey = string(msg.Query.Action.Key)
+	} else {
+		inferCtx, inferCancel := context.WithTimeout(parentCtx, 15*time.Second)
+		actionKey = inferActionKeyByLLM(inferCtx, llmClient, msg.Query.Content, history)
+		inferCancel()
 	}
 
 	handler, ok := actionRegistry[actionKey]
 	if !ok {
-		rt.finishMessage(stateKey, streamID, msg, 400, fmt.Sprintf("unsupported action_key: %s", actionKey))
-		return
+		// Unknown key from frontend — fall back to general_chat
+		actionKey = string(models.ActionKeyGeneralChat)
+		handler = actionRegistry[actionKey]
 	}
 
 	// Build AIChatRequest for reusing existing action logic
@@ -270,31 +318,15 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		chatReq.Context["table_name"] = ap.TableName
 	}
 
-	// Validate
+	// ④ Validate — on failure, silently fall back to general_chat instead of returning error
 	if handler.validate != nil {
 		if err := handler.validate(chatReq); err != nil {
-			rt.finishMessage(stateKey, streamID, msg, 400, err.Error())
-			return
+			logger.Infof("[Assistant] validate failed for action_key=%s: %v, falling back to general_chat", actionKey, err)
+			actionKey = string(models.ActionKeyGeneralChat)
+			handler = actionRegistry[actionKey]
+			chatReq.ActionKey = actionKey
+			chatReq.Context = make(map[string]interface{})
 		}
-	}
-
-	// Find AI agent
-	agent, err := models.AIAgentGetByUseCase(rt.Ctx, handler.useCase)
-	if err != nil || agent == nil {
-		rt.finishMessage(stateKey, streamID, msg, 400, fmt.Sprintf("no AI agent configured for use_case=%s", handler.useCase))
-		return
-	}
-
-	llmCfg, err := models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
-	if err != nil || llmCfg == nil {
-		rt.finishMessage(stateKey, streamID, msg, 400, "referenced LLM config not found")
-		return
-	}
-
-	extraConfig := llmCfg.ExtraConfig
-	timeout := 120000
-	if extraConfig.TimeoutSeconds > 0 {
-		timeout = extraConfig.TimeoutSeconds * 1000
 	}
 
 	// Select tools
@@ -314,32 +346,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	inputs := map[string]string{"user_input": msg.Query.Content}
 	if handler.buildInputs != nil {
 		inputs = handler.buildInputs(chatReq)
-	}
-
-	// Load multi-turn history from previous message's Extra
-	var history []aiagent.ChatMessage
-	if msg.SeqID > 1 {
-		prevMsg, _ := models.AssistantMessageGet(rt.Ctx, msg.ChatID, msg.SeqID-1)
-		if prevMsg != nil && len(prevMsg.Extra.HistoryMessages) > 0 {
-			json.Unmarshal(prevMsg.Extra.HistoryMessages, &history)
-		}
-	}
-
-	llmClient, err := rt.llmClientCache.GetOrCreate(&llm.Config{
-		Provider:      llmCfg.APIType,
-		BaseURL:       llmCfg.APIURL,
-		Model:         llmCfg.Model,
-		APIKey:        llmCfg.APIKey,
-		Headers:       extraConfig.CustomHeaders,
-		Timeout:       timeout,
-		SkipSSLVerify: extraConfig.SkipTLSVerify,
-		Proxy:         extraConfig.Proxy,
-		Temperature:   extraConfig.Temperature,
-		MaxTokens:     extraConfig.MaxTokens,
-	})
-	if err != nil {
-		rt.finishMessage(stateKey, streamID, msg, 500, fmt.Sprintf("failed to create LLM client: %v", err))
-		return
 	}
 
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
