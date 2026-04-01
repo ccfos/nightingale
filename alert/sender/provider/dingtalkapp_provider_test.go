@@ -52,8 +52,8 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 		Config: cfg,
 		Events: []*models.AlertCurEvent{{
 			Hash: "hash-test",
-			AnnotationsJSON: map[string]string{
-				"alert_image_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+			ShotImageBase64: map[string]string{
+				"shot_1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
 			},
 		}},
 		TplContent: map[string]interface{}{

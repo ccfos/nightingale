@@ -529,14 +529,13 @@ func isPhoneContactKey(contactKey string) bool {
 func pickImageBase64(events []*models.AlertCurEvent) string {
 	// 优先从事件注解中提取图片字段。
 	for _, evt := range events {
-		if evt == nil || evt.AnnotationsJSON == nil {
+		if evt == nil {
 			continue
 		}
-		if v := strings.TrimSpace(evt.AnnotationsJSON["alert_image_base64"]); v != "" {
-			return v
-		}
-		if v := strings.TrimSpace(evt.AnnotationsJSON["image_base64"]); v != "" {
-			return v
+		for _, image := range evt.ShotImageBase64 {
+			if v := strings.TrimSpace(image); v != "" {
+				return v
+			}
 		}
 	}
 

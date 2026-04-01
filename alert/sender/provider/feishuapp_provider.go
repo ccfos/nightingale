@@ -7,14 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -158,98 +156,11 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 }
 
 func GetFeishuTenantAccessToken(ctx context.Context, client *http.Client, appID, appSecret string) (string, error) {
-	if client == nil {
-		return "", errors.New("http client not found")
-	}
-	body, _ := json.Marshal(map[string]string{"app_id": appID, "app_secret": appSecret})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, feishuAppTokenURL, bytes.NewReader(body))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
-	logger.Infof("feishu get token response: %s", string(bs))
-	if err != nil {
-		return "", err
-	}
-	var out struct {
-		Code              int    `json:"code"`
-		Msg               string `json:"msg"`
-		TenantAccessToken string `json:"tenant_access_token"`
-	}
-	if err = json.Unmarshal(bs, &out); err != nil {
-		return "", fmt.Errorf("parse feishu token response failed: %w, body: %s", err, string(bs))
-	}
-	if out.Code != 0 || out.TenantAccessToken == "" {
-		return "", fmt.Errorf("get feishu token failed: code=%d msg=%s", out.Code, out.Msg)
-	}
-	return out.TenantAccessToken, nil
+	return getOpenPlatformTenantAccessToken(ctx, client, appID, appSecret, feishuAppTokenURL)
 }
 
 func UploadFeishuImage(ctx context.Context, client *http.Client, token, imageBase64 string) (string, error) {
-	if client == nil {
-		return "", errors.New("http client not found")
-	}
-	if token == "" {
-		return "", errors.New("tenant access token cannot be empty")
-	}
-	logger.Infof("feishu upload token: %s", token)
-	imgBytes, err := decodeBase64Payload(imageBase64)
-	if err != nil {
-		return "", err
-	}
-
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-	if err = writer.WriteField("image_type", "message"); err != nil {
-		return "", err
-	}
-	part, err := writer.CreateFormFile("image", "image.jpg")
-	if err != nil {
-		return "", err
-	}
-	if _, err = part.Write(imgBytes); err != nil {
-		return "", err
-	}
-	if err = writer.Close(); err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, feishuImageURL, &body)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
-	logger.Infof("feishu upload image response: %s", string(bs))
-	if err != nil {
-		return "", err
-	}
-	var out struct {
-		Code int    `json:"code"`
-		Msg  string `json:"msg"`
-		Data struct {
-			ImageKey string `json:"image_key"`
-		} `json:"data"`
-	}
-	if err = json.Unmarshal(bs, &out); err != nil {
-		return "", fmt.Errorf("parse feishu upload image response failed: %w, body: %s", err, string(bs))
-	}
-	if out.Code != 0 || out.Data.ImageKey == "" {
-		return "", fmt.Errorf("upload feishu image failed: code=%d msg=%s", out.Code, out.Msg)
-	}
-	return out.Data.ImageKey, nil
+	return uploadOpenPlatformImage(ctx, client, token, imageBase64, feishuImageURL)
 }
 
 func SendFeishuCardMessage(ctx context.Context, client *http.Client, token, receiveIDType, receiveID, content string) (string, error) {
