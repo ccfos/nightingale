@@ -115,29 +115,51 @@ func (e *Elasticsearch) InitClient() error {
 }
 
 func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
+	newest, ok := other.(*Elasticsearch)
+	if !ok {
+		return false
+	}
+
 	sort.Strings(e.Nodes)
-	sort.Strings(other.(*Elasticsearch).Nodes)
+	sort.Strings(newest.Nodes)
 
-	if strings.Join(e.Nodes, ",") != strings.Join(other.(*Elasticsearch).Nodes, ",") {
+	if strings.Join(e.Nodes, ",") != strings.Join(newest.Nodes, ",") {
 		return false
 	}
 
-	if e.Basic.Username != other.(*Elasticsearch).Basic.Username {
+	if e.Basic.Username != newest.Basic.Username {
 		return false
 	}
 
-	if e.Basic.Password != other.(*Elasticsearch).Basic.Password {
+	if e.Basic.Password != newest.Basic.Password {
 		return false
 	}
 
-	if e.TLS.SkipTlsVerify != other.(*Elasticsearch).TLS.SkipTlsVerify {
-		return false
-	}
-	if e.EnableWrite != other.(*Elasticsearch).EnableWrite {
+	if e.TLS.SkipTlsVerify != newest.TLS.SkipTlsVerify {
 		return false
 	}
 
-	if !reflect.DeepEqual(e.Headers, other.(*Elasticsearch).Headers) {
+	if e.EnableWrite != newest.EnableWrite {
+		return false
+	}
+
+	if !reflect.DeepEqual(e.Headers, newest.Headers) {
+		return false
+	}
+
+	if e.Version != newest.Version {
+		return false
+	}
+
+	if e.Timeout != newest.Timeout {
+		return false
+	}
+
+	if e.MinInterval != newest.MinInterval {
+		return false
+	}
+
+	if e.MaxShard != newest.MaxShard {
 		return false
 	}
 

@@ -449,13 +449,13 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	versionParts := strings.Split(version, ".")
 	major := 0
 	if len(versionParts) > 0 {
-		if m, err := strconv.Atoi(versionParts[0]); err == nil {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[0], "+-")); err == nil {
 			major = m
 		}
 	}
 	minor := 0
 	if len(versionParts) > 1 {
-		if m, err := strconv.Atoi(versionParts[1]); err == nil {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[1], "+-")); err == nil {
 			minor = m
 		}
 	}

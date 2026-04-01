@@ -20,9 +20,10 @@ import (
 )
 
 const (
-	ckDataSource = "clickhouse://%s:%s@%s?read_timeout=10s"
+	ckDataSource = "clickhouse://%s:%s@%s?read_timeout=%dms"
 
-	DefaultLimit = 500
+	DefaultLimit   = 500
+	DefaultTimeout = 10000 // milliseconds
 )
 
 type Clickhouse struct {
@@ -44,10 +45,17 @@ type Clickhouse struct {
 	ClientByHTTP *sql.DB  `json:"-"`
 }
 
-func (c *Clickhouse) InitCli() error {
+func (c *Clickhouse) FillDefaults() {
+	if c.Timeout <= 0 {
+		c.Timeout = DefaultTimeout
+	}
 	if c.MaxQueryRows == 0 {
 		c.MaxQueryRows = DefaultLimit
 	}
+}
+
+func (c *Clickhouse) InitCli() error {
+	c.FillDefaults()
 
 	if len(c.Nodes) == 0 {
 		return fmt.Errorf("not found ck shard, please check datasource config")
@@ -68,7 +76,7 @@ func (c *Clickhouse) InitCli() error {
 				Addr:        []string{addr},
 				Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
 				Settings:    clickhouse.Settings{"max_execution_time": 60},
-				DialTimeout: 10 * time.Second,
+				DialTimeout: time.Duration(c.Timeout) * time.Millisecond,
 				Protocol:    clickhouse.HTTP,
 			}
 			// 仅当显式指定 https 时才启用 TLS 并使用 SkipSSL 控制 InsecureSkipVerify
@@ -94,7 +102,7 @@ func (c *Clickhouse) InitCli() error {
 		}
 
 		// native 路径（使用 gorm + native driver）
-		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, addr)
+		dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, addr, c.Timeout)
 		// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
 		if c.SecureConnection {
 			dsn = dsn + "&secure=true"
@@ -136,7 +144,7 @@ func (c *Clickhouse) InitCli() error {
 		Addr:        []string{addr},
 		Auth:        clickhouse.Auth{Username: c.User, Password: c.Password},
 		Settings:    clickhouse.Settings{"max_execution_time": 60},
-		DialTimeout: 10 * time.Second,
+		DialTimeout: time.Duration(c.Timeout) * time.Millisecond,
 		Protocol:    clickhouse.HTTP,
 	}
 
@@ -163,7 +171,7 @@ func (c *Clickhouse) InitCli() error {
 
 	// 作为最后回退，尝试 native 连接
 	host := strings.TrimPrefix(strings.TrimPrefix(addr, "http://"), "https://")
-	dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host)
+	dsn := fmt.Sprintf(ckDataSource, c.User, c.Password, host, c.Timeout)
 	// 如果启用了 SecureConnection，为 DSN 添加 TLS 参数；SkipSSLVerify 控制是否跳过证书校验
 	if c.SecureConnection {
 		dsn = dsn + "&secure=true"

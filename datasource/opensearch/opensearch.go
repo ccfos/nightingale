@@ -113,30 +113,47 @@ func (os *OpenSearch) InitClient() error {
 }
 
 func (os *OpenSearch) Equal(other datasource.Datasource) bool {
+	newest, ok := other.(*OpenSearch)
+	if !ok {
+		return false
+	}
+
 	sort.Strings(os.Nodes)
-	sort.Strings(other.(*OpenSearch).Nodes)
+	sort.Strings(newest.Nodes)
 
-	if strings.Join(os.Nodes, ",") != strings.Join(other.(*OpenSearch).Nodes, ",") {
+	if strings.Join(os.Nodes, ",") != strings.Join(newest.Nodes, ",") {
 		return false
 	}
 
-	if os.Basic.Username != other.(*OpenSearch).Basic.Username {
+	if os.Basic.Username != newest.Basic.Username {
 		return false
 	}
 
-	if os.Basic.Password != other.(*OpenSearch).Basic.Password {
+	if os.Basic.Password != newest.Basic.Password {
 		return false
 	}
 
-	if os.TLS.SkipTlsVerify != other.(*OpenSearch).TLS.SkipTlsVerify {
+	if os.TLS.SkipTlsVerify != newest.TLS.SkipTlsVerify {
 		return false
 	}
 
-	if os.Timeout != other.(*OpenSearch).Timeout {
+	if os.Timeout != newest.Timeout {
 		return false
 	}
 
-	if !reflect.DeepEqual(os.Headers, other.(*OpenSearch).Headers) {
+	if !reflect.DeepEqual(os.Headers, newest.Headers) {
+		return false
+	}
+
+	if os.Version != newest.Version {
+		return false
+	}
+
+	if os.MinInterval != newest.MinInterval {
+		return false
+	}
+
+	if os.MaxShard != newest.MaxShard {
 		return false
 	}
 

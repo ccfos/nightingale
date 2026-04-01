@@ -107,6 +107,7 @@ func (c *Clickhouse) Validate(ctx context.Context) error {
 	// 	return fmt.Errorf("ck shard password is empty, please check datasource setting or set password for user")
 	// }
 
+	c.FillDefaults()
 	return nil
 }
 
@@ -141,6 +142,38 @@ func (c *Clickhouse) Equal(p datasource.Datasource) bool {
 	}
 
 	if c.Password != plg.Password {
+		return false
+	}
+
+	if c.Timeout != plg.Timeout {
+		return false
+	}
+
+	if c.MaxQueryRows != plg.MaxQueryRows {
+		return false
+	}
+
+	if c.Protocol != plg.Protocol {
+		return false
+	}
+
+	if c.SkipSSLVerify != plg.SkipSSLVerify {
+		return false
+	}
+
+	if c.SecureConnection != plg.SecureConnection {
+		return false
+	}
+
+	if c.MaxIdleConns != plg.MaxIdleConns {
+		return false
+	}
+
+	if c.MaxOpenConns != plg.MaxOpenConns {
+		return false
+	}
+
+	if c.ConnMaxLifetime != plg.ConnMaxLifetime {
 		return false
 	}
 
