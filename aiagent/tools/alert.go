@@ -1,4 +1,4 @@
-package aiagent
+package tools
 
 import (
 	"context"
@@ -6,21 +6,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
 )
-
-// =============================================================================
-// Context injection (similar to PromClientGetter pattern)
-// =============================================================================
-
-var dbCtx *ctx.Context
-
-// SetDBCtx injects the DB context used by builtin tools that need database access.
-func SetDBCtx(c *ctx.Context) { dbCtx = c }
 
 // =============================================================================
 // Result types for LLM consumption (simplified from full models)
@@ -74,49 +64,40 @@ type alertEventDetailResult struct {
 // =============================================================================
 
 func init() {
-	builtinTools["search_active_alerts"] = &BuiltinTool{
-		Definition: AgentTool{
-			Name:        "search_active_alerts",
-			Description: "搜索当前活跃的告警事件（未恢复的告警）",
-			Type:        ToolTypeBuiltin,
-			Parameters: []ToolParameter{
-				{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
-				{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
-				{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认不限）", Required: false},
-				{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
-			},
+	register("search_active_alerts", aiagent.AgentTool{
+		Name:        "search_active_alerts",
+		Description: "搜索当前活跃的告警事件（未恢复的告警）",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
+			{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
+			{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认不限）", Required: false},
+			{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
 		},
-		Handler: searchActiveAlerts,
-	}
+	}, searchActiveAlerts)
 
-	builtinTools["search_history_alerts"] = &BuiltinTool{
-		Definition: AgentTool{
-			Name:        "search_history_alerts",
-			Description: "搜索历史告警事件（包含已恢复和未恢复的告警）",
-			Type:        ToolTypeBuiltin,
-			Parameters: []ToolParameter{
-				{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
-				{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
-				{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认24h）", Required: false},
-				{Name: "is_recovered", Type: "integer", Description: "恢复状态过滤: 0=未恢复, 1=已恢复, -1=全部（默认-1）", Required: false},
-				{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
-			},
+	register("search_history_alerts", aiagent.AgentTool{
+		Name:        "search_history_alerts",
+		Description: "搜索历史告警事件（包含已恢复和未恢复的告警）",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
+			{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
+			{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认24h）", Required: false},
+			{Name: "is_recovered", Type: "integer", Description: "恢复状态过滤: 0=未恢复, 1=已恢复, -1=全部（默认-1）", Required: false},
+			{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
 		},
-		Handler: searchHistoryAlerts,
-	}
+	}, searchHistoryAlerts)
 
-	builtinTools["get_alert_event_detail"] = &BuiltinTool{
-		Definition: AgentTool{
-			Name:        "get_alert_event_detail",
-			Description: "获取单条告警事件的详细信息",
-			Type:        ToolTypeBuiltin,
-			Parameters: []ToolParameter{
-				{Name: "event_id", Type: "integer", Description: "告警事件ID", Required: true},
-				{Name: "event_type", Type: "string", Description: "事件类型: active=活跃告警, history=历史告警（默认active）", Required: false},
-			},
+	register("get_alert_event_detail", aiagent.AgentTool{
+		Name:        "get_alert_event_detail",
+		Description: "获取单条告警事件的详细信息",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "event_id", Type: "integer", Description: "告警事件ID", Required: true},
+			{Name: "event_type", Type: "string", Description: "事件类型: active=活跃告警, history=历史告警（默认active）", Required: false},
 		},
-		Handler: getAlertEventDetail,
-	}
+	}, getAlertEventDetail)
 }
 
 // =============================================================================
@@ -124,6 +105,7 @@ func init() {
 // =============================================================================
 
 func searchActiveAlerts(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+	dbCtx := aiagent.GetDBCtx()
 	if dbCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
@@ -184,6 +166,7 @@ func searchActiveAlerts(_ context.Context, args map[string]interface{}, _ map[st
 }
 
 func searchHistoryAlerts(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+	dbCtx := aiagent.GetDBCtx()
 	if dbCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
@@ -250,6 +233,7 @@ func searchHistoryAlerts(_ context.Context, args map[string]interface{}, _ map[s
 }
 
 func getAlertEventDetail(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+	dbCtx := aiagent.GetDBCtx()
 	if dbCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
@@ -297,6 +281,7 @@ func getAlertEventDetail(_ context.Context, args map[string]interface{}, _ map[s
 // =============================================================================
 
 func getCurEventDetail(eventId int64) (*alertEventDetailResult, error) {
+	dbCtx := aiagent.GetDBCtx()
 	e, err := models.AlertCurEventGetById(dbCtx, eventId)
 	if err != nil || e == nil {
 		return nil, err
@@ -320,6 +305,7 @@ func getCurEventDetail(eventId int64) (*alertEventDetailResult, error) {
 }
 
 func getHisEventDetail(eventId int64) (*alertEventDetailResult, error) {
+	dbCtx := aiagent.GetDBCtx()
 	e, err := models.AlertHisEventGetById(dbCtx, eventId)
 	if err != nil || e == nil {
 		return nil, err
@@ -360,53 +346,4 @@ func tagsJSONToMap(tagsJSON []string) map[string]string {
 		}
 	}
 	return m
-}
-
-func formatUnixTime(ts int64) string {
-	if ts <= 0 {
-		return ""
-	}
-	return time.Unix(ts, 0).Format("2006-01-02 15:04:05")
-}
-
-// parseTimeRange parses a human-readable time range string (e.g., "1h", "24h", "7d")
-// and returns (stime, etime) as unix timestamps.
-func parseTimeRange(tr string) (int64, int64) {
-	tr = strings.TrimSpace(strings.ToLower(tr))
-	if tr == "" {
-		return 0, 0
-	}
-
-	now := time.Now()
-	etime := now.Unix()
-
-	var num int
-	var unit string
-	for i, c := range tr {
-		if c < '0' || c > '9' {
-			num, _ = strconv.Atoi(tr[:i])
-			unit = tr[i:]
-			break
-		}
-	}
-	if num <= 0 {
-		return 0, 0
-	}
-
-	var duration time.Duration
-	switch unit {
-	case "m", "min":
-		duration = time.Duration(num) * time.Minute
-	case "h", "hour":
-		duration = time.Duration(num) * time.Hour
-	case "d", "day":
-		duration = time.Duration(num) * 24 * time.Hour
-	case "w", "week":
-		duration = time.Duration(num) * 7 * 24 * time.Hour
-	default:
-		duration = time.Duration(num) * time.Hour
-	}
-
-	stime := now.Add(-duration).Unix()
-	return stime, etime
 }

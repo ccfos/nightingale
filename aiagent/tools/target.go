@@ -1,0 +1,163 @@
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/toolkits/pkg/logger"
+)
+
+type targetResult struct {
+	Id           int64    `json:"id"`
+	Ident        string   `json:"ident"`
+	Note         string   `json:"note,omitempty"`
+	HostIp       string   `json:"host_ip,omitempty"`
+	OS           string   `json:"os,omitempty"`
+	AgentVersion string   `json:"agent_version,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+}
+
+type targetDetailResult struct {
+	Id           int64    `json:"id"`
+	Ident        string   `json:"ident"`
+	Note         string   `json:"note,omitempty"`
+	HostIp       string   `json:"host_ip,omitempty"`
+	OS           string   `json:"os,omitempty"`
+	AgentVersion string   `json:"agent_version,omitempty"`
+	Tags         []string `json:"tags,omitempty"`
+	HostTags     []string `json:"host_tags,omitempty"`
+	GroupIds     []int64  `json:"group_ids,omitempty"`
+	UpdateAt     int64    `json:"update_at"`
+}
+
+func init() {
+	register("list_targets", aiagent.AgentTool{
+		Name:        "list_targets",
+		Description: "查询当前用户有权限的机器/主机列表，支持关键词搜索（ident、IP、标签等）",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "query", Type: "string", Description: "搜索关键词，匹配 ident、IP、备注、标签、操作系统", Required: false},
+			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
+		},
+	}, listTargets)
+
+	register("get_target_detail", aiagent.AgentTool{
+		Name:        "get_target_detail",
+		Description: "获取单台机器/主机的详细信息",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "id", Type: "integer", Description: "机器ID", Required: false},
+			{Name: "ident", Type: "string", Description: "机器标识（ident），与id二选一", Required: false},
+		},
+	}, getTargetDetail)
+}
+
+func listTargets(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(params)
+	if err != nil {
+		return "", err
+	}
+	// targets listing has no perm middleware in router
+
+	bgids, isAdmin, err := getUserBgids(user)
+	if err != nil {
+		return "", err
+	}
+
+	query := getArgString(args, "query")
+	limit := getArgInt(args, "limit", 50)
+	if limit > 200 {
+		limit = 200
+	}
+
+	var options []models.BuildTargetWhereOption
+	if !isAdmin {
+		if len(bgids) == 0 {
+			return marshalList(0, []targetResult{}), nil
+		}
+		options = append(options, models.BuildTargetWhereWithBgids(bgids))
+	}
+	if query != "" {
+		options = append(options, models.BuildTargetWhereWithQuery(query))
+	}
+
+	dbCtx := aiagent.GetDBCtx()
+	targets, err := models.TargetGets(dbCtx, limit, 0, "ident", false, options...)
+	if err != nil {
+		return "", fmt.Errorf("failed to query targets: %v", err)
+	}
+
+	results := make([]targetResult, 0, len(targets))
+	for _, t := range targets {
+		results = append(results, targetResult{
+			Id:           t.Id,
+			Ident:        t.Ident,
+			Note:         t.Note,
+			HostIp:       t.HostIp,
+			OS:           t.OS,
+			AgentVersion: t.AgentVersion,
+			Tags:         strings.Fields(t.Tags),
+		})
+	}
+
+	logger.Debugf("list_targets: user_id=%d, query=%s, found %d targets", user.Id, query, len(results))
+	return marshalList(len(results), results), nil
+}
+
+func getTargetDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(params)
+	if err != nil {
+		return "", err
+	}
+
+	id := getArgInt64(args, "id")
+	ident := getArgString(args, "ident")
+
+	dbCtx := aiagent.GetDBCtx()
+	var target *models.Target
+	if id > 0 {
+		target, err = models.TargetGetById(dbCtx, id)
+	} else if ident != "" {
+		target, err = models.TargetGet(dbCtx, "ident=?", ident)
+	} else {
+		return "", fmt.Errorf("id or ident is required")
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get target: %v", err)
+	}
+	if target == nil {
+		return `{"error":"target not found"}`, nil
+	}
+
+	// Check data-level permission
+	if !user.IsAdmin() {
+		bgids, _, err := getUserBgids(user)
+		if err != nil {
+			return "", err
+		}
+		targetGids, _ := models.TargetGroupIdsGetByIdent(dbCtx, target.Ident)
+		if !int64SlicesOverlap(bgids, targetGids) {
+			return "", fmt.Errorf("forbidden: no access to this target")
+		}
+	}
+
+	result := targetDetailResult{
+		Id:           target.Id,
+		Ident:        target.Ident,
+		Note:         target.Note,
+		HostIp:       target.HostIp,
+		OS:           target.OS,
+		AgentVersion: target.AgentVersion,
+		Tags:         strings.Fields(target.Tags),
+		HostTags:     target.HostTags,
+		UpdateAt:     target.UpdateAt,
+	}
+	result.GroupIds, _ = models.TargetGroupIdsGetByIdent(dbCtx, target.Ident)
+
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
+}

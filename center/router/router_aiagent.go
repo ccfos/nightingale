@@ -42,18 +42,19 @@ var actionRegistry = map[string]*actionHandler{
 		parseResponse: parseQueryGeneratorResponse,
 	},
 	"general_chat": {
-		description:   "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
-		buildPrompt:   buildGeneralChatPrompt,
+		description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
+		selectTools: selectAllBuiltinTools,
+		buildPrompt: buildGeneralChatPrompt,
 	},
 	"alert_query": {
 		description:   "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
 		selectTools:   selectAlertQueryTools,
 		buildPrompt:   buildAlertQueryPrompt,
 	},
-	"busi_group_query": {
-		description:   "Query business groups that the user has access to (查询业务组). Examples: '我有哪些业务组', '查看业务组列表', '搜索业务组', 'list my business groups'",
-		selectTools:   selectBusiGroupQueryTools,
-		buildPrompt:   buildBusiGroupQueryPrompt,
+	"resource_query": {
+		description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
+		selectTools: selectResourceQueryTools,
+		buildPrompt: buildResourceQueryPrompt,
 	},
 }
 
@@ -217,6 +218,15 @@ func stripCodeFence(s string) string {
 
 // --- general_chat action ---
 
+func selectAllBuiltinTools(req *AIChatRequest) []string {
+	defs := aiagent.GetAllBuiltinToolDefs()
+	names := make([]string, 0, len(defs))
+	for _, d := range defs {
+		names = append(names, d.Name)
+	}
+	return names
+}
+
 func buildGeneralChatPrompt(req *AIChatRequest) string {
 	return fmt.Sprintf(`You are a helpful assistant specializing in IT operations, monitoring, observability, and general technical topics.
 Please answer the user's question clearly and concisely in the user's language.
@@ -256,26 +266,46 @@ Use a markdown table to list the alerts:
 - Recommendations`, req.UserInput)
 }
 
-// --- busi_group_query action ---
+// --- resource_query action ---
 
-func selectBusiGroupQueryTools(req *AIChatRequest) []string {
-	return []string{"list_busi_groups"}
+func selectResourceQueryTools(req *AIChatRequest) []string {
+	return []string{
+		"list_alert_rules", "get_alert_rule_detail",
+		"list_targets", "get_target_detail",
+		"list_dashboards", "get_dashboard_detail",
+		"list_alert_mutes", "get_alert_mute_detail",
+		"list_alert_subscribes", "get_alert_subscribe_detail",
+		"list_task_tpls", "get_task_tpl_detail",
+		"list_notify_rules", "get_notify_rule_detail",
+		"list_datasources", "get_datasource_detail",
+		"list_users",
+		"list_teams",
+		"list_busi_groups",
+	}
 }
 
-func buildBusiGroupQueryPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a monitoring system assistant. The user wants to query their business groups (业务组).
+func buildResourceQueryPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a monitoring system assistant. The user wants to query system resources or configurations.
 
 User request: %s
 
-Use the list_busi_groups tool to find the user's business groups. You can pass a "query" parameter to filter by name.
+Choose the appropriate tool based on the user's question:
+- Alert rules (告警规则): list_alert_rules / get_alert_rule_detail
+- Targets/hosts (机器/主机): list_targets / get_target_detail
+- Dashboards (仪表盘): list_dashboards / get_dashboard_detail
+- Alert mutes (屏蔽规则): list_alert_mutes / get_alert_mute_detail
+- Alert subscribes (订阅规则): list_alert_subscribes / get_alert_subscribe_detail
+- Task templates (自愈脚本): list_task_tpls / get_task_tpl_detail
+- Notify rules (通知规则): list_notify_rules / get_notify_rule_detail
+- Datasources (数据源): list_datasources / get_datasource_detail
+- Users (用户): list_users
+- Teams (团队): list_teams
+- Business groups (业务组): list_busi_groups
 
-IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Structure your response like this:
+Use the list tool first for browsing. Use the detail tool when the user asks about a specific item by ID or name.
+If a tool returns a "forbidden" error, inform the user they don't have permission.
 
-## 业务组列表
-Use a markdown table to list the groups:
-| ID | 业务组名称 | 标签值 |
-
-If the user asked about a specific group, highlight it. If no groups are found, let the user know.`, req.UserInput)
+IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Use tables for list results.`, req.UserInput)
 }
 
 // --- LLM intent inference ---
@@ -287,9 +317,10 @@ func buildIntentInferencePrompt() string {
 	sb.WriteString(`You are an intent classifier for a monitoring system. Classify the user's message into exactly one action.
 
 Key distinction:
-- "告警/alert" related messages (查告警、告警数量、告警详情) → alert_query
+- "告警事件/alert events" related messages (查告警、告警数量、活跃告警、历史告警) → alert_query
 - "写查询/生成查询/PromQL/SQL" related messages (编写查询语句) → query_generator
-- Everything else → general_chat
+- "查询资源/配置" related messages (告警规则、机器、仪表盘、屏蔽规则、订阅规则、自愈脚本、通知规则、数据源、用户、团队、业务组) → resource_query
+- General knowledge questions or other topics → general_chat
 
 Available actions:
 `)

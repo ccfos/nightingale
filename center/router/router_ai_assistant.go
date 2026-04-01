@@ -11,6 +11,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	_ "github.com/ccfos/nightingale/v6/aiagent/tools" // register builtin tools
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -364,6 +365,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	})
 
 	aiagent.SetDBCtx(rt.Ctx)
+	aiagent.SetDatasourceFilter(rt.DatasourceCache.DatasourceFilter)
 
 	streamChan := make(chan *aiagent.StreamChunk, 100)
 	agentReq := &aiagent.AgentRequest{

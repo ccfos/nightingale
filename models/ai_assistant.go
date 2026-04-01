@@ -91,10 +91,10 @@ type AssistantMessageResponse struct {
 type AssistantActionKey string
 
 const (
-	ActionKeyQueryGenerator  AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat     AssistantActionKey = "general_chat"
-	ActionKeyAlertQuery      AssistantActionKey = "alert_query"
-	ActionKeyBusiGroupQuery  AssistantActionKey = "busi_group_query"
+	ActionKeyQueryGenerator AssistantActionKey = "query_generator"
+	ActionKeyGeneralChat    AssistantActionKey = "general_chat"
+	ActionKeyAlertQuery     AssistantActionKey = "alert_query"
+	ActionKeyResourceQuery  AssistantActionKey = "resource_query"
 )
 
 type AssistantAction struct {

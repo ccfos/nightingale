@@ -1,0 +1,57 @@
+package tools
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/toolkits/pkg/logger"
+)
+
+type busiGroupResult struct {
+	Id         int64  `json:"id"`
+	Name       string `json:"name"`
+	LabelValue string `json:"label_value,omitempty"`
+}
+
+func init() {
+	register("list_busi_groups", aiagent.AgentTool{
+		Name:        "list_busi_groups",
+		Description: "查询当前用户有权限的业务组列表，支持关键词模糊搜索",
+		Type:        aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "query", Type: "string", Description: "搜索关键词，模糊匹配业务组名称", Required: false},
+			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
+		},
+	}, listBusiGroups)
+}
+
+func listBusiGroups(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(params)
+	if err != nil {
+		return "", err
+	}
+
+	query := getArgString(args, "query")
+	limit := getArgInt(args, "limit", 50)
+	if limit > 200 {
+		limit = 200
+	}
+
+	groups, err := user.BusiGroups(aiagent.GetDBCtx(), limit, query)
+	if err != nil {
+		return "", fmt.Errorf("failed to query busi groups: %v", err)
+	}
+
+	results := make([]busiGroupResult, 0, len(groups))
+	for _, g := range groups {
+		results = append(results, busiGroupResult{
+			Id:         g.Id,
+			Name:       g.Name,
+			LabelValue: g.LabelValue,
+		})
+	}
+
+	logger.Debugf("list_busi_groups: user_id=%d, query=%s, found %d groups", user.Id, query, len(results))
+	return marshalList(len(results), results), nil
+}

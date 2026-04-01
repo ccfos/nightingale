@@ -66,6 +66,7 @@ _test
 .cache-loader
 .payload
 queries.active
+.playwright-mcp
 
 /n9e-*
 n9e.sql
