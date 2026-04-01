@@ -862,6 +862,7 @@ CREATE TABLE `embedded_product` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `weight` int not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

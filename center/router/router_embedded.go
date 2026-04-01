@@ -98,6 +98,7 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	now := time.Now().Unix()
 	oldProduct.Name = ep.Name
 	oldProduct.URL = ep.URL
+	oldProduct.Weight = ep.Weight
 	oldProduct.IsPrivate = ep.IsPrivate
 	oldProduct.TeamIDs = ep.TeamIDs
 	oldProduct.UpdateBy = me.Username
