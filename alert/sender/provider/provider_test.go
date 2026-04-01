@@ -120,6 +120,79 @@ func TestSendDingTalkNotification(t *testing.T) {
 	}
 }
 
+// TestSendWecomNotificationWithImage 真实调用企业微信机器人：
+// 先发 markdown，再发 image（当事件里有截图时）。
+// 需要在 alert/sender/.env.json 配置 WecomBotKey。
+func TestSendWecomNotificationWithImage(t *testing.T) {
+	env := readSenderDotEnv(t)
+	wecomBotKey := senderEnvString(env, "WecomBotKey")
+	if wecomBotKey == "" {
+		t.Skip("跳过：在 .env.json 中填写 WecomBotKey 后重跑")
+	}
+
+	notifyChannel := &models.NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &models.RequestConfig{
+			HTTPRequestConfig: &models.HTTPRequestConfig{
+				Method:  "POST",
+				URL:     "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
+				Timeout: 10000,
+				Request: models.RequestDetail{
+					Parameters: map[string]string{
+						"key": "{{ $params.key }}",
+					},
+					Body: `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
+				},
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+				RetryTimes:    2,
+				RetryInterval: 100,
+			},
+		},
+		ParamConfig: &models.NotifyParamConfig{
+			Custom: models.Params{
+				Params: []models.ParamItem{
+					{Key: "key"},
+				},
+			},
+		},
+	}
+
+	client, err := models.GetHTTPClient(notifyChannel)
+	if err != nil {
+		t.Fatalf("Failed to create HTTP client: %v", err)
+	}
+
+	req := &NotifyRequest{
+		Config: notifyChannel,
+		Events: []*models.AlertCurEvent{
+			{
+				Hash: "wecom-image-test",
+				ShotImageBase64: map[string]string{
+					"shot_1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+				},
+			},
+		},
+		TplContent: map[string]interface{}{
+			"title":   "wecom image test",
+			"content": "wecom image test from provider test",
+		},
+		CustomParams: map[string]string{
+			"key": wecomBotKey,
+		},
+		HttpClient: client,
+	}
+
+	result := (&WecomProvider{}).Notify(context.Background(), req)
+	if result.Err != nil {
+		t.Fatalf("Wecom Notify failed: %v, response: %s", result.Err, result.Response)
+	}
+	if !strings.Contains(result.Response, "image_send") {
+		t.Fatalf("expect image send response, got: %s", result.Response)
+	}
+}
+
 func TestSendTencentVoiceNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
