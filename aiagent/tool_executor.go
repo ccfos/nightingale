@@ -37,7 +37,11 @@ func (a *Agent) executeTool(ctx context.Context, toolName string, input string, 
 	}
 
 	if tool == nil {
-		return fmt.Sprintf("Error: tool '%s' not found", toolName)
+		available := make([]string, len(a.cfg.Tools))
+		for i, t := range a.cfg.Tools {
+			available[i] = t.Name
+		}
+		return fmt.Sprintf("Error: tool '%s' not found. Available tools: %v. Please use one of these exact tool names.", toolName, available)
 	}
 
 	// 解析输入参数

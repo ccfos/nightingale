@@ -208,7 +208,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	key := msgKey(req.ChatID, seqID)
 	rt.msgStateManager.Set(key, &msg, cancel)
 
-	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key)
+	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key, me.Id)
 
 	ginx.NewRender(c).Data(gin.H{
 		"chat_id": req.ChatID,
@@ -216,7 +216,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	}, nil)
 }
 
-func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, chatLockKey string, msg *models.AssistantMessage, streamID, stateKey string) {
+func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, chatLockKey string, msg *models.AssistantMessage, streamID, stateKey string, userId int64) {
 	defer parentCancel()
 	defer rt.Redis.Del(context.Background(), chatLockKey)
 
@@ -348,6 +348,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		inputs = handler.buildInputs(chatReq)
 	}
 
+	// Inject user_id for permission-aware builtin tools
+	inputs["user_id"] = fmt.Sprintf("%d", userId)
+
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
@@ -359,6 +362,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)
 	})
+
+	aiagent.SetDBCtx(rt.Ctx)
 
 	streamChan := make(chan *aiagent.StreamChunk, 100)
 	agentReq := &aiagent.AgentRequest{

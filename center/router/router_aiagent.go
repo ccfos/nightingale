@@ -34,7 +34,7 @@ type actionHandler struct {
 
 var actionRegistry = map[string]*actionHandler{
 	"query_generator": {
-		description:   "Generate PromQL or SQL queries based on user requirements; requires datasource context (datasource_type, datasource_id)",
+		description:   "Generate PromQL or SQL query statements (编写查询语句). Examples: '帮我写个查CPU的PromQL', '生成一个查询订单表的SQL', 'write a PromQL for memory usage'",
 		validate:      validateQueryGenerator,
 		selectTools:   selectQueryGeneratorTools,
 		buildPrompt:   buildQueryGeneratorPrompt,
@@ -42,8 +42,18 @@ var actionRegistry = map[string]*actionHandler{
 		parseResponse: parseQueryGeneratorResponse,
 	},
 	"general_chat": {
-		description:   "General Q&A for operations, monitoring, observability, and other technical questions; no special context required",
+		description:   "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
 		buildPrompt:   buildGeneralChatPrompt,
+	},
+	"alert_query": {
+		description:   "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
+		selectTools:   selectAlertQueryTools,
+		buildPrompt:   buildAlertQueryPrompt,
+	},
+	"busi_group_query": {
+		description:   "Query business groups that the user has access to (查询业务组). Examples: '我有哪些业务组', '查看业务组列表', '搜索业务组', 'list my business groups'",
+		selectTools:   selectBusiGroupQueryTools,
+		buildPrompt:   buildBusiGroupQueryPrompt,
 	},
 }
 
@@ -214,14 +224,75 @@ Please answer the user's question clearly and concisely in the user's language.
 User request: %s`, req.UserInput)
 }
 
+// --- alert_query action ---
+
+func selectAlertQueryTools(req *AIChatRequest) []string {
+	return []string{"search_active_alerts", "search_history_alerts", "get_alert_event_detail"}
+}
+
+func buildAlertQueryPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an alert analysis expert for a monitoring system. The user wants to query or analyze alert events.
+
+User request: %s
+
+Tool selection strategy:
+- By DEFAULT, use search_active_alerts to query currently active (unrecovered) alerts
+- ONLY use search_history_alerts when the user explicitly mentions historical/past/recovered alerts (e.g. "历史告警", "已恢复", "过去的告警")
+- Use get_alert_event_detail to get full details of a specific alert event
+- Severity levels: 1=Critical, 2=Warning, 3=Info
+
+IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Structure your response like this:
+
+## 告警概览
+- 总数、活跃数、已恢复数
+- 按级别分布
+
+## 告警详情
+Use a markdown table to list the alerts:
+| 告警规则 | 级别 | 触发对象 | 触发时间 | 状态 |
+
+## 分析与建议
+- Notable patterns
+- Recommendations`, req.UserInput)
+}
+
+// --- busi_group_query action ---
+
+func selectBusiGroupQueryTools(req *AIChatRequest) []string {
+	return []string{"list_busi_groups"}
+}
+
+func buildBusiGroupQueryPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a monitoring system assistant. The user wants to query their business groups (业务组).
+
+User request: %s
+
+Use the list_busi_groups tool to find the user's business groups. You can pass a "query" parameter to filter by name.
+
+IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Structure your response like this:
+
+## 业务组列表
+Use a markdown table to list the groups:
+| ID | 业务组名称 | 标签值 |
+
+If the user asked about a specific group, highlight it. If no groups are found, let the user know.`, req.UserInput)
+}
+
 // --- LLM intent inference ---
 
 // buildIntentInferencePrompt constructs a system prompt that lists all available
 // action keys with descriptions, asking the LLM to pick the best match.
 func buildIntentInferencePrompt() string {
 	var sb strings.Builder
-	sb.WriteString("You are an intent classifier. Based on the user's message and conversation history, decide which action to take.\n\n")
-	sb.WriteString("Available actions:\n")
+	sb.WriteString(`You are an intent classifier for a monitoring system. Classify the user's message into exactly one action.
+
+Key distinction:
+- "告警/alert" related messages (查告警、告警数量、告警详情) → alert_query
+- "写查询/生成查询/PromQL/SQL" related messages (编写查询语句) → query_generator
+- Everything else → general_chat
+
+Available actions:
+`)
 	keys := make([]string, 0, len(actionRegistry))
 	for key := range actionRegistry {
 		keys = append(keys, key)

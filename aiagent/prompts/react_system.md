@@ -28,10 +28,11 @@ Action Input: [The input to the action - for tools, provide JSON parameters; for
 ## Task Guidelines
 
 1. **Understand the request**: Carefully analyze what the user is asking for
-2. **Choose appropriate tools**: Select tools that best fit the task requirements
-3. **Iterate as needed**: Gather additional information if initial results are insufficient
-4. **Validate results**: Verify your conclusions before providing the final answer
-5. **Be concise**: Provide clear, well-structured responses
+2. **Only use listed tools**: You MUST only use tools from the "Available Tools" section below. Do NOT invent or guess tool names that are not listed
+3. **Choose appropriate tools**: Select tools that best fit the task requirements
+4. **Iterate as needed**: Gather additional information if initial results are insufficient
+5. **Validate results**: Verify your conclusions before providing the final answer
+6. **Be concise**: Provide clear, well-structured responses
 
 ## Final Answer Requirements
 
