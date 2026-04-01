@@ -22,7 +22,8 @@ var (
 	dingtalkAppAccessTokenURL  = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
 	dingtalkAppUserByMobileURL = "https://oapi.dingtalk.com/topapi/v2/user/getbymobile"
 	dingtalkAppMediaUploadURL  = "https://oapi.dingtalk.com/media/upload"
-	dingtalkAppSendMessageURL  = "https://api.dingtalk.com/v1.0/card/instances/createAndDeliver"
+	dingtalkRobotBatchSendURL  = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
+	dingtalkRobotGroupSendURL  = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
 )
 
 // DingtalkAppProvider 对接钉钉应用消息发送接口。
@@ -31,13 +32,6 @@ type DingtalkAppProvider struct {
 	appConfig   *models.DingtalkAppRequestConfig
 	AccessToken string
 }
-
-type dingtalkTargetKind string
-
-const (
-	dingtalkTargetUser  dingtalkTargetKind = "user"
-	dingtalkTargetGroup dingtalkTargetKind = "group"
-)
 
 func (p *DingtalkAppProvider) Ident() string {
 	return "dingtalkapp"
@@ -77,6 +71,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	}
 	appConfig := req.Config.RequestConfig.DingtalkAppRequestConfig
 	p.appConfig = appConfig
+	logger.Infof("dingtalkapp notify start: sendtos=%d groups=%d contact_key=%s", len(req.Sendtos), len(req.ImGroupIDs), appConfig.ContactKey)
 	_, err := p.GetAccessToken(ctx, req.HttpClient)
 	if err != nil {
 		return &NotifyResult{
@@ -108,8 +103,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	}
 	groupIDs := make([]string, 0, len(req.ImGroupIDs))
 	for _, gid := range req.ImGroupIDs {
-		s := strings.TrimSpace(gid)
-		if s != "" {
+		if s := strings.TrimSpace(gid); s != "" {
 			groupIDs = append(groupIDs, s)
 		}
 	}
@@ -134,24 +128,22 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	if title == "" {
 		title = "Alert"
 	}
-
+	if content == "" {
+		content = "-"
+	}
+	imageMediaID := ""
 	imageBase64 := pickImageBase64(req.Events)
-	mediaID := ""
 	if imageBase64 != "" {
 		var uploadErr error
-		mediaID, uploadErr = p.UploadMedia(ctx, req.HttpClient, "image", imageBase64)
+		imageMediaID, uploadErr = p.UploadMedia(ctx, req.HttpClient, "image", imageBase64)
 		if uploadErr != nil {
+			logger.Errorf("dingtalkapp upload image failed: %v", uploadErr)
 			return &NotifyResult{
-				Target:   strings.Join(userIDs, ","),
+				Target:   strings.Join(append(userIDs, groupIDs...), ","),
 				Response: "",
 				Err:      uploadErr,
 			}
 		}
-	}
-	cardData := map[string]interface{}{
-		"msg_title":      title,
-		"msg_body":       content,
-		"shot_image_key": mediaID,
 	}
 
 	parts := make([]string, 0, 2)
@@ -160,7 +152,18 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	targets = append(targets, groupIDs...)
 
 	if len(userIDs) > 0 {
-		msgResp, sendErr := p.sendInteractiveCardMessage(ctx, req.HttpClient, dingtalkTargetUser, userIDs, cardData, req.CustomParams)
+		if imageMediaID != "" {
+			imageResp, imageErr := p.sendRobotOTOImageMessage(ctx, req.HttpClient, userIDs, imageMediaID, req.CustomParams)
+			if imageErr != nil {
+				return &NotifyResult{
+					Target:   strings.Join(targets, ","),
+					Response: imageResp,
+					Err:      imageErr,
+				}
+			}
+			parts = append(parts, "user_image:"+imageResp)
+		}
+		msgResp, sendErr := p.sendRobotOTOActionCardMessage(ctx, req.HttpClient, userIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -171,7 +174,18 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 		parts = append(parts, "user:"+msgResp)
 	}
 	if len(groupIDs) > 0 {
-		msgResp, sendErr := p.sendInteractiveCardMessage(ctx, req.HttpClient, dingtalkTargetGroup, groupIDs, cardData, req.CustomParams)
+		if imageMediaID != "" {
+			imageResp, imageErr := p.sendRobotGroupImageMessage(ctx, req.HttpClient, groupIDs, imageMediaID, req.CustomParams)
+			if imageErr != nil {
+				return &NotifyResult{
+					Target:   strings.Join(targets, ","),
+					Response: strings.Join(parts, "; "),
+					Err:      imageErr,
+				}
+			}
+			parts = append(parts, "group_image:"+imageResp)
+		}
+		msgResp, sendErr := p.sendRobotGroupActionCardMessage(ctx, req.HttpClient, groupIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -182,11 +196,82 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 		parts = append(parts, "group:"+msgResp)
 	}
 
+	logger.Infof("dingtalkapp notify success: target_count=%d", len(targets))
 	return &NotifyResult{
 		Target:   strings.Join(targets, ","),
 		Response: strings.Join(parts, "; "),
 		Err:      nil,
 	}
+}
+
+func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Client, mediaType, imageBase64 string) (string, error) {
+	if client == nil {
+		return "", errors.New("http client not found")
+	}
+	if p.AccessToken == "" {
+		return "", errors.New("access token cannot be empty")
+	}
+	if mediaType == "" {
+		mediaType = "image"
+	}
+	if imageBase64 == "" {
+		return "", errors.New("image base64 cannot be empty")
+	}
+	decoded, err := decodeBase64Payload(imageBase64)
+	if err != nil {
+		return "", fmt.Errorf("decode image base64 failed: %w", err)
+	}
+	if len(decoded) == 0 {
+		return "", errors.New("decoded image content cannot be empty")
+	}
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	if err = writer.WriteField("type", mediaType); err != nil {
+		return "", fmt.Errorf("write media type failed: %w", err)
+	}
+	part, err := writer.CreateFormFile("media", defaultMediaFileName(mediaType))
+	if err != nil {
+		return "", fmt.Errorf("create form file failed: %w", err)
+	}
+	if _, err = part.Write(decoded); err != nil {
+		return "", fmt.Errorf("write image content failed: %w", err)
+	}
+	if err = writer.Close(); err != nil {
+		return "", fmt.Errorf("close multipart writer failed: %w", err)
+	}
+
+	uploadURL := fmt.Sprintf("%s?access_token=%s", dingtalkAppMediaUploadURL, url.QueryEscape(p.AccessToken))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, &body)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	var out struct {
+		ErrCode json.RawMessage `json:"errcode"`
+		ErrMsg  string          `json:"errmsg"`
+		MediaID string          `json:"media_id"`
+	}
+	if err = json.Unmarshal(bs, &out); err != nil {
+		return "", fmt.Errorf("parse dingtalk upload media response failed: %w, body: %s", err, string(bs))
+	}
+	if code := normalizedDingtalkCode(out.ErrCode); code != "" && code != "0" {
+		return "", fmt.Errorf("dingtalk upload media failed: code=%s message=%s", code, out.ErrMsg)
+	}
+	if strings.TrimSpace(out.MediaID) == "" {
+		return "", fmt.Errorf("dingtalk upload media got empty media_id, body: %s", string(bs))
+	}
+	logger.Infof("dingtalkapp upload media success: media_id=%s", out.MediaID)
+	return strings.TrimSpace(out.MediaID), nil
 }
 
 // GetAccessToken 获取钉钉应用 access_token。
@@ -235,6 +320,7 @@ func (p *DingtalkAppProvider) GetAccessToken(ctx context.Context, client *http.C
 	if result.AccessToken == "" {
 		return "", fmt.Errorf("dingtalk gettoken failed or accessToken is empty, body: %s", string(respBytes))
 	}
+	logger.Infof("dingtalkapp get access token success")
 	p.AccessToken = result.AccessToken
 	return p.AccessToken, nil
 }
@@ -299,114 +385,70 @@ func (p *DingtalkAppProvider) GetUserIDByMobile(ctx context.Context, client *htt
 	return result.Result.UserID, nil
 }
 
-// UploadMedia 上传钉钉应用消息媒体文件并返回 media_id。
-// mediaType 常见值: image/file/voice。
-// imageBase64 支持纯 base64 字符串和 data URL（如 data:image/png;base64,xxxx）。
-func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Client, mediaType, imageBase64 string) (string, error) {
-	if client == nil {
-		return "", errors.New("http client not found")
+func (p *DingtalkAppProvider) buildRobotActionCardMessage(title, content string, customParams map[string]string) (string, string) {
+	singleTitle := strings.TrimSpace(customParams["single_title"])
+	if singleTitle == "" {
+		singleTitle = "查看详情"
 	}
-	if p.AccessToken == "" {
-		return "", errors.New("access token cannot be empty")
+	singleURL := strings.TrimSpace(customParams["single_url"])
+	if singleURL == "" {
+		singleURL = "https://www.dingtalk.com/"
 	}
-	if mediaType == "" {
-		mediaType = "image"
+	msgParamObj := map[string]string{
+		"title":       title,
+		"text":        content,
+		"singleTitle": singleTitle,
+		"singleURL":   singleURL,
 	}
-	if imageBase64 == "" {
-		return "", errors.New("image base64 cannot be empty")
-	}
-
-	decoded, err := decodeBase64Payload(imageBase64)
-	if err != nil {
-		return "", fmt.Errorf("decode image base64 failed: %w", err)
-	}
-	if len(decoded) == 0 {
-		return "", errors.New("decoded image content cannot be empty")
-	}
-
-	fileName := defaultMediaFileName(mediaType)
-
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-	if err := writer.WriteField("type", mediaType); err != nil {
-		return "", fmt.Errorf("write media type failed: %w", err)
-	}
-	part, err := writer.CreateFormFile("media", fileName)
-	if err != nil {
-		return "", fmt.Errorf("create form file failed: %w", err)
-	}
-	if _, err = part.Write(decoded); err != nil {
-		return "", fmt.Errorf("write file content failed: %w", err)
-	}
-	if err = writer.Close(); err != nil {
-		return "", fmt.Errorf("close multipart writer failed: %w", err)
-	}
-
-	u := fmt.Sprintf("%s?access_token=%s",
-		dingtalkAppMediaUploadURL,
-		url.QueryEscape(p.AccessToken))
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, &body)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var result struct {
-		ErrCode int    `json:"errcode"`
-		ErrMsg  string `json:"errmsg"`
-		MediaID string `json:"media_id"`
-	}
-	if err = json.Unmarshal(respBytes, &result); err != nil {
-		return "", fmt.Errorf("parse dingtalk upload response failed: %w, body: %s", err, string(respBytes))
-	}
-	if result.ErrCode != 0 {
-		return "", fmt.Errorf("dingtalk upload media failed: errcode=%d errmsg=%s", result.ErrCode, result.ErrMsg)
-	}
-	if result.MediaID == "" {
-		return "", fmt.Errorf("dingtalk upload media succeeded but media_id is empty, body: %s", string(respBytes))
-	}
-	return result.MediaID, nil
+	msgParamBytes, _ := json.Marshal(msgParamObj)
+	return "sampleActionCard", string(msgParamBytes)
 }
 
-func (p *DingtalkAppProvider) sendInteractiveCardMessage(ctx context.Context, client *http.Client, targetKind dingtalkTargetKind, targetIDs []string, cardData map[string]interface{}, customParams map[string]string) (string, error) {
-	cardTemplateID := strings.TrimSpace(customParams["card_template_id"])
-
-	if cardTemplateID == "" {
-		return "", errors.New("card_template_id cannot be empty when sending dingtalk interactive card")
+func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context, client *http.Client, userIDs []string, title, content string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+	if robotCode == "" {
+		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto message")
 	}
+	msgKey, msgParam := p.buildRobotActionCardMessage(title, content, customParams)
+	payload := map[string]interface{}{
+		"robotCode": robotCode,
+		"userIds":   userIDs,
+		"msgKey":    msgKey,
+		"msgParam":  msgParam,
+	}
+	return p.sendRobotMessage(ctx, client, dingtalkRobotBatchSendURL, payload)
+}
 
-	robotCode := p.appConfig.AppKey
-	results := make([]string, 0, len(targetIDs))
-	for _, targetID := range targetIDs {
+func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, client *http.Client, userIDs []string, mediaID string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+	if robotCode == "" {
+		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto image")
+	}
+	msgParamBytes, _ := json.Marshal(map[string]string{"mediaId": mediaID})
+	payload := map[string]interface{}{
+		"robotCode": robotCode,
+		"userIds":   userIDs,
+		"msgKey":    "sampleImageMsg",
+		"msgParam":  string(msgParamBytes),
+	}
+	return p.sendRobotMessage(ctx, client, dingtalkRobotBatchSendURL, payload)
+}
+
+func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Context, client *http.Client, groupIDs []string, title, content string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+	if robotCode == "" {
+		return "", errors.New("app_key cannot be empty when sending dingtalk robot group message")
+	}
+	msgKey, msgParam := p.buildRobotActionCardMessage(title, content, customParams)
+	results := make([]string, 0, len(groupIDs))
+	for _, gid := range groupIDs {
 		payload := map[string]interface{}{
-			"cardTemplateId": cardTemplateID,
-			"outTrackId":     fmt.Sprintf("n9e_%d_%s", time.Now().UnixNano(), targetID),
-			"cardData": map[string]interface{}{
-				"cardParamMap": cardData,
-			},
+			"robotCode":          robotCode,
+			"openConversationId": gid,
+			"msgKey":             msgKey,
+			"msgParam":           msgParam,
 		}
-		if targetKind == dingtalkTargetGroup {
-			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_GROUP.%s", targetID)
-			payload["imGroupOpenSpaceModel"] = map[string]bool{"supportForward": true}
-			payload["imGroupOpenDeliverModel"] = map[string]string{"robotCode": robotCode}
-		} else {
-			payload["openSpaceId"] = fmt.Sprintf("dtv1.card//IM_ROBOT.%s", targetID)
-			payload["imRobotOpenSpaceModel"] = map[string]bool{"supportForward": true}
-			payload["imRobotOpenDeliverModel"] = map[string]string{"spaceType": "IM_ROBOT"}
-		}
-
-		resp, err := p.sendAppMessage(ctx, client, payload)
+		resp, err := p.sendRobotMessage(ctx, client, dingtalkRobotGroupSendURL, payload)
 		if err != nil {
 			return strings.Join(results, "; "), err
 		}
@@ -415,7 +457,34 @@ func (p *DingtalkAppProvider) sendInteractiveCardMessage(ctx context.Context, cl
 	return strings.Join(results, "; "), nil
 }
 
-func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.Client, payload map[string]interface{}) (string, error) {
+func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, client *http.Client, groupIDs []string, mediaID string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+	if robotCode == "" {
+		return "", errors.New("app_key cannot be empty when sending dingtalk robot group image")
+	}
+	msgParamBytes, _ := json.Marshal(map[string]string{"mediaId": mediaID})
+	results := make([]string, 0, len(groupIDs))
+	for _, gid := range groupIDs {
+		payload := map[string]interface{}{
+			"robotCode":          robotCode,
+			"openConversationId": gid,
+			"msgKey":             "sampleImageMsg",
+			"msgParam":           string(msgParamBytes),
+		}
+		resp, err := p.sendRobotMessage(ctx, client, dingtalkRobotGroupSendURL, payload)
+		if err != nil {
+			return strings.Join(results, "; "), err
+		}
+		results = append(results, resp)
+	}
+	return strings.Join(results, "; "), nil
+}
+
+func (p *DingtalkAppProvider) sendRobotMessage(ctx context.Context, client *http.Client, endpoint string, payload map[string]interface{}) (string, error) {
+	return p.sendAppMessage(ctx, client, endpoint, payload)
+}
+
+func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.Client, endpoint string, payload map[string]interface{}) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
@@ -435,11 +504,9 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 	if p.appConfig != nil && p.appConfig.RetryTimes > 0 {
 		retryTimes = p.appConfig.RetryTimes
 	}
-	logger.Infof("send app message payload: %v", string(reqBody))
-
 	var lastErrorMessage string
 	for i := 0; i <= retryTimes; i++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, dingtalkAppSendMessageURL, bytes.NewReader(reqBody))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(reqBody))
 		if err != nil {
 			return "", err
 		}
@@ -466,38 +533,39 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 			return "", readErr
 		}
 
-		// 互动卡片新接口返回格式：
-		// {"success": true, "result": {"deliverResults":[{"success": true, ...}]}}
 		var result struct {
-			Success bool `json:"success"`
-			Result  struct {
-				OutTrackID     string `json:"outTrackId"`
-				DeliverResults []struct {
-					Success   bool   `json:"success"`
-					SpaceType string `json:"spaceType"`
-					SpaceID   string `json:"spaceId"`
-					CarrierID string `json:"carrierId"`
-					ErrorMsg  string `json:"errorMsg"`
-				} `json:"deliverResults"`
-			} `json:"result"`
+			ErrCode json.RawMessage `json:"errcode"`
+			ErrMsg  string          `json:"errmsg"`
+			Code    json.RawMessage `json:"code"`
+			Message string          `json:"message"`
+			Success *bool           `json:"success"`
 		}
 		if err = json.Unmarshal(bs, &result); err != nil {
 			return "", fmt.Errorf("parse dingtalk send message response failed: %w, body: %s", err, string(bs))
 		}
-		if !result.Success {
-			return string(bs), fmt.Errorf("dingtalk send message failed: success=false body=%s", string(bs))
+		code := normalizedDingtalkCode(result.ErrCode)
+		if code == "" {
+			code = normalizedDingtalkCode(result.Code)
 		}
-		if len(result.Result.DeliverResults) > 0 {
-			for _, dr := range result.Result.DeliverResults {
-				if !dr.Success {
-					return string(bs), fmt.Errorf("dingtalk deliver failed: space_id=%s error=%s", dr.SpaceID, dr.ErrorMsg)
-				}
+		if code != "" && code != "0" {
+			msg := strings.TrimSpace(result.ErrMsg)
+			if msg == "" {
+				msg = result.Message
 			}
+			return string(bs), fmt.Errorf("dingtalk send message failed: code=%s message=%s", code, msg)
+		}
+		if result.Success != nil && !*result.Success {
+			msg := strings.TrimSpace(result.ErrMsg)
+			if msg == "" {
+				msg = result.Message
+			}
+			return string(bs), fmt.Errorf("dingtalk send message failed: success=false message=%s", msg)
 		}
 		return string(bs), nil
 	}
 
-	return lastErrorMessage, errors.New("failed to send dingtalk interactive card")
+	logger.Errorf("dingtalkapp send failed after retries: endpoint=%s last_error=%s", endpoint, lastErrorMessage)
+	return lastErrorMessage, errors.New("failed to send dingtalk action_card message")
 }
 
 func decodeBase64Payload(payload string) ([]byte, error) {
@@ -506,6 +574,13 @@ func decodeBase64Payload(payload string) ([]byte, error) {
 		data = data[idx+1:]
 	}
 	return base64.StdEncoding.DecodeString(data)
+}
+
+func normalizedDingtalkCode(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	return strings.Trim(strings.TrimSpace(string(raw)), "\"")
 }
 
 func defaultMediaFileName(mediaType string) string {
@@ -592,7 +667,8 @@ func (p *DingtalkAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 			ParamConfig: &models.NotifyParamConfig{
 				Custom: models.Params{
 					Params: []models.ParamItem{
-						{Key: "card_template_id", CName: "Card Template ID", Type: "string"},
+						{Key: "single_title", CName: "Action Button Title", Type: "string"},
+						{Key: "single_url", CName: "Action Jump URL", Type: "string"},
 					},
 				},
 			},

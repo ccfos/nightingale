@@ -19,12 +19,12 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
@@ -587,6 +587,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-channel-config/default-channels", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelDefaultChannelsGet)
 		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
 		pages.GET("/flashduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
+		pages.POST("/feishu-visible-chats/:id", rt.auth(), rt.user(), rt.feishuVisibleChatsGet)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)

@@ -8,16 +8,16 @@ import (
 )
 
 // TestDingtalkAppProviderNotify 从 alert/sender/.env.json 读取钉钉应用参数后真实发送。
-// 需要：DingtalkAppKey、DingtalkAppSecret、DingtalkCardTemplateId、Phone（接收手机号，与 ContactKey=phone 一致）。
+// 需要：DingtalkAppKey、DingtalkAppSecret、DingtalkRobotCode、Phone（接收手机号，与 ContactKey=phone 一致）。
 func TestDingtalkAppProviderNotify(t *testing.T) {
 	env := readSenderDotEnv(t)
 	appKey := senderEnvString(env, "DingtalkAppKey")
 	appSecret := senderEnvString(env, "DingtalkAppSecret")
-	cardTpl := senderEnvString(env, "DingtalkCardTemplateId")
+	robotCode := appKey
 	phone := senderEnvString(env, "Phone")
 
-	if appKey == "" || appSecret == "" || cardTpl == "" || phone == "" {
-		t.Skip("跳过：在 .env.json 填写 DingtalkAppKey、DingtalkAppSecret、DingtalkCardTemplateId、Phone")
+	if appKey == "" || appSecret == "" || robotCode == "" || phone == "" {
+		t.Skip("跳过：在 .env.json 填写 DingtalkAppKey、DingtalkAppSecret、DingtalkRobotCode、Phone")
 	}
 
 	appCfg := &models.DingtalkAppRequestConfig{
@@ -35,7 +35,6 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 		RequestConfig: &models.RequestConfig{
 			DingtalkAppRequestConfig: appCfg,
 			HTTPRequestConfig: &models.HTTPRequestConfig{
-				URL:           "https://oapi.dingtalk.com",
 				Method:        "POST",
 				Headers:       map[string]string{"Content-Type": "application/json"},
 				Timeout:       10000,
@@ -53,7 +52,7 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 		Events: []*models.AlertCurEvent{{
 			Hash: "hash-test",
 			ShotImageBase64: map[string]string{
-				"shot_1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+				"shot_1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA80lEQVR4nO3QQQ3AIADAQEA5zhAxxfOwx5ElrYLOs+/4s6UDXjErMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCswKzArMCvwA6d8AZXhrmFoAAAAAElFTkSuQmCC",
 			},
 		}},
 		TplContent: map[string]interface{}{
@@ -62,11 +61,71 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 		},
 		Sendtos: []string{phone},
 		CustomParams: map[string]string{
-			"card_template_id": cardTpl,
+			"robot_code":   robotCode,
+			"single_title": "查看详情",
+			"single_url":   "https://www.dingtalk.com/",
 		},
 		HttpClient: client,
 	}
 
 	result := p.Notify(context.Background(), req)
 	t.Logf("result: %+v", result)
+}
+
+// TestDingtalkAppProviderNotifyGroup 真实发送群聊机器人消息。
+// 需要：DingtalkAppKey、DingtalkAppSecret、DingtalkRobotCode、DingtalkOpenConversationID。
+func TestDingtalkAppProviderNotifyGroup(t *testing.T) {
+	env := readSenderDotEnv(t)
+	appKey := senderEnvString(env, "DingtalkAppKey")
+	appSecret := senderEnvString(env, "DingtalkAppSecret")
+	robotCode := senderEnvString(env, "DingtalkRobotCode")
+	openConversationID := senderEnvString(env, "DingtalkOpenConversationID")
+
+	if appKey == "" || appSecret == "" || robotCode == "" || openConversationID == "" {
+		t.Skip("跳过：在 .env.json 填写 DingtalkAppKey、DingtalkAppSecret、DingtalkRobotCode、DingtalkOpenConversationID")
+	}
+
+	appCfg := &models.DingtalkAppRequestConfig{
+		AppKey:     appKey,
+		AppSecret:  appSecret,
+		ContactKey: "dingtalk_userid",
+		Timeout:    10000,
+		RetryTimes: 1,
+		RetrySleep: 1,
+	}
+
+	p := &DingtalkAppProvider{}
+	cfg := &models.NotifyChannelConfig{
+		RequestType: "dingtalkapp",
+		RequestConfig: &models.RequestConfig{
+			DingtalkAppRequestConfig: appCfg,
+			HTTPRequestConfig: &models.HTTPRequestConfig{
+				URL:           "https://api.dingtalk.com",
+				Method:        "POST",
+				Headers:       map[string]string{"Content-Type": "application/json"},
+				Timeout:       10000,
+				RetryTimes:    1,
+				RetryInterval: 1,
+			},
+		},
+	}
+	client, err := models.GetHTTPClient(cfg)
+	if err != nil {
+		t.Fatalf("Failed to create HTTP client: %v", err)
+	}
+	req := &NotifyRequest{
+		Config:     cfg,
+		Events:     []*models.AlertCurEvent{{Hash: "hash-group-test"}},
+		TplContent: map[string]interface{}{"title": "test group alert", "content": "group content from n9e"},
+		ImGroupIDs: []string{openConversationID},
+		CustomParams: map[string]string{
+			"robot_code":   robotCode,
+			"single_title": "查看详情",
+			"single_url":   "https://www.dingtalk.com/",
+		},
+		HttpClient: client,
+	}
+
+	result := p.Notify(context.Background(), req)
+	t.Logf("group result: %+v", result)
 }

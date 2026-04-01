@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +16,73 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 )
+
+func (rt *Router) feishuVisibleChatsGet(c *gin.Context) {
+	var req struct {
+		Query      string `json:"query"`
+		PageSize   int    `json:"page_size"`
+		UserIDType string `json:"user_id_type"`
+		PageToken  string `json:"page_token"`
+	}
+	ginx.BindJSON(c, &req)
+
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+	if nc.RequestConfig == nil || nc.RequestConfig.FeishuAppRequestConfig == nil {
+		ginx.Bomb(http.StatusBadRequest, "feishu app request config cannot be nil")
+	}
+
+	appCfg := nc.RequestConfig.FeishuAppRequestConfig
+	query := req.Query
+	if query == "" {
+		ginx.Bomb(http.StatusBadRequest, "query is required")
+	}
+	pageSize := req.PageSize
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	userIDType := req.UserIDType
+	if userIDType == "" {
+		userIDType = "user_id"
+	}
+	pageToken := req.PageToken
+
+	client, err := buildNotifyHTTPClientForFeishu(nc, appCfg)
+	ginx.Dangerous(err)
+
+	token, err := provider.GetFeishuTenantAccessToken(context.Background(), client, appCfg.AppID, appCfg.AppSecret)
+	ginx.Dangerous(err)
+
+	data, err := provider.SearchFeishuVisibleChats(context.Background(), client, token, query, pageSize, userIDType, pageToken)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(data, nil)
+}
+
+func buildNotifyHTTPClientForFeishu(nc *models.NotifyChannelConfig, appCfg *models.FeishuAppRequestConfig) (*http.Client, error) {
+	if nc.RequestConfig != nil && nc.RequestConfig.HTTPRequestConfig != nil {
+		return models.GetHTTPClient(nc)
+	}
+
+	timeout := appCfg.Timeout
+	if timeout <= 0 {
+		timeout = 10000
+	}
+	tmp := &models.NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &models.RequestConfig{
+			HTTPRequestConfig: &models.HTTPRequestConfig{
+				Timeout: timeout,
+				Headers: map[string]string{"Content-Type": "application/json"},
+			},
+			FeishuAppRequestConfig: appCfg,
+		},
+	}
+	return models.GetHTTPClient(tmp)
+}
 
 func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
