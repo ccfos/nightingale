@@ -155,27 +155,25 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
-	if len(e.Headers) != len(otherES.Headers) {
-		return false
-	}
-
 	for k, v := range e.Headers {
 		if otherES.Headers[k] != v {
 			return false
 		}
-	if e.Version != other.(*Elasticsearch).Version {
+	}
+	
+	if e.Version != otherES.Version {
 		return false
 	}
 
-	if e.Timeout != other.(*Elasticsearch).Timeout {
+	if e.Timeout != otherES.Timeout {
 		return false
 	}
 
-	if e.MinInterval != other.(*Elasticsearch).MinInterval {
+	if e.MinInterval != otherES.MinInterval {
 		return false
 	}
 
-	if e.MaxShard != other.(*Elasticsearch).MaxShard {
+	if e.MaxShard != otherES.MaxShard {
 		return false
 	}
 
@@ -294,7 +292,12 @@ func (e *Elasticsearch) processES6Fields(fieldData interface{}, fieldMap map[str
 }
 
 func (e *Elasticsearch) processES7Field(fieldName string, fieldData interface{}, fieldMap map[string]struct{}, fields *[]string) {
-	fieldType := getFieldType(fieldName, fieldData.(map[string]interface{}))
+	fieldMapData, ok := fieldData.(map[string]interface{})                                                                      
+    if !ok {                                                                                                                                                                                                 
+            return
+    }                                                                                                                                                                                                        
+    fieldType := getFieldType(fieldName, fieldMapData)
+	
 	if eslike.HitFilter(fieldType) {
 		return
 	}
