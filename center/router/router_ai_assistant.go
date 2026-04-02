@@ -90,6 +90,8 @@ func (m *MessageStateManager) GetStreamID(key string) string {
 	return ""
 }
 
+// ==================== Chat Handlers ====================
+
 func (rt *Router) assistantChatNew(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
@@ -572,7 +574,6 @@ func (rt *Router) assistantMessageCancel(c *gin.Context) {
 		aiagent.GetStreamCache().Finish(streamID)
 	}
 
-	// Persist cancel state via status column (like fc-model)
 	models.AssistantMessageSetStatus(rt.Ctx, req.ChatID, req.SeqID, models.MessageStatusCancel)
 
 	ginx.NewRender(c).Message(nil)
@@ -608,4 +609,27 @@ func (rt *Router) assistantStream(c *gin.Context) {
 		c.Writer.Flush()
 		return true
 	})
+}
+
+// serviceUser reads X-Service-Username header, resolves the user from DB,
+// and injects it into the gin context. This allows v1 service routes to
+// reuse the same handlers as the frontend.
+func (rt *Router) serviceUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		username := c.GetHeader("X-Service-Username")
+		if username == "" {
+			ginx.Bomb(http.StatusBadRequest, "X-Service-Username header is required")
+		}
+		user, err := models.UserGetByUsername(rt.Ctx, username)
+		if err != nil {
+			ginx.Bomb(http.StatusInternalServerError, err.Error())
+		}
+		if user == nil {
+			ginx.Bomb(http.StatusNotFound, "user not found: %s", username)
+		}
+		c.Set("user", user)
+		c.Set("userid", user.Id)
+		c.Set("username", user.Username)
+		c.Next()
+	}
 }

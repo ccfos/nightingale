@@ -784,6 +784,16 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/ai-skills", rt.aiSkillAddByService)
 			service.POST("/ai-skills/import", rt.aiSkillImportByService)
 			service.PUT("/ai-skill/:id/import", rt.aiSkillImportUpdateByService)
+
+			// AI Assistant (for external service, reuses frontend handlers via serviceUser middleware)
+			service.POST("/assistant/chat/new", rt.serviceUser(), rt.assistantChatNew)
+			service.GET("/assistant/chat/history", rt.serviceUser(), rt.assistantChatHistory)
+			service.DELETE("/assistant/chat/:chatId", rt.serviceUser(), rt.assistantChatDel)
+			service.POST("/assistant/message/new", rt.serviceUser(), rt.assistantMessageNew)
+			service.POST("/assistant/message/detail", rt.serviceUser(), rt.assistantMessageDetail)
+			service.POST("/assistant/message/history", rt.serviceUser(), rt.assistantMessageHistory)
+			service.POST("/assistant/message/cancel", rt.serviceUser(), rt.assistantMessageCancel)
+			service.POST("/assistant/stream", rt.assistantStream)
 		}
 	}
 

@@ -1,8 +1,13 @@
 # AI Chat API
 
-AI 对话助手接口，支持多轮对话、流式输出、消息取消等功能。所有接口需要登录（`auth` + `user`）。
+AI 对话助手接口，支持多轮对话、流式输出、消息取消等功能。
 
-基础路径：`/api/n9e`
+提供两套路由，共享相同的核心逻辑：
+
+| 路由前缀 | 认证方式 | 用户身份 | 使用场景 |
+|----------|---------|---------|---------|
+| `/api/n9e` | JWT / Token / ProxyAuth | 从认证信息自动获取 | 前端页面调用 |
+| `/v1/n9e` | BasicAuth（`APIForService`） | 请求体中的 `username` 字段 | 外部服务调用 |
 
 ---
 
@@ -718,4 +723,215 @@ POST /api/n9e/assistant/message/cancel
 ```
 GET /api/n9e/assistant/chat/history    →  会话列表
 POST /api/n9e/assistant/message/history →  某会话的消息列表
+```
+
+---
+
+## v1 Service API（外部服务调用）
+
+供外部服务（如统一 AI 网关）通过 BasicAuth 调用的接口。通过 `serviceUser` 中间件将 Header 中的用户名注入上下文，从而**直接复用前端 handler**，无需额外的 `*ByService` 函数。
+
+区别于前端接口：
+
+- **认证**：BasicAuth，需在配置文件中启用 `APIForService` 并配置账号密码
+- **用户身份**：通过 `X-Service-Username` HTTP Header 传递最终用户名。后端中间件据此加载用户对象并注入 context，handler 通过 `c.MustGet("user")` 获取，与前端行为一致
+- **基础路径**：`/v1/n9e`
+- **请求体格式**：与前端接口完全一致（不需要在 body 中传 username）
+
+### 接口列表
+
+| 方法 | 路径 | 对应前端接口 | 说明 |
+|------|------|------------|------|
+| POST | `/v1/n9e/assistant/chat/new` | `POST /api/n9e/assistant/chat/new` | 创建会话 |
+| GET | `/v1/n9e/assistant/chat/history` | `GET /api/n9e/assistant/chat/history` | 会话历史 |
+| DELETE | `/v1/n9e/assistant/chat/:chatId` | `DELETE /api/n9e/assistant/chat/:chatId` | 删除会话 |
+| POST | `/v1/n9e/assistant/message/new` | `POST /api/n9e/assistant/message/new` | 发送消息 |
+| POST | `/v1/n9e/assistant/message/detail` | `POST /api/n9e/assistant/message/detail` | 消息详情 |
+| POST | `/v1/n9e/assistant/message/history` | `POST /api/n9e/assistant/message/history` | 消息历史 |
+| POST | `/v1/n9e/assistant/message/cancel` | `POST /api/n9e/assistant/message/cancel` | 取消消息 |
+| POST | `/v1/n9e/assistant/stream` | `POST /api/n9e/stream` | SSE 流式输出 |
+
+### 请求格式
+
+请求体与前端接口完全一致，用户身份通过 `X-Service-Username` Header 传递（`stream` 接口除外，无需该 Header）。
+
+**公共 Header：**
+
+| Header | 必填 | 说明 |
+|--------|------|------|
+| `Authorization` | 是 | BasicAuth 凭证 |
+| `X-Service-Username` | 是（stream 除外） | 最终用户的用户名，后端按该用户的权限执行操作 |
+| `Content-Type` | 是 | `application/json` |
+
+#### 创建会话
+
+```
+POST /v1/n9e/assistant/chat/new
+X-Service-Username: alice
+```
+
+```json
+{
+  "page": "explorer",
+  "param": {
+    "datasource_type": "prometheus",
+    "datasource_id": 1
+  }
+}
+```
+
+#### 获取会话历史
+
+```
+GET /v1/n9e/assistant/chat/history
+X-Service-Username: alice
+```
+
+无请求体。
+
+#### 删除会话
+
+```
+DELETE /v1/n9e/assistant/chat/:chatId
+X-Service-Username: alice
+```
+
+#### 发送消息
+
+```
+POST /v1/n9e/assistant/message/new
+X-Service-Username: alice
+```
+
+```json
+{
+  "chat_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "query": {
+    "content": "当前有哪些活跃告警？",
+    "action": {
+      "key": "alert_query"
+    },
+    "page_from": {
+      "page": "active_alert"
+    }
+  }
+}
+```
+
+#### 获取消息详情
+
+```
+POST /v1/n9e/assistant/message/detail
+X-Service-Username: alice
+```
+
+```json
+{
+  "chat_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "seq_id": 1
+}
+```
+
+#### 获取消息历史
+
+```
+POST /v1/n9e/assistant/message/history
+X-Service-Username: alice
+```
+
+```json
+{
+  "chat_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+#### 取消消息
+
+```
+POST /v1/n9e/assistant/message/cancel
+X-Service-Username: alice
+```
+
+```json
+{
+  "chat_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "seq_id": 1
+}
+```
+
+#### SSE 流式输出
+
+```
+POST /v1/n9e/assistant/stream
+```
+
+```json
+{
+  "stream_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+}
+```
+
+> `stream` 接口不需要 `X-Service-Username` Header，`stream_id` 是服务端生成的临时凭证，仅通过已鉴权的 `message/detail` 接口获取。
+
+### 调用示例（curl）
+
+```bash
+# 创建会话
+curl -u service_user:password -X POST http://localhost:17000/v1/n9e/assistant/chat/new \
+  -H 'Content-Type: application/json' \
+  -H 'X-Service-Username: alice' \
+  -d '{"page":"explorer","param":{"datasource_type":"prometheus","datasource_id":1}}'
+
+# 发送消息
+curl -u service_user:password -X POST http://localhost:17000/v1/n9e/assistant/message/new \
+  -H 'Content-Type: application/json' \
+  -H 'X-Service-Username: alice' \
+  -d '{"chat_id":"<chat_id>","query":{"content":"当前有哪些活跃告警？"}}'
+
+# 轮询消息状态
+curl -u service_user:password -X POST http://localhost:17000/v1/n9e/assistant/message/detail \
+  -H 'Content-Type: application/json' \
+  -H 'X-Service-Username: alice' \
+  -d '{"chat_id":"<chat_id>","seq_id":1}'
+
+# SSE 流式获取回复
+curl -u service_user:password -X POST http://localhost:17000/v1/n9e/assistant/stream \
+  -H 'Content-Type: application/json' \
+  -d '{"stream_id":"<stream_id>"}'
+```
+
+### 外部服务对接流程
+
+```
+服务 A                                         夜莺 AI Agent
+ │                                               │
+ │  1. POST /v1/n9e/assistant/chat/new           │
+ │  Header: X-Service-Username: alice            │
+ │  Body: {"page":"..."}                         │
+ │──────────────────────────────────────────────►│
+ │◄──── 返回 chat_id ───────────────────────────│
+ │                                               │
+ │  2. POST /v1/n9e/assistant/message/new        │
+ │  Header: X-Service-Username: alice            │
+ │  Body: {"chat_id":"...", "query":{...}}       │
+ │──────────────────────────────────────────────►│
+ │◄──── 返回 {chat_id, seq_id} ─────────────────│
+ │                                               │
+ │  3. POST /v1/n9e/assistant/message/detail     │
+ │  Header: X-Service-Username: alice            │
+ │  Body: {"chat_id":"...", "seq_id":1}          │
+ │──────────────────────────────────────────────►│
+ │◄──── 返回消息详情(含 stream_id) ──────────────│
+ │                                               │
+ │  4. POST /v1/n9e/assistant/stream             │
+ │  Body: {"stream_id":"..."}                    │
+ │──────────────────────────────────────────────►│
+ │◄──── SSE: data {delta} ──────────────────────│
+ │◄──── SSE: data {delta} ──────────────────────│
+ │◄──── SSE: event: finish ─────────────────────│
+ │                                               │
+ │  5. POST /v1/n9e/assistant/message/detail     │
+ │  (获取最终完整回复)                            │
+ │──────────────────────────────────────────────►│
+ │◄──── 返回完整消息 ───────────────────────────│
 ```

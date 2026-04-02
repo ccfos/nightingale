@@ -65,9 +65,9 @@ description: 在夜莺(n9e)平台上通过 API 创建监控仪表盘。当用户
 
 | 参数 | 必填 | 说明 | 示例 |
 |------|------|------|------|
-| `base_url` | 是 | n9e 访问地址 | `http://10.99.1.106:8003` |
-| `username` | 是 | 登录用户名 | `root` |
-| `password` | 是 | 登录密码 | `root` |
+| `base_url` | 是 | n9e 访问地址 | `http://<n9e-host>:<port>` |
+| `username` | 是 | 登录用户名 | `<username>` |
+| `password` | 是 | 登录密码 | `<password>` |
 | `topic` | 是 | 监控主题 | `linux`、`mysql`、`redis`、`kubernetes` |
 | `busi_group` | 否 | 业务组名称或ID，不填则列出可选项让用户选择 | `n9e_test` |
 | `dashboard_name` | 否 | 仪表盘名称，不填则自动生成 | `Linux 主机监控` |
