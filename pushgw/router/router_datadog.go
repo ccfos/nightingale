@@ -250,8 +250,10 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		}
 
 		if ident != "" {
-			// register host
-			ids[ident] = struct{}{}
+			if r.Pushgw.GetHeartbeatFromMetric {
+				// register host
+				ids[ident] = struct{}{}
+			}
 
 			// fill tags
 			target, has := r.TargetCache.Get(ident)

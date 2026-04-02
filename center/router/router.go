@@ -19,12 +19,12 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
@@ -53,10 +53,13 @@ type Router struct {
 	Ctx               *ctx.Context
 	LogDir            string
 
-	HeartbeatHook       HeartbeatHookFunc
-	TargetDeleteHook    models.TargetDeleteHookFunc
-	AlertRuleModifyHook AlertRuleModifyHookFunc
+	HeartbeatHook         HeartbeatHookFunc
+	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetBgidChangeCheck TargetBgidChangeCheckFunc
+	AlertRuleModifyHook   AlertRuleModifyHookFunc
 }
+
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
@@ -82,9 +85,10 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserTokenCache:      utc,
 		Ctx:                 ctx,
 		LogDir:              logDir,
-		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook: func(ar *models.AlertRule) {},
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
+		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
 	}
 }
 
@@ -202,10 +206,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/db-desc-table", rt.DescribeTable)
 
 			// es 专用接口
-			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
-			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
-			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
+			pages.POST("/indices", rt.QueryIndices)
+			pages.POST("/es-variable", rt.QueryESVariable)
+			pages.POST("/fields", rt.QueryFields)
+			pages.POST("/log-query", rt.QueryLog)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
@@ -229,9 +233,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			// es 专用接口
 			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.QueryESVariable)
-			pages.POST("/fields", rt.QueryFields)
-			pages.POST("/log-query", rt.QueryLog)
+			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
+			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
+			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
 		}
 
 		// OpenSearch 专用接口
@@ -239,7 +243,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/os-variable", rt.QueryOSVariable)
 		pages.POST("/os-fields", rt.QueryOSFields)
 
-		pages.GET("/sql-template", rt.QuerySqlTemplate)
+		pages.GET("/sql-template", rt.auth(), rt.user(), rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
@@ -259,14 +263,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
 		pages.GET("/auth/callback/dingtalk", rt.loginCallbackDingTalk)
 		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
-		pages.GET("/auth/perms", rt.allPerms)
+		pages.GET("/auth/perms", rt.auth(), rt.user(), rt.allPerms)
 
-		pages.GET("/metrics/desc", rt.metricsDescGetFile)
-		pages.POST("/metrics/desc", rt.metricsDescGetMap)
+		pages.GET("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetFile)
+		pages.POST("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetMap)
 
-		pages.GET("/notify-channels", rt.notifyChannelsGets)
-		pages.GET("/contact-keys", rt.contactKeysGets)
-		pages.GET("/install-date", rt.installDateGet)
+		pages.GET("/notify-channels", rt.auth(), rt.user(), rt.notifyChannelsGets)
+		pages.GET("/contact-keys", rt.auth(), rt.user(), rt.contactKeysGets)
+		pages.GET("/install-date", rt.auth(), rt.user(), rt.installDateGet)
 
 		pages.GET("/self/perms", rt.auth(), rt.user(), rt.permsGets)
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
@@ -322,6 +326,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-groups/tags", rt.auth(), rt.user(), rt.busiGroupsGetTags)
 
 		pages.GET("/targets", rt.auth(), rt.user(), rt.targetGets)
+		pages.GET("/targets/stats", rt.auth(), rt.user(), rt.targetStats)
 		pages.POST("/target-update", rt.auth(), rt.targetUpdate)
 		pages.GET("/target/extra-meta", rt.auth(), rt.user(), rt.targetExtendInfoByIdent)
 		pages.POST("/target/list", rt.auth(), rt.user(), rt.targetGetsByHostFilter)
@@ -335,7 +340,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
 
-		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+		pages.GET("/integrations/icon/:cate/:name", rt.auth(), rt.user(), rt.builtinIcon)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
 		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
@@ -467,7 +472,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles"), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.roleBindOperation)
-		pages.GET("/operation", rt.operations)
+		pages.GET("/operation", rt.auth(), rt.user(), rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.user(), rt.notifyTplUpdateContent)
@@ -584,12 +589,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels/put"), rt.notifyChannelPut)
 		pages.GET("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelsGet)
-		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
+		pages.GET("/simplified-notify-channel-configs", rt.auth(), rt.user(), rt.notifyChannelsGetForNormalUser)
 		pages.GET("/flashduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
-		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
+		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 
 		// saved view 查询条件保存相关路由
 		pages.GET("/saved-views", rt.auth(), rt.user(), rt.savedViewGets)

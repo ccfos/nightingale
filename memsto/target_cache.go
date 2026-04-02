@@ -25,6 +25,7 @@ type TargetCacheType struct {
 	ctx             *ctx.Context
 	stats           *Stats
 	redis           storage.Redis
+	metaSyncCycle   int // 计数器，用于控制 HostMeta 刷新频率
 
 	sync.RWMutex
 	targets      map[string]*models.Target // key: ident
@@ -159,6 +160,38 @@ func (tc *TargetCacheType) refreshBeatTime() {
 	tc.Unlock()
 }
 
+// refreshHostMetas 从 Redis 刷新缓存中所有 target 的 HostMeta（CpuUtil, MemUtil, CpuNum 等）
+func (tc *TargetCacheType) refreshHostMetas() {
+	if tc.redis == nil {
+		return
+	}
+
+	// 快照 target 列表，避免持锁访问 Redis
+	tc.RLock()
+	targets := make([]*models.Target, 0, len(tc.targets))
+	for _, t := range tc.targets {
+		targets = append(targets, t)
+	}
+	tc.RUnlock()
+
+	if len(targets) == 0 {
+		return
+	}
+
+	metaMap := tc.GetHostMetas(targets)
+	if len(metaMap) == 0 {
+		return
+	}
+
+	tc.Lock()
+	for ident, target := range tc.targets {
+		if meta, ok := metaMap[ident]; ok {
+			target.FillMeta(meta)
+		}
+	}
+	tc.Unlock()
+}
+
 func (tc *TargetCacheType) Gets(idents []string) []*models.Target {
 	tc.RLock()
 	defer tc.RUnlock()
@@ -229,6 +262,12 @@ func (tc *TargetCacheType) syncTargets() error {
 
 	if !tc.StatChanged(stat.Total, stat.LastUpdated) {
 		tc.refreshBeatTime()
+		// HostMeta（CPU/内存等）变化不如心跳频繁，每 6 个周期（约 54 秒）刷新一次，减轻 Redis 压力
+		tc.metaSyncCycle++
+		if tc.metaSyncCycle >= 6 {
+			tc.metaSyncCycle = 0
+			tc.refreshHostMetas()
+		}
 		tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(0)
 		tc.stats.GaugeSyncNumber.WithLabelValues("sync_targets").Set(0)
 		dumper.PutSyncRecord("targets", start.Unix(), -1, -1, "not changed")
@@ -260,6 +299,7 @@ func (tc *TargetCacheType) syncTargets() error {
 	}
 
 	tc.Set(m, stat.Total, stat.LastUpdated)
+	tc.metaSyncCycle = 0 // 全量同步已包含 meta，重置计数器
 
 	ms := time.Since(start).Milliseconds()
 	tc.stats.GaugeCronDuration.WithLabelValues("sync_targets").Set(float64(ms))
