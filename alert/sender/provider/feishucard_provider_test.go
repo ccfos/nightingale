@@ -22,13 +22,9 @@ func TestFeishuCardProviderNotifyWithImage(t *testing.T) {
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "feishucard",
 		RequestConfig: &models.RequestConfig{
-			FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
-				AppID:      appID,
-				AppSecret:  appSecret,
-				ContactKey: "chat_id",
-				Timeout:    10000,
-				RetryTimes: 1,
-				RetrySleep: 10,
+			FeishuRequestConfig: &models.FeishuRequestConfig{
+				AppID:     appID,
+				AppSecret: appSecret,
 			},
 			HTTPRequestConfig: &models.HTTPRequestConfig{
 				URL:           "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
@@ -75,4 +71,3 @@ func TestFeishuCardProviderNotifyWithImage(t *testing.T) {
 	}
 	t.Logf("result: %+v", result)
 }
-
