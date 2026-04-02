@@ -137,6 +137,10 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
+	if e.Version != other.(*Elasticsearch).Version {
+		return false
+	}
+
 	if !reflect.DeepEqual(e.Headers, other.(*Elasticsearch).Headers) {
 		return false
 	}
