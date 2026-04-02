@@ -60,6 +60,10 @@ type RequestConfig struct {
 	DingtalkAppRequestConfig *DingtalkAppRequestConfig `json:"dingtalkapp_request_config,omitempty" gorm:"serializer:json"`
 	FeishuAppRequestConfig   *FeishuAppRequestConfig   `json:"feishuapp_request_config,omitempty" gorm:"serializer:json"`
 	WecomAppRequestConfig    *WecomAppRequestConfig    `json:"wecomapp_request_config,omitempty" gorm:"serializer:json"`
+	// 兼容旧版本
+	DingtalkRequestConfig *DingtalkRequestConfig `json:"dingtalk_request_config,omitempty" gorm:"serializer:json"`
+	FeishuRequestConfig   *FeishuRequestConfig   `json:"feishu_request_config,omitempty" gorm:"serializer:json"`
+	WecomRequestConfig    *WecomRequestConfig    `json:"wecom_request_config,omitempty" gorm:"serializer:json"`
 }
 
 // NotifyParamConfig 参数配置
@@ -135,7 +139,6 @@ type HTTPRequestConfig struct {
 type DingtalkAppRequestConfig struct {
 	AppKey     string `json:"app_key"`
 	AppSecret  string `json:"app_secret"`
-	ContactKey string `json:"contact_key"`
 	Proxy      string `json:"proxy"`
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes int    `json:"retry_times"` // 重试次数
@@ -145,7 +148,6 @@ type DingtalkAppRequestConfig struct {
 type FeishuAppRequestConfig struct {
 	AppID         string `json:"app_id"`
 	AppSecret     string `json:"app_secret"`
-	ContactKey    string `json:"contact_key"`
 	ReceiveIDType string `json:"receive_id_type,omitempty"`
 	Proxy         string `json:"proxy"`
 	Timeout       int    `json:"timeout"`     // 超时时间（毫秒）
@@ -153,11 +155,26 @@ type FeishuAppRequestConfig struct {
 	RetrySleep    int    `json:"retry_sleep"` // 重试等待时间（毫秒）
 }
 
+type FeishuRequestConfig struct {
+	AppID     string `json:"app_id"`
+	AppSecret string `json:"app_secret"`
+}
+
+type DingtalkRequestConfig struct {
+	AppKey    string `json:"app_key"`
+	AppSecret string `json:"app_secret"`
+}
+
+type WecomRequestConfig struct {
+	CorpID     string `json:"corp_id"`
+	CorpSecret string `json:"corp_secret"`
+	AgentID    int    `json:"agent_id"`
+}
+
 type WecomAppRequestConfig struct {
 	CorpID     string `json:"corp_id"`
 	CorpSecret string `json:"corp_secret"`
 	AgentID    int    `json:"agent_id"`
-	ContactKey string `json:"contact_key"`
 	Proxy      string `json:"proxy"`
 	Timeout    int    `json:"timeout"`     // 超时时间（毫秒）
 	RetryTimes int    `json:"retry_times"` // 重试次数
@@ -243,7 +260,9 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	}
 
 	httpConfig := nc.RequestConfig.HTTPRequestConfig
-
+	// 设置代理
+	var proxyFunc func(*http.Request) (*url.URL, error)
+	proxy := httpConfig.Proxy
 	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的超时时间
 	timeout := httpConfig.Timeout
 	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil {
@@ -251,12 +270,39 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		if flashDutyTimeout > 0 {
 			timeout = flashDutyTimeout
 		}
+		if nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
+			proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
+		}
 	}
-	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的超时时间
+	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的超时时间和代理
 	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
 		dingtalkAppTimeout := nc.RequestConfig.DingtalkAppRequestConfig.Timeout
 		if dingtalkAppTimeout > 0 {
 			timeout = dingtalkAppTimeout
+		}
+		if nc.RequestConfig.DingtalkAppRequestConfig.Proxy != "" {
+			proxy = nc.RequestConfig.DingtalkAppRequestConfig.Proxy
+		}
+	}
+	// 对于 FeishuApp 类型，优先使用 FeishuApp 配置中的超时时间和代理
+	if nc.RequestType == "feishuapp" && nc.RequestConfig.FeishuAppRequestConfig != nil {
+		feishuAppTimeout := nc.RequestConfig.FeishuAppRequestConfig.Timeout
+		if feishuAppTimeout > 0 {
+			timeout = feishuAppTimeout
+		}
+		if nc.RequestConfig.FeishuAppRequestConfig.Proxy != "" {
+			proxy = nc.RequestConfig.FeishuAppRequestConfig.Proxy
+		}
+	}
+
+	// 对于 WecomApp 类型，优先使用 WecomApp 配置中的超时时间和代理
+	if nc.RequestType == "wecomapp" && nc.RequestConfig.WecomAppRequestConfig != nil {
+		wecomAppTimeout := nc.RequestConfig.WecomAppRequestConfig.Timeout
+		if wecomAppTimeout > 0 {
+			timeout = wecomAppTimeout
+		}
+		if nc.RequestConfig.WecomAppRequestConfig.Proxy != "" {
+			proxy = nc.RequestConfig.WecomAppRequestConfig.Proxy
 		}
 	}
 
@@ -275,21 +321,6 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		httpConfig.RetryInterval = 100
 	}
 
-	// 设置代理
-	var proxyFunc func(*http.Request) (*url.URL, error)
-	proxy := httpConfig.Proxy
-	// 对于 FlashDuty 类型，优先使用 FlashDuty 配置中的代理
-	if nc.RequestType == "flashduty" && nc.RequestConfig.FlashDutyRequestConfig != nil && nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
-		proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
-	}
-	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
-	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
-		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
-	}
-	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的代理
-	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil && nc.RequestConfig.DingtalkAppRequestConfig.Proxy != "" {
-		proxy = nc.RequestConfig.DingtalkAppRequestConfig.Proxy
-	}
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
 		if err != nil {

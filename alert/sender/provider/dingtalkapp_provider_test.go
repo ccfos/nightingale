@@ -23,7 +23,6 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 	appCfg := &models.DingtalkAppRequestConfig{
 		AppKey:     appKey,
 		AppSecret:  appSecret,
-		ContactKey: "phone",
 		Timeout:    10000,
 		RetryTimes: 1,
 		RetrySleep: 1,
@@ -32,6 +31,9 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 	p := &DingtalkAppProvider{}
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "dingtalkapp",
+		ParamConfig: &models.NotifyParamConfig{
+			UserInfo: &models.UserInfo{ContactKey: "phone"},
+		},
 		RequestConfig: &models.RequestConfig{
 			DingtalkAppRequestConfig: appCfg,
 			HTTPRequestConfig: &models.HTTPRequestConfig{
@@ -88,7 +90,6 @@ func TestDingtalkAppProviderNotifyGroup(t *testing.T) {
 	appCfg := &models.DingtalkAppRequestConfig{
 		AppKey:     appKey,
 		AppSecret:  appSecret,
-		ContactKey: "dingtalk_userid",
 		Timeout:    10000,
 		RetryTimes: 1,
 		RetrySleep: 1,
@@ -97,6 +98,9 @@ func TestDingtalkAppProviderNotifyGroup(t *testing.T) {
 	p := &DingtalkAppProvider{}
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "dingtalkapp",
+		ParamConfig: &models.NotifyParamConfig{
+			UserInfo: &models.UserInfo{ContactKey: "dingtalk_userid"},
+		},
 		RequestConfig: &models.RequestConfig{
 			DingtalkAppRequestConfig: appCfg,
 			HTTPRequestConfig: &models.HTTPRequestConfig{

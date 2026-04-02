@@ -29,11 +29,13 @@ func TestFeishuAppProviderNotify(t *testing.T) {
 
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "feishuapp",
+		ParamConfig: &models.NotifyParamConfig{
+			UserInfo: &models.UserInfo{ContactKey: contactKey},
+		},
 		RequestConfig: &models.RequestConfig{
 			FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
 				AppID:         appID,
 				AppSecret:     appSecret,
-				ContactKey:    contactKey,
 				ReceiveIDType: receiveIDType,
 				Timeout:       10000,
 				RetryTimes:    1,

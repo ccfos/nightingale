@@ -49,9 +49,6 @@ func (p *DingtalkAppProvider) Check(config *models.NotifyChannelConfig) error {
 	if strings.TrimSpace(appConfig.AppSecret) == "" {
 		return errors.New("dingtalk app provider requires app_secret")
 	}
-	if strings.TrimSpace(appConfig.ContactKey) == "" {
-		return errors.New("dingtalk app provider requires contact_key")
-	}
 	if appConfig.Timeout <= 0 {
 		appConfig.Timeout = 10000
 	}
@@ -71,23 +68,36 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	}
 	appConfig := req.Config.RequestConfig.DingtalkAppRequestConfig
 	p.appConfig = appConfig
-	logger.Infof("dingtalkapp notify start: sendtos=%d groups=%d contact_key=%s", len(req.Sendtos), len(req.ImGroupIDs), appConfig.ContactKey)
-	_, err := p.GetAccessToken(ctx, req.HttpClient)
+
+	logger.Infof("dingtalkapp notify start: sendtos=%d groups=%d", len(req.Sendtos), len(req.ImGroupIDs))
+	accessToken, err := GetAccessToken(ctx, req.HttpClient, appConfig.AppKey, appConfig.AppSecret)
 	if err != nil {
 		return &NotifyResult{
 			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
 			Response: "get access token failed: " + err.Error(),
 			Err:      err,
 		}
+	} else {
+		p.AccessToken = accessToken
 	}
-
 	userIDs := make([]string, 0, len(req.Sendtos))
+	contactKey := ""
+	if req.Config.ParamConfig != nil && req.Config.ParamConfig.UserInfo != nil {
+		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
+	}
+	if contactKey == "" {
+		return &NotifyResult{
+			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
+			Response: "contact key cannot be empty",
+			Err:      errors.New("contact key cannot be empty"),
+		}
+	}
 	for _, sendto := range req.Sendtos {
 		s := strings.TrimSpace(sendto)
 		if s == "" {
 			continue
 		}
-		if isPhoneContactKey(appConfig.ContactKey) {
+		if isPhoneContactKey(contactKey) {
 			uid, userErr := p.GetUserIDByMobile(ctx, req.HttpClient, s)
 			if userErr != nil {
 				return &NotifyResult{
@@ -135,14 +145,9 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	imageBase64 := pickImageBase64(req.Events)
 	if imageBase64 != "" {
 		var uploadErr error
-		imageMediaID, uploadErr = p.UploadMedia(ctx, req.HttpClient, "image", imageBase64)
+		imageMediaID, uploadErr = UploadMedia(ctx, req.HttpClient, p.AccessToken, "image", imageBase64)
 		if uploadErr != nil {
 			logger.Errorf("dingtalkapp upload image failed: %v", uploadErr)
-			return &NotifyResult{
-				Target:   strings.Join(append(userIDs, groupIDs...), ","),
-				Response: "",
-				Err:      uploadErr,
-			}
 		}
 	}
 
@@ -204,11 +209,11 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	}
 }
 
-func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Client, mediaType, imageBase64 string) (string, error) {
+func UploadMedia(ctx context.Context, client *http.Client, accessToken, mediaType, imageBase64 string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.AccessToken == "" {
+	if accessToken == "" {
 		return "", errors.New("access token cannot be empty")
 	}
 	if mediaType == "" {
@@ -241,7 +246,7 @@ func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Clie
 		return "", fmt.Errorf("close multipart writer failed: %w", err)
 	}
 
-	uploadURL := fmt.Sprintf("%s?access_token=%s", dingtalkAppMediaUploadURL, url.QueryEscape(p.AccessToken))
+	uploadURL := fmt.Sprintf("%s?access_token=%s", dingtalkAppMediaUploadURL, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, &body)
 	if err != nil {
 		return "", err
@@ -275,20 +280,20 @@ func (p *DingtalkAppProvider) UploadMedia(ctx context.Context, client *http.Clie
 }
 
 // GetAccessToken 获取钉钉应用 access_token。
-func (p *DingtalkAppProvider) GetAccessToken(ctx context.Context, client *http.Client) (string, error) {
+func GetAccessToken(ctx context.Context, client *http.Client, appKey, appSecret string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.appConfig.AppKey == "" {
+	if appKey == "" {
 		return "", errors.New("app key cannot be empty")
 	}
-	if p.appConfig.AppSecret == "" {
+	if appSecret == "" {
 		return "", errors.New("app secret cannot be empty")
 	}
 
 	reqBody, err := json.Marshal(map[string]string{
-		"appKey":    p.appConfig.AppKey,
-		"appSecret": p.appConfig.AppSecret,
+		"appKey":    appKey,
+		"appSecret": appSecret,
 	})
 	if err != nil {
 		return "", fmt.Errorf("marshal dingtalk gettoken request failed: %w", err)
@@ -321,8 +326,7 @@ func (p *DingtalkAppProvider) GetAccessToken(ctx context.Context, client *http.C
 		return "", fmt.Errorf("dingtalk gettoken failed or accessToken is empty, body: %s", string(respBytes))
 	}
 	logger.Infof("dingtalkapp get access token success")
-	p.AccessToken = result.AccessToken
-	return p.AccessToken, nil
+	return result.AccessToken, nil
 }
 
 // GetUserIDByMobile 根据手机号查询钉钉 userid。
@@ -658,13 +662,13 @@ func (p *DingtalkAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 				DingtalkAppRequestConfig: &models.DingtalkAppRequestConfig{
 					AppKey:     "app_key_for_test",
 					AppSecret:  "app_secret_for_test",
-					ContactKey: "dingtalk_userid",
 					Timeout:    10000,
 					RetryTimes: 1,
 					RetrySleep: 1,
 				},
 			},
 			ParamConfig: &models.NotifyParamConfig{
+				UserInfo: &models.UserInfo{ContactKey: "dingtalk_userid"},
 				Custom: models.Params{
 					Params: []models.ParamItem{
 						{Key: "single_title", CName: "Action Button Title", Type: "string"},

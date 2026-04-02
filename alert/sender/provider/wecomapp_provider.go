@@ -46,9 +46,6 @@ func (p *WecomAppProvider) Check(config *models.NotifyChannelConfig) error {
 	if c.AgentID <= 0 {
 		return errors.New("wecom app provider requires agent_id > 0")
 	}
-	if strings.TrimSpace(c.ContactKey) == "" {
-		return errors.New("wecom app provider requires contact_key")
-	}
 	if c.Timeout <= 0 {
 		c.Timeout = 10000
 	}
@@ -66,7 +63,6 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		return &NotifyResult{Err: errors.New("wecom app request config cannot be nil")}
 	}
 	p.appConfig = req.Config.RequestConfig.WecomAppRequestConfig
-	cfg := p.appConfig
 
 	token, err := p.getAccessToken(ctx, req.HttpClient)
 	if err != nil {
@@ -77,6 +73,10 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		}
 	}
 	p.accessToken = token
+	contactKey := ""
+	if req.Config.ParamConfig != nil && req.Config.ParamConfig.UserInfo != nil && req.Config.ParamConfig.UserInfo.ContactKey != "" {
+		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
+	}
 
 	userIDs := make([]string, 0, len(req.Sendtos))
 	for _, sendto := range req.Sendtos {
@@ -84,7 +84,8 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		if s == "" {
 			continue
 		}
-		if isPhoneContactKey(cfg.ContactKey) {
+
+		if isPhoneContactKey(contactKey) {
 			uid, e := p.getUserIDByMobile(ctx, req.HttpClient, s)
 			if e != nil {
 				return &NotifyResult{
@@ -94,7 +95,7 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 				}
 			}
 			userIDs = append(userIDs, uid)
-		} else if isEmailContactKey(cfg.ContactKey) {
+		} else if isEmailContactKey(contactKey) {
 			uid, e := p.getUserIDByEmail(ctx, req.HttpClient, s)
 			if e != nil {
 				return &NotifyResult{
@@ -416,7 +417,6 @@ func (p *WecomAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 					CorpID:     "wwxxxxxxxxxxxxxxxx",
 					CorpSecret: "secret_xxx",
 					AgentID:    1000001,
-					ContactKey: "wecom_userid",
 					Timeout:    10000,
 					RetryTimes: 1,
 					RetrySleep: 1000,

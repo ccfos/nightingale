@@ -65,9 +65,6 @@ func (p *FeishuAppProvider) Check(config *models.NotifyChannelConfig) error {
 	if strings.TrimSpace(c.AppSecret) == "" {
 		return errors.New("feishu app provider requires app_secret")
 	}
-	if strings.TrimSpace(c.ContactKey) == "" {
-		return errors.New("feishu app provider requires contact_key")
-	}
 	if v := strings.TrimSpace(c.ReceiveIDType); v != "" {
 		if !isFeishuReceiveIDTypeAllowed(strings.ToLower(v)) {
 			return errors.New("feishu app provider receive_id_type must be user_id, email, or chat_id")
@@ -121,7 +118,8 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	resps := make([]string, 0, len(req.Sendtos)+len(req.ImGroupIDs))
 
 	// 个人: 使用 feishuapp_request_config.receive_id_type；未填时与历史一致，按 contact_key 推断。
-	receiveIDType := resolveFeishuReceiveIDType(p.appConfig.ReceiveIDType, p.appConfig.ContactKey)
+	contactKey := req.Config.ParamConfig.UserInfo.ContactKey
+	receiveIDType := resolveFeishuReceiveIDType(p.appConfig.ReceiveIDType, contactKey)
 	for _, rid := range req.Sendtos {
 		receiveID := strings.TrimSpace(rid)
 		if receiveID == "" {
@@ -379,7 +377,6 @@ func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
 					AppID:         "cli_xxx",
 					AppSecret:     "xxx",
-					ContactKey:    "open_id",
 					ReceiveIDType: "open_id",
 					Timeout:       10000,
 					RetryTimes:    1,
@@ -387,6 +384,7 @@ func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 				},
 			},
 			ParamConfig: &models.NotifyParamConfig{
+				UserInfo: &models.UserInfo{ContactKey: ""},
 				Custom: models.Params{
 					Params: []models.ParamItem{
 						{Key: "app_id", CName: "App ID", Type: "string"},
