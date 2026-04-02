@@ -155,6 +155,10 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
+	if len(e.Headers) != len(otherES.Headers) {                                                                                                                                                                    
+        return false                                                
+    }  
+
 	for k, v := range e.Headers {
 		if otherES.Headers[k] != v {
 			return false
@@ -294,7 +298,7 @@ func (e *Elasticsearch) processES6Fields(fieldData interface{}, fieldMap map[str
 func (e *Elasticsearch) processES7Field(fieldName string, fieldData interface{}, fieldMap map[string]struct{}, fields *[]string) {
 	fieldMapData, ok := fieldData.(map[string]interface{})                                                                      
     if !ok {                                                                                                                                                                                                 
-            return
+		return
     }                                                                                                                                                                                                        
     fieldType := getFieldType(fieldName, fieldMapData)
 	
