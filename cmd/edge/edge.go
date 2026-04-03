@@ -75,7 +75,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 		taskTplsCache := memsto.NewTaskTplCache(ctx)
 		notifyRuleCache := memsto.NewNotifyRuleCache(ctx, syncStats)
-		notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats, redis)
+		notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
 		messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
 
 		promClients := prom.NewPromClient(ctx)

@@ -14,12 +14,12 @@ import (
 
 	"gopkg.in/gomail.v2"
 
+	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
-	dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/storage"
+	dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/list"
@@ -64,23 +64,22 @@ type NotifyChannelCacheType struct {
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
 
-	redis               storage.Redis
-	dingtalkStreamMu    sync.Mutex
+	dingtalkLeaderNaming  *naming.Naming
+	dingtalkStreamMu      sync.Mutex
 	dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
 }
 
 type dingtalkStreamRunner struct {
-	stop          func()
+	stop           func()
 	cfgFingerprint string
 }
 
-func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *NotifyChannelCacheType {
+func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
 		statTotal:             -1,
 		statLastUpdated:       -1,
 		ctx:                   ctx,
 		stats:                 stats,
-		redis:                 redis,
 		channels:              make(map[int64]*models.NotifyChannelConfig),
 		channelsQueue:         make(map[int64]*list.SafeListLimited),
 		queueQuitCh:           make(map[int64]chan struct{}),
@@ -91,7 +90,7 @@ func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) 
 	}
 
 	ncc.SyncNotifyChannels()
-	if ncc.ctx != nil && ncc.ctx.IsCenter && ncc.ctx.DB != nil && ncc.redis != nil {
+	if ncc.ctx != nil && ncc.ctx.IsCenter && ncc.ctx.DB != nil {
 		go ncc.loopReconcileDingtalkStreams()
 	}
 	return ncc
@@ -119,6 +118,10 @@ func (ncc *NotifyChannelCacheType) reconcileDingtalkStreamsFromCache() {
 // SetNotifyRecordFunc 设置通知记录回调函数
 func (ncc *NotifyChannelCacheType) SetNotifyRecordFunc(fn NotifyRecordFunc) {
 	ncc.notifyRecordFunc = fn
+}
+
+func (ncc *NotifyChannelCacheType) SetDingtalkLeaderNaming(nm *naming.Naming) {
+	ncc.dingtalkLeaderNaming = nm
 }
 
 func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -580,8 +583,8 @@ func dingtalkStreamCfgFingerprint(appKey, appSecret, proxy string) string {
 
 type dingtalkStreamDesired struct {
 	appKey, appSecret, proxy string
-	fingerprint               string
-	channel                   *models.NotifyChannelConfig
+	fingerprint              string
+	channel                  *models.NotifyChannelConfig
 }
 
 func desiredDingtalkStreamsByAppKey(snapshot map[int64]*models.NotifyChannelConfig) map[string]dingtalkStreamDesired {
@@ -643,7 +646,12 @@ func (ncc *NotifyChannelCacheType) shutdownAllDingtalkStreams() {
 }
 
 func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*models.NotifyChannelConfig) {
-	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || ncc.redis == nil {
+	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil {
+		ncc.shutdownAllDingtalkStreams()
+		return
+	}
+
+	if ncc.dingtalkLeaderNaming != nil && !ncc.dingtalkLeaderNaming.IamLeader() {
 		ncc.shutdownAllDingtalkStreams()
 		return
 	}
@@ -687,7 +695,6 @@ func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*
 
 	for _, w := range starts {
 		stop := dtstream.StartRunner(context.Background(), dtstream.RunnerDeps{
-			Redis:         ncc.redis,
 			Nctx:          ncc.ctx,
 			AppKey:        w.appKey,
 			AppSecret:     w.appSecret,

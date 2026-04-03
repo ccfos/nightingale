@@ -66,7 +66,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	taskTplsCache := memsto.NewTaskTplCache(ctx)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 	notifyRuleCache := memsto.NewNotifyRuleCache(ctx, syncStats)
-	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats, redis)
+	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
 	messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx)
@@ -110,6 +110,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	models.VerifyByProvider = provider.VerifyChannelConfig
 
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
+	notifyChannelCache.SetDingtalkLeaderNaming(naming)
 
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats, datasourceCache)

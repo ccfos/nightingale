@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/models"
 	nctx "github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/open-dingtalk/dingtalk-stream-sdk-go/event"
 	"github.com/open-dingtalk/dingtalk-stream-sdk-go/payload"
 	"github.com/toolkits/pkg/logger"
@@ -33,7 +31,6 @@ type coolAppEventData struct {
 // EventHandlerDeps 处理 install/uninstall 所需依赖。
 type EventHandlerDeps struct {
 	Nctx       *nctx.Context
-	Redis      storage.Redis
 	ClientID   string
 	AppSecret  string
 	HTTPClient *http.Client
@@ -60,22 +57,7 @@ func (p *eventProcessor) onDataFrame(c context.Context, df *payload.DataFrame) (
 	return event.NewSuccessResponse()
 }
 
-func (p *eventProcessor) dedupe(stdCtx context.Context, eventID string) bool {
-	if p.Redis == nil || eventID == "" {
-		return true
-	}
-	ok, err := p.Redis.SetNX(stdCtx, eventDedupeRedisKey(eventID), "1", 7*24*time.Hour).Result()
-	if err != nil {
-		logger.Warningf("dingtalk stream event dedupe redis err: %v", err)
-		return true
-	}
-	return ok
-}
-
 func (p *eventProcessor) handleInstall(stdCtx context.Context, hdr *event.EventHeader, dataJSON string) {
-	if !p.dedupe(stdCtx, hdr.EventId) {
-		return
-	}
 	var raw coolAppEventData
 	if err := json.Unmarshal([]byte(dataJSON), &raw); err != nil {
 		logger.Warningf("dingtalk install parse data: %v", err)
@@ -118,9 +100,6 @@ func (p *eventProcessor) handleInstall(stdCtx context.Context, hdr *event.EventH
 }
 
 func (p *eventProcessor) handleUninstall(stdCtx context.Context, hdr *event.EventHeader, dataJSON string) {
-	if !p.dedupe(stdCtx, hdr.EventId) {
-		return
-	}
 	var raw coolAppEventData
 	if err := json.Unmarshal([]byte(dataJSON), &raw); err != nil {
 		logger.Warningf("dingtalk uninstall parse data: %v", err)
@@ -138,4 +117,3 @@ func (p *eventProcessor) handleUninstall(stdCtx context.Context, hdr *event.Even
 		logger.Errorf("dingtalk uninstall db: %v", err)
 	}
 }
-
