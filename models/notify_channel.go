@@ -255,11 +255,19 @@ func NotifyChannelGets(ctx *ctx.Context, id int64, name, ident string, enabled i
 }
 
 func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
-	if nc.RequestConfig == nil || nc.RequestConfig.HTTPRequestConfig == nil {
-		return nil, fmt.Errorf("%+v http request config not found", nc)
+	if nc.RequestConfig == nil {
+		return nil, fmt.Errorf("%+v request config not found", nc)
 	}
 
 	httpConfig := nc.RequestConfig.HTTPRequestConfig
+	if httpConfig == nil {
+		httpConfig = &HTTPRequestConfig{
+			Timeout:       10000,
+			Concurrency:   5,
+			RetryTimes:    3,
+			RetryInterval: 100,
+		}
+	}
 	// 设置代理
 	var proxyFunc func(*http.Request) (*url.URL, error)
 	proxy := httpConfig.Proxy
@@ -273,6 +281,11 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 		if nc.RequestConfig.FlashDutyRequestConfig.Proxy != "" {
 			proxy = nc.RequestConfig.FlashDutyRequestConfig.Proxy
 		}
+	}
+
+	// 对于 PagerDuty 类型，优先使用 PagerDuty 配置中的代理
+	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
+		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
 	}
 	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的超时时间和代理
 	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {

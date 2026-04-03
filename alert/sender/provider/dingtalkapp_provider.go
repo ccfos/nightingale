@@ -21,7 +21,8 @@ import (
 var (
 	dingtalkAppAccessTokenURL  = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
 	dingtalkAppUserByMobileURL = "https://oapi.dingtalk.com/topapi/v2/user/getbymobile"
-	dingtalkAppMediaUploadURL  = "https://oapi.dingtalk.com/media/upload"
+	dingtalkScenarioGroupGetURL = "https://oapi.dingtalk.com/topapi/im/chat/scenegroup/get"
+	dingtalkAppMediaUploadURL   = "https://oapi.dingtalk.com/media/upload"
 	dingtalkRobotBatchSendURL  = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
 	dingtalkRobotGroupSendURL  = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
 )
@@ -327,6 +328,72 @@ func GetAccessToken(ctx context.Context, client *http.Client, appKey, appSecret 
 	}
 	logger.Infof("dingtalkapp get access token success")
 	return result.AccessToken, nil
+}
+
+// DingtalkScenarioGroupInfo 场景群基本信息，对应开放平台「查询群信息」接口 result 中的常用字段。
+// 文档：https://open.dingtalk.com/document/development/queries-the-basic-information-of-a-scenario-group
+type DingtalkScenarioGroupInfo struct {
+	OpenConversationID string   `json:"open_conversation_id"`
+	Title              string   `json:"title"`
+	Icon               string   `json:"icon"`
+	OwnerStaffID       string   `json:"owner_staff_id"`
+	GroupURL           string   `json:"group_url"`
+	MemberAmount       int      `json:"member_amount"`
+	SubAdminStaffIDs   []string `json:"sub_admin_staff_ids"`
+}
+
+// GetScenarioGroupInfo 根据 open_conversation_id 查询场景群基本信息（需 chat 相关读权限）。
+func GetScenarioGroupInfo(ctx context.Context, client *http.Client, accessToken, openConversationID string) (*DingtalkScenarioGroupInfo, error) {
+	if client == nil {
+		return nil, errors.New("http client not found")
+	}
+	if strings.TrimSpace(accessToken) == "" {
+		return nil, errors.New("access token cannot be empty")
+	}
+	if strings.TrimSpace(openConversationID) == "" {
+		return nil, errors.New("open_conversation_id cannot be empty")
+	}
+
+	reqBody, err := json.Marshal(map[string]string{
+		"open_conversation_id": strings.TrimSpace(openConversationID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("marshal scenegroup get request failed: %w", err)
+	}
+
+	u := fmt.Sprintf("%s?access_token=%s", dingtalkScenarioGroupGetURL, url.QueryEscape(accessToken))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var envelope struct {
+		ErrCode json.RawMessage            `json:"errcode"`
+		ErrMsg  string                     `json:"errmsg"`
+		Result  *DingtalkScenarioGroupInfo `json:"result"`
+	}
+	if err = json.Unmarshal(respBytes, &envelope); err != nil {
+		return nil, fmt.Errorf("parse dingtalk scenegroup get response failed: %w, body: %s", err, string(respBytes))
+	}
+	if code := normalizedDingtalkCode(envelope.ErrCode); code != "" && code != "0" {
+		return nil, fmt.Errorf("dingtalk scenegroup get failed: errcode=%s errmsg=%s", code, envelope.ErrMsg)
+	}
+	if envelope.Result == nil {
+		return nil, fmt.Errorf("dingtalk scenegroup get succeeded but result is empty, body: %s", string(respBytes))
+	}
+	return envelope.Result, nil
 }
 
 // GetUserIDByMobile 根据手机号查询钉钉 userid。

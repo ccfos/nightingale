@@ -133,3 +133,36 @@ func TestDingtalkAppProviderNotifyGroup(t *testing.T) {
 	result := p.Notify(context.Background(), req)
 	t.Logf("group result: %+v", result)
 }
+
+func TestGetScenarioGroupInfo(t *testing.T) {
+	env := readSenderDotEnv(t)
+	appKey := senderEnvString(env, "DingtalkAppKey")
+	appSecret := senderEnvString(env, "DingtalkAppSecret")
+	openConversationID := senderEnvString(env, "DingtalkOpenConversationID")
+
+	if appKey == "" || appSecret == "" || openConversationID == "" {
+		t.Skip("跳过：在 .env.json 填写 DingtalkAppKey、DingtalkAppSecret、DingtalkOpenConversationID")
+	}
+	cfg := &models.NotifyChannelConfig{
+		RequestType: "dingtalkapp",
+		RequestConfig: &models.RequestConfig{
+			DingtalkAppRequestConfig: &models.DingtalkAppRequestConfig{
+				AppKey:    appKey,
+				AppSecret: appSecret,
+			},
+		},
+	}
+	client, err := models.GetHTTPClient(cfg)
+	if err != nil {
+		t.Fatalf("Failed to create HTTP client: %v", err)
+	}
+	accessToken, err := GetAccessToken(context.Background(), client, appKey, appSecret)
+	if err != nil {
+		t.Fatalf("Failed to get access token: %v", err)
+	}
+	info, err := GetScenarioGroupInfo(context.Background(), client, accessToken, openConversationID)
+	if err != nil {
+		t.Fatalf("Failed to get scenario group info: %v", err)
+	}
+	t.Logf("scenario group info: %+v", info)
+}

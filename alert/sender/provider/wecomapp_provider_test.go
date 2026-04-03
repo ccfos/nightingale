@@ -21,12 +21,14 @@ func TestTruncateWecomMarkdown(t *testing.T) {
 func TestWecomAppProviderCheck(t *testing.T) {
 	p := &WecomAppProvider{}
 	base := &models.NotifyChannelConfig{
+		ParamConfig: &models.NotifyParamConfig{
+			UserInfo: &models.UserInfo{ContactKey: "wecom_userid"},
+		},
 		RequestConfig: &models.RequestConfig{
 			WecomAppRequestConfig: &models.WecomAppRequestConfig{
 				CorpID:     "c",
 				CorpSecret: "s",
 				AgentID:    1,
-				ContactKey: "wecom_userid",
 			},
 		},
 	}
@@ -85,6 +87,9 @@ func TestWecomAppProviderNotifyLive(t *testing.T) {
 
 	cfg := &models.NotifyChannelConfig{
 		RequestType: "http",
+		ParamConfig: &models.NotifyParamConfig{
+			UserInfo: &models.UserInfo{ContactKey: contactKey},
+		},
 		RequestConfig: &models.RequestConfig{
 			HTTPRequestConfig: &models.HTTPRequestConfig{
 				URL:           "https://qyapi.weixin.qq.com",
@@ -98,7 +103,6 @@ func TestWecomAppProviderNotifyLive(t *testing.T) {
 				CorpID:     corpID,
 				CorpSecret: secret,
 				AgentID:    agentID,
-				ContactKey: contactKey,
 				Timeout:    15000,
 				RetryTimes: 2,
 				RetrySleep: 500,
