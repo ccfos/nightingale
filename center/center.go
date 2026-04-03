@@ -114,7 +114,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	taskTplCache := memsto.NewTaskTplCache(ctx)
 	configCvalCache := memsto.NewCvalCache(ctx, syncStats)
 	notifyRuleCache := memsto.NewNotifyRuleCache(ctx, syncStats)
-	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats)
+	notifyChannelCache := memsto.NewNotifyChannelCache(ctx, syncStats, redis)
 	messageTemplateCache := memsto.NewMessageTemplateCache(ctx, syncStats)
 	userTokenCache := memsto.NewUserTokenCache(ctx, syncStats)
 

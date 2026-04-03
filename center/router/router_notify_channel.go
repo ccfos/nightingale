@@ -43,7 +43,7 @@ func (rt *Router) feishuVisibleChatsGet(c *gin.Context) {
 	}
 	pageSize := req.PageSize
 	if pageSize <= 0 {
-		pageSize = 20
+		pageSize = 50
 	}
 	userIDType := req.UserIDType
 	if userIDType == "" {
@@ -237,6 +237,63 @@ func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
 	}
 	sort.Strings(lst)
 	ginx.NewRender(c).Data(lst, nil)
+}
+
+func (rt *Router) dingtalkGroupsGetByNotifyChannel(c *gin.Context) {
+	type reqBody struct {
+		Page     int `json:"page"`
+		PageSize int `json:"page_size"`
+	}
+
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+	if nc.RequestType != "dingtalkapp" {
+		ginx.Bomb(http.StatusBadRequest, "notify channel is not dingtalkapp")
+	}
+	if nc.RequestConfig == nil || nc.RequestConfig.DingtalkAppRequestConfig == nil {
+		ginx.Bomb(http.StatusBadRequest, "dingtalk app request config cannot be nil")
+	}
+	clientID := nc.RequestConfig.DingtalkAppRequestConfig.AppKey
+	if clientID == "" {
+		ginx.Bomb(http.StatusBadRequest, "dingtalk app client_id(app_key) cannot be empty")
+	}
+
+	req := reqBody{
+		Page:     1,
+		PageSize: 50,
+	}
+	if c.Request != nil && c.Request.ContentLength > 0 {
+		ginx.BindJSON(c, &req)
+		if req.Page == 0 {
+			req.Page = 1
+		}
+		if req.PageSize == 0 {
+			req.PageSize = 50
+		}
+	}
+
+	page := req.Page
+	pageSize := req.PageSize
+	if page < 1 {
+		ginx.Bomb(http.StatusBadRequest, "page must be >= 1")
+	}
+	if pageSize < 1 || pageSize > 500 {
+		ginx.Bomb(http.StatusBadRequest, "page_size must be in [1, 500]")
+	}
+	offset := (page - 1) * pageSize
+
+	list, total, err := models.DingtalkGroupsGetByClientIDPage(rt.Ctx, clientID, true, offset, pageSize)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(gin.H{
+		"list":      list,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	}, nil)
 }
 
 func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {

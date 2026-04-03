@@ -1,7 +1,10 @@
 package memsto
 
 import (
+	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,12 +17,17 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
+	dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
 )
+
+// dingtalkStreamReconcileInterval 多副本下 holder 崩溃后，其它实例在不依赖「通知媒介变更」的情况下周期性抢 Redis 租约并拉起 Stream。应小于租约 TTL（默认 30s）。
+const dingtalkStreamReconcileInterval = 10 * time.Second
 
 // NotifyTask 表示一个通知发送任务
 type NotifyTask struct {
@@ -55,24 +63,57 @@ type NotifyChannelCacheType struct {
 
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
+
+	redis               storage.Redis
+	dingtalkStreamMu    sync.Mutex
+	dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
 }
 
-func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
+type dingtalkStreamRunner struct {
+	stop          func()
+	cfgFingerprint string
+}
+
+func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats, redis storage.Redis) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
-		statTotal:       -1,
-		statLastUpdated: -1,
-		ctx:             ctx,
-		stats:           stats,
-		channels:        make(map[int64]*models.NotifyChannelConfig),
-		channelsQueue:   make(map[int64]*list.SafeListLimited),
-		queueQuitCh:     make(map[int64]chan struct{}),
-		httpClient:      make(map[int64]*http.Client),
-		smtpCh:          make(map[int64]chan *models.EmailContext),
-		smtpQuitCh:      make(map[int64]chan struct{}),
+		statTotal:             -1,
+		statLastUpdated:       -1,
+		ctx:                   ctx,
+		stats:                 stats,
+		redis:                 redis,
+		channels:              make(map[int64]*models.NotifyChannelConfig),
+		channelsQueue:         make(map[int64]*list.SafeListLimited),
+		queueQuitCh:           make(map[int64]chan struct{}),
+		httpClient:            make(map[int64]*http.Client),
+		smtpCh:                make(map[int64]chan *models.EmailContext),
+		smtpQuitCh:            make(map[int64]chan struct{}),
+		dingtalkStreamRunners: make(map[string]*dingtalkStreamRunner),
 	}
 
 	ncc.SyncNotifyChannels()
+	if ncc.ctx != nil && ncc.ctx.IsCenter && ncc.ctx.DB != nil && ncc.redis != nil {
+		go ncc.loopReconcileDingtalkStreams()
+	}
 	return ncc
+}
+
+// loopReconcileDingtalkStreams 定时根据内存中的媒介快照重算 DingTalk Stream，便于 holder 挂掉且租约过期后其它副本抢占。
+func (ncc *NotifyChannelCacheType) loopReconcileDingtalkStreams() {
+	ticker := time.NewTicker(dingtalkStreamReconcileInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		ncc.reconcileDingtalkStreamsFromCache()
+	}
+}
+
+func (ncc *NotifyChannelCacheType) reconcileDingtalkStreamsFromCache() {
+	ncc.RLock()
+	snapshot := make(map[int64]*models.NotifyChannelConfig, len(ncc.channels))
+	for id, ch := range ncc.channels {
+		snapshot[id] = ch
+	}
+	ncc.RUnlock()
+	ncc.reconcileDingtalkStreams(snapshot)
 }
 
 // SetNotifyRecordFunc 设置通知记录回调函数
@@ -90,17 +131,17 @@ func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 
 func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, total, lastUpdated int64) {
 	ncc.Lock()
-	defer ncc.Unlock()
-
 	// 1. 处理需要删除的通道
 	ncc.removeDeletedChannels(m)
 
 	// 2. 处理新增和更新的通道
 	ncc.addOrUpdateChannels(m)
 
-	// only one goroutine used, so no need lock
 	ncc.statTotal = total
 	ncc.statLastUpdated = lastUpdated
+	ncc.Unlock()
+
+	ncc.reconcileDingtalkStreams(m)
 }
 
 // removeDeletedChannels 移除已删除的通道
@@ -529,6 +570,139 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 				open = false
 			}
 		}
+	}
+}
+
+func dingtalkStreamCfgFingerprint(appKey, appSecret, proxy string) string {
+	h := sha256.Sum256([]byte(appKey + "\n" + appSecret + "\n" + proxy))
+	return hex.EncodeToString(h[:])
+}
+
+type dingtalkStreamDesired struct {
+	appKey, appSecret, proxy string
+	fingerprint               string
+	channel                   *models.NotifyChannelConfig
+}
+
+func desiredDingtalkStreamsByAppKey(snapshot map[int64]*models.NotifyChannelConfig) map[string]dingtalkStreamDesired {
+	out := make(map[string]dingtalkStreamDesired)
+	for _, ch := range snapshot {
+		if ch == nil || ch.RequestType != "dingtalkapp" {
+			continue
+		}
+		if ch.RequestConfig == nil || ch.RequestConfig.DingtalkAppRequestConfig == nil {
+			continue
+		}
+		dc := ch.RequestConfig.DingtalkAppRequestConfig
+		if strings.TrimSpace(dc.AppKey) == "" || strings.TrimSpace(dc.AppSecret) == "" {
+			continue
+		}
+		fp := dingtalkStreamCfgFingerprint(dc.AppKey, dc.AppSecret, dc.Proxy)
+		if ex, ok := out[dc.AppKey]; ok {
+			if ex.fingerprint == fp {
+				if ex.channel != nil && ch.ID >= ex.channel.ID {
+					continue
+				}
+			} else {
+				prevID := int64(0)
+				if ex.channel != nil {
+					prevID = ex.channel.ID
+				}
+				logger.Warningf("dingtalkapp duplicate AppKey %s different credentials, prefer smaller channel id: keeping %d over %d",
+					dc.AppKey, prevID, ch.ID)
+				if ex.channel != nil && ch.ID > ex.channel.ID {
+					continue
+				}
+			}
+		}
+		out[dc.AppKey] = dingtalkStreamDesired{
+			appKey:      dc.AppKey,
+			appSecret:   dc.AppSecret,
+			proxy:       dc.Proxy,
+			fingerprint: fp,
+			channel:     ch,
+		}
+	}
+	return out
+}
+
+func (ncc *NotifyChannelCacheType) shutdownAllDingtalkStreams() {
+	ncc.dingtalkStreamMu.Lock()
+	stops := make([]func(), 0, len(ncc.dingtalkStreamRunners))
+	for appKey, r := range ncc.dingtalkStreamRunners {
+		if r != nil && r.stop != nil {
+			logger.Infof("dingtalk stream runner stopping appKey=%s reason=cache_shutdown", appKey)
+			stops = append(stops, r.stop)
+		}
+	}
+	ncc.dingtalkStreamRunners = make(map[string]*dingtalkStreamRunner)
+	ncc.dingtalkStreamMu.Unlock()
+	for _, s := range stops {
+		s()
+	}
+}
+
+func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*models.NotifyChannelConfig) {
+	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || ncc.redis == nil {
+		ncc.shutdownAllDingtalkStreams()
+		return
+	}
+
+	desired := desiredDingtalkStreamsByAppKey(snapshot)
+
+	ncc.dingtalkStreamMu.Lock()
+	kept := make(map[string]*dingtalkStreamRunner)
+	var stops []func()
+	for appKey, r := range ncc.dingtalkStreamRunners {
+		w, ok := desired[appKey]
+		if ok && w.fingerprint == r.cfgFingerprint {
+			kept[appKey] = r
+			continue
+		}
+		if r != nil && r.stop != nil {
+			reason := "channel_removed_or_disabled"
+			if ok {
+				reason = "channel_config_changed"
+			}
+			logger.Infof("dingtalk stream runner stopping appKey=%s reason=%s", appKey, reason)
+			stops = append(stops, r.stop)
+		}
+	}
+	ncc.dingtalkStreamRunners = kept
+	ncc.dingtalkStreamMu.Unlock()
+
+	for _, s := range stops {
+		s()
+	}
+
+	var starts []dingtalkStreamDesired
+	ncc.dingtalkStreamMu.Lock()
+	for appKey, w := range desired {
+		if _, exists := ncc.dingtalkStreamRunners[appKey]; exists {
+			continue
+		}
+		starts = append(starts, w)
+	}
+	ncc.dingtalkStreamMu.Unlock()
+
+	for _, w := range starts {
+		stop := dtstream.StartRunner(context.Background(), dtstream.RunnerDeps{
+			Redis:         ncc.redis,
+			Nctx:          ncc.ctx,
+			AppKey:        w.appKey,
+			AppSecret:     w.appSecret,
+			Proxy:         w.proxy,
+			NotifyChannel: w.channel,
+		})
+		ncc.dingtalkStreamMu.Lock()
+		if _, exists := ncc.dingtalkStreamRunners[w.appKey]; exists {
+			ncc.dingtalkStreamMu.Unlock()
+			stop()
+			continue
+		}
+		ncc.dingtalkStreamRunners[w.appKey] = &dingtalkStreamRunner{stop: stop, cfgFingerprint: w.fingerprint}
+		ncc.dingtalkStreamMu.Unlock()
+		logger.Infof("dingtalk stream runner started appKey=%s", w.appKey)
 	}
 }
 
