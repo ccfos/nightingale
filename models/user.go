@@ -47,13 +47,14 @@ const (
 	Jira              = "jira"
 	JSMAlert          = "jsm_alert"
 
-	DingtalkKey  = "dingtalk_robot_token"
-	WecomKey     = "wecom_robot_token"
-	FeishuKey    = "feishu_robot_token"
-	MmKey        = "mm_webhook_url"
-	TelegramKey  = "telegram_robot_token"
-	LarkKey      = "lark_robot_token"
-	PagerDutyKey = "pagerduty_key"
+	DingtalkKey     = "dingtalk_robot_token"
+	WecomKey        = "wecom_robot_token"
+	FeishuKey       = "feishu_robot_token"
+	MmKey           = "mm_webhook_url"
+	TelegramKey     = "telegram_robot_token"
+	LarkKey         = "lark_robot_token"
+	PagerDutyKey    = "pagerduty_key"
+	SlackWebhookKey = "slack_webhook_url"
 
 	DingtalkDomain = "oapi.dingtalk.com"
 	WecomDomain    = "qyapi.weixin.qq.com"
@@ -69,8 +70,8 @@ const (
 )
 
 var (
-	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark, LarkCard}
-	DefaultContacts = []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey}
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard, Lark, LarkCard, SlackWebhook}
+	DefaultContacts = []string{DingtalkKey, WecomKey, FeishuKey, MmKey, TelegramKey, LarkKey, SlackWebhookKey}
 )
 
 type User struct {
@@ -1143,6 +1144,9 @@ func (u *User) ExtractToken(key string) (string, bool) {
 		return u.Email, u.Email != ""
 	case Lark, LarkCard:
 		ret := gjson.GetBytes(bs, LarkKey)
+		return ret.String(), ret.Exists()
+	case SlackWebhook:
+		ret := gjson.GetBytes(bs, SlackWebhookKey)
 		return ret.String(), ret.Exists()
 	case Phone:
 		return u.Phone, u.Phone != ""
