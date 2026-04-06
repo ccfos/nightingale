@@ -21,6 +21,7 @@ type DatasourceFilterFunc func([]*models.Datasource, *models.User) []*models.Dat
 
 var (
 	dbCtx                *ctx.Context
+	skillsPath           string
 	getPromClientFunc    PromClientGetter     = func(dsId int64) prom.API { return nil }
 	getSQLDatasourceFunc SQLDatasourceGetter  = defaultGetSQLDatasource
 	datasourceFilterFunc DatasourceFilterFunc = func(ds []*models.Datasource, u *models.User) []*models.Datasource { return ds }
@@ -31,6 +32,7 @@ func defaultGetSQLDatasource(dsType string, dsId int64) (datasource.Datasource, 
 }
 
 func SetDBCtx(c *ctx.Context)                              { dbCtx = c }
+func SetSkillsPath(path string)                             { skillsPath = path }
 func SetPromClientGetter(getter PromClientGetter)           { getPromClientFunc = getter }
 func SetSQLDatasourceGetter(getter SQLDatasourceGetter)     { getSQLDatasourceFunc = getter }
 func SetDatasourceFilter(filter DatasourceFilterFunc)        { datasourceFilterFunc = filter }
@@ -43,6 +45,7 @@ func ResetDatasourceGetters() {
 
 // Exported getters for tools sub-package
 func GetDBCtx() *ctx.Context                                              { return dbCtx }
+func GetSkillsPath() string                                               { return skillsPath }
 func GetPromClient(dsId int64) prom.API                                   { return getPromClientFunc(dsId) }
 func GetSQLDatasource(dsType string, dsId int64) (datasource.Datasource, bool) {
 	return getSQLDatasourceFunc(dsType, dsId)

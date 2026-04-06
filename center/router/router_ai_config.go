@@ -854,7 +854,7 @@ func testAILLMConfig(p *models.AILLMConfig) error {
 	hdrs := map[string]string{"Content-Type": "application/json"}
 
 	switch p.APIType {
-	case "openai":
+	case "openai", "ollama":
 		base := strings.TrimRight(p.APIURL, "/")
 		if strings.HasSuffix(base, "/chat/completions") {
 			reqURL = base
@@ -866,7 +866,26 @@ func testAILLMConfig(p *models.AILLMConfig) error {
 			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
 			"max_tokens": 5,
 		})
-		hdrs["Authorization"] = "Bearer " + p.APIKey
+		if p.APIKey != "" {
+			hdrs["Authorization"] = "Bearer " + p.APIKey
+		}
+	case "kimi":
+		// Kimi Code uses Anthropic Claude-compatible Messages API
+		base := strings.TrimRight(p.APIURL, "/")
+		if strings.HasSuffix(base, "/v1/messages") {
+			reqURL = base
+		} else if strings.HasSuffix(base, "/v1") {
+			reqURL = base + "/messages"
+		} else {
+			reqURL = base + "/v1/messages"
+		}
+		reqBody, _ = json.Marshal(map[string]interface{}{
+			"model":      p.Model,
+			"messages":   []map[string]interface{}{{"role": "user", "content": []map[string]string{{"type": "text", "text": "Hi"}}}},
+			"max_tokens": 5,
+		})
+		hdrs["x-api-key"] = p.APIKey
+		hdrs["anthropic-version"] = "2023-06-01"
 	case "claude":
 		reqURL = strings.TrimRight(p.APIURL, "/") + "/v1/messages"
 		reqBody, _ = json.Marshal(map[string]interface{}{

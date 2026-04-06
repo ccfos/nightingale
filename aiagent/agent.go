@@ -64,6 +64,7 @@ func (a *Agent) InitSkills(skillsPath string) {
 	if a.cfg.Skills == nil || skillsPath == "" {
 		return
 	}
+	SetSkillsPath(skillsPath)
 	a.skillRegistry = NewSkillRegistry(skillsPath)
 	if a.cfg.Skills.AutoSelect {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {

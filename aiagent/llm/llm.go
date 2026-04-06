@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,7 @@ const (
 	ProviderOllama  = "ollama"  // Ollama local models
 	ProviderBedrock = "bedrock" // AWS Bedrock
 	ProviderVertex  = "vertex"  // Google Vertex AI
+	ProviderKimi    = "kimi"   // Kimi Code (OpenAI-compatible)
 )
 
 // Role constants
@@ -157,6 +159,21 @@ func New(cfg *Config) (LLM, error) {
 			cfg.BaseURL = "http://localhost:11434/v1"
 		}
 		return NewOpenAI(cfg, client)
+	case ProviderKimi:
+		// Kimi Code uses Anthropic Claude-compatible API
+		if cfg.BaseURL == "" {
+			cfg.BaseURL = "https://api.kimi.com/coding/v1/messages"
+		} else {
+			base := strings.TrimRight(cfg.BaseURL, "/")
+			if strings.HasSuffix(base, "/v1/messages") {
+				cfg.BaseURL = base
+			} else if strings.HasSuffix(base, "/v1") {
+				cfg.BaseURL = base + "/messages"
+			} else {
+				cfg.BaseURL = base + "/v1/messages"
+			}
+		}
+		return NewClaude(cfg, client)
 	default:
 		return nil, fmt.Errorf("unsupported LLM provider: %s", cfg.Provider)
 	}

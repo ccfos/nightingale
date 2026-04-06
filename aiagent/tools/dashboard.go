@@ -51,6 +51,21 @@ func init() {
 			{Name: "id", Type: "integer", Description: "仪表盘ID", Required: true},
 		},
 	}, getDashboardDetail)
+
+	register("create_dashboard", aiagent.AgentTool{
+		Name: "create_dashboard",
+		Description: `创建监控仪表盘。只需提供面板描述和变量，工具会自动生成完整的仪表盘配置。
+面板布局自动计算，无需手动指定坐标。`,
+		Type: aiagent.ToolTypeBuiltin,
+		Parameters: []aiagent.ToolParameter{
+			{Name: "group_id", Type: "integer", Description: "业务组ID", Required: true},
+			{Name: "name", Type: "string", Description: "仪表盘名称", Required: true},
+			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源ID（从 list_datasources 获取）", Required: true},
+			{Name: "panels", Type: "string", Description: `面板列表 JSON 数组。每个面板: {"name":"标题", "type":"timeseries", "queries":[{"promql":"PromQL表达式", "legend":"{{label}}"}]}。type 可选: timeseries/stat/gauge/barGauge/pie/table/row。可选字段: w(宽度)/h(高度)/unit(单位:percent,bytesIEC,seconds等)/stack(是否堆叠)`, Required: true},
+			{Name: "variables", Type: "string", Description: `变量列表 JSON 数组。每个变量: {"name":"变量名", "definition":"label_values(metric, label)"}。可选字段: label(显示名)/multi(是否多选,默认true)`, Required: false},
+			{Name: "tags", Type: "string", Description: "仪表盘标签，多个用空格分隔", Required: false},
+		},
+	}, createDashboard)
 }
 
 func listDashboards(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
@@ -104,6 +119,101 @@ func listDashboards(_ context.Context, args map[string]interface{}, params map[s
 
 	logger.Debugf("list_dashboards: user_id=%d, query=%s, found %d boards", user.Id, query, len(results))
 	return marshalList(len(results), results), nil
+}
+
+func createDashboard(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(user, PermDashboards); err != nil {
+		return "", err
+	}
+
+	groupId := getArgInt64(args, "group_id")
+	if groupId == 0 {
+		return "", fmt.Errorf("group_id is required")
+	}
+
+	name := getArgString(args, "name")
+	if name == "" {
+		return "", fmt.Errorf("name is required")
+	}
+
+	dbCtx := aiagent.GetDBCtx()
+
+	// Check business group
+	bg, err := models.BusiGroupGetById(dbCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if !user.IsAdmin() {
+		bgids, _, err := getUserBgids(user)
+		if err != nil {
+			return "", err
+		}
+		if !int64SliceContains(bgids, groupId) {
+			return "", fmt.Errorf("forbidden: no access to busi group %d", groupId)
+		}
+	}
+
+	// 获取数据源 ID
+	dsId := getArgInt64(args, "datasource_id")
+	if dsId == 0 {
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		dsId = 1 // 最终兜底
+	}
+
+	// 构建 configs
+	panelsJSON := getArgString(args, "panels")
+	if panelsJSON == "" {
+		return "", fmt.Errorf("panels is required")
+	}
+
+	var panelSpecs []PanelSpec
+	if err := json.Unmarshal([]byte(panelsJSON), &panelSpecs); err != nil {
+		return "", fmt.Errorf("invalid panels JSON: %v", err)
+	}
+
+	var varSpecs []VariableSpec
+	if varsJSON := getArgString(args, "variables"); varsJSON != "" {
+		if err := json.Unmarshal([]byte(varsJSON), &varSpecs); err != nil {
+			return "", fmt.Errorf("invalid variables JSON: %v", err)
+		}
+	}
+
+	configs, err := buildConfigs(dsId, varSpecs, panelSpecs)
+	if err != nil {
+		return "", fmt.Errorf("failed to build configs: %v", err)
+	}
+
+	board := &models.Board{
+		GroupId:  groupId,
+		Name:     name,
+		Tags:     getArgString(args, "tags"),
+		CreateBy: user.Username,
+		UpdateBy: user.Username,
+	}
+
+	if err := board.AtomicAdd(dbCtx, configs); err != nil {
+		return "", fmt.Errorf("failed to create dashboard: %v", err)
+	}
+
+	logger.Infof("create_dashboard: user=%s, group_id=%d, name=%s, id=%d", user.Username, groupId, name, board.Id)
+
+	result := map[string]interface{}{
+		"id":       board.Id,
+		"group_id": board.GroupId,
+		"name":     board.Name,
+		"tags":     board.Tags,
+	}
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
 }
 
 func getDashboardDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {

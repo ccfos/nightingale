@@ -60,6 +60,8 @@ func DetectProvider(baseURL string) string {
 		return ProviderBedrock
 	case strings.Contains(baseURL, "localhost:11434"):
 		return ProviderOllama
+	case strings.Contains(baseURL, "api.kimi.com"):
+		return ProviderKimi
 	default:
 		// Default to OpenAI-compatible
 		return ProviderOpenAI
@@ -79,6 +81,8 @@ func DetectProviderFromModel(model string) string {
 		return ProviderOpenAI
 	case strings.HasPrefix(model, "llama") || strings.HasPrefix(model, "mistral") || strings.HasPrefix(model, "qwen"):
 		return ProviderOllama
+	case strings.HasPrefix(model, "kimi"):
+		return ProviderKimi
 	default:
 		return ProviderOpenAI
 	}
