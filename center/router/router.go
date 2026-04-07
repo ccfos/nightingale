@@ -335,7 +335,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/builtin-cate-favorite", rt.auth(), rt.user(), rt.builtinCateFavoriteAdd)
 		pages.DELETE("/builtin-cate-favorite/:name", rt.auth(), rt.user(), rt.builtinCateFavoriteDel)
 
-		pages.GET("/integrations/icon/:cate/:name", rt.auth(), rt.user(), rt.builtinIcon)
+		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 
 		// pages.GET("/builtin-boards", rt.builtinBoardGets)
 		// pages.GET("/builtin-board/:name", rt.builtinBoardGet)
