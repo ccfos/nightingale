@@ -103,6 +103,10 @@ func (p *LarkCardProvider) DefaultChannels() []*models.NotifyChannelConfig {
 						Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "markdown", "content": "{{$tpl.content}}"}]}}`,
 					},
 				},
+				FeishuRequestConfig: &models.FeishuRequestConfig{
+					AppID:     "",
+					AppSecret: "",
+				},
 			},
 			ParamConfig: &models.NotifyParamConfig{
 				Custom: models.Params{

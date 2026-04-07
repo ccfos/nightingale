@@ -85,6 +85,10 @@ func (p *DingtalkProvider) DefaultChannels() []*models.NotifyChannelConfig {
 						Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
 					},
 				},
+				DingtalkRequestConfig: &models.DingtalkRequestConfig{
+					AppKey:    "",
+					AppSecret: "",
+				},
 			},
 			ParamConfig: &models.NotifyParamConfig{
 				Custom: models.Params{

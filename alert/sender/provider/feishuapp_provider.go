@@ -385,12 +385,6 @@ func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 			},
 			ParamConfig: &models.NotifyParamConfig{
 				UserInfo: &models.UserInfo{ContactKey: ""},
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "app_id", CName: "App ID", Type: "string"},
-						{Key: "app_secret", CName: "App Secret", Type: "string"},
-					},
-				},
 			},
 		},
 	}
