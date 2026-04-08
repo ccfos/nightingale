@@ -11,8 +11,16 @@ const metricNamespace = "n9e"
 // Metrics for HTTP calls made through pkg/poster (typically edge → center
 // traffic). The "path" label is the request path with query string stripped;
 // since edge → center endpoints are a fixed small set, cardinality is bounded.
-// The "code" label is the HTTP status code as a string, or "error" when the
-// request failed before a response was received (DNS, connect, timeout, etc.).
+// The "code" label is one of:
+//
+//   - the HTTP status code as a string, when a response was received
+//   - "timeout"  — request context deadline exceeded
+//   - "canceled" — request context canceled before a response
+//   - "neterror" — net.OpError (DNS, dial refused, reset, TLS handshake, etc.)
+//   - "error"    — any other client-side failure
+//
+// The set of non-numeric values is fixed in classifyClientError(); keep that
+// function and this comment in sync.
 var (
 	RequestDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{

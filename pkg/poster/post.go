@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -40,22 +41,24 @@ type DataResponse[T any] struct {
 // per-request timeouts through context.WithTimeout instead of client.Timeout,
 // so a single shared *http.Client can serve every caller.
 const (
-	posterMaxIdleConns        = 1024
-	posterMaxIdleConnsPerHost = 256
-	posterMaxConnsPerHost     = 512
-	posterIdleConnTimeout     = 90 * time.Second
-	posterDialTimeout         = 5 * time.Second
-	posterDialKeepAlive       = 30 * time.Second
-	posterTLSHandshakeTimeout = 10 * time.Second
-	posterExpectContinueTO    = 1 * time.Second
+	posterMaxIdleConns          = 1024
+	posterMaxIdleConnsPerHost   = 256
+	posterMaxConnsPerHost       = 512
+	posterIdleConnTimeout       = 90 * time.Second
+	posterDialTimeout           = 5 * time.Second
+	posterDialKeepAlive         = 30 * time.Second
+	posterTLSHandshakeTimeout   = 10 * time.Second
+	posterExpectContinueTimeout = 1 * time.Second
 
-	// errBodyReadLimit caps how much of a non-2xx response body we attempt to
-	// read before returning. We still need to drain the body (otherwise the
-	// connection cannot be returned to the idle pool), and surfacing the
-	// server's error message in the returned error is much friendlier than the
-	// previous behavior of silently discarding it. The limit is there to
-	// prevent a misbehaving server from feeding us a huge body.
-	errBodyReadLimit = 64 * 1024
+	// errBodyReadLimit caps how much of a non-2xx response body we surface in
+	// the returned error message. The body is still drained beyond this limit
+	// (see drainAndReadErrBody) so the connection can be returned to the idle
+	// pool; the limit only bounds how much we keep in memory / show to the
+	// caller. errBodyDrainLimit is a hard cap on draining: past this size we
+	// give up on connection reuse rather than blocking indefinitely on a
+	// misbehaving server.
+	errBodyReadLimit  = 64 * 1024
+	errBodyDrainLimit = 1 << 20 // 1 MiB
 )
 
 var sharedTransport = &http.Transport{
@@ -70,7 +73,7 @@ var sharedTransport = &http.Transport{
 	MaxConnsPerHost:       posterMaxConnsPerHost,
 	IdleConnTimeout:       posterIdleConnTimeout,
 	TLSHandshakeTimeout:   posterTLSHandshakeTimeout,
-	ExpectContinueTimeout: posterExpectContinueTO,
+	ExpectContinueTimeout: posterExpectContinueTimeout,
 }
 
 var sharedClient = &http.Client{
@@ -95,22 +98,65 @@ func pickClient(rawURL string) *http.Client {
 }
 
 // pathLabel extracts a bounded-cardinality path from a full URL for use as a
-// Prometheus label. Query string and host are stripped.
+// Prometheus label. Query string and host are stripped. When parsing fails or
+// the URL has no path component, "unknown" is returned and the raw URL is
+// logged at debug level so operators can trace metric spikes back to the
+// caller.
 func pathLabel(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil || u.Path == "" {
+		logger.Debugf("poster: pathLabel falling back to \"unknown\" for url=%q err=%v", rawURL, err)
 		return "unknown"
 	}
 	return u.Path
 }
 
-// drainAndReadErrBody reads up to errBodyReadLimit bytes from body so that the
-// underlying TCP connection can be returned to the idle pool, and returns the
-// bytes it read so the caller can embed them in an error message. The caller
-// is still responsible for Close()-ing the body (typically via defer).
+// classifyClientError maps a client.Do error into a coarse, bounded label so
+// the "code" metric can distinguish "the request timed out" from "we never got
+// a TCP connection" from "TLS handshake failed", without exploding label
+// cardinality. The set of possible return values is fixed and small:
+//
+//	"timeout"  — request context deadline exceeded
+//	"canceled" — request context canceled before a response
+//	"neterror" — net.OpError (DNS, dial refused, reset, TLS, etc.)
+//	"error"    — anything else
+//
+// Keep this in sync with the comment on the "code" label in metrics.go.
+func classifyClientError(err error) string {
+	if err == nil {
+		return "error"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "timeout"
+	}
+	if errors.Is(err, context.Canceled) {
+		return "canceled"
+	}
+	var ne *net.OpError
+	if errors.As(err, &ne) {
+		return "neterror"
+	}
+	return "error"
+}
+
+// drainAndReadErrBody reads up to errBodyReadLimit bytes from body to surface
+// in the returned error, then drains the rest (up to errBodyDrainLimit) so the
+// underlying TCP connection can be returned to the idle pool. Without the
+// drain step, http.Response.Body.Close on a partially-read body causes the
+// Transport to discard the connection, defeating the connection-pool tuning
+// this package was set up to enable. The drain itself is bounded by
+// errBodyDrainLimit so a misbehaving server cannot block us indefinitely; if
+// the body is larger than that, we accept losing the keep-alive for this
+// request.
+//
+// The caller is still responsible for Close()-ing the body (typically via
+// defer).
 func drainAndReadErrBody(body io.Reader) string {
-	bs, err := io.ReadAll(io.LimitReader(body, errBodyReadLimit))
-	if err != nil {
+	bs, readErr := io.ReadAll(io.LimitReader(body, errBodyReadLimit))
+	// Drain whatever remains so the connection can be reused. Cap the drain
+	// so a hostile/broken server can't pin us here.
+	_, _ = io.Copy(io.Discard, io.LimitReader(body, errBodyDrainLimit))
+	if readErr != nil {
 		return ""
 	}
 	return strings.TrimSpace(string(bs))
@@ -168,9 +214,9 @@ func GetByUrl[T any](rawURL string, cfg conf.CenterApi) (T, error) {
 
 	// Metric observation is deferred so every return path is covered, including
 	// future branches. codeLabel starts as "error" (no response received) and
-	// is upgraded to the real HTTP status once we have a resp. The defer runs
-	// after resp.Body.Close() below, which means it captures the full end-to-end
-	// duration including body drain.
+	// is upgraded to a coarse failure category or the real HTTP status once we
+	// know which one applies. The defer runs after resp.Body.Close() below,
+	// which means it captures the full end-to-end duration including body drain.
 	path := pathLabel(rawURL)
 	start := time.Now()
 	codeLabel := "error"
@@ -178,6 +224,7 @@ func GetByUrl[T any](rawURL string, cfg conf.CenterApi) (T, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		codeLabel = classifyClientError(err)
 		return dat, fmt.Errorf("failed to fetch from url: %w", err)
 	}
 	defer resp.Body.Close()
@@ -295,6 +342,7 @@ func PostByUrl[T any](rawURL string, cfg conf.CenterApi, v interface{}) (t T, er
 
 	resp, err := client.Do(req)
 	if err != nil {
+		codeLabel = classifyClientError(err)
 		return t, fmt.Errorf("failed to fetch from url: %w", err)
 	}
 	defer resp.Body.Close()
