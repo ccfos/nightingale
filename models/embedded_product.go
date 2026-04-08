@@ -24,6 +24,7 @@ type EmbeddedProduct struct {
 	UpdateAt         int64   `json:"update_at" gorm:"column:update_at;not null;default:0"`
 	UpdateBy         string  `json:"update_by" gorm:"column:update_by;type:varchar(64);not null;default:''"`
 	UpdateByNickname string  `json:"update_by_nickname" gorm:"-"`
+	Weight           int     `json:"weight" gorm:"column:weight;not null;default:0"`
 }
 
 func (e *EmbeddedProduct) TableName() string {
@@ -76,7 +77,7 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 
 func EmbeddedProductGets(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
 	var list []*EmbeddedProduct
-	err := DB(ctx).Find(&list).Error
+	err := DB(ctx).Order("weight asc").Find(&list).Error
 	return list, err
 }
 

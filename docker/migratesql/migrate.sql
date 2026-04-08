@@ -255,6 +255,7 @@ CREATE TABLE `embedded_product` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `weight` int not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -364,3 +365,6 @@ ALTER TABLE `datasource` ADD COLUMN `weight` int not null default 0 COMMENT 'wei
 
 /* v9 2026-01-20 alert_rule time_zone support */
 ALTER TABLE `alert_rule` ADD COLUMN `time_zone` varchar(64) not null default '';
+
+/* v9 2026-04-08 embedded_product weight for sorting */
+ALTER TABLE `embedded_product` ADD COLUMN `weight` int not null default 0;
