@@ -3,6 +3,7 @@ package aiagent
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -63,6 +64,12 @@ func (a *Agent) SetSkillRegistry(registry *SkillRegistry) {
 func (a *Agent) InitSkills(skillsPath string) {
 	if a.cfg.Skills == nil || skillsPath == "" {
 		return
+	}
+	// Normalize to an absolute path so downstream consumers (skill registry +
+	// the list_files / read_file builtin tools' resolveBasePath security check)
+	// don't have to deal with "." vs "skill" vs "/abs/path" ambiguity.
+	if abs, err := filepath.Abs(skillsPath); err == nil {
+		skillsPath = abs
 	}
 	SetSkillsPath(skillsPath)
 	a.skillRegistry = NewSkillRegistry(skillsPath)

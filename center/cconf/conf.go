@@ -50,4 +50,8 @@ func (c *Center) PreCheck() {
 	if len(c.Plugins) == 0 {
 		c.Plugins = Plugins
 	}
+	if c.AIAgent.SkillsPath == "" {
+		// 默认使用项目根路径下的 skill 目录（与 integrations 同级）
+		c.AIAgent.SkillsPath = "skill"
+	}
 }

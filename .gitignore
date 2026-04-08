@@ -74,3 +74,4 @@ n9e.sql
 !/datasource
 
 .env.json
+/aichat-cli

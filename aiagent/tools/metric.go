@@ -14,9 +14,10 @@ import (
 func init() {
 	register("list_metrics", aiagent.AgentTool{
 		Name:        "list_metrics",
-		Description: "搜索 Prometheus 数据源的指标名称，支持关键词模糊匹配",
+		Description: "搜索 Prometheus 数据源的指标名称，支持关键词模糊匹配。需要通过 datasource_id 指定 Prometheus 数据源（用 list_datasources 查到）",
 		Type:        aiagent.ToolTypeBuiltin,
 		Parameters: []aiagent.ToolParameter{
+			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（从 list_datasources 获取）", Required: true},
 			{Name: "keyword", Type: "string", Description: "搜索关键词，模糊匹配指标名", Required: false},
 			{Name: "limit", Type: "integer", Description: "返回数量限制，默认30", Required: false},
 		},
@@ -24,18 +25,25 @@ func init() {
 
 	register("get_metric_labels", aiagent.AgentTool{
 		Name:        "get_metric_labels",
-		Description: "获取 Prometheus 指标的所有标签键及其可选值",
+		Description: "获取 Prometheus 指标的所有标签键及其可选值。需要通过 datasource_id 指定 Prometheus 数据源",
 		Type:        aiagent.ToolTypeBuiltin,
 		Parameters: []aiagent.ToolParameter{
+			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（从 list_datasources 获取）", Required: true},
 			{Name: "metric", Type: "string", Description: "指标名称", Required: true},
 		},
 	}, getMetricLabels)
 }
 
 func listMetrics(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
+	// Prefer the datasource_id supplied by the LLM via tool args; fall back to
+	// the chat-level params (set by query_generator action when the frontend
+	// pre-selected a datasource).
+	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		return "", fmt.Errorf("datasource_id is required (use list_datasources to find a Prometheus datasource id)")
 	}
 
 	keyword, _ := args["keyword"].(string)
@@ -73,9 +81,12 @@ func listMetrics(ctx context.Context, args map[string]interface{}, params map[st
 }
 
 func getMetricLabels(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
+	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		return "", fmt.Errorf("datasource_id is required (use list_datasources to find a Prometheus datasource id)")
 	}
 
 	metric, ok := args["metric"].(string)

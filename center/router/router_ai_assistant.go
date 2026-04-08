@@ -205,8 +205,11 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	// Prepare stream cache
 	aiagent.GetStreamCache().Create(streamID)
 
-	// Create cancelable context
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	// Create cancelable context. The parent context must outlive the agent's
+	// own ReAct budget (set later from llmCfg.ExtraConfig.TimeoutSeconds), so
+	// give it generous headroom — 15 min covers worst-case multi-tool flows
+	// while still bounding stuck conversations.
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 
 	key := msgKey(req.ChatID, seqID)
 	rt.msgStateManager.Set(key, &msg, cancel)
@@ -258,9 +261,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 
 	extraConfig := llmCfg.ExtraConfig
-	timeout := 120000
+	// llmCallTimeout caps a single LLM HTTP call (per-iteration). agentTotalTimeout
+	// caps the entire ReAct loop across all tool calls. Multi-turn ReAct flows
+	// (e.g. dashboard creation: list_busi_groups → list_datasources → list_files
+	// → read_file → create_dashboard) easily run 7+ iterations, so the agent
+	// budget must be several times the per-call budget.
+	llmCallTimeout := 120000
 	if extraConfig.TimeoutSeconds > 0 {
-		timeout = extraConfig.TimeoutSeconds * 1000
+		llmCallTimeout = extraConfig.TimeoutSeconds * 1000
+	}
+	agentTotalTimeout := llmCallTimeout * 5
+	if agentTotalTimeout < 5*60*1000 {
+		agentTotalTimeout = 5 * 60 * 1000
 	}
 
 	llmClient, err := rt.llmClientCache.GetOrCreate(&llm.Config{
@@ -269,7 +281,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Model:         llmCfg.Model,
 		APIKey:        llmCfg.APIKey,
 		Headers:       extraConfig.CustomHeaders,
-		Timeout:       timeout,
+		Timeout:       llmCallTimeout,
 		SkipSSLVerify: extraConfig.SkipTLSVerify,
 		Proxy:         extraConfig.Proxy,
 		Temperature:   extraConfig.Temperature,
@@ -357,10 +369,22 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
-		Timeout:            timeout,
+		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptTemplate: userPrompt,
+		Skills: &aiagent.SkillConfig{
+			AutoSelect: true,
+			MaxSkills:  2,
+		},
 	}, aiagent.WithLLMClient(llmClient))
+
+	// Wire up the skill subsystem so SKILL.md content actually reaches the LLM
+	// system prompt. InitSkills also calls SetSkillsPath, which is what makes the
+	// list_files / read_file / grep_files builtin tools resolve "integrations" and
+	// "<skill-name>" base paths instead of erroring with "skills path not configured".
+	if skillsPath := rt.Center.AIAgent.SkillsPath; skillsPath != "" {
+		agentRunner.InitSkills(skillsPath)
+	}
 
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)
@@ -588,6 +612,13 @@ func (rt *Router) assistantStream(c *gin.Context) {
 	if req.StreamID == "" {
 		ginx.Bomb(http.StatusBadRequest, "stream_id is required")
 		return
+	}
+
+	// SSE responses can outlive http.Server.WriteTimeout (40s by default), which
+	// would otherwise close the underlying TCP connection mid-stream. Clear the
+	// per-connection write deadline for this handler only.
+	if rc := http.NewResponseController(c.Writer); rc != nil {
+		_ = rc.SetWriteDeadline(time.Time{})
 	}
 
 	ch := aiagent.GetStreamCache().Read(req.StreamID)
