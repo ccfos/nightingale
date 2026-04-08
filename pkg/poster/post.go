@@ -52,7 +52,7 @@ const (
 
 	// errBodyReadLimit caps how much of a non-2xx response body we surface in
 	// the returned error message. The body is still drained beyond this limit
-	// (see drainAndReadErrBody) so the connection can be returned to the idle
+	// (see DrainAndReadErrBody) so the connection can be returned to the idle
 	// pool; the limit only bounds how much we keep in memory / show to the
 	// caller. errBodyDrainLimit is a hard cap on draining: past this size we
 	// give up on connection reuse rather than blocking indefinitely on a
@@ -97,21 +97,26 @@ func pickClient(rawURL string) *http.Client {
 	return sharedClient
 }
 
-// pathLabel extracts a bounded-cardinality path from a full URL for use as a
+// PathLabel extracts a bounded-cardinality path from a full URL for use as a
 // Prometheus label. Query string and host are stripped. When parsing fails or
 // the URL has no path component, "unknown" is returned and the raw URL is
 // logged at debug level so operators can trace metric spikes back to the
 // caller.
-func pathLabel(rawURL string) string {
+//
+// Exported so other packages that issue edge → center HTTP traffic but cannot
+// use GetByUrl/PostByUrl directly (e.g. callers that wrap http.Client or
+// httputil.ReverseProxy themselves) can record into the same
+// n9e_poster_request_* metric family with the same label semantics.
+func PathLabel(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil || u.Path == "" {
-		logger.Debugf("poster: pathLabel falling back to \"unknown\" for url=%q err=%v", rawURL, err)
+		logger.Debugf("poster: PathLabel falling back to \"unknown\" for url=%q err=%v", rawURL, err)
 		return "unknown"
 	}
 	return u.Path
 }
 
-// classifyClientError maps a client.Do error into a coarse, bounded label so
+// ClassifyClientError maps a client.Do error into a coarse, bounded label so
 // the "code" metric can distinguish "the request timed out" from "we never got
 // a TCP connection" from "TLS handshake failed", without exploding label
 // cardinality. The set of possible return values is fixed and small:
@@ -122,7 +127,10 @@ func pathLabel(rawURL string) string {
 //	"error"    — anything else
 //
 // Keep this in sync with the comment on the "code" label in metrics.go.
-func classifyClientError(err error) string {
+//
+// Exported so out-of-package callers that wrap their own http.Client or
+// RoundTripper can record the same coarse failure categories.
+func ClassifyClientError(err error) string {
 	if err == nil {
 		return "error"
 	}
@@ -139,7 +147,7 @@ func classifyClientError(err error) string {
 	return "error"
 }
 
-// drainAndReadErrBody reads up to errBodyReadLimit bytes from body to surface
+// DrainAndReadErrBody reads up to errBodyReadLimit bytes from body to surface
 // in the returned error, then drains the rest (up to errBodyDrainLimit) so the
 // underlying TCP connection can be returned to the idle pool. Without the
 // drain step, http.Response.Body.Close on a partially-read body causes the
@@ -151,7 +159,10 @@ func classifyClientError(err error) string {
 //
 // The caller is still responsible for Close()-ing the body (typically via
 // defer).
-func drainAndReadErrBody(body io.Reader) string {
+//
+// Exported so out-of-package callers that issue their own HTTP requests can
+// keep connections in the shared pool on non-2xx response paths.
+func DrainAndReadErrBody(body io.Reader) string {
 	bs, readErr := io.ReadAll(io.LimitReader(body, errBodyReadLimit))
 	// Drain whatever remains so the connection can be reused. Cap the drain
 	// so a hostile/broken server can't pin us here.
@@ -217,14 +228,14 @@ func GetByUrl[T any](rawURL string, cfg conf.CenterApi) (T, error) {
 	// is upgraded to a coarse failure category or the real HTTP status once we
 	// know which one applies. The defer runs after resp.Body.Close() below,
 	// which means it captures the full end-to-end duration including body drain.
-	path := pathLabel(rawURL)
+	path := PathLabel(rawURL)
 	start := time.Now()
 	codeLabel := "error"
-	defer func() { observeRequest(path, codeLabel, start) }()
+	defer func() { ObserveRequest(path, codeLabel, start) }()
 
 	resp, err := client.Do(req)
 	if err != nil {
-		codeLabel = classifyClientError(err)
+		codeLabel = ClassifyClientError(err)
 		return dat, fmt.Errorf("failed to fetch from url: %w", err)
 	}
 	defer resp.Body.Close()
@@ -232,7 +243,7 @@ func GetByUrl[T any](rawURL string, cfg conf.CenterApi) (T, error) {
 	codeLabel = strconv.Itoa(resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
-		errBody := drainAndReadErrBody(resp.Body)
+		errBody := DrainAndReadErrBody(resp.Body)
 		return dat, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, errBody)
 	}
 
@@ -335,14 +346,14 @@ func PostByUrl[T any](rawURL string, cfg conf.CenterApi, v interface{}) (t T, er
 	client := pickClient(rawURL)
 
 	// See GetByUrl for why metric observation is deferred.
-	path := pathLabel(rawURL)
+	path := PathLabel(rawURL)
 	start := time.Now()
 	codeLabel := "error"
-	defer func() { observeRequest(path, codeLabel, start) }()
+	defer func() { ObserveRequest(path, codeLabel, start) }()
 
 	resp, err := client.Do(req)
 	if err != nil {
-		codeLabel = classifyClientError(err)
+		codeLabel = ClassifyClientError(err)
 		return t, fmt.Errorf("failed to fetch from url: %w", err)
 	}
 	defer resp.Body.Close()
@@ -350,7 +361,7 @@ func PostByUrl[T any](rawURL string, cfg conf.CenterApi, v interface{}) (t T, er
 	codeLabel = strconv.Itoa(resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
-		errBody := drainAndReadErrBody(resp.Body)
+		errBody := DrainAndReadErrBody(resp.Body)
 		return t, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, errBody)
 	}
 

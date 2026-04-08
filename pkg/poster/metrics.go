@@ -19,7 +19,7 @@ const metricNamespace = "n9e"
 //   - "neterror" — net.OpError (DNS, dial refused, reset, TLS handshake, etc.)
 //   - "error"    — any other client-side failure
 //
-// The set of non-numeric values is fixed in classifyClientError(); keep that
+// The set of non-numeric values is fixed in ClassifyClientError(); keep that
 // function and this comment in sync.
 var (
 	RequestDuration = prometheus.NewHistogramVec(
@@ -48,9 +48,14 @@ func init() {
 	prometheus.MustRegister(RequestDuration, RequestTotal)
 }
 
-// observeRequest records the duration and increments the counter for a single
+// ObserveRequest records the duration and increments the counter for a single
 // request attempt. It is safe to call exactly once per client.Do invocation.
-func observeRequest(path, code string, start time.Time) {
+//
+// Exported so out-of-package callers that wrap their own http.Client or
+// RoundTripper can record into the same n9e_poster_request_* metric family.
+// Pair with PathLabel and ClassifyClientError to keep label semantics
+// consistent.
+func ObserveRequest(path, code string, start time.Time) {
 	elapsed := time.Since(start).Seconds()
 	RequestDuration.WithLabelValues(path, code).Observe(elapsed)
 	RequestTotal.WithLabelValues(path, code).Inc()
