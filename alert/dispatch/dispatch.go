@@ -547,7 +547,17 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams, imGroupIDs := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
-	p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident) // ← 按 ident 查找
+	ident := ""
+	switch notifyChannel.Ident {
+	case models.Feishu:
+		ident = models.FeishuCard
+	case models.Lark:
+		ident = models.LarkCard
+	default:
+		ident = notifyChannel.Ident
+	}
+
+	p, ok := provider.DefaultRegistry.Get(ident) // ← 按 ident 查找
 	if !ok {
 		logger.Warningf("unknown channel ident: %s", notifyChannel.Ident)
 		return
