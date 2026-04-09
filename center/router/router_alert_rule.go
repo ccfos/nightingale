@@ -13,10 +13,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
@@ -886,6 +886,7 @@ func (rt *Router) batchAlertRuleClone(c *gin.Context) {
 func (rt *Router) timezonesGet(c *gin.Context) {
 	// 返回常用时区列表（按时差去重，每个时差只保留一个代表性时区）
 	timezones := []string{
+		"Local",
 		"UTC",
 		"Asia/Shanghai",       // UTC+8 (代表 Asia/Hong_Kong, Asia/Singapore 等)
 		"Asia/Tokyo",          // UTC+9 (代表 Asia/Seoul 等)

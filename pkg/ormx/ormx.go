@@ -371,5 +371,10 @@ func New(c DBConfig) (*gorm.DB, error) {
 		sqlDB.SetMaxOpenConns(c.MaxOpenConns)
 		sqlDB.SetConnMaxLifetime(time.Duration(c.MaxLifetime) * time.Second)
 	}
+
+	if err := RegisterDBMetrics(db); err != nil {
+		return nil, fmt.Errorf("failed to register db metrics: %v", err)
+	}
+
 	return db, nil
 }

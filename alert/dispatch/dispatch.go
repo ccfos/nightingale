@@ -185,6 +185,9 @@ func (e *Dispatch) HandleEventWithNotifyRule(eventOrigin *models.AlertCurEvent) 
 			eventCopy.NotifyRuleName = notifyRule.Name
 
 			eventCopy = HandleEventPipeline(notifyRule.PipelineConfigs, eventOrigin, eventCopy, e.eventProcessorCache, e.ctx, notifyRuleId, "notify_rule")
+			if eventCopy == nil {
+				continue
+			}
 			if ShouldSkipNotify(e.ctx, eventCopy, notifyRuleId) {
 				logger.Infof("notify_id: %d, event:%s, should skip notify", notifyRuleId, eventCopy.Hash)
 				continue
@@ -636,6 +639,10 @@ func (e *Dispatch) HandleEventNotify(event *models.AlertCurEvent, isSubscribe bo
 	go e.HandleEventWithNotifyRule(event)
 	if event.IsRecovered && event.NotifyRecovered == 0 {
 		return
+	}
+
+	if !isSubscribe {
+		go sender.SendStaticGlobalWebhook(e.ctx, event.DeepCopy(), e.Astats)
 	}
 
 	rule := e.alertRuleCache.Get(event.RuleId)

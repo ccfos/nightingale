@@ -191,6 +191,7 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 		}
 
 		if targetNeedUpdate {
+			newTarget.UpdateAt = time.Now().Unix()
 			err := models.DB(ctx).Model(&target).Updates(newTarget).Error
 			if err != nil {
 				logger.Errorf("update target fields failed, err: %v", err)

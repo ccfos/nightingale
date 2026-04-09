@@ -130,6 +130,14 @@ type ChildVarConfig struct {
 	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
 }
 
+func (c ChildVarConfig) MarshalJSON() ([]byte, error) {
+	if c.ParamVal == nil {
+		c.ParamVal = []map[string]ParamQuery{}
+	}
+	type Alias ChildVarConfig
+	return json.Marshal(Alias(c))
+}
+
 type ParamQuery struct {
 	ParamType string      `json:"param_type"` // host、device、enum、threshold 三种类型
 	Query     interface{} `json:"query"`
@@ -138,6 +146,14 @@ type ParamQuery struct {
 type VarConfig struct {
 	ParamVal        []ParamQueryForFirst `json:"param_val"`
 	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
+}
+
+func (v VarConfig) MarshalJSON() ([]byte, error) {
+	if v.ParamVal == nil {
+		v.ParamVal = []ParamQueryForFirst{}
+	}
+	type Alias VarConfig
+	return json.Marshal(Alias(v))
 }
 
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现

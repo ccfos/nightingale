@@ -103,6 +103,7 @@ func (vl *VictoriaLogs) Equal(other datasource.Datasource) bool {
 		vl.VictorialogsBasic.VictorialogsPass == o.VictorialogsBasic.VictorialogsPass &&
 		vl.VictorialogsTls.SkipTlsVerify == o.VictorialogsTls.SkipTlsVerify &&
 		vl.Timeout == o.Timeout &&
+		vl.MaxQueryRows == o.MaxQueryRows &&
 		reflect.DeepEqual(vl.Headers, o.Headers)
 }
 

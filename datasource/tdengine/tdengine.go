@@ -104,6 +104,11 @@ func (td *TDengine) Equal(other datasource.Datasource) bool {
 			return false
 		}
 	}
+
+	if td.SkipTlsVerify != otherTD.SkipTlsVerify {
+		return false
+	}
+
 	return true
 }
 

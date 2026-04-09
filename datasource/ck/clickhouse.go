@@ -144,6 +144,38 @@ func (c *Clickhouse) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
+	if c.Timeout != plg.Timeout {
+		return false
+	}
+
+	if c.MaxQueryRows != plg.MaxQueryRows {
+		return false
+	}
+
+	if c.Protocol != plg.Protocol {
+		return false
+	}
+
+	if c.SkipSSLVerify != plg.SkipSSLVerify {
+		return false
+	}
+
+	if c.SecureConnection != plg.SecureConnection {
+		return false
+	}
+
+	if c.MaxIdleConns != plg.MaxIdleConns {
+		return false
+	}
+
+	if c.MaxOpenConns != plg.MaxOpenConns {
+		return false
+	}
+
+	if c.ConnMaxLifetime != plg.ConnMaxLifetime {
+		return false
+	}
+
 	return true
 }
 

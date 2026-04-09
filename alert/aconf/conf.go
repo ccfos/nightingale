@@ -33,6 +33,17 @@ type Alerting struct {
 	TemplatesDir      string
 	NotifyConcurrency int
 	WebhookBatchSend  bool
+	GlobalWebhook     GlobalWebhook
+}
+
+type GlobalWebhook struct {
+	Enable        bool
+	Url           string
+	BasicAuthUser string
+	BasicAuthPass string
+	Timeout       int
+	Headers       []string
+	SkipVerify    bool
 }
 
 type CallPlugin struct {
