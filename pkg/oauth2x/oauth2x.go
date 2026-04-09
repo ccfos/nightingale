@@ -275,7 +275,7 @@ func getUserinfoField(input []byte, isArray bool, prefix, field string) string {
 		if isArray {
 			return jsoniter.Get(input, 0).Get(field).ToString()
 		}
-		return jsoniter.Get(input).Get(field).ToString()
+		return jsoniter.Get(input, field).ToString()
 	}
 
 	// Try prefix as a literal key first (backward compatible).
