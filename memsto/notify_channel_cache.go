@@ -338,8 +338,11 @@ func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
 			}
 		} else {
 			for i := range task.Request.Sendtos {
+				// 单人发送模式下，逐个 sendto 渲染并发送，避免在 Provider 内使用全量 Sendtos 造成重复发送。
+				reqCopy := *task.Request
+				reqCopy.Sendtos = []string{task.Request.Sendtos[i]}
 				start := time.Now()
-				result := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
+				result := task.Provider.Notify(ncc.ctx.Ctx, &reqCopy)
 				resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), result.Response)
 				logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
 					task.NotifyRuleId, task.Request.Config.Name, task.Request.Events[0].Hash, task.Request.TplContent, task.Request.CustomParams, task.Request.Sendtos[i], resp, result.Err)
