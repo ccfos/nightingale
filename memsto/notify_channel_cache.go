@@ -26,7 +26,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// dingtalkStreamReconcileInterval 多副本下 holder 崩溃后，其它实例在不依赖「通知媒介变更」的情况下周期性抢 Redis 租约并拉起 Stream。应小于租约 TTL（默认 30s）。
+// dingtalkStreamReconcileInterval 定时根据内存快照重算 DingTalk Stream，配合 IamLeader 判主在主从切换后收敛连接状态。
 const dingtalkStreamReconcileInterval = 10 * time.Second
 
 // NotifyTask 表示一个通知发送任务
@@ -65,6 +65,7 @@ type NotifyChannelCacheType struct {
 	notifyRecordFunc NotifyRecordFunc
 
 	dingtalkLeaderNaming  *naming.Naming
+	dingtalkReconcileOnce sync.Once
 	dingtalkStreamMu      sync.Mutex
 	dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
 }
@@ -90,9 +91,6 @@ func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheTy
 	}
 
 	ncc.SyncNotifyChannels()
-	if ncc.ctx != nil && ncc.ctx.IsCenter && ncc.ctx.DB != nil {
-		go ncc.loopReconcileDingtalkStreams()
-	}
 	return ncc
 }
 
@@ -122,6 +120,13 @@ func (ncc *NotifyChannelCacheType) SetNotifyRecordFunc(fn NotifyRecordFunc) {
 
 func (ncc *NotifyChannelCacheType) SetDingtalkLeaderNaming(nm *naming.Naming) {
 	ncc.dingtalkLeaderNaming = nm
+	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || nm == nil {
+		return
+	}
+	ncc.reconcileDingtalkStreamsFromCache()
+	ncc.dingtalkReconcileOnce.Do(func() {
+		go ncc.loopReconcileDingtalkStreams()
+	})
 }
 
 func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -654,7 +659,7 @@ func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*
 		return
 	}
 
-	if ncc.dingtalkLeaderNaming != nil && !ncc.dingtalkLeaderNaming.IamLeader() {
+	if ncc.dingtalkLeaderNaming == nil || !ncc.dingtalkLeaderNaming.IamLeader() {
 		ncc.shutdownAllDingtalkStreams()
 		return
 	}
