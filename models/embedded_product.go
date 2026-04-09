@@ -77,7 +77,7 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 
 func EmbeddedProductGets(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
 	var list []*EmbeddedProduct
-	err := DB(ctx).Order("weight asc").Find(&list).Error
+	err := DB(ctx).Order("weight asc, id asc").Find(&list).Error
 	return list, err
 }
 
