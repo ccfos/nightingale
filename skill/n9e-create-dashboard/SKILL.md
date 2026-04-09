@@ -1,6 +1,7 @@
 ---
 name: n9e-create-dashboard
 description: 在夜莺(n9e)平台上创建监控仪表盘。当用户要求创建仪表盘、监控大盘、Dashboard 时使用。
+max_iterations: 18
 builtin_tools:
   - create_dashboard
   - list_files
@@ -104,6 +105,15 @@ builtin_tools:
 - 调用 `list_busi_groups` 获取业务组列表
 - 调用 `list_datasources` 获取数据源列表，找到 **Prometheus 类型的数据源 ID**
 
+#### 业务组选择规则
+
+1. 如果用户在提示词里明确指定了业务组名称或 ID，直接使用
+2. 否则从 `list_busi_groups` 返回结果中按以下优先级选择：
+   a. **优先选择 `is_default: true` 的业务组**（这是工具返回的"默认组"提示，通常对应 "Default Busi Group" 或含"默认"的组）
+   b. 只有一个业务组时直接用
+   c. 多个候选且都不是默认组时，**不要盲目取第一个**，在最终回复里列出让用户确认
+3. **绝对不要使用看起来是测试组的业务组**（如名字纯数字 `"123"`、含 `test`/`demo`/`临时`/`tmp` 的组）
+
 ### 第二步：参考集成模板获取正确的 PromQL
 
 **优先从 integrations 目录获取经过验证的 PromQL 表达式**，而不是自己编写。
@@ -134,6 +144,7 @@ builtin_tools:
 **注意事项：**
 - 多选变量在 PromQL 中用 `=~` 而不是 `=`，如 `ident=~"$ident"`
 - counter 类型指标用 `rate(...[3m])` 或 `irate(...[5m])`
+- 如果 `create_dashboard` 返回 `Name duplicate` 错误，**不要调用 `list_dashboards`** 去查重名，直接在原名后面追加后缀（如 `-v2`、`-AI` 或当前时间戳）重新调用 `create_dashboard`
 
 ### 第四步：输出结果
 

@@ -43,18 +43,27 @@ func TestBuildConfigs_Basic(t *testing.T) {
 		t.Errorf("graphTooltip: got %v", configs["graphTooltip"])
 	}
 
-	// 变量
+	// 变量: var[0] 是内置的 datasource 变量，var[1] 才是用户声明的 ident
 	vars := configs["var"].([]interface{})
-	if len(vars) != 1 {
-		t.Fatalf("expected 1 var, got %d", len(vars))
+	if len(vars) != 2 {
+		t.Fatalf("expected 2 vars (datasource + ident), got %d", len(vars))
 	}
-	v := vars[0].(map[string]interface{})
+	dsVar := vars[0].(map[string]interface{})
+	if dsVar["name"] != "prom" || dsVar["type"] != "datasource" || dsVar["definition"] != "prometheus" {
+		t.Errorf("datasource var unexpected: %+v", dsVar)
+	}
+	v := vars[1].(map[string]interface{})
+	if v["name"] != "ident" {
+		t.Errorf("query var name: got %v, want ident", v["name"])
+	}
 	ds := v["datasource"].(map[string]interface{})
 	if ds["cate"] != "prometheus" {
-		t.Errorf("var datasource.cate: got %v", ds["cate"])
+		t.Errorf("query var datasource.cate: got %v", ds["cate"])
 	}
-	if ds["value"] != float64(5) {
-		t.Errorf("var datasource.value: got %v, want 5", ds["value"])
+	// Query variables reference the datasource variable via template interp,
+	// not a literal ID — this is what makes the dropdown actually switch.
+	if ds["value"] != "${prom}" {
+		t.Errorf("query var datasource.value: got %v, want ${prom}", ds["value"])
 	}
 
 	// 面板
@@ -75,8 +84,8 @@ func TestBuildConfigs_Basic(t *testing.T) {
 		if layout["i"] != pm["id"] {
 			t.Errorf("panel[%d] layout.i (%v) != id (%v)", i, layout["i"], pm["id"])
 		}
-		if pm["datasourceValue"] != float64(5) {
-			t.Errorf("panel[%d] datasourceValue: got %v, want 5", i, pm["datasourceValue"])
+		if pm["datasourceValue"] != "${prom}" {
+			t.Errorf("panel[%d] datasourceValue: got %v, want ${prom}", i, pm["datasourceValue"])
 		}
 	}
 

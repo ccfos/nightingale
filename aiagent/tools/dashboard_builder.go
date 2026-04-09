@@ -40,7 +40,29 @@ type VariableSpec struct {
 // Builder — 从简化 spec 生成完整 n9e configs JSON
 // ============================================================================
 
+// datasourceVarName is the built-in datasource-type variable emitted by
+// buildConfigs. Panels and query variables reference it via "${prom}" so
+// the dashboard header renders a datasource dropdown and the dashboard
+// stays reusable across Prometheus instances. This matches the convention
+// used by the integration templates (e.g. integrations/Linux/dashboards/
+// categraf-detail.json) and n9e built-in boards.
+const datasourceVarName = "prom"
+
+// datasourceVarRef is the template interpolation string — literally
+// "${prom}" — used wherever a datasource ID would otherwise appear.
+const datasourceVarRef = "${" + datasourceVarName + "}"
+
 // buildConfigs 从简化的变量和面板描述生成完整的 n9e dashboard configs JSON
+//
+// The generated payload always includes a datasource-type variable named
+// "prom" at var[0], and every panel / query variable references it via
+// "${prom}" instead of a literal int. Without this, the dashboard header
+// shows no datasource selector and the dashboard is tied to a single
+// hardcoded datasource ID.
+//
+// datasourceId is still used to populate an initial fallback (so queries
+// have a sensible default on first load), but the dashboard is not bound
+// to it — users can switch datasources from the header after opening.
 func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSpec) (string, error) {
 	configs := map[string]interface{}{
 		"version":      "3.4.0",
@@ -49,10 +71,11 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 		"links":        []interface{}{},
 	}
 
-	// 构建变量
-	vars := make([]interface{}, 0, len(variables))
+	// 构建变量：datasource 变量置顶，后跟用户声明的 query 变量
+	vars := make([]interface{}, 0, len(variables)+1)
+	vars = append(vars, buildDatasourceVariable())
 	for _, v := range variables {
-		vars = append(vars, buildVariable(v, datasourceId))
+		vars = append(vars, buildVariable(v))
 	}
 	configs["var"] = vars
 
@@ -81,7 +104,7 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 			rowMaxH = 0
 		}
 
-		panel := buildPanel(spec, i, x, y, w, h, datasourceId)
+		panel := buildPanel(spec, i, x, y, w, h)
 		builtPanels = append(builtPanels, panel)
 
 		x += w
@@ -91,6 +114,11 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 	}
 	configs["panels"] = builtPanels
 
+	// datasourceId is intentionally unused in the marshalled payload —
+	// panels reference ${prom} instead. Touch it to keep the parameter
+	// surface stable for future wiring (e.g. defaultValue).
+	_ = datasourceId
+
 	result, err := json.Marshal(configs)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal configs: %v", err)
@@ -98,25 +126,41 @@ func buildConfigs(datasourceId int64, variables []VariableSpec, panels []PanelSp
 	return string(result), nil
 }
 
-func buildVariable(spec VariableSpec, datasourceId int64) map[string]interface{} {
+// buildDatasourceVariable returns the header datasource dropdown variable.
+// definition="prometheus" tells n9e to populate the dropdown with all
+// configured Prometheus datasources; hide=false makes it visible.
+func buildDatasourceVariable() map[string]interface{} {
+	return map[string]interface{}{
+		"name":       datasourceVarName,
+		"type":       "datasource",
+		"definition": "prometheus",
+		"label":      "数据源",
+		"hide":       false,
+	}
+}
+
+func buildVariable(spec VariableSpec) map[string]interface{} {
 	multi := true
 	if spec.Multi != nil {
 		multi = *spec.Multi
 	}
 
+	// Query variables reference the header datasource variable via
+	// template interpolation ("${prom}") so they follow whatever
+	// datasource the user selects in the dropdown.
 	v := map[string]interface{}{
-		"name":       spec.Name,
-		"type":       "query",
-		"definition": spec.Definition,
-		"reg":        "",
-		"multi":      multi,
-		"allOption":  true,
-		"allValue":   "",
+		"name":         spec.Name,
+		"type":         "query",
+		"definition":   spec.Definition,
+		"reg":          "",
+		"multi":        multi,
+		"allOption":    true,
+		"allValue":     "",
 		"defaultValue": "",
-		"hide":       false,
+		"hide":         false,
 		"datasource": map[string]interface{}{
 			"cate":  "prometheus",
-			"value": datasourceId,
+			"value": datasourceVarRef,
 		},
 	}
 	if spec.Label != "" {
@@ -125,21 +169,23 @@ func buildVariable(spec VariableSpec, datasourceId int64) map[string]interface{}
 	return v
 }
 
-func buildPanel(spec PanelSpec, index, x, y, w, h int, datasourceId int64) map[string]interface{} {
+func buildPanel(spec PanelSpec, index, x, y, w, h int) map[string]interface{} {
 	panelId := fmt.Sprintf("panel-%d", index)
 
+	// datasourceValue uses the "${prom}" template variable so panels
+	// inherit whichever datasource the user picks in the header dropdown.
 	panel := map[string]interface{}{
-		"version":          "3.4.0",
-		"id":               panelId,
-		"type":             spec.Type,
-		"name":             spec.Name,
-		"datasourceCate":   "prometheus",
-		"datasourceValue":  datasourceId,
-		"layout":           map[string]interface{}{"x": x, "y": y, "w": w, "h": h, "i": panelId, "isResizable": true},
-		"targets":          buildTargets(spec.Queries),
-		"options":          buildOptions(spec),
-		"custom":           buildCustom(spec),
-		"overrides":        []interface{}{},
+		"version":           "3.4.0",
+		"id":                panelId,
+		"type":              spec.Type,
+		"name":              spec.Name,
+		"datasourceCate":    "prometheus",
+		"datasourceValue":   datasourceVarRef,
+		"layout":            map[string]interface{}{"x": x, "y": y, "w": w, "h": h, "i": panelId, "isResizable": true},
+		"targets":           buildTargets(spec.Queries),
+		"options":           buildOptions(spec),
+		"custom":            buildCustom(spec),
+		"overrides":         []interface{}{},
 		"transformationsNG": []interface{}{},
 	}
 

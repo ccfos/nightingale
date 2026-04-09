@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/models"
@@ -201,6 +202,17 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 	}
 
 	if err := board.AtomicAdd(dbCtx, configs); err != nil {
+		// Instructive error on name conflict: tell the LLM exactly how to recover
+		// so it doesn't waste iterations calling list_dashboards to investigate.
+		if strings.Contains(err.Error(), "Name duplicate") {
+			return "", fmt.Errorf(
+				"dashboard name %q already exists in busi_group %d. "+
+					"DO NOT call list_dashboards. "+
+					"Retry create_dashboard immediately with a different name, "+
+					"e.g. %q or %q",
+				name, groupId, name+"-v2", name+"-AI",
+			)
+		}
 		return "", fmt.Errorf("failed to create dashboard: %v", err)
 	}
 

@@ -161,8 +161,23 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 		requestID = req.Metadata["request_id"]
 	}
 
+	// Per-skill override: a skill may declare a higher MaxIterations in its
+	// frontmatter for multi-step workflows (e.g. create_dashboard needs ~10+
+	// tool calls). Pick the highest value across all active skills so a cheap
+	// global default doesn't starve an expensive selected skill.
+	maxIter := a.cfg.MaxIterations
+	for _, sk := range skills {
+		if sk == nil || sk.Metadata == nil {
+			continue
+		}
+		if sk.Metadata.MaxIterations > maxIter {
+			maxIter = sk.Metadata.MaxIterations
+			logger.Infof("[Agent] skill %q raised MaxIterations to %d", sk.Metadata.Name, maxIter)
+		}
+	}
+
 	return a.runReActLoop(ctx, req, messages, &ReActLoopConfig{
-		MaxIterations:         a.cfg.MaxIterations,
+		MaxIterations:         maxIter,
 		Memory:                memory,
 		MemoryEnabled:         memoryEnabled,
 		IncludeMemoryInPrompt: memoryEnabled && a.cfg.Memory != nil && a.cfg.Memory.IncludeInPrompt != nil && *a.cfg.Memory.IncludeInPrompt,

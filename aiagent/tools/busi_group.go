@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/toolkits/pkg/logger"
@@ -12,6 +13,19 @@ type busiGroupResult struct {
 	Id         int64  `json:"id"`
 	Name       string `json:"name"`
 	LabelValue string `json:"label_value,omitempty"`
+	// IsDefault hints that this group is the conventional default (name contains
+	// "default" case-insensitively, or contains "默认"). The LLM should prefer
+	// is_default=true groups when the user did not specify one, to avoid
+	// accidentally picking a test/scratch group that happens to sort first.
+	IsDefault bool `json:"is_default,omitempty"`
+}
+
+// isDefaultBusiGroupName reports whether a busi group name looks like a
+// default group by naming convention. Exposed as a helper so the hint in
+// list_busi_groups results stays consistent with any future selection logic.
+func isDefaultBusiGroupName(name string) bool {
+	lower := strings.ToLower(name)
+	return strings.Contains(lower, "default") || strings.Contains(name, "默认")
 }
 
 func init() {
@@ -49,6 +63,7 @@ func listBusiGroups(_ context.Context, args map[string]interface{}, params map[s
 			Id:         g.Id,
 			Name:       g.Name,
 			LabelValue: g.LabelValue,
+			IsDefault:  isDefaultBusiGroupName(g.Name),
 		})
 	}
 
