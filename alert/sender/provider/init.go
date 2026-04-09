@@ -42,6 +42,5 @@ func knownProviderIdents() map[string]struct{} {
 	for _, p := range DefaultRegistry.All() {
 		m[p.Ident()] = struct{}{}
 	}
-	m["http"] = struct{}{} // 映射目标，视为已知避免重复映射
 	return m
 }

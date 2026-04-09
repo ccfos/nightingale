@@ -30,7 +30,7 @@ func (p *EmailProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyR
 	m.SetHeader("To", req.Sendtos...)
 	m.SetHeader("Subject", req.TplContent["subject"].(string))
 	m.SetBody("text/html", req.TplContent["content"].(string))
-	req.SmtpChan <- &models.EmailContext{NotifyRuleId: 0, Events: req.Events, Mail: m}
+	req.SmtpChan <- &models.EmailContext{NotifyRuleId: req.NotifyRuleId, Events: req.Events, Mail: m}
 	return &NotifyResult{Target: strings.Join(req.Sendtos, ","), Response: "queued", Err: nil}
 }
 

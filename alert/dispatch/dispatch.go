@@ -564,6 +564,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	}
 
 	req := &provider.NotifyRequest{
+		NotifyRuleId:         notifyRuleId,
 		Config:               notifyChannel,
 		Events:               events,
 		TplContent:           tplContent,
@@ -573,6 +574,8 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		Sendtos:              sendtos,
 		ImGroupIDs:           imGroupIDs,
 		HttpClient:           notifyChannelCache.GetHttpClient(notifyChannel.ID),
+		SiteUrl:              siteInfo.SiteUrl,
+		// CvalCache:            configCvalCache,
 	}
 	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {

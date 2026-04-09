@@ -25,6 +25,7 @@ type NotifyChannelProvider interface {
 }
 
 type NotifyRequest struct {
+	NotifyRuleId         int64
 	Config               *models.NotifyChannelConfig
 	Events               []*models.AlertCurEvent
 	TplContent           map[string]interface{}
@@ -35,6 +36,7 @@ type NotifyRequest struct {
 	ImGroupIDs           []string                  // 飞书群/钉钉群ID
 	HttpClient           *http.Client              // 由 cache 层提供
 	SmtpChan             chan *models.EmailContext // 由 cache 层提供 (仅 smtp 类型)
+	SiteUrl              string
 }
 
 type NotifyResult struct {

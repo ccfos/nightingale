@@ -34,19 +34,19 @@ func (p *PagerDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	if req.Config.RequestConfig == nil || req.Config.RequestConfig.PagerDutyRequestConfig == nil {
 		return &NotifyResult{Target: "", Response: "", Err: errors.New("pagerduty request config not found")}
 	}
-	siteUrl := req.CustomParams["site_url"]
-	if len(req.Sendtos) == 0 {
+
+	if len(req.PagerDutyRoutingKeys) == 0 {
 		return &NotifyResult{Target: "", Response: "", Err: errors.New("pagerduty requires at least one routing key in sendtos")}
 	}
 	var responses []string
-	for _, routingKey := range req.Sendtos {
-		resp, err := SendPagerDuty(req.Config.RequestConfig.PagerDutyRequestConfig, req.Events, routingKey, siteUrl, req.HttpClient)
+	for _, routingKey := range req.PagerDutyRoutingKeys {
+		resp, err := SendPagerDuty(req.Config.RequestConfig.PagerDutyRequestConfig, req.Events, routingKey, req.SiteUrl, req.HttpClient)
 		if err != nil {
-			return &NotifyResult{Target: strings.Join(req.Sendtos, ","), Response: strings.Join(responses, "; "), Err: err}
+			return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: err}
 		}
 		responses = append(responses, resp)
 	}
-	return &NotifyResult{Target: strings.Join(req.Sendtos, ","), Response: strings.Join(responses, "; "), Err: nil}
+	return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: nil}
 }
 
 func (p *PagerDutyProvider) DefaultChannels() []*models.NotifyChannelConfig {
