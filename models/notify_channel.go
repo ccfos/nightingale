@@ -514,7 +514,7 @@ func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 		if _, known := knownIdents[c.Ident]; !known {
 			switch c.RequestType {
 			case "http":
-				c.Ident = "http"
+				c.Ident = "callback"
 			case "script":
 				c.Ident = "script"
 			case "flashduty":
