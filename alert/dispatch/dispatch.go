@@ -595,8 +595,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	case "smtp":
 		// SMTP 走邮件连接池
 		req.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
-		result := p.Notify(ctx.Ctx, req)
-		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
+		p.Notify(ctx.Ctx, req)
 	default:
 		// flashduty/pagerduty/script 等直接调用
 		result := p.Notify(ctx.Ctx, req)
