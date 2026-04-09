@@ -169,6 +169,7 @@ PUT /api/n9e/embedded-products/weights
 ### 校验规则
 
 - 请求体为空数组时直接返回成功，不会产生任何写操作
+- 单次最多提交 **1000** 条，超出返回 `400 too many items`
 - 任一 `id <= 0` 直接返回 `400 invalid id`
 - 同一请求内重复的 `id` 以最后一次出现的 `weight` 为准
 

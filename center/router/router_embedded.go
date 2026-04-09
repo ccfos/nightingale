@@ -117,6 +117,12 @@ func (rt *Router) embeddedProductWeightsPut(c *gin.Context) {
 	}
 	ginx.BindJSON(c, &items)
 
+	// 上限保护：避免单个事务内跑过多 UPDATE 造成长事务/锁表
+	const maxBatchSize = 1000
+	if len(items) > maxBatchSize {
+		ginx.Bomb(400, "too many items")
+	}
+
 	weights := make(map[int64]int, len(items))
 	for _, it := range items {
 		if it.ID <= 0 {
