@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -168,18 +167,12 @@ func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig
 }
 
 func (p *AliyunSmsProvider) makeHTTPRequest(httpConfig *models.HTTPRequestConfig, url string, headers map[string]string, parameters map[string]string, body []byte) (*http.Request, error) {
-	req, err := http.NewRequest(httpConfig.Method, url, bytes.NewBuffer(body))
-	if err != nil {
-		logger.Errorf("failed to create request: %v", err)
-		return nil, err
-	}
-
-	query := req.URL.Query()
 	// 设置签名
-	req, err = http.NewRequest(httpConfig.Method, url, nil)
+	req, err := http.NewRequest(httpConfig.Method, url, nil)
 	if err != nil {
 		return nil, err
 	}
+	query := req.URL.Query()
 
 	query, headers = getAliQuery(p.Ident(), query, httpConfig, parameters)
 	for key, value := range headers {
