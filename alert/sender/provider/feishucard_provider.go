@@ -10,9 +10,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-type FeishuCardProvider struct {
-	appConfig *models.FeishuRequestConfig
-}
+type FeishuCardProvider struct{}
 
 func (p *FeishuCardProvider) Ident() string {
 	return models.FeishuCard
@@ -49,12 +47,12 @@ func (p *FeishuCardProvider) Notify(ctx context.Context, req *NotifyRequest) *No
 
 	// 当事件包含截图、且显式提供 app_id/app_secret 时，先上传图片并注入 shot_image_key，供卡片模板引用。
 	imageBase64 := pickImageBase64(req.Events)
-	p.appConfig = req.Config.RequestConfig.FeishuRequestConfig
+	appConfig := req.Config.RequestConfig.FeishuRequestConfig
 
 	var appID, appSecret string
-	if p.appConfig != nil {
-		appID = strings.TrimSpace(p.appConfig.AppID)
-		appSecret = strings.TrimSpace(p.appConfig.AppSecret)
+	if appConfig != nil {
+		appID = strings.TrimSpace(appConfig.AppID)
+		appSecret = strings.TrimSpace(appConfig.AppSecret)
 	}
 	if imageBase64 != "" && appID != "" && appSecret != "" {
 		token, err := getFeishuTenantAccessToken(ctx, req.HttpClient, appID, appSecret)

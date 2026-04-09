@@ -47,10 +47,7 @@ type FeishuUserIDItem struct {
 	UserID string `json:"user_id"`
 }
 
-type FeishuAppProvider struct {
-	appConfig *models.FeishuAppRequestConfig
-	token     string
-}
+type FeishuAppProvider struct{}
 
 func (p *FeishuAppProvider) Ident() string { return "feishuapp" }
 
@@ -86,12 +83,11 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	if req == nil || req.Config == nil || req.Config.RequestConfig == nil || req.Config.RequestConfig.FeishuAppRequestConfig == nil {
 		return &NotifyResult{Err: errors.New("feishu app request config cannot be nil")}
 	}
-	p.appConfig = req.Config.RequestConfig.FeishuAppRequestConfig
-	token, err := GetFeishuTenantAccessToken(ctx, req.HttpClient, p.appConfig.AppID, p.appConfig.AppSecret)
+	appConfig := req.Config.RequestConfig.FeishuAppRequestConfig
+	token, err := GetFeishuTenantAccessToken(ctx, req.HttpClient, appConfig.AppID, appConfig.AppSecret)
 	if err != nil {
 		return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: "", Err: err}
 	}
-	p.token = token
 
 	title := getMapString(req.TplContent, "title")
 	content := getMapString(req.TplContent, "content")
@@ -119,7 +115,7 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 
 	// 个人: 使用 feishuapp_request_config.receive_id_type；未填时与历史一致，按 contact_key 推断。
 	contactKey := req.Config.ParamConfig.UserInfo.ContactKey
-	receiveIDType := resolveFeishuReceiveIDType(p.appConfig.ReceiveIDType, contactKey)
+	receiveIDType := resolveFeishuReceiveIDType(appConfig.ReceiveIDType, contactKey)
 	for _, rid := range req.Sendtos {
 		receiveID := strings.TrimSpace(rid)
 		if receiveID == "" {

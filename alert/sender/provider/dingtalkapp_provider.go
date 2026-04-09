@@ -19,20 +19,17 @@ import (
 )
 
 var (
-	dingtalkAppAccessTokenURL  = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
-	dingtalkAppUserByMobileURL = "https://oapi.dingtalk.com/topapi/v2/user/getbymobile"
+	dingtalkAppAccessTokenURL   = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
+	dingtalkAppUserByMobileURL  = "https://oapi.dingtalk.com/topapi/v2/user/getbymobile"
 	dingtalkScenarioGroupGetURL = "https://oapi.dingtalk.com/topapi/im/chat/scenegroup/get"
 	dingtalkAppMediaUploadURL   = "https://oapi.dingtalk.com/media/upload"
-	dingtalkRobotBatchSendURL  = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
-	dingtalkRobotGroupSendURL  = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
+	dingtalkRobotBatchSendURL   = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
+	dingtalkRobotGroupSendURL   = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
 )
 
 // DingtalkAppProvider 对接钉钉应用消息发送接口。
 // 采用 HTTP 通道发送，支持通过参数传入 access_token 和 agent_id。
-type DingtalkAppProvider struct {
-	appConfig   *models.DingtalkAppRequestConfig
-	AccessToken string
-}
+type DingtalkAppProvider struct{}
 
 func (p *DingtalkAppProvider) Ident() string {
 	return "dingtalkapp"
@@ -68,7 +65,6 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 		return &NotifyResult{Err: errors.New("dingtalk app request config cannot be nil")}
 	}
 	appConfig := req.Config.RequestConfig.DingtalkAppRequestConfig
-	p.appConfig = appConfig
 
 	logger.Infof("dingtalkapp notify start: sendtos=%d groups=%d", len(req.Sendtos), len(req.ImGroupIDs))
 	accessToken, err := GetAccessToken(ctx, req.HttpClient, appConfig.AppKey, appConfig.AppSecret)
@@ -78,8 +74,6 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			Response: "get access token failed: " + err.Error(),
 			Err:      err,
 		}
-	} else {
-		p.AccessToken = accessToken
 	}
 	userIDs := make([]string, 0, len(req.Sendtos))
 	contactKey := ""
@@ -99,7 +93,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			continue
 		}
 		if isPhoneContactKey(contactKey) {
-			uid, userErr := p.GetUserIDByMobile(ctx, req.HttpClient, s)
+			uid, userErr := p.GetUserIDByMobile(ctx, req.HttpClient, accessToken, s)
 			if userErr != nil {
 				return &NotifyResult{
 					Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
@@ -146,7 +140,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	imageBase64 := pickImageBase64(req.Events)
 	if imageBase64 != "" {
 		var uploadErr error
-		imageMediaID, uploadErr = UploadMedia(ctx, req.HttpClient, p.AccessToken, "image", imageBase64)
+		imageMediaID, uploadErr = UploadMedia(ctx, req.HttpClient, accessToken, "image", imageBase64)
 		if uploadErr != nil {
 			logger.Errorf("dingtalkapp upload image failed: %v", uploadErr)
 		}
@@ -159,7 +153,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 
 	if len(userIDs) > 0 {
 		if imageMediaID != "" {
-			imageResp, imageErr := p.sendRobotOTOImageMessage(ctx, req.HttpClient, userIDs, imageMediaID, req.CustomParams)
+			imageResp, imageErr := p.sendRobotOTOImageMessage(ctx, req.HttpClient, appConfig, accessToken, userIDs, imageMediaID)
 			if imageErr != nil {
 				return &NotifyResult{
 					Target:   strings.Join(targets, ","),
@@ -169,7 +163,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			}
 			parts = append(parts, "user_image:"+imageResp)
 		}
-		msgResp, sendErr := p.sendRobotOTOActionCardMessage(ctx, req.HttpClient, userIDs, title, content, req.CustomParams)
+		msgResp, sendErr := p.sendRobotOTOActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, userIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -181,7 +175,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	}
 	if len(groupIDs) > 0 {
 		if imageMediaID != "" {
-			imageResp, imageErr := p.sendRobotGroupImageMessage(ctx, req.HttpClient, groupIDs, imageMediaID, req.CustomParams)
+			imageResp, imageErr := p.sendRobotGroupImageMessage(ctx, req.HttpClient, appConfig, accessToken, groupIDs, imageMediaID)
 			if imageErr != nil {
 				return &NotifyResult{
 					Target:   strings.Join(targets, ","),
@@ -191,7 +185,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			}
 			parts = append(parts, "group_image:"+imageResp)
 		}
-		msgResp, sendErr := p.sendRobotGroupActionCardMessage(ctx, req.HttpClient, groupIDs, title, content, req.CustomParams)
+		msgResp, sendErr := p.sendRobotGroupActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, groupIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -397,11 +391,11 @@ func GetScenarioGroupInfo(ctx context.Context, client *http.Client, accessToken,
 }
 
 // GetUserIDByMobile 根据手机号查询钉钉 userid。
-func (p *DingtalkAppProvider) GetUserIDByMobile(ctx context.Context, client *http.Client, mobile string) (string, error) {
+func (p *DingtalkAppProvider) GetUserIDByMobile(ctx context.Context, client *http.Client, accessToken, mobile string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.AccessToken == "" {
+	if accessToken == "" {
 		return "", errors.New("access token cannot be empty")
 	}
 	if strings.TrimSpace(mobile) == "" {
@@ -415,7 +409,7 @@ func (p *DingtalkAppProvider) GetUserIDByMobile(ctx context.Context, client *htt
 		return "", fmt.Errorf("marshal get user by mobile request failed: %w", err)
 	}
 
-	u := fmt.Sprintf("%s?access_token=%s", dingtalkAppUserByMobileURL, url.QueryEscape(p.AccessToken))
+	u := fmt.Sprintf("%s?access_token=%s", dingtalkAppUserByMobileURL, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(reqBody))
 	if err != nil {
 		return "", err
@@ -475,8 +469,8 @@ func (p *DingtalkAppProvider) buildRobotActionCardMessage(title, content string,
 	return "sampleActionCard", string(msgParamBytes)
 }
 
-func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context, client *http.Client, userIDs []string, title, content string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, userIDs []string, title, content string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(appConfig.AppKey)
 	if robotCode == "" {
 		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto message")
 	}
@@ -487,11 +481,11 @@ func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context,
 		"msgKey":    msgKey,
 		"msgParam":  msgParam,
 	}
-	return p.sendRobotMessage(ctx, client, dingtalkRobotBatchSendURL, payload)
+	return p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotBatchSendURL, payload)
 }
 
-func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, client *http.Client, userIDs []string, mediaID string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, userIDs []string, mediaID string) (string, error) {
+	robotCode := strings.TrimSpace(appConfig.AppKey)
 	if robotCode == "" {
 		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto image")
 	}
@@ -502,11 +496,11 @@ func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, clie
 		"msgKey":    "sampleImageMsg",
 		"msgParam":  string(msgParamBytes),
 	}
-	return p.sendRobotMessage(ctx, client, dingtalkRobotBatchSendURL, payload)
+	return p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotBatchSendURL, payload)
 }
 
-func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Context, client *http.Client, groupIDs []string, title, content string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, groupIDs []string, title, content string, customParams map[string]string) (string, error) {
+	robotCode := strings.TrimSpace(appConfig.AppKey)
 	if robotCode == "" {
 		return "", errors.New("app_key cannot be empty when sending dingtalk robot group message")
 	}
@@ -519,7 +513,7 @@ func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Contex
 			"msgKey":             msgKey,
 			"msgParam":           msgParam,
 		}
-		resp, err := p.sendRobotMessage(ctx, client, dingtalkRobotGroupSendURL, payload)
+		resp, err := p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotGroupSendURL, payload)
 		if err != nil {
 			return strings.Join(results, "; "), err
 		}
@@ -528,8 +522,8 @@ func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Contex
 	return strings.Join(results, "; "), nil
 }
 
-func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, client *http.Client, groupIDs []string, mediaID string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(p.appConfig.AppKey)
+func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, groupIDs []string, mediaID string) (string, error) {
+	robotCode := strings.TrimSpace(appConfig.AppKey)
 	if robotCode == "" {
 		return "", errors.New("app_key cannot be empty when sending dingtalk robot group image")
 	}
@@ -542,7 +536,7 @@ func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, cl
 			"msgKey":             "sampleImageMsg",
 			"msgParam":           string(msgParamBytes),
 		}
-		resp, err := p.sendRobotMessage(ctx, client, dingtalkRobotGroupSendURL, payload)
+		resp, err := p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotGroupSendURL, payload)
 		if err != nil {
 			return strings.Join(results, "; "), err
 		}
@@ -551,15 +545,15 @@ func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, cl
 	return strings.Join(results, "; "), nil
 }
 
-func (p *DingtalkAppProvider) sendRobotMessage(ctx context.Context, client *http.Client, endpoint string, payload map[string]interface{}) (string, error) {
-	return p.sendAppMessage(ctx, client, endpoint, payload)
+func (p *DingtalkAppProvider) sendRobotMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken, endpoint string, payload map[string]interface{}) (string, error) {
+	return p.sendAppMessage(ctx, client, appConfig, accessToken, endpoint, payload)
 }
 
-func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.Client, endpoint string, payload map[string]interface{}) (string, error) {
+func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken, endpoint string, payload map[string]interface{}) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.AccessToken == "" {
+	if accessToken == "" {
 		return "", errors.New("access token cannot be empty")
 	}
 	reqBody, err := json.Marshal(payload)
@@ -568,12 +562,12 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 	}
 
 	retrySleep := time.Second
-	if p.appConfig != nil && p.appConfig.RetrySleep > 0 {
-		retrySleep = time.Duration(p.appConfig.RetrySleep) * time.Millisecond
+	if appConfig != nil && appConfig.RetrySleep > 0 {
+		retrySleep = time.Duration(appConfig.RetrySleep) * time.Millisecond
 	}
 	retryTimes := 3
-	if p.appConfig != nil && p.appConfig.RetryTimes > 0 {
-		retryTimes = p.appConfig.RetryTimes
+	if appConfig != nil && appConfig.RetryTimes > 0 {
+		retryTimes = appConfig.RetryTimes
 	}
 	var lastErrorMessage string
 	for i := 0; i <= retryTimes; i++ {
@@ -582,7 +576,7 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 			return "", err
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("x-acs-dingtalk-access-token", p.AccessToken)
+		req.Header.Set("x-acs-dingtalk-access-token", accessToken)
 
 		resp, err := client.Do(req)
 		if err != nil {

@@ -25,10 +25,7 @@ const (
 )
 
 // WecomAppProvider 企业微信应用消息：成员使用 message/send（markdown）。
-type WecomAppProvider struct {
-	appConfig   *models.WecomAppRequestConfig
-	accessToken string
-}
+type WecomAppProvider struct{}
 
 func (p *WecomAppProvider) Ident() string { return "wecomapp" }
 
@@ -62,9 +59,9 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 	if req == nil || req.Config == nil || req.Config.RequestConfig == nil || req.Config.RequestConfig.WecomAppRequestConfig == nil {
 		return &NotifyResult{Err: errors.New("wecom app request config cannot be nil")}
 	}
-	p.appConfig = req.Config.RequestConfig.WecomAppRequestConfig
+	appConfig := req.Config.RequestConfig.WecomAppRequestConfig
 
-	token, err := p.getAccessToken(ctx, req.HttpClient)
+	token, err := p.getAccessToken(ctx, req.HttpClient, appConfig)
 	if err != nil {
 		return &NotifyResult{
 			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
@@ -72,7 +69,6 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 			Err:      fmt.Errorf("wecom get access_token: %w", err),
 		}
 	}
-	p.accessToken = token
 	contactKey := ""
 	if req.Config.ParamConfig != nil && req.Config.ParamConfig.UserInfo != nil && req.Config.ParamConfig.UserInfo.ContactKey != "" {
 		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
@@ -86,7 +82,7 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		}
 
 		if isPhoneContactKey(contactKey) {
-			uid, e := p.getUserIDByMobile(ctx, req.HttpClient, s)
+			uid, e := p.getUserIDByMobile(ctx, req.HttpClient, token, s)
 			if e != nil {
 				return &NotifyResult{
 					Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
@@ -96,7 +92,7 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 			}
 			userIDs = append(userIDs, uid)
 		} else if isEmailContactKey(contactKey) {
-			uid, e := p.getUserIDByEmail(ctx, req.HttpClient, s)
+			uid, e := p.getUserIDByEmail(ctx, req.HttpClient, token, s)
 			if e != nil {
 				return &NotifyResult{
 					Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
@@ -138,7 +134,7 @@ func (p *WecomAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 	if len(userIDs) > 0 {
 		targets = append(targets, userIDs...)
 		touser := strings.Join(userIDs, "|")
-		resp, sendErr := p.sendMarkdownToUsers(ctx, req.HttpClient, touser, markdown)
+		resp, sendErr := p.sendMarkdownToUsers(ctx, req.HttpClient, appConfig, token, touser, markdown)
 		if sendErr != nil {
 			return &NotifyResult{Target: strings.Join(targets, ","), Response: resp, Err: sendErr}
 		}
@@ -187,11 +183,10 @@ func truncateWecomMarkdown(s string) string {
 	return s
 }
 
-func (p *WecomAppProvider) getAccessToken(ctx context.Context, client *http.Client) (string, error) {
+func (p *WecomAppProvider) getAccessToken(ctx context.Context, client *http.Client, cfg *models.WecomAppRequestConfig) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	cfg := p.appConfig
 	u, err := url.Parse(wecomGetTokenURL)
 	if err != nil {
 		return "", err
@@ -244,18 +239,18 @@ func (p *WecomAppProvider) getAccessToken(ctx context.Context, client *http.Clie
 	return "", lastErr
 }
 
-func (p *WecomAppProvider) getUserIDByMobile(ctx context.Context, client *http.Client, mobile string) (string, error) {
+func (p *WecomAppProvider) getUserIDByMobile(ctx context.Context, client *http.Client, accessToken, mobile string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.accessToken == "" {
+	if accessToken == "" {
 		return "", errors.New("access token cannot be empty")
 	}
 	body, err := json.Marshal(map[string]string{"mobile": mobile})
 	if err != nil {
 		return "", err
 	}
-	u := fmt.Sprintf("%s?access_token=%s", wecomGetUserIDURL, url.QueryEscape(p.accessToken))
+	u := fmt.Sprintf("%s?access_token=%s", wecomGetUserIDURL, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
 	if err != nil {
 		return "", err
@@ -284,11 +279,11 @@ func (p *WecomAppProvider) getUserIDByMobile(ctx context.Context, client *http.C
 	return out.UserID, nil
 }
 
-func (p *WecomAppProvider) getUserIDByEmail(ctx context.Context, client *http.Client, email string) (string, error) {
+func (p *WecomAppProvider) getUserIDByEmail(ctx context.Context, client *http.Client, accessToken, email string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
-	if p.accessToken == "" {
+	if accessToken == "" {
 		return "", errors.New("access token cannot be empty")
 	}
 	email = strings.TrimSpace(email)
@@ -302,7 +297,7 @@ func (p *WecomAppProvider) getUserIDByEmail(ctx context.Context, client *http.Cl
 	if err != nil {
 		return "", err
 	}
-	u := fmt.Sprintf("%s?access_token=%s", wecomGetUserByEmail, url.QueryEscape(p.accessToken))
+	u := fmt.Sprintf("%s?access_token=%s", wecomGetUserByEmail, url.QueryEscape(accessToken))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
 	if err != nil {
 		return "", err
@@ -336,28 +331,27 @@ func isEmailContactKey(contactKey string) bool {
 	return key == models.Email || strings.Contains(key, "email")
 }
 
-func (p *WecomAppProvider) sendMarkdownToUsers(ctx context.Context, client *http.Client, touser, markdown string) (string, error) {
+func (p *WecomAppProvider) sendMarkdownToUsers(ctx context.Context, client *http.Client, cfg *models.WecomAppRequestConfig, accessToken, touser, markdown string) (string, error) {
 	if client == nil {
 		return "", errors.New("http client not found")
 	}
 	payload := map[string]interface{}{
 		"touser":  touser,
 		"msgtype": "markdown",
-		"agentid": p.appConfig.AgentID,
+		"agentid": cfg.AgentID,
 		"markdown": map[string]string{
 			"content": markdown,
 		},
 	}
-	return p.postWecomAPI(ctx, client, wecomMessageSendURL, payload)
+	return p.postWecomAPI(ctx, client, cfg, accessToken, wecomMessageSendURL, payload)
 }
 
-func (p *WecomAppProvider) postWecomAPI(ctx context.Context, client *http.Client, apiURL string, payload interface{}) (string, error) {
-	cfg := p.appConfig
+func (p *WecomAppProvider) postWecomAPI(ctx context.Context, client *http.Client, cfg *models.WecomAppRequestConfig, accessToken, apiURL string, payload interface{}) (string, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
-	u := fmt.Sprintf("%s?access_token=%s", apiURL, url.QueryEscape(p.accessToken))
+	u := fmt.Sprintf("%s?access_token=%s", apiURL, url.QueryEscape(accessToken))
 
 	var lastErr error
 	var lastBody string
