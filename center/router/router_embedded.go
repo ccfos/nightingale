@@ -108,6 +108,28 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 }
 
+// embeddedProductWeightsPut 批量更新 weight，供前端拖拽排序使用。
+// 请求体：[{"id": 1, "weight": 0}, {"id": 2, "weight": 1}, ...]
+func (rt *Router) embeddedProductWeightsPut(c *gin.Context) {
+	var items []struct {
+		ID     int64 `json:"id"`
+		Weight int   `json:"weight"`
+	}
+	ginx.BindJSON(c, &items)
+
+	weights := make(map[int64]int, len(items))
+	for _, it := range items {
+		if it.ID <= 0 {
+			ginx.Bomb(400, "invalid id")
+		}
+		weights[it.ID] = it.Weight
+	}
+
+	me := c.MustGet("user").(*models.User)
+	err := models.UpdateEmbeddedProductWeights(rt.Ctx, weights, me.Username)
+	ginx.NewRender(c).Message(err)
+}
+
 func (rt *Router) embeddedProductDelete(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 	if id <= 0 {

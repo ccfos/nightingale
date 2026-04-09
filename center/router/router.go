@@ -513,6 +513,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.embeddedProductGets)
 		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.embeddedProductGet)
 		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductAdd)
+		pages.PUT("/embedded-products/weights", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductWeightsPut)
 		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
