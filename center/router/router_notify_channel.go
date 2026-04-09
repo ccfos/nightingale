@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -266,14 +267,14 @@ func (rt *Router) dingtalkGroupsGetByNotifyChannel(c *gin.Context) {
 		Page:     1,
 		PageSize: 50,
 	}
-	if c.Request != nil && c.Request.ContentLength > 0 {
-		ginx.BindJSON(c, &req)
-		if req.Page == 0 {
-			req.Page = 1
-		}
-		if req.PageSize == 0 {
-			req.PageSize = 50
-		}
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		ginx.Bomb(http.StatusBadRequest, "json body invalid: %v", err)
+	}
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 50
 	}
 
 	page := req.Page

@@ -557,10 +557,32 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		ident = notifyChannel.Ident
 	}
 
-	p, ok := provider.DefaultRegistry.Get(ident) // ← 按 ident 查找
+	p, ok := provider.DefaultRegistry.Get(ident) // 优先按 ident 查找
 	if !ok {
-		logger.Warningf("unknown channel ident: %s", notifyChannel.Ident)
-		return
+		fallbackIdent := ""
+		switch notifyChannel.RequestType {
+		case "http":
+			fallbackIdent = "callback"
+		case "script":
+			fallbackIdent = "script"
+		case "flashduty":
+			fallbackIdent = "flashduty"
+		case "pagerduty":
+			fallbackIdent = "pagerduty"
+		case "smtp":
+			fallbackIdent = models.Email
+		}
+		if fallbackIdent != "" && fallbackIdent != ident {
+			p, ok = provider.DefaultRegistry.Get(fallbackIdent)
+			if ok {
+				logger.Warningf("notify channel ident(%s) not found, fallback by request_type(%s) to provider(%s)",
+					notifyChannel.Ident, notifyChannel.RequestType, fallbackIdent)
+			}
+		}
+		if !ok {
+			logger.Warningf("unknown channel ident(%s), request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
+			return
+		}
 	}
 
 	req := &provider.NotifyRequest{
@@ -575,7 +597,6 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		ImGroupIDs:           imGroupIDs,
 		HttpClient:           notifyChannelCache.GetHttpClient(notifyChannel.ID),
 		SiteUrl:              siteInfo.SiteUrl,
-		// CvalCache:            configCvalCache,
 	}
 	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {
