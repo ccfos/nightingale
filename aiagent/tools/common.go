@@ -118,6 +118,32 @@ func getArgInt64(args map[string]interface{}, key string) int64 {
 	return 0
 }
 
+// getArgFloat extracts a numeric arg, returning (value, present). It accepts
+// both JSON numbers (float64) and numeric strings — the LLM sometimes wraps
+// numbers in quotes when copying from documentation. Returns present=false
+// if the key is missing or unparseable so callers can distinguish "not set"
+// from "set to zero".
+func getArgFloat(args map[string]interface{}, key string) (float64, bool) {
+	switch v := args[key].(type) {
+	case float64:
+		return v, true
+	case int:
+		return float64(v), true
+	case int64:
+		return float64(v), true
+	case string:
+		if v == "" {
+			return 0, false
+		}
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, false
+		}
+		return f, true
+	}
+	return 0, false
+}
+
 func getDatasourceId(params map[string]string) int64 {
 	if params == nil {
 		return 0

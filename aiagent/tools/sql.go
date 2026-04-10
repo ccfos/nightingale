@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -18,39 +20,89 @@ type columnInfo struct {
 func init() {
 	register("list_databases", aiagent.AgentTool{
 		Name:        "list_databases",
-		Description: "列出 SQL 数据源（MySQL/Doris/ClickHouse/PostgreSQL）中的所有数据库",
+		Description: "列出 SQL 数据源（MySQL/Doris/ClickHouse/PostgreSQL）中的所有数据库。创建 SQL 类告警规则前先用这个探测真实的数据库名，不要凭空猜。",
 		Type:        aiagent.ToolTypeBuiltin,
-		Parameters:  []aiagent.ToolParameter{},
+		Parameters: []aiagent.ToolParameter{
+			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
+			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
+		},
 	}, listDatabasesTool)
 
 	register("list_tables", aiagent.AgentTool{
 		Name:        "list_tables",
-		Description: "列出指定数据库中的所有表",
+		Description: "列出指定数据库中的所有表。创建 SQL 类告警规则前先用这个探测真实的表名，不要凭空猜。",
 		Type:        aiagent.ToolTypeBuiltin,
 		Parameters: []aiagent.ToolParameter{
 			{Name: "database", Type: "string", Description: "数据库名", Required: true},
+			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
+			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
 		},
 	}, listTablesTool)
 
 	register("describe_table", aiagent.AgentTool{
 		Name:        "describe_table",
-		Description: "获取表的字段结构（字段名、类型、注释）",
+		Description: "获取表的字段结构（字段名、类型、注释）。创建 SQL 类告警规则前先用这个拿到真实字段名，不要编造字段。",
 		Type:        aiagent.ToolTypeBuiltin,
 		Parameters: []aiagent.ToolParameter{
 			{Name: "database", Type: "string", Description: "数据库名", Required: true},
 			{Name: "table", Type: "string", Description: "表名", Required: true},
+			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
+			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
 		},
 	}, describeTableTool)
 }
 
-func listDatabasesTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
-	dsType := getDatasourceType(params)
+// resolveSQLDatasource picks a (datasource_id, plugin_type) pair from the
+// three possible sources, in order of precedence:
+//
+//  1. explicit tool args — the caller knows exactly which datasource to
+//     target. Used by the alert-rule creation skill where the LLM probes
+//     schemas across multiple datasources in one conversation.
+//  2. session params — injected by the router when the chat is opened from
+//     a datasource-scoped page (explorer, datasource query page). The
+//     explorer flow doesn't require the LLM to know the id.
+//  3. DB lookup by id — if args supplied id but no type, fetch plugin_type
+//     from models.GetDatasourceInfosByIds. Keeps the LLM from having to
+//     remember which cate each id belongs to.
+//
+// Returns a pre-formatted error if neither source yields a usable id, so
+// callers can propagate it straight to the tool Observation.
+func resolveSQLDatasource(args map[string]interface{}, params map[string]string) (int64, string, error) {
+	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		return 0, "", fmt.Errorf("datasource_id required: pass it as a tool argument, or open the chat from a datasource-scoped page")
+	}
+
+	dsType := getArgString(args, "datasource_type")
+	if dsType == "" {
+		dsType = getDatasourceType(params)
 	}
 	if dsType == "" {
-		return "", fmt.Errorf("datasource_type not found in params")
+		// DB fallback — lets the LLM pass only datasource_id without
+		// having to know whether id=5 is mysql or doris.
+		if ctx := aiagent.GetDBCtx(); ctx != nil {
+			infos, err := models.GetDatasourceInfosByIds(ctx, []int64{dsId})
+			if err != nil {
+				return 0, "", fmt.Errorf("failed to resolve datasource type for id=%d: %v", dsId, err)
+			}
+			if len(infos) > 0 {
+				dsType = infos[0].PluginType
+			}
+		}
+	}
+	if dsType == "" {
+		return 0, "", fmt.Errorf("datasource_type not resolvable for id=%d: pass datasource_type explicitly or verify the datasource exists", dsId)
+	}
+	return dsId, dsType, nil
+}
+
+func listDatabasesTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId, dsType, err := resolveSQLDatasource(args, params)
+	if err != nil {
+		return "", err
 	}
 
 	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
@@ -66,11 +118,23 @@ func listDatabasesTool(ctx context.Context, args map[string]interface{}, params 
 		sql = "SHOW DATABASES"
 	case "pgsql", "postgresql":
 		sql = "SELECT datname FROM pg_database WHERE datistemplate = false"
+	case "tdengine":
+		// TDengine 3.x exposes databases via information_schema. SHOW
+		// DATABASES would also work but the result column set is larger
+		// and the row ordering is cluttered with system tables.
+		sql = "SELECT name FROM information_schema.ins_databases"
 	default:
 		return "", fmt.Errorf("unsupported datasource type for list_databases: %s", dsType)
 	}
 
-	query := map[string]interface{}{"sql": sql}
+	// TDengine routes SQL through a single `query` field (vs `sql` for
+	// the MySQL/Doris/CK/PG plugins). Normalise the shape here.
+	var query map[string]interface{}
+	if dsType == "tdengine" {
+		query = map[string]interface{}{"query": sql}
+	} else {
+		query = map[string]interface{}{"sql": sql}
+	}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to list databases: %v", err)
@@ -84,10 +148,9 @@ func listDatabasesTool(ctx context.Context, args map[string]interface{}, params 
 }
 
 func listTablesTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
-	dsType := getDatasourceType(params)
-	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+	dsId, dsType, err := resolveSQLDatasource(args, params)
+	if err != nil {
+		return "", err
 	}
 
 	database, ok := args["database"].(string)
@@ -111,11 +174,24 @@ func listTablesTool(ctx context.Context, args map[string]interface{}, params map
 		sql = fmt.Sprintf("SHOW TABLES FROM `%s`", database)
 	case "pgsql", "postgresql":
 		sql = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+	case "tdengine":
+		// TDengine 3.x: query both regular tables and supertables so
+		// alerts can be built on either. stable_name is returned by
+		// ins_stables; table_name by ins_tables.
+		sql = fmt.Sprintf(
+			"SELECT table_name FROM information_schema.ins_tables WHERE db_name='%s' UNION ALL "+
+				"SELECT stable_name AS table_name FROM information_schema.ins_stables WHERE db_name='%s'",
+			database, database)
 	default:
 		return "", fmt.Errorf("unsupported datasource type for list_tables: %s", dsType)
 	}
 
-	query := map[string]interface{}{"sql": sql, "database": database}
+	var query map[string]interface{}
+	if dsType == "tdengine" {
+		query = map[string]interface{}{"query": sql}
+	} else {
+		query = map[string]interface{}{"sql": sql, "database": database}
+	}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to list tables: %v", err)
@@ -129,10 +205,9 @@ func listTablesTool(ctx context.Context, args map[string]interface{}, params map
 }
 
 func describeTableTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
-	dsType := getDatasourceType(params)
-	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+	dsId, dsType, err := resolveSQLDatasource(args, params)
+	if err != nil {
+		return "", err
 	}
 
 	database, ok := args["database"].(string)
@@ -163,11 +238,27 @@ func describeTableTool(ctx context.Context, args map[string]interface{}, params 
 		sql = fmt.Sprintf("DESCRIBE TABLE `%s`.`%s`", database, table)
 	case "pgsql", "postgresql":
 		sql = fmt.Sprintf(`SELECT column_name as "Field", data_type as "Type", is_nullable as "Null", column_default as "Default" FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '%s'`, table)
+	case "tdengine":
+		// TDengine 3.x: query ins_columns (regular tables and supertable
+		// members) and ins_tags (stable tag columns) so the LLM sees
+		// both numeric columns and tag dimensions. Column alias to
+		// Field/Type matches the existing MySQL/Doris convention.
+		sql = fmt.Sprintf(
+			"SELECT col_name AS `Field`, col_type AS `Type` FROM information_schema.ins_columns "+
+				"WHERE db_name='%s' AND table_name='%s' UNION ALL "+
+				"SELECT tag_name AS `Field`, tag_type AS `Type` FROM information_schema.ins_tags "+
+				"WHERE db_name='%s' AND stable_name='%s'",
+			database, table, database, table)
 	default:
 		return "", fmt.Errorf("unsupported datasource type for describe_table: %s", dsType)
 	}
 
-	query := map[string]interface{}{"sql": sql, "database": database}
+	var query map[string]interface{}
+	if dsType == "tdengine" {
+		query = map[string]interface{}{"query": sql}
+	} else {
+		query = map[string]interface{}{"sql": sql, "database": database}
+	}
 	data, _, err := plug.QueryLog(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to describe table: %v", err)
@@ -181,27 +272,45 @@ func describeTableTool(ctx context.Context, args map[string]interface{}, params 
 }
 
 func extractColumnValues(data []interface{}, columnType string) []string {
+	// Exact key matches first (keeps deterministic order when multiple
+	// columns are present, e.g. information_schema views).
 	possible := map[string][]string{
 		"database": {"Database", "database", "datname", "name"},
-		"table":    {"Tables_in_", "table", "tablename", "name", "Name"},
+		"table":    {"table", "tablename", "table_name", "Name", "name"},
 	}
 	keys := possible[columnType]
 
 	result := make([]string, 0)
 	for _, row := range data {
-		if rowMap, ok := row.(map[string]interface{}); ok {
-			var value string
-			for _, key := range keys {
-				if v, ok := rowMap[key]; ok {
+		rowMap, ok := row.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		var value string
+		for _, key := range keys {
+			if v, ok := rowMap[key]; ok {
+				if s, ok := v.(string); ok {
+					value = s
+					break
+				}
+			}
+		}
+		// MySQL/Doris SHOW TABLES returns a column named Tables_in_<dbname>
+		// (e.g. "Tables_in_flashcat_apm") — we can't know the exact suffix
+		// ahead of time, so fall back to a prefix scan when the exact-key
+		// pass didn't find anything.
+		if value == "" && columnType == "table" {
+			for key, v := range rowMap {
+				if strings.HasPrefix(key, "Tables_in_") {
 					if s, ok := v.(string); ok {
 						value = s
 						break
 					}
 				}
 			}
-			if value != "" {
-				result = append(result, value)
-			}
+		}
+		if value != "" {
+			result = append(result, value)
 		}
 	}
 	return result

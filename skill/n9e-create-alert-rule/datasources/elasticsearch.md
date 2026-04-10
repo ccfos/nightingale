@@ -24,8 +24,7 @@
         "index": "logs-*",
         "filter": "level:ERROR",
         "date_field": "@timestamp",
-        "interval": 5,
-        "interval_unit": "min",
+        "interval": 300,
         "value": {
           "func": "count"
         },
@@ -60,7 +59,7 @@
 | `index` | 索引名，支持通配符如 `logs-*` |
 | `filter` | ES 查询过滤条件 |
 | `date_field` | 时间字段名，通常为 `@timestamp` |
-| `interval` + `interval_unit` | 查询聚合间隔，单位：`second` / `min` / `hour` |
+| `interval` | 查询聚合时间窗口，**单位：总秒数**（60=1分钟，300=5分钟，3600=1小时）。**不要写 `interval_unit`** |
 | `value.func` | 聚合函数：`count` / `avg` / `sum` / `max` / `min` / `p90` / `p95` / `p99` |
 | `value.field` | 聚合字段名（`count` 时不需要） |
 | `group_by` | 分组配置，`cate` 可选 `terms` / `filters` / `histogram` |
@@ -86,8 +85,7 @@
         "index": "logs-*",
         "filter": "level:ERROR",
         "date_field": "@timestamp",
-        "interval": 5,
-        "interval_unit": "min",
+        "interval": 300,
         "value": {"func": "count"}
       }
     ],

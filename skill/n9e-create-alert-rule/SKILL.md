@@ -1,206 +1,324 @@
 ---
 name: n9e-create-alert-rule
-description: 在夜莺(n9e)环境中创建告警规则并关联通知规则。当用户要求创建告警规则、添加监控告警、配置告警策略时使用。
+description: 在夜莺(n9e)平台上创建告警规则。支持 Prometheus/Loki/ES/MySQL/TDengine/ClickHouse/Doris/Host 等所有数据源类型。
+max_iterations: 20
+builtin_tools:
+  - create_alert_rule
+  - list_busi_groups
+  - list_datasources
+  - list_metrics
+  - list_notify_rules
+  - list_files
+  - read_file
+  - list_databases
+  - list_tables
+  - describe_table
 ---
 
-# 夜莺(n9e) 创建告警规则
+# Skill: 夜莺(N9E) 告警规则创建
 
-在夜莺监控平台上创建告警规则并关联通知规则。支持 Prometheus、Elasticsearch、Loki、TDengine、ClickHouse、MySQL、PostgreSQL、Doris、OpenSearch、VictoriaLogs、Host 等数据源类型。
+## 概述
 
-根据用户需要的数据源类型，读取 `datasources/` 目录下对应的文件获取 `rule_config` 结构：
-- [datasources/prometheus.md](datasources/prometheus.md) - Prometheus 指标告警
-- [datasources/loki.md](datasources/loki.md) - Loki 日志告警
-- [datasources/elasticsearch.md](datasources/elasticsearch.md) - Elasticsearch / OpenSearch 日志告警
-- [datasources/tdengine.md](datasources/tdengine.md) - TDengine 指标告警
-- [datasources/clickhouse.md](datasources/clickhouse.md) - ClickHouse 指标/日志告警
-- [datasources/mysql.md](datasources/mysql.md) - MySQL 指标告警
-- [datasources/pgsql.md](datasources/pgsql.md) - PostgreSQL 指标告警
-- [datasources/doris.md](datasources/doris.md) - Doris 日志告警
-- [datasources/victorialogs.md](datasources/victorialogs.md) - VictoriaLogs 日志告警
-- [datasources/host.md](datasources/host.md) - 机器监控告警
+使用 `create_alert_rule` 工具创建告警规则。支持 **Prometheus / Loki / Elasticsearch / OpenSearch / TDengine / ClickHouse / MySQL / PostgreSQL / Doris / VictoriaLogs / Host** 全部数据源类型。
 
----
+工具提供两种调用模式：
 
-## 前置条件
+1. **Prometheus 简化路径**（最常用）——直接传 `prom_ql` + `threshold` + `operator`，工具自动构建 v2 rule_config
+2. **通用路径**——传 `cate` + `rule_config_json`，`rule_config_json` 的结构**先通过 `read_file` 读取 `datasources/<cate>.md` 获取模板**，再填充实际值
 
-用户需要提供：
-- **n9e 地址**：如 `http://<n9e-host>:<port>`
-- **用户名/密码**：如 `<username>/<password>`
-- **告警内容描述**：如 "host CPU 使用率超过 80%"
+## 模式 1：Prometheus 简化路径
 
-如果用户未提供以上信息，使用 AskUserQuestion 工具询问。
+最常用的场景。只需填 PromQL、阈值、操作符。工具内部会把阈值拼进 `prom_ql` 生成 v1 格式的规则（OSS n9e 的 FE v2 编辑器被 `IS_PLUS` 门控，只能用 v1）。
 
----
+```json
+{
+  "group_id": 1,
+  "name": "CPU 使用率过高",
+  "datasource_id": 1,
+  "prom_ql": "avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
+  "operator": ">",
+  "threshold": 80,
+  "severity": 2,
+  "note": "CPU 使用率超过 80% 持续 1 分钟",
+  "for_duration": 60
+}
+```
+
+## 模式 2：通用路径（非 Prometheus）
+
+对 Loki / ES / MySQL / TDengine / ClickHouse / Doris / VictoriaLogs / Host 等类型，需传 `cate` 和 `rule_config_json`。
+
+**关键步骤**：先读该数据源类型的参考文档，获取 `rule_config` 结构模板：
+
+```
+read_file(base="n9e-create-alert-rule", path="datasources/<cate>.md")
+```
+
+然后把文档中的 `rule_config` 对象转成 JSON 字符串传给 `rule_config_json` 参数。示例（MySQL 告警）：
+
+```json
+{
+  "group_id": 1,
+  "name": "MySQL 失败订单过多",
+  "cate": "mysql",
+  "datasource_id": 4,
+  "severity": 2,
+  "rule_config_json": "{\"queries\":[{\"ref\":\"A\",\"sql\":\"SELECT count(*) AS value FROM orders WHERE created_at >= NOW() - INTERVAL 5 MINUTE AND status='failed'\",\"keys\":{\"valueKey\":\"value\",\"labelKey\":\"\"},\"interval\":60}],\"triggers\":[{\"mode\":0,\"expressions\":[{\"ref\":\"A\",\"comparisonOperator\":\">\",\"value\":10,\"logicalOperator\":\"&&\"}],\"severity\":2,\"recover_config\":{\"judge_type\":1}}]}"
+}
+```
+
+**⚠️ 重要通用规则（所有非 Prometheus 类型都适用）**：
+
+1. **`interval` 字段必须是总秒数**，不要写 `interval_unit`。前端保存时会把 `value × unit → seconds`，读取时再从秒数反推显示单位。
+   - 过去 1 分钟 → `"interval": 60`
+   - 过去 5 分钟 → `"interval": 300`
+   - 过去 1 小时 → `"interval": 3600`
+   - **不要** 写 `"interval": 5, "interval_unit": "min"` —— FE 会按 5 秒显示。
+   - 工具内部有防御式兜底：如果你不小心写了 `interval_unit` 或小于 60 的裸 interval，会自动换算成秒，但最好直接写对。
+
+**⚠️ OSS n9e 的 SQL 类数据源（MySQL/PGSQL/CK/Doris）重要限制**：
+1. **`keys.valueKey` 必填** —— SELECT 语句中数值列的别名，通常是 `"value"`。缺失会报 `valueKey is required`。
+2. **`$from`/`$to`/`$__timeFilter` 不会被替换** —— OSS 的 `macros.Macro` 是 no-op。必须用数据源原生时间函数，例如 MySQL 用 `NOW() - INTERVAL 5 MINUTE`、PG 用 `NOW() - INTERVAL '5 minutes'`、CK 用 `now() - INTERVAL 5 MINUTE`。
+3. **TDengine 是例外** —— 它有独立的变量替换逻辑，`$from`/`$to`/`$interval` 可用。
+
+## 参数说明
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `group_id` | ✅ | 业务组 ID（从 `list_busi_groups` 获取） |
+| `name` | ✅ | 规则名称（同业务组内不能重名） |
+| `cate` | ❌ | 数据源类型（默认 `prometheus`）。可选：`prometheus` / `loki` / `elasticsearch` / `opensearch` / `tdengine` / `ck` / `mysql` / `pgsql` / `doris` / `victorialogs` / `host` |
+| `prod` | ❌ | 产品类型。不传时按 `cate` 自动推导 |
+| `datasource_id` | 条件必填 | 数据源 ID。**`cate=host` 时不需要**，其他都必填 |
+| `rule_config_json` | 条件必填 | 完整的 `rule_config` JSON 字符串。**`cate=prometheus` 时可以不传（走简化路径）**；其他类型必填 |
+| `prom_ql` | 条件必填 | PromQL 查询（仅 `cate=prometheus` 简化路径用）。**只写查询不写阈值** |
+| `threshold` | 条件必填 | 触发阈值（仅简化路径用） |
+| `operator` | ❌ | 默认 `>`。可选 `>` `>=` `<` `<=` `==` `!=` |
+| `severity` | ❌ | 默认 2。1=Critical, 2=Warning, 3=Info |
+| `note` | ❌ | 告警通知正文 |
+| `eval_interval` | ❌ | 评估周期（秒），默认 30 |
+| `for_duration` | ❌ | 持续时长（秒），默认 60 |
+| `append_tags` | ❌ | 附加标签，多个用空格分隔 |
+| `runbook_url` | ❌ | 应急处理手册 URL |
+| `notify_rule_ids` | ❌ | 关联通知规则 ID 列表 JSON，如 `"[1,2]"` |
 
 ## 执行步骤
 
-### 第一步：登录获取 Token
+### 第一步：识别数据源类型（cate）
 
-```
-POST /api/n9e/auth/login
-Content-Type: application/json
-Body: {"username":"<用户名>","password":"<密码>"}
-```
+根据用户的告警需求判断应该用哪个 `cate`：
 
-从响应中提取 `dat.access_token`，后续请求都带上 `Authorization: Bearer <token>`。
-
-### 第二步：询问业务组
-
-调用 API 获取业务组列表：
-
-```
-GET /api/n9e/busi-groups
-Authorization: Bearer <token>
-```
-
-将返回的业务组列表通过 **AskUserQuestion** 工具展示给用户，让用户选择要创建告警规则的业务组。
-
-### 第三步：根据用户描述构建告警规则
-
-根据用户的告警需求，确定数据源类型，读取对应的 `datasources/*.md` 文件获取 `rule_config` 结构。
-
-如果是 Prometheus 类型，可查询可用指标：
-
-```
-GET /api/n9e/proxy/<datasource_id>/api/v1/label/__name__/values
-Authorization: Bearer <token>
-```
-
-调用创建 API（payload 必须是**数组**格式）：
-
-```
-POST /api/n9e/busi-group/<busi_group_id>/alert-rules
-Authorization: Bearer <token>
-Content-Type: application/json
-Body: [<告警规则对象>]
-```
-
-### 第四步：询问并关联通知规则
-
-获取通知规则列表：
-
-```
-GET /api/n9e/notify-rules
-Authorization: Bearer <token>
-```
-
-将返回的通知规则列表通过 **AskUserQuestion** 工具展示给用户，让用户选择要关联的通知规则。
-
-然后更新告警规则，添加 `notify_rule_ids`：
-
-```
-PUT /api/n9e/busi-group/<busi_group_id>/alert-rule/<rule_id>
-Authorization: Bearer <token>
-Content-Type: application/json
-Body: { ...原有字段, "notify_rule_ids": [<选择的通知规则ID>] }
-```
-
-### 第五步：验证
-
-```
-GET /api/n9e/alert-rule/<rule_id>
-Authorization: Bearer <token>
-```
-
-向用户输出创建结果摘要。
-
----
-
-## 公共字段模板
-
-所有数据源类型共享以下字段结构，`rule_config` 按数据源类型不同而不同：
-
-```json
-{
-  "name": "告警规则名称",
-  "note": "规则说明/告警通知内容",
-  "prod": "metric|logging|host",
-  "cate": "prometheus|elasticsearch|loki|tdengine|ck|mysql|pgsql|doris|opensearch|victorialogs|host",
-  "datasource_ids": [1],
-  "datasource_queries": [{"match_type": 0, "op": "in", "values": [1]}],
-  "disabled": 0,
-  "prom_eval_interval": 30,
-  "prom_for_duration": 60,
-  "rule_config": {},
-  "enable_in_bg": 0,
-  "enable_days_of_weeks": [["0","1","2","3","4","5","6"]],
-  "enable_stimes": ["00:00"],
-  "enable_etimes": ["00:00"],
-  "notify_recovered": 1,
-  "notify_repeat_step": 60,
-  "notify_max_number": 0,
-  "callbacks": [],
-  "runbook_url": "",
-  "append_tags": [],
-  "annotations": {},
-  "extra_config": {},
-  "notify_version": 1,
-  "notify_rule_ids": []
-}
-```
-
-### datasource_queries 匹配方式
-
-| match_type | 含义 | 示例 |
+| 用户诉求关键词 | cate | 触发条件 |
 |---|---|---|
-| 0 | 精确匹配（按 ID 或名称） | `{"match_type": 0, "op": "in", "values": [1, 2]}` |
-| 1 | 模糊匹配（按名称子串） | `{"match_type": 1, "op": "in", "values": ["prod"]}` |
-| 2 | 匹配全部 | `{"match_type": 2, "op": "in", "values": ["all"]}` |
+| "主机 CPU/内存/磁盘"、"Prometheus 指标" | `prometheus` | 指标阈值 |
+| "机器失联"、"节点离线" | `host` | 心跳超时 |
+| "应用错误日志"、"Loki 日志" | `loki` | 日志条数 |
+| "ES 日志"、"Elasticsearch 聚合" | `elasticsearch` | 日志聚合 |
+| "OpenSearch 日志" | `opensearch` | 日志聚合（同 ES） |
+| "MySQL 查询结果异常" | `mysql` | SQL 查询值 |
+| "PostgreSQL 查询结果异常" | `pgsql` | SQL 查询值 |
+| "ClickHouse 指标/日志" | `ck` | SQL 查询值 |
+| "Doris 日志" | `doris` | SQL 查询值 |
+| "TDengine 时序数据" | `tdengine` | SQL 查询值 |
+| "VictoriaLogs 日志" | `victorialogs` | LogsQL 查询 |
 
-### severity 告警级别
+默认值：`prometheus`。
 
-| 值 | 含义 |
+### 第二步：查询业务组和数据源
+
+- 调用 `list_busi_groups` 获取业务组列表
+- **如果 `cate != "host"`**：调用 `list_datasources` 找到对应类型的数据源 ID
+
+#### 业务组选择规则
+
+1. 如果用户在提示词里明确指定了业务组，直接使用
+2. 否则按以下优先级选择：
+   a. 优先选择 `is_default: true` 的业务组
+   b. 只有一个业务组时直接用
+   c. 多个候选都不是默认组时，列出选项让用户确认
+3. 不要使用看起来是测试组的业务组（纯数字、`test`、`demo`、`tmp`）
+
+### 第三步（仅非 Prometheus）：读取数据源参考文档
+
+对于 `cate != "prometheus"` 的类型，**必须先读该类型的参考文档**获取 `rule_config` 结构：
+
+```
+read_file(base="n9e-create-alert-rule", path="datasources/<cate>.md")
+```
+
+例如：
+- MySQL → `datasources/mysql.md`
+- Loki → `datasources/loki.md`
+- Host → `datasources/host.md`
+
+参考文档里有完整的字段说明、可选值表格、完整示例。**按示例里的 `rule_config` 对象照搬字段名**，只替换具体值。
+
+### 第 3.5 步（仅 SQL 类）：探测真实 schema ⚠️
+
+**`cate ∈ {mysql, pgsql, ck, doris, tdengine}` 时这一步必须做，不可跳过**。
+
+> **TDengine 也支持**：虽然 TDengine 是时序数据库，但它的 REST API 支持 `SHOW DATABASES` / `information_schema.ins_tables` / `information_schema.ins_columns`。`list_databases` / `list_tables` / `describe_table` 对 TDengine 完全可用。
+
+**绝对不要凭用户提示词里的字面描述猜数据库/表/字段名**。用户说"查 my_logs 库的 access_log 表"
+很可能只是举例，实际数据源里根本没这个库或这个表。
+
+必须按顺序探测：
+
+1. **`list_databases(datasource_id=<X>)`** —— 看真实的数据库列表
+   - 对比用户描述，找最贴近的一个
+   - 如果用户描述的库名**不在返回列表里**，**不要硬写进 SQL**。用 AskUserQuestion
+     列出真实库名让用户确认，或选一个看起来相关的让用户认可
+
+2. **`list_tables(datasource_id=<X>, database=<挑中的库>)`** —— 看真实的表列表
+   - 同上：用户说的表不在列表里 → 列出真实表让用户选
+
+3. **`describe_table(datasource_id=<X>, database=<库>, table=<表>)`** —— 拿真实字段
+   - 用返回的字段名拼 SQL，**不要编造** `log_time`、`status`、`created_at` 之类
+     常见字段名（它们未必真的存在于这张表）
+   - 时间字段特别要注意：不同表里可能叫 `ts`、`event_time`、`log_time`、`create_time`、
+     `timestamp` 等等，必须用 `describe_table` 返回的字段名决定
+
+只有在拿到真实 schema 后，才能进入第四步拼 SQL。
+
+#### datasource_id 的传法
+
+- 会话上下文已经绑定了数据源（从数据源页面进来的对话）：`datasource_id` 可省略，
+  从会话上下文继承
+- 告警规则场景（从告警规则页或纯对话进入）：必须**显式传** `datasource_id`，
+  否则工具会报 `datasource_id required` 错误
+
+### 第四步：构建 PromQL / SQL / LogQL
+
+#### 简化路径（cate=prometheus）
+
+根据用户描述构建 **不带阈值** 的 PromQL：
+
+| 用户需求 | 推荐 PromQL |
 |---|---|
-| 1 | 一级报警 (Critical) |
-| 2 | 二级报警 (Warning) |
-| 3 | 三级报警 (Info) |
+| 主机 CPU 使用率 | `avg by (ident) (100 - cpu_usage_idle{cpu="cpu-total"})` |
+| 主机内存使用率 | `mem_used_percent` |
+| 主机磁盘使用率 | `disk_used_percent` |
+| 主机系统负载 | `system_load1` |
+| 主机网络入向流量 | `rate(net_bytes_recv[5m])` |
+| MySQL QPS | `rate(mysql_global_status_queries[5m])` |
+| MySQL 连接数使用率 | `mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100` |
+| Redis 内存使用率 | `redis_used_memory / redis_maxmemory * 100` |
 
-### 通用 Trigger 结构（非 Host 类型通用）
+如不确定指标是否存在，调用 `list_metrics` 探测。
 
+#### 通用路径（其他 cate）
+
+按照第三步读到的参考文档，组装 `rule_config` 对象。关键字段：
+
+- **SQL 类**（mysql/pgsql/ck/doris）：
+  - 查询必须返回一列别名为 `value` 作为告警判断值
+  - **必填** `keys.valueKey: "value"`（缺失 → `valueKey is required` 错误）
+  - **时间过滤不能用 `$from`/`$to`**，要用数据源原生时间函数：
+    - MySQL: `NOW() - INTERVAL 5 MINUTE`
+    - PostgreSQL: `NOW() - INTERVAL '5 minutes'`
+    - ClickHouse: `now() - INTERVAL 5 MINUTE`
+    - Doris: `NOW() - INTERVAL 5 MINUTE`
+- **TDengine**：特殊例外，`$from`/`$to`/`$interval` **可以用**，用 `keys.metricKey` 而不是 `keys.valueKey`
+- **日志类**（loki/es/opensearch/victorialogs）：聚合查询返回数值；`recover_config.judge_type` 用 `0`
+- **指标类**（prometheus/mysql/pgsql/ck/tdengine）：`recover_config.judge_type` 用 `1`
+- **Host 类**（host）：`queries` 是 `{key, op, values}` 结构；`triggers` 是 `{type, severity, duration}` 结构；不需要 `datasource_id`
+
+### 第五步：调用 create_alert_rule
+
+#### 简化路径（Prometheus）
+
+```
+create_alert_rule(
+  group_id=1, name="CPU 过高", datasource_id=1,
+  prom_ql="avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
+  threshold=80, operator=">", severity=2
+)
+```
+
+#### 通用路径（其他类型）
+
+```
+create_alert_rule(
+  group_id=1, name="MySQL 错误过多",
+  cate="mysql", datasource_id=4, severity=2,
+  rule_config_json="<把第三步读到的 rule_config 序列化成 JSON 字符串>"
+)
+```
+
+**注意事项：**
+- Prometheus 简化路径下，阈值单独传 `threshold`，**不要写进 `prom_ql`**
+- 默认 `for_duration=60`，比 `eval_interval=30` 大才合理
+- 如果用户要求"立即触发"，把 `for_duration` 设为 0
+- 如果 `create_alert_rule` 返回 `already exists` 错误，**不要调用 `list_alert_rules`** 去查重名，直接给名字加后缀（如 `-v2`、`-AI` 或时间戳）重试
+- 通用路径下，`rule_config_json` 必须是 **JSON 字符串**（不是对象），记得对引号做转义
+- **SQL 类调用前必须已经完成第 3.5 步的 schema 探测**。如果 rule_config_json 里的
+  数据库/表/字段没经过 `list_databases`+`list_tables`+`describe_table` 核实过，
+  告警规则大概率无法运行（`Unknown database` / `Unknown column` 等运行时错误）
+
+### 第六步：（可选）关联通知规则
+
+如果用户要求绑定通知规则：
+1. 调用 `list_notify_rules` 获取通知规则列表
+2. 调用 `create_alert_rule` 时传入 `notify_rule_ids`，如 `"[1,2]"`
+
+如果用户没明确要求，**不要主动关联通知规则**，避免误发告警。
+
+### 第七步：输出结果
+
+输出：规则 ID、名称、cate、数据源、严重级别。提示用户可以在「告警 → 规则管理」中查看和调整。
+
+## 严重级别速查
+
+| severity | 中文 | 适用场景 |
+|---|---|---|
+| 1 | Critical（一级） | 服务不可用、核心组件宕机、数据丢失 |
+| 2 | Warning（二级） | 资源使用率高、性能退化、配额接近上限 |
+| 3 | Info（三级） | 信息性告警、容量规划提示 |
+
+默认用 2（Warning）。除非用户明确说"严重"或"紧急"才用 1。
+
+## 常见模板
+
+### 主机 CPU 使用率告警
 ```json
 {
-  "mode": 0,
-  "expressions": [
-    {"ref": "A", "comparisonOperator": ">", "value": 80, "logicalOperator": "&&"}
-  ],
+  "group_id": 1,
+  "name": "主机 CPU 使用率过高",
+  "datasource_id": 1,
+  "prom_ql": "avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
+  "operator": ">",
+  "threshold": 80,
   "severity": 2,
-  "recover_config": {"judge_type": 1}
+  "for_duration": 300,
+  "note": "主机 {{ $labels.ident }} CPU 使用率持续 5 分钟超过 80%"
 }
 ```
 
-- `mode`：0=构建器模式，1=表达式模式（使用 `exp` 字段，如 `"$A > 100 && $B < 50"`）
-- `recover_config.judge_type`：0=日志类型，1=指标类型
-- `comparisonOperator`：`>`, `>=`, `<`, `<=`, `==`, `!=`
-- `logicalOperator`：`&&`, `||`
+### 主机内存使用率告警
+```json
+{
+  "group_id": 1,
+  "name": "主机内存使用率过高",
+  "datasource_id": 1,
+  "prom_ql": "mem_used_percent",
+  "operator": ">",
+  "threshold": 90,
+  "severity": 1,
+  "for_duration": 180
+}
+```
 
----
-
-## 数据源类型速查表
-
-| cate | prod | 查询字段 | recover judge_type | 说明 |
-|---|---|---|---|---|
-| `prometheus` | `metric` | `prom_ql`(v1) 或 `query`(v2) | 1 | PromQL 指标查询 |
-| `loki` | `logging` | `prom_ql`（实际是 LogQL） | 0 | Loki 日志查询 |
-| `elasticsearch` | `logging` | `index`+`filter`+`value` | 0 | ES 日志聚合 |
-| `opensearch` | `logging` | 同 elasticsearch | 0 | 同 ES，无 index_pattern |
-| `tdengine` | `metric` | `query`（TDengine SQL） | 1 | 时序数据库查询 |
-| `ck` | `metric`/`logging` | `sql`（ClickHouse SQL） | 1 | ClickHouse 查询 |
-| `mysql` | `metric` | `sql`（MySQL SQL） | 1 | MySQL 查询 |
-| `pgsql` | `metric` | `sql`（PostgreSQL SQL） | 1 | PostgreSQL 查询 |
-| `doris` | `logging` | `sql`+`database` | 1 | Doris 查询，需指定库名 |
-| `victorialogs` | `logging` | `query`（LogsQL） | 0 | VictoriaLogs 查询 |
-| `host` | `host` | `key`+`op`+`values` | N/A | 机器监控，trigger 结构不同 |
-
----
-
-## 关键注意事项
-
-1. **创建 API 接收数组**：即使只创建一条规则，payload 也必须是数组格式 `[{...}]`
-2. **Prometheus v1 格式阈值写在 prom_ql 中**：如 `cpu_usage_active > 80`，不要把阈值放在 triggers 里
-3. **Prometheus v2 格式查询和触发分离**：query 只写指标查询，triggers 配置阈值表达式
-4. **日志类型 recover judge_type 用 0**：Loki、ES、OpenSearch、VictoriaLogs
-5. **指标类型 recover judge_type 用 1**：Prometheus、TDengine、ClickHouse、MySQL、PostgreSQL
-6. **Host 类型结构特殊**：queries 和 triggers 都使用专用结构，不走通用 trigger
-7. **datasource_ids**：如不确定可用数据源 ID，先查询已有告警规则获取
-8. **生效时间**：`enable_stimes` 和 `enable_etimes` 都设为 `"00:00"` 表示全天 24 小时生效
-9. **notify_version**：使用 `1`（新版通知系统），配合 `notify_rule_ids` 关联通知规则
+### 主机磁盘使用率告警
+```json
+{
+  "group_id": 1,
+  "name": "主机磁盘使用率过高",
+  "datasource_id": 1,
+  "prom_ql": "disk_used_percent",
+  "operator": ">",
+  "threshold": 85,
+  "severity": 2,
+  "for_duration": 600,
+  "append_tags": "alert_type=capacity"
+}
+```
