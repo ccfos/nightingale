@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/ccfos/nightingale/v6/pkg/unit"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/toolkits/pkg/logger"
 )
@@ -76,6 +76,7 @@ type AlertCurEvent struct {
 	Target             *Target             `json:"target" gorm:"-"`
 	RecoverConfig      RecoverConfig       `json:"recover_config" gorm:"-"`
 	RuleHash           string              `json:"rule_hash" gorm:"-"`
+	ShotImageBase64    map[string]string   `json:"shot_image_base64" gorm:"-"`
 	ExtraInfoMap       []map[string]string `json:"extra_info_map" gorm:"-"`
 	NotifyRuleIds      []int64             `json:"notify_rule_ids" gorm:"serializer:json"`
 	NotifyRuleId       int64               `json:"notify_rule_id" gorm:"-"`
@@ -1040,6 +1041,13 @@ func (e *AlertCurEvent) DeepCopy() *AlertCurEvent {
 	if e.ExtraInfo != nil {
 		eventCopy.ExtraInfo = make([]string, len(e.ExtraInfo))
 		copy(eventCopy.ExtraInfo, e.ExtraInfo)
+	}
+
+	if e.ShotImageBase64 != nil {
+		eventCopy.ShotImageBase64 = make(map[string]string, len(e.ShotImageBase64))
+		for k, v := range e.ShotImageBase64 {
+			eventCopy.ShotImageBase64[k] = v
+		}
 	}
 
 	if e.ExtraInfoMap != nil {
