@@ -284,6 +284,20 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		resp, _, err := provider.SendScript(notifyChannel, events, tplContent, customParams, sendtos)
 		logger.Infof("channel_name: %v, event:%s, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, resp, err)
 		return resp, err
+	case "dingtalkapp", "feishuapp", "wecomapp":
+		client, err := models.GetHTTPClient(notifyChannel)
+		if err != nil {
+			return "", fmt.Errorf("failed to get http client: %v", err)
+		}
+		p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident)
+		if !ok {
+			return "", fmt.Errorf("provider not found: %s", notifyChannel.Ident)
+		}
+		result := p.Notify(ctx.Ctx, &provider.NotifyRequest{
+			Config: notifyChannel, Events: events, Sendtos: sendtos, TplContent: tplContent, CustomParams: customParams,
+			HttpClient: client,
+		})
+		return result.Response, result.Err
 	default:
 		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
 		return "", fmt.Errorf("unsupported request type")
