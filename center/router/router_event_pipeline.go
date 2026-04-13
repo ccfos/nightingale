@@ -166,6 +166,10 @@ func (rt *Router) updateEventPipeline(c *gin.Context) {
 	}
 	rt.checkEventPipelinePermission(c, pipeline, "rw")
 
+	if f.GroupId != pipeline.GroupId {
+		rt.checkEventPipelinePermission(c, &f, "rw")
+	}
+
 	ginx.NewRender(c).Message(pipeline.Update(rt.Ctx, &f))
 }
 
