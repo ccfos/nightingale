@@ -375,8 +375,15 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
-	if ncc.RequestType != "http" && ncc.RequestType != "smtp" && ncc.RequestType != "script" && ncc.RequestType != "flashduty" && ncc.RequestType != "pagerduty" {
-		return errors.New("invalid request type, must be 'http', 'smtp' or 'script'")
+	if ncc.RequestType != "http" &&
+		ncc.RequestType != "smtp" &&
+		ncc.RequestType != "script" &&
+		ncc.RequestType != "flashduty" &&
+		ncc.RequestType != "pagerduty" &&
+		ncc.RequestType != "dingtalkapp" &&
+		ncc.RequestType != "feishuapp" &&
+		ncc.RequestType != "wecomapp" {
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'dingtalkapp', 'feishuapp', 'wecomapp'")
 	}
 
 	if ncc.ParamConfig != nil {

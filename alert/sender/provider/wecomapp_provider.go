@@ -405,7 +405,7 @@ func (p *WecomAppProvider) postWecomAPI(ctx context.Context, client *http.Client
 func (p *WecomAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 	return []*models.NotifyChannelConfig{
 		{
-			Name: "Wecom App", Ident: p.Ident(), RequestType: "http", Weight: 4, Enable: true,
+			Name: "Wecom App", Ident: p.Ident(), RequestType: "wecomapp", Weight: 4, Enable: true,
 			RequestConfig: &models.RequestConfig{
 				WecomAppRequestConfig: &models.WecomAppRequestConfig{
 					CorpID:     "wwxxxxxxxxxxxxxxxx",

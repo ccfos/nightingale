@@ -368,7 +368,7 @@ func GetFeishuUserID(ctx context.Context, client *http.Client, token string, ema
 func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 	return []*models.NotifyChannelConfig{
 		{
-			Name: "Feishu App", Ident: p.Ident(), RequestType: "http", Weight: 4, Enable: true,
+			Name: "Feishu App", Ident: p.Ident(), RequestType: "feishuapp", Weight: 4, Enable: true,
 			RequestConfig: &models.RequestConfig{
 				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
 					AppID:         "cli_xxx",
