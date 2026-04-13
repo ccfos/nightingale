@@ -24,6 +24,7 @@ type EmbeddedProduct struct {
 	UpdateAt         int64   `json:"update_at" gorm:"column:update_at;not null;default:0"`
 	UpdateBy         string  `json:"update_by" gorm:"column:update_by;type:varchar(64);not null;default:''"`
 	UpdateByNickname string  `json:"update_by_nickname" gorm:"-"`
+	Weight           int     `json:"weight" gorm:"column:weight;not null;default:0"`
 }
 
 func (e *EmbeddedProduct) TableName() string {
@@ -76,7 +77,7 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 
 func EmbeddedProductGets(ctx *ctx.Context) ([]*EmbeddedProduct, error) {
 	var list []*EmbeddedProduct
-	err := DB(ctx).Find(&list).Error
+	err := DB(ctx).Order("weight asc, id asc").Find(&list).Error
 	return list, err
 }
 
@@ -91,6 +92,30 @@ func UpdateEmbeddedProduct(ctx *ctx.Context, ep *EmbeddedProduct) error {
 		return err
 	}
 	return DB(ctx).Save(ep).Error
+}
+
+// UpdateEmbeddedProductWeights 批量更新 weight，仅用于拖拽排序场景，
+// 只会修改 weight / update_at / update_by 三个字段，不会触碰其它业务字段。
+func UpdateEmbeddedProductWeights(ctx *ctx.Context, weights map[int64]int, updateBy string) error {
+	if len(weights) == 0 {
+		return nil
+	}
+
+	now := time.Now().Unix()
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		for id, w := range weights {
+			if err := tx.Model(&EmbeddedProduct{}).
+				Where("id = ?", id).
+				Updates(map[string]interface{}{
+					"weight":    w,
+					"update_at": now,
+					"update_by": updateBy,
+				}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func DeleteEmbeddedProduct(ctx *ctx.Context, id int64) error {

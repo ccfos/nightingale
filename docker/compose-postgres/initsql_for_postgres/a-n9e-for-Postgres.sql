@@ -1032,5 +1032,6 @@ CREATE TABLE embedded_product (
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
-    update_by varchar(64) NOT NULL DEFAULT ''
+    update_by varchar(64) NOT NULL DEFAULT '',
+    weight int NOT NULL DEFAULT 0
 );

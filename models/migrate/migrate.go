@@ -71,7 +71,8 @@ func MigrateTables(db *gorm.DB) error {
 		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{},
 		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
-		&models.AssistantChatRow{}}
+		&models.AssistantChatRow{}, &models.DingtalkGroup{}}
+
 
 	if isPostgres(db) {
 		dts = append(dts, &models.AssistantMessageRow{})        // PostgreSQL: text is unlimited

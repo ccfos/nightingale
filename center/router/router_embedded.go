@@ -100,10 +100,39 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	oldProduct.URL = ep.URL
 	oldProduct.IsPrivate = ep.IsPrivate
 	oldProduct.TeamIDs = ep.TeamIDs
+	oldProduct.Weight = ep.Weight
 	oldProduct.UpdateBy = me.Username
 	oldProduct.UpdateAt = now
 
 	err = models.UpdateEmbeddedProduct(rt.Ctx, oldProduct)
+	ginx.NewRender(c).Message(err)
+}
+
+// embeddedProductWeightsPut 批量更新 weight，供前端拖拽排序使用。
+// 请求体：[{"id": 1, "weight": 0}, {"id": 2, "weight": 1}, ...]
+func (rt *Router) embeddedProductWeightsPut(c *gin.Context) {
+	var items []struct {
+		ID     int64 `json:"id"`
+		Weight int   `json:"weight"`
+	}
+	ginx.BindJSON(c, &items)
+
+	// 上限保护：避免单个事务内跑过多 UPDATE 造成长事务/锁表
+	const maxBatchSize = 1000
+	if len(items) > maxBatchSize {
+		ginx.Bomb(400, "too many items")
+	}
+
+	weights := make(map[int64]int, len(items))
+	for _, it := range items {
+		if it.ID <= 0 {
+			ginx.Bomb(400, "invalid id")
+		}
+		weights[it.ID] = it.Weight
+	}
+
+	me := c.MustGet("user").(*models.User)
+	err := models.UpdateEmbeddedProductWeights(rt.Ctx, weights, me.Username)
 	ginx.NewRender(c).Message(err)
 }
 

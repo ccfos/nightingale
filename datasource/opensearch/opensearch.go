@@ -140,6 +140,18 @@ func (os *OpenSearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
+	if os.Version != other.(*OpenSearch).Version {
+		return false
+	}
+
+	if os.MinInterval != other.(*OpenSearch).MinInterval {
+		return false
+	}
+
+	if os.MaxShard != other.(*OpenSearch).MaxShard {
+		return false
+	}
+
 	return true
 }
 
