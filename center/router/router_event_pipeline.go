@@ -35,13 +35,14 @@ func (rt *Router) checkEventPipelinePermission(c *gin.Context, pipeline *models.
 func (rt *Router) eventPipelinesList(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	groupId := ginx.QueryInt64(c, "group_id", -1)
+	useCase := ginx.QueryStr(c, "use_case", "")
 
 	// 不传 group_id 默认查 group_id=0 的
 	if groupId < 0 {
 		groupId = 0
 	}
 
-	pipelines, err := models.ListEventPipelines(rt.Ctx, groupId)
+	pipelines, err := models.ListEventPipelinesByUseCase(rt.Ctx, groupId, useCase)
 	ginx.Dangerous(err)
 
 	allTids := make([]int64, 0)

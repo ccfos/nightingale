@@ -88,7 +88,7 @@ const (
 
 const (
 	UseCaseEventPipeline = "event_pipeline"
-	UseCaseEventSummary  = "firemap"
+	UseCaseAlertRule     = "alert_rule"
 )
 
 // WorkflowTriggerContext 工作流触发上下文

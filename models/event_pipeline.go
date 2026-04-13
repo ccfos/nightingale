@@ -117,6 +117,15 @@ func DeleteEventPipeline(ctx *ctx.Context, id int64) error {
 // ListEventPipelines 获取事件Pipeline列表
 // groupId: -1 表示不过滤, 0 表示只返回 group_id=0 的, >0 表示返回指定 group_id 的
 func ListEventPipelines(ctx *ctx.Context, groupId ...int64) ([]*EventPipeline, error) {
+	gid := int64(-1)
+	if len(groupId) > 0 {
+		gid = groupId[0]
+	}
+	return ListEventPipelinesByUseCase(ctx, gid, "")
+}
+
+// ListEventPipelinesByUseCase 按 use_case 和 group_id 过滤获取事件Pipeline列表
+func ListEventPipelinesByUseCase(ctx *ctx.Context, groupId int64, useCase string) ([]*EventPipeline, error) {
 	if !ctx.IsCenter {
 		pipelines, err := poster.GetByUrls[[]*EventPipeline](ctx, "/v1/n9e/event-pipelines")
 		return pipelines, err
@@ -124,8 +133,11 @@ func ListEventPipelines(ctx *ctx.Context, groupId ...int64) ([]*EventPipeline, e
 
 	var pipelines []*EventPipeline
 	session := DB(ctx).Order("name asc")
-	if len(groupId) > 0 && groupId[0] >= 0 {
-		session = session.Where("group_id = ?", groupId[0])
+	if groupId >= 0 {
+		session = session.Where("group_id = ?", groupId)
+	}
+	if useCase != "" {
+		session = session.Where("use_case = ?", useCase)
 	}
 	err := session.Find(&pipelines).Error
 	if err != nil {
