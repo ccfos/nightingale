@@ -718,7 +718,7 @@ func buildDingtalkAppTplData(req *NotifyRequest, userIDs, groupIDs []string) map
 func (p *DingtalkAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
 	return []*models.NotifyChannelConfig{
 		{
-			Name: "DingtalkApp", Ident: p.Ident(), RequestType: "http", Weight: 3, Enable: true,
+			Name: "DingtalkApp", Ident: p.Ident(), RequestType: "dingtalkapp", Weight: 3, Enable: true,
 			RequestConfig: &models.RequestConfig{
 				DingtalkAppRequestConfig: &models.DingtalkAppRequestConfig{
 					AppKey:     "app_key_for_test",
