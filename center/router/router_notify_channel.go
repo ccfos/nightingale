@@ -2,7 +2,9 @@ package router
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,10 +12,78 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
 )
+
+func (rt *Router) feishuVisibleChatsGet(c *gin.Context) {
+	var req struct {
+		Query      string `json:"query"`
+		PageSize   int    `json:"page_size"`
+		UserIDType string `json:"user_id_type"`
+		PageToken  string `json:"page_token"`
+	}
+	ginx.BindJSON(c, &req)
+
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+	if nc.RequestConfig == nil || nc.RequestConfig.FeishuAppRequestConfig == nil {
+		ginx.Bomb(http.StatusBadRequest, "feishu app request config cannot be nil")
+	}
+
+	appCfg := nc.RequestConfig.FeishuAppRequestConfig
+	query := req.Query
+	if query == "" {
+		ginx.Bomb(http.StatusBadRequest, "query is required")
+	}
+	pageSize := req.PageSize
+	if pageSize <= 0 {
+		pageSize = 50
+	}
+	userIDType := req.UserIDType
+	if userIDType == "" {
+		userIDType = "user_id"
+	}
+	pageToken := req.PageToken
+
+	client, err := buildNotifyHTTPClientForFeishu(nc, appCfg)
+	ginx.Dangerous(err)
+
+	token, err := provider.GetFeishuTenantAccessToken(context.Background(), client, appCfg.AppID, appCfg.AppSecret)
+	ginx.Dangerous(err)
+
+	data, err := provider.SearchFeishuVisibleChats(context.Background(), client, token, query, pageSize, userIDType, pageToken)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(data, nil)
+}
+
+func buildNotifyHTTPClientForFeishu(nc *models.NotifyChannelConfig, appCfg *models.FeishuAppRequestConfig) (*http.Client, error) {
+	if nc.RequestConfig != nil && nc.RequestConfig.HTTPRequestConfig != nil {
+		return models.GetHTTPClient(nc)
+	}
+
+	timeout := appCfg.Timeout
+	if timeout <= 0 {
+		timeout = 10000
+	}
+	tmp := &models.NotifyChannelConfig{
+		RequestType: "http",
+		RequestConfig: &models.RequestConfig{
+			HTTPRequestConfig: &models.HTTPRequestConfig{
+				Timeout: timeout,
+				Headers: map[string]string{"Content-Type": "application/json"},
+			},
+			FeishuAppRequestConfig: appCfg,
+		},
+	}
+	return models.GetHTTPClient(tmp)
+}
 
 func (rt *Router) notifyChannelsAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
@@ -124,6 +194,20 @@ func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+// notifyChannelDefaultChannelsGet 根据 ident 获取对应 Provider 的 DefaultChannels()
+func (rt *Router) notifyChannelDefaultChannelsGet(c *gin.Context) {
+	ident := ginx.QueryStr(c, "ident", "")
+	if ident == "" {
+		ginx.Bomb(http.StatusBadRequest, "ident is required")
+	}
+	p, ok := provider.DefaultRegistry.Get(ident)
+	if !ok {
+		ginx.Bomb(http.StatusNotFound, "provider not found for ident: "+ident)
+	}
+	channels := p.DefaultChannels()
+	ginx.NewRender(c).Data(channels, nil)
+}
+
 func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "")
 	ginx.Dangerous(err)
@@ -143,26 +227,74 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
-	// 获取所有通知渠道
-	channels, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
-	ginx.Dangerous(err)
-
-	// ident 去重
-	idents := make(map[string]struct{})
-	for _, channel := range channels {
-		if channel.Ident != "" {
-			idents[channel.Ident] = struct{}{}
+	// 从 DefaultRegistry 获取所有已注册 Provider 的 ident
+	providers := provider.DefaultRegistry.All()
+	lst := make([]string, 0, len(providers))
+	for _, p := range providers {
+		ident := p.Ident()
+		if ident != "" {
+			lst = append(lst, ident)
 		}
 	}
+	sort.Strings(lst)
+	ginx.NewRender(c).Data(lst, nil)
+}
 
-	lst := make([]string, 0, len(idents))
-	for ident := range idents {
-		lst = append(lst, ident)
+func (rt *Router) dingtalkGroupsGetByNotifyChannel(c *gin.Context) {
+	type reqBody struct {
+		Page     int `json:"page"`
+		PageSize int `json:"page_size"`
 	}
 
-	sort.Strings(lst)
+	cid := ginx.UrlParamInt64(c, "id")
+	nc, err := models.NotifyChannelGet(rt.Ctx, "id = ?", cid)
+	ginx.Dangerous(err)
+	if nc == nil {
+		ginx.Bomb(http.StatusNotFound, "notify channel not found")
+	}
+	if nc.RequestType != "dingtalkapp" {
+		ginx.Bomb(http.StatusBadRequest, "notify channel is not dingtalkapp")
+	}
+	if nc.RequestConfig == nil || nc.RequestConfig.DingtalkAppRequestConfig == nil {
+		ginx.Bomb(http.StatusBadRequest, "dingtalk app request config cannot be nil")
+	}
+	clientID := nc.RequestConfig.DingtalkAppRequestConfig.AppKey
+	if clientID == "" {
+		ginx.Bomb(http.StatusBadRequest, "dingtalk app client_id(app_key) cannot be empty")
+	}
 
-	ginx.NewRender(c).Data(lst, nil)
+	req := reqBody{
+		Page:     1,
+		PageSize: 50,
+	}
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		ginx.Bomb(http.StatusBadRequest, "json body invalid: %v", err)
+	}
+	if req.Page == 0 {
+		req.Page = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 50
+	}
+
+	page := req.Page
+	pageSize := req.PageSize
+	if page < 1 {
+		ginx.Bomb(http.StatusBadRequest, "page must be >= 1")
+	}
+	if pageSize < 1 || pageSize > 500 {
+		ginx.Bomb(http.StatusBadRequest, "page_size must be in [1, 500]")
+	}
+	offset := (page - 1) * pageSize
+
+	list, total, err := models.DingtalkGroupsGetByClientIDPage(rt.Ctx, clientID, true, offset, pageSize)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(gin.H{
+		"list":      list,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	}, nil)
 }
 
 func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {

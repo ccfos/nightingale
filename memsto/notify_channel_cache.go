@@ -1,7 +1,10 @@
 package memsto
 
 import (
+	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,23 +14,31 @@ import (
 
 	"gopkg.in/gomail.v2"
 
+	"github.com/ccfos/nightingale/v6/alert/naming"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
 )
 
+// dingtalkStreamReconcileInterval 定时根据内存快照重算 DingTalk Stream，配合 IamLeader 判主在主从切换后收敛连接状态。
+const dingtalkStreamReconcileInterval = 10 * time.Second
+
 // NotifyTask 表示一个通知发送任务
 type NotifyTask struct {
-	Events        []*models.AlertCurEvent
-	NotifyRuleId  int64
-	NotifyChannel *models.NotifyChannelConfig
-	TplContent    map[string]interface{}
-	CustomParams  map[string]string
-	Sendtos       []string
+	// Events        []*models.AlertCurEvent
+	// NotifyChannel *models.NotifyChannelConfig
+	// TplContent    map[string]interface{}
+	// CustomParams  map[string]string
+	// Sendtos       []string
+	NotifyRuleId int64
+	Request      *provider.NotifyRequest
+	Provider     provider.NotifyChannelProvider
 }
 
 // NotifyRecordFunc 通知记录函数类型
@@ -52,29 +63,70 @@ type NotifyChannelCacheType struct {
 
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
+
+	dingtalkLeaderNaming  *naming.Naming
+	dingtalkReconcileOnce sync.Once
+	dingtalkStreamMu      sync.Mutex
+	dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
+}
+
+type dingtalkStreamRunner struct {
+	stop           func()
+	cfgFingerprint string
 }
 
 func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
-		statTotal:       -1,
-		statLastUpdated: -1,
-		ctx:             ctx,
-		stats:           stats,
-		channels:        make(map[int64]*models.NotifyChannelConfig),
-		channelsQueue:   make(map[int64]*list.SafeListLimited),
-		queueQuitCh:     make(map[int64]chan struct{}),
-		httpClient:      make(map[int64]*http.Client),
-		smtpCh:          make(map[int64]chan *models.EmailContext),
-		smtpQuitCh:      make(map[int64]chan struct{}),
+		statTotal:             -1,
+		statLastUpdated:       -1,
+		ctx:                   ctx,
+		stats:                 stats,
+		channels:              make(map[int64]*models.NotifyChannelConfig),
+		channelsQueue:         make(map[int64]*list.SafeListLimited),
+		queueQuitCh:           make(map[int64]chan struct{}),
+		httpClient:            make(map[int64]*http.Client),
+		smtpCh:                make(map[int64]chan *models.EmailContext),
+		smtpQuitCh:            make(map[int64]chan struct{}),
+		dingtalkStreamRunners: make(map[string]*dingtalkStreamRunner),
 	}
 
 	ncc.SyncNotifyChannels()
 	return ncc
 }
 
+// loopReconcileDingtalkStreams 定时根据内存中的媒介快照重算 DingTalk Stream，便于 holder 挂掉且租约过期后其它副本抢占。
+func (ncc *NotifyChannelCacheType) loopReconcileDingtalkStreams() {
+	ticker := time.NewTicker(dingtalkStreamReconcileInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		ncc.reconcileDingtalkStreamsFromCache()
+	}
+}
+
+func (ncc *NotifyChannelCacheType) reconcileDingtalkStreamsFromCache() {
+	ncc.RLock()
+	snapshot := make(map[int64]*models.NotifyChannelConfig, len(ncc.channels))
+	for id, ch := range ncc.channels {
+		snapshot[id] = ch
+	}
+	ncc.RUnlock()
+	ncc.reconcileDingtalkStreams(snapshot)
+}
+
 // SetNotifyRecordFunc 设置通知记录回调函数
 func (ncc *NotifyChannelCacheType) SetNotifyRecordFunc(fn NotifyRecordFunc) {
 	ncc.notifyRecordFunc = fn
+}
+
+func (ncc *NotifyChannelCacheType) SetDingtalkLeaderNaming(nm *naming.Naming) {
+	ncc.dingtalkLeaderNaming = nm
+	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || nm == nil {
+		return
+	}
+	ncc.reconcileDingtalkStreamsFromCache()
+	ncc.dingtalkReconcileOnce.Do(func() {
+		go ncc.loopReconcileDingtalkStreams()
+	})
 }
 
 func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
@@ -87,17 +139,17 @@ func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 
 func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, total, lastUpdated int64) {
 	ncc.Lock()
-	defer ncc.Unlock()
-
 	// 1. 处理需要删除的通道
 	ncc.removeDeletedChannels(m)
 
 	// 2. 处理新增和更新的通道
 	ncc.addOrUpdateChannels(m)
 
-	// only one goroutine used, so no need lock
 	ncc.statTotal = total
 	ncc.statLastUpdated = lastUpdated
+	ncc.Unlock()
+
+	ncc.reconcileDingtalkStreams(m)
 }
 
 // removeDeletedChannels 移除已删除的通道
@@ -275,33 +327,34 @@ func (ncc *NotifyChannelCacheType) startNotifyConsumer(channelID int64, queue *l
 
 // processNotifyTask 处理通知任务（仅处理 http 类型）
 func (ncc *NotifyChannelCacheType) processNotifyTask(task *NotifyTask) {
-	httpClient := ncc.GetHttpClient(task.NotifyChannel.ID)
-	logger.Debugf("processNotifyTask: task: %+v", task)
-
 	// 现在只处理 http 类型，flashduty 保持直接发送
-	if task.NotifyChannel.RequestType == "http" {
-		if len(task.Sendtos) == 0 || ncc.needBatchContacts(task.NotifyChannel.RequestConfig.HTTPRequestConfig) {
+	logger.Debugf("processNotifyTask: task: %+v", task)
+	if task.Request.Config.RequestType == "http" {
+		if len(task.Request.Sendtos) == 0 || ncc.needBatchContacts(task.Request.Config.RequestConfig.HTTPRequestConfig) {
 			start := time.Now()
-			resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, task.Sendtos, httpClient)
-			resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
+			resut := task.Provider.Notify(ncc.ctx.Ctx, task.Request)
+			resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resut.Response)
 			logger.Infof("http_sendernotify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-				task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos, resp, err)
+				task.NotifyRuleId, task.Request.Config.Name, task.Request.Events[0].Hash, task.Request.TplContent, task.Request.CustomParams, task.Request.Sendtos, resp, resut.Err)
 
 			// 调用通知记录回调函数
 			if ncc.notifyRecordFunc != nil {
-				ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, task.Sendtos), resp, err)
+				ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, task.Request.Sendtos), resp, resut.Err)
 			}
 		} else {
-			for i := range task.Sendtos {
+			for i := range task.Request.Sendtos {
+				// 单人发送模式下，逐个 sendto 渲染并发送，避免在 Provider 内使用全量 Sendtos 造成重复发送。
+				reqCopy := *task.Request
+				reqCopy.Sendtos = []string{task.Request.Sendtos[i]}
 				start := time.Now()
-				resp, err := task.NotifyChannel.SendHTTP(task.Events, task.TplContent, task.CustomParams, []string{task.Sendtos[i]}, httpClient)
-				resp = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), resp)
+				result := task.Provider.Notify(ncc.ctx.Ctx, &reqCopy)
+				resp := fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), result.Response)
 				logger.Infof("http_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%v, customParams:%v, userInfo:%+v, respBody: %v, err: %v",
-					task.NotifyRuleId, task.NotifyChannel.Name, task.Events[0].Hash, task.TplContent, task.CustomParams, task.Sendtos[i], resp, err)
+					task.NotifyRuleId, task.Request.Config.Name, task.Request.Events[0].Hash, task.Request.TplContent, task.Request.CustomParams, task.Request.Sendtos[i], resp, result.Err)
 
 				// 调用通知记录回调函数
 				if ncc.notifyRecordFunc != nil {
-					ncc.notifyRecordFunc(ncc.ctx, task.Events, task.NotifyRuleId, task.NotifyChannel.Name, ncc.getSendTarget(task.CustomParams, []string{task.Sendtos[i]}), resp, err)
+					ncc.notifyRecordFunc(ncc.ctx, task.Request.Events, task.NotifyRuleId, task.Request.Config.Name, ncc.getSendTarget(task.Request.CustomParams, []string{task.Request.Sendtos[i]}), resp, result.Err)
 				}
 			}
 		}
@@ -371,17 +424,17 @@ func (ncc *NotifyChannelCacheType) GetChannelIds() []int64 {
 // 新增：将通知任务加入队列
 func (ncc *NotifyChannelCacheType) EnqueueNotifyTask(task *NotifyTask) bool {
 	ncc.RLock()
-	queue := ncc.channelsQueue[task.NotifyChannel.ID]
+	queue := ncc.channelsQueue[task.Request.Config.ID]
 	ncc.RUnlock()
 
 	if queue == nil {
-		logger.Errorf("no queue found for channel %d", task.NotifyChannel.ID)
+		logger.Errorf("no queue found for channel %d", task.Request.Config.ID)
 		return false
 	}
 
 	success := queue.PushFront(task)
 	if !success {
-		logger.Warningf("failed to enqueue notify task for channel %d, queue is full", task.NotifyChannel.ID)
+		logger.Warningf("failed to enqueue notify task for channel %d, queue is full", task.Request.Config.ID)
 	}
 
 	return success
@@ -528,6 +581,143 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 				open = false
 			}
 		}
+	}
+}
+
+func dingtalkStreamCfgFingerprint(appKey, appSecret, proxy string) string {
+	h := sha256.Sum256([]byte(appKey + "\n" + appSecret + "\n" + proxy))
+	return hex.EncodeToString(h[:])
+}
+
+type dingtalkStreamDesired struct {
+	appKey, appSecret, proxy string
+	fingerprint              string
+	channel                  *models.NotifyChannelConfig
+}
+
+func desiredDingtalkStreamsByAppKey(snapshot map[int64]*models.NotifyChannelConfig) map[string]dingtalkStreamDesired {
+	out := make(map[string]dingtalkStreamDesired)
+	for _, ch := range snapshot {
+		if ch == nil || ch.RequestType != "dingtalkapp" {
+			continue
+		}
+		if ch.RequestConfig == nil || ch.RequestConfig.DingtalkAppRequestConfig == nil {
+			continue
+		}
+		dc := ch.RequestConfig.DingtalkAppRequestConfig
+		if strings.TrimSpace(dc.AppKey) == "" || strings.TrimSpace(dc.AppSecret) == "" {
+			continue
+		}
+		fp := dingtalkStreamCfgFingerprint(dc.AppKey, dc.AppSecret, dc.Proxy)
+		if ex, ok := out[dc.AppKey]; ok {
+			if ex.fingerprint == fp {
+				if ex.channel != nil && ch.ID >= ex.channel.ID {
+					continue
+				}
+			} else {
+				prevID := int64(0)
+				if ex.channel != nil {
+					prevID = ex.channel.ID
+				}
+				logger.Warningf("dingtalkapp duplicate AppKey %s different credentials, prefer smaller channel id: keeping %d over %d",
+					dc.AppKey, prevID, ch.ID)
+				if ex.channel != nil && ch.ID > ex.channel.ID {
+					continue
+				}
+			}
+		}
+		out[dc.AppKey] = dingtalkStreamDesired{
+			appKey:      dc.AppKey,
+			appSecret:   dc.AppSecret,
+			proxy:       dc.Proxy,
+			fingerprint: fp,
+			channel:     ch,
+		}
+	}
+	return out
+}
+
+func (ncc *NotifyChannelCacheType) shutdownAllDingtalkStreams() {
+	ncc.dingtalkStreamMu.Lock()
+	stops := make([]func(), 0, len(ncc.dingtalkStreamRunners))
+	for appKey, r := range ncc.dingtalkStreamRunners {
+		if r != nil && r.stop != nil {
+			logger.Infof("dingtalk stream runner stopping appKey=%s reason=cache_shutdown", appKey)
+			stops = append(stops, r.stop)
+		}
+	}
+	ncc.dingtalkStreamRunners = make(map[string]*dingtalkStreamRunner)
+	ncc.dingtalkStreamMu.Unlock()
+	for _, s := range stops {
+		s()
+	}
+}
+
+func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*models.NotifyChannelConfig) {
+	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil {
+		ncc.shutdownAllDingtalkStreams()
+		return
+	}
+
+	if ncc.dingtalkLeaderNaming == nil || !ncc.dingtalkLeaderNaming.IamLeader() {
+		ncc.shutdownAllDingtalkStreams()
+		return
+	}
+
+	desired := desiredDingtalkStreamsByAppKey(snapshot)
+
+	ncc.dingtalkStreamMu.Lock()
+	kept := make(map[string]*dingtalkStreamRunner)
+	var stops []func()
+	for appKey, r := range ncc.dingtalkStreamRunners {
+		w, ok := desired[appKey]
+		if ok && w.fingerprint == r.cfgFingerprint {
+			kept[appKey] = r
+			continue
+		}
+		if r != nil && r.stop != nil {
+			reason := "channel_removed_or_disabled"
+			if ok {
+				reason = "channel_config_changed"
+			}
+			logger.Infof("dingtalk stream runner stopping appKey=%s reason=%s", appKey, reason)
+			stops = append(stops, r.stop)
+		}
+	}
+	ncc.dingtalkStreamRunners = kept
+	ncc.dingtalkStreamMu.Unlock()
+
+	for _, s := range stops {
+		s()
+	}
+
+	var starts []dingtalkStreamDesired
+	ncc.dingtalkStreamMu.Lock()
+	for appKey, w := range desired {
+		if _, exists := ncc.dingtalkStreamRunners[appKey]; exists {
+			continue
+		}
+		starts = append(starts, w)
+	}
+	ncc.dingtalkStreamMu.Unlock()
+
+	for _, w := range starts {
+		stop := dtstream.StartRunner(context.Background(), dtstream.RunnerDeps{
+			Nctx:          ncc.ctx,
+			AppKey:        w.appKey,
+			AppSecret:     w.appSecret,
+			Proxy:         w.proxy,
+			NotifyChannel: w.channel,
+		})
+		ncc.dingtalkStreamMu.Lock()
+		if _, exists := ncc.dingtalkStreamRunners[w.appKey]; exists {
+			ncc.dingtalkStreamMu.Unlock()
+			stop()
+			continue
+		}
+		ncc.dingtalkStreamRunners[w.appKey] = &dingtalkStreamRunner{stop: stop, cfgFingerprint: w.fingerprint}
+		ncc.dingtalkStreamMu.Unlock()
+		logger.Infof("dingtalk stream runner started appKey=%s", w.appKey)
 	}
 }
 
