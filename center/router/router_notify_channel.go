@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 )
 
 func (rt *Router) notifyChannelsAdd(c *gin.Context) {
@@ -118,6 +118,9 @@ func (rt *Router) notifyChannelGetBy(c *gin.Context) {
 
 func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 	ginx.NewRender(c).Data(lst, err)
 }
 

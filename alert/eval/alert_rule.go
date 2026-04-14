@@ -101,17 +101,17 @@ func (s *Scheduler) syncAlertRules() {
 				}
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {
-					logger.Debugf("datasource %d not found", dsId)
+					logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
 					continue
 				}
 
 				if ds.PluginType != ruleType {
-					logger.Debugf("datasource %d category is %s not %s", dsId, ds.PluginType, ruleType)
+					logger.Debugf("alert_eval_%d datasource %d category is %s not %s", rule.Id, dsId, ds.PluginType, ruleType)
 					continue
 				}
 
 				if ds.Status != "enabled" {
-					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
+					logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
 					continue
 				}
 				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)
@@ -134,12 +134,12 @@ func (s *Scheduler) syncAlertRules() {
 			for _, dsId := range dsIds {
 				ds := s.datasourceCache.GetById(dsId)
 				if ds == nil {
-					logger.Debugf("datasource %d not found", dsId)
+					logger.Debugf("alert_eval_%d datasource %d not found", rule.Id, dsId)
 					continue
 				}
 
 				if ds.Status != "enabled" {
-					logger.Debugf("datasource %d status is %s", dsId, ds.Status)
+					logger.Debugf("alert_eval_%d datasource %d status is %s", rule.Id, dsId, ds.Status)
 					continue
 				}
 				processor := process.NewProcessor(s.aconf.Heartbeat.EngineName, rule, dsId, s.alertRuleCache, s.targetCache, s.targetsOfAlertRuleCache, s.busiGroupCache, s.alertMuteCache, s.datasourceCache, s.ctx, s.stats)

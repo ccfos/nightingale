@@ -36,6 +36,7 @@ type RecordingRule struct {
 	CreateBy          string            `json:"create_by"`
 	UpdateAt          int64             `json:"update_at"`
 	UpdateBy          string            `json:"update_by"`
+	UpdateByNickname  string            `json:"update_by_nickname" gorm:"-"`
 }
 
 type QueryConfig struct {
@@ -44,6 +45,7 @@ type QueryConfig struct {
 	Exp               string  `json:"exp"`
 	WriteDatasourceId int64   `json:"write_datasource_id"`
 	Delay             int     `json:"delay"`
+	WritebackEnabled  bool    `json:"writeback_enabled"` // 是否写入与查询数据源相同的数据源
 }
 
 type Query struct {
@@ -211,7 +213,6 @@ func (re *RecordingRule) Update(ctx *ctx.Context, ref RecordingRule) error {
 
 	ref.FE2DB()
 	ref.Id = re.Id
-	ref.GroupId = re.GroupId
 	ref.CreateAt = re.CreateAt
 	ref.CreateBy = re.CreateBy
 	ref.UpdateAt = time.Now().Unix()

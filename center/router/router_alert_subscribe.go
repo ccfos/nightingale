@@ -9,9 +9,9 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
 )
 
@@ -30,6 +30,7 @@ func (rt *Router) alertSubscribeGets(c *gin.Context) {
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	ginx.NewRender(c).Data(lst, err)
 }
@@ -66,6 +67,7 @@ func (rt *Router) alertSubscribeGetsByGids(c *gin.Context) {
 		ginx.Dangerous(lst[i].FillDatasourceIds(rt.Ctx))
 		ginx.Dangerous(lst[i].DB2FE())
 	}
+	models.FillUpdateByNicknames(rt.Ctx, lst)
 
 	ginx.NewRender(c).Data(lst, err)
 }

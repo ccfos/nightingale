@@ -41,8 +41,28 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 
 // TimeSpanMuteStrategy 根据规则配置的告警生效时间段过滤,如果产生的告警不在规则配置的告警生效时间段内,则不告警,即被mute
 // 时间范围，左闭右开，默认范围：00:00-24:00
+// 如果规则配置了时区，则在该时区下进行时间判断；如果时区为空，则使用系统时区
 func TimeSpanMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent) bool {
-	tm := time.Unix(event.TriggerTime, 0)
+	// 确定使用的时区
+	var targetLoc *time.Location
+	var err error
+
+	timezone := rule.TimeZone
+	if timezone == "" {
+		// 如果时区为空，使用系统时区（保持原有逻辑）
+		targetLoc = time.Local
+	} else {
+		// 加载规则配置的时区
+		targetLoc, err = time.LoadLocation(timezone)
+		if err != nil {
+			// 如果时区加载失败，记录错误并使用系统时区
+			logger.Warningf("Failed to load timezone %s for rule %d, using system timezone: %v", timezone, rule.Id, err)
+			targetLoc = time.Local
+		}
+	}
+
+	// 将触发时间转换到目标时区
+	tm := time.Unix(event.TriggerTime, 0).In(targetLoc)
 	triggerTime := tm.Format("15:04")
 	triggerWeek := strconv.Itoa(int(tm.Weekday()))
 
@@ -102,7 +122,7 @@ func IdentNotExistsMuteStrategy(rule *models.AlertRule, event *models.AlertCurEv
 	// 如果是target_up的告警,且ident已经不存在了,直接过滤掉
 	// 这里的判断有点太粗暴了,但是目前没有更好的办法
 	if !exists && strings.Contains(rule.PromQl, "target_up") {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s ident:%s", "IdentNotExistsMuteStrategy", rule.Id, event.Cluster, ident)
+		logger.Debugf("alert_eval_%d [IdentNotExistsMuteStrategy] mute: cluster:%s ident:%s", rule.Id, event.Cluster, ident)
 		return true
 	}
 	return false
@@ -124,7 +144,7 @@ func BgNotMatchMuteStrategy(rule *models.AlertRule, event *models.AlertCurEvent,
 	// 对于包含ident的告警事件，check一下ident所属bg和rule所属bg是否相同
 	// 如果告警规则选择了只在本BG生效，那其他BG的机器就不能因此规则产生告警
 	if exists && !target.MatchGroupId(rule.GroupId) {
-		logger.Debugf("[%s] mute: rule_eval:%d cluster:%s", "BgNotMatchMuteStrategy", rule.Id, event.Cluster)
+		logger.Debugf("alert_eval_%d [BgNotMatchMuteStrategy] mute: cluster:%s", rule.Id, event.Cluster)
 		return true
 	}
 	return false

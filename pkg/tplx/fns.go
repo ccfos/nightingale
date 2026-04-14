@@ -531,8 +531,13 @@ func Printf(format string, value interface{}) string {
 
 	switch valType {
 	case reflect.String:
+		strValue := value.(string)
+		// Check if it's a value with unit (contains both digits and non-numeric chars like letters or %)
+		if isValueWithUnit(strValue) {
+			return strValue
+		}
 		// Try converting string to float
-		if floatValue, err := strconv.ParseFloat(value.(string), 64); err == nil {
+		if floatValue, err := strconv.ParseFloat(strValue, 64); err == nil {
 			return fmt.Sprintf(format, floatValue)
 		}
 		return fmt.Sprintf(format, value)
@@ -542,6 +547,32 @@ func Printf(format string, value interface{}) string {
 		// Handle other types as per requirement
 		return fmt.Sprintf(format, value)
 	}
+}
+
+// isValueWithUnit checks if a string is a numeric value with unit
+// e.g., "11.5%", "100MB", "10a" returns true
+// e.g., "11", "11.11", "-3.14" returns false
+func isValueWithUnit(s string) bool {
+	if s == "" {
+		return false
+	}
+
+	hasDigit := false
+	hasUnit := false
+
+	for _, r := range s {
+		if r >= '0' && r <= '9' {
+			hasDigit = true
+		} else if r == '.' || r == '-' || r == '+' {
+			// These are valid numeric characters, not units
+			continue
+		} else {
+			// Any other character (letters, %, etc.) is considered a unit
+			hasUnit = true
+		}
+	}
+
+	return hasDigit && hasUnit
 }
 
 func floatToTime(v float64) (*time.Time, error) {

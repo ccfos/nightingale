@@ -255,6 +255,7 @@ CREATE TABLE `embedded_product` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `weight` int not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -294,7 +295,76 @@ ALTER TABLE `alert_rule` ADD COLUMN `pipeline_configs` text COMMENT 'pipeline co
 ALTER TABLE `board` ADD COLUMN `note` varchar(1024) not null default '' comment 'note';
 ALTER TABLE `builtin_payloads` ADD COLUMN `note` varchar(1024) not null default '' comment 'note of payload';
 
+/* v9 2026-01-09 */
+ALTER TABLE `event_pipeline` ADD COLUMN `typ` varchar(128) NOT NULL DEFAULT '' COMMENT 'pipeline type: builtin, user-defined';
+ALTER TABLE `event_pipeline` ADD COLUMN `use_case` varchar(128) NOT NULL DEFAULT '' COMMENT 'use case: metric_explorer, event_summary, event_pipeline';
+ALTER TABLE `event_pipeline` ADD COLUMN `trigger_mode` varchar(128) NOT NULL DEFAULT 'event' COMMENT 'trigger mode: event, api, cron';
+ALTER TABLE `event_pipeline` ADD COLUMN `disabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'disabled flag';
+ALTER TABLE `event_pipeline` ADD COLUMN `nodes` text COMMENT 'workflow nodes (JSON)';
+ALTER TABLE `event_pipeline` ADD COLUMN `connections` text COMMENT 'node connections (JSON)';
+ALTER TABLE `event_pipeline` ADD COLUMN `input_variables` text COMMENT 'input variables (JSON)';
+ALTER TABLE `event_pipeline` ADD COLUMN `label_filters` text COMMENT 'label filters (JSON)';
+
+CREATE TABLE `event_pipeline_execution` (
+    `id` varchar(36) NOT NULL COMMENT 'execution id',
+    `pipeline_id` bigint NOT NULL COMMENT 'pipeline id',
+    `pipeline_name` varchar(128) DEFAULT '' COMMENT 'pipeline name snapshot',
+    `event_id` bigint DEFAULT 0 COMMENT 'related alert event id',
+    `mode` varchar(16) NOT NULL DEFAULT 'event' COMMENT 'trigger mode: event/api/cron',
+    `status` varchar(16) NOT NULL DEFAULT 'running' COMMENT 'status: running/success/failed',
+    `node_results` mediumtext COMMENT 'node execution results (JSON)',
+    `error_message` varchar(1024) DEFAULT '' COMMENT 'error message',
+    `error_node` varchar(36) DEFAULT '' COMMENT 'error node id',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'start timestamp',
+    `finished_at` bigint DEFAULT 0 COMMENT 'finish timestamp',
+    `duration_ms` bigint DEFAULT 0 COMMENT 'duration in milliseconds',
+    `trigger_by` varchar(64) DEFAULT '' COMMENT 'trigger by',
+    `inputs_snapshot` text COMMENT 'inputs snapshot',
+    PRIMARY KEY (`id`),
+    KEY `idx_pipeline_id` (`pipeline_id`),
+    KEY `idx_event_id` (`event_id`),
+    KEY `idx_mode` (`mode`),
+    KEY `idx_status` (`status`),
+    KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='event pipeline execution records';
+
 /* v8.5.0 builtin_metrics new fields */
 ALTER TABLE `builtin_metrics` ADD COLUMN `expression_type` varchar(32) NOT NULL DEFAULT 'promql' COMMENT 'expression type: metric_name or promql';
 ALTER TABLE `builtin_metrics` ADD COLUMN `metric_type` varchar(191) NOT NULL DEFAULT '' COMMENT 'metric type like counter/gauge';
 ALTER TABLE `builtin_metrics` ADD COLUMN `extra_fields` text COMMENT 'custom extra fields';
+
+/* v9 2026-01-16 saved_view */
+CREATE TABLE `saved_view` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL COMMENT 'view name',
+    `page` varchar(64) NOT NULL COMMENT 'page identifier',
+    `filter` text COMMENT 'filter config (JSON)',
+    `public_cate` int NOT NULL DEFAULT 0 COMMENT 'public category: 0-self, 1-team, 2-all',
+    `gids` text COMMENT 'team group ids (JSON)',
+    `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
+    `create_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `update_at` bigint NOT NULL DEFAULT 0 COMMENT 'update timestamp',
+    `update_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_page` (`page`),
+    KEY `idx_create_by` (`create_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='saved views for pages';
+
+CREATE TABLE `user_view_favorite` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `view_id` bigint NOT NULL COMMENT 'saved view id',
+    `user_id` bigint NOT NULL COMMENT 'user id',
+    `create_at` bigint NOT NULL DEFAULT 0 COMMENT 'create timestamp',
+    PRIMARY KEY (`id`),
+    KEY `idx_view_id` (`view_id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='user favorite views';
+
+/* v9 2026-01-20 datasource weight */
+ALTER TABLE `datasource` ADD COLUMN `weight` int not null default 0 COMMENT 'weight for sorting';
+
+/* v9 2026-01-20 alert_rule time_zone support */
+ALTER TABLE `alert_rule` ADD COLUMN `time_zone` varchar(64) not null default '';
+
+/* v9 2026-04-08 embedded_product weight for sorting */
+ALTER TABLE `embedded_product` ADD COLUMN `weight` int not null default 0;

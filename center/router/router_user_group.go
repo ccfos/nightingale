@@ -7,9 +7,9 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -27,6 +27,9 @@ func (rt *Router) userGroupGets(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 	lst, err := me.UserGroups(rt.Ctx, limit, query)
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
+	}
 
 	ginx.NewRender(c).Data(lst, err)
 }

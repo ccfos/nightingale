@@ -251,6 +251,18 @@ func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 	return AlertHisEventGet(ctx, "id=?", id)
 }
 
+func AlertHisEventGetByHash(ctx *ctx.Context, hash string) (*AlertHisEvent, error) {
+	var lst []*AlertHisEvent
+	err := DB(ctx).Where("hash = ?", hash).Order("trigger_time desc").Limit(1).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(lst) == 0 {
+		return nil, nil
+	}
+	return lst[0], nil
+}
+
 func AlertHisEventBatchDelete(ctx *ctx.Context, timestamp int64, severities []int, limit int) (int64, error) {
 	db := DB(ctx).Where("last_eval_time < ?", timestamp)
 	if len(severities) > 0 {

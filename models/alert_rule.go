@@ -119,6 +119,7 @@ type AlertRule struct {
 	CurEventCount         int64                  `json:"cur_event_count" gorm:"-"`
 	UpdateByNickname      string                 `json:"update_by_nickname" gorm:"-"` // for fe
 	CronPattern           string                 `json:"cron_pattern"`
+	TimeZone              string                 `json:"time_zone" gorm:"default:''"` // timezone for alert rule, e.g. "Asia/Shanghai", "UTC", empty for default
 	NotifyRuleIds         []int64                `json:"notify_rule_ids" gorm:"serializer:json"`
 	PipelineConfigs       []PipelineConfig       `json:"pipeline_configs" gorm:"serializer:json"`
 	NotifyVersion         int                    `json:"notify_version"` // 0: old, 1: new
@@ -129,6 +130,14 @@ type ChildVarConfig struct {
 	ChildVarConfigs *ChildVarConfig         `json:"child_var_configs"`
 }
 
+func (c ChildVarConfig) MarshalJSON() ([]byte, error) {
+	if c.ParamVal == nil {
+		c.ParamVal = []map[string]ParamQuery{}
+	}
+	type Alias ChildVarConfig
+	return json.Marshal(Alias(c))
+}
+
 type ParamQuery struct {
 	ParamType string      `json:"param_type"` // host、device、enum、threshold 三种类型
 	Query     interface{} `json:"query"`
@@ -137,6 +146,14 @@ type ParamQuery struct {
 type VarConfig struct {
 	ParamVal        []ParamQueryForFirst `json:"param_val"`
 	ChildVarConfigs *ChildVarConfig      `json:"child_var_configs"`
+}
+
+func (v VarConfig) MarshalJSON() ([]byte, error) {
+	if v.ParamVal == nil {
+		v.ParamVal = []ParamQueryForFirst{}
+	}
+	type Alias VarConfig
+	return json.Marshal(Alias(v))
 }
 
 // ParamQueryForFirst 同 ParamQuery，仅在第一层出现
@@ -482,6 +499,13 @@ func (ar *AlertRule) Verify() error {
 		return errors.New("name is blank")
 	}
 
+	if ar.TimeZone != "" {
+		_, err := time.LoadLocation(ar.TimeZone)
+		if err != nil {
+			return fmt.Errorf("invalid timezone: %s", ar.TimeZone)
+		}
+	}
+
 	if str.Dangerous(ar.Name) {
 		return errors.New("Name has invalid characters")
 	}
@@ -509,10 +533,16 @@ func (ar *AlertRule) Verify() error {
 
 	ar.AppendTags = strings.TrimSpace(ar.AppendTags)
 	arr := strings.Fields(ar.AppendTags)
+	appendTagKeys := make(map[string]struct{})
 	for i := 0; i < len(arr); i++ {
 		if !strings.Contains(arr[i], "=") {
 			return fmt.Errorf("AppendTags(%s) invalid", arr[i])
 		}
+		pair := strings.SplitN(arr[i], "=", 2)
+		if _, exists := appendTagKeys[pair[0]]; exists {
+			return fmt.Errorf("AppendTags has duplicate key: %s", pair[0])
+		}
+		appendTagKeys[pair[0]] = struct{}{}
 	}
 
 	gids := strings.Fields(ar.NotifyGroups)

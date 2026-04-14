@@ -14,6 +14,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -79,52 +81,19 @@ func (d *Doris) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
-	// only compare first shard
-	if d.Addr != newest.Addr {
-		return false
-	}
-
-	if d.User != newest.User {
-		return false
-	}
-
-	if d.Password != newest.Password {
-		return false
-	}
-
-	if d.EnableWrite != newest.EnableWrite {
-		return false
-	}
-
-	if d.FeAddr != newest.FeAddr {
-		return false
-	}
-
-	if d.MaxQueryRows != newest.MaxQueryRows {
-		return false
-	}
-
-	if d.Timeout != newest.Timeout {
-		return false
-	}
-
-	if d.MaxIdleConns != newest.MaxIdleConns {
-		return false
-	}
-
-	if d.MaxOpenConns != newest.MaxOpenConns {
-		return false
-	}
-
-	if d.ConnMaxLifetime != newest.ConnMaxLifetime {
-		return false
-	}
-
-	if d.ClusterName != newest.ClusterName {
-		return false
-	}
-
-	return true
+	return d.Addr == newest.Addr &&
+		d.FeAddr == newest.FeAddr &&
+		d.User == newest.User &&
+		d.Password == newest.Password &&
+		d.EnableWrite == newest.EnableWrite &&
+		d.UserWrite == newest.UserWrite &&
+		d.PasswordWrite == newest.PasswordWrite &&
+		d.MaxQueryRows == newest.MaxQueryRows &&
+		d.Timeout == newest.Timeout &&
+		d.MaxIdleConns == newest.MaxIdleConns &&
+		d.MaxOpenConns == newest.MaxOpenConns &&
+		d.ConnMaxLifetime == newest.ConnMaxLifetime &&
+		d.ClusterName == newest.ClusterName
 }
 
 func (d *Doris) MakeLogQuery(ctx context.Context, query interface{}, eventTags []string, start, end int64) (interface{}, error) {
@@ -181,7 +150,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		}
 	}
 
-	items, err := d.QueryTimeseries(context.TODO(), &doris.QueryParam{
+	items, err := d.QueryTimeseries(ctx, &doris.QueryParam{
 		Database: dorisQueryParam.Database,
 		Sql:      dorisQueryParam.SQL,
 		Keys: types.Keys{
@@ -192,7 +161,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 		},
 	})
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", dorisQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", dorisQueryParam, err)
 		return []models.DataResp{}, err
 	}
 	data := make([]models.DataResp, 0)
@@ -205,7 +174,7 @@ func (d *Doris) QueryData(ctx context.Context, query interface{}) ([]models.Data
 	}
 
 	// parse resp to time series data
-	logger.Infof("req:%+v keys:%+v \n data:%v", dorisQueryParam, dorisQueryParam.Keys, data)
+	logx.Infof(ctx, "req:%+v keys:%+v \n data:%v", dorisQueryParam, dorisQueryParam.Keys, data)
 
 	return data, nil
 }
@@ -241,7 +210,7 @@ func (d *Doris) QueryLog(ctx context.Context, query interface{}) ([]interface{},
 		Sql:      dorisQueryParam.SQL,
 	})
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", dorisQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", dorisQueryParam, err)
 		return []interface{}{}, 0, err
 	}
 	logs := make([]interface{}, 0)

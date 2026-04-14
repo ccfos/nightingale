@@ -205,6 +205,6 @@ func PushCallbackEvent(ctx *ctx.Context, webhook *models.Webhook, event *models.
 
 	succ := queue.eventQueue.Push(event)
 	if !succ {
-		logger.Warningf("Write channel(%s) full, current channel size: %d event:%v", webhook.Url, queue.eventQueue.Len(), event)
+		logger.Warningf("Write channel(%s) full, current channel size: %d event:%s", webhook.Url, queue.eventQueue.Len(), event.Hash)
 	}
 }

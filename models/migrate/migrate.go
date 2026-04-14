@@ -68,7 +68,7 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
-		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
+		&models.EventPipeline{}, &models.EventPipelineExecution{}, &models.EmbeddedProduct{}, &models.SourceToken{},
 		&models.SavedView{}, &models.UserViewFavorite{}}
 
 	if isPostgres(db) {
@@ -174,6 +174,7 @@ func columnHasIndex(db *gorm.DB, dst interface{}, indexColumn string) bool {
 type AlertRule struct {
 	ExtraConfig       string                   `gorm:"type:text;column:extra_config"`
 	CronPattern       string                   `gorm:"type:varchar(64);column:cron_pattern"`
+	TimeZone          string                   `gorm:"type:varchar(64);column:time_zone;not null;default:''"`
 	DatasourceQueries []models.DatasourceQuery `gorm:"datasource_queries;type:text;serializer:json"` // datasource queries
 	NotifyRuleIds     []int64                  `gorm:"column:notify_rule_ids;type:varchar(1024)"`
 	NotifyVersion     int                      `gorm:"column:notify_version;type:int;default:0"`
@@ -234,6 +235,7 @@ type Target struct {
 type Datasource struct {
 	IsDefault  bool   `gorm:"column:is_default;type:boolean;comment:is default datasource"`
 	Identifier string `gorm:"column:identifier;type:varchar(255);default:'';comment:identifier"`
+	Weight     int    `gorm:"column:weight;type:int;default:0;comment:weight for sorting"`
 }
 
 type Configs struct {

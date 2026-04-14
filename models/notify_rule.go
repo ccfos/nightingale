@@ -24,10 +24,11 @@ type NotifyRule struct {
 	NotifyConfigs []NotifyConfig `json:"notify_configs" gorm:"serializer:json"`
 	ExtraConfig   interface{}    `json:"extra_config,omitempty" gorm:"serializer:json"`
 
-	CreateAt int64  `json:"create_at"`
-	CreateBy string `json:"create_by"`
-	UpdateAt int64  `json:"update_at"`
-	UpdateBy string `json:"update_by"`
+	CreateAt         int64  `json:"create_at"`
+	CreateBy         string `json:"create_by"`
+	UpdateAt         int64  `json:"update_at"`
+	UpdateBy         string `json:"update_by"`
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 type PipelineConfig struct {

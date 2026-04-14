@@ -31,7 +31,9 @@
 
 Nightingale is an open-source monitoring project that focuses on alerting. Similar to Grafana, Nightingale also connects with various existing data sources. However, while Grafana emphasizes visualization, Nightingale places greater emphasis on the alerting engine, as well as the processing and distribution of alarms.
 
-> The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODC).
+> 💡 Nightingale has now officially launched the [MCP-Server](https://github.com/n9e/n9e-mcp-server/). This MCP Server enables AI assistants to interact with the Nightingale API using natural language, facilitating alert management, monitoring, and observability tasks.
+> 
+> The Nightingale project was initially developed and open-sourced by DiDi.inc. On May 11, 2022, it was donated to the Open Source Development Committee of the China Computer Federation (CCF ODTC).
 
 ![](https://n9e.github.io/img/global/arch-bg.png)
 

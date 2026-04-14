@@ -321,6 +321,7 @@ CREATE TABLE alert_rule (
     create_by varchar(64) not null default '',
     update_at bigint not null default 0,
     update_by varchar(64) not null default '',
+    time_zone varchar(64) not null default '',
     PRIMARY KEY (id)
 ) ;
 CREATE INDEX alert_rule_group_id_idx ON alert_rule (group_id);
@@ -738,6 +739,7 @@ CREATE TABLE datasource
     http varchar(4096) not null default '',
     auth varchar(8192) not null default '',
     is_default boolean not null default false,
+    weight int not null default 0,
     created_at bigint not null default 0,
     created_by varchar(64) not null default '',
     updated_at bigint not null default 0,
@@ -1030,5 +1032,6 @@ CREATE TABLE embedded_product (
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
-    update_by varchar(64) NOT NULL DEFAULT ''
+    update_by varchar(64) NOT NULL DEFAULT '',
+    weight int NOT NULL DEFAULT 0
 );

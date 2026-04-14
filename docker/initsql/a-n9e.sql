@@ -293,6 +293,7 @@ CREATE TABLE `alert_rule` (
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
     `cron_pattern` varchar(64),
+    `time_zone` varchar(64) not null default '',
     `datasource_queries` text,
     PRIMARY KEY (`id`),
     KEY (`group_id`),
@@ -655,6 +656,7 @@ CREATE TABLE `datasource`
     `http` varchar(4096) not null default '',
     `auth` varchar(8192) not null default '',
     `is_default` boolean COMMENT 'is default datasource',
+    `weight` int not null default 0,
     `created_at` bigint not null default 0,
     `created_by` varchar(64) not null default '',
     `updated_at` bigint not null default 0,
@@ -860,6 +862,7 @@ CREATE TABLE `embedded_product` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `weight` int not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -18,11 +18,10 @@ type Pushgw struct {
 	UpdateTargetRetryIntervalMills int64
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
-	UpdateDBTargetConcurrency      int
-	UpdateDBTargetTimestampDisable bool
 	PushConcurrency                int
 	UpdateTargetByUrlConcurrency   int
 
+	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
 	BusiGroupLabelKey   string
 	IdentMetrics        []string
 	IdentStatsThreshold int
@@ -127,10 +126,6 @@ func (p *Pushgw) PreCheck() {
 
 	if p.UpdateTargetBatchSize <= 0 {
 		p.UpdateTargetBatchSize = 20
-	}
-
-	if p.UpdateDBTargetConcurrency <= 0 {
-		p.UpdateDBTargetConcurrency = 16
 	}
 
 	if p.PushConcurrency <= 0 {

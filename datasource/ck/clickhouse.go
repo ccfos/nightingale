@@ -12,6 +12,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/toolkits/pkg/logger"
+
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 const (
@@ -142,6 +144,38 @@ func (c *Clickhouse) Equal(p datasource.Datasource) bool {
 		return false
 	}
 
+	if c.Timeout != plg.Timeout {
+		return false
+	}
+
+	if c.MaxQueryRows != plg.MaxQueryRows {
+		return false
+	}
+
+	if c.Protocol != plg.Protocol {
+		return false
+	}
+
+	if c.SkipSSLVerify != plg.SkipSSLVerify {
+		return false
+	}
+
+	if c.SecureConnection != plg.SecureConnection {
+		return false
+	}
+
+	if c.MaxIdleConns != plg.MaxIdleConns {
+		return false
+	}
+
+	if c.MaxOpenConns != plg.MaxOpenConns {
+		return false
+	}
+
+	if c.ConnMaxLifetime != plg.ConnMaxLifetime {
+		return false
+	}
+
 	return true
 }
 
@@ -178,13 +212,8 @@ func (c *Clickhouse) QueryData(ctx context.Context, query interface{}) ([]models
 
 	rows, err := c.QueryTimeseries(ctx, ckQueryParam)
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", ckQueryParam, err)
 		return nil, err
-	}
-
-	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
-		return []models.DataResp{}, err
 	}
 	data := make([]models.DataResp, 0)
 	for i := range rows {
@@ -214,7 +243,7 @@ func (c *Clickhouse) QueryLog(ctx context.Context, query interface{}) ([]interfa
 
 	rows, err := c.Query(ctx, ckQueryParam)
 	if err != nil {
-		logger.Warningf("query:%+v get data err:%v", ckQueryParam, err)
+		logx.Warningf(ctx, "query:%+v get data err:%v", ckQueryParam, err)
 		return nil, 0, err
 	}
 

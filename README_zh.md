@@ -3,7 +3,7 @@
     <img src="doc/img/Nightingale_L_V.png" alt="nightingale - cloud native monitoring" width="100" /></a>
 </p>
 <p align="center">
-  <b>开源告警管理专家</b>
+  <b>开源监控告警管理专家</b>
 </p>
 
 <p align="center">
@@ -33,7 +33,8 @@
 
 夜莺侧重于监控告警，类似于 Grafana 的数据源集成方式，夜莺也是对接多种既有的数据源，不过 Grafana 侧重于可视化，夜莺则是侧重于告警引擎、告警事件的处理和分发。
 
-> 夜莺监控项目，最初由滴滴开发和开源，并于 2022 年 5 月 11 日，捐赠予中国计算机学会开源发展技术委员会（CCF ODTC），为 CCF ODTC 成立后接受捐赠的第一个开源项目。
+> - 💡夜莺正式推出了 [MCP-Server](https://github.com/n9e/n9e-mcp-server/)，此 MCP Server 允许 AI 助手通过自然语言与夜莺 API 交互，实现告警管理、监控和可观测性任务。
+> - 夜莺监控项目，最初由滴滴开发和开源，并于 2022 年 5 月 11 日，捐赠予中国计算机学会开源发展技术委员会（CCF ODTC），为 CCF ODTC 成立后接受捐赠的第一个开源项目。
 
 ![](https://n9e.github.io/img/global/arch-bg.png)
 

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/common"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/utils"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
@@ -43,7 +44,8 @@ func (c *CallbackConfig) Init(settings interface{}) (models.Processor, error) {
 	return result, err
 }
 
-func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
+func (c *CallbackConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
+	event := wfCtx.Event
 	if c.Client == nil {
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
@@ -52,7 +54,7 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 		if c.Proxy != "" {
 			proxyURL, err := url.Parse(c.Proxy)
 			if err != nil {
-				return event, "", fmt.Errorf("failed to parse proxy url: %v processor: %v", err, c)
+				return wfCtx, "", fmt.Errorf("failed to parse proxy url: %v processor: %v", err, c)
 			} else {
 				transport.Proxy = http.ProxyURL(proxyURL)
 			}
@@ -70,14 +72,19 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 		headers[k] = v
 	}
 
-	body, err := json.Marshal(event)
+	url, err := utils.TplRender(wfCtx, c.URL)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to marshal event: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to render url template: %v processor: %v", err, c)
 	}
 
-	req, err := http.NewRequest("POST", c.URL, strings.NewReader(string(body)))
+	body, err := json.Marshal(event)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to create request: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to marshal event: %v processor: %v", err, c)
+	}
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(string(body)))
+	if err != nil {
+		return wfCtx, "", fmt.Errorf("failed to create request: %v processor: %v", err, c)
 	}
 
 	for k, v := range headers {
@@ -90,14 +97,14 @@ func (c *CallbackConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) 
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to send request: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to send request: %v processor: %v", err, c)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to read response body: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to read response body: %v processor: %v", err, c)
 	}
 
 	logger.Debugf("callback processor response body: %s", string(b))
-	return event, "callback success", nil
+	return wfCtx, "callback success", nil
 }

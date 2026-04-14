@@ -15,8 +15,8 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/opensearch"
 	"github.com/ccfos/nightingale/v6/dskit/clickhouse"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
@@ -276,7 +276,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 		}
 		err = req.Add(rt.Ctx)
 	} else {
-		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default")
+		err = req.Update(rt.Ctx, "name", "identifier", "description", "cluster_name", "settings", "http", "auth", "updated_by", "updated_at", "is_default", "weight")
 	}
 
 	Render(c, nil, err)

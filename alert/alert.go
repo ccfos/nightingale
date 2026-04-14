@@ -79,7 +79,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
 		configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
-	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
+	rt := router.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 
 	if config.Ibex.Enable {
 		ibex.ServerStart(false, nil, redis, config.HTTP.APIForService.BasicAuth, config.Alert.Heartbeat, &config.CenterApi, r, nil, config.Ibex, config.HTTP.Port)
@@ -116,6 +116,8 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 		busiGroupCache, alertMuteCache, datasourceCache, promClients, naming, ctx, alertStats)
 
 	eventProcessorCache := memsto.NewEventProcessorCache(ctx, syncStats)
+
+	sender.InitStaticGlobalWebhook(alertc.Alerting.GlobalWebhook)
 
 	dp := dispatch.NewDispatch(alertRuleCache, userCache, userGroupCache, alertSubscribeCache, targetCache, notifyConfigCache, taskTplsCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, eventProcessorCache, configCvalCache, alertc.Alerting, ctx, alertStats)
 	consumer := dispatch.NewConsumer(alertc.Alerting, ctx, dp, promClients, alertMuteCache)

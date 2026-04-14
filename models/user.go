@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
@@ -315,6 +317,18 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 	}).Error
 }
 
+func (u *User) AddToUserGroups(ctx *ctx.Context, userGroupIds []int64) error {
+
+	count := len(userGroupIds)
+	for i := 0; i < count; i++ {
+		err := UserGroupMemberAdd(ctx, userGroupIds[i], u.Id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func UpdateUserLastActiveTime(ctx *ctx.Context, userId int64, lastActiveTime int64) error {
 	return DB(ctx).Model(&User{}).Where("id = ?", userId).Updates(map[string]interface{}{
 		"last_active_time": lastActiveTime,
@@ -408,6 +422,80 @@ func UserMapGet(ctx *ctx.Context, where string, args ...interface{}) map[string]
 		um[user.Username] = user
 	}
 	return um
+}
+
+// UserNicknameMap returns a deduplicated username -> nickname map.
+func UserNicknameMap(ctx *ctx.Context, names []string) map[string]string {
+	m := make(map[string]string)
+	if len(names) == 0 {
+		return m
+	}
+	seen := make(map[string]struct{}, len(names))
+	unique := make([]string, 0, len(names))
+	for _, name := range names {
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		unique = append(unique, name)
+	}
+	if len(unique) == 0 {
+		return m
+	}
+	users := UserMapGet(ctx, "username in (?)", unique)
+	for username, user := range users {
+		m[username] = user.Nickname
+	}
+	return m
+}
+
+// FillUpdateByNicknames fills the UpdateByNickname field for each element in items
+// by looking up the UpdateBy username. Supports both []T and []*T slices.
+func FillUpdateByNicknames[T any](ctx *ctx.Context, items []T) {
+	if len(items) == 0 {
+		return
+	}
+
+	elemType := reflect.TypeOf(items).Elem()
+	isPtr := elemType.Kind() == reflect.Ptr
+	if isPtr {
+		elemType = elemType.Elem()
+	}
+
+	updateByField, ok1 := elemType.FieldByName("UpdateBy")
+	nicknameField, ok2 := elemType.FieldByName("UpdateByNickname")
+	if !ok1 || !ok2 {
+		return
+	}
+
+	names := make([]string, 0, len(items))
+	for i := range items {
+		v := reflect.ValueOf(&items[i]).Elem()
+		if isPtr {
+			if v.IsNil() {
+				continue
+			}
+			v = v.Elem()
+		}
+		names = append(names, v.FieldByIndex(updateByField.Index).String())
+	}
+
+	nm := UserNicknameMap(ctx, names)
+
+	for i := range items {
+		v := reflect.ValueOf(&items[i]).Elem()
+		if isPtr {
+			if v.IsNil() {
+				continue
+			}
+			v = v.Elem()
+		}
+		updateBy := v.FieldByIndex(updateByField.Index).String()
+		v.FieldByIndex(nicknameField.Index).SetString(nm[updateBy])
+	}
 }
 
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
@@ -514,14 +602,14 @@ func incrLoginFailCount(ctx *ctx.Context, redisObj storage.Redis, username strin
 	}
 
 	if err != nil {
-		logger.Warningf("login_fail_count: failed to get redis value. key:%s, error:%s", key, err)
+		logx.Warningf(ctx.Ctx, "login_fail_count: failed to get redis value. key:%s, error:%s", key, err)
 		redisObj.Set(ctx.GetContext(), key, "1", duration)
 		return
 	}
 
 	count, err := strconv.ParseInt(val, 10, 64)
 	if err != nil {
-		logger.Warningf("login_fail_count: failed to parse int64. key:%s, error:%s", key, err)
+		logx.Warningf(ctx.Ctx, "login_fail_count: failed to parse int64. key:%s, error:%s", key, err)
 		redisObj.Set(ctx.GetContext(), key, "1", duration)
 		return
 	}
@@ -546,18 +634,18 @@ func PassLogin(ctx *ctx.Context, redis storage.Redis, username, pass string) (*U
 	if needCheck {
 		pair := strings.Fields(val)
 		if len(pair) != 2 {
-			logger.Warningf("login_fail_count config invalid: %s", val)
+			logx.Warningf(ctx.Ctx, "login_fail_count config invalid: %s", val)
 			needCheck = false
 		} else {
 			seconds, err = strconv.ParseInt(pair[0], 10, 64)
 			if err != nil {
-				logger.Warningf("login_fail_count seconds invalid: %s", pair[0])
+				logx.Warningf(ctx.Ctx, "login_fail_count seconds invalid: %s", pair[0])
 				needCheck = false
 			}
 
 			count, err = strconv.ParseInt(pair[1], 10, 64)
 			if err != nil {
-				logger.Warningf("login_fail_count count invalid: %s", pair[1])
+				logx.Warningf(ctx.Ctx, "login_fail_count count invalid: %s", pair[1])
 				needCheck = false
 			}
 		}

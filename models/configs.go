@@ -20,16 +20,17 @@ import (
 )
 
 type Configs struct { //ckey+external
-	Id        int64  `json:"id" gorm:"primaryKey"`
-	Ckey      string `json:"ckey"` // Before inserting external configs, check if they are already defined as built-in configs.
-	Cval      string `json:"cval"`
-	Note      string `json:"note"`
-	External  int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
-	Encrypted int    `json:"encrypted"` //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
-	CreateAt  int64  `json:"create_at"`
-	CreateBy  string `json:"create_by"`
-	UpdateAt  int64  `json:"update_at"`
-	UpdateBy  string `json:"update_by"`
+	Id               int64  `json:"id" gorm:"primaryKey"`
+	Ckey             string `json:"ckey"` // Before inserting external configs, check if they are already defined as built-in configs.
+	Cval             string `json:"cval"`
+	Note             string `json:"note"`
+	External         int    `json:"external"`  //Controls frontend list display: 0 hides built-in (default), 1 shows external
+	Encrypted        int    `json:"encrypted"` //Indicates whether the value(cval) is encrypted (1 for ciphertext, 0 for plaintext(default))
+	CreateAt         int64  `json:"create_at"`
+	CreateBy         string `json:"create_by"`
+	UpdateAt         int64  `json:"update_at"`
+	UpdateBy         string `json:"update_by"`
+	UpdateByNickname string `json:"update_by_nickname" gorm:"-"`
 }
 
 func (Configs) TableName() string {

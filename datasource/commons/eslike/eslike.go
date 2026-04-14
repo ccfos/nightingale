@@ -17,6 +17,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 type FixedField string
@@ -390,8 +391,8 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	now := time.Now().Unix()
 	var start, end int64
 	if param.End != 0 && param.Start != 0 {
-		end = param.End - param.End%param.Interval
-		start = param.Start - param.Start%param.Interval
+		end = param.End
+		start = param.Start
 	} else {
 		end = now
 		start = end - param.Interval
@@ -448,13 +449,13 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 	versionParts := strings.Split(version, ".")
 	major := 0
 	if len(versionParts) > 0 {
-		if m, err := strconv.Atoi(versionParts[0]); err == nil {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[0], "+-")); err == nil {
 			major = m
 		}
 	}
 	minor := 0
 	if len(versionParts) > 1 {
-		if m, err := strconv.Atoi(versionParts[1]); err == nil {
+		if m, err := strconv.Atoi(strings.TrimRight(versionParts[1], "+-")); err == nil {
 			minor = m
 		}
 	}
@@ -543,7 +544,7 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	source, _ := queryString.Source()
 	b, _ := json.Marshal(source)
-	logger.Debugf("query_data q:%+v indexArr:%+v tsAggr:%+v query_string:%s", param, indexArr, tsAggr, string(b))
+	logx.Debugf(ctx, "query_data q:%+v indexArr:%+v tsAggr:%+v query_string:%s", param, indexArr, tsAggr, string(b))
 
 	searchSource := elastic.NewSearchSource().
 		Query(queryString).
@@ -551,21 +552,29 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	searchSourceString, err := searchSource.Source()
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s to string error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s to string error:%v", searchSourceString, err)
 	}
 
 	jsonSearchSource, err := json.Marshal(searchSourceString)
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s to json error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s to json error:%v", searchSourceString, err)
 	}
 
 	result, err := search(ctx, indexArr, searchSource, param.Timeout, param.MaxShard)
 	if err != nil {
-		logger.Warningf("query_data searchSource:%s query_data error:%v", searchSourceString, err)
+		logx.Warningf(ctx, "query_data searchSource:%s query_data error:%v", searchSourceString, err)
 		return nil, err
 	}
 
-	logger.Debugf("query_data searchSource:%s resp:%s", string(jsonSearchSource), string(result.Aggregations["ts"]))
+	// 检查是否有 shard failures，有部分数据时仅记录警告继续处理
+	if shardErr := checkShardFailures(ctx, result.Shards, "query_data", searchSourceString); shardErr != nil {
+		if len(result.Aggregations["ts"]) == 0 {
+			return nil, shardErr
+		}
+		// 有部分数据，checkShardFailures 已记录警告，继续处理
+	}
+
+	logx.Infof(ctx, "query_data searchSource:%s resp:%s", string(jsonSearchSource), string(result.Aggregations["ts"]))
 
 	js, err := simplejson.NewJson(result.Aggregations["ts"])
 	if err != nil {
@@ -590,6 +599,19 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 
 	GetBuckets("", keys, bucketsData, metrics, "", 0, param.MetricAggr.Func)
 
+	// Drop the last incomplete bucket to avoid inaccurate values at the boundary.
+	// When the last bucket's time range extends beyond or reaches the query end time,
+	// it may contain only partial data, making aggregated values (count, sum, etc.) artificially low.
+	for k, v := range metrics.Data {
+		if len(v) <= 1 {
+			continue
+		}
+		lastTs := v[len(v)-1][0]
+		if int64(lastTs)+param.Interval > end {
+			metrics.Data[k] = v[:len(v)-1]
+		}
+	}
+
 	items, err := TransferData(fmt.Sprintf("%s_%s", field, param.MetricAggr.Func), param.Ref, metrics.Data), nil
 
 	var m map[string]interface{}
@@ -600,6 +622,40 @@ func QueryData(ctx context.Context, queryParam interface{}, cliTimeout int64, ve
 		items[i].Query = fmt.Sprintf("%+v", m)
 	}
 	return items, nil
+}
+
+// checkShardFailures 检查 ES 查询结果中的 shard failures，返回格式化的错误信息
+func checkShardFailures(ctx context.Context, shards *elastic.ShardsInfo, logPrefix string, queryContext interface{}) error {
+	if shards == nil || shards.Failed == 0 || len(shards.Failures) == 0 {
+		return nil
+	}
+
+	var failureReasons []string
+	for _, failure := range shards.Failures {
+		reason := ""
+		if failure.Reason != nil {
+			if reasonType, ok := failure.Reason["type"].(string); ok {
+				reason = reasonType
+			}
+			if reasonMsg, ok := failure.Reason["reason"].(string); ok {
+				if reason != "" {
+					reason += ": " + reasonMsg
+				} else {
+					reason = reasonMsg
+				}
+			}
+		}
+		if reason != "" {
+			failureReasons = append(failureReasons, fmt.Sprintf("index=%s shard=%d: %s", failure.Index, failure.Shard, reason))
+		}
+	}
+
+	if len(failureReasons) > 0 {
+		errMsg := fmt.Sprintf("elasticsearch shard failures (%d/%d failed): %s", shards.Failed, shards.Total, strings.Join(failureReasons, "; "))
+		logx.Warningf(ctx, "%s query:%v %s", logPrefix, queryContext, errMsg)
+		return fmt.Errorf("%s", errMsg)
+	}
+	return nil
 }
 
 func HitFilter(typ string) bool {
@@ -678,28 +734,34 @@ func QueryLog(ctx context.Context, queryParam interface{}, timeout int64, versio
 	} else {
 		source = source.From(param.P).Sort(param.DateField, param.Ascending)
 	}
+	sourceBytes, _ := json.Marshal(source)
 	result, err := search(ctx, indexArr, source, param.Timeout, param.MaxShard)
 	if err != nil {
-		logger.Warningf("query data error:%v", err)
+		logx.Warningf(ctx, "query_log source:%s error:%v", string(sourceBytes), err)
 		return nil, 0, err
 	}
 
+	// 检查是否有 shard failures，有部分数据时仅记录警告继续处理
+	if shardErr := checkShardFailures(ctx, result.Shards, "query_log", string(sourceBytes)); shardErr != nil {
+		if len(result.Hits.Hits) == 0 {
+			return nil, 0, shardErr
+		}
+		// 有部分数据，checkShardFailures 已记录警告，继续处理
+	}
+
 	total := result.TotalHits()
-
 	var ret []interface{}
-
-	b, _ := json.Marshal(source)
-	logger.Debugf("query data result query source:%s len:%d total:%d", string(b), len(result.Hits.Hits), total)
+	logx.Debugf(ctx, "query_log source:%s len:%d total:%d", string(sourceBytes), len(result.Hits.Hits), total)
 
 	resultBytes, _ := json.Marshal(result)
-	logger.Debugf("query data result query source:%s result:%s", string(b), string(resultBytes))
+	logx.Debugf(ctx, "query_log source:%s result:%s", string(sourceBytes), string(resultBytes))
 
 	if strings.HasPrefix(version, "6") {
 		for i := 0; i < len(result.Hits.Hits); i++ {
 			var x map[string]interface{}
 			err := json.Unmarshal(result.Hits.Hits[i].Source, &x)
 			if err != nil {
-				logger.Warningf("Unmarshal source error:%v", err)
+				logx.Warningf(ctx, "Unmarshal source error:%v", err)
 				continue
 			}
 

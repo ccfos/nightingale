@@ -13,10 +13,10 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -38,6 +38,16 @@ func (rt *Router) targetGetsByHostFilter(c *gin.Context) {
 	total, err := models.TargetCountByFilter(rt.Ctx, query)
 	ginx.Dangerous(err)
 
+	models.FillTargetsBeatTime(rt.Redis, hosts)
+	now := time.Now().Unix()
+	for i := 0; i < len(hosts); i++ {
+		if now-hosts[i].BeatTime < 60 {
+			hosts[i].TargetUp = 2
+		} else if now-hosts[i].BeatTime < 180 {
+			hosts[i].TargetUp = 1
+		}
+	}
+
 	ginx.NewRender(c).Data(gin.H{
 		"list":  hosts,
 		"total": total,
@@ -58,9 +68,8 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 	var err error
 	if len(bgids) > 0 {
-		// 如果用户当前查看的是未归组机器，会传入 bgids = [0]，此时是不需要校验的，故而排除这种情况
-		if !(len(bgids) == 1 && bgids[0] == 0) {
-			for _, gid := range bgids {
+		for _, gid := range bgids {
+			if gid > 0 {
 				rt.bgroCheck(c, gid)
 			}
 		}
@@ -81,9 +90,24 @@ func (rt *Router) targetGets(c *gin.Context) {
 		models.BuildTargetWhereWithBgids(bgids),
 		models.BuildTargetWhereWithDsIds(dsIds),
 		models.BuildTargetWhereWithQuery(query),
-		models.BuildTargetWhereWithDowntime(downtime),
 		models.BuildTargetWhereWithHosts(hosts),
 	}
+
+	// downtime 筛选：从缓存获取心跳时间，选择较小的集合用 IN 或 NOT IN 过滤
+	if downtime != 0 {
+		downtimeOpt, hasMatch := rt.downtimeFilter(downtime)
+		if !hasMatch {
+			ginx.NewRender(c).Data(gin.H{
+				"list":  []*models.Target{},
+				"total": 0,
+			}, nil)
+			return
+		}
+		if downtimeOpt != nil {
+			options = append(options, downtimeOpt)
+		}
+	}
+
 	total, err := models.TargetTotal(rt.Ctx, options...)
 	ginx.Dangerous(err)
 
@@ -102,14 +126,17 @@ func (rt *Router) targetGets(c *gin.Context) {
 		now := time.Now()
 		cache := make(map[int64]*models.BusiGroup)
 
+		// 从 Redis 补全 BeatTime
+		models.FillTargetsBeatTime(rt.Redis, list)
+
 		var keys []string
 		for i := 0; i < len(list); i++ {
 			ginx.Dangerous(list[i].FillGroup(rt.Ctx, cache))
 			keys = append(keys, models.WrapIdent(list[i].Ident))
 
-			if now.Unix()-list[i].UpdateAt < 60 {
+			if now.Unix()-list[i].BeatTime < 60 {
 				list[i].TargetUp = 2
-			} else if now.Unix()-list[i].UpdateAt < 180 {
+			} else if now.Unix()-list[i].BeatTime < 180 {
 				list[i].TargetUp = 1
 			}
 		}
@@ -146,6 +173,43 @@ func (rt *Router) targetGets(c *gin.Context) {
 		"list":  list,
 		"total": total,
 	}, nil)
+}
+
+// downtimeFilter 从缓存获取心跳时间，生成 downtime 筛选条件
+// 选择匹配集和非匹配集中较小的一方，用 IN 或 NOT IN 来减少 SQL 参数量
+// 返回值：
+//   - option: 筛选条件，nil 表示所有 target 都符合条件（无需过滤）
+//   - hasMatch: 是否有符合条件的 target，false 表示无匹配应返回空结果
+func (rt *Router) downtimeFilter(downtime int64) (option models.BuildTargetWhereOption, hasMatch bool) {
+	now := time.Now().Unix()
+	targets := rt.TargetCache.GetAll()
+	var matchIdents, nonMatchIdents []string
+	for _, target := range targets {
+		matched := false
+		if downtime > 0 {
+			matched = target.BeatTime < now-downtime
+		} else if downtime < 0 {
+			matched = target.BeatTime > now+downtime
+		}
+		if matched {
+			matchIdents = append(matchIdents, target.Ident)
+		} else {
+			nonMatchIdents = append(nonMatchIdents, target.Ident)
+		}
+	}
+
+	if len(matchIdents) == 0 {
+		return nil, false
+	}
+
+	if len(nonMatchIdents) == 0 {
+		return nil, true
+	}
+
+	if len(matchIdents) <= len(nonMatchIdents) {
+		return models.BuildTargetWhereWithIdents(matchIdents), true
+	}
+	return models.BuildTargetWhereExcludeIdents(nonMatchIdents), true
 }
 
 func (rt *Router) targetExtendInfoByIdent(c *gin.Context) {
@@ -406,6 +470,7 @@ type targetBgidsForm struct {
 	Bgids   []int64  `json:"bgids"`
 	Tags    []string `json:"tags"`
 	Action  string   `json:"action"` // add del reset
+	Force   bool     `json:"force"`  // 强制执行，跳过采集任务关联检查
 }
 
 func haveNeverGroupedIdent(ctx *ctx.Context, idents []string) (bool, error) {
@@ -481,8 +546,18 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	case "add":
 		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	case "del":
+		if !f.Force {
+			if err := rt.TargetBgidChangeCheck(f.Idents, "del", f.Bgids); err != nil {
+				ginx.Bomb(http.StatusBadRequest, err.Error())
+			}
+		}
 		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 	case "reset":
+		if !f.Force {
+			if err := rt.TargetBgidChangeCheck(f.Idents, "reset", f.Bgids); err != nil {
+				ginx.Bomb(http.StatusBadRequest, err.Error())
+			}
+		}
 		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	default:
 		ginx.Bomb(http.StatusBadRequest, "invalid action")
@@ -511,6 +586,7 @@ func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 type identsForm struct {
 	Idents  []string `json:"idents" binding:"required_without=HostIps"`
 	HostIps []string `json:"host_ips" binding:"required_without=Idents"`
+	Force   bool     `json:"force"` // 强制执行，跳过采集任务关联检查
 }
 
 func (rt *Router) targetDel(c *gin.Context) {
@@ -529,7 +605,7 @@ func (rt *Router) targetDel(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, f.Force, rt.TargetDeleteHook))
 }
 
 func (rt *Router) targetDelByService(c *gin.Context) {
@@ -548,7 +624,7 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, rt.TargetDeleteHook))
+	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, true, rt.TargetDeleteHook))
 }
 
 func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
@@ -601,6 +677,106 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(lst, nil)
+}
+
+func (rt *Router) targetStats(c *gin.Context) {
+	bgids := strx.IdsInt64ForAPI(ginx.QueryStr(c, "gids", ""), ",")
+
+	var err error
+	if len(bgids) > 0 {
+		for _, gid := range bgids {
+			if gid > 0 {
+				rt.bgroCheck(c, gid)
+			}
+		}
+	} else {
+		user := c.MustGet("user").(*models.User)
+		if !user.IsAdmin() {
+			bgids, err = models.MyBusiGroupIds(rt.Ctx, user.Id)
+			ginx.Dangerous(err)
+			bgids = append(bgids, 0)
+		}
+	}
+
+	targets := rt.TargetCache.GetAll()
+	now := time.Now().Unix()
+
+	var count, aliveCount, deadCount int64
+	memUsage := map[string]int64{"-1": 0, "20": 0, "40": 0, "60": 0, "80": 0, "100": 0}
+	cpuUsage := map[string]int64{"-1": 0, "20": 0, "40": 0, "60": 0, "80": 0, "100": 0}
+	versions := make(map[string]int64)
+
+	bgidSet := make(map[int64]struct{}, len(bgids))
+	for _, gid := range bgids {
+		bgidSet[gid] = struct{}{}
+	}
+	hasBgidFilter := len(bgids) > 0
+
+	for _, t := range targets {
+		if hasBgidFilter {
+			matched := false
+			if _, ok := bgidSet[0]; ok && len(t.GroupIds) == 0 {
+				matched = true
+			}
+			if !matched {
+				for _, gid := range t.GroupIds {
+					if _, ok := bgidSet[gid]; ok {
+						matched = true
+						break
+					}
+				}
+			}
+			if !matched {
+				continue
+			}
+		}
+
+		count++
+
+		if now-t.BeatTime < 180 {
+			aliveCount++
+		} else {
+			deadCount++
+		}
+
+		if t.CpuNum <= 0 {
+			cpuUsage["-1"]++
+			memUsage["-1"]++
+		} else {
+			cpuUsage[usageBucket(t.CpuUtil)]++
+			memUsage[usageBucket(t.MemUtil)]++
+		}
+
+		ver := t.AgentVersion
+		if ver == "" {
+			ver = "unknown"
+		}
+		versions[ver]++
+	}
+
+	ginx.NewRender(c).Data(gin.H{
+		"count":       count,
+		"alive_count": aliveCount,
+		"dead_count":  deadCount,
+		"mem_usage":   memUsage,
+		"cpu_usage":   cpuUsage,
+		"versions":    versions,
+	}, nil)
+}
+
+func usageBucket(val float64) string {
+	switch {
+	case val < 20:
+		return "20"
+	case val < 40:
+		return "40"
+	case val < 60:
+		return "60"
+	case val < 80:
+		return "80"
+	default:
+		return "100"
+	}
 }
 
 func (rt *Router) targetUpdate(c *gin.Context) {

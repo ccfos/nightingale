@@ -31,6 +31,7 @@ type MessageTemplate struct {
 	CreateBy           string            `json:"create_by"`
 	UpdateAt           int64             `json:"update_at"`
 	UpdateBy           string            `json:"update_by"`
+	UpdateByNickname   string            `json:"update_by_nickname" gorm:"-"`
 }
 
 func MessageTemplateStatistics(ctx *ctx.Context) (*Statistics, error) {

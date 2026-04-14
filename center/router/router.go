@@ -19,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
@@ -28,7 +29,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 )
@@ -51,17 +51,21 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
+	LogDir            string
 
-	HeartbeatHook       HeartbeatHookFunc
-	TargetDeleteHook    models.TargetDeleteHookFunc
-	AlertRuleModifyHook AlertRuleModifyHookFunc
+	HeartbeatHook         HeartbeatHookFunc
+	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetBgidChangeCheck TargetBgidChangeCheckFunc
+	AlertRuleModifyHook   AlertRuleModifyHookFunc
 }
+
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
-	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType) *Router {
+	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, logDir string) *Router {
 	return &Router{
 		HTTP:                httpConfig,
 		Center:              center,
@@ -80,9 +84,11 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserGroupCache:      ugc,
 		UserTokenCache:      utc,
 		Ctx:                 ctx,
-		HeartbeatHook:       func(ident string) map[string]interface{} { return nil },
-		TargetDeleteHook:    func(tx *gorm.DB, idents []string) error { return nil },
-		AlertRuleModifyHook: func(ar *models.AlertRule) {},
+		LogDir:              logDir,
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
+		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
+		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
 	}
 }
 
@@ -219,10 +225,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/db-desc-table", rt.DescribeTable)
 
 			// es 专用接口
-			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
-			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
-			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
+			pages.POST("/indices", rt.QueryIndices)
+			pages.POST("/es-variable", rt.QueryESVariable)
+			pages.POST("/fields", rt.QueryFields)
+			pages.POST("/log-query", rt.QueryLog)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
@@ -246,9 +252,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			// es 专用接口
 			pages.POST("/indices", rt.auth(), rt.user(), rt.QueryIndices)
-			pages.POST("/es-variable", rt.QueryESVariable)
-			pages.POST("/fields", rt.QueryFields)
-			pages.POST("/log-query", rt.QueryLog)
+			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
+			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
+			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
 		}
 
 		// OpenSearch 专用接口
@@ -256,7 +262,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/os-variable", rt.QueryOSVariable)
 		pages.POST("/os-fields", rt.QueryOSFields)
 
-		pages.GET("/sql-template", rt.QuerySqlTemplate)
+		pages.GET("/sql-template", rt.auth(), rt.user(), rt.QuerySqlTemplate)
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
 		pages.POST("/auth/logout", rt.jwtMock(), rt.auth(), rt.user(), rt.logoutPost)
 		pages.POST("/auth/refresh", rt.jwtMock(), rt.refreshPost)
@@ -270,18 +276,20 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
 		pages.GET("/auth/redirect/dingtalk", rt.loginRedirectDingTalk)
+		pages.GET("/auth/redirect/feishu", rt.loginRedirectFeiShu)
 		pages.GET("/auth/callback", rt.loginCallback)
 		pages.GET("/auth/callback/cas", rt.loginCallbackCas)
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
 		pages.GET("/auth/callback/dingtalk", rt.loginCallbackDingTalk)
-		pages.GET("/auth/perms", rt.allPerms)
+		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
+		pages.GET("/auth/perms", rt.auth(), rt.user(), rt.allPerms)
 
-		pages.GET("/metrics/desc", rt.metricsDescGetFile)
-		pages.POST("/metrics/desc", rt.metricsDescGetMap)
+		pages.GET("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetFile)
+		pages.POST("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetMap)
 
-		pages.GET("/notify-channels", rt.notifyChannelsGets)
-		pages.GET("/contact-keys", rt.contactKeysGets)
-		pages.GET("/install-date", rt.installDateGet)
+		pages.GET("/notify-channels", rt.auth(), rt.user(), rt.notifyChannelsGets)
+		pages.GET("/contact-keys", rt.auth(), rt.user(), rt.contactKeysGets)
+		pages.GET("/install-date", rt.auth(), rt.user(), rt.installDateGet)
 
 		pages.GET("/self/perms", rt.auth(), rt.user(), rt.permsGets)
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
@@ -337,6 +345,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-groups/tags", rt.auth(), rt.user(), rt.busiGroupsGetTags)
 
 		pages.GET("/targets", rt.auth(), rt.user(), rt.targetGets)
+		pages.GET("/targets/stats", rt.auth(), rt.user(), rt.targetStats)
 		pages.POST("/target-update", rt.auth(), rt.targetUpdate)
 		pages.GET("/target/extra-meta", rt.auth(), rt.user(), rt.targetExtendInfoByIdent)
 		pages.POST("/target/list", rt.auth(), rt.user(), rt.targetGetsByHostFilter)
@@ -385,6 +394,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		// pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
 		// pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 		pages.GET("/alert-rules/callbacks", rt.auth(), rt.user(), rt.alertRuleCallbacks)
+		pages.GET("/timezones", rt.auth(), rt.user(), rt.timezonesGet)
 
 		pages.GET("/busi-groups/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGetsByGids)
 		pages.GET("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGets)
@@ -408,8 +418,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
 		pages.POST("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules/add"), rt.bgrw(), rt.recordingRuleAddByFE)
 		pages.DELETE("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules/del"), rt.bgrw(), rt.recordingRuleDel)
-		pages.PUT("/busi-group/:id/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules/put"), rt.bgrw(), rt.recordingRulePutByFE)
 		pages.GET("/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGet)
+		pages.PUT("/recording-rule/:rrid", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRulePutByFE)
 		pages.PUT("/busi-group/:id/recording-rules/fields", rt.auth(), rt.user(), rt.perm("/recording-rules/put"), rt.recordingRulePutFields)
 
 		pages.GET("/busi-groups/alert-mutes", rt.auth(), rt.user(), rt.perm("/alert-mutes"), rt.alertMuteGetsByGids)
@@ -433,6 +443,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-event/:eid", rt.alertCurEventGet)
 		pages.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 		pages.GET("/event-notify-records/:eid", rt.notificationRecordList)
+		pages.GET("/event-detail/:hash", rt.eventDetailPage)
+		pages.GET("/alert-eval-detail/:id", rt.alertEvalDetailPage)
+		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
@@ -478,7 +491,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles"), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.user(), rt.perm("/roles/put"), rt.roleBindOperation)
-		pages.GET("/operation", rt.operations)
+		pages.GET("/operation", rt.auth(), rt.user(), rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.user(), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.user(), rt.notifyTplUpdateContent)
@@ -519,6 +532,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/embedded-product", rt.auth(), rt.user(), rt.embeddedProductGets)
 		pages.GET("/embedded-product/:id", rt.auth(), rt.user(), rt.embeddedProductGet)
 		pages.POST("/embedded-product", rt.auth(), rt.user(), rt.perm("/embedded-product/add"), rt.embeddedProductAdd)
+		pages.PUT("/embedded-products/weights", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductWeightsPut)
 		pages.PUT("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/put"), rt.embeddedProductPut)
 		pages.DELETE("/embedded-product/:id", rt.auth(), rt.user(), rt.perm("/embedded-product/delete"), rt.embeddedProductDelete)
 
@@ -577,17 +591,30 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/event-pipeline-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventPipeline)
 		pages.POST("/event-processor-tryrun", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.tryRunEventProcessor)
 
+		// API 触发工作流
+		pages.POST("/event-pipeline/:id/trigger", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.triggerEventPipelineByAPI)
+		// SSE 流式执行工作流
+		pages.POST("/event-pipeline/:id/stream", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.streamEventPipeline)
+
+		// 事件Pipeline执行记录路由
+		pages.GET("/event-pipeline-executions", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.listAllEventPipelineExecutions)
+		pages.GET("/event-pipeline/:id/executions", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.listEventPipelineExecutions)
+		pages.GET("/event-pipeline/:id/execution/:exec_id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecution)
+		pages.GET("/event-pipeline-execution/:exec_id", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecution)
+		pages.GET("/event-pipeline/:id/execution-stats", rt.auth(), rt.user(), rt.perm("/event-pipelines"), rt.getEventPipelineExecutionStats)
+		pages.POST("/event-pipeline-executions/clean", rt.auth(), rt.user(), rt.admin(), rt.cleanEventPipelineExecutions)
+
 		pages.POST("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/add"), rt.notifyChannelsAdd)
 		pages.DELETE("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels/del"), rt.notifyChannelsDel)
 		pages.PUT("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels/put"), rt.notifyChannelPut)
 		pages.GET("/notify-channel-config/:id", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelGet)
 		pages.GET("/notify-channel-configs", rt.auth(), rt.user(), rt.perm("/notification-channels"), rt.notifyChannelsGet)
-		pages.GET("/simplified-notify-channel-configs", rt.notifyChannelsGetForNormalUser)
+		pages.GET("/simplified-notify-channel-configs", rt.auth(), rt.user(), rt.notifyChannelsGetForNormalUser)
 		pages.GET("/flashduty-channel-list/:id", rt.auth(), rt.user(), rt.flashDutyNotifyChannelsGet)
 		pages.GET("/pagerduty-integration-key/:id/:service_id/:integration_id", rt.auth(), rt.user(), rt.pagerDutyIntegrationKeyGet)
 		pages.GET("/pagerduty-service-list/:id", rt.auth(), rt.user(), rt.pagerDutyNotifyServicesGet)
 		pages.GET("/notify-channel-config", rt.auth(), rt.user(), rt.notifyChannelGetBy)
-		pages.GET("/notify-channel-config/idents", rt.notifyChannelIdentsGet)
+		pages.GET("/notify-channel-config/idents", rt.auth(), rt.user(), rt.notifyChannelIdentsGet)
 
 		// saved view 查询条件保存相关路由
 		pages.GET("/saved-views", rt.auth(), rt.user(), rt.savedViewGets)
@@ -709,6 +736,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/message-templates", rt.messageTemplateGets)
 
 			service.GET("/event-pipelines", rt.eventPipelinesListByService)
+			service.POST("/event-pipeline/:id/trigger", rt.triggerEventPipelineByService)
+			service.POST("/event-pipeline/:id/stream", rt.streamEventPipelineByService)
+			service.POST("/event-pipeline-execution", rt.eventPipelineExecutionAdd)
 
 			// 手机号加密存储配置接口
 			service.POST("/users/phone/encrypt", rt.usersPhoneEncrypt)

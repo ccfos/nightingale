@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/cas"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/dingtalk"
+	"github.com/ccfos/nightingale/v6/pkg/feishu"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
@@ -27,6 +28,7 @@ type SsoClient struct {
 	CAS                  *cas.SsoClient
 	OAuth2               *oauth2x.SsoClient
 	DingTalk             *dingtalk.SsoClient
+	FeiShu               *feishu.SsoClient
 	LastUpdateTime       int64
 	configCache          *memsto.ConfigCache
 	configLastUpdateTime int64
@@ -203,6 +205,13 @@ func Init(center cconf.Center, ctx *ctx.Context, configCache *memsto.ConfigCache
 				log.Fatalf("init %s failed: %s", dingtalk.SsoTypeName, err)
 			}
 			ssoClient.DingTalk = dingtalk.New(config)
+		case feishu.SsoTypeName:
+			var config feishu.Config
+			err := json.Unmarshal([]byte(cfg.Content), &config)
+			if err != nil {
+				log.Fatalf("init %s failed: %s", feishu.SsoTypeName, err)
+			}
+			ssoClient.FeiShu = feishu.New(config)
 		}
 	}
 
@@ -289,6 +298,22 @@ func (s *SsoClient) reload(ctx *ctx.Context) error {
 		}
 	} else {
 		s.DingTalk = nil
+	}
+
+	if feiShuConfig, ok := ssoConfigMap[feishu.SsoTypeName]; ok {
+		var config feishu.Config
+		err := json.Unmarshal([]byte(feiShuConfig.Content), &config)
+		if err != nil {
+			logger.Warningf("reload %s failed: %s", feishu.SsoTypeName, err)
+		} else {
+			if s.FeiShu != nil {
+				s.FeiShu.Reload(config)
+			} else {
+				s.FeiShu = feishu.New(config)
+			}
+		}
+	} else {
+		s.FeiShu = nil
 	}
 
 	s.LastUpdateTime = lastUpdateTime

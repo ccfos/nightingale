@@ -8,9 +8,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
 )
@@ -25,6 +25,7 @@ func (rt *Router) taskTplGets(c *gin.Context) {
 
 	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
+	models.FillUpdateByNicknames(rt.Ctx, list)
 
 	ginx.NewRender(c).Data(gin.H{
 		"total": total,
@@ -60,6 +61,7 @@ func (rt *Router) taskTplGetsByGids(c *gin.Context) {
 
 	list, err := models.TaskTplGets(rt.Ctx, gids, query, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
+	models.FillUpdateByNicknames(rt.Ctx, list)
 
 	ginx.NewRender(c).Data(gin.H{
 		"total": total,

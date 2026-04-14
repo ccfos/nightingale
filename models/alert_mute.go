@@ -192,6 +192,7 @@ type AlertMute struct {
 	Activated         int            `json:"activated" gorm:"-"` // 0: not activated, 1: activated
 	CreateBy          string         `json:"create_by"`
 	UpdateBy          string         `json:"update_by"`
+	UpdateByNickname  string         `json:"update_by_nickname" gorm:"-"`
 	CreateAt          int64          `json:"create_at"`
 	UpdateAt          int64          `json:"update_at"`
 	ITags             []TagFilter    `json:"-" gorm:"-"`     // inner tags

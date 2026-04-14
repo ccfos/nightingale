@@ -15,9 +15,9 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -191,6 +191,7 @@ func HandleHeartbeat(c *gin.Context, ctx *ctx.Context, engineName string, metaSe
 		}
 
 		if targetNeedUpdate {
+			newTarget.UpdateAt = time.Now().Unix()
 			err := models.DB(ctx).Model(&target).Updates(newTarget).Error
 			if err != nil {
 				logger.Errorf("update target fields failed, err: %v", err)

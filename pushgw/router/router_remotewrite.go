@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"sync/atomic"
 
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pushgw/pstat"
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -149,7 +149,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			pstat.CounterSampleReceivedByIdent.WithLabelValues(ident).Inc()
 		}
 
-		if insertTarget {
+		if rt.Pushgw.GetHeartbeatFromMetric && insertTarget {
 			// has ident tag or agent_hostname tag
 			// register host in table target
 			ids[ident] = struct{}{}

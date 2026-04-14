@@ -9,14 +9,15 @@ import (
 )
 
 type MetricFilter struct {
-	ID         int64       `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
-	Name       string      `json:"name" gorm:"type:varchar(191);not null;index:idx_metricfilter_name,sort:asc;comment:'name of metric filter'"`
-	Configs    string      `json:"configs" gorm:"type:varchar(4096);not null;comment:'configuration of metric filter'"`
-	GroupsPerm []GroupPerm `json:"groups_perm" gorm:"type:text;serializer:json;"`
-	CreateAt   int64       `json:"create_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
-	CreateBy   string      `json:"create_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
-	UpdateAt   int64       `json:"update_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
-	UpdateBy   string      `json:"update_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	ID               int64       `json:"id" gorm:"primaryKey;type:bigint;autoIncrement;comment:'unique identifier'"`
+	Name             string      `json:"name" gorm:"type:varchar(191);not null;index:idx_metricfilter_name,sort:asc;comment:'name of metric filter'"`
+	Configs          string      `json:"configs" gorm:"type:varchar(4096);not null;comment:'configuration of metric filter'"`
+	GroupsPerm       []GroupPerm `json:"groups_perm" gorm:"type:text;serializer:json;"`
+	CreateAt         int64       `json:"create_at" gorm:"type:bigint;not null;default:0;comment:'create time'"`
+	CreateBy         string      `json:"create_by" gorm:"type:varchar(191);not null;default:'';comment:'creator'"`
+	UpdateAt         int64       `json:"update_at" gorm:"type:bigint;not null;default:0;comment:'update time'"`
+	UpdateBy         string      `json:"update_by" gorm:"type:varchar(191);not null;default:'';comment:'updater'"`
+	UpdateByNickname string      `json:"update_by_nickname" gorm:"-"`
 }
 
 type GroupPerm struct {

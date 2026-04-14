@@ -31,7 +31,8 @@ func (c *EventUpdateConfig) Init(settings interface{}) (models.Processor, error)
 	return result, err
 }
 
-func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEvent) (*models.AlertCurEvent, string, error) {
+func (c *EventUpdateConfig) Process(ctx *ctx.Context, wfCtx *models.WorkflowContext) (*models.WorkflowContext, string, error) {
+	event := wfCtx.Event
 	if c.Client == nil {
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLVerify},
@@ -40,7 +41,7 @@ func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEven
 		if c.Proxy != "" {
 			proxyURL, err := url.Parse(c.Proxy)
 			if err != nil {
-				return event, "", fmt.Errorf("failed to parse proxy url: %v processor: %v", err, c)
+				return wfCtx, "", fmt.Errorf("failed to parse proxy url: %v processor: %v", err, c)
 			} else {
 				transport.Proxy = http.ProxyURL(proxyURL)
 			}
@@ -60,12 +61,12 @@ func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEven
 
 	body, err := json.Marshal(event)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to marshal event: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to marshal event: %v processor: %v", err, c)
 	}
 
 	req, err := http.NewRequest("POST", c.URL, strings.NewReader(string(body)))
 	if err != nil {
-		return event, "", fmt.Errorf("failed to create request: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to create request: %v processor: %v", err, c)
 	}
 
 	for k, v := range headers {
@@ -78,7 +79,7 @@ func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEven
 
 	resp, err := c.Client.Do(req)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to send request: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to send request: %v processor: %v", err, c)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -89,8 +90,8 @@ func (c *EventUpdateConfig) Process(ctx *ctx.Context, event *models.AlertCurEven
 
 	err = json.Unmarshal(b, &event)
 	if err != nil {
-		return event, "", fmt.Errorf("failed to unmarshal response body: %v processor: %v", err, c)
+		return wfCtx, "", fmt.Errorf("failed to unmarshal response body: %v processor: %v", err, c)
 	}
 
-	return event, "", nil
+	return wfCtx, "", nil
 }

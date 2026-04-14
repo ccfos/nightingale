@@ -5,9 +5,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -118,6 +118,9 @@ func (rt *Router) busiGroupGets(c *gin.Context) {
 	lst, err := me.BusiGroups(rt.Ctx, limit, query, all)
 	if len(lst) == 0 {
 		lst = []models.BusiGroup{}
+	}
+	if err == nil {
+		models.FillUpdateByNicknames(rt.Ctx, lst)
 	}
 
 	ginx.NewRender(c).Data(lst, err)
