@@ -31,11 +31,27 @@ type OpenAI struct {
 func NewOpenAI(cfg *Config, client *http.Client) (*OpenAI, error) {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = DefaultOpenAIURL
+	} else {
+		cfg.BaseURL = normalizeOpenAIURL(cfg.BaseURL)
 	}
 	return &OpenAI{
 		config: cfg,
 		client: client,
 	}, nil
+}
+
+// normalizeOpenAIURL 归一化 OpenAI 兼容端点：
+// 用户常见填法包括 `https://host/v1` 或 `https://host/compatible-mode/v1`，
+// 这里自动补 `/chat/completions`，避免漏路径时返回 404。
+func normalizeOpenAIURL(rawURL string) string {
+	u := strings.TrimRight(rawURL, "/")
+	if strings.HasSuffix(u, "/chat/completions") {
+		return u
+	}
+	if strings.HasSuffix(u, "/v1") {
+		return u + "/chat/completions"
+	}
+	return u
 }
 
 func (o *OpenAI) Name() string {

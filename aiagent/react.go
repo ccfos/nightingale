@@ -27,7 +27,9 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 		}
 
 		// 调用 LLM（自动选择流式/非流式）
-		response, err := a.callLLMAuto(ctx, messages, config.StreamChan, config.RequestID)
+		// 传 "Observation:" 作为 stop 序列：防止模型在写完 Action Input 后
+		// 继续"脑补"工具结果（自造 Observation），保证真实工具输出由宿主注入。
+		response, err := a.callLLMAuto(ctx, messages, config.StreamChan, config.RequestID, []string{"Observation:"})
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
 			resp.Iterations = iteration
@@ -40,15 +42,13 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 
 		logger.Debugf("%s iteration %d: thought=%s, action=%s", config.LogPrefix, iteration, step.Thought, step.Action)
 
-		// 发送 thinking（流式模式）
-		if streaming && step.Thought != "" {
-			config.StreamChan <- &StreamChunk{
-				Type:      StreamTypeThinking,
-				Content:   step.Thought,
-				RequestID: config.RequestID,
-				Timestamp: time.Now().UnixMilli(),
-			}
-		}
+		// Note: we deliberately do NOT emit a separate StreamTypeThinking chunk
+		// here for step.Thought. callLLMAuto already streams the raw LLM
+		// output character-by-character as StreamTypeText, which the router
+		// accumulates into the message's reasoning channel — that raw stream
+		// already contains the Thought text. Re-emitting the parsed Thought
+		// would double it (the user reported reasoning duplication after
+		// switching models because of this).
 
 		// 检查是否完成
 		if config.IsComplete(step.Action) {
@@ -87,6 +87,7 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 			config.StreamChan <- &StreamChunk{
 				Type:      StreamTypeToolResult,
 				Content:   observation,
+				Metadata:  map[string]interface{}{"tool": step.Action},
 				RequestID: config.RequestID,
 				Timestamp: time.Now().UnixMilli(),
 			}

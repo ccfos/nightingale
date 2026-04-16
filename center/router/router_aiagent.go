@@ -23,9 +23,17 @@ type AIChatRequest struct {
 
 // actionHandler defines how each action_key is processed.
 // The LLM agent config is always resolved via "chat" useCase in processAssistantMessage.
+//
+// Execution order in processAssistantMessage:
+//  1. validate — soft gate. On error, silently fall back to general_chat.
+//  2. preflight — hard gate. May emit structured responses and halt the turn
+//     without running the agent (e.g. ask the user to pick a busi group
+//     before a creation flow). Returns halt=true to stop; halt=false to proceed.
+//  3. selectTools / buildPrompt — configure the agent for this action.
 type actionHandler struct {
 	description   string // human-readable description used by LLM intent inference
 	validate      func(req *AIChatRequest) error
+	preflight     func(ctx context.Context, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
 	selectTools   func(req *AIChatRequest) []string
 	buildPrompt   func(req *AIChatRequest) string
 	buildInputs   func(req *AIChatRequest) map[string]string
@@ -55,6 +63,17 @@ var actionRegistry = map[string]*actionHandler{
 		description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
 		selectTools: selectResourceQueryTools,
 		buildPrompt: buildResourceQueryPrompt,
+	},
+	"creation": {
+		description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are resource_query, NOT creation.",
+		preflight:   preflightCreation,
+		selectTools: selectCreationTools,
+		buildPrompt: buildCreationPrompt,
+	},
+	"troubleshooting": {
+		description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
+		selectTools: selectTroubleshootingTools,
+		buildPrompt: buildTroubleshootingPrompt,
 	},
 }
 
@@ -107,11 +126,28 @@ func selectQueryGeneratorTools(req *AIChatRequest) []string {
 	switch dsType {
 	case "prometheus":
 		return []string{"list_metrics", "get_metric_labels"}
-	case "mysql", "doris", "ck", "clickhouse", "pgsql", "postgresql":
+	case "mysql", "doris", "ck", "clickhouse", "pgsql", "postgresql", "tdengine":
 		return []string{"list_databases", "list_tables", "describe_table"}
+	case "loki", "elasticsearch", "opensearch", "victorialogs":
+		// Log datasources don't have a first-class schema introspection tool
+		// (labels/fields vary by stream/index); leave the agent without extra
+		// tools — it writes the DSL directly from the user's natural-language
+		// intent, which is how users do it today anyway.
+		return nil
 	default:
 		return nil
 	}
+}
+
+// isLogDatasource identifies datasources whose native query language is log-
+// oriented (LogQL / ES DSL / SPL-like). Used to branch the query_generator
+// prompt into a log-specific template.
+func isLogDatasource(dsType string) bool {
+	switch dsType {
+	case "loki", "elasticsearch", "opensearch", "victorialogs":
+		return true
+	}
+	return false
 }
 
 func buildQueryGeneratorPrompt(req *AIChatRequest) string {
@@ -119,8 +155,8 @@ func buildQueryGeneratorPrompt(req *AIChatRequest) string {
 	dbName := ctxStr(req.Context, "database_name")
 	tableName := ctxStr(req.Context, "table_name")
 
-	switch dsType {
-	case "prometheus":
+	switch {
+	case dsType == "prometheus":
 		return fmt.Sprintf(`You are a PromQL expert. The user wants to query Prometheus metrics.
 
 User request: %s
@@ -132,6 +168,39 @@ Please use the available tools to explore the metrics and generate the correct P
 
 Your Final Answer MUST be a valid JSON object with these fields:
 {"query": "<the PromQL query>", "explanation": "<brief explanation in the user's language>"}`, req.UserInput)
+
+	case isLogDatasource(dsType):
+		// Log query generation. Each engine has its own syntax:
+		//   loki → LogQL (`{app="foo"} |= "error" | json`)
+		//   elasticsearch / opensearch → query_string or KQL-style
+		//   victorialogs → LogsQL
+		// We don't have schema introspection tools here (labels/fields are
+		// stream/index specific); the LLM writes directly from the user's
+		// natural-language intent.
+		langHint := "the native log query language of this datasource"
+		switch dsType {
+		case "loki":
+			langHint = "LogQL (Loki). Pipeline syntax like `{app=\"foo\"} |= \"error\" | json | status=500`"
+		case "elasticsearch", "opensearch":
+			langHint = "Elasticsearch query_string (or Lucene) syntax, e.g. `level:ERROR AND service:checkout`"
+		case "victorialogs":
+			langHint = "VictoriaLogs LogsQL, e.g. `_time:5m AND app:order-svc AND level:error`"
+		}
+		return fmt.Sprintf(`You are a log query expert. The user wants to search logs stored in %s.
+
+Target datasource type: %s
+Target query language: %s
+
+User request: %s
+
+Generate a correct log query that matches the user's intent. Favor concise, production-safe queries:
+- Always scope by time range when the user implies one (last N minutes/hours).
+- Add filters rather than regex scans whenever possible.
+- For structured logs, suggest label/field filters before full-text scan.
+- If the user's intent is ambiguous, make a reasonable assumption and state it in the explanation.
+
+Your Final Answer MUST be a valid JSON object with these fields:
+{"query": "<the log query>", "explanation": "<brief explanation in the user's language>"}`, dsType, dsType, langHint, req.UserInput)
 
 	default: // SQL-based datasources
 		dbContext := ""
@@ -308,6 +377,89 @@ If a tool returns a "forbidden" error, inform the user they don't have permissio
 IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Use tables for list results.`, req.UserInput)
 }
 
+// --- creation action ---
+
+// selectCreationTools is the union of builtin_tools declared by the functional
+// n9e-create-* skills (alert-rule, dashboard). The non-tool-backed creation
+// skills (alert-mute, alert-subscribe, notify-rule) rely on HTTP flows and
+// don't contribute to this list. list_* tools are included so the agent can
+// resolve names → IDs when the user refers to groups/datasources by name.
+func selectCreationTools(req *AIChatRequest) []string {
+	return []string{
+		"create_alert_rule",
+		"create_dashboard",
+		"list_busi_groups",
+		"list_datasources",
+		"list_metrics",
+		"get_metric_labels",
+		"list_notify_rules",
+		"list_files",
+		"read_file",
+		"grep_files",
+		"list_databases",
+		"list_tables",
+		"describe_table",
+	}
+}
+
+func buildCreationPrompt(req *AIChatRequest) string {
+	// busi_group_id and team_ids are injected by the frontend after the
+	// preflight selector. Surface them to the LLM so it doesn't re-ask.
+	var ctxHint strings.Builder
+	if id := ctxInt64(req.Context, "busi_group_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nUser-selected busi_group_id: %d (use this as group_id; do NOT call list_busi_groups)", id))
+	}
+	if v, ok := req.Context["team_ids"]; ok {
+		ctxHint.WriteString(fmt.Sprintf("\nUser-selected team_ids: %v", v))
+	}
+
+	return fmt.Sprintf(`You are a monitoring system assistant helping the user CREATE a new resource in Nightingale (n9e).
+
+User request: %s%s
+
+Pick the correct creation skill based on the user's intent and follow its SKILL.md:
+- Alert rule (告警规则): n9e-create-alert-rule skill → use create_alert_rule tool
+- Dashboard (仪表盘): n9e-create-dashboard skill → use create_dashboard tool
+- Alert mute (屏蔽规则): n9e-create-alert-mute skill
+- Alert subscribe (订阅规则): n9e-create-alert-subscribe skill
+- Notify rule (通知规则): n9e-create-notify-rule skill
+
+Guidelines:
+- If the request maps to multiple skills (e.g. "创建一个仪表盘和告警"), do them one at a time and confirm each.
+- If critical parameters are missing, ask the user concisely in their language instead of guessing.
+- After a successful creation, keep the Final Answer short (one sentence). Structured result cards are rendered separately by the UI.`, req.UserInput, ctxHint.String())
+}
+
+// --- troubleshooting action ---
+
+func selectTroubleshootingTools(req *AIChatRequest) []string {
+	return []string{
+		"search_active_alerts", "search_history_alerts", "get_alert_event_detail",
+		"list_alert_rules", "get_alert_rule_detail",
+		"list_datasources", "get_datasource_detail",
+		"list_metrics", "get_metric_labels",
+		"query_prometheus", "query_timeseries", "query_log",
+		"list_databases", "list_tables", "describe_table",
+		"list_targets", "get_target_detail",
+		"list_dashboards", "get_dashboard_detail",
+		"list_busi_groups",
+	}
+}
+
+func buildTroubleshootingPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a senior SRE troubleshooting an incident on the Nightingale (n9e) monitoring platform.
+
+User request: %s
+
+Follow the ops-troubleshooting skill (SKILL.md) exactly. Core principles:
+- Evidence-driven: every inference must be backed by alerts, metrics, logs, or target data.
+- Query on demand, don't bulk-pull; keep time ranges tight.
+- Work forward from the timeline: find the anomaly starting point, then trace up/downstream.
+- Focus on direct cause + mitigation, not exhaustive root-cause coverage.
+
+IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Include: timeline, evidence, likely cause, suggested mitigation.`, req.UserInput)
+}
+
 // --- LLM intent inference ---
 
 // buildIntentInferencePrompt constructs a system prompt that lists all available
@@ -316,11 +468,18 @@ func buildIntentInferencePrompt() string {
 	var sb strings.Builder
 	sb.WriteString(`You are an intent classifier for a monitoring system. Classify the user's message into exactly one action.
 
-Key distinction:
-- "告警事件/alert events" related messages (查告警、告警数量、活跃告警、历史告警) → alert_query
-- "写查询/生成查询/PromQL/SQL" related messages (编写查询语句) → query_generator
-- "查询资源/配置" related messages (告警规则、机器、仪表盘、屏蔽规则、订阅规则、自愈脚本、通知规则、数据源、用户、团队、业务组) → resource_query
-- General knowledge questions or other topics → general_chat
+VERB-FIRST RULE — decide by the action verb before the noun:
+- "创建/新建/加一条/添加/建一个/create/add/build" (构造新资源) → creation
+- "查/查看/有哪些/列出/show/list" + resource nouns (告警规则、仪表盘、屏蔽、订阅、通知规则、机器、业务组等) → resource_query
+- "查/分析" + alert events (告警、告警事件、活跃告警、历史告警) → alert_query
+- "写/生成" + query language (PromQL/SQL/查询语句) → query_generator
+- "排查/定位/诊断/根因分析/troubleshoot/debug/investigate" → troubleshooting
+- 其它通用问答/knowledge → general_chat
+
+Edge cases:
+- "创建告警规则的步骤是什么" (asking HOW to, not DO) → general_chat
+- "查一下最近创建的告警规则" (query, not create) → resource_query
+- "这条告警为什么触发" (diagnosis, not query) → troubleshooting
 
 Available actions:
 `)

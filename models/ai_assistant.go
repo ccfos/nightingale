@@ -76,6 +76,12 @@ const (
 	ContentTypeHint      AssistantContentType = "hint"
 	ContentTypeQuery     AssistantContentType = "query"
 	ContentTypeReasoning AssistantContentType = "reasoning"
+	ContentTypeAlertRule AssistantContentType = "alert_rule"
+	ContentTypeDashboard AssistantContentType = "dashboard"
+	// ContentTypeFormSelect carries a multi-field form the user must fill in
+	// before a halted creation flow can continue. Payload is a creationFormPayload
+	// JSON. Frontend renders fields progressively and submits all picks at once.
+	ContentTypeFormSelect AssistantContentType = "form_select"
 )
 
 type AssistantMessageResponse struct {
@@ -91,10 +97,12 @@ type AssistantMessageResponse struct {
 type AssistantActionKey string
 
 const (
-	ActionKeyQueryGenerator AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat    AssistantActionKey = "general_chat"
-	ActionKeyAlertQuery     AssistantActionKey = "alert_query"
-	ActionKeyResourceQuery  AssistantActionKey = "resource_query"
+	ActionKeyQueryGenerator  AssistantActionKey = "query_generator"
+	ActionKeyGeneralChat     AssistantActionKey = "general_chat"
+	ActionKeyAlertQuery      AssistantActionKey = "alert_query"
+	ActionKeyResourceQuery   AssistantActionKey = "resource_query"
+	ActionKeyCreation        AssistantActionKey = "creation"
+	ActionKeyTroubleshooting AssistantActionKey = "troubleshooting"
 )
 
 type AssistantAction struct {
@@ -104,10 +112,12 @@ type AssistantAction struct {
 }
 
 type AssistantActionParam struct {
-	DatasourceType string `json:"datasource_type,omitempty"`
-	DatasourceID   int64  `json:"datasource_id,omitempty"`
-	DatabaseName   string `json:"database_name,omitempty"`
-	TableName      string `json:"table_name,omitempty"`
+	DatasourceType string  `json:"datasource_type,omitempty"`
+	DatasourceID   int64   `json:"datasource_id,omitempty"`
+	DatabaseName   string  `json:"database_name,omitempty"`
+	TableName      string  `json:"table_name,omitempty"`
+	BusiGroupID    int64   `json:"busi_group_id,omitempty"`
+	TeamIDs        []int64 `json:"team_ids,omitempty"`
 }
 
 // ==================== Message Status ====================

@@ -476,20 +476,28 @@ func createAlertRule(_ context.Context, args map[string]interface{}, params map[
 		user.Username, cate, groupId, name, rule.Id)
 
 	result := map[string]interface{}{
-		"id":       rule.Id,
-		"group_id": rule.GroupId,
-		"name":     rule.Name,
-		"cate":     rule.Cate,
-		"prod":     rule.Prod,
-		"severity": rule.Severity,
+		"id":         rule.Id,
+		"group_id":   rule.GroupId,
+		"group_name": bg.Name,
+		"name":       rule.Name,
+		"cate":       rule.Cate,
+		"prod":       rule.Prod,
+		"severity":   rule.Severity,
+		"note":       rule.Note,
 	}
 	if cate != "host" {
 		result["datasource_id"] = dsId
+		if ds, dsErr := models.DatasourceGet(dbCtx, dsId); dsErr == nil && ds != nil {
+			result["datasource_name"] = ds.Name
+		}
 	}
 	if simplePromQL != "" {
 		result["prom_ql"] = simplePromQL
 		result["operator"] = simpleOp
 		result["threshold"] = simpleThreshold
+	}
+	if forDuration > 0 {
+		result["for_duration"] = forDuration
 	}
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil

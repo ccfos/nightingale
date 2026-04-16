@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -292,14 +293,23 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		return
 	}
 
-	// ③ Resolve action key:
-	//   - First message of a new chat with an explicit key: use the frontend-provided key
-	//   - Otherwise (key empty or subsequent messages): LLM intent inference
+	// ③ Resolve action key in priority order:
+	//   1. Creation fast-path — if the user input has unambiguous creation
+	//      intent (verb + resource noun, no query anti-verb), route directly
+	//      to the creation action. Skips the LLM classifier entirely, which
+	//      both saves latency and avoids the 15s classifier timeout that has
+	//      been silently falling back to general_chat (see WARNING.log:
+	//      "intent inference failed: context deadline exceeded").
+	//   2. First message of a new chat with an explicit frontend key.
+	//   3. LLM intent inference (30s budget — 15s was too tight in practice).
 	var actionKey string
-	if msg.SeqID == 1 && msg.Query.Action.Key != "" {
+	switch {
+	case hasCreationIntent(msg.Query.Content):
+		actionKey = string(models.ActionKeyCreation)
+	case msg.SeqID == 1 && msg.Query.Action.Key != "":
 		actionKey = string(msg.Query.Action.Key)
-	} else {
-		inferCtx, inferCancel := context.WithTimeout(parentCtx, 15*time.Second)
+	default:
+		inferCtx, inferCancel := context.WithTimeout(parentCtx, 30*time.Second)
 		actionKey = inferActionKeyByLLM(inferCtx, llmClient, msg.Query.Content, history)
 		inferCancel()
 	}
@@ -310,6 +320,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		actionKey = string(models.ActionKeyGeneralChat)
 		handler = actionRegistry[actionKey]
 	}
+
+	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s front_key=%q content=%q",
+		msg.ChatID, msg.SeqID, actionKey, msg.Query.Action.Key, msg.Query.Content)
 
 	// Build AIChatRequest for reusing existing action logic
 	chatReq := &AIChatRequest{
@@ -332,6 +345,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if ap.TableName != "" {
 		chatReq.Context["table_name"] = ap.TableName
 	}
+	if ap.BusiGroupID > 0 {
+		chatReq.Context["busi_group_id"] = ap.BusiGroupID
+	}
+	if len(ap.TeamIDs) > 0 {
+		chatReq.Context["team_ids"] = ap.TeamIDs
+	}
 
 	// ④ Validate — on failure, silently fall back to general_chat instead of returning error
 	if handler.validate != nil {
@@ -341,6 +360,34 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			handler = actionRegistry[actionKey]
 			chatReq.ActionKey = actionKey
 			chatReq.Context = make(map[string]interface{})
+		}
+	}
+
+	// ⑤ Preflight — hard gate. May halt the turn and emit structured responses
+	// (e.g. ask the user to pick a busi group before a creation skill runs).
+	//
+	// Preflight loaders (loadBusiGroupField / loadDatasourceField) reach into
+	// the global aiagent.GetDBCtx() and aiagent.FilterDatasources hooks, so we
+	// must seed them BEFORE the first preflight call. Otherwise the very first
+	// request after server start nil-pointer-panics inside user.BusiGroups(nil,...)
+	// — the SetDBCtx call near the agent setup further down only kicks in for
+	// the second turn onward, which masked this bug during earlier testing.
+	aiagent.SetDBCtx(rt.Ctx)
+	aiagent.SetDatasourceFilter(rt.DatasourceCache.DatasourceFilter)
+
+	if handler.preflight != nil {
+		user, uerr := models.UserGetById(rt.Ctx, userId)
+		if uerr != nil || user == nil {
+			rt.finishMessage(stateKey, streamID, msg, 500, "failed to resolve user for preflight")
+			return
+		}
+		halt, preResps, perr := handler.preflight(parentCtx, chatReq, user)
+		if perr != nil {
+			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
+		}
+		if halt {
+			rt.finishHaltedMessage(stateKey, streamID, msg, history, preResps)
+			return
 		}
 	}
 
@@ -389,9 +436,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
 		return rt.PromClients.GetCli(dsId)
 	})
-
-	aiagent.SetDBCtx(rt.Ctx)
-	aiagent.SetDatasourceFilter(rt.DatasourceCache.DatasourceFilter)
+	// SetDBCtx + SetDatasourceFilter are seeded before preflight (above).
 
 	streamChan := make(chan *aiagent.StreamChunk, 100)
 	agentReq := &aiagent.AgentRequest{
@@ -409,6 +454,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// Consume stream chunks
 	var fullContent string
 	var fullReasoning string
+	var createdAlertRules []string
+	var createdDashboards []string
 	executedTools := false
 	for chunk := range streamChan {
 		select {
@@ -451,6 +498,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.msgStateManager.UpdateMsg(stateKey, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
+			// Capture successful tool results that have their own structured
+			// UI cards (alert_rule, dashboard, ...) so the frontend can render
+			// them outside of the plain markdown final answer.
+			if chunk.Metadata != nil {
+				toolName, _ := chunk.Metadata["tool"].(string)
+				obs := strings.TrimSpace(chunk.Content)
+				if obs != "" && !strings.HasPrefix(obs, "Error:") {
+					switch toolName {
+					case "create_alert_rule":
+						createdAlertRules = append(createdAlertRules, obs)
+					case "create_dashboard":
+						createdDashboards = append(createdDashboards, obs)
+					}
+				}
+			}
 		case aiagent.StreamTypeError:
 			errMsg := chunk.Error
 			if errMsg == "" {
@@ -480,6 +542,25 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	} else {
 		// Attach streamID to the first element for frontend stream matching
 		responses[0].StreamID = streamID
+	}
+
+	// Append structured alert_rule cards for each successful create_alert_rule invocation.
+	for _, ruleJSON := range createdAlertRules {
+		responses = append(responses, models.AssistantMessageResponse{
+			ContentType: models.ContentTypeAlertRule,
+			Content:     ruleJSON,
+			IsFinish:    true,
+			IsFromAI:    true,
+		})
+	}
+	// Same for dashboard cards.
+	for _, dashJSON := range createdDashboards {
+		responses = append(responses, models.AssistantMessageResponse{
+			ContentType: models.ContentTypeDashboard,
+			Content:     dashJSON,
+			IsFinish:    true,
+			IsFromAI:    true,
+		})
 	}
 
 	// Prepend reasoning as the first response item so it is persisted and
@@ -521,6 +602,35 @@ func (rt *Router) finishMessage(stateKey, streamID string, msg *models.Assistant
 
 	if err := models.AssistantMessageSet(rt.Ctx, *msg); err != nil {
 		logger.Errorf("[Assistant] failed to save error message: %v", err)
+	}
+
+	rt.msgStateManager.Remove(stateKey)
+}
+
+// finishHaltedMessage ends the turn without running the agent (used by preflight
+// hooks that ask the user for missing context). Responses are attached as normal
+// success-path responses, streamID is wired to the first one, and the chat
+// history records only the user's input.
+func (rt *Router) finishHaltedMessage(stateKey, streamID string, msg *models.AssistantMessage, history []aiagent.ChatMessage, responses []models.AssistantMessageResponse) {
+	aiagent.GetStreamCache().Finish(streamID)
+
+	if len(responses) > 0 {
+		responses[0].StreamID = streamID
+		for i := range responses {
+			responses[i].IsFinish = true
+			responses[i].IsFromAI = true
+		}
+	}
+	msg.Response = responses
+	msg.IsFinish = true
+	msg.CurStep = ""
+
+	// Persist history with just the user's turn (no assistant content, since no agent ran).
+	newHistory := append(history, aiagent.ChatMessage{Role: "user", Content: msg.Query.Content})
+	msg.Extra.HistoryMessages, _ = json.Marshal(newHistory)
+
+	if err := models.AssistantMessageSet(rt.Ctx, *msg); err != nil {
+		logger.Errorf("[Assistant] failed to save halted message: %v", err)
 	}
 
 	rt.msgStateManager.Remove(stateKey)

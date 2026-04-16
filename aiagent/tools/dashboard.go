@@ -219,10 +219,17 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 	logger.Infof("create_dashboard: user=%s, group_id=%d, name=%s, id=%d", user.Username, groupId, name, board.Id)
 
 	result := map[string]interface{}{
-		"id":       board.Id,
-		"group_id": board.GroupId,
-		"name":     board.Name,
-		"tags":     board.Tags,
+		"id":               board.Id,
+		"group_id":         board.GroupId,
+		"group_name":       bg.Name,
+		"name":             board.Name,
+		"tags":             board.Tags,
+		"datasource_id":    dsId,
+		"panels_count":     len(panelSpecs),
+		"variables_count":  len(varSpecs),
+	}
+	if ds, dsErr := models.DatasourceGet(dbCtx, dsId); dsErr == nil && ds != nil {
+		result["datasource_name"] = ds.Name
 	}
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil

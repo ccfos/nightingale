@@ -11,8 +11,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// callLLM 调用 LLM（非流式）
-func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, error) {
+// callLLM 调用 LLM（非流式）。stop 为可选的停止序列，非 ReAct 场景传 nil。
+func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage, stop []string) (string, error) {
 	if a.llmClient == nil {
 		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
 	}
@@ -27,6 +27,7 @@ func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, er
 
 	req := &llm.GenerateRequest{
 		Messages: llmMessages,
+		Stop:     stop,
 	}
 
 	resp, err := a.llmClient.Generate(ctx, req)
@@ -37,8 +38,8 @@ func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage) (string, er
 	return resp.Content, nil
 }
 
-// callLLMWithStreamOutput 调用 LLM 并将流式输出转发到 streamChan
-func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string) (string, error) {
+// callLLMWithStreamOutput 调用 LLM 并将流式输出转发到 streamChan。stop 为可选的停止序列。
+func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string, stop []string) (string, error) {
 	if a.llmClient == nil {
 		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
 	}
@@ -57,6 +58,7 @@ func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMess
 	streamStart := time.Now()
 	streamReq := &llm.GenerateRequest{
 		Messages: llmMessages,
+		Stop:     stop,
 	}
 
 	stream, err := a.llmClient.GenerateStream(ctx, streamReq)
@@ -101,10 +103,12 @@ func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMess
 	return fullContent.String(), nil
 }
 
-// callLLMAuto 统一的 LLM 调用（自动选择流式/非流式）
-func (a *Agent) callLLMAuto(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string) (string, error) {
+// callLLMAuto 统一的 LLM 调用（自动选择流式/非流式）。stop 为可选的停止序列，
+// ReAct 循环内需要传 []string{"Observation:"} 让模型在该前缀处停下等工具真实结果；
+// 计划生成/综合等一次性 LLM 调用传 nil。
+func (a *Agent) callLLMAuto(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string, stop []string) (string, error) {
 	if streamChan != nil {
-		return a.callLLMWithStreamOutput(ctx, messages, streamChan, requestID)
+		return a.callLLMWithStreamOutput(ctx, messages, streamChan, requestID, stop)
 	}
-	return a.callLLM(ctx, messages)
+	return a.callLLM(ctx, messages, stop)
 }

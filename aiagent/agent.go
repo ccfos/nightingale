@@ -55,7 +55,7 @@ func (a *Agent) SetSkillRegistry(registry *SkillRegistry) {
 
 	if a.cfg.Skills != nil && a.cfg.Skills.AutoSelect && a.skillSelector == nil {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
-			return a.callLLM(ctx, messages)
+			return a.callLLM(ctx, messages, nil)
 		})
 	}
 }
@@ -75,7 +75,7 @@ func (a *Agent) InitSkills(skillsPath string) {
 	a.skillRegistry = NewSkillRegistry(skillsPath)
 	if a.cfg.Skills.AutoSelect {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
-			return a.callLLM(ctx, messages)
+			return a.callLLM(ctx, messages, nil)
 		})
 	}
 	logger.Infof("AI Agent Skills initialized: path=%s, auto_select=%v", skillsPath, a.cfg.Skills.AutoSelect)

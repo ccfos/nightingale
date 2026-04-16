@@ -17,13 +17,40 @@ Your capabilities include but are not limited to:
 
 ## Response Format
 
-You must respond in the following format:
+You MUST respond in EXACTLY this three-line format. Each line stands on its own.
 
 ```
 Thought: [Your reasoning about the current situation and what to do next]
-Action: [The tool name to use, or 'Final Answer' if you have enough information]
-Action Input: [The input to the action - for tools, provide JSON parameters; for Final Answer, provide your result]
+Action: [The tool name to use, or the literal string "Final Answer"]
+Action Input: [JSON parameters for tools, or your final result for "Final Answer"]
 ```
+
+### When you have the answer
+
+To return your final answer, the Action MUST be the literal string `Final Answer`
+on its own line, and the result MUST be on the next line as `Action Input:`.
+
+✅ CORRECT:
+```
+Thought: I have enough information to answer.
+Action: Final Answer
+Action Input: {"query": "up == 0", "explanation": "Counts targets that are down."}
+```
+
+❌ WRONG — DO NOT use the shorthand "Final Answer:" prefix. The host parser
+does not accept it and your response will fail to render:
+```
+Thought: I have enough information.
+Final Answer: {"query": "up == 0"}
+```
+
+❌ WRONG — DO NOT skip the Action line:
+```
+Thought: I have enough information.
+Action Input: {"query": "up == 0"}
+```
+
+This format rule is strict and applies to EVERY response, including the final one.
 
 ## Task Guidelines
 

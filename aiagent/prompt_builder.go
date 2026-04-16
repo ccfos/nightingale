@@ -283,7 +283,12 @@ func buildTemplateData(req *AgentRequest) map[string]interface{} {
 	return data
 }
 
-// parseReActResponse 解析 LLM 响应，提取 Thought、Action、Action Input
+// parseReActResponse 解析 LLM 响应，提取 Thought、Action、Action Input。
+//
+// 同时识别 "Final Answer: <result>" 这种简写形式——很多模型（尤其是国产/
+// 开源模型）会用 "Final Answer: ..." 替代标准的 "Action: Final Answer\n
+// Action Input: ..." 两行写法。识别到简写时归一化为标准内部表示，让下游
+// IsComplete 判断和 parseResponse 解析器都能按统一格式处理。
 func (a *Agent) parseReActResponse(response string) ReActStep {
 	step := ReActStep{}
 
@@ -301,6 +306,16 @@ func (a *Agent) parseReActResponse(response string) ReActStep {
 			currentField = "thought"
 			currentValue.Reset()
 			currentValue.WriteString(strings.TrimPrefix(line, "Thought:"))
+		} else if strings.HasPrefix(line, "Final Answer:") {
+			// Shorthand: "Final Answer: <result>" → Action="Final Answer",
+			// ActionInput=<result>. Equivalent to the canonical two-line form.
+			if currentField != "" {
+				setStepField(&step, currentField, strings.TrimSpace(currentValue.String()))
+			}
+			step.Action = ActionFinalAnswer
+			currentField = "action_input"
+			currentValue.Reset()
+			currentValue.WriteString(strings.TrimPrefix(line, "Final Answer:"))
 		} else if strings.HasPrefix(line, "Action:") {
 			if currentField != "" {
 				setStepField(&step, currentField, strings.TrimSpace(currentValue.String()))
@@ -315,6 +330,15 @@ func (a *Agent) parseReActResponse(response string) ReActStep {
 			currentField = "action_input"
 			currentValue.Reset()
 			currentValue.WriteString(strings.TrimPrefix(line, "Action Input:"))
+		} else if strings.HasPrefix(line, "Observation:") {
+			// 防御性兜底：如果模型没尊重 stop 序列继续自造 Observation，
+			// 不要把它续写到 action_input，立刻终结当前字段并丢弃后续内容。
+			if currentField != "" {
+				setStepField(&step, currentField, strings.TrimSpace(currentValue.String()))
+				currentField = ""
+				currentValue.Reset()
+			}
+			break
 		} else if currentField != "" {
 			currentValue.WriteString("\n")
 			currentValue.WriteString(line)

@@ -190,7 +190,7 @@ func (a *Agent) generatePlan(ctx context.Context, req *AgentRequest, userMessage
 		requestID = req.Metadata["request_id"]
 	}
 
-	response, err := a.callLLMAuto(ctx, messages, req.StreamChan, requestID)
+	response, err := a.callLLMAuto(ctx, messages, req.StreamChan, requestID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("plan generation LLM call failed: %v", err)
 	}
@@ -255,7 +255,7 @@ func (a *Agent) synthesizeResults(ctx context.Context, req *AgentRequest, plan *
 		requestID = req.Metadata["request_id"]
 	}
 
-	response, err := a.callLLMAuto(ctx, messages, req.StreamChan, requestID)
+	response, err := a.callLLMAuto(ctx, messages, req.StreamChan, requestID, nil)
 	if err != nil {
 		return "", fmt.Errorf("synthesis LLM call failed: %v", err)
 	}
