@@ -1,10 +1,11 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"sync"
 	"sync/atomic"
 
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
@@ -31,35 +32,42 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 		return "", false
 	}
 
-	labelMap := make(map[string]int)
-	for i, label := range s.Labels {
-		labelMap[label.Name] = i
+	// 原实现为每条 TS 新建 map[string]int 定位 label 下标，pprof 显示仅 mapassign_faststr
+	// 一项就占用约 13% CPU。改为一次线性扫描同时记录四个关键 label 的下标，零分配。
+	identIdx, hostnameIdx, hostIdx, nameIdx := -1, -1, -1, -1
+	for i := range s.Labels {
+		switch s.Labels[i].Name {
+		case "ident":
+			identIdx = i
+		case "agent_hostname":
+			hostnameIdx = i
+		case "host":
+			hostIdx = i
+		case "__name__":
+			nameIdx = i
+		}
 	}
 
 	var ident string
 
 	// 如果标签中有ident，则直接使用
-	if idx, ok := labelMap["ident"]; ok {
-		ident = s.Labels[idx].Value
+	if identIdx >= 0 {
+		ident = s.Labels[identIdx].Value
 	}
 
-	if ident == "" {
+	if ident == "" && hostnameIdx >= 0 {
 		// 没有 ident 标签，尝试使用 agent_hostname 作为 ident
 		// agent_hostname for grafana-agent and categraf
-		if idx, ok := labelMap["agent_hostname"]; ok {
-			s.Labels[idx].Name = "ident"
-			ident = s.Labels[idx].Value
-		}
+		s.Labels[hostnameIdx].Name = "ident"
+		ident = s.Labels[hostnameIdx].Value
 	}
 
-	if !ignoreHost && ident == "" {
+	if !ignoreHost && ident == "" && hostIdx >= 0 {
 		// agent_hostname 没有，那就使用 host 作为 ident，用于 telegraf 的场景
 		// 但是，有的时候 nginx 采集的指标中带有 host 标签表示域名，这个时候就不能用 host 作为 ident，此时需要在 url 中设置 ignore_host=true
 		// telegraf, output plugin: http, format: prometheusremotewrite
-		if idx, ok := labelMap["host"]; ok {
-			s.Labels[idx].Name = "ident"
-			ident = s.Labels[idx].Value
-		}
+		s.Labels[hostIdx].Name = "ident"
+		ident = s.Labels[hostIdx].Value
 	}
 
 	if ident == "" {
@@ -69,13 +77,15 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 
 	if len(identMetrics) > 0 {
 		metricFound := false
-		for _, identMetric := range identMetrics {
-			if idx, has := labelMap["__name__"]; has && s.Labels[idx].Value == identMetric {
-				metricFound = true
-				break
+		if nameIdx >= 0 {
+			metricName := s.Labels[nameIdx].Value
+			for _, identMetric := range identMetrics {
+				if metricName == identMetric {
+					metricFound = true
+					break
+				}
 			}
 		}
-
 		if !metricFound {
 			return ident, false
 		}
@@ -84,21 +94,39 @@ func extractIdentFromTimeSeries(s *prompb.TimeSeries, ignoreIdent, ignoreHost bo
 	return ident, !ignoreIdent
 }
 
+// duplicateLabelKeyLinearThreshold 控制线性 vs map 两种去重策略的切换阈值。
+// n <= 阈值：O(n^2) 嵌套扫描，零分配，对 remote_write 典型 <20 label 的场景比 map 快得多；
+// n  > 阈值：退回 map 去重，避免异常/恶意请求塞入大量 label 时被 O(n^2) 放大成 DoS。
+// 阈值取 64：64*63/2 ≈ 2k 次指针比较，仍远低于构造一个 64-bucket map 的开销。
+const duplicateLabelKeyLinearThreshold = 64
+
+// duplicateLabelKey 判断是否有重复的 label 名称。
+// 原实现始终新建 map[string]struct{}，pprof 显示占 ~9% CPU（每条 TS 都分配）。
 func duplicateLabelKey(series *prompb.TimeSeries) bool {
 	if series == nil {
 		return false
 	}
-
-	labelKeys := make(map[string]struct{})
-
-	for j := 0; j < len(series.Labels); j++ {
-		if _, has := labelKeys[series.Labels[j].Name]; has {
-			return true
-		} else {
-			labelKeys[series.Labels[j].Name] = struct{}{}
+	labels := series.Labels
+	n := len(labels)
+	if n <= duplicateLabelKeyLinearThreshold {
+		for i := 0; i < n; i++ {
+			name := labels[i].Name
+			for j := i + 1; j < n; j++ {
+				if labels[j].Name == name {
+					return true
+				}
+			}
 		}
+		return false
 	}
 
+	labelKeys := make(map[string]struct{}, n)
+	for i := 0; i < n; i++ {
+		if _, has := labelKeys[labels[i].Name]; has {
+			return true
+		}
+		labelKeys[labels[i].Name] = struct{}{}
+	}
 	return false
 }
 
@@ -168,23 +196,72 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	c.String(200, "")
 }
 
+// decodeBodyBufPool 缓存 HTTP body 读取缓冲，典型 snappy 压缩后 remote_write 批量在 ~64KB-256KB 之间。
+// decodeSnappyBufPool 缓存 snappy 解压后的明文缓冲；过大的 buffer（>maxPooledBufCap）不回收以避免长期占用内存。
+var (
+	decodeBodyBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 64*1024)
+			return &b
+		},
+	}
+	decodeSnappyBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 256*1024)
+			return &b
+		},
+	}
+)
+
+const maxPooledBufCap = 4 * 1024 * 1024
+
 // DecodeWriteRequest from an io.Reader into a prompb.WriteRequest, handling
-// snappy decompression.
+// snappy decompression. 内部的 body 读取缓冲与 snappy 解码缓冲均从 sync.Pool 复用，
+// 返回的 *WriteRequest 在本函数返回后仍可安全使用，因为 prompb.Unmarshal 会把
+// label/sample 字段拷出到独立分配的 string。
 func DecodeWriteRequest(r io.Reader) (*prompb.WriteRequest, error) {
-	compressed, err := ioutil.ReadAll(r)
+	bodyBufP := decodeBodyBufPool.Get().(*[]byte)
+	defer func() {
+		if cap(*bodyBufP) <= maxPooledBufCap {
+			decodeBodyBufPool.Put(bodyBufP)
+		}
+	}()
+
+	buf := bytes.NewBuffer((*bodyBufP)[:0])
+	if _, err := io.Copy(buf, r); err != nil {
+		return nil, err
+	}
+	compressed := buf.Bytes()
+	*bodyBufP = compressed
+
+	dLen, err := snappy.DecodedLen(compressed)
 	if err != nil {
 		return nil, err
 	}
 
-	reqBuf, err := snappy.Decode(nil, compressed)
+	snappyBufP := decodeSnappyBufPool.Get().(*[]byte)
+	defer func() {
+		if cap(*snappyBufP) <= maxPooledBufCap {
+			decodeSnappyBufPool.Put(snappyBufP)
+		}
+	}()
+	snappyBuf := *snappyBufP
+	if cap(snappyBuf) < dLen {
+		snappyBuf = make([]byte, dLen)
+	} else {
+		snappyBuf = snappyBuf[:dLen]
+	}
+	*snappyBufP = snappyBuf
+
+	reqBuf, err := snappy.Decode(snappyBuf, compressed)
 	if err != nil {
 		return nil, err
 	}
 
-	var req prompb.WriteRequest
-	if err := proto.Unmarshal(reqBuf, &req); err != nil {
+	req := &prompb.WriteRequest{}
+	if err := proto.Unmarshal(reqBuf, req); err != nil {
 		return nil, err
 	}
 
-	return &req, nil
+	return req, nil
 }
