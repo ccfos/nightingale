@@ -49,12 +49,12 @@ func init() {
 	}, getNotifyRuleDetail)
 }
 
-func listNotifyRules(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listNotifyRules(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermNotificationRules); err != nil {
+	if err := checkPerm(deps, user, PermNotificationRules); err != nil {
 		return "", err
 	}
 
@@ -64,9 +64,8 @@ func listNotifyRules(_ context.Context, args map[string]interface{}, params map[
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	// NotifyRule has no group_id; permission is based on UserGroupIds intersection
-	allRules, err := models.NotifyRulesGet(dbCtx, "", nil)
+	allRules, err := models.NotifyRulesGet(deps.DBCtx, "", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to query notify rules: %v", err)
 	}
@@ -74,7 +73,7 @@ func listNotifyRules(_ context.Context, args map[string]interface{}, params map[
 	// For non-admin, filter by user's team membership
 	var myGroupIds []int64
 	if !user.IsAdmin() {
-		myGroupIds, err = getUserGroupIds(user.Id)
+		myGroupIds, err = getUserGroupIds(deps, user.Id)
 		if err != nil {
 			return "", err
 		}
@@ -107,12 +106,12 @@ func listNotifyRules(_ context.Context, args map[string]interface{}, params map[
 	return marshalList(len(results), results), nil
 }
 
-func getNotifyRuleDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getNotifyRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermNotificationRules); err != nil {
+	if err := checkPerm(deps, user, PermNotificationRules); err != nil {
 		return "", err
 	}
 
@@ -121,8 +120,7 @@ func getNotifyRuleDetail(_ context.Context, args map[string]interface{}, params 
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	rule, err := models.GetNotifyRule(dbCtx, id)
+	rule, err := models.GetNotifyRule(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get notify rule: %v", err)
 	}
@@ -131,7 +129,7 @@ func getNotifyRuleDetail(_ context.Context, args map[string]interface{}, params 
 	}
 
 	if !user.IsAdmin() {
-		myGroupIds, err := getUserGroupIds(user.Id)
+		myGroupIds, err := getUserGroupIds(deps, user.Id)
 		if err != nil {
 			return "", err
 		}

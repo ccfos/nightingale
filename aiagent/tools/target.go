@@ -56,14 +56,14 @@ func init() {
 	}, getTargetDetail)
 }
 
-func listTargets(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listTargets(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
 	// targets listing has no perm middleware in router
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -85,8 +85,7 @@ func listTargets(_ context.Context, args map[string]interface{}, params map[stri
 		options = append(options, models.BuildTargetWhereWithQuery(query))
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	targets, err := models.TargetGets(dbCtx, limit, 0, "ident", false, options...)
+	targets, err := models.TargetGets(deps.DBCtx, limit, 0, "ident", false, options...)
 	if err != nil {
 		return "", fmt.Errorf("failed to query targets: %v", err)
 	}
@@ -108,8 +107,8 @@ func listTargets(_ context.Context, args map[string]interface{}, params map[stri
 	return marshalList(len(results), results), nil
 }
 
-func getTargetDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getTargetDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
@@ -117,12 +116,11 @@ func getTargetDetail(_ context.Context, args map[string]interface{}, params map[
 	id := getArgInt64(args, "id")
 	ident := getArgString(args, "ident")
 
-	dbCtx := aiagent.GetDBCtx()
 	var target *models.Target
 	if id > 0 {
-		target, err = models.TargetGetById(dbCtx, id)
+		target, err = models.TargetGetById(deps.DBCtx, id)
 	} else if ident != "" {
-		target, err = models.TargetGet(dbCtx, "ident=?", ident)
+		target, err = models.TargetGet(deps.DBCtx, "ident=?", ident)
 	} else {
 		return "", fmt.Errorf("id or ident is required")
 	}
@@ -135,11 +133,11 @@ func getTargetDetail(_ context.Context, args map[string]interface{}, params map[
 
 	// Check data-level permission
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}
-		targetGids, _ := models.TargetGroupIdsGetByIdent(dbCtx, target.Ident)
+		targetGids, _ := models.TargetGroupIdsGetByIdent(deps.DBCtx, target.Ident)
 		if !int64SlicesOverlap(bgids, targetGids) {
 			return "", fmt.Errorf("forbidden: no access to this target")
 		}
@@ -156,7 +154,7 @@ func getTargetDetail(_ context.Context, args map[string]interface{}, params map[
 		HostTags:     target.HostTags,
 		UpdateAt:     target.UpdateAt,
 	}
-	result.GroupIds, _ = models.TargetGroupIdsGetByIdent(dbCtx, target.Ident)
+	result.GroupIds, _ = models.TargetGroupIdsGetByIdent(deps.DBCtx, target.Ident)
 
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil

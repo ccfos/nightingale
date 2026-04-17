@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/prom"
 )
 
 // ==================== 常量 ====================
@@ -66,6 +70,9 @@ type Agent struct {
 
 	// 外部工具处理器（用于 processor/skill 类型工具，由适配层注入）
 	externalToolHandler ExternalToolHandler
+
+	// 内置工具依赖（DBCtx、数据源获取器、过滤器等），由 WithToolDeps 注入
+	toolDeps *ToolDeps
 }
 
 // AgentConfig Agent 配置（仅包含 Agent 行为相关字段，LLM 配置通过 WithLLMClient 注入）
@@ -182,8 +189,19 @@ type ToolParameter struct {
 	Required    bool   `json:"required"`
 }
 
+// ToolDeps 内置工具的依赖集合
+// 由宿主一次性构造并通过 WithToolDeps 注入 Agent，取代原先 builtin_tools.go 里一组包级可变变量。
+// 所有 BuiltinToolFunc 都以第一等公民方式从形参拿依赖，不再读 package global。
+type ToolDeps struct {
+	DBCtx             *ctx.Context
+	SkillsPath        string
+	GetPromClient     func(dsId int64) prom.API
+	GetSQLDatasource  func(dsType string, dsId int64) (datasource.Datasource, bool)
+	FilterDatasources func([]*models.Datasource, *models.User) []*models.Datasource
+}
+
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）
-type BuiltinToolFunc func(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error)
+type BuiltinToolFunc func(ctx context.Context, deps *ToolDeps, args map[string]interface{}, params map[string]string) (string, error)
 
 // ExternalToolHandler 外部工具执行函数（用于 processor/skill 类型工具）
 // 由适配层注入，核心 Agent 不关心具体实现
@@ -205,6 +223,9 @@ type ReActLoopConfig struct {
 	TimeoutMessage string
 	LogPrefix      string
 
+	// 本次循环可见的工具集（runCtx.tools 快照）
+	Tools []AgentTool
+
 	// 流式支持（nil = 非流式）
 	StreamChan chan *StreamChunk
 	RequestID  string
@@ -212,6 +233,13 @@ type ReActLoopConfig struct {
 	// 完成判断
 	IsComplete           func(action string) bool
 	ExtractPartialResult bool
+}
+
+// runCtx 单次 Run 的运行期状态（per-Run scope）
+// 把 skills 和动态工具表从 AgentConfig 里剥离，让 Agent 可并发/重复 Run
+type runCtx struct {
+	skills []*SkillContent
+	tools  []AgentTool // 静态（cfg.Tools）+ skill + MCP，按本次选中的 skills 装配
 }
 
 // ==================== Plan+ReAct 类型 ====================

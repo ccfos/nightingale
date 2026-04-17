@@ -3,59 +3,13 @@ package aiagent
 import (
 	"context"
 	"encoding/json"
-
-	"github.com/ccfos/nightingale/v6/datasource"
-	"github.com/ccfos/nightingale/v6/dscache"
-	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/prom"
 )
-
-// =============================================================================
-// Dependency injection (exported for tools sub-package)
-// =============================================================================
-
-type PromClientGetter func(dsId int64) prom.API
-type SQLDatasourceGetter func(dsType string, dsId int64) (datasource.Datasource, bool)
-type DatasourceFilterFunc func([]*models.Datasource, *models.User) []*models.Datasource
-
-var (
-	dbCtx                *ctx.Context
-	skillsPath           string
-	getPromClientFunc    PromClientGetter     = func(dsId int64) prom.API { return nil }
-	getSQLDatasourceFunc SQLDatasourceGetter  = defaultGetSQLDatasource
-	datasourceFilterFunc DatasourceFilterFunc = func(ds []*models.Datasource, u *models.User) []*models.Datasource { return ds }
-)
-
-func defaultGetSQLDatasource(dsType string, dsId int64) (datasource.Datasource, bool) {
-	return dscache.DsCache.Get(dsType, dsId)
-}
-
-func SetDBCtx(c *ctx.Context)                              { dbCtx = c }
-func SetSkillsPath(path string)                             { skillsPath = path }
-func SetPromClientGetter(getter PromClientGetter)           { getPromClientFunc = getter }
-func SetSQLDatasourceGetter(getter SQLDatasourceGetter)     { getSQLDatasourceFunc = getter }
-func SetDatasourceFilter(filter DatasourceFilterFunc)        { datasourceFilterFunc = filter }
-
-func ResetDatasourceGetters() {
-	getPromClientFunc = func(dsId int64) prom.API { return nil }
-	getSQLDatasourceFunc = defaultGetSQLDatasource
-	datasourceFilterFunc = func(ds []*models.Datasource, u *models.User) []*models.Datasource { return ds }
-}
-
-// Exported getters for tools sub-package
-func GetDBCtx() *ctx.Context                                              { return dbCtx }
-func GetSkillsPath() string                                               { return skillsPath }
-func GetPromClient(dsId int64) prom.API                                   { return getPromClientFunc(dsId) }
-func GetSQLDatasource(dsType string, dsId int64) (datasource.Datasource, bool) {
-	return getSQLDatasourceFunc(dsType, dsId)
-}
-func FilterDatasources(ds []*models.Datasource, user *models.User) []*models.Datasource {
-	return datasourceFilterFunc(ds, user)
-}
 
 // =============================================================================
 // Builtin tool registry
+//
+// 只保留 init-time 注册表：aiagent/tools 子包的 init() 注册条目，运行期只读。
+// 宿主依赖（DBCtx、datasource 获取器等）见 ToolDeps（types.go），由 Agent 显式注入。
 // =============================================================================
 
 // BuiltinTool pairs a tool definition with its handler.
@@ -101,7 +55,7 @@ func GetAllBuiltinToolDefs() []AgentTool {
 
 // ExecuteBuiltinTool executes a builtin tool by name.
 // Returns (result, handled, error). handled=false means the tool was not found.
-func ExecuteBuiltinTool(ctx context.Context, name string, params map[string]string, argsJSON string) (string, bool, error) {
+func ExecuteBuiltinTool(ctx context.Context, deps *ToolDeps, name string, params map[string]string, argsJSON string) (string, bool, error) {
 	tool, exists := builtinTools[name]
 	if !exists {
 		return "", false, nil
@@ -117,6 +71,6 @@ func ExecuteBuiltinTool(ctx context.Context, name string, params map[string]stri
 		args = make(map[string]interface{})
 	}
 
-	result, err := tool.Handler(ctx, args, params)
+	result, err := tool.Handler(ctx, deps, args, params)
 	return result, true, err
 }

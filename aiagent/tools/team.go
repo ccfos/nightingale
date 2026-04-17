@@ -27,8 +27,8 @@ func init() {
 	}, listTeams)
 }
 
-func listTeams(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listTeams(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
@@ -40,9 +40,8 @@ func listTeams(_ context.Context, args map[string]interface{}, params map[string
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	// User.UserGroups() handles permission: admin sees all, non-admin sees own + created
-	groups, err := user.UserGroups(dbCtx, limit, query)
+	groups, err := user.UserGroups(deps.DBCtx, limit, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to query teams: %v", err)
 	}

@@ -12,20 +12,10 @@ import (
 )
 
 // processorSettings 用于从 Processor 的 JSON settings 中拆分出 LLM 配置和 Agent 配置
+// JSON 形如：{"llm": {...llm.Config 字段...}, ...AgentConfig 字段...}
 type processorSettings struct {
-	// LLM 配置字段
-	Provider      string            `json:"provider"`
-	LLMURL        string            `json:"llm_url"`
-	Model         string            `json:"model"`
-	APIKey        string            `json:"api_key"`
-	Headers       map[string]string `json:"headers"`
-	SkipSSLVerify bool              `json:"skip_ssl_verify"`
-	Proxy         string            `json:"proxy"`
-	Temperature   *float64          `json:"temperature,omitempty"`
-	MaxTokens     *int              `json:"max_tokens,omitempty"`
-
-	// Agent 配置字段（直接嵌入 AgentConfig）
-	AgentConfig
+	LLM         llm.Config `json:"llm"`
+	AgentConfig            // 嵌入：Agent 行为字段继续在 JSON 顶层
 }
 
 // ==================== Processor 适配器 ====================
@@ -50,22 +40,8 @@ func (p *ProcessorAdapter) Init(settings interface{}) (models.Processor, error) 
 		return nil, err
 	}
 
-	// 构造 LLM 配置
-	llmCfg := &llm.Config{
-		Provider:      s.Provider,
-		BaseURL:       s.LLMURL,
-		Model:         s.Model,
-		APIKey:        s.APIKey,
-		Headers:       s.Headers,
-		Timeout:       s.AgentConfig.Timeout,
-		SkipSSLVerify: s.SkipSSLVerify,
-		Proxy:         s.Proxy,
-		Temperature:   s.Temperature,
-		MaxTokens:     s.MaxTokens,
-	}
-
 	return &ProcessorAdapter{
-		agent: NewAgent(&s.AgentConfig, WithLLMConfig(llmCfg)),
+		agent: NewAgent(&s.AgentConfig, WithLLMConfig(&s.LLM)),
 	}, nil
 }
 

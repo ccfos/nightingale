@@ -18,9 +18,10 @@ import (
 )
 
 // executeTool 执行工具
-func (a *Agent) executeTool(ctx context.Context, toolName string, input string, req *AgentRequest) string {
+// tools 为本次 Run 的可见工具表（runCtx.tools 快照），不再从 a.cfg.Tools 读取
+func (a *Agent) executeTool(ctx context.Context, toolName string, input string, req *AgentRequest, tools []AgentTool) string {
 	// 1. 优先检查并执行内置工具
-	if result, handled, err := ExecuteBuiltinTool(ctx, toolName, req.Params, input); handled {
+	if result, handled, err := ExecuteBuiltinTool(ctx, a.toolDeps, toolName, req.Params, input); handled {
 		if err != nil {
 			return fmt.Sprintf("Error: %v", err)
 		}
@@ -29,16 +30,16 @@ func (a *Agent) executeTool(ctx context.Context, toolName string, input string, 
 
 	// 2. 查找配置的工具定义
 	var tool *AgentTool
-	for i := range a.cfg.Tools {
-		if a.cfg.Tools[i].Name == toolName {
-			tool = &a.cfg.Tools[i]
+	for i := range tools {
+		if tools[i].Name == toolName {
+			tool = &tools[i]
 			break
 		}
 	}
 
 	if tool == nil {
-		available := make([]string, len(a.cfg.Tools))
-		for i, t := range a.cfg.Tools {
+		available := make([]string, len(tools))
+		for i, t := range tools {
 			available[i] = t.Name
 		}
 		return fmt.Sprintf("Error: tool '%s' not found. Available tools: %v. Please use one of these exact tool names.", toolName, available)
@@ -190,16 +191,18 @@ func (a *Agent) executeMCPTool(ctx context.Context, tool *AgentTool, args map[st
 	return a.formatMCPResult(result)
 }
 
-// discoverMCPTools 自动发现 MCP 服务器提供的工具
-func (a *Agent) discoverMCPTools(ctx context.Context) {
+// appendMCPTools 自动发现 MCP 服务器提供的工具并追加到 base
+// 纯函数：不写 a.cfg，返回新切片（供 runCtx 使用）
+func (a *Agent) appendMCPTools(ctx context.Context, base []AgentTool) []AgentTool {
 	if a.mcpClientManager == nil || len(a.mcpServers) == 0 {
-		return
+		return base
 	}
 
-	existingTools := make(map[string]bool)
-	for _, tool := range a.cfg.Tools {
-		existingTools[tool.Name] = true
+	seen := make(map[string]bool, len(base))
+	for _, tool := range base {
+		seen[tool.Name] = true
 	}
+	result := base
 
 	for serverName, serverConfig := range a.mcpServers {
 		client, err := a.mcpClientManager.GetOrCreateClient(ctx, serverConfig)
@@ -215,7 +218,7 @@ func (a *Agent) discoverMCPTools(ctx context.Context) {
 		}
 
 		for _, mcpTool := range tools {
-			if existingTools[mcpTool.Name] {
+			if seen[mcpTool.Name] {
 				continue
 			}
 
@@ -224,7 +227,7 @@ func (a *Agent) discoverMCPTools(ctx context.Context) {
 				params = a.convertMCPSchemaToParams(mcpTool.InputSchema)
 			}
 
-			tool := AgentTool{
+			result = append(result, AgentTool{
 				Name:        mcpTool.Name,
 				Description: mcpTool.Description,
 				Type:        ToolTypeMCP,
@@ -233,15 +236,16 @@ func (a *Agent) discoverMCPTools(ctx context.Context) {
 					ToolName:   mcpTool.Name,
 				},
 				Parameters: params,
-			}
-			a.cfg.Tools = append(a.cfg.Tools, tool)
-			existingTools[mcpTool.Name] = true
+			})
+			seen[mcpTool.Name] = true
 
 			logger.Debugf("Discovered MCP tool: %s (from server: %s)", mcpTool.Name, serverName)
 		}
 
 		logger.Infof("Discovered %d tools from MCP server '%s'", len(tools), serverName)
 	}
+
+	return result
 }
 
 func (a *Agent) convertMCPSchemaToParams(schema map[string]interface{}) []ToolParameter {

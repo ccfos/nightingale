@@ -13,6 +13,8 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	_ "github.com/ccfos/nightingale/v6/aiagent/tools" // register builtin tools
+	"github.com/ccfos/nightingale/v6/datasource"
+	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -373,15 +375,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// ⑤ Preflight — hard gate. May halt the turn and emit structured responses
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
-	//
-	// Preflight loaders (loadBusiGroupField / loadDatasourceField) reach into
-	// the global aiagent.GetDBCtx() and aiagent.FilterDatasources hooks, so we
-	// must seed them BEFORE the first preflight call. Otherwise the very first
-	// request after server start nil-pointer-panics inside user.BusiGroups(nil,...)
-	// — the SetDBCtx call near the agent setup further down only kicks in for
-	// the second turn onward, which masked this bug during earlier testing.
-	aiagent.SetDBCtx(rt.Ctx)
-	aiagent.SetDatasourceFilter(rt.DatasourceCache.DatasourceFilter)
+	toolDeps := &aiagent.ToolDeps{
+		DBCtx:             rt.Ctx,
+		GetPromClient:     func(dsId int64) prom.API { return rt.PromClients.GetCli(dsId) },
+		GetSQLDatasource:  func(dsType string, dsId int64) (datasource.Datasource, bool) { return dscache.DsCache.Get(dsType, dsId) },
+		FilterDatasources: rt.DatasourceCache.DatasourceFilter,
+	}
 
 	if handler.preflight != nil {
 		user, uerr := models.UserGetById(rt.Ctx, userId)
@@ -389,7 +388,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.finishMessage(stateKey, streamID, msg, 500, "failed to resolve user for preflight")
 			return
 		}
-		halt, preResps, perr := handler.preflight(parentCtx, chatReq, user)
+		halt, preResps, perr := handler.preflight(parentCtx, toolDeps, chatReq, user)
 		if perr != nil {
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
@@ -436,20 +435,15 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			AutoSelect: true,
 			MaxSkills:  2,
 		},
-	}, aiagent.WithLLMClient(llmClient))
+	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
 	// Wire up the skill subsystem so SKILL.md content actually reaches the LLM
-	// system prompt. InitSkills also calls SetSkillsPath, which is what makes the
-	// list_files / read_file / grep_files builtin tools resolve "integrations" and
-	// "<skill-name>" base paths instead of erroring with "skills path not configured".
+	// system prompt. InitSkills writes the resolved path into toolDeps.SkillsPath,
+	// which list_files / read_file / grep_files use as the resolveBasePath
+	// security anchor — without it those tools error with "skills path not configured".
 	if skillsPath := rt.Center.AIAgent.SkillsPath; skillsPath != "" {
 		agentRunner.InitSkills(skillsPath)
 	}
-
-	aiagent.SetPromClientGetter(func(dsId int64) prom.API {
-		return rt.PromClients.GetCli(dsId)
-	})
-	// SetDBCtx + SetDatasourceFilter are seeded before preflight (above).
 
 	streamChan := make(chan *aiagent.StreamChunk, 100)
 	agentReq := &aiagent.AgentRequest{

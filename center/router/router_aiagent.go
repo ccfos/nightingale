@@ -67,7 +67,7 @@ IMPORTANT: Respond in %s. This applies to all natural-language output (explanati
 type actionHandler struct {
 	description   string // human-readable description used by LLM intent inference
 	validate      func(req *AIChatRequest) error
-	preflight     func(ctx context.Context, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
+	preflight     func(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
 	selectTools   func(req *AIChatRequest) []string
 	buildPrompt   func(req *AIChatRequest) string
 	buildInputs   func(req *AIChatRequest) map[string]string

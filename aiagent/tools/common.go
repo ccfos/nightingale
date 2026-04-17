@@ -29,9 +29,8 @@ const (
 // User & permission helpers
 // =============================================================================
 
-func getUser(params map[string]string) (*models.User, error) {
-	ctx := aiagent.GetDBCtx()
-	if ctx == nil {
+func getUser(deps *aiagent.ToolDeps, params map[string]string) (*models.User, error) {
+	if deps == nil || deps.DBCtx == nil {
 		return nil, fmt.Errorf("database context not configured")
 	}
 
@@ -43,7 +42,7 @@ func getUser(params map[string]string) (*models.User, error) {
 		return nil, fmt.Errorf("user_id not found in params")
 	}
 
-	user, err := models.UserGetById(ctx, userId)
+	user, err := models.UserGetById(deps.DBCtx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %v", err)
 	}
@@ -53,12 +52,11 @@ func getUser(params map[string]string) (*models.User, error) {
 	return user, nil
 }
 
-func checkPerm(user *models.User, operation string) error {
+func checkPerm(deps *aiagent.ToolDeps, user *models.User, operation string) error {
 	if user.IsAdmin() {
 		return nil
 	}
-	ctx := aiagent.GetDBCtx()
-	has, err := models.RoleHasOperation(ctx, user.RolesLst, operation)
+	has, err := models.RoleHasOperation(deps.DBCtx, user.RolesLst, operation)
 	if err != nil {
 		return fmt.Errorf("failed to check permission: %v", err)
 	}
@@ -68,21 +66,19 @@ func checkPerm(user *models.User, operation string) error {
 	return nil
 }
 
-func getUserBgids(user *models.User) (bgids []int64, isAdmin bool, err error) {
+func getUserBgids(deps *aiagent.ToolDeps, user *models.User) (bgids []int64, isAdmin bool, err error) {
 	if user.IsAdmin() {
 		return nil, true, nil
 	}
-	ctx := aiagent.GetDBCtx()
-	bgids, err = models.MyBusiGroupIds(ctx, user.Id)
+	bgids, err = models.MyBusiGroupIds(deps.DBCtx, user.Id)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to get busi group ids: %v", err)
 	}
 	return bgids, false, nil
 }
 
-func getUserGroupIds(userId int64) ([]int64, error) {
-	ctx := aiagent.GetDBCtx()
-	ids, err := models.MyGroupIds(ctx, userId)
+func getUserGroupIds(deps *aiagent.ToolDeps, userId int64) ([]int64, error) {
+	ids, err := models.MyGroupIds(deps.DBCtx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user group ids: %v", err)
 	}

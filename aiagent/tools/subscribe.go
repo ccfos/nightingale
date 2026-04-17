@@ -57,16 +57,16 @@ func init() {
 	}, getAlertSubscribeDetail)
 }
 
-func listAlertSubscribes(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listAlertSubscribes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertSubscribes); err != nil {
+	if err := checkPerm(deps, user, PermAlertSubscribes); err != nil {
 		return "", err
 	}
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -77,15 +77,14 @@ func listAlertSubscribes(_ context.Context, args map[string]interface{}, params 
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	var subs []models.AlertSubscribe
 	if isAdmin {
-		subs, err = models.AlertSubscribeGetsByBGIds(dbCtx, nil)
+		subs, err = models.AlertSubscribeGetsByBGIds(deps.DBCtx, nil)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []alertSubscribeResult{}), nil
 		}
-		subs, err = models.AlertSubscribeGetsByBGIds(dbCtx, bgids)
+		subs, err = models.AlertSubscribeGetsByBGIds(deps.DBCtx, bgids)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query alert subscribes: %v", err)
@@ -113,12 +112,12 @@ func listAlertSubscribes(_ context.Context, args map[string]interface{}, params 
 	return marshalList(len(results), results), nil
 }
 
-func getAlertSubscribeDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getAlertSubscribeDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertSubscribes); err != nil {
+	if err := checkPerm(deps, user, PermAlertSubscribes); err != nil {
 		return "", err
 	}
 
@@ -127,8 +126,7 @@ func getAlertSubscribeDetail(_ context.Context, args map[string]interface{}, par
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	sub, err := models.AlertSubscribeGet(dbCtx, "id=?", id)
+	sub, err := models.AlertSubscribeGet(deps.DBCtx, "id=?", id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get alert subscribe: %v", err)
 	}
@@ -137,7 +135,7 @@ func getAlertSubscribeDetail(_ context.Context, args map[string]interface{}, par
 	}
 
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}

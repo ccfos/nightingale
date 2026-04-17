@@ -55,16 +55,16 @@ func init() {
 	}, getTaskTplDetail)
 }
 
-func listTaskTpls(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listTaskTpls(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermJobTpls); err != nil {
+	if err := checkPerm(deps, user, PermJobTpls); err != nil {
 		return "", err
 	}
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -75,15 +75,14 @@ func listTaskTpls(_ context.Context, args map[string]interface{}, params map[str
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	var tpls []models.TaskTpl
 	if isAdmin {
-		tpls, err = models.TaskTplGets(dbCtx, nil, query, limit, 0)
+		tpls, err = models.TaskTplGets(deps.DBCtx, nil, query, limit, 0)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []taskTplResult{}), nil
 		}
-		tpls, err = models.TaskTplGets(dbCtx, bgids, query, limit, 0)
+		tpls, err = models.TaskTplGets(deps.DBCtx, bgids, query, limit, 0)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query task templates: %v", err)
@@ -105,12 +104,12 @@ func listTaskTpls(_ context.Context, args map[string]interface{}, params map[str
 	return marshalList(len(results), results), nil
 }
 
-func getTaskTplDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getTaskTplDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermJobTpls); err != nil {
+	if err := checkPerm(deps, user, PermJobTpls); err != nil {
 		return "", err
 	}
 
@@ -119,8 +118,7 @@ func getTaskTplDetail(_ context.Context, args map[string]interface{}, params map
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	tpl, err := models.TaskTplGetById(dbCtx, id)
+	tpl, err := models.TaskTplGetById(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get task template: %v", err)
 	}
@@ -129,7 +127,7 @@ func getTaskTplDetail(_ context.Context, args map[string]interface{}, params map
 	}
 
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}

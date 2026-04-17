@@ -146,7 +146,7 @@ type creationFormPayload struct {
 // When every required field is already in req.Context (which happens after
 // the form is submitted and resent with sessionParam values), preflight stays
 // out of the way and the agent runs normally.
-func preflightCreation(ctx context.Context, req *AIChatRequest, user *models.User) (bool, []models.AssistantMessageResponse, error) {
+func preflightCreation(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (bool, []models.AssistantMessageResponse, error) {
 	spec := matchCreationSkill(req.UserInput)
 	if spec == nil {
 		logger.Debugf("[preflight] creation: no keyword match for %q, skipping", req.UserInput)
@@ -163,7 +163,7 @@ func preflightCreation(ctx context.Context, req *AIChatRequest, user *models.Use
 	if !anyMissing {
 		return false, nil, nil
 	}
-	return emitFormSelect(req, user, spec.skillName, spec.requiredContexts)
+	return emitFormSelect(deps, req, user, spec.skillName, spec.requiredContexts)
 }
 
 // hasContext tests presence AND non-zero — team_ids needs to be a non-empty
@@ -192,16 +192,16 @@ func hasContext(reqCtx map[string]interface{}, key string) bool {
 // of the skill. Fields whose value is already present in req.Context get that
 // value pre-selected via is_default=true on the matching candidate, so the
 // user's typical "confirm the default" path is one click.
-func emitFormSelect(req *AIChatRequest, user *models.User, skillName string, required []string) (bool, []models.AssistantMessageResponse, error) {
+func emitFormSelect(deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User, skillName string, required []string) (bool, []models.AssistantMessageResponse, error) {
 	fields := make([]creationFormField, 0, len(required))
 	for _, key := range required {
 		switch key {
 		case "busi_group_id":
-			fields = append(fields, loadBusiGroupField(user, ctxInt64Get(req.Context, "busi_group_id")))
+			fields = append(fields, loadBusiGroupField(deps, user, ctxInt64Get(req.Context, "busi_group_id")))
 		case "datasource_id":
-			fields = append(fields, loadDatasourceField(user, ctxInt64Get(req.Context, "datasource_id")))
+			fields = append(fields, loadDatasourceField(deps, user, ctxInt64Get(req.Context, "datasource_id")))
 		case "team_ids":
-			fields = append(fields, loadTeamField(user, ctxInt64Slice(req.Context, "team_ids")))
+			fields = append(fields, loadTeamField(deps, user, ctxInt64Slice(req.Context, "team_ids")))
 		default:
 			logger.Warningf("[preflight] unknown required context key %q for skill %s", key, skillName)
 		}
@@ -216,9 +216,9 @@ func emitFormSelect(req *AIChatRequest, user *models.User, skillName string, req
 // loadBusiGroupField lists the user's accessible busi groups. If preselectedID
 // is > 0 and matches one of the candidates, that candidate wins is_default.
 // Otherwise the name-heuristic default ("Default" / "默认") wins.
-func loadBusiGroupField(user *models.User, preselectedID int64) creationFormField {
+func loadBusiGroupField(deps *aiagent.ToolDeps, user *models.User, preselectedID int64) creationFormField {
 	field := creationFormField{Key: "busi_group_id", Type: "single", Candidates: []formCandidate{}}
-	groups, err := user.BusiGroups(aiagent.GetDBCtx(), 200, "")
+	groups, err := user.BusiGroups(deps.DBCtx, 200, "")
 	if err != nil {
 		logger.Warningf("[preflight] load busi groups failed: %v", err)
 		return field
@@ -242,15 +242,14 @@ func loadBusiGroupField(user *models.User, preselectedID int64) creationFormFiel
 // loadDatasourceField lists datasources visible to the user. If preselectedID
 // is > 0 (typically the one auto-attached from the Copilot's page context),
 // that candidate is marked is_default so the form opens with it selected.
-func loadDatasourceField(user *models.User, preselectedID int64) creationFormField {
+func loadDatasourceField(deps *aiagent.ToolDeps, user *models.User, preselectedID int64) creationFormField {
 	field := creationFormField{Key: "datasource_id", Type: "single", Candidates: []formCandidate{}}
-	dbCtx := aiagent.GetDBCtx()
-	dsList, err := models.GetDatasourcesGetsBy(dbCtx, "", "", "", "")
+	dsList, err := models.GetDatasourcesGetsBy(deps.DBCtx, "", "", "", "")
 	if err != nil {
 		logger.Warningf("[preflight] load datasources failed: %v", err)
 		return field
 	}
-	filtered := aiagent.FilterDatasources(dsList, user)
+	filtered := deps.FilterDatasources(dsList, user)
 	for _, ds := range filtered {
 		field.Candidates = append(field.Candidates, formCandidate{
 			ID:        ds.Id,
@@ -265,9 +264,9 @@ func loadDatasourceField(user *models.User, preselectedID int64) creationFormFie
 // loadTeamField lists user-group memberships (teams) the user can reference
 // in a notify rule. preselectedIDs marks matching candidates is_default for
 // the multi-select case.
-func loadTeamField(user *models.User, preselectedIDs []int64) creationFormField {
+func loadTeamField(deps *aiagent.ToolDeps, user *models.User, preselectedIDs []int64) creationFormField {
 	field := creationFormField{Key: "team_ids", Type: "multi", Candidates: []formCandidate{}}
-	dbCtx := aiagent.GetDBCtx()
+	dbCtx := deps.DBCtx
 
 	var groups []models.UserGroup
 	if user.IsAdmin() {

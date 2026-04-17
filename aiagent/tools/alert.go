@@ -104,11 +104,11 @@ func init() {
 // Tool implementations
 // =============================================================================
 
-func searchActiveAlerts(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
-	dbCtx := aiagent.GetDBCtx()
-	if dbCtx == nil {
+func searchActiveAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.DBCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
+	dbCtx := deps.DBCtx
 
 	query, _ := args["query"].(string)
 	severity := -1
@@ -165,11 +165,11 @@ func searchActiveAlerts(_ context.Context, args map[string]interface{}, _ map[st
 	return string(bytes), nil
 }
 
-func searchHistoryAlerts(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
-	dbCtx := aiagent.GetDBCtx()
-	if dbCtx == nil {
+func searchHistoryAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.DBCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
+	dbCtx := deps.DBCtx
 
 	query, _ := args["query"].(string)
 	severity := -1
@@ -232,9 +232,8 @@ func searchHistoryAlerts(_ context.Context, args map[string]interface{}, _ map[s
 	return string(bytes), nil
 }
 
-func getAlertEventDetail(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
-	dbCtx := aiagent.GetDBCtx()
-	if dbCtx == nil {
+func getAlertEventDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.DBCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
 	}
 
@@ -258,9 +257,9 @@ func getAlertEventDetail(_ context.Context, args map[string]interface{}, _ map[s
 	var err error
 
 	if eventType == "history" {
-		detail, err = getHisEventDetail(eventId)
+		detail, err = getHisEventDetail(deps, eventId)
 	} else {
-		detail, err = getCurEventDetail(eventId)
+		detail, err = getCurEventDetail(deps, eventId)
 	}
 
 	if err != nil {
@@ -280,9 +279,8 @@ func getAlertEventDetail(_ context.Context, args map[string]interface{}, _ map[s
 // Internal query helpers
 // =============================================================================
 
-func getCurEventDetail(eventId int64) (*alertEventDetailResult, error) {
-	dbCtx := aiagent.GetDBCtx()
-	e, err := models.AlertCurEventGetById(dbCtx, eventId)
+func getCurEventDetail(deps *aiagent.ToolDeps, eventId int64) (*alertEventDetailResult, error) {
+	e, err := models.AlertCurEventGetById(deps.DBCtx, eventId)
 	if err != nil || e == nil {
 		return nil, err
 	}
@@ -304,9 +302,8 @@ func getCurEventDetail(eventId int64) (*alertEventDetailResult, error) {
 	}, nil
 }
 
-func getHisEventDetail(eventId int64) (*alertEventDetailResult, error) {
-	dbCtx := aiagent.GetDBCtx()
-	e, err := models.AlertHisEventGetById(dbCtx, eventId)
+func getHisEventDetail(deps *aiagent.ToolDeps, eventId int64) (*alertEventDetailResult, error) {
+	e, err := models.AlertHisEventGetById(deps.DBCtx, eventId)
 	if err != nil || e == nil {
 		return nil, err
 	}

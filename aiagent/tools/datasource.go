@@ -55,8 +55,8 @@ func init() {
 	}, getDatasourceDetail)
 }
 
-func listDatasourcesBuiltin(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listDatasourcesBuiltin(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
@@ -68,14 +68,13 @@ func listDatasourcesBuiltin(_ context.Context, args map[string]interface{}, para
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	dsList, err := models.GetDatasourcesGetsBy(dbCtx, pluginType, "", query, "")
+	dsList, err := models.GetDatasourcesGetsBy(deps.DBCtx, pluginType, "", query, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to query datasources: %v", err)
 	}
 
 	// Apply the same DatasourceFilter hook used by the web UI
-	filtered := aiagent.FilterDatasources(dsList, user)
+	filtered := deps.FilterDatasources(dsList, user)
 
 	results := make([]datasourceResult, 0)
 	for _, ds := range filtered {
@@ -96,8 +95,8 @@ func listDatasourcesBuiltin(_ context.Context, args map[string]interface{}, para
 	return marshalList(len(results), results), nil
 }
 
-func getDatasourceDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getDatasourceDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
@@ -107,8 +106,7 @@ func getDatasourceDetail(_ context.Context, args map[string]interface{}, params 
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	ds, err := models.DatasourceGet(dbCtx, id)
+	ds, err := models.DatasourceGet(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get datasource: %v", err)
 	}
@@ -117,7 +115,7 @@ func getDatasourceDetail(_ context.Context, args map[string]interface{}, params 
 	}
 
 	// Verify visibility via the same DatasourceFilter hook used by the web UI
-	filtered := aiagent.FilterDatasources([]*models.Datasource{ds}, user)
+	filtered := deps.FilterDatasources([]*models.Datasource{ds}, user)
 	if len(filtered) == 0 {
 		return "", fmt.Errorf("forbidden: no access to this datasource")
 	}

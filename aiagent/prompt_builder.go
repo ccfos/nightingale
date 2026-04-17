@@ -73,7 +73,7 @@ func isSensitiveKey(k string) bool {
 }
 
 // buildReActSystemPrompt 构建 ReAct 系统提示词
-func (a *Agent) buildReActSystemPrompt(skills []*SkillContent) string {
+func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 	var sb strings.Builder
 
 	// 基础提示词
@@ -81,10 +81,10 @@ func (a *Agent) buildReActSystemPrompt(skills []*SkillContent) string {
 	sb.WriteString("\n\n")
 
 	// Skills 知识（如果有）
-	if len(skills) > 0 {
-		skillContents := make([]string, len(skills))
-		for i, skill := range skills {
-			if len(skills) > 1 {
+	if len(rc.skills) > 0 {
+		skillContents := make([]string, len(rc.skills))
+		for i, skill := range rc.skills {
+			if len(rc.skills) > 1 {
 				skillContents[i] = fmt.Sprintf("### %s\n\n%s", skill.Metadata.Name, skill.MainContent)
 			} else {
 				skillContents[i] = skill.MainContent
@@ -95,9 +95,8 @@ func (a *Agent) buildReActSystemPrompt(skills []*SkillContent) string {
 	}
 
 	// 工具说明
-	if len(a.cfg.Tools) > 0 {
-		tools := a.convertToolsToInfo()
-		sb.WriteString(llm.BuildToolsSection(tools))
+	if len(rc.tools) > 0 {
+		sb.WriteString(llm.BuildToolsSection(convertToolsToInfo(rc.tools)))
 	}
 
 	// 环境信息
@@ -107,17 +106,17 @@ func (a *Agent) buildReActSystemPrompt(skills []*SkillContent) string {
 }
 
 // buildPlanningPrompt 构建规划阶段的系统提示词
-func (a *Agent) buildPlanningPrompt(skills []*SkillContent) string {
+func (a *Agent) buildPlanningPrompt(rc *runCtx) string {
 	var sb strings.Builder
 
 	sb.WriteString(prompts.PlanSystemPrompt)
 	sb.WriteString("\n\n")
 
 	// Skills 知识
-	if len(skills) > 0 {
-		skillContents := make([]string, len(skills))
-		for i, skill := range skills {
-			if len(skills) > 1 {
+	if len(rc.skills) > 0 {
+		skillContents := make([]string, len(rc.skills))
+		for i, skill := range rc.skills {
+			if len(rc.skills) > 1 {
 				skillContents[i] = fmt.Sprintf("### %s\n\n%s", skill.Metadata.Name, skill.MainContent)
 			} else {
 				skillContents[i] = skill.MainContent
@@ -129,25 +128,24 @@ func (a *Agent) buildPlanningPrompt(skills []*SkillContent) string {
 	}
 
 	// 工具列表（简洁版）
-	if len(a.cfg.Tools) > 0 {
-		tools := a.convertToolsToInfo()
-		sb.WriteString(llm.BuildToolsListBrief(tools))
+	if len(rc.tools) > 0 {
+		sb.WriteString(llm.BuildToolsListBrief(convertToolsToInfo(rc.tools)))
 	}
 
 	return sb.String()
 }
 
 // buildStepExecutionPrompt 构建步骤执行的系统提示词
-func (a *Agent) buildStepExecutionPrompt(step *PlanStep, previousFindings []string, skills []*SkillContent) string {
+func (a *Agent) buildStepExecutionPrompt(step *PlanStep, previousFindings []string, rc *runCtx) string {
 	var sb strings.Builder
 
 	sb.WriteString(prompts.StepExecutionPrompt)
 	sb.WriteString("\n\n")
 
 	// Skills 知识
-	if len(skills) > 0 {
-		skillContents := make([]string, len(skills))
-		for i, skill := range skills {
+	if len(rc.skills) > 0 {
+		skillContents := make([]string, len(rc.skills))
+		for i, skill := range rc.skills {
 			skillContents[i] = skill.MainContent
 		}
 		sb.WriteString(llm.BuildSkillsSection(skillContents))
@@ -160,9 +158,8 @@ func (a *Agent) buildStepExecutionPrompt(step *PlanStep, previousFindings []stri
 	sb.WriteString(llm.BuildPreviousFindingsSection(previousFindings))
 
 	// 工具列表
-	if len(a.cfg.Tools) > 0 {
-		tools := a.convertToolsToInfo()
-		sb.WriteString(llm.BuildToolsListBrief(tools))
+	if len(rc.tools) > 0 {
+		sb.WriteString(llm.BuildToolsListBrief(convertToolsToInfo(rc.tools)))
 	}
 
 	sb.WriteString("\nUse 'Step Complete' as the Action when you have gathered enough information for this step.\n")
@@ -171,15 +168,15 @@ func (a *Agent) buildStepExecutionPrompt(step *PlanStep, previousFindings []stri
 }
 
 // buildSynthesisPrompt 构建综合分析提示词
-func (a *Agent) buildSynthesisPrompt(skills []*SkillContent) string {
+func (a *Agent) buildSynthesisPrompt(rc *runCtx) string {
 	var sb strings.Builder
 
 	sb.WriteString(prompts.SynthesisPrompt)
 	sb.WriteString("\n\n")
 
-	if len(skills) > 0 {
-		skillContents := make([]string, len(skills))
-		for i, skill := range skills {
+	if len(rc.skills) > 0 {
+		skillContents := make([]string, len(rc.skills))
+		for i, skill := range rc.skills {
 			skillContents[i] = skill.MainContent
 		}
 		sb.WriteString(llm.BuildSkillsSection(skillContents))
@@ -246,9 +243,9 @@ func (a *Agent) buildSynthesisUserMessage(req *AgentRequest, plan *ExecutionPlan
 }
 
 // convertToolsToInfo 将 AgentTool 转换为 llm.ToolInfo
-func (a *Agent) convertToolsToInfo() []llm.ToolInfo {
-	tools := make([]llm.ToolInfo, len(a.cfg.Tools))
-	for i, tool := range a.cfg.Tools {
+func convertToolsToInfo(src []AgentTool) []llm.ToolInfo {
+	tools := make([]llm.ToolInfo, len(src))
+	for i, tool := range src {
 		params := make([]llm.ToolParamInfo, len(tool.Parameters))
 		for j, param := range tool.Parameters {
 			params[j] = llm.ToolParamInfo{

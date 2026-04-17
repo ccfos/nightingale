@@ -89,7 +89,7 @@ SQL 类数据源需提供 sql；ES 类需提供 index + filter；VictoriaLogs �
 // Prometheus query handler
 // =============================================================================
 
-func queryPrometheusTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+func queryPrometheusTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	dsId := getDatasourceId(params)
 	if dsId == 0 {
 		return "", fmt.Errorf("datasource_id not found in params")
@@ -105,7 +105,7 @@ func queryPrometheusTool(ctx context.Context, args map[string]interface{}, param
 		queryType = "instant"
 	}
 
-	client := aiagent.GetPromClient(dsId)
+	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
 	}
@@ -214,7 +214,7 @@ var esLikeDatasourceTypes = map[string]bool{
 	"elasticsearch": true, "opensearch": true,
 }
 
-func queryTimeseriesDataTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+func queryTimeseriesDataTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	dsId := getDatasourceId(params)
 	dsType := getDatasourceType(params)
 	if dsId == 0 {
@@ -224,7 +224,7 @@ func queryTimeseriesDataTool(ctx context.Context, args map[string]interface{}, p
 		return "", fmt.Errorf("datasource_type not found in params")
 	}
 
-	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
+	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
@@ -353,7 +353,7 @@ func buildQueryDataParam(dsType string, args map[string]interface{}, from, to in
 // Log query handler (Datasource.QueryLog)
 // =============================================================================
 
-func queryLogDataTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+func queryLogDataTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	dsId := getDatasourceId(params)
 	dsType := getDatasourceType(params)
 	if dsId == 0 {
@@ -363,7 +363,7 @@ func queryLogDataTool(ctx context.Context, args map[string]interface{}, params m
 		return "", fmt.Errorf("datasource_type not found in params")
 	}
 
-	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
+	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}

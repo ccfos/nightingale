@@ -32,12 +32,12 @@ func init() {
 	}, listUsers)
 }
 
-func listUsers(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listUsers(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermUsers); err != nil {
+	if err := checkPerm(deps, user, PermUsers); err != nil {
 		return "", err
 	}
 
@@ -47,8 +47,7 @@ func listUsers(_ context.Context, args map[string]interface{}, params map[string
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	users, err := models.UserGets(dbCtx, query, limit, 0, 0, 0, "username", false, nil, nil, nil)
+	users, err := models.UserGets(deps.DBCtx, query, limit, 0, 0, 0, "username", false, nil, nil, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to query users: %v", err)
 	}

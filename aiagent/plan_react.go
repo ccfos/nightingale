@@ -11,7 +11,7 @@ import (
 )
 
 // executePlanReAct 执行 Plan+ReAct Agent（统一入口，支持流式/非流式 + Skills）
-func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills []*SkillContent) *AgentResponse {
+func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, rc *runCtx) *AgentResponse {
 	streaming := req.StreamChan != nil
 	requestID := ""
 	if req.Metadata != nil {
@@ -39,7 +39,7 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 		}
 	}
 
-	plan, err := a.generatePlan(ctx, req, userMessage, skills)
+	plan, err := a.generatePlan(ctx, req, userMessage, rc)
 	if err != nil {
 		resp.Error = fmt.Sprintf("failed to generate plan: %v", err)
 		return resp
@@ -95,7 +95,7 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 
 		logger.Infof("[Agent] Executing step %d/%d: %s", i+1, len(plan.Steps), step.Goal)
 
-		stepResult := a.executeStep(ctx, req, step, allFindings, skills)
+		stepResult := a.executeStep(ctx, req, step, allFindings, rc)
 
 		// 更新步骤状态
 		if stepResult.Error != "" {
@@ -128,7 +128,7 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 		}
 	}
 
-	synthesis, err := a.synthesizeResults(ctx, req, plan, allFindings, skills)
+	synthesis, err := a.synthesizeResults(ctx, req, plan, allFindings, rc)
 	if err != nil {
 		logger.Warningf("[Agent] Synthesis failed: %v, using step findings as result", err)
 		synthesis = strings.Join(allFindings, "\n\n")
@@ -143,14 +143,14 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 }
 
 // executePlanReActWithDone 执行 Plan+ReAct 并在流式模式下发送 done/error
-func (a *Agent) executePlanReActWithDone(ctx context.Context, req *AgentRequest, skills []*SkillContent) {
+func (a *Agent) executePlanReActWithDone(ctx context.Context, req *AgentRequest, rc *runCtx) {
 	streamChan := req.StreamChan
 	requestID := ""
 	if req.Metadata != nil {
 		requestID = req.Metadata["request_id"]
 	}
 
-	resp := a.executePlanReAct(ctx, req, skills)
+	resp := a.executePlanReAct(ctx, req, rc)
 
 	if resp.Error != "" && !resp.Success {
 		streamChan <- &StreamChunk{
@@ -173,8 +173,8 @@ func (a *Agent) executePlanReActWithDone(ctx context.Context, req *AgentRequest,
 }
 
 // generatePlan 生成执行计划（统一支持流式/非流式）
-func (a *Agent) generatePlan(ctx context.Context, req *AgentRequest, userMessage string, skills []*SkillContent) (*ExecutionPlan, error) {
-	systemPrompt := a.buildPlanningPrompt(skills)
+func (a *Agent) generatePlan(ctx context.Context, req *AgentRequest, userMessage string, rc *runCtx) (*ExecutionPlan, error) {
+	systemPrompt := a.buildPlanningPrompt(rc)
 
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
@@ -196,9 +196,9 @@ func (a *Agent) generatePlan(ctx context.Context, req *AgentRequest, userMessage
 }
 
 // executeStep 执行单个计划步骤（使用 ReAct 循环）
-func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanStep, previousFindings []string, skills []*SkillContent) *AgentResponse {
+func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanStep, previousFindings []string, rc *runCtx) *AgentResponse {
 	// 构建步骤执行的系统提示词
-	systemPrompt := a.buildStepExecutionPrompt(step, previousFindings, skills)
+	systemPrompt := a.buildStepExecutionPrompt(step, previousFindings, rc)
 
 	// 构建步骤的用户消息
 	userMessage := a.buildStepUserMessage(req, step)
@@ -222,6 +222,7 @@ func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanSt
 		MaxIterations:  maxIter,
 		TimeoutMessage: fmt.Sprintf("step %d timeout", step.StepNumber),
 		LogPrefix:      fmt.Sprintf("Step-%d", step.StepNumber),
+		Tools:          rc.tools,
 		StreamChan:     req.StreamChan,
 		RequestID:      requestID,
 		IsComplete: func(action string) bool {
@@ -232,8 +233,8 @@ func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanSt
 }
 
 // synthesizeResults 综合所有步骤的结果（统一支持流式/非流式）
-func (a *Agent) synthesizeResults(ctx context.Context, req *AgentRequest, plan *ExecutionPlan, allFindings []string, skills []*SkillContent) (string, error) {
-	systemPrompt := a.buildSynthesisPrompt(skills)
+func (a *Agent) synthesizeResults(ctx context.Context, req *AgentRequest, plan *ExecutionPlan, allFindings []string, rc *runCtx) (string, error) {
+	systemPrompt := a.buildSynthesisPrompt(rc)
 	userMsg := a.buildSynthesisUserMessage(req, plan, allFindings)
 
 	messages := []ChatMessage{

@@ -77,7 +77,7 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 		}
 
 		// 执行工具
-		observation := a.executeTool(ctx, step.Action, step.ActionInput, req)
+		observation := a.executeTool(ctx, step.Action, step.ActionInput, req, config.Tools)
 		step.Observation = observation
 		resp.Steps[len(resp.Steps)-1] = step
 
@@ -110,7 +110,7 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 }
 
 // executeReAct 执行 ReAct Agent（统一入口，支持流式/非流式 + Skills）
-func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*SkillContent) *AgentResponse {
+func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, rc *runCtx) *AgentResponse {
 	// 构建用户消息
 	userMessage, err := a.buildUserMessage(req)
 	if err != nil {
@@ -118,7 +118,7 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 	}
 
 	// 构建系统提示词（自动包含 Skills 知识）
-	systemPrompt := a.buildReActSystemPrompt(skills)
+	systemPrompt := a.buildReActSystemPrompt(rc)
 
 	// 组装消息：system → 历史对话 → 当前 user
 	messages := []ChatMessage{
@@ -143,7 +143,7 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 	// tool calls). Pick the highest value across all active skills so a cheap
 	// global default doesn't starve an expensive selected skill.
 	maxIter := a.cfg.MaxIterations
-	for _, sk := range skills {
+	for _, sk := range rc.skills {
 		if sk == nil || sk.Metadata == nil {
 			continue
 		}
@@ -157,6 +157,7 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 		MaxIterations:        maxIter,
 		TimeoutMessage:       "agent execution timeout",
 		LogPrefix:            "AI Agent",
+		Tools:                rc.tools,
 		StreamChan:           req.StreamChan,
 		RequestID:            requestID,
 		IsComplete:           func(action string) bool { return action == ActionFinalAnswer },
@@ -166,14 +167,14 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 
 // executeReActWithDone 执行 ReAct 并在流式模式下发送 done/error chunk
 // 用于流式模式的顶层调用
-func (a *Agent) executeReActWithDone(ctx context.Context, req *AgentRequest, skills []*SkillContent) {
+func (a *Agent) executeReActWithDone(ctx context.Context, req *AgentRequest, rc *runCtx) {
 	streamChan := req.StreamChan
 	requestID := ""
 	if req.Metadata != nil {
 		requestID = req.Metadata["request_id"]
 	}
 
-	resp := a.executeReAct(ctx, req, skills)
+	resp := a.executeReAct(ctx, req, rc)
 
 	if resp.Error != "" && !resp.Success {
 		streamChan <- &StreamChunk{

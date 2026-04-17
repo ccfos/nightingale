@@ -67,7 +67,7 @@ func init() {
 //
 // Returns a pre-formatted error if neither source yields a usable id, so
 // callers can propagate it straight to the tool Observation.
-func resolveSQLDatasource(args map[string]interface{}, params map[string]string) (int64, string, error) {
+func resolveSQLDatasource(deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (int64, string, error) {
 	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
 		dsId = getDatasourceId(params)
@@ -83,8 +83,8 @@ func resolveSQLDatasource(args map[string]interface{}, params map[string]string)
 	if dsType == "" {
 		// DB fallback — lets the LLM pass only datasource_id without
 		// having to know whether id=5 is mysql or doris.
-		if ctx := aiagent.GetDBCtx(); ctx != nil {
-			infos, err := models.GetDatasourceInfosByIds(ctx, []int64{dsId})
+		if deps != nil && deps.DBCtx != nil {
+			infos, err := models.GetDatasourceInfosByIds(deps.DBCtx, []int64{dsId})
 			if err != nil {
 				return 0, "", fmt.Errorf("failed to resolve datasource type for id=%d: %v", dsId, err)
 			}
@@ -99,13 +99,13 @@ func resolveSQLDatasource(args map[string]interface{}, params map[string]string)
 	return dsId, dsType, nil
 }
 
-func listDatabasesTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(args, params)
+func listDatabasesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}
 
-	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
+	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
@@ -147,8 +147,8 @@ func listDatabasesTool(ctx context.Context, args map[string]interface{}, params 
 	return string(bytes), nil
 }
 
-func listTablesTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(args, params)
+func listTablesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}
@@ -161,7 +161,7 @@ func listTablesTool(ctx context.Context, args map[string]interface{}, params map
 		return "", fmt.Errorf("invalid database name: %s", database)
 	}
 
-	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
+	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}
@@ -204,8 +204,8 @@ func listTablesTool(ctx context.Context, args map[string]interface{}, params map
 	return string(bytes), nil
 }
 
-func describeTableTool(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(args, params)
+func describeTableTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}
@@ -225,7 +225,7 @@ func describeTableTool(ctx context.Context, args map[string]interface{}, params 
 		return "", fmt.Errorf("invalid table name: %s", table)
 	}
 
-	plug, exists := aiagent.GetSQLDatasource(dsType, dsId)
+	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
 	}

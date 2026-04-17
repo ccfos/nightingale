@@ -34,6 +34,11 @@ func WithLLMConfig(cfg *llm.Config) AgentOption {
 	}
 }
 
+// WithToolDeps 注入内置工具的运行期依赖（DBCtx、数据源获取器等）
+func WithToolDeps(d *ToolDeps) AgentOption {
+	return func(a *Agent) { a.toolDeps = d }
+}
+
 // NewAgent 创建 Agent 实例
 func NewAgent(cfg *AgentConfig, opts ...AgentOption) *Agent {
 	a := &Agent{cfg: cfg}
@@ -71,7 +76,12 @@ func (a *Agent) InitSkills(skillsPath string) {
 	if abs, err := filepath.Abs(skillsPath); err == nil {
 		skillsPath = abs
 	}
-	SetSkillsPath(skillsPath)
+	// skillsPath 被 list_files / read_file / grep_files 这几个 builtin tool
+	// 读（用作 resolveBasePath 的安全基准），经由 a.toolDeps 透传。
+	if a.toolDeps == nil {
+		a.toolDeps = &ToolDeps{}
+	}
+	a.toolDeps.SkillsPath = skillsPath
 	a.skillRegistry = NewSkillRegistry(skillsPath)
 	if a.cfg.Skills.AutoSelect {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
@@ -99,27 +109,30 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	if a.cfg.Skills != nil && a.skillRegistry != nil {
 		activeSkills = a.selectAndLoadSkills(timeoutCtx, req)
 		if len(activeSkills) > 0 {
-			a.registerSkillTools(activeSkills)
 			logger.Debugf("AI Agent loaded %d skills", len(activeSkills))
 		}
 	}
 
-	// MCP 工具自动发现
+	// 构造本次 Run 的工具表：cfg.Tools 作只读种子 → 追加 skill 工具 → 追加 MCP 工具
+	tools := append([]AgentTool(nil), a.cfg.Tools...)
+	tools = a.appendSkillTools(tools, activeSkills)
 	if a.mcpClientManager != nil && len(a.mcpServers) > 0 {
 		mcpCtx, mcpCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		a.discoverMCPTools(mcpCtx)
+		tools = a.appendMCPTools(mcpCtx, tools)
 		mcpCancel()
 	}
+
+	rc := &runCtx{skills: activeSkills, tools: tools}
 
 	// 流式模式：启动 goroutine，立即返回
 	// cfg.Stream 仅作为"默认创建 channel"的开关；如果调用方已传 StreamChan 则直接用
 	if req.StreamChan != nil {
-		return a.runWithStream(timeoutCtx, cancel, req, activeSkills)
+		return a.runWithStream(timeoutCtx, cancel, req, rc)
 	}
 	if a.cfg.Stream {
 		// 直接调用方（如 router）设了 cfg.Stream 但没传 StreamChan，自动创建
 		req.StreamChan = make(chan *StreamChunk, 100)
-		return a.runWithStream(timeoutCtx, cancel, req, activeSkills)
+		return a.runWithStream(timeoutCtx, cancel, req, rc)
 	}
 
 	// 非流式模式
@@ -128,9 +141,9 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	var resp *AgentResponse
 	switch a.cfg.AgentMode {
 	case AgentModePlanReAct:
-		resp = a.executePlanReAct(timeoutCtx, req, activeSkills)
+		resp = a.executePlanReAct(timeoutCtx, req, rc)
 	default:
-		resp = a.executeReAct(timeoutCtx, req, activeSkills)
+		resp = a.executeReAct(timeoutCtx, req, rc)
 	}
 
 	return resp, nil
@@ -138,7 +151,7 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 
 // runWithStream 流式执行 - 启动 goroutine 后立即返回
 // 前置条件：req.StreamChan 不为 nil（由 Run 保证）
-func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, req *AgentRequest, activeSkills []*SkillContent) (*AgentResponse, error) {
+func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, req *AgentRequest, rc *runCtx) (*AgentResponse, error) {
 	streamChan := req.StreamChan
 
 	go func() {
@@ -150,9 +163,9 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 		logger.Infof("[Agent] Stream goroutine started, mode=%s", a.cfg.AgentMode)
 		switch a.cfg.AgentMode {
 		case AgentModePlanReAct:
-			a.executePlanReActWithDone(ctx, req, activeSkills)
+			a.executePlanReActWithDone(ctx, req, rc)
 		default:
-			a.executeReActWithDone(ctx, req, activeSkills)
+			a.executeReActWithDone(ctx, req, rc)
 		}
 		logger.Infof("[Agent] Stream goroutine finished")
 	}()
@@ -261,27 +274,33 @@ func (a *Agent) selectAndLoadSkills(ctx context.Context, req *AgentRequest) []*S
 	return activeSkills
 }
 
-// registerSkillTools 注册 Skill 工具到可用工具列表
-func (a *Agent) registerSkillTools(skills []*SkillContent) {
-	globalTools := make(map[string]bool)
-	for _, tool := range a.cfg.Tools {
-		globalTools[tool.Name] = true
+// appendSkillTools 基于 base 工具表追加 skill 关联的 builtin / skill_tool
+// 纯函数：不写 a.cfg，返回新切片（供 runCtx 使用）
+func (a *Agent) appendSkillTools(base []AgentTool, skills []*SkillContent) []AgentTool {
+	if len(skills) == 0 {
+		return base
 	}
 
+	seen := make(map[string]bool, len(base))
+	for _, t := range base {
+		seen[t.Name] = true
+	}
+	result := base
+
 	for _, skill := range skills {
-		// 注册内置工具
+		// 追加内置工具
 		for _, builtinToolName := range skill.Metadata.BuiltinTools {
-			if globalTools[builtinToolName] {
+			if seen[builtinToolName] {
 				continue
 			}
 			if toolDef, ok := GetBuiltinToolDef(builtinToolName); ok {
-				a.cfg.Tools = append(a.cfg.Tools, toolDef)
-				globalTools[builtinToolName] = true
+				result = append(result, toolDef)
+				seen[builtinToolName] = true
 				logger.Debugf("Registered builtin tool: %s (from skill: %s)", builtinToolName, skill.Metadata.Name)
 			}
 		}
 
-		// 注册 skill_tools
+		// 追加 skill_tools
 		toolDescriptions, err := a.skillRegistry.LoadAllSkillToolDescriptions(skill.Metadata.Name)
 		if err != nil {
 			logger.Warningf("Failed to load skill tool descriptions for '%s': %v", skill.Metadata.Name, err)
@@ -296,7 +315,7 @@ func (a *Agent) registerSkillTools(skills []*SkillContent) {
 		}
 
 		for _, toolName := range toolNames {
-			if globalTools[toolName] {
+			if seen[toolName] {
 				continue
 			}
 
@@ -309,18 +328,19 @@ func (a *Agent) registerSkillTools(skills []*SkillContent) {
 				}
 			}
 
-			tool := AgentTool{
+			result = append(result, AgentTool{
 				Name:        toolName,
 				Description: description,
 				Type:        ToolTypeSkill,
 				SkillName:   skill.Metadata.Name,
-			}
-			a.cfg.Tools = append(a.cfg.Tools, tool)
-			globalTools[toolName] = true
+			})
+			seen[toolName] = true
 
 			logger.Debugf("Registered skill tool: %s (from skill: %s)", toolName, skill.Metadata.Name)
 		}
 	}
+
+	return result
 }
 
 // buildTaskContext 构建任务上下文（用于技能选择）

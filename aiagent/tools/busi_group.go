@@ -40,8 +40,8 @@ func init() {
 	}, listBusiGroups)
 }
 
-func listBusiGroups(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listBusiGroups(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func listBusiGroups(_ context.Context, args map[string]interface{}, params map[s
 		limit = 200
 	}
 
-	groups, err := user.BusiGroups(aiagent.GetDBCtx(), limit, query)
+	groups, err := user.BusiGroups(deps.DBCtx, limit, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to query busi groups: %v", err)
 	}

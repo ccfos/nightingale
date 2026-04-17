@@ -55,16 +55,16 @@ func init() {
 	}, getAlertMuteDetail)
 }
 
-func listAlertMutes(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listAlertMutes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertMutes); err != nil {
+	if err := checkPerm(deps, user, PermAlertMutes); err != nil {
 		return "", err
 	}
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -75,15 +75,14 @@ func listAlertMutes(_ context.Context, args map[string]interface{}, params map[s
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	var mutes []models.AlertMute
 	if isAdmin {
-		mutes, err = models.AlertMuteGetsByBGIds(dbCtx, nil)
+		mutes, err = models.AlertMuteGetsByBGIds(deps.DBCtx, nil)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []alertMuteResult{}), nil
 		}
-		mutes, err = models.AlertMuteGetsByBGIds(dbCtx, bgids)
+		mutes, err = models.AlertMuteGetsByBGIds(deps.DBCtx, bgids)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query alert mutes: %v", err)
@@ -112,12 +111,12 @@ func listAlertMutes(_ context.Context, args map[string]interface{}, params map[s
 	return marshalList(len(results), results), nil
 }
 
-func getAlertMuteDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getAlertMuteDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertMutes); err != nil {
+	if err := checkPerm(deps, user, PermAlertMutes); err != nil {
 		return "", err
 	}
 
@@ -126,8 +125,7 @@ func getAlertMuteDetail(_ context.Context, args map[string]interface{}, params m
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	mute, err := models.AlertMuteGetById(dbCtx, id)
+	mute, err := models.AlertMuteGetById(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get alert mute: %v", err)
 	}
@@ -136,7 +134,7 @@ func getAlertMuteDetail(_ context.Context, args map[string]interface{}, params m
 	}
 
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}

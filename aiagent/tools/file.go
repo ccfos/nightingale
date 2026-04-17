@@ -46,8 +46,11 @@ func init() {
 
 // resolveBasePath 解析基础目录路径，支持 skill 目录和 integrations 目录
 // base 可以是技能名(如 "n9e-create-dashboard")或 "integrations/分类"(如 "integrations/Linux")
-func resolveBasePath(base, subPath string) (string, error) {
-	skillsPath := aiagent.GetSkillsPath()
+func resolveBasePath(deps *aiagent.ToolDeps, base, subPath string) (string, error) {
+	if deps == nil {
+		return "", fmt.Errorf("skills path not configured")
+	}
+	skillsPath := deps.SkillsPath
 	if skillsPath == "" {
 		return "", fmt.Errorf("skills path not configured")
 	}
@@ -87,13 +90,13 @@ func resolveBasePath(base, subPath string) (string, error) {
 	return fullPath, nil
 }
 
-func listFiles(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+func listFiles(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
 	base := getArgString(args, "base")
 	if base == "" {
 		return "", fmt.Errorf("base is required")
 	}
 
-	dirPath, err := resolveBasePath(base, getArgString(args, "path"))
+	dirPath, err := resolveBasePath(deps, base, getArgString(args, "path"))
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +128,7 @@ func listFiles(_ context.Context, args map[string]interface{}, _ map[string]stri
 	return sb.String(), nil
 }
 
-func readFile(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+func readFile(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
 	base := getArgString(args, "base")
 	if base == "" {
 		return "", fmt.Errorf("base is required")
@@ -136,7 +139,7 @@ func readFile(_ context.Context, args map[string]interface{}, _ map[string]strin
 		return "", fmt.Errorf("path is required")
 	}
 
-	filePath, err := resolveBasePath(base, path)
+	filePath, err := resolveBasePath(deps, base, path)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +158,7 @@ func readFile(_ context.Context, args map[string]interface{}, _ map[string]strin
 	return string(data), nil
 }
 
-func grepFiles(_ context.Context, args map[string]interface{}, _ map[string]string) (string, error) {
+func grepFiles(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
 	base := getArgString(args, "base")
 	if base == "" {
 		return "", fmt.Errorf("base is required")
@@ -167,7 +170,7 @@ func grepFiles(_ context.Context, args map[string]interface{}, _ map[string]stri
 	}
 	patternLower := strings.ToLower(pattern)
 
-	searchDir, err := resolveBasePath(base, getArgString(args, "path"))
+	searchDir, err := resolveBasePath(deps, base, getArgString(args, "path"))
 	if err != nil {
 		return "", err
 	}

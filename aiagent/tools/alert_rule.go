@@ -116,16 +116,16 @@ func isValidCate(cate string) bool {
 	return false
 }
 
-func listAlertRules(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listAlertRules(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertRules); err != nil {
+	if err := checkPerm(deps, user, PermAlertRules); err != nil {
 		return "", err
 	}
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -140,15 +140,14 @@ func listAlertRules(_ context.Context, args map[string]interface{}, params map[s
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	var rules []models.AlertRule
 	if isAdmin {
-		rules, err = models.AlertRuleGetsByBGIds(dbCtx, nil)
+		rules, err = models.AlertRuleGetsByBGIds(deps.DBCtx, nil)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []alertRuleResult{}), nil
 		}
-		rules, err = models.AlertRuleGetsByBGIds(dbCtx, bgids)
+		rules, err = models.AlertRuleGetsByBGIds(deps.DBCtx, bgids)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query alert rules: %v", err)
@@ -180,12 +179,12 @@ func listAlertRules(_ context.Context, args map[string]interface{}, params map[s
 	return marshalList(len(results), results), nil
 }
 
-func getAlertRuleDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getAlertRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertRules); err != nil {
+	if err := checkPerm(deps, user, PermAlertRules); err != nil {
 		return "", err
 	}
 
@@ -194,8 +193,7 @@ func getAlertRuleDetail(_ context.Context, args map[string]interface{}, params m
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	rule, err := models.AlertRuleGetById(dbCtx, id)
+	rule, err := models.AlertRuleGetById(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get alert rule: %v", err)
 	}
@@ -205,7 +203,7 @@ func getAlertRuleDetail(_ context.Context, args map[string]interface{}, params m
 
 	// Check data-level permission
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}
@@ -252,12 +250,12 @@ func getAlertRuleDetail(_ context.Context, args map[string]interface{}, params m
 //
 // Host type is special-cased: it has no datasource, so datasource_id is
 // optional and datasource_queries is left empty.
-func createAlertRule(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermAlertRules); err != nil {
+	if err := checkPerm(deps, user, PermAlertRules); err != nil {
 		return "", err
 	}
 
@@ -292,10 +290,8 @@ func createAlertRule(_ context.Context, args map[string]interface{}, params map[
 	evalInterval := getArgInt(args, "eval_interval", 30)
 	forDuration := getArgInt(args, "for_duration", 60)
 
-	dbCtx := aiagent.GetDBCtx()
-
 	// Verify business group exists and the user has access.
-	bg, err := models.BusiGroupGetById(dbCtx, groupId)
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get busi group: %v", err)
 	}
@@ -303,7 +299,7 @@ func createAlertRule(_ context.Context, args map[string]interface{}, params map[
 		return "", fmt.Errorf("busi group not found: id=%d", groupId)
 	}
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}
@@ -456,7 +452,7 @@ func createAlertRule(_ context.Context, args map[string]interface{}, params map[
 		return "", fmt.Errorf("failed to convert rule fields: %v", err)
 	}
 
-	if err := rule.Add(dbCtx); err != nil {
+	if err := rule.Add(deps.DBCtx); err != nil {
 		// Map the upstream "AlertRule already exists" error to an instructive
 		// message so the LLM retries with a different name immediately
 		// instead of querying list_alert_rules to investigate.
@@ -487,7 +483,7 @@ func createAlertRule(_ context.Context, args map[string]interface{}, params map[
 	}
 	if cate != "host" {
 		result["datasource_id"] = dsId
-		if ds, dsErr := models.DatasourceGet(dbCtx, dsId); dsErr == nil && ds != nil {
+		if ds, dsErr := models.DatasourceGet(deps.DBCtx, dsId); dsErr == nil && ds != nil {
 			result["datasource_name"] = ds.Name
 		}
 	}

@@ -69,16 +69,16 @@ func init() {
 	}, createDashboard)
 }
 
-func listDashboards(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func listDashboards(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermDashboards); err != nil {
+	if err := checkPerm(deps, user, PermDashboards); err != nil {
 		return "", err
 	}
 
-	bgids, isAdmin, err := getUserBgids(user)
+	bgids, isAdmin, err := getUserBgids(deps, user)
 	if err != nil {
 		return "", err
 	}
@@ -89,15 +89,14 @@ func listDashboards(_ context.Context, args map[string]interface{}, params map[s
 		limit = 200
 	}
 
-	dbCtx := aiagent.GetDBCtx()
 	var boards []models.Board
 	if isAdmin {
-		boards, err = models.BoardGetsByBGIds(dbCtx, nil, query)
+		boards, err = models.BoardGetsByBGIds(deps.DBCtx, nil, query)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []dashboardResult{}), nil
 		}
-		boards, err = models.BoardGetsByBGIds(dbCtx, bgids, query)
+		boards, err = models.BoardGetsByBGIds(deps.DBCtx, bgids, query)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query dashboards: %v", err)
@@ -122,12 +121,12 @@ func listDashboards(_ context.Context, args map[string]interface{}, params map[s
 	return marshalList(len(results), results), nil
 }
 
-func createDashboard(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermDashboards); err != nil {
+	if err := checkPerm(deps, user, PermDashboards); err != nil {
 		return "", err
 	}
 
@@ -141,10 +140,8 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 		return "", fmt.Errorf("name is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-
 	// Check business group
-	bg, err := models.BusiGroupGetById(dbCtx, groupId)
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get busi group: %v", err)
 	}
@@ -152,7 +149,7 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 		return "", fmt.Errorf("busi group not found: id=%d", groupId)
 	}
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}
@@ -201,7 +198,7 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 		UpdateBy: user.Username,
 	}
 
-	if err := board.AtomicAdd(dbCtx, configs); err != nil {
+	if err := board.AtomicAdd(deps.DBCtx, configs); err != nil {
 		// Instructive error on name conflict: tell the LLM exactly how to recover
 		// so it doesn't waste iterations calling list_dashboards to investigate.
 		if strings.Contains(err.Error(), "Name duplicate") {
@@ -228,19 +225,19 @@ func createDashboard(_ context.Context, args map[string]interface{}, params map[
 		"panels_count":     len(panelSpecs),
 		"variables_count":  len(varSpecs),
 	}
-	if ds, dsErr := models.DatasourceGet(dbCtx, dsId); dsErr == nil && ds != nil {
+	if ds, dsErr := models.DatasourceGet(deps.DBCtx, dsId); dsErr == nil && ds != nil {
 		result["datasource_name"] = ds.Name
 	}
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil
 }
 
-func getDashboardDetail(_ context.Context, args map[string]interface{}, params map[string]string) (string, error) {
-	user, err := getUser(params)
+func getDashboardDetail(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(user, PermDashboards); err != nil {
+	if err := checkPerm(deps, user, PermDashboards); err != nil {
 		return "", err
 	}
 
@@ -249,8 +246,7 @@ func getDashboardDetail(_ context.Context, args map[string]interface{}, params m
 		return "", fmt.Errorf("id is required")
 	}
 
-	dbCtx := aiagent.GetDBCtx()
-	board, err := models.BoardGetByID(dbCtx, id)
+	board, err := models.BoardGetByID(deps.DBCtx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get dashboard: %v", err)
 	}
@@ -259,7 +255,7 @@ func getDashboardDetail(_ context.Context, args map[string]interface{}, params m
 	}
 
 	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(user)
+		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}

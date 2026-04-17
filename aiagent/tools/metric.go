@@ -34,7 +34,7 @@ func init() {
 	}, getMetricLabels)
 }
 
-func listMetrics(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+func listMetrics(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	// Prefer the datasource_id supplied by the LLM via tool args; fall back to
 	// the chat-level params (set by query_generator action when the frontend
 	// pre-selected a datasource).
@@ -52,7 +52,7 @@ func listMetrics(ctx context.Context, args map[string]interface{}, params map[st
 		limit = int(l)
 	}
 
-	client := aiagent.GetPromClient(dsId)
+	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
 	}
@@ -80,7 +80,7 @@ func listMetrics(ctx context.Context, args map[string]interface{}, params map[st
 	return string(bytes), nil
 }
 
-func getMetricLabels(ctx context.Context, args map[string]interface{}, params map[string]string) (string, error) {
+func getMetricLabels(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
 		dsId = getDatasourceId(params)
@@ -94,7 +94,7 @@ func getMetricLabels(ctx context.Context, args map[string]interface{}, params ma
 		return "", fmt.Errorf("metric parameter is required")
 	}
 
-	client := aiagent.GetPromClient(dsId)
+	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
 	}
