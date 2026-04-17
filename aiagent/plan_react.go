@@ -22,10 +22,6 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 		Steps: []ReActStep{},
 	}
 
-	// 初始化工作记忆
-	memory := a.initWorkingMemory()
-	resp.Memory = memory
-
 	// 1. 构建用户消息
 	userMessage, err := a.buildUserMessage(req)
 	if err != nil {
@@ -99,7 +95,7 @@ func (a *Agent) executePlanReAct(ctx context.Context, req *AgentRequest, skills 
 
 		logger.Infof("[Agent] Executing step %d/%d: %s", i+1, len(plan.Steps), step.Goal)
 
-		stepResult := a.executeStep(ctx, req, step, memory, allFindings, skills)
+		stepResult := a.executeStep(ctx, req, step, allFindings, skills)
 
 		// 更新步骤状态
 		if stepResult.Error != "" {
@@ -200,7 +196,7 @@ func (a *Agent) generatePlan(ctx context.Context, req *AgentRequest, userMessage
 }
 
 // executeStep 执行单个计划步骤（使用 ReAct 循环）
-func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanStep, memory *WorkingMemory, previousFindings []string, skills []*SkillContent) *AgentResponse {
+func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanStep, previousFindings []string, skills []*SkillContent) *AgentResponse {
 	// 构建步骤执行的系统提示词
 	systemPrompt := a.buildStepExecutionPrompt(step, previousFindings, skills)
 
@@ -222,17 +218,12 @@ func (a *Agent) executeStep(ctx context.Context, req *AgentRequest, step *PlanSt
 		maxIter = DefaultMaxStepIterations
 	}
 
-	memoryEnabled := a.cfg.Memory != nil && a.cfg.Memory.Enabled
-
 	return a.runReActLoop(ctx, req, messages, &ReActLoopConfig{
-		MaxIterations:         maxIter,
-		Memory:                memory,
-		MemoryEnabled:         memoryEnabled,
-		IncludeMemoryInPrompt: memoryEnabled && a.cfg.Memory.IncludeInPrompt != nil && *a.cfg.Memory.IncludeInPrompt,
-		TimeoutMessage:        fmt.Sprintf("step %d timeout", step.StepNumber),
-		LogPrefix:             fmt.Sprintf("Step-%d", step.StepNumber),
-		StreamChan:            req.StreamChan,
-		RequestID:             requestID,
+		MaxIterations:  maxIter,
+		TimeoutMessage: fmt.Sprintf("step %d timeout", step.StepNumber),
+		LogPrefix:      fmt.Sprintf("Step-%d", step.StepNumber),
+		StreamChan:     req.StreamChan,
+		RequestID:      requestID,
 		IsComplete: func(action string) bool {
 			return action == ActionFinalAnswer || action == ActionStepComplete
 		},

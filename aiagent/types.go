@@ -37,9 +37,6 @@ const (
 	DefaultMaxPlanSteps      = 10
 	DefaultMaxReplanCount    = 2
 	DefaultMaxStepIterations = 5
-	DefaultMaxFindings       = 10
-	DefaultMaxHypotheses     = 5
-	DefaultMaxEvidence       = 20
 
 	// HTTP
 	HTTPStatusSuccessMax = 299
@@ -85,10 +82,9 @@ type AgentConfig struct {
 	MaxStepIterations int `json:"max_step_iterations,omitempty"`
 
 	// 可选能力
-	Memory *MemoryConfig `json:"memory,omitempty"`
-	Skills *SkillConfig  `json:"skills,omitempty"`
-	MCP    *MCPConfig    `json:"mcp,omitempty"`
-	Stream bool          `json:"stream,omitempty"`
+	Skills *SkillConfig `json:"skills,omitempty"`
+	MCP    *MCPConfig   `json:"mcp,omitempty"`
+	Stream bool         `json:"stream,omitempty"`
 
 	// 用户提示词模板（支持 Go 模板语法）
 	UserPromptTemplate string `json:"user_prompt_template"`
@@ -128,13 +124,12 @@ type AgentRequest struct {
 
 // AgentResponse Agent 执行结果
 type AgentResponse struct {
-	Content    string         `json:"content"`           // 最终结果文本
-	Steps      []ReActStep    `json:"steps"`             // 执行轨迹
-	Plan       *ExecutionPlan `json:"plan,omitempty"`    // 执行计划（plan_react 模式）
-	Memory     *WorkingMemory `json:"memory,omitempty"`  // 工作记忆
-	Iterations int            `json:"iterations"`        // 迭代次数
-	Success    bool           `json:"success"`           // 是否成功
-	Error      string         `json:"error,omitempty"`   // 错误信息
+	Content    string         `json:"content"`          // 最终结果文本
+	Steps      []ReActStep    `json:"steps"`            // 执行轨迹
+	Plan       *ExecutionPlan `json:"plan,omitempty"`   // 执行计划（plan_react 模式）
+	Iterations int            `json:"iterations"`       // 迭代次数
+	Success    bool           `json:"success"`          // 是否成功
+	Error      string         `json:"error,omitempty"`  // 错误信息
 }
 
 // StreamChunk Agent 自有的流式数据块
@@ -206,12 +201,9 @@ type ReActStep struct {
 
 // ReActLoopConfig ReAct 循环配置
 type ReActLoopConfig struct {
-	MaxIterations         int
-	Memory                *WorkingMemory
-	MemoryEnabled         bool
-	IncludeMemoryInPrompt bool
-	TimeoutMessage        string
-	LogPrefix             string
+	MaxIterations  int
+	TimeoutMessage string
+	LogPrefix      string
 
 	// 流式支持（nil = 非流式）
 	StreamChan chan *StreamChunk
@@ -247,41 +239,6 @@ type ExecutionPlan struct {
 	CurrentStep int        `json:"current_step"`
 	ReplanCount int        `json:"replan_count"`
 	Synthesis   string     `json:"synthesis"`
-}
-
-// ==================== Memory 类型 ====================
-
-type MemoryConfig struct {
-	Enabled         bool  `json:"enabled"`
-	MaxFindings     int   `json:"max_findings,omitempty"`
-	MaxHypotheses   int   `json:"max_hypotheses,omitempty"`
-	MaxEvidence     int   `json:"max_evidence,omitempty"`
-	IncludeInPrompt *bool `json:"include_in_prompt,omitempty"`
-}
-
-type WorkingMemory struct {
-	KeyFindings      []KeyFinding `json:"key_findings"`
-	TestedHypotheses []Hypothesis `json:"tested_hypotheses"`
-	Evidence         []Evidence   `json:"evidence"`
-}
-
-type KeyFinding struct {
-	Content   string `json:"content"`
-	Source    string `json:"source"`
-	Relevance string `json:"relevance"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-type Hypothesis struct {
-	Description string `json:"description"`
-	Status      string `json:"status"`
-	Evidence    string `json:"evidence"`
-}
-
-type Evidence struct {
-	Type    string `json:"type"`
-	Content string `json:"content"`
-	Source  string `json:"source"`
 }
 
 // ==================== LLM 消息类型 ====================

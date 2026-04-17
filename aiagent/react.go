@@ -11,8 +11,7 @@ import (
 // runReActLoop 执行 ReAct 循环的核心逻辑（统一支持流式/非流式）
 func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []ChatMessage, config *ReActLoopConfig) *AgentResponse {
 	resp := &AgentResponse{
-		Steps:  []ReActStep{},
-		Memory: config.Memory,
+		Steps: []ReActStep{},
 	}
 
 	streaming := config.StreamChan != nil
@@ -93,17 +92,7 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 			}
 		}
 
-		// 更新工作记忆
-		if config.Memory != nil {
-			a.updateWorkingMemory(config.Memory, step)
-		}
-
-		// 构建观察消息
 		observationMsg := fmt.Sprintf("Observation: %s", observation)
-		if config.MemoryEnabled && config.IncludeMemoryInPrompt && config.Memory != nil && len(config.Memory.KeyFindings) > 0 {
-			memorySummary := a.formatWorkingMemorySummary(config.Memory)
-			observationMsg = fmt.Sprintf("%s\n\n%s", observationMsg, memorySummary)
-		}
 
 		messages = append(messages, ChatMessage{Role: "assistant", Content: response})
 		messages = append(messages, ChatMessage{Role: "user", Content: observationMsg})
@@ -122,8 +111,6 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 
 // executeReAct 执行 ReAct Agent（统一入口，支持流式/非流式 + Skills）
 func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*SkillContent) *AgentResponse {
-	memoryEnabled := a.cfg.Memory != nil && a.cfg.Memory.Enabled
-
 	// 构建用户消息
 	userMessage, err := a.buildUserMessage(req)
 	if err != nil {
@@ -132,17 +119,6 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 
 	// 构建系统提示词（自动包含 Skills 知识）
 	systemPrompt := a.buildReActSystemPrompt(skills)
-
-	// 初始化工作记忆
-	var memory *WorkingMemory
-	if memoryEnabled {
-		systemPrompt = a.appendMemoryInstructions(systemPrompt)
-		memory = &WorkingMemory{
-			KeyFindings:      []KeyFinding{},
-			TestedHypotheses: []Hypothesis{},
-			Evidence:         []Evidence{},
-		}
-	}
 
 	// 组装消息：system → 历史对话 → 当前 user
 	messages := []ChatMessage{
@@ -178,16 +154,13 @@ func (a *Agent) executeReAct(ctx context.Context, req *AgentRequest, skills []*S
 	}
 
 	return a.runReActLoop(ctx, req, messages, &ReActLoopConfig{
-		MaxIterations:         maxIter,
-		Memory:                memory,
-		MemoryEnabled:         memoryEnabled,
-		IncludeMemoryInPrompt: memoryEnabled && a.cfg.Memory != nil && a.cfg.Memory.IncludeInPrompt != nil && *a.cfg.Memory.IncludeInPrompt,
-		TimeoutMessage:        "agent execution timeout",
-		LogPrefix:             "AI Agent",
-		StreamChan:            req.StreamChan,
-		RequestID:             requestID,
-		IsComplete:            func(action string) bool { return action == ActionFinalAnswer },
-		ExtractPartialResult:  true,
+		MaxIterations:        maxIter,
+		TimeoutMessage:       "agent execution timeout",
+		LogPrefix:            "AI Agent",
+		StreamChan:           req.StreamChan,
+		RequestID:            requestID,
+		IsComplete:           func(action string) bool { return action == ActionFinalAnswer },
+		ExtractPartialResult: true,
 	})
 }
 

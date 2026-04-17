@@ -194,22 +194,6 @@ func (a *Agent) applyDefaults() {
 		cfg.MaxStepIterations = DefaultMaxStepIterations
 	}
 
-	if cfg.Memory != nil && cfg.Memory.Enabled {
-		if cfg.Memory.MaxFindings <= 0 {
-			cfg.Memory.MaxFindings = DefaultMaxFindings
-		}
-		if cfg.Memory.MaxHypotheses <= 0 {
-			cfg.Memory.MaxHypotheses = DefaultMaxHypotheses
-		}
-		if cfg.Memory.MaxEvidence <= 0 {
-			cfg.Memory.MaxEvidence = DefaultMaxEvidence
-		}
-		if cfg.Memory.IncludeInPrompt == nil {
-			v := true
-			cfg.Memory.IncludeInPrompt = &v
-		}
-	}
-
 	// MCP 初始化
 	if cfg.MCP != nil && len(cfg.MCP.Servers) > 0 {
 		a.mcpClientManager = NewMCPClientManager()

@@ -199,9 +199,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 		if resp.Plan != nil {
 			wfCtx.Output[outputField+"_plan"] = resp.Plan
 		}
-		if resp.Memory != nil && len(resp.Memory.KeyFindings) > 0 {
-			wfCtx.Output[outputField+"_memory"] = resp.Memory
-		}
 		return
 	}
 
@@ -219,10 +216,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 	if resp.Plan != nil {
 		planJSON, _ := json.Marshal(resp.Plan)
 		event.AnnotationsJSON[outputField+"_plan"] = string(planJSON)
-	}
-	if resp.Memory != nil && len(resp.Memory.KeyFindings) > 0 {
-		memoryJSON, _ := json.Marshal(resp.Memory)
-		event.AnnotationsJSON[outputField+"_memory"] = string(memoryJSON)
 	}
 
 	b, _ := json.Marshal(event.AnnotationsJSON)
