@@ -19,6 +19,40 @@ type AIChatRequest struct {
 	UserInput string                 `json:"user_input"`
 	History   []aiagent.ChatMessage  `json:"history,omitempty"`
 	Context   map[string]interface{} `json:"context,omitempty"` // action-specific params
+	// Language is the UI/request language from X-Language. Resolved to a
+	// fixed enum by languageDirective(); empty string means "let the LLM
+	// auto-detect from the user's message".
+	Language string `json:"language,omitempty"`
+}
+
+// languageDirective returns a trailing directive that pins the LLM's
+// natural-language output to a specific language. Used as a hard override
+// because skill documentation is largely in Chinese and LLMs tend to mirror
+// it even when the user types in English. Returns "" for unknown / unset
+// language codes so the LLM falls back to auto-detect.
+//
+// Kept intentionally verbose: "applies to explanations, summaries, reasoning,
+// markdown" disambiguates from code / query content, which must stay as-is
+// regardless of language.
+func languageDirective(lang string) string {
+	var name string
+	switch lang {
+	case "zh_CN":
+		name = "Simplified Chinese (简体中文)"
+	case "zh_HK":
+		name = "Traditional Chinese (繁體中文)"
+	case "ja_JP":
+		name = "Japanese (日本語)"
+	case "ru_RU":
+		name = "Russian (Русский)"
+	case "en", "en_US":
+		name = "English"
+	default:
+		return ""
+	}
+	return fmt.Sprintf(`
+
+IMPORTANT: Respond in %s. This applies to all natural-language output (explanations, summaries, reasoning, markdown, hints), regardless of the language used in the retrieved tool results or skill documentation. Code, queries, identifiers, field names, and JSON keys stay as-is.`, name)
 }
 
 // actionHandler defines how each action_key is processed.
@@ -74,6 +108,15 @@ var actionRegistry = map[string]*actionHandler{
 		description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
 		selectTools: selectTroubleshootingTools,
 		buildPrompt: buildTroubleshootingPrompt,
+	},
+	"notify_template_generator": {
+		description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
+		buildPrompt: buildNotifyTemplatePrompt,
+	},
+	"datasource_diagnose": {
+		description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
+		selectTools: selectDatasourceDiagnoseTools,
+		buildPrompt: buildDatasourceDiagnosePrompt,
 	},
 }
 
@@ -458,6 +501,79 @@ Follow the ops-troubleshooting skill (SKILL.md) exactly. Core principles:
 - Focus on direct cause + mitigation, not exhaustive root-cause coverage.
 
 IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Include: timeline, evidence, likely cause, suggested mitigation.`, req.UserInput)
+}
+
+// --- notify_template_generator action ---
+//
+// Focused assistant for writing/modifying alert notification templates. The
+// substantive knowledge (event fields, helper funcs, channel differences,
+// worked examples) lives in the n9e-generate-message-template skill's
+// SKILL.md — the skill selector auto-loads it based on the skill description.
+// This inline prompt just frames the task and points at the skill.
+
+func buildNotifyTemplatePrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a Nightingale (n9e) notification template expert. The user wants to author or modify an alert message template rendered by the n9e template engine.
+
+User request: %s
+
+Follow the n9e-generate-message-template skill (SKILL.md) exactly. Core expectations:
+- Output structure: one-line lead → fenced gotemplate code block → short "变量说明" list.
+- Always split $event.IsRecovered branches unless the user explicitly opts out.
+- Prefer $labels.<key> over $event.TagsJSON for tag lookups.
+- Wrap all unix timestamps through timeformat; format numeric values via formatDecimal when precision is requested.
+- Respond in the user's language; don't ask clarifying questions if a reasonable assumption will do — state the assumption in the lead instead.`, req.UserInput)
+}
+
+// --- datasource_diagnose action ---
+
+func selectDatasourceDiagnoseTools(req *AIChatRequest) []string {
+	return []string{
+		"list_datasources", "get_datasource_detail",
+	}
+}
+
+func buildDatasourceDiagnosePrompt(req *AIChatRequest) string {
+	var ctxHint strings.Builder
+	if id := ctxInt64(req.Context, "datasource_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nCurrent page datasource_id: %d — start by calling get_datasource_detail on it.", id))
+	}
+	if t := ctxStr(req.Context, "datasource_type"); t != "" {
+		ctxHint.WriteString(fmt.Sprintf("\nCurrent page datasource_type: %s", t))
+	}
+	return fmt.Sprintf(`You are a datasource connectivity troubleshooter for Nightingale (n9e). Users typically paste an error message or describe a connection failure, and you diagnose the cause.
+
+User request: %s%s
+
+Diagnostic checklist — walk through the layers top-down:
+1. URL format
+   - Prometheus/VictoriaMetrics: "http://host:port" (NO trailing path; n9e appends /api/v1/query itself).
+   - Loki: "http://host:3100" (the /loki/api/v1 suffix is appended).
+   - Elasticsearch/OpenSearch: "http://host:9200" (single node) or comma-joined list.
+   - ClickHouse HTTP: "http://host:8123"; native TCP: "tcp://host:9000" depending on the driver.
+   - TDengine: "http://host:6041" (RESTful) — NOT 6030.
+   - Common mistake: double slashes, trailing /api/v1/query, or pasting the UI URL.
+2. TLS / certificates
+   - "x509: certificate signed by unknown authority" → either import the CA into the n9e host trust store, or toggle "Skip TLS Verify" in the datasource config.
+   - "tls: failed to verify certificate" on ES 8.x → ES 8 enables TLS by default; switch scheme to https and either provide CA or skip verify.
+3. Authentication
+   - 401/403 → basic auth user/password, or missing bearer token.
+   - ES 8.x API Key vs user/password; Prometheus remote-write tenant headers.
+4. Network
+   - "connection refused" → wrong port, service not listening on that interface.
+   - "dial tcp ... i/o timeout" → firewall, security group, or wrong IP.
+   - "no route to host" → routing.
+5. Version compatibility
+   - ES client vs server major version mismatch.
+   - VictoriaMetrics cluster vs single — vmselect uses "/select/0/prometheus" prefix.
+
+When you have enough context, use the tools to inspect existing datasource configs:
+- list_datasources — browse what's configured.
+- get_datasource_detail — inspect one datasource's full config (URL, auth, timeout, skip_tls_verify).
+
+Output:
+- Your Final Answer MUST be Markdown (NOT JSON), in the user's language.
+- Structure: "可能原因" → "验证命令" (curl/telnet) → "修复建议".
+- Always include at least one verification curl command the user can run to confirm the fix.`, req.UserInput, ctxHint.String())
 }
 
 // --- LLM intent inference ---

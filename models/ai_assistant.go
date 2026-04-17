@@ -3,13 +3,12 @@ package models
 import "encoding/json"
 
 type AssistantChat struct {
-	ChatID          string            `json:"chat_id"`
-	Title           string            `json:"title"`
-	LastUpdate      int64             `json:"last_update"`
-	PageFrom        AssistantPageInfo `json:"page_from"`
-	RecommendAction []AssistantAction `json:"recommend_action"`
-	UserID          int64             `json:"user_id"`
-	IsNew           bool              `json:"is_new"`
+	ChatID     string            `json:"chat_id"`
+	Title      string            `json:"title"`
+	LastUpdate int64             `json:"last_update"`
+	PageFrom   AssistantPageInfo `json:"page_from"`
+	UserID     int64             `json:"user_id"`
+	IsNew      bool              `json:"is_new"`
 }
 
 type AssistantPageType string
@@ -19,6 +18,9 @@ const (
 	PageTypeAlertHistory AssistantPageType = "alert_history"
 	PageTypeActiveAlert  AssistantPageType = "active_alert"
 	PageTypeExplorer     AssistantPageType = "explorer"
+	PageTypeNotifyTpl    AssistantPageType = "notify_tpl"
+	PageTypeDatasource   AssistantPageType = "datasource"
+	PageTypeAlertRule    AssistantPageType = "alert_rule"
 )
 
 // AssistantPageInfo describes which page the user opened the AI assistant from.
@@ -97,12 +99,14 @@ type AssistantMessageResponse struct {
 type AssistantActionKey string
 
 const (
-	ActionKeyQueryGenerator  AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat     AssistantActionKey = "general_chat"
-	ActionKeyAlertQuery      AssistantActionKey = "alert_query"
-	ActionKeyResourceQuery   AssistantActionKey = "resource_query"
-	ActionKeyCreation        AssistantActionKey = "creation"
-	ActionKeyTroubleshooting AssistantActionKey = "troubleshooting"
+	ActionKeyQueryGenerator     AssistantActionKey = "query_generator"
+	ActionKeyGeneralChat        AssistantActionKey = "general_chat"
+	ActionKeyAlertQuery         AssistantActionKey = "alert_query"
+	ActionKeyResourceQuery      AssistantActionKey = "resource_query"
+	ActionKeyCreation           AssistantActionKey = "creation"
+	ActionKeyTroubleshooting    AssistantActionKey = "troubleshooting"
+	ActionKeyNotifyTemplate     AssistantActionKey = "notify_template_generator"
+	ActionKeyDatasourceDiagnose AssistantActionKey = "datasource_diagnose"
 )
 
 type AssistantAction struct {

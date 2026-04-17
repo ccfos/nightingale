@@ -103,13 +103,12 @@ func (rt *Router) assistantChatNew(c *gin.Context) {
 	ginx.BindJSON(c, &req)
 
 	chat := models.AssistantChat{
-		ChatID:          uuid.New().String(),
-		Title:           "New Chat",
-		LastUpdate:      time.Now().Unix(),
-		PageFrom:        models.AssistantPageInfo{Page: req.Page, Param: req.Param},
-		RecommendAction: []models.AssistantAction{},
-		UserID:          me.Id,
-		IsNew:           true,
+		ChatID:     uuid.New().String(),
+		Title:      "New Chat",
+		LastUpdate: time.Now().Unix(),
+		PageFrom:   models.AssistantPageInfo{Page: req.Page, Param: req.Param},
+		UserID:     me.Id,
+		IsNew:      true,
 	}
 
 	ginx.Dangerous(models.AssistantChatSet(rt.Ctx, chat))
@@ -191,11 +190,14 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 		return
 	}
 
-	// Update chat: title on first message, clear is_new, update timestamp
+	// Update chat: title on first message, clear is_new, update timestamp.
+	// Truncate by rune count (not byte count) so multi-byte characters like
+	// Chinese/Japanese aren't sliced mid-character — byte-level slicing would
+	// leave half a code point and render as '��'.
 	if seqID == 1 {
 		title := req.Query.Content
-		if len(title) > 50 {
-			title = title[:50] + "..."
+		if runes := []rune(title); len(runes) > 50 {
+			title = string(runes[:50]) + "..."
 		}
 		chat.Title = title
 	}
@@ -215,7 +217,12 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	key := msgKey(req.ChatID, seqID)
 	rt.msgStateManager.Set(key, &msg, cancel)
 
-	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key, me.Id)
+	// Capture X-Language before the gin.Context goes out of scope — the goroutine
+	// outlives this handler. Used to pin the agent's natural-language output to
+	// the UI language (see languageDirective).
+	lang := c.GetHeader("X-Language")
+
+	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key, me.Id, lang)
 
 	ginx.NewRender(c).Data(gin.H{
 		"chat_id": req.ChatID,
@@ -223,7 +230,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	}, nil)
 }
 
-func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, chatLockKey string, msg *models.AssistantMessage, streamID, stateKey string, userId int64) {
+func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, chatLockKey string, msg *models.AssistantMessage, streamID, stateKey string, userId int64, lang string) {
 	defer parentCancel()
 	defer rt.Redis.Del(context.Background(), chatLockKey)
 
@@ -329,6 +336,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		ActionKey: actionKey,
 		UserInput: msg.Query.Content,
 		Context:   make(map[string]interface{}),
+		Language:  lang,
 	}
 
 	// Extract action.param into context
@@ -404,6 +412,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if handler.buildPrompt != nil {
 		userPrompt = handler.buildPrompt(chatReq)
 	}
+	// Pin LLM output to the UI language. Appended AFTER the action-specific
+	// prompt so it lands at the tail of the agent's system instruction — the
+	// position LLMs weight highest for "respond in X" directives. Empty lang
+	// returns "" so we fall back to the LLM's auto-detection behavior.
+	userPrompt += languageDirective(lang)
 
 	inputs := map[string]string{"user_input": msg.Query.Content}
 	if handler.buildInputs != nil {
