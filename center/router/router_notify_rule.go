@@ -244,53 +244,30 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
-		useProviderNotify := notifyChannel.Ident == provider.AliyunSmsIdent ||
-			notifyChannel.Ident == provider.AliyunVoiceIdent ||
-			notifyChannel.Ident == provider.TencentSmsIdent ||
-			notifyChannel.Ident == provider.TencentVoiceIdent
-		if useProviderNotify {
-			p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident)
-			if !ok {
-				return "", fmt.Errorf("provider not found: %s", notifyChannel.Ident)
-			}
-			doNotify := func(targetSendtos []string) (string, error) {
-				result := p.Notify(ctx.Ctx, &provider.NotifyRequest{
-					Config:       notifyChannel,
-					Events:       events,
-					Sendtos:      targetSendtos,
-					TplContent:   tplContent,
-					CustomParams: customParams,
-					HttpClient:   client,
-					SiteUrl:      siteUrl,
-				})
-				return result.Response, result.Err
-			}
-			if notifyChannel.RequestConfig == nil || notifyChannel.RequestConfig.HTTPRequestConfig == nil ||
-				dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-				resp, err = doNotify(sendtos)
-				logger.Infof("channel_name: %v, event:%s, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, sendtos, tplContent, customParams, resp, err)
-				return resp, err
-			}
-			for i := range sendtos {
-				resp, err = doNotify([]string{sendtos[i]})
-				logger.Infof("channel_name: %v, event:%s,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, sendtos[i], resp, err)
-				if err != nil {
-					return "", err
-				}
-			}
-			return resp, nil
-		}
-
-		if notifyChannel.RequestConfig == nil {
-			return "", fmt.Errorf("request config is nil")
-		}
-
-		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
+		if notifyChannel.RequestConfig == nil || notifyChannel.RequestConfig.HTTPRequestConfig == nil {
 			return "", fmt.Errorf("http request config is nil")
 		}
 
+		p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
+		if !ok {
+			return "", fmt.Errorf("provider not found for ident(%s) request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
+		}
+
+		doNotify := func(targetSendtos []string) (string, error) {
+			result := p.Notify(ctx.Ctx, &provider.NotifyRequest{
+				Config:       notifyChannel,
+				Events:       events,
+				Sendtos:      targetSendtos,
+				TplContent:   tplContent,
+				CustomParams: customParams,
+				HttpClient:   client,
+				SiteUrl:      siteUrl,
+			})
+			return result.Response, result.Err
+		}
+
 		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err = provider.SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tplContent, customParams, sendtos, client)
+			resp, err = doNotify(sendtos)
 			logger.Infof("channel_name: %v, event:%s, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, sendtos, tplContent, customParams, resp, err)
 			if err != nil {
 				return "", fmt.Errorf("failed to send http notify: %v", err)
@@ -298,7 +275,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 			return resp, nil
 		}
 		for i := range sendtos {
-			resp, err = provider.SendHTTPRequest(notifyChannel.RequestConfig.HTTPRequestConfig, events, tplContent, customParams, []string{sendtos[i]}, client)
+			resp, err = doNotify([]string{sendtos[i]})
 			logger.Infof("channel_name: %v, event:%s,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, sendtos[i], resp, err)
 			if err != nil {
 				return "", fmt.Errorf("failed to send http notify: %v", err)
@@ -324,9 +301,9 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		if err != nil {
 			return "", fmt.Errorf("failed to get http client: %v", err)
 		}
-		p, ok := provider.DefaultRegistry.Get(notifyChannel.Ident)
+		p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
 		if !ok {
-			return "", fmt.Errorf("provider not found: %s", notifyChannel.Ident)
+			return "", fmt.Errorf("provider not found for ident(%s) request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
 		}
 		result := p.Notify(ctx.Ctx, &provider.NotifyRequest{
 			Config: notifyChannel, Events: events, Sendtos: sendtos, TplContent: tplContent, CustomParams: customParams,

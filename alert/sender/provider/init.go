@@ -1,17 +1,15 @@
 package provider
 
-import (
-	"github.com/ccfos/nightingale/v6/models"
-)
-
 func init() {
 	// 独立媒介 Provider
 	DefaultRegistry.Register(&DingtalkProvider{})
 	DefaultRegistry.Register(&DingtalkAppProvider{})
+	DefaultRegistry.Register(&FeishuProvider{})
 	DefaultRegistry.Register(&FeishuAppProvider{})
 	DefaultRegistry.Register(&WecomProvider{})
 	DefaultRegistry.Register(&WecomAppProvider{})
 	DefaultRegistry.Register(&FeishuCardProvider{})
+	DefaultRegistry.Register(&LarkProvider{})
 	DefaultRegistry.Register(&LarkCardProvider{})
 	DefaultRegistry.Register(&TencentSmsProvider{})
 	DefaultRegistry.Register(&TencentVoiceProvider{})
@@ -32,15 +30,4 @@ func init() {
 
 	// 通用 HTTP (高级用户)
 	DefaultRegistry.Register(&GenericHTTPProvider{})
-
-	// 供 models.NotifyChannelsGet 做 ident 映射时使用：未知 ident 按 requestType 映射为 http/script
-	models.KnownProviderIdents = knownProviderIdents
-}
-
-func knownProviderIdents() map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, p := range DefaultRegistry.All() {
-		m[p.Ident()] = struct{}{}
-	}
-	return m
 }

@@ -15,6 +15,16 @@ type Registry struct {
 	providers map[string]NotifyChannelProvider // key = ident
 }
 
+// requestTypeFallback：ident 未注册时按 request_type 兜底到通用 provider。
+// 用于历史库里 ident 写得五花八门、但仍能按 request_type 找到合理 provider 的情况。
+var requestTypeFallback = map[string]string{
+	"http":      "callback",
+	"script":    "script",
+	"smtp":      "email",
+	"flashduty": "flashduty",
+	"pagerduty": "pagerduty",
+}
+
 var DefaultRegistry = NewRegistry()
 
 func NewRegistry() *Registry {
@@ -75,6 +85,26 @@ func (r *Registry) All() []NotifyChannelProvider {
 		providers = append(providers, p)
 	}
 	return providers
+}
+
+// Resolve 根据 channel 配置找对应 provider：
+//  1. 按 ident 精确查；
+//  2. 找不到则按 request_type 兜底到通用 provider (callback/script/email/flashduty/pagerduty)；
+//  3. 仍找不到返回 (nil, false)。
+//
+// 取代之前散落在 dispatch / router / models 中的三份 ident 映射逻辑。
+func (r *Registry) Resolve(c *models.NotifyChannelConfig) (NotifyChannelProvider, bool) {
+	if c == nil {
+		return nil, false
+	}
+	if p, ok := r.Get(c.Ident); ok {
+		return p, true
+	}
+	fallback, ok := requestTypeFallback[c.RequestType]
+	if !ok {
+		return nil, false
+	}
+	return r.Get(fallback)
 }
 
 func (r *Registry) AllDefaultChannels() []*models.NotifyChannelConfig {

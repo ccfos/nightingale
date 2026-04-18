@@ -499,9 +499,6 @@ func NotifyChannelGet(ctx *ctx.Context, where string, args ...interface{}) (
 	return lst[0], err
 }
 
-// KnownProviderIdents 由 alert/sender/provider 在 init 中注入，从 DefaultRegistry 动态获取已注册 ident，用于 ident 映射时判断是否为已知类型
-var KnownProviderIdents func() map[string]struct{}
-
 func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 	[]*NotifyChannelConfig, error) {
 	lst := make([]*NotifyChannelConfig, 0)
@@ -512,26 +509,6 @@ func NotifyChannelsGet(ctx *ctx.Context, where string, args ...interface{}) (
 	err := session.Order("weight asc").Find(&lst).Error
 	if err != nil {
 		return nil, err
-	}
-	knownIdents := make(map[string]struct{})
-	if KnownProviderIdents != nil {
-		knownIdents = KnownProviderIdents()
-	}
-	for _, c := range lst {
-		if _, known := knownIdents[c.Ident]; !known {
-			switch c.RequestType {
-			case "http":
-				c.Ident = "callback"
-			case "script":
-				c.Ident = "script"
-			case "flashduty":
-				c.Ident = "flashduty"
-			case "pagerduty":
-				c.Ident = "pagerduty"
-			case "smtp":
-				c.Ident = "email"
-			}
-		}
 	}
 	return lst, nil
 }

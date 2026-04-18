@@ -550,42 +550,10 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams, imGroupIDs := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
 
-	ident := ""
-	switch notifyChannel.Ident {
-	case models.Feishu:
-		ident = models.FeishuCard
-	case models.Lark:
-		ident = models.LarkCard
-	default:
-		ident = notifyChannel.Ident
-	}
-
-	p, ok := provider.DefaultRegistry.Get(ident) // 优先按 ident 查找
+	p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
 	if !ok {
-		fallbackIdent := ""
-		switch notifyChannel.RequestType {
-		case "http":
-			fallbackIdent = "callback"
-		case "script":
-			fallbackIdent = "script"
-		case "flashduty":
-			fallbackIdent = "flashduty"
-		case "pagerduty":
-			fallbackIdent = "pagerduty"
-		case "smtp":
-			fallbackIdent = models.Email
-		}
-		if fallbackIdent != "" && fallbackIdent != ident {
-			p, ok = provider.DefaultRegistry.Get(fallbackIdent)
-			if ok {
-				logger.Warningf("notify channel ident(%s) not found, fallback by request_type(%s) to provider(%s)",
-					notifyChannel.Ident, notifyChannel.RequestType, fallbackIdent)
-			}
-		}
-		if !ok {
-			logger.Warningf("unknown channel ident(%s), request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
-			return
-		}
+		logger.Warningf("unknown channel ident(%s), request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
+		return
 	}
 
 	req := &provider.NotifyRequest{
