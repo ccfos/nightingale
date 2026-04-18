@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -209,8 +210,8 @@ func (a *Agent) applyDefaults() {
 
 	// MCP 初始化
 	if cfg.MCP != nil && len(cfg.MCP.Servers) > 0 {
-		a.mcpClientManager = NewMCPClientManager()
-		a.mcpServers = make(map[string]*MCPServerConfig)
+		a.mcpClientManager = mcp.NewClientManager()
+		a.mcpServers = make(map[string]*mcp.ServerConfig)
 		for i := range cfg.MCP.Servers {
 			server := &cfg.MCP.Servers[i]
 			a.mcpServers[server.Name] = server

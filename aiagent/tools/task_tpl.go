@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -35,24 +36,8 @@ type taskTplDetailResult struct {
 }
 
 func init() {
-	register("list_task_tpls", aiagent.AgentTool{
-		Name:        "list_task_tpls",
-		Description: "查询当前用户有权限的自愈脚本/任务模板列表",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配标题或标签", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listTaskTpls)
-
-	register("get_task_tpl_detail", aiagent.AgentTool{
-		Name:        "get_task_tpl_detail",
-		Description: "获取单个自愈脚本/任务模板的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "任务模板ID", Required: true},
-		},
-	}, getTaskTplDetail)
+	register(defs.ListTaskTpls, listTaskTpls)
+	register(defs.GetTaskTplDetail, getTaskTplDetail)
 }
 
 func listTaskTpls(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

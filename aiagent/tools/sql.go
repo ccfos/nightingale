@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -18,38 +19,9 @@ type columnInfo struct {
 }
 
 func init() {
-	register("list_databases", aiagent.AgentTool{
-		Name:        "list_databases",
-		Description: "列出 SQL 数据源（MySQL/Doris/ClickHouse/PostgreSQL）中的所有数据库。创建 SQL 类告警规则前先用这个探测真实的数据库名，不要凭空猜。",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
-			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
-		},
-	}, listDatabasesTool)
-
-	register("list_tables", aiagent.AgentTool{
-		Name:        "list_tables",
-		Description: "列出指定数据库中的所有表。创建 SQL 类告警规则前先用这个探测真实的表名，不要凭空猜。",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "database", Type: "string", Description: "数据库名", Required: true},
-			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
-			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
-		},
-	}, listTablesTool)
-
-	register("describe_table", aiagent.AgentTool{
-		Name:        "describe_table",
-		Description: "获取表的字段结构（字段名、类型、注释）。创建 SQL 类告警规则前先用这个拿到真实字段名，不要编造字段。",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "database", Type: "string", Description: "数据库名", Required: true},
-			{Name: "table", Type: "string", Description: "表名", Required: true},
-			{Name: "datasource_id", Type: "integer", Description: "SQL 数据源 ID。会话上下文已绑定数据源时可省略；告警规则创建等场景必须显式传", Required: false},
-			{Name: "datasource_type", Type: "string", Description: "数据源类型（mysql/doris/ck/pgsql）。一般不用传，会自动从 datasource_id 反查", Required: false},
-		},
-	}, describeTableTool)
+	register(defs.ListDatabases, listDatabasesTool)
+	register(defs.ListTables, listTablesTool)
+	register(defs.DescribeTable, describeTableTool)
 }
 
 // resolveSQLDatasource picks a (datasource_id, plugin_type) pair from the

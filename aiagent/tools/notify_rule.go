@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -29,24 +30,8 @@ type notifyRuleDetailResult struct {
 }
 
 func init() {
-	register("list_notify_rules", aiagent.AgentTool{
-		Name:        "list_notify_rules",
-		Description: "查询当前用户有权限的通知规则列表",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配通知规则名称", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listNotifyRules)
-
-	register("get_notify_rule_detail", aiagent.AgentTool{
-		Name:        "get_notify_rule_detail",
-		Description: "获取单条通知规则的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "通知规则ID", Required: true},
-		},
-	}, getNotifyRuleDetail)
+	register(defs.ListNotifyRules, listNotifyRules)
+	register(defs.GetNotifyRuleDetail, getNotifyRuleDetail)
 }
 
 func listNotifyRules(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

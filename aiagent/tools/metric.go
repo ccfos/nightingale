@@ -8,30 +8,13 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/toolkits/pkg/logger"
 )
 
 func init() {
-	register("list_metrics", aiagent.AgentTool{
-		Name:        "list_metrics",
-		Description: "搜索 Prometheus 数据源的指标名称，支持关键词模糊匹配。需要通过 datasource_id 指定 Prometheus 数据源（用 list_datasources 查到）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（从 list_datasources 获取）", Required: true},
-			{Name: "keyword", Type: "string", Description: "搜索关键词，模糊匹配指标名", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认30", Required: false},
-		},
-	}, listMetrics)
-
-	register("get_metric_labels", aiagent.AgentTool{
-		Name:        "get_metric_labels",
-		Description: "获取 Prometheus 指标的所有标签键及其可选值。需要通过 datasource_id 指定 Prometheus 数据源",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（从 list_datasources 获取）", Required: true},
-			{Name: "metric", Type: "string", Description: "指标名称", Required: true},
-		},
-	}, getMetricLabels)
+	register(defs.ListMetrics, listMetrics)
+	register(defs.GetMetricLabels, getMetricLabels)
 }
 
 func listMetrics(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

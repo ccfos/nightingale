@@ -7,10 +7,7 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-const (
-	streamTTL      = time.Hour
-	cleanupTick    = 5 * time.Minute
-)
+// streamTTL 和 cleanupTick 迁移至 defaults.go（StreamTTL / StreamCleanupTick）。
 
 // StreamMessage is the SSE payload sent to the client.
 type StreamMessage struct {
@@ -52,7 +49,7 @@ func (sc *StreamCache) Create(streamID string) {
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
 	sc.streams[streamID] = &StreamData{
-		expire: time.Now().Add(streamTTL),
+		expire: time.Now().Add(StreamTTL),
 	}
 }
 
@@ -161,7 +158,7 @@ func (sc *StreamCache) Read(streamID string) <-chan StreamMessage {
 }
 
 func (sc *StreamCache) cleanupLoop() {
-	ticker := time.NewTicker(cleanupTick)
+	ticker := time.NewTicker(StreamCleanupTick)
 	defer ticker.Stop()
 	for range ticker.C {
 		sc.cleanup()

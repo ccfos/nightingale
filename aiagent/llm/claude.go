@@ -141,27 +141,18 @@ func (c *Claude) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.config.BaseURL, bytes.NewBuffer(jsonData))
+	resp, err := doHTTPStreamWithRetry(ctx, c.client, "Claude",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", c.config.BaseURL, bytes.NewBuffer(jsonData))
+		},
+		c.setHeaders,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	c.setHeaders(httpReq)
-
-	resp, err := c.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		return nil, fmt.Errorf("Claude API error (status %d): %s", resp.StatusCode, string(body))
+		return nil, err
 	}
 
 	ch := make(chan StreamChunk, 100)
 	go c.streamResponse(ctx, resp, ch)
-
 	return ch, nil
 }
 
@@ -348,30 +339,12 @@ func (c *Claude) doRequest(ctx context.Context, req *claudeRequest) ([]byte, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.config.BaseURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	c.setHeaders(httpReq)
-
-	resp, err := c.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("Claude API error (status %d): %s", resp.StatusCode, string(body))
-	}
-
-	return body, nil
+	return doHTTPWithRetry(ctx, c.client, "Claude",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", c.config.BaseURL, bytes.NewBuffer(jsonData))
+		},
+		c.setHeaders,
+	)
 }
 
 func (c *Claude) setHeaders(req *http.Request) {

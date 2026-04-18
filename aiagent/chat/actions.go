@@ -1,129 +1,99 @@
-package router
+package chat
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
-	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/toolkits/pkg/logger"
 )
 
-// AIChatRequest is the generic chat request dispatched by action_key.
-type AIChatRequest struct {
-	ActionKey string                 `json:"action_key"` // e.g. "query_generator"
-	UserInput string                 `json:"user_input"`
-	History   []aiagent.ChatMessage  `json:"history,omitempty"`
-	Context   map[string]interface{} `json:"context,omitempty"` // action-specific params
-	// Language is the UI/request language from X-Language. Resolved to a
-	// fixed enum by languageDirective(); empty string means "let the LLM
-	// auto-detect from the user's message".
-	Language string `json:"language,omitempty"`
-}
-
-// languageDirective returns a trailing directive that pins the LLM's
-// natural-language output to a specific language. Used as a hard override
-// because skill documentation is largely in Chinese and LLMs tend to mirror
-// it even when the user types in English. Returns "" for unknown / unset
-// language codes so the LLM falls back to auto-detect.
+// ActionHandler defines how each action_key is processed.
+// The LLM agent config is always resolved via "chat" useCase in the router.
 //
-// Kept intentionally verbose: "applies to explanations, summaries, reasoning,
-// markdown" disambiguates from code / query content, which must stay as-is
-// regardless of language.
-func languageDirective(lang string) string {
-	var name string
-	switch lang {
-	case "zh_CN":
-		name = "Simplified Chinese (简体中文)"
-	case "zh_HK":
-		name = "Traditional Chinese (繁體中文)"
-	case "ja_JP":
-		name = "Japanese (日本語)"
-	case "ru_RU":
-		name = "Russian (Русский)"
-	case "en", "en_US":
-		name = "English"
-	default:
-		return ""
-	}
-	return fmt.Sprintf(`
-
-IMPORTANT: Respond in %s. This applies to all natural-language output (explanations, summaries, reasoning, markdown, hints), regardless of the language used in the retrieved tool results or skill documentation. Code, queries, identifiers, field names, and JSON keys stay as-is.`, name)
-}
-
-// actionHandler defines how each action_key is processed.
-// The LLM agent config is always resolved via "chat" useCase in processAssistantMessage.
-//
-// Execution order in processAssistantMessage:
-//  1. validate — soft gate. On error, silently fall back to general_chat.
-//  2. preflight — hard gate. May emit structured responses and halt the turn
+// Execution order in the router's processAssistantMessage:
+//  1. Validate — soft gate. On error, silently fall back to general_chat.
+//  2. Preflight — hard gate. May emit structured responses and halt the turn
 //     without running the agent (e.g. ask the user to pick a busi group
 //     before a creation flow). Returns halt=true to stop; halt=false to proceed.
-//  3. selectTools / buildPrompt — configure the agent for this action.
-type actionHandler struct {
-	description   string // human-readable description used by LLM intent inference
-	validate      func(req *AIChatRequest) error
-	preflight     func(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
-	selectTools   func(req *AIChatRequest) []string
-	buildPrompt   func(req *AIChatRequest) string
-	buildInputs   func(req *AIChatRequest) map[string]string
-	parseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
+//  3. SelectTools / BuildPrompt — configure the agent for this action.
+type ActionHandler struct {
+	Description   string // human-readable description used by LLM intent inference
+	Validate      func(req *AIChatRequest) error
+	Preflight     func(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
+	SelectTools   func(req *AIChatRequest) []string
+	BuildPrompt   func(req *AIChatRequest) string
+	BuildInputs   func(req *AIChatRequest) map[string]string
+	ParseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
 }
 
-var actionRegistry = map[string]*actionHandler{
+var registry = map[string]*ActionHandler{
 	"query_generator": {
-		description:   "Generate PromQL or SQL query statements (编写查询语句). Examples: '帮我写个查CPU的PromQL', '生成一个查询订单表的SQL', 'write a PromQL for memory usage'",
-		validate:      validateQueryGenerator,
-		selectTools:   selectQueryGeneratorTools,
-		buildPrompt:   buildQueryGeneratorPrompt,
-		buildInputs:   buildQueryGeneratorInputs,
-		parseResponse: parseQueryGeneratorResponse,
+		Description:   "Generate PromQL or SQL query statements (编写查询语句). Examples: '帮我写个查CPU的PromQL', '生成一个查询订单表的SQL', 'write a PromQL for memory usage'",
+		Validate:      validateQueryGenerator,
+		SelectTools:   selectQueryGeneratorTools,
+		BuildPrompt:   buildQueryGeneratorPrompt,
+		BuildInputs:   buildQueryGeneratorInputs,
+		ParseResponse: parseQueryGeneratorResponse,
 	},
 	"general_chat": {
-		description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
-		selectTools: selectAllBuiltinTools,
-		buildPrompt: buildGeneralChatPrompt,
+		Description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
+		SelectTools: selectAllBuiltinTools,
+		BuildPrompt: buildGeneralChatPrompt,
 	},
 	"alert_query": {
-		description:   "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
-		selectTools:   selectAlertQueryTools,
-		buildPrompt:   buildAlertQueryPrompt,
+		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
+		SelectTools: selectAlertQueryTools,
+		BuildPrompt: buildAlertQueryPrompt,
 	},
 	"resource_query": {
-		description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
-		selectTools: selectResourceQueryTools,
-		buildPrompt: buildResourceQueryPrompt,
+		Description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
+		SelectTools: selectResourceQueryTools,
+		BuildPrompt: buildResourceQueryPrompt,
 	},
 	"creation": {
-		description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are resource_query, NOT creation.",
-		preflight:   preflightCreation,
-		selectTools: selectCreationTools,
-		buildPrompt: buildCreationPrompt,
+		Description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are resource_query, NOT creation.",
+		Preflight:   PreflightCreation,
+		SelectTools: selectCreationTools,
+		BuildPrompt: buildCreationPrompt,
 	},
 	"troubleshooting": {
-		description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
-		selectTools: selectTroubleshootingTools,
-		buildPrompt: buildTroubleshootingPrompt,
+		Description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
+		SelectTools: selectTroubleshootingTools,
+		BuildPrompt: buildTroubleshootingPrompt,
 	},
 	"notify_template_generator": {
-		description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
-		buildPrompt: buildNotifyTemplatePrompt,
+		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
+		BuildPrompt: buildNotifyTemplatePrompt,
 	},
 	"datasource_diagnose": {
-		description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
-		selectTools: selectDatasourceDiagnoseTools,
-		buildPrompt: buildDatasourceDiagnosePrompt,
+		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
+		SelectTools: selectDatasourceDiagnoseTools,
+		BuildPrompt: buildDatasourceDiagnosePrompt,
 	},
 }
 
 func init() {
-	if _, ok := actionRegistry[string(models.ActionKeyGeneralChat)]; !ok {
-		panic("actionRegistry must contain general_chat as fallback")
+	if _, ok := registry[string(models.ActionKeyGeneralChat)]; !ok {
+		panic("chat.registry must contain general_chat as fallback")
 	}
+}
+
+// Lookup returns the handler for the given action key, or (nil, false) if absent.
+func Lookup(key string) (*ActionHandler, bool) {
+	h, ok := registry[key]
+	return h, ok
+}
+
+// Keys returns every registered action key. Order is not guaranteed.
+func Keys() []string {
+	out := make([]string, 0, len(registry))
+	for k := range registry {
+		out = append(out, k)
+	}
+	return out
 }
 
 // --- query_generator action ---
@@ -574,89 +544,4 @@ Output:
 - Your Final Answer MUST be Markdown (NOT JSON), in the user's language.
 - Structure: "可能原因" → "验证命令" (curl/telnet) → "修复建议".
 - Always include at least one verification curl command the user can run to confirm the fix.`, req.UserInput, ctxHint.String())
-}
-
-// --- LLM intent inference ---
-
-// buildIntentInferencePrompt constructs a system prompt that lists all available
-// action keys with descriptions, asking the LLM to pick the best match.
-func buildIntentInferencePrompt() string {
-	var sb strings.Builder
-	sb.WriteString(`You are an intent classifier for a monitoring system. Classify the user's message into exactly one action.
-
-VERB-FIRST RULE — decide by the action verb before the noun:
-- "创建/新建/加一条/添加/建一个/create/add/build" (构造新资源) → creation
-- "查/查看/有哪些/列出/show/list" + resource nouns (告警规则、仪表盘、屏蔽、订阅、通知规则、机器、业务组等) → resource_query
-- "查/分析" + alert events (告警、告警事件、活跃告警、历史告警) → alert_query
-- "写/生成" + query language (PromQL/SQL/查询语句) → query_generator
-- "排查/定位/诊断/根因分析/troubleshoot/debug/investigate" → troubleshooting
-- 其它通用问答/knowledge → general_chat
-
-Edge cases:
-- "创建告警规则的步骤是什么" (asking HOW to, not DO) → general_chat
-- "查一下最近创建的告警规则" (query, not create) → resource_query
-- "这条告警为什么触发" (diagnosis, not query) → troubleshooting
-
-Available actions:
-`)
-	keys := make([]string, 0, len(actionRegistry))
-	for key := range actionRegistry {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		handler := actionRegistry[key]
-		sb.WriteString(fmt.Sprintf("- %s: %s\n", key, handler.description))
-	}
-	sb.WriteString("\nRespond with ONLY a JSON object: {\"action_key\": \"<chosen_key>\"}\n")
-	sb.WriteString("Do not include any other text.")
-	return sb.String()
-}
-
-// inferActionKeyByLLM uses a lightweight LLM call to classify user intent
-// into one of the registered action keys. Falls back to "general_chat" on error.
-func inferActionKeyByLLM(ctx context.Context, llmClient llm.LLM, userInput string, history []aiagent.ChatMessage) string {
-	// Optimisation: if only one handler is registered, skip inference.
-	if len(actionRegistry) <= 1 {
-		for key := range actionRegistry {
-			return key
-		}
-	}
-
-	systemPrompt := buildIntentInferencePrompt()
-
-	// Build user message with recent history context (last 4 turns max).
-	var userMsg strings.Builder
-	start := 0
-	if len(history) > 4 {
-		start = len(history) - 4
-	}
-	if len(history) > 0 {
-		userMsg.WriteString("Recent conversation:\n")
-		for _, h := range history[start:] {
-			userMsg.WriteString(fmt.Sprintf("[%s]: %s\n", h.Role, h.Content))
-		}
-		userMsg.WriteString("\n")
-	}
-	userMsg.WriteString("Current user message: ")
-	userMsg.WriteString(userInput)
-
-	resp, err := llm.ChatWithSystem(ctx, llmClient, systemPrompt, userMsg.String())
-	if err != nil {
-		logger.Warningf("[Assistant] intent inference failed: %v, falling back to general_chat", err)
-		return string(models.ActionKeyGeneralChat)
-	}
-
-	cleaned := stripCodeFence(strings.TrimSpace(resp))
-	var result struct {
-		ActionKey string `json:"action_key"`
-	}
-	if err := json.Unmarshal([]byte(cleaned), &result); err != nil {
-		return string(models.ActionKeyGeneralChat)
-	}
-
-	if _, ok := actionRegistry[result.ActionKey]; !ok {
-		return string(models.ActionKeyGeneralChat)
-	}
-	return result.ActionKey
 }

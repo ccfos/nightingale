@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -16,15 +17,7 @@ type teamResult struct {
 }
 
 func init() {
-	register("list_teams", aiagent.AgentTool{
-		Name:        "list_teams",
-		Description: "查询当前用户可见的团队列表（自己所在的团队及自己创建的团队）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配团队名称", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listTeams)
+	register(defs.ListTeams, listTeams)
 }
 
 func listTeams(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

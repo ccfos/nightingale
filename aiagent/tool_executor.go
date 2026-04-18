@@ -12,6 +12,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 
 	"github.com/toolkits/pkg/logger"
@@ -156,8 +157,8 @@ func (a *Agent) executeHTTPTool(ctx context.Context, tool *AgentTool, args map[s
 	}
 
 	result := string(body)
-	if len(result) > 4000 {
-		result = result[:4000] + "\n... (truncated)"
+	if len(result) > ToolOutputMaxBytes {
+		result = result[:ToolOutputMaxBytes] + "\n... (truncated)"
 	}
 
 	return result
@@ -231,7 +232,7 @@ func (a *Agent) appendMCPTools(ctx context.Context, base []AgentTool) []AgentToo
 				Name:        mcpTool.Name,
 				Description: mcpTool.Description,
 				Type:        ToolTypeMCP,
-				MCPConfig: &MCPToolConfig{
+				MCPConfig: &mcp.ToolConfig{
 					ServerName: serverName,
 					ToolName:   mcpTool.Name,
 				},
@@ -289,7 +290,7 @@ func (a *Agent) convertMCPSchemaToParams(schema map[string]interface{}) []ToolPa
 	return params
 }
 
-func (a *Agent) formatMCPResult(result *MCPToolsCallResult) string {
+func (a *Agent) formatMCPResult(result *mcp.ToolsCallResult) string {
 	if result == nil {
 		return "No result returned"
 	}
@@ -323,8 +324,8 @@ func (a *Agent) formatMCPResult(result *MCPToolsCallResult) string {
 	}
 
 	outputStr := strings.TrimSpace(output.String())
-	if len(outputStr) > 4000 {
-		outputStr = outputStr[:4000] + "\n... (truncated)"
+	if len(outputStr) > ToolOutputMaxBytes {
+		outputStr = outputStr[:ToolOutputMaxBytes] + "\n... (truncated)"
 	}
 
 	return outputStr

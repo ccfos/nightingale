@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/datasource"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -35,15 +36,7 @@ const (
 	StreamTypeStep       = "step"
 	StreamTypeSynthesis  = "synthesis"
 
-	// 默认值
-	DefaultMaxIterations     = 10
-	DefaultTimeout           = 60000 // 60秒
-	DefaultMaxPlanSteps      = 10
-	DefaultMaxReplanCount    = 2
-	DefaultMaxStepIterations = 5
-
-	// HTTP
-	HTTPStatusSuccessMax = 299
+	// 注：Agent 运行期默认值、HTTP 状态码上界等调优参数见 defaults.go。
 
 	// ReAct 特殊标记
 	ActionFinalAnswer = "Final Answer"
@@ -65,8 +58,8 @@ type Agent struct {
 	skillSelector *LLMSkillSelector
 
 	// MCP
-	mcpClientManager *MCPClientManager
-	mcpServers       map[string]*MCPServerConfig
+	mcpClientManager *mcp.ClientManager
+	mcpServers       map[string]*mcp.ServerConfig
 
 	// 外部工具处理器（用于 processor/skill 类型工具，由适配层注入）
 	externalToolHandler ExternalToolHandler
@@ -90,11 +83,21 @@ type AgentConfig struct {
 
 	// 可选能力
 	Skills *SkillConfig `json:"skills,omitempty"`
-	MCP    *MCPConfig   `json:"mcp,omitempty"`
+	MCP    *mcp.Config  `json:"mcp,omitempty"`
 	Stream bool         `json:"stream,omitempty"`
 
-	// 用户提示词模板（支持 Go 模板语法）
+	// 用户提示词模板（支持 Go 模板语法，会被 text/template 解析）。
+	// 适用于 adapter/processor 路径：用户在 JSON config 中显式写模板字符串，
+	// 引用 {{.Params.X}} / {{.Event.Y}} 等变量。
 	UserPromptTemplate string `json:"user_prompt_template"`
+
+	// 已渲染好的用户提示词（按原样塞给 LLM，不经 text/template）。
+	// 适用于 chat 路径：router 的 actionHandler.BuildPrompt 已经用 fmt.Sprintf
+	// 把用户原文拼进去，此时再 parse 会把用户输入里的 {{ 当模板语法炸掉
+	// （例如用户问 "告警模板怎么写 {{ .Alertname }}" 会让整轮对话 500）。
+	//
+	// 两者互斥：若 UserPromptRendered 非空优先用它。
+	UserPromptRendered string `json:"-"`
 
 	// 工具定义
 	Tools []AgentTool `json:"tools"`
@@ -175,7 +178,7 @@ type AgentTool struct {
 	SkillName string `json:"skill_name,omitempty"`
 
 	// MCP 工具配置
-	MCPConfig *MCPToolConfig `json:"mcp_config,omitempty"`
+	MCPConfig *mcp.ToolConfig `json:"mcp_config,omitempty"`
 
 	// 参数定义
 	Parameters []ToolParameter `json:"parameters,omitempty"`

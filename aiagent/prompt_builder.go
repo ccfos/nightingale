@@ -13,7 +13,17 @@ import (
 )
 
 // buildUserMessage 构建用户消息
+//
+// 三条路径，按优先级：
+//  1. UserPromptRendered 非空：已渲染好，直接返回（chat 路径，避免误把用户原文里的
+//     {{...}} 当模板语法解析）。
+//  2. UserPromptTemplate 非空：按 Go 模板解析并渲染（adapter 路径，用户 JSON
+//     config 里显式写模板）。
+//  3. 都为空：走 buildDefaultUserMessage 兜底。
 func (a *Agent) buildUserMessage(req *AgentRequest) (string, error) {
+	if a.cfg.UserPromptRendered != "" {
+		return a.cfg.UserPromptRendered, nil
+	}
 	if a.cfg.UserPromptTemplate == "" {
 		return a.buildDefaultUserMessage(req), nil
 	}

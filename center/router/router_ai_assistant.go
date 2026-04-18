@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/chat"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	_ "github.com/ccfos/nightingale/v6/aiagent/tools" // register builtin tools
 	"github.com/ccfos/nightingale/v6/datasource"
@@ -221,7 +222,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 
 	// Capture X-Language before the gin.Context goes out of scope — the goroutine
 	// outlives this handler. Used to pin the agent's natural-language output to
-	// the UI language (see languageDirective).
+	// the UI language (see chat.LanguageDirective).
 	lang := c.GetHeader("X-Language")
 
 	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key, me.Id, lang)
@@ -313,28 +314,28 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	//   3. LLM intent inference (30s budget — 15s was too tight in practice).
 	var actionKey string
 	switch {
-	case hasCreationIntent(msg.Query.Content):
+	case chat.HasCreationIntent(msg.Query.Content):
 		actionKey = string(models.ActionKeyCreation)
 	case msg.SeqID == 1 && msg.Query.Action.Key != "":
 		actionKey = string(msg.Query.Action.Key)
 	default:
 		inferCtx, inferCancel := context.WithTimeout(parentCtx, 30*time.Second)
-		actionKey = inferActionKeyByLLM(inferCtx, llmClient, msg.Query.Content, history)
+		actionKey = chat.InferAction(inferCtx, llmClient, msg.Query.Content, history)
 		inferCancel()
 	}
 
-	handler, ok := actionRegistry[actionKey]
+	handler, ok := chat.Lookup(actionKey)
 	if !ok {
 		// Unknown key from frontend — fall back to general_chat
 		actionKey = string(models.ActionKeyGeneralChat)
-		handler = actionRegistry[actionKey]
+		handler, _ = chat.Lookup(actionKey)
 	}
 
 	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s front_key=%q content=%q",
 		msg.ChatID, msg.SeqID, actionKey, msg.Query.Action.Key, msg.Query.Content)
 
 	// Build AIChatRequest for reusing existing action logic
-	chatReq := &AIChatRequest{
+	chatReq := &chat.AIChatRequest{
 		ActionKey: actionKey,
 		UserInput: msg.Query.Content,
 		Context:   make(map[string]interface{}),
@@ -363,11 +364,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 
 	// ④ Validate — on failure, silently fall back to general_chat instead of returning error
-	if handler.validate != nil {
-		if err := handler.validate(chatReq); err != nil {
+	if handler.Validate != nil {
+		if err := handler.Validate(chatReq); err != nil {
 			logger.Infof("[Assistant] validate failed for action_key=%s: %v, falling back to general_chat", actionKey, err)
 			actionKey = string(models.ActionKeyGeneralChat)
-			handler = actionRegistry[actionKey]
+			handler, _ = chat.Lookup(actionKey)
 			chatReq.ActionKey = actionKey
 			chatReq.Context = make(map[string]interface{})
 		}
@@ -382,13 +383,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		FilterDatasources: rt.DatasourceCache.DatasourceFilter,
 	}
 
-	if handler.preflight != nil {
+	if handler.Preflight != nil {
 		user, uerr := models.UserGetById(rt.Ctx, userId)
 		if uerr != nil || user == nil {
 			rt.finishMessage(stateKey, streamID, msg, 500, "failed to resolve user for preflight")
 			return
 		}
-		halt, preResps, perr := handler.preflight(parentCtx, toolDeps, chatReq, user)
+		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, user)
 		if perr != nil {
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
@@ -400,37 +401,40 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Select tools
 	var tools []aiagent.AgentTool
-	if handler.selectTools != nil {
-		toolNames := handler.selectTools(chatReq)
+	if handler.SelectTools != nil {
+		toolNames := handler.SelectTools(chatReq)
 		if toolNames != nil {
 			tools = aiagent.GetBuiltinToolDefs(toolNames)
 		}
 	}
 
 	userPrompt := ""
-	if handler.buildPrompt != nil {
-		userPrompt = handler.buildPrompt(chatReq)
+	if handler.BuildPrompt != nil {
+		userPrompt = handler.BuildPrompt(chatReq)
 	}
 	// Pin LLM output to the UI language. Appended AFTER the action-specific
 	// prompt so it lands at the tail of the agent's system instruction — the
 	// position LLMs weight highest for "respond in X" directives. Empty lang
 	// returns "" so we fall back to the LLM's auto-detection behavior.
-	userPrompt += languageDirective(lang)
+	userPrompt += chat.LanguageDirective(lang)
 
 	inputs := map[string]string{"user_input": msg.Query.Content}
-	if handler.buildInputs != nil {
-		inputs = handler.buildInputs(chatReq)
+	if handler.BuildInputs != nil {
+		inputs = handler.BuildInputs(chatReq)
 	}
 
 	// Inject user_id for permission-aware builtin tools
 	inputs["user_id"] = fmt.Sprintf("%d", userId)
 
+	// 用 UserPromptRendered 而非 UserPromptTemplate：handler.BuildPrompt 已经用
+	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
+	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
-		UserPromptTemplate: userPrompt,
+		UserPromptRendered: userPrompt,
 		Skills: &aiagent.SkillConfig{
 			AutoSelect: true,
 			MaxSkills:  2,
@@ -539,8 +543,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Build final response: try action-specific parsing first, fall back to single markdown
 	var responses []models.AssistantMessageResponse
-	if handler.parseResponse != nil {
-		responses = handler.parseResponse(fullContent)
+	if handler.ParseResponse != nil {
+		responses = handler.ParseResponse(fullContent)
 	}
 	if len(responses) == 0 {
 		responses = []models.AssistantMessageResponse{

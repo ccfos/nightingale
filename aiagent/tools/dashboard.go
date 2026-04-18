@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -34,39 +35,9 @@ type dashboardDetailResult struct {
 }
 
 func init() {
-	register("list_dashboards", aiagent.AgentTool{
-		Name:        "list_dashboards",
-		Description: "查询当前用户有权限的仪表盘列表，支持关键词搜索",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配仪表盘名称或标签", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listDashboards)
-
-	register("get_dashboard_detail", aiagent.AgentTool{
-		Name:        "get_dashboard_detail",
-		Description: "获取单个仪表盘的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "仪表盘ID", Required: true},
-		},
-	}, getDashboardDetail)
-
-	register("create_dashboard", aiagent.AgentTool{
-		Name: "create_dashboard",
-		Description: `创建监控仪表盘。只需提供面板描述和变量，工具会自动生成完整的仪表盘配置。
-面板布局自动计算，无需手动指定坐标。`,
-		Type: aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "group_id", Type: "integer", Description: "业务组ID", Required: true},
-			{Name: "name", Type: "string", Description: "仪表盘名称", Required: true},
-			{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源ID（从 list_datasources 获取）", Required: true},
-			{Name: "panels", Type: "string", Description: `面板列表 JSON 数组。每个面板: {"name":"标题", "type":"timeseries", "queries":[{"promql":"PromQL表达式", "legend":"{{label}}"}]}。type 可选: timeseries/stat/gauge/barGauge/pie/table/row。可选字段: w(宽度)/h(高度)/unit(单位:percent,bytesIEC,seconds等)/stack(是否堆叠)`, Required: true},
-			{Name: "variables", Type: "string", Description: `变量列表 JSON 数组。每个变量: {"name":"变量名", "definition":"label_values(metric, label)"}。可选字段: label(显示名)/multi(是否多选,默认true)`, Required: false},
-			{Name: "tags", Type: "string", Description: "仪表盘标签，多个用空格分隔", Required: false},
-		},
-	}, createDashboard)
+	register(defs.ListDashboards, listDashboards)
+	register(defs.GetDashboardDetail, getDashboardDetail)
+	register(defs.CreateDashboard, createDashboard)
 }
 
 func listDashboards(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -34,25 +35,8 @@ type datasourceDetailResult struct {
 }
 
 func init() {
-	register("list_datasources", aiagent.AgentTool{
-		Name:        "list_datasources",
-		Description: "查询数据源列表，支持按类型过滤",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "plugin_type", Type: "string", Description: "数据源类型过滤，如 prometheus、mysql、elasticsearch", Required: false},
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配数据源名称", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listDatasourcesBuiltin)
-
-	register("get_datasource_detail", aiagent.AgentTool{
-		Name:        "get_datasource_detail",
-		Description: "获取单个数据源的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "数据源ID", Required: true},
-		},
-	}, getDatasourceDetail)
+	register(defs.ListDatasources, listDatasourcesBuiltin)
+	register(defs.GetDatasourceDetail, getDatasourceDetail)
 }
 
 func listDatasourcesBuiltin(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

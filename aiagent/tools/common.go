@@ -266,8 +266,8 @@ func isValidIdentifier(s string) bool {
 // Registration shorthand
 // =============================================================================
 
-func register(name string, def aiagent.AgentTool, handler aiagent.BuiltinToolFunc) {
-	aiagent.RegisterBuiltinTool(name, &aiagent.BuiltinTool{
+func register(def aiagent.AgentTool, handler aiagent.BuiltinToolFunc) {
+	aiagent.RegisterBuiltinTool(def.Name, &aiagent.BuiltinTool{
 		Definition: def,
 		Handler:    handler,
 	})

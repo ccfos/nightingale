@@ -9,39 +9,13 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 )
 
 func init() {
-	register("list_files", aiagent.AgentTool{
-		Name:        "list_files",
-		Description: "列出技能或集成模板目录下的文件和子目录",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
-			{Name: "path", Type: "string", Description: "相对子路径，如 panels 或 dashboards。不传则列出根目录", Required: false},
-		},
-	}, listFiles)
-
-	register("read_file", aiagent.AgentTool{
-		Name:        "read_file",
-		Description: "读取技能文档或集成模板文件内容",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
-			{Name: "path", Type: "string", Description: "相对文件路径，如 panels/timeseries.md 或 dashboards/categraf-detail.json", Required: true},
-		},
-	}, readFile)
-
-	register("grep_files", aiagent.AgentTool{
-		Name:        "grep_files",
-		Description: "在技能或集成模板目录下搜索包含指定关键词的文件和行",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
-			{Name: "pattern", Type: "string", Description: "搜索关键词（不区分大小写）", Required: true},
-			{Name: "path", Type: "string", Description: "相对搜索路径，不传则搜索整个目录", Required: false},
-		},
-	}, grepFiles)
+	register(defs.ListFiles, listFiles)
+	register(defs.ReadFile, readFile)
+	register(defs.GrepFiles, grepFiles)
 }
 
 // resolveBasePath 解析基础目录路径，支持 skill 目录和 integrations 目录
@@ -150,9 +124,8 @@ func readFile(_ context.Context, deps *aiagent.ToolDeps, args map[string]interfa
 	}
 
 	// 限制大文件返回
-	const maxSize = 64 * 1024
-	if len(data) > maxSize {
-		return string(data[:maxSize]) + "\n\n... (truncated, file too large)", nil
+	if len(data) > aiagent.FileReadMaxBytes {
+		return string(data[:aiagent.FileReadMaxBytes]) + "\n\n... (truncated, file too large)", nil
 	}
 
 	return string(data), nil

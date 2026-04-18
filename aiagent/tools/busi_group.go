@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -29,15 +30,7 @@ func isDefaultBusiGroupName(name string) bool {
 }
 
 func init() {
-	register("list_busi_groups", aiagent.AgentTool{
-		Name:        "list_busi_groups",
-		Description: "查询当前用户有权限的业务组列表，支持关键词模糊搜索",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，模糊匹配业务组名称", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listBusiGroups)
+	register(defs.ListBusiGroups, listBusiGroups)
 }
 
 func listBusiGroups(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

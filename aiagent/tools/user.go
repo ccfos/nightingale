@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -21,15 +22,7 @@ type userResult struct {
 }
 
 func init() {
-	register("list_users", aiagent.AgentTool{
-		Name:        "list_users",
-		Description: "查询用户列表，支持关键词搜索（用户名、昵称、邮箱、手机号）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listUsers)
+	register(defs.ListUsers, listUsers)
 }
 
 func listUsers(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

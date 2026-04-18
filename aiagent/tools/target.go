@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -35,25 +36,8 @@ type targetDetailResult struct {
 }
 
 func init() {
-	register("list_targets", aiagent.AgentTool{
-		Name:        "list_targets",
-		Description: "查询当前用户有权限的机器/主机列表，支持关键词搜索（ident、IP、标签等）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配 ident、IP、备注、标签、操作系统", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listTargets)
-
-	register("get_target_detail", aiagent.AgentTool{
-		Name:        "get_target_detail",
-		Description: "获取单台机器/主机的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "机器ID", Required: false},
-			{Name: "ident", Type: "string", Description: "机器标识（ident），与id二选一", Required: false},
-		},
-	}, getTargetDetail)
+	register(defs.ListTargets, listTargets)
+	register(defs.GetTargetDetail, getTargetDetail)
 }
 
 func listTargets(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

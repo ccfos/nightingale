@@ -133,27 +133,18 @@ func (g *Gemini) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	}
 
 	url := g.buildURL(true)
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	resp, err := doHTTPStreamWithRetry(ctx, g.client, "Gemini",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+		},
+		g.setHeaders,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	g.setHeaders(httpReq)
-
-	resp, err := g.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		return nil, fmt.Errorf("Gemini API error (status %d): %s", resp.StatusCode, string(body))
+		return nil, err
 	}
 
 	ch := make(chan StreamChunk, 100)
 	go g.streamResponse(ctx, resp, ch)
-
 	return ch, nil
 }
 
@@ -355,30 +346,12 @@ func (g *Gemini) doRequest(ctx context.Context, url string, req *geminiRequest) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	g.setHeaders(httpReq)
-
-	resp, err := g.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("Gemini API error (status %d): %s", resp.StatusCode, string(body))
-	}
-
-	return body, nil
+	return doHTTPWithRetry(ctx, g.client, "Gemini",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+		},
+		g.setHeaders,
+	)
 }
 
 func (g *Gemini) setHeaders(req *http.Request) {

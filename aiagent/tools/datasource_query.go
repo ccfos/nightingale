@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/toolkits/pkg/logger"
 )
@@ -17,72 +18,9 @@ import (
 // =============================================================================
 
 func init() {
-	register("query_prometheus", aiagent.AgentTool{
-		Name:        "query_prometheus",
-		Description: "执行 PromQL 查询 Prometheus/VictoriaMetrics 数据源，支持即时查询和范围查询",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "PromQL 表达式，如 cpu_usage_active{ident='web-01'}", Required: true},
-			{Name: "query_type", Type: "string", Description: "查询类型: instant(即时查询,默认) 或 range(范围查询)", Required: false},
-			{Name: "time_range", Type: "string", Description: "时间范围，如 15m、1h、6h、24h、7d，默认 1h", Required: false},
-			{Name: "step", Type: "integer", Description: "范围查询步长(秒)，不填则根据 time_range 自动推算", Required: false},
-		},
-	}, queryPrometheusTool)
-
-	// =========================================================================
-	// query_timeseries — Datasource.QueryData()
-	// =========================================================================
-
-	register("query_timeseries", aiagent.AgentTool{
-		Name: "query_timeseries",
-		Description: `执行时序数据查询，通过 Datasource.QueryData() 接口。
-适用数据源: mysql, ck(ClickHouse), pgsql(PostgreSQL), doris, tdengine, elasticsearch, opensearch, victorialogs。
-SQL 类数据源需提供 sql + value_key；ES 类需提供 index + filter；VictoriaLogs 需提供 query。`,
-		Type: aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			// SQL 类 (mysql, ck, pgsql, doris, tdengine)
-			{Name: "sql", Type: "string", Description: "SQL 查询语句，支持 $from/$to 时间变量（SQL类数据源使用）", Required: false},
-			{Name: "value_key", Type: "string", Description: "数值列名，多个用空格分隔（SQL类数据源时序查询必填）", Required: false},
-			{Name: "label_key", Type: "string", Description: "标签/分组列名，多个用空格分隔", Required: false},
-			{Name: "time_key", Type: "string", Description: "时间列名", Required: false},
-			{Name: "database", Type: "string", Description: "数据库名（SQL类数据源可选）", Required: false},
-			// ES/OpenSearch 类
-			{Name: "index", Type: "string", Description: "索引名或索引模式，如 logs-*（ES/OpenSearch 使用）", Required: false},
-			{Name: "filter", Type: "string", Description: "Lucene 查询语法过滤条件（ES/OpenSearch 使用）", Required: false},
-			{Name: "date_field", Type: "string", Description: "时间字段名，默认 @timestamp（ES/OpenSearch 使用）", Required: false},
-			// VictoriaLogs
-			{Name: "query", Type: "string", Description: "LogsQL 查询表达式（VictoriaLogs 使用）", Required: false},
-			{Name: "step", Type: "string", Description: "步长，如 1m、5m（VictoriaLogs 使用）", Required: false},
-			// 通用
-			{Name: "time_range", Type: "string", Description: "时间范围，如 15m、1h、6h、24h、7d，默认 1h", Required: false},
-		},
-	}, queryTimeseriesDataTool)
-
-	// =========================================================================
-	// query_log — Datasource.QueryLog()
-	// =========================================================================
-
-	register("query_log", aiagent.AgentTool{
-		Name: "query_log",
-		Description: `查询原始日志/数据，通过 Datasource.QueryLog() 接口。
-适用数据源: mysql, ck(ClickHouse), pgsql(PostgreSQL), doris, tdengine, elasticsearch, opensearch, victorialogs。
-SQL 类数据源需提供 sql；ES 类需提供 index + filter；VictoriaLogs 需提供 query。`,
-		Type: aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			// SQL 类
-			{Name: "sql", Type: "string", Description: "SQL 查询语句，支持 $from/$to 时间变量（SQL类数据源使用）", Required: false},
-			{Name: "database", Type: "string", Description: "数据库名（SQL类数据源可选）", Required: false},
-			// ES/OpenSearch 类
-			{Name: "index", Type: "string", Description: "索引名或索引模式，如 logs-*（ES/OpenSearch 使用）", Required: false},
-			{Name: "filter", Type: "string", Description: "Lucene 查询语法过滤条件（ES/OpenSearch 使用）", Required: false},
-			{Name: "date_field", Type: "string", Description: "时间字段名，默认 @timestamp（ES/OpenSearch 使用）", Required: false},
-			// VictoriaLogs
-			{Name: "query", Type: "string", Description: "LogsQL 查询表达式（VictoriaLogs 使用）", Required: false},
-			// 通用
-			{Name: "time_range", Type: "string", Description: "时间范围，如 15m、1h、6h、24h、7d，默认 1h", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回行数限制，默认 50，最大 500", Required: false},
-		},
-	}, queryLogDataTool)
+	register(defs.QueryPrometheus, queryPrometheusTool)
+	register(defs.QueryTimeseries, queryTimeseriesDataTool)
+	register(defs.QueryLog, queryLogDataTool)
 }
 
 // =============================================================================

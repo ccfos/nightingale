@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -64,40 +65,9 @@ type alertEventDetailResult struct {
 // =============================================================================
 
 func init() {
-	register("search_active_alerts", aiagent.AgentTool{
-		Name:        "search_active_alerts",
-		Description: "搜索当前活跃的告警事件（未恢复的告警）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
-			{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
-			{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认不限）", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
-		},
-	}, searchActiveAlerts)
-
-	register("search_history_alerts", aiagent.AgentTool{
-		Name:        "search_history_alerts",
-		Description: "搜索历史告警事件（包含已恢复和未恢复的告警）",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配告警规则名称或标签", Required: false},
-			{Name: "severity", Type: "integer", Description: "告警级别过滤: 1=一级告警, 2=二级告警, 3=三级告警, -1=全部（默认-1）", Required: false},
-			{Name: "time_range", Type: "string", Description: "时间范围，如 1h, 6h, 24h, 7d（默认24h）", Required: false},
-			{Name: "is_recovered", Type: "integer", Description: "恢复状态过滤: 0=未恢复, 1=已恢复, -1=全部（默认-1）", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认20，最大100", Required: false},
-		},
-	}, searchHistoryAlerts)
-
-	register("get_alert_event_detail", aiagent.AgentTool{
-		Name:        "get_alert_event_detail",
-		Description: "获取单条告警事件的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "event_id", Type: "integer", Description: "告警事件ID", Required: true},
-			{Name: "event_type", Type: "string", Description: "事件类型: active=活跃告警, history=历史告警（默认active）", Required: false},
-		},
-	}, getAlertEventDetail)
+	register(defs.SearchActiveAlerts, searchActiveAlerts)
+	register(defs.SearchHistoryAlerts, searchHistoryAlerts)
+	register(defs.GetAlertEventDetail, getAlertEventDetail)
 }
 
 // =============================================================================

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -40,52 +41,9 @@ type alertRuleDetailResult struct {
 }
 
 func init() {
-	register("list_alert_rules", aiagent.AgentTool{
-		Name:        "list_alert_rules",
-		Description: "查询当前用户有权限的告警规则列表，支持关键词搜索和状态过滤",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配规则名称", Required: false},
-			{Name: "disabled", Type: "integer", Description: "状态过滤: 0=启用, 1=禁用, -1=全部（默认-1）", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listAlertRules)
-
-	register("get_alert_rule_detail", aiagent.AgentTool{
-		Name:        "get_alert_rule_detail",
-		Description: "获取单条告警规则的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "告警规则ID", Required: true},
-		},
-	}, getAlertRuleDetail)
-
-	register("create_alert_rule", aiagent.AgentTool{
-		Name: "create_alert_rule",
-		Description: `创建告警规则，支持 Prometheus/Loki/ES/OpenSearch/TDengine/ClickHouse/MySQL/PostgreSQL/Doris/VictoriaLogs/Host 等数据源类型。
-- Prometheus 阈值告警：直接传 prom_ql + threshold + operator，工具自动构建 v2 rule_config
-- 其他类型：传 cate + rule_config_json（先读 skill 的 datasources/<cate>.md 获取结构）
-- Host 类型：cate="host"，不需要 datasource_id`,
-		Type: aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "group_id", Type: "integer", Description: "业务组 ID（从 list_busi_groups 获取，优先选择 is_default=true 的组）", Required: true},
-			{Name: "name", Type: "string", Description: "告警规则名称（同业务组内不能重名）", Required: true},
-			{Name: "cate", Type: "string", Description: "数据源类型: prometheus|loki|elasticsearch|opensearch|tdengine|ck|mysql|pgsql|doris|victorialogs|host（默认 prometheus）", Required: false},
-			{Name: "prod", Type: "string", Description: "产品类型: metric|logging|host。不传时按 cate 自动推导", Required: false},
-			{Name: "datasource_id", Type: "integer", Description: "数据源 ID（host 类型不需要；其他类型必填）", Required: false},
-			{Name: "rule_config_json", Type: "string", Description: "完整的 rule_config JSON 对象字符串。仅在 cate != prometheus 时必填；先调用 read_file(base=\"n9e-create-alert-rule\", path=\"datasources/<cate>.md\") 获取该类型的结构模板", Required: false},
-			{Name: "prom_ql", Type: "string", Description: "PromQL 查询表达式（仅 cate=prometheus 简化路径使用），只写查询不要包含阈值，例如 cpu_usage_active{cpu=\"cpu-total\"}", Required: false},
-			{Name: "threshold", Type: "number", Description: "触发阈值（仅 cate=prometheus 简化路径使用），例如 80", Required: false},
-			{Name: "operator", Type: "string", Description: "比较操作符: > / >= / < / <= / == / !=（默认 >，仅 cate=prometheus 简化路径使用）", Required: false},
-			{Name: "severity", Type: "integer", Description: "告警级别: 1=Critical, 2=Warning, 3=Info（默认 2）", Required: false},
-			{Name: "note", Type: "string", Description: "告警说明/通知正文", Required: false},
-			{Name: "eval_interval", Type: "integer", Description: "评估周期（秒），默认 30", Required: false},
-			{Name: "for_duration", Type: "integer", Description: "持续时长（秒），告警条件需持续这么久才触发，默认 60", Required: false},
-			{Name: "append_tags", Type: "string", Description: "附加标签，多个用空格分隔，如 \"service=cpu mod=host\"", Required: false},
-			{Name: "runbook_url", Type: "string", Description: "应急处理手册 URL", Required: false},
-			{Name: "notify_rule_ids", Type: "string", Description: "关联通知规则 ID 列表 JSON，如 \"[1,2]\"。不传则不绑定", Required: false},
-		},
-	}, createAlertRule)
+	register(defs.ListAlertRules, listAlertRules)
+	register(defs.GetAlertRuleDetail, getAlertRuleDetail)
+	register(defs.CreateAlertRule, createAlertRule)
 }
 
 // prodForCate returns the default "prod" value for a given datasource cate,

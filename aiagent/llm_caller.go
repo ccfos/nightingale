@@ -11,77 +11,59 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// callLLM 调用 LLM（非流式）。stop 为可选的停止序列，非 ReAct 场景传 nil。
-func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage, stop []string) (string, error) {
-	if a.llmClient == nil {
-		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
-	}
-
+// buildLLMRequest 将 Agent 内部的 ChatMessage 转成 llm.GenerateRequest
+func buildLLMRequest(messages []ChatMessage, stop []string) *llm.GenerateRequest {
 	llmMessages := make([]llm.Message, len(messages))
 	for i, msg := range messages {
-		llmMessages[i] = llm.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
-		}
+		llmMessages[i] = llm.Message{Role: msg.Role, Content: msg.Content}
 	}
+	return &llm.GenerateRequest{Messages: llmMessages, Stop: stop}
+}
 
-	req := &llm.GenerateRequest{
-		Messages: llmMessages,
-		Stop:     stop,
+func (a *Agent) checkLLMClient() error {
+	if a.llmClient == nil {
+		return fmt.Errorf("LLM client not initialized, use WithLLMClient or WithLLMConfig option")
 	}
+	return nil
+}
 
-	resp, err := a.llmClient.Generate(ctx, req)
+// callLLM 调用 LLM（非流式）。stop 为可选的停止序列，非 ReAct 场景传 nil。
+func (a *Agent) callLLM(ctx context.Context, messages []ChatMessage, stop []string) (string, error) {
+	if err := a.checkLLMClient(); err != nil {
+		return "", err
+	}
+	resp, err := a.llmClient.Generate(ctx, buildLLMRequest(messages, stop))
 	if err != nil {
 		return "", fmt.Errorf("LLM generate error: %w", err)
 	}
-
 	return resp.Content, nil
 }
 
 // callLLMWithStreamOutput 调用 LLM 并将流式输出转发到 streamChan。stop 为可选的停止序列。
 func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string, stop []string) (string, error) {
-	if a.llmClient == nil {
-		return "", fmt.Errorf("LLM client not initialized, use WithLLMClient option, agent: %v", a)
-	}
-	logger.Infof("[Agent] LLM client ready, provider=%s", a.llmClient.Name())
-
-	llmMessages := make([]llm.Message, len(messages))
-	for i, msg := range messages {
-		llmMessages[i] = llm.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
-		}
-		logger.Infof("[Agent] Message[%d]: role=%s, content_len=%d", i, msg.Role, len(msg.Content))
+	if err := a.checkLLMClient(); err != nil {
+		return "", err
 	}
 
-	logger.Infof("[Agent] Calling GenerateStream with %d messages", len(llmMessages))
-	streamStart := time.Now()
-	streamReq := &llm.GenerateRequest{
-		Messages: llmMessages,
-		Stop:     stop,
-	}
-
-	stream, err := a.llmClient.GenerateStream(ctx, streamReq)
+	stream, err := a.llmClient.GenerateStream(ctx, buildLLMRequest(messages, stop))
 	if err != nil {
-		logger.Errorf("[Agent] GenerateStream failed after %v: %v", time.Since(streamStart), err)
+		logger.Errorf("[Agent] GenerateStream failed provider=%s: %v", a.llmClient.Name(), err)
 		return "", fmt.Errorf("LLM stream error: %w", err)
 	}
-	logger.Infof("[Agent] GenerateStream returned stream channel after %v", time.Since(streamStart))
 
 	var fullContent strings.Builder
-	chunkCount := 0
-
 	for chunk := range stream {
-		chunkCount++
 		if chunk.Error != nil {
-			logger.Errorf("[Agent] Stream error at chunk #%d: %v, accumulated_content_len=%d",
-				chunkCount, chunk.Error, fullContent.Len())
+			logger.Errorf("[Agent] stream chunk error provider=%s content_len=%d: %v",
+				a.llmClient.Name(), fullContent.Len(), chunk.Error)
+			// 早退前排干 provider 的 ch：否则 provider 那边的 streamResponse goroutine
+			// 还在往 100-buffer 里 blocking send，buffer 满就永久卡死（直到 HTTP ctx
+			// 取消 + 最后一个 error chunk 也写进去为止——但那个最后写同样是 blocking）。
+			go drainStream(stream)
 			return fullContent.String(), fmt.Errorf("stream error: %w", chunk.Error)
 		}
-
 		if chunk.Content != "" {
 			fullContent.WriteString(chunk.Content)
-
 			streamChan <- &StreamChunk{
 				Type:      StreamTypeText,
 				Delta:     chunk.Content,
@@ -90,17 +72,19 @@ func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMess
 				Timestamp: time.Now().UnixMilli(),
 			}
 		}
-
 		if chunk.Done {
-			logger.Infof("[Agent] Stream done at chunk #%d", chunkCount)
 			break
 		}
 	}
-
-	logger.Infof("[Agent] Stream completed: total_chunks=%d, total_content_len=%d, elapsed=%v",
-		chunkCount, fullContent.Len(), time.Since(streamStart))
-
 	return fullContent.String(), nil
+}
+
+// drainStream 消费完 provider 的 stream chan（直到被 provider 侧 close）。
+// 用于调用方提前返回（比如遇到错误）后，让 provider 的 goroutine 得以 unblock
+// 并正常退出，避免 goroutine 泄漏。
+func drainStream(stream <-chan llm.StreamChunk) {
+	for range stream {
+	}
 }
 
 // callLLMAuto 统一的 LLM 调用（自动选择流式/非流式）。stop 为可选的停止序列，

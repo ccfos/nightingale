@@ -179,12 +179,29 @@ func New(cfg *Config) (LLM, error) {
 	}
 }
 
-// createHTTPClient creates an HTTP client with the given config
+// createHTTPClient creates an HTTP client with the given config.
+//
+// 注意：Client.Timeout 被刻意设为 0。原因是同一个 http.Client 被流式路径
+// （GenerateStream）和非流式路径（Generate）共用，Client.Timeout 会覆盖 body 读取阶段
+// 长流式响应（LLM 多轮 reasoning 或工具调用）持续几分钟是常态，Timeout 会把 body
+// 中途拉断，前端收到截断输出。
+//
+// 改由两条更精确的限制替代：
+//   - Transport.ResponseHeaderTimeout = cfg.Timeout —— 发请求到首个 header 返回的上限；
+//     真正 hung 住的连接会被这里拦住，而正在持续吐字的流不会。
+//   - 调用方 ctx（context.WithTimeout）—— 总时长上限由 Agent.Run 的 a.cfg.Timeout 负责。
 func createHTTPClient(cfg *Config) *http.Client {
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = DefaultHTTPTimeout
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: cfg.SkipSSLVerify,
 		},
+		ResponseHeaderTimeout: time.Duration(timeout) * time.Millisecond,
+		IdleConnTimeout:       90 * time.Second,
 	}
 
 	if cfg.Proxy != "" {
@@ -193,13 +210,8 @@ func createHTTPClient(cfg *Config) *http.Client {
 		}
 	}
 
-	timeout := cfg.Timeout
-	if timeout <= 0 {
-		timeout = 60000
-	}
-
 	return &http.Client{
-		Timeout:   time.Duration(timeout) * time.Millisecond,
+		Timeout:   0, // 见函数顶部注释：流式路径禁用总时长封顶，由 ctx + ResponseHeaderTimeout 负责
 		Transport: transport,
 	}
 }

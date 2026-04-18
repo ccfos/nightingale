@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -35,24 +36,8 @@ type alertMuteDetailResult struct {
 }
 
 func init() {
-	register("list_alert_mutes", aiagent.AgentTool{
-		Name:        "list_alert_mutes",
-		Description: "查询当前用户有权限的告警屏蔽规则列表",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配屏蔽原因", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listAlertMutes)
-
-	register("get_alert_mute_detail", aiagent.AgentTool{
-		Name:        "get_alert_mute_detail",
-		Description: "获取单条告警屏蔽规则的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "屏蔽规则ID", Required: true},
-		},
-	}, getAlertMuteDetail)
+	register(defs.ListAlertMutes, listAlertMutes)
+	register(defs.GetAlertMuteDetail, getAlertMuteDetail)
 }
 
 func listAlertMutes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

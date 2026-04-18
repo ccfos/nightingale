@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -37,24 +38,8 @@ type alertSubscribeDetailResult struct {
 }
 
 func init() {
-	register("list_alert_subscribes", aiagent.AgentTool{
-		Name:        "list_alert_subscribes",
-		Description: "查询当前用户有权限的告警订阅规则列表",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "query", Type: "string", Description: "搜索关键词，匹配订阅名称", Required: false},
-			{Name: "limit", Type: "integer", Description: "返回数量限制，默认50，最大200", Required: false},
-		},
-	}, listAlertSubscribes)
-
-	register("get_alert_subscribe_detail", aiagent.AgentTool{
-		Name:        "get_alert_subscribe_detail",
-		Description: "获取单条告警订阅规则的详细信息",
-		Type:        aiagent.ToolTypeBuiltin,
-		Parameters: []aiagent.ToolParameter{
-			{Name: "id", Type: "integer", Description: "订阅规则ID", Required: true},
-		},
-	}, getAlertSubscribeDetail)
+	register(defs.ListAlertSubscribes, listAlertSubscribes)
+	register(defs.GetAlertSubscribeDetail, getAlertSubscribeDetail)
 }
 
 func listAlertSubscribes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

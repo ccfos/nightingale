@@ -9,17 +9,11 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
-const (
-	DefaultOpenAIURL = "https://api.openai.com/v1/chat/completions"
+const DefaultOpenAIURL = "https://api.openai.com/v1/chat/completions"
 
-	// 重试相关配置
-	maxRetries       = 3
-	initialRetryWait = 5 * time.Second  // rate limit 时初始等待 5 秒
-	maxRetryWait     = 60 * time.Second // 最大等待 60 秒
-)
+// maxRetries / initialRetryWait / maxRetryWait 迁移至 defaults.go
 
 // OpenAI implements the LLM interface for OpenAI and compatible APIs
 type OpenAI struct {
@@ -149,85 +143,27 @@ func (o *OpenAI) Generate(ctx context.Context, req *GenerateRequest) (*GenerateR
 	return o.convertResponse(&openAIResp), nil
 }
 
-// isRetryableStatus 检查是否是可重试的 HTTP 状态码
-func isRetryableStatus(statusCode int) bool {
-	switch statusCode {
-	case 429, 500, 502, 503, 504:
-		return true
-	default:
-		return false
-	}
-}
-
 func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-chan StreamChunk, error) {
-	// Convert to OpenAI format
 	openAIReq := o.convertRequest(req)
 	openAIReq.Stream = true
 
-	// Create request body
 	jsonData, err := json.Marshal(openAIReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	var resp *http.Response
-	var lastErr error
-	retryWait := initialRetryWait
-
-	// 重试循环
-	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if attempt > 0 {
-			// 等待后重试
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case <-time.After(retryWait):
-			}
-			// 指数退避，但不超过最大等待时间
-			retryWait *= 2
-			if retryWait > maxRetryWait {
-				retryWait = maxRetryWait
-			}
-		}
-
-		httpReq, err := http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		o.setHeaders(httpReq)
-
-		// Make request
-		resp, err = o.client.Do(httpReq)
-		if err != nil {
-			lastErr = fmt.Errorf("failed to send request: %w", err)
-			continue // 网络错误，重试
-		}
-
-		if resp.StatusCode >= 400 {
-			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			lastErr = fmt.Errorf("OpenAI API error (status %d): %s", resp.StatusCode, string(body))
-
-			// 检查是否可重试
-			if isRetryableStatus(resp.StatusCode) && attempt < maxRetries {
-				continue // 可重试的错误，继续重试
-			}
-			return nil, lastErr
-		}
-
-		// 成功，跳出循环
-		break
+	resp, err := doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
+		},
+		o.setHeaders,
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	if resp == nil {
-		return nil, lastErr
-	}
-
-	// Create channel and start streaming
 	ch := make(chan StreamChunk, 100)
 	go o.streamResponse(ctx, resp, ch)
-
 	return ch, nil
 }
 
@@ -378,59 +314,12 @@ func (o *OpenAI) doRequest(ctx context.Context, req *openAIRequest) ([]byte, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-
-	var lastErr error
-	retryWait := initialRetryWait
-
-	// 重试循环
-	for attempt := 0; attempt <= maxRetries; attempt++ {
-		if attempt > 0 {
-			// 等待后重试
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case <-time.After(retryWait):
-			}
-			// 指数退避
-			retryWait *= 2
-			if retryWait > maxRetryWait {
-				retryWait = maxRetryWait
-			}
-		}
-
-		httpReq, err := http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		o.setHeaders(httpReq)
-
-		resp, err := o.client.Do(httpReq)
-		if err != nil {
-			lastErr = fmt.Errorf("failed to send request: %w", err)
-			continue // 网络错误，重试
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			lastErr = fmt.Errorf("failed to read response: %w", err)
-			continue
-		}
-
-		if resp.StatusCode >= 400 {
-			lastErr = fmt.Errorf("OpenAI API error (status %d): %s", resp.StatusCode, string(body))
-			// 检查是否可重试
-			if isRetryableStatus(resp.StatusCode) && attempt < maxRetries {
-				continue
-			}
-			return nil, lastErr
-		}
-
-		return body, nil
-	}
-
-	return nil, lastErr
+	return doHTTPWithRetry(ctx, o.client, "OpenAI",
+		func() (*http.Request, error) {
+			return http.NewRequestWithContext(ctx, "POST", o.config.BaseURL, bytes.NewBuffer(jsonData))
+		},
+		o.setHeaders,
+	)
 }
 
 func (o *OpenAI) setHeaders(req *http.Request) {
