@@ -45,28 +45,3 @@ func (p *DiscordProvider) Notify(ctx context.Context, req *NotifyRequest) *Notif
 		req.CustomParams, req.Sendtos, req.HttpClient)
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
-
-func (p *DiscordProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Discord", Ident: models.Discord, RequestType: "http", Weight: 16, Enable: false,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "{{$params.webhook_url}}",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"content": "{{$tpl.content}}"}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

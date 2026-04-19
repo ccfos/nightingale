@@ -45,29 +45,3 @@ func (p *MattermostWebhookProvider) Notify(ctx context.Context, req *NotifyReque
 		req.CustomParams, req.Sendtos, req.HttpClient)
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
-
-func (p *MattermostWebhookProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "MattermostWebhook", Ident: models.MattermostWebhook, RequestType: "http", Weight: 15, Enable: false,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "{{$params.webhook_url}}",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"text":  "{{$tpl.content}}"}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "webhook_url", CName: "Webhook Url", Type: "string"},
-						{Key: "bot_name", CName: "Bot Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

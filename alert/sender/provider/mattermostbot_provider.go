@@ -45,29 +45,3 @@ func (p *MattermostBotProvider) Notify(ctx context.Context, req *NotifyRequest) 
 		req.CustomParams, req.Sendtos, req.HttpClient)
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
-
-func (p *MattermostBotProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "MattermostBot", Ident: models.MattermostBot, RequestType: "http", Weight: 14, Enable: false,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "<your mattermost url>/api/v4/posts",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you mattermost bot token>"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"channel_id": "{{$params.channel_id}}", "message":  "{{$tpl.content}}"}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "channel_id", CName: "Channel ID", Type: "string"},
-						{Key: "channel_name", CName: "Channel Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

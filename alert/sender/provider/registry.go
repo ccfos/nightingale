@@ -3,11 +3,8 @@ package provider
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/toolkits/pkg/logger"
 )
 
 type Registry struct {
@@ -30,25 +27,6 @@ var DefaultRegistry = NewRegistry()
 func NewRegistry() *Registry {
 	return &Registry{
 		providers: make(map[string]NotifyChannelProvider),
-	}
-}
-
-func InitNotifyChannel(ctx *ctx.Context) {
-	if !ctx.IsCenter {
-		return
-	}
-
-	for _, p := range DefaultRegistry.All() {
-		for _, ch := range p.DefaultChannels() {
-			ch.CreateBy = "system"
-			ch.CreateAt = time.Now().Unix()
-			ch.UpdateBy = "system"
-			ch.UpdateAt = time.Now().Unix()
-			err := ch.Upsert(ctx)
-			if err != nil {
-				logger.Warningf("notify channel init failed to upsert notify channels %v", err)
-			}
-		}
 	}
 }
 
@@ -105,15 +83,4 @@ func (r *Registry) Resolve(c *models.NotifyChannelConfig) (NotifyChannelProvider
 		return nil, false
 	}
 	return r.Get(fallback)
-}
-
-func (r *Registry) AllDefaultChannels() []*models.NotifyChannelConfig {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	channels := make([]*models.NotifyChannelConfig, 0)
-	for _, p := range r.providers {
-		channels = append(channels, p.DefaultChannels()...)
-	}
-	return channels
 }

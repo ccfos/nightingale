@@ -60,40 +60,6 @@ func (p *AliyunSmsProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
-func (p *AliyunSmsProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Aliyun SMS", Ident: AliyunSmsIdent, RequestType: "http", Weight: 9, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					Method:  "POST",
-					URL:     "https://dysmsapi.aliyuncs.com",
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Parameters: map[string]string{
-							"PhoneNumbers":    "{{ $sendto }}",
-							"SignName":        "需要改为实际的签名",
-							"TemplateCode":    "需要改为实际的模板id",
-							"TemplateParam":   `{"incident":"故障{{$tpl.incident}}，请及时处理"}`,
-							"AccessKeyId":     "需要改为实际的access_key_id",
-							"AccessKeySecret": "需要改为实际的access_key_secret",
-						},
-					},
-					Headers: map[string]string{
-						"Content-Type": "application/json",
-						"Host":         "dysmsapi.aliyuncs.com",
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{
-					ContactKey: "phone",
-				},
-			},
-		},
-	}
-}
-
 // 从原 NotifyChannelConfig.SendHTTP 提取，供各 HTTP 类 Provider 复用
 func (p *AliyunSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.AlertCurEvent,
 	tpl map[string]interface{}, params map[string]string, sendtos []string,

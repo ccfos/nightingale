@@ -45,29 +45,3 @@ func (p *SlackBotProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 		req.CustomParams, req.Sendtos, req.HttpClient)
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
-
-func (p *SlackBotProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "SlackBot", Ident: models.SlackBot, RequestType: "http", Weight: 12, Enable: false,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "https://slack.com/api/chat.postMessage",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json", "Authorization": "Bearer <you slack bot token>"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"channel": "#{{$params.channel}}", "text":  "{{$tpl.content}}", "mrkdwn": true}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "channel", CName: "channel", Type: "string"},
-						{Key: "channel_name", CName: "Channel Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

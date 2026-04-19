@@ -70,34 +70,3 @@ func (p *DingtalkProvider) Notify(ctx context.Context, req *NotifyRequest) *Noti
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
-func (p *DingtalkProvider) DefaultChannels() []*models.NotifyChannelConfig {
-
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Dingtalk", Ident: models.Dingtalk, RequestType: "http", Weight: 3, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
-					Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
-						Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
-					},
-				},
-				DingtalkRequestConfig: &models.DingtalkRequestConfig{
-					AppKey:    "",
-					AppSecret: "",
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "access_token", CName: "Access Token", Type: "string"},
-						{Key: "bot_name", CName: "Bot Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

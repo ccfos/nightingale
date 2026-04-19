@@ -53,40 +53,6 @@ func (p *AliyunVoiceProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
-func (p *AliyunVoiceProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Aliyun Voice", Ident: AliyunVoiceIdent, RequestType: "http", Weight: 8, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					Method:  "POST",
-					URL:     "https://dyvmsapi.aliyuncs.com",
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Parameters: map[string]string{
-							"TtsCode":          "需要改为实际的voice_code",
-							"TtsParam":         `{"incident":"故障{{$tpl.incident}}，一键认领请按1"}`,
-							"CalledNumber":     `{{ $sendto }}`,
-							"CalledShowNumber": `需要改为实际的show_number, 如果为空则不显示`,
-							"AccessKeyId":      "需要改为实际的access_key_id",
-							"AccessKeySecret":  "需要改为实际的access_key_secret",
-						},
-					},
-					Headers: map[string]string{
-						"Content-Type": "application/json",
-						"Host":         "dyvmsapi.aliyuncs.com",
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{
-					ContactKey: "phone",
-				},
-			},
-		},
-	}
-}
-
 // 从原 NotifyChannelConfig.SendHTTP 提取，供各 HTTP 类 Provider 复用
 func (p *AliyunVoiceProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.AlertCurEvent,
 	tpl map[string]interface{}, params map[string]string, sendtos []string,

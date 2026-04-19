@@ -52,27 +52,6 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: nil}
 }
 
-func (p *FlashDutyProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "FlashDuty", Ident: FlashDutyIdent, RequestType: FlashDutyIdent, Weight: 1, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Headers: map[string]string{
-						"Content-Type": "application/json",
-					},
-				},
-				FlashDutyRequestConfig: &models.FlashDutyRequestConfig{
-					IntegrationUrl: "flashduty integration url",
-					Timeout:        5000,
-					RetryTimes:     3,
-				},
-			},
-		},
-	}
-}
-
 func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {
 	// todo 每一个 channel 批量发送事件
 	if client == nil {

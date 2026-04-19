@@ -194,20 +194,6 @@ func (rt *Router) notifyChannelsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
-// notifyChannelDefaultChannelsGet 根据 ident 获取对应 Provider 的 DefaultChannels()
-func (rt *Router) notifyChannelDefaultChannelsGet(c *gin.Context) {
-	ident := ginx.QueryStr(c, "ident", "")
-	if ident == "" {
-		ginx.Bomb(http.StatusBadRequest, "ident is required")
-	}
-	p, ok := provider.DefaultRegistry.Get(ident)
-	if !ok {
-		ginx.Bomb(http.StatusNotFound, "provider not found for ident: "+ident)
-	}
-	channels := p.DefaultChannels()
-	ginx.NewRender(c).Data(channels, nil)
-}
-
 func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 	lst, err := models.NotifyChannelsGet(rt.Ctx, "")
 	ginx.Dangerous(err)

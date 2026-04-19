@@ -83,33 +83,3 @@ func getFeishuTenantAccessToken(ctx context.Context, client *http.Client, appID,
 func uploadFeishuImage(ctx context.Context, client *http.Client, token, imageBase64 string) (string, error) {
 	return uploadOpenPlatformImage(ctx, client, token, imageBase64, feishuImageURL)
 }
-
-func (p *FeishuCardProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Feishu Card", Ident: models.FeishuCard, RequestType: "http", Weight: 5, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "markdown", "content": "{{$tpl.content}}"}]}}`,
-					},
-				},
-				FeishuRequestConfig: &models.FeishuRequestConfig{
-					AppID:     "",
-					AppSecret: "",
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "access_token", CName: "Access Token", Type: "string"},
-						{Key: "bot_name", CName: "Bot Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

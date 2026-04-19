@@ -58,39 +58,6 @@ func (p *TencentSmsProvider) Notify(ctx context.Context, req *NotifyRequest) *No
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
 
-func (p *TencentSmsProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Tencent SMS", Ident: TencentSmsIdent, RequestType: "http", Weight: 11, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					Method:  "POST",
-					URL:     "https://sms.tencentcloudapi.com",
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"PhoneNumberSet":["{{ $sendto }}"],"SignName":"需要改为实际的签名","SmsSdkAppId":"需要改为实际的appid","TemplateId":"需要改为实际的模板id","TemplateParamSet":["{{$tpl.content}}"]}`,
-					},
-					Headers: map[string]string{
-						"Content-Type": "application/json",
-						"Host":         "sms.tencentcloudapi.com",
-						"X-TC-Action":  "SendSms",
-						"X-TC-Version": "2021-01-11",
-						"X-TC-Region":  "需要改为实际的region",
-						"Service":      "sms",
-						"Secret_ID":    "需要改为实际的secret_id",
-						"Secret_Key":   "需要改为实际的secret_key",
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{
-					ContactKey: "phone",
-				},
-			},
-		},
-	}
-}
-
 func (p *TencentSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfig, events []*models.AlertCurEvent,
 	tpl map[string]interface{}, params map[string]string, sendtos []string,
 	client *http.Client) (string, error) {

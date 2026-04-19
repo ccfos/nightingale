@@ -49,21 +49,6 @@ func (p *PagerDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: nil}
 }
 
-func (p *PagerDutyProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "PagerDuty", Ident: PagerDutyIdent, RequestType: PagerDutyIdent, Weight: 19, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				PagerDutyRequestConfig: &models.PagerDutyRequestConfig{
-					ApiKey:     "pagerduty api key",
-					Timeout:    5000,
-					RetryTimes: 3,
-				},
-			},
-		},
-	}
-}
-
 func SendPagerDuty(config *models.PagerDutyRequestConfig, events []*models.AlertCurEvent, routingKey, siteUrl string, client *http.Client) (string, error) {
 	if client == nil {
 		return "", fmt.Errorf("http client not found")

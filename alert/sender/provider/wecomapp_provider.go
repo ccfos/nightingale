@@ -401,24 +401,3 @@ func (p *WecomAppProvider) postWecomAPI(ctx context.Context, client *http.Client
 	}
 	return lastBody, lastErr
 }
-
-func (p *WecomAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Wecom App", Ident: p.Ident(), RequestType: "wecomapp", Weight: 4, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				WecomAppRequestConfig: &models.WecomAppRequestConfig{
-					CorpID:     "wwxxxxxxxxxxxxxxxx",
-					CorpSecret: "secret_xxx",
-					AgentID:    1000001,
-					Timeout:    10000,
-					RetryTimes: 1,
-					RetrySleep: 1000,
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{ContactKey: "wecom_userid"},
-			},
-		},
-	}
-}

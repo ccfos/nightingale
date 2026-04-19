@@ -34,29 +34,6 @@ func (p *EmailProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyR
 	return &NotifyResult{Target: strings.Join(req.Sendtos, ","), Response: "queued", Err: nil}
 }
 
-func (p *EmailProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Email", Ident: models.Email, RequestType: "smtp", Weight: 2, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				SMTPRequestConfig: &models.SMTPRequestConfig{
-					Host:               "smtp.host",
-					Port:               25,
-					Username:           "your-username",
-					Password:           "your-password",
-					From:               "your-email",
-					InsecureSkipVerify: true,
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{
-					ContactKey: "email",
-				},
-			},
-		},
-	}
-}
-
 func SendEmailNow(ncc *models.NotifyChannelConfig, events []*models.AlertCurEvent, tpl map[string]interface{}, sendtos []string) error {
 
 	d := gomail.NewDialer(ncc.RequestConfig.SMTPRequestConfig.Host, ncc.RequestConfig.SMTPRequestConfig.Port, ncc.RequestConfig.SMTPRequestConfig.Username, ncc.RequestConfig.SMTPRequestConfig.Password)

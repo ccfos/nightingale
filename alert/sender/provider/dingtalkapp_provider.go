@@ -715,28 +715,3 @@ func buildDingtalkAppTplData(req *NotifyRequest, userIDs, groupIDs []string) map
 	return data
 }
 
-func (p *DingtalkAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "DingtalkApp", Ident: p.Ident(), RequestType: "dingtalkapp", Weight: 3, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				DingtalkAppRequestConfig: &models.DingtalkAppRequestConfig{
-					AppKey:     "app_key_for_test",
-					AppSecret:  "app_secret_for_test",
-					Timeout:    10000,
-					RetryTimes: 1,
-					RetrySleep: 1,
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{ContactKey: "dingtalk_userid"},
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "single_title", CName: "Action Button Title", Type: "string"},
-						{Key: "single_url", CName: "Action Jump URL", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

@@ -47,22 +47,6 @@ func (p *ScriptProvider) Notify(ctx context.Context, req *NotifyRequest) *Notify
 	return &NotifyResult{Target: targetStr, Response: response, Err: err}
 }
 
-func (p *ScriptProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Script", Ident: ScriptIdent, RequestType: ScriptIdent, Weight: 20, Enable: false,
-			RequestConfig: &models.RequestConfig{
-				ScriptRequestConfig: &models.ScriptRequestConfig{
-					ScriptType: "script",
-					Timeout:    5000,
-					Script:     "",
-					Path:       "",
-				},
-			},
-		},
-	}
-}
-
 func SendScript(ncc *models.NotifyChannelConfig, events []*models.AlertCurEvent, tpl map[string]interface{}, params map[string]string, sendtos []string) (string, string, error) {
 	config := ncc.RequestConfig.ScriptRequestConfig
 	if config.Script == "" && config.Path == "" {

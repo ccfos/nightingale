@@ -47,29 +47,3 @@ func (p *LarkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyRe
 		req.CustomParams, req.Sendtos, req.HttpClient)
 	return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: resp, Err: err}
 }
-
-func (p *LarkProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Lark", Ident: models.Lark, RequestType: "http", Weight: 6, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "https://open.larksuite.com/open-apis/bot/v2/hook/{{$params.token}}",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Body: `{"msg_type": "text", "content": {"text": "{{$tpl.content}}"}}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "token", CName: "Token", Type: "string"},
-						{Key: "bot_name", CName: "Bot Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}

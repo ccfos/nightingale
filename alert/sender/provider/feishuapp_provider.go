@@ -365,27 +365,6 @@ func GetFeishuUserID(ctx context.Context, client *http.Client, token string, ema
 	return out.Data.UserList, nil
 }
 
-func (p *FeishuAppProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Feishu App", Ident: p.Ident(), RequestType: "feishuapp", Weight: 4, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
-					AppID:         "cli_xxx",
-					AppSecret:     "xxx",
-					ReceiveIDType: "open_id",
-					Timeout:       10000,
-					RetryTimes:    1,
-					RetrySleep:    1000,
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				UserInfo: &models.UserInfo{ContactKey: ""},
-			},
-		},
-	}
-}
-
 var (
 	cardJson = `
 	{

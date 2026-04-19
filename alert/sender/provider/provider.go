@@ -19,9 +19,6 @@ type NotifyChannelProvider interface {
 
 	// Notify 发送通知
 	Notify(ctx context.Context, req *NotifyRequest) *NotifyResult
-
-	// DefaultChannels 返回此 Provider 的内置默认通道配置 (替代 NotiChMap)
-	DefaultChannels() []*models.NotifyChannelConfig
 }
 
 type NotifyRequest struct {

@@ -96,30 +96,3 @@ func sendWecomImageMessage(httpConfig *models.HTTPRequestConfig, req *NotifyRequ
 
 	return SendHTTPRequest(&cfg, req.Events, req.TplContent, req.CustomParams, req.Sendtos, req.HttpClient)
 }
-
-func (p *WecomProvider) DefaultChannels() []*models.NotifyChannelConfig {
-	return []*models.NotifyChannelConfig{
-		{
-			Name: "Wecom", Ident: models.Wecom, RequestType: "http", Weight: 4, Enable: true,
-			RequestConfig: &models.RequestConfig{
-				HTTPRequestConfig: &models.HTTPRequestConfig{
-					URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
-					Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
-					Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
-					Request: models.RequestDetail{
-						Parameters: map[string]string{"key": "{{$params.key}}"},
-						Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
-					},
-				},
-			},
-			ParamConfig: &models.NotifyParamConfig{
-				Custom: models.Params{
-					Params: []models.ParamItem{
-						{Key: "key", CName: "Key", Type: "string"},
-						{Key: "bot_name", CName: "Bot Name", Type: "string"},
-					},
-				},
-			},
-		},
-	}
-}
