@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -17,29 +16,7 @@ func (p *FeishuCardProvider) Ident() string {
 }
 
 func (p *FeishuCardProvider) Check(config *models.NotifyChannelConfig) error {
-	if err := config.ValidateHTTPRequestConfig(); err != nil {
-		return err
-	}
-
-	httpConfig := config.RequestConfig.HTTPRequestConfig
-
-	if httpConfig.Method != "POST" {
-		return errors.New("feishu card provider requires POST method")
-	}
-
-	if httpConfig.Headers == nil || httpConfig.Headers["Content-Type"] != "application/json" {
-		return errors.New("feishu card provider requires Content-Type: application/json header")
-	}
-
-	if httpConfig.URL == "" {
-		return errors.New("feishu card provider requires URL (e.g. with {{$params.access_token}})")
-	}
-
-	if httpConfig.Request.Body == "" {
-		return errors.New("feishu card provider requires request body")
-	}
-
-	return nil
+	return validateSimpleHTTPConfig(p.Ident(), nil, config)
 }
 
 func (p *FeishuCardProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {

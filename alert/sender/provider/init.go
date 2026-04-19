@@ -1,33 +1,39 @@
 package provider
 
+import "github.com/ccfos/nightingale/v6/models"
+
 func init() {
-	// 独立媒介 Provider
+	// 自定义逻辑 Provider：各自文件实现 Ident/Check/Notify
 	DefaultRegistry.Register(&DingtalkProvider{})
 	DefaultRegistry.Register(&DingtalkAppProvider{})
-	DefaultRegistry.Register(&FeishuProvider{})
 	DefaultRegistry.Register(&FeishuAppProvider{})
 	DefaultRegistry.Register(&WecomProvider{})
 	DefaultRegistry.Register(&WecomAppProvider{})
 	DefaultRegistry.Register(&FeishuCardProvider{})
-	DefaultRegistry.Register(&LarkProvider{})
 	DefaultRegistry.Register(&LarkCardProvider{})
 	DefaultRegistry.Register(&TencentSmsProvider{})
 	DefaultRegistry.Register(&TencentVoiceProvider{})
 	DefaultRegistry.Register(&AliyunSmsProvider{})
 	DefaultRegistry.Register(&AliyunVoiceProvider{})
-	DefaultRegistry.Register(&TelegramProvider{})
-	DefaultRegistry.Register(&SlackBotProvider{})
-	DefaultRegistry.Register(&SlackWebhookProvider{})
-	DefaultRegistry.Register(&MattermostWebhookProvider{})
-	DefaultRegistry.Register(&MattermostBotProvider{})
-	DefaultRegistry.Register(&DiscordProvider{})
-	DefaultRegistry.Register(&JsmProvider{})
-	DefaultRegistry.Register(&JiraProvider{})
 	DefaultRegistry.Register(&PagerDutyProvider{})
 	DefaultRegistry.Register(&ScriptProvider{})
 	DefaultRegistry.Register(&EmailProvider{})
 	DefaultRegistry.Register(&FlashDutyProvider{})
+	DefaultRegistry.Register(&CallbackProvider{})
 
-	// 通用 HTTP (高级用户)
-	DefaultRegistry.Register(&GenericHTTPProvider{})
+	// 纯 HTTP webhook 模板驱动 Provider：只差 ident，统一走 simpleHTTPProvider
+	for _, ident := range []string{
+		models.Feishu,
+		models.Lark,
+		models.Telegram,
+		models.Discord,
+		models.SlackBot,
+		models.SlackWebhook,
+		models.MattermostBot,
+		models.MattermostWebhook,
+		models.Jira,
+		models.JSMAlert,
+	} {
+		DefaultRegistry.Register(&simpleHTTPProvider{ident: ident})
+	}
 }

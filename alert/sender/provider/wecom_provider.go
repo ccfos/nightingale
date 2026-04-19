@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -19,29 +18,7 @@ func (p *WecomProvider) Ident() string {
 }
 
 func (p *WecomProvider) Check(config *models.NotifyChannelConfig) error {
-	if err := config.ValidateHTTPRequestConfig(); err != nil {
-		return err
-	}
-
-	httpConfig := config.RequestConfig.HTTPRequestConfig
-
-	if httpConfig.Method != "POST" {
-		return errors.New("wecom provider requires POST method")
-	}
-
-	if httpConfig.Headers == nil || httpConfig.Headers["Content-Type"] != "application/json" {
-		return errors.New("wecom provider requires Content-Type: application/json header")
-	}
-
-	if httpConfig.Request.Parameters == nil || httpConfig.Request.Parameters["key"] == "" {
-		return errors.New("wecom provider requires key parameter")
-	}
-
-	if httpConfig.Request.Body == "" {
-		return errors.New("wecom provider requires request body")
-	}
-
-	return nil
+	return validateSimpleHTTPConfig(p.Ident(), []string{"key"}, config)
 }
 
 func (p *WecomProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {

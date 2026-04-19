@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
@@ -11,33 +10,11 @@ import (
 type DingtalkProvider struct{}
 
 func (p *DingtalkProvider) Ident() string {
-	return "dingtalk"
+	return models.Dingtalk
 }
 
 func (p *DingtalkProvider) Check(config *models.NotifyChannelConfig) error {
-	if err := config.ValidateHTTPRequestConfig(); err != nil {
-		return err
-	}
-
-	httpConfig := config.RequestConfig.HTTPRequestConfig
-
-	if httpConfig.Method != "POST" {
-		return errors.New("dingtalk provider requires POST method")
-	}
-
-	if httpConfig.Headers == nil || httpConfig.Headers["Content-Type"] != "application/json" {
-		return errors.New("dingtalk provider requires Content-Type: application/json header")
-	}
-
-	if httpConfig.Request.Parameters == nil || httpConfig.Request.Parameters["access_token"] == "" {
-		return errors.New("dingtalk provider requires access_token parameter")
-	}
-
-	if httpConfig.Request.Body == "" {
-		return errors.New("dingtalk provider requires request body")
-	}
-
-	return nil
+	return validateSimpleHTTPConfig(p.Ident(), []string{"access_token"}, config)
 }
 
 func (p *DingtalkProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {

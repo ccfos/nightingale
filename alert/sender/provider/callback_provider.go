@@ -7,11 +7,11 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-type GenericHTTPProvider struct{}
+type CallbackProvider struct{}
 
-func (p *GenericHTTPProvider) Ident() string { return "callback" }
+func (p *CallbackProvider) Ident() string { return "callback" }
 
-func (p *GenericHTTPProvider) Check(config *models.NotifyChannelConfig) error {
+func (p *CallbackProvider) Check(config *models.NotifyChannelConfig) error {
 	if err := config.ValidateHTTPRequestConfig(); err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func (p *GenericHTTPProvider) Check(config *models.NotifyChannelConfig) error {
 	return nil
 }
 
-func (p *GenericHTTPProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {
+func (p *CallbackProvider) Notify(ctx context.Context, req *NotifyRequest) *NotifyResult {
 	httpConfig := req.Config.RequestConfig.HTTPRequestConfig
 	resp, err := SendHTTPRequest(httpConfig, req.Events, req.TplContent,
 		req.CustomParams, req.Sendtos, req.HttpClient)
