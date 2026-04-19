@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -530,6 +531,51 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 }
 
+// NotifyContext 由 BuildNotifyContext 产生，封装一次通知所需的 provider + 请求参数。
+// dispatch 正常发送路径、router test-send 路径共用此结构，差异仅在传输层（同步/异步/扇出）。
+type NotifyContext struct {
+	Provider provider.NotifyChannelProvider
+	Request  *provider.NotifyRequest
+}
+
+// BuildNotifyContext 抽取两条发送路径的公共粘合逻辑：
+// 从 notifyConfig 中解出收件人 + 定位 provider + 组装 NotifyRequest。
+// 调用方各自决定拿到 context 后走队列、同步、扇出还是同步发邮件等。
+func BuildNotifyContext(userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
+	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig,
+	notifyChannel *models.NotifyChannelConfig, tplContent map[string]interface{},
+	httpClient *http.Client, siteUrl string) (*NotifyContext, error) {
+
+	var contactKey string
+	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
+		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+	}
+	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs :=
+		GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+
+	p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
+	if !ok {
+		return nil, fmt.Errorf("unknown channel ident(%s), request_type(%s)",
+			notifyChannel.Ident, notifyChannel.RequestType)
+	}
+	return &NotifyContext{
+		Provider: p,
+		Request: &provider.NotifyRequest{
+			NotifyRuleId:         notifyRuleId,
+			Config:               notifyChannel,
+			Events:               events,
+			TplContent:           tplContent,
+			FlashDutyChannelIDs:  flashDutyChannelIDs,
+			PagerDutyRoutingKeys: pagerDutyRoutingKeys,
+			CustomParams:         customParams,
+			Sendtos:              sendtos,
+			ImGroupIDs:           imGroupIDs,
+			HttpClient:           httpClient,
+			SiteUrl:              siteUrl,
+		},
+	}, nil
+}
+
 func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, configCvalCache *memsto.CvalCache,
 	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig, notifyChannel *models.NotifyChannelConfig, messageTemplate *models.MessageTemplate) {
 	if len(events) == 0 {
@@ -543,54 +589,35 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
 	}
 
-	var contactKey string
-	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
-		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
-	}
-
-	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams, imGroupIDs := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
-
-	p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
-	if !ok {
-		logger.Warningf("unknown channel ident(%s), request_type(%s)", notifyChannel.Ident, notifyChannel.RequestType)
+	nc, err := BuildNotifyContext(userCache, userGroupCache, events, notifyRuleId,
+		notifyConfig, notifyChannel, tplContent, notifyChannelCache.GetHttpClient(notifyChannel.ID), siteInfo.SiteUrl)
+	if err != nil {
+		logger.Warningf("%v", err)
 		return
 	}
 
-	req := &provider.NotifyRequest{
-		NotifyRuleId:         notifyRuleId,
-		Config:               notifyChannel,
-		Events:               events,
-		TplContent:           tplContent,
-		FlashDutyChannelIDs:  flashDutyChannelIDs,
-		PagerDutyRoutingKeys: pagerdutyRoutingKeys,
-		CustomParams:         customParams,
-		Sendtos:              sendtos,
-		ImGroupIDs:           imGroupIDs,
-		HttpClient:           notifyChannelCache.GetHttpClient(notifyChannel.ID),
-		SiteUrl:              siteInfo.SiteUrl,
-	}
 	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {
 	case "http":
 		// HTTP 类型走并发队列 (dingtalk/wecom/feishu/通用http 等都走这里)
-		task := &memsto.NotifyTask{
+		success := notifyChannelCache.EnqueueNotifyTask(&memsto.NotifyTask{
 			NotifyRuleId: notifyRuleId,
-			Provider:     p,
-			Request:      req,
-		}
-		success := notifyChannelCache.EnqueueNotifyTask(task)
+			Provider:     nc.Provider,
+			Request:      nc.Request,
+		})
 		if !success {
 			logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
-			// 如果入队失败，记录错误通知
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name,
+				getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos), "",
+				errors.New("failed to enqueue notify task, queue is full"))
 		}
 	case "smtp":
 		// SMTP 走邮件连接池
-		req.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
-		p.Notify(ctx.Ctx, req)
+		nc.Request.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
+		nc.Provider.Notify(ctx.Ctx, nc.Request)
 	default:
 		// flashduty/pagerduty/script 等直接调用
-		result := p.Notify(ctx.Ctx, req)
+		result := nc.Provider.Notify(ctx.Ctx, nc.Request)
 		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	}
 }
