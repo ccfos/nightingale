@@ -1,11 +1,13 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 type AIAgent struct {
@@ -50,7 +52,7 @@ func AIAgentGet(c *ctx.Context, where string, args ...interface{}) (*AIAgent, er
 	var obj AIAgent
 	err := DB(c).Where(where, args...).First(&obj).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err

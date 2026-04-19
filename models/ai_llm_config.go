@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -67,11 +68,25 @@ func AILLMConfigGets(c *ctx.Context) ([]*AILLMConfig, error) {
 	return lst, err
 }
 
+// MaskAPIKey masks api_key for display: keep first/last 4 chars, mask the middle.
+// Keys of 8 chars or shorter are fully masked.
+func (a *AILLMConfig) MaskAPIKey() {
+	n := len(a.APIKey)
+	if n == 0 {
+		return
+	}
+	if n <= 8 {
+		a.APIKey = "****"
+		return
+	}
+	a.APIKey = a.APIKey[:4] + "****" + a.APIKey[n-4:]
+}
+
 func AILLMConfigGet(c *ctx.Context, where string, args ...interface{}) (*AILLMConfig, error) {
 	var obj AILLMConfig
 	err := DB(c).Where(where, args...).First(&obj).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
@@ -129,11 +144,6 @@ func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
 func (a *AILLMConfig) Update(c *ctx.Context, username string, data AILLMConfig) error {
 	data.UpdatedAt = time.Now().Unix()
 	data.UpdatedBy = username
-
-	// If api_key is empty, keep the original
-	if data.APIKey == "" {
-		data.APIKey = a.APIKey
-	}
 
 	return DB(c).Transaction(func(tx *gorm.DB) error {
 		if data.Name != a.Name {

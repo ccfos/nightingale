@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llmconfig"
@@ -11,8 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func isV1Request(c *gin.Context) bool {
+	return strings.HasPrefix(c.Request.URL.Path, "/v1")
+}
+
 func (rt *Router) aiLLMConfigGets(c *gin.Context) {
 	lst, err := models.AILLMConfigGets(rt.Ctx)
+	if !isV1Request(c) {
+		for _, item := range lst {
+			item.MaskAPIKey()
+		}
+	}
 	ginx.NewRender(c).Data(lst, err)
 }
 
@@ -22,6 +32,9 @@ func (rt *Router) aiLLMConfigGet(c *gin.Context) {
 	ginx.Dangerous(err)
 	if obj == nil {
 		ginx.Bomb(http.StatusNotFound, "ai llm config not found")
+	}
+	if !isV1Request(c) {
+		obj.MaskAPIKey()
 	}
 	ginx.NewRender(c).Data(obj, nil)
 }
@@ -47,6 +60,9 @@ func (rt *Router) aiLLMConfigPut(c *gin.Context) {
 
 	var ref models.AILLMConfig
 	ginx.BindJSON(c, &ref)
+	if ref.APIKey == "" {
+		ref.APIKey = obj.APIKey
+	}
 	ginx.Dangerous(ref.Verify())
 
 	me := c.MustGet("user").(*models.User)

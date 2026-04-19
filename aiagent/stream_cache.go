@@ -1,6 +1,7 @@
 package aiagent
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -105,8 +106,10 @@ func (sc *StreamCache) Finish(streamID string) {
 }
 
 // Read returns a channel that replays existing messages then receives new ones in real-time.
-// The returned channel is closed when the stream finishes.
-func (sc *StreamCache) Read(streamID string) <-chan StreamMessage {
+// The returned channel is closed when the stream finishes or ctx is cancelled.
+// Callers MUST cancel ctx when done (e.g., on SSE client disconnect) to release the
+// internal forwarding goroutine and the live consumer channel.
+func (sc *StreamCache) Read(ctx context.Context, streamID string) <-chan StreamMessage {
 	sc.mu.RLock()
 	sd, ok := sc.streams[streamID]
 	sc.mu.RUnlock()
@@ -126,10 +129,14 @@ func (sc *StreamCache) Read(streamID string) <-chan StreamMessage {
 		sd.mu.Unlock()
 
 		go func() {
+			defer close(out)
 			for _, msg := range cached {
-				out <- msg
+				select {
+				case out <- msg:
+				case <-ctx.Done():
+					return
+				}
 			}
-			close(out)
 		}()
 		return out
 	}
@@ -144,17 +151,52 @@ func (sc *StreamCache) Read(streamID string) <-chan StreamMessage {
 	sd.mu.Unlock()
 
 	// Goroutine: replay cached messages into out, then forward live messages.
+	// Exits when (a) live is closed by Finish/cleanup, or (b) ctx is cancelled
+	// (e.g., SSE client disconnect). On ctx cancel we also detach `live` from
+	// sd.consumers so add() stops trying to send into it.
 	go func() {
+		defer close(out)
+		defer sc.detachConsumer(sd, live)
+
 		for _, msg := range cached {
-			out <- msg
+			select {
+			case out <- msg:
+			case <-ctx.Done():
+				return
+			}
 		}
-		for msg := range live {
-			out <- msg
+		for {
+			select {
+			case msg, ok := <-live:
+				if !ok {
+					return
+				}
+				select {
+				case out <- msg:
+				case <-ctx.Done():
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
 		}
-		close(out)
 	}()
 
 	return out
+}
+
+// detachConsumer removes live from sd.consumers and closes it. Safe to call
+// even if Finish/cleanup already removed and closed it (no-op in that case).
+func (sc *StreamCache) detachConsumer(sd *StreamData, live chan StreamMessage) {
+	sd.mu.Lock()
+	defer sd.mu.Unlock()
+	for i, ch := range sd.consumers {
+		if ch == live {
+			sd.consumers = append(sd.consumers[:i], sd.consumers[i+1:]...)
+			close(live)
+			return
+		}
+	}
 }
 
 func (sc *StreamCache) cleanupLoop() {

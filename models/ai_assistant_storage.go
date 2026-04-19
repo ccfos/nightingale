@@ -5,10 +5,12 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // ==================== DB row structs (used by both GORM AutoMigrate and queries) ====================
@@ -51,14 +53,16 @@ func (MysqlAssistantMessageRow) TableName() string { return "ai_assistant_messag
 
 // ==================== Gzip helpers ====================
 
-func gzipBase64Encode(data []byte) string {
+func gzipBase64Encode(data []byte) (string, error) {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	if _, err := gz.Write(data); err != nil {
-		return ""
+		return "", fmt.Errorf("gzip write: %w", err)
 	}
-	gz.Close()
-	return base64.StdEncoding.EncodeToString(buf.Bytes())
+	if err := gz.Close(); err != nil {
+		return "", fmt.Errorf("gzip close: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 
 func gzipBase64Decode(input string) ([]byte, error) {
@@ -83,13 +87,17 @@ func mustJSON(v any) []byte {
 	return b
 }
 
-func encodeChat(chat AssistantChat) AssistantChatRow {
+func encodeChat(chat AssistantChat) (AssistantChatRow, error) {
+	data, err := gzipBase64Encode(mustJSON(chat))
+	if err != nil {
+		return AssistantChatRow{}, fmt.Errorf("encode chat: %w", err)
+	}
 	return AssistantChatRow{
 		ChatID:    chat.ChatID,
 		UserID:    chat.UserID,
 		UpdatedAt: chat.LastUpdate,
-		Data:      gzipBase64Encode(mustJSON(chat)),
-	}
+		Data:      data,
+	}, nil
 }
 
 func decodeChat(row *AssistantChatRow) (*AssistantChat, error) {
@@ -107,13 +115,21 @@ func decodeChat(row *AssistantChatRow) (*AssistantChat, error) {
 	return &chat, nil
 }
 
-func encodeMessage(msg AssistantMessage) AssistantMessageRow {
+func encodeMessage(msg AssistantMessage) (AssistantMessageRow, error) {
+	data, err := gzipBase64Encode(mustJSON(msg))
+	if err != nil {
+		return AssistantMessageRow{}, fmt.Errorf("encode message data: %w", err)
+	}
+	extra, err := gzipBase64Encode(mustJSON(msg.Extra))
+	if err != nil {
+		return AssistantMessageRow{}, fmt.Errorf("encode message extra: %w", err)
+	}
 	return AssistantMessageRow{
 		ChatID: msg.ChatID,
 		SeqID:  msg.SeqID,
-		Data:   gzipBase64Encode(mustJSON(msg)),
-		Extra:  gzipBase64Encode(mustJSON(msg.Extra)),
-	}
+		Data:   data,
+		Extra:  extra,
+	}, nil
 }
 
 func decodeMessage(row *AssistantMessageRow) (*AssistantMessage, error) {
@@ -140,7 +156,10 @@ func decodeMessage(row *AssistantMessageRow) (*AssistantMessage, error) {
 // ==================== Chat Storage ====================
 
 func AssistantChatSet(c *ctx.Context, chat AssistantChat) error {
-	row := encodeChat(chat)
+	row, err := encodeChat(chat)
+	if err != nil {
+		return err
+	}
 	// Try update first; if no rows affected, insert.
 	result := DB(c).Model(&AssistantChatRow{}).
 		Where("chat_id = ?", chat.ChatID).
@@ -158,7 +177,7 @@ func AssistantChatGet(c *ctx.Context, chatID string) (*AssistantChat, error) {
 	var row AssistantChatRow
 	err := DB(c).Where("chat_id = ?", chatID).First(&row).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
@@ -213,7 +232,7 @@ func AssistantMessageMaxSeqID(c *ctx.Context, chatID string) (int64, error) {
 	var row AssistantMessageRow
 	err := DB(c).Where("chat_id = ?", chatID).Order("seq_id desc").Select("seq_id").First(&row).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, nil
 		}
 		return 0, err
@@ -222,7 +241,10 @@ func AssistantMessageMaxSeqID(c *ctx.Context, chatID string) (int64, error) {
 }
 
 func AssistantMessageSet(c *ctx.Context, msg AssistantMessage) error {
-	row := encodeMessage(msg)
+	row, err := encodeMessage(msg)
+	if err != nil {
+		return err
+	}
 	// Try update first; if no rows affected, insert.
 	result := DB(c).Model(&AssistantMessageRow{}).
 		Where("chat_id = ? AND seq_id = ?", msg.ChatID, msg.SeqID).
@@ -240,7 +262,7 @@ func AssistantMessageGet(c *ctx.Context, chatID string, seqID int64) (*Assistant
 	var row AssistantMessageRow
 	err := DB(c).Where("chat_id = ? AND seq_id = ?", chatID, seqID).First(&row).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err

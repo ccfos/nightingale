@@ -742,7 +742,12 @@ func (rt *Router) assistantStream(c *gin.Context) {
 		_ = rc.SetWriteDeadline(time.Time{})
 	}
 
-	ch := aiagent.GetStreamCache().Read(req.StreamID)
+	// Tie the reader's lifetime to the HTTP request so a client disconnect
+	// (or normal handler return) releases the StreamCache forwarding goroutine
+	// instead of leaking it until Finish/cleanup.
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+	ch := aiagent.GetStreamCache().Read(ctx, req.StreamID)
 
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")

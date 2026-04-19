@@ -1,10 +1,12 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 type AISkillFile struct {
@@ -22,6 +24,8 @@ type AISkillFile struct {
 func (f *AISkillFile) TableName() string {
 	return "ai_skill_file"
 }
+
+const maxFilesPerSkill = 200
 
 // PostgresAISkillFile is the PostgreSQL-compatible variant of AISkillFile.
 // PostgreSQL does not support mediumtext; its text type is unlimited.
@@ -51,7 +55,7 @@ func AISkillFileGet(c *ctx.Context, where string, args ...interface{}) (*AISkill
 	var obj AISkillFile
 	err := DB(c).Where(where, args...).First(&obj).Error
 	if err != nil {
-		if err.Error() == "record not found" {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
@@ -70,91 +74,88 @@ func (f *AISkillFile) Create(c *ctx.Context) error {
 	f.UpdatedAt = now
 	f.UpdatedBy = f.CreatedBy
 
-	// Check file count limit per skill (max 50)
 	var count int64
 	DB(c).Model(&AISkillFile{}).Where("skill_id = ?", f.SkillId).Count(&count)
-	if count >= 50 {
-		return fmt.Errorf("max 50 files per skill")
+	if count >= maxFilesPerSkill {
+		return fmt.Errorf("max %d files per skill", maxFilesPerSkill)
 	}
 
 	return Insert(c, f)
 }
 
 
-// BatchUpsert batch-upserts files for a given skill.
+// BatchUpsert batch-upserts files for a given skill within a single transaction.
 // When fullSync is true, existing files not present in the incoming list are deleted (full replace).
-// 1 SELECT to find all existing files, then updates/inserts/deletes as needed.
 func AISkillFileBatchUpsert(c *ctx.Context, skillId int64, files []*AISkillFile, fullSync bool) error {
-	// Query ALL existing files for this skill (not just matching names)
-	var existingFiles []*AISkillFile
-	err := DB(c).Select("id, name").Where("skill_id = ?", skillId).Find(&existingFiles).Error
-	if err != nil {
-		return err
-	}
+	return DB(c).Transaction(func(tx *gorm.DB) error {
+		var existingFiles []*AISkillFile
+		if err := tx.Select("id, name").Where("skill_id = ?", skillId).Find(&existingFiles).Error; err != nil {
+			return err
+		}
 
-	existingMap := make(map[string]int64, len(existingFiles))
-	for _, ef := range existingFiles {
-		existingMap[ef.Name] = ef.Id
-	}
-
-	// Collect incoming file names for stale file detection
-	incomingNames := make(map[string]struct{}, len(files))
-	for _, f := range files {
-		incomingNames[f.Name] = struct{}{}
-	}
-
-	// Delete files not in the new archive
-	if fullSync {
-		var staleIds []int64
+		existingMap := make(map[string]int64, len(existingFiles))
 		for _, ef := range existingFiles {
-			if _, ok := incomingNames[ef.Name]; !ok {
-				staleIds = append(staleIds, ef.Id)
+			existingMap[ef.Name] = ef.Id
+		}
+
+		incomingNames := make(map[string]struct{}, len(files))
+		for _, f := range files {
+			incomingNames[f.Name] = struct{}{}
+		}
+
+		if fullSync {
+			var staleIds []int64
+			for _, ef := range existingFiles {
+				if _, ok := incomingNames[ef.Name]; !ok {
+					staleIds = append(staleIds, ef.Id)
+				}
+			}
+			if len(staleIds) > 0 {
+				if err := tx.Where("id IN ?", staleIds).Delete(&AISkillFile{}).Error; err != nil {
+					return err
+				}
 			}
 		}
-		if len(staleIds) > 0 {
-			if err := DB(c).Where("id IN ?", staleIds).Delete(&AISkillFile{}).Error; err != nil {
-				return err
+
+		now := time.Now().Unix()
+		var toInsert []*AISkillFile
+
+		for _, f := range files {
+			f.SkillId = skillId
+			f.Size = int64(len(f.Content))
+			f.CreatedAt = now
+			f.UpdatedAt = now
+			f.UpdatedBy = f.CreatedBy
+
+			if existId, ok := existingMap[f.Name]; ok {
+				if err := tx.Model(&AISkillFile{Id: existId}).Updates(map[string]interface{}{
+					"content":    f.Content,
+					"size":       f.Size,
+					"updated_at": now,
+					"updated_by": f.CreatedBy,
+				}).Error; err != nil {
+					return err
+				}
+			} else {
+				toInsert = append(toInsert, f)
 			}
 		}
-	}
 
-	now := time.Now().Unix()
-	var toInsert []*AISkillFile
-
-	for _, f := range files {
-		f.SkillId = skillId
-		f.Size = int64(len(f.Content))
-		f.CreatedAt = now
-		f.UpdatedAt = now
-		f.UpdatedBy = f.CreatedBy
-
-		if existId, ok := existingMap[f.Name]; ok {
-			// Update: only change content/size and updated fields, preserve created fields
-			if err := DB(c).Model(&AISkillFile{Id: existId}).Updates(map[string]interface{}{
-				"content":    f.Content,
-				"size":       f.Size,
-				"updated_at": now,
-				"updated_by": f.CreatedBy,
-			}).Error; err != nil {
-				return err
-			}
-		} else {
-			toInsert = append(toInsert, f)
+		if len(toInsert) == 0 {
+			return nil
 		}
-	}
 
-	if len(toInsert) == 0 {
-		return nil
-	}
+		// Re-count inside the transaction to narrow the TOCTOU window vs. concurrent writers.
+		var totalCount int64
+		if err := tx.Model(&AISkillFile{}).Where("skill_id = ?", skillId).Count(&totalCount).Error; err != nil {
+			return err
+		}
+		if totalCount+int64(len(toInsert)) > maxFilesPerSkill {
+			return fmt.Errorf("max %d files per skill, current: %d, importing: %d", maxFilesPerSkill, totalCount, len(toInsert))
+		}
 
-	// Check file count limit: existing (not being replaced) + new inserts
-	var totalCount int64
-	DB(c).Model(&AISkillFile{}).Where("skill_id = ?", skillId).Count(&totalCount)
-	if totalCount+int64(len(toInsert)) > 50 {
-		return fmt.Errorf("max 50 files per skill, current: %d, importing: %d", totalCount, len(toInsert))
-	}
-
-	return DB(c).Create(&toInsert).Error
+		return tx.Create(&toInsert).Error
+	})
 }
 
 func (f *AISkillFile) Delete(c *ctx.Context) error {
