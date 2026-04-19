@@ -52,6 +52,9 @@ type FeishuAppProvider struct{}
 func (p *FeishuAppProvider) Ident() string { return "feishuapp" }
 
 func (p *FeishuAppProvider) Check(config *models.NotifyChannelConfig) error {
+	if config.RequestType != p.Ident() {
+		return fmt.Errorf("feishu app provider requires request_type=%s, got %q", p.Ident(), config.RequestType)
+	}
 	if config.RequestConfig == nil || config.RequestConfig.FeishuAppRequestConfig == nil {
 		return errors.New("feishu app request config cannot be nil")
 	}
@@ -64,7 +67,7 @@ func (p *FeishuAppProvider) Check(config *models.NotifyChannelConfig) error {
 	}
 	if v := strings.TrimSpace(c.ReceiveIDType); v != "" {
 		if !isFeishuReceiveIDTypeAllowed(strings.ToLower(v)) {
-			return errors.New("feishu app provider receive_id_type must be user_id, email, or chat_id")
+			return errors.New("feishu app provider receive_id_type must be one of user_id/email/chat_id/open_id/union_id")
 		}
 	}
 	if c.Timeout <= 0 {
@@ -120,6 +123,10 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
 	}
 	receiveIDType := resolveFeishuReceiveIDType(appConfig.ReceiveIDType, contactKey)
+	if receiveIDType == "" && len(req.Sendtos) > 0 {
+		err := fmt.Errorf("feishu app unsupported contact_key=%q, please configure receive_id_type or use user_id/email/chat_id", contactKey)
+		return &NotifyResult{Target: getNotifyTarget(req.CustomParams, req.Sendtos), Response: "", Err: err}
+	}
 	for _, rid := range req.Sendtos {
 		receiveID := strings.TrimSpace(rid)
 		if receiveID == "" {
@@ -166,6 +173,9 @@ func SendFeishuCardMessage(ctx context.Context, client *http.Client, token, rece
 		return "", errors.New("http client not found")
 	}
 	receiveIDType = normalizeFeishuReceiveIDType(receiveIDType)
+	if receiveIDType == "" {
+		return "", fmt.Errorf("feishu unsupported receive_id_type")
+	}
 	reqBody, _ := json.Marshal(map[string]string{
 		"content":    content,
 		"msg_type":   "interactive",
@@ -201,6 +211,10 @@ func SendFeishuCardMessage(ctx context.Context, client *http.Client, token, rece
 	return string(bs), nil
 }
 
+// resolveFeishuReceiveIDType 解析发送时的 receive_id_type：优先取 channel 上显式配置的
+// ReceiveIDType（Check 已校验），否则回退到 UserInfo.ContactKey。返回空串表示无法推断
+// （比如 contact_key=phone 等飞书不直接支持的类型），调用方必须显式处理以避免把手机号
+// 当 user_id 发出。
 func resolveFeishuReceiveIDType(receiveIDType, contactKey string) string {
 	if v := strings.TrimSpace(receiveIDType); v != "" {
 		return normalizeFeishuReceiveIDType(v)
@@ -210,24 +224,22 @@ func resolveFeishuReceiveIDType(receiveIDType, contactKey string) string {
 
 func isFeishuReceiveIDTypeAllowed(s string) bool {
 	switch s {
-	case "user_id", "email", "chat_id":
+	case "user_id", "email", "chat_id", "open_id", "union_id":
 		return true
 	default:
 		return false
 	}
 }
 
+// normalizeFeishuReceiveIDType 把输入标准化为飞书接口可接受的 receive_id_type；
+// 对 phone 等未识别的值返回空串而非静默回退 user_id，调用方据此显式报错。
 func normalizeFeishuReceiveIDType(v string) string {
 	s := strings.ToLower(strings.TrimSpace(v))
 	switch s {
-	case "user_id":
-		return "user_id"
-	case "email":
-		return "email"
-	case "chat_id":
-		return "chat_id"
+	case "user_id", "email", "chat_id", "open_id", "union_id":
+		return s
 	default:
-		return "user_id"
+		return ""
 	}
 }
 

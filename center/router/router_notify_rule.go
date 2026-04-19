@@ -208,7 +208,7 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	if err != nil {
 		return "", fmt.Errorf("failed to get http client: %v", err)
 	}
-	nc, err := dispatch.BuildNotifyContext(userCache, userGroup, events, 0,
+	nc, err := dispatch.BuildNotifyContext(ctx, userCache, userGroup, events, 0,
 		&notifyConfig, notifyChannel, tplContent, client, siteUrl)
 	if err != nil {
 		return "", err

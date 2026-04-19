@@ -36,6 +36,9 @@ func (p *DingtalkAppProvider) Ident() string {
 }
 
 func (p *DingtalkAppProvider) Check(config *models.NotifyChannelConfig) error {
+	if config.RequestType != p.Ident() {
+		return fmt.Errorf("dingtalk app provider requires request_type=%s, got %q", p.Ident(), config.RequestType)
+	}
 	if config.RequestConfig == nil || config.RequestConfig.DingtalkAppRequestConfig == nil {
 		return errors.New("dingtalk app request config cannot be nil")
 	}
@@ -153,8 +156,19 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	targets = append(targets, groupIDs...)
 
 	if len(userIDs) > 0 {
+		// OTO 消息的 robotCode 必须由调用方通过 CustomParams["robot_code"] 指定：
+		// 与群消息不同，OTO 没有对应的 dingtalk_group 记录可供查询，AppKey 也不等于 robotCode。
+		otoRobotCode := strings.TrimSpace(req.CustomParams["robot_code"])
+		if otoRobotCode == "" {
+			err := errors.New("dingtalkapp OTO message requires custom_params.robot_code")
+			return &NotifyResult{
+				Target:   strings.Join(targets, ","),
+				Response: strings.Join(parts, "; "),
+				Err:      err,
+			}
+		}
 		if imageMediaID != "" {
-			imageResp, imageErr := p.sendRobotOTOImageMessage(ctx, req.HttpClient, appConfig, accessToken, userIDs, imageMediaID)
+			imageResp, imageErr := p.sendRobotOTOImageMessage(ctx, req.HttpClient, appConfig, accessToken, otoRobotCode, userIDs, imageMediaID)
 			if imageErr != nil {
 				return &NotifyResult{
 					Target:   strings.Join(targets, ","),
@@ -164,7 +178,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			}
 			parts = append(parts, "user_image:"+imageResp)
 		}
-		msgResp, sendErr := p.sendRobotOTOActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, userIDs, title, content, req.CustomParams)
+		msgResp, sendErr := p.sendRobotOTOActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, otoRobotCode, userIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -175,8 +189,10 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 		parts = append(parts, "user:"+msgResp)
 	}
 	if len(groupIDs) > 0 {
+		// 群聊 robotCode 来源于 dingtalk_group 表（由 Stream 安装事件写入），按 gid 映射。
+		// 映射缺失意味着该群未完成酷应用安装或 RobotCode 为空，发送必然失败，这里直接拦下来。
 		if imageMediaID != "" {
-			imageResp, imageErr := p.sendRobotGroupImageMessage(ctx, req.HttpClient, appConfig, accessToken, groupIDs, imageMediaID)
+			imageResp, imageErr := p.sendRobotGroupImageMessage(ctx, req.HttpClient, appConfig, accessToken, req.ImGroupRobotCodes, groupIDs, imageMediaID)
 			if imageErr != nil {
 				return &NotifyResult{
 					Target:   strings.Join(targets, ","),
@@ -186,7 +202,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 			}
 			parts = append(parts, "group_image:"+imageResp)
 		}
-		msgResp, sendErr := p.sendRobotGroupActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, groupIDs, title, content, req.CustomParams)
+		msgResp, sendErr := p.sendRobotGroupActionCardMessage(ctx, req.HttpClient, appConfig, accessToken, req.ImGroupRobotCodes, groupIDs, title, content, req.CustomParams)
 		if sendErr != nil {
 			return &NotifyResult{
 				Target:   strings.Join(targets, ","),
@@ -470,10 +486,9 @@ func (p *DingtalkAppProvider) buildRobotActionCardMessage(title, content string,
 	return "sampleActionCard", string(msgParamBytes)
 }
 
-func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, userIDs []string, title, content string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(appConfig.AppKey)
-	if robotCode == "" {
-		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto message")
+func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken, robotCode string, userIDs []string, title, content string, customParams map[string]string) (string, error) {
+	if strings.TrimSpace(robotCode) == "" {
+		return "", errors.New("robot_code cannot be empty when sending dingtalk robot oto message")
 	}
 	msgKey, msgParam := p.buildRobotActionCardMessage(title, content, customParams)
 	payload := map[string]interface{}{
@@ -485,10 +500,9 @@ func (p *DingtalkAppProvider) sendRobotOTOActionCardMessage(ctx context.Context,
 	return p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotBatchSendURL, payload)
 }
 
-func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, userIDs []string, mediaID string) (string, error) {
-	robotCode := strings.TrimSpace(appConfig.AppKey)
-	if robotCode == "" {
-		return "", errors.New("app_key cannot be empty when sending dingtalk robot oto image")
+func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken, robotCode string, userIDs []string, mediaID string) (string, error) {
+	if strings.TrimSpace(robotCode) == "" {
+		return "", errors.New("robot_code cannot be empty when sending dingtalk robot oto image")
 	}
 	msgParamBytes, _ := json.Marshal(map[string]string{"mediaId": mediaID})
 	payload := map[string]interface{}{
@@ -500,14 +514,15 @@ func (p *DingtalkAppProvider) sendRobotOTOImageMessage(ctx context.Context, clie
 	return p.sendRobotMessage(ctx, client, appConfig, accessToken, dingtalkRobotBatchSendURL, payload)
 }
 
-func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, groupIDs []string, title, content string, customParams map[string]string) (string, error) {
-	robotCode := strings.TrimSpace(appConfig.AppKey)
-	if robotCode == "" {
-		return "", errors.New("app_key cannot be empty when sending dingtalk robot group message")
-	}
+func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, robotCodes map[string]string, groupIDs []string, title, content string, customParams map[string]string) (string, error) {
 	msgKey, msgParam := p.buildRobotActionCardMessage(title, content, customParams)
 	results := make([]string, 0, len(groupIDs))
 	for _, gid := range groupIDs {
+		robotCode := strings.TrimSpace(robotCodes[gid])
+		if robotCode == "" {
+			return strings.Join(results, "; "),
+				fmt.Errorf("dingtalk robot_code missing for open_conversation_id=%s; 请确认酷应用已安装到该群", gid)
+		}
 		payload := map[string]interface{}{
 			"robotCode":          robotCode,
 			"openConversationId": gid,
@@ -523,14 +538,15 @@ func (p *DingtalkAppProvider) sendRobotGroupActionCardMessage(ctx context.Contex
 	return strings.Join(results, "; "), nil
 }
 
-func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, groupIDs []string, mediaID string) (string, error) {
-	robotCode := strings.TrimSpace(appConfig.AppKey)
-	if robotCode == "" {
-		return "", errors.New("app_key cannot be empty when sending dingtalk robot group image")
-	}
+func (p *DingtalkAppProvider) sendRobotGroupImageMessage(ctx context.Context, client *http.Client, appConfig *models.DingtalkAppRequestConfig, accessToken string, robotCodes map[string]string, groupIDs []string, mediaID string) (string, error) {
 	msgParamBytes, _ := json.Marshal(map[string]string{"mediaId": mediaID})
 	results := make([]string, 0, len(groupIDs))
 	for _, gid := range groupIDs {
+		robotCode := strings.TrimSpace(robotCodes[gid])
+		if robotCode == "" {
+			return strings.Join(results, "; "),
+				fmt.Errorf("dingtalk robot_code missing for open_conversation_id=%s; 请确认酷应用已安装到该群", gid)
+		}
 		payload := map[string]interface{}{
 			"robotCode":          robotCode,
 			"openConversationId": gid,

@@ -63,8 +63,24 @@ func StartRunner(parent context.Context, deps RunnerDeps) (stop func()) {
 		}
 
 		<-root.Done()
+		// SDK 的 reconnect 循环用自己的 background context，单纯 cancel root
+		// 或调一次 Close 无法保证它不再重连。这里先关 AutoReconnect，再在一个
+		// 收尾窗口里周期性 Close，把任何已经 sleep 完、刚 Start 成功的连接也踢掉。
+		// reconnect 每失败一次 sleep 3s，10s 窗口足以覆盖一次在途的重连。
 		cli.AutoReconnect = false
 		cli.Close()
+		deadline := time.After(10 * time.Second)
+		tick := time.NewTicker(1 * time.Second)
+	drain:
+		for {
+			select {
+			case <-deadline:
+				tick.Stop()
+				break drain
+			case <-tick.C:
+				cli.Close()
+			}
+		}
 		logger.Infof("dingtalk stream stopped appKey=%s", deps.AppKey)
 	}()
 

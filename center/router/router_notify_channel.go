@@ -213,15 +213,21 @@ func (rt *Router) notifyChannelsGetForNormalUser(c *gin.Context) {
 }
 
 func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
-	// 从 DefaultRegistry 获取所有已注册 Provider 的 ident
-	providers := provider.DefaultRegistry.All()
-	lst := make([]string, 0, len(providers))
-	for _, p := range providers {
-		ident := p.Ident()
-		if ident != "" {
-			lst = append(lst, ident)
+	channels, err := models.NotifyChannelsGet(rt.Ctx, "", nil)
+	ginx.Dangerous(err)
+
+	idents := make(map[string]struct{})
+	for _, channel := range channels {
+		if channel.Ident != "" {
+			idents[channel.Ident] = struct{}{}
 		}
 	}
+
+	lst := make([]string, 0, len(idents))
+	for ident := range idents {
+		lst = append(lst, ident)
+	}
+
 	sort.Strings(lst)
 	ginx.NewRender(c).Data(lst, nil)
 }

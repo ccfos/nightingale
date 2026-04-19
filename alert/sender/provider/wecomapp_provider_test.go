@@ -21,6 +21,7 @@ func TestTruncateWecomMarkdown(t *testing.T) {
 func TestWecomAppProviderCheck(t *testing.T) {
 	p := &WecomAppProvider{}
 	base := &models.NotifyChannelConfig{
+		RequestType: "wecomapp",
 		ParamConfig: &models.NotifyParamConfig{
 			UserInfo: &models.UserInfo{ContactKey: "wecom_userid"},
 		},
@@ -39,6 +40,11 @@ func TestWecomAppProviderCheck(t *testing.T) {
 	noAgent.RequestConfig.WecomAppRequestConfig.AgentID = 0
 	if err := p.Check(noAgent); err == nil {
 		t.Fatal("want error for agent_id=0")
+	}
+	wrongType := cloneWecomCfg(base)
+	wrongType.RequestType = "http"
+	if err := p.Check(wrongType); err == nil {
+		t.Fatal("want error for request_type=http")
 	}
 }
 
@@ -86,7 +92,7 @@ func TestWecomAppProviderNotifyLive(t *testing.T) {
 	}
 
 	cfg := &models.NotifyChannelConfig{
-		RequestType: "http",
+		RequestType: "wecomapp",
 		ParamConfig: &models.NotifyParamConfig{
 			UserInfo: &models.UserInfo{ContactKey: contactKey},
 		},

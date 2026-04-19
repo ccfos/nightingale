@@ -402,20 +402,17 @@ func (ncc *NotifyChannelCacheType) GetHttpClient(channelId int64) *http.Client {
 		ncc.RUnlock()
 		return cli
 	}
-	ch := ncc.channels[channelId]
 	ncc.RUnlock()
-
-	if ch == nil || ch.RequestConfig == nil {
-		return nil
-	}
 
 	ncc.Lock()
 	defer ncc.Unlock()
 	if cli, ok := ncc.httpClient[channelId]; ok && cli != nil {
 		return cli
 	}
-	// 再次确认 channel 在双检期间没被删除
-	if ncc.channels[channelId] == nil {
+	// 在写锁内重新读取 channel 配置，避免 RUnlock->Lock 间隙有
+	// 配置更新导致用旧 ch 构造出过期的 HTTP client。
+	ch := ncc.channels[channelId]
+	if ch == nil || ch.RequestConfig == nil {
 		return nil
 	}
 	cli, err := models.GetHTTPClient(ch)

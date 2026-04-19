@@ -13,7 +13,7 @@ func TestDingtalkAppProviderNotify(t *testing.T) {
 	env := readSenderDotEnv(t)
 	appKey := senderEnvString(env, "DingtalkAppKey")
 	appSecret := senderEnvString(env, "DingtalkAppSecret")
-	robotCode := appKey
+	robotCode := senderEnvString(env, "DingtalkRobotCode")
 	phone := senderEnvString(env, "Phone")
 
 	if appKey == "" || appSecret == "" || robotCode == "" || phone == "" {
@@ -122,6 +122,9 @@ func TestDingtalkAppProviderNotifyGroup(t *testing.T) {
 		Events:     []*models.AlertCurEvent{{Hash: "hash-group-test"}},
 		TplContent: map[string]interface{}{"title": "test group alert", "content": "group content from n9e"},
 		ImGroupIDs: []string{openConversationID},
+		// 群聊 robotCode 在真实路径由 BuildNotifyContext 预取自 dingtalk_group 表，
+		// 单测里手工填，模拟酷应用已安装场景。
+		ImGroupRobotCodes: map[string]string{openConversationID: robotCode},
 		CustomParams: map[string]string{
 			"robot_code":   robotCode,
 			"single_title": "查看详情",

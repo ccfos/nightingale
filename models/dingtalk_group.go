@@ -91,6 +91,31 @@ func DingtalkGroupsGetByClientID(c *ctx.Context, clientID string, onlyInstalled 
 	return lst, err
 }
 
+// DingtalkGroupRobotCodes 批量查询 (client_id, open_conversation_id) 对应的 robot_code。
+// 返回 map[openConversationID]robotCode，只包含 status=installed 且 robot_code 非空的记录。
+// 钉钉 robotCode 是在酷应用被装进群时由 Stream 事件推送过来的，按群存，
+// 不等同于 AppKey —— 发群聊消息时必须用这份映射而不是用 AppKey 兜底。
+func DingtalkGroupRobotCodes(c *ctx.Context, clientID string, openConversationIDs []string) (map[string]string, error) {
+	result := make(map[string]string)
+	if c == nil || c.DB == nil || clientID == "" || len(openConversationIDs) == 0 {
+		return result, nil
+	}
+	lst := make([]*DingtalkGroup, 0, len(openConversationIDs))
+	err := DB(c).
+		Where("client_id = ? AND status = ?", clientID, DingtalkGroupStatusInstalled).
+		Where("open_conversation_id IN ?", openConversationIDs).
+		Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, g := range lst {
+		if g.RobotCode != "" {
+			result[g.OpenConversationID] = g.RobotCode
+		}
+	}
+	return result, nil
+}
+
 // DingtalkGroupsGetByClientIDPage 按 client_id 分页查询；onlyInstalled 语义同 DingtalkGroupsGetByClientID。
 func DingtalkGroupsGetByClientIDPage(c *ctx.Context, clientID string, onlyInstalled bool, offset, limit int) ([]*DingtalkGroup, int64, error) {
 	lst := make([]*DingtalkGroup, 0)

@@ -30,6 +30,9 @@ type WecomAppProvider struct{}
 func (p *WecomAppProvider) Ident() string { return "wecomapp" }
 
 func (p *WecomAppProvider) Check(config *models.NotifyChannelConfig) error {
+	if config.RequestType != p.Ident() {
+		return fmt.Errorf("wecom app provider requires request_type=%s, got %q", p.Ident(), config.RequestType)
+	}
 	if config.RequestConfig == nil || config.RequestConfig.WecomAppRequestConfig == nil {
 		return errors.New("wecom app request config cannot be nil")
 	}

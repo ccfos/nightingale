@@ -545,7 +545,8 @@ type NotifyContext struct {
 // BuildNotifyContext 抽取两条发送路径的公共粘合逻辑：
 // 从 notifyConfig 中解出收件人 + 定位 provider + 组装 NotifyRequest。
 // 调用方各自决定拿到 context 后走队列、同步、扇出还是同步发邮件等。
-func BuildNotifyContext(userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
+// nctx 用于预取发送期需要的 DB 派生信息（如钉钉群 robotCode），可为 nil（仅 test-send 等无 ctx 场景）。
+func BuildNotifyContext(nctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig,
 	notifyChannel *models.NotifyChannelConfig, tplContent map[string]interface{},
 	httpClient *http.Client, siteUrl string) (*NotifyContext, error) {
@@ -562,6 +563,23 @@ func BuildNotifyContext(userCache *memsto.UserCacheType, userGroupCache *memsto.
 		return nil, fmt.Errorf("unknown channel ident(%s), request_type(%s)",
 			notifyChannel.Ident, notifyChannel.RequestType)
 	}
+
+	// 钉钉应用发群聊消息时每个 openConversationId 对应的 robotCode 由 Stream 安装事件存到 dingtalk_group 表，
+	// 这里按 AppKey 批量预取一次，避免把 RobotCode 当成 AppKey 发导致 invalidRobotCode。
+	var imGroupRobotCodes map[string]string
+	if notifyChannel.RequestType == "dingtalkapp" && len(imGroupIDs) > 0 && nctx != nil &&
+		notifyChannel.RequestConfig != nil && notifyChannel.RequestConfig.DingtalkAppRequestConfig != nil {
+		appKey := strings.TrimSpace(notifyChannel.RequestConfig.DingtalkAppRequestConfig.AppKey)
+		if appKey != "" {
+			codes, rcErr := models.DingtalkGroupRobotCodes(nctx, appKey, imGroupIDs)
+			if rcErr != nil {
+				logger.Warningf("lookup dingtalk group robot_code failed appKey=%s: %v", appKey, rcErr)
+			} else {
+				imGroupRobotCodes = codes
+			}
+		}
+	}
+
 	return &NotifyContext{
 		Provider: p,
 		Request: &provider.NotifyRequest{
@@ -574,6 +592,7 @@ func BuildNotifyContext(userCache *memsto.UserCacheType, userGroupCache *memsto.
 			CustomParams:         customParams,
 			Sendtos:              sendtos,
 			ImGroupIDs:           imGroupIDs,
+			ImGroupRobotCodes:    imGroupRobotCodes,
 			HttpClient:           httpClient,
 			SiteUrl:              siteUrl,
 		},
@@ -595,7 +614,7 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
 	}
 
-	nc, err := BuildNotifyContext(userCache, userGroupCache, events, notifyRuleId,
+	nc, err := BuildNotifyContext(ctx, userCache, userGroupCache, events, notifyRuleId,
 		notifyConfig, notifyChannel, tplContent, notifyChannelCache.GetHttpClient(notifyChannel.ID), siteInfo.SiteUrl)
 	if err != nil {
 		logger.Warningf("%v", err)

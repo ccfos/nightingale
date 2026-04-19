@@ -57,7 +57,7 @@ var events = []*models.AlertCurEvent{
 func TestSendDingTalkNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 	// 创建钉钉通知配置
 	notifyChannel := &models.NotifyChannelConfig{
@@ -196,7 +196,7 @@ func TestSendWecomNotificationWithImage(t *testing.T) {
 func TestSendTencentVoiceNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 
 	// 创建腾讯云语音通知配置
@@ -257,7 +257,7 @@ func TestSendTencentVoiceNotification(t *testing.T) {
 func TestSendTencentSMSNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 
 	// 创建腾讯云短信通知配置
@@ -318,7 +318,7 @@ func TestSendTencentSMSNotification(t *testing.T) {
 func TestSendAliYunVoiceNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 
 	// 创建阿里云语音通知配置
@@ -376,7 +376,7 @@ func TestSendAliYunVoiceNotification(t *testing.T) {
 func TestSendAliYunSMSNotification(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 
 	notifyChannel := &models.NotifyChannelConfig{
@@ -451,7 +451,7 @@ func TestSendAliYunSMSNotification(t *testing.T) {
 func TestSendFlashDuty(t *testing.T) {
 	data, err := readKeyValueFromJsonFile("../.env.json")
 	if err != nil {
-		t.Fatalf("读取JSON文件失败: %v", err)
+		t.Skipf("跳过：读取 ../.env.json 失败: %v", err)
 	}
 
 	// 创建NotifyChannelConfig对象
