@@ -17,7 +17,9 @@ import (
 
 const (
 	PermAlertRules        = "/alert-rules"
+	PermAlertRulesAdd     = "/alert-rules/add"
 	PermDashboards        = "/dashboards"
+	PermDashboardsAdd     = "/dashboards/add"
 	PermAlertMutes        = "/alert-mutes"
 	PermAlertSubscribes   = "/alert-subscribes"
 	PermJobTpls           = "/job-tpls"
@@ -62,6 +64,20 @@ func checkPerm(deps *aiagent.ToolDeps, user *models.User, operation string) erro
 	}
 	if !has {
 		return fmt.Errorf("forbidden: no permission for %s", operation)
+	}
+	return nil
+}
+
+// checkBgRW mirrors the router's bgrw() middleware: a non-admin must belong to
+// at least one user-group that has rw flag on this BusiGroup. Without this,
+// a user with read-only group membership could create resources via AI tools.
+func checkBgRW(deps *aiagent.ToolDeps, user *models.User, bg *models.BusiGroup) error {
+	can, err := user.CanDoBusiGroup(deps.DBCtx, bg, "rw")
+	if err != nil {
+		return fmt.Errorf("failed to check busi group rw permission: %v", err)
+	}
+	if !can {
+		return fmt.Errorf("forbidden: no rw permission on busi group %d", bg.Id)
 	}
 	return nil
 }

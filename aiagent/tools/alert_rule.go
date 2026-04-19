@@ -213,7 +213,8 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(deps, user, PermAlertRules); err != nil {
+	// Match the FE route: /alert-rules/add role permission + bgrw on the group.
+	if err := checkPerm(deps, user, PermAlertRulesAdd); err != nil {
 		return "", err
 	}
 
@@ -248,7 +249,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	evalInterval := getArgInt(args, "eval_interval", 30)
 	forDuration := getArgInt(args, "for_duration", 60)
 
-	// Verify business group exists and the user has access.
+	// Verify business group exists and the user has rw permission on it.
 	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get busi group: %v", err)
@@ -256,14 +257,8 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if bg == nil {
 		return "", fmt.Errorf("busi group not found: id=%d", groupId)
 	}
-	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(deps, user)
-		if err != nil {
-			return "", err
-		}
-		if !int64SliceContains(bgids, groupId) {
-			return "", fmt.Errorf("forbidden: no access to busi group %d", groupId)
-		}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
 	}
 
 	// Datasource is required for everything except host type.

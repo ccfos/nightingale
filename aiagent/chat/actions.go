@@ -58,6 +58,7 @@ var registry = map[string]*ActionHandler{
 		Preflight:   PreflightCreation,
 		SelectTools: selectCreationTools,
 		BuildPrompt: buildCreationPrompt,
+		BuildInputs: buildCreationInputs,
 	},
 	"troubleshooting": {
 		Description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
@@ -422,6 +423,9 @@ func buildCreationPrompt(req *AIChatRequest) string {
 	if id := ctxInt64(req.Context, "busi_group_id"); id > 0 {
 		ctxHint.WriteString(fmt.Sprintf("\nUser-selected busi_group_id: %d (use this as group_id; do NOT call list_busi_groups)", id))
 	}
+	if id := ctxInt64(req.Context, "datasource_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nUser-selected datasource_id: %d (use this as datasource_id; do NOT call list_datasources)", id))
+	}
 	if v, ok := req.Context["team_ids"]; ok {
 		ctxHint.WriteString(fmt.Sprintf("\nUser-selected team_ids: %v", v))
 	}
@@ -441,6 +445,28 @@ Guidelines:
 - If the request maps to multiple skills (e.g. "创建一个仪表盘和告警"), do them one at a time and confirm each.
 - If critical parameters are missing, ask the user concisely in their language instead of guessing.
 - After a successful creation, keep the Final Answer short (one sentence). Structured result cards are rendered separately by the UI.`, req.UserInput, ctxHint.String())
+}
+
+// buildCreationInputs forwards preflight-selected context (busi_group_id,
+// datasource_id, team_ids) to the agent as tool params, so tools like
+// create_alert_rule / create_dashboard can read them via getDatasourceId etc.
+// without relying on the LLM to thread them through arguments.
+func buildCreationInputs(req *AIChatRequest) map[string]string {
+	inputs := map[string]string{}
+	if id := ctxInt64(req.Context, "busi_group_id"); id > 0 {
+		inputs["busi_group_id"] = fmt.Sprintf("%d", id)
+	}
+	if id := ctxInt64(req.Context, "datasource_id"); id > 0 {
+		inputs["datasource_id"] = fmt.Sprintf("%d", id)
+	}
+	if ids := ctxInt64Slice(req.Context, "team_ids"); len(ids) > 0 {
+		parts := make([]string, len(ids))
+		for i, id := range ids {
+			parts[i] = fmt.Sprintf("%d", id)
+		}
+		inputs["team_ids"] = strings.Join(parts, ",")
+	}
+	return inputs
 }
 
 // --- troubleshooting action ---

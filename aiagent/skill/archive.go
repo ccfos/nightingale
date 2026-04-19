@@ -62,6 +62,9 @@ func ExtractZip(data []byte, destDir string) error {
 		if f.FileInfo().IsDir() {
 			continue
 		}
+		if f.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("symlink not allowed in archive: %s", f.Name)
+		}
 
 		relPath := filepath.Clean(f.Name)
 		if strings.HasPrefix(relPath, "..") || filepath.IsAbs(relPath) {
@@ -123,10 +126,14 @@ func ExtractTarGz(r io.Reader, destDir string) error {
 			return err
 		}
 
-		if hdr.Typeflag == tar.TypeDir {
+		switch hdr.Typeflag {
+		case tar.TypeDir:
 			continue
-		}
-		if hdr.Typeflag != tar.TypeReg {
+		case tar.TypeSymlink, tar.TypeLink:
+			return fmt.Errorf("symlink/hardlink not allowed in archive: %s", hdr.Name)
+		case tar.TypeReg:
+			// 继续下面的处理
+		default:
 			continue
 		}
 

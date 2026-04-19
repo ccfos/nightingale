@@ -156,11 +156,12 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	chat, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	// Acquire per-chat Redis lock
-	chatLockKey := models.AssistantChatLockKey(req.ChatID)
-	locked, err := rt.Redis.SetNX(c, chatLockKey, "1", 5*time.Minute).Result()
+	// Acquire per-chat Redis lock. Short TTL + background renewal (see
+	// models.ChatLock) — a long agent run extends the lease while alive;
+	// a crashed process lets the lock expire within ChatLockTTL.
+	lock, err := models.AcquireChatLock(c, rt.Redis, req.ChatID)
 	ginx.Dangerous(err)
-	if !locked {
+	if lock == nil {
 		ginx.Bomb(http.StatusConflict, "chat is busy, please wait for the current message to finish")
 		return
 	}
@@ -168,7 +169,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	// Under lock: allocate seq_id
 	maxSeq, err := models.AssistantMessageMaxSeqID(rt.Ctx, req.ChatID)
 	if err != nil {
-		rt.Redis.Del(c, chatLockKey)
+		lock.Release(context.Background(), rt.Redis)
 		ginx.Dangerous(err)
 		return
 	}
@@ -188,7 +189,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 
 	// Persist initial message
 	if err := models.AssistantMessageSet(rt.Ctx, msg); err != nil {
-		rt.Redis.Del(c, chatLockKey)
+		lock.Release(context.Background(), rt.Redis)
 		ginx.Dangerous(err)
 		return
 	}
@@ -225,7 +226,7 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	// the UI language (see chat.LanguageDirective).
 	lang := c.GetHeader("X-Language")
 
-	go rt.processAssistantMessage(ctx, cancel, chatLockKey, &msg, streamID, key, me.Id, lang)
+	go rt.processAssistantMessage(ctx, cancel, lock, &msg, streamID, key, me.Id, lang)
 
 	ginx.NewRender(c).Data(gin.H{
 		"chat_id": req.ChatID,
@@ -233,9 +234,25 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 	}, nil)
 }
 
-func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, chatLockKey string, msg *models.AssistantMessage, streamID, stateKey string, userId int64, lang string) {
+func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, msg *models.AssistantMessage, streamID, stateKey string, userId int64, lang string) {
+	// Shutdown sequence (defer runs LIFO — reverse of registration order):
+	//   1. parentCancel()           — signals watchdog to stop
+	//   2. <-keepAliveDone          — wait for watchdog goroutine to fully exit
+	//   3. lock.Release(...)        — CAS-delete the lock (background ctx so it
+	//                                 still runs even though parentCtx is done)
+	// This ordering prevents a late renew() from racing with the release and
+	// logging a spurious "lost ownership" after we deleted the key ourselves.
+	keepAliveDone := make(chan struct{})
+	defer lock.Release(context.Background(), rt.Redis)
+	defer func() { <-keepAliveDone }()
 	defer parentCancel()
-	defer rt.Redis.Del(context.Background(), chatLockKey)
+
+	// Watchdog: renews TTL every ChatLockRenewInterval until parentCtx is
+	// canceled (success, error, timeout, or user cancel).
+	go func() {
+		defer close(keepAliveDone)
+		lock.KeepAlive(parentCtx, rt.Redis)
+	}()
 
 	defer func() {
 		if r := recover(); r != nil {

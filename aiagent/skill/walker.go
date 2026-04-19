@@ -2,6 +2,7 @@ package skill
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +20,7 @@ func Walk(dir string) (skillMD string, files map[string]string, err error) {
 	dir = archiveRoot(dir)
 	files = make(map[string]string)
 
-	err = filepath.Walk(dir, func(path string, info os.FileInfo, walkErr error) error {
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -36,13 +37,17 @@ func Walk(dir string) (skillMD string, files map[string]string, err error) {
 
 		// 跳过隐藏文件 / macOS 归档元数据
 		if strings.HasPrefix(filepath.Base(relPath), ".") || strings.HasPrefix(relPath, "__MACOSX") {
-			if info.IsDir() {
+			if d.IsDir() {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		if info.IsDir() {
+		if d.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("symlink not allowed: %s", relPath)
+		}
+
+		if d.IsDir() {
 			return nil
 		}
 

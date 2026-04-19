@@ -71,15 +71,29 @@ func AILLMConfigGets(c *ctx.Context) ([]*AILLMConfig, error) {
 // MaskAPIKey masks api_key for display: keep first/last 4 chars, mask the middle.
 // Keys of 8 chars or shorter are fully masked.
 func (a *AILLMConfig) MaskAPIKey() {
-	n := len(a.APIKey)
+	a.APIKey = maskAPIKey(a.APIKey)
+}
+
+func maskAPIKey(key string) string {
+	n := len(key)
 	if n == 0 {
-		return
+		return ""
 	}
 	if n <= 8 {
-		a.APIKey = "****"
-		return
+		return "****"
 	}
-	a.APIKey = a.APIKey[:4] + "****" + a.APIKey[n-4:]
+	return key[:4] + "****" + key[n-4:]
+}
+
+// IsMaskedAPIKey reports whether `raw` is the mask produced by MaskAPIKey for
+// `stored`. Used by update handlers to detect the case where the frontend
+// round-trips the masked key it received from a GET — in which case we must
+// keep the real stored key instead of overwriting it with the mask.
+func IsMaskedAPIKey(raw, stored string) bool {
+	if raw == "" || stored == "" {
+		return false
+	}
+	return raw == maskAPIKey(stored)
 }
 
 func AILLMConfigGet(c *ctx.Context, where string, args ...interface{}) (*AILLMConfig, error) {

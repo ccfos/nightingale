@@ -97,7 +97,8 @@ func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if err != nil {
 		return "", err
 	}
-	if err := checkPerm(deps, user, PermDashboards); err != nil {
+	// Match the FE route: /dashboards/add role permission + bgrw on the group.
+	if err := checkPerm(deps, user, PermDashboardsAdd); err != nil {
 		return "", err
 	}
 
@@ -111,7 +112,7 @@ func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", fmt.Errorf("name is required")
 	}
 
-	// Check business group
+	// Check business group exists and the user has rw permission on it.
 	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get busi group: %v", err)
@@ -119,23 +120,18 @@ func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if bg == nil {
 		return "", fmt.Errorf("busi group not found: id=%d", groupId)
 	}
-	if !user.IsAdmin() {
-		bgids, _, err := getUserBgids(deps, user)
-		if err != nil {
-			return "", err
-		}
-		if !int64SliceContains(bgids, groupId) {
-			return "", fmt.Errorf("forbidden: no access to busi group %d", groupId)
-		}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
 	}
 
-	// 获取数据源 ID
+	// 获取数据源 ID：先看工具参数，再回退到 page/preflight 注入的 params。
+	// 不再静默兜底到 1——错误的数据源会创建出无法查询的面板，必须显式指定。
 	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
 		dsId = getDatasourceId(params)
 	}
 	if dsId == 0 {
-		dsId = 1 // 最终兜底
+		return "", fmt.Errorf("datasource_id is required: call list_datasources to pick one, or ask the user")
 	}
 
 	// 构建 configs

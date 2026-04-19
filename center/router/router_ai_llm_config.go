@@ -60,7 +60,10 @@ func (rt *Router) aiLLMConfigPut(c *gin.Context) {
 
 	var ref models.AILLMConfig
 	ginx.BindJSON(c, &ref)
-	if ref.APIKey == "" {
+	// Treat empty or the masked round-trip value as "keep existing key".
+	// GET returns api_key masked (e.g. "sk-a****wxyz"); if the frontend PUTs
+	// that mask back unchanged we must not overwrite the real key with it.
+	if ref.APIKey == "" || models.IsMaskedAPIKey(ref.APIKey, obj.APIKey) {
 		ref.APIKey = obj.APIKey
 	}
 	ginx.Dangerous(ref.Verify())
