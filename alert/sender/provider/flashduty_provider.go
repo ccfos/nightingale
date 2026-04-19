@@ -41,15 +41,24 @@ func (p *FlashDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	}
 	var responses []string
 	var targets []string
+	var failedMsgs []string
 	for _, channelID := range channelIDs {
+		target := strconv.FormatInt(channelID, 10)
+		targets = append(targets, target)
 		resp, err := SendFlashDuty(req.Config.RequestConfig.FlashDutyRequestConfig, req.Events, channelID, req.HttpClient)
 		if err != nil {
-			return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: err}
+			// 单个 channel 失败不要中断其他 channel 的发送
+			failedMsgs = append(failedMsgs, fmt.Sprintf("channel %s: %v", target, err))
+			responses = append(responses, fmt.Sprintf("channel %s: %s", target, resp))
+			continue
 		}
 		responses = append(responses, resp)
-		targets = append(targets, strconv.FormatInt(channelID, 10))
 	}
-	return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: nil}
+	var aggErr error
+	if len(failedMsgs) > 0 {
+		aggErr = errors.New(strings.Join(failedMsgs, " | "))
+	}
+	return &NotifyResult{Target: strings.Join(targets, ","), Response: strings.Join(responses, "; "), Err: aggErr}
 }
 
 func SendFlashDuty(config *models.FlashDutyRequestConfig, events []*models.AlertCurEvent, flashDutyChannelID int64, client *http.Client) (string, error) {

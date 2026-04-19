@@ -80,7 +80,8 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 	if req.Config.ParamConfig != nil && req.Config.ParamConfig.UserInfo != nil {
 		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
 	}
-	if contactKey == "" {
+	// contact key 仅用于把 sendtos 解析成 userid，只发群（im_group_ids）时不需要
+	if len(req.Sendtos) > 0 && contactKey == "" {
 		return &NotifyResult{
 			Target:   getNotifyTarget(req.CustomParams, req.Sendtos),
 			Response: "contact key cannot be empty",

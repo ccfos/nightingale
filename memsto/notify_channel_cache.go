@@ -275,7 +275,12 @@ func (ncc *NotifyChannelCacheType) startHttpChannel(chID int64, channel *models.
 	ncc.queueQuitCh[chID] = quitCh
 
 	// 启动指定数量的消费者协程
+	// TODO: 默认值与 models.GetHTTPClient 中的 Concurrency==0→5 重复，
+	// 后续把 HTTPRequestConfig 的默认值统一抽到 normalize() 里，cache 与发送路径共用。
 	concurrency := channel.RequestConfig.HTTPRequestConfig.Concurrency
+	if concurrency <= 0 {
+		concurrency = 5
+	}
 	for i := 0; i < concurrency; i++ {
 		go ncc.startNotifyConsumer(chID, queue, quitCh)
 	}

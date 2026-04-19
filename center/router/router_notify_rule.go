@@ -191,7 +191,8 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	}
 
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashduty" {
+	// flashduty / pagerduty 不依赖模板，从 event 字段直接构造 payload
+	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		if err != nil {
 			return "", fmt.Errorf("failed to get message templates: %v", err)

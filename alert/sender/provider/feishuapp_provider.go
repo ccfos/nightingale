@@ -510,7 +510,7 @@ var (
                     }
                 ],
                 "margin": "0px 0px 0px 0px"
-            },
+            }{{ if .shot_image_key }},
             {
                 "tag": "img",
                 "img_key": {{ jsonMarshal .shot_image_key }},
@@ -518,7 +518,7 @@ var (
                 "transparent": false,
                 "scale_type": "fit_horizontal",
                 "margin": "0px 0px 0px 0px"
-            }
+            }{{ end }}
         ]
     },
     "header": {

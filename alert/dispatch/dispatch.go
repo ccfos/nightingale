@@ -589,7 +589,9 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	siteInfo := configCvalCache.GetSiteInfo()
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashduty" {
+	// flashduty / pagerduty 直接从 event 字段构造 payload，不需要模板，
+	// 与 dispatch 入口处 messageTemplate 的可空判断保持一致，避免 nil 解引用。
+	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate != nil {
 		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
 	}
 

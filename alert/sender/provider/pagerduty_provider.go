@@ -39,14 +39,22 @@ func (p *PagerDutyProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 		return &NotifyResult{Target: "", Response: "", Err: errors.New("pagerduty requires at least one routing key in sendtos")}
 	}
 	var responses []string
+	var failedMsgs []string
 	for _, routingKey := range req.PagerDutyRoutingKeys {
 		resp, err := SendPagerDuty(req.Config.RequestConfig.PagerDutyRequestConfig, req.Events, routingKey, req.SiteUrl, req.HttpClient)
 		if err != nil {
-			return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: err}
+			// 单个 routing key 失败不要中断其他 routing key 的发送
+			failedMsgs = append(failedMsgs, fmt.Sprintf("routing_key %s: %v", routingKey, err))
+			responses = append(responses, fmt.Sprintf("routing_key %s: %s", routingKey, resp))
+			continue
 		}
 		responses = append(responses, resp)
 	}
-	return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: nil}
+	var aggErr error
+	if len(failedMsgs) > 0 {
+		aggErr = errors.New(strings.Join(failedMsgs, " | "))
+	}
+	return &NotifyResult{Target: strings.Join(req.PagerDutyRoutingKeys, ","), Response: strings.Join(responses, "; "), Err: aggErr}
 }
 
 func SendPagerDuty(config *models.PagerDutyRequestConfig, events []*models.AlertCurEvent, routingKey, siteUrl string, client *http.Client) (string, error) {
