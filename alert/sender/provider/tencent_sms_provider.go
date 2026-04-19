@@ -114,16 +114,16 @@ func (p *TencentSmsProvider) sendHTTPRequest(httpConfig *models.HTTPRequestConfi
 		defer resp.Body.Close()
 
 		// 读取响应
-		body, err := io.ReadAll(resp.Body)
-		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(body))
+		respBody, err := io.ReadAll(resp.Body)
+		logger.Debugf("send http request: %+v, response: %+v, body: %+v", req, resp, string(respBody))
 		if err != nil {
 			logger.Errorf("send_http: failed to read response. url=%s request_body=%s error=%v", url, string(body), err)
 		}
 		if resp.StatusCode == http.StatusOK {
-			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), nil
+			return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(respBody)), nil
 		}
 
-		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(body)), fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(body))
+		return fmt.Sprintf("status_code:%d, response:%s", resp.StatusCode, string(respBody)), fmt.Errorf("failed to send request, status code: %d, body: %s", resp.StatusCode, string(respBody))
 	}
 
 	return lastErrorMessage, errors.New("all retries failed, last error: " + lastErrorMessage)

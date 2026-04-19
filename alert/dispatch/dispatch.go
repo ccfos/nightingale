@@ -487,7 +487,11 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 			}
 		default:
 			// 避免直接 value.(string) 导致 panic，支持多种类型并统一为字符串
-			customParams[key] = value.(string)
+			if s, ok := value.(string); ok {
+				customParams[key] = s
+			} else {
+				customParams[key] = fmt.Sprint(value)
+			}
 		}
 	}
 
