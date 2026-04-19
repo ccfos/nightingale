@@ -80,3 +80,57 @@ func TestFeishuAppProviderNotify(t *testing.T) {
 	}
 	t.Logf("result: %+v", result)
 }
+
+// Notify 在 ParamConfig 为 nil、只配了 ReceiveIDType 时不应 panic。
+// 通过 HttpClient=nil 让 token 获取立刻返回 error，避免真实网络请求；
+// 本用例的目的是验证个人发送路径不会因空指针崩溃。
+func TestFeishuAppProvider_Notify_NilParamConfig_NoPanic(t *testing.T) {
+	p := &FeishuAppProvider{}
+	req := &NotifyRequest{
+		Config: &models.NotifyChannelConfig{
+			RequestConfig: &models.RequestConfig{
+				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
+					AppID:         "app",
+					AppSecret:     "secret",
+					ReceiveIDType: "email",
+				},
+			},
+		},
+		Sendtos:    []string{"a@b.com"},
+		HttpClient: nil,
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Notify panicked: %v", r)
+		}
+	}()
+	res := p.Notify(context.Background(), req)
+	if res == nil || res.Err == nil {
+		t.Fatalf("expected error result (nil http client), got %+v", res)
+	}
+}
+
+// 仅群发（ImGroupIDs 非空、Sendtos 为空、ParamConfig 为 nil）时也不应 panic。
+func TestFeishuAppProvider_Notify_GroupOnly_NilParamConfig_NoPanic(t *testing.T) {
+	p := &FeishuAppProvider{}
+	req := &NotifyRequest{
+		Config: &models.NotifyChannelConfig{
+			RequestConfig: &models.RequestConfig{
+				FeishuAppRequestConfig: &models.FeishuAppRequestConfig{
+					AppID:     "app",
+					AppSecret: "secret",
+				},
+			},
+		},
+		ImGroupIDs: []string{"oc_xxx"},
+		HttpClient: nil,
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("Notify panicked: %v", r)
+		}
+	}()
+	_ = p.Notify(context.Background(), req)
+}

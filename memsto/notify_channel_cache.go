@@ -200,26 +200,11 @@ func (ncc *NotifyChannelCacheType) addOrUpdateChannels(newChannels map[int64]*mo
 		// 更新通道配置
 		ncc.channels[chID] = newChannel
 
-		// 根据类型创建相应的资源
+		// HTTP client 不在这里预建。GetHttpClient 首次被调用时按需构造，
+		// 这样新增通道类型不必再改 cache 逻辑。
 		switch newChannel.RequestType {
-		case "http", "flashduty", "pagerduty":
-			// 创建HTTP客户端
-			if newChannel.RequestConfig != nil && newChannel.RequestConfig.HTTPRequestConfig != nil {
-				cli, err := models.GetHTTPClient(newChannel)
-				if err != nil {
-					logger.Warningf("failed to create HTTP client for channel %d: %v", chID, err)
-				} else {
-					if ncc.httpClient == nil {
-						ncc.httpClient = make(map[int64]*http.Client)
-					}
-					ncc.httpClient[chID] = cli
-				}
-			}
-
-			// 对于 http 类型，启动队列和消费者
-			if newChannel.RequestType == "http" {
-				ncc.startHttpChannel(chID, newChannel)
-			}
+		case "http":
+			ncc.startHttpChannel(chID, newChannel)
 		case "smtp":
 			// 创建SMTP发送器
 			if newChannel.RequestConfig != nil && newChannel.RequestConfig.SMTPRequestConfig != nil {
@@ -262,6 +247,9 @@ func (ncc *NotifyChannelCacheType) stopChannelResources(chID int64) {
 		delete(ncc.queueQuitCh, chID)
 		delete(ncc.channelsQueue, chID)
 	}
+
+	// 丢弃已缓存的 HTTP client，保证配置变更后 GetHttpClient 会按新配置重建
+	delete(ncc.httpClient, chID)
 
 	// 停止SMTP发送器
 	if quitCh, exists := ncc.smtpQuitCh[chID]; exists {
@@ -396,10 +384,43 @@ func (ncc *NotifyChannelCacheType) Get(channelId int64) *models.NotifyChannelCon
 	return ncc.channels[channelId]
 }
 
+// GetHttpClient 懒加载 HTTP client：
+//  1. 命中缓存直接返回（fast path, 仅持 RLock）；
+//  2. 未命中时根据 channel 配置现场构造并缓存；
+//  3. channel 不存在或构造失败返回 nil，由调用方（provider）判空。
+//
+// 这样新增通道类型不必再在 cache 里登记「是否需要 HTTP client」，
+// 避免 dingtalkapp/feishuapp/wecomapp 那种遗漏登记导致真实告警路径拿到 nil 的问题。
 func (ncc *NotifyChannelCacheType) GetHttpClient(channelId int64) *http.Client {
 	ncc.RLock()
-	defer ncc.RUnlock()
-	return ncc.httpClient[channelId]
+	if cli, ok := ncc.httpClient[channelId]; ok && cli != nil {
+		ncc.RUnlock()
+		return cli
+	}
+	ch := ncc.channels[channelId]
+	ncc.RUnlock()
+
+	if ch == nil || ch.RequestConfig == nil {
+		return nil
+	}
+
+	ncc.Lock()
+	defer ncc.Unlock()
+	if cli, ok := ncc.httpClient[channelId]; ok && cli != nil {
+		return cli
+	}
+	// 再次确认 channel 在双检期间没被删除
+	if ncc.channels[channelId] == nil {
+		return nil
+	}
+	cli, err := models.GetHTTPClient(ch)
+	if err != nil {
+		logger.Warningf("lazy build http client for channel %d (type=%s) failed: %v",
+			channelId, ch.RequestType, err)
+		return nil
+	}
+	ncc.httpClient[channelId] = cli
+	return cli
 }
 
 func (ncc *NotifyChannelCacheType) GetSmtpClient(channelId int64) chan *models.EmailContext {

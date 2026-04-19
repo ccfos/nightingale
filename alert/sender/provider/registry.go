@@ -30,11 +30,20 @@ func NewRegistry() *Registry {
 	}
 }
 
-// VerifyChannelConfig 按 ident 查找 Provider 并执行 Check，供 models 通过 VerifyByProvider 回调使用。
+// VerifyChannelConfig 查找 Provider 并执行 Check，供 models 通过 VerifyByProvider 回调使用。
+//
+// 走 Registry.Resolve 而不是精确 ident 匹配：历史/自定义 ident (如 ident=my-webhook,
+// request_type=http) 在发送路径能按 request_type 兜底到 callback provider 发送，
+// 保存校验若只按 ident 精确查就会把它拦下来，造成「能发不能存」。统一走 Resolve
+// 让两条路径看到同一张 provider 视图。
 func VerifyChannelConfig(ncc *models.NotifyChannelConfig) error {
-	p, ok := DefaultRegistry.Get(ncc.Ident)
+	if ncc == nil {
+		return fmt.Errorf("nil channel config")
+	}
+	p, ok := DefaultRegistry.Resolve(ncc)
 	if !ok {
-		return fmt.Errorf("unsupported channel ident: %s", ncc.Ident)
+		return fmt.Errorf("unsupported channel: ident=%s request_type=%s",
+			ncc.Ident, ncc.RequestType)
 	}
 	return p.Check(ncc)
 }

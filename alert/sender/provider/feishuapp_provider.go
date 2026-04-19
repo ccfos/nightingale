@@ -114,7 +114,11 @@ func (p *FeishuAppProvider) Notify(ctx context.Context, req *NotifyRequest) *Not
 	resps := make([]string, 0, len(req.Sendtos)+len(req.ImGroupIDs))
 
 	// 个人: 使用 feishuapp_request_config.receive_id_type；未填时与历史一致，按 contact_key 推断。
-	contactKey := req.Config.ParamConfig.UserInfo.ContactKey
+	// ParamConfig/UserInfo 均为指针，群发或未配 UserInfo 的场景为 nil，必须守卫，避免告警协程 panic。
+	contactKey := ""
+	if req.Config.ParamConfig != nil && req.Config.ParamConfig.UserInfo != nil {
+		contactKey = req.Config.ParamConfig.UserInfo.ContactKey
+	}
 	receiveIDType := resolveFeishuReceiveIDType(appConfig.ReceiveIDType, contactKey)
 	for _, rid := range req.Sendtos {
 		receiveID := strings.TrimSpace(rid)
