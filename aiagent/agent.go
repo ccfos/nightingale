@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
+	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -83,6 +84,10 @@ func (a *Agent) InitSkills(skillsPath string) {
 		a.toolDeps = &ToolDeps{}
 	}
 	a.toolDeps.SkillsPath = skillsPath
+	if err := skill.ExtractBuiltin(skillsPath); err != nil {
+		// 解压失败不阻塞启动：磁盘上已有的 skill 依然能被 NewSkillRegistry 加载
+		logger.Warningf("extract builtin skills to %s failed: %v", skillsPath, err)
+	}
 	a.skillRegistry = NewSkillRegistry(skillsPath)
 	if a.cfg.Skills.AutoSelect {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {

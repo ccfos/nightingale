@@ -82,15 +82,20 @@ func listFiles(_ context.Context, deps *aiagent.ToolDeps, args map[string]interf
 
 	var sb strings.Builder
 	for _, entry := range entries {
+		name := entry.Name()
+		// 隐藏 .source / .* 等元信息文件，避免泄漏到 LLM 可见的 listing 中
+		if strings.HasPrefix(name, ".") {
+			continue
+		}
 		if entry.IsDir() {
-			sb.WriteString(entry.Name())
+			sb.WriteString(name)
 			sb.WriteString("/\n")
 		} else {
 			info, _ := entry.Info()
 			if info != nil {
-				sb.WriteString(fmt.Sprintf("%-40s %d bytes\n", entry.Name(), info.Size()))
+				sb.WriteString(fmt.Sprintf("%-40s %d bytes\n", name, info.Size()))
 			} else {
-				sb.WriteString(entry.Name())
+				sb.WriteString(name)
 				sb.WriteString("\n")
 			}
 		}
