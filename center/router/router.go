@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
+	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -102,6 +103,17 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		llmClientCache:        llm.NewClientCache(),
 		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
+	}
+
+	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
+	// 消息的 InitSkills 里 destructive re-extract，多 chat 并发时 Step 1 删目录
+	// 和 Step 2 重写之间会被别的请求读到空目录，引发偶发 "file not found"。
+	// 移到启动期后，运行期对内置 skill 目录是纯只读，DB skill 由下面的 sync
+	// loop 独立维护（只动带 .fromdb 的目录，不会碰到内置 skill）。
+	if skillsPath := rt.Center.AIAgent.SkillsPath; skillsPath != "" {
+		if err := skill.ExtractBuiltin(skillsPath); err != nil {
+			logger.Warningf("extract builtin skills to %s failed: %v", skillsPath, err)
+		}
 	}
 
 	// Long-lived goroutine that materializes DB-backed skills onto disk. It

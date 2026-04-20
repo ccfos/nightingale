@@ -9,7 +9,6 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
-	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -84,10 +83,10 @@ func (a *Agent) InitSkills(skillsPath string) {
 		a.toolDeps = &ToolDeps{}
 	}
 	a.toolDeps.SkillsPath = skillsPath
-	if err := skill.ExtractBuiltin(skillsPath); err != nil {
-		// 解压失败不阻塞启动：磁盘上已有的 skill 依然能被 NewSkillRegistry 加载
-		logger.Warningf("extract builtin skills to %s failed: %v", skillsPath, err)
-	}
+	// 内置 skill 的磁盘落地由进程启动期的一次性 ExtractBuiltin 负责（见
+	// center/router/router.go 中 runAISkillSyncLoop 之前的调用），这里不再
+	// 每条消息都 destructive re-extract，避免多 chat 并发时 read_file /
+	// SkillRegistry 在 Step 1 删目录和 Step 2 重写之间读到空目录的竞态。
 	a.skillRegistry = NewSkillRegistry(skillsPath)
 	if a.cfg.Skills.AutoSelect {
 		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
