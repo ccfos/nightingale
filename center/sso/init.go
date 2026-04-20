@@ -50,6 +50,8 @@ SyncInterval = 86400
 AuthFilter = '(&(uid=%s))'
 UserFilter = '(&(uid=*))'
 CoverAttributes = true
+# Whether to overwrite roles with mapping (or DefaultRoles on miss) on each login. Requires CoverAttributes = true.
+CoverRoles = false
 TLS = false
 StartTLS = true
 DefaultRoles = ['Standard']

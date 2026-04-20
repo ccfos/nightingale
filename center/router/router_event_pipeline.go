@@ -16,10 +16,33 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+// checkEventPipelinePermission 根据 pipeline 的 group_id 决定鉴权方式
+// group_id > 0: 使用业务组鉴权; group_id = 0: 使用 teamids 鉴权
+func (rt *Router) checkEventPipelinePermission(c *gin.Context, pipeline *models.EventPipeline, permFlag ...string) {
+	me := c.MustGet("user").(*models.User)
+	if pipeline.GroupId > 0 {
+		if len(permFlag) > 0 && permFlag[0] == "rw" {
+			rt.bgrwCheck(c, pipeline.GroupId)
+		} else {
+			rt.bgroCheck(c, pipeline.GroupId)
+		}
+	} else {
+		ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	}
+}
+
 // 获取事件Pipeline列表
 func (rt *Router) eventPipelinesList(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	pipelines, err := models.ListEventPipelines(rt.Ctx)
+	groupId := ginx.QueryInt64(c, "group_id", -1)
+	useCase := ginx.QueryStr(c, "use_case", "")
+
+	// 不传 group_id 默认查 group_id=0 的
+	if groupId < 0 {
+		groupId = 0
+	}
+
+	pipelines, err := models.ListEventPipelinesByUseCase(rt.Ctx, groupId, useCase)
 	ginx.Dangerous(err)
 
 	allTids := make([]int64, 0)
@@ -37,33 +60,42 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 	}
 	models.FillUpdateByNicknames(rt.Ctx, pipelines)
 
-	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
-	ginx.Dangerous(err)
+	// 统一填充默认值
+	for _, pipeline := range pipelines {
+		if pipeline.TriggerMode == "" {
+			pipeline.TriggerMode = models.TriggerModeEvent
+		}
+		if pipeline.UseCase == "" {
+			pipeline.UseCase = models.UseCaseEventPipeline
+		}
+	}
 
-	if me.IsAdmin() {
-		for _, pipeline := range pipelines {
-			if pipeline.TriggerMode == "" {
-				pipeline.TriggerMode = models.TriggerModeEvent
-			}
-
-			if pipeline.UseCase == "" {
-				pipeline.UseCase = models.UseCaseEventPipeline
+	// 业务组场景：使用业务组鉴权，admin 或有权限的用户可见
+	if groupId > 0 {
+		if !me.IsAdmin() {
+			bg := BusiGroup(rt.Ctx, groupId)
+			can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+			ginx.Dangerous(err)
+			if !can {
+				ginx.NewRender(c).Data(make([]*models.EventPipeline, 0), nil)
+				return
 			}
 		}
 		ginx.NewRender(c).Data(pipelines, nil)
 		return
 	}
 
+	// 工作流页面场景 (group_id=0)：使用 teamids 鉴权
+	if me.IsAdmin() {
+		ginx.NewRender(c).Data(pipelines, nil)
+		return
+	}
+
+	gids, err := models.MyGroupIdsMap(rt.Ctx, me.Id)
+	ginx.Dangerous(err)
+
 	res := make([]*models.EventPipeline, 0)
 	for _, pipeline := range pipelines {
-		if pipeline.TriggerMode == "" {
-			pipeline.TriggerMode = models.TriggerModeEvent
-		}
-
-		if pipeline.UseCase == "" {
-			pipeline.UseCase = models.UseCaseEventPipeline
-		}
-
 		for _, tid := range pipeline.TeamIds {
 			if _, ok := gids[tid]; ok {
 				res = append(res, pipeline)
@@ -77,11 +109,10 @@ func (rt *Router) eventPipelinesList(c *gin.Context) {
 
 // 获取单个事件Pipeline详情
 func (rt *Router) getEventPipeline(c *gin.Context) {
-	me := c.MustGet("user").(*models.User)
 	id := ginx.UrlParamInt64(c, "id")
 	pipeline, err := models.GetEventPipeline(rt.Ctx, id)
 	ginx.Dangerous(err)
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, pipeline)
 
 	err = pipeline.FillTeamNames(rt.Ctx)
 	ginx.Dangerous(err)
@@ -115,9 +146,9 @@ func (rt *Router) addEventPipeline(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, err.Error())
 	}
 
-	ginx.Dangerous(user.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, &pipeline, "rw")
 	err = models.CreateEventPipeline(rt.Ctx, &pipeline)
-	ginx.NewRender(c).Message(err)
+	ginx.NewRender(c).Data(pipeline.ID, err)
 }
 
 // 更新事件Pipeline
@@ -133,7 +164,11 @@ func (rt *Router) updateEventPipeline(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusNotFound, "No such event pipeline")
 	}
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+	rt.checkEventPipelinePermission(c, pipeline, "rw")
+
+	if f.GroupId != pipeline.GroupId {
+		rt.checkEventPipelinePermission(c, &f, "rw")
+	}
 
 	ginx.NewRender(c).Message(pipeline.Update(rt.Ctx, &f))
 }
@@ -149,11 +184,10 @@ func (rt *Router) deleteEventPipelines(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "ids required")
 	}
 
-	me := c.MustGet("user").(*models.User)
 	for _, id := range f.Ids {
 		pipeline, err := models.GetEventPipeline(rt.Ctx, id)
 		ginx.Dangerous(err)
-		ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
+		rt.checkEventPipelinePermission(c, pipeline, "rw")
 	}
 
 	err := models.DeleteEventPipelines(rt.Ctx, f.Ids)
@@ -382,8 +416,8 @@ func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
 	}
 
 	// 检查权限
+	rt.checkEventPipelinePermission(c, pipeline)
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
 
 	executionID, err := rt.executePipelineTrigger(pipeline, &f, me.Username)
 	if err != nil {
@@ -493,8 +527,8 @@ func (rt *Router) streamEventPipeline(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "pipeline not found: %v", err)
 	}
 
+	rt.checkEventPipelinePermission(c, pipeline)
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(me.CheckGroupPermission(rt.Ctx, pipeline.TeamIds))
 
 	var event *models.AlertCurEvent
 	if f.Event != nil {

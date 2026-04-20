@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -266,18 +267,40 @@ func (s *SsoClient) getUserInfo(ClientId, UserInfoAddr, accessToken string, Tran
 	return body, err
 }
 
+// getUserinfoField extracts a field from JSON userinfo response.
+// prefix is first tried as a literal JSON key for backward compatibility (e.g. a key named "data.user").
+// If no match is found and the prefix contains dots, it falls back to dot-separated multi-level path navigation.
 func getUserinfoField(input []byte, isArray bool, prefix, field string) string {
 	if prefix == "" {
 		if isArray {
 			return jsoniter.Get(input, 0).Get(field).ToString()
-		} else {
-			return jsoniter.Get(input, field).ToString()
 		}
-	} else {
-		if isArray {
-			return jsoniter.Get(input, prefix, 0).Get(field).ToString()
-		} else {
-			return jsoniter.Get(input, prefix).Get(field).ToString()
-		}
+		return jsoniter.Get(input, field).ToString()
 	}
+
+	// Try prefix as a literal key first (backward compatible).
+	// Only check whether the literal prefix node itself exists — not the final field.
+	// This avoids falling through to the nested path when the literal key exists
+	// but the field is missing, the array is empty, or the value type doesn't match.
+	prefixNode := jsoniter.Get(input, prefix)
+	if prefixNode.ValueType() != jsoniter.InvalidValue {
+		if isArray {
+			return prefixNode.Get(0).Get(field).ToString()
+		}
+		return prefixNode.Get(field).ToString()
+	}
+
+	// Fall back to dot-separated path only when literal prefix key is absent and prefix contains dots.
+	if !strings.Contains(prefix, ".") {
+		return ""
+	}
+
+	var path []interface{}
+	for _, seg := range strings.Split(prefix, ".") {
+		path = append(path, seg)
+	}
+	if isArray {
+		path = append(path, 0)
+	}
+	return jsoniter.Get(input, path...).Get(field).ToString()
 }

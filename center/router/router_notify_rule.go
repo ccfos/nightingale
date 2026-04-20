@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/slice"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/slice"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -190,7 +191,8 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 	}
 
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashduty" {
+	// flashduty / pagerduty 不依赖模板，从 event 字段直接构造 payload
+	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" {
 		messageTemplates, err := models.MessageTemplateGets(ctx, notifyConfig.TemplateID, "", "")
 		if err != nil {
 			return "", fmt.Errorf("failed to get message templates: %v", err)
@@ -201,92 +203,64 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		}
 		tplContent = messageTemplates[0].RenderEvent(events, siteUrl)
 	}
-	var contactKey string
-	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
-		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+
+	client, err := models.GetHTTPClient(notifyChannel)
+	if err != nil {
+		return "", fmt.Errorf("failed to get http client: %v", err)
+	}
+	nc, err := dispatch.BuildNotifyContext(ctx, userCache, userGroup, events, 0,
+		&notifyConfig, notifyChannel, tplContent, client, siteUrl)
+	if err != nil {
+		return "", err
 	}
 
-	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams := dispatch.GetNotifyConfigParams(&notifyConfig, contactKey, userCache, userGroup)
-
-	var resp string
-	switch notifyChannel.RequestType {
-	case "flashduty":
-		client, err := models.GetHTTPClient(notifyChannel)
-		if err != nil {
-			return "", fmt.Errorf("failed to get http client: %v", err)
-		}
-
-		for i := range flashDutyChannelIDs {
-			resp, err = notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], client)
-			if err != nil {
-				return "", fmt.Errorf("failed to send flashduty notify: %v", err)
-			}
-		}
-		logger.Infof("channel_name: %v, event:%s, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, resp, err)
-		return resp, nil
-	case "pagerduty":
-		client, err := models.GetHTTPClient(notifyChannel)
-		if err != nil {
-			return "", fmt.Errorf("failed to get http client: %v", err)
-		}
-
-		for _, routingKey := range pagerDutyRoutingKeys {
-			resp, err = notifyChannel.SendPagerDuty(events, routingKey, siteUrl, client)
-			if err != nil {
-				return "", fmt.Errorf("failed to send pagerduty notify: %v", err)
-			}
-		}
-		logger.Infof("channel_name: %v, event:%s, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, resp, err)
-		return resp, nil
-	case "http":
-		client, err := models.GetHTTPClient(notifyChannel)
-		if err != nil {
-			return "", fmt.Errorf("failed to get http client: %v", err)
-		}
-
-		if notifyChannel.RequestConfig == nil {
-			return "", fmt.Errorf("request config is nil")
-		}
-
-		if notifyChannel.RequestConfig.HTTPRequestConfig == nil {
-			return "", fmt.Errorf("http request config is nil")
-		}
-
-		if dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) || len(sendtos) == 0 {
-			resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, sendtos, client)
-			logger.Infof("channel_name: %v, event:%s, sendtos:%+v, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, sendtos, tplContent, customParams, resp, err)
-			if err != nil {
-				return "", fmt.Errorf("failed to send http notify: %v", err)
-			}
-			return resp, nil
-		} else {
-			for i := range sendtos {
-				resp, err = notifyChannel.SendHTTP(events, tplContent, customParams, []string{sendtos[i]}, client)
-				logger.Infof("channel_name: %v, event:%s,  tplContent:%s, customParams:%v, sendto:%+v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, sendtos[i], resp, err)
-				if err != nil {
-					return "", fmt.Errorf("failed to send http notify: %v", err)
-				}
-			}
-			return resp, nil
-		}
-
-	case "smtp":
-		if len(sendtos) == 0 {
+	// smtp: Provider.Notify 走 SmtpChan 是异步入队，test-send 要同步拿结果
+	if notifyChannel.RequestType == "smtp" {
+		if len(nc.Request.Sendtos) == 0 {
 			return "", fmt.Errorf("no valid email address in the user and team")
 		}
-		err := notifyChannel.SendEmailNow(events, tplContent, sendtos)
-		if err != nil {
+		if err := provider.SendEmailNow(notifyChannel, events, tplContent, nc.Request.Sendtos); err != nil {
 			return "", fmt.Errorf("failed to send email notify: %v", err)
 		}
-		return resp, nil
-	case "script":
-		resp, _, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
-		logger.Infof("channel_name: %v, event:%s, tplContent:%s, customParams:%v, respBody: %v, err: %v", notifyChannel.Name, events[0].Hash, tplContent, customParams, resp, err)
-		return resp, err
-	default:
-		logger.Errorf("unsupported request type: %v", notifyChannel.RequestType)
-		return "", fmt.Errorf("unsupported request type")
+		return "", nil
 	}
+
+	// http: test-send 特有，按 sendto 扇出，让前端能看到每个收件人的结果
+	if notifyChannel.RequestType == "http" {
+		if notifyChannel.RequestConfig == nil || notifyChannel.RequestConfig.HTTPRequestConfig == nil {
+			return "", fmt.Errorf("http request config is nil")
+		}
+		sendtos := nc.Request.Sendtos
+		batches := [][]string{sendtos}
+		if !dispatch.NeedBatchContacts(notifyChannel.RequestConfig.HTTPRequestConfig) && len(sendtos) > 0 {
+			batches = make([][]string, len(sendtos))
+			for i := range sendtos {
+				batches[i] = []string{sendtos[i]}
+			}
+		}
+		var lastResp string
+		for _, batch := range batches {
+			// 每轮拷贝一份 request，保持 nc.Request 的不可变快照语义，
+			// 避免 Provider 内部异步持有引用时读到被后续迭代改写的 Sendtos
+			reqCopy := *nc.Request
+			reqCopy.Sendtos = batch
+			r := nc.Provider.Notify(ctx.Ctx, &reqCopy)
+			logger.Infof("channel_name=%s event=%s sendto=%v customParams=%v resp=%s err=%v",
+				notifyChannel.Name, events[0].Hash, batch, nc.Request.CustomParams, r.Response, r.Err)
+			if r.Err != nil {
+				return "", fmt.Errorf("failed to send http notify: %v", r.Err)
+			}
+			lastResp = r.Response
+		}
+		return lastResp, nil
+	}
+
+	// 其余：flashduty / pagerduty / script / feishuapp / wecomapp
+	// TODO(dingtalkapp): 钉钉应用本次不上线，上线时在注释中补回 dingtalkapp。
+	r := nc.Provider.Notify(ctx.Ctx, nc.Request)
+	logger.Infof("channel_name=%s event=%s sendtos=%v customParams=%v resp=%s err=%v",
+		notifyChannel.Name, events[0].Hash, nc.Request.Sendtos, nc.Request.CustomParams, r.Response, r.Err)
+	return r.Response, r.Err
 }
 
 type paramList struct {

@@ -304,12 +304,14 @@ func (rt *Router) builtinPayloadsDel(c *gin.Context) {
 func (rt *Router) builtinPayloadsGetByUUID(c *gin.Context) {
 	uuid := ginx.QueryInt64(c, "uuid")
 
+	// 优先查内存中的文件数据，与列表接口保持一致
+	if bp, ok := integration.BuiltinPayloadInFile.IndexData[uuid]; ok && bp != nil {
+		ginx.NewRender(c).Data(bp, nil)
+		return
+	}
+
 	bp, err := models.BuiltinPayloadGet(rt.Ctx, "uuid = ?", uuid)
 	ginx.Dangerous(err)
 
-	if bp != nil {
-		ginx.NewRender(c).Data(bp, nil)
-	} else {
-		ginx.NewRender(c).Data(integration.BuiltinPayloadInFile.IndexData[uuid], nil)
-	}
+	ginx.NewRender(c).Data(bp, nil)
 }

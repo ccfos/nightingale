@@ -659,7 +659,11 @@ var MsgTplMap = []MessageTemplate{
 	{Name: "Feishu", Ident: Feishu, Weight: 4, Content: map[string]string{"content": NewTplMap[Feishu]}},
 	{Name: "FeishuCard", Ident: FeishuCard, Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
 	{Name: "Wecom", Ident: Wecom, Weight: 3, Content: map[string]string{"content": NewTplMap[Wecom]}},
+	//{Name: "WecomApp", Ident: "wecomapp", Weight: 3, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Wecom]}},
 	{Name: "Dingtalk", Ident: Dingtalk, Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+	// TODO(dingtalkapp): 钉钉应用本次不上线，默认模板先注释；上线时恢复。
+	// {Name: "DingtalkApp", Ident: "dingtalkapp", Weight: 2, Content: map[string]string{"title": NewTplMap[EmailSubject], "content": NewTplMap[Dingtalk]}},
+	//{Name: "FeishuApp", Ident: "feishuapp", Weight: 4, Content: map[string]string{"title": FeishuCardTitle, "content": NewTplMap[FeishuCard]}},
 	{Name: "Email", Ident: Email, Weight: 1, Content: map[string]string{"subject": NewTplMap[EmailSubject], "content": NewTplMap[Email]}},
 }
 

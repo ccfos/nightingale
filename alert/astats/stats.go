@@ -26,6 +26,8 @@ type Stats struct {
 	CounterSubEventTotal        *prometheus.CounterVec
 	GaugeQuerySeriesCount       *prometheus.GaugeVec
 	GaugeRuleEvalDuration       *prometheus.GaugeVec
+	GaugeRecordEvalDuration     *prometheus.GaugeVec
+	GaugeRecordSeriesCount      *prometheus.GaugeVec
 	GaugeNotifyRecordQueueSize  prometheus.Gauge
 }
 
@@ -63,14 +65,17 @@ func NewSyncStats() *Stats {
 		Subsystem: subsystem,
 		Name:      "record_eval_total",
 		Help:      "Number of record eval.",
-	}, []string{"datasource"})
+	}, []string{"datasource", "rule_id"})
 
+	// labels: datasource = rule's write-target ds;
+	// query_datasource = ds actually being queried/written when the error fires (empty if not yet known);
+	// stage = pipeline phase (check_query / get_client / query_data / get_rule_config / convert_data / write_data).
 	CounterRecordEvalErrorTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
 		Name:      "record_eval_error_total",
-		Help:      "Number of record eval error.",
-	}, []string{"datasource"})
+		Help:      "Number of record eval errors, labeled by stage.",
+	}, []string{"datasource", "query_datasource", "stage", "rule_id"})
 
 	AlertNotifyTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
@@ -144,6 +149,25 @@ func NewSyncStats() *Stats {
 		Help:      "Duration of rule eval in milliseconds.",
 	}, []string{"rule_id", "datasource_id"})
 
+	GaugeRecordEvalDuration := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_duration_ms",
+		Help:      "Duration of record eval in milliseconds.",
+	}, []string{"rule_id", "datasource_id"})
+
+	// Negative values encode error states:
+	//   -1 = query error
+	//   -2 = client / config missing
+	//   -3 = convert or remote-write error (only set by the n9e-plus enterprise pipeline;
+	//        the upstream simple path has no such phase and never writes -3)
+	GaugeRecordSeriesCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "record_eval_series_count",
+		Help:      "Series count produced by the latest record eval; negative values encode error states.",
+	}, []string{"rule_id", "datasource_id"})
+
 	CounterVarFillingQuery := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,
@@ -167,6 +191,8 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal,
 		GaugeQuerySeriesCount,
 		GaugeRuleEvalDuration,
+		GaugeRecordEvalDuration,
+		GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery,
 	)
@@ -187,6 +213,8 @@ func NewSyncStats() *Stats {
 		CounterSubEventTotal:        CounterSubEventTotal,
 		GaugeQuerySeriesCount:       GaugeQuerySeriesCount,
 		GaugeRuleEvalDuration:       GaugeRuleEvalDuration,
+		GaugeRecordEvalDuration:     GaugeRecordEvalDuration,
+		GaugeRecordSeriesCount:      GaugeRecordSeriesCount,
 		GaugeNotifyRecordQueueSize:  GaugeNotifyRecordQueueSize,
 		CounterVarFillingQuery:      CounterVarFillingQuery,
 	}

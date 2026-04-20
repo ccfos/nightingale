@@ -33,17 +33,77 @@ type WriterType struct {
 	RetryInterval    int64 // 单位秒
 }
 
+// forceSampleTS 在开启 forceUseServerTS 时将每条 TS 的首个 sample 时间戳重写为当前服务端时间。
+func forceSampleTS(items []prompb.TimeSeries) {
+	ts := int64(fasttime.UnixTimestamp()) * 1000
+	for i := 0; i < len(items); i++ {
+		if len(items[i].Samples) == 0 {
+			continue
+		}
+		items[i].Samples[0].Timestamp = ts
+	}
+}
+
+// marshalAndSnappyEncode 用池化缓冲完成 proto.Marshal + snappy.Encode。
+// 返回的 encoded 与释放函数需配对使用：调用方在 HTTP Post 完成（含重试）后调用 release()。
+// 原实现每次 Write 都产生两块新堆分配：proto.Marshal 内部 make([]byte,size) 与
+// snappy.Encode(nil,...) 的 make([]byte,MaxEncodedLen)，在 pprof 中合计占 ~10% CPU。
+func marshalAndSnappyEncode(items []prompb.TimeSeries) (encoded []byte, release func(), err error) {
+	req := prompb.WriteRequest{Timeseries: items}
+	size := req.Size()
+
+	marshalBufP := marshalBufPool.Get().(*[]byte)
+	marshalBuf := *marshalBufP
+	if cap(marshalBuf) < size {
+		marshalBuf = make([]byte, size)
+	} else {
+		marshalBuf = marshalBuf[:size]
+	}
+	*marshalBufP = marshalBuf
+
+	if _, err = req.MarshalToSizedBuffer(marshalBuf); err != nil {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		return nil, nil, err
+	}
+
+	// snappy.MaxEncodedLen 在 src 超过 0xFFFFFFFF (4GB) 时返回 -1，
+	// 直接走下面的 slice 表达式会 panic，这里先挡一道返回普通 error，避免 pushgw 整进程崩溃。
+	maxEnc := snappy.MaxEncodedLen(len(marshalBuf))
+	if maxEnc < 0 {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		return nil, nil, fmt.Errorf("snappy: message too large to encode: %d bytes", len(marshalBuf))
+	}
+
+	snappyBufP := snappyEncBufPool.Get().(*[]byte)
+	snappyBuf := *snappyBufP
+	if cap(snappyBuf) < maxEnc {
+		snappyBuf = make([]byte, maxEnc)
+	} else {
+		snappyBuf = snappyBuf[:maxEnc]
+	}
+	encoded = snappy.Encode(snappyBuf, marshalBuf)
+	*snappyBufP = encoded
+
+	release = func() {
+		if cap(*marshalBufP) <= maxPooledBufCap {
+			marshalBufPool.Put(marshalBufP)
+		}
+		if cap(*snappyBufP) <= maxPooledBufCap {
+			snappyEncBufPool.Put(snappyBufP)
+		}
+	}
+	return encoded, release, nil
+}
+
 func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, encodeType string) ([]byte, error) {
 	pstat.CounterWriteTotal.WithLabelValues(key).Add(float64(len(items)))
 
 	if forceUseServerTS {
-		ts := int64(fasttime.UnixTimestamp()) * 1000
-		for i := 0; i < len(items); i++ {
-			if len(items[i].Samples) == 0 {
-				continue
-			}
-			items[i].Samples[0].Timestamp = ts
-		}
+		forceSampleTS(items)
 	}
 
 	if encodeType == "proto" {
@@ -56,6 +116,23 @@ func beforeWrite(key string, items []prompb.TimeSeries, forceUseServerTS bool, e
 	// 如果是 json 格式，将 NaN 值的数据丢弃掉
 	return json.Marshal(filterNaNSamples(items))
 }
+
+var (
+	marshalBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 256*1024)
+			return &b
+		},
+	}
+	snappyEncBufPool = sync.Pool{
+		New: func() any {
+			b := make([]byte, 0, 512*1024)
+			return &b
+		},
+	}
+)
+
+const maxPooledBufCap = 8 * 1024 * 1024
 
 func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
 	// 早期检查：如果没有NaN值，直接返回原始数据
@@ -113,14 +190,20 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 		pstat.ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
 	}()
 
-	data, err := beforeWrite(key, items, w.ForceUseServerTS, "proto")
+	pstat.CounterWriteTotal.WithLabelValues(key).Add(float64(len(items)))
+	if w.ForceUseServerTS {
+		forceSampleTS(items)
+	}
+
+	encoded, release, err := marshalAndSnappyEncode(items)
 	if err != nil {
 		logger.Warningf("marshal prom data to proto got error: %v, data: %+v", err, items)
 		return
 	}
+	defer release()
 
 	for i := 0; i < w.RetryCount; i++ {
-		err := w.Post(snappy.Encode(nil, data), headers...)
+		err := w.Post(encoded, headers...)
 		if err == nil {
 			break
 		}

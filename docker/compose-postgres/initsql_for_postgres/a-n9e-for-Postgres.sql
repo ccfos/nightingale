@@ -1028,9 +1028,11 @@ CREATE TABLE embedded_product (
     name varchar(255) DEFAULT NULL,
     url varchar(255) DEFAULT NULL,
     is_private boolean DEFAULT NULL,
+    hide boolean NOT NULL DEFAULT false,
     team_ids varchar(255),
     create_at bigint NOT NULL DEFAULT 0,
     create_by varchar(64) NOT NULL DEFAULT '',
     update_at bigint NOT NULL DEFAULT 0,
-    update_by varchar(64) NOT NULL DEFAULT ''
+    update_by varchar(64) NOT NULL DEFAULT '',
+    weight int NOT NULL DEFAULT 0
 );

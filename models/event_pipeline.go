@@ -18,6 +18,7 @@ type EventPipeline struct {
 	TriggerMode      string            `json:"trigger_mode" gorm:"type:varchar(128)"` // event, api, cron
 	Disabled         bool              `json:"disabled" gorm:"type:boolean"`
 	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
+	GroupId          int64             `json:"group_id" gorm:"type:bigint"`
 	TeamNames        []string          `json:"team_names" gorm:"-"`
 	Description      string            `json:"description" gorm:"type:varchar(255)"`
 	FilterEnable     bool              `json:"filter_enable" gorm:"type:boolean"`
@@ -53,7 +54,7 @@ func (e *EventPipeline) Verify() error {
 		return errors.New("name cannot be empty")
 	}
 
-	if len(e.TeamIds) == 0 {
+	if e.UseCase != UseCaseAlertRule && e.GroupId <= 0 && len(e.TeamIds) == 0 {
 		return errors.New("team_ids cannot be empty")
 	}
 
@@ -114,14 +115,31 @@ func DeleteEventPipeline(ctx *ctx.Context, id int64) error {
 }
 
 // ListEventPipelines 获取事件Pipeline列表
-func ListEventPipelines(ctx *ctx.Context) ([]*EventPipeline, error) {
+// groupId: -1 表示不过滤, 0 表示只返回 group_id=0 的, >0 表示返回指定 group_id 的
+func ListEventPipelines(ctx *ctx.Context, groupId ...int64) ([]*EventPipeline, error) {
+	gid := int64(-1)
+	if len(groupId) > 0 {
+		gid = groupId[0]
+	}
+	return ListEventPipelinesByUseCase(ctx, gid, "")
+}
+
+// ListEventPipelinesByUseCase 按 use_case 和 group_id 过滤获取事件Pipeline列表
+func ListEventPipelinesByUseCase(ctx *ctx.Context, groupId int64, useCase string) ([]*EventPipeline, error) {
 	if !ctx.IsCenter {
 		pipelines, err := poster.GetByUrls[[]*EventPipeline](ctx, "/v1/n9e/event-pipelines")
 		return pipelines, err
 	}
 
 	var pipelines []*EventPipeline
-	err := DB(ctx).Order("name asc").Find(&pipelines).Error
+	session := DB(ctx).Order("name asc")
+	if groupId >= 0 {
+		session = session.Where("group_id = ?", groupId)
+	}
+	if useCase != "" {
+		session = session.Where("use_case = ?", useCase)
+	}
+	err := session.Find(&pipelines).Error
 	if err != nil {
 		return nil, err
 	}

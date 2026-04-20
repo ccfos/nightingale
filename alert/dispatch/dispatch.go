@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/pipeline"
 	"github.com/ccfos/nightingale/v6/alert/pipeline/engine"
 	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -441,11 +443,12 @@ func NotifyRuleMatchCheck(notifyConfig *models.NotifyConfig, event *models.Alert
 	return nil
 }
 
-func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string) {
+func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType) ([]string, []int64, []string, map[string]string, []string) {
 	customParams := make(map[string]string)
 	var flashDutyChannelIDs []int64
 	var pagerDutyRoutingKeys []string
 	var userInfoParams models.CustomParams
+	var imGroupIDs []string
 
 	for key, value := range notifyConfig.Params {
 		switch key {
@@ -474,14 +477,26 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 					break
 				}
 			}
+		case "im_group_ids":
+			// 发送到指定的飞书群/钉钉群
+			if data, err := json.Marshal(value); err == nil {
+				var ids []string
+				if json.Unmarshal(data, &ids) == nil {
+					imGroupIDs = ids
+				}
+			}
 		default:
 			// 避免直接 value.(string) 导致 panic，支持多种类型并统一为字符串
-			customParams[key] = value.(string)
+			if s, ok := value.(string); ok {
+				customParams[key] = s
+			} else {
+				customParams[key] = fmt.Sprint(value)
+			}
 		}
 	}
 
 	if len(userInfoParams.UserIDs) == 0 && len(userInfoParams.UserGroupIDs) == 0 {
-		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
+		return []string{}, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
 	}
 
 	userIds := make([]int64, 0)
@@ -517,7 +532,70 @@ func GetNotifyConfigParams(notifyConfig *models.NotifyConfig, contactKey string,
 		visited[user.Id] = true
 	}
 
-	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams
+	return sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs
+}
+
+// NotifyContext 由 BuildNotifyContext 产生，封装一次通知所需的 provider + 请求参数。
+// dispatch 正常发送路径、router test-send 路径共用此结构，差异仅在传输层（同步/异步/扇出）。
+type NotifyContext struct {
+	Provider provider.NotifyChannelProvider
+	Request  *provider.NotifyRequest
+}
+
+// BuildNotifyContext 抽取两条发送路径的公共粘合逻辑：
+// 从 notifyConfig 中解出收件人 + 定位 provider + 组装 NotifyRequest。
+// 调用方各自决定拿到 context 后走队列、同步、扇出还是同步发邮件等。
+// nctx 用于预取发送期需要的 DB 派生信息（如钉钉群 robotCode），可为 nil（仅 test-send 等无 ctx 场景）。
+func BuildNotifyContext(nctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
+	events []*models.AlertCurEvent, notifyRuleId int64, notifyConfig *models.NotifyConfig,
+	notifyChannel *models.NotifyChannelConfig, tplContent map[string]interface{},
+	httpClient *http.Client, siteUrl string) (*NotifyContext, error) {
+
+	var contactKey string
+	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
+		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+	}
+	sendtos, flashDutyChannelIDs, pagerDutyRoutingKeys, customParams, imGroupIDs :=
+		GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
+
+	p, ok := provider.DefaultRegistry.Resolve(notifyChannel)
+	if !ok {
+		return nil, fmt.Errorf("unknown channel ident(%s), request_type(%s)",
+			notifyChannel.Ident, notifyChannel.RequestType)
+	}
+
+	// TODO(dingtalkapp): 钉钉应用本次不上线，按 AppKey 预取群 RobotCode 的分支先注释；上线时恢复整段。
+	var imGroupRobotCodes map[string]string
+	// if notifyChannel.RequestType == "dingtalkapp" && len(imGroupIDs) > 0 && nctx != nil &&
+	// 	notifyChannel.RequestConfig != nil && notifyChannel.RequestConfig.DingtalkAppRequestConfig != nil {
+	// 	appKey := strings.TrimSpace(notifyChannel.RequestConfig.DingtalkAppRequestConfig.AppKey)
+	// 	if appKey != "" {
+	// 		codes, rcErr := models.DingtalkGroupRobotCodes(nctx, appKey, imGroupIDs)
+	// 		if rcErr != nil {
+	// 			logger.Warningf("lookup dingtalk group robot_code failed appKey=%s: %v", appKey, rcErr)
+	// 		} else {
+	// 			imGroupRobotCodes = codes
+	// 		}
+	// 	}
+	// }
+
+	return &NotifyContext{
+		Provider: p,
+		Request: &provider.NotifyRequest{
+			NotifyRuleId:         notifyRuleId,
+			Config:               notifyChannel,
+			Events:               events,
+			TplContent:           tplContent,
+			FlashDutyChannelIDs:  flashDutyChannelIDs,
+			PagerDutyRoutingKeys: pagerDutyRoutingKeys,
+			CustomParams:         customParams,
+			Sendtos:              sendtos,
+			ImGroupIDs:           imGroupIDs,
+			ImGroupRobotCodes:    imGroupRobotCodes,
+			HttpClient:           httpClient,
+			SiteUrl:              siteUrl,
+		},
+	}, nil
 }
 
 func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType, notifyChannelCache *memsto.NotifyChannelCacheType, configCvalCache *memsto.CvalCache,
@@ -529,71 +607,55 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 
 	siteInfo := configCvalCache.GetSiteInfo()
 	tplContent := make(map[string]interface{})
-	if notifyChannel.RequestType != "flashduty" {
+	// flashduty / pagerduty 直接从 event 字段构造 payload，不需要模板，
+	// 与 dispatch 入口处 messageTemplate 的可空判断保持一致，避免 nil 解引用。
+	if notifyChannel.RequestType != "flashduty" && notifyChannel.RequestType != "pagerduty" && messageTemplate != nil {
 		tplContent = messageTemplate.RenderEvent(events, siteInfo.SiteUrl)
 	}
 
-	var contactKey string
-	if notifyChannel.ParamConfig != nil && notifyChannel.ParamConfig.UserInfo != nil {
-		contactKey = notifyChannel.ParamConfig.UserInfo.ContactKey
+	nc, err := BuildNotifyContext(ctx, userCache, userGroupCache, events, notifyRuleId,
+		notifyConfig, notifyChannel, tplContent, notifyChannelCache.GetHttpClient(notifyChannel.ID), siteInfo.SiteUrl)
+	if err != nil {
+		logger.Warningf("%v", err)
+		return
 	}
 
-	sendtos, flashDutyChannelIDs, pagerdutyRoutingKeys, customParams := GetNotifyConfigParams(notifyConfig, contactKey, userCache, userGroupCache)
-
+	// 传输层路由：根据 request_type 决定同步/异步
 	switch notifyChannel.RequestType {
-	case "flashduty":
-		if len(flashDutyChannelIDs) == 0 {
-			flashDutyChannelIDs = []int64{0} // 如果 flashduty 通道没有配置，则使用 0, 给 SendFlashDuty 判断使用, 不给 flashduty 传 channel_id 参数
-		}
-
-		for i := range flashDutyChannelIDs {
-			start := time.Now()
-			respBody, err := notifyChannel.SendFlashDuty(events, flashDutyChannelIDs[i], notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("duty_sender notify_id: %d, channel_name: %v, event:%s, IntegrationUrl: %v dutychannel_id: %v, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, notifyChannel.RequestConfig.FlashDutyRequestConfig.IntegrationUrl, flashDutyChannelIDs[i], respBody, err)
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, strconv.FormatInt(flashDutyChannelIDs[i], 10), respBody, err)
-		}
-
-	case "pagerduty":
-		for _, routingKey := range pagerdutyRoutingKeys {
-			start := time.Now()
-			respBody, err := notifyChannel.SendPagerDuty(events, routingKey, siteInfo.SiteUrl, notifyChannelCache.GetHttpClient(notifyChannel.ID))
-			respBody = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), respBody)
-			logger.Infof("pagerduty_sender notify_id: %d, channel_name: %v, event:%s, respBody: %v, err: %v", notifyRuleId, notifyChannel.Name, events[0].Hash, respBody, err)
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, "", respBody, err)
-		}
-
 	case "http":
-		// 使用队列模式处理 http 通知
-		// 创建通知任务
-		task := &memsto.NotifyTask{
-			Events:        events,
-			NotifyRuleId:  notifyRuleId,
-			NotifyChannel: notifyChannel,
-			TplContent:    tplContent,
-			CustomParams:  customParams,
-			Sendtos:       sendtos,
-		}
-
-		// 将任务加入队列
-		success := notifyChannelCache.EnqueueNotifyTask(task)
+		// HTTP 类型走并发队列 (dingtalk/wecom/feishu/通用http 等都走这里)
+		success := notifyChannelCache.EnqueueNotifyTask(&memsto.NotifyTask{
+			NotifyRuleId: notifyRuleId,
+			Provider:     nc.Provider,
+			Request:      nc.Request,
+		})
 		if !success {
 			logger.Errorf("failed to enqueue notify task for channel %d, notify_id: %d", notifyChannel.ID, notifyRuleId)
-			// 如果入队失败，记录错误通知
-			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, getSendTarget(customParams, sendtos), "", errors.New("failed to enqueue notify task, queue is full"))
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name,
+				getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos), "",
+				errors.New("failed to enqueue notify task, queue is full"))
 		}
-
 	case "smtp":
-		notifyChannel.SendEmail(notifyRuleId, events, tplContent, sendtos, notifyChannelCache.GetSmtpClient(notifyChannel.ID))
-
-	case "script":
-		start := time.Now()
-		target, res, err := notifyChannel.SendScript(events, tplContent, customParams, sendtos)
-		res = fmt.Sprintf("send_time: %s duration: %d ms %s", time.Now().Format("2006-01-02 15:04:05"), time.Since(start).Milliseconds(), res)
-		logger.Infof("script_sender notify_id: %d, channel_name: %v, event:%s, tplContent:%s, customParams:%v, target:%s, res:%s, err:%v", notifyRuleId, notifyChannel.Name, events[0].Hash, tplContent, customParams, target, res, err)
-		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, res, err)
+		// SMTP 走邮件连接池
+		nc.Request.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
+		result := nc.Provider.Notify(ctx.Ctx, nc.Request)
+		if result == nil {
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name,
+				getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos), "",
+				errors.New("smtp provider returned nil result"))
+			return
+		}
+		if result.Err != nil {
+			target := result.Target
+			if target == "" {
+				target = getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos)
+			}
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, result.Response, result.Err)
+		}
 	default:
-		logger.Warningf("notify_id: %d, channel_name: %v, event:%s send type not found", notifyRuleId, notifyChannel.Name, events[0].Hash)
+		// flashduty/pagerduty/script 等直接调用
+		result := nc.Provider.Notify(ctx.Ctx, nc.Request)
+		sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, result.Target, result.Response, result.Err)
 	}
 }
 

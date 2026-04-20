@@ -857,11 +857,13 @@ CREATE TABLE `embedded_product` (
     `name` varchar(255) DEFAULT NULL,
     `url` varchar(255) DEFAULT NULL,
     `is_private` boolean DEFAULT NULL,
+    `hide` boolean not null default false,
     `team_ids` varchar(255),
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `weight` int not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
