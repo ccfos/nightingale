@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	htmltemplate "html/template"
 	"io"
 	"net/http"
 	"strings"
-	"text/template"
+	texttemplate "text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -99,7 +100,7 @@ func parseRequestBody(httpConfig *models.HTTPRequestConfig, bodyTpl map[string]i
 	}
 
 	text := strings.Join(append(defs, httpConfig.Request.Body), "")
-	tpl, err := template.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(text)
+	tpl, err := htmltemplate.New("requestBody").Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return nil, err
 	}
@@ -116,14 +117,14 @@ func replaceVariables(httpConfig *models.HTTPRequestConfig, tpl map[string]inter
 
 	if needsTemplateRendering(httpConfig.URL) {
 		logger.Infof("replace variables url: %s tpl: %+v", httpConfig.URL, tpl)
-		url = getParsedString("url", httpConfig.URL, tpl)
+		url = getParsedHTTPString("url", httpConfig.URL, tpl)
 	} else {
 		url = httpConfig.URL
 	}
 
 	for key, value := range httpConfig.Headers {
 		if needsTemplateRendering(value) {
-			headers[key] = getParsedString(key, value, tpl)
+			headers[key] = getParsedHTTPString(key, value, tpl)
 		} else {
 			headers[key] = value
 		}
@@ -131,7 +132,7 @@ func replaceVariables(httpConfig *models.HTTPRequestConfig, tpl map[string]inter
 
 	for key, value := range httpConfig.Request.Parameters {
 		if needsTemplateRendering(value) {
-			parameters[key] = getParsedString(key, value, tpl)
+			parameters[key] = getParsedHTTPString(key, value, tpl)
 		} else {
 			parameters[key] = value
 		}
@@ -156,7 +157,31 @@ func getParsedString(name, tplStr string, tplData map[string]interface{}) string
 	}
 
 	text := strings.Join(append(defs, tplStr), "")
-	tpl, err := template.New(name).Funcs(tplx.TemplateFuncMap).Parse(text)
+	tpl, err := texttemplate.New(name).Funcs(tplx.TemplateFuncMap).Parse(text)
+	if err != nil {
+		return ""
+	}
+	var body bytes.Buffer
+	err = tpl.Execute(&body, tplData)
+	if err != nil {
+		return fmt.Sprintf("failed to parse template: %v data: %v", err, tplData)
+	}
+
+	return body.String()
+}
+
+func getParsedHTTPString(name, tplStr string, tplData map[string]interface{}) string {
+	var defs = []string{
+		"{{$tpl := .tpl}}",
+		"{{$sendto := .sendto}}",
+		"{{$sendtos := .sendtos}}",
+		"{{$params := .params}}",
+		"{{$events := .events}}",
+		"{{$event := .event}}",
+	}
+
+	text := strings.Join(append(defs, tplStr), "")
+	tpl, err := htmltemplate.New(name).Funcs(tplx.TemplateFuncMap).Parse(text)
 	if err != nil {
 		return ""
 	}
