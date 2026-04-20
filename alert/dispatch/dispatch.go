@@ -638,7 +638,20 @@ func SendNotifyRuleMessage(ctx *ctx.Context, userCache *memsto.UserCacheType, us
 	case "smtp":
 		// SMTP 走邮件连接池
 		nc.Request.SmtpChan = notifyChannelCache.GetSmtpClient(notifyChannel.ID)
-		nc.Provider.Notify(ctx.Ctx, nc.Request)
+		result := nc.Provider.Notify(ctx.Ctx, nc.Request)
+		if result == nil {
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name,
+				getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos), "",
+				errors.New("smtp provider returned nil result"))
+			return
+		}
+		if result.Err != nil {
+			target := result.Target
+			if target == "" {
+				target = getSendTarget(nc.Request.CustomParams, nc.Request.Sendtos)
+			}
+			sender.NotifyRecord(ctx, events, notifyRuleId, notifyChannel.Name, target, result.Response, result.Err)
+		}
 	default:
 		// flashduty/pagerduty/script 等直接调用
 		result := nc.Provider.Notify(ctx.Ctx, nc.Request)
