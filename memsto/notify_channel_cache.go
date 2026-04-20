@@ -23,6 +23,7 @@ import (
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+
 	// TODO(dingtalkapp): pkg/dingtalk/stream 已 build tag 屏蔽，这里的导入一起注释；上线时恢复。
 	// dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 
@@ -36,11 +37,6 @@ import (
 
 // NotifyTask 表示一个通知发送任务
 type NotifyTask struct {
-	// Events        []*models.AlertCurEvent
-	// NotifyChannel *models.NotifyChannelConfig
-	// TplContent    map[string]interface{}
-	// CustomParams  map[string]string
-	// Sendtos       []string
 	NotifyRuleId int64
 	Request      *provider.NotifyRequest
 	Provider     provider.NotifyChannelProvider
