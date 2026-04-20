@@ -13,6 +13,7 @@ const (
 )
 
 // DingtalkGroup 钉钉酷应用场景群安装状态及群信息，按 client_id（AppKey）+ 会话维度唯一。
+// todo 不上线，不加到 migrate
 type DingtalkGroup struct {
 	ID                     int64  `json:"id" gorm:"primaryKey;autoIncrement"`
 	ClientID               string `json:"client_id" gorm:"type:varchar(128);not null;uniqueIndex:uk_dt_group_client_conv,priority:1;comment:钉钉应用 ClientId(AppKey)"`
