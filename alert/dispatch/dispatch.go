@@ -564,21 +564,20 @@ func BuildNotifyContext(nctx *ctx.Context, userCache *memsto.UserCacheType, user
 			notifyChannel.Ident, notifyChannel.RequestType)
 	}
 
-	// 钉钉应用发群聊消息时每个 openConversationId 对应的 robotCode 由 Stream 安装事件存到 dingtalk_group 表，
-	// 这里按 AppKey 批量预取一次，避免把 RobotCode 当成 AppKey 发导致 invalidRobotCode。
+	// TODO(dingtalkapp): 钉钉应用本次不上线，按 AppKey 预取群 RobotCode 的分支先注释；上线时恢复整段。
 	var imGroupRobotCodes map[string]string
-	if notifyChannel.RequestType == "dingtalkapp" && len(imGroupIDs) > 0 && nctx != nil &&
-		notifyChannel.RequestConfig != nil && notifyChannel.RequestConfig.DingtalkAppRequestConfig != nil {
-		appKey := strings.TrimSpace(notifyChannel.RequestConfig.DingtalkAppRequestConfig.AppKey)
-		if appKey != "" {
-			codes, rcErr := models.DingtalkGroupRobotCodes(nctx, appKey, imGroupIDs)
-			if rcErr != nil {
-				logger.Warningf("lookup dingtalk group robot_code failed appKey=%s: %v", appKey, rcErr)
-			} else {
-				imGroupRobotCodes = codes
-			}
-		}
-	}
+	// if notifyChannel.RequestType == "dingtalkapp" && len(imGroupIDs) > 0 && nctx != nil &&
+	// 	notifyChannel.RequestConfig != nil && notifyChannel.RequestConfig.DingtalkAppRequestConfig != nil {
+	// 	appKey := strings.TrimSpace(notifyChannel.RequestConfig.DingtalkAppRequestConfig.AppKey)
+	// 	if appKey != "" {
+	// 		codes, rcErr := models.DingtalkGroupRobotCodes(nctx, appKey, imGroupIDs)
+	// 		if rcErr != nil {
+	// 			logger.Warningf("lookup dingtalk group robot_code failed appKey=%s: %v", appKey, rcErr)
+	// 		} else {
+	// 			imGroupRobotCodes = codes
+	// 		}
+	// 	}
+	// }
 
 	return &NotifyContext{
 		Provider: p,

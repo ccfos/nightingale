@@ -1,3 +1,8 @@
+//go:build ignore
+// +build ignore
+
+// TODO(dingtalkapp): 钉钉应用本次不上线，Stream runner 先 build tag 屏蔽；上线时删除顶部两行即可恢复。
+
 package stream
 
 import (

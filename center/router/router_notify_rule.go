@@ -255,7 +255,8 @@ func SendNotifyChannelMessage(ctx *ctx.Context, userCache *memsto.UserCacheType,
 		return lastResp, nil
 	}
 
-	// 其余：flashduty / pagerduty / script / dingtalkapp / feishuapp / wecomapp
+	// 其余：flashduty / pagerduty / script / feishuapp / wecomapp
+	// TODO(dingtalkapp): 钉钉应用本次不上线，上线时在注释中补回 dingtalkapp。
 	r := nc.Provider.Notify(ctx.Ctx, nc.Request)
 	logger.Infof("channel_name=%s event=%s sendtos=%v customParams=%v resp=%s err=%v",
 		notifyChannel.Name, events[0].Hash, nc.Request.Sendtos, nc.Request.CustomParams, r.Response, r.Err)

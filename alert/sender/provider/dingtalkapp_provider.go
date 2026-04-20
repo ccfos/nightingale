@@ -1,5 +1,9 @@
 package provider
 
+// TODO(dingtalkapp): 钉钉应用本次不上线。本文件中的 DingtalkAppProvider 类型及其方法、buildDingtalkAppTplData
+// 已被注释（见下方 /* ... */ 包裹段），只保留 GetAccessToken/UploadMedia/pickImageBase64/getMapString
+// 等共享工具函数——dingtalk/wecom/feishu 等 Provider 仍会使用这些工具函数。上线时去掉下面的 /* 和 */ 即可恢复。
+
 import (
 	"bytes"
 	"context"
@@ -12,7 +16,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
+	// TODO(dingtalkapp): time 仅在已注释的 DingtalkAppProvider 方法中使用，上线时一并恢复。
+	// "time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
@@ -27,6 +32,8 @@ var (
 	dingtalkRobotGroupSendURL   = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
 )
 
+// TODO(dingtalkapp): 钉钉应用本次不上线，DingtalkAppProvider 及其 Ident/Check/Notify 整段注释；上线时去掉 /* 和 */。
+/*
 // DingtalkAppProvider 对接钉钉应用消息发送接口。
 // 采用 HTTP 通道发送，支持通过参数传入 access_token 和 agent_id。
 type DingtalkAppProvider struct{}
@@ -220,6 +227,7 @@ func (p *DingtalkAppProvider) Notify(ctx context.Context, req *NotifyRequest) *N
 		Err:      nil,
 	}
 }
+*/
 
 func UploadMedia(ctx context.Context, client *http.Client, accessToken, mediaType, imageBase64 string) (string, error) {
 	if client == nil {
@@ -341,6 +349,8 @@ func GetAccessToken(ctx context.Context, client *http.Client, appKey, appSecret 
 	return result.AccessToken, nil
 }
 
+// TODO(dingtalkapp): 钉钉应用本次不上线，场景群查询 + GetUserIDByMobile + buildRobot* + sendRobot* 一起注释；上线时去掉 /* 和 */。
+/*
 // DingtalkScenarioGroupInfo 场景群基本信息，对应开放平台「查询群信息」接口 result 中的常用字段。
 // 文档：https://open.dingtalk.com/document/development/queries-the-basic-information-of-a-scenario-group
 type DingtalkScenarioGroupInfo struct {
@@ -649,6 +659,7 @@ func (p *DingtalkAppProvider) sendAppMessage(ctx context.Context, client *http.C
 	logger.Errorf("dingtalkapp send failed after retries: endpoint=%s last_error=%s", endpoint, lastErrorMessage)
 	return lastErrorMessage, errors.New("failed to send dingtalk action_card message")
 }
+*/
 
 func decodeBase64Payload(payload string) ([]byte, error) {
 	data := strings.TrimSpace(payload)
@@ -713,6 +724,8 @@ func getMapString(m map[string]interface{}, key string) string {
 	return strings.TrimSpace(fmt.Sprint(v))
 }
 
+// TODO(dingtalkapp): 钉钉应用本次不上线，buildDingtalkAppTplData 仅 Notify 使用，随 Provider 一起注释。
+/*
 func buildDingtalkAppTplData(req *NotifyRequest, userIDs, groupIDs []string) map[string]interface{} {
 	data := map[string]interface{}{
 		"tpl":        req.TplContent,
@@ -731,4 +744,5 @@ func buildDingtalkAppTplData(req *NotifyRequest, userIDs, groupIDs []string) map
 	}
 	return data
 }
+*/
 

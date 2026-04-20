@@ -1,10 +1,13 @@
 package memsto
 
 import (
-	"context"
-	"crypto/sha256"
+	// TODO(dingtalkapp): "context" 仅在 Stream runner 启动时使用，钉钉应用不上线先注释。
+	// "context"
+	// TODO(dingtalkapp): "crypto/sha256" 仅在 Stream 指纹计算中使用，钉钉应用不上线先注释。
+	// "crypto/sha256"
 	"crypto/tls"
-	"encoding/hex"
+	// TODO(dingtalkapp): "encoding/hex" 仅在 Stream 指纹计算中使用，钉钉应用不上线先注释。
+	// "encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,20 +17,22 @@ import (
 
 	"gopkg.in/gomail.v2"
 
-	"github.com/ccfos/nightingale/v6/alert/naming"
+	// TODO(dingtalkapp): "alert/naming" 仅用于 DingTalk Stream 主备选举，钉钉应用不上线先注释。
+	// "github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/alert/sender/provider"
 	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
+	// TODO(dingtalkapp): pkg/dingtalk/stream 已 build tag 屏蔽，这里的导入一起注释；上线时恢复。
+	// dtstream "github.com/ccfos/nightingale/v6/pkg/dingtalk/stream"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/container/list"
 	"github.com/toolkits/pkg/logger"
 )
 
-// dingtalkStreamReconcileInterval 定时根据内存快照重算 DingTalk Stream，配合 IamLeader 判主在主从切换后收敛连接状态。
-const dingtalkStreamReconcileInterval = 10 * time.Second
+// TODO(dingtalkapp): 钉钉应用本次不上线，Stream reconcile 相关常量先注释。
+// const dingtalkStreamReconcileInterval = 10 * time.Second
 
 // NotifyTask 表示一个通知发送任务
 type NotifyTask struct {
@@ -64,70 +69,75 @@ type NotifyChannelCacheType struct {
 	// 通知记录回调函数
 	notifyRecordFunc NotifyRecordFunc
 
-	dingtalkLeaderNaming  *naming.Naming
-	dingtalkReconcileOnce sync.Once
-	dingtalkStreamMu      sync.Mutex
-	dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
+	// TODO(dingtalkapp): 钉钉应用本次不上线，Stream 相关字段先注释；上线时恢复下列四个字段。
+	// dingtalkLeaderNaming  *naming.Naming
+	// dingtalkReconcileOnce sync.Once
+	// dingtalkStreamMu      sync.Mutex
+	// dingtalkStreamRunners map[string]*dingtalkStreamRunner // key = AppKey (ClientId)
 }
 
-type dingtalkStreamRunner struct {
-	stop           func()
-	cfgFingerprint string
-}
+// TODO(dingtalkapp): 钉钉应用本次不上线，dingtalkStreamRunner 类型先注释；上线时恢复。
+// type dingtalkStreamRunner struct {
+// 	stop           func()
+// 	cfgFingerprint string
+// }
 
 func NewNotifyChannelCache(ctx *ctx.Context, stats *Stats) *NotifyChannelCacheType {
 	ncc := &NotifyChannelCacheType{
-		statTotal:             -1,
-		statLastUpdated:       -1,
-		ctx:                   ctx,
-		stats:                 stats,
-		channels:              make(map[int64]*models.NotifyChannelConfig),
-		channelsQueue:         make(map[int64]*list.SafeListLimited),
-		queueQuitCh:           make(map[int64]chan struct{}),
-		httpClient:            make(map[int64]*http.Client),
-		smtpCh:                make(map[int64]chan *models.EmailContext),
-		smtpQuitCh:            make(map[int64]chan struct{}),
-		dingtalkStreamRunners: make(map[string]*dingtalkStreamRunner),
+		statTotal:       -1,
+		statLastUpdated: -1,
+		ctx:             ctx,
+		stats:           stats,
+		channels:        make(map[int64]*models.NotifyChannelConfig),
+		channelsQueue:   make(map[int64]*list.SafeListLimited),
+		queueQuitCh:     make(map[int64]chan struct{}),
+		httpClient:      make(map[int64]*http.Client),
+		smtpCh:          make(map[int64]chan *models.EmailContext),
+		smtpQuitCh:      make(map[int64]chan struct{}),
+		// TODO(dingtalkapp): 钉钉应用本次不上线，Stream runners 初始化先注释。
+		// dingtalkStreamRunners: make(map[string]*dingtalkStreamRunner),
 	}
 
 	ncc.SyncNotifyChannels()
 	return ncc
 }
 
-// loopReconcileDingtalkStreams 定时根据内存中的媒介快照重算 DingTalk Stream，便于 holder 挂掉且租约过期后其它副本抢占。
-func (ncc *NotifyChannelCacheType) loopReconcileDingtalkStreams() {
-	ticker := time.NewTicker(dingtalkStreamReconcileInterval)
-	defer ticker.Stop()
-	for range ticker.C {
-		ncc.reconcileDingtalkStreamsFromCache()
-	}
-}
-
-func (ncc *NotifyChannelCacheType) reconcileDingtalkStreamsFromCache() {
-	ncc.RLock()
-	snapshot := make(map[int64]*models.NotifyChannelConfig, len(ncc.channels))
-	for id, ch := range ncc.channels {
-		snapshot[id] = ch
-	}
-	ncc.RUnlock()
-	ncc.reconcileDingtalkStreams(snapshot)
-}
+// TODO(dingtalkapp): 钉钉应用本次不上线，loopReconcileDingtalkStreams / reconcileDingtalkStreamsFromCache / SetDingtalkLeaderNaming
+// 一起注释。上线时恢复下方整段以及 import 顶部的 naming/dtstream/sha256/hex。
+// func (ncc *NotifyChannelCacheType) loopReconcileDingtalkStreams() {
+// 	ticker := time.NewTicker(dingtalkStreamReconcileInterval)
+// 	defer ticker.Stop()
+// 	for range ticker.C {
+// 		ncc.reconcileDingtalkStreamsFromCache()
+// 	}
+// }
+//
+// func (ncc *NotifyChannelCacheType) reconcileDingtalkStreamsFromCache() {
+// 	ncc.RLock()
+// 	snapshot := make(map[int64]*models.NotifyChannelConfig, len(ncc.channels))
+// 	for id, ch := range ncc.channels {
+// 		snapshot[id] = ch
+// 	}
+// 	ncc.RUnlock()
+// 	ncc.reconcileDingtalkStreams(snapshot)
+// }
 
 // SetNotifyRecordFunc 设置通知记录回调函数
 func (ncc *NotifyChannelCacheType) SetNotifyRecordFunc(fn NotifyRecordFunc) {
 	ncc.notifyRecordFunc = fn
 }
 
-func (ncc *NotifyChannelCacheType) SetDingtalkLeaderNaming(nm *naming.Naming) {
-	ncc.dingtalkLeaderNaming = nm
-	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || nm == nil {
-		return
-	}
-	ncc.reconcileDingtalkStreamsFromCache()
-	ncc.dingtalkReconcileOnce.Do(func() {
-		go ncc.loopReconcileDingtalkStreams()
-	})
-}
+// TODO(dingtalkapp): 钉钉应用本次不上线，SetDingtalkLeaderNaming 入口先注释；调用方 alert/alert.go 也已注释。
+// func (ncc *NotifyChannelCacheType) SetDingtalkLeaderNaming(nm *naming.Naming) {
+// 	ncc.dingtalkLeaderNaming = nm
+// 	if ncc.ctx == nil || !ncc.ctx.IsCenter || ncc.ctx.DB == nil || nm == nil {
+// 		return
+// 	}
+// 	ncc.reconcileDingtalkStreamsFromCache()
+// 	ncc.dingtalkReconcileOnce.Do(func() {
+// 		go ncc.loopReconcileDingtalkStreams()
+// 	})
+// }
 
 func (ncc *NotifyChannelCacheType) StatChanged(total, lastUpdated int64) bool {
 	if ncc.statTotal == total && ncc.statLastUpdated == lastUpdated {
@@ -149,7 +159,8 @@ func (ncc *NotifyChannelCacheType) Set(m map[int64]*models.NotifyChannelConfig, 
 	ncc.statLastUpdated = lastUpdated
 	ncc.Unlock()
 
-	ncc.reconcileDingtalkStreams(m)
+	// TODO(dingtalkapp): 钉钉应用本次不上线，快照同步时不再触发 Stream reconcile。
+	// ncc.reconcileDingtalkStreams(m)
 }
 
 // removeDeletedChannels 移除已删除的通道
@@ -607,6 +618,9 @@ func (ncc *NotifyChannelCacheType) startEmailSender(chID int64, smtp *models.SMT
 	}
 }
 
+// TODO(dingtalkapp): 钉钉应用本次不上线，下面 Stream 相关函数一起注释；上线时整段恢复，
+// 并同时打开顶部 crypto/sha256、encoding/hex、alert/naming、dtstream 的 import。
+/*
 func dingtalkStreamCfgFingerprint(appKey, appSecret, proxy string) string {
 	h := sha256.Sum256([]byte(appKey + "\n" + appSecret + "\n" + proxy))
 	return hex.EncodeToString(h[:])
@@ -743,6 +757,7 @@ func (ncc *NotifyChannelCacheType) reconcileDingtalkStreams(snapshot map[int64]*
 		logger.Infof("dingtalk stream runner started appKey=%s", w.appKey)
 	}
 }
+*/
 
 func (ncc *NotifyChannelCacheType) dialSmtp(quitCh chan struct{}, d *gomail.Dialer) gomail.SendCloser {
 	for {

@@ -109,7 +109,8 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	models.VerifyByProvider = provider.VerifyChannelConfig
 
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
-	notifyChannelCache.SetDingtalkLeaderNaming(naming)
+	// TODO(dingtalkapp): 钉钉应用本次不上线，先屏蔽 Stream 主备选举入口，避免启动回调长连接；待上线时恢复本行。
+	// notifyChannelCache.SetDingtalkLeaderNaming(naming)
 
 	writers := writer.NewWriters(pushgwc)
 	record.NewScheduler(alertc, recordingRuleCache, promClients, writers, alertStats, datasourceCache)

@@ -287,16 +287,16 @@ func GetHTTPClient(nc *NotifyChannelConfig) (*http.Client, error) {
 	if nc.RequestType == "pagerduty" && nc.RequestConfig.PagerDutyRequestConfig != nil && nc.RequestConfig.PagerDutyRequestConfig.Proxy != "" {
 		proxy = nc.RequestConfig.PagerDutyRequestConfig.Proxy
 	}
-	// 对于 DingtalkApp 类型，优先使用 DingtalkApp 配置中的超时时间和代理
-	if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
-		dingtalkAppTimeout := nc.RequestConfig.DingtalkAppRequestConfig.Timeout
-		if dingtalkAppTimeout > 0 {
-			timeout = dingtalkAppTimeout
-		}
-		if nc.RequestConfig.DingtalkAppRequestConfig.Proxy != "" {
-			proxy = nc.RequestConfig.DingtalkAppRequestConfig.Proxy
-		}
-	}
+	// TODO(dingtalkapp): 钉钉应用本次不上线，DingtalkApp 超时/代理合并分支先注释；上线时恢复。
+	// if nc.RequestType == "dingtalkapp" && nc.RequestConfig.DingtalkAppRequestConfig != nil {
+	// 	dingtalkAppTimeout := nc.RequestConfig.DingtalkAppRequestConfig.Timeout
+	// 	if dingtalkAppTimeout > 0 {
+	// 		timeout = dingtalkAppTimeout
+	// 	}
+	// 	if nc.RequestConfig.DingtalkAppRequestConfig.Proxy != "" {
+	// 		proxy = nc.RequestConfig.DingtalkAppRequestConfig.Proxy
+	// 	}
+	// }
 	// 对于 FeishuApp 类型，优先使用 FeishuApp 配置中的超时时间和代理
 	if nc.RequestType == "feishuapp" && nc.RequestConfig.FeishuAppRequestConfig != nil {
 		feishuAppTimeout := nc.RequestConfig.FeishuAppRequestConfig.Timeout
@@ -375,15 +375,16 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return fmt.Errorf("channel identifier must be ^[a-zA-Z0-9_-]+$, current: %s", ncc.Ident)
 	}
 
+	// TODO(dingtalkapp): 钉钉应用本次不上线，白名单中暂不放行 dingtalkapp；上线时恢复下面两处注释行。
 	if ncc.RequestType != "http" &&
 		ncc.RequestType != "smtp" &&
 		ncc.RequestType != "script" &&
 		ncc.RequestType != "flashduty" &&
 		ncc.RequestType != "pagerduty" &&
-		ncc.RequestType != "dingtalkapp" &&
+		// ncc.RequestType != "dingtalkapp" &&
 		ncc.RequestType != "feishuapp" &&
 		ncc.RequestType != "wecomapp" {
-		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'dingtalkapp', 'feishuapp', 'wecomapp'")
+		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp'")
 	}
 
 	if ncc.ParamConfig != nil {

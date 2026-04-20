@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	// TODO(dingtalkapp): errors 仅在已注释的 dingtalkGroupsGetByNotifyChannel 中使用，钉钉应用上线时一并恢复。
+	// "errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -232,6 +233,9 @@ func (rt *Router) notifyChannelIdentsGet(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, nil)
 }
 
+// TODO(dingtalkapp): 钉钉应用本次不上线，dingtalkGroupsGetByNotifyChannel handler 先整段注释；
+// 对应路由 POST /dingtalk-group-list/:id 也在 router.go 一起注释。上线时去掉 /* 和 */。
+/*
 func (rt *Router) dingtalkGroupsGetByNotifyChannel(c *gin.Context) {
 	type reqBody struct {
 		Page     int `json:"page"`
@@ -288,6 +292,7 @@ func (rt *Router) dingtalkGroupsGetByNotifyChannel(c *gin.Context) {
 		"page_size": pageSize,
 	}, nil)
 }
+*/
 
 func (rt *Router) flashDutyNotifyChannelsGet(c *gin.Context) {
 	cid := ginx.UrlParamInt64(c, "id")
