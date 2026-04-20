@@ -23,9 +23,7 @@ type Gemini struct {
 
 // NewGemini creates a new Gemini provider
 func NewGemini(cfg *Config, client *http.Client) (*Gemini, error) {
-	if cfg.BaseURL == "" {
-		cfg.BaseURL = DefaultGeminiURL
-	}
+	cfg.BaseURL = NormalizeGeminiBase(cfg.BaseURL)
 	return &Gemini{
 		config: cfg,
 		client: client,

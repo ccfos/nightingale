@@ -25,9 +25,7 @@ type Claude struct {
 
 // NewClaude creates a new Claude provider
 func NewClaude(cfg *Config, client *http.Client) (*Claude, error) {
-	if cfg.BaseURL == "" {
-		cfg.BaseURL = DefaultClaudeURL
-	}
+	cfg.BaseURL = NormalizeClaudeURL(cfg.BaseURL)
 	return &Claude{
 		config: cfg,
 		client: client,

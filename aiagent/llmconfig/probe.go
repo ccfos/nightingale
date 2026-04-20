@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/models"
 )
 
@@ -78,7 +79,7 @@ func Test(p *models.AILLMConfig) error {
 		hdrs["x-api-key"] = p.APIKey
 		hdrs["anthropic-version"] = "2023-06-01"
 	case "claude":
-		reqURL = strings.TrimRight(p.APIURL, "/") + "/v1/messages"
+		reqURL = llm.NormalizeClaudeURL(p.APIURL)
 		reqBody, _ = json.Marshal(map[string]interface{}{
 			"model":      p.Model,
 			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
@@ -87,7 +88,12 @@ func Test(p *models.AILLMConfig) error {
 		hdrs["x-api-key"] = p.APIKey
 		hdrs["anthropic-version"] = "2023-06-01"
 	case "gemini":
-		reqURL = strings.TrimRight(p.APIURL, "/") + "/v1beta/models/" + p.Model + ":generateContent?key=" + p.APIKey
+		base := llm.NormalizeGeminiBase(p.APIURL)
+		if strings.Contains(base, ":generateContent") || strings.Contains(base, ":streamGenerateContent") {
+			reqURL = base + "?key=" + p.APIKey
+		} else {
+			reqURL = base + "/" + p.Model + ":generateContent?key=" + p.APIKey
+		}
 		reqBody, _ = json.Marshal(map[string]interface{}{
 			"contents": []map[string]interface{}{
 				{"parts": []map[string]string{{"text": "Hi"}}},

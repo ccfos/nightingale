@@ -171,3 +171,24 @@ func AISkillFileGetContents(c *ctx.Context, skillId int64) ([]*AISkillFile, erro
 	err := DB(c).Where("skill_id = ?", skillId).Find(&lst).Error
 	return lst, err
 }
+
+// AISkillFilesBySkillIds returns all files for the given skill ids in a single
+// query, grouped by skill id. Used by the startup skill sync to avoid the N+1
+// round-trip that the single-skill helper would produce.
+//
+// Empty input returns an empty map (not nil) so callers can key into it without
+// a nil-check.
+func AISkillFilesBySkillIds(c *ctx.Context, ids []int64) (map[int64][]*AISkillFile, error) {
+	out := make(map[int64][]*AISkillFile, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	var lst []*AISkillFile
+	if err := DB(c).Where("skill_id IN ?", ids).Order("skill_id, id").Find(&lst).Error; err != nil {
+		return nil, err
+	}
+	for _, f := range lst {
+		out[f.SkillId] = append(out[f.SkillId], f)
+	}
+	return out, nil
+}

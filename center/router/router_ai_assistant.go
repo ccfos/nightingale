@@ -261,6 +261,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}()
 
+	// Gate: if the startup goroutine hasn't finished the first DB→FS skill sync
+	// yet, wait for it here before InitSkills reads the registry off disk.
+	// sync.Once makes this a cheap no-op after the first successful pass.
+	rt.ensureAISkillsSynced()
+
 	streamCache := aiagent.GetStreamCache()
 
 	// ① Load multi-turn history early (needed for LLM intent inference)
@@ -435,9 +440,16 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// returns "" so we fall back to the LLM's auto-detection behavior.
 	userPrompt += chat.LanguageDirective(lang)
 
+	// Default inputs always carry user_input so downstream consumers
+	// (skill autoselect's buildTaskContext, logging, tool params) can rely on
+	// it. BuildInputs returns only the action-specific extras — merge them
+	// on top rather than replacing the whole map, so handlers don't have to
+	// remember to re-include the defaults.
 	inputs := map[string]string{"user_input": msg.Query.Content}
 	if handler.BuildInputs != nil {
-		inputs = handler.BuildInputs(chatReq)
+		for k, v := range handler.BuildInputs(chatReq) {
+			inputs[k] = v
+		}
 	}
 
 	// Inject user_id for permission-aware builtin tools
@@ -446,16 +458,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 用 UserPromptRendered 而非 UserPromptTemplate：handler.BuildPrompt 已经用
 	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
+	//
+	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
+	// （SkillNames + 固定 MCP server 列表），空则保留历史 AutoSelect 行为。详见
+	// buildSkillConfigForAgent / buildMCPConfigForAgent 的注释。
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          aiagent.AgentModeReAct,
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptRendered: userPrompt,
-		Skills: &aiagent.SkillConfig{
-			AutoSelect: true,
-			MaxSkills:  2,
-		},
+		Skills:             rt.buildSkillConfigForAgent(agent),
+		MCP:                rt.buildMCPConfigForAgent(agent),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
 	// Wire up the skill subsystem so SKILL.md content actually reaches the LLM

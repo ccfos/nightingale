@@ -6,6 +6,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
@@ -60,6 +61,13 @@ type Router struct {
 	TargetDeleteHook      models.TargetDeleteHookFunc
 	TargetBgidChangeCheck TargetBgidChangeCheckFunc
 	AlertRuleModifyHook   AlertRuleModifyHookFunc
+
+	// aiSkillSyncOnce ensures the DB→FS full sync runs at most once per process
+	// lifetime (startup goroutine + first chat handler both call through the
+	// same once). aiSkillSyncMu serializes the full sync against single-skill
+	// CRUD sync paths so orphan-cleanup can't race a concurrent insert.
+	aiSkillSyncOnce sync.Once
+	aiSkillSyncMu   sync.Mutex
 }
 
 type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
@@ -69,7 +77,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	pc *prom.PromClientMap, redis storage.Redis,
 	sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set,
 	tc *memsto.TargetCacheType, uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, utc *memsto.UserTokenCacheType, logDir string) *Router {
-	return &Router{
+	rt := &Router{
 		HTTP:                  httpConfig,
 		Center:                center,
 		Alert:                 alert,
@@ -95,6 +103,15 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
 	}
+
+	// Long-lived goroutine that materializes DB-backed skills onto disk. It
+	// runs one pass through sync.Once on entry (so the first chat request
+	// blocks on a real first-pass outcome, not on the ticker firing) and then
+	// re-syncs on the configured cadence. See runAISkillSyncLoop for the
+	// design rationale.
+	go rt.runAISkillSyncLoop(rt.Center.AIAgent.SkillSyncInterval)
+
+	return rt
 }
 
 func stat() gin.HandlerFunc {

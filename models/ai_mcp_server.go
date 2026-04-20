@@ -105,3 +105,16 @@ func MCPServerGetEnabled(c *ctx.Context) ([]*MCPServer, error) {
 	err := DB(c).Where("enabled = ?", true).Order("id").Find(&lst).Error
 	return lst, err
 }
+
+// MCPServersByIds returns enabled MCP servers whose ids are in the input list.
+// Disabled entries are filtered so toggling `enabled=false` effectively detaches
+// a server from agents that still reference it, without requiring a DB cleanup
+// on the join.
+func MCPServersByIds(c *ctx.Context, ids []int64) ([]*MCPServer, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var lst []*MCPServer
+	err := DB(c).Where("id IN ? AND enabled = ?", ids, true).Order("id").Find(&lst).Error
+	return lst, err
+}

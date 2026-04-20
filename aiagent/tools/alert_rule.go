@@ -261,8 +261,15 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", err
 	}
 
-	// Datasource is required for everything except host type.
+	// Datasource is required for everything except host type. Prefer the
+	// explicit tool arg; fall back to preflight/page-injected params so the
+	// LLM doesn't have to re-thread datasource_id through every call. Mirrors
+	// createDashboard so "创建告警规则" with a preselected datasource works
+	// even when the LLM omits it from Action Input.
 	dsId := getArgInt64(args, "datasource_id")
+	if dsId == 0 {
+		dsId = getDatasourceId(params)
+	}
 	if cate != "host" && dsId == 0 {
 		return "", fmt.Errorf("datasource_id is required for cate=%s", cate)
 	}

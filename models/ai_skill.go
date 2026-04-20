@@ -114,3 +114,38 @@ func (s *AISkill) Update(c *ctx.Context, ref AISkill) error {
 func (s *AISkill) Delete(c *ctx.Context) error {
 	return DB(c).Where("id = ?", s.Id).Delete(&AISkill{}).Error
 }
+
+// AISkillsEnabled returns all enabled skills ordered by id. Used by the DB→FS
+// skill sync to materialize DB skills into the on-disk registry.
+func AISkillsEnabled(c *ctx.Context) ([]*AISkill, error) {
+	var lst []*AISkill
+	err := DB(c).Where("enabled = ?", true).Order("id").Find(&lst).Error
+	return lst, err
+}
+
+// AISkillsByIds returns enabled skills whose ids are in the input list.
+// Disabled skills are skipped — an agent that binds a disabled skill simply
+// loses it from the active set rather than erroring out.
+func AISkillsByIds(c *ctx.Context, ids []int64) ([]*AISkill, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var lst []*AISkill
+	err := DB(c).Where("id IN ? AND enabled = ?", ids, true).Order("id").Find(&lst).Error
+	return lst, err
+}
+
+// AISkillNamesByIds is a small projection of AISkillsByIds used when the caller
+// only needs skill names (e.g. to populate SkillConfig.SkillNames). Disabled
+// skills drop out of the result.
+func AISkillNamesByIds(c *ctx.Context, ids []int64) ([]string, error) {
+	skills, err := AISkillsByIds(c, ids)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(skills))
+	for _, s := range skills {
+		names = append(names, s.Name)
+	}
+	return names, nil
+}
