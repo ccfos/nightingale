@@ -319,8 +319,20 @@ func (e *WorkflowEngine) executeNode(node *models.WorkflowNode, wfCtx *models.Wo
 	nodeResult.FinishedAt = time.Now().Unix()
 	nodeResult.DurationMs = time.Since(startTime).Milliseconds()
 
-	logger.Infof("workflow: executed node %s (type=%s) status=%s msg=%s duration=%dms",
-		node.Name, node.Type, nodeResult.Status, nodeResult.Message, nodeResult.DurationMs)
+	var eventHash string
+	eventDetailStr := "nil"
+	if wfCtx != nil && wfCtx.Event != nil {
+		eventHash = wfCtx.Event.Hash
+		eventDetailStr = fmt.Sprintf("%+v", wfCtx.Event)
+	}
+
+	var pipelineID string
+	if wfCtx != nil && wfCtx.Metadata != nil {
+		pipelineID = wfCtx.Metadata["pipeline_id"]
+	}
+
+	logger.Infof("workflow: executed node name=%s type=%s status=%s msg=%q duration=%dms event_hash=%s pipeline_id=%s event_detail:%s",
+		node.Name, node.Type, nodeResult.Status, nodeResult.Message, nodeResult.DurationMs, eventHash, pipelineID, eventDetailStr)
 
 	return nodeResult, nodeOutput
 }
