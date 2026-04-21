@@ -105,6 +105,58 @@ var (
 		},
 		[]string{"operation", "status"},
 	)
+
+	GaugeProxyRemoteWriteInflight = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_inflight",
+		Help:      "Current number of in-flight requests on /proxy/v1/write.",
+	})
+
+	CounterProxyRemoteWriteOverLimitTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_over_limit_total",
+		Help:      "Number of /proxy/v1/write requests rejected with 429 due to in-flight over limit.",
+	})
+
+	CounterProxyRemoteWriteBodyTooLargeTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_body_too_large_total",
+		Help:      "Number of /proxy/v1/write requests rejected with 413 due to body size over limit.",
+	})
+
+	CounterProxyRemoteWriteTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_remote_write_total",
+		Help:      "Number of /proxy/v1/write requests received.",
+	})
+
+	CounterProxyForwardTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_forward_total",
+		Help:      "Number of forwards performed by /proxy/v1/write.",
+	}, []string{"url"})
+
+	CounterProxyForwardErrorTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "proxy_forward_error_total",
+		Help:      "Number of forward errors on /proxy/v1/write.",
+	}, []string{"url", "reason"})
+
+	ProxyForwardDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Buckets:   []float64{.001, .01, .1, 1, 5, 10},
+			Name:      "proxy_forward_duration_seconds",
+			Help:      "Forward latencies on /proxy/v1/write in seconds.",
+		}, []string{"url"},
+	)
 )
 
 func init() {
@@ -121,5 +173,12 @@ func init() {
 		GaugeSampleQueueSize,
 		CounterPushQueueOverLimitTotal,
 		RedisOperationLatency,
+		GaugeProxyRemoteWriteInflight,
+		CounterProxyRemoteWriteOverLimitTotal,
+		CounterProxyRemoteWriteBodyTooLargeTotal,
+		CounterProxyRemoteWriteTotal,
+		CounterProxyForwardTotal,
+		CounterProxyForwardErrorTotal,
+		ProxyForwardDuration,
 	)
 }

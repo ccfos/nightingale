@@ -22,18 +22,27 @@ type Pushgw struct {
 	UpdateTargetByUrlConcurrency   int
 
 	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
-	BusiGroupLabelKey   string
-	IdentMetrics        []string
-	IdentStatsThreshold int
-	IdentDropThreshold  int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
-	WriteConcurrency    int
-	LabelRewrite        bool
-	ForceUseServerTS    bool
-	DebugSample         map[string]string
-	DropSample          []map[string]string
-	WriterOpt           WriterGlobalOpt
-	Writers             []WriterOptions
-	KafkaWriters        []KafkaWriterOptions
+	BusiGroupLabelKey      string
+	IdentMetrics           []string
+	IdentStatsThreshold    int
+	IdentDropThreshold     int // 每分钟单个 ident 的样本数超过该阈值，则丢弃
+	WriteConcurrency       int
+
+	// ProxyInflightMax 控制 /proxy/v1/write 的并发上限。超过阈值直接返回 429，
+	// 把背压交给客户端 WAL（remote_write 协议原生支持）。<=0 使用默认值。
+	ProxyInflightMax int
+
+	// ProxyMaxBodyBytes 限制 /proxy/v1/write 单个请求 body 的最大字节数，超过返回 413。
+	// 和 ProxyInflightMax 配套：并发 × 单请求大小 = pushgw 内存占用上限。<=0 使用默认值。
+	ProxyMaxBodyBytes int64
+
+	LabelRewrite     bool
+	ForceUseServerTS bool
+	DebugSample      map[string]string
+	DropSample       []map[string]string
+	WriterOpt        WriterGlobalOpt
+	Writers          []WriterOptions
+	KafkaWriters     []KafkaWriterOptions
 }
 
 type WriterGlobalOpt struct {
@@ -188,6 +197,14 @@ func (p *Pushgw) PreCheck() {
 
 	if p.IdentDropThreshold <= 0 {
 		p.IdentDropThreshold = 5000000
+	}
+
+	if p.ProxyInflightMax <= 0 {
+		p.ProxyInflightMax = 1000
+	}
+
+	if p.ProxyMaxBodyBytes <= 0 {
+		p.ProxyMaxBodyBytes = 32 * 1024 * 1024
 	}
 
 	for index := range p.Writers {
