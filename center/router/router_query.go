@@ -6,12 +6,34 @@ import (
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/alert/eval"
+	dskit_doris "github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dscache"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
 )
+
+// injectDorisCallContext attaches a dskit/doris.CallContext to the gin
+// request context when the query targets Doris. Downstream observers (e.g.
+// audit hooks living in n9e-plus) use this to whitelist queries that should
+// be reported.
+//
+// Safe to call for any cate; it is a no-op when cate != "doris". Username
+// extraction is best-effort: anonymous queries simply leave Operator empty.
+func injectDorisCallContext(c *gin.Context, cate string, dsID int64) {
+	if cate != "doris" {
+		return
+	}
+	var operator string
+	if v, ok := c.Get("user"); ok {
+		if u, ok := v.(*models.User); ok && u != nil {
+			operator = u.Username
+		}
+	}
+	cc := dskit_doris.CallContext{DatasourceID: dsID, Operator: operator}
+	c.Request = c.Request.WithContext(dskit_doris.WithCallContext(c.Request.Context(), cc))
+}
 
 type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
 
@@ -179,6 +201,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 func (rt *Router) QueryData(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	injectDorisCallContext(c, f.Cate, f.DatasourceId)
 
 	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	if err != nil {
@@ -245,6 +268,7 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 func (rt *Router) QueryLogV2(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	injectDorisCallContext(c, f.Cate, f.DatasourceId)
 
 	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	ginx.NewRender(c).Data(resp, err)
