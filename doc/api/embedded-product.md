@@ -12,6 +12,7 @@
 | name | string | 是 | 产品名称 |
 | url | string | 是 | 跳转地址 |
 | is_private | bool | 否 | 是否私有。为 `true` 时必须指定 `team_ids` |
+| hide | bool | 否 | 是否隐藏。默认 `false`；为 `true` 时前端不在入口处展示，但接口仍会返回 |
 | team_ids | int64[] | 条件必填 | 可见团队 ID 列表，`is_private=true` 时不能为空 |
 | weight | int | 否 | 排序权重，升序展示，默认 `0` |
 | create_at | int64 | - | 创建时间（Unix 时间戳） |
@@ -42,6 +43,7 @@ GET /api/n9e/embedded-product
       "name": "Grafana",
       "url": "https://grafana.example.com",
       "is_private": false,
+      "hide": false,
       "team_ids": [],
       "weight": 0,
       "create_at": 1710000000,
@@ -92,6 +94,7 @@ POST /api/n9e/embedded-product
     "name": "Grafana",
     "url": "https://grafana.example.com",
     "is_private": false,
+    "hide": false,
     "team_ids": [],
     "weight": 0
   },
@@ -99,6 +102,7 @@ POST /api/n9e/embedded-product
     "name": "内部管理台",
     "url": "https://admin.example.com",
     "is_private": true,
+    "hide": false,
     "team_ids": [1, 2],
     "weight": 1
   }
@@ -125,7 +129,7 @@ POST /api/n9e/embedded-product
 PUT /api/n9e/embedded-product/:id
 ```
 
-需要权限点 `/embedded-product/put`。会覆盖 `name` / `url` / `is_private` / `team_ids` / `weight` 字段，并刷新 `update_by` / `update_at`。
+需要权限点 `/embedded-product/put`。会覆盖 `name` / `url` / `is_private` / `hide` / `team_ids` / `weight` 字段，并刷新 `update_by` / `update_at`。
 
 ### 请求体
 
@@ -134,6 +138,7 @@ PUT /api/n9e/embedded-product/:id
   "name": "Grafana Prod",
   "url": "https://grafana-prod.example.com",
   "is_private": true,
+  "hide": false,
   "team_ids": [1, 2],
   "weight": 3
 }
@@ -143,6 +148,42 @@ PUT /api/n9e/embedded-product/:id
 
 - `400` id 非法
 - `404` 条目不存在
+
+---
+
+## 单独更新隐藏状态
+
+```
+PUT /api/n9e/embedded-product/:id/hide
+```
+
+需要权限点 `/embedded-product/put`。**专用于"显示 / 隐藏"开关**，只更新 `hide` / `update_at` / `update_by` 三个字段，不会触碰 `name` / `url` / `is_private` / `team_ids` / `weight` 等业务字段。
+
+### 路径参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | Embedded Product ID |
+
+### 请求体
+
+```json
+{ "hide": true }
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| hide | bool | 是 | 目标隐藏状态 |
+
+### 错误
+
+- `400` id 非法
+
+### 响应
+
+```json
+{ "dat": null, "err": "" }
+```
 
 ---
 

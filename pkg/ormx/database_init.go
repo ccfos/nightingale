@@ -962,6 +962,28 @@ func (InitNotificationRecord) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
+type InitDingtalkGroup struct {
+	ID                     uint64 `gorm:"primaryKey;autoIncrement"`
+	ClientID               string `gorm:"size:128;not null;uniqueIndex:uk_dt_group_client_conv,priority:1;comment:钉钉应用 ClientId(AppKey)"`
+	OpenConversationCorpID string `gorm:"size:128;not null;default:'';uniqueIndex:uk_dt_group_client_conv,priority:2"`
+	OpenConversationID     string `gorm:"size:128;not null;uniqueIndex:uk_dt_group_client_conv,priority:3"`
+	CoolAppCode            string `gorm:"size:128;not null;default:''"`
+	RobotCode              string `gorm:"size:128;not null;default:''"`
+	Title                  string `gorm:"size:255;not null;default:''"`
+	Status                 int32  `gorm:"not null;default:1;comment:1 installed 0 uninstalled"`
+	CreatedAt              int64  `gorm:"not null"`
+	UpdatedAt              int64  `gorm:"not null"`
+	UninstalledAt          int64  `gorm:"not null;default:0"`
+}
+
+func (InitDingtalkGroup) TableName() string {
+	return "dingtalk_group"
+}
+
+func (InitDingtalkGroup) TableOptions() string {
+	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+}
+
 type InitTaskTpl struct {
 	ID        uint64 `gorm:"primaryKey;autoIncrement"`
 	GroupID   int64  `gorm:"not null;comment:busi group id;index"`
@@ -1426,6 +1448,7 @@ func sqliteDataBaseInit(db *gorm.DB) error {
 		&InitBuiltinComponent{},
 		&InitBuiltinPayload{},
 		&InitNotificationRecord{},
+		//&InitDingtalkGroup{},
 		&InitTaskTpl{},
 		&InitTaskTplHost{},
 		&InitTaskRecord{},
@@ -1618,6 +1641,7 @@ func mysqlDataBaseInit(db *gorm.DB) error {
 		&InitBuiltinComponent{},
 		&InitBuiltinPayload{},
 		&InitNotificationRecord{},
+		//&InitDingtalkGroup{},
 		&InitTaskTpl{},
 		&InitTaskTplHost{},
 		&InitTaskRecord{},
@@ -1809,6 +1833,7 @@ func postgresDataBaseInit(db *gorm.DB) error {
 		&InitBuiltinComponent{},
 		&InitpostgresBuiltinPayload{},
 		&InitNotificationRecord{},
+		//&InitDingtalkGroup{},
 		&InitTaskTpl{},
 		&InitTaskTplHost{},
 		&InitTaskRecord{},

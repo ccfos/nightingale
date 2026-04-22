@@ -1,5 +1,7 @@
 package models
 
+import "context"
+
 // WorkflowNode 工作流节点
 type WorkflowNode struct {
 	ID       string      `json:"id"`                 // 节点唯一ID
@@ -124,6 +126,10 @@ type WorkflowContext struct {
 	// 流式输出支持
 	Stream     bool              `json:"-"` // 是否启用流式输出（不序列化）
 	StreamChan chan *StreamChunk `json:"-"` // 流式数据通道（不序列化）
+
+	// 外部注入的父 context，用于支持调用方取消（如 assistant message cancel）
+	// 为 nil 时 Process 内部使用 context.Background() 作为父
+	ParentCtx context.Context `json:"-"`
 }
 
 // StreamChunk 类型常量

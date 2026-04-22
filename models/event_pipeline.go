@@ -18,7 +18,7 @@ type EventPipeline struct {
 	TriggerMode      string            `json:"trigger_mode" gorm:"type:varchar(128)"` // event, api, cron
 	Disabled         bool              `json:"disabled" gorm:"type:boolean"`
 	TeamIds          []int64           `json:"team_ids" gorm:"type:text;serializer:json"`
-	GroupId          int64             `json:"group_id" gorm:"type:bigint"`
+	GroupId          int64             `json:"group_id" gorm:"type:bigint;not null;default:0"`
 	TeamNames        []string          `json:"team_names" gorm:"-"`
 	Description      string            `json:"description" gorm:"type:varchar(255)"`
 	FilterEnable     bool              `json:"filter_enable" gorm:"type:boolean"`

@@ -31,6 +31,7 @@ type Config struct {
 	Attributes      LdapAttributes
 	CoverAttributes bool
 	CoverTeams      bool
+	CoverRoles      bool
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
@@ -54,6 +55,7 @@ type SsoClient struct {
 	Attributes      LdapAttributes
 	CoverAttributes bool
 	CoverTeams      bool
+	CoverRoles      bool
 	TLS             bool
 	StartTLS        bool
 	DefaultRoles    []string
@@ -109,6 +111,7 @@ func (s *SsoClient) Reload(cf Config) {
 	s.Attributes = cf.Attributes
 	s.CoverAttributes = cf.CoverAttributes
 	s.CoverTeams = cf.CoverTeams
+	s.CoverRoles = cf.CoverRoles
 	s.TLS = cf.TLS
 	s.StartTLS = cf.StartTLS
 	s.DefaultRoles = cf.DefaultRoles
@@ -329,6 +332,7 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, d
 	attrs := ldap.Attributes
 	coverAttributes := ldap.CoverAttributes
 	coverTeams := ldap.CoverTeams
+	coverRoles := ldap.CoverRoles
 	ldap.RUnlock()
 
 	var nickname, email, phone string
@@ -352,8 +356,15 @@ func LdapLogin(ctx *ctx.Context, username, pass string, defaultRoles []string, d
 
 	if user != nil && user.Id > 0 {
 		if coverAttributes {
+			var rolesForUpdate []string
+			if coverRoles {
+				rolesForUpdate = roleTeamMapping.Roles
+				if len(rolesForUpdate) == 0 {
+					rolesForUpdate = defaultRoles
+				}
+			}
 			// need to override the user's basic properties
-			updatedFields := user.UpdateSsoFieldsWithRoles("ldap", nickname, phone, email, roleTeamMapping.Roles)
+			updatedFields := user.UpdateSsoFieldsWithRoles("ldap", nickname, phone, email, rolesForUpdate)
 			if err = user.Update(ctx, "update_at", updatedFields...); err != nil {
 				return nil, errors.WithMessage(err, "failed to update user")
 			}

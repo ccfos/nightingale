@@ -68,14 +68,22 @@ func MigrateTables(db *gorm.DB) error {
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
-		&models.EventPipeline{}, &models.EventPipelineExecution{}, &models.EmbeddedProduct{}, &models.SourceToken{},
-		&models.SavedView{}, &models.UserViewFavorite{}}
+		&models.EventPipeline{}, &models.EmbeddedProduct{}, &models.SourceToken{},
+		&models.SavedView{}, &models.UserViewFavorite{},
+		&models.AILLMConfig{}, &models.AIAgent{}, &models.AISkill{}, &models.MCPServer{},
+		&models.AssistantChatRow{}}
 
 	if isPostgres(db) {
+		dts = append(dts, &models.AssistantMessageRow{})        // PostgreSQL: text is unlimited
 		dts = append(dts, &models.PostgresBuiltinComponent{})
+		dts = append(dts, &models.PostgresAISkillFile{})
+		dts = append(dts, &models.PostgresEventPipelineExecution{})
 		DropUniqueFiledLimit(db, &models.PostgresBuiltinComponent{}, "idx_ident", "idx_ident")
 	} else {
+		dts = append(dts, &models.MysqlAssistantMessageRow{})   // MySQL: mediumtext; SQLite: treated as text
 		dts = append(dts, &models.BuiltinComponent{})
+		dts = append(dts, &models.AISkillFile{})
+		dts = append(dts, &models.EventPipelineExecution{})
 		DropUniqueFiledLimit(db, &models.BuiltinComponent{}, "idx_ident", "idx_ident")
 	}
 
@@ -134,6 +142,10 @@ func MigrateTables(db *gorm.DB) error {
 
 	return nil
 }
+
+// AssistantChat / AssistantMessage row structs live in models package
+// (models.AssistantChatRow / models.AssistantMessageRow) so both
+// migrate and storage can share them.
 
 func DropUniqueFiledLimit(db *gorm.DB, dst interface{}, uniqueFiled string, pgUniqueFiled string) { // UNIQUE KEY (`ckey`)
 	// 先检查表是否存在，如果不存在则直接返回

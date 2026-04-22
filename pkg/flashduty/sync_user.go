@@ -58,7 +58,9 @@ func SyncUsersChange(ctx *ctx.Context, dbUsers []*models.User) error {
 	dbUsersHas := sliceToMap(dbUsers)
 
 	delUsers := diffMap(dutyUsers, dbUsersHas)
-	fdDelUsers(appKey, delUsers)
+	if len(delUsers) > 0 {
+		fdDelUsers(appKey, delUsers, NeedForceDeleteUser(ctx))
+	}
 
 	addUsers := diffMap(dbUsersHas, dutyUsers)
 	if err := fdAddUsers(appKey, addUsers); err != nil {
@@ -139,6 +141,7 @@ type User struct {
 	Phone      string  `json:"phone,omitempty"`
 	MemberName string  `json:"member_name,omitempty"`
 	RefID      string  `json:"ref_id,omitempty"`
+	IsForce    bool    `json:"is_force,omitempty"`
 	Updates    Updates `json:"updates,omitempty"`
 }
 
@@ -150,11 +153,11 @@ type Updates struct {
 	CountryCode string `json:"country_code,omitempty"`
 }
 
-func (user *User) delMember(appKey string) error {
+func (user *User) delMember(appKey string, force bool) error {
 	if user.RefID == "" {
 		return errors.New("refID must not be empty")
 	}
-	userDel := &User{RefID: user.RefID}
+	userDel := &User{RefID: user.RefID, IsForce: force}
 	return PostFlashDuty("/member/delete", appKey, userDel)
 }
 
@@ -194,10 +197,10 @@ func fdAddUsers(appKey string, users []models.User) error {
 	return members.addMembers(appKey)
 }
 
-func fdDelUsers(appKey string, users []models.User) {
+func fdDelUsers(appKey string, users []models.User, force bool) {
 	fdUsers := usersToFdUsers(users)
 	for _, fdUser := range fdUsers {
-		if err := fdUser.delMember(appKey); err != nil {
+		if err := fdUser.delMember(appKey, force); err != nil {
 			logger.Errorf("failed to delete user: %v", err)
 		}
 	}

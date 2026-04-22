@@ -250,6 +250,7 @@ CREATE TABLE `embedded_product` (
     `name` varchar(255) DEFAULT NULL,
     `url` varchar(255) DEFAULT NULL,
     `is_private` boolean DEFAULT NULL,
+    `hide` boolean not null default false,
     `team_ids` varchar(255),
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
@@ -368,3 +369,6 @@ ALTER TABLE `alert_rule` ADD COLUMN `time_zone` varchar(64) not null default '';
 
 /* v9 2026-04-08 embedded_product weight for sorting */
 ALTER TABLE `embedded_product` ADD COLUMN `weight` int not null default 0;
+
+/* v9 2026-04-17 embedded_product hide flag */
+ALTER TABLE `embedded_product` ADD COLUMN `hide` boolean not null default false;

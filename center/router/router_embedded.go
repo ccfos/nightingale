@@ -74,8 +74,8 @@ func (rt *Router) embeddedProductAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
 	for i := range eps {
-		eps[i].CreateBy = me.Nickname
-		eps[i].UpdateBy = me.Nickname
+		eps[i].CreateBy = me.Username
+		eps[i].UpdateBy = me.Username
 	}
 
 	err := models.AddEmbeddedProduct(rt.Ctx, eps)
@@ -99,12 +99,31 @@ func (rt *Router) embeddedProductPut(c *gin.Context) {
 	oldProduct.Name = ep.Name
 	oldProduct.URL = ep.URL
 	oldProduct.IsPrivate = ep.IsPrivate
+	oldProduct.Hide = ep.Hide
 	oldProduct.TeamIDs = ep.TeamIDs
 	oldProduct.Weight = ep.Weight
 	oldProduct.UpdateBy = me.Username
 	oldProduct.UpdateAt = now
 
 	err = models.UpdateEmbeddedProduct(rt.Ctx, oldProduct)
+	ginx.NewRender(c).Message(err)
+}
+
+// embeddedProductHidePut 单独更新 hide 字段，供"显示 / 隐藏"开关使用。
+// 请求体：{"hide": true}
+func (rt *Router) embeddedProductHidePut(c *gin.Context) {
+	id := ginx.UrlParamInt64(c, "id")
+	if id <= 0 {
+		ginx.Bomb(400, "invalid id")
+	}
+
+	var req struct {
+		Hide bool `json:"hide"`
+	}
+	ginx.BindJSON(c, &req)
+
+	me := c.MustGet("user").(*models.User)
+	err := models.UpdateEmbeddedProductHide(rt.Ctx, id, req.Hide, me.Username)
 	ginx.NewRender(c).Message(err)
 }
 

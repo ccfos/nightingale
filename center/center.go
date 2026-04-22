@@ -71,6 +71,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), db, true)
 	migrate.Migrate(db)
 	isRootInit := models.InitRoot(ctx)
+	models.InitDefaultAIAgent(ctx)
 
 	config.HTTP.JWTAuth.SigningKey = models.InitJWTSigningKey(ctx)
 
