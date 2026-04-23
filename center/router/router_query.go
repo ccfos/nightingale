@@ -16,13 +16,20 @@ import (
 
 // injectDorisCallContext attaches a dskit/doris.CallContext to the gin
 // request context when the query targets Doris. Downstream observers (e.g.
-// audit hooks living in n9e-plus) use this to whitelist queries that should
-// be reported.
+// audit hooks living in n9e-plus) use this to classify and whitelist
+// queries that should be reported.
 //
-// Safe to call for any cate; it is a no-op when cate != "doris". Username
-// extraction is best-effort: anonymous queries simply leave Operator empty.
+// Both "doris" and "doris.logging" are user-facing entrypoints reaching
+// dskit/doris.ExecQuery, so both must be tagged with CallerUser.
+// Tagging is mandatory rather than best-effort: a CallContext without
+// Caller would leak into "_unknown" metric series and be silently
+// excluded from the audit table, defeating the whitelist.
+//
+// Safe to call for any cate; it is a no-op when the cate is not Doris.
+// Username extraction is best-effort: anonymous queries simply leave
+// Operator empty.
 func injectDorisCallContext(c *gin.Context, cate string, dsID int64) {
-	if cate != "doris" {
+	if cate != "doris" && cate != "doris.logging" {
 		return
 	}
 	var operator string
@@ -31,7 +38,11 @@ func injectDorisCallContext(c *gin.Context, cate string, dsID int64) {
 			operator = u.Username
 		}
 	}
-	cc := dskit_doris.CallContext{DatasourceID: dsID, Operator: operator}
+	cc := dskit_doris.CallContext{
+		DatasourceID: dsID,
+		Operator:     operator,
+		Caller:       dskit_doris.CallerUser,
+	}
 	c.Request = c.Request.WithContext(dskit_doris.WithCallContext(c.Request.Context(), cc))
 }
 
