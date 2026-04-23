@@ -1,49 +1,67 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/alert/eval"
-	dskit_doris "github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/dscache"
+	dskit_doris "github.com/ccfos/nightingale/v6/dskit/doris"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
 )
 
-// injectDorisCallContext attaches a dskit/doris.CallContext to the gin
-// request context when the query targets Doris. Downstream observers (e.g.
-// audit hooks living in n9e-plus) use this to classify and whitelist
-// queries that should be reported.
+// dorisOperator extracts the best-effort operator name from gin.Context.
+// Reads c.Get("user") which is populated by rt.user() middleware; for
+// anonymous endpoints we simply return "".
+//
+// Pulled out so the parallel batch path can compute operator once, outside
+// goroutines, avoiding races on gin.Context across query workers.
+func dorisOperator(c *gin.Context) string {
+	if v, ok := c.Get("user"); ok {
+		if u, ok := v.(*models.User); ok && u != nil {
+			return u.Username
+		}
+	}
+	return ""
+}
+
+// dorisCallCtx returns a context carrying a dskit/doris.CallContext for the
+// given (cate, dsID). When the cate is not Doris, parent is returned as-is
+// so callers in the batch path can blindly wrap every query without
+// branching.
 //
 // Both "doris" and "doris.logging" are user-facing entrypoints reaching
 // dskit/doris.ExecQuery, so both must be tagged with CallerUser.
 // Tagging is mandatory rather than best-effort: a CallContext without
 // Caller would leak into "_unknown" metric series and be silently
-// excluded from the audit table, defeating the whitelist.
-//
-// Safe to call for any cate; it is a no-op when the cate is not Doris.
-// Username extraction is best-effort: anonymous queries simply leave
-// Operator empty.
-func injectDorisCallContext(c *gin.Context, cate string, dsID int64) {
+// excluded from the audit table downstream in n9e-plus, defeating the
+// whitelist.
+func dorisCallCtx(parent context.Context, operator string, cate string, dsID int64) context.Context {
 	if cate != "doris" && cate != "doris.logging" {
-		return
-	}
-	var operator string
-	if v, ok := c.Get("user"); ok {
-		if u, ok := v.(*models.User); ok && u != nil {
-			operator = u.Username
-		}
+		return parent
 	}
 	cc := dskit_doris.CallContext{
 		DatasourceID: dsID,
 		Operator:     operator,
 		Caller:       dskit_doris.CallerUser,
 	}
-	c.Request = c.Request.WithContext(dskit_doris.WithCallContext(c.Request.Context(), cc))
+	return dskit_doris.WithCallContext(parent, cc)
+}
+
+// injectDorisCallContext rewrites c.Request to carry a Doris CallContext
+// when the cate is Doris. Used by single-cate handlers (QueryData,
+// QueryLogV2) where every query in the batch shares the same cate/dsID.
+//
+// For per-query mixed batches (QueryLogBatchConcurrently) prefer
+// dorisCallCtx, which derives a child context per query without mutating
+// the request.
+func injectDorisCallContext(c *gin.Context, cate string, dsID int64) {
+	c.Request = c.Request.WithContext(dorisCallCtx(c.Request.Context(), dorisOperator(c), cate, dsID))
 }
 
 type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
@@ -82,6 +100,10 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 	var errs []error
 	rctx := ctx.Request.Context()
 
+	// Operator is a per-request property; resolve it once outside the
+	// goroutines to avoid concurrent reads on gin.Context.
+	operator := dorisOperator(ctx)
+
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, q.Did, q.DsCate, q) {
 			return LogResp{}, fmt.Errorf("forbidden")
@@ -100,11 +122,18 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 			return LogResp{}, fmt.Errorf("query template execute error: %v", err)
 		}
 
+		// Per-query CallContext: this batch endpoint is reached by both
+		// dashboard (cate=doris/doris.logging) and other ds; derive a
+		// child ctx so the dskit OnQuery hook can classify Doris traffic
+		// as caller=user instead of falling into _unknown and being
+		// dropped from the audit table.
+		qctx := dorisCallCtx(rctx, operator, q.DsCate, q.Did)
+
 		wg.Add(1)
-		go func(query Query) {
+		go func(query Query, qctx context.Context) {
 			defer wg.Done()
 
-			data, total, err := plug.QueryLog(rctx, query.Query)
+			data, total, err := plug.QueryLog(qctx, query.Query)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {
@@ -122,7 +151,7 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 			resp.List = append(resp.List, m)
 			resp.Total += total
-		}(q)
+		}(q, qctx)
 	}
 
 	wg.Wait()
