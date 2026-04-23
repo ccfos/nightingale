@@ -204,6 +204,11 @@ func (rt *Router) Config(r *gin.Engine) {
 	r.Use(languageDetector(rt.Center.I18NHeaderKey))
 	r.Use(aop.Recovery())
 
+	// Register datasource-specific context decorators for observability.
+	// Each decorator attaches per-query metadata (audit context, tracing
+	// spans, etc.) to requests targeting its datasource type.
+	RegisterQueryContextDecorator(dorisQueryContextDecorator)
+
 	statikFS, err := fs.New()
 	if err != nil {
 		logger.Errorf("cannot create statik fs: %v", err)
