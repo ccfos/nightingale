@@ -1,17 +1,37 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/alert/eval"
 	"github.com/ccfos/nightingale/v6/dscache"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
 )
+
+func ginUser(c *gin.Context) string {
+	if v, ok := c.Get("user"); ok {
+		if u, ok := v.(*models.User); ok && u != nil {
+			return u.Username
+		}
+	}
+	return ""
+}
+
+// withCallContext
+// Operator is best-effort: empty for anonymous endpoints.
+func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
+	return dskittypes.WithCallContext(parent, dskittypes.CallContext{
+		DatasourceID: dsID,
+		Operator:     operator,
+	})
+}
 
 type CheckDsPermFunc func(c *gin.Context, dsId int64, cate string, q interface{}) bool
 
@@ -49,6 +69,10 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 	var errs []error
 	rctx := ctx.Request.Context()
 
+	// Operator is a per-request property; resolve it once outside the
+	// goroutines to avoid concurrent reads on gin.Context.
+	operator := ginUser(ctx)
+
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, q.Did, q.DsCate, q) {
 			return LogResp{}, fmt.Errorf("forbidden")
@@ -67,11 +91,15 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 			return LogResp{}, fmt.Errorf("query template execute error: %v", err)
 		}
 
+		// Per-query context decoration: every cate carries CallContext;
+		// individual datasources consume it (audit/metrics/tracing) on demand.
+		qctx := withCallContext(rctx, q.Did, operator)
+
 		wg.Add(1)
-		go func(query Query) {
+		go func(query Query, qctx context.Context) {
 			defer wg.Done()
 
-			data, total, err := plug.QueryLog(rctx, query.Query)
+			data, total, err := plug.QueryLog(qctx, query.Query)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {
@@ -89,7 +117,7 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 			resp.List = append(resp.List, m)
 			resp.Total += total
-		}(q)
+		}(q, qctx)
 	}
 
 	wg.Wait()
@@ -179,6 +207,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 func (rt *Router) QueryData(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	if err != nil {
@@ -245,6 +274,7 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 func (rt *Router) QueryLogV2(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	ginx.NewRender(c).Data(resp, err)
