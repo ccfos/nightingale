@@ -230,6 +230,9 @@ func (d *Doris) ShowDatabases(ctx context.Context) ([]string, error) {
 		}
 		databases = append(databases, dbName)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
 	return databases, nil
 }
 
@@ -318,6 +321,9 @@ func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, erro
 		}
 		tables = append(tables, tableName)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
 	return tables, nil
 }
 
@@ -392,6 +398,9 @@ func (d *Doris) DescTable(ctx context.Context, database, table string) ([]*types
 			Type2:     type2,
 			Indexable: indexable,
 		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}
 	return columns, nil
 }
@@ -556,6 +565,15 @@ func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) (res
 			}
 		}
 		results = append(results, rowMap)
+	}
+	// rows.Next returning false can mean either EOF or that the underlying
+	// connection was torn down (timeout / cancel / network reset). Without
+	// this check, a SQL aborted by ctx cancel comes back as (partialRows, nil)
+	// and observers (audit / metrics) silently misclassify a failed query
+	// as a successful one. The named return makes the deferred OnQuery hook
+	// see the real error.
+	if err = rows.Err(); err != nil {
+		return results, fmt.Errorf("error iterating rows: %w", err)
 	}
 	return results, nil
 }
