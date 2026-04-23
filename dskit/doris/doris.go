@@ -230,6 +230,9 @@ func (d *Doris) ShowDatabases(ctx context.Context) ([]string, error) {
 		}
 		databases = append(databases, dbName)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
 	return databases, nil
 }
 
@@ -318,6 +321,9 @@ func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, erro
 		}
 		tables = append(tables, tableName)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
 	return tables, nil
 }
 
@@ -392,6 +398,9 @@ func (d *Doris) DescTable(ctx context.Context, database, table string) ([]*types
 			Type2:     type2,
 			Indexable: indexable,
 		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}
 	return columns, nil
 }
@@ -494,8 +503,27 @@ func (d *Doris) SelectRows(ctx context.Context, database, table, query string) (
 	return d.ExecQuery(ctx, database, sql)
 }
 
-// ExecQuery executes a given SQL query in Doris and returns the results
-func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) ([]map[string]interface{}, error) {
+// ExecQuery executes a given SQL query in Doris and returns the results.
+//
+// On every exit (success or any error) it emits a QueryEvent to OnQuery if
+// one is registered. The hook receives the user-supplied ctx so observers can
+// pull CallContext (or anything else) attached upstream.
+func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) (results []map[string]interface{}, err error) {
+	startedAt := time.Now()
+	defer func() {
+		if OnQuery == nil {
+			return
+		}
+		OnQuery(ctx, QueryEvent{
+			Database:  database,
+			SQL:       sql,
+			StartedAt: startedAt,
+			Duration:  time.Since(startedAt),
+			RowCount:  len(results),
+			Err:       err,
+		})
+	}()
+
 	timeoutCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
 
@@ -514,8 +542,6 @@ func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) ([]m
 	if err != nil {
 		return nil, err
 	}
-
-	var results []map[string]interface{}
 
 	for rows.Next() {
 		columnValues := make([]interface{}, len(columns))
@@ -539,6 +565,10 @@ func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) ([]m
 			}
 		}
 		results = append(results, rowMap)
+	}
+
+	if err = rows.Err(); err != nil {
+		return results, fmt.Errorf("error iterating rows: %w", err)
 	}
 	return results, nil
 }
