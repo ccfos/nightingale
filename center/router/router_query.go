@@ -8,43 +8,20 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/eval"
 	"github.com/ccfos/nightingale/v6/dscache"
-	dskit_doris "github.com/ccfos/nightingale/v6/dskit/doris"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/gin-gonic/gin"
 )
 
-// queryContextDecorators holds per-datasource context decorators.
-// Each decorator receives the output of the previous one (chain of
-// responsibility). A decorator MUST return parent unchanged for cate
-// values it does not own.
-var queryContextDecorators []func(parent context.Context, cate string, dsID int64, operator string) context.Context
-
-// RegisterQueryContextDecorator appends a context decorator to the
-// chain. Call during router setup for each datasource that needs to
-// attach per-query metadata (audit context, tracing spans, etc.).
-func RegisterQueryContextDecorator(fn func(context.Context, string, int64, string) context.Context) {
-	queryContextDecorators = append(queryContextDecorators, fn)
-}
-
-// decorateQueryContext runs the registered decorator chain.
-// When no decorators are registered, parent is returned as-is.
-func decorateQueryContext(parent context.Context, cate string, dsID int64, operator string) context.Context {
-	ctx := parent
-	for _, dec := range queryContextDecorators {
-		ctx = dec(ctx, cate, dsID, operator)
-	}
-	return ctx
-}
-
-// ginOperator extracts the best-effort operator name from gin.Context.
+// ginUser extracts the best-effort operator name from gin.Context.
 // Reads c.Get("user") which is populated by rt.user() middleware; for
 // anonymous endpoints we simply return "".
 //
 // Pulled out so the parallel batch path can compute operator once, outside
 // goroutines, avoiding races on gin.Context across query workers.
-func ginOperator(c *gin.Context) string {
+func ginUser(c *gin.Context) string {
 	if v, ok := c.Get("user"); ok {
 		if u, ok := v.(*models.User); ok && u != nil {
 			return u.Username
@@ -53,37 +30,16 @@ func ginOperator(c *gin.Context) string {
 	return ""
 }
 
-// injectQueryCallContext rewrites c.Request to carry datasource-specific
-// context (e.g. audit metadata, tracing spans) via the decorator chain.
-// Used by single-cate handlers (QueryData, QueryLogV2) where every query
-// in the batch shares the same cate/dsID.
+// withCallContext attaches CallContext (datasource id + operator) to ctx for
+// every query path. Datasources consume the value as needed (audit, metrics,
+// tracing); cates that don't care simply ignore it. Always-on injection keeps
+// the upstream router agnostic of which datasources care about call origin.
 //
-// For per-query mixed batches (QueryLogBatchConcurrently), prefer calling
-// decorateQueryContext directly per query.
-func injectQueryCallContext(c *gin.Context, cate string, dsID int64) {
-	c.Request = c.Request.WithContext(
-		decorateQueryContext(c.Request.Context(), cate, dsID, ginOperator(c)),
-	)
-}
-
-// dorisQueryContextDecorator is the Doris-specific implementation of
-// the context decorator chain. It attaches dskit/doris.CallContext when
-// the cate is Doris, enabling downstream audit and metrics hooks in
-// n9e-plus to classify traffic as caller=user.
-//
-// Both "doris" and "doris.logging" are user-facing entrypoints reaching
-// dskit/doris.ExecQuery, so both must be tagged with CallerUser.
-// Tagging is mandatory rather than best-effort: a CallContext without
-// Caller would leak into "_unknown" metric series and be silently
-// excluded from the audit table, defeating the whitelist.
-func dorisQueryContextDecorator(parent context.Context, cate string, dsID int64, operator string) context.Context {
-	if cate != "doris" && cate != "doris.logging" {
-		return parent
-	}
-	return dskit_doris.WithCallContext(parent, dskit_doris.CallContext{
+// Operator is best-effort: empty for anonymous endpoints.
+func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
+	return dskittypes.WithCallContext(parent, dskittypes.CallContext{
 		DatasourceID: dsID,
 		Operator:     operator,
-		Caller:       dskit_doris.CallerUser,
 	})
 }
 
@@ -125,7 +81,7 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 
 	// Operator is a per-request property; resolve it once outside the
 	// goroutines to avoid concurrent reads on gin.Context.
-	operator := ginOperator(ctx)
+	operator := ginUser(ctx)
 
 	for _, q := range f.Queries {
 		if !anonymousAccess && !CheckDsPerm(ctx, q.Did, q.DsCate, q) {
@@ -145,12 +101,9 @@ func QueryLogBatchConcurrently(anonymousAccess bool, ctx *gin.Context, f QueryFr
 			return LogResp{}, fmt.Errorf("query template execute error: %v", err)
 		}
 
-		// Per-query context decoration: this batch endpoint is reached by
-		// multiple datasource types; run the decorator chain so each
-		// datasource can attach its own metadata (audit context, tracing
-		// spans, etc.) without the generic dispatcher needing to know
-		// datasource-specific details.
-		qctx := decorateQueryContext(rctx, q.DsCate, q.Did, operator)
+		// Per-query context decoration: every cate carries CallContext;
+		// individual datasources consume it (audit/metrics/tracing) on demand.
+		qctx := withCallContext(rctx, q.Did, operator)
 
 		wg.Add(1)
 		go func(query Query, qctx context.Context) {
@@ -264,7 +217,7 @@ func QueryDataConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Quer
 func (rt *Router) QueryData(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
-	injectQueryCallContext(c, f.Cate, f.DatasourceId)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	resp, err := QueryDataConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	if err != nil {
@@ -331,7 +284,7 @@ func QueryLogConcurrently(anonymousAccess bool, ctx *gin.Context, f models.Query
 func (rt *Router) QueryLogV2(c *gin.Context) {
 	var f models.QueryParam
 	ginx.BindJSON(c, &f)
-	injectQueryCallContext(c, f.Cate, f.DatasourceId)
+	c.Request = c.Request.WithContext(withCallContext(c.Request.Context(), f.DatasourceId, ginUser(c)))
 
 	resp, err := QueryLogConcurrently(rt.Center.AnonymousAccess.PromQuerier, c, f)
 	ginx.NewRender(c).Data(resp, err)

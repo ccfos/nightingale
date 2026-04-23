@@ -3,11 +3,13 @@ package doris
 import (
 	"context"
 	"testing"
+
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 )
 
 func TestCallContext_RoundTrip(t *testing.T) {
-	ctx := WithCallContext(context.Background(), CallContext{DatasourceID: 7, Operator: "alice"})
-	cc, ok := CallContextFromCtx(ctx)
+	ctx := dskittypes.WithCallContext(context.Background(), dskittypes.CallContext{DatasourceID: 7, Operator: "alice"})
+	cc, ok := dskittypes.CallContextFromCtx(ctx)
 	if !ok {
 		t.Fatal("CallContextFromCtx: expected ok=true")
 	}
@@ -17,7 +19,7 @@ func TestCallContext_RoundTrip(t *testing.T) {
 }
 
 func TestCallContext_Missing(t *testing.T) {
-	if _, ok := CallContextFromCtx(context.Background()); ok {
+	if _, ok := dskittypes.CallContextFromCtx(context.Background()); ok {
 		t.Fatal("CallContextFromCtx on bare ctx: expected ok=false")
 	}
 }
@@ -30,7 +32,6 @@ func TestOnQuery_NilIsSafe(t *testing.T) {
 	OnQuery = nil
 	defer func() { OnQuery = prev }()
 
-	// Imitate the defer body in ExecQuery.
 	if OnQuery != nil {
 		OnQuery(context.Background(), QueryEvent{})
 	}

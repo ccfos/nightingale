@@ -18,7 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/dscache"
-	dskitdoris "github.com/ccfos/nightingale/v6/dskit/doris"
+	dskittypes "github.com/ccfos/nightingale/v6/dskit/types"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/hash"
@@ -1498,12 +1498,11 @@ func (arw *AlertRuleWorker) GetAnomalyPoint(rule *models.AlertRule, dsId int64) 
 			}
 
 			ctx := context.WithValue(context.Background(), "delay", int64(rule.Delay))
-			if rule.Cate == "doris" || rule.Cate == "doris.logging" {
-				ctx = dskitdoris.WithCallContext(ctx, dskitdoris.CallContext{
-					DatasourceID: dsId,
-					Caller:       dskitdoris.CallerAlert,
-				})
-			}
+			ctx = dskittypes.WithCallContext(ctx, dskittypes.CallContext{
+				DatasourceID: dsId,
+				Operator:     "alert_rule",
+				RuleID:       rule.Id,
+			})
 			series, err := plug.QueryData(ctx, query)
 			arw.Processor.Stats.CounterQueryDataTotal.WithLabelValues(fmt.Sprintf("%d", arw.DatasourceId), fmt.Sprintf("%d", rule.Id)).Inc()
 			if err != nil {
