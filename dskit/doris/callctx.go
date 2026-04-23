@@ -2,6 +2,25 @@ package doris
 
 import "context"
 
+// Caller is the high-level call site classification recorded in a CallContext.
+//
+// It is consumed by observation hooks (metrics, audit, tracing) to distinguish
+// query traffic produced by interactive user requests from background workers
+// such as alert/recording rule schedulers. The value is intentionally a plain
+// string so downstream observers can introduce their own categories without
+// changing this package; the constants below cover the common cases.
+type Caller string
+
+const (
+	// CallerUser denotes interactive, user-facing query traffic
+	// (dashboards, log search, ad-hoc SQL...).
+	CallerUser Caller = "user"
+	// CallerAlert denotes alert rule evaluation queries.
+	CallerAlert Caller = "alert"
+	// CallerRecord denotes recording rule evaluation queries.
+	CallerRecord Caller = "record"
+)
+
 // CallContext carries the originating call site information for a Doris query.
 // It is propagated through context so deep observation hooks (audit, metrics,
 // tracing) can correlate raw execution with the user-facing request.
@@ -11,6 +30,7 @@ import "context"
 type CallContext struct {
 	DatasourceID int64  // datasource id resolved at the entry handler
 	Operator     string // best-effort caller identity, usually username
+	Caller       Caller // high-level classification of the call site; empty when unknown
 }
 
 type callCtxKey struct{}
