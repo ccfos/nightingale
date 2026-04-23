@@ -12,10 +12,11 @@ import (
 )
 
 type UserGroupSyncer struct {
-	ctx    *ctx.Context
-	ug     *models.UserGroup
-	appKey string
-	teamID int64
+	ctx      *ctx.Context
+	ug       *models.UserGroup
+	appKey   string
+	teamID   int64
+	syncFrom string
 }
 
 func NewUserGroupSyncer(ctx *ctx.Context, ug *models.UserGroup) (*UserGroupSyncer, error) {
@@ -25,9 +26,10 @@ func NewUserGroupSyncer(ctx *ctx.Context, ug *models.UserGroup) (*UserGroupSynce
 	}
 
 	return &UserGroupSyncer{
-		ctx:    ctx,
-		ug:     ug,
-		appKey: appKey,
+		ctx:      ctx,
+		ug:       ug,
+		appKey:   appKey,
+		syncFrom: GetFlashDutySyncUserFrom(ctx),
 	}, nil
 }
 
@@ -147,7 +149,7 @@ func (ugs *UserGroupSyncer) syncTeamMember() error {
 }
 
 func (ugs *UserGroupSyncer) addMemberToFDTeam(users []models.User) error {
-	if err := fdAddUsers(ugs.appKey, users); err != nil {
+	if err := fdAddUsers(ugs.appKey, users, ugs.syncFrom); err != nil {
 		return err
 	}
 
@@ -237,6 +239,20 @@ func NeedForceDeleteUser(ctx *ctx.Context) bool {
 	}
 
 	return configs[0].Cval == "true"
+}
+
+func GetFlashDutySyncUserFrom(ctx *ctx.Context) string {
+	configs, err := models.ConfigsSelectByCkey(ctx, "flashduty_sync_user_from")
+	if err != nil {
+		logger.Warningf("failed to query flashduty_sync_user_from: %v", err)
+		return ""
+	}
+
+	if len(configs) == 0 {
+		return ""
+	}
+
+	return configs[0].Cval
 }
 
 func NeedSyncUser(ctx *ctx.Context) bool {
