@@ -15,12 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ginUser extracts the best-effort operator name from gin.Context.
-// Reads c.Get("user") which is populated by rt.user() middleware; for
-// anonymous endpoints we simply return "".
-//
-// Pulled out so the parallel batch path can compute operator once, outside
-// goroutines, avoiding races on gin.Context across query workers.
 func ginUser(c *gin.Context) string {
 	if v, ok := c.Get("user"); ok {
 		if u, ok := v.(*models.User); ok && u != nil {
@@ -30,11 +24,7 @@ func ginUser(c *gin.Context) string {
 	return ""
 }
 
-// withCallContext attaches CallContext (datasource id + operator) to ctx for
-// every query path. Datasources consume the value as needed (audit, metrics,
-// tracing); cates that don't care simply ignore it. Always-on injection keeps
-// the upstream router agnostic of which datasources care about call origin.
-//
+// withCallContext
 // Operator is best-effort: empty for anonymous endpoints.
 func withCallContext(parent context.Context, dsID int64, operator string) context.Context {
 	return dskittypes.WithCallContext(parent, dskittypes.CallContext{

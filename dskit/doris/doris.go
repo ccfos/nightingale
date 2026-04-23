@@ -566,12 +566,7 @@ func (d *Doris) ExecQuery(ctx context.Context, database string, sql string) (res
 		}
 		results = append(results, rowMap)
 	}
-	// rows.Next returning false can mean either EOF or that the underlying
-	// connection was torn down (timeout / cancel / network reset). Without
-	// this check, a SQL aborted by ctx cancel comes back as (partialRows, nil)
-	// and observers (audit / metrics) silently misclassify a failed query
-	// as a successful one. The named return makes the deferred OnQuery hook
-	// see the real error.
+
 	if err = rows.Err(); err != nil {
 		return results, fmt.Errorf("error iterating rows: %w", err)
 	}
