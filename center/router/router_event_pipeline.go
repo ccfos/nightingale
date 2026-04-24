@@ -235,8 +235,12 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	}
 
 	lang := c.GetHeader("X-Language")
+	var resultEvent *models.AlertCurEvent
+	if wfCtx != nil {
+		resultEvent = wfCtx.Event
+	}
 	ginx.NewRender(c).Data(map[string]interface{}{
-		"event":  wfCtx.Event,
+		"event":  resultEvent,
 		"result": i18n.Sprintf(lang, res),
 	}, nil)
 }
