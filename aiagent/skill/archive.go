@@ -21,7 +21,7 @@ import (
 
 // 归档安全限制：防止 zip bomb / 过大单文件
 const (
-	MaxFileCount      = 50               // 单个归档最多文件数（不含 SKILL.md 本身的上限余量）
+	MaxFileCount      = 100              // 单个归档最多文件数（不含 SKILL.md 本身的上限余量）
 	MaxTotalExtracted = 50 * 1024 * 1024 // 解压后总大小上限
 	MaxSingleFile     = 16 * 1024 * 1024 // 单文件上限（对齐 MEDIUMTEXT）
 	MaxSkillMD        = 64 * 1024        // SKILL.md 本身的上限（对齐 TEXT）
