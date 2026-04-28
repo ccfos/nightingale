@@ -112,6 +112,7 @@ func (rt *Router) aiLLMConfigDel(c *gin.Context) {
 
 func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 	var body struct {
+		Name        string                `json:"name"`
 		APIType     string                `json:"api_type"`
 		APIURL      string                `json:"api_url"`
 		APIKey      string                `json:"api_key"`
@@ -122,6 +123,17 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 
 	if body.APIType == "" || body.APIURL == "" || body.APIKey == "" || body.Model == "" {
 		ginx.Bomb(http.StatusBadRequest, "api_type, api_url, api_key, model are required")
+	}
+
+	// On the edit page the GET response masks api_key (e.g. "sk-a****wxyz").
+	// If the frontend posts that masked value back for testing, look up the
+	// real key by name so the test actually authenticates.
+	if body.Name != "" {
+		stored, err := models.AILLMConfigGetByName(rt.Ctx, body.Name)
+		ginx.Dangerous(err)
+		if stored != nil && models.IsMaskedAPIKey(body.APIKey, stored.APIKey) {
+			body.APIKey = stored.APIKey
+		}
 	}
 
 	obj := &models.AILLMConfig{
