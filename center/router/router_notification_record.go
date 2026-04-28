@@ -169,10 +169,11 @@ func checkChannel(channel string) bool {
 }
 
 func replaceLastEightChars(s string) string {
-	if len(s) <= 8 {
-		return strings.Repeat("*", len(s))
+	runes := []rune(s)
+	if len(runes) <= 8 {
+		return strings.Repeat("*", len(runes))
 	}
-	return s[:len(s)-8] + strings.Repeat("*", 8)
+	return string(runes[:len(runes)-8]) + strings.Repeat("*", 8)
 }
 
 func fillUserNames(ctx *ctx.Context, groupIdSet map[int64]struct{}) map[string]map[string]struct{} {
