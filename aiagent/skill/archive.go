@@ -27,6 +27,17 @@ const (
 	MaxSkillMD        = 64 * 1024        // SKILL.md 本身的上限（对齐 TEXT）
 )
 
+// isArchiveNoise 判断归档条目是否是系统/打包工具产生的噪声（macOS AppleDouble、
+// Finder 资源 fork、.DS_Store 等）。这些条目对 skill 内容无意义，且会撑爆
+// MaxFileCount 配额，所以在 Extract 阶段就直接跳过，与 walker.go 的过滤语义保持一致。
+func isArchiveNoise(name string) bool {
+	if strings.HasPrefix(name, "__MACOSX/") {
+		return true
+	}
+	base := filepath.Base(filepath.ToSlash(name))
+	return strings.HasPrefix(base, "._") || base == ".DS_Store"
+}
+
 // ExtractZip 将 data 中的 zip 归档解压到 destDir。做了两层保护：
 //  1. 按 header 声明的大小预扫描（防止文件数过多 / 单文件过大 / 解压总量过大）；
 //  2. 实际拷贝时再用 LimitReader 兜底，防止 header 被伪造。
@@ -41,6 +52,9 @@ func ExtractZip(data []byte, destDir string) error {
 	var declaredTotal uint64
 	for _, f := range r.File {
 		if f.FileInfo().IsDir() {
+			continue
+		}
+		if isArchiveNoise(f.Name) {
 			continue
 		}
 		fileCount++
@@ -60,6 +74,9 @@ func ExtractZip(data []byte, destDir string) error {
 	var actualTotal int64
 	for _, f := range r.File {
 		if f.FileInfo().IsDir() {
+			continue
+		}
+		if isArchiveNoise(f.Name) {
 			continue
 		}
 		if f.Mode()&os.ModeSymlink != 0 {
@@ -134,6 +151,11 @@ func ExtractTarGz(r io.Reader, destDir string) error {
 		case tar.TypeReg:
 			// 继续下面的处理
 		default:
+			continue
+		}
+
+		if isArchiveNoise(hdr.Name) {
+			// tr.Next() 会自动丢弃当前条目剩余字节，无需手动 drain
 			continue
 		}
 
