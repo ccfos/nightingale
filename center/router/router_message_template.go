@@ -121,8 +121,6 @@ func (rt *Router) messageTemplatePut(c *gin.Context) {
 
 func (rt *Router) messageTemplateGet(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
-	gids, err := models.MyGroupIds(rt.Ctx, me.Id)
-	ginx.Dangerous(err)
 
 	tid := ginx.UrlParamInt64(c, "id")
 	mt, err := models.MessageTemplateGet(rt.Ctx, "id = ?", tid)
@@ -130,8 +128,13 @@ func (rt *Router) messageTemplateGet(c *gin.Context) {
 	if mt == nil {
 		ginx.Bomb(http.StatusNotFound, "message template not found")
 	}
-	if mt.Private == 1 && !slice.HaveIntersection(gids, mt.UserGroupIds) {
-		ginx.Bomb(http.StatusForbidden, "forbidden")
+
+	if !me.IsAdmin() && mt.Private == 1 {
+		gids, err := models.MyGroupIds(rt.Ctx, me.Id)
+		ginx.Dangerous(err)
+		if !slice.HaveIntersection(gids, mt.UserGroupIds) {
+			ginx.Bomb(http.StatusForbidden, "forbidden")
+		}
 	}
 
 	ginx.NewRender(c).Data(mt, nil)
