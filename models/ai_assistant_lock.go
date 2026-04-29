@@ -63,6 +63,17 @@ func AcquireChatLock(ctx context.Context, rds storage.Redis, chatID string) (*Ch
 	return lock, nil
 }
 
+// ChatLockHeld reports whether the per-chat lock key currently exists. Used by
+// /detail to spot orphan in-flight snapshots whose owner crashed: lock is gone
+// but msg snapshot still has IsFinish=false until its 24h TTL.
+func ChatLockHeld(ctx context.Context, rds storage.Redis, chatID string) (bool, error) {
+	n, err := rds.Exists(ctx, AssistantChatLockKey(chatID)).Result()
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
 // Release deletes the lock only if we still hold it (token match).
 // Pass a fresh background context — release must run even when the caller's
 // context has already been canceled.

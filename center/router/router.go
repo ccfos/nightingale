@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
@@ -57,7 +58,8 @@ type Router struct {
 	LogDir            string
 
 	HeartbeatHook         HeartbeatHookFunc
-	msgStateManager       *MessageStateManager
+	streamBus             aiagent.StreamBus
+	pubsubBus             storage.PubsubBus
 	llmClientCache        *llm.ClientCache
 	TargetDeleteHook      models.TargetDeleteHookFunc
 	TargetBgidChangeCheck TargetBgidChangeCheckFunc
@@ -99,7 +101,8 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		LogDir:                logDir,
 		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
 		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
-		msgStateManager:       NewMessageStateManager(),
+		streamBus:             aiagent.NewStreamBus(redis),
+		pubsubBus:             storage.NewPubsubBus(redis),
 		llmClientCache:        llm.NewClientCache(),
 		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
