@@ -6,6 +6,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/a2a"
+	a2ataskstore "github.com/ccfos/nightingale/v6/aiagent/a2a/taskstore"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
@@ -65,6 +66,22 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		tokenHeader = DefaultTokenKey
 	}
 
+	// Build a Redis-backed TaskStore so tasks/get and tasks/resubscribe
+	// survive process restarts and LB-induced instance switches. All n9e
+	// center instances share the same Redis, so multi-instance correctness
+	// comes for free via the store's Lua-CAS update path.
+	taskStore := a2ataskstore.NewRedisStore(rt.Redis, a2ataskstore.Options{
+		User: func(ctx context.Context) (string, error) {
+			user := a2a.UserFromContext(ctx)
+			if user == nil {
+				return "", nil
+			}
+			return user.Username, nil
+		},
+	})
+
+	handlerOpts := a2a.HandlerOptions{TaskStore: taskStore}
+
 	// AgentCard is public — it carries no instance-specific secrets, only a
 	// description of the agent's capabilities. Spec requires it to be
 	// reachable without authentication so clients can discover.
@@ -76,8 +93,8 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 
 	a2aGroup := r.Group("/a2a")
 	a2aGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser())
-	a2aGroup.Any("", gin.WrapH(a2a.NewHTTPHandler(backend)))
-	a2aGroup.Any("/*proxyPath", gin.WrapH(a2a.NewHTTPHandler(backend)))
+	a2aGroup.Any("", gin.WrapH(a2a.NewHTTPHandler(backend, handlerOpts)))
+	a2aGroup.Any("/*proxyPath", gin.WrapH(a2a.NewHTTPHandler(backend, handlerOpts)))
 
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpGroup := r.Group("/mcp")
