@@ -156,116 +156,26 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 		return
 	}
 
-	// Verify chat ownership
 	chat, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	// Acquire per-chat Redis lock. Short TTL + background renewal (see
-	// models.ChatLock) — a long agent run extends the lease while alive;
-	// a crashed process lets the lock expire within ChatLockTTL.
-	lock, err := models.AcquireChatLock(c, rt.Redis, req.ChatID)
-	ginx.Dangerous(err)
-	if lock == nil {
-		ginx.Bomb(http.StatusConflict, "chat is busy, please wait for the current message to finish")
-		return
-	}
-
-	// Under lock: allocate seq_id
-	maxSeq, err := models.AssistantMessageMaxSeqID(rt.Ctx, req.ChatID)
-	if err != nil {
-		lock.Release(context.Background(), rt.Redis)
-		ginx.Dangerous(err)
-		return
-	}
-	seqID := maxSeq + 1
-
-	// streamID 内嵌 chatID + seqID："<chatID>:<seqID>:<uuid>"——
-	// /assistant/stream 接口收到 streamID 后能据此还原出 chatID（用来定位 Redis
-	// Stream key 的 hash tag）和 seqID（用来 MsgStateGet 做 message 粒度的 orphan
-	// 判定），不需要前端多传字段，wire format 完全不变。
-	// 旧格式 "<chatID>:<uuid>" 由 parser 兼容（seqID 解析失败回 0，watchdog 自动
-	// 回退到 ChatLockHeld 老逻辑）。
-	streamID := fmt.Sprintf("%s:%d:%s", req.ChatID, seqID, uuid.New().String())
-	msg := models.AssistantMessage{
-		ChatID: req.ChatID,
-		SeqID:  seqID,
-		Query:  req.Query,
-		Response: []models.AssistantMessageResponse{
-			{ContentType: models.ContentTypeMarkdown, StreamID: streamID, IsFromAI: true},
-		},
-		RecommendAction: []models.AssistantAction{},
-	}
-
-	// Persist initial message
-	if err := models.AssistantMessageSet(rt.Ctx, msg); err != nil {
-		lock.Release(context.Background(), rt.Redis)
-		ginx.Dangerous(err)
-		return
-	}
-
-	// Update chat: title on first message, clear is_new, update timestamp.
-	// Truncate by rune count (not byte count) so multi-byte characters like
-	// Chinese/Japanese aren't sliced mid-character — byte-level slicing would
-	// leave half a code point and render as '��'.
-	if seqID == 1 {
-		title := req.Query.Content
-		if runes := []rune(title); len(runes) > 50 {
-			title = string(runes[:50]) + "..."
-		}
-		chat.Title = title
-	}
-	chat.IsNew = false
-	chat.LastUpdate = time.Now().Unix()
-	models.AssistantChatSet(rt.Ctx, *chat)
-
-	// 写入 Redis 上的初始快照——detail 接口在 owner 还没开始流式输出之前来查就能
-	// 直接从 Redis 拿到。
-	state := NewMessageState(rt.Redis, &msg)
-	state.Persist(c)
-
-	// 同步种入 init marker，让 stream key 立刻存在。客户端拿到 streamID 后立即
-	// 连 /assistant/stream 时，Exists 校验能立刻通过，不会因为 owner 还没首包
-	// 而被误判成"无效 streamID"。
-	//
-	// Init 失败必须在返回 streamID 给前端之前处理掉：否则 stream key 不存在，
-	// 前端连 /assistant/stream 后 Exists 返回 (false, nil)，handler 立即写
-	// finish event 关闭，owner 后续 Append 全部丢失，UI 表现为「消息成功创建
-	// 但永远收不到任何内容」。go-redis 自带连接级 retry，但偶发抖动仍可能让
-	// Init 失败而后续 Append 成功（不同次调用、不同 backoff），所以这里再叠
-	// 一层 app-level retry 吃瞬时抖动；仍失败就当 Redis 不可用，释放 lock、
-	// 把刚 Persist 的占位消息打成 cancelled（避免幽灵行），让前端看到清晰失败。
-	var initErr error
-	for i := 0; i < 3; i++ {
-		initErr = rt.streamBus.Init(c, msg.ChatID, streamID)
-		if initErr == nil {
-			break
-		}
-		logger.Warningf("[Assistant] streamBus.Init chat=%s stream=%s attempt=%d: %v", msg.ChatID, streamID, i+1, initErr)
-		time.Sleep(50 * time.Millisecond)
-	}
-	if initErr != nil {
-		models.AssistantMessageSetStatus(rt.Ctx, msg.ChatID, msg.SeqID, models.MessageStatusCancel)
-		lock.Release(context.Background(), rt.Redis)
-		ginx.Bomb(http.StatusInternalServerError, "stream init failed: %v", initErr)
-		return
-	}
-
-	// Create cancelable context. The parent context must outlive the agent's
-	// own ReAct budget (set later from llmCfg.ExtraConfig.TimeoutSeconds), so
-	// give it generous headroom — 15 min covers worst-case multi-tool flows
-	// while still bounding stuck conversations.
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
-
-	// Capture X-Language before the gin.Context goes out of scope — the goroutine
-	// outlives this handler. Used to pin the agent's natural-language output to
-	// the UI language (see chat.LanguageDirective).
+	// Capture X-Language before the gin.Context goes out of scope — the runner
+	// goroutine outlives this handler. Used to pin the agent's natural-language
+	// output to the UI language (see chat.LanguageDirective).
 	lang := c.GetHeader("X-Language")
 
-	go rt.processAssistantMessage(ctx, cancel, lock, state, streamID, me.Id, lang)
+	result, status, err := rt.StartAssistantMessage(me.Id, chat, req.Query, lang)
+	if err != nil {
+		if status == 0 {
+			status = http.StatusInternalServerError
+		}
+		ginx.Bomb(status, "%s", err.Error())
+		return
+	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"chat_id": req.ChatID,
-		"seq_id":  seqID,
+		"chat_id": result.ChatID,
+		"seq_id":  result.SeqID,
 	}, nil)
 }
 
@@ -901,72 +811,15 @@ func (rt *Router) assistantMessageCancel(c *gin.Context) {
 	_, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	// 检查目标消息是否还在进行中：未完结或 key 已不在则不能取消
-	snap, err := models.MsgStateGet(c, rt.Redis, req.ChatID, req.SeqID)
-	ginx.Dangerous(err)
-	if snap == nil || snap.IsFinish {
-		ginx.Bomb(http.StatusNotFound, "message not executing or not found")
+	if err := rt.CancelAssistantMessageInternal(c, req.ChatID, req.SeqID); err != nil {
+		// "message not executing or not found" → 404; everything else → 500.
+		if err.Error() == "message not executing or not found" {
+			ginx.Bomb(http.StatusNotFound, "%s", err.Error())
+			return
+		}
+		ginx.Dangerous(err)
 		return
 	}
-
-	// 双通道通知 owner：(1) SET 取消标志兜底，对抗 pubsub 偶发漏发；
-	// (2) PUBLISH 即时通知，让 owner 在毫秒级触发本地 cancel。
-	if err := models.MsgCancelMark(c, rt.Redis, req.ChatID, req.SeqID); err != nil {
-		logger.Warningf("[Assistant] MsgCancelMark chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
-	}
-	if err := rt.pubsubBus.Publish(c, models.MsgCancelChannel(req.ChatID, req.SeqID), ""); err != nil {
-		logger.Warningf("[Assistant] cancel publish chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
-	}
-
-	// 自闭环收尾：不依赖 owner 实例还活着。owner 健在时它的 finishMessage 也会写
-	// 终态，与下面这次写入互为幂等覆盖；owner 崩溃 / 卡死时，下面这次写入就是权威
-	// 终态——/detail 立即读到 cancelled，/stream 的消费者读到 finish marker 后退出。
-	var streamID string
-	for _, r := range snap.Response {
-		if r.StreamID != "" {
-			streamID = r.StreamID
-			break
-		}
-	}
-	if streamID != "" {
-		if err := rt.streamBus.Finish(c, req.ChatID, streamID); err != nil {
-			logger.Warningf("[Assistant] cancel streamBus.Finish chat=%s stream=%s: %v", req.ChatID, streamID, err)
-		}
-	}
-
-	// 反向竞态防护（race A）：① 校验 → ③ 设 marker → ④ 写终态 之间约 ~5ms，owner
-	// 完全可能在这个窗口里走完 success 路径写完 IsFinish=true 的权威终态。如果直接
-	// 用 ① 读到的旧 in-flight snap 写 Redis/DB，会把 owner 刚写完的成功结果反向
-	// 覆盖成 cancelled + 空 Response，再叠加 status=-2 让 history 过滤掉这条消息——
-	// 用户已经从 SSE 看完全文，点 cancel 后却"凭空消失"。
-	//
-	// 这里 re-read 一次：发现 owner 已经收尾就 no-op，cancel 视为"来晚了"。注意 ③
-	// MsgCancelMark 已经设上，owner 端 MessageState.Update/Persist 内部的 guard 会
-	// 让此后任何 owner 写 Redis 都跳过——也就是 fresh==in-flight 时这里继续往下写
-	// 不会被 owner 反向再覆盖 Redis。
-	if fresh, ferr := models.MsgStateGet(c, rt.Redis, req.ChatID, req.SeqID); ferr != nil {
-		logger.Warningf("[Assistant] cancel re-read chat=%s seq=%d: %v", req.ChatID, req.SeqID, ferr)
-	} else if fresh != nil && fresh.IsFinish {
-		ginx.NewRender(c).Message(nil)
-		return
-	}
-
-	snap.IsFinish = true
-	snap.CurStep = ""
-	snap.ErrCode = int(models.MessageStatusCancel)
-	snap.ErrMsg = "cancelled by user"
-	if err := models.MsgStateSet(c, rt.Redis, snap); err != nil {
-		logger.Warningf("[Assistant] cancel MsgStateSet chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
-	}
-
-	// 把 cancelled 的 data/extra 也写回 DB——光更新 status 列的话，Redis TTL 过期后
-	// /detail fallback 到 DB 会拿到最初创建时的 is_finish=false/err_code=0 旧行。
-	// 同时 owner 那边在最终 AssistantMessageSet 之前会检查 MsgCancelExists，看到取消
-	// 标志就直接 return，不会再覆盖这里写的 cancelled data。
-	if err := models.AssistantMessageSet(rt.Ctx, *snap); err != nil {
-		logger.Warningf("[Assistant] cancel AssistantMessageSet chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
-	}
-	models.AssistantMessageSetStatus(rt.Ctx, req.ChatID, req.SeqID, models.MessageStatusCancel)
 
 	ginx.NewRender(c).Message(nil)
 }
