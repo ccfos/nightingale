@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/a2a"
@@ -85,28 +86,44 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// AgentCard is public — it carries no instance-specific secrets, only a
 	// description of the agent's capabilities. Spec requires it to be
 	// reachable without authentication so clients can discover.
-	r.GET("/.well-known/agent.json", gin.WrapH(a2a.AgentCardHandler(a2a.AgentCardOptions{
+	cardHandler := gin.WrapH(a2a.AgentCardHandler(a2a.AgentCardOptions{
 		BaseURL:         rt.HTTP.A2A.BaseURL,
 		A2APath:         "/a2a",
 		TokenHeaderName: tokenHeader,
-	})))
+	}))
+	// Canonical A2A v0.3+ path; alias kept for older clients.
+	r.GET("/.well-known/agent-card.json", cardHandler)
+	r.GET("/.well-known/agent.json", cardHandler)
 
+	// The SDK's internal http.ServeMux is registered at root paths like
+	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a
+	// mount prefix before delegating; otherwise the SDK's mux sees
+	// /a2a/message:send and 404s.
+	a2aHandler := http.StripPrefix("/a2a", a2a.NewHTTPHandler(backend, handlerOpts))
 	a2aGroup := r.Group("/a2a")
 	a2aGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser())
-	a2aGroup.Any("", gin.WrapH(a2a.NewHTTPHandler(backend, handlerOpts)))
-	a2aGroup.Any("/*proxyPath", gin.WrapH(a2a.NewHTTPHandler(backend, handlerOpts)))
+	a2aGroup.Any("", gin.WrapH(a2aHandler))
+	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
+		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
 		mcpGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser())
-		mcpGroup.Any("", gin.WrapH(a2a.NewMCPHandler(backend)))
-		mcpGroup.Any("/*proxyPath", gin.WrapH(a2a.NewMCPHandler(backend)))
+		mcpGroup.Any("", gin.WrapH(mcpHandler))
+		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}
 }
 
 // injectA2AUser pulls *models.User from gin.Context (set by rt.user()) and
 // stuffs it into request.Context so the a2a executor / mcp handler can read
 // it without depending on gin.
+//
+// It also clears the per-connection write deadline. A2A SSE streams (e.g.
+// message:stream, tasks/{id}:subscribe) and long MCP responses can outlive
+// the global http.Server.WriteTimeout (40s by default in n9e config), which
+// would otherwise close the underlying TCP connection mid-stream and the
+// SDK's REST encoder fails with "write tcp: i/o timeout". n9e's existing
+// /stream handler does the same thing — see assistantStream().
 func (rt *Router) injectA2AUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get("user")
@@ -118,6 +135,9 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 		if !ok || user == nil {
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 			return
+		}
+		if rc := http.NewResponseController(c.Writer); rc != nil {
+			_ = rc.SetWriteDeadline(time.Time{})
 		}
 		c.Request = c.Request.WithContext(a2a.WithUser(c.Request.Context(), user))
 		c.Next()

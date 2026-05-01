@@ -88,20 +88,27 @@ func NewRedisStore(rds storage.Redis, opts Options) *RedisStore {
 	}
 }
 
+// All keys use the prefix as a Redis Cluster hash tag (the {…} segment) so
+// they always land on the same hash slot. Without this tag the Lua scripts
+// (which touch task hash + user index + context index in one call) would
+// fail with CROSSSLOT on a clustered Redis. Trade-off: every A2A task lives
+// on a single shard — acceptable because A2A traffic is low compared to the
+// rest of n9e's Redis workload.
+
 // taskKey returns the Redis hash key holding a single task's serialized state.
 func (s *RedisStore) taskKey(id a2a.TaskID) string {
-	return fmt.Sprintf("%s:task:%s", s.prefix, id)
+	return fmt.Sprintf("{%s}:task:%s", s.prefix, id)
 }
 
 // userIndexKey returns the per-user sorted-set key indexing tasks by updated time.
 func (s *RedisStore) userIndexKey(user string) string {
-	return fmt.Sprintf("%s:tasks:idx:%s", s.prefix, user)
+	return fmt.Sprintf("{%s}:tasks:idx:%s", s.prefix, user)
 }
 
 // contextIndexKey returns the per-context sorted-set key. Used to scope
 // ListTasks by ContextID without scanning every task.
 func (s *RedisStore) contextIndexKey(contextID string) string {
-	return fmt.Sprintf("%s:tasks:ctx:%s", s.prefix, contextID)
+	return fmt.Sprintf("{%s}:tasks:ctx:%s", s.prefix, contextID)
 }
 
 // Lua script for Create. Refuses to overwrite an existing task; sets all

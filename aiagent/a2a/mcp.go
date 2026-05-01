@@ -42,14 +42,14 @@ func NewMCPHandler(backend AssistantBackend) http.Handler {
 }
 
 type mcpInput struct {
-	Message string `json:"message" jsonschema:"description=User request or question for the n9e assistant."`
-	ChatID  string `json:"chat_id,omitempty" jsonschema:"description=Optional existing chat ID; when omitted a new chat is created."`
+	Message string `json:"message" jsonschema:"User request or question for the n9e assistant."`
+	ChatID  string `json:"chat_id,omitempty" jsonschema:"Optional existing chat ID; when omitted a new chat is created."`
 }
 
 type mcpOutput struct {
-	Content string `json:"content" jsonschema:"description=Final assistant response text."`
-	ChatID  string `json:"chat_id" jsonschema:"description=Chat identifier; reuse it to continue the same conversation."`
-	SeqID   int64  `json:"seq_id" jsonschema:"description=Sequence number of this message inside the chat."`
+	Content string `json:"content" jsonschema:"Final assistant response text."`
+	ChatID  string `json:"chat_id" jsonschema:"Chat identifier; reuse it to continue the same conversation."`
+	SeqID   int64  `json:"seq_id" jsonschema:"Sequence number of this message inside the chat."`
 }
 
 func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) (*mcp.CallToolResult, *mcpOutput, error) {

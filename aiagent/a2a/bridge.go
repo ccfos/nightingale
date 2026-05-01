@@ -68,25 +68,17 @@ func (b *streamBridge) forwardReason(delta string) bool {
 	return b.yield(a2a.NewArtifactUpdateEvent(b.execCtx, b.reasoningArtifactID, part), nil)
 }
 
-// End marks the in-flight artifacts as last-chunk and emits a terminal status
-// update. err == nil means success → TaskStateCompleted; otherwise failed.
+// End emits a terminal status update. err == nil → TaskStateCompleted;
+// otherwise failed.
+//
+// We deliberately do NOT emit a separate LastChunk artifact-update event:
+// the SDK's taskupdate.Manager rejects ArtifactUpdate events with empty
+// Parts (a2a.ErrInvalidAgentResponse "artifact cannot be empty"), which
+// would flip the task state to failed even though the conversation
+// succeeded. The completed status update alone is the canonical end-of-
+// stream signal in this SDK; clients still know the artifact is final
+// because no further deltas arrive after a terminal state.
 func (b *streamBridge) End(err error) bool {
-	// Mark accumulated artifacts as final so clients can free buffers.
-	if b.contentArtifactID != "" {
-		ev := a2a.NewArtifactUpdateEvent(b.execCtx, b.contentArtifactID)
-		ev.LastChunk = true
-		if !b.yield(ev, nil) {
-			return false
-		}
-	}
-	if b.reasoningArtifactID != "" {
-		ev := a2a.NewArtifactUpdateEvent(b.execCtx, b.reasoningArtifactID)
-		ev.LastChunk = true
-		if !b.yield(ev, nil) {
-			return false
-		}
-	}
-
 	if err != nil {
 		return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, a2a.TaskStateFailed,
 			a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
