@@ -61,13 +61,12 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 		return nil, nil, errors.New("a2a/mcp: message is required")
 	}
 
+	// EnsureAssistantChat collapses "unknown chatID" / "chatID owned by someone
+	// else" / "no chatID supplied" into "allocate a fresh chat" already, so the
+	// only error path here is an actual DB failure. Don't echo client input
+	// back in the error message.
 	chat, err := backend.EnsureAssistantChat(user.Id, in.ChatID, models.AssistantPageInfo{})
 	if err != nil {
-		// Don't leak whether ChatID exists-but-belongs-to-someone-else vs.
-		// just doesn't exist — both surface identically.
-		if in.ChatID != "" {
-			return nil, nil, fmt.Errorf("chat %s not found", in.ChatID)
-		}
 		return nil, nil, fmt.Errorf("ensure chat: %w", err)
 	}
 

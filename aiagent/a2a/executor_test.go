@@ -12,16 +12,17 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-// fakeBackend records which backend methods Cancel touches, so a test can
+// fakeBackend records which backend methods Cancel touches, so tests can
 // assert that auth gates short-circuit before any mutation happens.
 type fakeBackend struct {
 	checkedChat   string
 	checkedUserID int64
 	checkErr      error
 
-	latestSeqCalls   int
-	cancelCalls      int
-	cancelChatCalled string
+	cancelCalls       int
+	cancelChatCalled  string
+	cancelSeqIDCalled int64
+	cancelErr         error
 }
 
 func (f *fakeBackend) EnsureAssistantChat(int64, string, models.AssistantPageInfo) (*models.AssistantChat, error) {
@@ -32,15 +33,11 @@ func (f *fakeBackend) StartAssistantMessage(int64, *models.AssistantChat, models
 	return nil, 0, errors.New("not implemented")
 }
 
-func (f *fakeBackend) CancelAssistantMessage(_ context.Context, chatID string, _ int64) error {
+func (f *fakeBackend) CancelAssistantMessage(_ context.Context, chatID string, seqID int64) error {
 	f.cancelCalls++
 	f.cancelChatCalled = chatID
-	return nil
-}
-
-func (f *fakeBackend) LatestAssistantMessageSeqID(string) (int64, error) {
-	f.latestSeqCalls++
-	return 0, nil
+	f.cancelSeqIDCalled = seqID
+	return f.cancelErr
 }
 
 func (f *fakeBackend) CheckChatOwner(chatID string, userID int64) error {
@@ -50,6 +47,10 @@ func (f *fakeBackend) CheckChatOwner(chatID string, userID int64) error {
 }
 
 func (f *fakeBackend) StreamBus() aiagent.StreamBus { return nil }
+
+func (f *fakeBackend) MessageSnapshot(context.Context, string, int64) (*models.AssistantMessage, error) {
+	return nil, nil
+}
 
 // drain runs the iter.Seq2 returned by Cancel and collects (events, errors).
 func drain(seq func(yield func(a2a.Event, error) bool)) ([]a2a.Event, []error) {
@@ -63,18 +64,34 @@ func drain(seq func(yield func(a2a.Event, error) bool)) ([]a2a.Event, []error) {
 	return events, errs
 }
 
+// storedTask returns an ec.StoredTask whose Metadata carries the (chatID,
+// seqID) ref Execute would have attached at submission time. Tests that
+// exercise Cancel use this to simulate the SDK round-tripping the Task
+// through TaskStore between Execute and Cancel.
+func storedTask(chatID string, seqID int64) *a2a.Task {
+	return &a2a.Task{
+		ID: "task-uuid",
+		Metadata: map[string]any{
+			taskMetaChatID: chatID,
+			taskMetaSeqID:  seqID,
+		},
+	}
+}
+
 func TestCancelRejectsUnauthenticated(t *testing.T) {
 	be := &fakeBackend{}
 	exec := NewExecutor(be).(*executor)
 
-	// No user attached to ctx — Cancel must reject before touching the backend.
-	got := exec.Cancel(context.Background(), &a2asrv.ExecutorContext{ContextID: "chat-1"})
+	got := exec.Cancel(context.Background(), &a2asrv.ExecutorContext{
+		ContextID:  "chat-1",
+		StoredTask: storedTask("chat-1", 7),
+	})
 	_, errs := drain(got)
 
 	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrUnauthenticated) {
 		t.Fatalf("expected single ErrUnauthenticated, got %v", errs)
 	}
-	if be.latestSeqCalls != 0 || be.cancelCalls != 0 || be.checkedChat != "" {
+	if be.cancelCalls != 0 || be.checkedChat != "" {
 		t.Fatalf("backend must not be touched on auth failure: %+v", be)
 	}
 }
@@ -84,31 +101,118 @@ func TestCancelRejectsNonOwner(t *testing.T) {
 	exec := NewExecutor(be).(*executor)
 
 	ctx := WithUser(context.Background(), &models.User{Id: 7, Username: "bob"})
-	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{ContextID: "chat-of-alice"})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{
+		ContextID:  "chat-of-alice",
+		StoredTask: storedTask("chat-of-alice", 3),
+	})
 	_, errs := drain(got)
 
 	// Cross-user attempts must collapse to ErrTaskNotFound — and must NOT
-	// reach LatestAssistantMessageSeqID / CancelAssistantMessage.
+	// reach CancelAssistantMessage.
 	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrTaskNotFound) {
 		t.Fatalf("expected single ErrTaskNotFound, got %v", errs)
 	}
 	if be.checkedChat != "chat-of-alice" || be.checkedUserID != 7 {
 		t.Fatalf("CheckChatOwner not called with the request identity: %+v", be)
 	}
-	if be.latestSeqCalls != 0 || be.cancelCalls != 0 {
+	if be.cancelCalls != 0 {
 		t.Fatalf("backend mutation reached on non-owner cancel: %+v", be)
 	}
 }
 
-func TestCancelRejectsMissingContextID(t *testing.T) {
+func TestCancelRejectsMissingStoredTask(t *testing.T) {
+	be := &fakeBackend{}
+	exec := NewExecutor(be).(*executor)
+
+	// SDK only reaches our Cancel after it has loaded the task from store, so
+	// a nil StoredTask in practice means a fabricated TaskID. Map to NotFound.
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{ContextID: "chat-1"})
+	_, errs := drain(got)
+
+	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrTaskNotFound) {
+		t.Fatalf("expected ErrTaskNotFound, got %v", errs)
+	}
+	if be.checkedChat != "" || be.cancelCalls != 0 {
+		t.Fatalf("backend touched on missing-stored-task: %+v", be)
+	}
+}
+
+func TestCancelRejectsMetadataChatMismatch(t *testing.T) {
+	be := &fakeBackend{}
+	exec := NewExecutor(be).(*executor)
+
+	// Defense in depth: stored task was bound to chat-1 but client claims
+	// ContextID=chat-other. Treat as probing, not just a sloppy client.
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{
+		ContextID:  "chat-other",
+		StoredTask: storedTask("chat-1", 5),
+	})
+	_, errs := drain(got)
+
+	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrTaskNotFound) {
+		t.Fatalf("expected ErrTaskNotFound on chat mismatch, got %v", errs)
+	}
+	if be.checkedChat != "" || be.cancelCalls != 0 {
+		t.Fatalf("backend touched on chat-mismatch: %+v", be)
+	}
+}
+
+func TestCancelTargetsSeqFromMetadata(t *testing.T) {
+	be := &fakeBackend{}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1, Username: "alice"})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{
+		ContextID:  "chat-1",
+		StoredTask: storedTask("chat-1", 42),
+	})
+	events, errs := drain(got)
+
+	if len(errs) != 1 || errs[0] != nil {
+		t.Fatalf("expected no error, got %v", errs)
+	}
+	if be.cancelCalls != 1 {
+		t.Fatalf("CancelAssistantMessage call count = %d, want 1", be.cancelCalls)
+	}
+	if be.cancelChatCalled != "chat-1" || be.cancelSeqIDCalled != 42 {
+		t.Fatalf("cancel hit (chat=%q, seq=%d), want (chat-1, 42)",
+			be.cancelChatCalled, be.cancelSeqIDCalled)
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected single canceled event, got %d", len(events))
+	}
+	upd, ok := events[0].(*a2a.TaskStatusUpdateEvent)
+	if !ok || upd.Status.State != a2a.TaskStateCanceled {
+		t.Fatalf("expected TaskStateCanceled event, got %#v", events[0])
+	}
+}
+
+// JSON round-trip via TaskStore turns int64 metadata into float64. Make sure
+// taskRefFromStored handles that — otherwise cancel breaks the moment the
+// task lives anywhere but in-process memory.
+func TestCancelAcceptsFloat64SeqIDFromJSONRoundTrip(t *testing.T) {
 	be := &fakeBackend{}
 	exec := NewExecutor(be).(*executor)
 
 	ctx := WithUser(context.Background(), &models.User{Id: 1})
-	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{ContextID: ""})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{
+		ContextID: "chat-1",
+		StoredTask: &a2a.Task{
+			ID: "task-uuid",
+			Metadata: map[string]any{
+				taskMetaChatID: "chat-1",
+				taskMetaSeqID:  float64(99), // simulate JSON-decoded number
+			},
+		},
+	})
 	_, errs := drain(got)
 
-	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrInvalidParams) {
-		t.Fatalf("expected ErrInvalidParams, got %v", errs)
+	if len(errs) != 1 || errs[0] != nil {
+		t.Fatalf("expected no error, got %v", errs)
+	}
+	if be.cancelSeqIDCalled != 99 {
+		t.Fatalf("expected seqID=99, got %d", be.cancelSeqIDCalled)
 	}
 }

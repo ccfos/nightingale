@@ -166,10 +166,16 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 
 	result, status, err := rt.StartAssistantMessage(me.Id, chat, req.Query, lang)
 	if err != nil {
-		if status == 0 {
-			status = http.StatusInternalServerError
+		// Business errors (status != 0, e.g. 409 busy) keep their explicit
+		// status code via Bomb. System errors (status == 0) fall through to
+		// Dangerous so they emerge as the n9e-standard "200 + {err: ...}"
+		// envelope — same shape as every other handler in this codebase, so
+		// the fe error interceptor and 5xx alerts behave consistently.
+		if status != 0 {
+			ginx.Bomb(status, "%s", err.Error())
+			return
 		}
-		ginx.Bomb(status, "%s", err.Error())
+		ginx.Dangerous(err)
 		return
 	}
 

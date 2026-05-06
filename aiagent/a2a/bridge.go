@@ -41,6 +41,14 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 	case "step":
 		// Status text describing a tool call or workflow step. Surface as a
 		// transient working update so clients can render progress.
+		//
+		// A step frame is also the natural boundary between two ReAct
+		// reasoning passes — the next "reason" delta after a tool call is a
+		// fresh thought, not a continuation. Reset reasoningArtifactID so
+		// forwardReason allocates a new artifact for it; otherwise multi-step
+		// thoughts would be appended to a single artifact and clients render
+		// them as one undelimited blob.
+		b.reasoningArtifactID = ""
 		return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, a2a.TaskStateWorking,
 			a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(msg.V))), nil)
 	}
@@ -68,20 +76,22 @@ func (b *streamBridge) forwardReason(delta string) bool {
 	return b.yield(a2a.NewArtifactUpdateEvent(b.execCtx, b.reasoningArtifactID, part), nil)
 }
 
-// End emits a terminal status update. err == nil → TaskStateCompleted;
-// otherwise failed.
+// Finalize emits the terminal status update for the task, optionally
+// attaching a human-readable message (used to surface ErrMsg on
+// failed/canceled terminals). An empty msg keeps the status update
+// payload-free.
 //
 // We deliberately do NOT emit a separate LastChunk artifact-update event:
 // the SDK's taskupdate.Manager rejects ArtifactUpdate events with empty
 // Parts (a2a.ErrInvalidAgentResponse "artifact cannot be empty"), which
 // would flip the task state to failed even though the conversation
-// succeeded. The completed status update alone is the canonical end-of-
+// succeeded. The terminal status update alone is the canonical end-of-
 // stream signal in this SDK; clients still know the artifact is final
 // because no further deltas arrive after a terminal state.
-func (b *streamBridge) End(err error) bool {
-	if err != nil {
-		return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, a2a.TaskStateFailed,
-			a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
+func (b *streamBridge) Finalize(state a2a.TaskState, msg string) bool {
+	var payload *a2a.Message
+	if msg != "" {
+		payload = a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(msg))
 	}
-	return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, a2a.TaskStateCompleted, nil), nil)
+	return b.yield(a2a.NewStatusUpdateEvent(b.execCtx, state, payload), nil)
 }

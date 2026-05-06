@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"iter"
 	"strings"
+	"time"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2asrv"
@@ -14,6 +15,16 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
+// heartbeatInterval is how long the stream may be idle before we emit a
+// no-op TaskStateWorking event to keep intermediate proxies and clients
+// from tearing down the connection. Set comfortably below the 60s idle
+// timeouts on common LBs (nginx, AWS ALB) so the heartbeat lands first.
+//
+// A single ReAct turn (LLM reasoning + tool calls) can produce no tokens
+// for minutes; without this, reverse proxies silently close the SSE and
+// the client sees EOF while the server thinks it's still streaming.
+const heartbeatInterval = 30 * time.Second
+
 // AssistantBackend is the surface the executor needs from the gin router. It's
 // kept narrow on purpose so we don't drag the whole *router.Router into the
 // aiagent/a2a package.
@@ -21,13 +32,16 @@ type AssistantBackend interface {
 	EnsureAssistantChat(userID int64, chatID string, page models.AssistantPageInfo) (*models.AssistantChat, error)
 	StartAssistantMessage(userID int64, chat *models.AssistantChat, query models.AssistantMessageQuery, lang string) (*MessageStartResult, int, error)
 	CancelAssistantMessage(ctx context.Context, chatID string, seqID int64) error
-	LatestAssistantMessageSeqID(chatID string) (int64, error)
 	// CheckChatOwner returns nil when chatID exists and is owned by userID.
 	// Any error (chat missing OR owned by another user) means "not authorized
 	// for this chat" — callers should map both to the same response so they
 	// don't reveal whether the chat exists.
 	CheckChatOwner(chatID string, userID int64) error
 	StreamBus() aiagent.StreamBus
+	// MessageSnapshot returns the latest in-flight/terminal snapshot of the
+	// (chatID, seqID) message. nil snapshot + nil error means the snapshot is
+	// gone (TTL expired or never written). Callers must tolerate both.
+	MessageSnapshot(ctx context.Context, chatID string, seqID int64) (*models.AssistantMessage, error)
 }
 
 // MessageStartResult mirrors the router's MessageStartResult so the package
@@ -40,6 +54,16 @@ type MessageStartResult struct {
 
 // langMetadataKey lets clients pin the agent's natural-language output.
 const langMetadataKey = "lang"
+
+// Task.Metadata keys binding an A2A TaskID to the n9e (chatID, seqID) pair.
+// The SDK auto-generates TaskID as a UUID we can't override, so we stash the
+// real n9e identity here when the task is first created. Cancel reads it back
+// from ec.StoredTask.Metadata to target the exact message — no "latest seq"
+// guessing, which would race against fast-follow message:send.
+const (
+	taskMetaChatID = "n9e.chat_id"
+	taskMetaSeqID  = "n9e.seq_id"
+)
 
 // NewExecutor wires the n9e assistant pipeline into an a2asrv.AgentExecutor.
 func NewExecutor(backend AssistantBackend) a2asrv.AgentExecutor {
@@ -92,7 +116,14 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 		}
 
 		// Surface task lifecycle: submitted → working → (artifacts...) → terminal.
-		if !yield(a2a.NewSubmittedTask(ec, ec.Message), nil) {
+		// Stash (chatID, seqID) on the Task so Cancel can recover them precisely
+		// from ec.StoredTask.Metadata after a TaskStore round-trip.
+		submitted := a2a.NewSubmittedTask(ec, ec.Message)
+		submitted.Metadata = map[string]any{
+			taskMetaChatID: result.ChatID,
+			taskMetaSeqID:  result.SeqID,
+		}
+		if !yield(submitted, nil) {
 			return
 		}
 		if !yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateWorking, nil), nil) {
@@ -101,56 +132,136 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 
 		bridge := newBridge(ec, yield)
 		stream := e.backend.StreamBus().Read(ctx, result.ChatID, result.StreamID)
-		for msg := range stream {
-			if !bridge.Forward(msg) {
-				return
+
+		// Single-goroutine select: iter.Seq2's yield is not safe to call
+		// concurrently, so the heartbeat MUST share this goroutine with the
+		// stream forwarder. Reset the ticker on every real event so the
+		// heartbeat only fires on genuine idle, not in lockstep with bursty
+		// token deltas.
+		ticker := time.NewTicker(heartbeatInterval)
+		defer ticker.Stop()
+	streamLoop:
+		for {
+			select {
+			case msg, ok := <-stream:
+				if !ok {
+					break streamLoop
+				}
+				if !bridge.Forward(msg) {
+					return
+				}
+				ticker.Reset(heartbeatInterval)
+			case <-ticker.C:
+				if !yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateWorking, nil), nil) {
+					return
+				}
 			}
 		}
-		bridge.End(nil)
+		state, errMsg := e.terminalState(ctx, result.ChatID, result.SeqID)
+		bridge.Finalize(state, errMsg)
+	}
+}
+
+// terminalState consults the message snapshot to map the n9e ErrCode/IsFinish
+// pair into an A2A TaskState. The stream channel can close for several
+// reasons that all look identical from the consumer side (success, cancel,
+// owner failure, request-context cancel) — without this lookup we would
+// misreport every terminal as Completed and break A2A's task lifecycle
+// semantics for downstream agent orchestrations.
+//
+// If snapshot lookup fails or returns nil (TTL'd out), default to Completed
+// rather than synthesising a failure: a missing snapshot most commonly means
+// the message terminated cleanly long enough ago for the snapshot to expire.
+func (e *executor) terminalState(ctx context.Context, chatID string, seqID int64) (a2a.TaskState, string) {
+	snap, err := e.backend.MessageSnapshot(ctx, chatID, seqID)
+	if err != nil || snap == nil {
+		return a2a.TaskStateCompleted, ""
+	}
+	switch {
+	case snap.ErrCode == int(models.MessageStatusCancel):
+		return a2a.TaskStateCanceled, snap.ErrMsg
+	case snap.ErrCode != 0:
+		return a2a.TaskStateFailed, snap.ErrMsg
+	default:
+		return a2a.TaskStateCompleted, ""
 	}
 }
 
 // Cancel implements a2asrv.AgentExecutor.
+//
+// The (chatID, seqID) targeted by this cancel is recovered from the StoredTask's
+// Metadata, which was written by Execute when the task was first submitted.
+// This binds cancel precisely to the originating message and avoids "cancel the
+// latest seq in this chat" — which would race against a fast follow-up
+// message:send completing the previous task and starting a new one between the
+// client's intent to cancel and the server's lookup.
 func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.Seq2[a2a.Event, error] {
 	return func(yield func(a2a.Event, error) bool) {
-		// We don't have direct access to (chatID, seqID) from the cancel
-		// request — the only stable key A2A passes is TaskID/ContextID.
-		// In our mapping ContextID == chatID; the latest in-flight seqID is
-		// recovered by walking the chat's messages. CancelAssistantMessage
-		// itself is a no-op for already-completed messages.
-
-		// Require an authenticated caller. ec.ContextID is client-supplied
-		// and untrusted — without this gate any token holder could cancel
-		// any chat they happen to know the ID of.
+		// Require an authenticated caller. ec.TaskID/StoredTask are
+		// client-attributable but the StoredTask was written by us at Execute
+		// time; auth still gates whether *this* user may act on it.
 		user := UserFromContext(ctx)
 		if user == nil {
 			yield(nil, a2a.ErrUnauthenticated)
 			return
 		}
-		if ec.ContextID == "" {
-			yield(nil, a2a.ErrInvalidParams)
-			return
-		}
-		// Collapse "chat does not exist" and "chat owned by someone else"
-		// into the same NotFound response so a non-owner can't probe chat
-		// IDs across tenants.
-		if err := e.backend.CheckChatOwner(ec.ContextID, user.Id); err != nil {
+
+		chatID, seqID, ok := taskRefFromStored(ec.StoredTask)
+		if !ok {
+			// No stored task or missing metadata — either the TaskID was
+			// fabricated, the task pre-dates this metadata convention, or the
+			// store dropped it. Either way, treat as not-found rather than
+			// attempting a chat-wide cancel.
 			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
-		seqID, err := e.backend.LatestAssistantMessageSeqID(ec.ContextID)
-		if err != nil || seqID == 0 {
-			// Fall back to terminal canceled — there's nothing to interrupt.
-			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateCanceled, nil), nil)
+		// Defense in depth: if the client passed a ContextID, it must match
+		// the chat the StoredTask is bound to. Mismatch == probing.
+		if ec.ContextID != "" && ec.ContextID != chatID {
+			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
-		if err := e.backend.CancelAssistantMessage(ctx, ec.ContextID, seqID); err != nil {
+		// Collapse "chat does not exist" and "chat owned by someone else"
+		// into the same NotFound so a non-owner can't probe task IDs across
+		// tenants by triggering different error shapes.
+		if err := e.backend.CheckChatOwner(chatID, user.Id); err != nil {
+			yield(nil, a2a.ErrTaskNotFound)
+			return
+		}
+		if err := e.backend.CancelAssistantMessage(ctx, chatID, seqID); err != nil {
 			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateFailed,
 				a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
 			return
 		}
 		yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateCanceled, nil), nil)
 	}
+}
+
+// taskRefFromStored extracts the (chatID, seqID) pair Execute attached to the
+// task at submission time. Returns ok=false when either field is missing or
+// malformed. seqID survives a JSON round-trip as float64, so accept either.
+func taskRefFromStored(task *a2a.Task) (chatID string, seqID int64, ok bool) {
+	if task == nil || task.Metadata == nil {
+		return "", 0, false
+	}
+	chatID, _ = task.Metadata[taskMetaChatID].(string)
+	if chatID == "" {
+		return "", 0, false
+	}
+	switch v := task.Metadata[taskMetaSeqID].(type) {
+	case float64:
+		seqID = int64(v)
+	case int64:
+		seqID = v
+	case int:
+		seqID = int64(v)
+	default:
+		return "", 0, false
+	}
+	if seqID <= 0 {
+		return "", 0, false
+	}
+	return chatID, seqID, true
 }
 
 func concatTextParts(m *a2a.Message) string {

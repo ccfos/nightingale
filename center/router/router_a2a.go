@@ -41,10 +41,6 @@ func (b *a2aBackend) CancelAssistantMessage(ctx context.Context, chatID string, 
 	return b.rt.CancelAssistantMessageInternal(ctx, chatID, seqID)
 }
 
-func (b *a2aBackend) LatestAssistantMessageSeqID(chatID string) (int64, error) {
-	return models.AssistantMessageMaxSeqID(b.rt.Ctx, chatID)
-}
-
 func (b *a2aBackend) CheckChatOwner(chatID string, userID int64) error {
 	_, err := models.AssistantChatCheckOwner(b.rt.Ctx, chatID, userID)
 	return err
@@ -52,6 +48,10 @@ func (b *a2aBackend) CheckChatOwner(chatID string, userID int64) error {
 
 func (b *a2aBackend) StreamBus() aiagent.StreamBus {
 	return b.rt.streamBus
+}
+
+func (b *a2aBackend) MessageSnapshot(ctx context.Context, chatID string, seqID int64) (*models.AssistantMessage, error) {
+	return models.MsgStateGet(ctx, b.rt.Redis, chatID, seqID)
 }
 
 // configRegisterA2A mounts the AgentCard, A2A and MCP endpoints. The HTTP path
@@ -133,12 +133,18 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get("user")
 		if !ok {
+			c.Abort()
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 			return
 		}
+		// A bad type assertion here means rt.user() ran but stuffed something
+		// other than *models.User into the context — that's a middleware-chain
+		// wiring bug, not a credential problem. Surface it as 500 so it can't
+		// be confused with normal auth failures during incident triage.
 		user, ok := v.(*models.User)
 		if !ok || user == nil {
-			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+			c.Abort()
+			ginx.Bomb(http.StatusInternalServerError, "a2a: user middleware returned wrong type")
 			return
 		}
 		if rc := http.NewResponseController(c.Writer); rc != nil {
