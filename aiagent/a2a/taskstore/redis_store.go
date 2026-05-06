@@ -288,8 +288,15 @@ func (s *RedisStore) fetchUser(ctx context.Context, id a2a.TaskID) (string, erro
 }
 
 // Get implements a2asrv/taskstore.Store.
+//
+// When a UserResolver is configured, Get scopes results to the caller — a
+// task owned by user A is reported as ErrTaskNotFound to user B. Both the
+// "missing" and "wrong owner" cases collapse to the same NotFound so callers
+// can't probe task IDs across tenants. Deployments without a resolver
+// (single-tenant or no auth) keep the legacy "any caller can read any task"
+// behavior.
 func (s *RedisStore) Get(ctx context.Context, id a2a.TaskID) (*a2astore.StoredTask, error) {
-	fields, err := s.rds.HMGet(ctx, s.taskKey(id), "task", "version").Result()
+	fields, err := s.rds.HMGet(ctx, s.taskKey(id), "task", "version", "user").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +307,22 @@ func (s *RedisStore) Get(ctx context.Context, id a2a.TaskID) (*a2astore.StoredTa
 	if !ok || raw == "" {
 		return nil, a2a.ErrTaskNotFound
 	}
+
+	if s.resolveUser != nil {
+		owner, _ := fields[2].(string)
+		caller, _ := s.resolveUser(ctx)
+		// Empty caller means the request is unauthenticated; treat the same
+		// as a wrong-owner mismatch. Empty owner only happens when Create
+		// ran without a resolver (legacy / single-tenant) — fall through so
+		// such tasks remain readable to whoever the resolver returns.
+		if owner != "" && caller != owner {
+			return nil, a2a.ErrTaskNotFound
+		}
+		if owner != "" && caller == "" {
+			return nil, a2a.ErrTaskNotFound
+		}
+	}
+
 	var task a2a.Task
 	if err := json.Unmarshal([]byte(raw), &task); err != nil {
 		return nil, fmt.Errorf("unmarshal task: %w", err)

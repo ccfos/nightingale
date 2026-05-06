@@ -45,6 +45,11 @@ func (b *a2aBackend) LatestAssistantMessageSeqID(chatID string) (int64, error) {
 	return models.AssistantMessageMaxSeqID(b.rt.Ctx, chatID)
 }
 
+func (b *a2aBackend) CheckChatOwner(chatID string, userID int64) error {
+	_, err := models.AssistantChatCheckOwner(b.rt.Ctx, chatID, userID)
+	return err
+}
+
 func (b *a2aBackend) StreamBus() aiagent.StreamBus {
 	return b.rt.streamBus
 }

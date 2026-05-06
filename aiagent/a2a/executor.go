@@ -22,6 +22,11 @@ type AssistantBackend interface {
 	StartAssistantMessage(userID int64, chat *models.AssistantChat, query models.AssistantMessageQuery, lang string) (*MessageStartResult, int, error)
 	CancelAssistantMessage(ctx context.Context, chatID string, seqID int64) error
 	LatestAssistantMessageSeqID(chatID string) (int64, error)
+	// CheckChatOwner returns nil when chatID exists and is owned by userID.
+	// Any error (chat missing OR owned by another user) means "not authorized
+	// for this chat" — callers should map both to the same response so they
+	// don't reveal whether the chat exists.
+	CheckChatOwner(chatID string, userID int64) error
 	StreamBus() aiagent.StreamBus
 }
 
@@ -113,9 +118,24 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 		// In our mapping ContextID == chatID; the latest in-flight seqID is
 		// recovered by walking the chat's messages. CancelAssistantMessage
 		// itself is a no-op for already-completed messages.
+
+		// Require an authenticated caller. ec.ContextID is client-supplied
+		// and untrusted — without this gate any token holder could cancel
+		// any chat they happen to know the ID of.
+		user := UserFromContext(ctx)
+		if user == nil {
+			yield(nil, a2a.ErrUnauthenticated)
+			return
+		}
 		if ec.ContextID == "" {
-			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateFailed,
-				a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart("missing context_id"))), nil)
+			yield(nil, a2a.ErrInvalidParams)
+			return
+		}
+		// Collapse "chat does not exist" and "chat owned by someone else"
+		// into the same NotFound response so a non-owner can't probe chat
+		// IDs across tenants.
+		if err := e.backend.CheckChatOwner(ec.ContextID, user.Id); err != nil {
+			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
 		seqID, err := e.backend.LatestAssistantMessageSeqID(ec.ContextID)

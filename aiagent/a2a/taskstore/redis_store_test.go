@@ -163,6 +163,24 @@ func TestListUnauthenticatedWithoutResolver(t *testing.T) {
 	assert.True(t, errors.Is(err, a2a.ErrUnauthenticated))
 }
 
+func TestGetRejectsCrossUser(t *testing.T) {
+	store, _, _ := newStore(t)
+
+	// alice creates the task
+	_, err := store.Create(ctxAs("alice"), sampleTask("t1", "ctx-1"))
+	require.NoError(t, err)
+
+	// alice can read it
+	got, err := store.Get(ctxAs("alice"), "t1")
+	require.NoError(t, err)
+	assert.Equal(t, a2a.TaskID("t1"), got.Task.ID)
+
+	// bob must see NotFound — same response a non-existent ID would get,
+	// so the store doesn't reveal which IDs belong to other tenants.
+	_, err = store.Get(ctxAs("bob"), "t1")
+	assert.ErrorIs(t, err, a2a.ErrTaskNotFound)
+}
+
 func TestListFilterByStatus(t *testing.T) {
 	store, _, _ := newStore(t)
 	ctx := ctxAs("alice")

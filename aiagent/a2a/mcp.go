@@ -63,6 +63,11 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 
 	chat, err := backend.EnsureAssistantChat(user.Id, in.ChatID, models.AssistantPageInfo{})
 	if err != nil {
+		// Don't leak whether ChatID exists-but-belongs-to-someone-else vs.
+		// just doesn't exist — both surface identically.
+		if in.ChatID != "" {
+			return nil, nil, fmt.Errorf("chat %s not found", in.ChatID)
+		}
 		return nil, nil, fmt.Errorf("ensure chat: %w", err)
 	}
 
