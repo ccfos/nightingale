@@ -2,8 +2,10 @@ package router
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"time"
+
+	a2asdk "github.com/a2aproject/a2a-go/v2/a2a"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/a2a"
@@ -38,7 +40,16 @@ func (b *a2aBackend) StartAssistantMessage(userID int64, chat *models.AssistantC
 }
 
 func (b *a2aBackend) CancelAssistantMessage(ctx context.Context, chatID string, seqID int64) error {
-	return b.rt.CancelAssistantMessageInternal(ctx, chatID, seqID)
+	// Translate the router-side typed sentinel into the A2A SDK's canonical
+	// "task not found" error at the package boundary, so aiagent/a2a never has
+	// to know about router internals. Other errors propagate untouched.
+	if err := b.rt.CancelAssistantMessageInternal(ctx, chatID, seqID); err != nil {
+		if errors.Is(err, ErrMessageNotInflight) {
+			return a2asdk.ErrTaskNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (b *a2aBackend) CheckChatOwner(chatID string, userID int64) error {
@@ -106,14 +117,14 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// /a2a/message:send and 404s.
 	a2aHandler := http.StripPrefix("/a2a", a2a.NewHTTPHandler(backend, handlerOpts))
 	a2aGroup := r.Group("/a2a")
-	a2aGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser())
+	a2aGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 	a2aGroup.Any("", gin.WrapH(a2aHandler))
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
-		mcpGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser())
+		mcpGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}
@@ -121,14 +132,9 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 
 // injectA2AUser pulls *models.User from gin.Context (set by rt.user()) and
 // stuffs it into request.Context so the a2a executor / mcp handler can read
-// it without depending on gin.
-//
-// It also clears the per-connection write deadline. A2A SSE streams (e.g.
-// message:stream, tasks/{id}:subscribe) and long MCP responses can outlive
-// the global http.Server.WriteTimeout (40s by default in n9e config), which
-// would otherwise close the underlying TCP connection mid-stream and the
-// SDK's REST encoder fails with "write tcp: i/o timeout". n9e's existing
-// /stream handler does the same thing — see assistantStream().
+// it without depending on gin. The streaming write-deadline relaxation is
+// applied separately via streamingDeadline() so each middleware does one
+// thing.
 func (rt *Router) injectA2AUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		v, ok := c.Get("user")
@@ -147,10 +153,20 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 			ginx.Bomb(http.StatusInternalServerError, "a2a: user middleware returned wrong type")
 			return
 		}
-		if rc := http.NewResponseController(c.Writer); rc != nil {
-			_ = rc.SetWriteDeadline(time.Time{})
-		}
 		c.Request = c.Request.WithContext(a2a.WithUser(c.Request.Context(), user))
+		c.Next()
+	}
+}
+
+// streamingDeadline relaxes the per-connection write deadline for endpoints
+// that may stream longer than http.Server.WriteTimeout (40s default). A2A SSE
+// streams (message:stream, tasks/{id}:subscribe) and long MCP responses can
+// be silent for minutes during a single ReAct turn; without this the TCP
+// connection is closed mid-stream and the SDK's REST encoder fails with
+// "write tcp: i/o timeout".
+func (rt *Router) streamingDeadline() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clearWriteDeadline(c.Writer)
 		c.Next()
 	}
 }

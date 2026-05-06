@@ -3,10 +3,10 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -71,32 +71,6 @@ func (s *MessageState) Persist(ctx context.Context) {
 
 // Msg 返回本地副本指针，调用方必须只读；写请走 Update
 func (s *MessageState) Msg() *models.AssistantMessage { return s.msg }
-
-// parseChatIDFromStreamID 把 streamID 拆出 chatID。streamID 格式为
-// "<chatID>:<seqID>:<uuid>"（旧格式 "<chatID>:<uuid>" 也兼容——chatID 都是首段）
-// ——这样 /assistant/stream 接口在不改 wire format 的前提下，后端仍能从 streamID
-// 定位到对应 Redis Stream key。
-func parseChatIDFromStreamID(streamID string) string {
-	if i := strings.Index(streamID, ":"); i > 0 {
-		return streamID[:i]
-	}
-	return ""
-}
-
-// parseSeqIDFromStreamID 拆出 seqID。新格式 3 段返回真实 seqID；旧格式 2 段返回
-// 0——调用方据此判断是否能做 MsgStateGet 级别的 orphan 检测，0 时回退到 chat 粒度
-// 的 ChatLockHeld 老逻辑。
-func parseSeqIDFromStreamID(streamID string) int64 {
-	parts := strings.SplitN(streamID, ":", 3)
-	if len(parts) < 3 {
-		return 0
-	}
-	n, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0
-	}
-	return n
-}
 
 // ==================== Chat Handlers ====================
 
@@ -818,8 +792,8 @@ func (rt *Router) assistantMessageCancel(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if err := rt.CancelAssistantMessageInternal(c, req.ChatID, req.SeqID); err != nil {
-		// "message not executing or not found" → 404; everything else → 500.
-		if err.Error() == "message not executing or not found" {
+		// ErrMessageNotInflight → 404; everything else → 500.
+		if errors.Is(err, ErrMessageNotInflight) {
 			ginx.Bomb(http.StatusNotFound, "%s", err.Error())
 			return
 		}
@@ -853,12 +827,7 @@ func (rt *Router) assistantStream(c *gin.Context) {
 	// 的边角，但这是旧 streamID 在 in-flight 期间不可避免的限制）。
 	seqID := parseSeqIDFromStreamID(req.StreamID)
 
-	// SSE responses can outlive http.Server.WriteTimeout (40s by default), which
-	// would otherwise close the underlying TCP connection mid-stream. Clear the
-	// per-connection write deadline for this handler only.
-	if rc := http.NewResponseController(c.Writer); rc != nil {
-		_ = rc.SetWriteDeadline(time.Time{})
-	}
+	clearWriteDeadline(c.Writer)
 
 	// Tie the reader's lifetime to the HTTP request so a client disconnect
 	// (or normal handler return) releases the StreamBus consumer goroutine

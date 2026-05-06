@@ -2,15 +2,65 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/logger"
 )
+
+// parseChatIDFromStreamID 把 streamID 拆出 chatID。streamID 格式为
+// "<chatID>:<seqID>:<uuid>"（旧格式 "<chatID>:<uuid>" 也兼容——chatID 都是首段）
+// ——这样 /assistant/stream 接口在不改 wire format 的前提下，后端仍能从 streamID
+// 定位到对应 Redis Stream key。
+func parseChatIDFromStreamID(streamID string) string {
+	if i := strings.Index(streamID, ":"); i > 0 {
+		return streamID[:i]
+	}
+	return ""
+}
+
+// parseSeqIDFromStreamID 拆出 seqID。新格式 3 段返回真实 seqID；旧格式 2 段返回
+// 0——调用方据此判断是否能做 MsgStateGet 级别的 orphan 检测，0 时回退到 chat 粒度
+// 的 ChatLockHeld 老逻辑。
+func parseSeqIDFromStreamID(streamID string) int64 {
+	parts := strings.SplitN(streamID, ":", 3)
+	if len(parts) < 3 {
+		return 0
+	}
+	n, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// clearWriteDeadline removes the per-connection HTTP write deadline so the
+// caller's response can outlive http.Server.WriteTimeout. Used by SSE / A2A
+// streaming endpoints — without this, long agent runs (single ReAct turn can
+// be silent for minutes) would hit "write tcp: i/o timeout" mid-stream.
+//
+// Safe to call even when the underlying ResponseWriter doesn't support
+// SetWriteDeadline: http.NewResponseController returns nil and we no-op.
+func clearWriteDeadline(w gin.ResponseWriter) {
+	if rc := http.NewResponseController(w); rc != nil {
+		_ = rc.SetWriteDeadline(time.Time{})
+	}
+}
+
+// ErrMessageNotInflight is returned by CancelAssistantMessageInternal when the
+// target (chatID, seqID) has no in-flight Redis snapshot — either it never
+// existed, was already finalized, or its TTL has expired. Callers map this to
+// HTTP 404 / a2a.ErrTaskNotFound; comparing via errors.Is keeps the contract
+// stable if the human-readable text is ever revised.
+var ErrMessageNotInflight = errors.New("message not executing or not found")
 
 // MessageStartResult is returned by StartAssistantMessage to its caller.
 // Lock ownership has been transferred to the running goroutine; the caller
@@ -167,7 +217,7 @@ func (rt *Router) CancelAssistantMessageInternal(ctx context.Context, chatID str
 		return err
 	}
 	if snap == nil || snap.IsFinish {
-		return fmt.Errorf("message not executing or not found")
+		return ErrMessageNotInflight
 	}
 
 	if err := models.MsgCancelMark(ctx, rt.Redis, chatID, seqID); err != nil {

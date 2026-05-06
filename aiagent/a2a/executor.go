@@ -44,8 +44,10 @@ type AssistantBackend interface {
 	MessageSnapshot(ctx context.Context, chatID string, seqID int64) (*models.AssistantMessage, error)
 }
 
-// MessageStartResult mirrors the router's MessageStartResult so the package
-// public surface doesn't import the gin router.
+// MessageStartResult mirrors center/router.MessageStartResult so this package
+// stays free of any dependency on the gin router. The duplication is
+// intentional — do NOT collapse the two by having one side import the other.
+// The adapter in router_a2a.go performs the trivial field-by-field copy.
 type MessageStartResult struct {
 	ChatID   string
 	SeqID    int64
@@ -229,6 +231,14 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 			return
 		}
 		if err := e.backend.CancelAssistantMessage(ctx, chatID, seqID); err != nil {
+			// "not in-flight" gets the same NotFound treatment as bad TaskID /
+			// non-owner — collapsing all three into one shape avoids leaking
+			// whether a given (chat, seq) ever existed. Any other error is a
+			// genuine cancel failure surfaced as a Failed status update.
+			if errors.Is(err, a2a.ErrTaskNotFound) {
+				yield(nil, a2a.ErrTaskNotFound)
+				return
+			}
 			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateFailed,
 				a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
 			return

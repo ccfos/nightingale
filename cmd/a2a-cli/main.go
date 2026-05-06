@@ -52,7 +52,6 @@ func main() {
 		modelID   = flag.Int64("model-id", 0, "optional: override the LLM model_id (passed via metadata)")
 		streaming = flag.Bool("stream", true, "use SendStreamingMessage; false uses SendMessage")
 		doGet     = flag.Bool("get", false, "after streaming, call tasks/get to verify TaskStore")
-		doList    = flag.Bool("list", false, "before streaming, dump tasks/list for the user")
 		timeout   = flag.Duration("timeout", 5*time.Minute, "overall request timeout")
 	)
 	flag.Parse()
@@ -88,13 +87,6 @@ func main() {
 	ctx = a2aclient.AttachServiceParams(ctx, a2aclient.ServiceParams{
 		*header: []string{*token},
 	})
-
-	// Optional: tasks/list before sending.
-	if *doList {
-		if err := dumpListTasks(ctx, client); err != nil {
-			log.Printf("tasks/list: %v", err)
-		}
-	}
 
 	// 4) Compose the message. ContextID maps 1:1 to n9e's chat_id.
 	msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart(*message))
@@ -213,19 +205,6 @@ func oneLine(s string) string {
 		return s[:200] + "..."
 	}
 	return s
-}
-
-func dumpListTasks(ctx context.Context, client *a2aclient.Client) error {
-	resp, err := client.ListTasks(ctx, &a2a.ListTasksRequest{PageSize: 10})
-	if err != nil {
-		return err
-	}
-	fmt.Printf("== tasks/list (total=%d, page=%d) ==\n", resp.TotalSize, resp.PageSize)
-	for _, t := range resp.Tasks {
-		fmt.Printf("  - %s  context=%s  state=%s\n", t.ID, t.ContextID, t.Status.State)
-	}
-	fmt.Println()
-	return nil
 }
 
 func mustJSON(v any) string {
