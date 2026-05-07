@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/ccfos/nightingale/v6/dskit/pool"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
 	"github.com/ccfos/nightingale/v6/dskit/types"
 
 	_ "github.com/go-sql-driver/mysql" // MySQL driver
@@ -70,6 +71,11 @@ func NewDorisWithSettings(ctx context.Context, settings interface{}) (*Doris, er
 func (d *Doris) NewConn(ctx context.Context, database string) (*sql.DB, error) {
 	if len(d.Addr) == 0 {
 		return nil, errors.New("empty fe-node addr")
+	}
+	if database != "" {
+		if err := sqlbase.ValidateIdentifier(database); err != nil {
+			return nil, fmt.Errorf("doris connect: %w", err)
+		}
 	}
 
 	// Set default values similar to postgres implementation
@@ -135,6 +141,11 @@ func (d *Doris) NewWriteConn(ctx context.Context, database string) (*sql.DB, err
 
 	if len(d.Addr) == 0 {
 		return nil, errors.New("empty fe-node addr")
+	}
+	if database != "" {
+		if err := sqlbase.ValidateIdentifier(database); err != nil {
+			return nil, fmt.Errorf("doris connect: %w", err)
+		}
 	}
 
 	// Set default values similar to postgres implementation
@@ -247,8 +258,8 @@ func (d *Doris) ShowResources(ctx context.Context, resourceType string) ([]strin
 	}
 
 	// 使用 SHOW RESOURCES 命令
-	query := fmt.Sprintf("SHOW RESOURCES WHERE RESOURCETYPE = '%s'", resourceType)
-	rows, err := db.QueryContext(timeoutCtx, query)
+	rows, err := db.QueryContext(timeoutCtx,
+		"SHOW RESOURCES WHERE RESOURCETYPE = ?", resourceType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -298,6 +309,9 @@ func (d *Doris) ShowResources(ctx context.Context, resourceType string) ([]strin
 
 // ShowTables lists all tables in a given database
 func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, error) {
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("show tables: %w", err)
+	}
 	timeoutCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
 
@@ -306,7 +320,7 @@ func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, erro
 		return nil, err
 	}
 
-	query := fmt.Sprintf("SHOW TABLES IN %s", database)
+	query := "SHOW TABLES IN " + sqlbase.QuoteBacktick(database)
 	rows, err := db.QueryContext(timeoutCtx, query)
 	if err != nil {
 		return nil, err
@@ -329,6 +343,12 @@ func (d *Doris) ShowTables(ctx context.Context, database string) ([]string, erro
 
 // DescTable describes the schema of a specified table in Doris
 func (d *Doris) DescTable(ctx context.Context, database, table string) ([]*types.ColumnProperty, error) {
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
 	timeoutCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
 
@@ -337,7 +357,7 @@ func (d *Doris) DescTable(ctx context.Context, database, table string) ([]*types
 		return nil, err
 	}
 
-	query := fmt.Sprintf("DESCRIBE %s.%s", database, table)
+	query := "DESCRIBE " + sqlbase.QuoteBacktick(database) + "." + sqlbase.QuoteBacktick(table)
 	rows, err := db.QueryContext(timeoutCtx, query)
 	if err != nil {
 		return nil, err
@@ -416,6 +436,12 @@ func (d *Doris) ShowIndexes(ctx context.Context, database, table string) ([]Tabl
 	if database == "" || table == "" {
 		return nil, fmt.Errorf("database and table names cannot be empty")
 	}
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("show indexes: %w", err)
+	}
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("show indexes: %w", err)
+	}
 
 	tCtx, cancel := d.createTimeoutContext(ctx)
 	defer cancel()
@@ -425,7 +451,7 @@ func (d *Doris) ShowIndexes(ctx context.Context, database, table string) ([]Tabl
 		return nil, err
 	}
 
-	querySQL := fmt.Sprintf("%s `%s`.`%s`", SQLShowIndex, database, table)
+	querySQL := fmt.Sprintf("%s %s.%s", SQLShowIndex, sqlbase.QuoteBacktick(database), sqlbase.QuoteBacktick(table))
 	rows, err := db.QueryContext(tCtx, querySQL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query indexes: %w", err)
@@ -489,7 +515,13 @@ func (d *Doris) ShowIndexes(ctx context.Context, database, table string) ([]Tabl
 
 // SelectRows selects rows from a specified table in Doris based on a given query with MaxQueryRows check
 func (d *Doris) SelectRows(ctx context.Context, database, table, query string) ([]map[string]interface{}, error) {
-	sql := fmt.Sprintf("SELECT * FROM %s.%s", database, table)
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("select rows: %w", err)
+	}
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("select rows: %w", err)
+	}
+	sql := fmt.Sprintf("SELECT * FROM %s.%s", sqlbase.QuoteBacktick(database), sqlbase.QuoteBacktick(table))
 	if query != "" {
 		sql += " " + query
 	}

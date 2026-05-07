@@ -262,21 +262,6 @@ func parseTimeRange(tr string) (int64, int64) {
 	return stime, etime
 }
 
-// =============================================================================
-// SQL identifier validation
-// =============================================================================
-
-func isValidIdentifier(s string) bool {
-	if len(s) == 0 || len(s) > 128 {
-		return false
-	}
-	for _, c := range s {
-		if c == ';' || c == '\'' || c == '"' || c == '`' || c == '\\' || c == 0 {
-			return false
-		}
-	}
-	return !strings.ContainsAny(s, "/*")
-}
 
 // =============================================================================
 // Registration shorthand
