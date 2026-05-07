@@ -178,11 +178,10 @@ write timeout，否则长 ReAct 流会中途 `i/o timeout`。
 实现位于 `aiagent/a2a/taskstore/redis_store.go`，挂在 `a2asrv.NewHandler(WithTaskStore(...))`，
 保证 `tasks/get` / `tasks/resubscribe` 跨进程重启 + 跨实例 LB 路由都能拿到任务状态。
 
-- Redis Key（全部带 24h TTL，与 streamBus 对齐）：
+- Redis Key（24h TTL，与 streamBus 对齐）：
   - `a2a:task:<taskID>` (Hash) —— task JSON + version + user + context_id + updated
-  - `a2a:tasks:idx:<user>` (ZSet) —— per-user 索引，score = updated_nano
-  - `a2a:tasks:ctx:<contextID>` (ZSet) —— per-context 索引，加速 List by ContextID
-- Update 走 Lua CAS：检查 `prev_version` → 匹配则原子地 HSET + 版本 +1 + 刷新 ZSet 分数
+  - 未实现 `tasks/list`，因此不维护 per-user / per-context 二级索引
+- Update 走 Lua CAS：检查 `prev_version` → 匹配则原子地 HSET + 版本 +1 + 刷新 TTL
 - 多实例：所有 center 实例共享 Redis，CAS 保证只有一个实例能成功提交并发更新
 - `UserResolver` 由 `router_a2a.go` 注入，从 ctx 取 `*models.User` 返回 `Username`，
   Get 时用于校验 task 归属（防跨租户读其他人 task）

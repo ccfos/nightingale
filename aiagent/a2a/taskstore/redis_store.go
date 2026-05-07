@@ -265,14 +265,11 @@ func (s *RedisStore) Get(ctx context.Context, id a2a.TaskID) (*a2astore.StoredTa
 	if s.resolveUser != nil {
 		owner, _ := fields[2].(string)
 		caller, _ := s.resolveUser(ctx)
-		// Empty caller means the request is unauthenticated; treat the same
-		// as a wrong-owner mismatch. Empty owner only happens when Create
-		// ran without a resolver (legacy / single-tenant) — fall through so
-		// such tasks remain readable to whoever the resolver returns.
+		// Unauthenticated callers (caller == "") are implicitly rejected by
+		// this check — empty string never equals a non-empty owner. Empty
+		// owner only happens when Create ran without a resolver (legacy /
+		// single-tenant) — fall through so such tasks remain readable.
 		if owner != "" && caller != owner {
-			return nil, a2a.ErrTaskNotFound
-		}
-		if owner != "" && caller == "" {
 			return nil, a2a.ErrTaskNotFound
 		}
 	}
