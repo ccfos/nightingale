@@ -849,6 +849,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	}
 
+	rt.configRegisterA2A(r)
+
 	rt.configNoRoute(r, &statikFS)
 
 }
