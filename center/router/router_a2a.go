@@ -73,7 +73,7 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		return
 	}
 	if !rt.HTTP.TokenAuth.Enable {
-		logger.Warning("[A2A] HTTP.A2A is enabled but HTTP.TokenAuth is not — A2A/MCP endpoints will reject every request. Set HTTP.A2A.Disable=true or enable HTTP.TokenAuth.")
+		logger.Warning("[A2A] HTTP.TokenAuth.Enable=false — AgentCard advertises X-User-Token apiKey but the server will only accept JWT credentials. Enable HTTP.TokenAuth so the advertised auth scheme actually works.")
 	}
 
 	backend := &a2aBackend{rt: rt}
