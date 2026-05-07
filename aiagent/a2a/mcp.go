@@ -10,7 +10,9 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 
+	a2asdk "github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/toolkits/pkg/logger"
 )
 
 // NewMCPHandler builds an MCP Streamable HTTP handler that exposes a single
@@ -53,6 +55,39 @@ type mcpOutput struct {
 	SeqID   int64  `json:"seq_id" jsonschema:"Sequence number of this message inside the chat."`
 }
 
+// drainStream reads content deltas into sb until either the stream closes or
+// the caller ctx is cancelled. On caller-side cancellation it proxies the
+// intent into CancelAssistantMessage so the runner goroutine exits promptly
+// instead of running to its 15min budget while no one is listening.
+func drainStream(ctx context.Context, backend AssistantBackend, result *MessageStartResult, sb *strings.Builder) {
+	streamCh := backend.StreamBus().Read(ctx, result.ChatID, result.StreamID)
+	for {
+		select {
+		case msg, ok := <-streamCh:
+			if !ok {
+				return
+			}
+			if msg.P == "content" {
+				sb.WriteString(msg.V)
+			}
+		case <-ctx.Done():
+			// Use a background ctx for the cancel RPC: the caller ctx is
+			// already done, so threading it through would abort the cancel
+			// write itself before it reaches Redis.
+			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if cerr := backend.CancelAssistantMessage(cleanupCtx, result.ChatID, result.SeqID); cerr != nil &&
+				!errors.Is(cerr, a2asdk.ErrTaskNotFound) {
+				// ErrTaskNotFound just means the runner already reached a
+				// terminal state on its own — race with natural finish, fine.
+				logger.Warningf("[MCP] cancel on disconnect chat=%s seq=%d: %v",
+					result.ChatID, result.SeqID, cerr)
+			}
+			cleanupCancel()
+			return
+		}
+	}
+}
+
 func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) (*mcp.CallToolResult, *mcpOutput, error) {
 	user := UserFromContext(ctx)
 	if user == nil {
@@ -80,12 +115,15 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 	// Drain the stream — we only care about the final text. ReAct may emit
 	// reasoning ("reason") deltas too; those are dropped here intentionally
 	// to match the natural-language-out contract.
+	//
+	// MCP itself does not expose a Cancel verb, so a caller disconnect would
+	// otherwise leave the runner goroutine churning until its 15min budget
+	// expires — burning LLM quota and holding the per-chat ChatLock so any
+	// follow-up message:send returns 409. Watch ctx.Done() and proxy the
+	// caller's intent into the existing CancelAssistantMessage path (pubsub
+	// + Redis cancel mark) so the runner exits within milliseconds.
 	var sb strings.Builder
-	for msg := range backend.StreamBus().Read(ctx, result.ChatID, result.StreamID) {
-		if msg.P == "content" {
-			sb.WriteString(msg.V)
-		}
-	}
+	drainStream(ctx, backend, result, &sb)
 
 	// Mirror executor.terminalState: a closed stream alone doesn't tell us
 	// whether the message succeeded, errored, or was cancelled — that lives
@@ -112,10 +150,10 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 
 	answer := sb.String()
 	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: answer}},
-	}, &mcpOutput{
-		Content: answer,
-		ChatID:  result.ChatID,
-		SeqID:   result.SeqID,
-	}, nil
+			Content: []mcp.Content{&mcp.TextContent{Text: answer}},
+		}, &mcpOutput{
+			Content: answer,
+			ChatID:  result.ChatID,
+			SeqID:   result.SeqID,
+		}, nil
 }
