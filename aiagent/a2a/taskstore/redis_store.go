@@ -91,6 +91,18 @@ func (s *RedisStore) taskKey(id a2a.TaskID) string {
 	return fmt.Sprintf("{%s}:task:%s", s.prefix, id)
 }
 
+// luaErrPrefix prefixes every Lua error_reply tag emitted by this package's
+// scripts. isLuaErr matches against the full prefixed token so a generic
+// infrastructure error whose message happens to contain "exists" / "conflict"
+// / "not_found" can never be misrecognised as a business error.
+const luaErrPrefix = "a2a-taskstore:"
+
+const (
+	luaTagExists   = luaErrPrefix + "exists"
+	luaTagNotFound = luaErrPrefix + "not_found"
+	luaTagConflict = luaErrPrefix + "conflict"
+)
+
 // Lua script for Create. Refuses to overwrite an existing task; sets all
 // fields atomically.
 //
@@ -102,9 +114,10 @@ func (s *RedisStore) taskKey(id a2a.TaskID) string {
 //   3: contextID
 //   4: updated nano
 //   5: ttl seconds
+//   6: lua error tag for "already exists"
 var createScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 1 then
-  return redis.error_reply("exists")
+  return redis.error_reply(ARGV[6])
 end
 redis.call("HSET", KEYS[1],
   "task", ARGV[1],
@@ -128,14 +141,16 @@ return 1
 //   4: contextID
 //   5: updated nano
 //   6: ttl seconds
+//   7: lua error tag for "not found"
+//   8: lua error tag for "conflict"
 var updateScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 0 then
-  return redis.error_reply("not_found")
+  return redis.error_reply(ARGV[7])
 end
 local prev = tonumber(ARGV[1])
 local cur = tonumber(redis.call("HGET", KEYS[1], "version"))
 if prev ~= 0 and cur ~= prev then
-  return redis.error_reply("conflict")
+  return redis.error_reply(ARGV[8])
 end
 local newVersion = cur + 1
 redis.call("HSET", KEYS[1],
@@ -173,9 +188,9 @@ func (s *RedisStore) Create(ctx context.Context, task *a2a.Task) (a2astore.TaskV
 
 	keys := []string{s.taskKey(task.ID)}
 	res, err := createScript.Run(ctx, s.rds, keys,
-		string(payload), user, task.ContextID, updatedNano, ttlSeconds).Result()
+		string(payload), user, task.ContextID, updatedNano, ttlSeconds, luaTagExists).Result()
 	if err != nil {
-		if isLuaErr(err, "exists") {
+		if isLuaErr(err, luaTagExists) {
 			return a2astore.TaskVersionMissing, a2astore.ErrTaskAlreadyExists
 		}
 		return a2astore.TaskVersionMissing, err
@@ -206,12 +221,13 @@ func (s *RedisStore) Update(ctx context.Context, req *a2astore.UpdateRequest) (a
 	keys := []string{s.taskKey(req.Task.ID)}
 	res, err := updateScript.Run(ctx, s.rds, keys,
 		strconv.FormatInt(int64(req.PrevVersion), 10),
-		string(payload), user, req.Task.ContextID, updatedNano, ttlSeconds).Result()
+		string(payload), user, req.Task.ContextID, updatedNano, ttlSeconds,
+		luaTagNotFound, luaTagConflict).Result()
 	if err != nil {
-		if isLuaErr(err, "not_found") {
+		if isLuaErr(err, luaTagNotFound) {
 			return a2astore.TaskVersionMissing, a2a.ErrTaskNotFound
 		}
-		if isLuaErr(err, "conflict") {
+		if isLuaErr(err, luaTagConflict) {
 			return a2astore.TaskVersionMissing, a2astore.ErrConcurrentModification
 		}
 		return a2astore.TaskVersionMissing, err
@@ -306,9 +322,16 @@ func (s *RedisStore) List(ctx context.Context, req *a2a.ListTasksRequest) (*a2a.
 // isLuaErr inspects the redis.Cmdable error string for a Lua error_reply tag.
 // go-redis surfaces error_reply as plain errors with the script's tag in the
 // message; we can't unwrap to a typed sentinel.
+//
+// Tags are namespaced under luaErrPrefix so unrelated infrastructure errors
+// (network, serialization, …) whose message happens to contain a bare word
+// like "exists"/"conflict"/"not_found" never get misclassified as a business
+// error. HasSuffix matches because go-redis appends the error_reply payload
+// at the end of its own message; tighter than Contains while still tolerating
+// driver-specific prefixes.
 func isLuaErr(err error, tag string) bool {
-	if err == nil {
+	if err == nil || tag == "" {
 		return false
 	}
-	return strings.Contains(err.Error(), tag)
+	return strings.HasSuffix(err.Error(), tag)
 }
