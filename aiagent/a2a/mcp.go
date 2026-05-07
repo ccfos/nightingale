@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -84,6 +85,29 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 		if msg.P == "content" {
 			sb.WriteString(msg.V)
 		}
+	}
+
+	// Mirror executor.terminalState: a closed stream alone doesn't tell us
+	// whether the message succeeded, errored, or was cancelled — that lives
+	// in the MsgState snapshot (ErrCode/ErrMsg). Without this lookup the MCP
+	// caller would get a fake-success response (empty or partially-streamed
+	// content) for failed/cancelled turns.
+	//
+	// Use Background for the snapshot read: if the caller's ctx already
+	// cancelled mid-stream, propagating that cancel into MessageSnapshot
+	// would mask the real terminal state behind context.Canceled. A short
+	// background read keeps the error attribution honest.
+	snapCtx, snapCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer snapCancel()
+	if snap, _ := backend.MessageSnapshot(snapCtx, result.ChatID, result.SeqID); snap != nil && snap.ErrCode != 0 {
+		errMsg := snap.ErrMsg
+		if errMsg == "" {
+			errMsg = "assistant message terminated with error"
+		}
+		if snap.ErrCode == int(models.MessageStatusCancel) {
+			return nil, nil, fmt.Errorf("a2a/mcp: cancelled: %s", errMsg)
+		}
+		return nil, nil, fmt.Errorf("a2a/mcp: %s", errMsg)
 	}
 
 	answer := sb.String()
