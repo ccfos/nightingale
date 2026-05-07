@@ -3,11 +3,11 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -19,80 +19,58 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/toolkits/pkg/logger"
 )
 
-// MessageStateManager manages in-flight assistant messages.
-type MessageStateManager struct {
-	mu      sync.RWMutex
-	states  map[string]*models.AssistantMessage // key: "chatID:seqID"
-	cancels map[string]context.CancelFunc
+// MessageState 是 owner 实例本地的消息工作副本 + Redis 持久化包装。
+// 多实例化改造后，"哪台实例在跑这条消息"由 ChatLock 决定，detail/cancel/stream
+// 全靠 Redis 中的快照与 Stream，不再依赖进程内 map。
+//
+// 单一 owner 写入，无并发写竞态——由 ChatLock 保证；不加锁。/detail 等只读路径
+// 直接从 Redis 读，不会触碰 s.msg 指针。
+type MessageState struct {
+	rds storage.Redis
+	msg *models.AssistantMessage
 }
 
-func NewMessageStateManager() *MessageStateManager {
-	return &MessageStateManager{
-		states:  make(map[string]*models.AssistantMessage),
-		cancels: make(map[string]context.CancelFunc),
+func NewMessageState(rds storage.Redis, msg *models.AssistantMessage) *MessageState {
+	return &MessageState{rds: rds, msg: msg}
+}
+
+// Update 修改本地副本并把整个 JSON 写回 Redis。Redis 写失败只 warn——本地状态
+// 已变更，下一次 Update 会重试覆盖。
+//
+// Cancel race guard：/cancel handler 一旦把 MsgCancelKey 设上，它的 Redis 终态
+// 就是权威——这里再写 MsgStateSet 会盖掉 cancelled 状态导致 /detail 显示成功
+// 但 history 因 status=-2 过滤掉这条，前后矛盾。本地副本仍然 mutate，因为 owner
+// goroutine 后续逻辑（如 m.ExecutedTools）依赖它，只是不再持久化到 Redis。
+func (s *MessageState) Update(ctx context.Context, fn func(*models.AssistantMessage)) {
+	fn(s.msg)
+	if cancelled, _ := models.MsgCancelExists(ctx, s.rds, s.msg.ChatID, s.msg.SeqID); cancelled {
+		return
+	}
+	if err := models.MsgStateSet(ctx, s.rds, s.msg); err != nil {
+		logger.Warningf("[Assistant] persist msg state chat=%s seq=%d: %v", s.msg.ChatID, s.msg.SeqID, err)
 	}
 }
 
-func msgKey(chatID string, seqID int64) string {
-	return fmt.Sprintf("%s:%d", chatID, seqID)
-}
-
-func (m *MessageStateManager) Set(key string, msg *models.AssistantMessage, cancel context.CancelFunc) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.states[key] = msg
-	if cancel != nil {
-		m.cancels[key] = cancel
+// Persist 显式刷一次（在直接修改 s.msg 字段之后调用）。同 Update 一样，
+// 一旦 cancel marker 设上就停止写——避免覆盖 cancel handler 的权威终态。
+func (s *MessageState) Persist(ctx context.Context) {
+	if cancelled, _ := models.MsgCancelExists(ctx, s.rds, s.msg.ChatID, s.msg.SeqID); cancelled {
+		return
+	}
+	if err := models.MsgStateSet(ctx, s.rds, s.msg); err != nil {
+		logger.Warningf("[Assistant] persist msg state chat=%s seq=%d: %v", s.msg.ChatID, s.msg.SeqID, err)
 	}
 }
 
-func (m *MessageStateManager) Get(key string) (*models.AssistantMessage, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	v, ok := m.states[key]
-	return v, ok
-}
-
-func (m *MessageStateManager) Remove(key string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.states, key)
-	delete(m.cancels, key)
-}
-
-func (m *MessageStateManager) Cancel(key string) bool {
-	m.mu.RLock()
-	cancel, ok := m.cancels[key]
-	m.mu.RUnlock()
-	if ok && cancel != nil {
-		cancel()
-		return true
-	}
-	return false
-}
-
-func (m *MessageStateManager) UpdateMsg(key string, fn func(msg *models.AssistantMessage)) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if msg, ok := m.states[key]; ok {
-		fn(msg)
-	}
-}
-
-func (m *MessageStateManager) GetStreamID(key string) string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	if msg, ok := m.states[key]; ok && len(msg.Response) > 0 {
-		return msg.Response[0].StreamID
-	}
-	return ""
-}
+// Msg 返回本地副本指针，调用方必须只读；写请走 Update
+func (s *MessageState) Msg() *models.AssistantMessage { return s.msg }
 
 // ==================== Chat Handlers ====================
 
@@ -152,89 +130,37 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 		return
 	}
 
-	// Verify chat ownership
 	chat, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	// Acquire per-chat Redis lock. Short TTL + background renewal (see
-	// models.ChatLock) — a long agent run extends the lease while alive;
-	// a crashed process lets the lock expire within ChatLockTTL.
-	lock, err := models.AcquireChatLock(c, rt.Redis, req.ChatID)
-	ginx.Dangerous(err)
-	if lock == nil {
-		ginx.Bomb(http.StatusConflict, "chat is busy, please wait for the current message to finish")
-		return
-	}
-
-	// Under lock: allocate seq_id
-	maxSeq, err := models.AssistantMessageMaxSeqID(rt.Ctx, req.ChatID)
-	if err != nil {
-		lock.Release(context.Background(), rt.Redis)
-		ginx.Dangerous(err)
-		return
-	}
-	seqID := maxSeq + 1
-
-	// Build message
-	streamID := uuid.New().String()
-	msg := models.AssistantMessage{
-		ChatID: req.ChatID,
-		SeqID:  seqID,
-		Query:  req.Query,
-		Response: []models.AssistantMessageResponse{
-			{ContentType: models.ContentTypeMarkdown, StreamID: streamID, IsFromAI: true},
-		},
-		RecommendAction: []models.AssistantAction{},
-	}
-
-	// Persist initial message
-	if err := models.AssistantMessageSet(rt.Ctx, msg); err != nil {
-		lock.Release(context.Background(), rt.Redis)
-		ginx.Dangerous(err)
-		return
-	}
-
-	// Update chat: title on first message, clear is_new, update timestamp.
-	// Truncate by rune count (not byte count) so multi-byte characters like
-	// Chinese/Japanese aren't sliced mid-character — byte-level slicing would
-	// leave half a code point and render as '��'.
-	if seqID == 1 {
-		title := req.Query.Content
-		if runes := []rune(title); len(runes) > 50 {
-			title = string(runes[:50]) + "..."
-		}
-		chat.Title = title
-	}
-	chat.IsNew = false
-	chat.LastUpdate = time.Now().Unix()
-	models.AssistantChatSet(rt.Ctx, *chat)
-
-	// Prepare stream cache
-	aiagent.GetStreamCache().Create(streamID)
-
-	// Create cancelable context. The parent context must outlive the agent's
-	// own ReAct budget (set later from llmCfg.ExtraConfig.TimeoutSeconds), so
-	// give it generous headroom — 15 min covers worst-case multi-tool flows
-	// while still bounding stuck conversations.
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
-
-	key := msgKey(req.ChatID, seqID)
-	rt.msgStateManager.Set(key, &msg, cancel)
-
-	// Capture X-Language before the gin.Context goes out of scope — the goroutine
-	// outlives this handler. Used to pin the agent's natural-language output to
-	// the UI language (see chat.LanguageDirective).
+	// Capture X-Language before the gin.Context goes out of scope — the runner
+	// goroutine outlives this handler. Used to pin the agent's natural-language
+	// output to the UI language (see chat.LanguageDirective).
 	lang := c.GetHeader("X-Language")
 
-	go rt.processAssistantMessage(ctx, cancel, lock, &msg, streamID, key, me.Id, lang)
+	result, status, err := rt.StartAssistantMessage(me.Id, chat, req.Query, lang)
+	if err != nil {
+		// Business errors (status != 0, e.g. 409 busy) keep their explicit
+		// status code via Bomb. System errors (status == 0) fall through to
+		// Dangerous so they emerge as the n9e-standard "200 + {err: ...}"
+		// envelope — same shape as every other handler in this codebase, so
+		// the fe error interceptor and 5xx alerts behave consistently.
+		if status != 0 {
+			ginx.Bomb(status, "%s", err.Error())
+			return
+		}
+		ginx.Dangerous(err)
+		return
+	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"chat_id": req.ChatID,
-		"seq_id":  seqID,
+		"chat_id": result.ChatID,
+		"seq_id":  result.SeqID,
 	}, nil)
 }
 
-func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, msg *models.AssistantMessage, streamID, stateKey string, userId int64, lang string) {
+func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, state *MessageState, streamID string, userId int64, lang string) {
+	msg := state.Msg()
 	// Shutdown sequence (defer runs LIFO — reverse of registration order):
 	//   1. parentCancel()           — signals watchdog to stop
 	//   2. <-keepAliveDone          — wait for watchdog goroutine to fully exit
@@ -254,10 +180,41 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		lock.KeepAlive(parentCtx, rt.Redis)
 	}()
 
+	// Cancel 通道：任意实例的 /assistant/message/cancel 调用 PUBLISH 到这个频道，
+	// 我们（owner）订阅并转换成本地 ctx 取消，让正在跑的 LLM/工具循环能立即停。
+	// 同时兜底每 2s 检查 cancel 标志位（pubsub 偶发漏发时收尾）。
+	cancelSub := rt.pubsubBus.Subscribe(parentCtx, models.MsgCancelChannel(msg.ChatID, msg.SeqID))
+	go func() {
+		defer cancelSub.Close()
+		// 启动期同步检查一次：assistantMessageNew 返回客户端后客户端可能立即调
+		// /cancel，那个 PUBLISH 在 Subscribe 注册前发出会被 Redis 丢掉，仅靠
+		// ticker 兜底要等 2s。这里先看一眼 SET 标志位，把盲区压到 0。
+		if exists, _ := models.MsgCancelExists(parentCtx, rt.Redis, msg.ChatID, msg.SeqID); exists {
+			parentCancel()
+			return
+		}
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-parentCtx.Done():
+				return
+			case <-cancelSub.Channel():
+				parentCancel()
+				return
+			case <-ticker.C:
+				if exists, _ := models.MsgCancelExists(parentCtx, rt.Redis, msg.ChatID, msg.SeqID); exists {
+					parentCancel()
+					return
+				}
+			}
+		}
+	}()
+
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Errorf("[Assistant] PANIC: %v", r)
-			rt.finishMessage(stateKey, streamID, msg, 500, fmt.Sprintf("internal error: %v", r))
+			rt.finishMessage(state, streamID, 500, fmt.Sprintf("internal error: %v", r))
 		}
 	}()
 
@@ -265,8 +222,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// yet, wait for it here before InitSkills reads the registry off disk.
 	// sync.Once makes this a cheap no-op after the first successful pass.
 	rt.ensureAISkillsSynced()
-
-	streamCache := aiagent.GetStreamCache()
 
 	// ① Load multi-turn history early (needed for LLM intent inference)
 	var history []aiagent.ChatMessage
@@ -283,7 +238,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// Always use "chat" useCase to find the agent config for the LLM client.
 	agent, err := models.AIAgentGetByUseCase(rt.Ctx, "chat")
 	if err != nil || agent == nil {
-		rt.finishMessage(stateKey, streamID, msg, 400, "no AI agent configured for use_case=chat")
+		rt.finishMessage(state, streamID, 400, "no AI agent configured for use_case=chat")
 		return
 	}
 
@@ -304,7 +259,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 	if llmCfg == nil {
-		rt.finishMessage(stateKey, streamID, msg, 400, "no LLM configured, please configure one in system settings")
+		rt.finishMessage(state, streamID, 400, "no LLM configured, please configure one in system settings")
 		return
 	}
 
@@ -336,7 +291,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		MaxTokens:     extraConfig.MaxTokens,
 	})
 	if err != nil {
-		rt.finishMessage(stateKey, streamID, msg, 500, fmt.Sprintf("failed to create LLM client: %v", err))
+		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))
 		return
 	}
 
@@ -414,16 +369,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// ⑤ Preflight — hard gate. May halt the turn and emit structured responses
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
 	toolDeps := &aiagent.ToolDeps{
-		DBCtx:             rt.Ctx,
-		GetPromClient:     func(dsId int64) prom.API { return rt.PromClients.GetCli(dsId) },
-		GetSQLDatasource:  func(dsType string, dsId int64) (datasource.Datasource, bool) { return dscache.DsCache.Get(dsType, dsId) },
+		DBCtx:         rt.Ctx,
+		GetPromClient: func(dsId int64) prom.API { return rt.PromClients.GetCli(dsId) },
+		GetSQLDatasource: func(dsType string, dsId int64) (datasource.Datasource, bool) {
+			return dscache.DsCache.Get(dsType, dsId)
+		},
 		FilterDatasources: rt.DatasourceCache.DatasourceFilter,
 	}
 
 	if handler.Preflight != nil {
 		user, uerr := models.UserGetById(rt.Ctx, userId)
 		if uerr != nil || user == nil {
-			rt.finishMessage(stateKey, streamID, msg, 500, "failed to resolve user for preflight")
+			rt.finishMessage(state, streamID, 500, "failed to resolve user for preflight")
 			return
 		}
 		halt, preResps, perr := handler.Preflight(parentCtx, toolDeps, chatReq, user)
@@ -431,7 +388,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
 		if halt {
-			rt.finishHaltedMessage(stateKey, streamID, msg, history, preResps)
+			rt.finishHaltedMessage(state, streamID, history, preResps)
 			return
 		}
 	}
@@ -517,7 +474,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
-			rt.finishMessage(stateKey, streamID, msg, -2, "cancelled")
+			rt.finishMessage(state, streamID, -2, "cancelled")
 			return
 		default:
 		}
@@ -530,7 +487,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 			if delta != "" {
 				fullReasoning += delta
-				streamCache.AddReason(streamID, delta)
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
 		case aiagent.StreamTypeText:
 			delta := chunk.Delta
@@ -539,7 +496,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 			if delta != "" {
 				fullReasoning += delta
-				streamCache.AddReason(streamID, delta)
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
 		case aiagent.StreamTypeToolCall:
 			executedTools = true
@@ -547,12 +504,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			if chunk.Content != "" {
 				step = chunk.Content
 			}
-			rt.msgStateManager.UpdateMsg(stateKey, func(m *models.AssistantMessage) {
+			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = step
 				m.ExecutedTools = true
 			})
 		case aiagent.StreamTypeToolResult:
-			rt.msgStateManager.UpdateMsg(stateKey, func(m *models.AssistantMessage) {
+			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
 			// Capture successful tool results that have their own structured
@@ -575,17 +532,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			if errMsg == "" {
 				errMsg = chunk.Content
 			}
-			rt.finishMessage(stateKey, streamID, msg, 500, errMsg)
+			rt.finishMessage(state, streamID, 500, errMsg)
 			return
 		case aiagent.StreamTypeDone:
 			if chunk.Content != "" {
 				fullContent = chunk.Content
-				streamCache.AddContent(streamID, chunk.Content)
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: chunk.Content, P: "content"})
 			}
 		}
 	}
 
-	streamCache.Finish(streamID)
+	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
+	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
+	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog
+	// 兜底。终态写入和 finishMessage 保持一致用 Background。
+	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	// Build final response: try action-specific parsing first, fall back to single markdown
 	var responses []models.AssistantMessageResponse
@@ -632,6 +593,15 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		responses = append([]models.AssistantMessageResponse{reasoningResp}, responses...)
 	}
 
+	// Cancel race guard：/cancel handler 已经把 cancelled 的终态写进 Redis 快照 +
+	// DB data + DB status=-2。如果 owner 在收到 cancel 信号之前正好把 chunks 跑完
+	// 走到这里，下面的 AssistantMessageSet / state.Persist 会把成功态盖回去——
+	// /detail 看到的是成功，但 history 因为 status=-2 把它过滤掉，前后矛盾。
+	// 见 cancel marker 就直接 return，让 cancel handler 的写入是权威终态。
+	if cancelled, _ := models.MsgCancelExists(context.Background(), rt.Redis, msg.ChatID, msg.SeqID); cancelled {
+		return
+	}
+
 	msg.Response = responses
 	msg.IsFinish = true
 	msg.CurStep = ""
@@ -646,30 +616,42 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if err := models.AssistantMessageSet(rt.Ctx, *msg); err != nil {
 		logger.Errorf("[Assistant] failed to save message: %v", err)
 	}
-
-	rt.msgStateManager.Remove(stateKey)
+	// Redis 上的 msg 快照刷一次最终态。完结后 24h TTL 自然过期，detail 接口
+	// 在过期后会 fallback 到 DB 读取。用 Background 兜底——parentCtx 此时可能因
+	// cancel/超时而 Done。
+	state.Persist(context.Background())
 }
 
-func (rt *Router) finishMessage(stateKey, streamID string, msg *models.AssistantMessage, errCode int, errMsg string) {
-	aiagent.GetStreamCache().Finish(streamID)
+func (rt *Router) finishMessage(state *MessageState, streamID string, errCode int, errMsg string) {
+	msg := state.Msg()
+	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
+
+	// 同 success 路径：/cancel 已经把 cancelled 终态写到 Redis + DB 时，这里如果再
+	// 用 errCode (常见 500/通用错误) 覆盖 DB data，会造成 /detail 看到错误码但
+	// history 因 status=-2 过滤掉它的前后不一致。见 cancel 标志就让 /cancel 的
+	// 写入做权威。
+	if cancelled, _ := models.MsgCancelExists(context.Background(), rt.Redis, msg.ChatID, msg.SeqID); cancelled {
+		return
+	}
 
 	msg.IsFinish = true
+	msg.CurStep = ""
 	msg.ErrCode = errCode
 	msg.ErrMsg = errMsg
 
 	if err := models.AssistantMessageSet(rt.Ctx, *msg); err != nil {
 		logger.Errorf("[Assistant] failed to save error message: %v", err)
 	}
-
-	rt.msgStateManager.Remove(stateKey)
+	state.Persist(context.Background())
 }
 
 // finishHaltedMessage ends the turn without running the agent (used by preflight
 // hooks that ask the user for missing context). Responses are attached as normal
 // success-path responses, streamID is wired to the first one, and the chat
 // history records only the user's input.
-func (rt *Router) finishHaltedMessage(stateKey, streamID string, msg *models.AssistantMessage, history []aiagent.ChatMessage, responses []models.AssistantMessageResponse) {
-	aiagent.GetStreamCache().Finish(streamID)
+func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, history []aiagent.ChatMessage, responses []models.AssistantMessageResponse) {
+	msg := state.Msg()
+	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	if len(responses) > 0 {
 		responses[0].StreamID = streamID
@@ -689,8 +671,7 @@ func (rt *Router) finishHaltedMessage(stateKey, streamID string, msg *models.Ass
 	if err := models.AssistantMessageSet(rt.Ctx, *msg); err != nil {
 		logger.Errorf("[Assistant] failed to save halted message: %v", err)
 	}
-
-	rt.msgStateManager.Remove(stateKey)
+	state.Persist(context.Background())
 }
 
 func (rt *Router) assistantMessageDetail(c *gin.Context) {
@@ -704,12 +685,69 @@ func (rt *Router) assistantMessageDetail(c *gin.Context) {
 	_, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	key := msgKey(req.ChatID, req.SeqID)
-	if msg, ok := rt.msgStateManager.Get(key); ok {
-		ginx.NewRender(c).Data(msg, nil)
+	// 优先读 Redis 上的进行中/最近完结快照——任意实例都能拿到 owner 实时写入的
+	// CurStep / 部分 Response / IsFinish。
+	if snap, err := models.MsgStateGet(c, rt.Redis, req.ChatID, req.SeqID); err == nil && snap != nil {
+		// Orphan 收敛：snap 看上去还在执行中，但 ChatLock 已经不在了——可能是
+		// owner 真崩了，也可能是 owner 刚刚正常收尾（state.Persist 写完 Redis
+		// IsFinish=true 之后才 defer lock.Release）。这里先做完两次 Redis 读再下结论：
+		//
+		//   1. ChatLockHeld 出错（Redis 抖动）保守不收敛——别把活的 owner 误判 orphan
+		//   2. 锁不在 → 重新拉一次 snap。owner 正常收尾 / cancel handler 已经把终态
+		//      写进 Redis 时，第二次读会拿到 IsFinish=true 的最终态，直接返回，不会
+		//      再用第一次读到的旧 snap 去 AssistantMessageSet 反向覆盖 DB 成功态
+		//   3. 第二次读还是 IsFinish=false → 真 orphan，但还要分两种：
+		//      a) MsgCancelExists=true：cancel handler 在 race 中没赢，但它一定会
+		//         继续把 cancelled 终态写进 DB+Redis。这里只把响应渲染成 cancelled，
+		//         别 AssistantMessageSet / MsgStateDelete 去抢占 cancel handler 的写入
+		//      b) 否则才是真崩：固化终态到 DB，给 stream 写 finish marker，删 Redis 快照
+		if !snap.IsFinish {
+			held, lerr := models.ChatLockHeld(c, rt.Redis, req.ChatID)
+			if lerr != nil {
+				logger.Warningf("[Assistant] ChatLockHeld chat=%s seq=%d: %v", req.ChatID, req.SeqID, lerr)
+			} else if !held {
+				// Lost-update 防御：用最新的 snap 替换我们手里那份可能已陈旧的副本
+				if fresh, ferr := models.MsgStateGet(c, rt.Redis, req.ChatID, req.SeqID); ferr == nil && fresh != nil {
+					snap = fresh
+				}
+				if !snap.IsFinish {
+					cancelled, _ := models.MsgCancelExists(c, rt.Redis, req.ChatID, req.SeqID)
+					snap.IsFinish = true
+					snap.CurStep = ""
+					if cancelled {
+						if snap.ErrCode == 0 {
+							snap.ErrCode = int(models.MessageStatusCancel)
+							snap.ErrMsg = "cancelled by user"
+						}
+						// 不动 DB / 不删 Redis：cancel handler 的写入是权威终态
+					} else {
+						if snap.ErrCode == 0 {
+							snap.ErrCode = 500
+							snap.ErrMsg = "owner instance lost, message aborted"
+						}
+						if err := models.AssistantMessageSet(rt.Ctx, *snap); err != nil {
+							logger.Warningf("[Assistant] orphan persist DB chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
+						}
+						for _, r := range snap.Response {
+							if r.StreamID == "" {
+								continue
+							}
+							if err := rt.streamBus.Finish(c, req.ChatID, r.StreamID); err != nil {
+								logger.Warningf("[Assistant] orphan streamBus.Finish chat=%s stream=%s: %v", req.ChatID, r.StreamID, err)
+							}
+						}
+						_ = models.MsgStateDelete(c, rt.Redis, req.ChatID, req.SeqID)
+					}
+				}
+			}
+		}
+		ginx.NewRender(c).Data(snap, nil)
 		return
+	} else if err != nil {
+		logger.Warningf("[Assistant] MsgStateGet chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
 	}
 
+	// Fallback 历史消息：Redis 24h TTL 已过期，从 DB 读取最终持久化结果。
 	msg, err := models.AssistantMessageGet(rt.Ctx, req.ChatID, req.SeqID)
 	ginx.Dangerous(err)
 	if msg == nil {
@@ -753,19 +791,15 @@ func (rt *Router) assistantMessageCancel(c *gin.Context) {
 	_, err := models.AssistantChatCheckOwner(rt.Ctx, req.ChatID, me.Id)
 	ginx.Dangerous(err)
 
-	key := msgKey(req.ChatID, req.SeqID)
-	streamID := rt.msgStateManager.GetStreamID(key)
-
-	if !rt.msgStateManager.Cancel(key) {
-		ginx.Bomb(http.StatusNotFound, "message not executing or not found")
+	if err := rt.CancelAssistantMessageInternal(c, req.ChatID, req.SeqID); err != nil {
+		// ErrMessageNotInflight → 404; everything else → 500.
+		if errors.Is(err, ErrMessageNotInflight) {
+			ginx.Bomb(http.StatusNotFound, "%s", err.Error())
+			return
+		}
+		ginx.Dangerous(err)
 		return
 	}
-
-	if streamID != "" {
-		aiagent.GetStreamCache().Finish(streamID)
-	}
-
-	models.AssistantMessageSetStatus(rt.Ctx, req.ChatID, req.SeqID, models.MessageStatusCancel)
 
 	ginx.NewRender(c).Message(nil)
 }
@@ -781,24 +815,98 @@ func (rt *Router) assistantStream(c *gin.Context) {
 		return
 	}
 
-	// SSE responses can outlive http.Server.WriteTimeout (40s by default), which
-	// would otherwise close the underlying TCP connection mid-stream. Clear the
-	// per-connection write deadline for this handler only.
-	if rc := http.NewResponseController(c.Writer); rc != nil {
-		_ = rc.SetWriteDeadline(time.Time{})
+	// streamID 内嵌 chatID，格式 "<chatID>:<uuid>"——assistantMessageNew 写入。
+	// 用 chatID 作为 hash tag 才能在 Cluster 模式下定位到对应 stream key。
+	chatID := parseChatIDFromStreamID(req.StreamID)
+	if chatID == "" {
+		ginx.Bomb(http.StatusBadRequest, "invalid stream_id format")
+		return
 	}
+	// seqID 可能是 0——旧格式 streamID 不带 seqID，watchdog 此时回退到 chat 粒度的
+	// ChatLockHeld 判定（不能区分"我们这条 message 已经孤儿但同 chat 又起了新 message"
+	// 的边角，但这是旧 streamID 在 in-flight 期间不可避免的限制）。
+	seqID := parseSeqIDFromStreamID(req.StreamID)
+
+	clearWriteDeadline(c.Writer)
 
 	// Tie the reader's lifetime to the HTTP request so a client disconnect
-	// (or normal handler return) releases the StreamCache forwarding goroutine
-	// instead of leaking it until Finish/cleanup.
+	// (or normal handler return) releases the StreamBus consumer goroutine
+	// instead of leaking it until Finish/timeout.
 	ctx, cancel := context.WithCancel(c.Request.Context())
 	defer cancel()
-	ch := aiagent.GetStreamCache().Read(ctx, req.StreamID)
 
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 	c.Header("X-Accel-Buffering", "no")
+
+	// Stream key 不存在时立即收尾——避免对非法 / 已 TTL 过期的 streamID 做
+	// XREAD BLOCK 而无限挂起 goroutine + Redis 连接。assistantMessageNew 会同步
+	// 种入 init marker，所以"合法但 owner 还没首包"的情况此处也能通过。
+	exists, err := rt.streamBus.Exists(ctx, chatID, req.StreamID)
+	if err != nil {
+		logger.Warningf("[Assistant] streamBus.Exists chat=%s stream=%s: %v", chatID, req.StreamID, err)
+	}
+	if err == nil && !exists {
+		c.Stream(func(w io.Writer) bool {
+			fmt.Fprintf(w, "event: finish\ndata:\n\n")
+			c.Writer.Flush()
+			return false
+		})
+		return
+	}
+
+	ch := rt.streamBus.Read(ctx, chatID, req.StreamID)
+
+	// Orphan watchdog：owner 在 Init 之后、Finish 之前崩溃时 stream 里永远不会
+	// 出现 finishMarker，单靠 XREAD BLOCK + 24h TTL 会让 SSE 消费者长时间挂着。
+	//
+	// 优先用 message 粒度的信号 MsgStateGet(chatID, seqID).IsFinish——这能精准对应
+	// "我们这条 message 是不是结束了"，覆盖以下两种 case：
+	//   1) owner 正常 finalize 写过 IsFinish=true 但 SSE 这边漏了 finishMarker；
+	//   2) owner 真崩了 + 同 chat 又起了新 message，新 message 的 ChatLock 让旧的
+	//      chat 粒度 ChatLockHeld 判定永远 true，老 watchdog 在这场景下失效。
+	//
+	// 若 snap 直接 nil（24h TTL 过期）也视作"早就该结束了"。snap 还在 in-flight
+	// (IsFinish=false) 时，再退一步用 ChatLockHeld 兜——锁不在意味着没有任何 owner
+	// 在为本 chat 工作，旧 streamID 也该收尾。
+	//
+	// seqID==0 (legacy streamID) 时跳过 message 级判定，行为退化到老逻辑。
+	go func() {
+		t := time.NewTicker(5 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				if seqID > 0 {
+					snap, serr := models.MsgStateGet(ctx, rt.Redis, chatID, seqID)
+					if serr != nil {
+						// Redis 抖动，下个 tick 再试，不要误杀
+						continue
+					}
+					if snap == nil || snap.IsFinish {
+						if err := rt.streamBus.Finish(ctx, chatID, req.StreamID); err != nil {
+							logger.Warningf("[Assistant] orphan watchdog Finish chat=%s stream=%s: %v", chatID, req.StreamID, err)
+						}
+						return
+					}
+					// snap 还在 in-flight，落到下面的 lock 判定
+				}
+				held, herr := models.ChatLockHeld(ctx, rt.Redis, chatID)
+				if herr != nil {
+					continue
+				}
+				if !held {
+					if err := rt.streamBus.Finish(ctx, chatID, req.StreamID); err != nil {
+						logger.Warningf("[Assistant] orphan watchdog Finish chat=%s stream=%s: %v", chatID, req.StreamID, err)
+					}
+					return
+				}
+			}
+		}
+	}()
 
 	c.Stream(func(w io.Writer) bool {
 		msg, ok := <-ch

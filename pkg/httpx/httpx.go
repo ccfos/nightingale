@@ -40,6 +40,20 @@ type Config struct {
 	APIForService    BasicAuths
 	RSA              RSAConfig
 	TokenAuth        TokenAuth
+	A2A              A2AConfig
+}
+
+// A2AConfig controls the A2A (Agent-to-Agent) and MCP (Model Context Protocol)
+// HTTP endpoints exposed by n9e. Both are enabled by default; auth reuses the
+// existing TokenAuth middleware (X-User-Token).
+type A2AConfig struct {
+	// Disable turns off both the A2A and MCP endpoints when true.
+	Disable bool
+	// DisableMCP turns off only the MCP endpoint while keeping A2A active.
+	DisableMCP bool
+	// BaseURL is the absolute URL advertised in the AgentCard. When empty it
+	// is derived from the incoming request (Host + X-Forwarded-Proto / TLS).
+	BaseURL string
 }
 
 type RSAConfig struct {
