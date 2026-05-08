@@ -239,18 +239,16 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 				// Disambiguate "snapshot truly gone" from "snapshot exists but
 				// already terminal": the backend collapses both into
 				// ErrTaskNotFound, but they map to different A2A semantics.
-				// Already-terminal tasks should look idempotent — surface the
-				// real terminal state as a status update so a cancel arriving
-				// just after natural completion produces a coherent
-				// Working → Completed/Failed/Canceled transition instead of a
-				// confusing 404.
+				// For already-terminal tasks A2A's correct response is
+				// TaskNotCancelable, not NotFound — yield it as a typed error
+				// rather than a status update so we never hit the SDK's
+				// "write to closed pipe" race in handleCancelWithConcurrentRun
+				// when the underlying run cleaned up between Cancel's
+				// execution lookup and the canceler goroutine's first write.
+				// Clients who want the actual terminal state can follow up
+				// with tasks/get.
 				if snap, sErr := e.backend.MessageSnapshot(ctx, chatID, seqID); sErr == nil && snap != nil && snap.IsFinish {
-					state, errMsg := e.terminalState(ctx, chatID, seqID)
-					var statusMsg *a2a.Message
-					if errMsg != "" {
-						statusMsg = a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(errMsg))
-					}
-					yield(a2a.NewStatusUpdateEvent(ec, state, statusMsg), nil)
+					yield(nil, a2a.ErrTaskNotCancelable)
 					return
 				}
 				yield(nil, a2a.ErrTaskNotFound)
