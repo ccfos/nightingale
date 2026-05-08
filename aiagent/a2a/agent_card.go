@@ -64,8 +64,13 @@ func buildAgentCard(endpointURL, tokenHeader string) *a2a.AgentCard {
 		SupportedInterfaces: []*a2a.AgentInterface{
 			a2a.NewAgentInterface(endpointURL, a2a.TransportProtocolHTTPJSON),
 		},
-		DefaultInputModes:  []string{"text"},
-		DefaultOutputModes: []string{"text"},
+		DefaultInputModes: []string{"text"},
+		// "data" advertises that some skills emit structured Data parts
+		// alongside text — alert rules and dashboards come back as JSON
+		// payloads with vendor MIME types (application/vnd.n9e.alert-rule+json,
+		// application/vnd.n9e.dashboard+json). Clients that don't recognise
+		// the MIME still get the raw object and can ignore it.
+		DefaultOutputModes: []string{"text", "data"},
 		Capabilities: a2a.AgentCapabilities{
 			Streaming: true,
 		},

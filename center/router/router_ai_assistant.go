@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/a2a"
 	"github.com/ccfos/nightingale/v6/aiagent/chat"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	_ "github.com/ccfos/nightingale/v6/aiagent/tools" // register builtin tools
@@ -516,6 +517,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				m.CurStep = step
 				m.ExecutedTools = true
 			})
+			// P1: surface the step text on streamBus so progress is visible
+			// to non-DOM consumers (A2A bridge translates to a working-state
+			// status update). The original frontend still ignores the "step"
+			// phase and renders progress from msg.CurStep.
+			_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID,
+				aiagent.StreamMessage{V: step, P: "step"})
 		case aiagent.StreamTypeToolResult:
 			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
@@ -527,6 +534,28 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				toolName, _ := chunk.Metadata["tool"].(string)
 				obs := strings.TrimSpace(chunk.Content)
 				if obs != "" && !strings.HasPrefix(obs, "Error:") {
+					// P1: human-readable tool_result for SSE / A2A status bar.
+					_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID,
+						aiagent.StreamMessage{V: shortToolSummary(toolName, obs), P: "tool_result"})
+
+					// P2: structured artifact envelope for tools whose output
+					// is meant to be surfaced as a typed card. Bridge
+					// translates this into an A2A Data part with vendor MIME.
+					// Tools without a kind mapping skip the artifact phase.
+					if kind := a2a.ArtifactKindForTool(toolName); kind != "" {
+						envelope, err := json.Marshal(map[string]any{
+							"kind":    kind,
+							"mime":    a2a.VendorMimeForKind(kind),
+							"content": json.RawMessage(obs),
+						})
+						if err == nil {
+							_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID,
+								aiagent.StreamMessage{V: string(envelope), P: "artifact"})
+						} else {
+							logger.Warningf("[Assistant] artifact envelope marshal tool=%s: %v", toolName, err)
+						}
+					}
+
 					switch toolName {
 					case "create_alert_rule":
 						createdAlertRules = append(createdAlertRules, obs)
@@ -657,6 +686,32 @@ func (rt *Router) finishMessage(state *MessageState, streamID string, errCode in
 		logger.Errorf("[Assistant] failed to save error message: %v", err)
 	}
 	state.Persist(context.Background())
+}
+
+// shortToolSummary builds a concise user-facing string summarising a tool
+// invocation result. It feeds the streamBus "tool_result" phase, which
+// surfaces as A2A status updates or SSE step text — neither of which
+// benefits from the full JSON observation. Falls back to a generic
+// "Tool X finished" when the payload doesn't expose a recognisable name.
+func shortToolSummary(tool, obs string) string {
+	var meta struct {
+		Name string `json:"name"`
+		ID   any    `json:"id"`
+	}
+	_ = json.Unmarshal([]byte(obs), &meta)
+	switch tool {
+	case "create_alert_rule":
+		if meta.Name != "" {
+			return fmt.Sprintf("Created alert rule %s", meta.Name)
+		}
+		return "Created alert rule"
+	case "create_dashboard":
+		if meta.Name != "" {
+			return fmt.Sprintf("Created dashboard %s", meta.Name)
+		}
+		return "Created dashboard"
+	}
+	return fmt.Sprintf("Tool %s finished", tool)
 }
 
 // finishHaltedMessage ends the turn without running the agent (used by preflight
