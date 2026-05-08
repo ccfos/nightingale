@@ -162,9 +162,16 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, state *MessageState, streamID string, userId int64, lang string) {
 	msg := state.Msg()
 	// Shutdown sequence (defer runs LIFO — reverse of registration order):
-	//   1. parentCancel()           — signals watchdog to stop
-	//   2. <-keepAliveDone          — wait for watchdog goroutine to fully exit
-	//   3. lock.Release(...)        — CAS-delete the lock (background ctx so it
+	//   1. streamBus.Finish(...)    — close the SSE marker last, AFTER any
+	//                                 state.Persist so cancel arriving in the
+	//                                 teardown window sees snap.IsFinish=true
+	//                                 and avoids the SDK pipe-close race
+	//                                 (cancel.go yields ErrTaskNotCancelable
+	//                                 instead of trying to write a status
+	//                                 update event to a freshly-closed pipe).
+	//   2. parentCancel()           — signals watchdog to stop
+	//   3. <-keepAliveDone          — wait for watchdog goroutine to fully exit
+	//   4. lock.Release(...)        — CAS-delete the lock (background ctx so it
 	//                                 still runs even though parentCtx is done)
 	// This ordering prevents a late renew() from racing with the release and
 	// logging a spurious "lost ownership" after we deleted the key ourselves.
@@ -172,6 +179,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	defer lock.Release(context.Background(), rt.Redis)
 	defer func() { <-keepAliveDone }()
 	defer parentCancel()
+	defer rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	// Watchdog: renews TTL every ChatLockRenewInterval until parentCtx is
 	// canceled (success, error, timeout, or user cancel).
@@ -542,11 +550,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
-	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
-	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
-	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog
-	// 兜底。终态写入和 finishMessage 保持一致用 Background。
-	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
+	// streamBus.Finish is intentionally NOT called here — it is deferred at
+	// function entry so it always runs AFTER state.Persist. This ordering is
+	// what lets the A2A cancel handler see a coherent snap.IsFinish=true once
+	// the SSE marker closes; otherwise cancel arriving in the teardown window
+	// would read snap.IsFinish=false, hit the "in-flight cancel succeeded"
+	// path, and try to write a status update event to a pipe the SDK already
+	// closed (resulting in the SDK's "queue is closed" 500).
 
 	// Build final response: try action-specific parsing first, fall back to single markdown
 	var responses []models.AssistantMessageResponse
@@ -624,7 +634,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 func (rt *Router) finishMessage(state *MessageState, streamID string, errCode int, errMsg string) {
 	msg := state.Msg()
-	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
+	// streamBus.Finish must run AFTER state.Persist so cancel arriving in the
+	// teardown window sees snap.IsFinish=true (set by either /cancel handler
+	// or our own state.Persist below) — same rationale as the deferred
+	// streamBus.Finish in processAssistantMessage.
+	defer rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	// 同 success 路径：/cancel 已经把 cancelled 终态写到 Redis + DB 时，这里如果再
 	// 用 errCode (常见 500/通用错误) 覆盖 DB data，会造成 /detail 看到错误码但
@@ -651,7 +665,10 @@ func (rt *Router) finishMessage(state *MessageState, streamID string, errCode in
 // history records only the user's input.
 func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, history []aiagent.ChatMessage, responses []models.AssistantMessageResponse) {
 	msg := state.Msg()
-	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
+	// streamBus.Finish runs AFTER state.Persist (deferred) — see the comment
+	// on the matching defer in processAssistantMessage for the cancel-race
+	// rationale.
+	defer rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	if len(responses) > 0 {
 		responses[0].StreamID = streamID
