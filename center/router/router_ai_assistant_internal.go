@@ -71,21 +71,20 @@ type MessageStartResult struct {
 	StreamID string
 }
 
-// EnsureAssistantChat returns an existing chat owned by userID (matched by chatID),
-// otherwise allocates a fresh server-generated chatID and creates a new one.
+// EnsureAssistantChat returns an existing chat owned by userID (matched by
+// chatID), otherwise creates one — adopting the supplied chatID when it is
+// not already taken, falling back to a fresh UUID only when no usable ID was
+// supplied or the supplied ID is owned by another user.
 //
-// The caller-supplied chatID is honored only when it identifies an existing
-// chat the caller already owns. Every other case — empty input, unknown ID, or
-// ID owned by a different user — collapses into "allocate a new UUID and
-// create". This deliberate silent fallback:
+// Adopting the caller-supplied chatID is required by A2A: the SDK generates
+// a ContextID per task, returns it to the client, and the client passes it
+// back to bind cancel/multi-turn to the same chat. If we silently swap that
+// ID for a fresh UUID, every subsequent reference points at the wrong chat —
+// breaking tasks/cancel (the ContextID-vs-chatID guard in executor.Cancel
+// trips) and multi-turn memory (turn 2 lands in a brand-new empty chat).
 //
-//  1. Prevents clients (A2A ContextID, MCP chat_id are both client-attributable)
-//     from squatting predictable identifiers they intend to reuse later. A2A
-//     spec defines ContextID as server-generated; honoring arbitrary client
-//     values would let a token holder claim any ID before legitimate use.
-//  2. Removes a cross-tenant existence probe: "your chat" / "someone else's
-//     chat" / "doesn't exist" used to map to three distinguishable outcomes;
-//     now the latter two look identical to the caller (a fresh chat).
+// The "owned by another user" branch still falls back to a fresh UUID, so
+// cross-tenant isolation is preserved.
 //
 // The page argument is used only when creating a new chat.
 func (rt *Router) EnsureAssistantChat(userID int64, chatID string, page models.AssistantPageInfo) (*models.AssistantChat, error) {
@@ -98,14 +97,18 @@ func (rt *Router) EnsureAssistantChat(userID int64, chatID string, page models.A
 			return existing, nil
 		}
 		if existing != nil {
-			// Audit trail: legit clients shouldn't ever land here. A spike
-			// of these warnings means either a buggy client passing stale
-			// chatIDs, or someone probing.
+			// chatID is taken by another user — refuse to overwrite the
+			// owner field and allocate a fresh ID instead. Warn so a spike
+			// in this path can be triaged as either a buggy client or
+			// someone probing.
 			logger.Warningf("[Assistant] user=%d supplied chatID=%s owned by user=%d; allocating new", userID, chatID, existing.UserID)
+			chatID = ""
 		}
 	}
 
-	chatID = uuid.New().String()
+	if chatID == "" {
+		chatID = uuid.New().String()
+	}
 	chat := models.AssistantChat{
 		ChatID:     chatID,
 		Title:      "New Chat",
