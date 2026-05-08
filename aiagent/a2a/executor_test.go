@@ -199,10 +199,12 @@ func TestCancelTargetsSeqFromMetadata(t *testing.T) {
 // Cancel arriving just after the assistant naturally completes is a real
 // race: the n9e snapshot already says IsFinish=true (so the backend returns
 // ErrTaskNotFound), but the SDK still considers the A2A task non-terminal
-// and dispatches to our Cancel. The 404-equivalent response is misleading —
-// the task DID exist, it just finished. Surface the real terminal state so
-// cancel becomes idempotent on completed work.
-func TestCancelOnNaturallyCompletedTaskYieldsCompleted(t *testing.T) {
+// and dispatches to our Cancel. NotFound is misleading (the task did exist),
+// so surface ErrTaskNotCancelable instead — the A2A-spec'd "task is in a
+// terminal state" response. Yielding it as an error (not a status update)
+// also avoids the SDK's handleCancelWithConcurrentRun race that closes the
+// run pipe between execution lookup and the canceler's first write.
+func TestCancelOnNaturallyCompletedTaskYieldsNotCancelable(t *testing.T) {
 	be := &fakeBackend{
 		cancelErr: a2a.ErrTaskNotFound,
 		snapshot: &models.AssistantMessage{
@@ -221,24 +223,20 @@ func TestCancelOnNaturallyCompletedTaskYieldsCompleted(t *testing.T) {
 	})
 	events, errs := drain(got)
 
-	if len(errs) != 1 || errs[0] != nil {
-		t.Fatalf("expected no error (idempotent path), got %v", errs)
+	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrTaskNotCancelable) {
+		t.Fatalf("expected ErrTaskNotCancelable, got %v", errs)
 	}
-	if len(events) != 1 {
-		t.Fatalf("expected single status update, got %d events", len(events))
-	}
-	upd, ok := events[0].(*a2a.TaskStatusUpdateEvent)
-	if !ok {
-		t.Fatalf("expected TaskStatusUpdateEvent, got %#v", events[0])
-	}
-	if upd.Status.State != a2a.TaskStateCompleted {
-		t.Fatalf("expected TaskStateCompleted, got %s", upd.Status.State)
+	if len(events) != 1 || events[0] != nil {
+		t.Fatalf("expected single nil event paired with the error, got %v", events)
 	}
 }
 
-// Same race but the assistant terminated via prior cancel — yield Canceled,
-// not Completed, so an A2A client polling tasks/get sees a coherent state.
-func TestCancelOnAlreadyCanceledSnapshotYieldsCanceled(t *testing.T) {
+// Same race but the assistant terminated via prior cancel — still yields
+// ErrTaskNotCancelable. The exact terminal state (canceled vs completed vs
+// failed) is recoverable via tasks/get; we don't try to push it through the
+// cancel response because that path goes through the SDK's run.pipe.Writer
+// which races with cleanup.
+func TestCancelOnAlreadyCanceledSnapshotYieldsNotCancelable(t *testing.T) {
 	be := &fakeBackend{
 		cancelErr: a2a.ErrTaskNotFound,
 		snapshot: &models.AssistantMessage{
@@ -256,14 +254,10 @@ func TestCancelOnAlreadyCanceledSnapshotYieldsCanceled(t *testing.T) {
 		ContextID:  "chat-1",
 		StoredTask: storedTask("chat-1", 7),
 	})
-	events, errs := drain(got)
+	_, errs := drain(got)
 
-	if len(errs) != 1 || errs[0] != nil {
-		t.Fatalf("expected no error, got %v", errs)
-	}
-	upd, ok := events[0].(*a2a.TaskStatusUpdateEvent)
-	if !ok || upd.Status.State != a2a.TaskStateCanceled {
-		t.Fatalf("expected Canceled status update, got %#v", events[0])
+	if len(errs) != 1 || !errors.Is(errs[0], a2a.ErrTaskNotCancelable) {
+		t.Fatalf("expected ErrTaskNotCancelable, got %v", errs)
 	}
 }
 
