@@ -159,33 +159,39 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 				}
 			}
 		}
-		state, errMsg := e.terminalState(ctx, result.ChatID, result.SeqID)
-		bridge.Finalize(state, errMsg)
+		state, errMsg, snap := e.terminalSnapshot(ctx, result.ChatID, result.SeqID)
+		bridge.Finalize(state, errMsg, snap)
 	}
 }
 
-// terminalState consults the message snapshot to map the n9e ErrCode/IsFinish
-// pair into an A2A TaskState. The stream channel can close for several
-// reasons that all look identical from the consumer side (success, cancel,
-// owner failure, request-context cancel) — without this lookup we would
-// misreport every terminal as Completed and break A2A's task lifecycle
-// semantics for downstream agent orchestrations.
+// terminalSnapshot consults the message snapshot to map the n9e ErrCode /
+// IsFinish pair into an A2A TaskState, and returns the snapshot itself so
+// bridge.Finalize can replay structured Response items that bypassed the
+// realtime stream (mode-2 safety net).
+//
+// The stream channel can close for several reasons that all look identical
+// from the consumer side (success, cancel, owner failure, request-context
+// cancel) — without this lookup we would misreport every terminal as
+// Completed and break A2A's task lifecycle semantics for downstream agent
+// orchestrations.
 //
 // If snapshot lookup fails or returns nil (TTL'd out), default to Completed
 // rather than synthesising a failure: a missing snapshot most commonly means
 // the message terminated cleanly long enough ago for the snapshot to expire.
-func (e *executor) terminalState(ctx context.Context, chatID string, seqID int64) (a2a.TaskState, string) {
+// In that case the safety-net pass is a no-op (nil snap) — same effect as
+// having no missing artifacts to replay.
+func (e *executor) terminalSnapshot(ctx context.Context, chatID string, seqID int64) (a2a.TaskState, string, *models.AssistantMessage) {
 	snap, err := e.backend.MessageSnapshot(ctx, chatID, seqID)
 	if err != nil || snap == nil {
-		return a2a.TaskStateCompleted, ""
+		return a2a.TaskStateCompleted, "", nil
 	}
 	switch {
 	case snap.ErrCode == int(models.MessageStatusCancel):
-		return a2a.TaskStateCanceled, snap.ErrMsg
+		return a2a.TaskStateCanceled, snap.ErrMsg, snap
 	case snap.ErrCode != 0:
-		return a2a.TaskStateFailed, snap.ErrMsg
+		return a2a.TaskStateFailed, snap.ErrMsg, snap
 	default:
-		return a2a.TaskStateCompleted, ""
+		return a2a.TaskStateCompleted, "", snap
 	}
 }
 
@@ -233,8 +239,7 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 		if err := e.backend.CancelAssistantMessage(ctx, chatID, seqID); err != nil {
 			// "not in-flight" gets the same NotFound treatment as bad TaskID /
 			// non-owner — collapsing all three into one shape avoids leaking
-			// whether a given (chat, seq) ever existed. Any other error is a
-			// genuine cancel failure surfaced as a Failed status update.
+			// whether a given (chat, seq) ever existed.
 			if errors.Is(err, a2a.ErrTaskNotFound) {
 				// Disambiguate "snapshot truly gone" from "snapshot exists but
 				// already terminal": the backend collapses both into
@@ -254,11 +259,25 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 				yield(nil, a2a.ErrTaskNotFound)
 				return
 			}
-			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateFailed,
-				a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
+			// Backend cancel failed for an unexpected reason. Yield it as an
+			// error rather than a TaskStateFailed status update event — the
+			// status-update path goes through canceler.Cancel's q.Write to
+			// the run's pipe, which races with the run's own cleanup and
+			// surfaces as a 500 "queue is closed" when cleanup wins.
+			yield(nil, err)
 			return
 		}
-		yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateCanceled, nil), nil)
+		// Backend cancel succeeded. Do NOT yield a TaskStateCanceled status
+		// update event from here — the cancel handler already closed
+		// streamBus, which causes the *run's* executor.Execute to exit and
+		// bridge.Finalize to yield the canceled status update through the
+		// run's pipe (terminalState reads the cancel marker from Redis and
+		// maps to TaskStateCanceled). The SDK collects that via run.result.
+		// If we yielded our own status update here, q.Write on the run's
+		// pipe would race with the run's own cleanup and produce a 500
+		// "queue is closed". Yielding nothing lets canceler.Cancel return
+		// nil cleanly, after which handleCancelWithConcurrentRun waits on
+		// run.result and surfaces the run's CANCELED state to the client.
 	}
 }
 

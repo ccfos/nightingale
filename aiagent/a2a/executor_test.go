@@ -177,8 +177,18 @@ func TestCancelTargetsSeqFromMetadata(t *testing.T) {
 	})
 	events, errs := drain(got)
 
-	if len(errs) != 1 || errs[0] != nil {
-		t.Fatalf("expected no error, got %v", errs)
+	// On successful cancel the iter must yield neither events nor errors.
+	// The SDK collects the canceled state from the *run* (executor.Execute
+	// terminates because the cancel handler closed streamBus, then
+	// bridge.Finalize emits the TaskStateCanceled status update via the
+	// run's pipe). Yielding a status update from here would race with the
+	// run's own pipe writes and surface as a 500 "queue is closed" when
+	// cleanup wins.
+	if len(events) != 0 {
+		t.Fatalf("expected zero events on successful cancel, got %v", events)
+	}
+	if len(errs) != 0 {
+		t.Fatalf("expected zero errors on successful cancel, got %v", errs)
 	}
 	if be.cancelCalls != 1 {
 		t.Fatalf("CancelAssistantMessage call count = %d, want 1", be.cancelCalls)
@@ -186,13 +196,6 @@ func TestCancelTargetsSeqFromMetadata(t *testing.T) {
 	if be.cancelChatCalled != "chat-1" || be.cancelSeqIDCalled != 42 {
 		t.Fatalf("cancel hit (chat=%q, seq=%d), want (chat-1, 42)",
 			be.cancelChatCalled, be.cancelSeqIDCalled)
-	}
-	if len(events) != 1 {
-		t.Fatalf("expected single canceled event, got %d", len(events))
-	}
-	upd, ok := events[0].(*a2a.TaskStatusUpdateEvent)
-	if !ok || upd.Status.State != a2a.TaskStateCanceled {
-		t.Fatalf("expected TaskStateCanceled event, got %#v", events[0])
 	}
 }
 
@@ -283,6 +286,33 @@ func TestCancelOnMissingSnapshotKeeps404(t *testing.T) {
 	}
 }
 
+// Unexpected backend error (anything other than ErrTaskNotFound) must be
+// yielded as a typed error rather than a TaskStateFailed status update event.
+// The status-update path goes through canceler.Cancel's q.Write, which
+// races with the run's own pipe cleanup and surfaces as 500 "queue is
+// closed" when cleanup wins.
+func TestCancelOnUnexpectedBackendErrorYieldsError(t *testing.T) {
+	backendErr := errors.New("redis exploded")
+	be := &fakeBackend{cancelErr: backendErr}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	got := exec.Cancel(ctx, &a2asrv.ExecutorContext{
+		ContextID:  "chat-1",
+		StoredTask: storedTask("chat-1", 7),
+	})
+	events, errs := drain(got)
+
+	if len(errs) != 1 || !errors.Is(errs[0], backendErr) {
+		t.Fatalf("expected backend error to propagate, got errs=%v", errs)
+	}
+	for _, ev := range events {
+		if ev != nil {
+			t.Fatalf("expected only nil events alongside the error, got %#v", ev)
+		}
+	}
+}
+
 // JSON round-trip via TaskStore turns int64 metadata into float64. Make sure
 // taskRefFromStored handles that — otherwise cancel breaks the moment the
 // task lives anywhere but in-process memory.
@@ -301,10 +331,10 @@ func TestCancelAcceptsFloat64SeqIDFromJSONRoundTrip(t *testing.T) {
 			},
 		},
 	})
-	_, errs := drain(got)
+	events, errs := drain(got)
 
-	if len(errs) != 1 || errs[0] != nil {
-		t.Fatalf("expected no error, got %v", errs)
+	if len(events) != 0 || len(errs) != 0 {
+		t.Fatalf("expected no events/errors on successful cancel, got events=%v errs=%v", events, errs)
 	}
 	if be.cancelSeqIDCalled != 99 {
 		t.Fatalf("expected seqID=99, got %d", be.cancelSeqIDCalled)
