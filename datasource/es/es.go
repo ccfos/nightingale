@@ -155,16 +155,16 @@ func (e *Elasticsearch) Equal(other datasource.Datasource) bool {
 		return false
 	}
 
-	if len(e.Headers) != len(otherES.Headers) {                                                                                                                                                                    
-        return false                                                
-    }  
+	if len(e.Headers) != len(otherES.Headers) {
+		return false
+	}
 
 	for k, v := range e.Headers {
 		if otherES.Headers[k] != v {
 			return false
 		}
 	}
-	
+
 	if e.Version != otherES.Version {
 		return false
 	}
@@ -296,12 +296,12 @@ func (e *Elasticsearch) processES6Fields(fieldData interface{}, fieldMap map[str
 }
 
 func (e *Elasticsearch) processES7Field(fieldName string, fieldData interface{}, fieldMap map[string]struct{}, fields *[]string) {
-	fieldMapData, ok := fieldData.(map[string]interface{})                                                                      
-    if !ok {                                                                                                                                                                                                 
+	fieldMapData, ok := fieldData.(map[string]interface{})
+	if !ok {
 		return
-    }                                                                                                                                                                                                        
-    fieldType := getFieldType(fieldName, fieldMapData)
-	
+	}
+	fieldType := getFieldType(fieldName, fieldMapData)
+
 	if eslike.HitFilter(fieldType) {
 		return
 	}
@@ -316,6 +316,11 @@ func (e *Elasticsearch) addFieldIfNotExists(fieldName string, fieldMap map[strin
 }
 
 func (e *Elasticsearch) QueryLog(ctx context.Context, queryParam interface{}) ([]interface{}, int64, error) {
+	// Check if the query contains a SQL field — if so, use XPackSQL path
+	if sqlReq, ok := extractSQLRequest(queryParam); ok {
+		return e.queryLogViaSQL(ctx, sqlReq)
+	}
+
 	searchFunc := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
 		return e.Client.Search().
 			Index(indices...).
