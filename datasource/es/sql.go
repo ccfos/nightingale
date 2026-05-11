@@ -32,7 +32,7 @@ type XPackSQLColumn struct {
 	Type string `json:"type"`
 }
 
-// XPackSQLResponse is the normalized response across v7/v8/v9.
+// XPackSQLResponse is the normalized ES SQL response.
 type XPackSQLResponse struct {
 	Columns []XPackSQLColumn `json:"columns"`
 	Rows    [][]any          `json:"rows"`
@@ -40,8 +40,12 @@ type XPackSQLResponse struct {
 }
 
 // XPackSQL is the single entry point for ES SQL execution.
-// It dispatches to the correct version adapter based on the cluster's major version.
+// It uses the go-elasticsearch/v8 SDK which is wire-compatible with ES 7.x, 8.x, and 9.x.
 func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*XPackSQLResponse, error) {
+	if !IsESSQLSupported(escli.Version) {
+		return nil, fmt.Errorf("ES SQL requires version 7.x or higher, got %q", escli.Version)
+	}
+
 	if strings.Contains(req.Query, "$__") {
 		expanded, err := ExpandTimeMacros(req.Query, req.From, req.To, req.TimeZone, req.TimeFormat)
 		if err != nil {
@@ -50,21 +54,7 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 		req.Query = expanded
 	}
 
-	major, err := majorVersion(escli.Version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse ES version: %w", err)
-	}
-
-	switch major {
-	case 7:
-		return xpackSQLViaV7(ctx, escli, req)
-	case 8:
-		return xpackSQLViaV8(ctx, escli, req)
-	case 9:
-		return xpackSQLViaV9(ctx, escli, req)
-	default:
-		return nil, fmt.Errorf("ES SQL requires major version 7 or higher, got %s (major: %d)", escli.Version, major)
-	}
+	return xpackSQLExec(ctx, escli, req)
 }
 
 // marshalSQLBody builds the JSON request body for the ES SQL REST API.
@@ -157,4 +147,14 @@ func majorVersion(version string) (int, error) {
 	}
 
 	return major, nil
+}
+
+// IsESSQLSupported reports whether the given ES version supports the SQL endpoint.
+// Requires major version >= 7.
+func IsESSQLSupported(version string) bool {
+	major, err := majorVersion(version)
+	if err != nil {
+		return false
+	}
+	return major >= 7
 }
