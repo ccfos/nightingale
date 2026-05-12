@@ -3,11 +3,15 @@ package es
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
+
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 )
 
 func syncMapNew() sync.Map { return sync.Map{} }
@@ -158,7 +162,46 @@ func TestXPackSQL_UnsupportedVersion(t *testing.T) {
 	}
 }
 
+func TestXPackSQL_NoMacroSkipsPreprocess(t *testing.T) {
+	origPreprocess := SQLPreprocess
+	SQLPreprocess = func(sql string, from, to int64) (string, error) {
+		t.Fatalf("SQLPreprocess should not be called for SQL without macros")
+		return "", nil
+	}
+	defer func() { SQLPreprocess = origPreprocess }()
+
+	sqlResp := `{"columns":[{"name":"cnt","type":"long"}],"rows":[[100]]}`
+	srv := mockESServer(t, "8.15.0", sqlResp, true)
+	defer srv.Close()
+
+	clientCache = syncMapNew()
+	escli := newTestElasticsearch("8.15.0", []string{srv.URL})
+
+	resp, err := XPackSQL(context.Background(), escli, XPackSQLRequest{
+		Query: `SELECT COUNT(*) AS cnt FROM "logs"`,
+	})
+	if err != nil {
+		t.Fatalf("XPackSQL() without macro error: %v", err)
+	}
+	if len(resp.Rows) != 1 {
+		t.Errorf("expected 1 row, got %d", len(resp.Rows))
+	}
+}
+
 func TestXPackSQL_MacroExpansion(t *testing.T) {
+	// Register a simple $__timeFilter macro for testing, mimicking the
+	// pattern used by fc-datasource-kit's ReplaceMacros.
+	origMacro := macros.Macro
+	macros.RegisterMacro(func(sql string, start, end int64) (string, error) {
+		if strings.Contains(sql, "$__timeFilter") {
+			// Simple replacement: $__timeFilter("col") to ("col" >= start AND "col" < end)
+			sql = strings.Replace(sql, `$__timeFilter("@timestamp")`,
+				fmt.Sprintf(`("@timestamp" >= %d AND "@timestamp" < %d)`, start, end), 1)
+		}
+		return sql, nil
+	})
+	defer func() { macros.Macro = origMacro }()
+
 	sqlResp := `{"columns":[{"name":"cnt","type":"long"}],"rows":[[100]]}`
 	srv := mockESServer(t, "8.15.0", sqlResp, true)
 	defer srv.Close()
