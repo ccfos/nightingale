@@ -539,31 +539,13 @@ IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use 
 // This inline prompt just frames the task and points at the skill.
 
 func buildNotifyTemplatePrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a Nightingale (n9e) notification template expert. The user is on the notification-template editor page and may want to either (a) author/modify a template, or (b) ask a how-to / conceptual question about templates.
+	return fmt.Sprintf(`You are an n9e notification template expert. Classify the user request first, then answer accordingly.
 
 User request: %s
 
-First, classify the request into one of two modes:
+If asking for a template (帮我写/加上/改成/生成/write/add/change/generate): output one-line lead → fenced gotemplate block → short 变量说明 list. Split $event.IsRecovered branches; prefer $labels.<key>; wrap times in timeformat; numeric precision via formatDecimal. Don't ask clarifying questions—state assumptions in the lead.
 
-MODE A — Generate / modify a template. Triggers: "帮我写"、"加上"、"改成"、"生成一个 X 模板"、"把 X 改为 Y"、"write/add/change/generate a template". The user wants template code they can paste.
-
-MODE B — How-to / conceptual. Triggers: "如何"、"怎么"、"支持哪些"、"有哪些字段"、"能不能"、"是什么"、"how do I"、"what fields"、"can I". The user wants an explanation, a list, or step-by-step guidance — NOT a full template dump.
-
-Rules by mode:
-
-MODE A output:
-- Follow the n9e-generate-message-template skill (SKILL.md) exactly.
-- Structure: one-line lead → fenced gotemplate code block → short "变量说明" list.
-- Always split $event.IsRecovered branches unless the user explicitly opts out.
-- Prefer $labels.<key> over $event.TagsJSON for tag lookups.
-- Wrap all unix timestamps through timeformat; format numeric values via formatDecimal when precision is requested.
-- Don't ask clarifying questions if a reasonable assumption will do — state the assumption in the lead instead.
-
-MODE B output:
-- Answer the question directly. Do NOT dump a full enhanced template the user did not ask for.
-- Use prose, lists, or short snippets — whichever fits the question. A small inline snippet (one-line {{...}}) is fine to illustrate; a full template block is not.
-- If the request is strongly ambiguous (e.g. "附加信息字段" without specifying which fields), give 2–3 concrete options for the user to pick from instead of guessing one and producing a large output. Keep options short.
-- Lean on the skill SKILL.md for the field/helper reference, but quote only the parts relevant to the question.
+If asking how-to/conceptual (如何/怎么/支持哪些/有哪些字段/能不能/是什么/how/what/can): answer directly with prose or short snippets, NO full template dump. For strongly ambiguous asks (e.g. "附加信息字段"), give 2-3 short options to pick from.
 
 Respond in the user's language.`, req.UserInput)
 }
