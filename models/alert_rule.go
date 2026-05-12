@@ -396,10 +396,40 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 		switch q.Key {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
+			if len(ids) == 0 {
+				// 没有有效的 group_id，跳过该过滤项，避免生成 `group_id IN ()` 这种非法 SQL。
+				continue
+			}
+			hasZero := false
+			nonZeroIds := make([]int64, 0, len(ids))
+			for _, id := range ids {
+				if id == 0 {
+					hasZero = true
+				} else {
+					nonZeroIds = append(nonZeroIds, id)
+				}
+			}
+			// 注意：以下分支依赖 TargetFilterQueryBuild 在外层对 target_busi_group 使用 LEFT JOIN，
+			// 才能让 target_ident IS NULL 表示「该 target 未归组」。如果外层换成 INNER JOIN，
+			// `== [0]` 与 `!= [0]` 的语义都会被打破。
 			if q.Op == "==" {
-				m["target_busi_group.group_id in (?)"] = ids
+				switch {
+				case hasZero && len(nonZeroIds) == 0:
+					m["target_busi_group.target_ident IS NULL"] = nil
+				case hasZero && len(nonZeroIds) > 0:
+					m["(target_busi_group.target_ident IS NULL OR target_busi_group.group_id IN (?))"] = nonZeroIds
+				default:
+					m["target_busi_group.group_id in (?)"] = nonZeroIds
+				}
 			} else {
-				m["NOT EXISTS (SELECT 1 FROM target_busi_group tbg WHERE tbg.target_ident = target.ident AND tbg.group_id IN (?))"] = ids
+				switch {
+				case hasZero && len(nonZeroIds) == 0:
+					m["target_busi_group.target_ident IS NOT NULL"] = nil
+				case hasZero && len(nonZeroIds) > 0:
+					m["target_busi_group.target_ident IS NOT NULL AND NOT EXISTS (SELECT 1 FROM target_busi_group tbg WHERE tbg.target_ident = target.ident AND tbg.group_id IN (?))"] = nonZeroIds
+				default:
+					m["NOT EXISTS (SELECT 1 FROM target_busi_group tbg WHERE tbg.target_ident = target.ident AND tbg.group_id IN (?))"] = nonZeroIds
+				}
 			}
 		case "tags":
 			lst := []string{}
