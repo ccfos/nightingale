@@ -289,6 +289,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Proxy:         extraConfig.Proxy,
 		Temperature:   extraConfig.Temperature,
 		MaxTokens:     extraConfig.MaxTokens,
+		// CustomParams 透传给 provider，由 provider 决定如何并入请求（OpenAI 兼容路径
+		// 把它平铺到 request body 顶层；这是 dashscope/Qwen3 关 thinking 的入口：
+		// custom_params: {"enable_thinking": false}）
+		ExtraBody: extraConfig.CustomParams,
 	})
 	if err != nil {
 		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))

@@ -114,5 +114,19 @@ func (c *ClientCache) fingerprint(cfg *Config) string {
 		}
 	}
 
+	// ExtraBody 同样是 client 行为的一部分（拼进每次请求体），必须算进 fingerprint，
+	// 否则改了 extra_body 但拿到旧 client 仍发旧 body。用 fmt.Sprintf("%v") 对
+	// map[string]any 的值做稳定字符串化（Go 1.12+ map fmt 输出按 key 排序）。
+	if len(cfg.ExtraBody) > 0 {
+		keys := make([]string, 0, len(cfg.ExtraBody))
+		for k := range cfg.ExtraBody {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			fmt.Fprintf(h, "|eb:%s=%v", k, cfg.ExtraBody[k])
+		}
+	}
+
 	return hex.EncodeToString(h.Sum(nil))
 }
