@@ -247,6 +247,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/es-variable", rt.QueryESVariable)
 			pages.POST("/fields", rt.QueryFields)
 			pages.POST("/log-query", rt.QueryLog)
+			pages.POST("/es-cluster-info", rt.ESClusterInfo)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
@@ -273,6 +274,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/es-variable", rt.auth(), rt.user(), rt.QueryESVariable)
 			pages.POST("/fields", rt.auth(), rt.user(), rt.QueryFields)
 			pages.POST("/log-query", rt.auth(), rt.user(), rt.QueryLog)
+			pages.POST("/es-cluster-info", rt.auth(), rt.user(), rt.ESClusterInfo)
 		}
 
 		// OpenSearch 专用接口

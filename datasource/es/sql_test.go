@@ -42,49 +42,24 @@ func TestMajorVersion(t *testing.T) {
 	}
 }
 
-func TestExpandTimeMacros(t *testing.T) {
-	from := int64(1700000000)
-	to := int64(1700003600)
-
+func TestIsESSQLSupported(t *testing.T) {
 	tests := []struct {
-		name       string
-		sql        string
-		timezone   string
-		timeFormat string
-		want       string
+		version string
+		want    bool
 	}{
-		{
-			name: "no macro",
-			sql:  `SELECT * FROM "logs"`,
-			want: `SELECT * FROM "logs"`,
-		},
-		{
-			name: "timeFilter",
-			sql:  `SELECT * FROM "logs" WHERE $__timeFilter("@timestamp")`,
-			want: `SELECT * FROM "logs" WHERE ("@timestamp" >= 1700000000 AND "@timestamp" < 1700003600)`,
-		},
-		{
-			name: "timeFilter_ms",
-			sql:  `SELECT * FROM "logs" WHERE $__timeFilter_ms("@timestamp")`,
-			want: `SELECT * FROM "logs" WHERE ("@timestamp" >= 1700000000000 AND "@timestamp" < 1700003600000)`,
-		},
-		{
-			name:       "datetimeFilter UTC",
-			sql:        `SELECT * FROM "logs" WHERE $__datetimeFilter("@timestamp")`,
-			timezone:   "UTC",
-			timeFormat: "2006-01-02T15:04:05.000Z",
-			want:       `SELECT * FROM "logs" WHERE ("@timestamp" >= '2023-11-14T22:13:20.000Z' AND "@timestamp" < '2023-11-14T23:13:20.000Z')`,
-		},
+		{"7.0.0", true},
+		{"7.17.10", true},
+		{"8.15.0", true},
+		{"9.0.0", true},
+		{"6.8.0", false},
+		{"5.6.0", false},
+		{"", false},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExpandTimeMacros(tt.sql, from, to, tt.timezone, tt.timeFormat)
-			if err != nil {
-				t.Fatalf("ExpandTimeMacros() unexpected error: %v", err)
-			}
-			if got != tt.want {
-				t.Errorf("ExpandTimeMacros() =\n  %s\nwant:\n  %s", got, tt.want)
+		t.Run(tt.version, func(t *testing.T) {
+			if got := IsESSQLSupported(tt.version); got != tt.want {
+				t.Errorf("IsESSQLSupported(%q) = %v, want %v", tt.version, got, tt.want)
 			}
 		})
 	}

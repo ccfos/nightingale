@@ -7,23 +7,35 @@ import (
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/pkg/macros"
 )
+
+// SQLPreprocess is called before SQL execution to expand macros.
+// Defaults to macros.Macro. Downstream projects (e.g. n9e-plus)
+// can override this via RegisterSQLPreprocess to adapt macro
+// dialects for different SQL engines.
+var SQLPreprocess func(sql string, from, to int64) (string, error)
+
+// RegisterSQLPreprocess sets a custom SQL preprocessor for ES SQL
+// macro expansion, replacing the default macros.Macro delegation.
+func RegisterSQLPreprocess(f func(sql string, from, to int64) (string, error)) {
+	SQLPreprocess = f
+}
 
 // XPackSQLRequest is the neutral request structure for ES SQL queries.
 // Field names align with the ES SQL REST API spec.
 type XPackSQLRequest struct {
 	Query string `json:"query"`
 
-	TimeZone                string          `json:"time_zone,omitempty"`
 	FetchSize               int             `json:"fetch_size,omitempty"`
 	Cursor                  string          `json:"cursor,omitempty"`
 	Filter                  json.RawMessage `json:"filter,omitempty"`
 	FieldMultiValueLeniency bool            `json:"field_multi_value_leniency,omitempty"`
 
 	// Macro expansion params (not sent to ES, only for internal expansion)
-	From       int64  `json:"from,omitempty"`
-	To         int64  `json:"to,omitempty"`
-	TimeFormat string `json:"time_format,omitempty"`
+	From int64 `json:"from,omitempty"`
+	To   int64 `json:"to,omitempty"`
 }
 
 // XPackSQLColumn represents a column in the SQL result.
@@ -32,7 +44,7 @@ type XPackSQLColumn struct {
 	Type string `json:"type"`
 }
 
-// XPackSQLResponse is the normalized response across v7/v8/v9.
+// XPackSQLResponse is the normalized ES SQL response.
 type XPackSQLResponse struct {
 	Columns []XPackSQLColumn `json:"columns"`
 	Rows    [][]any          `json:"rows"`
@@ -40,31 +52,33 @@ type XPackSQLResponse struct {
 }
 
 // XPackSQL is the single entry point for ES SQL execution.
-// It dispatches to the correct version adapter based on the cluster's major version.
+// It uses the go-elasticsearch/v8 SDK which is wire-compatible with ES 7.x, 8.x, and 9.x.
+// Macro expansion is delegated to SQLPreprocess (defaults to macros.Macro).
 func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*XPackSQLResponse, error) {
+	if !IsESSQLSupported(escli.Version) {
+		return nil, fmt.Errorf("ES SQL requires version 7.x or higher, got %q", escli.Version)
+	}
+
 	if strings.Contains(req.Query, "$__") {
-		expanded, err := ExpandTimeMacros(req.Query, req.From, req.To, req.TimeZone, req.TimeFormat)
+		preprocess := SQLPreprocess
+		if preprocess == nil {
+			preprocess = defaultSQLPreprocess
+		}
+		expanded, err := preprocess(req.Query, req.From, req.To)
 		if err != nil {
 			return nil, fmt.Errorf("macro expansion failed: %w", err)
 		}
 		req.Query = expanded
 	}
 
-	major, err := majorVersion(escli.Version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse ES version: %w", err)
-	}
+	return xpackSQLExec(ctx, escli, req)
+}
 
-	switch major {
-	case 7:
-		return xpackSQLViaV7(ctx, escli, req)
-	case 8:
-		return xpackSQLViaV8(ctx, escli, req)
-	case 9:
-		return xpackSQLViaV9(ctx, escli, req)
-	default:
-		return nil, fmt.Errorf("ES SQL requires major version 7 or higher, got %s (major: %d)", escli.Version, major)
+func defaultSQLPreprocess(sql string, from, to int64) (string, error) {
+	if macros.Macro != nil {
+		return macros.Macro(sql, from, to)
 	}
+	return sql, nil
 }
 
 // marshalSQLBody builds the JSON request body for the ES SQL REST API.
@@ -74,9 +88,6 @@ func marshalSQLBody(req XPackSQLRequest) ([]byte, error) {
 	}
 	if req.Cursor != "" {
 		reqBody["cursor"] = req.Cursor
-	}
-	if req.TimeZone != "" {
-		reqBody["time_zone"] = req.TimeZone
 	}
 	if req.FetchSize > 0 {
 		reqBody["fetch_size"] = req.FetchSize
@@ -157,4 +168,14 @@ func majorVersion(version string) (int, error) {
 	}
 
 	return major, nil
+}
+
+// IsESSQLSupported reports whether the given ES version supports the SQL endpoint.
+// Requires major version >= 7.
+func IsESSQLSupported(version string) bool {
+	major, err := majorVersion(version)
+	if err != nil {
+		return false
+	}
+	return major >= 7
 }
