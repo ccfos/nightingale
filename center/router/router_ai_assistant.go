@@ -504,6 +504,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
+		case aiagent.StreamTypeContent:
+			// Direct 模式：token 直接归 content 通道。同时累加到 fullContent，
+			// 因为 executeDirectWithDone 的 Done chunk 刻意把 Content 置空（避免重复
+			// append），但 router 末尾还要靠 fullContent 写最终 AssistantMessageResponse。
+			delta := chunk.Delta
+			if delta == "" {
+				delta = chunk.Content
+			}
+			if delta != "" {
+				fullContent += delta
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "content"})
+			}
 		case aiagent.StreamTypeToolCall:
 			executedTools = true
 			step := "Using tools..."

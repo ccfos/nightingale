@@ -147,6 +147,8 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	switch a.cfg.AgentMode {
 	case AgentModePlanReAct:
 		resp = a.executePlanReAct(timeoutCtx, req, rc)
+	case AgentModeDirect:
+		resp = a.executeDirect(timeoutCtx, req, rc)
 	default:
 		resp = a.executeReAct(timeoutCtx, req, rc)
 	}
@@ -169,6 +171,8 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 		switch a.cfg.AgentMode {
 		case AgentModePlanReAct:
 			a.executePlanReActWithDone(ctx, req, rc)
+		case AgentModeDirect:
+			a.executeDirectWithDone(ctx, req, rc)
 		default:
 			a.executeReActWithDone(ctx, req, rc)
 		}
