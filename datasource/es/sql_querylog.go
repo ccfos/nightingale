@@ -9,12 +9,10 @@ import (
 
 // sqlQueryParam is used to detect whether a queryParam contains SQL mode fields.
 type sqlQueryParam struct {
-	SQL        string `json:"sql" mapstructure:"sql"`
-	Index      string `json:"index" mapstructure:"index"`
-	TimeZone   string `json:"time_zone" mapstructure:"time_zone"`
-	TimeFormat string `json:"time_format" mapstructure:"time_format"`
-	Start      int64  `json:"start" mapstructure:"start"`
-	End        int64  `json:"end" mapstructure:"end"`
+	SQL   string `json:"sql" mapstructure:"sql"`
+	Index string `json:"index" mapstructure:"index"`
+	Start int64  `json:"start" mapstructure:"start"`
+	End   int64  `json:"end" mapstructure:"end"`
 }
 
 // extractSQLRequest checks if queryParam contains a non-empty "sql" field.
@@ -30,8 +28,6 @@ func extractSQLRequest(queryParam interface{}) (*XPackSQLRequest, bool) {
 
 	return &XPackSQLRequest{
 		Query:                   p.SQL,
-		TimeZone:                p.TimeZone,
-		TimeFormat:              p.TimeFormat,
 		From:                    p.Start,
 		To:                      p.End,
 		FieldMultiValueLeniency: true,
