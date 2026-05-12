@@ -17,8 +17,10 @@ builtin_tools:
   - search_active_alerts
   - get_alert_event_detail
   - get_event_processing_logs
+  - get_event_pipeline_executions
   - list_alert_mutes
   - get_alert_mute_detail
+  - list_alert_engine_instances
   - list_busi_groups
 ---
 
@@ -53,7 +55,8 @@ builtin_tools:
 判断属于哪种现象：
    A. 完全没产生告警事件      → 走流程 A
    B. 产生了告警事件但没收到通知 → 走流程 B
-   C. 不确定                  → 先 search_history_alerts 看下规则最近有没有产生过事件，再分流
+   C. 告警触发了，但用户说"曲线数据对不上 / 触发值不合理" → 走流程 C
+   D. 不确定                  → 先 search_history_alerts 看下规则最近有没有产生过事件，再分流
 ```
 
 ---
@@ -71,8 +74,11 @@ builtin_tools:
 | `enable_in_bg`（仅本业务组生效，主机告警） | 主机不在业务组里会被跳过 |
 | `enable_stime` / `enable_etime` / `enable_days_of_week` | 当前时间不在生效窗口就不评估 |
 | `cate` + 规则配置（PromQL / SQL） | 表达式是否能查到数据需后续验证 |
+| `rule_config.triggers[].exp`（阈值告警） | **如果 exp 字段为空**，说明告警条件配置不完整（常见于通过 API/导入创建的规则），规则永远不会触发 |
 
 任何一项不满足，**直接定位到这一步**，输出报告。
+
+> **阈值告警 exp 校验提示**：从 `rule_config` 取出 `triggers` 数组，每个 trigger 应该有非空 `exp`（如 `$A > 80`）。若 `exp` 为空字符串或缺失，是直接定位结论。
 
 ### 第 2 步 · 验证数据源链路
 调用 `get_datasource_detail(id=<ds_id>)`。重点：
@@ -101,12 +107,24 @@ get_alert_eval_logs(rule_id=<rule_id>)
 
 - **日志为空** → 引擎根本没在跑这条规则。检查：
   - 数据源是否关联了引擎集群（回到第 2 步）
-  - 引擎实例心跳是否正常
+  - 引擎实例心跳是否正常（用 Step 4.5 的 `list_alert_engine_instances`）
 - **日志里有 `ERROR ... query` 字样** → 查询数据时报错了（如 Prometheus 连不上、SQL 报错）
 - **日志显示"查不到数据"** → 数据上报延迟或查询表达式问题
 - **日志显示"查到数据但不满足条件"** → 实际数据没异常
 - **日志显示"满足条件但持续时长不够"** → 异常点没持续到 `prom_for_duration`
 - **日志显示"产生 event 但被屏蔽"** → 走第 5 步对照屏蔽规则
+
+### 第 4.5 步 · 告警引擎实例健康度（当 eval logs 为空时必查）
+
+```
+list_alert_engine_instances(datasource_id=<规则关联的 ds_id>)
+```
+
+返回每个引擎实例的 `last_heartbeat` / `stale_seconds` / `healthy` 字段。判定：
+
+- 没有任何实例返回 → 数据源没绑定到任何引擎实例（同 Step 2 链路问题）
+- 所有实例 `healthy=false`（`stale_seconds > 30`）→ 进程挂了，让用户重启 n9e-server
+- 出现多个 `engine_cluster` 或多个旧版本实例同时心跳 → 怀疑"旧实例忘记升级"，让用户清理掉旧实例
 
 ### 第 5 步 · 屏蔽规则核对
 如果 eval logs 显示事件被屏蔽，或者你怀疑被屏蔽了：
@@ -150,10 +168,64 @@ get_event_processing_logs(event_hash=<事件 hash>)
 - 是否在某一步被**屏蔽**
 - 是否走了**通知脚本**，脚本执行结果如何
 
-### 第 3 步 · 配套核对
+### 第 3 步 · 通知频率核对（重复通知 / 最大次数）
+
+很多"没收到通知"其实是被频控了。`get_alert_rule_detail` 取规则配置后核对：
+
+| 字段 | 含义 | 不通过会怎样 |
+|---|---|---|
+| `notify_repeat_step`（分钟） | 重复通知间隔 | 距离上一次通知不到这个间隔，就不会再发；恢复事件会让这个间隔从 0 重新计时 |
+| `notify_max_number` | 最大通知次数 | 0 = 不限；非 0 时，到达次数后不再通知，需要事件恢复才会重置 |
+
+核对方法：
+- 用 `search_history_alerts(query=<规则名>, hours=720)`（拉一个月的历史）数下规则历史触发次数，看是否已用尽 `notify_max_number`
+- 看最近一次通知时间（如有），对照 `notify_repeat_step` 判断是否还在静默窗口里
+
+### 第 4 步 · 事件处理器（pipeline）执行核查
+
+如果用户配置了事件处理器（事件抑制/数据补充/自愈等 pipeline），它们可能在某一步丢弃或改写了事件：
+
+```
+get_event_pipeline_executions(event_id=<事件 id>)
+```
+
+解读每条执行记录的 `status` 和 `error_message`：
+- `status=success` 且没有改写 → 处理器正常放行
+- `status=failed` + `error_message` + `error_node` → 处理器节点失败，可能阻断了通知链路
+- 完全没有执行记录 → 没有 pipeline 匹配该事件（如果用户预期有，让用户检查 pipeline 的匹配条件）
+
+### 第 5 步 · 其他配套核对
 - `get_alert_event_detail(event_id=<id>)` 拿事件详情，看 `callbacks` 字段
 - 如果事件 `IsRecovered=1`，说明已经恢复，可能用户看的是历史时间窗外的事件
 - 如果是订阅规则，`list_alert_subscribes` / `get_alert_subscribe_detail` 核对订阅条件
+
+---
+
+## 流程 C：告警触发了，但曲线数据 / 触发值看起来对不上
+
+用户描述类似："告警显示触发值是 95，但我打开曲线一看才 30"、"明明数据没异常为什么报警了"。常见原因有 2 类：
+
+### 原因 1 · 即时查询时被降采样了
+
+时序数据库在长时间范围查询时会自动降采样，导致用户在 UI 上看到的"平滑曲线"和告警触发时刻的"原始点"不一致。
+
+**排查方法**：
+1. `get_alert_event_detail(event_id=<id>)` 拿到触发时间 `trigger_time` 和 `trigger_value`
+2. 用 `query_prometheus(query=<规则的 promql>, query_type='instant', time_range='5m')`，把时间范围缩到告警触发时刻附近（前后几分钟），不要拉 1h/6h
+3. 对照 instant 查询结果 vs `trigger_value`，正常应该一致
+
+### 原因 2 · 日志类数据上报延迟，告警时刻 ≠ 查询时刻
+
+日志类数据源（ES / VictoriaLogs / SLS 等）的数据有上报延迟，告警引擎在 t 时刻查 [t-1m, t] 区间时拿到了一批旧数据触发了告警；用户事后查同样区间，因为又有新数据补进来，统计结果就变了。
+
+**排查方法**：
+1. 用 `get_alert_eval_logs(rule_id=<rule_id>)` 找到该次触发的那条评估日志（按 `trigger_time` 对齐）
+2. 看日志里记录的 `query`/`series`/`value` 字段 —— 这才是引擎当时**实际查到的值**，以这个为准而不是用户事后查询的结果
+3. 给用户解释延迟成因，建议告警规则在 SQL/查询条件里加上"延迟容忍窗口"
+
+### 直接定位结论
+- 如果原因 1 → 告知用户用更短的时间范围或 instant 查询复核
+- 如果原因 2 → 告警触发值是当时的真实值，用户事后看到的曲线是补数后的结果，两者都对，告警没问题
 
 ---
 
@@ -205,7 +277,12 @@ get_event_processing_logs(event_hash=<事件 hash>)
 | eval logs 显示 `event muted` | 命中屏蔽规则 |
 | event 存在但 processing logs 显示 `notify skipped` | 通知规则不匹配 / 订阅未命中 |
 | event 存在但 processing logs 显示 callback 错误 | 第三方接口（IM / webhook）异常 |
-| event 存在，processing logs 没通知动作 | 没绑定 notify_rule 或最大次数已用尽 |
+| event 存在，processing logs 没通知动作 | 没绑定 notify_rule、被 notify_repeat_step 频控、或达到 notify_max_number |
+| pipeline executions 里有 `status=failed` | 事件处理器节点报错阻断了链路，看 error_node/error_message |
+| 所有引擎实例 `stale_seconds > 30` | n9e-server 进程挂了，重启 |
+| 多个 engine_cluster 同时心跳 | 旧版本实例没下线，可能抢规则纳管 |
+| rule_config.triggers 里 exp 为空 | 阈值告警条件没配完整，永远不会触发 |
+| 用户说"触发值和曲线对不上" | 即时查询降采样 / 日志数据上报延迟，以 eval logs 里记录的值为准 |
 
 ---
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
@@ -76,6 +77,8 @@ func init() {
 	register(defs.GetAlertEventDetail, getAlertEventDetail)
 	register(defs.GetAlertEvalLogs, getAlertEvalLogs)
 	register(defs.GetEventProcessingLogs, getEventProcessingLogs)
+	register(defs.ListAlertEngineInstances, listAlertEngineInstances)
+	register(defs.GetEventPipelineExecutions, getEventPipelineExecutions)
 }
 
 // =============================================================================
@@ -312,6 +315,118 @@ func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[
 		"instance":   instance,
 		"count":      len(logs),
 		"logs":       logs,
+	})
+	return string(bytes), nil
+}
+
+func listAlertEngineInstances(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.DBCtx == nil {
+		return "", fmt.Errorf("alert context not configured")
+	}
+
+	var (
+		whereParts []string
+		whereArgs  []interface{}
+	)
+	if dsId, ok := args["datasource_id"].(float64); ok && dsId > 0 {
+		whereParts = append(whereParts, "datasource_id = ?")
+		whereArgs = append(whereArgs, int64(dsId))
+	}
+	if cluster, ok := args["engine_cluster"].(string); ok && cluster != "" {
+		whereParts = append(whereParts, "engine_cluster = ?")
+		whereArgs = append(whereArgs, cluster)
+	}
+
+	where := strings.Join(whereParts, " AND ")
+	engines, err := models.AlertingEngineGets(deps.DBCtx, where, whereArgs...)
+	if err != nil {
+		return "", fmt.Errorf("failed to list alert engine instances: %v", err)
+	}
+
+	now := time.Now().Unix()
+	type engineResult struct {
+		Instance       string `json:"instance"`
+		EngineCluster  string `json:"engine_cluster"`
+		DatasourceId   int64  `json:"datasource_id"`
+		LastHeartbeat  string `json:"last_heartbeat"`
+		StaleSeconds   int64  `json:"stale_seconds"`
+		Healthy        bool   `json:"healthy"`
+	}
+	results := make([]engineResult, 0, len(engines))
+	for _, e := range engines {
+		stale := now - e.Clock
+		results = append(results, engineResult{
+			Instance:      e.Instance,
+			EngineCluster: e.EngineCluster,
+			DatasourceId:  e.DatasourceId,
+			LastHeartbeat: formatUnixTime(e.Clock),
+			StaleSeconds:  stale,
+			Healthy:       stale <= 30,
+		})
+	}
+
+	logger.Debugf("list_alert_engine_instances: where=%q, found=%d", where, len(results))
+
+	bytes, _ := json.Marshal(map[string]interface{}{
+		"count":     len(results),
+		"instances": results,
+	})
+	return string(bytes), nil
+}
+
+func getEventPipelineExecutions(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.DBCtx == nil {
+		return "", fmt.Errorf("alert context not configured")
+	}
+
+	var eventId int64
+	switch v := args["event_id"].(type) {
+	case float64:
+		eventId = int64(v)
+	case string:
+		eventId, _ = strconv.ParseInt(v, 10, 64)
+	}
+	if eventId <= 0 {
+		return "", fmt.Errorf("event_id is required")
+	}
+
+	executions, err := models.ListEventPipelineExecutionsByEventID(deps.DBCtx, eventId)
+	if err != nil {
+		return "", fmt.Errorf("failed to list pipeline executions: %v", err)
+	}
+
+	type execResult struct {
+		ID           string `json:"id"`
+		PipelineID   int64  `json:"pipeline_id"`
+		PipelineName string `json:"pipeline_name"`
+		Mode         string `json:"mode"`
+		Status       string `json:"status"`
+		ErrorMessage string `json:"error_message,omitempty"`
+		ErrorNode    string `json:"error_node,omitempty"`
+		DurationMs   int64  `json:"duration_ms"`
+		CreatedAt    string `json:"created_at"`
+	}
+	results := make([]execResult, 0, len(executions))
+	for _, e := range executions {
+		results = append(results, execResult{
+			ID:           e.ID,
+			PipelineID:   e.PipelineID,
+			PipelineName: e.PipelineName,
+			Mode:         e.Mode,
+			Status:       e.Status,
+			ErrorMessage: e.ErrorMessage,
+			ErrorNode:    e.ErrorNode,
+			DurationMs:   e.DurationMs,
+			CreatedAt:    formatUnixTime(e.CreatedAt),
+		})
+	}
+
+	logger.Debugf("get_event_pipeline_executions: event_id=%d, count=%d", eventId, len(results))
+
+	bytes, _ := json.Marshal(map[string]interface{}{
+		"event_id":   eventId,
+		"count":      len(results),
+		"executions": results,
 	})
 	return string(bytes), nil
 }

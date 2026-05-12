@@ -66,6 +66,29 @@ var GetEventProcessingLogs = aiagent.AgentTool{
 	},
 }
 
+var ListAlertEngineInstances = aiagent.AgentTool{
+	Name: "list_alert_engine_instances",
+	Description: `列出当前所有告警引擎实例（n9e-server）及其心跳。
+排查"规则没人跑/某条规则被哪个实例跑"时使用：返回实例地址、所属引擎集群、关联数据源 ID、最近一次心跳时间戳。
+心跳时间戳距今超过 30s 视为离线，可能是引擎进程挂了或忘记升级。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "datasource_id", Type: "integer", Description: "按数据源 ID 过滤，仅返回纳管该数据源的引擎实例", Required: false},
+		{Name: "engine_cluster", Type: "string", Description: "按告警引擎集群名过滤", Required: false},
+	},
+}
+
+var GetEventPipelineExecutions = aiagent.AgentTool{
+	Name: "get_event_pipeline_executions",
+	Description: `获取指定告警事件触发的事件处理器（event pipeline）执行记录列表。
+排查"某个事件处理器没生效"时使用：可以看到针对该事件运行了哪些 pipeline、状态（running/success/failed）、失败节点和错误信息、耗时。
+如需查看单条执行的节点级详情，再用 status/error_message 字段定位，必要时让用户去 pipeline 执行详情页看完整 node_results。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "event_id", Type: "integer", Description: "告警事件 ID（不是 hash）", Required: true},
+	},
+}
+
 // =============================================================================
 // Alert rule
 // =============================================================================
