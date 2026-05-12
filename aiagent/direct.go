@@ -101,6 +101,7 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 	}
 
 	// 流式
+	tStreamStart := time.Now()
 	stream, err := a.llmClient.GenerateStream(ctx, buildLLMRequest(messages, nil))
 	if err != nil {
 		logger.Errorf("[Agent] direct GenerateStream failed provider=%s: %v", a.llmClient.Name(), err)
@@ -108,6 +109,8 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 	}
 
 	var sb strings.Builder
+	var firstTokenAt time.Time
+	chunkCount := 0
 	for chunk := range stream {
 		if chunk.Error != nil {
 			logger.Errorf("[Agent] direct stream chunk error provider=%s content_len=%d: %v",
@@ -116,6 +119,11 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 			return sb.String(), fmt.Errorf("stream error: %w", chunk.Error)
 		}
 		if chunk.Content != "" {
+			if firstTokenAt.IsZero() {
+				firstTokenAt = time.Now()
+				logger.Infof("[Agent] direct TTFT=%dms provider=%s", firstTokenAt.Sub(tStreamStart).Milliseconds(), a.llmClient.Name())
+			}
+			chunkCount++
 			sb.WriteString(chunk.Content)
 			streamChan <- &StreamChunk{
 				Type:      StreamTypeContent,
@@ -129,5 +137,12 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 			break
 		}
 	}
+	total := time.Since(tStreamStart)
+	var genMs int64
+	if !firstTokenAt.IsZero() {
+		genMs = time.Since(firstTokenAt).Milliseconds()
+	}
+	logger.Infof("[Agent] direct done: total=%dms gen=%dms chunks=%d content_len=%d provider=%s",
+		total.Milliseconds(), genMs, chunkCount, sb.Len(), a.llmClient.Name())
 	return sb.String(), nil
 }
