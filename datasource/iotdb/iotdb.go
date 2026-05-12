@@ -3,9 +3,11 @@ package iotdb
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -187,7 +189,8 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 		return nil, fmt.Errorf("sql is required")
 	}
 
-	if strings.Contains(sqlText, "$__") {
+	hasMacro := strings.Contains(sqlText, "$__")
+	if hasMacro {
 		from, err := parseQueryTime(queryParam.From)
 		if err != nil {
 			return nil, fmt.Errorf("parse from failed: %w", err)
@@ -197,6 +200,12 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 			return nil, fmt.Errorf("parse to failed: %w", err)
 		}
 		sqlText, err = macros.Macro(sqlText, from, to)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		sqlText, err = appendTimeFilter(sqlText, queryParam)
 		if err != nil {
 			return nil, err
 		}
@@ -418,4 +427,219 @@ func scaleEpoch(ts int64) int64 {
 	default:
 		return ts
 	}
+}
+
+var (
+	explicitTimeFilterOperators = []string{">=", "<=", "<>", "!=", ">", "<", "="}
+	sqlTailClauses              = []string{"group by", "having", "fill", "order by", "offset", "limit"}
+)
+
+func appendTimeFilter(sqlText string, queryParam *QueryParam) (string, error) {
+	timeKey := strings.TrimSpace(queryParam.Keys.TimeKey)
+	if timeKey == "" {
+		timeKey = "time"
+	}
+
+	if hasExplicitTimeFilter(sqlText, timeKey) {
+		return sqlText, nil
+	}
+
+	condition, err := buildTimeFilterCondition(timeKey, queryParam.From, queryParam.To)
+	if err != nil {
+		return "", err
+	}
+	if condition == "" {
+		return sqlText, nil
+	}
+
+	return insertWhereCondition(sqlText, condition), nil
+}
+
+func buildTimeFilterCondition(timeKey string, fromValue, toValue interface{}) (string, error) {
+	conditions := make([]string, 0, 2)
+
+	if from, ok, err := queryTimeToMillis(fromValue); err != nil {
+		return "", fmt.Errorf("parse from failed: %w", err)
+	} else if ok {
+		conditions = append(conditions, fmt.Sprintf("%s >= %d", timeKey, from))
+	}
+
+	if to, ok, err := queryTimeToMillis(toValue); err != nil {
+		return "", fmt.Errorf("parse to failed: %w", err)
+	} else if ok {
+		conditions = append(conditions, fmt.Sprintf("%s <= %d", timeKey, to))
+	}
+
+	return strings.Join(conditions, " AND "), nil
+}
+
+func queryTimeToMillis(value interface{}) (int64, bool, error) {
+	switch v := value.(type) {
+	case nil:
+		return 0, false, nil
+	case int:
+		return epochToMillis(int64(v)), true, nil
+	case int32:
+		return epochToMillis(int64(v)), true, nil
+	case int64:
+		return epochToMillis(v), true, nil
+	case float32:
+		return epochToMillis(int64(v)), true, nil
+	case float64:
+		return epochToMillis(int64(v)), true, nil
+	case string:
+		raw := strings.TrimSpace(v)
+		if raw == "" {
+			return 0, false, nil
+		}
+		if ts, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			return epochToMillis(ts), true, nil
+		}
+
+		layouts := []string{
+			time.RFC3339Nano,
+			time.RFC3339,
+			"2006-01-02 15:04:05.000",
+			"2006-01-02 15:04:05",
+			"2006-01-02T15:04:05.000",
+			"2006-01-02T15:04:05",
+		}
+		for _, layout := range layouts {
+			if ts, err := time.Parse(layout, raw); err == nil {
+				return ts.UnixMilli(), true, nil
+			}
+		}
+		return 0, false, fmt.Errorf("unsupported time format: %s", raw)
+	default:
+		return 0, false, fmt.Errorf("unsupported time type: %T", value)
+	}
+}
+
+func epochToMillis(ts int64) int64 {
+	switch {
+	case ts >= 1e18:
+		return ts / 1e6
+	case ts >= 1e15:
+		return ts / 1e3
+	case ts >= 1e12:
+		return ts
+	default:
+		return ts * 1e3
+	}
+}
+
+func hasExplicitTimeFilter(sqlText, timeKey string) bool {
+	token := timeKeyRegexp(timeKey)
+	for _, op := range explicitTimeFilterOperators {
+		pattern := regexp.MustCompile(`(?i)(^|[^\w.])` + token + `\s*` + regexp.QuoteMeta(op))
+		if pattern.MatchString(sqlText) {
+			return true
+		}
+	}
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`(?i)(^|[^\w.])` + token + `\s+between\b`),
+		regexp.MustCompile(`(?i)(^|[^\w.])` + token + `\s+in\b`),
+		regexp.MustCompile(`(?i)(^|[^\w.])` + token + `\s+is\s+(not\s+)?null\b`),
+	}
+	for _, pattern := range patterns {
+		if pattern.MatchString(sqlText) {
+			return true
+		}
+	}
+	return false
+}
+
+func timeKeyRegexp(timeKey string) string {
+	if strings.Contains(timeKey, ".") {
+		return regexp.QuoteMeta(timeKey)
+	}
+
+	identifier := regexp.QuoteMeta(strings.Trim(timeKey, "`"))
+	return `(?:` + "`?" + `[A-Za-z_][\w]*` + "`?" + `\.)*` + "`?" + identifier + "`?"
+}
+
+func insertWhereCondition(sqlText, condition string) string {
+	trimmed := strings.TrimSpace(sqlText)
+	if trimmed == "" || condition == "" {
+		return sqlText
+	}
+
+	suffix := ""
+	if strings.HasSuffix(trimmed, ";") {
+		trimmed = strings.TrimSpace(strings.TrimSuffix(trimmed, ";"))
+		suffix = ";"
+	}
+
+	insertAt := findInsertBeforeClause(trimmed)
+	head := strings.TrimRightFunc(trimmed[:insertAt], unicode.IsSpace)
+	tail := strings.TrimLeftFunc(trimmed[insertAt:], unicode.IsSpace)
+
+	joiner := " WHERE "
+	if findTopLevelKeyword(head, "where") >= 0 {
+		joiner = " AND "
+	}
+
+	result := head + joiner + condition
+	if tail != "" {
+		result += " " + tail
+	}
+	return result + suffix
+}
+
+func findInsertBeforeClause(sqlText string) int {
+	insertAt := len(sqlText)
+	for _, clause := range sqlTailClauses {
+		if idx := findTopLevelKeyword(sqlText, clause); idx >= 0 && idx < insertAt {
+			insertAt = idx
+		}
+	}
+	return insertAt
+}
+
+func findTopLevelKeyword(sqlText, keyword string) int {
+	lowerSQL := strings.ToLower(sqlText)
+	lowerKeyword := strings.ToLower(keyword)
+	depth := 0
+	quote := rune(0)
+
+	for i, r := range lowerSQL {
+		if quote != 0 {
+			if r == quote {
+				quote = 0
+			}
+			continue
+		}
+
+		switch r {
+		case '\'', '"', '`':
+			quote = r
+			continue
+		case '(':
+			depth++
+			continue
+		case ')':
+			if depth > 0 {
+				depth--
+			}
+			continue
+		}
+
+		if depth == 0 && strings.HasPrefix(lowerSQL[i:], lowerKeyword) && isSQLKeywordBoundary(lowerSQL, i, len(lowerKeyword)) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func isSQLKeywordBoundary(sqlText string, start, length int) bool {
+	before := start == 0 || !isSQLIdentifierRune(rune(sqlText[start-1]))
+	afterIdx := start + length
+	after := afterIdx >= len(sqlText) || !isSQLIdentifierRune(rune(sqlText[afterIdx]))
+	return before && after
+}
+
+func isSQLIdentifierRune(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
