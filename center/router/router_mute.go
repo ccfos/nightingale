@@ -8,11 +8,12 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 )
 
 // Return all, front-end search and paging
@@ -208,6 +209,43 @@ func (rt *Router) alertMutePutByFE(c *gin.Context) {
 type alertMuteFieldForm struct {
 	Ids    []int64                `json:"ids"`
 	Fields map[string]interface{} `json:"fields"`
+}
+
+type alertMuteBatchDeleteForm struct {
+	GroupIds  []int64 `json:"group_ids"`
+	Timestamp int64   `json:"timestamp" binding:"required"`
+}
+
+func (rt *Router) alertMuteBatchDelete(c *gin.Context) {
+	var f alertMuteBatchDeleteForm
+	ginx.BindJSON(c, &f)
+
+	if f.Timestamp == 0 {
+		ginx.Bomb(http.StatusBadRequest, "timestamp parameter is required")
+		return
+	}
+
+	user := c.MustGet("user").(*models.User)
+
+	go func() {
+		limit := 1000
+		for {
+			n, err := models.AlertMuteBatchDelete(rt.Ctx, f.Timestamp, f.GroupIds, limit)
+			if err != nil {
+				logger.Errorf("Failed to delete alert mutes: operator=%s, timestamp=%d, group_ids=%v, error=%v",
+					user.Username, f.Timestamp, f.GroupIds, err)
+				break
+			}
+			logger.Debugf("Successfully deleted alert mutes: operator=%s, timestamp=%d, group_ids=%v, deleted=%d",
+				user.Username, f.Timestamp, f.GroupIds, n)
+			if n < int64(limit) {
+				break
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+	ginx.NewRender(c).Data("Alert mutes deletion started", nil)
 }
 
 func (rt *Router) alertMutePutFields(c *gin.Context) {
