@@ -17,6 +17,7 @@ const (
 	// Agent 模式
 	AgentModeReAct     = "react"      // ReAct 模式（默认）
 	AgentModePlanReAct = "plan_react" // Plan + ReAct 混合模式
+	AgentModeDirect    = "direct"     // 单次 LLM 调用，无 ReAct 格式包装，适用于无工具的纯生成 action
 
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
@@ -30,6 +31,7 @@ const (
 	StreamTypeToolCall   = "tool_call"
 	StreamTypeToolResult = "tool_result"
 	StreamTypeText       = "text"
+	StreamTypeContent    = "content" // Direct 模式 token，路由层归入 content 通道（非 reason）
 	StreamTypeDone       = "done"
 	StreamTypeError      = "error"
 	StreamTypePlan       = "plan"

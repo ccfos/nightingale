@@ -434,15 +434,19 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
 	//
 	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
-	// （SkillNames + 固定 MCP server 列表），空则保留历史 AutoSelect 行为。详见
-	// buildSkillConfigForAgent / buildMCPConfigForAgent 的注释。
+	// （SkillNames + 固定 MCP server 列表），空则保留历史 AutoSelect 行为。
+	// 但 action handler 若声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
+	agentMode := aiagent.AgentModeReAct
+	if handler != nil && handler.AgentMode != "" {
+		agentMode = handler.AgentMode
+	}
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
-		AgentMode:          aiagent.AgentModeReAct,
+		AgentMode:          agentMode,
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptRendered: userPrompt,
-		Skills:             rt.buildSkillConfigForAgent(agent),
+		Skills:             rt.resolveSkillConfig(handler, chatReq, agent),
 		MCP:                rt.buildMCPConfigForAgent(agent),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 

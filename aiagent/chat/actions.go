@@ -27,6 +27,21 @@ type ActionHandler struct {
 	BuildPrompt   func(req *AIChatRequest) string
 	BuildInputs   func(req *AIChatRequest) map[string]string
 	ParseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
+
+	// RequiredSkills 声明本 action 路径上需要加载的 skill 名列表。
+	// 非 nil 时 router 用它覆盖 agent 默认 SkillConfig，跳过 LLM autoselect 的 round-trip。
+	// 用函数而非 []string 是为了允许依赖 req.Context 决定具体 skill
+	// （如 query_generator 按 datasource_type 在 promql/sql skill 之间二选一）。
+	//
+	// 返回 nil 表示"本次不需要任何 skill"（注意不同于"未声明此字段"——未声明走 agent 默认配置）。
+	RequiredSkills func(req *AIChatRequest) []string
+
+	// AgentMode 覆盖默认 ReAct 模式。空字符串走 ReAct。AgentModeDirect 适用于：
+	//   1. SelectTools 为 nil 或返回空（无工具调用）
+	//   2. RequiredSkills 涉及的 skill 不含 skill_tools
+	//   3. 单轮纯文本生成
+	// 满足以上条件时改 Direct 可省 ReAct 的 Thought/Action 包装开销。
+	AgentMode string
 }
 
 var registry = map[string]*ActionHandler{
@@ -37,6 +52,15 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt:   buildQueryGeneratorPrompt,
 		BuildInputs:   buildQueryGeneratorInputs,
 		ParseResponse: parseQueryGeneratorResponse,
+		RequiredSkills: func(req *AIChatRequest) []string {
+			switch ctxStr(req.Context, "datasource_type") {
+			case "prometheus":
+				return []string{"promql-generator"}
+			case "mysql", "doris", "ck", "clickhouse", "pgsql", "postgresql", "tdengine":
+				return []string{"sql-generator"}
+			}
+			return nil
+		},
 	},
 	"general_chat": {
 		Description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
@@ -47,6 +71,9 @@ var registry = map[string]*ActionHandler{
 		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
 		SelectTools: selectAlertQueryTools,
 		BuildPrompt: buildAlertQueryPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-query-alert-events"}
+		},
 	},
 	"resource_query": {
 		Description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
@@ -68,6 +95,10 @@ var registry = map[string]*ActionHandler{
 	"notify_template_generator": {
 		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
 		BuildPrompt: buildNotifyTemplatePrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-generate-message-template"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
 	},
 	"datasource_diagnose": {
 		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
