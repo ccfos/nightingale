@@ -201,6 +201,11 @@ type ToolDeps struct {
 	GetPromClient     func(dsId int64) prom.API
 	GetSQLDatasource  func(dsType string, dsId int64) (datasource.Datasource, bool)
 	FilterDatasources func([]*models.Datasource, *models.User) []*models.Datasource
+
+	// 告警排障日志获取。由 center 路由注入：包装 alert-eval-detail / event-detail
+	// 两个内部接口，用于排查"告警规则为什么没发告警"。两者都返回 (logs, instance, err)。
+	GetAlertEvalLogs       func(ruleId string) ([]string, string, error)
+	GetEventProcessingLogs func(eventHash string) ([]string, string, error)
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

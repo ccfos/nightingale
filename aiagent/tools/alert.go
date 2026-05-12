@@ -19,6 +19,8 @@ import (
 
 type alertCurEventResult struct {
 	Id           int64             `json:"id"`
+	Hash         string            `json:"hash,omitempty"`
+	RuleId       int64             `json:"rule_id,omitempty"`
 	RuleName     string            `json:"rule_name"`
 	Severity     int               `json:"severity"`
 	TargetIdent  string            `json:"target_ident,omitempty"`
@@ -30,6 +32,8 @@ type alertCurEventResult struct {
 
 type alertHisEventResult struct {
 	Id           int64             `json:"id"`
+	Hash         string            `json:"hash,omitempty"`
+	RuleId       int64             `json:"rule_id,omitempty"`
 	RuleName     string            `json:"rule_name"`
 	Severity     int               `json:"severity"`
 	IsRecovered  int               `json:"is_recovered"`
@@ -43,6 +47,8 @@ type alertHisEventResult struct {
 
 type alertEventDetailResult struct {
 	Id           int64             `json:"id"`
+	Hash         string            `json:"hash,omitempty"`
+	RuleId       int64             `json:"rule_id,omitempty"`
 	RuleName     string            `json:"rule_name"`
 	RuleNote     string            `json:"rule_note,omitempty"`
 	Severity     int               `json:"severity"`
@@ -68,6 +74,8 @@ func init() {
 	register(defs.SearchActiveAlerts, searchActiveAlerts)
 	register(defs.SearchHistoryAlerts, searchHistoryAlerts)
 	register(defs.GetAlertEventDetail, getAlertEventDetail)
+	register(defs.GetAlertEvalLogs, getAlertEvalLogs)
+	register(defs.GetEventProcessingLogs, getEventProcessingLogs)
 }
 
 // =============================================================================
@@ -117,6 +125,8 @@ func searchActiveAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 	for _, e := range events {
 		results = append(results, alertCurEventResult{
 			Id:           e.Id,
+			Hash:         e.Hash,
+			RuleId:       e.RuleId,
 			RuleName:     e.RuleName,
 			Severity:     e.Severity,
 			TargetIdent:  e.TargetIdent,
@@ -179,6 +189,8 @@ func searchHistoryAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[str
 	for _, e := range events {
 		r := alertHisEventResult{
 			Id:           e.Id,
+			Hash:         e.Hash,
+			RuleId:       e.RuleId,
 			RuleName:     e.RuleName,
 			Severity:     e.Severity,
 			IsRecovered:  e.IsRecovered,
@@ -245,6 +257,65 @@ func getAlertEventDetail(_ context.Context, deps *aiagent.ToolDeps, args map[str
 	return string(bytes), nil
 }
 
+func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.GetAlertEvalLogs == nil {
+		return "", fmt.Errorf("alert eval logs fetcher not configured")
+	}
+
+	var ruleId int64
+	switch v := args["rule_id"].(type) {
+	case float64:
+		ruleId = int64(v)
+	case string:
+		ruleId, _ = strconv.ParseInt(v, 10, 64)
+	}
+	if ruleId <= 0 {
+		return "", fmt.Errorf("rule_id is required")
+	}
+
+	logs, instance, err := deps.GetAlertEvalLogs(strconv.FormatInt(ruleId, 10))
+	if err != nil {
+		return "", fmt.Errorf("failed to get alert eval logs: %v", err)
+	}
+
+	logger.Debugf("get_alert_eval_logs: rule_id=%d, instance=%s, lines=%d", ruleId, instance, len(logs))
+
+	bytes, _ := json.Marshal(map[string]interface{}{
+		"rule_id":  ruleId,
+		"instance": instance,
+		"count":    len(logs),
+		"logs":     logs,
+	})
+	return string(bytes), nil
+}
+
+func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	if deps == nil || deps.GetEventProcessingLogs == nil {
+		return "", fmt.Errorf("event processing logs fetcher not configured")
+	}
+
+	hash, _ := args["event_hash"].(string)
+	hash = strings.TrimSpace(hash)
+	if hash == "" {
+		return "", fmt.Errorf("event_hash is required")
+	}
+
+	logs, instance, err := deps.GetEventProcessingLogs(hash)
+	if err != nil {
+		return "", fmt.Errorf("failed to get event processing logs: %v", err)
+	}
+
+	logger.Debugf("get_event_processing_logs: hash=%s, instance=%s, lines=%d", hash, instance, len(logs))
+
+	bytes, _ := json.Marshal(map[string]interface{}{
+		"event_hash": hash,
+		"instance":   instance,
+		"count":      len(logs),
+		"logs":       logs,
+	})
+	return string(bytes), nil
+}
+
 // =============================================================================
 // Internal query helpers
 // =============================================================================
@@ -256,6 +327,8 @@ func getCurEventDetail(deps *aiagent.ToolDeps, eventId int64) (*alertEventDetail
 	}
 	return &alertEventDetailResult{
 		Id:           e.Id,
+		Hash:         e.Hash,
+		RuleId:       e.RuleId,
 		RuleName:     e.RuleName,
 		RuleNote:     e.RuleNote,
 		Severity:     e.Severity,
@@ -279,6 +352,8 @@ func getHisEventDetail(deps *aiagent.ToolDeps, eventId int64) (*alertEventDetail
 	}
 	result := &alertEventDetailResult{
 		Id:           e.Id,
+		Hash:         e.Hash,
+		RuleId:       e.RuleId,
 		RuleName:     e.RuleName,
 		RuleNote:     e.RuleNote,
 		Severity:     e.Severity,

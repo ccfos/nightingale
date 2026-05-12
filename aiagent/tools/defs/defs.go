@@ -44,6 +44,28 @@ var GetAlertEventDetail = aiagent.AgentTool{
 	},
 }
 
+var GetAlertEvalLogs = aiagent.AgentTool{
+	Name: "get_alert_eval_logs",
+	Description: `获取指定告警规则在告警引擎上的执行日志（alert-eval-detail）。
+排查"告警规则没产生事件"时的核心证据：可以看到每次评估是否查到数据、查到的数据是否满足条件、是否产生 event、是否被屏蔽。
+返回日志按时间倒序，包含负责该规则的告警引擎实例地址。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "rule_id", Type: "integer", Description: "告警规则ID", Required: true},
+	},
+}
+
+var GetEventProcessingLogs = aiagent.AgentTool{
+	Name: "get_event_processing_logs",
+	Description: `获取指定告警事件（按事件 hash）的下游处理日志（event-detail）。
+排查"已产生告警事件但没收到通知"时使用：可以看到是否被屏蔽、是否走通知规则、callback / webhook 是否发送成功、订阅是否命中等完整链路。
+事件 hash 可以从 search_history_alerts / get_alert_event_detail 返回的 hash 字段获取。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "event_hash", Type: "string", Description: "告警事件 hash（不是事件 ID）", Required: true},
+	},
+}
+
 // =============================================================================
 // Alert rule
 // =============================================================================

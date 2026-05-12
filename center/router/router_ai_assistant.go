@@ -374,7 +374,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		GetSQLDatasource: func(dsType string, dsId int64) (datasource.Datasource, bool) {
 			return dscache.DsCache.Get(dsType, dsId)
 		},
-		FilterDatasources: rt.DatasourceCache.DatasourceFilter,
+		FilterDatasources:      rt.DatasourceCache.DatasourceFilter,
+		GetAlertEvalLogs:       rt.getAlertEvalLogs,
+		GetEventProcessingLogs: rt.getEventLogs,
 	}
 
 	if handler.Preflight != nil {
