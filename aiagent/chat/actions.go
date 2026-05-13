@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -64,8 +65,12 @@ var registry = map[string]*ActionHandler{
 	},
 	"general_chat": {
 		Description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
-		SelectTools: selectAllBuiltinTools,
 		BuildPrompt: buildGeneralChatPrompt,
+		// 闲聊/知识问答场景：不挂工具、不选 skill、不走 ReAct。
+		// - 显式 RequiredSkills 返回 nil → resolveSkillConfig 跳过 LLM autoselect（省 ~1s round-trip）
+		// - AgentMode=Direct → system prompt 不拼 ReAct 协议段和工具描述（18KB → 几十字节）
+		RequiredSkills: func(_ *AIChatRequest) []string { return nil },
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"alert_query": {
 		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
@@ -332,20 +337,43 @@ func stripCodeFence(s string) string {
 
 // --- general_chat action ---
 
-func selectAllBuiltinTools(req *AIChatRequest) []string {
-	defs := aiagent.GetAllBuiltinToolDefs()
-	names := make([]string, 0, len(defs))
-	for _, d := range defs {
-		names = append(names, d.Name)
+// capabilityListCache 在 init 时一次性算好的"平台能力清单"段落，
+// 注入 general_chat 的 prompt，让模型在被问"你能做什么"时讲清楚平台具体功能。
+//
+// 直接复用每个 action 的 Description 作为单一来源——新增 action 自动出现，
+// 不会漂移。但 Description 本职是给意图分类器读的，可能含 "Trigger verbs:"、
+// "NOTE: ... NOT xxx" 这类机器语，模型大多数情况会自动剪枝；如果观察到漏到
+// 用户答案里频率高，再考虑给 ActionHandler 加专门的 Capabilities 字段。
+//
+// 用包级变量 + init 而不是每次 BuildPrompt 时实时拼，避免 Go 的初始化循环检测：
+// registry 的 BuildPrompt 字段如果直接/间接读 registry 自己，编译器会报
+// initialization cycle。这里 init() 在 registry 完成填充之后运行，安全。
+var capabilityListCache string
+
+func init() {
+	var sb strings.Builder
+	sb.WriteString("This monitoring platform supports the following capabilities — mention them when the user asks what you can do (in the user's language):\n")
+	keys := make([]string, 0, len(registry))
+	for key := range registry {
+		if key == string(models.ActionKeyGeneralChat) {
+			continue
+		}
+		keys = append(keys, key)
 	}
-	return names
+	sort.Strings(keys)
+	for _, key := range keys {
+		sb.WriteString(fmt.Sprintf("- %s\n", registry[key].Description))
+	}
+	capabilityListCache = sb.String()
 }
 
 func buildGeneralChatPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a helpful assistant specializing in IT operations, monitoring, observability, and general technical topics.
+	return fmt.Sprintf(`You are a helpful assistant for the n9e (Nightingale) monitoring platform, specializing in IT operations, monitoring, and observability.
+
+%s
 Please answer the user's question clearly and concisely in the user's language.
 
-User request: %s`, req.UserInput)
+User request: %s`, capabilityListCache, req.UserInput)
 }
 
 // --- alert_query action ---

@@ -161,6 +161,24 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 
 func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, state *MessageState, streamID string, userId int64, lang string) {
 	msg := state.Msg()
+
+	// Timing instrumentation: capture per-phase durations so we can answer
+	// "where did the 8s go" without re-running the request. All durations are
+	// relative to tStart (entry of this goroutine). Phases that don't run
+	// (e.g. preflight when handler.Preflight == nil) stay at 0.
+	tStart := time.Now()
+	var (
+		tHistoryLoaded time.Duration
+		tLLMReady      time.Duration
+		tIntent        time.Duration
+		intentMethod   string // "fast" | "front" | "llm"
+		tValidatePre   time.Duration
+		tAgentStart    time.Duration
+		tFirstToken    time.Duration
+		tStreamDone    time.Duration
+		tPersisted     time.Duration
+	)
+
 	// Shutdown sequence (defer runs LIFO — reverse of registration order):
 	//   1. parentCancel()           — signals watchdog to stop
 	//   2. <-keepAliveDone          — wait for watchdog goroutine to fully exit
@@ -233,6 +251,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 		}
 	}
+	tHistoryLoaded = time.Since(tStart)
 
 	// ② Create LLM client early (shared by intent inference and agent execution)
 	// Always use "chat" useCase to find the agent config for the LLM client.
@@ -308,6 +327,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))
 		return
 	}
+	tLLMReady = time.Since(tStart)
 
 	// ③ Resolve action key in priority order:
 	//   1. Creation fast-path — if the user input has unambiguous creation
@@ -319,16 +339,22 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	//   2. First message of a new chat with an explicit frontend key.
 	//   3. LLM intent inference (30s budget — 15s was too tight in practice).
 	var actionKey string
+	tIntentStart := time.Now()
 	switch {
 	case chat.HasCreationIntent(msg.Query.Content):
 		actionKey = string(models.ActionKeyCreation)
+		intentMethod = "fast"
 	case msg.SeqID == 1 && msg.Query.Action.Key != "":
 		actionKey = string(msg.Query.Action.Key)
+		intentMethod = "front"
 	default:
 		inferCtx, inferCancel := context.WithTimeout(parentCtx, 30*time.Second)
 		actionKey = chat.InferAction(inferCtx, llmClient, msg.Query.Content, history)
 		inferCancel()
+		intentMethod = "llm"
 	}
+	tIntent = time.Since(tStart)
+	intentDur := time.Since(tIntentStart)
 
 	handler, ok := chat.Lookup(actionKey)
 	if !ok {
@@ -339,6 +365,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s front_key=%q content=%q",
 		msg.ChatID, msg.SeqID, actionKey, msg.Query.Action.Key, msg.Query.Content)
+	logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=intent_resolved method=%s dur=%dms total=%dms action_key=%s",
+		msg.ChatID, msg.SeqID, intentMethod, intentDur.Milliseconds(), tIntent.Milliseconds(), actionKey)
 
 	// Build AIChatRequest for reusing existing action logic
 	chatReq := &chat.AIChatRequest{
@@ -404,10 +432,14 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
 		if halt {
+			tValidatePre = time.Since(tStart)
+			logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=preflight_halted total=%dms",
+				msg.ChatID, msg.SeqID, tValidatePre.Milliseconds())
 			rt.finishHaltedMessage(state, streamID, history, preResps)
 			return
 		}
 	}
+	tValidatePre = time.Since(tStart)
 
 	// Select tools
 	var tools []aiagent.AgentTool
@@ -484,6 +516,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if processErr != nil {
 		logger.Errorf("[Assistant] Process error: %v", processErr)
 	}
+	tAgentStart = time.Since(tStart)
 
 	// Consume stream chunks
 	var fullContent string
@@ -491,6 +524,16 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var createdAlertRules []string
 	var createdDashboards []string
 	executedTools := false
+	firstTokenSeen := false
+	markFirstToken := func(kind string) {
+		if firstTokenSeen {
+			return
+		}
+		firstTokenSeen = true
+		tFirstToken = time.Since(tStart)
+		logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=first_token kind=%s ttft=%dms total=%dms",
+			msg.ChatID, msg.SeqID, kind, (tFirstToken - tAgentStart).Milliseconds(), tFirstToken.Milliseconds())
+	}
 	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
@@ -506,6 +549,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				markFirstToken("thinking")
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
@@ -515,6 +559,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				markFirstToken("text")
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
@@ -527,6 +572,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				markFirstToken("content")
 				fullContent += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "content"})
 			}
@@ -573,6 +619,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 		}
 	}
+
+	tStreamDone = time.Since(tStart)
 
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
@@ -652,6 +700,27 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 在过期后会 fallback 到 DB 读取。用 Background 兜底——parentCtx 此时可能因
 	// cancel/超时而 Done。
 	state.Persist(context.Background())
+	tPersisted = time.Since(tStart)
+
+	// One-line summary for easy log scanning. All durations are ms relative to
+	// tStart (goroutine entry). "stream" = tStreamDone - tFirstToken (tail of
+	// LLM output after first token); "persist" = tPersisted - tStreamDone.
+	streamDur := int64(0)
+	if tFirstToken > 0 {
+		streamDur = (tStreamDone - tFirstToken).Milliseconds()
+	}
+	logger.Infof("[Assistant.Summary] chat=%s seq=%d action=%s total=%dms | history=%dms llm_client=%dms intent=%dms(%s) validate_pre=%dms agent_start=%dms ttft=%dms stream=%dms persist=%dms",
+		msg.ChatID, msg.SeqID, actionKey,
+		tPersisted.Milliseconds(),
+		tHistoryLoaded.Milliseconds(),
+		(tLLMReady - tHistoryLoaded).Milliseconds(),
+		(tIntent - tLLMReady).Milliseconds(), intentMethod,
+		(tValidatePre - tIntent).Milliseconds(),
+		(tAgentStart - tValidatePre).Milliseconds(),
+		(tFirstToken - tAgentStart).Milliseconds(),
+		streamDur,
+		(tPersisted - tStreamDone).Milliseconds(),
+	)
 }
 
 func (rt *Router) finishMessage(state *MessageState, streamID string, errCode int, errMsg string) {
