@@ -266,7 +266,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 	if llmCfg == nil {
-		rt.finishMessage(state, streamID, 400, "no LLM configured, please configure one in system settings")
+		// 409 而非 400：跟 /detail 接口约定——errCode 取 HTTP 状态码值，前端用
+		// HTTP 状态码就能识别"未配置 LLM"这条特定错误，弹"去配置"引导而非通用 toast。
+		rt.finishMessage(state, streamID, http.StatusConflict, "no LLM configured, please configure one in system settings")
 		return
 	}
 
@@ -770,7 +772,7 @@ func (rt *Router) assistantMessageDetail(c *gin.Context) {
 				}
 			}
 		}
-		ginx.NewRender(c).Data(snap, nil)
+		ginx.NewRender(c, detailHTTPStatus(snap.ErrCode, snap.IsFinish)).Data(snap, nil)
 		return
 	} else if err != nil {
 		logger.Warningf("[Assistant] MsgStateGet chat=%s seq=%d: %v", req.ChatID, req.SeqID, err)
@@ -783,7 +785,23 @@ func (rt *Router) assistantMessageDetail(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "message not found")
 		return
 	}
-	ginx.NewRender(c).Data(msg, nil)
+	ginx.NewRender(c, detailHTTPStatus(msg.ErrCode, msg.IsFinish)).Data(msg, nil)
+}
+
+// detailHTTPStatus 把 message 内嵌的业务 ErrCode 映射成 HTTP 状态码。
+// 仅对显式登记的码（目前是 409 "no LLM configured"）透传，其余保持 200——
+// 通用错误信息还在 body.err 里，前端原有"HTTP 200 + body 错误"路径不受影响。
+// 未来加新码（如 503 quota exhausted）只在 switch 里加一行即可。
+func detailHTTPStatus(errCode int, isFinish bool) int {
+	if !isFinish {
+		return http.StatusOK
+	}
+	switch errCode {
+	case http.StatusConflict: // 409: no LLM configured
+		return http.StatusConflict
+	default:
+		return http.StatusOK
+	}
 }
 
 func (rt *Router) assistantMessageHistory(c *gin.Context) {
