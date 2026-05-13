@@ -106,6 +106,7 @@ const (
 	ActionKeyCreation           AssistantActionKey = "creation"
 	ActionKeyTroubleshooting    AssistantActionKey = "troubleshooting"
 	ActionKeyNotifyTemplate     AssistantActionKey = "notify_template_generator"
+	ActionKeyNotifyChannel      AssistantActionKey = "notify_channel_copilot"
 	ActionKeyDatasourceDiagnose AssistantActionKey = "datasource_diagnose"
 )
 

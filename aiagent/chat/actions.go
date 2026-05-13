@@ -98,10 +98,18 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt: buildTroubleshootingPrompt,
 	},
 	"notify_template_generator": {
-		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
+		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Scope: 模板内容/字段/变量/渲染/卡片标题/颜色. Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'. NOTE: 改 URL/Webhook 地址/请求头/签名/秘钥/接入新平台 是 notify_channel_copilot, NOT this.",
 		BuildPrompt: buildNotifyTemplatePrompt,
 		RequiredSkills: func(_ *AIChatRequest) []string {
 			return []string{"n9e-generate-message-template"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
+	},
+	"notify_channel_copilot": {
+		Description: "Configure, onboard, or troubleshoot notification channel/media (通知媒介通道配置/接入/排障). Scope: 媒介通道层 (notify_channel) ——URL/Webhook 地址、请求体、headers、签名、秘钥、AppID/AppSecret/CorpID、超时、代理、TLS、@人/接收人字段. Examples: '怎么接入 Slack/通用 webhook/自建 HTTP', '钉钉媒介加签怎么配', '飞书机器人 URL 写哪', '企微媒介 9499 是什么意思', '为什么发不出去 Bad Request', '改一下钉钉媒介的请求头', '新建一个邮件媒介'. NOTE: 改模板内容/字段渲染 是 notify_template_generator; 改发给谁/订阅 是 creation 里的 notify rule.",
+		BuildPrompt: buildNotifyChannelPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-modify-notify-channel"}
 		},
 		AgentMode: aiagent.AgentModeDirect,
 	},
@@ -576,6 +584,28 @@ If asking for a template (帮我写/加上/改成/生成/write/add/change/genera
 If asking how-to/conceptual (如何/怎么/支持哪些/有哪些字段/能不能/是什么/how/what/can): answer directly with prose or short snippets, NO full template dump. For strongly ambiguous asks (e.g. "附加信息字段"), give 2-3 short options to pick from.
 
 Respond in the user's language.`, req.UserInput)
+}
+
+// --- notify_channel_copilot action ---
+//
+// Channel-layer configuration: URL/headers/body/signing/auth/proxy/TLS, plus
+// onboarding new platforms (Slack, custom HTTP, generic webhook) and
+// diagnosing send failures (9499 / Bad Request / 401 etc).
+// Substantive knowledge lives in the n9e-modify-notify-channel skill's
+// SKILL.md — this prompt just frames the task.
+
+func buildNotifyChannelPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an n9e (Nightingale) notification channel (通知媒介) expert. Follow the n9e-modify-notify-channel skill (SKILL.md) for substantive guidance.
+
+User request: %s
+
+Stay in the channel/transport layer: URL, request body, headers, signing, auth (AppID/AppSecret/CorpID/token), timeout, proxy, TLS, @-mention/recipient-field plumbing. Do NOT drift into:
+- 消息模板/字段渲染 → say so briefly and point at notify_template_generator.
+- 发给谁/订阅匹配 → say so briefly and point at notify rule (creation).
+
+If the user is onboarding a platform not in the built-in list (Slack, 自建 HTTP, 其他 IM), default to the "通用 Webhook" channel and walk them through: create channel → JSON body shape (event 字段) → 中转/目标地址 → test send. State assumptions inline instead of asking clarifying questions for every gap.
+
+Respond in the user's language, Markdown (NOT JSON).`, req.UserInput)
 }
 
 // --- datasource_diagnose action ---
