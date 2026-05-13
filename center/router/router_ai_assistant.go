@@ -248,10 +248,17 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		if err != nil {
 			logger.Warningf("[Assistant] load agent LLM config id=%d failed: %v", agent.LLMConfigId, err)
 		}
+		// AILLMConfigGetById 是通用 getter，故意不过滤 enabled——管理后台编辑页要能
+		// 查出已禁用的记录。但用在 chat 业务路径，命中已禁用配置时应当视为"agent 没
+		// 可用 LLM"，让兜底逻辑去找默认 LLM；找不到再报错给用户。
+		if llmCfg != nil && !llmCfg.Enabled {
+			logger.Infof("[Assistant] agent's bound LLM config id=%d is disabled, falling back to default", llmCfg.Id)
+			llmCfg = nil
+		}
 	}
 	// Fall back to the default LLM when the agent has no binding (LLMConfigId=0,
-	// e.g. the auto-created default-chat-agent) or when its binding no longer
-	// resolves (the referenced LLM was deleted).
+	// e.g. the auto-created default-chat-agent), when its binding no longer
+	// resolves (the referenced LLM was deleted), or when the bound LLM is disabled.
 	if llmCfg == nil {
 		llmCfg, err = models.AILLMConfigPickDefault(rt.Ctx)
 		if err != nil {
