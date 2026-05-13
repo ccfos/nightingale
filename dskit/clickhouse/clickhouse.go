@@ -200,23 +200,21 @@ func (c *Clickhouse) InitCli() error {
 
 const (
 	ShowDatabases = "SHOW DATABASES"
-	ShowTables    = "SELECT name FROM system.tables WHERE database = '%s'"
-	DescTable     = "SELECT name,type FROM system.columns WHERE database='%s' AND table = '%s';"
 )
 
-func (c *Clickhouse) QueryRows(ctx context.Context, query string) (*sql.Rows, error) {
+func (c *Clickhouse) QueryRows(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	var (
 		rows *sql.Rows
 		err  error
 	)
 
 	if c.ClientByHTTP != nil {
-		rows, err = c.ClientByHTTP.Query(query)
+		rows, err = c.ClientByHTTP.Query(query, args...)
 		if err != nil {
 			return nil, err
 		}
 	} else if c.Client != nil {
-		rows, err = c.Client.Raw(query).Rows()
+		rows, err = c.Client.Raw(query, args...).Rows()
 		if err != nil {
 			return nil, err
 		}
@@ -249,10 +247,13 @@ func (c *Clickhouse) ShowDatabases(ctx context.Context) ([]string, error) {
 
 // ShowTables lists all tables in a given database
 func (c *Clickhouse) ShowTables(ctx context.Context, database string) ([]string, error) {
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return nil, fmt.Errorf("show tables: %w", err)
+	}
 	res := make([]string, 0)
 
-	showTables := fmt.Sprintf(ShowTables, database)
-	rows, err := c.QueryRows(ctx, showTables)
+	rows, err := c.QueryRows(ctx,
+		"SELECT name FROM system.tables WHERE database = ?", database)
 	if err != nil {
 		return nil, err
 	}
@@ -278,9 +279,16 @@ func (c *Clickhouse) DescribeTable(ctx context.Context, query interface{}) ([]*t
 	if err := mapstructure.Decode(query, ckQueryParam); err != nil {
 		return nil, err
 	}
-	descTable := fmt.Sprintf(DescTable, ckQueryParam.Database, ckQueryParam.Table)
+	if err := sqlbase.ValidateIdentifier(ckQueryParam.Database); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
+	if err := sqlbase.ValidateIdentifier(ckQueryParam.Table); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
 
-	rows, err := c.QueryRows(ctx, descTable)
+	rows, err := c.QueryRows(ctx,
+		"SELECT name, type FROM system.columns WHERE database = ? AND table = ?",
+		ckQueryParam.Database, ckQueryParam.Table)
 	if err != nil {
 		return nil, err
 	}

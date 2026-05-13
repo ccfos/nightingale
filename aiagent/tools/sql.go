@@ -8,6 +8,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
+	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
@@ -129,8 +130,8 @@ func listTablesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string
 	if !ok || database == "" {
 		return "", fmt.Errorf("database parameter is required")
 	}
-	if !isValidIdentifier(database) {
-		return "", fmt.Errorf("invalid database name: %s", database)
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return "", fmt.Errorf("invalid database name: %w", err)
 	}
 
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)
@@ -186,15 +187,15 @@ func describeTableTool(ctx context.Context, deps *aiagent.ToolDeps, args map[str
 	if !ok || database == "" {
 		return "", fmt.Errorf("database parameter is required")
 	}
-	if !isValidIdentifier(database) {
-		return "", fmt.Errorf("invalid database name: %s", database)
+	if err := sqlbase.ValidateIdentifier(database); err != nil {
+		return "", fmt.Errorf("invalid database name: %w", err)
 	}
 	table, ok := args["table"].(string)
 	if !ok || table == "" {
 		return "", fmt.Errorf("table parameter is required")
 	}
-	if !isValidIdentifier(table) {
-		return "", fmt.Errorf("invalid table name: %s", table)
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return "", fmt.Errorf("invalid table name: %w", err)
 	}
 
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)

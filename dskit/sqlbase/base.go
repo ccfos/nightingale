@@ -5,7 +5,6 @@ package sqlbase
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -47,10 +46,10 @@ func CloseDB(db *gorm.DB) error {
 }
 
 // ShowTables retrieves a list of all tables in the specified database
-func ShowTables(ctx context.Context, db *gorm.DB, query string) ([]string, error) {
+func ShowTables(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]string, error) {
 	tables := make([]string, 0)
 
-	rows, err := db.WithContext(ctx).Raw(query).Rows()
+	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -68,10 +67,10 @@ func ShowTables(ctx context.Context, db *gorm.DB, query string) ([]string, error
 }
 
 // ShowDatabases retrieves a list of all databases in the connected database server
-func ShowDatabases(ctx context.Context, db *gorm.DB, query string) ([]string, error) {
+func ShowDatabases(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]string, error) {
 	var databases []string
 
-	rows, err := db.WithContext(ctx).Raw(query).Rows()
+	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +88,8 @@ func ShowDatabases(ctx context.Context, db *gorm.DB, query string) ([]string, er
 }
 
 // DescTable describes the schema of a specified table in MySQL or PostgreSQL
-func DescTable(ctx context.Context, db *gorm.DB, query string) ([]*types.ColumnProperty, error) {
-	rows, err := db.WithContext(ctx).Raw(query).Rows()
+func DescTable(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]*types.ColumnProperty, error) {
+	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -135,8 +134,8 @@ func DescTable(ctx context.Context, db *gorm.DB, query string) ([]*types.ColumnP
 }
 
 // ExecQuery executes the specified query and returns the result rows
-func ExecQuery(ctx context.Context, db *gorm.DB, sql string) ([]map[string]interface{}, error) {
-	rows, err := db.WithContext(ctx).Raw(sql).Rows()
+func ExecQuery(ctx context.Context, db *gorm.DB, sql string, args ...interface{}) ([]map[string]interface{}, error) {
+	rows, err := db.WithContext(ctx).Raw(sql, args...).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -173,16 +172,6 @@ func ExecQuery(ctx context.Context, db *gorm.DB, sql string) ([]map[string]inter
 		results = append(results, rowMap)
 	}
 	return results, nil
-}
-
-// SelectRows selects rows from a specified table based on a given query
-func SelectRows(ctx context.Context, db *gorm.DB, table, query string) ([]map[string]interface{}, error) {
-	sql := fmt.Sprintf("SELECT * FROM %s", table)
-	if query != "" {
-		sql += " WHERE " + query
-	}
-
-	return ExecQuery(ctx, db, sql)
 }
 
 // convertDBType converts MySQL or PostgreSQL data types to custom internal types and determines if they are indexable
