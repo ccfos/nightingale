@@ -113,6 +113,14 @@ var registry = map[string]*ActionHandler{
 		},
 		AgentMode: aiagent.AgentModeDirect,
 	},
+	"host_health_diagnose": {
+		Description: "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 走 resource_query; 分析'某条告警为什么触发'走 troubleshooting.",
+		SelectTools: selectHostHealthTools,
+		BuildPrompt: buildHostHealthPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-host-health-diagnose"}
+		},
+	},
 	"datasource_diagnose": {
 		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
 		SelectTools: selectDatasourceDiagnoseTools,
@@ -606,6 +614,44 @@ Stay in the channel/transport layer: URL, request body, headers, signing, auth (
 If the user is onboarding a platform not in the built-in list (Slack, 自建 HTTP, 其他 IM), default to the "通用 Webhook" channel and walk them through: create channel → JSON body shape (event 字段) → 中转/目标地址 → test send. State assumptions inline instead of asking clarifying questions for every gap.
 
 Respond in the user's language, Markdown (NOT JSON).`, req.UserInput)
+}
+
+// --- host_health_diagnose action ---
+
+func selectHostHealthTools(req *AIChatRequest) []string {
+	return []string{
+		"list_targets", "get_target_detail",
+		"get_target_realtime_status", "query_host_metrics_window", "list_neighbor_targets",
+		"list_alert_mutes", "get_alert_mute_detail",
+		"search_active_alerts",
+		"list_datasources",
+	}
+}
+
+func buildHostHealthPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an SRE assistant for the Nightingale (n9e) monitoring platform, specialized in judging host / agent (categraf) health. Follow the n9e-host-health-diagnose skill (SKILL.md) for the substantive logic.
+
+User request: %s
+
+Core principle: "agent 失联 ≠ 主机宕机". Always gather evidence from THREE layers before concluding:
+1. Realtime heartbeat & meta — get_target_realtime_status (Redis BeatTime, Offset, CpuUtil, MemUtil)
+2. Recent metrics window (default 10m) — query_host_metrics_window (cpu_usage_active / mem_available_percent / system_load1 / net_bytes_*)
+3. Same busi-group neighbors — list_neighbor_targets (个体故障 vs 集群故障 vs 网络分区)
+
+Also check list_alert_mutes (是否在维护窗口) and search_active_alerts (是否还有其它伴生告警).
+
+Final Answer MUST be Markdown (NOT JSON), in the user's language. Required structure:
+## 结论
+One of: 真宕机 / agent 假死 / 网络抖动 / 维护中 / 数据不足无法判断
+## 关键证据
+- 心跳：beat_time / lag / status
+- 指标：最近 10m cpu/mem/load/net 末值与窗口内 min/max/avg
+- 邻居：同业务组 active/lagging/stale 计数
+- 屏蔽：是否命中 mute
+## 建议动作
+2-3 条具体可执行项
+## 误报风险
+说明这个结论可能在什么情况下站不住脚`, req.UserInput)
 }
 
 // --- datasource_diagnose action ---

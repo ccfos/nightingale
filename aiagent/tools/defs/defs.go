@@ -469,6 +469,46 @@ var GetTargetDetail = aiagent.AgentTool{
 	},
 }
 
+var GetTargetRealtimeStatus = aiagent.AgentTool{
+	Name: "get_target_realtime_status",
+	Description: `从 Redis 读取目标主机的实时心跳与元数据，用于判断 "agent 失联 / 假死 / 真宕机"。
+返回字段：beat_time(最近一次心跳秒级时间戳) / lag_seconds(now - beat_time) / status(active|lagging|stale) /
+offset(agent 时钟与 server 偏移) / cpu_util / mem_util / agent_version / remote_addr / extend_info。
+status 判定：lag<60s=active, 60s≤lag<180s=lagging, lag≥180s=stale；redis 里完全没有心跳 key 时 status=stale_no_heartbeat。
+本工具只读不写，权限按目标所属业务组判定。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+	},
+}
+
+var QueryHostMetricsWindow = aiagent.AgentTool{
+	Name: "query_host_metrics_window",
+	Description: `查询主机最近窗口的核心健康指标聚合（cpu_usage_active / mem_available_percent / system_load1 / net_bytes_recv / net_bytes_sent），用于判断 "数据真停了 / 还在动 / 有突变"。
+返回每个指标的 samples_count / first_ts / last_ts / min / max / avg / last。
+不返回完整时序点，避免炸 token；要看趋势再单独调 query_prometheus。
+默认窗口 10m。datasource_id 不传时按 params 里的 chat-level datasource_id 兜底；都没有时报错并提示先 list_datasources。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID。不传时使用 chat-level params 兜底", Required: false},
+		{Name: "metrics", Type: "string", Description: "指标列表，空格或逗号分隔。不传则使用默认四件套 cpu_usage_active/mem_available_percent/system_load1/net_bytes_recv,net_bytes_sent", Required: false},
+		{Name: "time_range", Type: "string", Description: "时间窗口，如 10m / 30m / 1h，默认 10m", Required: false},
+	},
+}
+
+var ListNeighborTargets = aiagent.AgentTool{
+	Name: "list_neighbor_targets",
+	Description: `列出目标主机所在业务组（同一个 group_id）下的其它机器，并补全每台的实时心跳，用于判断 "个体故障 vs 集群故障 vs 网络分区"。
+返回 items 列表（ident / host_ip / lag_seconds / status）+ summary 聚合（total / active / lagging / stale）。
+limit 默认 30，避免大业务组返回过多。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "目标机器标识（ident），必填", Required: true},
+		{Name: "limit", Type: "integer", Description: "邻居数量上限，默认 30，最大 100", Required: false},
+	},
+}
+
 // =============================================================================
 // Task template
 // =============================================================================

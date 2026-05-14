@@ -419,6 +419,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		FilterDatasources:      rt.DatasourceCache.DatasourceFilter,
 		GetAlertEvalLogs:       rt.getAlertEvalLogs,
 		GetEventProcessingLogs: rt.getEventLogs,
+		Redis:                  rt.Redis,
 	}
 
 	if handler.Preflight != nil {

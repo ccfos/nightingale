@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/storage"
 )
 
 // ==================== 常量 ====================
@@ -208,6 +209,10 @@ type ToolDeps struct {
 	// 两个内部接口，用于排查"告警规则为什么没发告警"。两者都返回 (logs, instance, err)。
 	GetAlertEvalLogs       func(ruleId string) ([]string, string, error)
 	GetEventProcessingLogs func(eventHash string) ([]string, string, error)
+
+	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
+	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。
+	Redis storage.Redis
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）
