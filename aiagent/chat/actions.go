@@ -114,11 +114,19 @@ var registry = map[string]*ActionHandler{
 		AgentMode: aiagent.AgentModeDirect,
 	},
 	"host_health_diagnose": {
-		Description: "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 走 resource_query; 分析'某条告警为什么触发'走 troubleshooting.",
+		Description: "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 走 resource_query; 分析'某条告警为什么触发'走 troubleshooting; '新装机器没出现 / 显示 unknown / 没接入' 走 host_onboard_diagnose（曾经能看到现在失联走本 action，没接入过走 onboard）.",
 		SelectTools: selectHostHealthTools,
 		BuildPrompt: buildHostHealthPrompt,
 		RequiredSkills: func(_ *AIChatRequest) []string {
 			return []string{"n9e-host-health-diagnose"}
+		},
+	},
+	"host_onboard_diagnose": {
+		Description: "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留走 resource_query.",
+		SelectTools: selectHostOnboardTools,
+		BuildPrompt: buildHostOnboardPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-host-onboard-diagnose"}
 		},
 	},
 	"datasource_diagnose": {
@@ -652,6 +660,50 @@ One of: 真宕机 / agent 假死 / 网络抖动 / 维护中 / 数据不足无法
 2-3 条具体可执行项
 ## 误报风险
 说明这个结论可能在什么情况下站不住脚`, req.UserInput)
+}
+
+// --- host_onboard_diagnose action ---
+
+func selectHostOnboardTools(req *AIChatRequest) []string {
+	return []string{
+		"probe_target_onboard_status",
+		"list_targets", "get_target_detail",
+		"query_prometheus", "query_host_metrics_window",
+		"list_datasources",
+	}
+}
+
+func buildHostOnboardPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an SRE assistant for the Nightingale (n9e) monitoring platform, specialized in diagnosing host onboarding failures — categraf is installed/running but the host doesn't show up in n9e, or shows up with unknown metadata, or has no metrics. Follow the n9e-host-onboard-diagnose skill (SKILL.md) for the substantive logic.
+
+User request: %s
+
+Core principle: "机器没出现" is never a single cause — the onboarding pipeline has 5 segments and you must locate which one broke before recommending a fix:
+  [1] categraf 本机进程       — running? heartbeat.enable on?
+  [2] 心跳上报 HTTP            — can it reach /v1/n9e/heartbeat? (network/TLS/BasicAuth)
+  [3] server / edge 接收       — token / version compatibility / hostname collision
+  [4] target 表落库            — DB row exists? redis meta exists?
+  [5] Redis + 指标流          — does prom see this ident?
+
+ALWAYS call probe_target_onboard_status FIRST — it returns the 5-segment footprint plus a likely_segment + likely_causes diagnosis aggregated server-side. Trust the likely_segment field; do not re-derive the segment from raw fields.
+
+If likely_segment=segment_5, additionally run THREE PromQL variants via query_prometheus to distinguish "no data" from "ident label mismatch":
+  target_up{ident="<ident>"}
+  target_up{ident=~".*<host>.*"}
+  {instance=~".*<host>.*"}
+
+Final Answer MUST be Markdown (NOT JSON), in the user's language. Required structure:
+## 结论
+One line: 卡在第 X 段：xxx（或：接入正常，看不到是 yyy 原因）
+## 接入链路证据
+- 段 1/2（categraf 本机/HTTP）：<未取证 / 推断异常：xxx>
+- 段 3（server 接收）：target in_db=..., os=..., agent_version=...
+- 段 4（target 落库 + redis）：in_redis_beat=..., lag_seconds=...
+- 段 5（Prom）：prom_metrics_hit=..., target_up_last=...
+## 修复命令
+2-3 条用户可直接粘贴执行的命令，每条带"预期输出"
+## 自证步骤
+1-2 条验证修复是否生效的命令`, req.UserInput)
 }
 
 // --- datasource_diagnose action ---

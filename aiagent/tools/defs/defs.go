@@ -509,6 +509,25 @@ limit 默认 30，避免大业务组返回过多。`,
 	},
 }
 
+var ProbeTargetOnboardStatus = aiagent.AgentTool{
+	Name: "probe_target_onboard_status",
+	Description: `沿"接入链路 5 段"探测一台机器在 n9e 平台的接入足迹，用于排查"机器没出现 / 元信息 unknown / 心跳没建立"的接入失败问题。
+与 get_target_realtime_status 的关键差异：本工具**容忍 target 不在 DB 中**——这正是 onboard 场景的常态。
+返回字段：
+- in_target_db / target{os, agent_version, host_ip, has_group}：段 3/4，DB 落库情况
+- in_redis_beat / in_redis_meta / redis_meta{cpu_util, mem_util, remote_addr, hostname, offset}：段 4，redis 心跳与 meta
+- datasource_checked / in_prom_target_up / target_up_last / prom_metrics_hit：段 5，时序库是否能查到该 ident
+- likely_segment：诊断聚合，取值 segment_1_or_2 / segment_3 / segment_4 / segment_5 / ok
+- likely_causes：likely_segment 对应的高频根因列表（带相关 issue 编号）
+权限：target 在 DB 且有业务组归属时按组交集鉴权；target 不在 DB 或未归组时允许查询（onboard 排障必须能查"还没归过组"的机器）。
+段 5（prom）需要 datasource_id：不传时按 chat-level params 兜底，仍取不到则跳过段 5，不报错。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（段 5 用）。不传时用 chat-level params 兜底；都没有则只跑段 3/4。", Required: false},
+	},
+}
+
 // =============================================================================
 // Task template
 // =============================================================================
