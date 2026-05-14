@@ -105,6 +105,8 @@ func (rt *Router) QuerySqlTemplate(c *gin.Context) {
 	switch cate {
 	case models.TDENGINE:
 		m = cconf.TDengineSQLTpl
+	case models.IOTDB:
+		m = cconf.IotdbSQLTpl
 	}
 	ginx.NewRender(c).Data(m, nil)
 }
