@@ -134,6 +134,24 @@ var registry = map[string]*ActionHandler{
 		SelectTools: selectDatasourceDiagnoseTools,
 		BuildPrompt: buildDatasourceDiagnosePrompt,
 	},
+	"task_tpl_copilot": {
+		Description: "Generate or modify Nightingale (n9e) self-healing scripts / 告警自愈脚本 (task_tpl/ibex). Scope: 脚本正文 / stdin 解析 / 超时 / 批次 / 容忍度 / 参数 / 危险命令规避. Examples: '写一个磁盘满清理 /var/log 的自愈脚本', '把这个脚本加上 stdin 解析', '清理 docker 镜像层缓存的脚本', 'Java OOM 自动 dump+重启', 'reload nginx 的安全脚本', '自愈脚本怎么拿告警标签', 'is_recovered 怎么用', 'timeout 应该填多少'. NOTE: 改告警规则/接收人/通知模板都不在这里——分别走 creation / notify rule / notify_template_generator.",
+		BuildPrompt: buildTaskTplCopilotPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-modify-task-tpl"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
+	},
+	"auto_heal_recommend": {
+		Description: "Recommend a self-healing action for a fired alert event (告警自愈推荐 / 半自愈). Given an alert event, gather three-layer evidence (event → rule → history), find the safest matching task_tpl, show what it would do (脚本要点 + 风险 + dry-run hint), and emit a 一键执行 marker — OR draft a new task_tpl spec and hand off to task_tpl_copilot when no candidate fits. Examples: '这条告警能自愈吗', '帮我处理一下这个告警', '推荐一个自愈脚本', '能不能一键修复', '建议下怎么自愈', 'auto-heal this alert', 'fix this incident'. NOTE: 直接写脚本走 task_tpl_copilot; 排查为什么告警触发走 troubleshooting; 判断主机活没活走 host_health_diagnose. Requires context.event_id.",
+		Validate:    validateAutoHealRecommend,
+		Preflight:   preflightAutoHealRecommend,
+		SelectTools: selectAutoHealRecommendTools,
+		BuildPrompt: buildAutoHealRecommendPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-recommend-self-heal"}
+		},
+	},
 }
 
 func init() {
@@ -756,4 +774,167 @@ Output:
 - Your Final Answer MUST be Markdown (NOT JSON), in the user's language.
 - Structure: "可能原因" → "验证命令" (curl/telnet) → "修复建议".
 - Always include at least one verification curl command the user can run to confirm the fix.`, req.UserInput, ctxHint.String())
+}
+
+// --- task_tpl_copilot action ---
+//
+// Focused assistant for writing/modifying ibex self-healing scripts (告警自愈
+// 脚本 / task_tpl). Substantive knowledge — stdin payload shape (flat
+// map[string]string built in alert/sender/ibex.go:118-142, NOT $event),
+// is_recovered behavior (ibex never fires on recovery, line 39-42),
+// timeout semantics (CleanFields default 30s, max 5 days), language-specific
+// stdin readers, danger-command blacklist, and the 20-scenario library —
+// lives in the n9e-modify-task-tpl skill's SKILL.md.
+
+func buildTaskTplCopilotPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an n9e (Nightingale) self-healing script (告警自愈/ibex task_tpl) expert. Follow the n9e-modify-task-tpl skill (SKILL.md) for substantive guidance.
+
+User request: %s
+
+Classify first, then answer accordingly:
+
+A) Generate / modify a script (写一个 / 帮我写 / 加上 / 改成 / 生成 / write / add / change / generate):
+   Output structure:
+   1. One-line lead stating the assumed scenario.
+   2. Fenced shell or python block — always include: (a) safe stdin JSON parsing with default fallbacks, (b) explicit timeout / exit-code handling, (c) idempotency or dry-run guard before any destructive action, (d) stdout echo of before/after state so task_record is observable.
+   3. Short "stdin 字段说明" list — only the keys actually referenced by the script, plus a note on which ones come from PromQL labels vs. ibex injection.
+   4. "运行参数建议" — timeout / batch / tolerance / pause values with reasoning (e.g. "timeout=120 因为 yum 清理可能超过默认 30s").
+   5. Risk & rollback note when the action is mutating.
+   State assumptions inline. Do NOT ask clarifying questions if a sensible default exists.
+
+B) How-to / conceptual (如何 / 怎么 / 支持哪些 / 字段有哪些 / 能不能 / 为什么 / how / what / can / why):
+   Answer directly with prose or short snippets, NO full template dump.
+
+Stay strictly in script-generation scope. Redirect when:
+- "告警恢复时跑个脚本" → 一句话说明 ibex 不在恢复事件触发 (alert/sender/ibex.go IsRecovered 直接 return), 让用户改走 notify_rule + callback 媒介, 不要生成带 is_recovered 分支的脚本 (那是死代码).
+- "怎么改告警规则 / PromQL" → point at creation or query_generator action.
+- "怎么改通知模板 / 消息内容" → point at notify_template_generator action.
+- "怎么改 webhook / 通知通道" → point at notify_channel_copilot action.
+
+Refuse to emit, even when requested: 'rm -rf /', 'rm -rf $UNSET_VAR/', 'mkfs', 'dd of=/dev/...', 'shutdown', 'reboot', 'init 0', 'init 6', 'iptables -F' without backup, 'chmod -R 777 /', 'curl ... | sh' from non-allowlisted hosts, base64-encoded shell payloads. If the user explicitly asks for a destructive op, state the risk and emit a safer dry-run / confirm-flag / scoped variant (e.g. clean ~/.cache for a specific user instead of rm -rf /home).
+
+Respond in the user's language, Markdown (NOT JSON).`, req.UserInput)
+}
+
+// --- auto_heal_recommend action ---
+//
+// Half-automation: AI recommends, human confirms, system executes. Three-layer
+// evidence gathering (event → rule → history) followed by candidate matching
+// against the user's task_tpl library; emits an inline {{action:run_task_tpl}}
+// marker for the frontend to render as a one-click button, OR an
+// {{action:switch|to=task_tpl_copilot}} marker when no template fits.
+//
+// Substantive matching algorithm, risk evaluation, and No-Match handoff
+// templates live in the n9e-recommend-self-heal skill's SKILL.md.
+//
+// Requires context.event_id; preflight halts otherwise.
+
+func validateAutoHealRecommend(req *AIChatRequest) error {
+	if ctxInt64(req.Context, "event_id") == 0 {
+		return fmt.Errorf("context.event_id is required for auto_heal_recommend")
+	}
+	return nil
+}
+
+func preflightAutoHealRecommend(_ context.Context, _ *aiagent.ToolDeps,
+	req *AIChatRequest, _ *models.User) (bool, []models.AssistantMessageResponse, error) {
+	if ctxInt64(req.Context, "event_id") > 0 {
+		return false, nil, nil
+	}
+	hint := "自愈推荐需要绑定一条告警事件。请从「告警事件详情页」或「通知卡片」打开 Copilot，让系统把 event_id 传进来后再试。"
+	return true, []models.AssistantMessageResponse{{
+		ContentType: models.ContentTypeMarkdown,
+		Content:     hint,
+		IsFinish:    true,
+		IsFromAI:    true,
+	}}, nil
+}
+
+func selectAutoHealRecommendTools(_ *AIChatRequest) []string {
+	return []string{
+		// L1: 当前事件
+		"get_alert_event_detail",
+		"get_alert_rule_detail",
+		// L2: 历史频次 / 上次处置
+		"search_history_alerts",
+		"search_active_alerts",
+		// L3: 候选 task_tpl 匹配
+		"list_task_tpls", "get_task_tpl_detail",
+		// 取证 / 上下文
+		"query_prometheus", "query_timeseries", "query_log",
+		"get_target_detail", "list_busi_groups",
+		"list_alert_mutes", "get_alert_mute_detail",
+	}
+}
+
+func buildAutoHealRecommendPrompt(req *AIChatRequest) string {
+	eid := ctxInt64(req.Context, "event_id")
+	rid := ctxInt64(req.Context, "rule_id")
+	bgid := ctxInt64(req.Context, "busi_group_id")
+
+	var ctxHint strings.Builder
+	ctxHint.WriteString(fmt.Sprintf("\nContext: event_id=%d", eid))
+	if rid > 0 {
+		ctxHint.WriteString(fmt.Sprintf(", rule_id=%d", rid))
+	}
+	if bgid > 0 {
+		ctxHint.WriteString(fmt.Sprintf(", busi_group_id=%d", bgid))
+	}
+
+	return fmt.Sprintf(`You are an n9e (Nightingale) self-healing advisor. Follow the n9e-recommend-self-heal skill (SKILL.md) for the substantive matching algorithm, risk-evaluation checklist, and No-Match handoff templates. Your job is RECOMMEND — never execute. Execution is a separate UI button the user clicks.
+
+User request: %s%s
+
+Workflow — gather THREE layers of evidence BEFORE recommending:
+
+L1. Current event — get_alert_event_detail(id=event_id). Capture: severity, target_ident, trigger_value, tags_json, rule_name, datasource_id, is_recovered, group_id. If is_recovered=true → output "⏭️ 事件已恢复" and skip everything below (no execution marker).
+
+L2. The rule — get_alert_rule_detail(rule_id). Read the PromQL / query expression. Identify which labels the rule's by() preserves — these are what a self-heal script can read from stdin (see ibex.go:118-142). If a needed label is missing, flag it explicitly.
+
+L3. Frequency & history — search_history_alerts with rule_id filter and a 30d range. Count occurrences. Was the most recent recurrence auto-healed (look at related task records via the event labels)? Recurring (≥5 / 30d) → confidence boost; first-time → recommend with extra caution.
+
+Then candidate matching (skill §3 决策树 has the full logic):
+
+- list_task_tpls with a query built from event labels and rule intent (例: "disk clean log", "restart oom", "nginx reload"). Cap candidates considered at 10, evaluate top 3 by tag/title overlap.
+- For each candidate: get_task_tpl_detail and judge:
+  (a) intent match: does its script actually address THIS condition?
+  (b) bg boundary: tpl.group_id == event.group_id? (跨 bg 即使 admin 也不直接推荐执行 — alert/sender/ibex.go:CanDoIbex 会拒)
+  (c) stdin sufficiency: does the script need labels the event doesn't carry? (若缺, 提示用户修 PromQL by 子句)
+  (d) destructive safety: rm -rf / shutdown / kubectl delete / iptables -F 等黑名单命令且无 dry-run/护栏 → 标 ⚠️ 或 ❌
+  (e) target reachability: target online? (light check via target_ident if available)
+
+Branch decision (skill §3):
+- ≥1 candidate passes all checks → ✅ 推荐执行
+- candidates exist but all fail → choose the closest reason: N2 (全跨 bg) / N3 (语义错位) / N4 (高风险无护栏)
+- 0 candidates → N1 (草案生成)
+
+In ALL no-match branches, emit an inline marker for the frontend to render as a "用此草案写脚本" button:
+{{action:switch|to=task_tpl_copilot|prefill=<一段自然语言描述, 包含: 目标 / 必备 stdin 标签 / 步骤骨架 / 建议 timeout / 风险点>}}
+
+When recommending execution, emit:
+{{action:run_task_tpl|tpl_id=<id>|host=<event.target_ident>|event_id=<event_id>}}
+(Frontend parses this, shows script preview + risks in a confirm dialog, then calls the existing ibex API. AI must NEVER call execution tools itself.)
+
+Final Answer MUST be Markdown (NOT JSON) in the user's language, using this structure:
+
+## 推荐结论
+✅ / ⚠️ / ❌ / ⏭️ + 一句话
+
+## 关键证据
+- 事件: ...
+- 规则: ...
+- 历史: ...
+
+## 候选清单 / 新建草案
+(取决于分支)
+
+## 一键执行 / 写脚本
+(对应 {{action:...}} 标记 — 必须放在此节内, 前端就找这一节)
+
+## 误报风险
+何时这个推荐可能不准 (告警标签语义模糊 / 上次执行失败过 / 业务高峰期 / 主机正在维护)
+
+Refuse to emit a {{action:run_task_tpl}} marker for any candidate that, after reading its script, contains: 'rm -rf /', 'mkfs', 'shutdown', 'kubectl delete node', 'iptables -F' without backup, or curl-pipe-to-shell. Instead emit N4 (修法建议) with a {{action:switch}} marker pointing to task_tpl_copilot.
+
+Respond in the user's language.`, req.UserInput, ctxHint.String())
 }

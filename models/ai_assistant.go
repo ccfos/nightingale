@@ -109,6 +109,8 @@ const (
 	ActionKeyNotifyChannel      AssistantActionKey = "notify_channel_copilot"
 	ActionKeyDatasourceDiagnose AssistantActionKey = "datasource_diagnose"
 	ActionKeyHostHealthDiagnose AssistantActionKey = "host_health_diagnose"
+	ActionKeyTaskTplCopilot     AssistantActionKey = "task_tpl_copilot"
+	ActionKeyAutoHealRecommend  AssistantActionKey = "auto_heal_recommend"
 )
 
 type AssistantAction struct {
