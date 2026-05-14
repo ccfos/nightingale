@@ -113,6 +113,21 @@ var GetAlertRuleDetail = aiagent.AgentTool{
 	},
 }
 
+var ListLegacyNotifyAlertRules = aiagent.AgentTool{
+	Name: "list_legacy_notify_alert_rules",
+	Description: `审计哪些告警规则还在用老式接收组（notify_groups）而没有迁移到新版通知规则（notify_rule_ids）。
+**只用于迁移审计场景**，例如"扫一下还有哪些老式接收组配置没迁"。日常告警规则查询请用 list_alert_rules，不要用本工具。
+判定口径：notify_version=0 即认为是老版本（写入时该字段与 notify_rule_ids 互斥，是平台层的权威迁移标识）。
+返回 items 每条带 id / name / group_id / group_name / disabled / severity / cate / notify_groups / notify_rule_ids / update_at / update_by，外加 summary{total, enabled, disabled, with_groups_configured, empty_legacy}。
+非 admin 用户按业务组权限自动过滤；admin 看全量。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "include_disabled", Type: "boolean", Description: "是否包含已禁用规则。默认 false（禁用的迁移影响小，先聚焦在跑的）", Required: false},
+		{Name: "group_id", Type: "integer", Description: "限定单个业务组 ID，可选；不传则扫所有有权限的业务组", Required: false},
+		{Name: "limit", Type: "integer", Description: "返回数量上限，默认 500，最大 2000", Required: false},
+	},
+}
+
 var CreateAlertRule = aiagent.AgentTool{
 	Name: "create_alert_rule",
 	Description: `创建告警规则，支持 Prometheus/Loki/ES/OpenSearch/TDengine/ClickHouse/MySQL/PostgreSQL/Doris/VictoriaLogs/Host 等数据源类型。

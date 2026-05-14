@@ -56,14 +56,14 @@ func (o *OpenAI) Name() string {
 
 // OpenAI API request/response structures
 type openAIRequest struct {
-	Model       string              `json:"model"`
-	Messages    []openAIMessage     `json:"messages"`
-	Tools       []openAITool        `json:"tools,omitempty"`
-	MaxTokens   int                 `json:"max_tokens,omitempty"`
-	Temperature float64             `json:"temperature,omitempty"`
-	TopP        float64             `json:"top_p,omitempty"`
-	Stop        []string            `json:"stop,omitempty"`
-	Stream      bool                `json:"stream,omitempty"`
+	Model       string          `json:"model"`
+	Messages    []openAIMessage `json:"messages"`
+	Tools       []openAITool    `json:"tools,omitempty"`
+	MaxTokens   int             `json:"max_tokens,omitempty"`
+	Temperature float64         `json:"temperature,omitempty"`
+	TopP        float64         `json:"top_p,omitempty"`
+	Stop        []string        `json:"stop,omitempty"`
+	Stream      bool            `json:"stream,omitempty"`
 
 	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
 	// 用于把 LLMConfig.ExtraBody 透传给厂商特定字段（如 dashscope 的 enable_thinking）。
@@ -104,8 +104,8 @@ type openAIMessage struct {
 }
 
 type openAITool struct {
-	Type     string           `json:"type"`
-	Function openAIFunction   `json:"function"`
+	Type     string         `json:"type"`
+	Function openAIFunction `json:"function"`
 }
 
 type openAIFunction struct {

@@ -260,9 +260,74 @@ func getAlertEventDetail(_ context.Context, deps *aiagent.ToolDeps, args map[str
 	return string(bytes), nil
 }
 
-func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+// authorizeBgid 校验非 admin 用户对某业务组 (rule 或 event 的 group_id) 是否可访问。
+// admin 直通；groupId<=0 视作"无归属"，拒绝以防越权。
+func authorizeBgid(deps *aiagent.ToolDeps, user *models.User, groupId int64) error {
+	if user == nil {
+		return fmt.Errorf("forbidden: no user context")
+	}
+	if user.IsAdmin() {
+		return nil
+	}
+	if groupId <= 0 {
+		return fmt.Errorf("forbidden: resource has no business group")
+	}
+	bgids, _, err := getUserBgids(deps, user)
+	if err != nil {
+		return err
+	}
+	if !int64SliceContains(bgids, groupId) {
+		return fmt.Errorf("forbidden: no access to this resource")
+	}
+	return nil
+}
+
+// resolveEventGroupIdByHash 通过 event hash 解析对应事件的业务组归属。
+// 先查 cur，没命中再查 his——hash 在两表都可能命中（活跃事件 + 历史事件）。
+func resolveEventGroupIdByHash(deps *aiagent.ToolDeps, hash string) (int64, bool, error) {
+	cur, err := models.AlertCurEventGet(deps.DBCtx, "hash=?", hash)
+	if err != nil {
+		return 0, false, err
+	}
+	if cur != nil {
+		return cur.GroupId, true, nil
+	}
+	his, err := models.AlertHisEventGetByHash(deps.DBCtx, hash)
+	if err != nil {
+		return 0, false, err
+	}
+	if his != nil {
+		return his.GroupId, true, nil
+	}
+	return 0, false, nil
+}
+
+// resolveEventGroupIdById 通过 event_id 解析对应事件的业务组归属。
+func resolveEventGroupIdById(deps *aiagent.ToolDeps, eventId int64) (int64, bool, error) {
+	cur, err := models.AlertCurEventGetById(deps.DBCtx, eventId)
+	if err != nil {
+		return 0, false, err
+	}
+	if cur != nil {
+		return cur.GroupId, true, nil
+	}
+	his, err := models.AlertHisEventGetById(deps.DBCtx, eventId)
+	if err != nil {
+		return 0, false, err
+	}
+	if his != nil {
+		return his.GroupId, true, nil
+	}
+	return 0, false, nil
+}
+
+func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	if deps == nil || deps.GetAlertEvalLogs == nil {
 		return "", fmt.Errorf("alert eval logs fetcher not configured")
+	}
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
 	}
 
 	var ruleId int64
@@ -274,6 +339,18 @@ func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string
 	}
 	if ruleId <= 0 {
 		return "", fmt.Errorf("rule_id is required")
+	}
+
+	// 鉴权：按规则所在业务组校验。规则不存在直接拒绝，避免靠错误差异枚举 rule_id。
+	rule, err := models.AlertRuleGetById(deps.DBCtx, ruleId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get alert rule: %v", err)
+	}
+	if rule == nil {
+		return "", fmt.Errorf("alert rule not found: %d", ruleId)
+	}
+	if err := authorizeBgid(deps, user, rule.GroupId); err != nil {
+		return "", err
 	}
 
 	logs, instance, err := deps.GetAlertEvalLogs(strconv.FormatInt(ruleId, 10))
@@ -292,15 +369,30 @@ func getAlertEvalLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string
 	return string(bytes), nil
 }
 
-func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	if deps == nil || deps.GetEventProcessingLogs == nil {
 		return "", fmt.Errorf("event processing logs fetcher not configured")
+	}
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
 	}
 
 	hash, _ := args["event_hash"].(string)
 	hash = strings.TrimSpace(hash)
 	if hash == "" {
 		return "", fmt.Errorf("event_hash is required")
+	}
+
+	groupId, found, err := resolveEventGroupIdByHash(deps, hash)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve event: %v", err)
+	}
+	if !found {
+		return "", fmt.Errorf("event not found for hash")
+	}
+	if err := authorizeBgid(deps, user, groupId); err != nil {
+		return "", err
 	}
 
 	logs, instance, err := deps.GetEventProcessingLogs(hash)
@@ -319,9 +411,18 @@ func getEventProcessingLogs(_ context.Context, deps *aiagent.ToolDeps, args map[
 	return string(bytes), nil
 }
 
-func listAlertEngineInstances(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+func listAlertEngineInstances(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	if deps == nil || deps.DBCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
+	}
+	// 引擎实例清单含 instance 地址 / cluster / 心跳——属于平台级运维信息，没有
+	// 业务组归属。仅 admin 可见，避免普通用户用作部署拓扑侦察。
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if !user.IsAdmin() {
+		return "", fmt.Errorf("forbidden: only admin can list alert engine instances")
 	}
 
 	var (
@@ -345,12 +446,12 @@ func listAlertEngineInstances(_ context.Context, deps *aiagent.ToolDeps, args ma
 
 	now := time.Now().Unix()
 	type engineResult struct {
-		Instance       string `json:"instance"`
-		EngineCluster  string `json:"engine_cluster"`
-		DatasourceId   int64  `json:"datasource_id"`
-		LastHeartbeat  string `json:"last_heartbeat"`
-		StaleSeconds   int64  `json:"stale_seconds"`
-		Healthy        bool   `json:"healthy"`
+		Instance      string `json:"instance"`
+		EngineCluster string `json:"engine_cluster"`
+		DatasourceId  int64  `json:"datasource_id"`
+		LastHeartbeat string `json:"last_heartbeat"`
+		StaleSeconds  int64  `json:"stale_seconds"`
+		Healthy       bool   `json:"healthy"`
 	}
 	results := make([]engineResult, 0, len(engines))
 	for _, e := range engines {
@@ -374,9 +475,13 @@ func listAlertEngineInstances(_ context.Context, deps *aiagent.ToolDeps, args ma
 	return string(bytes), nil
 }
 
-func getEventPipelineExecutions(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+func getEventPipelineExecutions(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	if deps == nil || deps.DBCtx == nil {
 		return "", fmt.Errorf("alert context not configured")
+	}
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
 	}
 
 	var eventId int64
@@ -388,6 +493,17 @@ func getEventPipelineExecutions(_ context.Context, deps *aiagent.ToolDeps, args 
 	}
 	if eventId <= 0 {
 		return "", fmt.Errorf("event_id is required")
+	}
+
+	groupId, found, err := resolveEventGroupIdById(deps, eventId)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve event: %v", err)
+	}
+	if !found {
+		return "", fmt.Errorf("event not found: %d", eventId)
+	}
+	if err := authorizeBgid(deps, user, groupId); err != nil {
+		return "", err
 	}
 
 	executions, err := models.ListEventPipelineExecutionsByEventID(deps.DBCtx, eventId)

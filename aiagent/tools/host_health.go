@@ -25,9 +25,9 @@ import (
 // otherwise stale. "stale_no_heartbeat" means the redis key is missing entirely
 // (vs "stale" which means the key exists but is far in the past).
 const (
-	statusActive          = "active"
-	statusLagging         = "lagging"
-	statusStale           = "stale"
+	statusActive           = "active"
+	statusLagging          = "lagging"
+	statusStale            = "stale"
 	statusStaleNoHeartbeat = "stale_no_heartbeat"
 )
 
@@ -424,12 +424,16 @@ func listNeighborTargets(_ context.Context, deps *aiagent.ToolDeps, args map[str
 		return `{"items":[],"summary":{"total":0,"active":0,"lagging":0,"stale":0},"note":"target has no busi group"}`, nil
 	}
 
+	// 查询范围 = target 业务组 ∩ 用户业务组：避免 target 同时在 {A,B}、用户只有 A
+	// 权限时把 B 组下的邻居 ident 漏给用户。admin 不受限。
+	queryGroupIds := groupIds
 	if !user.IsAdmin() {
 		bgids, _, err := getUserBgids(deps, user)
 		if err != nil {
 			return "", err
 		}
-		if !int64SlicesOverlap(bgids, groupIds) {
+		queryGroupIds = int64SliceIntersect(bgids, groupIds)
+		if len(queryGroupIds) == 0 {
 			return "", fmt.Errorf("forbidden: no access to this target")
 		}
 	}
@@ -440,7 +444,7 @@ func listNeighborTargets(_ context.Context, deps *aiagent.ToolDeps, args map[str
 	}
 	// Pull one extra so we can drop the self-ident without truncating the page.
 	targets, err := models.TargetGets(deps.DBCtx, limit+1, 0, "ident", false,
-		models.BuildTargetWhereWithBgids(groupIds))
+		models.BuildTargetWhereWithBgids(queryGroupIds))
 	if err != nil {
 		return "", fmt.Errorf("failed to query neighbor targets: %v", err)
 	}
