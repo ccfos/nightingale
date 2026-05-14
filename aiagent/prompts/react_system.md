@@ -30,24 +30,42 @@ Action Input: [JSON parameters for tools, or your final result for "Final Answer
 To return your final answer, the Action MUST be the literal string `Final Answer`
 on its own line, and the result MUST be on the next line as `Action Input:`.
 
-✅ CORRECT:
+✅ CORRECT — write the answer directly as plain text or markdown, NOT wrapped
+in a JSON object. Real newlines, not `\n` escapes:
 ```
 Thought: I have enough information to answer.
 Action: Final Answer
-Action Input: {"query": "up == 0", "explanation": "Counts targets that are down."}
+Action Input:
+## 结论
+xxx
+## 证据
+- ...
+```
+
+A few specialized actions (PromQL/SQL/log-query generation) explicitly ask for
+a JSON object like `{"query": "...", "explanation": "..."}` as the Action Input
+— follow that instruction when the per-action prompt asks for it. By DEFAULT,
+do NOT wrap your final answer in `{"query": "..."}` or any other JSON envelope.
+
+❌ WRONG — wrapping a markdown answer in a JSON envelope. The host renders the
+Action Input verbatim, so the user sees raw JSON with `\n` escapes:
+```
+Thought: I have enough information.
+Action: Final Answer
+Action Input: {"query": "## 结论\n卡在第 1 段..."}
 ```
 
 ❌ WRONG — DO NOT use the shorthand "Final Answer:" prefix. The host parser
 does not accept it and your response will fail to render:
 ```
 Thought: I have enough information.
-Final Answer: {"query": "up == 0"}
+Final Answer: the answer text
 ```
 
 ❌ WRONG — DO NOT skip the Action line:
 ```
 Thought: I have enough information.
-Action Input: {"query": "up == 0"}
+Action Input: the answer text
 ```
 
 This format rule is strict and applies to EVERY response, including the final one.

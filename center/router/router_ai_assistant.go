@@ -635,8 +635,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		responses = handler.ParseResponse(fullContent)
 	}
 	if len(responses) == 0 {
+		// Defensive: some models wrap a markdown final answer in a JSON envelope
+		// like {"query": "## 结论\n..."}, conditioned by the shared ReAct system
+		// prompt's example. Unwrap before rendering as markdown so the user sees
+		// real newlines instead of literal "\n" escapes.
+		markdown := chat.UnwrapJSONEnvelope(fullContent)
 		responses = []models.AssistantMessageResponse{
-			{ContentType: models.ContentTypeMarkdown, Content: fullContent, StreamID: streamID, IsFinish: true, IsFromAI: true},
+			{ContentType: models.ContentTypeMarkdown, Content: markdown, StreamID: streamID, IsFinish: true, IsFromAI: true},
 		}
 	} else {
 		// Attach streamID to the first element for frontend stream matching

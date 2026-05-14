@@ -361,6 +361,40 @@ func parseQueryGeneratorResponse(content string) []models.AssistantMessageRespon
 	return resp
 }
 
+// UnwrapJSONEnvelope handles the case where an LLM mistakenly wraps a markdown
+// final answer in a JSON object like {"query": "## 结论\n..."} — the front-end
+// then renders the raw JSON with literal "\n" escapes, which looks like garbled
+// output. When `content` is such an envelope, returns the extracted body string;
+// otherwise returns `content` unchanged.
+//
+// This is intended for the fallback path only — actions that legitimately emit
+// JSON (e.g. query_generator's {"query":"<expr>","explanation":"..."}) have
+// their own ParseResponse and never reach this function.
+//
+// Heuristic: the extracted value must contain a real newline OR a markdown
+// header marker ("## "), so we don't mis-unwrap a single-line value like
+// `{"query": "up == 0"}` that happens to slip through without ParseResponse.
+func UnwrapJSONEnvelope(content string) string {
+	cleaned := stripCodeFence(strings.TrimSpace(content))
+	if !strings.HasPrefix(cleaned, "{") || !strings.HasSuffix(cleaned, "}") {
+		return content
+	}
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(cleaned), &obj); err != nil {
+		return content
+	}
+	for _, key := range []string{"answer", "content", "markdown", "text", "result", "query"} {
+		v, ok := obj[key].(string)
+		if !ok || v == "" {
+			continue
+		}
+		if strings.Contains(v, "\n") || strings.Contains(v, "## ") {
+			return v
+		}
+	}
+	return content
+}
+
 // stripCodeFence removes markdown code fences (```json ... ```) that LLMs sometimes wrap around JSON.
 func stripCodeFence(s string) string {
 	if !strings.HasPrefix(s, "```") {
