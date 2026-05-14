@@ -109,7 +109,7 @@ var registry = map[string]*ActionHandler{
 		Description: "Configure, onboard, or troubleshoot notification channel/media (通知媒介通道配置/接入/排障). Scope: 媒介通道层 (notify_channel) ——URL/Webhook 地址、请求体、headers、签名、秘钥、AppID/AppSecret/CorpID、超时、代理、TLS、@人/接收人字段. Examples: '怎么接入 Slack/通用 webhook/自建 HTTP', '钉钉媒介加签怎么配', '飞书机器人 URL 写哪', '企微媒介 9499 是什么意思', '为什么发不出去 Bad Request', '改一下钉钉媒介的请求头', '新建一个邮件媒介'. NOTE: 改模板内容/字段渲染 是 notify_template_generator; 改发给谁/订阅 是 creation 里的 notify rule.",
 		BuildPrompt: buildNotifyChannelPrompt,
 		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-modify-notify-channel"}
+			return []string{"n9e-notify-channel-copilot"}
 		},
 		AgentMode: aiagent.AgentModeDirect,
 	},
@@ -625,11 +625,11 @@ Respond in the user's language.`, req.UserInput)
 // Channel-layer configuration: URL/headers/body/signing/auth/proxy/TLS, plus
 // onboarding new platforms (Slack, custom HTTP, generic webhook) and
 // diagnosing send failures (9499 / Bad Request / 401 etc).
-// Substantive knowledge lives in the n9e-modify-notify-channel skill's
+// Substantive knowledge lives in the n9e-notify-channel-copilot skill's
 // SKILL.md — this prompt just frames the task.
 
 func buildNotifyChannelPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are an n9e (Nightingale) notification channel (通知媒介) expert. Follow the n9e-modify-notify-channel skill (SKILL.md) for substantive guidance.
+	return fmt.Sprintf(`You are an n9e (Nightingale) notification channel (通知媒介) expert. Follow the n9e-notify-channel-copilot skill (SKILL.md) for substantive guidance.
 
 User request: %s
 
