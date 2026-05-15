@@ -122,12 +122,20 @@ var registry = map[string]*ActionHandler{
 		},
 	},
 	"host_onboard_diagnose": {
-		Description: "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留走 resource_query.",
+		Description: "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留走 resource_query; '我要装 categraf / 教我部署' 走 agent_deploy_guide（还没装 vs 装完没出现）.",
 		SelectTools: selectHostOnboardTools,
 		BuildPrompt: buildHostOnboardPrompt,
 		RequiredSkills: func(_ *AIChatRequest) []string {
 			return []string{"n9e-host-onboard-diagnose"}
 		},
+	},
+	"agent_deploy_guide": {
+		Description: "Teach the user how to install / deploy / configure the categraf collector (部署 / 安装 / 启动 categraf 采集器). Scope: 下载二进制 / systemd 注册 / Docker 跑 categraf / Windows 服务 / K8s DaemonSet / config.toml 怎么写（writers / heartbeat / hostname / labels）/ 验证采集 / 自升级 / 资源限制. Examples: '怎么部署 categraf', 'categraf 怎么安装', '教我装一下采集器', 'docker 跑 categraf', 'categraf --install', 'win-service-install', 'config.toml writers 怎么写', 'categraf 上报到夜莺地址', 'k8s 装 categraf', '怎么验证 categraf 采集到了'. IMPORTANT — 覆盖默认规则: 即使用户用 '如何 / 怎么 / how to' 这类知识问法，只要是问 categraf 部署/安装/配置/启动/上报，**必须**归到本 action，**不要**走 general_chat. NOTE: '装完看不到机器 / 显示 unknown' 走 host_onboard_diagnose; '曾经在线现在失联' 走 host_health_diagnose; 配置某个具体 input 插件（mysql/nginx/snmp 等）的采集细节也归本 action.",
+		BuildPrompt: buildAgentDeployGuidePrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"categraf-deploy-guide"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
 	},
 	"datasource_diagnose": {
 		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
@@ -661,6 +669,34 @@ Respond in the user's language.`, req.UserInput)
 // diagnosing send failures (9499 / Bad Request / 401 etc).
 // Substantive knowledge lives in the n9e-notify-channel-copilot skill's
 // SKILL.md — this prompt just frames the task.
+
+// --- agent_deploy_guide action ---
+//
+// Teaches users how to install/deploy/configure categraf collector across
+// Linux (binary+systemd), Docker, Windows, K8s. Substantive deployment
+// commands and config snippets live in the categraf-deploy-guide skill's
+// SKILL.md — this prompt just frames the task and reinforces the routing
+// boundary against host_onboard_diagnose (装完没出现) and host_health_diagnose
+// (曾经在线失联).
+
+func buildAgentDeployGuidePrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a categraf deployment expert for n9e (Nightingale). Follow the categraf-deploy-guide skill (SKILL.md) for substantive guidance — deployment matrix, config.toml shape, verification commands.
+
+User request: %s
+
+Stay in the "install / configure / start / verify" stage:
+- 选择部署方式（binary+systemd / Docker / Windows / K8s）— 先问清 OS 和形态再给方案。
+- config.toml 关键段：[[writers]].url 指向 n9e 的 /prometheus/v1/write；[heartbeat] enable=true + url 指向 /api/n9e/heartbeat；[global].hostname 重名场景显式指定；不要把 omit_hostname 设成 true。
+- 每条建议给可粘贴执行的命令或完整配置片段，不要写"修改一下配置"这种废话。
+- 部署完后必须提醒做一次 './categraf --test --inputs cpu' 并去夜莺机器列表确认。
+
+Do NOT drift into:
+- "装完夜莺看不到机器 / OS 显示 unknown" → 告诉用户这是接入失败排障，转 host_onboard_diagnose。
+- "曾经在线现在失联" → 转 host_health_diagnose。
+- 写告警规则 / 通知模板 / 自愈脚本 → 对应 creation / notify_template_generator / task_tpl_copilot。
+
+Respond in the user's language (中文用户中文，英文用户英文), Markdown.`, req.UserInput)
+}
 
 func buildNotifyChannelPrompt(req *AIChatRequest) string {
 	return fmt.Sprintf(`You are an n9e (Nightingale) notification channel (通知媒介) expert. Follow the n9e-notify-channel-copilot skill (SKILL.md) for substantive guidance.
