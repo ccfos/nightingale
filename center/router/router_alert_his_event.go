@@ -22,11 +22,11 @@ func getTimeRange(c *gin.Context) (stime, etime int64) {
 	now := time.Now().Unix()
 	if hours != 0 {
 		stime = now - 3600*hours
-		etime = now + 3600*24
+		etime = now
 	}
 
 	if stime != 0 && etime == 0 {
-		etime = now + 3600*24
+		etime = now
 	}
 	return
 }
