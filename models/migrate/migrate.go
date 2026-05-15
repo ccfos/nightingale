@@ -21,7 +21,7 @@ func MigrateIbexTables(db *gorm.DB) {
 	var tableOptions string
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
-		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 	}
 
 	if tableOptions != "" {
@@ -58,7 +58,7 @@ func MigrateTables(db *gorm.DB) error {
 	var tableOptions string
 	switch db.Dialector.(type) {
 	case *mysql.Dialector:
-		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+		tableOptions = "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
 	}
 	if tableOptions != "" {
 		db = db.Set("gorm:table_options", tableOptions)
