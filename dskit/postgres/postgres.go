@@ -75,6 +75,11 @@ func (p *PostgreSQL) NewConn(ctx context.Context, database string) (*gorm.DB, er
 	if len(p.DB) == 0 && len(database) == 0 {
 		return nil, errors.New("empty pgsql database") // 兼容阿里实时数仓Holgres, 连接时必须指定db名字
 	}
+	if database != "" {
+		if err := sqlbase.ValidateIdentifier(database); err != nil {
+			return nil, fmt.Errorf("postgres connect: %w", err)
+		}
+	}
 
 	if p.Shard.Timeout == 0 {
 		p.Shard.Timeout = 60
@@ -147,9 +152,8 @@ func (p *PostgreSQL) ShowDatabases(ctx context.Context, searchKeyword string) ([
 	if err != nil {
 		return nil, err
 	}
-	sql := fmt.Sprintf("SELECT datname FROM pg_database WHERE datistemplate = false AND datname LIKE %s",
-		"'%"+searchKeyword+"%'")
-	return sqlbase.ShowDatabases(ctx, db, sql)
+	sql := "SELECT datname FROM pg_database WHERE datistemplate = false AND datname LIKE ?"
+	return sqlbase.ShowDatabases(ctx, db, sql, "%"+searchKeyword+"%")
 }
 
 // ShowTables lists all tables in a given database
@@ -158,9 +162,8 @@ func (p *PostgreSQL) ShowTables(ctx context.Context, searchKeyword string) (map[
 	if err != nil {
 		return nil, err
 	}
-	sql := fmt.Sprintf("SELECT schemaname, tablename FROM pg_tables WHERE schemaname !='information_schema' and schemaname !='pg_catalog'  and  tablename LIKE %s",
-		"'%"+searchKeyword+"%'")
-	rets, err := sqlbase.ExecQuery(ctx, db, sql)
+	sql := "SELECT schemaname, tablename FROM pg_tables WHERE schemaname != 'information_schema' AND schemaname != 'pg_catalog' AND tablename LIKE ?"
+	rets, err := sqlbase.ExecQuery(ctx, db, sql, "%"+searchKeyword+"%")
 	if err != nil {
 		return nil, err
 	}
@@ -184,18 +187,26 @@ func (p *PostgreSQL) DescTable(ctx context.Context, scheme, table string) ([]*ty
 		scheme = "public"
 	}
 
-	query := fmt.Sprintf("SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = '%s' AND table_schema = '%s'", table, scheme)
-	return sqlbase.DescTable(ctx, db, query)
+	query := "SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = ? AND table_schema = ?"
+	return sqlbase.DescTable(ctx, db, query, table, scheme)
 }
 
-// SelectRows selects rows from a specified table in PostgreSQL based on a given query
+// SelectRows selects rows from the given table. table is validated as a SQL
+// identifier; where is a WHERE clause fragment that callers must validate.
 func (p *PostgreSQL) SelectRows(ctx context.Context, table, where string) ([]map[string]interface{}, error) {
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("select rows: %w", err)
+	}
 	db, err := p.NewConn(ctx, p.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	return sqlbase.SelectRows(ctx, db, table, where)
+	sql := "SELECT * FROM " + sqlbase.QuoteDouble(table)
+	if where != "" {
+		sql += " WHERE " + where
+	}
+	return sqlbase.ExecQuery(ctx, db, sql)
 }
 
 // ExecQuery executes a SQL query in PostgreSQL

@@ -110,6 +110,7 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	timeoutCtx, cancel := context.WithTimeout(parentCtx, time.Duration(a.cfg.Timeout)*time.Millisecond)
 
 	// 加载 Skills
+	tSkillStart := time.Now()
 	var activeSkills []*SkillContent
 	if a.cfg.Skills != nil && a.skillRegistry != nil {
 		activeSkills = a.selectAndLoadSkills(timeoutCtx, req)
@@ -117,15 +118,23 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 			logger.Debugf("AI Agent loaded %d skills", len(activeSkills))
 		}
 	}
+	tSkillElapsed := time.Since(tSkillStart)
 
 	// 构造本次 Run 的工具表：cfg.Tools 作只读种子 → 追加 skill 工具 → 追加 MCP 工具
+	tToolStart := time.Now()
 	tools := append([]AgentTool(nil), a.cfg.Tools...)
 	tools = a.appendSkillTools(tools, activeSkills)
+	mcpToolCount := 0
 	if a.mcpClientManager != nil && len(a.mcpServers) > 0 {
 		mcpCtx, mcpCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		before := len(tools)
 		tools = a.appendMCPTools(mcpCtx, tools)
 		mcpCancel()
+		mcpToolCount = len(tools) - before
 	}
+	logger.Infof("[Agent] preparation: skills=%dms (n=%d) tools=%dms (mcp_added=%d total=%d)",
+		tSkillElapsed.Milliseconds(), len(activeSkills),
+		time.Since(tToolStart).Milliseconds(), mcpToolCount, len(tools))
 
 	rc := &runCtx{skills: activeSkills, tools: tools}
 
@@ -147,6 +156,8 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	switch a.cfg.AgentMode {
 	case AgentModePlanReAct:
 		resp = a.executePlanReAct(timeoutCtx, req, rc)
+	case AgentModeDirect:
+		resp = a.executeDirect(timeoutCtx, req, rc)
 	default:
 		resp = a.executeReAct(timeoutCtx, req, rc)
 	}
@@ -169,6 +180,8 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 		switch a.cfg.AgentMode {
 		case AgentModePlanReAct:
 			a.executePlanReActWithDone(ctx, req, rc)
+		case AgentModeDirect:
+			a.executeDirectWithDone(ctx, req, rc)
 		default:
 			a.executeReActWithDone(ctx, req, rc)
 		}

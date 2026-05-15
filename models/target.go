@@ -275,9 +275,15 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, li
 	for _, q := range query {
 		tx := DB(ctx).Model(&Target{})
 		for k, v := range q {
-			if strings.Count(k, "?") > 1 {
+			switch {
+			case v == nil:
+				// v == nil 表示 k 是无占位符的纯字面 SQL 片段（例如 `target_busi_group.target_ident IS NULL`），
+				// 直接拼到 WHERE 中。调用方必须保证 k 是来自代码的常量片段、不含任何外部输入，
+				// 否则会绕过 GORM 的参数化机制造成 SQL 注入。当前唯一的写入位置是 GetHostsQuery。
+				tx = tx.Or(k)
+			case strings.Count(k, "?") > 1:
 				tx = tx.Or(k, v.([]interface{})...)
-			} else {
+			default:
 				tx = tx.Or(k, v)
 			}
 		}

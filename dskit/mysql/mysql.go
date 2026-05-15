@@ -60,6 +60,11 @@ func NewMySQLWithSettings(ctx context.Context, settings interface{}) (*MySQL, er
 
 // NewConn establishes a new connection to MySQL
 func (m *MySQL) NewConn(ctx context.Context, database string) (*gorm.DB, error) {
+	if database != "" {
+		if err := sqlbase.ValidateIdentifier(database); err != nil {
+			return nil, fmt.Errorf("mysql connect: %w", err)
+		}
+	}
 	if len(m.Shards) == 0 {
 		return nil, errors.New("empty pgsql shards")
 	}
@@ -144,22 +149,35 @@ func (m *MySQL) ShowTables(ctx context.Context, database string) ([]string, erro
 }
 
 func (m *MySQL) DescTable(ctx context.Context, database, table string) ([]*types.ColumnProperty, error) {
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("describe table: %w", err)
+	}
+	// database is validated inside NewConn
 	db, err := m.NewConn(ctx, database)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf("DESCRIBE %s", table)
+	query := "DESCRIBE " + sqlbase.QuoteBacktick(table)
 	return sqlbase.DescTable(ctx, db, query)
 }
 
+// SelectRows selects rows from the given table. table is validated as a SQL
+// identifier; query is a WHERE clause fragment that callers must validate.
 func (m *MySQL) SelectRows(ctx context.Context, database, table, query string) ([]map[string]interface{}, error) {
+	if err := sqlbase.ValidateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("select rows: %w", err)
+	}
 	db, err := m.NewConn(ctx, database)
 	if err != nil {
 		return nil, err
 	}
 
-	return sqlbase.SelectRows(ctx, db, table, query)
+	sql := "SELECT * FROM " + sqlbase.QuoteBacktick(table)
+	if query != "" {
+		sql += " WHERE " + query
+	}
+	return sqlbase.ExecQuery(ctx, db, sql)
 }
 
 func (m *MySQL) ExecQuery(ctx context.Context, database string, sql string) ([]map[string]interface{}, error) {

@@ -162,6 +162,24 @@ func (rt *Router) assistantMessageNew(c *gin.Context) {
 
 func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCancel context.CancelFunc, lock *models.ChatLock, state *MessageState, streamID string, userId int64, lang string) {
 	msg := state.Msg()
+
+	// Timing instrumentation: capture per-phase durations so we can answer
+	// "where did the 8s go" without re-running the request. All durations are
+	// relative to tStart (entry of this goroutine). Phases that don't run
+	// (e.g. preflight when handler.Preflight == nil) stay at 0.
+	tStart := time.Now()
+	var (
+		tHistoryLoaded time.Duration
+		tLLMReady      time.Duration
+		tIntent        time.Duration
+		intentMethod   string // "fast" | "front" | "llm"
+		tValidatePre   time.Duration
+		tAgentStart    time.Duration
+		tFirstToken    time.Duration
+		tStreamDone    time.Duration
+		tPersisted     time.Duration
+	)
+
 	// Shutdown sequence (defer runs LIFO — reverse of registration order):
 	//   1. streamBus.Finish(...)    — close the SSE marker last, AFTER any
 	//                                 state.Persist so cancel arriving in the
@@ -242,6 +260,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 		}
 	}
+	tHistoryLoaded = time.Since(tStart)
 
 	// ② Create LLM client early (shared by intent inference and agent execution)
 	// Always use "chat" useCase to find the agent config for the LLM client.
@@ -257,10 +276,17 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		if err != nil {
 			logger.Warningf("[Assistant] load agent LLM config id=%d failed: %v", agent.LLMConfigId, err)
 		}
+		// AILLMConfigGetById 是通用 getter，故意不过滤 enabled——管理后台编辑页要能
+		// 查出已禁用的记录。但用在 chat 业务路径，命中已禁用配置时应当视为"agent 没
+		// 可用 LLM"，让兜底逻辑去找默认 LLM；找不到再报错给用户。
+		if llmCfg != nil && !llmCfg.Enabled {
+			logger.Infof("[Assistant] agent's bound LLM config id=%d is disabled, falling back to default", llmCfg.Id)
+			llmCfg = nil
+		}
 	}
 	// Fall back to the default LLM when the agent has no binding (LLMConfigId=0,
-	// e.g. the auto-created default-chat-agent) or when its binding no longer
-	// resolves (the referenced LLM was deleted).
+	// e.g. the auto-created default-chat-agent), when its binding no longer
+	// resolves (the referenced LLM was deleted), or when the bound LLM is disabled.
 	if llmCfg == nil {
 		llmCfg, err = models.AILLMConfigPickDefault(rt.Ctx)
 		if err != nil {
@@ -268,7 +294,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 	if llmCfg == nil {
-		rt.finishMessage(state, streamID, 400, "no LLM configured, please configure one in system settings")
+		// 用 409 作为业务错误码（写进 message.ErrCode），前端读 body.dat.err_code
+		// 识别"未配置 LLM"这条特定错误，弹"去配置"引导而非通用 toast。HTTP 状态
+		// 码保持 200——/detail 接口对所有完成态消息都是 200，错误细节走 body。
+		rt.finishMessage(state, streamID, http.StatusConflict, "no LLM configured, please configure one in system settings")
 		return
 	}
 
@@ -298,11 +327,16 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Proxy:         extraConfig.Proxy,
 		Temperature:   extraConfig.Temperature,
 		MaxTokens:     extraConfig.MaxTokens,
+		// CustomParams 透传给 provider，由 provider 决定如何并入请求（OpenAI 兼容路径
+		// 把它平铺到 request body 顶层；这是 dashscope/Qwen3 关 thinking 的入口：
+		// custom_params: {"enable_thinking": false}）
+		ExtraBody: extraConfig.CustomParams,
 	})
 	if err != nil {
 		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))
 		return
 	}
+	tLLMReady = time.Since(tStart)
 
 	// ③ Resolve action key in priority order:
 	//   1. Creation fast-path — if the user input has unambiguous creation
@@ -314,16 +348,22 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	//   2. First message of a new chat with an explicit frontend key.
 	//   3. LLM intent inference (30s budget — 15s was too tight in practice).
 	var actionKey string
+	tIntentStart := time.Now()
 	switch {
 	case chat.HasCreationIntent(msg.Query.Content):
 		actionKey = string(models.ActionKeyCreation)
+		intentMethod = "fast"
 	case msg.SeqID == 1 && msg.Query.Action.Key != "":
 		actionKey = string(msg.Query.Action.Key)
+		intentMethod = "front"
 	default:
 		inferCtx, inferCancel := context.WithTimeout(parentCtx, 30*time.Second)
 		actionKey = chat.InferAction(inferCtx, llmClient, msg.Query.Content, history)
 		inferCancel()
+		intentMethod = "llm"
 	}
+	tIntent = time.Since(tStart)
+	intentDur := time.Since(tIntentStart)
 
 	handler, ok := chat.Lookup(actionKey)
 	if !ok {
@@ -334,6 +374,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s front_key=%q content=%q",
 		msg.ChatID, msg.SeqID, actionKey, msg.Query.Action.Key, msg.Query.Content)
+	logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=intent_resolved method=%s dur=%dms total=%dms action_key=%s",
+		msg.ChatID, msg.SeqID, intentMethod, intentDur.Milliseconds(), tIntent.Milliseconds(), actionKey)
 
 	// Build AIChatRequest for reusing existing action logic
 	chatReq := &chat.AIChatRequest{
@@ -383,7 +425,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		GetSQLDatasource: func(dsType string, dsId int64) (datasource.Datasource, bool) {
 			return dscache.DsCache.Get(dsType, dsId)
 		},
-		FilterDatasources: rt.DatasourceCache.DatasourceFilter,
+		FilterDatasources:      rt.DatasourceCache.DatasourceFilter,
+		GetAlertEvalLogs:       rt.getAlertEvalLogs,
+		GetEventProcessingLogs: rt.getEventLogs,
+		Redis:                  rt.Redis,
 	}
 
 	if handler.Preflight != nil {
@@ -397,10 +442,14 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			logger.Warningf("[Assistant] preflight error for action_key=%s: %v", actionKey, perr)
 		}
 		if halt {
+			tValidatePre = time.Since(tStart)
+			logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=preflight_halted total=%dms",
+				msg.ChatID, msg.SeqID, tValidatePre.Milliseconds())
 			rt.finishHaltedMessage(state, streamID, history, preResps)
 			return
 		}
 	}
+	tValidatePre = time.Since(tStart)
 
 	// Select tools
 	var tools []aiagent.AgentTool
@@ -441,15 +490,19 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。
 	//
 	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
-	// （SkillNames + 固定 MCP server 列表），空则保留历史 AutoSelect 行为。详见
-	// buildSkillConfigForAgent / buildMCPConfigForAgent 的注释。
+	// （SkillNames + 固定 MCP server 列表），空则保留历史 AutoSelect 行为。
+	// 但 action handler 若声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
+	agentMode := aiagent.AgentModeReAct
+	if handler != nil && handler.AgentMode != "" {
+		agentMode = handler.AgentMode
+	}
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
-		AgentMode:          aiagent.AgentModeReAct,
+		AgentMode:          agentMode,
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptRendered: userPrompt,
-		Skills:             rt.buildSkillConfigForAgent(agent),
+		Skills:             rt.resolveSkillConfig(handler, chatReq, agent),
 		MCP:                rt.buildMCPConfigForAgent(agent),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
@@ -473,6 +526,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if processErr != nil {
 		logger.Errorf("[Assistant] Process error: %v", processErr)
 	}
+	tAgentStart = time.Since(tStart)
 
 	// Consume stream chunks
 	var fullContent string
@@ -480,6 +534,16 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var createdAlertRules []string
 	var createdDashboards []string
 	executedTools := false
+	firstTokenSeen := false
+	markFirstToken := func(kind string) {
+		if firstTokenSeen {
+			return
+		}
+		firstTokenSeen = true
+		tFirstToken = time.Since(tStart)
+		logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=first_token kind=%s ttft=%dms total=%dms",
+			msg.ChatID, msg.SeqID, kind, (tFirstToken - tAgentStart).Milliseconds(), tFirstToken.Milliseconds())
+	}
 	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
@@ -495,6 +559,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				markFirstToken("thinking")
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
@@ -504,8 +569,22 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				delta = chunk.Content
 			}
 			if delta != "" {
+				markFirstToken("text")
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
+			}
+		case aiagent.StreamTypeContent:
+			// Direct 模式：token 直接归 content 通道。同时累加到 fullContent，
+			// 因为 executeDirectWithDone 的 Done chunk 刻意把 Content 置空（避免重复
+			// append），但 router 末尾还要靠 fullContent 写最终 AssistantMessageResponse。
+			delta := chunk.Delta
+			if delta == "" {
+				delta = chunk.Content
+			}
+			if delta != "" {
+				markFirstToken("content")
+				fullContent += delta
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "content"})
 			}
 		case aiagent.StreamTypeToolCall:
 			executedTools = true
@@ -579,13 +658,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
-	// streamBus.Finish is intentionally NOT called here — it is deferred at
-	// function entry so it always runs AFTER state.Persist. This ordering is
-	// what lets the A2A cancel handler see a coherent snap.IsFinish=true once
-	// the SSE marker closes; otherwise cancel arriving in the teardown window
-	// would read snap.IsFinish=false, hit the "in-flight cancel succeeded"
-	// path, and try to write a status update event to a pipe the SDK already
-	// closed (resulting in the SDK's "queue is closed" 500).
+	tStreamDone = time.Since(tStart)
+
+	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
+	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
+	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog
+	// 兜底。终态写入和 finishMessage 保持一致用 Background。
+	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	// Build final response: try action-specific parsing first, fall back to single markdown
 	var responses []models.AssistantMessageResponse
@@ -593,8 +672,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		responses = handler.ParseResponse(fullContent)
 	}
 	if len(responses) == 0 {
+		// Defensive: some models wrap a markdown final answer in a JSON envelope
+		// like {"query": "## 结论\n..."}, conditioned by the shared ReAct system
+		// prompt's example. Unwrap before rendering as markdown so the user sees
+		// real newlines instead of literal "\n" escapes.
+		markdown := chat.UnwrapJSONEnvelope(fullContent)
 		responses = []models.AssistantMessageResponse{
-			{ContentType: models.ContentTypeMarkdown, Content: fullContent, StreamID: streamID, IsFinish: true, IsFromAI: true},
+			{ContentType: models.ContentTypeMarkdown, Content: markdown, StreamID: streamID, IsFinish: true, IsFromAI: true},
 		}
 	} else {
 		// Attach streamID to the first element for frontend stream matching
@@ -659,6 +743,27 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 在过期后会 fallback 到 DB 读取。用 Background 兜底——parentCtx 此时可能因
 	// cancel/超时而 Done。
 	state.Persist(context.Background())
+	tPersisted = time.Since(tStart)
+
+	// One-line summary for easy log scanning. All durations are ms relative to
+	// tStart (goroutine entry). "stream" = tStreamDone - tFirstToken (tail of
+	// LLM output after first token); "persist" = tPersisted - tStreamDone.
+	streamDur := int64(0)
+	if tFirstToken > 0 {
+		streamDur = (tStreamDone - tFirstToken).Milliseconds()
+	}
+	logger.Infof("[Assistant.Summary] chat=%s seq=%d action=%s total=%dms | history=%dms llm_client=%dms intent=%dms(%s) validate_pre=%dms agent_start=%dms ttft=%dms stream=%dms persist=%dms",
+		msg.ChatID, msg.SeqID, actionKey,
+		tPersisted.Milliseconds(),
+		tHistoryLoaded.Milliseconds(),
+		(tLLMReady - tHistoryLoaded).Milliseconds(),
+		(tIntent - tLLMReady).Milliseconds(), intentMethod,
+		(tValidatePre - tIntent).Milliseconds(),
+		(tAgentStart - tValidatePre).Milliseconds(),
+		(tFirstToken - tAgentStart).Milliseconds(),
+		streamDur,
+		(tPersisted - tStreamDone).Milliseconds(),
+	)
 }
 
 func (rt *Router) finishMessage(state *MessageState, streamID string, errCode int, errMsg string) {
