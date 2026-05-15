@@ -127,6 +127,10 @@ type Config struct {
 	Temperature *float64 `json:"temperature,omitempty"`
 	MaxTokens   *int     `json:"max_tokens,omitempty"`
 
+	// ExtraBody 在序列化请求体时平铺到顶层 JSON，用于厂商特定字段——
+	// 例如 dashscope/Qwen3 的 "enable_thinking"、Anthropic 的 "thinking" 等。
+	// 由 provider 具体实现（目前 OpenAI 兼容路径已支持）。
+	ExtraBody map[string]any `json:"extra_body,omitempty"`
 }
 
 // DefaultConfig returns a config with default values

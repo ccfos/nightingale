@@ -1135,6 +1135,29 @@ func AlertRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]AlertRule, error) 
 	return lst, err
 }
 
+// AlertRuleGetsLegacyNotifyByBGIds 查老式通知配置（notify_version=0）的告警规则。
+// 用于迁移审计场景：把 notify_version 过滤下推到 SQL，避免全表拉回再内存过滤。
+// includeDisabled=false 时同时过滤 disabled=0。
+func AlertRuleGetsLegacyNotifyByBGIds(ctx *ctx.Context, bgids []int64, includeDisabled bool) ([]AlertRule, error) {
+	session := DB(ctx).Where("notify_version = ?", 0)
+	if len(bgids) > 0 {
+		session = session.Where("group_id in (?)", bgids)
+	}
+	if !includeDisabled {
+		session = session.Where("disabled = ?", 0)
+	}
+
+	var lst []AlertRule
+	err := session.Order("name").Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")

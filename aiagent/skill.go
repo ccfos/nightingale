@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	skillpkg "github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/toolkits/pkg/logger"
 	"gopkg.in/yaml.v3"
 )
@@ -131,7 +132,23 @@ func (r *SkillRegistry) loadAllMetadata() error {
 			continue
 		}
 
-		skillPath := filepath.Join(r.skillsPath, entry.Name())
+		name := entry.Name()
+		skillPath := filepath.Join(r.skillsPath, name)
+
+		// builtin skill 优先走进程级共享缓存（embed 已在启动期 Once 解析）。
+		// 只有不带 .fromdb 标记的目录才算 builtin —— 用户 skill 即便重名也会
+		// 走下面的磁盘解析路径，沿用 ExtractBuiltin 中 DB skill 胜出的语义。
+		if !skillpkg.IsFromDB(skillPath) {
+			if fm, ok := skillpkg.LookupBuiltin(name); ok {
+				metadata := skillMetadataFromFrontmatter(fm)
+				metadata.Path = skillPath
+				metadata.LoadedAt = time.Now()
+				r.skills[metadata.Name] = metadata
+				logger.Debugf("Loaded builtin skill metadata from cache: %s", metadata.Name)
+				continue
+			}
+		}
+
 		skillFile := filepath.Join(skillPath, SkillFileName)
 
 		// 检查 SKILL.md 是否存在
@@ -155,6 +172,24 @@ func (r *SkillRegistry) loadAllMetadata() error {
 
 	logger.Infof("Loaded %d skills from %s", len(r.skills), r.skillsPath)
 	return nil
+}
+
+// skillMetadataFromFrontmatter 把 skill 子包的只读 Frontmatter 转成本包运行期
+// 使用的 SkillMetadata。slice 字段做浅拷贝，避免 SkillRegistry 后续对 metadata
+// 的局部修改污染到进程级共享缓存。Path/LoadedAt 由调用方在拿到结果后补齐。
+func skillMetadataFromFrontmatter(fm skillpkg.Frontmatter) *SkillMetadata {
+	m := &SkillMetadata{
+		Name:          fm.Name,
+		Description:   fm.Description,
+		MaxIterations: fm.MaxIterations,
+	}
+	if len(fm.RecommendedTools) > 0 {
+		m.RecommendedTools = append([]string(nil), fm.RecommendedTools...)
+	}
+	if len(fm.BuiltinTools) > 0 {
+		m.BuiltinTools = append([]string(nil), fm.BuiltinTools...)
+	}
+	return m
 }
 
 // 从 SKILL.md 文件加载元数据

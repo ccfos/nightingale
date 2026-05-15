@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/chat"
 	"github.com/ccfos/nightingale/v6/aiagent/mcp"
 	"github.com/ccfos/nightingale/v6/models"
 
@@ -38,6 +39,33 @@ func (rt *Router) buildSkillConfigForAgent(agent *models.AIAgent) *aiagent.Skill
 	}
 	cfg.SkillNames = names
 	return cfg
+}
+
+// resolveSkillConfig 决定本次 chat 用哪份 SkillConfig，优先级从高到低：
+//
+//  1. action handler 的 RequiredSkills——前端入口已经把意图分流到具体 action 时，
+//     对应 skill 几乎确定（如 notify_template_generator → n9e-generate-message-template），
+//     直接走 SkillNames 路径，跳过 LLM autoselect 那一次 2-5s round-trip。
+//     handler 返回 nil 切片也算"明确表态：本次不需要 skill"，依然跳过 autoselect，
+//     好让 system prompt 保持精简。区别在于"未声明 RequiredSkills 字段"——那时落到第 2 档。
+//  2. agent 自带 SkillIds——运维在 agent 配置里显式绑定的 skill。
+//  3. 兜底——AutoSelect = true，让 LLM 在全量 registry 里挑。
+//
+// 设计取舍：action 的 RequiredSkills 覆盖 agent 绑定。理由是 action 反映"业务路径需要什么"
+// （代码事实），而 agent 绑定是"运维允许用哪些"（策略偏好）。前端已经把用户引到这个 action
+// 入口（如 FlashAI 按钮），说明用户就是要做这件事；若 agent 不该干这事，应该在前端禁用入口，
+// 不该靠 skill scope 兜底。
+func (rt *Router) resolveSkillConfig(handler *chat.ActionHandler, req *chat.AIChatRequest, agent *models.AIAgent) *aiagent.SkillConfig {
+	if handler != nil && handler.RequiredSkills != nil {
+		names := handler.RequiredSkills(req)
+		logger.Debugf("[Assistant] action %q declared RequiredSkills=%v, bypass autoselect", req.ActionKey, names)
+		return &aiagent.SkillConfig{
+			SkillNames: names,
+			AutoSelect: false,
+			MaxSkills:  2,
+		}
+	}
+	return rt.buildSkillConfigForAgent(agent)
 }
 
 // buildMCPConfigForAgent translates agent.MCPServerIds into mcp.Config.

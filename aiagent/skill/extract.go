@@ -19,7 +19,10 @@ import (
 // 没有 marker 的目录，下次启动会被当成内置残留清掉。
 const FromDBMarker = ".fromdb"
 
-const embedRoot = "builtin"
+// BuiltinEmbedRoot 是 embedded.FS 中存放内置 skill 的根目录名。
+// 导出是为了让上层（如 A2A AgentCard 构建、SkillRegistry builtin 缓存）
+// 与本包内的解压逻辑引用同一处常量，避免魔法字符串散落。
+const BuiltinEmbedRoot = "builtin"
 
 // MarkFromDB 在 skillDir 下创建 .fromdb 空文件。
 // DB 同步在创建新 skill 目录时应第一步调用此函数。
@@ -43,7 +46,7 @@ func IsBuiltinName(name string) bool {
 	if name == "" {
 		return false
 	}
-	_, err := fs.Stat(embedded.FS, embedRoot+"/"+name)
+	_, err := fs.Stat(embedded.FS, BuiltinEmbedRoot+"/"+name)
 	return err == nil
 }
 
@@ -91,7 +94,7 @@ func ExtractBuiltin(skillsPath string) error {
 	}
 
 	// Step 2: 解压内置 skill
-	root, err := fs.Sub(embedded.FS, embedRoot)
+	root, err := fs.Sub(embedded.FS, BuiltinEmbedRoot)
 	if err != nil {
 		return fmt.Errorf("sub embed fs: %w", err)
 	}
