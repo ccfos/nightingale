@@ -44,6 +44,51 @@ var GetAlertEventDetail = aiagent.AgentTool{
 	},
 }
 
+var GetAlertEvalLogs = aiagent.AgentTool{
+	Name: "get_alert_eval_logs",
+	Description: `获取指定告警规则在告警引擎上的执行日志（alert-eval-detail）。
+排查"告警规则没产生事件"时的核心证据：可以看到每次评估是否查到数据、查到的数据是否满足条件、是否产生 event、是否被屏蔽。
+返回日志按时间倒序，包含负责该规则的告警引擎实例地址。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "rule_id", Type: "integer", Description: "告警规则ID", Required: true},
+	},
+}
+
+var GetEventProcessingLogs = aiagent.AgentTool{
+	Name: "get_event_processing_logs",
+	Description: `获取指定告警事件（按事件 hash）的下游处理日志（event-detail）。
+排查"已产生告警事件但没收到通知"时使用：可以看到是否被屏蔽、是否走通知规则、callback / webhook 是否发送成功、订阅是否命中等完整链路。
+事件 hash 可以从 search_history_alerts / get_alert_event_detail 返回的 hash 字段获取。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "event_hash", Type: "string", Description: "告警事件 hash（不是事件 ID）", Required: true},
+	},
+}
+
+var ListAlertEngineInstances = aiagent.AgentTool{
+	Name: "list_alert_engine_instances",
+	Description: `列出当前所有告警引擎实例（n9e-server）及其心跳。
+排查"规则没人跑/某条规则被哪个实例跑"时使用：返回实例地址、所属引擎集群、关联数据源 ID、最近一次心跳时间戳。
+心跳时间戳距今超过 30s 视为离线，可能是引擎进程挂了或忘记升级。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "datasource_id", Type: "integer", Description: "按数据源 ID 过滤，仅返回纳管该数据源的引擎实例", Required: false},
+		{Name: "engine_cluster", Type: "string", Description: "按告警引擎集群名过滤", Required: false},
+	},
+}
+
+var GetEventPipelineExecutions = aiagent.AgentTool{
+	Name: "get_event_pipeline_executions",
+	Description: `获取指定告警事件触发的事件处理器（event pipeline）执行记录列表。
+排查"某个事件处理器没生效"时使用：可以看到针对该事件运行了哪些 pipeline、状态（running/success/failed）、失败节点和错误信息、耗时。
+如需查看单条执行的节点级详情，再用 status/error_message 字段定位，必要时让用户去 pipeline 执行详情页看完整 node_results。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "event_id", Type: "integer", Description: "告警事件 ID（不是 hash）", Required: true},
+	},
+}
+
 // =============================================================================
 // Alert rule
 // =============================================================================
@@ -65,6 +110,21 @@ var GetAlertRuleDetail = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "告警规则ID", Required: true},
+	},
+}
+
+var ListLegacyNotifyAlertRules = aiagent.AgentTool{
+	Name: "list_legacy_notify_alert_rules",
+	Description: `审计哪些告警规则还在用老式接收组（notify_groups）而没有迁移到新版通知规则（notify_rule_ids）。
+**只用于迁移审计场景**，例如"扫一下还有哪些老式接收组配置没迁"。日常告警规则查询请用 list_alert_rules，不要用本工具。
+判定口径：notify_version=0 即认为是老版本（写入时该字段与 notify_rule_ids 互斥，是平台层的权威迁移标识）。
+返回 items 每条带 id / name / group_id / group_name / disabled / severity / cate / notify_groups / notify_rule_ids / update_at / update_by，外加 summary{total, enabled, disabled, with_groups_configured, empty_legacy}。
+非 admin 用户按业务组权限自动过滤；admin 看全量。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "include_disabled", Type: "boolean", Description: "是否包含已禁用规则。默认 false（禁用的迁移影响小，先聚焦在跑的）", Required: false},
+		{Name: "group_id", Type: "integer", Description: "限定单个业务组 ID，可选；不传则扫所有有权限的业务组", Required: false},
+		{Name: "limit", Type: "integer", Description: "返回数量上限，默认 500，最大 2000", Required: false},
 	},
 }
 
@@ -421,6 +481,65 @@ var GetTargetDetail = aiagent.AgentTool{
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "机器ID", Required: false},
 		{Name: "ident", Type: "string", Description: "机器标识（ident），与id二选一", Required: false},
+	},
+}
+
+var GetTargetRealtimeStatus = aiagent.AgentTool{
+	Name: "get_target_realtime_status",
+	Description: `从 Redis 读取目标主机的实时心跳与元数据，用于判断 "agent 失联 / 假死 / 真宕机"。
+返回字段：beat_time(最近一次心跳秒级时间戳) / lag_seconds(now - beat_time) / status(active|lagging|stale) /
+offset(agent 时钟与 server 偏移) / cpu_util / mem_util / agent_version / remote_addr / extend_info。
+status 判定：lag<60s=active, 60s≤lag<180s=lagging, lag≥180s=stale；redis 里完全没有心跳 key 时 status=stale_no_heartbeat。
+本工具只读不写，权限按目标所属业务组判定。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+	},
+}
+
+var QueryHostMetricsWindow = aiagent.AgentTool{
+	Name: "query_host_metrics_window",
+	Description: `查询主机最近窗口的核心健康指标聚合（cpu_usage_active / mem_available_percent / system_load1 / net_bytes_recv / net_bytes_sent），用于判断 "数据真停了 / 还在动 / 有突变"。
+返回每个指标的 samples_count / first_ts / last_ts / min / max / avg / last。
+不返回完整时序点，避免炸 token；要看趋势再单独调 query_prometheus。
+默认窗口 10m。datasource_id 不传时按 params 里的 chat-level datasource_id 兜底；都没有时报错并提示先 list_datasources。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID。不传时使用 chat-level params 兜底", Required: false},
+		{Name: "metrics", Type: "string", Description: "指标列表，空格或逗号分隔。不传则使用默认四件套 cpu_usage_active/mem_available_percent/system_load1/net_bytes_recv,net_bytes_sent", Required: false},
+		{Name: "time_range", Type: "string", Description: "时间窗口，如 10m / 30m / 1h，默认 10m", Required: false},
+	},
+}
+
+var ListNeighborTargets = aiagent.AgentTool{
+	Name: "list_neighbor_targets",
+	Description: `列出目标主机所在业务组（同一个 group_id）下的其它机器，并补全每台的实时心跳，用于判断 "个体故障 vs 集群故障 vs 网络分区"。
+返回 items 列表（ident / host_ip / lag_seconds / status）+ summary 聚合（total / active / lagging / stale）。
+limit 默认 30，避免大业务组返回过多。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "目标机器标识（ident），必填", Required: true},
+		{Name: "limit", Type: "integer", Description: "邻居数量上限，默认 30，最大 100", Required: false},
+	},
+}
+
+var ProbeTargetOnboardStatus = aiagent.AgentTool{
+	Name: "probe_target_onboard_status",
+	Description: `沿"接入链路 5 段"探测一台机器在 n9e 平台的接入足迹，用于排查"机器没出现 / 元信息 unknown / 心跳没建立"的接入失败问题。
+与 get_target_realtime_status 的关键差异：本工具**容忍 target 不在 DB 中**——这正是 onboard 场景的常态。
+返回字段：
+- in_target_db / target{os, agent_version, host_ip, has_group}：段 3/4，DB 落库情况
+- in_redis_beat / in_redis_meta / redis_meta{cpu_util, mem_util, remote_addr, hostname, offset}：段 4，redis 心跳与 meta
+- datasource_checked / in_prom_target_up / target_up_last / prom_metrics_hit：段 5，时序库是否能查到该 ident
+- likely_segment：诊断聚合，取值 segment_1_or_2 / segment_3 / segment_4 / segment_5 / ok
+- likely_causes：likely_segment 对应的高频根因列表（带相关 issue 编号）
+权限：target 在 DB 且有业务组归属时按组交集鉴权；target 不在 DB 或未归组时允许查询（onboard 排障必须能查"还没归过组"的机器）。
+段 5（prom）需要 datasource_id：不传时按 chat-level params 兜底，仍取不到则跳过段 5，不报错。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "ident", Type: "string", Description: "机器标识（ident），必填", Required: true},
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（段 5 用）。不传时用 chat-level params 兜底；都没有则只跑段 3/4。", Required: false},
 	},
 }
 

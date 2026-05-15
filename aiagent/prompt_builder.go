@@ -82,6 +82,33 @@ func isSensitiveKey(k string) bool {
 		strings.Contains(lower, "token")
 }
 
+// buildDirectSystemPrompt 构建 Direct 模式系统提示词。
+// 跟 ReAct 版的关键差异：
+//   - 不包含 ReactSystemPrompt（~70 行格式说明），节省 ~1.5KB 输入 token
+//   - 不包含 tools 列表（Direct 模式不调工具）
+//   - 保留 Skills 内容（真正的知识，决定回答质量）
+//   - 保留 Env 信息（语言、时间等上下文）
+func (a *Agent) buildDirectSystemPrompt(rc *runCtx) string {
+	var sb strings.Builder
+
+	if len(rc.skills) > 0 {
+		skillContents := make([]string, len(rc.skills))
+		for i, skill := range rc.skills {
+			if len(rc.skills) > 1 {
+				skillContents[i] = fmt.Sprintf("### %s\n\n%s", skill.Metadata.Name, skill.MainContent)
+			} else {
+				skillContents[i] = skill.MainContent
+			}
+		}
+		sb.WriteString(llm.BuildSkillsSection(skillContents))
+		sb.WriteString("**Important**: Follow the workflow and guidelines defined in the loaded Skills when applicable.\n\n")
+	}
+
+	sb.WriteString(llm.BuildEnvSection())
+
+	return sb.String()
+}
+
 // buildReActSystemPrompt 构建 ReAct 系统提示词
 func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 	var sb strings.Builder

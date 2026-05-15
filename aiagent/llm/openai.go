@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 const DefaultOpenAIURL = "https://api.openai.com/v1/chat/completions"
@@ -54,14 +56,44 @@ func (o *OpenAI) Name() string {
 
 // OpenAI API request/response structures
 type openAIRequest struct {
-	Model       string              `json:"model"`
-	Messages    []openAIMessage     `json:"messages"`
-	Tools       []openAITool        `json:"tools,omitempty"`
-	MaxTokens   int                 `json:"max_tokens,omitempty"`
-	Temperature float64             `json:"temperature,omitempty"`
-	TopP        float64             `json:"top_p,omitempty"`
-	Stop        []string            `json:"stop,omitempty"`
-	Stream      bool                `json:"stream,omitempty"`
+	Model       string          `json:"model"`
+	Messages    []openAIMessage `json:"messages"`
+	Tools       []openAITool    `json:"tools,omitempty"`
+	MaxTokens   int             `json:"max_tokens,omitempty"`
+	Temperature float64         `json:"temperature,omitempty"`
+	TopP        float64         `json:"top_p,omitempty"`
+	Stop        []string        `json:"stop,omitempty"`
+	Stream      bool            `json:"stream,omitempty"`
+
+	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
+	// 用于把 LLMConfig.ExtraBody 透传给厂商特定字段（如 dashscope 的 enable_thinking）。
+	extraBody map[string]any
+}
+
+// MarshalJSON 把 extraBody 平铺到顶层 JSON。逻辑：先用别名走默认序列化（拿到所有
+// 显式字段），unmarshal 回 map，再合并 extraBody，最后 marshal 出去。这种"先反射
+// 再合并"的写法多绕一步，但好处是新增显式字段时不用同步改任何 reflection 代码。
+// 已存在的 key 由显式字段优先（不让 extraBody 偷偷覆盖 model/messages 等关键字段）。
+func (r openAIRequest) MarshalJSON() ([]byte, error) {
+	type alias openAIRequest
+	data, err := json.Marshal(alias(r))
+	if err != nil {
+		return nil, err
+	}
+	if len(r.extraBody) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, v := range r.extraBody {
+		if _, occupied := m[k]; occupied {
+			continue
+		}
+		m[k] = v
+	}
+	return json.Marshal(m)
 }
 
 type openAIMessage struct {
@@ -72,8 +104,8 @@ type openAIMessage struct {
 }
 
 type openAITool struct {
-	Type     string           `json:"type"`
-	Function openAIFunction   `json:"function"`
+	Type     string         `json:"type"`
+	Function openAIFunction `json:"function"`
 }
 
 type openAIFunction struct {
@@ -150,6 +182,15 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	jsonData, err := json.Marshal(openAIReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+	// Debug 日志：确认 extraBody 等扩展字段是否真的被序列化进请求体。
+	// 只在 ExtraBody 非空时打印，避免常态噪音；只打前 512 字节防止泄漏长 prompt。
+	if len(o.config.ExtraBody) > 0 {
+		preview := string(jsonData)
+		if len(preview) > 512 {
+			preview = preview[:512] + "...(truncated)"
+		}
+		logger.Debugf("[OpenAI] stream request body (with extra): %s", preview)
 	}
 
 	resp, err := doHTTPStreamWithRetry(ctx, o.client, "OpenAI",
@@ -236,9 +277,10 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
-		Model: o.config.Model,
-		TopP:  req.TopP,
-		Stop:  req.Stop,
+		Model:     o.config.Model,
+		TopP:      req.TopP,
+		Stop:      req.Stop,
+		extraBody: o.config.ExtraBody,
 	}
 
 	// Temperature: request 优先，fallback 到 config 默认值

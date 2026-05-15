@@ -11,11 +11,11 @@ import "time"
 
 // Agent 运行期默认值（AgentConfig 字段缺省时使用）
 const (
-	DefaultMaxIterations     = 10
+	DefaultMaxIterations     = 25
 	DefaultTimeout           = 60000 // 60 秒（毫秒单位，和 llm.Config.Timeout 保持一致）
 	DefaultMaxPlanSteps      = 10
 	DefaultMaxReplanCount    = 2
-	DefaultMaxStepIterations = 5
+	DefaultMaxStepIterations = 10
 )
 
 // 工具执行器相关

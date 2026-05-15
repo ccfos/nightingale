@@ -215,6 +215,31 @@ func int64SlicesOverlap(a, b []int64) bool {
 	return false
 }
 
+// int64SliceIntersect 返回 a 和 b 都包含的元素（保持 b 的顺序、去重）。
+// 用于权限交集场景：target 在 {A,B,C} 三个组，用户能看 {A,C}，查询应该限制到 {A,C}。
+func int64SliceIntersect(a, b []int64) []int64 {
+	if len(a) == 0 || len(b) == 0 {
+		return nil
+	}
+	set := make(map[int64]struct{}, len(a))
+	for _, v := range a {
+		set[v] = struct{}{}
+	}
+	seen := make(map[int64]struct{}, len(b))
+	out := make([]int64, 0, len(b))
+	for _, v := range b {
+		if _, ok := set[v]; !ok {
+			continue
+		}
+		if _, dup := seen[v]; dup {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	return out
+}
+
 // =============================================================================
 // Time helpers
 // =============================================================================

@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/storage"
 )
 
 // ==================== 常量 ====================
@@ -17,6 +18,7 @@ const (
 	// Agent 模式
 	AgentModeReAct     = "react"      // ReAct 模式（默认）
 	AgentModePlanReAct = "plan_react" // Plan + ReAct 混合模式
+	AgentModeDirect    = "direct"     // 单次 LLM 调用，无 ReAct 格式包装，适用于无工具的纯生成 action
 
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
@@ -30,6 +32,7 @@ const (
 	StreamTypeToolCall   = "tool_call"
 	StreamTypeToolResult = "tool_result"
 	StreamTypeText       = "text"
+	StreamTypeContent    = "content" // Direct 模式 token，路由层归入 content 通道（非 reason）
 	StreamTypeDone       = "done"
 	StreamTypeError      = "error"
 	StreamTypePlan       = "plan"
@@ -201,6 +204,15 @@ type ToolDeps struct {
 	GetPromClient     func(dsId int64) prom.API
 	GetSQLDatasource  func(dsType string, dsId int64) (datasource.Datasource, bool)
 	FilterDatasources func([]*models.Datasource, *models.User) []*models.Datasource
+
+	// 告警排障日志获取。由 center 路由注入：包装 alert-eval-detail / event-detail
+	// 两个内部接口，用于排查"告警规则为什么没发告警"。两者都返回 (logs, instance, err)。
+	GetAlertEvalLogs       func(ruleId string) ([]string, string, error)
+	GetEventProcessingLogs func(eventHash string) ([]string, string, error)
+
+	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
+	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。
+	Redis storage.Redis
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

@@ -22,6 +22,17 @@ type Frontmatter struct {
 	Compatibility string            `yaml:"compatibility"`
 	Metadata      map[string]string `yaml:"metadata"`
 	AllowedTools  string            `yaml:"allowed-tools"`
+	// Tags 和 Examples 主要给 A2A AgentCard 用，让发现端能看到 skill 的关键词
+	// 与典型 prompt 范例。SKILL.md 不写也没关系，发现层会兜默认值。
+	Tags     []string `yaml:"tags"`
+	Examples []string `yaml:"examples"`
+	// 下面三个字段给 aiagent.SkillRegistry 的 builtin 缓存复用：让进程级缓存
+	// 一次解析就能同时满足 AgentCard（取 Name+Description）与 ReAct 运行期
+	// （取 BuiltinTools/MaxIterations 等）。user skill 导入流程不依赖这几个
+	// 字段，保留 omitempty 不影响。
+	RecommendedTools []string `yaml:"recommended_tools,omitempty"`
+	BuiltinTools     []string `yaml:"builtin_tools,omitempty"`
+	MaxIterations    int      `yaml:"max_iterations,omitempty"`
 }
 
 // ParseMarkdown 解析 SKILL.md：成功返回 (meta, body, true)。

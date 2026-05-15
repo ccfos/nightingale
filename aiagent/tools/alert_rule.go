@@ -44,6 +44,149 @@ func init() {
 	register(defs.ListAlertRules, listAlertRules)
 	register(defs.GetAlertRuleDetail, getAlertRuleDetail)
 	register(defs.CreateAlertRule, createAlertRule)
+	register(defs.ListLegacyNotifyAlertRules, listLegacyNotifyAlertRules)
+}
+
+// legacyAlertRuleResult 是 list_legacy_notify_alert_rules 的返回单元。
+// 与 alertRuleResult 拆开是有意为之：审计场景需要看到老/新两侧的具体值
+// （NotifyGroups / NotifyRuleIds），日常列表场景不应暴露 deprecated 字段。
+type legacyAlertRuleResult struct {
+	Id            int64    `json:"id"`
+	GroupId       int64    `json:"group_id"`
+	GroupName     string   `json:"group_name,omitempty"`
+	Name          string   `json:"name"`
+	Severity      int      `json:"severity"`
+	Disabled      int      `json:"disabled"`
+	Cate          string   `json:"cate,omitempty"`
+	NotifyVersion int      `json:"notify_version"`
+	NotifyGroups  []string `json:"notify_groups"`            // 老式接收组（user_group id 字符串列表），空数组表示该规则虽然标 v0 但没人收
+	NotifyRuleIds []int64  `json:"notify_rule_ids"`          // 新式通知规则（v0 规则下应该为空，列出来便于人工核对）
+	UpdateAt      int64    `json:"update_at"`
+	UpdateBy      string   `json:"update_by,omitempty"`
+}
+
+// listLegacyNotifyAlertRules scans alert rules still on the legacy notify path
+// (notify_version=0). Single-shot — does not paginate or follow up with detail
+// calls. The summary fields are precomputed so the LLM doesn't have to bucket
+// the items itself.
+func listLegacyNotifyAlertRules(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAlertRules); err != nil {
+		return "", err
+	}
+
+	bgids, isAdmin, err := getUserBgids(deps, user)
+	if err != nil {
+		return "", err
+	}
+
+	includeDisabled := false
+	if v, ok := args["include_disabled"].(bool); ok {
+		includeDisabled = v
+	}
+	filterGroupId := getArgInt64(args, "group_id")
+	limit := getArgInt(args, "limit", 500)
+	if limit > 2000 {
+		limit = 2000
+	}
+
+	// Permission gating: same shape as listAlertRules — admin sees all, others
+	// restricted to their bgids. If filterGroupId is set, intersect with that.
+	var scopeBgids []int64
+	if isAdmin {
+		if filterGroupId > 0 {
+			scopeBgids = []int64{filterGroupId}
+		}
+	} else {
+		if len(bgids) == 0 {
+			return marshalList(0, []legacyAlertRuleResult{}), nil
+		}
+		if filterGroupId > 0 {
+			if !int64SliceContains(bgids, filterGroupId) {
+				return "", fmt.Errorf("forbidden: no access to busi group %d", filterGroupId)
+			}
+			scopeBgids = []int64{filterGroupId}
+		} else {
+			scopeBgids = bgids
+		}
+	}
+
+	rules, err := models.AlertRuleGetsLegacyNotifyByBGIds(deps.DBCtx, scopeBgids, includeDisabled)
+	if err != nil {
+		return "", fmt.Errorf("failed to query legacy alert rules: %v", err)
+	}
+
+	// Cache busi groups so we can fill GroupName without N+1 lookups.
+	bgCache, _ := models.BusiGroupGetMap(deps.DBCtx)
+
+	results := make([]legacyAlertRuleResult, 0)
+	var enabled, disabled, withGroups, emptyLegacy int
+
+	for i := range rules {
+		r := rules[i]
+
+		groups := r.NotifyGroupsJSON
+		if groups == nil {
+			groups = []string{}
+		}
+		ruleIds := r.NotifyRuleIds
+		if ruleIds == nil {
+			ruleIds = []int64{}
+		}
+
+		item := legacyAlertRuleResult{
+			Id:            r.Id,
+			GroupId:       r.GroupId,
+			Name:          r.Name,
+			Severity:      r.Severity,
+			Disabled:      r.Disabled,
+			Cate:          r.Cate,
+			NotifyVersion: r.NotifyVersion,
+			NotifyGroups:  groups,
+			NotifyRuleIds: ruleIds,
+			UpdateAt:      r.UpdateAt,
+			UpdateBy:      r.UpdateBy,
+		}
+		if bg, ok := bgCache[r.GroupId]; ok && bg != nil {
+			item.GroupName = bg.Name
+		}
+
+		if r.Disabled == 0 {
+			enabled++
+		} else {
+			disabled++
+		}
+		if len(groups) > 0 {
+			withGroups++
+		} else {
+			emptyLegacy++
+		}
+
+		results = append(results, item)
+		if len(results) >= limit {
+			break
+		}
+	}
+
+	logger.Debugf("list_legacy_notify_alert_rules: user_id=%d include_disabled=%v group_id=%d found=%d",
+		user.Id, includeDisabled, filterGroupId, len(results))
+
+	payload, _ := json.Marshal(map[string]interface{}{
+		"total": len(results),
+		"items": results,
+		"summary": map[string]int{
+			"total":                  len(results),
+			"enabled":                enabled,
+			"disabled":               disabled,
+			"with_groups_configured": withGroups,
+			"empty_legacy":           emptyLegacy,
+		},
+		"note": "notify_version=0 即老版本（写入时与 notify_rule_ids 互斥）。empty_legacy 是 v0 但 notify_groups 也空的，等于谁都不通知，建议优先治理。",
+	})
+	return string(payload), nil
 }
 
 // prodForCate returns the default "prod" value for a given datasource cate,

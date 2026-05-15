@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -27,6 +28,21 @@ type ActionHandler struct {
 	BuildPrompt   func(req *AIChatRequest) string
 	BuildInputs   func(req *AIChatRequest) map[string]string
 	ParseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
+
+	// RequiredSkills 声明本 action 路径上需要加载的 skill 名列表。
+	// 非 nil 时 router 用它覆盖 agent 默认 SkillConfig，跳过 LLM autoselect 的 round-trip。
+	// 用函数而非 []string 是为了允许依赖 req.Context 决定具体 skill
+	// （如 query_generator 按 datasource_type 在 promql/sql skill 之间二选一）。
+	//
+	// 返回 nil 表示"本次不需要任何 skill"（注意不同于"未声明此字段"——未声明走 agent 默认配置）。
+	RequiredSkills func(req *AIChatRequest) []string
+
+	// AgentMode 覆盖默认 ReAct 模式。空字符串走 ReAct。AgentModeDirect 适用于：
+	//   1. SelectTools 为 nil 或返回空（无工具调用）
+	//   2. RequiredSkills 涉及的 skill 不含 skill_tools
+	//   3. 单轮纯文本生成
+	// 满足以上条件时改 Direct 可省 ReAct 的 Thought/Action 包装开销。
+	AgentMode string
 }
 
 var registry = map[string]*ActionHandler{
@@ -37,16 +53,32 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt:   buildQueryGeneratorPrompt,
 		BuildInputs:   buildQueryGeneratorInputs,
 		ParseResponse: parseQueryGeneratorResponse,
+		RequiredSkills: func(req *AIChatRequest) []string {
+			switch ctxStr(req.Context, "datasource_type") {
+			case "prometheus":
+				return []string{"promql-generator"}
+			case "mysql", "doris", "ck", "clickhouse", "pgsql", "postgresql", "tdengine":
+				return []string{"sql-generator"}
+			}
+			return nil
+		},
 	},
 	"general_chat": {
 		Description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
-		SelectTools: selectAllBuiltinTools,
 		BuildPrompt: buildGeneralChatPrompt,
+		// 闲聊/知识问答场景：不挂工具、不选 skill、不走 ReAct。
+		// - 显式 RequiredSkills 返回 nil → resolveSkillConfig 跳过 LLM autoselect（省 ~1s round-trip）
+		// - AgentMode=Direct → system prompt 不拼 ReAct 协议段和工具描述（18KB → 几十字节）
+		RequiredSkills: func(_ *AIChatRequest) []string { return nil },
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"alert_query": {
 		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
 		SelectTools: selectAlertQueryTools,
 		BuildPrompt: buildAlertQueryPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-query-alert-events"}
+		},
 	},
 	"resource_query": {
 		Description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
@@ -66,13 +98,67 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt: buildTroubleshootingPrompt,
 	},
 	"notify_template_generator": {
-		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'",
+		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Scope: 模板内容/字段/变量/渲染/卡片标题/颜色. Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'. NOTE: 改 URL/Webhook 地址/请求头/签名/秘钥/接入新平台 是 notify_channel_copilot, NOT this.",
 		BuildPrompt: buildNotifyTemplatePrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-generate-message-template"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
+	},
+	"notify_channel_copilot": {
+		Description: "Configure, onboard, or troubleshoot notification channel/media (通知媒介通道配置/接入/排障). Scope: 媒介通道层 (notify_channel) ——URL/Webhook 地址、请求体、headers、签名、秘钥、AppID/AppSecret/CorpID、超时、代理、TLS、@人/接收人字段. Examples: '怎么接入 Slack/通用 webhook/自建 HTTP', '钉钉媒介加签怎么配', '飞书机器人 URL 写哪', '企微媒介 9499 是什么意思', '为什么发不出去 Bad Request', '改一下钉钉媒介的请求头', '新建一个邮件媒介'. NOTE: 改模板内容/字段渲染 是 notify_template_generator; 改发给谁/订阅 是 creation 里的 notify rule.",
+		BuildPrompt: buildNotifyChannelPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-notify-channel-copilot"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
+	},
+	"host_health_diagnose": {
+		Description: "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 走 resource_query; 分析'某条告警为什么触发'走 troubleshooting; '新装机器没出现 / 显示 unknown / 没接入' 走 host_onboard_diagnose（曾经能看到现在失联走本 action，没接入过走 onboard）.",
+		SelectTools: selectHostHealthTools,
+		BuildPrompt: buildHostHealthPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-host-health-diagnose"}
+		},
+	},
+	"host_onboard_diagnose": {
+		Description: "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留走 resource_query; '我要装 categraf / 教我部署' 走 agent_deploy_guide（还没装 vs 装完没出现）.",
+		SelectTools: selectHostOnboardTools,
+		BuildPrompt: buildHostOnboardPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-host-onboard-diagnose"}
+		},
+	},
+	"agent_deploy_guide": {
+		Description: "Teach the user how to install / deploy / configure the categraf collector (部署 / 安装 / 启动 categraf 采集器). Scope: 下载二进制 / systemd 注册 / Docker 跑 categraf / Windows 服务 / K8s DaemonSet / config.toml 怎么写（writers / heartbeat / hostname / labels）/ 验证采集 / 自升级 / 资源限制. Examples: '怎么部署 categraf', 'categraf 怎么安装', '教我装一下采集器', 'docker 跑 categraf', 'categraf --install', 'win-service-install', 'config.toml writers 怎么写', 'categraf 上报到夜莺地址', 'k8s 装 categraf', '怎么验证 categraf 采集到了'. IMPORTANT — 覆盖默认规则: 即使用户用 '如何 / 怎么 / how to' 这类知识问法，只要是问 categraf 部署/安装/配置/启动/上报，**必须**归到本 action，**不要**走 general_chat. NOTE: '装完看不到机器 / 显示 unknown' 走 host_onboard_diagnose; '曾经在线现在失联' 走 host_health_diagnose; 配置某个具体 input 插件（mysql/nginx/snmp 等）的采集细节也归本 action.",
+		BuildPrompt: buildAgentDeployGuidePrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"categraf-deploy-guide"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
 	},
 	"datasource_diagnose": {
 		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
 		SelectTools: selectDatasourceDiagnoseTools,
 		BuildPrompt: buildDatasourceDiagnosePrompt,
+	},
+	"task_tpl_copilot": {
+		Description: "Generate or modify Nightingale (n9e) self-healing scripts / 告警自愈脚本 (task_tpl/ibex). Scope: 脚本正文 / stdin 解析 / 超时 / 批次 / 容忍度 / 参数 / 危险命令规避. Examples: '写一个磁盘满清理 /var/log 的自愈脚本', '把这个脚本加上 stdin 解析', '清理 docker 镜像层缓存的脚本', 'Java OOM 自动 dump+重启', 'reload nginx 的安全脚本', '自愈脚本怎么拿告警标签', 'is_recovered 怎么用', 'timeout 应该填多少'. NOTE: 改告警规则/接收人/通知模板都不在这里——分别走 creation / notify rule / notify_template_generator.",
+		BuildPrompt: buildTaskTplCopilotPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-modify-task-tpl"}
+		},
+		AgentMode: aiagent.AgentModeDirect,
+	},
+	"auto_heal_recommend": {
+		Description: "Recommend a self-healing action for a fired alert event (告警自愈推荐 / 半自愈). Given an alert event, gather three-layer evidence (event → rule → history), find the safest matching task_tpl, show what it would do (脚本要点 + 风险 + dry-run hint), and emit a 一键执行 marker — OR draft a new task_tpl spec and hand off to task_tpl_copilot when no candidate fits. Examples: '这条告警能自愈吗', '帮我处理一下这个告警', '推荐一个自愈脚本', '能不能一键修复', '建议下怎么自愈', 'auto-heal this alert', 'fix this incident'. NOTE: 直接写脚本走 task_tpl_copilot; 排查为什么告警触发走 troubleshooting; 判断主机活没活走 host_health_diagnose. Requires context.event_id.",
+		Validate:    validateAutoHealRecommend,
+		Preflight:   preflightAutoHealRecommend,
+		SelectTools: selectAutoHealRecommendTools,
+		BuildPrompt: buildAutoHealRecommendPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-recommend-self-heal"}
+		},
 	},
 }
 
@@ -283,6 +369,40 @@ func parseQueryGeneratorResponse(content string) []models.AssistantMessageRespon
 	return resp
 }
 
+// UnwrapJSONEnvelope handles the case where an LLM mistakenly wraps a markdown
+// final answer in a JSON object like {"query": "## 结论\n..."} — the front-end
+// then renders the raw JSON with literal "\n" escapes, which looks like garbled
+// output. When `content` is such an envelope, returns the extracted body string;
+// otherwise returns `content` unchanged.
+//
+// This is intended for the fallback path only — actions that legitimately emit
+// JSON (e.g. query_generator's {"query":"<expr>","explanation":"..."}) have
+// their own ParseResponse and never reach this function.
+//
+// Heuristic: the extracted value must contain a real newline OR a markdown
+// header marker ("## "), so we don't mis-unwrap a single-line value like
+// `{"query": "up == 0"}` that happens to slip through without ParseResponse.
+func UnwrapJSONEnvelope(content string) string {
+	cleaned := stripCodeFence(strings.TrimSpace(content))
+	if !strings.HasPrefix(cleaned, "{") || !strings.HasSuffix(cleaned, "}") {
+		return content
+	}
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(cleaned), &obj); err != nil {
+		return content
+	}
+	for _, key := range []string{"answer", "content", "markdown", "text", "result", "query"} {
+		v, ok := obj[key].(string)
+		if !ok || v == "" {
+			continue
+		}
+		if strings.Contains(v, "\n") || strings.Contains(v, "## ") {
+			return v
+		}
+	}
+	return content
+}
+
 // stripCodeFence removes markdown code fences (```json ... ```) that LLMs sometimes wrap around JSON.
 func stripCodeFence(s string) string {
 	if !strings.HasPrefix(s, "```") {
@@ -301,20 +421,43 @@ func stripCodeFence(s string) string {
 
 // --- general_chat action ---
 
-func selectAllBuiltinTools(req *AIChatRequest) []string {
-	defs := aiagent.GetAllBuiltinToolDefs()
-	names := make([]string, 0, len(defs))
-	for _, d := range defs {
-		names = append(names, d.Name)
+// capabilityListCache 在 init 时一次性算好的"平台能力清单"段落，
+// 注入 general_chat 的 prompt，让模型在被问"你能做什么"时讲清楚平台具体功能。
+//
+// 直接复用每个 action 的 Description 作为单一来源——新增 action 自动出现，
+// 不会漂移。但 Description 本职是给意图分类器读的，可能含 "Trigger verbs:"、
+// "NOTE: ... NOT xxx" 这类机器语，模型大多数情况会自动剪枝；如果观察到漏到
+// 用户答案里频率高，再考虑给 ActionHandler 加专门的 Capabilities 字段。
+//
+// 用包级变量 + init 而不是每次 BuildPrompt 时实时拼，避免 Go 的初始化循环检测：
+// registry 的 BuildPrompt 字段如果直接/间接读 registry 自己，编译器会报
+// initialization cycle。这里 init() 在 registry 完成填充之后运行，安全。
+var capabilityListCache string
+
+func init() {
+	var sb strings.Builder
+	sb.WriteString("This monitoring platform supports the following capabilities — mention them when the user asks what you can do (in the user's language):\n")
+	keys := make([]string, 0, len(registry))
+	for key := range registry {
+		if key == string(models.ActionKeyGeneralChat) {
+			continue
+		}
+		keys = append(keys, key)
 	}
-	return names
+	sort.Strings(keys)
+	for _, key := range keys {
+		sb.WriteString(fmt.Sprintf("- %s\n", registry[key].Description))
+	}
+	capabilityListCache = sb.String()
 }
 
 func buildGeneralChatPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a helpful assistant specializing in IT operations, monitoring, observability, and general technical topics.
+	return fmt.Sprintf(`You are a helpful assistant for the n9e (Nightingale) monitoring platform, specializing in IT operations, monitoring, and observability.
+
+%s
 Please answer the user's question clearly and concisely in the user's language.
 
-User request: %s`, req.UserInput)
+User request: %s`, capabilityListCache, req.UserInput)
 }
 
 // --- alert_query action ---
@@ -508,16 +651,147 @@ IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use 
 // This inline prompt just frames the task and points at the skill.
 
 func buildNotifyTemplatePrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a Nightingale (n9e) notification template expert. The user wants to author or modify an alert message template rendered by the n9e template engine.
+	return fmt.Sprintf(`You are an n9e notification template expert. Classify the user request first, then answer accordingly.
 
 User request: %s
 
-Follow the n9e-generate-message-template skill (SKILL.md) exactly. Core expectations:
-- Output structure: one-line lead → fenced gotemplate code block → short "变量说明" list.
-- Always split $event.IsRecovered branches unless the user explicitly opts out.
-- Prefer $labels.<key> over $event.TagsJSON for tag lookups.
-- Wrap all unix timestamps through timeformat; format numeric values via formatDecimal when precision is requested.
-- Respond in the user's language; don't ask clarifying questions if a reasonable assumption will do — state the assumption in the lead instead.`, req.UserInput)
+If asking for a template (帮我写/加上/改成/生成/write/add/change/generate): output one-line lead → fenced gotemplate block → short 变量说明 list. Split $event.IsRecovered branches; prefer $labels.<key>; wrap times in timeformat; numeric precision via formatDecimal. Don't ask clarifying questions—state assumptions in the lead.
+
+If asking how-to/conceptual (如何/怎么/支持哪些/有哪些字段/能不能/是什么/how/what/can): answer directly with prose or short snippets, NO full template dump. For strongly ambiguous asks (e.g. "附加信息字段"), give 2-3 short options to pick from.
+
+Respond in the user's language.`, req.UserInput)
+}
+
+// --- notify_channel_copilot action ---
+//
+// Channel-layer configuration: URL/headers/body/signing/auth/proxy/TLS, plus
+// onboarding new platforms (Slack, custom HTTP, generic webhook) and
+// diagnosing send failures (9499 / Bad Request / 401 etc).
+// Substantive knowledge lives in the n9e-notify-channel-copilot skill's
+// SKILL.md — this prompt just frames the task.
+
+// --- agent_deploy_guide action ---
+//
+// Teaches users how to install/deploy/configure categraf collector across
+// Linux (binary+systemd), Docker, Windows, K8s. Substantive deployment
+// commands and config snippets live in the categraf-deploy-guide skill's
+// SKILL.md — this prompt just frames the task and reinforces the routing
+// boundary against host_onboard_diagnose (装完没出现) and host_health_diagnose
+// (曾经在线失联).
+
+func buildAgentDeployGuidePrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a categraf deployment expert for n9e (Nightingale). Follow the categraf-deploy-guide skill (SKILL.md) for substantive guidance — deployment matrix, config.toml shape, verification commands.
+
+User request: %s
+
+Stay in the "install / configure / start / verify" stage:
+- 选择部署方式（binary+systemd / Docker / Windows / K8s）— 先问清 OS 和形态再给方案。
+- config.toml 关键段：[[writers]].url 指向 n9e 的 /prometheus/v1/write；[heartbeat] enable=true + url 指向 /api/n9e/heartbeat；[global].hostname 重名场景显式指定；不要把 omit_hostname 设成 true。
+- 每条建议给可粘贴执行的命令或完整配置片段，不要写"修改一下配置"这种废话。
+- 部署完后必须提醒做一次 './categraf --test --inputs cpu' 并去夜莺机器列表确认。
+
+Do NOT drift into:
+- "装完夜莺看不到机器 / OS 显示 unknown" → 告诉用户这是接入失败排障，转 host_onboard_diagnose。
+- "曾经在线现在失联" → 转 host_health_diagnose。
+- 写告警规则 / 通知模板 / 自愈脚本 → 对应 creation / notify_template_generator / task_tpl_copilot。
+
+Respond in the user's language (中文用户中文，英文用户英文), Markdown.`, req.UserInput)
+}
+
+func buildNotifyChannelPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an n9e (Nightingale) notification channel (通知媒介) expert. Follow the n9e-notify-channel-copilot skill (SKILL.md) for substantive guidance.
+
+User request: %s
+
+Stay in the channel/transport layer: URL, request body, headers, signing, auth (AppID/AppSecret/CorpID/token), timeout, proxy, TLS, @-mention/recipient-field plumbing. Do NOT drift into:
+- 消息模板/字段渲染 → say so briefly and point at notify_template_generator.
+- 发给谁/订阅匹配 → say so briefly and point at notify rule (creation).
+
+If the user is onboarding a platform not in the built-in list (Slack, 自建 HTTP, 其他 IM), default to the "通用 Webhook" channel and walk them through: create channel → JSON body shape (event 字段) → 中转/目标地址 → test send. State assumptions inline instead of asking clarifying questions for every gap.
+
+Respond in the user's language, Markdown (NOT JSON).`, req.UserInput)
+}
+
+// --- host_health_diagnose action ---
+
+func selectHostHealthTools(req *AIChatRequest) []string {
+	return []string{
+		"list_targets", "get_target_detail",
+		"get_target_realtime_status", "query_host_metrics_window", "list_neighbor_targets",
+		"list_alert_mutes", "get_alert_mute_detail",
+		"search_active_alerts",
+		"list_datasources",
+	}
+}
+
+func buildHostHealthPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an SRE assistant for the Nightingale (n9e) monitoring platform, specialized in judging host / agent (categraf) health. Follow the n9e-host-health-diagnose skill (SKILL.md) for the substantive logic.
+
+User request: %s
+
+Core principle: "agent 失联 ≠ 主机宕机". Always gather evidence from THREE layers before concluding:
+1. Realtime heartbeat & meta — get_target_realtime_status (Redis BeatTime, Offset, CpuUtil, MemUtil)
+2. Recent metrics window (default 10m) — query_host_metrics_window (cpu_usage_active / mem_available_percent / system_load1 / net_bytes_*)
+3. Same busi-group neighbors — list_neighbor_targets (个体故障 vs 集群故障 vs 网络分区)
+
+Also check list_alert_mutes (是否在维护窗口) and search_active_alerts (是否还有其它伴生告警).
+
+Final Answer MUST be Markdown (NOT JSON), in the user's language. Required structure:
+## 结论
+One of: 真宕机 / agent 假死 / 网络抖动 / 维护中 / 数据不足无法判断
+## 关键证据
+- 心跳：beat_time / lag / status
+- 指标：最近 10m cpu/mem/load/net 末值与窗口内 min/max/avg
+- 邻居：同业务组 active/lagging/stale 计数
+- 屏蔽：是否命中 mute
+## 建议动作
+2-3 条具体可执行项
+## 误报风险
+说明这个结论可能在什么情况下站不住脚`, req.UserInput)
+}
+
+// --- host_onboard_diagnose action ---
+
+func selectHostOnboardTools(req *AIChatRequest) []string {
+	return []string{
+		"probe_target_onboard_status",
+		"list_targets", "get_target_detail",
+		"query_prometheus", "query_host_metrics_window",
+		"list_datasources",
+	}
+}
+
+func buildHostOnboardPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an SRE assistant for the Nightingale (n9e) monitoring platform, specialized in diagnosing host onboarding failures — categraf is installed/running but the host doesn't show up in n9e, or shows up with unknown metadata, or has no metrics. Follow the n9e-host-onboard-diagnose skill (SKILL.md) for the substantive logic.
+
+User request: %s
+
+Core principle: "机器没出现" is never a single cause — the onboarding pipeline has 5 segments and you must locate which one broke before recommending a fix:
+  [1] categraf 本机进程       — running? heartbeat.enable on?
+  [2] 心跳上报 HTTP            — can it reach /v1/n9e/heartbeat? (network/TLS/BasicAuth)
+  [3] server / edge 接收       — token / version compatibility / hostname collision
+  [4] target 表落库            — DB row exists? redis meta exists?
+  [5] Redis + 指标流          — does prom see this ident?
+
+ALWAYS call probe_target_onboard_status FIRST — it returns the 5-segment footprint plus a likely_segment + likely_causes diagnosis aggregated server-side. Trust the likely_segment field; do not re-derive the segment from raw fields.
+
+If likely_segment=segment_5, additionally run THREE PromQL variants via query_prometheus to distinguish "no data" from "ident label mismatch":
+  target_up{ident="<ident>"}
+  target_up{ident=~".*<host>.*"}
+  {instance=~".*<host>.*"}
+
+Final Answer MUST be Markdown (NOT JSON), in the user's language. Required structure:
+## 结论
+One line: 卡在第 X 段：xxx（或：接入正常，看不到是 yyy 原因）
+## 接入链路证据
+- 段 1/2（categraf 本机/HTTP）：<未取证 / 推断异常：xxx>
+- 段 3（server 接收）：target in_db=..., os=..., agent_version=...
+- 段 4（target 落库 + redis）：in_redis_beat=..., lag_seconds=...
+- 段 5（Prom）：prom_metrics_hit=..., target_up_last=...
+## 修复命令
+2-3 条用户可直接粘贴执行的命令，每条带"预期输出"
+## 自证步骤
+1-2 条验证修复是否生效的命令`, req.UserInput)
 }
 
 // --- datasource_diagnose action ---
@@ -570,4 +844,167 @@ Output:
 - Your Final Answer MUST be Markdown (NOT JSON), in the user's language.
 - Structure: "可能原因" → "验证命令" (curl/telnet) → "修复建议".
 - Always include at least one verification curl command the user can run to confirm the fix.`, req.UserInput, ctxHint.String())
+}
+
+// --- task_tpl_copilot action ---
+//
+// Focused assistant for writing/modifying ibex self-healing scripts (告警自愈
+// 脚本 / task_tpl). Substantive knowledge — stdin payload shape (flat
+// map[string]string built in alert/sender/ibex.go:118-142, NOT $event),
+// is_recovered behavior (ibex never fires on recovery, line 39-42),
+// timeout semantics (CleanFields default 30s, max 5 days), language-specific
+// stdin readers, danger-command blacklist, and the 20-scenario library —
+// lives in the n9e-modify-task-tpl skill's SKILL.md.
+
+func buildTaskTplCopilotPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are an n9e (Nightingale) self-healing script (告警自愈/ibex task_tpl) expert. Follow the n9e-modify-task-tpl skill (SKILL.md) for substantive guidance.
+
+User request: %s
+
+Classify first, then answer accordingly:
+
+A) Generate / modify a script (写一个 / 帮我写 / 加上 / 改成 / 生成 / write / add / change / generate):
+   Output structure:
+   1. One-line lead stating the assumed scenario.
+   2. Fenced shell or python block — always include: (a) safe stdin JSON parsing with default fallbacks, (b) explicit timeout / exit-code handling, (c) idempotency or dry-run guard before any destructive action, (d) stdout echo of before/after state so task_record is observable.
+   3. Short "stdin 字段说明" list — only the keys actually referenced by the script, plus a note on which ones come from PromQL labels vs. ibex injection.
+   4. "运行参数建议" — timeout / batch / tolerance / pause values with reasoning (e.g. "timeout=120 因为 yum 清理可能超过默认 30s").
+   5. Risk & rollback note when the action is mutating.
+   State assumptions inline. Do NOT ask clarifying questions if a sensible default exists.
+
+B) How-to / conceptual (如何 / 怎么 / 支持哪些 / 字段有哪些 / 能不能 / 为什么 / how / what / can / why):
+   Answer directly with prose or short snippets, NO full template dump.
+
+Stay strictly in script-generation scope. Redirect when:
+- "告警恢复时跑个脚本" → 一句话说明 ibex 不在恢复事件触发 (alert/sender/ibex.go IsRecovered 直接 return), 让用户改走 notify_rule + callback 媒介, 不要生成带 is_recovered 分支的脚本 (那是死代码).
+- "怎么改告警规则 / PromQL" → point at creation or query_generator action.
+- "怎么改通知模板 / 消息内容" → point at notify_template_generator action.
+- "怎么改 webhook / 通知通道" → point at notify_channel_copilot action.
+
+Refuse to emit, even when requested: 'rm -rf /', 'rm -rf $UNSET_VAR/', 'mkfs', 'dd of=/dev/...', 'shutdown', 'reboot', 'init 0', 'init 6', 'iptables -F' without backup, 'chmod -R 777 /', 'curl ... | sh' from non-allowlisted hosts, base64-encoded shell payloads. If the user explicitly asks for a destructive op, state the risk and emit a safer dry-run / confirm-flag / scoped variant (e.g. clean ~/.cache for a specific user instead of rm -rf /home).
+
+Respond in the user's language, Markdown (NOT JSON).`, req.UserInput)
+}
+
+// --- auto_heal_recommend action ---
+//
+// Half-automation: AI recommends, human confirms, system executes. Three-layer
+// evidence gathering (event → rule → history) followed by candidate matching
+// against the user's task_tpl library; emits an inline {{action:run_task_tpl}}
+// marker for the frontend to render as a one-click button, OR an
+// {{action:switch|to=task_tpl_copilot}} marker when no template fits.
+//
+// Substantive matching algorithm, risk evaluation, and No-Match handoff
+// templates live in the n9e-recommend-self-heal skill's SKILL.md.
+//
+// Requires context.event_id; preflight halts otherwise.
+
+func validateAutoHealRecommend(req *AIChatRequest) error {
+	if ctxInt64(req.Context, "event_id") == 0 {
+		return fmt.Errorf("context.event_id is required for auto_heal_recommend")
+	}
+	return nil
+}
+
+func preflightAutoHealRecommend(_ context.Context, _ *aiagent.ToolDeps,
+	req *AIChatRequest, _ *models.User) (bool, []models.AssistantMessageResponse, error) {
+	if ctxInt64(req.Context, "event_id") > 0 {
+		return false, nil, nil
+	}
+	hint := "自愈推荐需要绑定一条告警事件。请从「告警事件详情页」或「通知卡片」打开 Copilot，让系统把 event_id 传进来后再试。"
+	return true, []models.AssistantMessageResponse{{
+		ContentType: models.ContentTypeMarkdown,
+		Content:     hint,
+		IsFinish:    true,
+		IsFromAI:    true,
+	}}, nil
+}
+
+func selectAutoHealRecommendTools(_ *AIChatRequest) []string {
+	return []string{
+		// L1: 当前事件
+		"get_alert_event_detail",
+		"get_alert_rule_detail",
+		// L2: 历史频次 / 上次处置
+		"search_history_alerts",
+		"search_active_alerts",
+		// L3: 候选 task_tpl 匹配
+		"list_task_tpls", "get_task_tpl_detail",
+		// 取证 / 上下文
+		"query_prometheus", "query_timeseries", "query_log",
+		"get_target_detail", "list_busi_groups",
+		"list_alert_mutes", "get_alert_mute_detail",
+	}
+}
+
+func buildAutoHealRecommendPrompt(req *AIChatRequest) string {
+	eid := ctxInt64(req.Context, "event_id")
+	rid := ctxInt64(req.Context, "rule_id")
+	bgid := ctxInt64(req.Context, "busi_group_id")
+
+	var ctxHint strings.Builder
+	ctxHint.WriteString(fmt.Sprintf("\nContext: event_id=%d", eid))
+	if rid > 0 {
+		ctxHint.WriteString(fmt.Sprintf(", rule_id=%d", rid))
+	}
+	if bgid > 0 {
+		ctxHint.WriteString(fmt.Sprintf(", busi_group_id=%d", bgid))
+	}
+
+	return fmt.Sprintf(`You are an n9e (Nightingale) self-healing advisor. Follow the n9e-recommend-self-heal skill (SKILL.md) for the substantive matching algorithm, risk-evaluation checklist, and No-Match handoff templates. Your job is RECOMMEND — never execute. Execution is a separate UI button the user clicks.
+
+User request: %s%s
+
+Workflow — gather THREE layers of evidence BEFORE recommending:
+
+L1. Current event — get_alert_event_detail(id=event_id). Capture: severity, target_ident, trigger_value, tags_json, rule_name, datasource_id, is_recovered, group_id. If is_recovered=true → output "⏭️ 事件已恢复" and skip everything below (no execution marker).
+
+L2. The rule — get_alert_rule_detail(rule_id). Read the PromQL / query expression. Identify which labels the rule's by() preserves — these are what a self-heal script can read from stdin (see ibex.go:118-142). If a needed label is missing, flag it explicitly.
+
+L3. Frequency & history — search_history_alerts with rule_id filter and a 30d range. Count occurrences. Was the most recent recurrence auto-healed (look at related task records via the event labels)? Recurring (≥5 / 30d) → confidence boost; first-time → recommend with extra caution.
+
+Then candidate matching (skill §3 决策树 has the full logic):
+
+- list_task_tpls with a query built from event labels and rule intent (例: "disk clean log", "restart oom", "nginx reload"). Cap candidates considered at 10, evaluate top 3 by tag/title overlap.
+- For each candidate: get_task_tpl_detail and judge:
+  (a) intent match: does its script actually address THIS condition?
+  (b) bg boundary: tpl.group_id == event.group_id? (跨 bg 即使 admin 也不直接推荐执行 — alert/sender/ibex.go:CanDoIbex 会拒)
+  (c) stdin sufficiency: does the script need labels the event doesn't carry? (若缺, 提示用户修 PromQL by 子句)
+  (d) destructive safety: rm -rf / shutdown / kubectl delete / iptables -F 等黑名单命令且无 dry-run/护栏 → 标 ⚠️ 或 ❌
+  (e) target reachability: target online? (light check via target_ident if available)
+
+Branch decision (skill §3):
+- ≥1 candidate passes all checks → ✅ 推荐执行
+- candidates exist but all fail → choose the closest reason: N2 (全跨 bg) / N3 (语义错位) / N4 (高风险无护栏)
+- 0 candidates → N1 (草案生成)
+
+In ALL no-match branches, emit an inline marker for the frontend to render as a "用此草案写脚本" button:
+{{action:switch|to=task_tpl_copilot|prefill=<一段自然语言描述, 包含: 目标 / 必备 stdin 标签 / 步骤骨架 / 建议 timeout / 风险点>}}
+
+When recommending execution, emit:
+{{action:run_task_tpl|tpl_id=<id>|host=<event.target_ident>|event_id=<event_id>}}
+(Frontend parses this, shows script preview + risks in a confirm dialog, then calls the existing ibex API. AI must NEVER call execution tools itself.)
+
+Final Answer MUST be Markdown (NOT JSON) in the user's language, using this structure:
+
+## 推荐结论
+✅ / ⚠️ / ❌ / ⏭️ + 一句话
+
+## 关键证据
+- 事件: ...
+- 规则: ...
+- 历史: ...
+
+## 候选清单 / 新建草案
+(取决于分支)
+
+## 一键执行 / 写脚本
+(对应 {{action:...}} 标记 — 必须放在此节内, 前端就找这一节)
+
+## 误报风险
+何时这个推荐可能不准 (告警标签语义模糊 / 上次执行失败过 / 业务高峰期 / 主机正在维护)
+
+Refuse to emit a {{action:run_task_tpl}} marker for any candidate that, after reading its script, contains: 'rm -rf /', 'mkfs', 'shutdown', 'kubectl delete node', 'iptables -F' without backup, or curl-pipe-to-shell. Instead emit N4 (修法建议) with a {{action:switch}} marker pointing to task_tpl_copilot.
+
+Respond in the user's language.`, req.UserInput, ctxHint.String())
 }
