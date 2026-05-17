@@ -210,6 +210,32 @@ func (c *Clickhouse) InitCli() error {
 	return nil
 }
 
+// Close 释放底层 *sql.DB / *gorm.DB 持有的连接池与后台 goroutine.
+//
+// 注意:
+//   - 不把字段置为 nil. 否则与 QueryRows 等使用者中的 `if c.X != nil { c.X.Query(...) }`
+//     形成数据竞争(两次 load 之间字段被改 nil 会导致 nil 解引用 panic).
+//   - 调用 Close 后, 并发中的查询会自然得到 "sql: database is closed" 错误,
+//     业务层正常错误处理即可. *sql.DB.Close 自身会等待已开始的查询结束.
+//   - *sql.DB.Close 多次调用是安全的(后续调用返回 error 但不 panic),
+//     因此 Close 不需要 sync.Once 也可幂等.
+func (c *Clickhouse) Close() error {
+	var firstErr error
+	if c.ClientByHTTP != nil {
+		if err := c.ClientByHTTP.Close(); err != nil {
+			firstErr = err
+		}
+	}
+	if c.Client != nil {
+		if sqlDB, err := c.Client.DB(); err == nil && sqlDB != nil {
+			if cerr := sqlDB.Close(); cerr != nil && firstErr == nil {
+				firstErr = cerr
+			}
+		}
+	}
+	return firstErr
+}
+
 const (
 	ShowDatabases = "SHOW DATABASES"
 )
