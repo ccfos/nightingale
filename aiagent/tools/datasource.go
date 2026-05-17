@@ -57,6 +57,9 @@ func listDatasourcesBuiltin(_ context.Context, deps *aiagent.ToolDeps, args map[
 		return "", fmt.Errorf("failed to query datasources: %v", err)
 	}
 
+	if deps.FilterDatasources == nil {
+		return "", fmt.Errorf("datasource visibility filter not available on this node")
+	}
 	// Apply the same DatasourceFilter hook used by the web UI
 	filtered := deps.FilterDatasources(dsList, user)
 
@@ -98,6 +101,9 @@ func getDatasourceDetail(_ context.Context, deps *aiagent.ToolDeps, args map[str
 		return fmt.Sprintf(`{"error":"datasource not found: id=%d"}`, id), nil
 	}
 
+	if deps.FilterDatasources == nil {
+		return "", fmt.Errorf("datasource visibility filter not available on this node")
+	}
 	// Verify visibility via the same DatasourceFilter hook used by the web UI
 	filtered := deps.FilterDatasources([]*models.Datasource{ds}, user)
 	if len(filtered) == 0 {

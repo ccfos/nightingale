@@ -234,6 +234,9 @@ func queryHostMetricsWindow(ctx context.Context, deps *aiagent.ToolDeps, args ma
 		return "", fmt.Errorf("datasource_id is required (call list_datasources to find a Prometheus datasource id, or pass it explicitly)")
 	}
 
+	if deps == nil || deps.GetPromClient == nil {
+		return "", fmt.Errorf("prometheus query not available on this node")
+	}
 	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)

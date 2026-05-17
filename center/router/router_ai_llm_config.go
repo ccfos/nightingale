@@ -26,6 +26,31 @@ func (rt *Router) aiLLMConfigGets(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
+// aiLLMConfigBriefs returns minimal info (id / name / model) of all enabled
+// LLM configs. Used by lightweight consumers like the AI Runner event
+// processor edit page, which only needs to populate a dropdown and must work
+// for regular users who don't hold the /ai-config/llm-configs management perm.
+//
+// Disabled configs are filtered out so the dropdown only contains options
+// the runtime would actually accept.
+func (rt *Router) aiLLMConfigBriefs(c *gin.Context) {
+	lst, err := models.AILLMConfigGetEnabled(rt.Ctx)
+	if err != nil {
+		ginx.NewRender(c).Data(nil, err)
+		return
+	}
+	type brief struct {
+		Id    int64  `json:"id"`
+		Name  string `json:"name"`
+		Model string `json:"model"`
+	}
+	out := make([]brief, 0, len(lst))
+	for _, it := range lst {
+		out = append(out, brief{Id: it.Id, Name: it.Name, Model: it.Model})
+	}
+	ginx.NewRender(c).Data(out, nil)
+}
+
 func (rt *Router) aiLLMConfigGet(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
 	obj, err := models.AILLMConfigGetById(rt.Ctx, id)

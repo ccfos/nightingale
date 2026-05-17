@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/eval"
 	"github.com/ccfos/nightingale/v6/alert/naming"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/airunner"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/alert/queue"
 	"github.com/ccfos/nightingale/v6/alert/record"
@@ -134,4 +135,17 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 	go queue.ReportQueueSize(alertStats)
 	go sender.ReportNotifyRecordQueueSize(alertStats)
 	go sender.InitEmailSender(ctx, notifyConfigCache)
+
+	// 注入 ai_runner 处理器的运行期依赖。
+	// 注：alert/edge 进程能拿到的依赖有限（这里只传 DBCtx + SkillsPath），
+	// 不含 PromClients / AlertEvalLogs 等管理面能力——AI 调用这些工具时
+	// 会因 deps 字段为 nil 返回友好错误。
+	// center 进程会随后在 router 启动期再次调用 airunner.Setup，用完整依赖
+	// 覆盖本次注入；调用顺序由 center 主流程保证。
+	if alertc.AIAgent.Enable {
+		airunner.Setup(airunner.SetupOptions{
+			DBCtx:      ctx,
+			SkillsPath: alertc.AIAgent.SkillsPath,
+		})
+	}
 }

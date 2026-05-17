@@ -43,6 +43,9 @@ func queryPrometheusTool(ctx context.Context, deps *aiagent.ToolDeps, args map[s
 		queryType = "instant"
 	}
 
+	if deps == nil || deps.GetPromClient == nil {
+		return "", fmt.Errorf("prometheus query not available on this node")
+	}
 	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
@@ -162,6 +165,9 @@ func queryTimeseriesDataTool(ctx context.Context, deps *aiagent.ToolDeps, args m
 		return "", fmt.Errorf("datasource_type not found in params")
 	}
 
+	if deps == nil || deps.GetSQLDatasource == nil {
+		return "", fmt.Errorf("datasource query not available on this node")
+	}
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)
@@ -301,6 +307,9 @@ func queryLogDataTool(ctx context.Context, deps *aiagent.ToolDeps, args map[stri
 		return "", fmt.Errorf("datasource_type not found in params")
 	}
 
+	if deps == nil || deps.GetSQLDatasource == nil {
+		return "", fmt.Errorf("datasource query not available on this node")
+	}
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)
 	if !exists {
 		return "", fmt.Errorf("datasource not found: %s/%d", dsType, dsId)

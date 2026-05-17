@@ -55,6 +55,13 @@ func (a *Agent) SetExternalToolHandler(h ExternalToolHandler) {
 	a.externalToolHandler = h
 }
 
+// SkillRegistry 返回 Agent 当前持有的 skill 注册表，供事件处理器的外部
+// 工具回调（ExternalToolHandler）使用。可能为 nil（未调 InitSkills /
+// SetSkillRegistry 时）。
+func (a *Agent) SkillRegistry() *SkillRegistry {
+	return a.skillRegistry
+}
+
 // SetSkillRegistry 设置技能注册表
 func (a *Agent) SetSkillRegistry(registry *SkillRegistry) {
 	a.skillRegistry = registry

@@ -35,6 +35,9 @@ func listMetrics(ctx context.Context, deps *aiagent.ToolDeps, args map[string]in
 		limit = int(l)
 	}
 
+	if deps == nil || deps.GetPromClient == nil {
+		return "", fmt.Errorf("prometheus query not available on this node")
+	}
 	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
@@ -77,6 +80,9 @@ func getMetricLabels(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		return "", fmt.Errorf("metric parameter is required")
 	}
 
+	if deps == nil || deps.GetPromClient == nil {
+		return "", fmt.Errorf("prometheus query not available on this node")
+	}
 	client := deps.GetPromClient(dsId)
 	if client == nil {
 		return "", fmt.Errorf("prometheus datasource not found: %d", dsId)
