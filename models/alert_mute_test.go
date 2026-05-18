@@ -30,16 +30,18 @@ func TestAlertMuteBatchDelete(t *testing.T) {
 	now := time.Now().Unix()
 	threshold := now - 30*24*3600 // 30 days ago
 
-	// expired + created long ago + group 1 -> SHOULD delete
-	insertMute(t, c, &AlertMute{GroupId: 1, Etime: now - 3600, CreateAt: threshold - 100})
-	// expired + created long ago + group 2 -> SHOULD delete (when no group filter)
-	insertMute(t, c, &AlertMute{GroupId: 2, Etime: now - 3600, CreateAt: threshold - 100})
+	// expired before threshold + group 1 -> SHOULD delete
+	insertMute(t, c, &AlertMute{GroupId: 1, MuteTimeType: TimeRange, Etime: threshold - 3600, CreateAt: threshold - 7200})
+	// expired before threshold + group 2 -> SHOULD delete (when no group filter)
+	insertMute(t, c, &AlertMute{GroupId: 2, MuteTimeType: TimeRange, Etime: threshold - 3600, CreateAt: threshold - 7200})
 	// permanent mute (etime=0) -> SHOULD NOT delete
-	insertMute(t, c, &AlertMute{GroupId: 1, Etime: 0, CreateAt: threshold - 100})
+	insertMute(t, c, &AlertMute{GroupId: 1, MuteTimeType: TimeRange, Etime: 0, CreateAt: threshold - 7200})
 	// not yet expired -> SHOULD NOT delete
-	insertMute(t, c, &AlertMute{GroupId: 1, Etime: now + 3600, CreateAt: threshold - 100})
-	// expired but created recently -> SHOULD NOT delete
-	insertMute(t, c, &AlertMute{GroupId: 1, Etime: now - 3600, CreateAt: now - 10})
+	insertMute(t, c, &AlertMute{GroupId: 1, MuteTimeType: TimeRange, Etime: now + 3600, CreateAt: threshold - 7200})
+	// expired after threshold -> SHOULD NOT delete
+	insertMute(t, c, &AlertMute{GroupId: 1, MuteTimeType: TimeRange, Etime: now - 3600, CreateAt: threshold - 7200})
+	// periodic mute (etime/create_at would otherwise qualify) -> SHOULD NOT delete
+	insertMute(t, c, &AlertMute{GroupId: 1, MuteTimeType: Periodic, Etime: threshold - 3600, CreateAt: threshold - 7200})
 
 	// Restrict to group 1: only the first row should match.
 	n, err := AlertMuteBatchDelete(c, threshold, []int64{1}, 100)
@@ -49,21 +51,22 @@ func TestAlertMuteBatchDelete(t *testing.T) {
 	// Verify group 2's expired+old row is still there.
 	var remaining []AlertMute
 	require.NoError(t, DB(c).Find(&remaining).Error)
-	assert.Equal(t, 4, len(remaining))
+	assert.Equal(t, 5, len(remaining))
 
 	// Now sweep with no group filter: should delete the group 2 expired+old row.
 	n, err = AlertMuteBatchDelete(c, threshold, nil, 100)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), n)
 
-	// Remaining should be: permanent, not-yet-expired, created-recently (3 rows).
+	// Remaining should be: permanent, not-yet-expired, expired-after-threshold,
+	// periodic (4 rows).
 	require.NoError(t, DB(c).Find(&remaining).Error)
-	assert.Equal(t, 3, len(remaining))
+	assert.Equal(t, 4, len(remaining))
 	for _, m := range remaining {
 		switch {
+		case m.MuteTimeType == Periodic:
 		case m.Etime == 0:
-		case m.Etime > now:
-		case m.CreateAt >= threshold:
+		case m.Etime >= threshold:
 		default:
 			t.Errorf("unexpected row not pruned: %+v", m)
 		}
