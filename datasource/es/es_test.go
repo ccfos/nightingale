@@ -403,7 +403,7 @@ func TestElasticsearch_Test(t *testing.T) {
 func TestElasticsearch_Constants(t *testing.T) {
 	assert.Equal(t, 5, defaultMaxShard)
 	assert.Equal(t, 10, defaultMinInterval)
-	assert.Equal(t, int64(60000), defaultTimeout)
+	assert.Equal(t, int64(60000), int64(defaultTimeout))
 	assert.Equal(t, 30, defaultQueryInterval)
 	assert.Equal(t, "7.10+", minVersion)
 }

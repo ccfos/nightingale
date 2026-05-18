@@ -190,8 +190,9 @@ func (e *Elasticsearch) Validate(ctx context.Context) error {
 	}
 
 	for _, addr := range e.Nodes {
-		if _, err := url.Parse(addr); err != nil {
-			return fmt.Errorf("invalid node address %s: %w", addr, err)
+		u, err := url.Parse(addr)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("invalid node address %s: must be a valid URL with scheme and host", addr)
 		}
 	}
 
@@ -224,6 +225,10 @@ func (e *Elasticsearch) MakeTSQuery(ctx context.Context, query interface{}, even
 }
 
 func (e *Elasticsearch) QueryData(ctx context.Context, queryParam interface{}) ([]models.DataResp, error) {
+	if tsReq, ok := extractTSRequest(queryParam); ok {
+		return e.queryDataViaSQL(ctx, tsReq)
+	}
+
 	searchFunc := func(ctx context.Context, indices []string, source interface{}, timeout int, maxShard int) (*elastic.SearchResult, error) {
 		return e.Client.Search().
 			Index(indices...).
