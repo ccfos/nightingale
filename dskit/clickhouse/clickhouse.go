@@ -44,10 +44,22 @@ type Clickhouse struct {
 	ClientByHTTP *sql.DB  `json:"-"`
 }
 
-func (c *Clickhouse) InitCli() error {
+// FillDefaults 把零值字段补成默认值. 必须在 dscache.Put 比较 Equal 之前调用,
+// 否则缓存里的 ds(已被 InitCli 补过默认值)会与每次同步新建的 ds(未补默认值)
+// 字段不一致, Equal 永远返回 false 触发反复 InitClient. 因此由外层 Validate 调用.
+func (c *Clickhouse) FillDefaults() {
 	if c.MaxQueryRows == 0 {
 		c.MaxQueryRows = DefaultLimit
 	}
+	// Timeout 当前 InitCli 已不再读取(DialTimeout 硬编码 10s), 但 Equal 仍比对该字段;
+	// 这里给个默认值保持对称, 避免后续有人重新启用 c.Timeout 时漏改这里导致 dscache 反复重建.
+	if c.Timeout <= 0 {
+		c.Timeout = 10000
+	}
+}
+
+func (c *Clickhouse) InitCli() error {
+	c.FillDefaults()
 
 	if len(c.Nodes) == 0 {
 		return fmt.Errorf("not found ck shard, please check datasource config")
