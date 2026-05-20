@@ -107,6 +107,8 @@ func (c *Clickhouse) Validate(ctx context.Context) error {
 	// 	return fmt.Errorf("ck shard password is empty, please check datasource setting or set password for user")
 	// }
 
+	// 把零值补成默认值, 与 InitCli 保持一致, 避免 dscache 反复触发 Equal 不等而重建客户端
+	c.FillDefaults()
 	return nil
 }
 
