@@ -111,9 +111,7 @@ func Test(p *models.AILLMConfig) error {
 		req.Header.Set(k, v)
 	}
 	// Apply custom headers from ExtraConfig
-	for k, v := range extra.CustomHeaders {
-		req.Header.Set(k, v)
-	}
+	llm.ApplyCustomHeaders(req, extra.CustomHeaders)
 
 	resp, err := client.Do(req)
 	if err != nil {

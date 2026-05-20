@@ -355,7 +355,5 @@ func (g *Gemini) doRequest(ctx context.Context, url string, req *geminiRequest) 
 func (g *Gemini) setHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 
-	for k, v := range g.config.Headers {
-		req.Header.Set(k, v)
-	}
+	ApplyCustomHeaders(req, g.config.Headers)
 }

@@ -353,7 +353,5 @@ func (c *Claude) setHeaders(req *http.Request) {
 		req.Header.Set("x-api-key", c.config.APIKey)
 	}
 
-	for k, v := range c.config.Headers {
-		req.Header.Set(k, v)
-	}
+	ApplyCustomHeaders(req, c.config.Headers)
 }
