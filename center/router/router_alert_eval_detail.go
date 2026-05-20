@@ -25,7 +25,7 @@ func (rt *Router) alertEvalDetailPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getAlertEvalLogs(id)
+	logs, instance, err := rt.GetAlertEvalLogs(id)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error: %v", err)
 		return
@@ -50,7 +50,7 @@ func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 		ginx.Bomb(200, "invalid rule id format")
 	}
 
-	logs, instance, err := rt.getAlertEvalLogs(id)
+	logs, instance, err := rt.GetAlertEvalLogs(id)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
@@ -59,8 +59,8 @@ func (rt *Router) alertEvalDetailJSON(c *gin.Context) {
 	}, nil)
 }
 
-// getAlertEvalLogs resolves the target instance(s) and retrieves alert eval logs.
-func (rt *Router) getAlertEvalLogs(id string) ([]string, string, error) {
+// GetAlertEvalLogs resolves the target instance(s) and retrieves alert eval logs.
+func (rt *Router) GetAlertEvalLogs(id string) ([]string, string, error) {
 	ruleId, _ := strconv.ParseInt(id, 10, 64)
 	rule, err := models.AlertRuleGetById(rt.Ctx, ruleId)
 	if err != nil {

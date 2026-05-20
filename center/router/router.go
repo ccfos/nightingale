@@ -119,12 +119,6 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		}
 	}
 
-	// AI Runner 事件处理器在 models.Processor.Init 阶段拿不到 router 引用，
-	// 这里把它运行期需要的 ToolDeps + skill 路径一次性灌进 airunner 包，
-	// processor.Process 通过 airunner.GetRuntime() 取出。注意 alert.Start
-	// 已经以精简依赖调过一次 Setup，本次覆盖（完整依赖）。
-	rt.registerAIRunnerRuntime()
-
 	// Long-lived goroutine that materializes DB-backed skills onto disk. It
 	// runs one pass through sync.Once on entry (so the first chat request
 	// blocks on a real first-pass outcome, not on the ticker firing) and then

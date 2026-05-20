@@ -24,7 +24,7 @@ func (rt *Router) eventDetailPage(c *gin.Context) {
 		return
 	}
 
-	logs, instance, err := rt.getEventLogs(hash)
+	logs, instance, err := rt.GetEventLogs(hash)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error: %v", err)
 		return
@@ -49,7 +49,7 @@ func (rt *Router) eventDetailJSON(c *gin.Context) {
 		ginx.Bomb(200, "invalid hash format")
 	}
 
-	logs, instance, err := rt.getEventLogs(hash)
+	logs, instance, err := rt.GetEventLogs(hash)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(loggrep.EventDetailResp{
@@ -85,8 +85,8 @@ func (rt *Router) getNodeForDatasource(datasourceId int64, pk string) (string, e
 	return ring.Get(pk)
 }
 
-// getEventLogs resolves the target instance and retrieves logs.
-func (rt *Router) getEventLogs(hash string) ([]string, string, error) {
+// GetEventLogs resolves the target instance and retrieves logs.
+func (rt *Router) GetEventLogs(hash string) ([]string, string, error) {
 	event, err := models.AlertHisEventGetByHash(rt.Ctx, hash)
 	if err != nil {
 		return nil, "", err

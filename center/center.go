@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert"
 	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
+	"github.com/ccfos/nightingale/v6/alert/pipeline/processor/airunner"
 	"github.com/ccfos/nightingale/v6/alert/process"
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/cconf"
@@ -128,7 +129,6 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	macros.RegisterMacro(macros.MacroInVain)
 	dscache.Init(ctx, false)
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
@@ -137,10 +137,30 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go cron.CleanNotifyRecord(ctx, config.Center.CleanNotifyRecordDay)
 	go cron.CleanPipelineExecution(ctx, config.Center.CleanPipelineExecutionDay)
 
-	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 	centerRouter := centerrt.New(config.HTTP, config.Center, config.Alert, config.Ibex,
 		cconf.Operations, dsCache, notifyConfigCache, promClients,
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache, config.Log.Dir)
+
+	// Wire AI Runner runtime deps before any pipeline goroutines start. Setup
+	// is the single injection point for ai_runner; alert.Start (next line)
+	// would otherwise spawn pipeline goroutines that could hit ai_runner nodes
+	// before the runtime is ready.
+	airunner.Setup(airunner.SetupOptions{
+		DBCtx:            ctx,
+		Redis:            redis,
+		SkillsPath:       config.Center.AIAgent.SkillsPath,
+		GetPromClient:    promClients.GetCli,
+		GetSQLDatasource: dscache.DsCache.Get,
+		FilterDatasources: func(ds []*models.Datasource, user *models.User) []*models.Datasource {
+			return dsCache.DatasourceFilter(ds, user)
+		},
+		GetAlertEvalLogs:       centerRouter.GetAlertEvalLogs,
+		GetEventProcessingLogs: centerRouter.GetEventLogs,
+	})
+
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
+
+	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors, config.Log.Dir)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)

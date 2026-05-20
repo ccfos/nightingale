@@ -9,15 +9,6 @@ type Alert struct {
 	EngineDelay int64
 	Heartbeat   HeartbeatConfig
 	Alerting    Alerting
-	AIAgent     AIAgent
-}
-
-// AIAgent 配置在 alert/edge 进程下执行 ai_runner 事件处理器所需的运行期参数。
-// Enable=false 时不向 airunner 注入运行期，告警链路上配置了 ai_runner 节点
-// 会直接报错（设计上：边缘节点默认不承担 AI 调用，需要运维显式开启）。
-type AIAgent struct {
-	Enable     bool
-	SkillsPath string
 }
 
 type SMTPConfig struct {
@@ -82,9 +73,5 @@ func (a *Alert) PreCheck(configDir string) {
 
 	if a.EngineDelay == 0 {
 		a.EngineDelay = 30
-	}
-
-	if a.AIAgent.Enable && a.AIAgent.SkillsPath == "" {
-		a.AIAgent.SkillsPath = path.Join(configDir, "skill")
 	}
 }

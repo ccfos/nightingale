@@ -417,8 +417,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			return dscache.DsCache.Get(dsType, dsId)
 		},
 		FilterDatasources:      rt.DatasourceCache.DatasourceFilter,
-		GetAlertEvalLogs:       rt.getAlertEvalLogs,
-		GetEventProcessingLogs: rt.getEventLogs,
+		GetAlertEvalLogs:       rt.GetAlertEvalLogs,
+		GetEventProcessingLogs: rt.GetEventLogs,
 		Redis:                  rt.Redis,
 	}
 

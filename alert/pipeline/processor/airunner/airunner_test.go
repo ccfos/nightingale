@@ -27,7 +27,7 @@ func TestProcessorAdapter_Init_Defaults(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "description")
 
-	// 没填 timeout_seconds，使用默认值
+	// 没填 timeout_seconds，使用默认值；description 前后空白被 trim
 	got, err := p.Init(map[string]interface{}{
 		"llm_config_id": 7,
 		"description":   "  hi  ",
@@ -36,7 +36,7 @@ func TestProcessorAdapter_Init_Defaults(t *testing.T) {
 	adapter, ok := got.(*ProcessorAdapter)
 	require.True(t, ok)
 	assert.Equal(t, int64(7), adapter.settings.LLMConfigID)
-	assert.Equal(t, "  hi  ", adapter.settings.Description)
+	assert.Equal(t, "hi", adapter.settings.Description)
 	assert.Equal(t, DefaultAIRunnerTimeoutSeconds, adapter.settings.TimeoutSeconds)
 }
 
@@ -133,22 +133,6 @@ func TestHandleSetEventAnnotation_MissingKey(t *testing.T) {
 	_, err := handleSetEventAnnotation(map[string]interface{}{"value": "y"}, wfCtx)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "key is required")
-}
-
-// TestEventUntouched_WhenAIDoesNotCallAnnotationTool 验证没有 AI 调用
-// set_event_annotation 时，event 完全不被修改（即"未提及则不修改 event"约束）。
-//
-// 这里没有真的跑 Agent（依赖 LLM），改成验证 Process 路径上 event 字段的
-// "默认不写"语义：handleSetEventAnnotation 不被触发 → event.Annotations 为零值。
-func TestEventUntouched_WhenAIDoesNotCallAnnotationTool(t *testing.T) {
-	wfCtx := &models.WorkflowContext{Event: &models.AlertCurEvent{RuleName: "r"}}
-	before := *wfCtx.Event
-
-	// 模拟一次 Agent 跑完但没调 set_event_annotation：handleSetEventAnnotation
-	// 不会被调用，event 仍是原状态。
-	after := *wfCtx.Event
-	assert.Equal(t, before.Annotations, after.Annotations)
-	assert.Equal(t, before.AnnotationsJSON, after.AnnotationsJSON)
 }
 
 // renderUserPromptForTest 用与 aiagent.prompt_builder 一致的方式渲染模板，
