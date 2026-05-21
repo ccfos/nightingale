@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -696,11 +697,27 @@ type promRulePreviewItem struct {
 	Annotations     map[string]string `json:"annotations,omitempty"`
 }
 
+// promRuleImportItem 区分三种结局：
+//   - status="created"          ：新建成功，Id 非零
+//   - status="skipped_duplicate"：同名规则已存在，未做任何改动；Error 字段为空
+//   - status="failed"           ：其他错误（校验失败、DB 异常等）；Error 描述原因
+//
+// 区分 skipped vs failed 很关键，避免 LLM 看到 "failed: already exists" 就触发
+// "用 name_prefix 重试整份 YAML" 的错误纠正动作——那会让没冲突的规则全部多写
+// 一遍，造成 N+冲突项 vs 2N 条总量。
 type promRuleImportItem struct {
-	Name  string `json:"name"`
-	Id    int64  `json:"id,omitempty"`
-	Error string `json:"error,omitempty"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	Id     int64  `json:"id,omitempty"`
+	Error  string `json:"error,omitempty"`
 }
+
+const (
+	promRuleStatusCreated   = "created"
+	promRuleStatusSkipped   = "skipped_duplicate"
+	promRuleStatusFailed    = "failed"
+	promRuleDuplicateErrStr = "AlertRule already exists" // 来自 models.AlertRule.Add
+)
 
 // resolvePromRulePayload returns the YAML payload for preview/import. Caller
 // must pass exactly one of `payload` (inline text) or `payload_file` (path to
@@ -822,9 +839,11 @@ func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		}
 	}
 
-	disabled := getArgInt(args, "disabled", 0)
-	if disabled < 0 || disabled > 1 {
-		return "", fmt.Errorf("disabled must be 0 or 1")
+	// 严校验 disabled：必须是 0 或 1。不能用 getArgInt——它把负数和非数字 silently
+	// coerce 成默认 0，原本写的 `disabled < 0` 分支因此永远不可达。
+	disabled, err := parseDisabledFlag(args["disabled"])
+	if err != nil {
+		return "", err
 	}
 
 	payload, err := resolvePromRulePayload(args)
@@ -868,35 +887,50 @@ func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 
 		item := promRuleImportItem{Name: r.Name}
 		if err := r.FE2DB(); err != nil {
+			item.Status = promRuleStatusFailed
 			item.Error = err.Error()
 			items = append(items, item)
 			continue
 		}
 		if err := r.Add(deps.DBCtx); err != nil {
-			item.Error = err.Error()
+			// 重名是预期分支：DB 里已经有同名规则，不当真正失败，标 skipped。
+			// 否则 LLM 看到 "failed: already exists" 容易触发"用 name_prefix
+			// 重试整份 YAML"的纠正动作 —— 那会让没冲突的规则全部多写一遍。
+			if err.Error() == promRuleDuplicateErrStr {
+				item.Status = promRuleStatusSkipped
+			} else {
+				item.Status = promRuleStatusFailed
+				item.Error = err.Error()
+			}
 			items = append(items, item)
 			continue
 		}
+		item.Status = promRuleStatusCreated
 		item.Id = r.Id
 		items = append(items, item)
 	}
 
-	var ok, failed int
+	var created, skipped, failed int
 	for _, it := range items {
-		if it.Error == "" {
-			ok++
-		} else {
+		switch it.Status {
+		case promRuleStatusCreated:
+			created++
+		case promRuleStatusSkipped:
+			skipped++
+		case promRuleStatusFailed:
 			failed++
 		}
 	}
 	payloadOut, _ := json.Marshal(map[string]interface{}{
-		"group_id":  groupId,
-		"total":     len(items),
-		"succeeded": ok,
-		"failed":    failed,
-		"items":     items,
+		"group_id": groupId,
+		"total":    len(items),
+		"created":  created,
+		"skipped":  skipped, // 重名规则跳过的数量，不是失败
+		"failed":   failed,
+		"items":    items,
 	})
-	logger.Debugf("import_prom_rule_yaml: group=%d total=%d ok=%d failed=%d", groupId, len(items), ok, failed)
+	logger.Debugf("import_prom_rule_yaml: group=%d total=%d created=%d skipped=%d failed=%d",
+		groupId, len(items), created, skipped, failed)
 	return string(payloadOut), nil
 }
 
@@ -937,4 +971,44 @@ func wrapIfComplex(promQL string) string {
 		return "(" + trimmed + ")"
 	}
 	return trimmed
+}
+
+// parseDisabledFlag 严格解析 import_prom_rule_yaml 的 disabled 入参：必须未传 /
+// 0 / 1 三种之一。其他值（包括 -1、2、"abc"）报错。
+//
+// 历史实现用 getArgInt(args,"disabled",0)，但 getArgInt 把任何非正值（含负数）
+// silently coerce 成默认 0，导致原本写的 disabled < 0 分支不可达，用户传 -1
+// 不会得到任何反馈。这里直接读 raw 值做完整三态判断。
+func parseDisabledFlag(raw interface{}) (int, error) {
+	if raw == nil {
+		return 0, nil
+	}
+	var n int64
+	switch v := raw.(type) {
+	case float64:
+		// JSON 数字统一是 float64。要求整数 + 在 0/1 范围内。
+		if v != float64(int64(v)) {
+			return 0, fmt.Errorf("disabled must be 0 or 1 (got non-integer %v)", v)
+		}
+		n = int64(v)
+	case int:
+		n = int64(v)
+	case int64:
+		n = v
+	case string:
+		if v == "" {
+			return 0, nil
+		}
+		parsed, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("disabled must be 0 or 1 (got %q)", v)
+		}
+		n = parsed
+	default:
+		return 0, fmt.Errorf("disabled must be 0 or 1 (got %T)", raw)
+	}
+	if n != 0 && n != 1 {
+		return 0, fmt.Errorf("disabled must be 0 or 1 (got %d)", n)
+	}
+	return int(n), nil
 }

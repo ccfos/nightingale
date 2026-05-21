@@ -174,8 +174,9 @@ var ImportPromRuleYAML = aiagent.AgentTool{
 - 支持三种格式：顶层 groups / 纯 rules 数组 / 单条 rule
 - labels.severity (critical/warning/info) 会自动映射到 n9e 的 1/2/3
 - 其他 labels 自动转成 append_tags
-- 同名规则会按 n9e 现有逻辑报错并跳过；可用 name_prefix/name_suffix 整体改名后重试
-返回每条规则的写入结果（id / error）。建议先调 preview_prom_rule_yaml 让用户确认。
+- **同名规则自动跳过**，返回 status=skipped_duplicate；不算 failed，**不要**用 name_prefix 重试整份 YAML（会让已创建的规则全部多写一份）
+- name_prefix/name_suffix 用于刻意让导入的规则与现有规则并存（如对比测试），不是用于"重试失败项"
+返回每条规则的结果（status=created|skipped_duplicate|failed，对应 id 或 error）。建议先调 preview_prom_rule_yaml 让用户确认。
 推荐入参用 payload_file（http_fetch save_to_file=true 拿到的 file_path）而不是 payload 文本。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{

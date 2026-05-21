@@ -489,9 +489,16 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 		maxSkills = DefaultMaxSkills
 	}
 
-	// 短路：用户消息（taskContext）里出现 skill 完整 name 时直接命中，跳过 LLM。
-	// 治"用户已经指定了 skill 名却被 selector 选错"的常见 case——一次确定性匹配
-	// 比一次 LLM 调用快、稳、便宜。多个 name 都命中时按出现顺序保留（map 迭代不稳）。
+	// 短路：用户**明确引用**了 skill 完整 name 时跳过 LLM 直接命中。
+	//
+	// 早先用 strings.Contains 太宽——用户粘 release notes、错误日志、文档片段里
+	// 顺手出现的 skill 名字也会触发，比如用户问 "怎么用 n9e-import-prom-rule
+	// 这个 skill" 是真要用，但贴一段日志含 "[ERROR] n9e-import-prom-rule timeout"
+	// 又问别的事就被误触发。
+	//
+	// 现在只在 name 周围有"引用标记"时短路：单/双/反引号成对包裹、或紧贴在 / @
+	// 之后。这是常见的"我在引用 skill 名"语义，普通文本里很少出现。命中失败就
+	// 老老实实走 LLM selector，让 examples + description 决定。
 	var explicit []*SkillMetadata
 	seen := make(map[string]struct{}, len(availableSkills))
 	for _, sk := range availableSkills {
@@ -501,7 +508,7 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 		if _, dup := seen[sk.Name]; dup {
 			continue
 		}
-		if strings.Contains(taskContext, sk.Name) {
+		if isExplicitSkillReference(taskContext, sk.Name) {
 			explicit = append(explicit, sk)
 			seen[sk.Name] = struct{}{}
 		}
@@ -510,7 +517,7 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 		if len(explicit) > maxSkills {
 			explicit = explicit[:maxSkills]
 		}
-		logger.Debugf("[SkillSelector] explicit name match: %d skill(s) in user message, skipping LLM", len(explicit))
+		logger.Debugf("[SkillSelector] explicit name match: %d skill(s) referenced in user message, skipping LLM", len(explicit))
 		return explicit, nil
 	}
 
@@ -554,6 +561,32 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 	}
 
 	return result, nil
+}
+
+// isExplicitSkillReference 判断 text 里是否**明确引用**了 name。
+//
+// 命中规则（任一即可）：
+//   - 紧贴 `name`、'name'、"name" 三种引号包裹
+//   - 紧贴在 / 或 @ 之后（如 /n9e-import-prom-rule、@n9e-import-prom-rule）
+//
+// 只看是否引号 / 前缀符号紧贴，不要求一定到边界——即 "use `n9e-import-prom-rule`!"
+// 也命中（!= 反引号闭合后任意字符）。这是常见的"我在引用 skill 名"语义。
+// 普通文本里不会无意出现，避免被粘贴的文档 / 日志误触发。
+func isExplicitSkillReference(text, name string) bool {
+	if name == "" {
+		return false
+	}
+	// 引号包裹三种
+	for _, q := range []string{"`", "'", "\""} {
+		if strings.Contains(text, q+name+q) {
+			return true
+		}
+	}
+	// / 或 @ 前缀
+	if strings.Contains(text, "/"+name) || strings.Contains(text, "@"+name) {
+		return true
+	}
+	return false
 }
 
 // buildSelectionPrompt 构建技能选择提示词

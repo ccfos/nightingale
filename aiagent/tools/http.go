@@ -111,6 +111,17 @@ func httpFetch(ctx context.Context, _ *aiagent.ToolDeps, args map[string]interfa
 	}
 
 	if saveToFile {
+		// 截断时不写文件、直接报错：下游 import_prom_rule_yaml / preview_prom_rule_yaml
+		// 看不到 truncated 字段（payload_file 入参时它们只读文件正文），LLM 也未必
+		// 检查 truncated。最坏情况是截断切在 YAML group 边界附近、parse 居然成功，
+		// 用户以为全量导入了实际丢了几十条规则。所以前置阻断，让 LLM 必须显式扩大
+		// max_bytes 重试。
+		if truncated {
+			return "", fmt.Errorf(
+				"response truncated at %d bytes (max_bytes cap); retry with a larger max_bytes (hard cap: %d)",
+				len(raw), httpFetchHardMaxBytes)
+		}
+
 		// Write body to a temp file and return its path instead of the bytes.
 		// Lets the LLM hand the path to downstream tools (preview/import) without
 		// the YAML ever entering the prompt context — saves tokens on large files
@@ -133,7 +144,7 @@ func httpFetch(ctx context.Context, _ *aiagent.ToolDeps, args map[string]interfa
 			"status_code":  resp.StatusCode,
 			"content_type": resp.Header.Get("Content-Type"),
 			"size":         len(raw),
-			"truncated":    truncated,
+			"truncated":    false, // 上面 truncated=true 已 return；落到这里必然完整
 			"file_path":    path,
 		})
 		return string(payload), nil

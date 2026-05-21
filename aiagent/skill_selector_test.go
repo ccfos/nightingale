@@ -120,3 +120,31 @@ builtin_tools:
 		t.Errorf("builtin_tools wrong: %#v", sk.BuiltinTools)
 	}
 }
+
+func TestIsExplicitSkillReference(t *testing.T) {
+	name := "n9e-import-prom-rule"
+	cases := []struct {
+		text string
+		want bool
+	}{
+		// 命中：被引号 / 反引号 / 斜杠 / @ 包裹
+		{"试用 `" + name + "` 这个 skill", true},
+		{"用 '" + name + "' 处理", true},
+		{`call "` + name + `" please`, true},
+		{"调 /" + name + " 来导入", true},
+		{"see @" + name + " for usage", true},
+
+		// 不命中：裸出现（可能是粘贴的日志 / 文档 / 顺口提到）
+		{"导入 " + name + " 的某个文件，但其实不是真要用它", false},
+		{"[ERROR] " + name + " timeout 1s", false},
+		{name + " is a great skill, anyway help me create something", false},
+		{"", false},
+		{"unrelated text", false},
+	}
+	for _, c := range cases {
+		got := isExplicitSkillReference(c.text, name)
+		if got != c.want {
+			t.Errorf("isExplicitSkillReference(%q, %q) = %v, want %v", c.text, name, got, c.want)
+		}
+	}
+}

@@ -78,6 +78,13 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 		DatasourceQueries: datasouceQueries,
 		NotifyVersion:     1,
 		NotifyRuleIds:     []int64{},
+		// 显式初始化为空切片：FE2DB 把 nil 切片序列化成 JSON null，
+		// 前端 / 后续迁移逻辑若对 null vs [] 处理不一致会显示异常。
+		// 这三个字段 deprecated 但 schema 还在，统一落 "[]" 更稳。
+		// 同样解决 HTTP /alert-rules-import 那条路径同样的隐患（共用 ConvertAlert）。
+		NotifyChannelsJSON: []string{},
+		NotifyGroupsJSON:   []string{},
+		CallbacksJSON:      []string{},
 	}
 
 	return ar

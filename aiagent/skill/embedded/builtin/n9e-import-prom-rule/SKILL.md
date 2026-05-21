@@ -103,15 +103,41 @@ import_prom_rule_yaml(
 
 `datasource_ids` 必须是 JSON 数组字符串，比如 `"[1]"` 或 `"[1,3]"`。
 
-返回是 `{total, succeeded, failed, items:[{name, id?, error?}]}`。
+返回结构：
 
-#### 处理重名
-
-如果 `failed > 0` 且 `items[*].error` 里出现 `already exists`，**不要去查 `list_alert_rules`**。直接用 `name_prefix` 或 `name_suffix` 重试：
-
+```json
+{
+  "total":   38,
+  "created": 36,
+  "skipped": 2,        // 重名规则，自动跳过，不是失败
+  "failed":  0,        // 真正的写入错误（DB/校验等）
+  "items": [
+    {"name":"HostHighCpuLoad", "status":"skipped_duplicate"},
+    {"name":"HostOutOfMemory", "status":"created", "id":177},
+    {"name":"BadOne", "status":"failed", "error":"<message>"}
+  ]
+}
 ```
-import_prom_rule_yaml(... , payload_file=<同一个>, name_prefix="awesome-")
-```
+
+每条规则的 `status` 三选一：
+- `created` — 新建成功，有 `id`
+- `skipped_duplicate` — 同名规则已存在，**未做任何改动**，不需要重试
+- `failed` — 真错误（DB、校验等），看 `error`
+
+#### 处理重名（重要）
+
+⚠️ **同名规则会被自动跳过（status=skipped_duplicate），不是失败**。看到 skipped > 0 时**绝对不要**用 `name_prefix` "重试整份 YAML"——那会让已经成功创建的 N 条规则全部多写一份带前缀的副本，造成翻倍数据污染。
+
+正确的汇报方式：直接告诉用户哪几条因重名跳过，让用户决定怎么办：
+
+> ✅ 已导入 36 条规则。另有 2 条因同名已存在被跳过：HostHighCpuLoad、HostOutOfMemory。
+> 如果想覆盖它们，请到告警规则页面删掉旧的再重新导入；如果想让新旧并存（如做对比测试），可以加 name_prefix 重新导入但要清楚**所有 38 条都会被加前缀**。
+
+只有用户**明确要求并存**（极少见的对比测试场景）才用 `name_prefix`/`name_suffix`，且要提前告知 LLM 会把全量规则都加前缀。
+
+#### 真正的失败（status=failed）才需要排查
+
+如果出现 `status=failed`，看 `error` 字段：常见的有数据源校验失败、字段格式错误等。这些是 YAML 本身或环境问题，name_prefix 治不了。
 
 #### 谨慎模式
 
@@ -121,9 +147,10 @@ import_prom_rule_yaml(... , payload_file=<同一个>, name_prefix="awesome-")
 
 **保持简短**：
 
-> ✅ 已向业务组「default」导入 36 条告警规则，2 条因重名跳过（HostHighCpuLoad / HostOutOfMemory）。失败的可以加 `name_prefix` 重试。
+> ✅ 已向业务组「default」导入 36 条告警规则。
+> ⚠️ 2 条因同名已存在被跳过：HostHighCpuLoad、HostOutOfMemory。需要覆盖请在告警规则页面手动删除旧规则后重导。
 
-不要把 36 条规则的 ID 全列出来，前端会用卡片展示。
+不要把 36 条规则的 ID 全列出来，前端会用卡片展示。**不要主动建议 "用 name_prefix 重试"——除非用户明确要并存。**
 
 ## payload vs payload_file 怎么选
 
