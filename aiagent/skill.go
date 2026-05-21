@@ -42,6 +42,11 @@ type SkillMetadata struct {
 	Name        string `yaml:"name" json:"name"`
 	Description string `yaml:"description" json:"description"`
 
+	// Examples 是触发本 skill 的典型用户问法，会被 selector prompt 当作 few-shot
+	// 用——比单看 description 文字相似度强很多，特别能区分"批量导入 vs 单条创建"
+	// 这种相邻意图。每条 SKILL.md frontmatter 写 3-5 句即可。
+	Examples []string `yaml:"examples,omitempty" json:"examples,omitempty"`
+
 	// 可选扩展字段
 	RecommendedTools []string `yaml:"recommended_tools,omitempty" json:"recommended_tools,omitempty"`
 	BuiltinTools     []string `yaml:"builtin_tools,omitempty" json:"builtin_tools,omitempty"` // 内置工具列表
@@ -189,60 +194,29 @@ func skillMetadataFromFrontmatter(fm skillpkg.Frontmatter) *SkillMetadata {
 	if len(fm.BuiltinTools) > 0 {
 		m.BuiltinTools = append([]string(nil), fm.BuiltinTools...)
 	}
+	if len(fm.Examples) > 0 {
+		m.Examples = append([]string(nil), fm.Examples...)
+	}
 	return m
 }
 
-// 从 SKILL.md 文件加载元数据
+// loadMetadataFromFile 读取 SKILL.md 顶部 YAML frontmatter，转成 SkillMetadata。
+//
+// 历史实现自己用 bufio.Scanner 逐行 TrimSpace 拼 frontmatter，结果把多行 block
+// scalar 的缩进吃掉了——`description: |\n  ...` 这种形式会被压扁成
+// `description: |\n...`，后续 YAML 解析在第一行非空字符处报 "could not find
+// expected ':'". 现在直接复用 skill.ParseMarkdown（subpackage 里已经写过的、
+// 也是 router 导入路径用的那一份），保证两个入口对同一个 SKILL.md 解析一致。
 func (r *SkillRegistry) loadMetadataFromFile(filePath string) (*SkillMetadata, error) {
-	file, err := os.Open(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %v", err)
+		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
-	defer file.Close()
-
-	// 解析 YAML frontmatter
-	scanner := bufio.NewScanner(file)
-	var inFrontmatter bool
-	var frontmatterLines []string
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-
-		if line == "---" {
-			if !inFrontmatter {
-				inFrontmatter = true
-				continue
-			} else {
-				// frontmatter 结束
-				break
-			}
-		}
-
-		if inFrontmatter {
-			frontmatterLines = append(frontmatterLines, line)
-		}
+	fm, _, ok := skillpkg.ParseMarkdown(string(content))
+	if !ok {
+		return nil, fmt.Errorf("invalid frontmatter or missing name in %s", filePath)
 	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to scan file: %v", err)
-	}
-
-	if len(frontmatterLines) == 0 {
-		return nil, fmt.Errorf("no frontmatter found in %s", filePath)
-	}
-
-	// 解析 YAML
-	frontmatter := strings.Join(frontmatterLines, "\n")
-	var metadata SkillMetadata
-	if err := yaml.Unmarshal([]byte(frontmatter), &metadata); err != nil {
-		return nil, fmt.Errorf("failed to parse frontmatter: %v", err)
-	}
-
-	if metadata.Name == "" {
-		return nil, fmt.Errorf("skill name is required in frontmatter")
-	}
-
-	return &metadata, nil
+	return skillMetadataFromFrontmatter(fm), nil
 }
 
 // GetByName 根据名称获取技能元数据
@@ -515,6 +489,31 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 		maxSkills = DefaultMaxSkills
 	}
 
+	// 短路：用户消息（taskContext）里出现 skill 完整 name 时直接命中，跳过 LLM。
+	// 治"用户已经指定了 skill 名却被 selector 选错"的常见 case——一次确定性匹配
+	// 比一次 LLM 调用快、稳、便宜。多个 name 都命中时按出现顺序保留（map 迭代不稳）。
+	var explicit []*SkillMetadata
+	seen := make(map[string]struct{}, len(availableSkills))
+	for _, sk := range availableSkills {
+		if sk.Name == "" {
+			continue
+		}
+		if _, dup := seen[sk.Name]; dup {
+			continue
+		}
+		if strings.Contains(taskContext, sk.Name) {
+			explicit = append(explicit, sk)
+			seen[sk.Name] = struct{}{}
+		}
+	}
+	if len(explicit) > 0 {
+		if len(explicit) > maxSkills {
+			explicit = explicit[:maxSkills]
+		}
+		logger.Debugf("[SkillSelector] explicit name match: %d skill(s) in user message, skipping LLM", len(explicit))
+		return explicit, nil
+	}
+
 	// 构建提示词
 	systemPrompt := s.buildSelectionPrompt(availableSkills, maxSkills)
 
@@ -531,6 +530,7 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 
 	// 解析响应
 	selectedNames := s.parseSelectionResponse(response)
+	logger.Debugf("[SkillSelector] availableSkills=%d, response=%q, parsed=%v", len(availableSkills), response, selectedNames)
 	if len(selectedNames) == 0 {
 		return nil, nil
 	}
@@ -557,58 +557,123 @@ func (s *LLMSkillSelector) SelectMultiple(ctx context.Context, taskContext strin
 }
 
 // buildSelectionPrompt 构建技能选择提示词
+//
+// 设计要点（按 ROI 排序，对应 Anthropic Skills 与业界 RouterChain 实践）：
+//
+//  1. 每个 skill 渲染 description 之后，把 frontmatter 里的 examples 列出来作为
+//     few-shot。"用户这么问 → 选这个 skill" 的对比示例比单看 description 文本
+//     相似度强很多——尤其能区分"批量导入 vs 单条创建"这种相邻意图。
+//  2. 选择原则强调"读完所有 description 再判断"，并显式警告不要只看名词重叠
+//     （selector LLM 常见的失败模式：用户说"导入告警规则"被"告警规则"吸去
+//     create-alert-rule，忽略了真正的动词"导入"）。
+//  3. 要求 LLM 先输出选择理由再输出 JSON。CoT 形式比直接 JSON 显著提高准确率，
+//     parseSelectionResponse 已经能容忍前缀文本（用 LastIndex("]") 定位）。
 func (s *LLMSkillSelector) buildSelectionPrompt(availableSkills []*SkillMetadata, maxSkills int) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf(`你是一个技能选择器。根据以下任务上下文，选择最合适的技能（可选择 1-%d 个）。
+	sb.WriteString(fmt.Sprintf(`你是夜莺(n9e)的技能选择器。任务：根据用户的输入选择 1-%d 个最合适的技能。
+
+## 选择原则（关键）
+
+1. **看用户意图的"动词"，不要被"名词"误导**。例如用户说"导入告警规则"——动词是"导入"，名词是"告警规则"。应选导入类 skill，不选创建类 skill。
+2. **读完每个 skill 的 description 和 examples 再判断**。description 里如果有 "⚠️" 警告（如"不要用这个 skill 做 X，用 Y"），认真对待。
+3. **examples 是同类用户问法**，如果用户提问跟某个 skill 的 example 措辞接近，强信号。
+4. 用户提到了 skill 完整名称时，必选该 skill（虽然代码层已经短路了，仍然遵循）。
+5. 没有合适的技能就返回 []，不要硬选。
 
 ## 可用技能
 
 `, maxSkills))
 
-	for i, skill := range availableSkills {
-		sb.WriteString(fmt.Sprintf("%d. **%s**\n", i+1, skill.Name))
-		sb.WriteString(fmt.Sprintf("   %s\n\n", skill.Description))
+	for i, sk := range availableSkills {
+		sb.WriteString(fmt.Sprintf("### %d. `%s`\n", i+1, sk.Name))
+		sb.WriteString(sk.Description)
+		if !strings.HasSuffix(sk.Description, "\n") {
+			sb.WriteString("\n")
+		}
+		if len(sk.Examples) > 0 {
+			sb.WriteString("典型问法：\n")
+			for _, ex := range sk.Examples {
+				sb.WriteString(fmt.Sprintf("  - %q → 选 %s\n", ex, sk.Name))
+			}
+		}
+		sb.WriteString("\n")
 	}
 
 	sb.WriteString(`## 输出格式
 
-请以 JSON 数组格式返回选中的技能名称，例如：
-` + "```json\n" + `["skill-name-1", "skill-name-2"]
+先用一行中文写出"选择理由"，再单独一行输出 JSON 数组。示例：
+
+选择理由：用户要把 URL 指向的 YAML 文件批量导入，应该用导入类 skill。
+` + "```json\n" + `["n9e-import-prom-rule"]
 ` + "```" + `
 
-## 选择原则
-
-1. 选择与任务最相关的技能
-2. 如果任务涉及多个领域，可以选择多个技能
-3. 优先选择更具体、更专业的技能
-4. 如果没有合适的技能，返回空数组 []
-
-请返回技能名称数组：`)
+现在请基于用户输入做选择：`)
 
 	return sb.String()
 }
 
-// parseSelectionResponse 解析 LLM 的选择响应
+// parseSelectionResponse 解析 LLM 的选择响应。
+//
+// 容忍 LLM 在 JSON 之前先输出 CoT 选择理由（新版 selector prompt 鼓励这个）。
+// 策略：优先 ```json ... ``` 围栏块；没有就回退到"最后一个 [ ... ] 对"——
+// LastIndex 双向锚定避免被 CoT 中可能出现的中括号干扰（理由里如果出现
+// "[node-exporter.yml]" 之类的引用，旧实现会把第一个 [ 当成 JSON 起点）。
 func (s *LLMSkillSelector) parseSelectionResponse(response string) []string {
-	// 尝试从 JSON 代码块中提取
 	response = strings.TrimSpace(response)
 
-	// 查找 JSON 数组
-	start := strings.Index(response, "[")
-	end := strings.LastIndex(response, "]")
-
-	if start < 0 || end <= start {
-		return nil
+	if jsonStr := extractFencedJSONArray(response); jsonStr != "" {
+		if names := tryUnmarshalStringArray(jsonStr); names != nil {
+			return names
+		}
 	}
 
-	jsonStr := response[start : end+1]
+	// 回退：取最后一对 [ ... ]
+	end := strings.LastIndex(response, "]")
+	if end < 0 {
+		return nil
+	}
+	start := strings.LastIndex(response[:end], "[")
+	if start < 0 {
+		return nil
+	}
+	if names := tryUnmarshalStringArray(response[start : end+1]); names != nil {
+		return names
+	}
+	return nil
+}
 
-	var skillNames []string
-	if err := json.Unmarshal([]byte(jsonStr), &skillNames); err != nil {
+// extractFencedJSONArray 从 ```json ... ``` 或 ``` ... ``` 围栏里抠出第一段 JSON 数组。
+// 返回空串表示没找到围栏块。
+func extractFencedJSONArray(s string) string {
+	const fence = "```"
+	for {
+		i := strings.Index(s, fence)
+		if i < 0 {
+			return ""
+		}
+		rest := s[i+len(fence):]
+		// 可选语言标记，如 "json\n"
+		if nl := strings.IndexByte(rest, '\n'); nl >= 0 {
+			rest = rest[nl+1:]
+		}
+		j := strings.Index(rest, fence)
+		if j < 0 {
+			return ""
+		}
+		block := strings.TrimSpace(rest[:j])
+		if strings.HasPrefix(block, "[") && strings.HasSuffix(block, "]") {
+			return block
+		}
+		s = rest[j+len(fence):]
+	}
+}
+
+func tryUnmarshalStringArray(jsonStr string) []string {
+	var names []string
+	if err := json.Unmarshal([]byte(jsonStr), &names); err != nil {
 		logger.Warningf("Failed to parse skill selection response: %v", err)
 		return nil
 	}
-
-	return skillNames
+	return names
 }

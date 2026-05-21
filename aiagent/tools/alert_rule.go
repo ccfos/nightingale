@@ -702,14 +702,38 @@ type promRuleImportItem struct {
 	Error string `json:"error,omitempty"`
 }
 
+// resolvePromRulePayload returns the YAML payload for preview/import. Caller
+// must pass exactly one of `payload` (inline text) or `payload_file` (path to
+// a temp file produced by http_fetch save_to_file=true). The file path is
+// validated via ReadFetchTempFile — must live under os.TempDir and have the
+// http-fetch prefix, so the LLM cannot read arbitrary files.
+func resolvePromRulePayload(args map[string]interface{}) (string, error) {
+	payload := getArgString(args, "payload")
+	payloadFile := getArgString(args, "payload_file")
+	switch {
+	case payload != "" && payloadFile != "":
+		return "", fmt.Errorf("pass either payload or payload_file, not both")
+	case payload != "":
+		return payload, nil
+	case payloadFile != "":
+		raw, err := ReadFetchTempFile(payloadFile)
+		if err != nil {
+			return "", err
+		}
+		return string(raw), nil
+	default:
+		return "", fmt.Errorf("payload or payload_file is required")
+	}
+}
+
 // previewPromRuleYAML parses a Prometheus rule YAML payload and returns the
 // rules it would produce, without touching the DB. Same parsing path as the
 // import handler (models.ParsePromRuleYAML + models.DealPromGroup), so the
 // preview can't drift from what import will actually write.
 func previewPromRuleYAML(_ context.Context, _ *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
-	payload := getArgString(args, "payload")
-	if payload == "" {
-		return "", fmt.Errorf("payload is required")
+	payload, err := resolvePromRulePayload(args)
+	if err != nil {
+		return "", err
 	}
 
 	groups, err := models.ParsePromRuleYAML(payload)
@@ -803,9 +827,9 @@ func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		return "", fmt.Errorf("disabled must be 0 or 1")
 	}
 
-	payload := getArgString(args, "payload")
-	if payload == "" {
-		return "", fmt.Errorf("payload is required")
+	payload, err := resolvePromRulePayload(args)
+	if err != nil {
+		return "", err
 	}
 
 	groups, err := models.ParsePromRuleYAML(payload)

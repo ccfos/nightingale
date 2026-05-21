@@ -8,6 +8,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -24,6 +27,12 @@ const (
 	httpFetchDefaultTimeout  = 10
 	httpFetchMaxTimeout      = 60
 	httpFetchMaxRedirects    = 5
+
+	// HTTPFetchTempFilePrefix is the basename prefix used by http_fetch when
+	// save_to_file=true. Downstream tools (preview_prom_rule_yaml /
+	// import_prom_rule_yaml) refuse any payload_file whose basename doesn't
+	// start with this prefix — keeps the LLM from passing /etc/passwd through.
+	HTTPFetchTempFilePrefix = "n9e-aiagent-fetch-"
 )
 
 // httpFetch issues a GET against a public URL and returns the response body
@@ -96,6 +105,40 @@ func httpFetch(ctx context.Context, _ *aiagent.ToolDeps, args map[string]interfa
 		raw = raw[:maxBytes]
 	}
 
+	saveToFile := false
+	if v, ok := args["save_to_file"].(bool); ok {
+		saveToFile = v
+	}
+
+	if saveToFile {
+		// Write body to a temp file and return its path instead of the bytes.
+		// Lets the LLM hand the path to downstream tools (preview/import) without
+		// the YAML ever entering the prompt context — saves tokens on large files
+		// and keeps the LLM from "helpfully" reformatting it on the way through.
+		f, err := os.CreateTemp("", HTTPFetchTempFilePrefix+"*")
+		if err != nil {
+			return "", fmt.Errorf("create temp file failed: %v", err)
+		}
+		path := f.Name()
+		if _, err := f.Write(raw); err != nil {
+			f.Close()
+			os.Remove(path)
+			return "", fmt.Errorf("write temp file failed: %v", err)
+		}
+		if err := f.Close(); err != nil {
+			os.Remove(path)
+			return "", fmt.Errorf("close temp file failed: %v", err)
+		}
+		payload, _ := json.Marshal(map[string]interface{}{
+			"status_code":  resp.StatusCode,
+			"content_type": resp.Header.Get("Content-Type"),
+			"size":         len(raw),
+			"truncated":    truncated,
+			"file_path":    path,
+		})
+		return string(payload), nil
+	}
+
 	payload, _ := json.Marshal(map[string]interface{}{
 		"status_code":  resp.StatusCode,
 		"content_type": resp.Header.Get("Content-Type"),
@@ -104,6 +147,49 @@ func httpFetch(ctx context.Context, _ *aiagent.ToolDeps, args map[string]interfa
 		"body":         string(raw),
 	})
 	return string(payload), nil
+}
+
+// ReadFetchTempFile validates that path was produced by http_fetch (sits in
+// os.TempDir() and basename starts with HTTPFetchTempFilePrefix) and reads it
+// with the same hard cap as the fetcher itself. Exported so the alert-rule
+// tools can accept a `payload_file` arg without redoing the path checks.
+func ReadFetchTempFile(path string) ([]byte, error) {
+	if path == "" {
+		return nil, fmt.Errorf("file_path is empty")
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file_path: %v", err)
+	}
+	tmpDir, err := filepath.Abs(os.TempDir())
+	if err != nil {
+		return nil, fmt.Errorf("resolve tmpdir failed: %v", err)
+	}
+	dir, base := filepath.Split(abs)
+	// Trim trailing slash from dir for the equality check (filepath.Split keeps it).
+	cleanDir := filepath.Clean(dir)
+	cleanTmp := filepath.Clean(tmpDir)
+	if cleanDir != cleanTmp {
+		return nil, fmt.Errorf("payload_file must live under %s (got %s)", cleanTmp, cleanDir)
+	}
+	if !strings.HasPrefix(base, HTTPFetchTempFilePrefix) {
+		return nil, fmt.Errorf("payload_file basename must start with %q", HTTPFetchTempFilePrefix)
+	}
+	f, err := os.Open(abs)
+	if err != nil {
+		return nil, fmt.Errorf("open payload_file: %v", err)
+	}
+	defer f.Close()
+	// Same hard cap as http_fetch — refuses to read a 50 MiB file even if it
+	// somehow landed in /tmp with our prefix.
+	raw, err := io.ReadAll(io.LimitReader(f, int64(httpFetchHardMaxBytes)+1))
+	if err != nil {
+		return nil, fmt.Errorf("read payload_file: %v", err)
+	}
+	if len(raw) > httpFetchHardMaxBytes {
+		return nil, fmt.Errorf("payload_file exceeds %d bytes", httpFetchHardMaxBytes)
+	}
+	return raw, nil
 }
 
 func validateFetchURL(rawURL string) error {
