@@ -407,6 +407,31 @@ func (a *Agent) buildTaskContext(req *AgentRequest) string {
 		}
 	}
 
+	// 多轮对话历史里的 user 消息也喂给 selector。否则跟进消息（"业务组：xxx
+	// 数据源：xxx"）丢掉 seq=1 的原始意图，selector 看不到"导入"这种动词，
+	// 必然返回 []。只挂最近 4 条 user 消息，避免长会话把 selector prompt 撑爆。
+	if len(req.History) > 0 {
+		const maxHistoryUserMsgs = 4
+		userMsgs := make([]string, 0, maxHistoryUserMsgs)
+		for i := len(req.History) - 1; i >= 0 && len(userMsgs) < maxHistoryUserMsgs; i-- {
+			m := req.History[i]
+			if m.Role != "user" || strings.TrimSpace(m.Content) == "" {
+				continue
+			}
+			userMsgs = append([]string{m.Content}, userMsgs...) // 保持时间顺序
+		}
+		if len(userMsgs) > 0 {
+			sb.WriteString("\n对话历史（user 消息，按时间正序）:\n")
+			for _, msg := range userMsgs {
+				// 截断单条以防一条几 KB 的粘贴撑爆 selector prompt
+				if len(msg) > 1024 {
+					msg = msg[:1024] + "...(truncated)"
+				}
+				sb.WriteString(fmt.Sprintf("  - %s\n", strings.ReplaceAll(msg, "\n", " ")))
+			}
+		}
+	}
+
 	if sb.Len() == 0 {
 		return "无可用上下文信息"
 	}

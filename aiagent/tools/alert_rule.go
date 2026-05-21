@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
@@ -45,6 +47,8 @@ func init() {
 	register(defs.GetAlertRuleDetail, getAlertRuleDetail)
 	register(defs.CreateAlertRule, createAlertRule)
 	register(defs.ListLegacyNotifyAlertRules, listLegacyNotifyAlertRules)
+	register(defs.ImportPromRuleYAML, importPromRuleYAML)
+	register(defs.PreviewPromRuleYAML, previewPromRuleYAML)
 }
 
 // legacyAlertRuleResult 是 list_legacy_notify_alert_rules 的返回单元。
@@ -679,6 +683,272 @@ func normalizeQueryIntervals(rc map[string]interface{}) {
 	}
 }
 
+// =============================================================================
+// import_prom_rule_yaml / preview_prom_rule_yaml
+// =============================================================================
+
+type promRulePreviewItem struct {
+	Name            string            `json:"name"`
+	Severity        int               `json:"severity"`
+	PromQl          string            `json:"prom_ql"`
+	ForDurationSec  int               `json:"for_duration_sec"`
+	EvalIntervalSec int               `json:"eval_interval_sec"`
+	AppendTags      []string          `json:"append_tags,omitempty"`
+	Annotations     map[string]string `json:"annotations,omitempty"`
+}
+
+// promRuleImportItem 区分三种结局：
+//   - status="created"          ：新建成功，Id 非零
+//   - status="skipped_duplicate"：同名规则已存在，未做任何改动；Error 字段为空
+//   - status="failed"           ：其他错误（校验失败、DB 异常等）；Error 描述原因
+//
+// 区分 skipped vs failed 很关键，避免 LLM 看到 "failed: already exists" 就触发
+// "用 name_prefix 重试整份 YAML" 的错误纠正动作——那会让没冲突的规则全部多写
+// 一遍，造成 N+冲突项 vs 2N 条总量。
+type promRuleImportItem struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	Id     int64  `json:"id,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
+
+const (
+	promRuleStatusCreated   = "created"
+	promRuleStatusSkipped   = "skipped_duplicate"
+	promRuleStatusFailed    = "failed"
+	promRuleDuplicateErrStr = "AlertRule already exists" // 来自 models.AlertRule.Add
+)
+
+// resolvePromRulePayload returns the YAML payload for preview/import. Caller
+// must pass exactly one of `payload` (inline text) or `payload_file` (path to
+// a temp file produced by http_fetch save_to_file=true). The file path is
+// validated via ReadFetchTempFile — must live under os.TempDir and have the
+// http-fetch prefix, so the LLM cannot read arbitrary files.
+func resolvePromRulePayload(args map[string]interface{}) (string, error) {
+	payload := getArgString(args, "payload")
+	payloadFile := getArgString(args, "payload_file")
+	switch {
+	case payload != "" && payloadFile != "":
+		return "", fmt.Errorf("pass either payload or payload_file, not both")
+	case payload != "":
+		return payload, nil
+	case payloadFile != "":
+		raw, err := ReadFetchTempFile(payloadFile)
+		if err != nil {
+			return "", err
+		}
+		return string(raw), nil
+	default:
+		return "", fmt.Errorf("payload or payload_file is required")
+	}
+}
+
+// previewPromRuleYAML parses a Prometheus rule YAML payload and returns the
+// rules it would produce, without touching the DB. Same parsing path as the
+// import handler (models.ParsePromRuleYAML + models.DealPromGroup), so the
+// preview can't drift from what import will actually write.
+func previewPromRuleYAML(_ context.Context, _ *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	payload, err := resolvePromRulePayload(args)
+	if err != nil {
+		return "", err
+	}
+
+	groups, err := models.ParsePromRuleYAML(payload)
+	if err != nil {
+		return "", err
+	}
+
+	rules := models.DealPromGroup(groups, nil, 0)
+
+	items := make([]promRulePreviewItem, 0, len(rules))
+	for _, r := range rules {
+		items = append(items, promRulePreviewItem{
+			Name:            r.Name,
+			Severity:        r.Severity,
+			PromQl:          r.PromQl,
+			ForDurationSec:  r.PromForDuration,
+			EvalIntervalSec: parseCronEverySeconds(r.CronPattern),
+			AppendTags:      r.AppendTagsJSON,
+			Annotations:     r.AnnotationsJSON,
+		})
+	}
+
+	return marshalList(len(items), items), nil
+}
+
+// importPromRuleYAML parses a Prometheus rule YAML payload and persists each
+// rule to the named busi group. Mirrors the permission checks of
+// alertRuleAddByImportPromRule (perm /alert-rules/add + bgrw) and reuses the
+// same conversion (ParsePromRuleYAML + DealPromGroup) so behavior matches the
+// HTTP import endpoint. Returns one entry per rule with id or error so the
+// LLM can summarise partial successes.
+func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAlertRulesAdd); err != nil {
+		return "", err
+	}
+
+	groupId := getArgInt64(args, "group_id")
+	if groupId == 0 {
+		return "", fmt.Errorf("group_id is required")
+	}
+
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	rawIds := getArgString(args, "datasource_ids")
+	if rawIds == "" {
+		return "", fmt.Errorf("datasource_ids is required (JSON array, e.g. \"[1]\")")
+	}
+	var dsIds []int64
+	if err := json.Unmarshal([]byte(rawIds), &dsIds); err != nil {
+		return "", fmt.Errorf("datasource_ids must be a JSON array of integers (got %q): %v", rawIds, err)
+	}
+	if len(dsIds) == 0 {
+		return "", fmt.Errorf("datasource_ids cannot be empty")
+	}
+
+	// Verify each datasource exists and the user can see it. Without this
+	// check the LLM could spray rules at a datasource the caller doesn't
+	// actually have rights on (mirrors the visibility check in
+	// getDatasourceDetail).
+	for _, dsId := range dsIds {
+		ds, err := models.DatasourceGet(deps.DBCtx, dsId)
+		if err != nil {
+			return "", fmt.Errorf("failed to get datasource %d: %v", dsId, err)
+		}
+		if ds == nil {
+			return "", fmt.Errorf("datasource not found: id=%d", dsId)
+		}
+		if deps.FilterDatasources != nil {
+			filtered := deps.FilterDatasources([]*models.Datasource{ds}, user)
+			if len(filtered) == 0 {
+				return "", fmt.Errorf("forbidden: no access to datasource %d", dsId)
+			}
+		}
+	}
+
+	// 严校验 disabled：必须是 0 或 1。不能用 getArgInt——它把负数和非数字 silently
+	// coerce 成默认 0，原本写的 `disabled < 0` 分支因此永远不可达。
+	disabled, err := parseDisabledFlag(args["disabled"])
+	if err != nil {
+		return "", err
+	}
+
+	payload, err := resolvePromRulePayload(args)
+	if err != nil {
+		return "", err
+	}
+
+	groups, err := models.ParsePromRuleYAML(payload)
+	if err != nil {
+		return "", err
+	}
+
+	dsValues := make([]interface{}, 0, len(dsIds))
+	for _, id := range dsIds {
+		dsValues = append(dsValues, id)
+	}
+	dsQueries := []models.DatasourceQuery{{MatchType: 0, Op: "in", Values: dsValues}}
+
+	rules := models.DealPromGroup(groups, dsQueries, disabled)
+	if len(rules) == 0 {
+		return "", fmt.Errorf("no alert rules parsed from payload")
+	}
+
+	prefix := getArgString(args, "name_prefix")
+	suffix := getArgString(args, "name_suffix")
+
+	items := make([]promRuleImportItem, 0, len(rules))
+	for i := range rules {
+		r := &rules[i]
+		r.Id = 0
+		r.GroupId = groupId
+		r.CreateBy = user.Username
+		r.UpdateBy = user.Username
+		r.DatasourceIdsJson = dsIds
+		if prefix != "" {
+			r.Name = prefix + r.Name
+		}
+		if suffix != "" {
+			r.Name = r.Name + suffix
+		}
+
+		item := promRuleImportItem{Name: r.Name}
+		if err := r.FE2DB(); err != nil {
+			item.Status = promRuleStatusFailed
+			item.Error = err.Error()
+			items = append(items, item)
+			continue
+		}
+		if err := r.Add(deps.DBCtx); err != nil {
+			// 重名是预期分支：DB 里已经有同名规则，不当真正失败，标 skipped。
+			// 否则 LLM 看到 "failed: already exists" 容易触发"用 name_prefix
+			// 重试整份 YAML"的纠正动作 —— 那会让没冲突的规则全部多写一遍。
+			if err.Error() == promRuleDuplicateErrStr {
+				item.Status = promRuleStatusSkipped
+			} else {
+				item.Status = promRuleStatusFailed
+				item.Error = err.Error()
+			}
+			items = append(items, item)
+			continue
+		}
+		item.Status = promRuleStatusCreated
+		item.Id = r.Id
+		items = append(items, item)
+	}
+
+	var created, skipped, failed int
+	for _, it := range items {
+		switch it.Status {
+		case promRuleStatusCreated:
+			created++
+		case promRuleStatusSkipped:
+			skipped++
+		case promRuleStatusFailed:
+			failed++
+		}
+	}
+	payloadOut, _ := json.Marshal(map[string]interface{}{
+		"group_id": groupId,
+		"total":    len(items),
+		"created":  created,
+		"skipped":  skipped, // 重名规则跳过的数量，不是失败
+		"failed":   failed,
+		"items":    items,
+	})
+	logger.Debugf("import_prom_rule_yaml: group=%d total=%d created=%d skipped=%d failed=%d",
+		groupId, len(items), created, skipped, failed)
+	return string(payloadOut), nil
+}
+
+// parseCronEverySeconds turns "@every 60s" / "@every 5m" into seconds. Best
+// effort: anything else returns 0 so the preview falls back to "unset" rather
+// than misreporting.
+func parseCronEverySeconds(pattern string) int {
+	const prefix = "@every "
+	if !strings.HasPrefix(pattern, prefix) {
+		return 0
+	}
+	d, err := time.ParseDuration(strings.TrimPrefix(pattern, prefix))
+	if err != nil {
+		return 0
+	}
+	return int(d.Seconds())
+}
+
 // wrapIfComplex wraps a PromQL expression in parentheses if it contains
 // operators or functions that could bind more loosely than the comparison
 // we're about to append. For a bare metric selector like `cpu_usage_active`
@@ -701,4 +971,44 @@ func wrapIfComplex(promQL string) string {
 		return "(" + trimmed + ")"
 	}
 	return trimmed
+}
+
+// parseDisabledFlag 严格解析 import_prom_rule_yaml 的 disabled 入参：必须未传 /
+// 0 / 1 三种之一。其他值（包括 -1、2、"abc"）报错。
+//
+// 历史实现用 getArgInt(args,"disabled",0)，但 getArgInt 把任何非正值（含负数）
+// silently coerce 成默认 0，导致原本写的 disabled < 0 分支不可达，用户传 -1
+// 不会得到任何反馈。这里直接读 raw 值做完整三态判断。
+func parseDisabledFlag(raw interface{}) (int, error) {
+	if raw == nil {
+		return 0, nil
+	}
+	var n int64
+	switch v := raw.(type) {
+	case float64:
+		// JSON 数字统一是 float64。要求整数 + 在 0/1 范围内。
+		if v != float64(int64(v)) {
+			return 0, fmt.Errorf("disabled must be 0 or 1 (got non-integer %v)", v)
+		}
+		n = int64(v)
+	case int:
+		n = int64(v)
+	case int64:
+		n = v
+	case string:
+		if v == "" {
+			return 0, nil
+		}
+		parsed, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("disabled must be 0 or 1 (got %q)", v)
+		}
+		n = parsed
+	default:
+		return 0, fmt.Errorf("disabled must be 0 or 1 (got %T)", raw)
+	}
+	if n != 0 && n != 1 {
+		return 0, fmt.Errorf("disabled must be 0 or 1 (got %d)", n)
+	}
+	return int(n), nil
 }
