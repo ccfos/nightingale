@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
@@ -45,6 +46,8 @@ func init() {
 	register(defs.GetAlertRuleDetail, getAlertRuleDetail)
 	register(defs.CreateAlertRule, createAlertRule)
 	register(defs.ListLegacyNotifyAlertRules, listLegacyNotifyAlertRules)
+	register(defs.ImportPromRuleYAML, importPromRuleYAML)
+	register(defs.PreviewPromRuleYAML, previewPromRuleYAML)
 }
 
 // legacyAlertRuleResult 是 list_legacy_notify_alert_rules 的返回单元。
@@ -677,6 +680,215 @@ func normalizeQueryIntervals(rc map[string]interface{}) {
 		}
 		qm["interval"] = int(intervalFloat)
 	}
+}
+
+// =============================================================================
+// import_prom_rule_yaml / preview_prom_rule_yaml
+// =============================================================================
+
+type promRulePreviewItem struct {
+	Name            string            `json:"name"`
+	Severity        int               `json:"severity"`
+	PromQl          string            `json:"prom_ql"`
+	ForDurationSec  int               `json:"for_duration_sec"`
+	EvalIntervalSec int               `json:"eval_interval_sec"`
+	AppendTags      []string          `json:"append_tags,omitempty"`
+	Annotations     map[string]string `json:"annotations,omitempty"`
+}
+
+type promRuleImportItem struct {
+	Name  string `json:"name"`
+	Id    int64  `json:"id,omitempty"`
+	Error string `json:"error,omitempty"`
+}
+
+// previewPromRuleYAML parses a Prometheus rule YAML payload and returns the
+// rules it would produce, without touching the DB. Same parsing path as the
+// import handler (models.ParsePromRuleYAML + models.DealPromGroup), so the
+// preview can't drift from what import will actually write.
+func previewPromRuleYAML(_ context.Context, _ *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	payload := getArgString(args, "payload")
+	if payload == "" {
+		return "", fmt.Errorf("payload is required")
+	}
+
+	groups, err := models.ParsePromRuleYAML(payload)
+	if err != nil {
+		return "", err
+	}
+
+	rules := models.DealPromGroup(groups, nil, 0)
+
+	items := make([]promRulePreviewItem, 0, len(rules))
+	for _, r := range rules {
+		items = append(items, promRulePreviewItem{
+			Name:            r.Name,
+			Severity:        r.Severity,
+			PromQl:          r.PromQl,
+			ForDurationSec:  r.PromForDuration,
+			EvalIntervalSec: parseCronEverySeconds(r.CronPattern),
+			AppendTags:      r.AppendTagsJSON,
+			Annotations:     r.AnnotationsJSON,
+		})
+	}
+
+	return marshalList(len(items), items), nil
+}
+
+// importPromRuleYAML parses a Prometheus rule YAML payload and persists each
+// rule to the named busi group. Mirrors the permission checks of
+// alertRuleAddByImportPromRule (perm /alert-rules/add + bgrw) and reuses the
+// same conversion (ParsePromRuleYAML + DealPromGroup) so behavior matches the
+// HTTP import endpoint. Returns one entry per rule with id or error so the
+// LLM can summarise partial successes.
+func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAlertRulesAdd); err != nil {
+		return "", err
+	}
+
+	groupId := getArgInt64(args, "group_id")
+	if groupId == 0 {
+		return "", fmt.Errorf("group_id is required")
+	}
+
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	rawIds := getArgString(args, "datasource_ids")
+	if rawIds == "" {
+		return "", fmt.Errorf("datasource_ids is required (JSON array, e.g. \"[1]\")")
+	}
+	var dsIds []int64
+	if err := json.Unmarshal([]byte(rawIds), &dsIds); err != nil {
+		return "", fmt.Errorf("datasource_ids must be a JSON array of integers (got %q): %v", rawIds, err)
+	}
+	if len(dsIds) == 0 {
+		return "", fmt.Errorf("datasource_ids cannot be empty")
+	}
+
+	// Verify each datasource exists and the user can see it. Without this
+	// check the LLM could spray rules at a datasource the caller doesn't
+	// actually have rights on (mirrors the visibility check in
+	// getDatasourceDetail).
+	for _, dsId := range dsIds {
+		ds, err := models.DatasourceGet(deps.DBCtx, dsId)
+		if err != nil {
+			return "", fmt.Errorf("failed to get datasource %d: %v", dsId, err)
+		}
+		if ds == nil {
+			return "", fmt.Errorf("datasource not found: id=%d", dsId)
+		}
+		if deps.FilterDatasources != nil {
+			filtered := deps.FilterDatasources([]*models.Datasource{ds}, user)
+			if len(filtered) == 0 {
+				return "", fmt.Errorf("forbidden: no access to datasource %d", dsId)
+			}
+		}
+	}
+
+	disabled := getArgInt(args, "disabled", 0)
+	if disabled < 0 || disabled > 1 {
+		return "", fmt.Errorf("disabled must be 0 or 1")
+	}
+
+	payload := getArgString(args, "payload")
+	if payload == "" {
+		return "", fmt.Errorf("payload is required")
+	}
+
+	groups, err := models.ParsePromRuleYAML(payload)
+	if err != nil {
+		return "", err
+	}
+
+	dsValues := make([]interface{}, 0, len(dsIds))
+	for _, id := range dsIds {
+		dsValues = append(dsValues, id)
+	}
+	dsQueries := []models.DatasourceQuery{{MatchType: 0, Op: "in", Values: dsValues}}
+
+	rules := models.DealPromGroup(groups, dsQueries, disabled)
+	if len(rules) == 0 {
+		return "", fmt.Errorf("no alert rules parsed from payload")
+	}
+
+	prefix := getArgString(args, "name_prefix")
+	suffix := getArgString(args, "name_suffix")
+
+	items := make([]promRuleImportItem, 0, len(rules))
+	for i := range rules {
+		r := &rules[i]
+		r.Id = 0
+		r.GroupId = groupId
+		r.CreateBy = user.Username
+		r.UpdateBy = user.Username
+		r.DatasourceIdsJson = dsIds
+		if prefix != "" {
+			r.Name = prefix + r.Name
+		}
+		if suffix != "" {
+			r.Name = r.Name + suffix
+		}
+
+		item := promRuleImportItem{Name: r.Name}
+		if err := r.FE2DB(); err != nil {
+			item.Error = err.Error()
+			items = append(items, item)
+			continue
+		}
+		if err := r.Add(deps.DBCtx); err != nil {
+			item.Error = err.Error()
+			items = append(items, item)
+			continue
+		}
+		item.Id = r.Id
+		items = append(items, item)
+	}
+
+	var ok, failed int
+	for _, it := range items {
+		if it.Error == "" {
+			ok++
+		} else {
+			failed++
+		}
+	}
+	payloadOut, _ := json.Marshal(map[string]interface{}{
+		"group_id":  groupId,
+		"total":     len(items),
+		"succeeded": ok,
+		"failed":    failed,
+		"items":     items,
+	})
+	logger.Debugf("import_prom_rule_yaml: group=%d total=%d ok=%d failed=%d", groupId, len(items), ok, failed)
+	return string(payloadOut), nil
+}
+
+// parseCronEverySeconds turns "@every 60s" / "@every 5m" into seconds. Best
+// effort: anything else returns 0 so the preview falls back to "unset" rather
+// than misreporting.
+func parseCronEverySeconds(pattern string) int {
+	const prefix = "@every "
+	if !strings.HasPrefix(pattern, prefix) {
+		return 0
+	}
+	d, err := time.ParseDuration(strings.TrimPrefix(pattern, prefix))
+	if err != nil {
+		return 0
+	}
+	return int(d.Seconds())
 }
 
 // wrapIfComplex wraps a PromQL expression in parentheses if it contains

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/toolkits/pkg/logger"
+	"gopkg.in/yaml.v2"
 )
 
 type PromRule struct {
@@ -80,6 +81,43 @@ func ConvertAlert(rule PromRule, interval string, datasouceQueries []DatasourceQ
 	}
 
 	return ar
+}
+
+// ParsePromRuleYAML accepts the three shapes that the import endpoint
+// historically tolerated and returns a single normalised []PromRuleGroup:
+//  1. Standard Prometheus file with top-level `groups:`.
+//  2. A bare list of rules (treated as one synthetic group "imported_rules").
+//  3. A single rule object (wrapped the same way).
+//
+// Lives in the model layer so both center/router (HTTP handler) and the
+// aiagent builtin tool (import/preview) decode identically — there's no good
+// reason for two parsers to drift.
+func ParsePromRuleYAML(payload string) ([]PromRuleGroup, error) {
+	payload = strings.TrimSpace(payload)
+	if payload == "" {
+		return nil, fmt.Errorf("payload is empty")
+	}
+
+	var pr struct {
+		Groups []PromRuleGroup `yaml:"groups"`
+	}
+	if err := yaml.Unmarshal([]byte(payload), &pr); err == nil && len(pr.Groups) > 0 {
+		return pr.Groups, nil
+	}
+
+	var rules []PromRule
+	if err := yaml.Unmarshal([]byte(payload), &rules); err == nil && len(rules) > 0 {
+		return []PromRuleGroup{{Name: "imported_rules", Rules: rules}}, nil
+	}
+
+	var single PromRule
+	if err := yaml.Unmarshal([]byte(payload), &single); err != nil {
+		return nil, fmt.Errorf("invalid yaml format: %v", err)
+	}
+	if single.Alert == "" && single.Record == "" {
+		return nil, fmt.Errorf("input yaml is empty or invalid")
+	}
+	return []PromRuleGroup{{Name: "imported_rules", Rules: []PromRule{single}}}, nil
 }
 
 func DealPromGroup(promRule []PromRuleGroup, dataSourceQueries []DatasourceQuery, disabled int) []AlertRule {
