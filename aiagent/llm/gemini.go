@@ -9,11 +9,37 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
 	DefaultGeminiURL = "https://generativelanguage.googleapis.com/v1beta/models"
 )
+
+// toInt 把 JSON 反序列化出来的"数字"（可能是 int / float64 / json.Number）
+// 收敛成 int。NormalizeThinkingParams 内部直接构造 map，会得到 int；用户
+// 自己填的 CustomParams 经过 gorm json serializer 后会变 float64，所以两者都要兼容。
+func toInt(v any) (int, bool) {
+	switch n := v.(type) {
+	case int:
+		return n, true
+	case int32:
+		return int(n), true
+	case int64:
+		return int(n), true
+	case float64:
+		return int(n), true
+	case float32:
+		return int(n), true
+	case json.Number:
+		i, err := n.Int64()
+		if err == nil {
+			return int(i), true
+		}
+	}
+	return 0, false
+}
 
 // Gemini implements the LLM interface for Google Gemini API
 type Gemini struct {
@@ -74,10 +100,20 @@ type geminiFunctionDeclaration struct {
 }
 
 type geminiGenerationConfig struct {
-	Temperature     float64  `json:"temperature,omitempty"`
-	TopP            float64  `json:"topP,omitempty"`
-	MaxOutputTokens int      `json:"maxOutputTokens,omitempty"`
-	StopSequences   []string `json:"stopSequences,omitempty"`
+	Temperature     float64               `json:"temperature,omitempty"`
+	TopP            float64               `json:"topP,omitempty"`
+	MaxOutputTokens int                   `json:"maxOutputTokens,omitempty"`
+	StopSequences   []string              `json:"stopSequences,omitempty"`
+	ThinkingConfig  *geminiThinkingConfig `json:"thinkingConfig,omitempty"`
+}
+
+// geminiThinkingConfig 对应 Gemini 2.5+ 的 thinking 控制字段。
+// ThinkingBudget=0 关闭思考（仅 Flash 系列支持，Pro 关不掉）；
+// ThinkingLevel 是 Gemini 3 引入的替代字段，取值如 "minimal"。
+// 用 *int 区分"没设置"和"显式设为 0"——后者要序列化为 thinkingBudget:0。
+type geminiThinkingConfig struct {
+	ThinkingBudget *int   `json:"thinkingBudget,omitempty"`
+	ThinkingLevel  string `json:"thinkingLevel,omitempty"`
 }
 
 type geminiResponse struct {
@@ -242,6 +278,56 @@ func (g *Gemini) convertRequest(req *GenerateRequest) *geminiRequest {
 		genCfg.MaxOutputTokens = *req.MaxTokens
 	case g.config.MaxTokens != nil:
 		genCfg.MaxOutputTokens = *g.config.MaxTokens
+	}
+
+	// Gemini 没有 OpenAI 风格的 extra_body 平铺，thinking 控制必须落进
+	// generationConfig.thinkingConfig 里。这里把 NormalizeThinkingParams 注入的
+	// map 桥接成强类型字段。容错地读 budget / level，转不出来就静默忽略——
+	// extra 里可能还混着别的厂商字段，不能因为格式不符直接报错。
+	//
+	// 同时尝试 snake_case 和 camelCase：前者是 NormalizeThinkingParams 注入的写法，
+	// 后者是 Gemini 官方文档里的写法（用户可能照官方文档拷过来）。两种都收，避免静默失效。
+	tc, ok := g.config.ExtraBody["thinking_config"].(map[string]any)
+	if !ok {
+		tc, ok = g.config.ExtraBody["thinkingConfig"].(map[string]any)
+	}
+	if ok {
+		gtc := &geminiThinkingConfig{}
+		// budget 也同样两种 key 都收
+		budget, hasBudget := tc["thinking_budget"]
+		if !hasBudget {
+			budget, hasBudget = tc["thinkingBudget"]
+		}
+		if hasBudget {
+			if n, ok := toInt(budget); ok {
+				gtc.ThinkingBudget = &n
+			}
+		}
+		level, _ := tc["thinking_level"].(string)
+		if level == "" {
+			level, _ = tc["thinkingLevel"].(string)
+		}
+		gtc.ThinkingLevel = level
+		if gtc.ThinkingBudget != nil || gtc.ThinkingLevel != "" {
+			genCfg.ThinkingConfig = gtc
+		}
+	}
+
+	// Gemini provider 只消费 thinking_config / thinkingConfig，其它 ExtraBody 键无效。
+	// 这是 Gemini API 形态本身决定的（请求字段都嵌在 generationConfig 等强类型结构里，
+	// 没有 OpenAI 那种顶层平铺的逃生口）。这里给个 debug 日志，避免用户在 CustomParams
+	// 里塞了别的字段却无声无息地不生效、查不出原因。
+	if len(g.config.ExtraBody) > 0 {
+		var unused []string
+		for k := range g.config.ExtraBody {
+			if k == "thinking_config" || k == "thinkingConfig" {
+				continue
+			}
+			unused = append(unused, k)
+		}
+		if len(unused) > 0 {
+			logger.Debugf("[Gemini] ignored ExtraBody keys (provider only consumes thinking_config): %v", unused)
+		}
 	}
 
 	geminiReq := &geminiRequest{

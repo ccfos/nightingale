@@ -319,9 +319,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Temperature:   extraConfig.Temperature,
 		MaxTokens:     extraConfig.MaxTokens,
 		// CustomParams 透传给 provider，由 provider 决定如何并入请求（OpenAI 兼容路径
-		// 把它平铺到 request body 顶层；这是 dashscope/Qwen3 关 thinking 的入口：
-		// custom_params: {"enable_thinking": false}）
-		ExtraBody: extraConfig.CustomParams,
+		// 把它平铺到 request body 顶层）。
+		//
+		// NormalizeThinkingParams 在透传前按 BaseURL / Provider / Model 自动注入"关思考"
+		// 字段（阿里百炼 enable_thinking、火山方舟 thinking.type、Gemini thinking_budget 等）。
+		// 用户在 CustomParams 里显式配置过任意 thinking 控制字段时跳过注入，保留用户意图。
+		ExtraBody: llm.NormalizeThinkingParams(llmCfg.APIType, llmCfg.APIURL, llmCfg.Model, extraConfig.CustomParams),
 	})
 	if err != nil {
 		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))
