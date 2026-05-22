@@ -292,7 +292,6 @@ func TestXPackSQL_CursorFollowed(t *testing.T) {
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.Write([]byte(`{
-					"columns":[{"name":"id","type":"long"}],
 					"rows":[[3],[4]]
 				}`))
 			}
@@ -315,6 +314,9 @@ func TestXPackSQL_CursorFollowed(t *testing.T) {
 	}
 	if len(resp.Rows) != 4 {
 		t.Errorf("expected 4 rows (all pages), got %d", len(resp.Rows))
+	}
+	if len(resp.Columns) != 1 || resp.Columns[0].Name != "id" {
+		t.Errorf("expected columns preserved from first page, got %+v", resp.Columns)
 	}
 	if resp.Cursor != "" {
 		t.Errorf("expected cursor to be cleared, got %q", resp.Cursor)

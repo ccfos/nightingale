@@ -210,6 +210,7 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 		return resp, nil
 	}
 
+	columns := resp.Columns
 	allRows := resp.Rows
 	iterations := 0
 	for iterations < maxCursorIterations && resp.Cursor != "" && len(allRows) < limit {
@@ -228,17 +229,13 @@ func XPackSQL(ctx context.Context, escli *Elasticsearch, req XPackSQLRequest) (*
 
 	if resp.Cursor != "" {
 		go xpackSQLClearCursor(escli, resp.Cursor)
-		if len(allRows) < limit {
-			return nil, fmt.Errorf("ES SQL result incomplete: fetched %d rows in %d cursor iterations "+
-				"but LIMIT is %d; consider reducing LIMIT (max supported: %d)",
-				len(allRows), iterations, limit, (1+maxCursorIterations)*maxCursorBatchSize)
-		}
 	}
 
 	if len(allRows) > limit {
 		allRows = allRows[:limit]
 	}
 
+	resp.Columns = columns
 	resp.Rows = allRows
 	resp.Cursor = ""
 	return resp, nil
