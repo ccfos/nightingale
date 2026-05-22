@@ -371,7 +371,5 @@ func (o *OpenAI) setHeaders(req *http.Request) {
 		req.Header.Set("Authorization", "Bearer "+o.config.APIKey)
 	}
 
-	for k, v := range o.config.Headers {
-		req.Header.Set(k, v)
-	}
+	ApplyCustomHeaders(req, o.config.Headers)
 }

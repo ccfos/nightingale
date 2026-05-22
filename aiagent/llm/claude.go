@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -47,6 +49,35 @@ type claudeRequest struct {
 	Stop        []string        `json:"stop_sequences,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
 	Tools       []claudeTool    `json:"tools,omitempty"`
+
+	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
+	// Kimi（走 Claude provider）的 thinking:{type:disabled} 通过这里注入。
+	extraBody map[string]any
+}
+
+// MarshalJSON 把 extraBody 平铺到顶层 JSON。逻辑与 openAIRequest.MarshalJSON 一致：
+// 先用别名走默认序列化（拿到所有显式字段），unmarshal 回 map，再合并 extraBody，
+// 最后 marshal 出去。显式字段优先，不让 extraBody 覆盖 model/messages 等关键字段。
+func (r claudeRequest) MarshalJSON() ([]byte, error) {
+	type alias claudeRequest
+	data, err := json.Marshal(alias(r))
+	if err != nil {
+		return nil, err
+	}
+	if len(r.extraBody) == 0 {
+		return data, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	for k, v := range r.extraBody {
+		if _, occupied := m[k]; occupied {
+			continue
+		}
+		m[k] = v
+	}
+	return json.Marshal(m)
 }
 
 type claudeMessage struct {
@@ -137,6 +168,13 @@ func (c *Claude) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	jsonData, err := json.Marshal(claudeReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+	if len(c.config.ExtraBody) > 0 {
+		preview := string(jsonData)
+		if len(preview) > 512 {
+			preview = preview[:512] + "...(truncated)"
+		}
+		logger.Debugf("[Claude] stream request body (with extra): %s", preview)
 	}
 
 	resp, err := doHTTPStreamWithRetry(ctx, c.client, "Claude",
@@ -246,9 +284,10 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (c *Claude) convertRequest(req *GenerateRequest) *claudeRequest {
 	claudeReq := &claudeRequest{
-		Model: c.config.Model,
-		TopP:  req.TopP,
-		Stop:  req.Stop,
+		Model:     c.config.Model,
+		TopP:      req.TopP,
+		Stop:      req.Stop,
+		extraBody: c.config.ExtraBody,
 	}
 
 	switch {
@@ -353,7 +392,5 @@ func (c *Claude) setHeaders(req *http.Request) {
 		req.Header.Set("x-api-key", c.config.APIKey)
 	}
 
-	for k, v := range c.config.Headers {
-		req.Header.Set(k, v)
-	}
+	ApplyCustomHeaders(req, c.config.Headers)
 }

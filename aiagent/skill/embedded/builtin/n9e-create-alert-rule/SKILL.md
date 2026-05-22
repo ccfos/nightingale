@@ -1,6 +1,14 @@
 ---
 name: n9e-create-alert-rule
-description: 在夜莺(n9e)平台上创建告警规则。支持 Prometheus/Loki/ES/MySQL/TDengine/ClickHouse/Doris/Host 等所有数据源类型。
+description: |
+  **创建单条告警规则**（用户描述一个告警需求 → 建一条规则）。支持 Prometheus / Loki / ES / OpenSearch / MySQL / PG / TDengine / ClickHouse / Doris / VictoriaLogs / Host 全部数据源。
+  ⚠️ **不要用这个 skill 做批量导入**——用户给的是 URL 或 YAML 文件、awesome-prometheus-alerts、node-exporter.yml 之类，请改用 n9e-import-prom-rule。
+  触发：创建一条 / 加一条告警 / 帮我建个 CPU 告警 / 给 MySQL 加个告警规则 / 我要监控某个指标。
+examples:
+  - "帮我建一条 CPU 使用率超过 80% 的告警"
+  - "新增一条 MySQL 慢查询告警规则"
+  - "给主机内存加个告警，超过 90% 报警"
+  - "创建告警规则监控 disk_used_percent"
 max_iterations: 20
 builtin_tools:
   - create_alert_rule

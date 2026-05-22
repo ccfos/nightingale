@@ -127,9 +127,15 @@ type Config struct {
 	Temperature *float64 `json:"temperature,omitempty"`
 	MaxTokens   *int     `json:"max_tokens,omitempty"`
 
-	// ExtraBody 在序列化请求体时平铺到顶层 JSON，用于厂商特定字段——
-	// 例如 dashscope/Qwen3 的 "enable_thinking"、Anthropic 的 "thinking" 等。
-	// 由 provider 具体实现（目前 OpenAI 兼容路径已支持）。
+	// ExtraBody 用于厂商特定字段。各 provider 消费方式不同：
+	//   - OpenAI 兼容（含 Dashscope/Ark/SiliconFlow/Kimi-OpenAI 等）：整张 map 平铺到
+	//     请求体顶层。例：{"enable_thinking": false} 直接成为顶层字段。
+	//   - Claude（含 Kimi-Claude 兼容路径）：同样平铺到 Anthropic Messages 请求顶层。
+	//   - Gemini：API 形态没有"顶层平铺"逃生口，**仅消费 thinking_config / thinkingConfig
+	//     这一个 key**，桥接进 generationConfig.thinkingConfig；其它 key 会被忽略
+	//     （会打 debug 日志提示）。
+	// 通常由 NormalizeThinkingParams 自动注入 thinking 控制字段；用户也可以在 LLMConfig
+	// 的 CustomParams 里手填覆盖。
 	ExtraBody map[string]any `json:"extra_body,omitempty"`
 }
 

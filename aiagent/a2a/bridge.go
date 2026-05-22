@@ -13,6 +13,11 @@ import (
 // thoughtMetadataKey is recognised by Google ADK A2A clients to render content
 // as the agent's chain-of-thought rather than a regular response. Other clients
 // see it as plain text — no harm done.
+//
+// The router demultiplexes ReAct raw output into P:"reason" (thoughts) and
+// P:"content" (final answer body) before frames reach this bridge — so the
+// rule here is simply: reason → mark thought, content → don't. No marker
+// detection lives in this file.
 const thoughtMetadataKey = "adk_thought"
 
 // kindMetadataKey tags an artifact Part with the n9e artifact kind tag (e.g.

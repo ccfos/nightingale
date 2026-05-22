@@ -2,8 +2,21 @@ package llm
 
 import (
 	"context"
+	"net/http"
 	"strings"
 )
+
+// ApplyCustomHeaders 把用户自定义 header 写入请求。
+// Host 在 net/http 中不能通过 Header.Set 生效，必须赋给 req.Host。
+func ApplyCustomHeaders(req *http.Request, headers map[string]string) {
+	for k, v := range headers {
+		if strings.EqualFold(k, "Host") {
+			req.Host = v
+			continue
+		}
+		req.Header.Set(k, v)
+	}
+}
 
 // Chat is a convenience function for simple chat completions
 func Chat(ctx context.Context, llm LLM, messages []Message) (string, error) {

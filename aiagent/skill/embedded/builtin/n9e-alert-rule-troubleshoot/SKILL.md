@@ -90,6 +90,10 @@ builtin_tools:
 
 - **Prometheus 类**：用 `query_prometheus(query=<promql>, query_type='range', time_range='1h')`。先看 range 趋势，再用 instant 看当前是否真的满足触发条件。
 - **SQL / ES / VictoriaLogs 类**：用 `query_timeseries`，照 R22+ 文档传 `sql + value_key` 或 `index + filter` 或 `query`。**重点提醒用户检查 `value_key` 字段名是否和 SQL 中的列完全一致**（PDF 中明确指出这是常见坑）。
+- **ES `query_string` 大小写坑（ES 日志告警不符合预期时优先排查）**：`AND` / `OR` / `NOT` 必须**大写**才会被识别为布尔操作符，写成 `and` / `or` / `not` 会被当成普通词项，再加上 `query_string` 默认 operator 是 `OR`，整条查询语义彻底变了。
+  - 典型症状：告警命中量远大于预期；返回的日志里混进了**不该匹配**的 pod / service / level（比如查询写的是 `logLevel:ERROR and ext_pod:"menuglobal-*"`，结果返回里大量 INFO/WARN，或者其它 pod 的 ERROR 日志）。
+  - 排查方法：把规则里的 ES 查询语句拷出来，**逐个字符检查 `and`/`or`/`not` 是否大写**；同时用同一条语句把小写改成大写各跑一次 `query_timeseries`，命中数差异巨大就是这个原因。
+  - 修复：改成大写 `AND` / `OR` / `NOT`，或改用结构化 `bool.must` / `bool.should` 写法避免大小写坑。
 
 判定标准：
 - **查得到 + 满足条件** → 进入第 4 步看引擎为什么没产生事件
@@ -311,6 +315,7 @@ get_event_pipeline_executions(event_id=<事件 id>)
 | 7 天内同 hash 触发 > 30 次 / 平均存活 < 2 个评估周期 | flapping 抖动型误报，调大 prom_for_duration 或 RecoverDuration |
 | 触发值始终贴在阈值 ±5% 窄带 | 阈值边缘震荡，需上调阈值远离震荡带 |
 | 恢复前 eval logs 显示 `series=0` | 数据缺失被判恢复（Prom 风格"无数据=恢复"），用 RecoverDuration 让恢复延迟出或独立 host 失联规则承接 |
+| ES 日志告警命中量远超预期 / 返回里混进不该匹配的 pod 或 level | `query_string` 里 `and`/`or`/`not` 写成了小写，被当成词项 + 默认 OR 拼接，改成大写 `AND`/`OR`/`NOT` 或改用 `bool.must` |
 
 ---
 
