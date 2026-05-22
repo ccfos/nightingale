@@ -538,6 +538,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=first_token kind=%s ttft=%dms total=%dms",
 			msg.ChatID, msg.SeqID, kind, (tFirstToken - tAgentStart).Milliseconds(), tFirstToken.Milliseconds())
 	}
+
+	// reactDemux splits a ReAct raw stream into "reason" (everything up to
+	// "Final Answer:") and "content" (everything after). See reactStreamDemuxer
+	// for the rationale — without this split, the final-answer body would only
+	// reach the content channel as one big Done chunk, defeating streaming.
+	demux := &reactStreamDemuxer{}
 	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
@@ -562,10 +568,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			if delta == "" {
 				delta = chunk.Content
 			}
-			if delta != "" {
-				markFirstToken("text")
-				fullReasoning += delta
-				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
+			if delta == "" {
+				break
+			}
+			markFirstToken("text")
+			reasonPart, contentPart := demux.Feed(delta)
+			if reasonPart != "" {
+				fullReasoning += reasonPart
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: reasonPart, P: "reason"})
+			}
+			if contentPart != "" {
+				fullContent += contentPart
+				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: contentPart, P: "content"})
 			}
 		case aiagent.StreamTypeContent:
 			// Direct 模式：token 直接归 content 通道。同时累加到 fullContent，
@@ -594,6 +608,20 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
+			// ReAct iteration boundary: next StreamTypeText delta starts a
+			// fresh "Thought:" from a new LLM call, so the Final-Answer
+			// detection state must be cleared. Also push a P:"step" frame so
+			// downstream consumers (A2A bridge) can close out the current
+			// reasoning artifact and start a new one — without this, multi-
+			// step thoughts render as one undelimited blob.
+			demux.Reset()
+			stepText := "tool_result"
+			if chunk.Metadata != nil {
+				if toolName, _ := chunk.Metadata["tool"].(string); toolName != "" {
+					stepText = "tool_result:" + toolName
+				}
+			}
+			_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: stepText, P: "step"})
 			// Capture successful tool results that have their own structured
 			// UI cards (alert_rule, dashboard, ...) so the frontend can render
 			// them outside of the plain markdown final answer.
@@ -617,7 +645,20 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.finishMessage(state, streamID, 500, errMsg)
 			return
 		case aiagent.StreamTypeDone:
-			if chunk.Content != "" {
+			// Normal ReAct path: fullContent was already accumulated from the
+			// post-marker portion of the raw stream above, so Done with
+			// non-empty Content here would just re-push the same body. Skip
+			// to avoid duplication — symmetric with Direct mode, where
+			// executeDirectWithDone deliberately leaves chunk.Content empty.
+			//
+			// Fallback path: reactFinalSeen=false means the LLM never emitted
+			// a "Final Answer:" marker (react.go's step.Action=="" branch
+			// where the whole response is treated as the answer). Without a
+			// marker we couldn't split content out from the raw stream, so
+			// rely on chunk.Content as the canonical body. The reason stream
+			// already carries this same text — we accept the duplication on
+			// this rare unstructured path rather than guess at boundaries.
+			if !demux.FinalSeen() && chunk.Content != "" {
 				fullContent = chunk.Content
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: chunk.Content, P: "content"})
 			}
