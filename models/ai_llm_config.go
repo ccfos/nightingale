@@ -161,6 +161,13 @@ func (a *AILLMConfig) Create(c *ctx.Context, username string) error {
 		if count > 0 {
 			return fmt.Errorf("ai llm config name %s already exists", a.Name)
 		}
+		var total int64
+		if err := tx.Model(&AILLMConfig{}).Count(&total).Error; err != nil {
+			return err
+		}
+		if total == 0 {
+			a.IsDefault = true
+		}
 		if a.IsDefault {
 			if err := tx.Model(&AILLMConfig{}).Where("is_default = ?", true).Update("is_default", false).Error; err != nil {
 				return err
