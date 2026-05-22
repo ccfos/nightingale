@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/macros"
 )
@@ -219,6 +220,213 @@ func TestXPackSQL_MacroExpansion(t *testing.T) {
 	}
 	if len(resp.Rows) != 1 {
 		t.Errorf("expected 1 row, got %d", len(resp.Rows))
+	}
+}
+
+func TestParseSQLLimit(t *testing.T) {
+	tests := []struct {
+		sql  string
+		want int
+	}{
+		{`SELECT * FROM "t" LIMIT 100`, 100},
+		{`SELECT * FROM "t" LIMIT 100000`, 100000},
+		{`SELECT * FROM "t" limit 500`, 500},
+		{`SELECT * FROM "t"`, 0},
+		{`SELECT * FROM "t" LIMIT abc`, 0},
+		{"SELECT * FROM \"t\"\nLIMIT\n  900", 900},
+		{`SELECT * FROM "t" WHERE x LIKE '%LIMIT%' LIMIT 50`, 50},
+		{`SELECT * FROM "t" WHERE msg = 'LIMIT 999'`, 0},
+		{`SELECT * FROM "t" WHERE msg = 'LIMIT 5' LIMIT 200`, 200},
+		{`SELECT * FROM "t" WHERE msg = 'has ''LIMIT 5'' inside'`, 0},
+		{`SELECT * FROM "limit 5"`, 0},
+		{`SELECT * FROM t -- LIMIT 5`, 0},
+		{`SELECT * FROM t /* LIMIT 5 */ LIMIT 300`, 300},
+		{`SELECT * FROM t -- LIMIT 5` + "\n" + `LIMIT 100`, 100},
+	}
+	for _, tt := range tests {
+		got := parseSQLLimit(tt.sql)
+		if got != tt.want {
+			t.Errorf("parseSQLLimit(%q) = %d, want %d", tt.sql, got, tt.want)
+		}
+	}
+}
+
+// TestXPackSQL_CursorFollowed verifies that XPackSQL follows the cursor
+// to fetch all pages. It also asserts the wire protocol: first request has
+// query+fetch_size, subsequent requests have cursor+fetch_size only.
+func TestXPackSQL_CursorFollowed(t *testing.T) {
+	callCount := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Elastic-Product", "Elasticsearch")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"version": map[string]interface{}{"number": "8.15.0"},
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/_sql":
+			callCount++
+			body, _ := io.ReadAll(r.Body)
+			var reqBody map[string]interface{}
+			json.Unmarshal(body, &reqBody)
+
+			if callCount == 1 {
+				if _, ok := reqBody["query"]; !ok {
+					t.Errorf("first request should have 'query', got: %s", body)
+				}
+				if _, ok := reqBody["fetch_size"]; !ok {
+					t.Errorf("first request should have 'fetch_size', got: %s", body)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(`{
+					"columns":[{"name":"id","type":"long"}],
+					"rows":[[1],[2]],
+					"cursor":"page2"
+				}`))
+			} else {
+				if _, ok := reqBody["query"]; ok {
+					t.Errorf("cursor request should NOT have 'query', got: %s", body)
+				}
+				if _, ok := reqBody["cursor"]; !ok {
+					t.Errorf("cursor request should have 'cursor', got: %s", body)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(`{
+					"columns":[{"name":"id","type":"long"}],
+					"rows":[[3],[4]]
+				}`))
+			}
+		}
+	}))
+	defer srv.Close()
+
+	clientCache = syncMapNew()
+	escli := newTestElasticsearch("8.15.0", []string{srv.URL})
+
+	resp, err := XPackSQL(context.Background(), escli, XPackSQLRequest{
+		Query: `SELECT id FROM "test" LIMIT 10000`,
+	})
+	if err != nil {
+		t.Fatalf("XPackSQL() error: %v", err)
+	}
+
+	if callCount != 2 {
+		t.Errorf("expected 2 /_sql calls (initial + cursor), got %d", callCount)
+	}
+	if len(resp.Rows) != 4 {
+		t.Errorf("expected 4 rows (all pages), got %d", len(resp.Rows))
+	}
+	if resp.Cursor != "" {
+		t.Errorf("expected cursor to be cleared, got %q", resp.Cursor)
+	}
+}
+
+// TestXPackSQL_CursorTruncatedByLimit verifies rows are truncated to LIMIT
+// and that a clear cursor request is sent for the leftover cursor.
+func TestXPackSQL_CursorTruncatedByLimit(t *testing.T) {
+	callCount := 0
+	clearCursorCalled := make(chan string, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Elastic-Product", "Elasticsearch")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"version": map[string]interface{}{"number": "8.15.0"},
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/_sql/close":
+			body, _ := io.ReadAll(r.Body)
+			var reqBody map[string]string
+			json.Unmarshal(body, &reqBody)
+			clearCursorCalled <- reqBody["cursor"]
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"succeeded":true}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/_sql":
+			callCount++
+			w.Header().Set("Content-Type", "application/json")
+			if callCount == 1 {
+				w.Write([]byte(`{
+					"columns":[{"name":"id","type":"long"}],
+					"rows":[[1],[2],[3]],
+					"cursor":"leftover_cursor"
+				}`))
+			} else {
+				w.Write([]byte(`{
+					"columns":[{"name":"id","type":"long"}],
+					"rows":[[4],[5],[6]],
+					"cursor":"still_more"
+				}`))
+			}
+		}
+	}))
+	defer srv.Close()
+
+	clientCache = syncMapNew()
+	escli := newTestElasticsearch("8.15.0", []string{srv.URL})
+
+	resp, err := XPackSQL(context.Background(), escli, XPackSQLRequest{
+		Query: `SELECT id FROM "test" LIMIT 5`,
+	})
+	if err != nil {
+		t.Fatalf("XPackSQL() error: %v", err)
+	}
+
+	if len(resp.Rows) != 5 {
+		t.Errorf("expected 5 rows (truncated to LIMIT), got %d", len(resp.Rows))
+	}
+	if resp.Cursor != "" {
+		t.Errorf("expected cursor cleared in response, got %q", resp.Cursor)
+	}
+
+	select {
+	case cursor := <-clearCursorCalled:
+		if cursor != "still_more" {
+			t.Errorf("expected clear cursor for 'still_more', got %q", cursor)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("clear cursor request not received within 2s — cursor cleanup may be broken")
+	}
+}
+
+// TestXPackSQL_NoCursorWithoutLimit verifies that without LIMIT,
+// cursor is not followed (preserves existing behavior for unbounded queries).
+func TestXPackSQL_NoCursorWithoutLimit(t *testing.T) {
+	callCount := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Elastic-Product", "Elasticsearch")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"version": map[string]interface{}{"number": "8.15.0"},
+			})
+		case r.Method == http.MethodPost && r.URL.Path == "/_sql":
+			callCount++
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{
+				"columns":[{"name":"id","type":"long"}],
+				"rows":[[1],[2]],
+				"cursor":"ignored"
+			}`))
+		}
+	}))
+	defer srv.Close()
+
+	clientCache = syncMapNew()
+	escli := newTestElasticsearch("8.15.0", []string{srv.URL})
+
+	resp, err := XPackSQL(context.Background(), escli, XPackSQLRequest{
+		Query: `SELECT id FROM "test"`,
+	})
+	if err != nil {
+		t.Fatalf("XPackSQL() error: %v", err)
+	}
+
+	if callCount != 1 {
+		t.Errorf("expected 1 call (no cursor follow without LIMIT), got %d", callCount)
+	}
+	if len(resp.Rows) != 2 {
+		t.Errorf("expected 2 rows, got %d", len(resp.Rows))
 	}
 }
 
