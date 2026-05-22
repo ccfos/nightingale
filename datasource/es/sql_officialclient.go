@@ -3,8 +3,10 @@ package es
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	elasticsearch8 "github.com/elastic/go-elasticsearch/v8"
 )
@@ -34,23 +36,35 @@ var clientCache sync.Map // map[*Elasticsearch]*elasticsearch8.Client
 
 // officialClient returns a cached go-elasticsearch/v8 client for the given datasource.
 // The v8 SDK's HTTP-level SQL API is compatible with ES 7.x, 8.x, and 9.x.
+// Timeout settings are inherited from the datasource configuration (es.timeout),
+// consistent with the olivere/elastic v7 client in InitClient().
 func officialClient(escli *Elasticsearch) (*elasticsearch8.Client, error) {
 	if cached, ok := clientCache.Load(escli); ok {
 		return cached.(*elasticsearch8.Client), nil
 	}
 
-	base := http.DefaultTransport
+	timeout := time.Duration(escli.Timeout) * time.Millisecond
+	if timeout == 0 {
+		timeout = time.Duration(defaultTimeout) * time.Millisecond
+	}
+
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: timeout,
+		}).DialContext,
+		ResponseHeaderTimeout: timeout,
+	}
+
 	if escli.TLS.SkipTlsVerify {
-		base = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true, //nolint:gosec
-			},
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec
 		}
 	}
 
 	cfg := elasticsearch8.Config{
 		Addresses: escli.Nodes,
-		Transport: &productCheckTransport{base: base},
+		Transport: &productCheckTransport{base: transport},
 	}
 
 	if escli.Basic.Enable {
