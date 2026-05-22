@@ -184,3 +184,117 @@ func TestDemuxByteByByte(t *testing.T) {
 		t.Fatalf("content mismatch on byte-by-byte feed, got %q", c.String())
 	}
 }
+
+// TestDemuxCanonicalFormSingleDelta covers the canonical ReAct two-line form
+// "Action: Final Answer\nAction Input: <body>" that many models prefer over
+// the shorthand. Before canonical support, the demuxer's marker only matched
+// the shorthand and this entire input would flow to reason — then Done would
+// re-push the same body to content, producing the duplicate-final-answer bug.
+func TestDemuxCanonicalFormSingleDelta(t *testing.T) {
+	d := &reactStreamDemuxer{}
+	reason, content := feedAll(d, []string{
+		"Thought: ready to answer\nAction: Final Answer\nAction Input: The answer is 42",
+	})
+	if !d.FinalSeen() {
+		t.Fatal("FinalSeen=false after canonical marker")
+	}
+	if reason != "Thought: ready to answer\n" {
+		t.Fatalf("reason should stop before 'Action:', got %q", reason)
+	}
+	if content != "The answer is 42" {
+		t.Fatalf("content should be the post-marker body, got %q", content)
+	}
+}
+
+// TestDemuxCanonicalMarkerSpanningDeltas verifies the canonical marker is
+// still detected when it arrives split across many small deltas — the
+// canonical marker is 34 bytes long, so its prefix-suffix retention must
+// hold across many chunks.
+func TestDemuxCanonicalMarkerSpanningDeltas(t *testing.T) {
+	d := &reactStreamDemuxer{}
+	reason, content := feedAll(d, []string{
+		"Thought: ok\n",
+		"Action: ",
+		"Final ",
+		"Answer",
+		"\nAction ",
+		"Input:",
+		" body here",
+	})
+	if !d.FinalSeen() {
+		t.Fatal("FinalSeen=false despite canonical marker spanning deltas")
+	}
+	if strings.Contains(reason, "Action:") {
+		t.Fatalf("marker prefix must not leak into reason, got %q", reason)
+	}
+	if reason != "Thought: ok\n" {
+		t.Fatalf("reason should be only the pre-marker thought, got %q", reason)
+	}
+	if content != "body here" {
+		t.Fatalf("content should be the post-marker body, got %q", content)
+	}
+}
+
+// TestDemuxCanonicalByteByByte feeds the canonical form one byte at a time.
+// This is the strictest test of tail retention because the 34-byte marker
+// must be reconstructed across 34 separate Feed calls without leaking any
+// of its prefix bytes into reason.
+func TestDemuxCanonicalByteByByte(t *testing.T) {
+	full := "Thought: x\nAction: Final Answer\nAction Input: the body"
+	d := &reactStreamDemuxer{}
+	var r, c strings.Builder
+	for i := 0; i < len(full); i++ {
+		rp, cp := d.Feed(full[i : i+1])
+		r.WriteString(rp)
+		c.WriteString(cp)
+	}
+	if r.String() != "Thought: x\n" {
+		t.Fatalf("reason mismatch on byte-by-byte canonical, got %q", r.String())
+	}
+	if c.String() != "the body" {
+		t.Fatalf("content mismatch on byte-by-byte canonical, got %q", c.String())
+	}
+}
+
+// TestDemuxCanonicalMultilineBody mirrors the real production scenario from
+// the screenshot bug: an ops-troubleshooting answer with multi-line markdown
+// (headings, lists, blank lines) following the canonical marker. None of
+// the inner whitespace should be touched — only the leading space after the
+// marker's trailing colon.
+func TestDemuxCanonicalMultilineBody(t *testing.T) {
+	body := "## 故障分析报告\n\n1. 问题概述\n\n- 问题描述：磁盘 I/O 延迟\n"
+	d := &reactStreamDemuxer{}
+	reason, content := feedAll(d, []string{
+		"Thought: 我将基于这些证据生成最终报告。\nAction: Final Answer\nAction Input: " + body,
+	})
+	if !d.FinalSeen() {
+		t.Fatal("FinalSeen=false on multiline canonical body")
+	}
+	if content != body {
+		t.Fatalf("multiline body must pass through unchanged:\n  got:  %q\n  want: %q", content, body)
+	}
+	if !strings.HasPrefix(reason, "Thought:") || strings.Contains(reason, "Action") {
+		t.Fatalf("reason should hold only the thought, got %q", reason)
+	}
+}
+
+// TestDemuxIntermediateActionNotConfusedWithFinal makes sure a non-final
+// tool-call iteration ("Action: query_metrics\nAction Input: ...") does NOT
+// trip the canonical marker. The marker requires the literal "Final Answer"
+// between Action: and \n.
+func TestDemuxIntermediateActionNotConfusedWithFinal(t *testing.T) {
+	d := &reactStreamDemuxer{}
+	reason, content := feedAll(d, []string{
+		"Thought: I need data\nAction: query_metrics\nAction Input: {\"q\":\"cpu\"}\n",
+	})
+	if d.FinalSeen() {
+		t.Fatalf("FinalSeen=true on intermediate Action — false positive; reason=%q content=%q", reason, content)
+	}
+	if content != "" {
+		t.Fatalf("content should be empty on intermediate action, got %q", content)
+	}
+	want := "Thought: I need data\nAction: query_metrics\nAction Input: {\"q\":\"cpu\"}\n"
+	if reason != want {
+		t.Fatalf("reason mismatch on intermediate action:\n  got:  %q\n  want: %q", reason, want)
+	}
+}
