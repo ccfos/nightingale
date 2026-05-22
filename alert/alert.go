@@ -106,6 +106,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 	go models.InitMessageTemplate(ctx)
+	go models.InitNotifyChannel(ctx)
 	models.VerifyByProvider = provider.VerifyChannelConfig
 
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)
