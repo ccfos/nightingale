@@ -2,6 +2,8 @@
 name: ops-troubleshooting
 description: This skill should be used when the user asks to "troubleshoot", "diagnose", "debug alert", "investigate incident", "故障定位", "告警排查", "问题诊断", "排障", "查告警", "分析告警", "根因分析", "查指标", "查日志", or discusses monitoring/alerting/observability issues in 夜莺(n9e) platform.
 version: 1.0.0
+tags:
+  - internal
 # Default agent budget is 10 iterations; troubleshooting routinely needs more
 # (search alerts → fetch detail → get rule → list metrics → query timeseries
 # → explain). Bump to 25 so a typical incident analysis can finish in one turn.

@@ -10,6 +10,11 @@ import (
 // thoughtMetadataKey is recognised by Google ADK A2A clients to render content
 // as the agent's chain-of-thought rather than a regular response. Other clients
 // see it as plain text — no harm done.
+//
+// The router demultiplexes ReAct raw output into P:"reason" (thoughts) and
+// P:"content" (final answer body) before frames reach this bridge — so the
+// rule here is simply: reason → mark thought, content → don't. No marker
+// detection lives in this file.
 const thoughtMetadataKey = "adk_thought"
 
 // streamBridge translates aiagent.StreamMessage frames produced by the existing
@@ -21,7 +26,7 @@ type streamBridge struct {
 	yield   func(a2a.Event, error) bool
 
 	// artifact IDs allocated lazily on first delta of each kind.
-	contentArtifactID a2a.ArtifactID
+	contentArtifactID   a2a.ArtifactID
 	reasoningArtifactID a2a.ArtifactID
 }
 
