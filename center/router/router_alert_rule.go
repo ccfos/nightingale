@@ -378,12 +378,12 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 		}
 
 		if err := lst[i].FE2DB(); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
+			reterr[lst[i].Name] = translateText(lang, err.Error())
 			continue
 		}
 
 		if err := lst[i].Add(rt.Ctx); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
+			reterr[lst[i].Name] = translateText(lang, err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
 		}
@@ -820,7 +820,7 @@ func (rt *Router) batchAlertRuleClone(c *gin.Context) {
 		for _, bgid := range f.Bgids {
 			// 为了让 bgid 和 arid 对应，将上面的 err 放到这里处理
 			if err != nil {
-				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = translateText(lang, err.Error())
 				continue
 			}
 
@@ -832,7 +832,7 @@ func (rt *Router) batchAlertRuleClone(c *gin.Context) {
 			newAr := ar.Clone(me.Username, bgid)
 			err = newAr.Add(rt.Ctx)
 			if err != nil {
-				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%d-%d", arid, bgid)] = translateText(lang, err.Error())
 				continue
 			}
 		}

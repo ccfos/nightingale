@@ -8,11 +8,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 // Return all, front-end search and paging
@@ -130,11 +129,9 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 	curEvent := *hisEvent.ToCur()
 	curEvent.SetTagsMap()
 
-	lang := c.GetHeader("X-Language")
-
 	// 先判断匹配条件
 	if !f.SubscribeConfig.MatchCluster(curEvent.DatasourceId) {
-		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event datasource not match"))
+		bombI18n(c, http.StatusBadRequest, "event datasource not match")
 	}
 
 	if len(f.SubscribeConfig.RuleIds) != 0 {
@@ -146,19 +143,19 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if !match {
-			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event rule id not match"))
+			bombI18n(c, http.StatusBadRequest, "event rule id not match")
 		}
 	}
 
 	// 匹配 tag
 	f.SubscribeConfig.Parse()
 	if !common.MatchTags(curEvent.TagsMap, f.SubscribeConfig.ITags) {
-		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event tags not match"))
+		bombI18n(c, http.StatusBadRequest, "event tags not match")
 	}
 
 	// 匹配group name
 	if !common.MatchGroupsName(curEvent.GroupName, f.SubscribeConfig.IBusiGroups) {
-		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event group name not match"))
+		bombI18n(c, http.StatusBadRequest, "event group name not match")
 	}
 
 	// 检查严重级别（Severity）匹配
@@ -171,42 +168,42 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 			}
 		}
 		if !match {
-			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "event severity not match"))
+			bombI18n(c, http.StatusBadRequest, "event severity not match")
 		}
 	}
 
 	// 新版本通知规则
 	if f.SubscribeConfig.NotifyVersion == 1 {
 		if len(f.SubscribeConfig.NotifyRuleIds) == 0 {
-			ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "no notify rules selected"))
+			bombI18n(c, http.StatusBadRequest, "no notify rules selected")
 		}
 
 		for _, id := range f.SubscribeConfig.NotifyRuleIds {
 			notifyRule, err := models.GetNotifyRule(rt.Ctx, id)
 			if err != nil {
-				ginx.Bomb(http.StatusNotFound, i18n.Sprintf(lang, "subscribe notify rule not found: %v", err))
+				bombI18n(c, http.StatusNotFound, "subscribe notify rule not found: %v", err)
 			}
 
 			for _, notifyConfig := range notifyRule.NotifyConfigs {
 				_, err = SendNotifyChannelMessage(rt.Ctx, rt.UserCache, rt.UserGroupCache, notifyConfig, []*models.AlertCurEvent{&curEvent})
 				if err != nil {
-					ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "notify rule send error: %v", err))
+					bombI18n(c, http.StatusBadRequest, "notify rule send error: %v", err)
 				}
 			}
 		}
 
-		ginx.NewRender(c).Data(i18n.Sprintf(lang, "event match subscribe and notification test ok"), nil)
+		ginx.NewRender(c).Data(translate(c, "event match subscribe and notification test ok"), nil)
 		return
 	}
 
 	// 旧版通知方式
 	f.SubscribeConfig.ModifyEvent(&curEvent)
 	if len(curEvent.NotifyChannelsJSON) == 0 {
-		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "no notify channels selected"))
+		bombI18n(c, http.StatusBadRequest, "no notify channels selected")
 	}
 
 	if len(curEvent.NotifyGroupsJSON) == 0 {
-		ginx.Bomb(http.StatusOK, i18n.Sprintf(lang, "no notify groups selected"))
+		bombI18n(c, http.StatusOK, "no notify groups selected")
 	}
 
 	ancs := make([]string, 0, len(curEvent.NotifyChannelsJSON))
@@ -246,10 +243,10 @@ func (rt *Router) alertSubscribeTryRun(c *gin.Context) {
 		}
 	}
 	if len(ancs) > 0 {
-		ginx.Bomb(http.StatusBadRequest, i18n.Sprintf(lang, "all users missing notify channel configurations: %v", ancs))
+		bombI18n(c, http.StatusBadRequest, "all users missing notify channel configurations: %v", ancs)
 	}
 
-	ginx.NewRender(c).Data(i18n.Sprintf(lang, "event match subscribe and notify settings ok"), nil)
+	ginx.NewRender(c).Data(translate(c, "event match subscribe and notify settings ok"), nil)
 }
 
 func (rt *Router) alertSubscribePut(c *gin.Context) {

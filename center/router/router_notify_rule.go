@@ -156,7 +156,7 @@ func (rt *Router) notifyTest(c *gin.Context) {
 		event := he.ToCur()
 		event.SetTagsMap()
 		if err := dispatch.NotifyRuleMatchCheck(&f.NotifyConfig, event); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 
 		events = append(events, event)

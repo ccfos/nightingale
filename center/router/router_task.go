@@ -6,11 +6,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 func (rt *Router) taskGets(c *gin.Context) {
@@ -93,7 +92,7 @@ func (rt *Router) taskRecordAdd(c *gin.Context) {
 
 func (rt *Router) taskAdd(c *gin.Context) {
 	if !rt.Ibex.Enable {
-		ginx.Bomb(400, i18n.Sprintf(c.GetHeader("X-Language"), "This functionality has not been enabled. Please contact the system administrator to activate it."))
+		bombI18n(c, 400, "This functionality has not been enabled. Please contact the system administrator to activate it.")
 		return
 	}
 

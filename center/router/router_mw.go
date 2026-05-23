@@ -36,7 +36,7 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 
 	user, err := models.UserGetByUsername(rt.Ctx, username)
 	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
+		bombErr(http.StatusInternalServerError, err)
 	}
 
 	if user == nil {
@@ -52,7 +52,7 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 		}
 		err = user.Add(rt.Ctx)
 		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, err.Error())
+			bombErr(http.StatusInternalServerError, err)
 		}
 	}
 	return user

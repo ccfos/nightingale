@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 type boardForm struct {
@@ -365,12 +364,12 @@ func (rt *Router) boardBatchClone(c *gin.Context) {
 			newBoard := bo.Clone(me.Username, bgid, "")
 			payload, err := models.BoardPayloadGet(rt.Ctx, bo.Id)
 			if err != nil {
-				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = translateText(lang, err.Error())
 				continue
 			}
 
 			if err = newBoard.AtomicAdd(rt.Ctx, payload); err != nil {
-				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = i18n.Sprintf(lang, err.Error())
+				reterr[fmt.Sprintf("%s-%d", newBoard.Name, bgid)] = translateText(lang, err.Error())
 			}
 		}
 	}

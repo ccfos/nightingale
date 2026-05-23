@@ -143,7 +143,7 @@ func (rt *Router) addEventPipeline(c *gin.Context) {
 
 	err := pipeline.Verify()
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	rt.checkEventPipelinePermission(c, &pipeline, "rw")
@@ -229,7 +229,7 @@ func (rt *Router) tryRunEventPipeline(c *gin.Context) {
 
 	m := map[string]interface{}{
 		"event":        resultEvent,
-		"result":       i18n.Sprintf(lang, result.Message),
+		"result":       translateText(lang, result.Message),
 		"status":       result.Status,
 		"node_results": result.NodeResults,
 	}
@@ -275,7 +275,7 @@ func (rt *Router) tryRunEventProcessor(c *gin.Context) {
 	}
 	ginx.NewRender(c).Data(map[string]interface{}{
 		"event":  resultEvent,
-		"result": i18n.Sprintf(lang, res),
+		"result": translateText(lang, res),
 	}, nil)
 }
 
@@ -425,7 +425,7 @@ func (rt *Router) triggerEventPipelineByAPI(c *gin.Context) {
 
 	executionID, err := rt.executePipelineTrigger(pipeline, &f, me.Username)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(gin.H{

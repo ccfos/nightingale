@@ -10,10 +10,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
@@ -264,7 +264,7 @@ func (rt *Router) targetBindTagsByFE(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
@@ -284,7 +284,7 @@ func (rt *Router) targetBindTagsByService(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(rt.targetBindTags(f, failedResults))
@@ -367,7 +367,7 @@ func (rt *Router) targetUnbindTagsByFE(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
@@ -387,7 +387,7 @@ func (rt *Router) targetUnbindTagsByService(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(rt.targetUnbindTags(f, failedResults))
@@ -431,7 +431,7 @@ func (rt *Router) targetUpdateNote(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	rt.checkTargetPerm(c, f.Idents)
@@ -452,7 +452,7 @@ func (rt *Router) targetUpdateNoteByService(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetUpdateNote(rt.Ctx, f.Idents, f.Note))
@@ -501,7 +501,7 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	user := c.MustGet("user").(*models.User)
@@ -548,14 +548,14 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	case "del":
 		if !f.Force {
 			if err := rt.TargetBgidChangeCheck(f.Idents, "del", f.Bgids); err != nil {
-				ginx.Bomb(http.StatusBadRequest, err.Error())
+				bombErr(http.StatusBadRequest, err)
 			}
 		}
 		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 	case "reset":
 		if !f.Force {
 			if err := rt.TargetBgidChangeCheck(f.Idents, "reset", f.Bgids); err != nil {
-				ginx.Bomb(http.StatusBadRequest, err.Error())
+				bombErr(http.StatusBadRequest, err)
 			}
 		}
 		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
@@ -577,7 +577,7 @@ func (rt *Router) targetUpdateBgidByService(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, []int64{f.Bgid}, nil))
@@ -602,7 +602,7 @@ func (rt *Router) targetDel(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, f.Force, rt.TargetDeleteHook))
@@ -621,7 +621,7 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 	// Acquire idents by idents and hostIps
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, err.Error())
+		bombErr(http.StatusBadRequest, err)
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, true, rt.TargetDeleteHook))
@@ -673,7 +673,7 @@ func (rt *Router) targetsOfHostQuery(c *gin.Context) {
 	var lst []*models.Target
 	err := session.Find(&lst).Error
 	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, err.Error())
+		bombErr(http.StatusInternalServerError, err)
 	}
 
 	ginx.NewRender(c).Data(lst, nil)
