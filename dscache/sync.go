@@ -27,7 +27,12 @@ var FromAPIHook func()
 
 var DatasourceProcessHook func(items []datasource.DatasourceInfo) []datasource.DatasourceInfo
 
-func Init(ctx *ctx.Context, fromAPI bool) {
+// engineName 保存当前进程所属告警引擎集群名；edge 模式下用于过滤掉不属于本集群的数据源，
+// 避免对无关数据源做 InitClient 而产生连接报错（issue #3159）。center 不参与过滤。
+var engineName string
+
+func Init(ctx *ctx.Context, fromAPI bool, engineNameArg string) {
+	engineName = engineNameArg
 	if !ctx.IsCenter {
 		// 从 center 同步密钥
 		var rsaConfig = new(models.RsaConfig)
@@ -82,6 +87,20 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 				time.Sleep(time.Second * 2)
 				continue
 			}
+
+			// edge 模式下跳过不属于本引擎集群的数据源，避免无意义的 InitClient（issue #3159）。
+			// ClusterName 为空保持兼容，仍走 InitClient。
+			if !ctx.IsCenter && engineName != "" {
+				filtered := items[:0]
+				for _, it := range items {
+					if it.ClusterName != "" && it.ClusterName != engineName {
+						continue
+					}
+					filtered = append(filtered, it)
+				}
+				items = filtered
+			}
+
 			var dss []datasource.DatasourceInfo
 			for _, item := range items {
 

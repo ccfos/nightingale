@@ -56,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 	rt := router.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 	rt.Config(r)
-	dscache.Init(ctx, false)
+	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 	httpClean := httpx.Init(config.HTTP, r)
 
 	return func() {

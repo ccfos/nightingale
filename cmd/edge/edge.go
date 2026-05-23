@@ -62,7 +62,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	pushgwRouter.Config(r)
 	macros.RegisterMacro(macros.MacroInVain)
-	dscache.Init(ctx, false)
+	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 
 	if !config.Alert.Disable {
 		configCache := memsto.NewConfigCache(ctx, syncStats, nil, "")
