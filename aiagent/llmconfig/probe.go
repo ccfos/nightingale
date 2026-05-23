@@ -47,12 +47,7 @@ func Test(p *models.AILLMConfig) error {
 
 	switch p.APIType {
 	case "openai", "ollama":
-		base := strings.TrimRight(p.APIURL, "/")
-		if strings.HasSuffix(base, "/chat/completions") {
-			reqURL = base
-		} else {
-			reqURL = base + "/chat/completions"
-		}
+		reqURL = llm.NormalizeOpenAIURL(p.APIURL)
 		reqBody, _ = json.Marshal(map[string]interface{}{
 			"model":      p.Model,
 			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
