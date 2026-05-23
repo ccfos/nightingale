@@ -141,18 +141,37 @@ func (s *SsoClient) Reload(cf Config) {
 
 func (s *SsoClient) Copy() *SsoClient {
 	s.RLock()
+	defer s.RUnlock()
 
 	newRoles := make([]string, len(s.DefaultRoles))
 	copy(newRoles, s.DefaultRoles)
 	newTeams := make([]int64, len(s.DefaultTeams))
 	copy(newTeams, s.DefaultTeams)
-	lc := *s
-	lc.DefaultRoles = newRoles
-	lc.DefaultTeams = newTeams
 
-	s.RUnlock()
-
-	return &lc
+	return &SsoClient{
+		Enable:          s.Enable,
+		Host:            s.Host,
+		Port:            s.Port,
+		BaseDn:          s.BaseDn,
+		BaseDns:         s.BaseDns,
+		BindUser:        s.BindUser,
+		BindPass:        s.BindPass,
+		SyncAdd:         s.SyncAdd,
+		SyncDel:         s.SyncDel,
+		SyncInterval:    s.SyncInterval,
+		UserFilter:      s.UserFilter,
+		AuthFilter:      s.AuthFilter,
+		Attributes:      s.Attributes,
+		CoverAttributes: s.CoverAttributes,
+		CoverTeams:      s.CoverTeams,
+		CoverRoles:      s.CoverRoles,
+		TLS:             s.TLS,
+		StartTLS:        s.StartTLS,
+		DefaultRoles:    newRoles,
+		DefaultTeams:    newTeams,
+		RoleTeamMapping: s.RoleTeamMapping,
+		Ticker:          s.Ticker,
+	}
 }
 
 func (s *SsoClient) LoginCheck(user, pass string) (*ldap.SearchResult, error) {

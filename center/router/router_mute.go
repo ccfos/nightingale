@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -125,9 +124,7 @@ func (rt *Router) alertMuteTryRun(c *gin.Context) {
 
 	match, err := mute.MatchMute(&curEvent, &f.AlertMute)
 	if err != nil {
-		// 对错误信息进行 i18n 翻译
-		translatedErr := i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
-		ginx.Bomb(http.StatusBadRequest, translatedErr)
+		bombMsg(http.StatusBadRequest, translate(c, err.Error()))
 	}
 
 	if !match {

@@ -11,7 +11,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 type Board struct {
@@ -67,7 +66,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+						reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -102,7 +101,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		} else if lst[i].Type == "dashboard" {
 			if strings.HasPrefix(strings.TrimSpace(lst[i].Content), "[") {
@@ -137,7 +136,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 					}
 
 					if err := bp.Add(rt.Ctx, username); err != nil {
-						reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+						reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 					}
 				}
 				continue
@@ -145,7 +144,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 
 			dashboard := Board{}
 			if err := json.Unmarshal([]byte(lst[i].Content), &dashboard); err != nil {
-				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[lst[i].Name] = translateText(c.GetHeader("X-Language"), err.Error())
 				continue
 			}
 
@@ -173,7 +172,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := bp.Add(rt.Ctx, username); err != nil {
-				reterr[bp.Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[bp.Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		} else {
 			if lst[i].Type == "collect" {
@@ -185,7 +184,7 @@ func (rt *Router) builtinPayloadsAdd(c *gin.Context) {
 			}
 
 			if err := lst[i].Add(rt.Ctx, username); err != nil {
-				reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+				reterr[lst[i].Name] = translateText(c.GetHeader("X-Language"), err.Error())
 			}
 		}
 
@@ -265,7 +264,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 	if req.Type == "alert" {
 		alertRule := models.AlertRule{}
 		if err := json.Unmarshal([]byte(req.Content), &alertRule); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 
 		req.Name = alertRule.Name
@@ -273,7 +272,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 	} else if req.Type == "dashboard" {
 		dashboard := Board{}
 		if err := json.Unmarshal([]byte(req.Content), &dashboard); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 
 		req.Name = dashboard.Name
@@ -282,7 +281,7 @@ func (rt *Router) builtinPayloadsPut(c *gin.Context) {
 	} else if req.Type == "collect" {
 		c := make(map[string]interface{})
 		if _, err := toml.Decode(req.Content, &c); err != nil {
-			ginx.Bomb(http.StatusBadRequest, err.Error())
+			bombErr(http.StatusBadRequest, err)
 		}
 	}
 

@@ -347,7 +347,7 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 			logger.Errorf("Error creating request: %v", err)
 			if !strings.Contains(ds.HTTPJson.Url, "/loki") {
 				lang := c.GetHeader("X-Language")
-				return fmt.Errorf(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
+				return newMessageError(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
 			}
 			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
@@ -372,7 +372,7 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 		logger.Errorf("Error making request: %v\n", resp.StatusCode)
 		if resp.StatusCode == 404 && ds.PluginType == models.LOKI && !strings.Contains(ds.HTTPJson.Url, "/loki") {
 			lang := c.GetHeader("X-Language")
-			return fmt.Errorf(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
+			return newMessageError(i18n.Sprintf(lang, "/loki suffix is miss, please add /loki to the url: %s", ds.HTTPJson.Url+"/loki"))
 		}
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("request url:%s failed code:%d body:%s", fullURL, resp.StatusCode, string(body))

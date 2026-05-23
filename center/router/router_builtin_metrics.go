@@ -10,7 +10,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 // single or import
@@ -33,7 +32,7 @@ func (rt *Router) builtinMetricsAdd(c *gin.Context) {
 		lst[i].Lang = lang
 		lst[i].UUID = time.Now().UnixMicro()
 		if err := lst[i].Add(rt.Ctx, username); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(c.GetHeader("X-Language"), err.Error())
+			reterr[lst[i].Name] = translateText(c.GetHeader("X-Language"), err.Error())
 		}
 	}
 	ginx.NewRender(c).Data(reterr, nil)
