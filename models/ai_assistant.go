@@ -99,19 +99,21 @@ type AssistantMessageResponse struct {
 type AssistantActionKey string
 
 const (
-	ActionKeyQueryGenerator     AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat        AssistantActionKey = "general_chat"
-	ActionKeyAlertQuery         AssistantActionKey = "alert_query"
-	ActionKeyResourceQuery      AssistantActionKey = "resource_query"
-	ActionKeyCreation           AssistantActionKey = "creation"
-	ActionKeyTroubleshooting    AssistantActionKey = "troubleshooting"
-	ActionKeyNotifyTemplate     AssistantActionKey = "notify_template_generator"
-	ActionKeyNotifyChannel      AssistantActionKey = "notify_channel_copilot"
-	ActionKeyDatasourceDiagnose AssistantActionKey = "datasource_diagnose"
-	ActionKeyHostHealthDiagnose AssistantActionKey = "host_health_diagnose"
-	ActionKeyTaskTplCopilot     AssistantActionKey = "task_tpl_copilot"
-	ActionKeyAutoHealRecommend  AssistantActionKey = "auto_heal_recommend"
-	ActionKeyAgentDeployGuide   AssistantActionKey = "agent_deploy_guide"
+	ActionKeyQueryGenerator      AssistantActionKey = "query_generator"
+	ActionKeyGeneralChat         AssistantActionKey = "general_chat"
+	ActionKeyAlertQuery          AssistantActionKey = "alert_query"
+	ActionKeyResourceQuery       AssistantActionKey = "resource_query"
+	ActionKeyCreation            AssistantActionKey = "creation"
+	ActionKeyTroubleshooting     AssistantActionKey = "troubleshooting"
+	ActionKeyNotifyTemplate      AssistantActionKey = "notify_template_generator"
+	ActionKeyNotifyChannel       AssistantActionKey = "notify_channel_copilot"
+	ActionKeyDatasourceDiagnose  AssistantActionKey = "datasource_diagnose"
+	ActionKeyHostHealthDiagnose  AssistantActionKey = "host_health_diagnose"
+	ActionKeyHostOnboardDiagnose AssistantActionKey = "host_onboard_diagnose"
+	ActionKeyTaskTplCopilot      AssistantActionKey = "task_tpl_copilot"
+	ActionKeyAutoHealRecommend   AssistantActionKey = "auto_heal_recommend"
+	ActionKeyAgentDeployGuide    AssistantActionKey = "agent_deploy_guide"
+	ActionKeyDatasourceQuery     AssistantActionKey = "datasource_query"
 )
 
 type AssistantAction struct {

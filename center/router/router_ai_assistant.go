@@ -454,6 +454,26 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
+	// general_chat sub-mode routing: knowledge questions can answer from
+	// model parametric memory alone, so strip tools and force Direct mode —
+	// shrinks the system prompt from ~18KB to a few hundred bytes for the
+	// most common case (definitions / how-to / concepts). Data queries keep
+	// the full ReAct + tools stack so they can actually fetch state.
+	//
+	// The extra LLM round-trip (~1s for sub-mode classification) is cheaper
+	// than carrying the full tool schema through every knowledge-question
+	// generation. On classification failure InferGeneralChatSubMode returns
+	// data_query, so behavior degrades to "current" rather than to broken.
+	generalChatSubMode := chat.GeneralChatSubMode("")
+	if actionKey == string(models.ActionKeyGeneralChat) {
+		subCtx, subCancel := context.WithTimeout(parentCtx, 15*time.Second)
+		generalChatSubMode = chat.InferGeneralChatSubMode(subCtx, llmClient, msg.Query.Content, history)
+		subCancel()
+		if generalChatSubMode == chat.GeneralChatSubModeKnowledge {
+			tools = nil
+		}
+	}
+
 	userPrompt := ""
 	if handler.BuildPrompt != nil {
 		userPrompt = handler.BuildPrompt(chatReq)
@@ -489,6 +509,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	agentMode := aiagent.AgentModeReAct
 	if handler != nil && handler.AgentMode != "" {
 		agentMode = handler.AgentMode
+	}
+	// general_chat knowledge sub-mode: force Direct (no Thought/Action wrapper,
+	// no tool schema in prompt) — paired with the tools=nil above.
+	if generalChatSubMode == chat.GeneralChatSubModeKnowledge {
+		agentMode = aiagent.AgentModeDirect
 	}
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          agentMode,

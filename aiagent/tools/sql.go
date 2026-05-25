@@ -9,7 +9,6 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/dskit/sqlbase"
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -25,55 +24,8 @@ func init() {
 	register(defs.DescribeTable, describeTableTool)
 }
 
-// resolveSQLDatasource picks a (datasource_id, plugin_type) pair from the
-// three possible sources, in order of precedence:
-//
-//  1. explicit tool args — the caller knows exactly which datasource to
-//     target. Used by the alert-rule creation skill where the LLM probes
-//     schemas across multiple datasources in one conversation.
-//  2. session params — injected by the router when the chat is opened from
-//     a datasource-scoped page (explorer, datasource query page). The
-//     explorer flow doesn't require the LLM to know the id.
-//  3. DB lookup by id — if args supplied id but no type, fetch plugin_type
-//     from models.GetDatasourceInfosByIds. Keeps the LLM from having to
-//     remember which cate each id belongs to.
-//
-// Returns a pre-formatted error if neither source yields a usable id, so
-// callers can propagate it straight to the tool Observation.
-func resolveSQLDatasource(deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (int64, string, error) {
-	dsId := getArgInt64(args, "datasource_id")
-	if dsId == 0 {
-		dsId = getDatasourceId(params)
-	}
-	if dsId == 0 {
-		return 0, "", fmt.Errorf("datasource_id required: pass it as a tool argument, or open the chat from a datasource-scoped page")
-	}
-
-	dsType := getArgString(args, "datasource_type")
-	if dsType == "" {
-		dsType = getDatasourceType(params)
-	}
-	if dsType == "" {
-		// DB fallback — lets the LLM pass only datasource_id without
-		// having to know whether id=5 is mysql or doris.
-		if deps != nil && deps.DBCtx != nil {
-			infos, err := models.GetDatasourceInfosByIds(deps.DBCtx, []int64{dsId})
-			if err != nil {
-				return 0, "", fmt.Errorf("failed to resolve datasource type for id=%d: %v", dsId, err)
-			}
-			if len(infos) > 0 {
-				dsType = infos[0].PluginType
-			}
-		}
-	}
-	if dsType == "" {
-		return 0, "", fmt.Errorf("datasource_type not resolvable for id=%d: pass datasource_type explicitly or verify the datasource exists", dsId)
-	}
-	return dsId, dsType, nil
-}
-
 func listDatabasesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
+	dsId, dsType, err := resolveDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}
@@ -121,7 +73,7 @@ func listDatabasesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[str
 }
 
 func listTablesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
+	dsId, dsType, err := resolveDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}
@@ -178,7 +130,7 @@ func listTablesTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string
 }
 
 func describeTableTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId, dsType, err := resolveSQLDatasource(deps, args, params)
+	dsId, dsType, err := resolveDatasource(deps, args, params)
 	if err != nil {
 		return "", err
 	}

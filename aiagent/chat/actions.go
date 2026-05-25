@@ -64,13 +64,14 @@ var registry = map[string]*ActionHandler{
 		},
 	},
 	"general_chat": {
-		Description: "General Q&A and other questions (通用问答). Examples: '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'",
+		Description: "General Q&A, conceptual questions, AND fallback for anything that doesn't fit the more specific actions above (通用问答/兜底). PRIMARY use: knowledge/concept questions — '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'. ALSO serves as a fallback when intent is ambiguous or mixed (e.g. '帮我看下系统现在状态怎样', '随便聊聊监控的事'). In fallback mode, it can call read-only tools (查告警/查资源/查数据源数据/查主机) to give a real answer instead of guessing — but if the user's intent is clearly a specialized scenario (查告警→alert_query, 查资源列表→resource_query, 执行数据源查询→datasource_query, 创建资源→creation), route there FIRST.",
 		BuildPrompt: buildGeneralChatPrompt,
-		// 闲聊/知识问答场景：不挂工具、不选 skill、不走 ReAct。
-		// - 显式 RequiredSkills 返回 nil → resolveSkillConfig 跳过 LLM autoselect（省 ~1s round-trip）
-		// - AgentMode=Direct → system prompt 不拼 ReAct 协议段和工具描述（18KB → 几十字节）
+		// 兜底 action：作为意图分类失败或其他 action validate 失败时的最终落脚点，
+		// 挂全部内置工具走 ReAct，以便兜底场景也能真正调用工具（查数据源、查告警、查资源等），
+		// 而不是只能凭模型常识空答。
+		// RequiredSkills 保持 nil（不引入额外 skill 内容膨胀 system prompt）。
+		SelectTools:    selectGeneralChatTools,
 		RequiredSkills: func(_ *AIChatRequest) []string { return nil },
-		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"alert_query": {
 		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
@@ -84,6 +85,14 @@ var registry = map[string]*ActionHandler{
 		Description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
 		SelectTools: selectResourceQueryTools,
 		BuildPrompt: buildResourceQueryPrompt,
+	},
+	"datasource_query": {
+		Description: "Execute actual queries against monitoring datasources and return the data (查询数据源真实数据并返回结果). Scope: 实际跑查询拿数据 — 'ES 索引 logs-* 最近1h 日志数量', '查 prometheus up{} 现在多少', '帮我查 MySQL orders 表最近1h 写入量', 'CK 错误日志条数', '看下 VictoriaLogs 最近5m 的 error 日志'. NOTE: 只是'帮我写一条 PromQL/SQL'（不执行，仅要查询文本）走 query_generator; 查告警事件走 alert_query; 查资源配置（数据源列表本身、规则列表等）走 resource_query.",
+		SelectTools: selectDatasourceQueryTools,
+		BuildPrompt: buildDatasourceQueryPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-query-datasource"}
+		},
 	},
 	"creation": {
 		Description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are resource_query, NOT creation.",
@@ -455,7 +464,28 @@ func buildGeneralChatPrompt(req *AIChatRequest) string {
 	return fmt.Sprintf(`You are a helpful assistant for the n9e (Nightingale) monitoring platform, specializing in IT operations, monitoring, and observability.
 
 %s
-Please answer the user's question clearly and concisely in the user's language.
+
+DOMAIN LIMIT (STRICT):
+ONLY answer questions in these domains:
+  - n9e (Nightingale) usage, configuration, features
+  - IT operations / SRE / DevOps practice
+  - Alerting (rules, notifications, on-call, suppression, escalation)
+  - Observability — metrics, logs, traces, distributed tracing
+  - Related infrastructure (Prometheus, Grafana, Loki, ClickHouse, ElasticSearch, OpenSearch, VictoriaMetrics, etc.)
+  - Performance / capacity / troubleshooting in the above contexts
+
+If the user asks anything outside these domains (general programming help unrelated to ops, life advice, news, personal questions, creative writing, math homework, etc.), politely decline in the user's language and remind them this assistant is specialized for n9e and observability topics. Do NOT attempt to answer such questions even partially.
+
+This is the fallback action — earlier intent classification didn't pinpoint a specialized action, so handle a broad range of (in-domain) requests yourself.
+
+Tool usage policy (IMPORTANT — don't overcall tools):
+- For knowledge / concept / "how to" questions (e.g. "什么是 P99", "PromQL 和 MetricsQL 区别", "为什么要用 histogram"), answer DIRECTLY from your own knowledge. Do NOT call tools.
+- For questions about CURRENT system state or data (e.g. "我现在有哪些告警", "查一下 ES 索引日志数", "哪些机器掉线了", "datasource 列表"), USE the appropriate tools to fetch real data and answer.
+- Prefer the most specific tool. Don't fan-out and call many tools when one is enough.
+- For datasource data queries: list_datasources first if datasource not specified; then pick query_prometheus / query_timeseries / query_log by plugin_type.
+- This fallback path is READ-ONLY. If the user asks to create or import resources, instruct them to phrase it as an explicit creation request (e.g. "创建/新建...") so it routes to the dedicated creation flow with proper business-group selection.
+
+Answer in the user's language. Use well-formatted Markdown.
 
 User request: %s`, capabilityListCache, req.UserInput)
 }
@@ -1007,4 +1037,66 @@ Final Answer MUST be Markdown (NOT JSON) in the user's language, using this stru
 Refuse to emit a {{action:run_task_tpl}} marker for any candidate that, after reading its script, contains: 'rm -rf /', 'mkfs', 'shutdown', 'kubectl delete node', 'iptables -F' without backup, or curl-pipe-to-shell. Instead emit N4 (修法建议) with a {{action:switch}} marker pointing to task_tpl_copilot.
 
 Respond in the user's language.`, req.UserInput, ctxHint.String())
+}
+
+// --- datasource_query action ---
+
+func selectDatasourceQueryTools(req *AIChatRequest) []string {
+	return []string{
+		"list_datasources", "get_datasource_detail",
+		"query_prometheus", "query_timeseries", "query_log",
+		"list_metrics", "get_metric_labels",
+		"list_databases", "list_tables", "describe_table",
+	}
+}
+
+func buildDatasourceQueryPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are a datasource query expert. The user wants to ACTUALLY execute a query and get the data back (NOT just generate query text for them to run later).
+
+User request: %s
+
+Workflow:
+1. If the user didn't specify a datasource, call list_datasources first and pick the matching one (by name keyword or plugin_type). If multiple match, ask the user to choose.
+2. Pick the right tool by datasource plugin_type:
+   - prometheus → query_prometheus (PromQL)
+   - mysql/ck/pgsql/doris/tdengine → query_timeseries (sql + value_key) for metric/aggregation; query_log for raw rows
+   - elasticsearch/opensearch → query_timeseries (index + filter, for counts/aggregations) or query_log (raw documents)
+   - victorialogs → query_timeseries / query_log with LogsQL query
+3. For SQL-class datasources, use list_databases / list_tables / describe_table first if the user didn't specify schema details.
+4. Default time_range = 1h unless the user specified otherwise.
+
+IMPORTANT: Your Final Answer MUST be well-formatted Markdown (NOT JSON). Use the user's language. Present numerical/aggregated results in tables or clear statements; truncate long log lists to top-N with a note.`, req.UserInput)
+}
+
+// --- general_chat action (fallback) ---
+// general_chat 是兜底 action：分类失败/validate 失败时落地于此。挂全部内置工具走 ReAct，
+// 让模型在兜底场景也能调用工具去查数据，而不是只能凭常识空答。
+func selectGeneralChatTools(req *AIChatRequest) []string {
+	return []string{
+		// 告警
+		"search_active_alerts", "search_history_alerts", "get_alert_event_detail",
+		"get_alert_eval_logs", "get_event_processing_logs", "get_event_pipeline_executions",
+		"list_alert_engine_instances",
+		// 资源
+		"list_alert_rules", "get_alert_rule_detail", "list_legacy_notify_alert_rules",
+		"list_alert_mutes", "get_alert_mute_detail",
+		"list_alert_subscribes", "get_alert_subscribe_detail",
+		"list_task_tpls", "get_task_tpl_detail",
+		"list_notify_rules", "get_notify_rule_detail",
+		"list_datasources", "get_datasource_detail",
+		"list_dashboards", "get_dashboard_detail",
+		"list_targets", "get_target_detail", "list_neighbor_targets",
+		"get_target_realtime_status", "probe_target_onboard_status", "query_host_metrics_window",
+		"list_users", "list_teams", "list_busi_groups",
+		// 数据源查询
+		"query_prometheus", "query_timeseries", "query_log",
+		"list_metrics", "get_metric_labels",
+		"list_databases", "list_tables", "describe_table",
+		// 文件 / 网络（只读）
+		"read_file", "list_files", "grep_files", "http_fetch",
+		// 注意：兜底路径故意不暴露写操作工具（create_alert_rule / create_dashboard /
+		// import_prom_rule_yaml / preview_prom_rule_yaml）。这些走 creation action 才能
+		// 触发 PreflightCreation 让用户先选业务组；兜底场景没有 preflight 保护，
+		// 模型直接调写工具会因缺 busi_group_id 误建到错误业务组或参数缺失 500。
+	}
 }

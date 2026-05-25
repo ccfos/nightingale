@@ -28,9 +28,15 @@ func init() {
 // =============================================================================
 
 func queryPrometheusTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
+	// Prefer datasource_id supplied by the LLM via tool args (so it can pick a
+	// datasource from list_datasources results); fall back to chat-level params
+	// (set when the frontend pre-selected a datasource).
+	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		return "", fmt.Errorf("datasource_id is required (use list_datasources to find a Prometheus datasource id)")
 	}
 
 	query := getArgString(args, "query")
@@ -153,13 +159,9 @@ var esLikeDatasourceTypes = map[string]bool{
 }
 
 func queryTimeseriesDataTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
-	dsType := getDatasourceType(params)
-	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
-	}
-	if dsType == "" {
-		return "", fmt.Errorf("datasource_type not found in params")
+	dsId, dsType, err := resolveDatasource(deps, args, params)
+	if err != nil {
+		return "", err
 	}
 
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)
@@ -292,13 +294,9 @@ func buildQueryDataParam(dsType string, args map[string]interface{}, from, to in
 // =============================================================================
 
 func queryLogDataTool(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
-	dsId := getDatasourceId(params)
-	dsType := getDatasourceType(params)
-	if dsId == 0 {
-		return "", fmt.Errorf("datasource_id not found in params")
-	}
-	if dsType == "" {
-		return "", fmt.Errorf("datasource_type not found in params")
+	dsId, dsType, err := resolveDatasource(deps, args, params)
+	if err != nil {
+		return "", err
 	}
 
 	plug, exists := deps.GetSQLDatasource(dsType, dsId)

@@ -174,6 +174,56 @@ func getDatasourceType(params map[string]string) string {
 	return params["datasource_type"]
 }
 
+// resolveDatasource picks a (datasource_id, plugin_type) pair from the
+// three possible sources, in order of precedence:
+//
+//  1. explicit tool args — the caller knows exactly which datasource to
+//     target. Used when the LLM discovered the id via list_datasources.
+//  2. session params — injected by the router when the chat is opened from
+//     a datasource-scoped page (explorer, datasource query page). The
+//     explorer flow doesn't require the LLM to know the id.
+//  3. DB lookup by id — if args supplied id but no type, fetch plugin_type
+//     from models.GetDatasourceInfosByIds. Keeps the LLM from having to
+//     remember which cate each id belongs to.
+//
+// Used by both SQL-class tools (list_databases/tables, describe_table) and
+// generic query tools (query_timeseries/query_log), so the name intentionally
+// doesn't include "SQL" — the resolver itself doesn't gate on plugin family.
+//
+// Returns a pre-formatted error if neither source yields a usable id, so
+// callers can propagate it straight to the tool Observation.
+func resolveDatasource(deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (int64, string, error) {
+	dsId := getArgInt64(args, "datasource_id")
+	if dsId == 0 {
+		dsId = getDatasourceId(params)
+	}
+	if dsId == 0 {
+		return 0, "", fmt.Errorf("datasource_id required: pass it as a tool argument (use list_datasources to find one), or open the chat from a datasource-scoped page")
+	}
+
+	dsType := getArgString(args, "datasource_type")
+	if dsType == "" {
+		dsType = getDatasourceType(params)
+	}
+	if dsType == "" {
+		// DB fallback — lets the LLM pass only datasource_id without
+		// having to know whether id=5 is mysql or doris.
+		if deps != nil && deps.DBCtx != nil {
+			infos, err := models.GetDatasourceInfosByIds(deps.DBCtx, []int64{dsId})
+			if err != nil {
+				return 0, "", fmt.Errorf("failed to resolve datasource type for id=%d: %v", dsId, err)
+			}
+			if len(infos) > 0 {
+				dsType = infos[0].PluginType
+			}
+		}
+	}
+	if dsType == "" {
+		return 0, "", fmt.Errorf("datasource_type not resolvable for id=%d: pass datasource_type explicitly or verify the datasource exists", dsId)
+	}
+	return dsId, dsType, nil
+}
+
 // =============================================================================
 // Collection helpers
 // =============================================================================

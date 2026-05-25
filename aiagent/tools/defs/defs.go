@@ -275,6 +275,7 @@ var QueryPrometheus = aiagent.AgentTool{
 	Description: "执行 PromQL 查询 Prometheus/VictoriaMetrics 数据源，支持即时查询和范围查询",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源 ID（先用 list_datasources 查到）。若调用方已通过会话上下文预选数据源可不传", Required: false},
 		{Name: "query", Type: "string", Description: "PromQL 表达式，如 cpu_usage_active{ident='web-01'}", Required: true},
 		{Name: "query_type", Type: "string", Description: "查询类型: instant(即时查询,默认) 或 range(范围查询)", Required: false},
 		{Name: "time_range", Type: "string", Description: "时间范围，如 15m、1h、6h、24h、7d，默认 1h", Required: false},
@@ -289,6 +290,8 @@ var QueryTimeseries = aiagent.AgentTool{
 SQL 类数据源需提供 sql + value_key；ES 类需提供 index + filter；VictoriaLogs 需提供 query。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
+		{Name: "datasource_id", Type: "integer", Description: "数据源 ID（先用 list_datasources 查到）。若调用方已通过会话上下文预选数据源可不传", Required: false},
+		{Name: "datasource_type", Type: "string", Description: "数据源类型，取自 list_datasources 返回的 plugin_type 字段，如 mysql/ck/pgsql/doris/tdengine/elasticsearch/opensearch/victorialogs。若调用方已通过会话上下文预选数据源可不传", Required: false},
 		// SQL 类 (mysql, ck, pgsql, doris, tdengine)
 		{Name: "sql", Type: "string", Description: "SQL 查询语句，支持 $from/$to 时间变量（SQL类数据源使用）", Required: false},
 		{Name: "value_key", Type: "string", Description: "数值列名，多个用空格分隔（SQL类数据源时序查询必填）", Required: false},
@@ -314,6 +317,8 @@ var QueryLog = aiagent.AgentTool{
 SQL 类数据源需提供 sql；ES 类需提供 index + filter；VictoriaLogs 需提供 query。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
+		{Name: "datasource_id", Type: "integer", Description: "数据源 ID（先用 list_datasources 查到）。若调用方已通过会话上下文预选数据源可不传", Required: false},
+		{Name: "datasource_type", Type: "string", Description: "数据源类型，取自 list_datasources 返回的 plugin_type 字段，如 mysql/ck/pgsql/doris/tdengine/elasticsearch/opensearch/victorialogs。若调用方已通过会话上下文预选数据源可不传", Required: false},
 		// SQL 类
 		{Name: "sql", Type: "string", Description: "SQL 查询语句，支持 $from/$to 时间变量（SQL类数据源使用）", Required: false},
 		{Name: "database", Type: "string", Description: "数据库名（SQL类数据源可选）", Required: false},
