@@ -74,6 +74,13 @@ func init() {
 		PluginType:     "victorialogs",
 		PluginTypeName: "VictoriaLogs",
 	}
+
+	DatasourceTypes[8] = DatasourceType{
+		Id:             8,
+		Category:       "timeseries",
+		PluginType:     "iotdb",
+		PluginTypeName: "IoTDB",
+	}
 }
 
 type NewDatasourceFn func(settings map[string]interface{}) (Datasource, error)

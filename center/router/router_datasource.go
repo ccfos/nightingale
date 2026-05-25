@@ -137,7 +137,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 	var count int64
 
 	if !req.ForceSave {
-		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE {
+		if req.PluginType == models.PROMETHEUS || req.PluginType == models.LOKI || req.PluginType == models.TDENGINE || req.PluginType == models.IOTDB {
 			err = DatasourceCheck(c, req)
 			if err != nil {
 				Dangerous(c, err)
@@ -283,7 +283,7 @@ func (rt *Router) datasourceUpsert(c *gin.Context) {
 }
 
 func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
-	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE {
+	if ds.PluginType == models.PROMETHEUS || ds.PluginType == models.LOKI || ds.PluginType == models.TDENGINE || ds.PluginType == models.IOTDB {
 		if ds.HTTPJson.Url == "" {
 			return fmt.Errorf("url is empty")
 		}
@@ -335,6 +335,15 @@ func DatasourceCheck(c *gin.Context, ds models.Datasource) error {
 			logger.Errorf("Error creating request: %v", err)
 			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
 		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	} else if ds.PluginType == models.IOTDB {
+		fullURL = fmt.Sprintf("%s/rest/table/v1/query", ds.HTTPJson.Url)
+		req, err = http.NewRequest("POST", fullURL, strings.NewReader(`{"sql":"show databases"}`))
+		if err != nil {
+			logger.Errorf("Error creating request: %v", err)
+			return fmt.Errorf("request url:%s failed: %v", fullURL, err)
+		}
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	if ds.PluginType == models.LOKI {
