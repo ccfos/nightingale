@@ -206,6 +206,14 @@ var I18N = `{
     "saved view page is blank": "视图页面不能为空",
     "saved view name already exists in this page": "该页面下已存在同名的公开视图",
 
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 连接测试失败：认证失败（HTTP %d），请检查 API Key 是否正确。服务端返回：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 连接测试失败：接口地址不存在（HTTP 404），请检查 API URL 是否正确（当前：%s）。OpenAI 兼容接口地址通常应以 /v1 结尾，例如 https://api.openai.com/v1。服务端返回：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 连接测试失败：请求频率超限（HTTP 429），API Key 配额已耗尽或请求过于频繁，请稍后重试。服务端返回：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 连接测试失败：请求失败（HTTP %d）。服务端返回：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 连接测试失败：接口返回了非预期的响应格式，API URL 可能指向了错误的端点。原始内容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 连接测试失败：模型「%s」返回错误：%s，请检查模型名称是否正确",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 连接测试失败：LLM 未返回有效内容，请检查模型名称「%s」是否正确",
+
     "---------zh_CN--------": "---------zh_CN--------"
   },
   "zh_HK": {
@@ -415,6 +423,14 @@ var I18N = `{
     "saved view page is blank": "視圖頁面不能為空",
     "saved view name already exists in this page": "該頁面下已存在同名的公開視圖",
 
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 連接測試失敗：認證失敗（HTTP %d），請檢查 API Key 是否正確。服務端返回：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 連接測試失敗：介面地址不存在（HTTP 404），請檢查 API URL 是否正確（當前：%s）。OpenAI 相容介面地址通常應以 /v1 結尾，例如 https://api.openai.com/v1。服務端返回：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 連接測試失敗：請求頻率超限（HTTP 429），API Key 配額已耗盡或請求過於頻繁，請稍後重試。服務端返回：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 連接測試失敗：請求失敗（HTTP %d）。服務端返回：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 連接測試失敗：介面返回了非預期的響應格式，API URL 可能指向了錯誤的端點。原始內容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 連接測試失敗：模型「%s」返回錯誤：%s，請檢查模型名稱是否正確",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 連接測試失敗：LLM 未返回有效內容，請檢查模型名稱「%s」是否正確",
+
     "---------zh_HK--------": "---------zh_HK--------"
   },
   "ja_JP": {
@@ -621,6 +637,14 @@ var I18N = `{
     "saved view page is blank": "ビューページを空にすることはできません",
     "saved view name already exists in this page": "このページには同名の公開ビューが既に存在します",
 
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "LLM 接続テスト失敗：認証エラー（HTTP %d）、API Key が正しいか確認してください。サーバーの応答：%s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "LLM 接続テスト失敗：エンドポイントが見つかりません（HTTP 404）、API URL を確認してください（現在：%s）。OpenAI 互換 API の URL は通常 /v1 で終わる必要があります（例：https://api.openai.com/v1）。サーバーの応答：%s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "LLM 接続テスト失敗：レート制限超過（HTTP 429）、API Key のクォータが枯渇したかリクエストが頻繁すぎます。しばらくしてから再試行してください。サーバーの応答：%s",
+    "llm test: request failed (HTTP %d). server response: %s": "LLM 接続テスト失敗：リクエスト失敗（HTTP %d）。サーバーの応答：%s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "LLM 接続テスト失敗：予期しない応答形式です。API URL が誤ったエンドポイントを指している可能性があります。内容：%s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "LLM 接続テスト失敗：モデル「%s」がエラーを返しました：%s。モデル名が正しいか確認してください",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "LLM 接続テスト失敗：LLM が有効なコンテンツを返しませんでした。モデル名「%s」が正しいか確認してください",
+
     "---------ja_JP--------": "---------ja_JP--------"
   },
   "ru_RU": {
@@ -826,6 +850,14 @@ var I18N = `{
     "saved view name is blank": "Название вида не может быть пустым",
     "saved view page is blank": "Страница вида не может быть пустой",
     "saved view name already exists in this page": "На этой странице уже существует публичный вид с таким названием",
+
+    "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s": "Тест подключения LLM не пройден: ошибка аутентификации (HTTP %d), проверьте правильность API Key. Ответ сервера: %s",
+    "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s": "Тест подключения LLM не пройден: эндпоинт не найден (HTTP 404), проверьте API URL (текущий: %s). Для OpenAI-совместимых API URL должен заканчиваться на /v1, например https://api.openai.com/v1. Ответ сервера: %s",
+    "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s": "Тест подключения LLM не пройден: превышен лимит запросов (HTTP 429), квота API Key исчерпана или запросы слишком частые. Повторите попытку позже. Ответ сервера: %s",
+    "llm test: request failed (HTTP %d). server response: %s": "Тест подключения LLM не пройден: запрос завершился ошибкой (HTTP %d). Ответ сервера: %s",
+    "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s": "Тест подключения LLM не пройден: неожиданный формат ответа, API URL может указывать на неверный эндпоинт. Содержимое: %s",
+    "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct": "Тест подключения LLM не пройден: модель «%s» вернула ошибку: %s. Проверьте правильность названия модели",
+    "llm test: LLM returned no content, please verify the model name(%s) is correct": "Тест подключения LLM не пройден: LLM не вернула содержимого. Проверьте правильность названия модели «%s»",
 
     "---------ru_RU--------": "---------ru_RU--------"
   }

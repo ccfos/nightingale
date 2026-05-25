@@ -1154,7 +1154,7 @@ func (rt *Router) serviceUser() gin.HandlerFunc {
 		}
 		user, err := models.UserGetByUsername(rt.Ctx, username)
 		if err != nil {
-			ginx.Bomb(http.StatusInternalServerError, err.Error())
+			bombErr(http.StatusInternalServerError, err)
 		}
 		if user == nil {
 			ginx.Bomb(http.StatusNotFound, "user not found: %s", username)

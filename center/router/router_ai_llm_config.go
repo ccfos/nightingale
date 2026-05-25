@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent/llmconfig"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -153,7 +155,35 @@ func (rt *Router) aiLLMConfigTest(c *gin.Context) {
 		"duration_ms": durationMs,
 	}
 	if testErr != nil {
-		result["error"] = testErr.Error()
+		var errMsg string
+		var probeErr *llmconfig.ProbeError
+		if errors.As(testErr, &probeErr) {
+			errMsg = translateProbeError(c.GetHeader("X-Language"), probeErr)
+		} else {
+			errMsg = testErr.Error()
+		}
+		result["error"] = errMsg
 	}
 	ginx.NewRender(c).Data(result, nil)
+}
+
+func translateProbeError(lang string, err *llmconfig.ProbeError) string {
+	switch err.Kind {
+	case llmconfig.ProbeErrorAuth:
+		return i18nx.Translatef(lang, "llm test: authentication failed (HTTP %d), please verify your API Key is correct. server response: %s", err.StatusCode, err.Detail)
+	case llmconfig.ProbeErrorEndpointNotFound:
+		return i18nx.Translatef(lang, "llm test: endpoint not found (HTTP 404), please check your API URL (current: %s). for OpenAI-compatible APIs the URL should end with /v1, e.g. https://api.openai.com/v1. server response: %s", err.APIURL, err.Detail)
+	case llmconfig.ProbeErrorRateLimited:
+		return i18nx.Translatef(lang, "llm test: rate limit exceeded (HTTP 429), your API Key quota is exhausted or requests are too frequent. server response: %s", err.Detail)
+	case llmconfig.ProbeErrorRequestFailed:
+		return i18nx.Translatef(lang, "llm test: request failed (HTTP %d). server response: %s", err.StatusCode, err.Detail)
+	case llmconfig.ProbeErrorUnexpectedResponse:
+		return i18nx.Translatef(lang, "llm test: unexpected response format, the API URL may point to a wrong endpoint. raw: %s", err.Detail)
+	case llmconfig.ProbeErrorModel:
+		return i18nx.Translatef(lang, "llm test: LLM returned an error for model(%s): %s, please verify the model name is correct", err.Model, err.Detail)
+	case llmconfig.ProbeErrorNoContent:
+		return i18nx.Translatef(lang, "llm test: LLM returned no content, please verify the model name(%s) is correct", err.Model)
+	default:
+		return err.Error()
+	}
 }

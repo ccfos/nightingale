@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 	"gopkg.in/gomail.v2"
 )
 
@@ -548,4 +549,145 @@ func (ncc *NotifyChannelConfig) Upsert(ctx *ctx.Context) error {
 		return nil
 	}
 	return ch.Update(ctx, *ncc)
+}
+
+// Weight 用于页面元素排序，weight 越大 排序越靠后
+var NotiChMap = []*NotifyChannelConfig{
+	{
+		Name: "FlashDuty", Ident: "flashduty", RequestType: "flashduty", Weight: 1, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			},
+			FlashDutyRequestConfig: &FlashDutyRequestConfig{
+				IntegrationUrl: "flashduty integration url",
+				Timeout:        5000,
+				RetryTimes:     3,
+			},
+		},
+	},
+	{
+		Name: "Callback", Ident: "callback", RequestType: "http", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "{{$params.callback_url}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{{ jsonMarshal $events }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "callback_url", CName: "Callback Url", Type: "string"},
+					{Key: "note", CName: "Note", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Email", Ident: Email, RequestType: "smtp", Weight: 2, Enable: true,
+		RequestConfig: &RequestConfig{
+			SMTPRequestConfig: &SMTPRequestConfig{
+				Host:               "smtp.host",
+				Port:               25,
+				Username:           "your-username",
+				Password:           "your-password",
+				From:               "your-email",
+				InsecureSkipVerify: true,
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			UserInfo: &UserInfo{
+				ContactKey: "email",
+			},
+		},
+	},
+	{
+		Name: "Dingtalk", Ident: Dingtalk, RequestType: "http", Weight: 3, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL: "https://oapi.dingtalk.com/robot/send", Method: "POST",
+				Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"access_token": "{{$params.access_token}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"title": "{{$tpl.title}}", "text": "{{$tpl.content}}\n{{batchContactsAts $sendtos}}"}, "at": {"atMobiles": {{batchContactsJsonMarshal $sendtos}} }}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Wecom", Ident: Wecom, RequestType: "http", Weight: 4, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://qyapi.weixin.qq.com/cgi-bin/webhook/send",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Parameters: map[string]string{"key": "{{$params.key}}"},
+					Body:       `{"msgtype": "markdown", "markdown": {"content": "{{$tpl.content}}"}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "key", CName: "Key", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+	{
+		Name: "Feishu Card", Ident: FeishuCard, RequestType: "http", Weight: 5, Enable: true,
+		RequestConfig: &RequestConfig{
+			HTTPRequestConfig: &HTTPRequestConfig{
+				URL:    "https://open.feishu.cn/open-apis/bot/v2/hook/{{$params.access_token}}",
+				Method: "POST", Headers: map[string]string{"Content-Type": "application/json"},
+				Timeout: 10000, Concurrency: 5, RetryTimes: 3, RetryInterval: 100,
+				Request: RequestDetail{
+					Body: `{"msg_type": "interactive", "card": {"config": {"wide_screen_mode": true}, "header": {"title": {"content": "{{$tpl.title}}", "tag": "plain_text"}, "template": "{{if $event.IsRecovered}}green{{else}}red{{end}}"}, "elements": [{"tag": "markdown", "content": "{{$tpl.content}}"}]}}`,
+				},
+			},
+		},
+		ParamConfig: &NotifyParamConfig{
+			Custom: Params{
+				Params: []ParamItem{
+					{Key: "access_token", CName: "Access Token", Type: "string"},
+					{Key: "bot_name", CName: "Bot Name", Type: "string"},
+				},
+			},
+		},
+	},
+}
+
+func InitNotifyChannel(ctx *ctx.Context) {
+	if !ctx.IsCenter {
+		return
+	}
+
+	for _, notiCh := range NotiChMap {
+		notiCh.CreateBy = "system"
+		notiCh.CreateAt = time.Now().Unix()
+		notiCh.UpdateBy = "system"
+		notiCh.UpdateAt = time.Now().Unix()
+		err := notiCh.Upsert(ctx)
+		if err != nil {
+			logger.Warningf("notify channel init failed to upsert notify channels %v", err)
+		}
+	}
 }

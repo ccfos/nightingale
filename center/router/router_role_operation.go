@@ -7,7 +7,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/i18n"
 )
 
 func (rt *Router) operationOfRole(c *gin.Context) {
@@ -62,13 +61,13 @@ func (rt *Router) operations(c *gin.Context) {
 	for _, v := range rt.Operations.Ops {
 		newOp := cconf.Ops{
 			Name:  v.Name,
-			Cname: i18n.Sprintf(c.GetHeader("X-Language"), v.Cname),
+			Cname: translateText(c.GetHeader("X-Language"), v.Cname),
 			Ops:   []cconf.SingleOp{},
 		}
 		for i := range v.Ops {
 			op := cconf.SingleOp{
 				Name:  v.Ops[i].Name,
-				Cname: i18n.Sprintf(c.GetHeader("X-Language"), v.Ops[i].Cname),
+				Cname: translateText(c.GetHeader("X-Language"), v.Ops[i].Cname),
 			}
 			newOp.Ops = append(newOp.Ops, op)
 		}

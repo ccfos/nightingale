@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/i18nx"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/errorx"
-	"github.com/toolkits/pkg/i18n"
 )
 
 var (
@@ -47,10 +47,10 @@ func RecoveryWithWriter(out io.Writer) gin.HandlerFunc {
 				// custom error
 				if e, ok := err.(errorx.PageError); ok {
 					if e.Code != 200 {
-						c.String(e.Code, i18n.Sprintf(c.GetHeader("X-Language"), e.Message))
+						c.String(e.Code, i18nx.Translate(c.GetHeader("X-Language"), e.Message))
 					} else {
 						c.JSON(e.Code, gin.H{
-							"err":        i18n.Sprintf(c.GetHeader("X-Language"), e.Message),
+							"err":        i18nx.Translate(c.GetHeader("X-Language"), e.Message),
 							"request_id": c.GetString("trace_id"),
 						})
 					}

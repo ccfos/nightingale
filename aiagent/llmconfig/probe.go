@@ -4,13 +4,9 @@
 package llmconfig
 
 import (
-	"bytes"
-	"crypto/tls"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -18,113 +14,185 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 )
 
-// Test 向目标 LLM 提供方发送一次最小探针请求，用于验证连通性与凭证是否可用。
-// 出错时返回具体错误信息（例如 HTTP 状态码 + 截断后的响应体），成功则返回 nil。
-func Test(p *models.AILLMConfig) error {
-	extra := p.ExtraConfig
+type ProbeErrorKind string
 
-	// Build HTTP client with ExtraConfig settings
+const (
+	ProbeErrorAuth               ProbeErrorKind = "auth"
+	ProbeErrorEndpointNotFound   ProbeErrorKind = "endpoint_not_found"
+	ProbeErrorRateLimited        ProbeErrorKind = "rate_limited"
+	ProbeErrorRequestFailed      ProbeErrorKind = "request_failed"
+	ProbeErrorUnexpectedResponse ProbeErrorKind = "unexpected_response"
+	ProbeErrorModel              ProbeErrorKind = "model"
+	ProbeErrorNoContent          ProbeErrorKind = "no_content"
+)
+
+// ProbeError is the structured domain error returned by LLM connectivity tests.
+// It keeps provider and transport details separate from any i18n presentation logic.
+type ProbeError struct {
+	Kind       ProbeErrorKind
+	StatusCode int
+	APIURL     string
+	Model      string
+	Detail     string
+	Cause      error
+}
+
+func (e *ProbeError) Error() string {
+	parts := []string{"llm probe failed", "kind=" + string(e.Kind)}
+	if e.StatusCode > 0 {
+		parts = append(parts, fmt.Sprintf("status=%d", e.StatusCode))
+	}
+	if e.Model != "" {
+		parts = append(parts, "model="+e.Model)
+	}
+	if e.Detail != "" {
+		parts = append(parts, "detail="+e.Detail)
+	}
+	if e.Cause != nil {
+		parts = append(parts, "cause="+e.Cause.Error())
+	}
+	return strings.Join(parts, ", ")
+}
+
+func (e *ProbeError) Unwrap() error {
+	return e.Cause
+}
+
+// Test sends a real chat request to the target LLM provider to verify connectivity,
+// credentials, and model availability. Returns a ProbeError for classified failures.
+func Test(p *models.AILLMConfig) error {
+	client, err := llm.New(buildLLMConfig(p))
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), probeTimeout(p.ExtraConfig))
+	defer cancel()
+
+	maxTokens := 5
+	resp, err := client.Generate(ctx, &llm.GenerateRequest{
+		Messages:  []llm.Message{{Role: llm.RoleUser, Content: "Hi"}},
+		MaxTokens: &maxTokens,
+	})
+	if err != nil {
+		return classifyProbeError(p, err)
+	}
+	if resp == nil || strings.TrimSpace(resp.Content) == "" {
+		return &ProbeError{Kind: ProbeErrorNoContent, Model: p.Model}
+	}
+	return nil
+}
+
+var providerStatusErrPattern = regexp.MustCompile(`(?i)^(?:[a-z0-9_ -]+) API error \(status (\d+)\):\s*(.*)$`)
+
+func buildLLMConfig(p *models.AILLMConfig) *llm.Config {
+	return &llm.Config{
+		Provider:      p.APIType,
+		BaseURL:       p.APIURL,
+		APIKey:        p.APIKey,
+		Model:         p.Model,
+		Headers:       cloneStringMap(p.ExtraConfig.CustomHeaders),
+		Timeout:       int(probeTimeout(p.ExtraConfig) / time.Millisecond),
+		SkipSSLVerify: p.ExtraConfig.SkipTLSVerify,
+		Proxy:         p.ExtraConfig.Proxy,
+		Temperature:   p.ExtraConfig.Temperature,
+		MaxTokens:     p.ExtraConfig.MaxTokens,
+		ExtraBody:     p.ExtraConfig.CustomParams,
+	}
+}
+
+func probeTimeout(extra models.LLMExtraConfig) time.Duration {
 	timeout := 30 * time.Second
 	if extra.TimeoutSeconds > 0 {
 		timeout = time.Duration(extra.TimeoutSeconds) * time.Second
 	}
+	return timeout
+}
 
-	transport := &http.Transport{}
-	if extra.SkipTLSVerify {
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	if extra.Proxy != "" {
-		if proxyURL, err := url.Parse(extra.Proxy); err == nil {
-			transport.Proxy = http.ProxyURL(proxyURL)
-		}
+func classifyProbeError(p *models.AILLMConfig, err error) error {
+	msg := err.Error()
+	if statusCode, raw, ok := parseProviderStatusError(msg); ok {
+		return formatHTTPError(statusCode, p.APIURL, raw)
 	}
 
-	client := &http.Client{Timeout: timeout, Transport: transport}
+	if strings.Contains(msg, "failed to parse response") {
+		return &ProbeError{
+			Kind:   ProbeErrorUnexpectedResponse,
+			APIURL: p.APIURL,
+			Detail: truncate(msg, 200),
+			Cause:  err,
+		}
+	}
 
-	var reqURL string
-	var reqBody []byte
-	hdrs := map[string]string{"Content-Type": "application/json"}
+	if strings.Contains(msg, "no response from OpenAI") {
+		return &ProbeError{Kind: ProbeErrorNoContent, Model: p.Model, Cause: err}
+	}
 
-	switch p.APIType {
-	case "openai", "ollama":
-		base := strings.TrimRight(p.APIURL, "/")
-		if strings.HasSuffix(base, "/chat/completions") {
-			reqURL = base
-		} else {
-			reqURL = base + "/chat/completions"
+	if providerMsg, ok := extractProviderMessage(msg); ok {
+		return &ProbeError{
+			Kind:   ProbeErrorModel,
+			Model:  p.Model,
+			Detail: providerMsg,
+			Cause:  err,
 		}
-		reqBody, _ = json.Marshal(map[string]interface{}{
-			"model":      p.Model,
-			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
-			"max_tokens": 5,
-		})
-		if p.APIKey != "" {
-			hdrs["Authorization"] = "Bearer " + p.APIKey
+	}
+
+	return err
+}
+
+func parseProviderStatusError(msg string) (int, string, bool) {
+	matches := providerStatusErrPattern.FindStringSubmatch(msg)
+	if len(matches) != 3 {
+		return 0, "", false
+	}
+	var statusCode int
+	if _, err := fmt.Sscanf(matches[1], "%d", &statusCode); err != nil {
+		return 0, "", false
+	}
+	return statusCode, matches[2], true
+}
+
+func extractProviderMessage(msg string) (string, bool) {
+	for _, prefix := range []string{"OpenAI API error: ", "Claude API error: ", "Gemini API error: "} {
+		if strings.HasPrefix(msg, prefix) {
+			providerMsg := strings.TrimSpace(strings.TrimPrefix(msg, prefix))
+			if providerMsg != "" {
+				return providerMsg, true
+			}
 		}
-	case "kimi":
-		// Kimi Code uses Anthropic Claude-compatible Messages API
-		base := strings.TrimRight(p.APIURL, "/")
-		if strings.HasSuffix(base, "/v1/messages") {
-			reqURL = base
-		} else if strings.HasSuffix(base, "/v1") {
-			reqURL = base + "/messages"
-		} else {
-			reqURL = base + "/v1/messages"
-		}
-		reqBody, _ = json.Marshal(map[string]interface{}{
-			"model":      p.Model,
-			"messages":   []map[string]interface{}{{"role": "user", "content": []map[string]string{{"type": "text", "text": "Hi"}}}},
-			"max_tokens": 5,
-		})
-		hdrs["x-api-key"] = p.APIKey
-		hdrs["anthropic-version"] = "2023-06-01"
-	case "claude":
-		reqURL = llm.NormalizeClaudeURL(p.APIURL)
-		reqBody, _ = json.Marshal(map[string]interface{}{
-			"model":      p.Model,
-			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
-			"max_tokens": 5,
-		})
-		hdrs["x-api-key"] = p.APIKey
-		hdrs["anthropic-version"] = "2023-06-01"
-	case "gemini":
-		base := llm.NormalizeGeminiBase(p.APIURL)
-		if strings.Contains(base, ":generateContent") || strings.Contains(base, ":streamGenerateContent") {
-			reqURL = base + "?key=" + p.APIKey
-		} else {
-			reqURL = base + "/" + p.Model + ":generateContent?key=" + p.APIKey
-		}
-		reqBody, _ = json.Marshal(map[string]interface{}{
-			"contents": []map[string]interface{}{
-				{"parts": []map[string]string{{"text": "Hi"}}},
-			},
-		})
+	}
+	return "", false
+}
+
+// formatHTTPError converts an HTTP error status into a structured ProbeError.
+func formatHTTPError(statusCode int, apiURL, raw string) *ProbeError {
+	raw = truncate(raw, 300)
+	switch statusCode {
+	case 401, 403:
+		return &ProbeError{Kind: ProbeErrorAuth, StatusCode: statusCode, APIURL: apiURL, Detail: raw}
+	case 404:
+		return &ProbeError{Kind: ProbeErrorEndpointNotFound, StatusCode: statusCode, APIURL: apiURL, Detail: raw}
+	case 429:
+		return &ProbeError{Kind: ProbeErrorRateLimited, StatusCode: statusCode, APIURL: apiURL, Detail: raw}
 	default:
-		return fmt.Errorf("unsupported api_type: %s", p.APIType)
+		return &ProbeError{Kind: ProbeErrorRequestFailed, StatusCode: statusCode, APIURL: apiURL, Detail: raw}
 	}
+}
 
-	req, err := http.NewRequest("POST", reqURL, bytes.NewReader(reqBody))
-	if err != nil {
-		return err
+func truncate(s string, n int) string {
+	if len([]rune(s)) <= n {
+		return s
 	}
-	for k, v := range hdrs {
-		req.Header.Set(k, v)
-	}
-	// Apply custom headers from ExtraConfig
-	llm.ApplyCustomHeaders(req, extra.CustomHeaders)
+	return string([]rune(s)[:n])
+}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
+func cloneStringMap(src map[string]string) map[string]string {
+	if len(src) == 0 {
+		return nil
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		if len(body) > 500 {
-			body = body[:500]
-		}
-		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	dst := make(map[string]string, len(src))
+	for k, v := range src {
+		dst[k] = v
 	}
-	return nil
+	return dst
 }

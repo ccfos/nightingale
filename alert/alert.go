@@ -75,7 +75,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	externalProcessors := process.NewExternalProcessors()
 
 	macros.RegisterMacro(macros.MacroInVain)
-	dscache.Init(ctx, false)
+	dscache.Init(ctx, false, config.Alert.Heartbeat.EngineName)
 	Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, taskTplsCache, dsCache, ctx, promClients, userCache, userGroupCache, notifyRuleCache, notifyChannelCache, messageTemplateCache, configCvalCache)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP,
@@ -106,6 +106,7 @@ func Start(alertc aconf.Alert, pushgwc pconf.Pushgw, syncStats *memsto.Stats, al
 
 	go models.InitNotifyConfig(ctx, alertc.Alerting.TemplatesDir)
 	go models.InitMessageTemplate(ctx)
+	go models.InitNotifyChannel(ctx)
 	models.VerifyByProvider = provider.VerifyChannelConfig
 
 	naming := naming.NewNaming(ctx, alertc.Heartbeat, alertStats)

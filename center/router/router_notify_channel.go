@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+
 	// TODO(dingtalkapp): errors 仅在已注释的 dingtalkGroupsGetByNotifyChannel 中使用，钉钉应用上线时一并恢复。
 	// "errors"
 	"fmt"
@@ -376,7 +377,7 @@ func getFlashDutyChannels(integrationUrl string, jsonData []byte, timeout time.D
 	}
 
 	if res.Error.Message != "" {
-		return nil, fmt.Errorf(res.Error.Message)
+		return nil, newMessageError(res.Error.Message)
 	}
 
 	return res.Data.Items, nil
@@ -409,7 +410,7 @@ func (rt *Router) pagerDutyNotifyServicesGet(c *gin.Context) {
 
 	items, err := getPagerDutyServices(nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
 	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty services: %v", err))
+		ginx.Bomb(http.StatusInternalServerError, "failed to get pagerduty services: %v", err)
 	}
 	// 服务: []集成，扁平化为服务-集成
 	var flattenedItems []map[string]string
@@ -441,7 +442,7 @@ func (rt *Router) pagerDutyIntegrationKeyGet(c *gin.Context) {
 	integrationUrl := fmt.Sprintf("https://api.pagerduty.com/services/%s/integrations/%s", serviceId, integrationId)
 	integrationKey, err := getPagerDutyIntegrationKey(integrationUrl, nc.RequestConfig.PagerDutyRequestConfig.ApiKey, time.Duration(nc.RequestConfig.PagerDutyRequestConfig.Timeout)*time.Millisecond)
 	if err != nil {
-		ginx.Bomb(http.StatusInternalServerError, fmt.Sprintf("failed to get pagerduty integration key: %v", err))
+		ginx.Bomb(http.StatusInternalServerError, "failed to get pagerduty integration key: %v", err)
 	}
 
 	ginx.NewRender(c).Data(map[string]string{
