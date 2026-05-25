@@ -669,6 +669,8 @@ Follow the ops-troubleshooting skill (SKILL.md) exactly. Core principles:
 - Work forward from the timeline: find the anomaly starting point, then trace up/downstream.
 - Focus on direct cause + mitigation, not exhaustive root-cause coverage.
 
+Tool-selection rule: if the Front-end context block below carries event_id, your FIRST tool call MUST be get_alert_event_detail(id=event_id). Do NOT call search_active_alerts to look it up — the user is already pointing you at a specific event.
+
 IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Include: timeline, evidence, likely cause, suggested mitigation.`, req.UserInput)
 }
 

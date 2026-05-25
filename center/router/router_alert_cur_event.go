@@ -294,6 +294,12 @@ func GetEventNotifyVersion(ctx *ctx.Context, ruleId int64, notifyRuleIds []int64
 	if err != nil {
 		return 0, err
 	}
+	// Rule may have been deleted while the event row lives on (history events
+	// outlive their rules). AlertRuleGet returns (nil, nil) in that case;
+	// default to legacy version 0 instead of dereferencing.
+	if rule == nil {
+		return 0, nil
+	}
 	return rule.NotifyVersion, nil
 }
 

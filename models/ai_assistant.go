@@ -117,18 +117,9 @@ const (
 )
 
 type AssistantAction struct {
-	Content string               `json:"content"`
-	Key     AssistantActionKey   `json:"key"`
-	Param   AssistantActionParam `json:"param"`
-}
-
-type AssistantActionParam struct {
-	DatasourceType string  `json:"datasource_type,omitempty"`
-	DatasourceID   int64   `json:"datasource_id,omitempty"`
-	DatabaseName   string  `json:"database_name,omitempty"`
-	TableName      string  `json:"table_name,omitempty"`
-	BusiGroupID    int64   `json:"busi_group_id,omitempty"`
-	TeamIDs        []int64 `json:"team_ids,omitempty"`
+	Content string                 `json:"content"`
+	Key     AssistantActionKey     `json:"key"`
+	Param   map[string]interface{} `json:"param,omitempty"`
 }
 
 // ==================== Message Status ====================

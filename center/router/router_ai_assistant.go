@@ -379,25 +379,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Language:  lang,
 	}
 
-	// Extract action.param into context
-	ap := msg.Query.Action.Param
-	if ap.DatasourceType != "" {
-		chatReq.Context["datasource_type"] = ap.DatasourceType
-	}
-	if ap.DatasourceID > 0 {
-		chatReq.Context["datasource_id"] = ap.DatasourceID
-	}
-	if ap.DatabaseName != "" {
-		chatReq.Context["database_name"] = ap.DatabaseName
-	}
-	if ap.TableName != "" {
-		chatReq.Context["table_name"] = ap.TableName
-	}
-	if ap.BusiGroupID > 0 {
-		chatReq.Context["busi_group_id"] = ap.BusiGroupID
-	}
-	if len(ap.TeamIDs) > 0 {
-		chatReq.Context["team_ids"] = ap.TeamIDs
+	// Merge action.param into context — handlers consume Context as a generic
+	// map[string]interface{} (see ctxInt64 in aiagent/chat/actions.go), so
+	// param flows through verbatim. Adding a new param requires no router
+	// changes; the consuming handler just reads its key from req.Context.
+	for k, v := range msg.Query.Action.Param {
+		chatReq.Context[k] = v
 	}
 
 	// ④ Validate — on failure, silently fall back to general_chat instead of returning error
@@ -483,6 +470,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// position LLMs weight highest for "respond in X" directives. Empty lang
 	// returns "" so we fall back to the LLM's auto-detection behavior.
 	userPrompt += chat.LanguageDirective(lang)
+	// System-level safety net: surface the front-end context map to the LLM
+	// even when BuildPrompt doesn't read every key (see chat/context_dump.go
+	// for rationale). Empty context renders to "" so unaffected actions pay
+	// nothing.
+	userPrompt += chat.ContextDump(chatReq.Context)
 
 	// Default inputs always carry user_input so downstream consumers
 	// (skill autoselect's buildTaskContext, logging, tool params) can rely on
