@@ -38,22 +38,25 @@ func loadIntegrationsEntries() ([]docEntry, error) {
 		return nil, fmt.Errorf("read integrations dir %s: %w", dir, err)
 	}
 
+	// 单独统计目录数, 避免把 .DS_Store / 顶层 README.md 等非目录算进组件总数。
 	var entries []docEntry
-	skipped := 0
+	dirCount, loaded, skipped := 0, 0, 0
 	for _, c := range components {
 		if !c.IsDir() {
 			continue
 		}
+		dirCount++
 		extras, err := scanIntegrationComponent(dir, c.Name())
 		if err != nil {
 			logger.Warningf("integrations: scan component %s: %v", c.Name(), err)
 			skipped++
 			continue
 		}
+		loaded++
 		entries = append(entries, extras...)
 	}
-	logger.Infof("integrations: loaded %d entries from %d components (skipped %d) at %s",
-		len(entries), len(components)-skipped, skipped, dir)
+	logger.Infof("integrations: loaded %d entries from %d/%d components (skipped %d) at %s",
+		len(entries), loaded, dirCount, skipped, dir)
 	return entries, nil
 }
 

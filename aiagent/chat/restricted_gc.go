@@ -22,10 +22,12 @@ import (
 //   - ForbiddenPatterns 给 general_chat 后置校验用, 命中即整体替换为拒答模板
 var ForbiddenPatterns = []*regexp.Regexp{
 	// === Severity 命名 (n9e 用 Emergency/Warning/Notice, 不是 Critical/Info) ===
-	regexp.MustCompile(`(?i)severity\s*[:=]?\s*1\s*[:=]?\s*critical\b`),
-	regexp.MustCompile(`(?i)severity\s*[:=]?\s*3\s*[:=]?\s*info\b`),
-	regexp.MustCompile(`(?i)\b1\s*[:=]\s*critical\b`),
-	regexp.MustCompile(`(?i)\b3\s*[:=]\s*info\b`),
+	// 字符类纳入中文全角冒号 ：, 与 landmines.yaml 的 severity_1_critical /
+	// severity_3_info 规则对齐, 避免中文 LLM 输出 "Severity 1：Critical" 漏判。
+	regexp.MustCompile(`(?i)severity\s*[:：=]?\s*1\s*[:：=]?\s*critical\b`),
+	regexp.MustCompile(`(?i)severity\s*[:：=]?\s*3\s*[:：=]?\s*info\b`),
+	regexp.MustCompile(`(?i)\b1\s*[:：=]\s*critical\b`),
+	regexp.MustCompile(`(?i)\b3\s*[:：=]\s*info\b`),
 
 	// === 鉴权 Header (n9e Web API 用 X-User-Token, 不是 Bearer) ===
 	// 限制版 GC 模式下 — 因为没有 search 兜底拿到正确 Header — 干脆禁止
@@ -40,8 +42,8 @@ var ForbiddenPatterns = []*regexp.Regexp{
 	// === Telegraf 风格 inputs.xxx (categraf 用 [[instances]]) ===
 	regexp.MustCompile(`\[\[inputs\.[a-zA-Z_][a-zA-Z0-9_]*\]\]`),
 
-	// === 编造的 ping 指标名 ===
-	regexp.MustCompile(`\b(ping_result_code|ping_duration_seconds|ping_packet_loss_ratio)\b`),
+	// === 编造的 ping 指标名 (ping_result_code 是真实指标, 不能拉黑) ===
+	regexp.MustCompile(`\b(ping_duration_seconds|ping_packet_loss_ratio)\b`),
 
 	// === 编造的 categraf 环境变量 ===
 	regexp.MustCompile(`\bN9E_ADDR\b`),
