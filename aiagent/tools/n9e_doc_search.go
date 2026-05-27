@@ -97,10 +97,9 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 		return "", fmt.Errorf("n9e doc index is still warming up, please retry in a few seconds")
 	}
 
+	// keywords 上面已 TrimSpace 并校验非空, strings.Fields 一定能产出 >=1 个 token,
+	// 所以 tokenizeKeywords 这里不会返回空切片, 不再加额外判空。
 	terms := tokenizeKeywords(keywords)
-	if len(terms) == 0 {
-		return "", fmt.Errorf("keywords yielded no usable terms")
-	}
 
 	type scored struct {
 		idx   int
@@ -154,9 +153,12 @@ func searchN9eDocs(ctx context.Context, _ *aiagent.ToolDeps, args map[string]int
 // classifyDocResultQuality 按 hit count 和 top1 分数把召回质量分四档：
 //
 //	high   max_score >= 20         强召回（多 term 都在 title/description 命中）
-//	ok     10 <= max_score < 20    中等召回（单 term 在 title/description 多处命中）
-//	low    SCORE_FLOOR <= max_score < 10  弱召回（只有 contents 弱命中）
+//	ok     10 <= max_score < 20    中等召回（title+description 双命中或 title 多次命中）
+//	low    SCORE_FLOOR <= max_score < 10  弱召回（title 单命中、或仅 description/contents 命中）
 //	empty  hits == 0 或所有 hit < SCORE_FLOOR    无有效召回，触发拒答
+//
+// 打分参考 scoreDocEntry: title +5、description +3、contents 每次 +1（封顶 3）。
+// 单 term 仅 title 命中 = 5 分即 low 下限; title+desc+contents 全中 = 11 分进入 ok。
 //
 // SKILL.md 和限制版 GC handler 都按这四档决定行为：
 //   - high/ok: 正常依据 contents 回答

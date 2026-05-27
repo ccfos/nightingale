@@ -73,9 +73,11 @@
   retry_hint: '重搜 "n9e target 标签 API" 找真实路径; 一般通过 /api/n9e/targets PUT 或 categraf [global.labels] 实现。'
 
 - name: ping_duration_misname
-  pattern: '\b(ping_duration_seconds|ping_result_code|ping_packet_loss_ratio)\b'
+  # 注意: ping_result_code 是真实存在的指标, 不在此黑名单。
+  # 这里只列 categraf 不导出的编造指标名。
+  pattern: '\b(ping_duration_seconds|ping_packet_loss_ratio)\b'
   severity: high
-  annotate: '编造的 ping 指标名。categraf input.ping 真实指标包括 ping_average_response_ms / ping_percent_packet_loss / ping_result_code (注: result_code 真实存在但 duration_seconds 不存在)。'
+  annotate: '编造的 ping 指标名。categraf input.ping 真实指标是 ping_average_response_ms / ping_percent_packet_loss / ping_result_code, 不存在 ping_duration_seconds / ping_packet_loss_ratio。'
   retry_hint: '重搜 integration-config Ping 配置, 按 .toml 样例里实际暴露的指标名重写。'
 
 - name: categraf_websocket_plugin
