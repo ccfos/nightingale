@@ -64,7 +64,7 @@ var registry = map[string]*ActionHandler{
 		},
 	},
 	"general_chat": {
-		Description: "General Q&A, conceptual questions, AND fallback for anything that doesn't fit the more specific actions above (通用问答/兜底). PRIMARY use: knowledge/concept questions — '什么是P99延迟', 'Prometheus和VictoriaMetrics有什么区别', '如何优化慢查询'. ALSO serves as a fallback when intent is ambiguous or mixed (e.g. '帮我看下系统现在状态怎样', '随便聊聊监控的事'). In fallback mode, it can call read-only tools (查告警/查资源/查数据源数据/查主机) to give a real answer instead of guessing — but if the user's intent is clearly a specialized scenario (查告警→alert_query, 查资源列表→resource_query, 执行数据源查询→datasource_query, 创建资源→creation), route there FIRST.",
+		Description: "GENERIC monitoring/observability concepts ONLY, AND fallback for ambiguous intent (通用问答/兜底). PRIMARY use: vendor-neutral concept questions — '什么是P99延迟', 'PromQL 和 MetricsQL 区别', '如何优化慢查询', '直方图怎么用'. NOT for n9e/categraf/夜莺 specific questions: those must go to a specialized action — `doc_qa` for product behavior / 字段含义 / 指标含义 / 配置项 / 默认值 / 环境变量 (i.e. anything that requires the official docs as authority), `agent_deploy_guide` for categraf 部署, etc. ALSO serves as fallback when intent is genuinely ambiguous (e.g. '帮我看下系统现在状态怎样'). In fallback mode, can call read-only tools to give a real answer. But if the user clearly references a specialized scenario, route there FIRST.",
 		BuildPrompt: buildGeneralChatPrompt,
 		// 兜底 action：作为意图分类失败或其他 action validate 失败时的最终落脚点，
 		// 挂全部内置工具走 ReAct，以便兜底场景也能真正调用工具（查数据源、查告警、查资源等），
@@ -158,6 +158,19 @@ var registry = map[string]*ActionHandler{
 			return []string{"n9e-modify-task-tpl"}
 		},
 		AgentMode: aiagent.AgentModeDirect,
+	},
+	"doc_qa": {
+		// 这是"找文档读"型 action，专门接 n9e 平台特有术语 / UI 操作 / 显式查文档诉求。
+		// 边界写得长是因为它跟很多 action 的"配置/如何"语义相邻，必须显式让出地盘。
+		// 工作流走 ReAct（默认），因为必须调 search_n9e_docs 工具；SKILL.md 的 frontmatter
+		// 已声明 builtin_tools，appendSkillTools 会自动注入，所以这里不设 SelectTools。
+		Description: "Look up the n9e (Nightingale) / Flashcat OFFICIAL DOCS + integrations/ config samples to answer platform-specific factual questions. TRIGGER WHEN the user asks about ANY of: (a) doc references — '从文档里查', '文档里怎么说', 'docs 里有没有'; (b) 夜莺-specific terms/UI — 业务组/BusiGroup, 订阅规则, 屏蔽规则, edge 模式, Token, 附属告警, 通知 pipeline, 自愈触发条件; (c) **categraf input plugin field meaning / metric name / default value / environment variable / config syntax** — '[[instances]] 怎么写', 'ping_average_response_ms 单位是什么', 'http_response_result_code 各值含义', 'net_response 失败时返回啥', 'mysql input 哪些字段', 'N9E_API_URL 是干啥的', 'Severity 1 代表什么'; (d) n9e behavior/internal logic — 心跳判定逻辑, target sync 间隔, ingest 队列长度, omit_hostname 影响. Examples: '业务组是什么', 'edge 模式和中心模式区别', '订阅规则怎么用', 'categraf 怎么写 mysql 配置', 'ping 监控对应的指标名是什么', 'Severity 1 是 Critical 吗'. NOTE — STRICT BOUNDARIES (do NOT take these): 创建/新建任何资源 → creation; 教用户从零部署 categraf (二进制下载/systemd注册/docker run/k8s yaml) → agent_deploy_guide; 配通知通道/Webhook/签名 → notify_channel_copilot; 改通知模板字段 → notify_template_generator; 写自愈脚本 → task_tpl_copilot; 排查告警/诊断故障 → troubleshooting; 数据源连不上 → datasource_diagnose; 真正 vendor-neutral 的监控概念 ('什么是P99','PromQL vs MetricsQL') → general_chat.",
+		BuildPrompt: buildDocQAPrompt,
+		RequiredSkills: func(_ *AIChatRequest) []string {
+			return []string{"n9e-doc-qa"}
+		},
+		// SKILL.md frontmatter 已声明 builtin_tools (search_n9e_docs / verify_answer),
+		// appendSkillTools 自动注入, 这里无需 SelectTools。
 	},
 	"auto_heal_recommend": {
 		Description: "Recommend a self-healing action for a fired alert event (告警自愈推荐 / 半自愈). Given an alert event, gather three-layer evidence (event → rule → history), find the safest matching task_tpl, show what it would do (脚本要点 + 风险 + dry-run hint), and emit a 一键执行 marker — OR draft a new task_tpl spec and hand off to task_tpl_copilot when no candidate fits. Examples: '这条告警能自愈吗', '帮我处理一下这个告警', '推荐一个自愈脚本', '能不能一键修复', '建议下怎么自愈', 'auto-heal this alert', 'fix this incident'. NOTE: 直接写脚本走 task_tpl_copilot; 排查为什么告警触发走 troubleshooting; 判断主机活没活走 host_health_diagnose. Requires context.event_id.",
@@ -478,12 +491,31 @@ If the user asks anything outside these domains (general programming help unrela
 
 This is the fallback action — earlier intent classification didn't pinpoint a specialized action, so handle a broad range of (in-domain) requests yourself.
 
-Tool usage policy (IMPORTANT — don't overcall tools):
-- For knowledge / concept / "how to" questions (e.g. "什么是 P99", "PromQL 和 MetricsQL 区别", "为什么要用 histogram"), answer DIRECTLY from your own knowledge. Do NOT call tools.
-- For questions about CURRENT system state or data (e.g. "我现在有哪些告警", "查一下 ES 索引日志数", "哪些机器掉线了", "datasource 列表"), USE the appropriate tools to fetch real data and answer.
-- Prefer the most specific tool. Don't fan-out and call many tools when one is enough.
-- For datasource data queries: list_datasources first if datasource not specified; then pick query_prometheus / query_timeseries / query_log by plugin_type.
-- This fallback path is READ-ONLY. If the user asks to create or import resources, instruct them to phrase it as an explicit creation request (e.g. "创建/新建...") so it routes to the dedicated creation flow with proper business-group selection.
+Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
+
+1. **Vendor-neutral concept questions** (e.g. "什么是 P99", "PromQL 和 MetricsQL 区别", "histogram vs summary", "黄金信号", "alert fatigue"): answer DIRECTLY from your own knowledge. Do NOT call tools. These don't require product-specific facts.
+
+2. **n9e / categraf / 夜莺 SPECIFIC FACTUAL questions** (e.g. "ping 监控对应的 promql", "Severity 1 是什么", "config.toml http 段作用", "categraf_self 指标怎么获取", "Token 调接口 401 怎么回事", "[http] 段是不是给 Prometheus 抓的"): MUST call **search_n9e_docs** first to get authoritative facts. The doc index contains real toml samples + V9 documentation. NEVER answer such questions from memory — you have a documented history of hallucinating field names / metric names / Severity mappings / Header names when answering without doc retrieval (Severity=Critical / Authorization: Bearer / ping_result_code / [[inputs.xxx]] / enable_queue / N9E_ADDR ... 这些都是历史翻车样本)。
+
+   When search_n9e_docs returns ` + "`quality: empty`" + ` or ` + "`must_refuse: true`" + `, you MUST NOT invent specific identifiers — instead reply with the refusal template (see below) and offer vendor-neutral concept guidance.
+
+3. **CURRENT system state / data queries** (e.g. "我现在有哪些告警", "查一下 ES 索引日志数", "哪些机器掉线了", "datasource 列表"): use the appropriate read tool to fetch real data. Prefer the most specific tool. Don't fan-out.
+
+4. **For datasource data queries**: list_datasources first if datasource not specified; then pick query_prometheus / query_timeseries / query_log by plugin_type.
+
+5. This fallback path is READ-ONLY. If the user asks to create or import resources, instruct them to phrase it as an explicit creation request (e.g. "创建/新建...") so it routes to the dedicated creation flow with proper business-group selection.
+
+Refusal template (use VERBATIM when search_n9e_docs is empty for a factual question):
+` + "```" + `
+我在 n9e/categraf 官方文档里没有找到关于 <用户问题里的关键名词> 的明确描述，
+为避免给你错误信息，我不直接回答这个问题。建议:
+
+1. 📖 到 https://flashcat.cloud/docs/ 切换版本手动查
+2. 🐛 到 https://github.com/ccfos/nightingale/issues 搜历史问答
+3. 💬 加夜莺社区群直接问研发
+
+[可选: 这里附一段 vendor-neutral 的概念引导, 不带任何 n9e/categraf 特定标识符]
+` + "```" + `
 
 Answer in the user's language. Use well-formatted Markdown.
 
@@ -726,6 +758,28 @@ Do NOT drift into:
 - 写告警规则 / 通知模板 / 自愈脚本 → 对应 creation / notify_template_generator / task_tpl_copilot。
 
 Respond in the user's language (中文用户中文，英文用户英文), Markdown.`, req.UserInput)
+}
+
+// buildDocQAPrompt 是 thin shell: 真正的工作流 / 翻车案例 / 输出格式 / 索引版本约束
+// 全部在 n9e-doc-qa skill 的 SKILL.md 里, 这里只做三件事:
+//   1. 注入 user input
+//   2. 强调 "禁止凭训练记忆答" 这一最高指令 (反正 LLM 会读 SKILL.md, 这条再喊一遍兜底)
+//   3. 提醒 Final Answer 前必须调 verify_answer (与 SKILL.md 的强制工作流保持一致)
+//
+// 不再在 prompt 里复述 landmine 案例、source 标记说明、三段式输出协议 ——
+// 那些规则只在 SKILL.md + landmines.yaml 里维护, 单一事实源, 避免漂移。
+func buildDocQAPrompt(req *AIChatRequest) string {
+	return fmt.Sprintf(`You are answering an n9e (Nightingale) / Flashcat platform usage question.
+
+User request: %s
+
+Follow the n9e-doc-qa skill (SKILL.md) for the full workflow: tokenize keywords → call search_n9e_docs → synthesize top results → call verify_answer on your draft → revise if HIGH hits → Final Answer with markdown citations.
+
+红线 (压倒一切): 回答里每一个"具体事实"(字段名 / 配置语法 / API 路径 / Header / 环境变量 / 指标名 / 默认值 / Severity 命名 / 端口) **必须能在 search_n9e_docs 返回的 contents 里逐字找到**。找不到就说"文档里没找到", 禁止凭训练记忆补。错答比不答伤害大 100 倍。
+
+Final Answer 前**必须**调一次 verify_answer(answer="<完整草稿>"), 命中 HIGH 必须按 retry_hint 重搜重写, 直到 clean=true 或仅剩 medium/low 才能输出。
+
+Respond in the user's language (中文用户中文, 英文用户英文), Markdown.`, req.UserInput)
 }
 
 func buildNotifyChannelPrompt(req *AIChatRequest) string {
@@ -1071,6 +1125,9 @@ IMPORTANT: Your Final Answer MUST be well-formatted Markdown (NOT JSON). Use the
 // --- general_chat action (fallback) ---
 // general_chat 是兜底 action：分类失败/validate 失败时落地于此。挂全部内置工具走 ReAct，
 // 让模型在兜底场景也能调用工具去查数据，而不是只能凭常识空答。
+//
+// 工具集包含 search_n9e_docs, 用于"问数据 + 问文档"的混合场景。例如先 list_metrics
+// 列出指标名, 再 search_n9e_docs 查每个指标的真实含义, 避免凭记忆瞎解释。
 func selectGeneralChatTools(req *AIChatRequest) []string {
 	return []string{
 		// 告警
@@ -1094,6 +1151,10 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"list_databases", "list_tables", "describe_table",
 		// 文件 / 网络（只读）
 		"read_file", "list_files", "grep_files", "http_fetch",
+		// 文档检索: n9e/categraf 特定字段/指标/Header/API 路径等"具体事实"必须从
+		// 这里取证, 不能凭训练记忆答 — 否则会编 Severity=Critical / Authorization
+		// Bearer / ping_result_code / [[inputs.xxx]] 等不存在的标识符。
+		"search_n9e_docs",
 		// 注意：兜底路径故意不暴露写操作工具（create_alert_rule / create_dashboard /
 		// import_prom_rule_yaml / preview_prom_rule_yaml）。这些走 creation action 才能
 		// 触发 PreflightCreation 让用户先选业务组；兜底场景没有 preflight 保护，

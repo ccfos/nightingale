@@ -353,6 +353,44 @@ var HTTPFetch = aiagent.AgentTool{
 }
 
 // =============================================================================
+// N9e Docs
+// =============================================================================
+
+// VerifyAnswer 给 n9e-doc-qa skill 用: LLM 在 Final Answer 之前调一次, 让代码层
+// 用正则扫一遍草稿, 把"编造的字段名/环境变量/Severity 命名"等 n9e 域确定性错误捞回来。
+// 规则放在 <skillsPath>/n9e-doc-qa/landmines.yaml 里, 跟 skill 同居; 这里只声明
+// tool 接口和入参。规则是数据, 不是代码 — 这条工具的 Go 实现是通用的, 任何 skill
+// 想用都可以拷一份 yaml 然后在自己的 SKILL.md 里 builtin_tools 引一下。
+var VerifyAnswer = aiagent.AgentTool{
+	Name: "verify_answer",
+	Description: `在 Final Answer **之前**强制调一次, 把你即将发给用户的 markdown 草稿传进来。
+工具会用正则跑一遍 n9e 域的确定性错误规则 (来自 n9e-doc-qa/landmines.yaml), 返回:
+  - hits: 命中的规则列表, 每条带 matched (匹配到的具体字符串)、severity、annotate (给用户的警告)、retry_hint (修复方向)
+  - must_revise: 是否必须修改后重新调本工具 (HIGH severity 命中即 true)
+  - clean: hits 为空时为 true
+工作流: 草稿 → 调本工具 → 命中就按 retry_hint 用 search_n9e_docs 重搜 → 重写 → 再调本工具直到 clean=true → 才能 Final Answer。
+must_revise=true 时不要 Final Answer, 否则你的答案会带 ⚠️ 警告标志发给用户。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "answer", Type: "string", Description: "你打算 Final Answer 的完整 markdown 草稿", Required: true},
+	},
+}
+
+var SearchN9eDocs = aiagent.AgentTool{
+	Name: "search_n9e_docs",
+	Description: `在 Flashcat/夜莺(n9e) 官方文档站（flashcat.cloud/docs）做关键词搜索，返回 top N 篇匹配文档的标题、链接、描述和**完整正文**。
+专门用于回答"平台使用类"问题（怎么操作 / 如何配置 / 概念解释）。索引每天自动同步一次，常驻内存；只含 V9 文档（V5-V8 旧版已过滤）。
+打分：关键词命中 title +5、description +3、contents 每次 +1（封顶 3）。
+返回字段 contents 是该文档的完整正文（rune 截断到 6000，覆盖 99% 文档全长）——必须以此为答题依据，**禁止**凭训练记忆补充正文里没出现的字段名/接口路径/Header 格式。permalink 必须在回答末尾以引用形式带给用户。
+若 total=0，换关键词重试一次；仍无 → 告诉用户文档里没找到。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "keywords", Type: "string", Description: "搜索关键词，多个用空格分隔（如 \"告警规则 配置\"）。所有词都会做 lowercase 子串匹配", Required: true},
+		{Name: "top_n", Type: "integer", Description: "返回 top N 篇，默认 3，上限 10", Required: false},
+	},
+}
+
+// =============================================================================
 // File
 // =============================================================================
 

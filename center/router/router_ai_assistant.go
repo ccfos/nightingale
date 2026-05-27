@@ -333,14 +333,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	tLLMReady = time.Since(tStart)
 
 	// ③ Resolve action key in priority order:
-	//   1. Creation fast-path — if the user input has unambiguous creation
-	//      intent (verb + resource noun, no query anti-verb), route directly
-	//      to the creation action. Skips the LLM classifier entirely, which
-	//      both saves latency and avoids the 15s classifier timeout that has
-	//      been silently falling back to general_chat (see WARNING.log:
-	//      "intent inference failed: context deadline exceeded").
-	//   2. First message of a new chat with an explicit frontend key.
-	//   3. LLM intent inference (30s budget — 15s was too tight in practice).
+	//   1. Creation fast-path — 创建动词命中 → creation, 跳过 LLM 分类器节省延迟
+	//      (避免 15s 超时 fallback 到 general_chat 的历史问题, 见 WARNING.log
+	//      "intent inference failed: context deadline exceeded")
+	//   2. 前端首条消息明确指定 action — 保留前端控制权
+	//   3. LLM 推理 — 兜底, 30s budget
 	var actionKey string
 	tIntentStart := time.Now()
 	switch {
@@ -454,23 +451,19 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
-	// general_chat sub-mode routing: knowledge questions can answer from
-	// model parametric memory alone, so strip tools and force Direct mode —
-	// shrinks the system prompt from ~18KB to a few hundred bytes for the
-	// most common case (definitions / how-to / concepts). Data queries keep
-	// the full ReAct + tools stack so they can actually fetch state.
+	// general_chat sub-mode routing: knowledge 子模式只挂 search_n9e_docs 单工具
+	// 走 ReAct。LLM 看到工具列表后按 ReAct 框架决定要不要调 — vendor-neutral
+	// 概念题直接答, n9e/categraf 特定事实题先查文档再答。search_n9e_docs 返回
+	// must_refuse=true 时 LLM 会自行拒答。
 	//
-	// The extra LLM round-trip (~1s for sub-mode classification) is cheaper
-	// than carrying the full tool schema through every knowledge-question
-	// generation. On classification failure InferGeneralChatSubMode returns
-	// data_query, so behavior degrades to "current" rather than to broken.
+	// data_query 子模式保持全工具集走 ReAct, search_n9e_docs 已在工具集内。
 	generalChatSubMode := chat.GeneralChatSubMode("")
 	if actionKey == string(models.ActionKeyGeneralChat) {
 		subCtx, subCancel := context.WithTimeout(parentCtx, 15*time.Second)
 		generalChatSubMode = chat.InferGeneralChatSubMode(subCtx, llmClient, msg.Query.Content, history)
 		subCancel()
 		if generalChatSubMode == chat.GeneralChatSubModeKnowledge {
-			tools = nil
+			tools = aiagent.GetBuiltinToolDefs([]string{"search_n9e_docs"})
 		}
 	}
 
@@ -510,11 +503,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if handler != nil && handler.AgentMode != "" {
 		agentMode = handler.AgentMode
 	}
-	// general_chat knowledge sub-mode: force Direct (no Thought/Action wrapper,
-	// no tool schema in prompt) — paired with the tools=nil above.
-	if generalChatSubMode == chat.GeneralChatSubModeKnowledge {
-		agentMode = aiagent.AgentModeDirect
-	}
+	// general_chat knowledge 子模式挂了 search_n9e_docs 工具, 必须走 ReAct
+	// 才能让 LLM 看到工具调用框架, 不能再走原来的 Direct。
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
 		AgentMode:          agentMode,
 		Tools:              tools,
@@ -691,6 +681,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 
 	tStreamDone = time.Since(tStart)
+
+	// 限制版 general_chat 后置校验: prompt 约束是软约束, LLM 仍可能漏出已知
+	// landmine, 这层正则扫描是硬约束, 命中即把输出整体替换为拒答模板。
+	//
+	// 流式输出已发到前端不可撤回, 但 detail 接口和 history 拿到的是校验后的内容。
+	//
+	// scope 限定 general_chat: doc_qa 有自己的 verify_answer + landmines, 其他
+	// action 多数有自己的取证流程, 不容易凭记忆编。
+	if actionKey == string(models.ActionKeyGeneralChat) && fullContent != "" {
+		if clean, hits := chat.ValidateRestrictedGCOutput(fullContent); !clean {
+			logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, replacing output (chat=%s seq=%d)",
+				hits, msg.ChatID, msg.SeqID)
+			fullContent = chat.BuildRestrictedRefusalResponse(msg.Query.Content)
+		}
+	}
 
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
