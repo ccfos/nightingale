@@ -1,9 +1,13 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	a2asdk "github.com/a2aproject/a2a-go/v2/a2a"
 
@@ -16,6 +20,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
 )
+
+// a2aLogBodyLimit caps how much of the request body we capture for INFO logs.
+// A2A JSON-RPC payloads are normally well under 4KB; the cap exists so a
+// pathological caller cannot blow up the log file by uploading megabytes.
+const a2aLogBodyLimit = 4 * 1024
 
 // a2aBackend adapts *Router into the narrow surface expected by aiagent/a2a.
 // Keeps the package boundary clean: aiagent/a2a never imports center/router.
@@ -117,17 +126,94 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// /a2a/message:send and 404s.
 	a2aHandler := http.StripPrefix("/a2a", a2a.NewHTTPHandler(backend, handlerOpts))
 	a2aGroup := r.Group("/a2a")
-	a2aGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+	// requestLog runs first so auth failures (which short-circuit tokenAuth)
+	// still produce a structured "[A2A] start/done" pair carrying trace_id.
+	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 	a2aGroup.Any("", gin.WrapH(a2aHandler))
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
-		mcpGroup.Use(rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}
+}
+
+// a2aRequestLog emits an INFO line at request entry (with captured body) and a
+// matching one at exit (with status, latency, response bytes). scope is "A2A"
+// or "MCP" so the two surfaces can be grepped apart. trace_id is taken from
+// the global traceIdMid (pkg/httpx) so the line stitches together with the
+// rest of the access log.
+//
+// The body is read into memory up to a2aLogBodyLimit and then restored via a
+// MultiReader so the downstream SDK still sees the full payload. Non-JSON
+// content types are skipped to avoid binary spam in the log.
+func (rt *Router) a2aRequestLog(scope string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		traceID := c.GetString("trace_id")
+		method := c.Request.Method
+		path := c.Request.URL.Path
+		remote := c.ClientIP()
+
+		body, truncated := captureA2ARequestBody(c.Request)
+
+		logger.Infof("[%s] start trace_id=%s method=%s path=%s remote=%s body_len=%d body_truncated=%v body=%s",
+			scope, traceID, method, path, remote, len(body), truncated, body)
+
+		start := time.Now()
+		c.Next()
+		cost := time.Since(start)
+
+		username := ""
+		if v, ok := c.Get("user"); ok {
+			if u, _ := v.(*models.User); u != nil {
+				username = u.Username
+			}
+		}
+
+		logger.Infof("[%s] done trace_id=%s method=%s path=%s user=%s status=%d cost=%s bytes_out=%d",
+			scope, traceID, method, path, username, c.Writer.Status(), cost, c.Writer.Size())
+	}
+}
+
+// captureA2ARequestBody reads up to a2aLogBodyLimit bytes from r.Body for
+// logging, then restores r.Body so the downstream handler sees the full
+// original payload. Returns (preview, truncated). Non-JSON Content-Types are
+// skipped (preview = "<skipped non-json content-type=...>") to keep the log
+// readable when callers POST binary or multipart payloads.
+func captureA2ARequestBody(r *http.Request) (string, bool) {
+	if r == nil || r.Body == nil || r.Body == http.NoBody {
+		return "", false
+	}
+	ct := r.Header.Get("Content-Type")
+	if ct != "" && !strings.Contains(ct, "json") {
+		return "<skipped non-json content-type=" + ct + ">", false
+	}
+
+	// Read one byte past the limit so we can tell "exactly at limit" from
+	// "truncated" without an extra Read after the LimitedReader.
+	limited := io.LimitReader(r.Body, a2aLogBodyLimit+1)
+	buf, err := io.ReadAll(limited)
+	if err != nil {
+		// Restore what we managed to read so the downstream still has a
+		// chance; surface the read failure in the preview so it's visible.
+		r.Body = io.NopCloser(bytes.NewReader(buf))
+		return "<read-error: " + err.Error() + ">", false
+	}
+
+	truncated := len(buf) > a2aLogBodyLimit
+	preview := buf
+	if truncated {
+		preview = buf[:a2aLogBodyLimit]
+		// Stitch what we already read back together with the unread tail so
+		// the downstream handler sees the original byte stream.
+		r.Body = io.NopCloser(io.MultiReader(bytes.NewReader(buf), r.Body))
+	} else {
+		r.Body = io.NopCloser(bytes.NewReader(buf))
+	}
+	return string(preview), truncated
 }
 
 // injectA2AUser pulls *models.User from gin.Context (set by rt.user()) and
@@ -137,8 +223,11 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 // thing.
 func (rt *Router) injectA2AUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		traceID := c.GetString("trace_id")
 		v, ok := c.Get("user")
 		if !ok {
+			logger.Warningf("[A2A] injectA2AUser trace_id=%s path=%s: no user in context — upstream auth middleware did not set one",
+				traceID, c.Request.URL.Path)
 			c.Abort()
 			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
 			return
@@ -149,6 +238,8 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 		// be confused with normal auth failures during incident triage.
 		user, ok := v.(*models.User)
 		if !ok || user == nil {
+			logger.Errorf("[A2A] injectA2AUser trace_id=%s path=%s: user middleware returned wrong type %T",
+				traceID, c.Request.URL.Path, v)
 			c.Abort()
 			ginx.Bomb(http.StatusInternalServerError, "a2a: user middleware returned wrong type")
 			return

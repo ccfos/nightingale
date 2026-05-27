@@ -13,6 +13,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 )
 
 // heartbeatInterval is how long the stream may be idle before we emit a
@@ -84,38 +85,53 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 	return func(yield func(a2a.Event, error) bool) {
 		user := UserFromContext(ctx)
 		if user == nil {
+			logx.Warningf(ctx, "[A2A] Execute reject: unauthenticated request")
 			yield(nil, errors.New("a2a: unauthenticated request"))
 			return
 		}
 		if ec.Message == nil {
+			logx.Warningf(ctx, "[A2A] Execute reject user_id=%d: empty message", user.Id)
 			yield(nil, errors.New("a2a: empty message"))
 			return
 		}
 
 		text := concatTextParts(ec.Message)
 		if strings.TrimSpace(text) == "" {
+			logx.Warningf(ctx, "[A2A] Execute reject user_id=%d context_id=%s task_id=%s: empty text parts",
+				user.Id, ec.ContextID, ec.TaskID)
 			yield(nil, errors.New("a2a: message text is empty"))
 			return
 		}
 
 		page := pageFromMetadata(ec.Metadata)
+		lang := stringMeta(ec.Metadata, langMetadataKey)
+		logx.Infof(ctx, "[A2A] Execute start user_id=%d username=%s context_id=%s task_id=%s message_id=%s text_len=%d page=%s lang=%s",
+			user.Id, user.Username, ec.ContextID, ec.TaskID, ec.Message.ID, len(text), page.Page, lang)
+
 		chat, err := e.backend.EnsureAssistantChat(user.Id, ec.ContextID, page)
 		if err != nil {
+			logx.Errorf(ctx, "[A2A] Execute ensure chat failed user_id=%d context_id=%s task_id=%s: %v",
+				user.Id, ec.ContextID, ec.TaskID, err)
 			yield(nil, fmt.Errorf("ensure chat: %w", err))
 			return
 		}
+		logx.Infof(ctx, "[A2A] Execute chat ensured user_id=%d context_id=%s task_id=%s chat_id=%s",
+			user.Id, ec.ContextID, ec.TaskID, chat.ChatID)
 
 		query := models.AssistantMessageQuery{
 			Content:  text,
 			PageFrom: page,
 		}
-		lang := stringMeta(ec.Metadata, langMetadataKey)
 
 		result, _, err := e.backend.StartAssistantMessage(user.Id, chat, query, lang)
 		if err != nil {
+			logx.Errorf(ctx, "[A2A] Execute start message failed user_id=%d chat_id=%s task_id=%s: %v",
+				user.Id, chat.ChatID, ec.TaskID, err)
 			yield(nil, fmt.Errorf("start message: %w", err))
 			return
 		}
+		logx.Infof(ctx, "[A2A] Execute message started user_id=%d task_id=%s chat_id=%s seq_id=%d stream_id=%s",
+			user.Id, ec.TaskID, result.ChatID, result.SeqID, result.StreamID)
 
 		// Surface task lifecycle: submitted → working → (artifacts...) → terminal.
 		// Stash (chatID, seqID) on the Task so Cancel can recover them precisely
@@ -160,6 +176,8 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 			}
 		}
 		state, errMsg := e.terminalState(ctx, result.ChatID, result.SeqID)
+		logx.Infof(ctx, "[A2A] Execute terminal user_id=%d task_id=%s chat_id=%s seq_id=%d state=%s err=%q",
+			user.Id, ec.TaskID, result.ChatID, result.SeqID, state, errMsg)
 		bridge.Finalize(state, errMsg)
 	}
 }
@@ -204,6 +222,7 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 		// time; auth still gates whether *this* user may act on it.
 		user := UserFromContext(ctx)
 		if user == nil {
+			logx.Warningf(ctx, "[A2A] Cancel reject: unauthenticated request task_id=%s", ec.TaskID)
 			yield(nil, a2a.ErrUnauthenticated)
 			return
 		}
@@ -214,12 +233,18 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 			// fabricated, the task pre-dates this metadata convention, or the
 			// store dropped it. Either way, treat as not-found rather than
 			// attempting a chat-wide cancel.
+			logx.Warningf(ctx, "[A2A] Cancel not_found user_id=%d task_id=%s: stored task metadata missing",
+				user.Id, ec.TaskID)
 			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
+		logx.Infof(ctx, "[A2A] Cancel start user_id=%d task_id=%s chat_id=%s seq_id=%d",
+			user.Id, ec.TaskID, chatID, seqID)
 		// Defense in depth: if the client passed a ContextID, it must match
 		// the chat the StoredTask is bound to. Mismatch == probing.
 		if ec.ContextID != "" && ec.ContextID != chatID {
+			logx.Warningf(ctx, "[A2A] Cancel context mismatch user_id=%d task_id=%s chat_id=%s context_id=%s",
+				user.Id, ec.TaskID, chatID, ec.ContextID)
 			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
@@ -227,6 +252,8 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 		// into the same NotFound so a non-owner can't probe task IDs across
 		// tenants by triggering different error shapes.
 		if err := e.backend.CheckChatOwner(chatID, user.Id); err != nil {
+			logx.Warningf(ctx, "[A2A] Cancel owner check failed user_id=%d task_id=%s chat_id=%s: %v",
+				user.Id, ec.TaskID, chatID, err)
 			yield(nil, a2a.ErrTaskNotFound)
 			return
 		}
@@ -236,13 +263,19 @@ func (e *executor) Cancel(ctx context.Context, ec *a2asrv.ExecutorContext) iter.
 			// whether a given (chat, seq) ever existed. Any other error is a
 			// genuine cancel failure surfaced as a Failed status update.
 			if errors.Is(err, a2a.ErrTaskNotFound) {
+				logx.Infof(ctx, "[A2A] Cancel result user_id=%d task_id=%s chat_id=%s seq_id=%d state=NotFound",
+					user.Id, ec.TaskID, chatID, seqID)
 				yield(nil, a2a.ErrTaskNotFound)
 				return
 			}
+			logx.Errorf(ctx, "[A2A] Cancel failed user_id=%d task_id=%s chat_id=%s seq_id=%d: %v",
+				user.Id, ec.TaskID, chatID, seqID, err)
 			yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateFailed,
 				a2a.NewMessage(a2a.MessageRoleAgent, a2a.NewTextPart(err.Error()))), nil)
 			return
 		}
+		logx.Infof(ctx, "[A2A] Cancel result user_id=%d task_id=%s chat_id=%s seq_id=%d state=Canceled",
+			user.Id, ec.TaskID, chatID, seqID)
 		yield(a2a.NewStatusUpdateEvent(ec, a2a.TaskStateCanceled, nil), nil)
 	}
 }

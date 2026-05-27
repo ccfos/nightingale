@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/logx"
 
 	a2asdk "github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/toolkits/pkg/logger"
 )
 
 // NewMCPHandler builds an MCP Streamable HTTP handler that exposes a single
@@ -79,7 +79,7 @@ func drainStream(ctx context.Context, backend AssistantBackend, result *MessageS
 				!errors.Is(cerr, a2asdk.ErrTaskNotFound) {
 				// ErrTaskNotFound just means the runner already reached a
 				// terminal state on its own — race with natural finish, fine.
-				logger.Warningf("[MCP] cancel on disconnect chat=%s seq=%d: %v",
+				logx.Warningf(ctx, "[MCP] cancel on disconnect chat_id=%s seq_id=%d: %v",
 					result.ChatID, result.SeqID, cerr)
 			}
 			cleanupCancel()
@@ -91,11 +91,16 @@ func drainStream(ctx context.Context, backend AssistantBackend, result *MessageS
 func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) (*mcp.CallToolResult, *mcpOutput, error) {
 	user := UserFromContext(ctx)
 	if user == nil {
+		logx.Warningf(ctx, "[MCP] tool reject: unauthenticated request")
 		return nil, nil, errors.New("a2a/mcp: unauthenticated request")
 	}
 	if strings.TrimSpace(in.Message) == "" {
+		logx.Warningf(ctx, "[MCP] tool reject user_id=%d: empty message", user.Id)
 		return nil, nil, errors.New("a2a/mcp: message is required")
 	}
+
+	logx.Infof(ctx, "[MCP] tool start user_id=%d username=%s chat_id=%s message_len=%d",
+		user.Id, user.Username, in.ChatID, len(in.Message))
 
 	// EnsureAssistantChat collapses "unknown chatID" / "chatID owned by someone
 	// else" / "no chatID supplied" into "allocate a fresh chat" already, so the
@@ -103,14 +108,19 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 	// back in the error message.
 	chat, err := backend.EnsureAssistantChat(user.Id, in.ChatID, models.AssistantPageInfo{})
 	if err != nil {
+		logx.Errorf(ctx, "[MCP] ensure chat failed user_id=%d in_chat_id=%s: %v", user.Id, in.ChatID, err)
 		return nil, nil, fmt.Errorf("ensure chat: %w", err)
 	}
+	logx.Infof(ctx, "[MCP] chat ensured user_id=%d chat_id=%s", user.Id, chat.ChatID)
 
 	result, _, err := backend.StartAssistantMessage(user.Id, chat,
 		models.AssistantMessageQuery{Content: in.Message}, "")
 	if err != nil {
+		logx.Errorf(ctx, "[MCP] start message failed user_id=%d chat_id=%s: %v", user.Id, chat.ChatID, err)
 		return nil, nil, fmt.Errorf("start message: %w", err)
 	}
+	logx.Infof(ctx, "[MCP] message started user_id=%d chat_id=%s seq_id=%d stream_id=%s",
+		user.Id, result.ChatID, result.SeqID, result.StreamID)
 
 	// Drain the stream — we only care about the final text. ReAct may emit
 	// reasoning ("reason") deltas too; those are dropped here intentionally
@@ -143,12 +153,18 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 			errMsg = "assistant message terminated with error"
 		}
 		if snap.ErrCode == int(models.MessageStatusCancel) {
+			logx.Infof(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Canceled err=%q bytes=%d",
+				user.Id, result.ChatID, result.SeqID, errMsg, sb.Len())
 			return nil, nil, fmt.Errorf("a2a/mcp: cancelled: %s", errMsg)
 		}
+		logx.Errorf(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Failed err=%q bytes=%d",
+			user.Id, result.ChatID, result.SeqID, errMsg, sb.Len())
 		return nil, nil, fmt.Errorf("a2a/mcp: %s", errMsg)
 	}
 
 	answer := sb.String()
+	logx.Infof(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Completed bytes=%d",
+		user.Id, result.ChatID, result.SeqID, len(answer))
 	return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: answer}},
 		}, &mcpOutput{
