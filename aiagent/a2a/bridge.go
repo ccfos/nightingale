@@ -1,6 +1,8 @@
 package a2a
 
 import (
+	"encoding/json"
+
 	"github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/a2aproject/a2a-go/v2/a2asrv"
 
@@ -16,6 +18,11 @@ import (
 // rule here is simply: reason → mark thought, content → don't. No marker
 // detection lives in this file.
 const thoughtMetadataKey = "adk_thought"
+
+// n9eContentTypeMetadataKey tags an A2A part whose body is a structured n9e
+// payload (e.g. form_select JSON). n9e clients render the widget; generic
+// clients see opaque JSON — degraded but not lost.
+const n9eContentTypeMetadataKey = "n9e_content_type"
 
 // streamBridge translates aiagent.StreamMessage frames produced by the existing
 // ReAct pipeline into A2A events. It maintains separate "in-flight" artifact
@@ -43,6 +50,8 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 		return b.forwardContent(msg.V)
 	case "reason":
 		return b.forwardReason(msg.V)
+	case aiagent.PhaseResponse:
+		return b.forwardResponse(msg.V)
 	case "step":
 		// Status text describing a tool call or workflow step. Surface as a
 		// transient working update so clients can render progress.
@@ -68,6 +77,25 @@ func (b *streamBridge) forwardContent(delta string) bool {
 		return b.yield(ev, nil)
 	}
 	return b.yield(a2a.NewArtifactUpdateEvent(b.execCtx, b.contentArtifactID, a2a.NewTextPart(delta)), nil)
+}
+
+// forwardResponse emits a structured response as its own artifact. Each frame
+// is a complete payload (not a delta), so allocate a fresh artifact rather
+// than reusing contentArtifactID. Bad JSON / empty content are dropped so a
+// single malformed frame can't take down the stream.
+func (b *streamBridge) forwardResponse(body string) bool {
+	var frame aiagent.ResponseFrame
+	if err := json.Unmarshal([]byte(body), &frame); err != nil {
+		return true
+	}
+	if frame.Content == "" {
+		return true
+	}
+	part := a2a.NewTextPart(frame.Content)
+	if frame.ContentType != "" {
+		part.SetMeta(n9eContentTypeMetadataKey, string(frame.ContentType))
+	}
+	return b.yield(a2a.NewArtifactEvent(b.execCtx, part), nil)
 }
 
 func (b *streamBridge) forwardReason(delta string) bool {

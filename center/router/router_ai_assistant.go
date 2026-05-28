@@ -821,7 +821,6 @@ func (rt *Router) finishMessage(state *MessageState, streamID string, errCode in
 // history records only the user's input.
 func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, history []aiagent.ChatMessage, responses []models.AssistantMessageResponse) {
 	msg := state.Msg()
-	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
 	if len(responses) > 0 {
 		responses[0].StreamID = streamID
@@ -830,6 +829,17 @@ func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, hist
 			responses[i].IsFromAI = true
 		}
 	}
+
+	// Publish responses BEFORE Finish so stream-only consumers (A2A bridge)
+	// see the payload, not just an empty COMPLETED task. SSE 仍由 /detail 渲染，
+	// 沿途忽略此帧。
+	for _, r := range responses {
+		if err := rt.streamBus.PublishResponse(context.Background(), msg.ChatID, streamID, r); err != nil {
+			logger.Warningf("[Assistant] PublishResponse on halt chat=%s stream=%s: %v", msg.ChatID, streamID, err)
+		}
+	}
+	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
+
 	msg.Response = responses
 	msg.IsFinish = true
 	msg.CurStep = ""
