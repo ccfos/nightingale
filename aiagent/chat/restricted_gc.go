@@ -5,33 +5,19 @@ import (
 	"strings"
 )
 
-// general_chat 路径的反幻觉硬约束。LLM 在 general_chat 上凭训练记忆生成时,
-// 会把相邻产品 (Telegraf / node_exporter / Grafana / AlertManager) 的"行业
-// 惯例"误用到 n9e 上 (Severity=Critical / Authorization: Bearer /
-// [[inputs.xxx]] / :9100/metrics 等), 因为训练数据里 categraf/n9e 真实事实
-// 占比远低于这些相邻产品。
-//
-// ValidateRestrictedGCOutput 对 LLM 最终输出跑正则扫描, 命中 ForbiddenPatterns
-// 就让 router 用 BuildRestrictedRefusalResponse 整体替换为拒答模板, 保证错误
-// 事实不会落到持久化和 history 里。
-
-// ForbiddenPatterns: 限制版输出的禁止模式列表。
-//
-// 和 landmines.yaml 定位区分:
-//   - landmines.yaml 给 verify_answer 工具读, 覆盖 doc-qa skill 路径
-//   - ForbiddenPatterns 给 general_chat 后置校验用, 命中即整体替换为拒答模板
+// general_chat 后置校验的禁词正则。LLM 凭记忆答 n9e 问题时会把相邻产品
+// (Telegraf/node_exporter 等, 训练数据里占比远高于 categraf/n9e) 的惯例
+// 误用到 n9e 上, prompt 防不住, 这里硬扫。
+// landmines.yaml 给 doc_qa 的 verify_answer 用, 这里给 general_chat 用。
 var ForbiddenPatterns = []*regexp.Regexp{
 	// === Severity 命名 (n9e 用 Emergency/Warning/Notice, 不是 Critical/Info) ===
-	// 字符类纳入中文全角冒号 ：, 与 landmines.yaml 的 severity_1_critical /
-	// severity_3_info 规则对齐, 避免中文 LLM 输出 "Severity 1：Critical" 漏判。
+	// 字符类纳入中文全角冒号 ：, 避免 "Severity 1：Critical" 漏判。
 	regexp.MustCompile(`(?i)severity\s*[:：=]?\s*1\s*[:：=]?\s*critical\b`),
 	regexp.MustCompile(`(?i)severity\s*[:：=]?\s*3\s*[:：=]?\s*info\b`),
 	regexp.MustCompile(`(?i)\b1\s*[:：=]\s*critical\b`),
 	regexp.MustCompile(`(?i)\b3\s*[:：=]\s*info\b`),
 
 	// === 鉴权 Header (n9e Web API 用 X-User-Token, 不是 Bearer) ===
-	// 限制版 GC 模式下 — 因为没有 search 兜底拿到正确 Header — 干脆禁止
-	// 提任何认证 Header, 让 LLM 走拒答模板。
 	regexp.MustCompile(`(?i)(?:夜莺|n9e|nightingale|flashcat)[\s\S]{0,150}Authorization\s*:\s*Bearer`),
 
 	// === categraf 编造字段 ===
@@ -57,12 +43,8 @@ var ForbiddenPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`/api/n9e/target-bindings\b|/api/n9e/target/bindings\b`),
 }
 
-// ValidateRestrictedGCOutput 跑后置校验。返回 (clean, hits):
-//   - clean == true: 输出干净, 可以直接发送给用户
-//   - clean == false: 命中至少 1 条 ForbiddenPattern, 调用方应丢弃 LLM 输出
-//     用 BuildRestrictedRefusalResponse 生成的拒答模板替代
-//
-// hits 包含命中的具体字符串, 用于日志 / metrics / eval 调试。
+// ValidateRestrictedGCOutput 扫描 LLM 输出, 命中 ForbiddenPatterns 时返回
+// clean=false 和 hits 命中字面量。
 func ValidateRestrictedGCOutput(answer string) (clean bool, hits []string) {
 	for _, p := range ForbiddenPatterns {
 		if matches := p.FindAllString(answer, -1); len(matches) > 0 {
@@ -72,31 +54,28 @@ func ValidateRestrictedGCOutput(answer string) (clean bool, hits []string) {
 	return len(hits) == 0, hits
 }
 
-// BuildRestrictedRefusalResponse 构造拒答模板。
-//
-// 后置校验失败时用这个替换 LLM 输出, 保证用户拿到的不是错误事实而是
-// 引导查文档的提示。可选 hints 参数允许调用方注入"召回到的相关 chunk
-// 摘要"作为概念引导, 让拒答不至于完全无用。
-func BuildRestrictedRefusalResponse(userQuery string, conceptualHints ...string) string {
+// BuildHallucinationStamp 生成追加到 LLM 原文末尾的警告 stamp。
+// 追加而非替换: 流式已发出, 替换骗不了用户; 且 Turn 2 LLM 看原文+警告才能
+// 定位自己上次错在哪。
+func BuildHallucinationStamp(hits []string) string {
 	var sb strings.Builder
-	sb.WriteString("我在 n9e/categraf 官方文档里没找到关于这个问题的明确描述, ")
-	sb.WriteString("不能凭记忆给出具体字段名/指标名/API 路径以免误导。\n\n")
-	sb.WriteString("建议:\n\n")
-	sb.WriteString("1. 📖 到 [V9 文档站](https://flashcat.cloud/docs/) 手动搜或切换版本查询\n")
-	sb.WriteString("2. 🐛 到 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 搜历史问答\n")
-	sb.WriteString("3. 💬 加[夜莺社区群](https://flashcat.cloud/community/)直接问研发\n")
-
-	for _, h := range conceptualHints {
-		h = strings.TrimSpace(h)
-		if h == "" {
-			continue
+	sb.WriteString("\n\n---\n\n")
+	sb.WriteString("⚠️ **后置校验提示**：上述回答命中已知 hallucination 模式")
+	if len(hits) > 0 {
+		seen := make(map[string]struct{}, len(hits))
+		uniq := make([]string, 0, len(hits))
+		for _, h := range hits {
+			if _, ok := seen[h]; ok {
+				continue
+			}
+			seen[h] = struct{}{}
+			uniq = append(uniq, h)
 		}
-		sb.WriteString("\n---\n\n")
-		sb.WriteString(h)
-		sb.WriteString("\n")
+		sb.WriteString("（`")
+		sb.WriteString(strings.Join(uniq, "`, `"))
+		sb.WriteString("`）")
 	}
-
-	sb.WriteString("\n---\n\n")
-	sb.WriteString("如需准确的 n9e 配置细节，请查阅官方文档或加群咨询。\n")
+	sb.WriteString("，未经 n9e 官方文档验证，请到 [V9 文档](https://flashcat.cloud/docs/) 或 [GitHub Issues](https://github.com/ccfos/nightingale/issues) 核对。\n\n")
+	sb.WriteString("**下一轮请勿基于上述具体标识符继续。**\n")
 	return sb.String()
 }

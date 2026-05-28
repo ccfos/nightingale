@@ -682,21 +682,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	tStreamDone = time.Since(tStart)
 
-	// 限制版 general_chat 后置校验: prompt 约束是软约束, LLM 仍可能漏出已知
-	// landmine, 这层正则扫描是硬约束, 命中即把输出整体替换为拒答模板。
-	//
-	// 流式输出已发到前端不可撤回, 但 detail 接口和 history 拿到的是校验后的内容。
-	//
-	// scope 限定 general_chat: doc_qa 有自己的 verify_answer + landmines, 其他
-	// action 多数有自己的取证流程, 不容易凭记忆编。
-	if actionKey == string(models.ActionKeyGeneralChat) && fullContent != "" {
-		if clean, hits := chat.ValidateRestrictedGCOutput(fullContent); !clean {
-			logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, replacing output (chat=%s seq=%d)",
-				hits, msg.ChatID, msg.SeqID)
-			fullContent = chat.BuildRestrictedRefusalResponse(msg.Query.Content)
-		}
-	}
-
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
 	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog
@@ -714,6 +699,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		// prompt's example. Unwrap before rendering as markdown so the user sees
 		// real newlines instead of literal "\n" escapes.
 		markdown := chat.UnwrapJSONEnvelope(fullContent)
+
+		// general_chat 后置校验: 必须在 UnwrapJSONEnvelope 之后跑——若
+		// fullContent 是 JSON envelope, append stamp 会破坏末尾 `}` 让 unwrap
+		// 短路返回 raw JSON。scope 限定 general_chat (它无 ParseResponse, 必走 fallback)。
+		if actionKey == string(models.ActionKeyGeneralChat) && markdown != "" {
+			if clean, hits := chat.ValidateRestrictedGCOutput(markdown); !clean {
+				logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, appending stamp (chat=%s seq=%d)",
+					hits, msg.ChatID, msg.SeqID)
+				markdown += chat.BuildHallucinationStamp(hits)
+			}
+		}
+
 		responses = []models.AssistantMessageResponse{
 			{ContentType: models.ContentTypeMarkdown, Content: markdown, StreamID: streamID, IsFinish: true, IsFromAI: true},
 		}
