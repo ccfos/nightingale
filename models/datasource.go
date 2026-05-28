@@ -554,7 +554,9 @@ func (ds *Datasource) Decrypt() error {
 	return nil
 }
 
-// ClearPlaintext 清理敏感字段
+// ClearPlaintext 清理 Settings / Auth 的明文字段。
+// 仅用于 Encrypt() 之后，加密产物（SettingsEncoded / AuthEncoded）和 HTTP headers
+// 必须保留以便 edge 节点解密和使用。给最终用户脱敏请用 RedactSecrets()。
 func (ds *Datasource) ClearPlaintext() {
 	ds.Settings = ""
 	ds.SettingsJson = nil
@@ -562,6 +564,27 @@ func (ds *Datasource) ClearPlaintext() {
 	ds.Auth = ""
 	ds.AuthJson.BasicAuthUser = ""
 	ds.AuthJson.BasicAuthPassword = ""
+}
+
+// RedactSecrets 抹掉所有可能携带密钥 / 口令 / 令牌的字段，用于把数据源对象
+// 返回给非管理员用户。HTTPJson.Url/Urls 等非敏感连接信息保留，方便前端展示。
+func (ds *Datasource) RedactSecrets() {
+	ds.Settings = ""
+	ds.SettingsJson = nil
+	ds.SettingsEncoded = ""
+
+	ds.HTTP = ""
+	ds.HTTPJson.Headers = nil
+	// mTLS 客户端私钥及其口令属于密钥材料，必须抹掉；
+	// CA / 客户端证书不算口令，但也没有展示需求，一并清空。
+	ds.HTTPJson.TLS.CACert = ""
+	ds.HTTPJson.TLS.ClientCert = ""
+	ds.HTTPJson.TLS.ClientKey = ""
+	ds.HTTPJson.TLS.ClientKeyPassword = ""
+
+	ds.Auth = ""
+	ds.AuthJson = Auth{}
+	ds.AuthEncoded = ""
 }
 
 func DatasourceGetMap(ctx *ctx.Context) (map[int64]*Datasource, error) {
