@@ -17,12 +17,11 @@ import (
 // buildIntentInferencePrompt constructs a system prompt that lists all available
 // action keys with descriptions, asking the LLM to pick the best match.
 //
-// Kept deliberately short — the handler Descriptions in actions.go already
-// encode the trigger verbs and examples per action, so re-stating them here as
-// a "VERB-FIRST RULE" block was largely duplicative. We only keep the one
-// disambiguation rule that the Descriptions cannot express naturally:
-// knowledge-style questions ("how to / what is") should fall through to
-// general_chat instead of the matching action.
+// 路由规则按"是否需要产品官方文档作为权威依据"分层：n9e/categraf 特定事实题
+// (字段名/指标名/Severity 命名/API/Header/Env) 优先走 doc_qa，纯 vendor-neutral
+// 概念题才走 general_chat。否则裸 LLM 在 general_chat 路径上凭训练记忆答, 会
+// 把 ping_result_code / Severity=Critical / [[inputs.xxx]] / Authorization Bearer
+// 等相邻产品的"行业惯例"误用到 n9e 上。
 func buildIntentInferencePrompt() string {
 	var sb strings.Builder
 	sb.WriteString("Classify the user's message into exactly ONE action below.\n\n")
@@ -36,7 +35,51 @@ func buildIntentInferencePrompt() string {
 		handler := registry[key]
 		sb.WriteString(fmt.Sprintf("- %s: %s\n", key, handler.Description))
 	}
-	sb.WriteString("\nRule: knowledge questions (\"how to ...\", \"什么是\", \"...的步骤\") → general_chat, even if they mention a resource.\n")
+	sb.WriteString(`
+Routing rules (apply in priority order, first match wins):
+
+1. PRODUCT-SPECIFIC FACTUAL questions → doc_qa
+   The answer must match a specific identifier from the n9e/categraf/夜莺
+   codebase or official docs. This OVERRIDES any "knowledge question" heuristic.
+   Signals (any of):
+   - asks for a specific metric / field / config name
+     (e.g. ping_average_response_ms, omit_hostname, [[instances]] syntax,
+      [http] section behavior, categraf_self metrics)
+   - asks about Severity number ↔ English name mapping (1, 2, 3)
+   - asks about a specific API path / port / HTTP header / env var
+     (X-User-Token, /api/n9e/heartbeat, 17000, N9E_API_URL, Authorization)
+   - asks "what does X mean / X 是什么 / X 代表什么" where X is a product term
+     (业务组, 订阅规则, 屏蔽规则, edge 模式, [http] 段, target_info, …)
+   - asks how a specific n9e mechanism works / 逻辑 / 原理 of a product feature
+     (心跳判定逻辑, 失联检测原理, ingest 队列长度, batch / chan_size 默认值)
+   - asks about categraf plugin existence / 默认行为 / supported inputs
+
+2. PRODUCT OPERATIONS → matching specialized action_key
+   - 创建 / 新建 / 添加 → creation
+   - 查看 / 列出 → resource_query / alert_query
+   - 实际跑查询拿数据 → datasource_query
+   - 排查告警 / 诊断 → troubleshooting
+   - 主机失联（具体一台机器、有 ident / 现象描述）→ host_health_diagnose
+   - 主机新装没出现 → host_onboard_diagnose
+   - 装 / 部署 categraf → agent_deploy_guide
+   - 改通知通道 → notify_channel_copilot
+   - 改通知模板 → notify_template_generator
+   - 写自愈脚本 → task_tpl_copilot
+   - 数据源连不上 → datasource_diagnose
+
+3. GENERIC monitoring concepts (vendor-neutral, NO product-specific terms)
+   → general_chat
+   Examples: "什么是 P99 延迟", "PromQL vs MetricsQL 区别",
+   "如何设计告警阈值", "黄金信号是什么", "histogram vs summary".
+   If the same concept references n9e/categraf/夜莺 specifically
+   (e.g. "夜莺里的 P99 怎么算", "categraf 的 histogram 怎么写"),
+   it falls into rule 1 (doc_qa).
+
+4. AMBIGUOUS between doc_qa and general_chat → choose doc_qa.
+   doc_qa has search_n9e_docs + verify_answer for ground-truth check;
+   general_chat answers from model memory and tends to hallucinate
+   product-specific identifiers.
+`)
 	sb.WriteString("\nRespond with JSON only: {\"action_key\": \"<chosen_key>\"}")
 	return sb.String()
 }

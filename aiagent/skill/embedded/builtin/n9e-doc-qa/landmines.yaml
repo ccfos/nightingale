@@ -1,0 +1,103 @@
+# n9e-doc-qa skill 的 landmine 规则集
+#
+# 用途: verify_answer tool 在 LLM 调用时读取这份文件, 对 LLM 的草稿答案跑正则,
+# 拦截 n9e 域里高频的确定性错误 (编造的字段名、配错的 Severity 命名等)。
+#
+# 规则字段:
+#   name      唯一标识, 写日志/调试用
+#   pattern   Go regexp (RE2 语法), 不支持 lookahead
+#   severity  high / medium / low
+#               high   → must_revise=true, LLM 应当重搜重写后再调 verify_answer
+#               medium → 允许 Final Answer 但建议修
+#               low    → 仅提示, 不打断
+#   annotate  命中时给 LLM 看的简短说明 (它会拿这个去判断怎么改)
+#   retry_hint  HIGH 才需要, 告诉 LLM 应该搜什么关键词修
+#
+# 添加新规则: 直接往本文件追加; 重启进程生效。无需改 Go 代码。
+# 规则全部来自 80 题回归实测翻车样本 + SKILL.md 翻车案例表。
+
+- name: telegraf_inputs_syntax
+  pattern: '\[\[inputs\.[a-zA-Z_][a-zA-Z0-9_]*\]\]'
+  severity: high
+  annotate: '出现了 Telegraf 风格 [[inputs.xxx]] 语法; categraf 实际用 [[instances]]。'
+  retry_hint: '重搜 "categraf <相关插件名> 配置", 优先看 source="integration-config" 的命中 (那是 integrations/ 仓库的真实 toml 样例), 逐字按那里的写法重写。'
+
+- name: n9e_addr_env_var
+  pattern: '\bN9E_ADDR\b'
+  severity: high
+  annotate: '编出了 N9E_ADDR 环境变量, categraf 和 n9e 代码库里都没有这个变量。'
+  retry_hint: 'categraf 的上报/心跳地址在 config.toml 的 [[writers]].url 和 [heartbeat].url 字段配置, 不是环境变量。重搜 "categraf 心跳 writers 配置" 并参考 integration-config 样例。'
+
+- name: severity_1_critical
+  pattern: '(?i)severity\s*[:：=]?\s*1\s*[:：=]?\s*Critical\b|1\s*[:：=]\s*Critical\b|Critical\s*\(.*severity.*1.*\)'
+  severity: high
+  annotate: 'n9e Severity 1 是 Emergency, 不是 Critical。代码定义见 models/alert_rule.go:77, 三个级别依次是 1=Emergency / 2=Warning / 3=Notice。'
+  retry_hint: '重搜 "告警级别 Severity" 并按真实命名 (Emergency / Warning / Notice) 重写答案。'
+
+- name: ping_metric_misname
+  pattern: '\b(categraf_ping_rtt|ping_result_milliseconds|ping_packet_loss_percent)\b'
+  severity: medium
+  annotate: 'ping 插件指标名建议核对 integrations/Ping/ 或文档, 常见正确名是 ping_average_response_ms。'
+
+- name: categraf_http_section_misread
+  pattern: '(?i)(?:categraf|夜莺)[\s\S]{0,200}9100[\s\S]{0,200}/metrics[\s\S]{0,200}Prometheus[\s\S]{0,50}(?:抓取|pull|scrape)'
+  severity: medium
+  annotate: 'categraf 的 [http] 段不是给 Prometheus PULL /metrics 用的, 它实际是 PUSH 网关, 接收外部主动 push 的指标。'
+
+- name: fabricated_write_cache
+  pattern: '\b(enable_write_cache|write_cache_max_items|write_cache_drop_policy)\s*='
+  severity: medium
+  annotate: 'enable_write_cache / write_cache_max_items 等并不在 categraf 配置项里。长断网场景建议用 vmagent 等支持磁盘缓冲的中间件。'
+
+- name: n9e_bearer_auth
+  pattern: '(?i)(?:夜莺|n9e|nightingale|flashcat)[\s\S]{0,150}Authorization\s*:\s*Bearer'
+  severity: medium
+  annotate: 'n9e Web API 个人 Token 用 X-User-Token: <token> Header, 不是标准的 Authorization: Bearer。'
+
+- name: categraf_disk_queue_fabricated
+  pattern: '\b(enable_queue\s*=\s*true|queue_max_size_bytes|queue_pop_timeout)\b|data/queue/'
+  severity: high
+  annotate: 'categraf 不存在这套磁盘队列配置字段。长断网恢复后补传带原时间戳的场景, 业界做法是在 categraf 和 n9e 之间挂一层 vmagent (-remoteWrite.tmpDataPath), 不是 categraf 自带能力。'
+  retry_hint: '改写为 "categraf 本身不带磁盘队列, 网络抖动恢复后无法保留原时间戳补传; 推荐方案是用 vmagent 做中转, 参考 vmagent 的 -remoteWrite.tmpDataPath 配置"。'
+
+- name: categraf_self_metrics_endpoint
+  pattern: '\b(enable_self_metrics\s*=\s*true|prometheus_exporter_port)\b'
+  severity: high
+  annotate: 'categraf [http] 段没有 enable_self_metrics / prometheus_exporter_port 这种字段。HTTP server (api/server.go) 只暴露 /ping 和 /api/push/*, 没有 /metrics 端点。'
+  retry_hint: '重搜 "categraf [http] 配置" 看真实字段 (enable / address / print_access / cert_file 等), 重写答案。'
+
+- name: n9e_target_binding_fabricated_api
+  pattern: '/api/n9e/target-bindings\b|/api/n9e/target/bindings\b'
+  severity: high
+  annotate: '编造的 API 路径; n9e 没有 /api/n9e/target-bindings 这个端点。'
+  retry_hint: '重搜 "n9e target 标签 API" 找真实路径; 一般通过 /api/n9e/targets PUT 或 categraf [global.labels] 实现。'
+
+- name: ping_duration_misname
+  # 注意: ping_result_code 是真实存在的指标, 不在此黑名单。
+  # 这里只列 categraf 不导出的编造指标名。
+  pattern: '\b(ping_duration_seconds|ping_packet_loss_ratio)\b'
+  severity: high
+  annotate: '编造的 ping 指标名。categraf input.ping 真实指标是 ping_average_response_ms / ping_percent_packet_loss / ping_result_code, 不存在 ping_duration_seconds / ping_packet_loss_ratio。'
+  retry_hint: '重搜 integration-config Ping 配置, 按 .toml 样例里实际暴露的指标名重写。'
+
+- name: categraf_websocket_plugin
+  pattern: '\b(input\.websocket|\[\[inputs\.websocket\]\]|websocket_connect_duration_ms|websocket_status\{|websocket_error_count)\b'
+  severity: high
+  annotate: 'categraf 没有 input.websocket 插件。监控 ws/wss 接口建议用 input.http_response (HTTP 探测) 或 input.exec 跑 Python websocket 库测试。'
+  retry_hint: '改答案不要提 input.websocket; 建议 input.http_response 探测 + 自定义 exec 脚本。'
+
+- name: categraf_batch_default_misquote
+  pattern: '\b(batch\s*=\s*2000|chan_size\s*=\s*10000)\b'
+  severity: medium
+  annotate: 'categraf 真实默认值: batch=1000, chan_size=1000000 (不是 batch=2000, chan_size=10000)。'
+
+- name: severity_3_info
+  pattern: '(?i)severity\s*[:：=]?\s*3\s*[:：=]?\s*Info\b|3\s*[:：=]\s*Info\b'
+  severity: high
+  annotate: 'n9e Severity 3 是 Notice, 不是 Info。models/alert_rule.go:58 定义 SeverityNotice=3。'
+  retry_hint: '把 "Info" 改成 "Notice"。完整映射: 1=Emergency / 2=Warning / 3=Notice。'
+
+- name: fabricated_categraf_env_vars
+  pattern: '\bCATEGRAF_GLOBAL_LABELS_[A-Z_]+\b|\bCATEGRAF_HOSTNAME\b|\bCATEGRAF_WRITERS_[A-Z_]+\b'
+  severity: medium
+  annotate: 'categraf 不支持用 CATEGRAF_*_* 环境变量覆盖 config.toml 字段; toml 配置以挂载/拷贝方式生效。如需在 K8s 注入动态值, 用 ConfigMap + downward API + entrypoint 脚本渲染 toml。'
