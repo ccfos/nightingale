@@ -17,6 +17,7 @@ import (
 	"github.com/tidwall/match"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+	"gorm.io/gorm"
 )
 
 const (
@@ -640,6 +641,25 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 	ar.UpdateAt = now
 
 	return Insert(ctx, ar)
+}
+
+// Upsert: 同 group 内若存在同名规则则覆盖（保留原 id/create_at/create_by，下游引用不破），否则插入。
+// 用于 force=true 的批量导入场景。调用方传入的 ar 不要预先调用 FE2DB —— 本方法内部处理。
+func (ar *AlertRule) Upsert(ctx *ctx.Context) error {
+	var existing AlertRule
+	err := DB(ctx).Where("group_id = ? AND name = ?", ar.GroupId, ar.Name).Take(&existing).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := ar.FE2DB(); err != nil {
+			return err
+		}
+		return ar.Add(ctx) // 复用 Add 的 Verify + 同名兜底（防 SELECT 与 INSERT 之间的并发插入）
+	}
+
+	return existing.Update(ctx, *ar) // Update 内部会 FE2DB、Verify，并保留 existing 的 id/create_at/create_by
 }
 
 func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {

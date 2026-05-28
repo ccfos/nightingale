@@ -264,6 +264,7 @@ func (rt *Router) alertRuleEnableTryRun(c *gin.Context) {
 
 func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	username := c.MustGet("username").(string)
+	force := ginx.QueryBool(c, "force", false)
 
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
@@ -291,7 +292,14 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
-	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+	lang := c.GetHeader("X-Language")
+
+	var reterr map[string]string
+	if force {
+		reterr = rt.alertRuleUpsert(lst, username, bgid, lang)
+	} else {
+		reterr = rt.alertRuleAdd(lst, username, bgid, lang)
+	}
 
 	ginx.NewRender(c).Data(reterr, nil)
 }
@@ -383,6 +391,28 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 		}
 
 		if err := lst[i].Add(rt.Ctx); err != nil {
+			reterr[lst[i].Name] = translateText(lang, err.Error())
+		} else {
+			reterr[lst[i].Name] = ""
+		}
+	}
+	return reterr
+}
+
+// alertRuleUpsert 与 alertRuleAdd 对位，命中同名则覆盖；用于 force=true 的导入路径。
+// 注意：FE2DB 由 Upsert 内部按分支调用，这里不要预调用，否则覆盖分支会双调 FE2DB 污染累加型字段（如 EnableDaysOfWeek）。
+func (rt *Router) alertRuleUpsert(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
+	count := len(lst)
+	reterr := make(map[string]string)
+	for i := 0; i < count; i++ {
+		lst[i].Id = 0
+		lst[i].GroupId = bgid
+		if username != "" {
+			lst[i].CreateBy = username // 仅插入路径生效，覆盖路径会被 existing.CreateBy 还原
+			lst[i].UpdateBy = username
+		}
+
+		if err := lst[i].Upsert(rt.Ctx); err != nil {
 			reterr[lst[i].Name] = translateText(lang, err.Error())
 		} else {
 			reterr[lst[i].Name] = ""
