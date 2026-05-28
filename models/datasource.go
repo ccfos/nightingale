@@ -575,6 +575,12 @@ func (ds *Datasource) RedactSecrets() {
 
 	ds.HTTP = ""
 	ds.HTTPJson.Headers = nil
+	// mTLS 客户端私钥及其口令属于密钥材料，必须抹掉；
+	// CA / 客户端证书不算口令，但也没有展示需求，一并清空。
+	ds.HTTPJson.TLS.CACert = ""
+	ds.HTTPJson.TLS.ClientCert = ""
+	ds.HTTPJson.TLS.ClientKey = ""
+	ds.HTTPJson.TLS.ClientKeyPassword = ""
 
 	ds.Auth = ""
 	ds.AuthJson = Auth{}
