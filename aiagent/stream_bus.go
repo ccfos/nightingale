@@ -2,6 +2,7 @@ package aiagent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -16,7 +17,18 @@ import (
 // 字段名与原 stream_cache.StreamMessage 完全一致，前端 wire format 不变。
 type StreamMessage struct {
 	V string `json:"v"`
-	P string `json:"p"` // "content" | "reason" | "step" | "finish"
+	P string `json:"p"` // "content" | "reason" | "step" | "response" | "finish"
+}
+
+// PhaseResponse 的 V 是 ResponseFrame JSON。stream_bus 不认 ContentType，
+// 由下游消费者（A2A bridge 等）自行解读。
+const PhaseResponse = "response"
+
+// ResponseFrame 是 PhaseResponse 的 V shape。StreamID / IsFinish / IsFromAI
+// 是 DB-only 字段，不上 wire。
+type ResponseFrame struct {
+	ContentType models.AssistantContentType `json:"content_type"`
+	Content     string                      `json:"content"`
 }
 
 const (
@@ -50,6 +62,8 @@ var xreadBlockTimeout = 30 * time.Second
 type StreamBus interface {
 	Init(ctx context.Context, chatID, streamID string) error
 	Append(ctx context.Context, chatID, streamID string, msg StreamMessage) error
+	// PublishResponse 把 resp 序列化成 ResponseFrame 后作为 PhaseResponse 帧 Append。
+	PublishResponse(ctx context.Context, chatID, streamID string, resp models.AssistantMessageResponse) error
 	Finish(ctx context.Context, chatID, streamID string) error
 	Exists(ctx context.Context, chatID, streamID string) (bool, error)
 	Read(ctx context.Context, chatID, streamID string) <-chan StreamMessage
@@ -109,6 +123,14 @@ func (b *streamBus) Append(ctx context.Context, chatID, streamID string, msg Str
 		return fmt.Errorf("StreamBus.Append: %w", err)
 	}
 	return nil
+}
+
+func (b *streamBus) PublishResponse(ctx context.Context, chatID, streamID string, resp models.AssistantMessageResponse) error {
+	body, err := json.Marshal(ResponseFrame{ContentType: resp.ContentType, Content: resp.Content})
+	if err != nil {
+		return fmt.Errorf("StreamBus.PublishResponse marshal: %w", err)
+	}
+	return b.Append(ctx, chatID, streamID, StreamMessage{P: PhaseResponse, V: string(body)})
 }
 
 // Finish 写入终止标记。所有阻塞在 XREAD 的消费者会立即被 Redis 唤醒，
