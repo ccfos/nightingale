@@ -49,9 +49,6 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
 	list = rt.DatasourceCache.DatasourceFilter(list, user)
 
-	// 路由对非管理员开放（前端 Profile / 仪表盘数据源选择器都依赖该接口），
-	// 但 Datasource 结构体序列化时会带出密码 / Bearer token / 加密 blob 等敏感字段，
-	// 因此非管理员一律脱敏后再返回。
 	if !user.IsAdmin() {
 		for _, ds := range list {
 			ds.RedactSecrets()
