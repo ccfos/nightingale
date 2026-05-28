@@ -47,7 +47,18 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 
 	list, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, category, name, "")
-	Render(c, rt.DatasourceCache.DatasourceFilter(list, user), err)
+	list = rt.DatasourceCache.DatasourceFilter(list, user)
+
+	// 路由对非管理员开放（前端 Profile / 仪表盘数据源选择器都依赖该接口），
+	// 但 Datasource 结构体序列化时会带出密码 / Bearer token / 加密 blob 等敏感字段，
+	// 因此非管理员一律脱敏后再返回。
+	if !user.IsAdmin() {
+		for _, ds := range list {
+			ds.RedactSecrets()
+		}
+	}
+
+	Render(c, list, err)
 }
 
 func (rt *Router) datasourceGetsByService(c *gin.Context) {
@@ -94,23 +105,29 @@ func (rt *Router) datasourceBriefs(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	for _, item := range list {
-		item.AuthJson.BasicAuthPassword = ""
-		if item.PluginType == models.PROMETHEUS {
+		// 先挑出 UI 必需且不敏感的 settings 字段，再统一调用 RedactSecrets
+		// 全量脱敏，避免遗漏 HTTPJson.Headers / AuthEncoded / SettingsEncoded
+		// 之类同样会泄露密钥的字段。
+		var safeSettings map[string]interface{}
+		switch item.PluginType {
+		case models.PROMETHEUS:
+			safeSettings = make(map[string]interface{})
 			for k, v := range item.SettingsJson {
 				if strings.HasPrefix(k, "prometheus.") {
-					item.SettingsJson[strings.TrimPrefix(k, "prometheus.")] = v
-					delete(item.SettingsJson, k)
+					safeSettings[strings.TrimPrefix(k, "prometheus.")] = v
 				}
 			}
-		} else if item.PluginType == "cloudwatch" {
-			for k := range item.SettingsJson {
-				if !strings.Contains(k, "region") {
-					delete(item.SettingsJson, k)
+		case "cloudwatch":
+			safeSettings = make(map[string]interface{})
+			for k, v := range item.SettingsJson {
+				if strings.Contains(k, "region") {
+					safeSettings[k] = v
 				}
 			}
-		} else {
-			item.SettingsJson = nil
 		}
+
+		item.RedactSecrets()
+		item.SettingsJson = safeSettings
 		dss = append(dss, item)
 	}
 
