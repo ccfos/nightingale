@@ -17,7 +17,7 @@ import (
 
 type AssistantChatRow struct {
 	Id        int64  `gorm:"column:id;primaryKey;autoIncrement"`
-	ChatID    string `gorm:"column:chat_id;type:varchar(255);not null;uniqueIndex:uk_chat_id"`
+	ChatID    string `gorm:"column:chat_id;type:varchar(255);not null;unique"`
 	UserID    int64  `gorm:"column:user_id;not null;default:0;index:idx_ac_user_id"`
 	UpdatedAt int64  `gorm:"column:updated_at;not null;default:0;index:idx_ac_updated_at"`
 	Data      string `gorm:"column:data;type:text"`

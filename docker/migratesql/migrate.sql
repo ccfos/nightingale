@@ -372,3 +372,117 @@ ALTER TABLE `embedded_product` ADD COLUMN `weight` int not null default 0;
 
 /* v9 2026-04-17 embedded_product hide flag */
 ALTER TABLE `embedded_product` ADD COLUMN `hide` boolean not null default false;
+
+/* v9 2026-04-20 event_pipeline group_id */
+ALTER TABLE `event_pipeline` ADD COLUMN `group_id` bigint NOT NULL DEFAULT 0 COMMENT 'busi group id';
+
+/* v9 2026-04-20 AI agent: llm config / agent / skill / mcp server */
+CREATE TABLE `ai_llm_config` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'config name',
+    `description` varchar(1024) NOT NULL DEFAULT '' COMMENT 'description',
+    `api_type` varchar(64) NOT NULL DEFAULT '' COMMENT 'api type, e.g. openai',
+    `api_url` varchar(1024) NOT NULL DEFAULT '' COMMENT 'api base url',
+    `api_key` varchar(1024) NOT NULL DEFAULT '' COMMENT 'api key',
+    `model` varchar(255) NOT NULL DEFAULT '' COMMENT 'model name',
+    `extra_config` text COMMENT 'extra config (JSON)',
+    `enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'enabled flag',
+    `is_default` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'default llm config flag',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai llm configs';
+
+CREATE TABLE `ai_agent` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'agent name',
+    `description` varchar(1024) NOT NULL DEFAULT '' COMMENT 'description',
+    `use_case` varchar(64) NOT NULL DEFAULT '' COMMENT 'use case, e.g. chat',
+    `llm_config_id` bigint NOT NULL DEFAULT 0 COMMENT 'bound ai_llm_config id',
+    `skill_ids` text COMMENT 'bound skill ids (JSON)',
+    `mcp_server_ids` text COMMENT 'bound mcp server ids (JSON)',
+    `enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'enabled flag',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`),
+    KEY `idx_use_case` (`use_case`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai agents';
+
+CREATE TABLE `ai_skill` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'skill name',
+    `description` varchar(4096) COMMENT 'description',
+    `instructions` text COMMENT 'skill instructions (SKILL.md body)',
+    `license` varchar(255) COMMENT 'license',
+    `compatibility` varchar(255) COMMENT 'compatibility',
+    `metadata` text COMMENT 'metadata (JSON)',
+    `allowed_tools` varchar(4096) COMMENT 'allowed tools',
+    `enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'enabled flag',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai skills';
+
+CREATE TABLE `mcp_server` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'mcp server name',
+    `url` varchar(1024) NOT NULL DEFAULT '' COMMENT 'mcp server url',
+    `headers` text COMMENT 'request headers (JSON)',
+    `description` text COMMENT 'description',
+    `enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'enabled flag',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='mcp servers';
+
+/* v9 2026-04-23 AI skill files */
+CREATE TABLE `ai_skill_file` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `skill_id` bigint NOT NULL DEFAULT 0 COMMENT 'ai_skill id',
+    `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'file name',
+    `content` mediumtext COMMENT 'file content',
+    `size` bigint NOT NULL DEFAULT 0 COMMENT 'content size in bytes',
+    `created_at` bigint NOT NULL DEFAULT 0 COMMENT 'create time',
+    `created_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'creator',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `updated_by` varchar(64) NOT NULL DEFAULT '' COMMENT 'updater',
+    PRIMARY KEY (`id`),
+    KEY `idx_skill_id` (`skill_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai skill files';
+
+/* v9 2026-04-29 AI assistant chat history */
+CREATE TABLE `ai_assistant_chat` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `chat_id` varchar(255) NOT NULL COMMENT 'chat id',
+    `user_id` bigint NOT NULL DEFAULT 0 COMMENT 'user id',
+    `updated_at` bigint NOT NULL DEFAULT 0 COMMENT 'update time',
+    `data` text COMMENT 'gzip+base64 encoded chat meta (JSON)',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_chat_id` (`chat_id`),
+    KEY `idx_ac_user_id` (`user_id`),
+    KEY `idx_ac_updated_at` (`updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai assistant chats';
+
+CREATE TABLE `ai_assistant_message` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `chat_id` varchar(255) NOT NULL COMMENT 'chat id',
+    `seq_id` bigint NOT NULL DEFAULT 0 COMMENT 'message seq id within chat',
+    `data` mediumtext COMMENT 'gzip+base64 encoded message (JSON)',
+    `extra` mediumtext COMMENT 'gzip+base64 encoded extra (JSON)',
+    `status` int NOT NULL DEFAULT 0 COMMENT 'message status',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_chat_seq` (`chat_id`, `seq_id`),
+    KEY `idx_am_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai assistant messages';
