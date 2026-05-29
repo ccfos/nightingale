@@ -102,10 +102,8 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 	logx.Infof(ctx, "[MCP] tool start user_id=%d username=%s chat_id=%s message_len=%d",
 		user.Id, user.Username, in.ChatID, len(in.Message))
 
-	// EnsureAssistantChat collapses "unknown chatID" / "chatID owned by someone
-	// else" / "no chatID supplied" into "allocate a fresh chat" already, so the
-	// only error path here is an actual DB failure. Don't echo client input
-	// back in the error message.
+	// EnsureAssistantChat handles all chatID shapes (empty/unknown/owned/foreign),
+	// so the only error here is a DB failure. Don't echo client input back.
 	chat, err := backend.EnsureAssistantChat(user.Id, in.ChatID, models.AssistantPageInfo{})
 	if err != nil {
 		logx.Errorf(ctx, "[MCP] ensure chat failed user_id=%d in_chat_id=%s: %v", user.Id, in.ChatID, err)

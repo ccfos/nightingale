@@ -80,6 +80,10 @@ type executor struct {
 // chatPageMeta carries the originating page (best-effort hint for routing).
 const chatPageMeta = "page"
 
+// actionParamMetaKey lets callers ship form answers as message.metadata.action_param
+// so the router's preflight finds the required keys and lets the turn proceed.
+const actionParamMetaKey = "action_param"
+
 // Execute implements a2asrv.AgentExecutor.
 func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter.Seq2[a2a.Event, error] {
 	return func(yield func(a2a.Event, error) bool) {
@@ -105,8 +109,9 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 
 		page := pageFromMetadata(ec.Metadata)
 		lang := stringMeta(ec.Metadata, langMetadataKey)
-		logx.Infof(ctx, "[A2A] Execute start user_id=%d username=%s context_id=%s task_id=%s message_id=%s text_len=%d page=%s lang=%s",
-			user.Id, user.Username, ec.ContextID, ec.TaskID, ec.Message.ID, len(text), page.Page, lang)
+		actionParam := actionParamFromMetadata(ec.Metadata)
+		logx.Infof(ctx, "[A2A] Execute start user_id=%d username=%s context_id=%s task_id=%s message_id=%s text_len=%d page=%s lang=%s action_param_keys=%d",
+			user.Id, user.Username, ec.ContextID, ec.TaskID, ec.Message.ID, len(text), page.Page, lang, len(actionParam))
 
 		chat, err := e.backend.EnsureAssistantChat(user.Id, ec.ContextID, page)
 		if err != nil {
@@ -121,6 +126,9 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 		query := models.AssistantMessageQuery{
 			Content:  text,
 			PageFrom: page,
+			Action: models.AssistantAction{
+				Param: actionParam,
+			},
 		}
 
 		result, _, err := e.backend.StartAssistantMessage(user.Id, chat, query, lang)
@@ -334,6 +342,24 @@ func stringMeta(meta map[string]any, key string) string {
 	}
 	v, _ := meta[key].(string)
 	return v
+}
+
+// actionParamFromMetadata returns a copy of metadata.action_param, or nil when
+// absent or shaped wrong. Copy avoids leaking mutations back into ec.Metadata,
+// which the SDK may persist into TaskStore.
+func actionParamFromMetadata(meta map[string]any) map[string]interface{} {
+	if meta == nil {
+		return nil
+	}
+	raw, ok := meta[actionParamMetaKey].(map[string]any)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	out := make(map[string]interface{}, len(raw))
+	for k, v := range raw {
+		out[k] = v
+	}
+	return out
 }
 
 func pageFromMetadata(meta map[string]any) models.AssistantPageInfo {

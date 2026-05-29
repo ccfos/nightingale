@@ -426,8 +426,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.finishHaltedMessage(state, streamID, history, preResps)
 			return
 		}
+		tValidatePre = time.Since(tStart)
+		logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=preflight_pass total=%dms action_key=%s",
+			msg.ChatID, msg.SeqID, tValidatePre.Milliseconds(), actionKey)
+	} else {
+		tValidatePre = time.Since(tStart)
 	}
-	tValidatePre = time.Since(tStart)
 
 	// Select tools
 	var tools []aiagent.AgentTool

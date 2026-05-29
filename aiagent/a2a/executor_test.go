@@ -3,6 +3,7 @@ package a2a
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
@@ -214,5 +215,190 @@ func TestCancelAcceptsFloat64SeqIDFromJSONRoundTrip(t *testing.T) {
 	}
 	if be.cancelSeqIDCalled != 99 {
 		t.Fatalf("expected seqID=99, got %d", be.cancelSeqIDCalled)
+	}
+}
+
+func TestActionParamFromMetadata(t *testing.T) {
+	cases := []struct {
+		name string
+		meta map[string]any
+		want map[string]interface{}
+	}{
+		{"nil meta", nil, nil},
+		{"key absent", map[string]any{"page": "landing"}, nil},
+		{"wrong shape string", map[string]any{actionParamMetaKey: "busi_group_id=1"}, nil},
+		{"wrong shape number", map[string]any{actionParamMetaKey: float64(1)}, nil},
+		{"empty object", map[string]any{actionParamMetaKey: map[string]any{}}, nil},
+		{
+			"single field",
+			map[string]any{actionParamMetaKey: map[string]any{"busi_group_id": float64(1)}},
+			map[string]interface{}{"busi_group_id": float64(1)},
+		},
+		{
+			"multi field",
+			map[string]any{actionParamMetaKey: map[string]any{
+				"busi_group_id": float64(5),
+				"datasource_id": float64(7),
+			}},
+			map[string]interface{}{
+				"busi_group_id": float64(5),
+				"datasource_id": float64(7),
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := actionParamFromMetadata(tc.meta)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("actionParamFromMetadata = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// actionParamFromMetadata copies the input map — confirm that mutating the
+// result doesn't bleed back into the caller's metadata (which the SDK may
+// persist verbatim into TaskStore on the way out).
+func TestActionParamFromMetadataReturnsCopy(t *testing.T) {
+	src := map[string]any{
+		actionParamMetaKey: map[string]any{"busi_group_id": float64(1)},
+	}
+	got := actionParamFromMetadata(src)
+	got["intruder"] = "x"
+
+	original := src[actionParamMetaKey].(map[string]any)
+	if _, leaked := original["intruder"]; leaked {
+		t.Fatal("mutating returned map leaked back into source metadata")
+	}
+}
+
+// stubStreamBus drives the executor's stream loop to immediate termination so
+// the Execute happy path can be inspected without spinning up Redis.
+type stubStreamBus struct{}
+
+func (stubStreamBus) Init(context.Context, string, string) error { return nil }
+func (stubStreamBus) Append(context.Context, string, string, aiagent.StreamMessage) error {
+	return nil
+}
+func (stubStreamBus) PublishResponse(context.Context, string, string, models.AssistantMessageResponse) error {
+	return nil
+}
+func (stubStreamBus) Finish(context.Context, string, string) error { return nil }
+func (stubStreamBus) Exists(context.Context, string, string) (bool, error) {
+	return true, nil
+}
+func (stubStreamBus) Read(context.Context, string, string) <-chan aiagent.StreamMessage {
+	ch := make(chan aiagent.StreamMessage)
+	close(ch)
+	return ch
+}
+
+// executeBackend implements AssistantBackend for tests that exercise the
+// happy fresh-task path end-to-end. It records the chatID handed to
+// EnsureAssistantChat and the query handed to StartAssistantMessage so the
+// caller can assert wiring without a real DB/Redis.
+type executeBackend struct {
+	chat        *models.AssistantChat
+	startResult *MessageStartResult
+
+	ensureChatIDArg string
+	startCalled     bool
+	capturedQuery   models.AssistantMessageQuery
+	capturedLang    string
+}
+
+func (e *executeBackend) EnsureAssistantChat(_ int64, chatID string, _ models.AssistantPageInfo) (*models.AssistantChat, error) {
+	e.ensureChatIDArg = chatID
+	return e.chat, nil
+}
+
+func (e *executeBackend) StartAssistantMessage(_ int64, _ *models.AssistantChat, query models.AssistantMessageQuery, lang string) (*MessageStartResult, int, error) {
+	e.startCalled = true
+	e.capturedQuery = query
+	e.capturedLang = lang
+	return e.startResult, 0, nil
+}
+
+func (e *executeBackend) CancelAssistantMessage(context.Context, string, int64) error {
+	return nil
+}
+func (e *executeBackend) CheckChatOwner(string, int64) error { return nil }
+func (e *executeBackend) StreamBus() aiagent.StreamBus       { return stubStreamBus{} }
+func (e *executeBackend) MessageSnapshot(context.Context, string, int64) (*models.AssistantMessage, error) {
+	return nil, nil
+}
+
+// The minimum-multi-turn contract: a caller that bundles form answers under
+// message.metadata.action_param expects those answers to land in
+// query.Action.Param so the preflight handler's required-context check passes
+// on the resume turn. Without this wiring, preflight halts again with the
+// same form_select and we loop forever.
+func TestExecuteForwardsActionParamFromMetadata(t *testing.T) {
+	chat := &models.AssistantChat{ChatID: "ctx-from-sdk", UserID: 1}
+	be := &executeBackend{
+		chat: chat,
+		startResult: &MessageStartResult{
+			ChatID:   chat.ChatID,
+			SeqID:    2,
+			StreamID: chat.ChatID + ":2:stream-uuid",
+		},
+	}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1, Username: "alice"})
+	msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart("继续创建 Linux 仪表盘"))
+	msg.ID = "msg-2"
+
+	seq := exec.Execute(ctx, &a2asrv.ExecutorContext{
+		Message:   msg,
+		TaskID:    "task-2",
+		ContextID: chat.ChatID,
+		Metadata: map[string]any{
+			actionParamMetaKey: map[string]any{
+				"busi_group_id": float64(1),
+			},
+		},
+	})
+	drain(seq)
+
+	if be.ensureChatIDArg != chat.ChatID {
+		t.Fatalf("EnsureAssistantChat got chatID=%q, want %q (ContextID must pass through verbatim)",
+			be.ensureChatIDArg, chat.ChatID)
+	}
+	if !be.startCalled {
+		t.Fatal("StartAssistantMessage was not invoked")
+	}
+	got := be.capturedQuery.Action.Param
+	if got == nil {
+		t.Fatal("query.Action.Param is nil; metadata.action_param did not flow through")
+	}
+	if v, ok := got["busi_group_id"]; !ok || v != float64(1) {
+		t.Fatalf("query.Action.Param[busi_group_id] = %v (present=%v), want 1", v, ok)
+	}
+	if be.capturedQuery.Content != "继续创建 Linux 仪表盘" {
+		t.Fatalf("query.Content = %q, expected the user text verbatim", be.capturedQuery.Content)
+	}
+}
+
+// First-turn requests typically have no metadata. Make sure that path leaves
+// Action.Param nil (rather than allocating an empty map) so downstream
+// "hasContext" checks behave identically to the pre-change baseline.
+func TestExecuteLeavesActionParamNilWhenMetadataAbsent(t *testing.T) {
+	be := &executeBackend{
+		chat:        &models.AssistantChat{ChatID: "c", UserID: 1},
+		startResult: &MessageStartResult{ChatID: "c", SeqID: 1, StreamID: "c:1:s"},
+	}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart("hi"))
+	seq := exec.Execute(ctx, &a2asrv.ExecutorContext{
+		Message: msg, ContextID: "c", TaskID: "t",
+	})
+	drain(seq)
+
+	if be.capturedQuery.Action.Param != nil {
+		t.Fatalf("Action.Param should be nil when metadata absent, got %v",
+			be.capturedQuery.Action.Param)
 	}
 }
