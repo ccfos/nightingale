@@ -678,6 +678,21 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	tStreamDone = time.Since(tStart)
 
+	// Push cards into the stream before the finish marker so stream-only
+	// consumers (A2A) get them; the frontend ignores these and reads /detail.
+	for _, ruleJSON := range createdAlertRules {
+		if err := rt.streamBus.PublishResponse(context.Background(), msg.ChatID, streamID,
+			models.AssistantMessageResponse{ContentType: models.ContentTypeAlertRule, Content: ruleJSON}); err != nil {
+			logger.Warningf("[Assistant] PublishResponse alert_rule card chat=%s stream=%s: %v", msg.ChatID, streamID, err)
+		}
+	}
+	for _, dashJSON := range createdDashboards {
+		if err := rt.streamBus.PublishResponse(context.Background(), msg.ChatID, streamID,
+			models.AssistantMessageResponse{ContentType: models.ContentTypeDashboard, Content: dashJSON}); err != nil {
+			logger.Warningf("[Assistant] PublishResponse dashboard card chat=%s stream=%s: %v", msg.ChatID, streamID, err)
+		}
+	}
+
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
 	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog

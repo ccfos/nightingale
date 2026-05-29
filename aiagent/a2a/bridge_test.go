@@ -1,6 +1,7 @@
 package a2a
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -146,5 +147,53 @@ func TestStepBoundaryStartsFreshReasoningArtifact(t *testing.T) {
 	}
 	if artifactIDs[0] == artifactIDs[1] {
 		t.Fatalf("iteration 2 reasoning must allocate a new artifact ID (both were %q)", artifactIDs[0])
+	}
+}
+
+// A card frame (dashboard/alert_rule) must surface as an artifact carrying the
+// card JSON plus the n9e content-type tag, so A2A callers can render the widget.
+func TestForwardResponseEmitsCardArtifact(t *testing.T) {
+	b, events := collectBridge(t)
+
+	card := `{"id":889,"name":"MySQL 监控","group_name":"AIDev","panels_count":20}`
+	// Shape matches aiagent.ResponseFrame as PublishResponse serializes it.
+	frame := `{"content_type":"dashboard","content":` + strconv.Quote(card) + `}`
+
+	if !b.Forward(aiagent.StreamMessage{P: aiagent.PhaseResponse, V: frame}) {
+		t.Fatal("Forward returned false unexpectedly")
+	}
+
+	if len(*events) != 1 {
+		t.Fatalf("expected 1 artifact event, got %d", len(*events))
+	}
+	up, ok := (*events)[0].(*a2a.TaskArtifactUpdateEvent)
+	if !ok {
+		t.Fatalf("event is not an artifact event: %T", (*events)[0])
+	}
+	if len(up.Artifact.Parts) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(up.Artifact.Parts))
+	}
+	part := up.Artifact.Parts[0]
+	if part.Text() != card {
+		t.Fatalf("part text = %q, want card JSON %q", part.Text(), card)
+	}
+	if got := part.Metadata[n9eContentTypeMetadataKey]; got != "dashboard" {
+		t.Fatalf("part metadata[%s] = %v, want \"dashboard\"", n9eContentTypeMetadataKey, got)
+	}
+}
+
+// Empty-content or malformed frames are dropped silently (Forward returns true)
+// rather than aborting the stream.
+func TestForwardResponseDropsEmptyAndBadFrames(t *testing.T) {
+	b, events := collectBridge(t)
+
+	if !b.Forward(aiagent.StreamMessage{P: aiagent.PhaseResponse, V: `{"content_type":"dashboard","content":""}`}) {
+		t.Fatal("empty-content frame should be dropped, not abort the stream")
+	}
+	if !b.Forward(aiagent.StreamMessage{P: aiagent.PhaseResponse, V: `not json`}) {
+		t.Fatal("malformed frame should be dropped, not abort the stream")
+	}
+	if len(*events) != 0 {
+		t.Fatalf("dropped frames must emit no events, got %d", len(*events))
 	}
 }
