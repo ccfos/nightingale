@@ -143,7 +143,15 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, userTokenCache, config.Log.Dir)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, config.Alert, targetCache, busiGroupCache, idents, metas, writers, ctx)
 
-	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
+	// http 日志打印
+	printAccessLog := configCvalCache.PrintAccessLog
+	// 如果本地配置文件 config.toml 中配置了强行开启 PrintAccessLog，则优先使用本地配置以方便开发调试
+	if config.HTTP.PrintAccessLog {
+		printAccessLog = func() bool { return true }
+	}
+
+	r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, printAccessLog)
+	// r := httpx.GinEngine(config.Global.RunMode, config.HTTP, configCvalCache.PrintBodyPaths, configCvalCache.PrintAccessLog)
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)
