@@ -21,7 +21,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/elastic/go-elasticsearch/v8 v8.19.4
 	github.com/expr-lang/expr v1.16.1
-	github.com/flashcatcloud/ibex v1.3.6
+	github.com/flashcatcloud/ibex v1.3.8
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/glebarez/sqlite v1.11.0
