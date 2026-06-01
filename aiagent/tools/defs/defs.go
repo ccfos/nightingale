@@ -242,6 +242,23 @@ var CreateDashboard = aiagent.AgentTool{
 	},
 }
 
+var ImportDashboardTemplate = aiagent.AgentTool{
+	Name: "import_dashboard_template",
+	Description: `直接导入 integrations 目录下经过验证的仪表盘模板（含完整布局、阈值、单位、overrides 等），
+比 create_dashboard 手工拼装质量更高。先用 list_files 找到 component 和 dashboards 下的文件名，
+再把 component + file 传进来即可——不要用 read_file 把整个模板读出来再拼（模板可能很大且会被截断）。
+适用于用户监控主题在 integrations 里有现成模板的场景（如 Linux/MySQL/Redis/Kafka 等）。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "group_id", Type: "integer", Description: "业务组ID", Required: true},
+		{Name: "component", Type: "string", Description: `集成组件名，对应 integrations 下的目录名，如 "Linux"、"MySQL"、"Redis"`, Required: true},
+		{Name: "file", Type: "string", Description: `dashboards 子目录下的模板文件名，如 "categraf-overview.json"（用 list_files(base="integrations/<component>", path="dashboards") 获取）`, Required: true},
+		{Name: "datasource_id", Type: "integer", Description: "Prometheus 数据源ID（从 list_datasources 获取）。可选：传了就作为模板数据源变量的默认选中值，保证首屏可查询；不传则由前端在数据源下拉里自动选第一个 Prometheus", Required: false},
+		{Name: "name", Type: "string", Description: "覆盖仪表盘名称。不传则沿用模板自带名称", Required: false},
+		{Name: "tags", Type: "string", Description: "覆盖仪表盘标签，多个用空格分隔。不传则沿用模板自带标签", Required: false},
+	},
+}
+
 // =============================================================================
 // Datasource
 // =============================================================================
@@ -400,7 +417,7 @@ var ListFiles = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
-		{Name: "path", Type: "string", Description: "相对子路径，如 panels 或 dashboards。不传则列出根目录", Required: false},
+		{Name: "path", Type: "string", Description: "相对子路径，如 dashboards 或 metrics。不传则列出根目录", Required: false},
 	},
 }
 
@@ -410,7 +427,7 @@ var ReadFile = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
-		{Name: "path", Type: "string", Description: "相对文件路径，如 panels/timeseries.md 或 dashboards/categraf-detail.json", Required: true},
+		{Name: "path", Type: "string", Description: "相对文件路径，如 dashboards/categraf-detail.json 或 metrics/categraf-base.json", Required: true},
 	},
 }
 
