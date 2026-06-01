@@ -96,6 +96,7 @@ func (r *Registry) Resolve(c *models.NotifyChannelConfig) (NotifyChannelProvider
 			return p, true
 		}
 	}
+
 	fallback, ok := requestTypeFallback[c.RequestType]
 	if !ok {
 		return nil, false
