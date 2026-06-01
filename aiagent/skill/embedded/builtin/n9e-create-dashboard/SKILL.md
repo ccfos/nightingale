@@ -5,6 +5,7 @@ max_iterations: 18
 builtin_tools:
   - import_dashboard_template
   - create_dashboard
+  - list_metrics
   - list_files
   - read_file
   - grep_files
@@ -13,6 +14,8 @@ builtin_tools:
 # Skill: 夜莺(N9E) 仪表盘创建
 
 创建仪表盘有两条路径，**优先用方式 A（导入集成模板）**，模板是人工精调验证过的成品，质量远高于手工拼装；只有在没有现成模板或用户要自定义指标时才走方式 B。
+
+同一组件常同时有 categraf 和 exporter 两套模板时，**优先 categraf**：先探测 categraf 指标有没有数据，能查到就用 categraf 模板，查不到才退回 exporter（详见方式 A 第 3 步）。
 
 | 场景 | 用哪个工具 |
 |------|-----------|
@@ -50,9 +53,13 @@ builtin_tools:
    ```
    list_files(base="integrations/Linux", path="dashboards")
    ```
-3. **挑对模板文件**。模板常分 `categraf` 和 `exporter` 两种采集风格：
-   - 用 `list_metrics` 探测环境里实际存在的指标，决定用哪种风格
-   - **不要**用 `read_file` 把整个模板读出来再拼——模板可能很大且会被截断；挑文件靠文件名 + README/metrics 即可
+3. **挑对模板文件**。模板常分 categraf（telegraf 风格指标名）和 exporter（`node_*` / `*_exporter` 风格指标名）两种采集风格，文件名约定各组件不一，可能是前缀（Linux 的 `categraf-overview.json`）也可能是后缀（`redis_by_categraf.json`）。**优先选文件名含 `categraf` 的模板**：
+   - 先探测 categraf 指标在环境里有没有数据：`list_metrics(datasource_id=<X>, keyword="<categraf 指标关键字>")`。
+     - 关键字用能区分两种风格的 categraf 专有指标名，例如 Linux 用 `cpu_usage`（categraf 是 `cpu_usage_idle`，node_exporter 没有这个名字）、`mem_used_percent`、`disk_used_percent`；Redis 用 `redis_used_memory`。
+     - 拿不准该用哪个关键字时，读一下该模板的指标清单（文件小、不会截断）：`read_file(base="integrations/Linux", path="metrics/categraf-base.json")`，从里面挑一个代表性 `expression` 去探测。
+   - **只要 categraf 指标能查到数据（返回非空数组），就直接用文件名含 `categraf` 的模板**，不必再去比较 exporter。
+   - 只有 categraf 指标查不到任何数据时，才退回文件名含 `exporter` 的模板（如 `exporter-detail.json`、`redis_by_exporter.json`），并用对应的 exporter 指标关键字（如 `node_cpu_seconds_total`）`list_metrics` 确认它确实有数据后再导入。
+   - **不要**用 `read_file` 把整个 dashboard 模板读出来再拼——模板可能很大且会被截断；挑文件靠文件名 + metrics 清单即可
 4. 导入：
    ```
    import_dashboard_template(group_id=<业务组>, component="Linux", file="categraf-overview.json", datasource_id=<Prometheus数据源>)
