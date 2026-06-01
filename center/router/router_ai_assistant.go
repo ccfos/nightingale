@@ -643,7 +643,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 					switch toolName {
 					case "create_alert_rule":
 						createdAlertRules = append(createdAlertRules, obs)
-					case "create_dashboard":
+					case "create_dashboard", "import_dashboard_template":
 						createdDashboards = append(createdDashboards, obs)
 					}
 				}

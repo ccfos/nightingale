@@ -607,6 +607,7 @@ func selectCreationTools(req *AIChatRequest) []string {
 	return []string{
 		"create_alert_rule",
 		"create_dashboard",
+		"import_dashboard_template",
 		"list_busi_groups",
 		"list_datasources",
 		"list_metrics",
