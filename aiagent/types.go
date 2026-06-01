@@ -79,6 +79,9 @@ type AgentConfig struct {
 	Timeout       int    `json:"timeout"`
 	OutputField   string `json:"output_field"`
 
+	// 仅交互式 chat 在最终答案末尾追加"下一步建议"；workflow/事件路径开启会污染结构化输出，默认 false。
+	GuidedFollowup bool `json:"guided_followup,omitempty"`
+
 	// Plan+ReAct 配置
 	MaxPlanSteps      int `json:"max_plan_steps,omitempty"`
 	MaxReplanCount    int `json:"max_replan_count,omitempty"`

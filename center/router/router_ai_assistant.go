@@ -509,6 +509,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
 		UserPromptRendered: userPrompt,
+		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
 		Skills:             rt.resolveSkillConfig(handler, chatReq, agent),
 		MCP:                rt.buildMCPConfigForAgent(agent),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
