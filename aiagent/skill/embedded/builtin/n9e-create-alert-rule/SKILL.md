@@ -199,9 +199,9 @@ read_file(base="n9e-create-alert-rule", path="datasources/<cate>.md")
 
 #### 简化路径（cate=prometheus）
 
-根据用户描述构建 **不带阈值** 的 PromQL：
+根据用户描述构建 **不带阈值** 的 PromQL。下表都是 **categraf（telegraf 风格）** 指标名，**优先用 categraf**：
 
-| 用户需求 | 推荐 PromQL |
+| 用户需求 | 推荐 PromQL（categraf 优先） |
 |---|---|
 | 主机 CPU 使用率 | `avg by (ident) (100 - cpu_usage_idle{cpu="cpu-total"})` |
 | 主机内存使用率 | `mem_used_percent` |
@@ -212,7 +212,23 @@ read_file(base="n9e-create-alert-rule", path="datasources/<cate>.md")
 | MySQL 连接数使用率 | `mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100` |
 | Redis 内存使用率 | `redis_used_memory / redis_maxmemory * 100` |
 
-如不确定指标是否存在，调用 `list_metrics` 探测。
+**categraf 优先 + 探测**：先用 `list_metrics` 确认 categraf 指标在环境里有没有数据，例如
+`list_metrics(datasource_id=<X>, keyword="cpu_usage")`（categraf 是 `cpu_usage_idle`，node_exporter 没有这个名字）。
+- **能查到数据** → 直接用上表的 categraf PromQL。
+- **查不到** → 环境里很可能用的是 node_exporter，改用下面的 exporter 等价表达式，并再用
+  `list_metrics(datasource_id=<X>, keyword="node_")` 确认 node_exporter 指标确实有数据后再建规则。
+
+##### node_exporter 回退等价表（仅 categraf 指标查不到时用）
+
+| 用户需求 | node_exporter 等价 PromQL |
+|---|---|
+| 主机 CPU 使用率 | `100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100` |
+| 主机内存使用率 | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
+| 主机磁盘使用率 | `(1 - node_filesystem_avail_bytes{fstype!~"tmpfs\|overlay"} / node_filesystem_size_bytes) * 100` |
+| 主机系统负载 | `node_load1` |
+| 主机网络入向流量 | `rate(node_network_receive_bytes_total[5m])` |
+
+> 磁盘表达式里的 `\|` 只是为了不破坏 Markdown 表格的转义，写进 PromQL 时要还原成 `|`，即 `fstype!~"tmpfs|overlay"`（否则正则会把它当成字面竖线，过滤失效）。
 
 #### 通用路径（其他 cate）
 
