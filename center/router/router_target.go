@@ -630,6 +630,18 @@ func (rt *Router) targetDel(c *gin.Context) {
 		}
 	}
 
+	// 非强制删除时，先逐台校验是否满足删除条件（如仍被采集任务引用）。
+	// 只要有机器不满足，就把它们连同原因一并返回，且不执行任何删除；前端确认后带 force=true 重试。
+	if !f.Force {
+		if blocked := rt.TargetDeleteCheck(f.Idents); len(blocked) > 0 {
+			for ident, msg := range blocked {
+				failedResults[ident] = msg
+			}
+			ginx.NewRender(c).Data(failedResults, nil)
+			return
+		}
+	}
+
 	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, f.Force, rt.TargetDeleteHook))
 }
 
