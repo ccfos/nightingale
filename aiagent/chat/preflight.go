@@ -78,6 +78,18 @@ func PreflightCreation(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatR
 		}
 	}
 
+	// 数据源同理：编排/子代理常把数据源以自然语言带进来（`数据源：demo-vm`、
+	// `datasource_id: 694`），却不放进 action.param。唯一命中即注入 ID，免去重复弹表单；
+	// 解析不出或有歧义则落到下面的选择器表单（零风险回退）。
+	if requiresContext(spec.requiredContexts, "datasource_id") && !hasContext(req.Context, "datasource_id") {
+		if id, ok := resolveDatasourceFromText(deps, user, req.UserInput); ok {
+			if req.Context == nil {
+				req.Context = map[string]interface{}{}
+			}
+			req.Context["datasource_id"] = id
+		}
+	}
+
 	// 跨回合继承：本轮仍缺的 required key 用同一会话更早提交过的值补上，避免重复弹表单。
 	backfillCreationContext(deps, req, spec.requiredContexts)
 
@@ -179,6 +191,109 @@ func pickBusiGroup(groups []busiGroupRef, userInput string) (int64, bool) {
 		}
 		if strings.Contains(input, strings.ToLower(name)) {
 			nameHits = append(nameHits, hit{g.ID, name})
+		}
+	}
+	for _, h := range nameHits {
+		nested := false
+		for _, o := range nameHits {
+			lh, lo := strings.ToLower(h.name), strings.ToLower(o.name)
+			if h.id != o.id && len(o.name) > len(h.name) && strings.Contains(lo, lh) {
+				nested = true
+				break
+			}
+		}
+		if !nested {
+			matched[h.id] = struct{}{}
+		}
+	}
+
+	if len(matched) != 1 {
+		return 0, false
+	}
+	for id := range matched {
+		return id, true
+	}
+	return 0, false
+}
+
+// datasourceRef is the lightweight (id,name) pair pickDatasource matches
+// against — decoupled from models.Datasource to keep pickDatasource pure.
+type datasourceRef struct {
+	ID   int64
+	Name string
+}
+
+var (
+	// 关键词在前："数据源 694"、"datasource_id: 694"、"datasource：694"
+	datasourceIDAfter = regexp.MustCompile(`(?:数据源|datasource_?id|datasource)\s*(?:id)?\s*[#:：=＝是为]*\s*(\d+)`)
+	// 数字在前："694 数据源"、"694号数据源"
+	datasourceIDBefore = regexp.MustCompile(`(\d+)\s*号?\s*(?:的)?\s*数据源`)
+)
+
+// resolveDatasourceFromText loads the user's visible datasources and delegates
+// to pickDatasource. Mirrors resolveBusiGroupFromText so datasource gets the
+// same "name or id in free text → id" treatment the busi group already has —
+// needed because orchestrator/sub-agent turns ship the datasource in prose
+// (`数据源：demo-vm`) rather than in action.param.
+func resolveDatasourceFromText(deps *aiagent.ToolDeps, user *models.User, userInput string) (int64, bool) {
+	dsList, err := models.GetDatasourcesGetsBy(deps.DBCtx, "", "", "", "")
+	if err != nil {
+		logger.Warningf("[preflight] resolve datasource: load datasources failed: %v", err)
+		return 0, false
+	}
+	filtered := deps.FilterDatasources(dsList, user)
+	refs := make([]datasourceRef, 0, len(filtered))
+	for _, ds := range filtered {
+		refs = append(refs, datasourceRef{ID: ds.Id, Name: ds.Name})
+	}
+	id, ok := pickDatasource(refs, userInput)
+	if ok {
+		logger.Infof("[preflight] resolved datasource_id=%d from user text %q", id, userInput)
+	} else {
+		logger.Debugf("[preflight] no unique datasource resolved from %q, deferring to form", userInput)
+	}
+	return id, ok
+}
+
+// pickDatasource resolves a datasource named in free text — same rules as
+// pickBusiGroup: full-name substring (most specific/longest wins) or an id
+// adjacent to a datasource keyword that hits a real visible datasource. Returns
+// (id,true) only on a unique hit; zero/ambiguous/conflicting → (0,false), which
+// defers to the form selector. Pure (no DB) for unit testing.
+func pickDatasource(datasources []datasourceRef, userInput string) (int64, bool) {
+	input := strings.ToLower(userInput)
+
+	valid := make(map[int64]struct{}, len(datasources))
+	for _, d := range datasources {
+		valid[d.ID] = struct{}{}
+	}
+
+	matched := map[int64]struct{}{}
+
+	// (a) 按 ID：数字须紧邻数据源关键词，且必须是真实可见数据源。
+	for _, re := range []*regexp.Regexp{datasourceIDAfter, datasourceIDBefore} {
+		for _, m := range re.FindAllStringSubmatch(input, -1) {
+			if id, err := strconv.ParseInt(m[1], 10, 64); err == nil {
+				if _, ok := valid[id]; ok {
+					matched[id] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// (b) 按名称：全名子串命中；命中名互为包含时取最长（最具体）的。
+	type hit struct {
+		id   int64
+		name string
+	}
+	var nameHits []hit
+	for _, d := range datasources {
+		name := strings.TrimSpace(d.Name)
+		if utf8.RuneCountInString(name) < 2 { // 跳过 1 字符超短名，避免巧合命中
+			continue
+		}
+		if strings.Contains(input, strings.ToLower(name)) {
+			nameHits = append(nameHits, hit{d.ID, name})
 		}
 	}
 	for _, h := range nameHits {
