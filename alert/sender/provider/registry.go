@@ -85,8 +85,11 @@ func (r *Registry) Resolve(c *models.NotifyChannelConfig) (NotifyChannelProvider
 		return nil, false
 	}
 	if p, ok := r.Get(c.Ident); ok {
-		return p, true
+		if err := p.Check(c); err == nil {
+			return p, true
+		}
 	}
+
 	fallback, ok := requestTypeFallback[c.RequestType]
 	if !ok {
 		return nil, false
