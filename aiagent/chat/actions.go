@@ -606,6 +606,8 @@ IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use 
 func selectCreationTools(req *AIChatRequest) []string {
 	return []string{
 		"create_alert_rule",
+		"import_alert_rule_template",
+		"preview_alert_rule_template",
 		"create_dashboard",
 		"import_dashboard_template",
 		"list_busi_groups",

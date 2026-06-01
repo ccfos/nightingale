@@ -646,6 +646,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 					switch toolName {
 					case "create_alert_rule":
 						createdAlertRules = append(createdAlertRules, obs)
+					case "import_alert_rule_template":
+						// Batch import returns a summary with a "cards" array of
+						// per-rule payloads; fan them out so each imported rule
+						// gets its own alert_rule UI card.
+						createdAlertRules = append(createdAlertRules, extractImportedAlertRuleCards(obs)...)
 					case "create_dashboard", "import_dashboard_template":
 						createdDashboards = append(createdDashboards, obs)
 					}
@@ -812,6 +817,25 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		streamDur,
 		(tPersisted - tStreamDone).Milliseconds(),
 	)
+}
+
+// extractImportedAlertRuleCards pulls the per-rule "cards" out of an
+// import_alert_rule_template summary, re-marshaling each to a JSON string so it
+// matches the Content shape the alert_rule card path expects. Returns nil on
+// parse failure or when no rules were created.
+func extractImportedAlertRuleCards(obs string) []string {
+	var summary struct {
+		Cards []json.RawMessage `json:"cards"`
+	}
+	if err := json.Unmarshal([]byte(obs), &summary); err != nil {
+		logger.Warningf("[Assistant] import_alert_rule_template result not parseable for cards: %v", err)
+		return nil
+	}
+	out := make([]string, 0, len(summary.Cards))
+	for _, c := range summary.Cards {
+		out = append(out, string(c))
+	}
+	return out
 }
 
 func (rt *Router) finishMessage(state *MessageState, streamID string, errCode int, errMsg string) {
