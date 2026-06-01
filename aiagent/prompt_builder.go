@@ -326,6 +326,15 @@ func buildTemplateData(req *AgentRequest) map[string]interface{} {
 func (a *Agent) parseReActResponse(response string) ReActStep {
 	step := ReActStep{}
 
+	// 某些模型（尤其 deepseek-v4-pro）会把结构标记黏在上一行行尾，例如：
+	//   Thought: ...获取数据源列表。Action: list_datasources
+	//   Action Input: {...}
+	// 下面的逐行扫描只认行首标记，行内的 "Action:" 会被并进 Thought，导致
+	// step.Action 为空 → runReActLoop 当成 Final Answer 直接返回、工具不执行
+	// （线上现象：executed_tools 始终 false，create-dashboard/alert 卡在第一步）。
+	// 先把行内标记提升到行首再扫描。
+	response = normalizeReActMarkers(response)
+
 	lines := strings.Split(response, "\n")
 	var currentField string
 	var currentValue strings.Builder
@@ -384,6 +393,50 @@ func (a *Agent) parseReActResponse(response string) ReActStep {
 	}
 
 	return step
+}
+
+// normalizeReActMarkers 把模型黏在行尾的 ReAct 结构标记（Action:/Action Input:/
+// Final Answer:）提升到新行行首，使 parseReActResponse 的行首前缀扫描能识别它们。
+//
+// 改写严格限制在 header 段（到第一个 Action Input: / Final Answer: 的值开始之前）。
+// 值区是不透明的——最终答案的 markdown、工具参数 JSON 里可能合法地包含 "Action:"
+// 或 "Observation:" 字样，改写值区会损坏答案或在 Observation 处被截断。
+func normalizeReActMarkers(response string) string {
+	// 定位值区起点：第一个出现的 Action Input: 或 Final Answer: 标记之后。
+	boundaryIdx, boundaryLen := len(response), 0
+	for _, m := range []string{"Action Input:", "Final Answer:"} {
+		if i := strings.Index(response, m); i >= 0 && i < boundaryIdx {
+			boundaryIdx, boundaryLen = i, len(m)
+		}
+	}
+	head, tail := response[:boundaryIdx+boundaryLen], response[boundaryIdx+boundaryLen:]
+
+	// 只在 header 段提升标记。"Action:" 与 "Action Input:" 不会互相误匹配
+	// （冒号位置不同："Action:" vs "Action "），处理顺序无关紧要。
+	for _, m := range []string{"Final Answer:", "Action Input:", "Action:"} {
+		head = promoteMarkerToLineStart(head, m)
+	}
+	return head + tail
+}
+
+// promoteMarkerToLineStart 在每个不在行首的 marker 前插入换行。行首前导空格由调用
+// 方逐行 TrimSpace 兜底，这里只需保证 marker 前有换行。
+func promoteMarkerToLineStart(s, marker string) string {
+	var b strings.Builder
+	for {
+		i := strings.Index(s, marker)
+		if i < 0 {
+			b.WriteString(s)
+			break
+		}
+		b.WriteString(s[:i])
+		if i > 0 && s[i-1] != '\n' { // 已在行首则不重复插入
+			b.WriteByte('\n')
+		}
+		b.WriteString(marker)
+		s = s[i+len(marker):]
+	}
+	return b.String()
 }
 
 func setStepField(step *ReActStep, field, value string) {
