@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +50,8 @@ func init() {
 	register(defs.ListLegacyNotifyAlertRules, listLegacyNotifyAlertRules)
 	register(defs.ImportPromRuleYAML, importPromRuleYAML)
 	register(defs.PreviewPromRuleYAML, previewPromRuleYAML)
+	register(defs.ImportAlertRuleTemplate, importAlertRuleTemplate)
+	register(defs.PreviewAlertRuleTemplate, previewAlertRuleTemplate)
 }
 
 // legacyAlertRuleResult 是 list_legacy_notify_alert_rules 的返回单元。
@@ -63,8 +66,8 @@ type legacyAlertRuleResult struct {
 	Disabled      int      `json:"disabled"`
 	Cate          string   `json:"cate,omitempty"`
 	NotifyVersion int      `json:"notify_version"`
-	NotifyGroups  []string `json:"notify_groups"`            // 老式接收组（user_group id 字符串列表），空数组表示该规则虽然标 v0 但没人收
-	NotifyRuleIds []int64  `json:"notify_rule_ids"`          // 新式通知规则（v0 规则下应该为空，列出来便于人工核对）
+	NotifyGroups  []string `json:"notify_groups"`   // 老式接收组（user_group id 字符串列表），空数组表示该规则虽然标 v0 但没人收
+	NotifyRuleIds []int64  `json:"notify_rule_ids"` // 新式通知规则（v0 规则下应该为空，列出来便于人工核对）
 	UpdateAt      int64    `json:"update_at"`
 	UpdateBy      string   `json:"update_by,omitempty"`
 }
@@ -932,6 +935,458 @@ func importPromRuleYAML(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 	logger.Debugf("import_prom_rule_yaml: group=%d total=%d created=%d skipped=%d failed=%d",
 		groupId, len(items), created, skipped, failed)
 	return string(payloadOut), nil
+}
+
+// =============================================================================
+// import_alert_rule_template
+// =============================================================================
+
+// importAlertRuleTemplate imports a curated alert-rule pack from
+// integrations/<component>/alerts/<file> into a busi group. Each file is a JSON
+// array of fully hand-tuned models.AlertRule objects; unlike create_alert_rule
+// it preserves every field and only rebinds datasource + busi group, mirroring
+// alertRuleAddByImport. Read server-side so large packs aren't truncated.
+// Per-rule transforms: rebind datasource (non-host rules; falls back to
+// DataSourceQueryAll when dsId is unset) and default disabled=0 (templates ship
+// disabled). Uses the same created/skipped/failed accounting as
+// import_prom_rule_yaml.
+func importAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	// Match the FE route: /alert-rules/add role permission + bgrw on the group.
+	if err := checkPerm(deps, user, PermAlertRulesAdd); err != nil {
+		return "", err
+	}
+
+	groupId := getArgInt64(args, "group_id")
+	if groupId == 0 {
+		return "", fmt.Errorf("group_id is required")
+	}
+
+	component := strings.TrimSpace(getArgString(args, "component"))
+	if component == "" {
+		return "", fmt.Errorf("component is required (e.g. \"Linux\"); call list_files(base=\"integrations\") to discover")
+	}
+	file := strings.TrimSpace(getArgString(args, "file"))
+	if file == "" {
+		return "", fmt.Errorf("file is required (e.g. \"linux_by_categraf.json\"); call list_files(base=\"integrations/%s\", path=\"alerts\")", component)
+	}
+
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	// Datasource is optional: when provided, bind every non-host rule to it;
+	// otherwise rules match all datasources of their cate. Verify access first.
+	dsId := getArgInt64(args, "datasource_id")
+	if dsId == 0 {
+		dsId = getDatasourceId(params)
+	}
+	var dsName string
+	if dsId > 0 {
+		ds, err := models.DatasourceGet(deps.DBCtx, dsId)
+		if err != nil {
+			return "", fmt.Errorf("failed to get datasource %d: %v", dsId, err)
+		}
+		if ds == nil {
+			return "", fmt.Errorf("datasource not found: id=%d", dsId)
+		}
+		if deps.FilterDatasources != nil {
+			if filtered := deps.FilterDatasources([]*models.Datasource{ds}, user); len(filtered) == 0 {
+				return "", fmt.Errorf("forbidden: no access to datasource %d", dsId)
+			}
+		}
+		dsName = ds.Name
+	}
+
+	rules, err := loadAlertRuleTemplate(deps, component, file)
+	if err != nil {
+		return "", err
+	}
+
+	// names: optional exact-name filter (single rule, a batch, or whole pack
+	// when absent). Track missing names so the LLM can re-check instead of
+	// silently importing nothing.
+	var notFound []string
+	if rawNames := getArgString(args, "names"); rawNames != "" {
+		var want []string
+		if err := json.Unmarshal([]byte(rawNames), &want); err != nil {
+			return "", fmt.Errorf("names must be a JSON array of rule-name strings (got %q): %v", rawNames, err)
+		}
+		wantSet := make(map[string]bool, len(want))
+		for _, n := range want {
+			wantSet[n] = true
+		}
+		seen := make(map[string]bool, len(rules))
+		filtered := make([]models.AlertRule, 0, len(want))
+		for i := range rules {
+			if wantSet[rules[i].Name] {
+				filtered = append(filtered, rules[i])
+				seen[rules[i].Name] = true
+			}
+		}
+		for _, n := range want {
+			if !seen[n] {
+				notFound = append(notFound, n)
+			}
+		}
+		if len(filtered) == 0 {
+			return "", fmt.Errorf("none of the requested names %v exist in %s/%s; call preview_alert_rule_template to see the real rule names", want, component, file)
+		}
+		rules = filtered
+	}
+
+	// disabled: default 0 (enable); templates ship disabled. Validates 0/1.
+	disabledVal, err := parseDisabledFlag(args["disabled"])
+	if err != nil {
+		return "", err
+	}
+
+	prefix := getArgString(args, "name_prefix")
+	suffix := getArgString(args, "name_suffix")
+
+	items := make([]promRuleImportItem, 0, len(rules))
+	// cards: one create_alert_rule-shaped payload per created rule so the router
+	// can fan the batch out into individual alert_rule UI cards.
+	cards := make([]map[string]interface{}, 0, len(rules))
+	for i := range rules {
+		r := &rules[i]
+		prepareImportedAlertRule(r, groupId, user.Username, dsId, disabledVal, prefix, suffix)
+
+		item := promRuleImportItem{Name: r.Name}
+		if err := r.FE2DB(); err != nil {
+			item.Status = promRuleStatusFailed
+			item.Error = err.Error()
+			items = append(items, item)
+			continue
+		}
+		if err := r.Add(deps.DBCtx); err != nil {
+			// 重名标 skipped 而非失败（同 import_prom_rule_yaml），避免 LLM 用 name_prefix 重写整包。
+			if err.Error() == promRuleDuplicateErrStr {
+				item.Status = promRuleStatusSkipped
+			} else {
+				item.Status = promRuleStatusFailed
+				item.Error = err.Error()
+			}
+			items = append(items, item)
+			continue
+		}
+		item.Status = promRuleStatusCreated
+		item.Id = r.Id
+		items = append(items, item)
+		cards = append(cards, importedAlertRuleCard(r, bg.Name, dsId, dsName))
+	}
+
+	var created, skipped, failed int
+	for _, it := range items {
+		switch it.Status {
+		case promRuleStatusCreated:
+			created++
+		case promRuleStatusSkipped:
+			skipped++
+		case promRuleStatusFailed:
+			failed++
+		}
+	}
+
+	result := map[string]interface{}{
+		"group_id":   groupId,
+		"group_name": bg.Name,
+		"source":     component + "/" + file,
+		"total":      len(items),
+		"created":    created,
+		"skipped":    skipped, // 重名跳过的数量，不是失败
+		"failed":     failed,
+		"items":      items,
+		"cards":      cards, // 每条成功规则一份 create_alert_rule 形状载荷，供前端逐条渲染
+	}
+	if len(notFound) > 0 {
+		result["not_found_names"] = notFound // 请求的名字在包里没找到，提醒核对
+	}
+	if dsId > 0 {
+		result["datasource_id"] = dsId
+		if dsName != "" {
+			result["datasource_name"] = dsName
+		}
+	}
+	logger.Infof("import_alert_rule_template: user=%s, group_id=%d, template=%s/%s, total=%d created=%d skipped=%d failed=%d",
+		user.Username, groupId, component, file, len(items), created, skipped, failed)
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
+}
+
+// importedAlertRuleCard builds the same single-rule payload create_alert_rule
+// returns, so an imported rule renders identically in the FE alert_rule card.
+// Template rules are v2-shaped: severity and expression live per-query inside
+// rule_config, not in the top-level Severity/PromQl columns, so we dig them out
+// via importedRuleHeadline. Note falls back to the rule's annotations when empty.
+func importedAlertRuleCard(r *models.AlertRule, groupName string, dsId int64, dsName string) map[string]interface{} {
+	severity, expr := importedRuleHeadline(r)
+
+	note := strings.TrimSpace(r.Note)
+	if note == "" {
+		for _, k := range []string{"summary", "description"} {
+			if v := strings.TrimSpace(r.AnnotationsJSON[k]); v != "" {
+				note = v
+				break
+			}
+		}
+	}
+
+	card := map[string]interface{}{
+		"id":         r.Id,
+		"group_id":   r.GroupId,
+		"group_name": groupName,
+		"name":       r.Name,
+		"cate":       r.Cate,
+		"prod":       r.Prod,
+		"severity":   severity,
+		"note":       note,
+	}
+	if expr != "" {
+		card["prom_ql"] = truncateRunes(expr, 240)
+	}
+	// host (heartbeat) rules aren't bound to a datasource; mirror create_alert_rule.
+	if r.Cate != "host" && dsId > 0 {
+		card["datasource_id"] = dsId
+		if dsName != "" {
+			card["datasource_name"] = dsName
+		}
+	}
+	return card
+}
+
+// importedRuleHeadline extracts a representative (severity, expression) pair
+// from a template rule's rule_config. Multi-tier rules carry one severity per
+// query/trigger; we surface the most severe tier (smallest positive number)
+// with its expression. Prometheus/SQL carry severity per query, host rules in
+// triggers. Falls back to the top-level Severity / PromQl for legacy v1 rules.
+func importedRuleHeadline(r *models.AlertRule) (int, string) {
+	bestSev, bestExpr := 0, "" // bestSev 0 = unset; "most severe" = smallest positive
+	consider := func(sev int, expr string) {
+		if sev <= 0 {
+			return
+		}
+		if bestSev == 0 || sev < bestSev {
+			bestSev = sev
+			if strings.TrimSpace(expr) != "" {
+				bestExpr = strings.TrimSpace(expr)
+			}
+		}
+	}
+	queryExpr := func(q map[string]interface{}) string {
+		for _, k := range []string{"prom_ql", "sql", "query"} {
+			if s, ok := q[k].(string); ok && strings.TrimSpace(s) != "" {
+				return s
+			}
+		}
+		if key, ok := q["key"].(string); ok && key != "" { // host rule: {key, op, values}
+			op, _ := q["op"].(string)
+			return fmt.Sprintf("%s %s %v", key, op, q["values"])
+		}
+		return ""
+	}
+
+	if cfg, ok := r.RuleConfigJson.(map[string]interface{}); ok {
+		queries, _ := cfg["queries"].([]interface{})
+		// prometheus / sql: severity per query, paired with its expression.
+		for _, qi := range queries {
+			if q, ok := qi.(map[string]interface{}); ok {
+				consider(jsonInt(q["severity"]), queryExpr(q))
+			}
+		}
+		// host: severity is in triggers; the expression is the query condition.
+		if triggers, ok := cfg["triggers"].([]interface{}); ok {
+			var hostExpr string
+			if len(queries) > 0 {
+				if q, ok := queries[0].(map[string]interface{}); ok {
+					hostExpr = queryExpr(q)
+				}
+			}
+			for _, ti := range triggers {
+				if tr, ok := ti.(map[string]interface{}); ok {
+					consider(jsonInt(tr["severity"]), hostExpr)
+				}
+			}
+		}
+		// single-severity v2 (severity + prom_ql at the config root).
+		if s, ok := cfg["prom_ql"].(string); ok {
+			consider(jsonInt(cfg["severity"]), s)
+		}
+	}
+
+	if bestSev == 0 {
+		bestSev = r.Severity
+	}
+	if bestExpr == "" {
+		bestExpr = strings.TrimSpace(r.PromQl)
+	}
+	return bestSev, bestExpr
+}
+
+// jsonInt coerces a value decoded from JSON (numbers land as float64) into an int.
+func jsonInt(v interface{}) int {
+	switch n := v.(type) {
+	case float64:
+		return int(n)
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case json.Number:
+		i, _ := n.Int64()
+		return int(i)
+	}
+	return 0
+}
+
+// prepareImportedAlertRule rewrites a template rule in place for the target
+// busi group: resets identity, rebinds owner/group/datasource, forces new-style
+// notify config (mirrors alertRuleAddByImport), applies the enabled state, and
+// prefixes/suffixes the name. Pure function (no deps/DB) so it's unit-testable.
+// dsId<=0 leaves a non-host rule matching all datasources of its cate; host
+// rules never get a datasource binding.
+func prepareImportedAlertRule(r *models.AlertRule, groupId int64, username string, dsId int64, disabledVal int, prefix, suffix string) {
+	r.Id = 0
+	r.UUID = 0
+	r.GroupId = groupId
+	r.CreateBy = username
+	r.UpdateBy = username
+	r.Disabled = disabledVal
+
+	// Rebind datasource for everything except host (heartbeat) rules.
+	if r.Cate != "host" {
+		if dsId > 0 {
+			r.DatasourceQueries = []models.DatasourceQuery{{MatchType: 0, Op: "in", Values: []interface{}{dsId}}}
+			r.DatasourceIdsJson = []int64{dsId}
+		} else if len(r.DatasourceQueries) == 0 {
+			r.DatasourceQueries = []models.DatasourceQuery{models.DataSourceQueryAll}
+		}
+	}
+
+	// Force new-style notify config and drop legacy notify fields (like
+	// alertRuleAddByImport), so imported rules don't carry the template's stale ones.
+	r.NotifyVersion = 1
+	r.NotifyChannelsJSON = []string{}
+	r.NotifyGroupsJSON = []string{}
+	r.NotifyChannels = ""
+	r.NotifyGroups = ""
+	r.Callbacks = ""
+	r.CallbacksJSON = []string{}
+
+	if prefix != "" {
+		r.Name = prefix + r.Name
+	}
+	if suffix != "" {
+		r.Name = r.Name + suffix
+	}
+}
+
+// loadAlertRuleTemplate reads and parses integrations/<component>/alerts/<file>.
+// Shared by preview + import. Resolves through resolveBasePath so paths can't
+// escape the integrations tree.
+func loadAlertRuleTemplate(deps *aiagent.ToolDeps, component, file string) ([]models.AlertRule, error) {
+	tplPath, err := resolveBasePath(deps, "integrations/"+component, "alerts/"+file)
+	if err != nil {
+		return nil, fmt.Errorf("template not found: %v", err)
+	}
+	raw, err := os.ReadFile(tplPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read template %s/%s: %v", component, file, err)
+	}
+	var rules []models.AlertRule
+	if err := json.Unmarshal(raw, &rules); err != nil {
+		return nil, fmt.Errorf("invalid alert template JSON in %s/%s (expected an array of alert rules): %v", component, file, err)
+	}
+	if len(rules) == 0 {
+		return nil, fmt.Errorf("alert template %s/%s has no rules", component, file)
+	}
+	return rules, nil
+}
+
+type alertTemplatePreviewItem struct {
+	Name     string `json:"name"`
+	Cate     string `json:"cate,omitempty"`
+	Severity int    `json:"severity"`
+	Summary  string `json:"summary,omitempty"` // 表达式摘要：PromQL / SQL / 心跳条件等
+	Disabled int    `json:"disabled"`          // 模板里自带的启用态（导入时会默认翻成启用）
+}
+
+// previewAlertRuleTemplate lists the rules in an integration alert pack as
+// lightweight summaries (no full rule_config), so the agent can let the user
+// pick single / a few / all before importing. Read-only, no busi-group context.
+func previewAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, _ map[string]string) (string, error) {
+	component := strings.TrimSpace(getArgString(args, "component"))
+	if component == "" {
+		return "", fmt.Errorf("component is required (e.g. \"Linux\"); call list_files(base=\"integrations\") to discover")
+	}
+	file := strings.TrimSpace(getArgString(args, "file"))
+	if file == "" {
+		return "", fmt.Errorf("file is required (e.g. \"linux_by_categraf.json\"); call list_files(base=\"integrations/%s\", path=\"alerts\")", component)
+	}
+
+	rules, err := loadAlertRuleTemplate(deps, component, file)
+	if err != nil {
+		return "", err
+	}
+
+	items := make([]alertTemplatePreviewItem, 0, len(rules))
+	for i := range rules {
+		r := &rules[i]
+		items = append(items, alertTemplatePreviewItem{
+			Name:     r.Name,
+			Cate:     r.Cate,
+			Severity: r.Severity,
+			Summary:  alertRuleExprSummary(r),
+			Disabled: r.Disabled,
+		})
+	}
+	return marshalList(len(items), items), nil
+}
+
+// alertRuleExprSummary digs a short, representative expression out of a template
+// rule's rule_config so the preview shows what each rule checks. Best-effort:
+// prom_ql for metrics, sql/query for SQL/log, a key/op/value blurb for host
+// rules. Falls back to PromQl / note.
+func alertRuleExprSummary(r *models.AlertRule) string {
+	const maxLen = 160
+	clip := func(s string) string {
+		s = strings.TrimSpace(s)
+		return truncateRunes(s, maxLen)
+	}
+
+	if cfg, ok := r.RuleConfigJson.(map[string]interface{}); ok {
+		if queries, ok := cfg["queries"].([]interface{}); ok && len(queries) > 0 {
+			if q, ok := queries[0].(map[string]interface{}); ok {
+				for _, k := range []string{"prom_ql", "sql", "query"} {
+					if s, ok := q[k].(string); ok && strings.TrimSpace(s) != "" {
+						return clip(s)
+					}
+				}
+				// host rule: {key, op, values}
+				if key, ok := q["key"].(string); ok && key != "" {
+					op, _ := q["op"].(string)
+					return clip(fmt.Sprintf("%s %s %v", key, op, q["values"]))
+				}
+			}
+		}
+		if s, ok := cfg["prom_ql"].(string); ok && strings.TrimSpace(s) != "" {
+			return clip(s)
+		}
+	}
+	if strings.TrimSpace(r.PromQl) != "" {
+		return clip(r.PromQl)
+	}
+	return clip(r.Note)
 }
 
 // parseCronEverySeconds turns "@every 60s" / "@every 5m" into seconds. Best

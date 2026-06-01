@@ -190,6 +190,40 @@ var ImportPromRuleYAML = aiagent.AgentTool{
 	},
 }
 
+var PreviewAlertRuleTemplate = aiagent.AgentTool{
+	Name: "preview_alert_rule_template",
+	Description: `预览 integrations 目录下某个告警规则包里有哪些规则，不写入数据库。
+返回每条规则的 name / cate / severity / 表达式摘要 / 是否禁用，是小载荷（不含完整配置），
+用于在导入前让用户挑选：想整包导、导其中几条、还是只参考某一条建单规则。
+大规则包（如 Kubernetes 上百 KB）用 read_file 会被截断，要看包里有哪些规则就用本工具，不要用 read_file。
+先用 list_files(base="integrations/<component>", path="alerts") 找到文件名再调本工具。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "component", Type: "string", Description: `集成组件名，对应 integrations 下的目录名，如 "Linux"、"MySQL"、"Redis"`, Required: true},
+		{Name: "file", Type: "string", Description: `alerts 子目录下的规则包文件名，如 "linux_by_categraf.json"（用 list_files(base="integrations/<component>", path="alerts") 获取）`, Required: true},
+	},
+}
+
+var ImportAlertRuleTemplate = aiagent.AgentTool{
+	Name: "import_alert_rule_template",
+	Description: `从 integrations 目录下经过验证的告警规则包里导入规则到指定业务组（每条规则含告警级别、持续时长、评估周期、附加标签、注释、生效时间窗等完整配置），
+比 create_alert_rule 手搓质量更高、字段更全。**导入几条按用户需求来**：用 names 选一条（建单规则）、选几条（一批），或不传 names（整包）。
+先用 list_files(base="integrations/<component>", path="alerts") 找到文件名；想知道包里有哪些规则、按名字挑，先用 preview_alert_rule_template 看一眼。
+不要用 read_file 把整个规则包读出来再逐条 create_alert_rule（会丢字段且大文件会被截断）。
+模板里的规则默认是禁用态，本工具导入时默认改为启用（disabled=0）。同名规则自动跳过（status=skipped_duplicate），不算失败，不要用 name_prefix 重试。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "group_id", Type: "integer", Description: "业务组 ID（从 list_busi_groups 获取）", Required: true},
+		{Name: "component", Type: "string", Description: `集成组件名，对应 integrations 下的目录名，如 "Linux"、"MySQL"、"Redis"`, Required: true},
+		{Name: "file", Type: "string", Description: `alerts 子目录下的规则包文件名，如 "linux_by_categraf.json"（用 list_files(base="integrations/<component>", path="alerts") 获取）。优先选文件名含 categraf 的`, Required: true},
+		{Name: "names", Type: "string", Description: `要导入的规则名 JSON 数组（精确匹配 preview_alert_rule_template 返回的 name），如 "[\"CPU high\",\"Mem high\"]"。单条就传一个，多条传多个。不传=导入整包全部规则`, Required: false},
+		{Name: "datasource_id", Type: "integer", Description: "数据源 ID（从 list_datasources 获取，规则包多为 prometheus 类型）。强烈建议传：传了就把规则绑定到该数据源；不传则规则匹配该类型的全部数据源。host 心跳类规则不需要数据源，自动跳过绑定", Required: false},
+		{Name: "disabled", Type: "integer", Description: "导入后启用状态：0=启用（默认，因为模板里规则默认是禁用态），1=保持禁用", Required: false},
+		{Name: "name_prefix", Type: "string", Description: "给所有规则名加前缀，避免与现有规则重名", Required: false},
+		{Name: "name_suffix", Type: "string", Description: "给所有规则名加后缀，避免与现有规则重名", Required: false},
+	},
+}
+
 // =============================================================================
 // Busi group
 // =============================================================================
