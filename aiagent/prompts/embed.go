@@ -28,3 +28,9 @@ var SynthesisPrompt string
 //
 //go:embed user_default.md
 var UserDefaultTemplate string
+
+// Guided Follow-up 规则：要求最终答案末尾给 1~2 条接地的"下一步"建议。
+// 同时被 ReAct / Direct / Synthesis 三条出答案路径引用，单一真源。
+//
+//go:embed guided_followup.md
+var GuidedFollowupRule string

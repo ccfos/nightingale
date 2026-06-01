@@ -83,6 +83,16 @@ func isSensitiveKey(k string) bool {
 		strings.Contains(lower, "token")
 }
 
+// appendGuidedFollowup 在系统提示词末尾（利用 recency）追加收尾建议规则，仅交互式路径注入——
+// workflow/事件路径输出会被下游结构化消费，追加"下一步"建议是噪声甚至会破坏该值。
+func (a *Agent) appendGuidedFollowup(sb *strings.Builder) {
+	if !a.cfg.GuidedFollowup {
+		return
+	}
+	sb.WriteString("\n")
+	sb.WriteString(prompts.GuidedFollowupRule)
+}
+
 // buildDirectSystemPrompt 构建 Direct 模式系统提示词。
 // 跟 ReAct 版的关键差异：
 //   - 不包含 ReactSystemPrompt（~70 行格式说明），节省 ~1.5KB 输入 token
@@ -106,6 +116,8 @@ func (a *Agent) buildDirectSystemPrompt(rc *runCtx) string {
 	}
 
 	sb.WriteString(llm.BuildEnvSection())
+
+	a.appendGuidedFollowup(&sb)
 
 	return sb.String()
 }
@@ -139,6 +151,8 @@ func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 
 	// 环境信息
 	sb.WriteString(llm.BuildEnvSection())
+
+	a.appendGuidedFollowup(&sb)
 
 	return sb.String()
 }
@@ -219,6 +233,9 @@ func (a *Agent) buildSynthesisPrompt(rc *runCtx) string {
 		}
 		sb.WriteString(llm.BuildSkillsSection(skillContents))
 	}
+
+	// plan 模式的最终答案由 synthesis 产出，收尾建议也要带上
+	a.appendGuidedFollowup(&sb)
 
 	return sb.String()
 }
