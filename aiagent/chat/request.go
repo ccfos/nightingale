@@ -14,4 +14,10 @@ type AIChatRequest struct {
 	// fixed enum by LanguageDirective(); empty string means "let the LLM
 	// auto-detect from the user's message".
 	Language string `json:"language,omitempty"`
+
+	// ChatID / SeqID identify the in-flight message; preflight uses them to read
+	// earlier turns' action.param for cross-turn context backfill. Router-set,
+	// not part of the JSON wire format.
+	ChatID string `json:"-"`
+	SeqID  int64  `json:"-"`
 }
