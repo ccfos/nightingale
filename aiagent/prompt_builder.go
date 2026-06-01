@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -326,13 +327,13 @@ func buildTemplateData(req *AgentRequest) map[string]interface{} {
 func (a *Agent) parseReActResponse(response string) ReActStep {
 	step := ReActStep{}
 
-	// 某些模型（尤其 deepseek-v4-pro）会把结构标记黏在上一行行尾，例如：
-	//   Thought: ...获取数据源列表。Action: list_datasources
-	//   Action Input: {...}
-	// 下面的逐行扫描只认行首标记，行内的 "Action:" 会被并进 Thought，导致
-	// step.Action 为空 → runReActLoop 当成 Final Answer 直接返回、工具不执行
-	// （线上现象：executed_tools 始终 false，create-dashboard/alert 卡在第一步）。
-	// 先把行内标记提升到行首再扫描。
+	// 格式兜底层：deepseek-v4-pro 输出格式漂移严重，会用非 ReAct 形态发工具调用。
+	// 逐行扫描前先归一化成规范的 Action/Action Input，否则 step.Action 为空 →
+	// runReActLoop 当成 Final Answer 直接返回、工具不执行（executed_tools 始终 false）。
+	//
+	//  1) XML 工具调用：<tool_call name="X">{json}</tool_call>（含批量/畸形闭合标签）
+	response = normalizeXMLToolCall(response)
+	//  2) 行内标记：Thought: ...。Action: X 黏在一行
 	response = normalizeReActMarkers(response)
 
 	lines := strings.Split(response, "\n")
@@ -393,6 +394,94 @@ func (a *Agent) parseReActResponse(response string) ReActStep {
 	}
 
 	return step
+}
+
+var (
+	// 匹配 name 作为 XML 属性的工具调用：<tool_call name="X"> ... {json} ... </tool_call>。
+	// 开/闭标签都容忍 tool_call / tool_calls 混用（模型常写畸形）；(?s) 让 . 跨行；
+	// (.*?) 非贪婪，确保多个工具调用时只吃到第一个的闭合标签。
+	// 注意：要求 name 是 XML 属性；name 写在 JSON 内部的 <tool_call>{"name":...}</tool_call>
+	// （Nous/Hermes 形态）不匹配。
+	xmlToolCallRe = regexp.MustCompile(`(?s)<tool_calls?\s+name=["']([^"']+)["']\s*>(.*?)</tool_calls?>`)
+	// 行尾残留的 <tool_calls> 外层包裹标签，提取 Thought 前缀时一并剥掉。
+	openToolCallsTagRe = regexp.MustCompile(`(?s)<tool_calls?[^>]*>\s*$`)
+)
+
+// normalizeXMLToolCall 把 name 作为 XML 属性的工具调用 <tool_call name="X">{json}</tool_call>
+// 改写成规范的 ReAct 文本形态，让 parseReActResponse 能识别。某些模型（尤其 deepseek-v4-pro）
+// 无视 ReAct 格式，直接吐这种 XML 而不是 Action/Action Input：
+//
+//	<tool_calls>
+//	<tool_call name="read_file">
+//	{"base": "...", "path": "..."}
+//	</tool_call>
+//	...
+//	</tool_calls>
+//
+// 逐行扫描扫不到 Action，step.Action 为空，runReActLoop 把整段 XML 当 Final Answer
+// 返回 → 工具永不执行。
+//
+// 只转换【第一个】工具调用（ReAct 一步一个 Action；其余的下一轮模型会再发）。
+// 当响应已含规范的行首 Action/Final Answer，或没有【此形态】的 XML 工具调用时，原样返回。
+//
+// 仅覆盖 name 作为 XML 属性的形态（deepseek 自定义形态）。以下两种均不匹配本函数：
+//   - Nous/Hermes：name 写在 JSON 内 —— <tool_call>{"name":...,"arguments":...}</tool_call>
+//   - Anthropic 原生：<function_calls><invoke name="...">…</invoke></function_calls>
+func normalizeXMLToolCall(response string) string {
+	// 已有规范 Action 就不要去动一个本来正常的响应。
+	if hasReActActionMarker(response) {
+		return response
+	}
+	loc := xmlToolCallRe.FindStringSubmatchIndex(response)
+	if loc == nil {
+		return response
+	}
+	name := strings.TrimSpace(response[loc[2]:loc[3]])
+	body := response[loc[4]:loc[5]]
+	input := extractJSONObject(body)
+	if input == "" {
+		input = strings.TrimSpace(body)
+	}
+
+	// 工具调用块之前的散文是模型的推理，作为 Thought 保留。剥掉行尾可能残留的
+	// 外层 <tool_calls> 包裹标签。
+	prefix := strings.TrimSpace(response[:loc[0]])
+	prefix = strings.TrimSpace(openToolCallsTagRe.ReplaceAllString(prefix, ""))
+
+	var b strings.Builder
+	if prefix != "" {
+		if !strings.HasPrefix(prefix, "Thought:") {
+			b.WriteString("Thought: ")
+		}
+		b.WriteString(prefix)
+		b.WriteString("\n")
+	}
+	b.WriteString("Action: ")
+	b.WriteString(name)
+	b.WriteString("\nAction Input: ")
+	b.WriteString(input)
+	return b.String()
+}
+
+// hasReActActionMarker 报告响应里是否有行首的 Action: / Final Answer: 标记。
+func hasReActActionMarker(response string) bool {
+	for _, line := range strings.Split(response, "\n") {
+		t := strings.TrimSpace(line)
+		if strings.HasPrefix(t, "Action:") || strings.HasPrefix(t, "Final Answer:") {
+			return true
+		}
+	}
+	return false
+}
+
+// extractJSONObject 取 s 中第一个 '{' 到最后一个 '}' 的子串；找不到返回空串。
+func extractJSONObject(s string) string {
+	i := strings.Index(s, "{")
+	j := strings.LastIndex(s, "}")
+	if i >= 0 && j > i {
+		return s[i : j+1]
+	}
+	return ""
 }
 
 // normalizeReActMarkers 把模型黏在行尾的 ReAct 结构标记（Action:/Action Input:/
