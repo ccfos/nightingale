@@ -78,6 +78,9 @@ func PreflightCreation(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatR
 		}
 	}
 
+	// 跨回合继承：本轮仍缺的 required key 用同一会话更早提交过的值补上，避免重复弹表单。
+	backfillCreationContext(deps, req, spec.requiredContexts)
+
 	anyMissing := false
 	for _, key := range spec.requiredContexts {
 		if !hasContext(req.Context, key) {
@@ -208,6 +211,12 @@ func hasContext(reqCtx map[string]interface{}, key string) bool {
 	if !ok {
 		return false
 	}
+	return valueIsSet(v)
+}
+
+// valueIsSet reports whether a context value counts as "provided" — shared by
+// hasContext and the backfill so both agree on "already set".
+func valueIsSet(v interface{}) bool {
 	switch typed := v.(type) {
 	case int64:
 		return typed > 0
@@ -221,6 +230,80 @@ func hasContext(reqCtx map[string]interface{}, key string) bool {
 		return len(typed) > 0
 	}
 	return true
+}
+
+// backfillCreationContext inherits required keys the user already submitted
+// earlier in the same chat (e.g. a prior form_select), so a follow-up turn that
+// keyword-matches a creation skill won't re-ask. Absent-only (current turn
+// wins); a brand-new creation request never inherits (cross-flow guard).
+func backfillCreationContext(deps *aiagent.ToolDeps, req *AIChatRequest, required []string) {
+	if req.ChatID == "" {
+		return
+	}
+	if HasCreationIntent(req.UserInput) {
+		return // 新发起的创建从零开始，不继承上一次创建的数据源
+	}
+
+	missing := make([]string, 0, len(required))
+	for _, k := range required {
+		if !hasContext(req.Context, k) {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) == 0 {
+		return
+	}
+
+	msgs, err := models.AssistantMessageGetsByChat(deps.DBCtx, req.ChatID)
+	if err != nil {
+		logger.Warningf("[preflight] backfill: load chat %s failed: %v", req.ChatID, err)
+		return
+	}
+	if req.Context == nil {
+		req.Context = map[string]interface{}{}
+	}
+	applyBackfill(req.Context, missing, msgs, req.SeqID, req.ChatID)
+}
+
+// applyBackfill is the pure (DB-free) core: priorMsgs (seq-ascending) is scanned
+// newest→oldest, filling each still-missing key from the first earlier turn that
+// carries it. The scan stops AT — and does not inherit from — a turn that already
+// produced a creation result card: that turn marks a completed prior creation,
+// whose context belongs to a different flow. This is a hard boundary on purpose:
+// a follow-up right after a one-turn creation re-asks rather than risk donating a
+// finished rule's datasource to a new one — "ask when unsure" is the safe side.
+func applyBackfill(dst map[string]interface{}, missing []string, priorMsgs []models.AssistantMessage, curSeq int64, chatID string) {
+	for i := len(priorMsgs) - 1; i >= 0 && len(missing) > 0; i-- {
+		m := priorMsgs[i]
+		if curSeq > 0 && m.SeqID >= curSeq {
+			continue // 跳过在途/更新的回合
+		}
+		if hasCreationResult(m.Response) {
+			break // 到此即上一次已完成的创建：其值不继承，也不再向更早回溯
+		}
+
+		remain := make([]string, 0, len(missing))
+		for _, k := range missing {
+			if v, ok := m.Query.Action.Param[k]; ok && valueIsSet(v) {
+				dst[k] = v
+				logger.Debugf("[preflight] backfill %s=%v from chat=%s seq=%d", k, v, chatID, m.SeqID)
+			} else {
+				remain = append(remain, k)
+			}
+		}
+		missing = remain
+	}
+}
+
+// hasCreationResult flags a completed-creation card — the flow boundary.
+func hasCreationResult(resps []models.AssistantMessageResponse) bool {
+	for _, r := range resps {
+		switch r.ContentType {
+		case models.ContentTypeAlertRule, models.ContentTypeDashboard:
+			return true
+		}
+	}
+	return false
 }
 
 // emitFormSelect builds a form_select response covering every required field

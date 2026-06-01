@@ -374,6 +374,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		UserInput: msg.Query.Content,
 		Context:   make(map[string]interface{}),
 		Language:  lang,
+		ChatID:    msg.ChatID,
+		SeqID:     msg.SeqID,
 	}
 
 	// Merge action.param into context — handlers consume Context as a generic
