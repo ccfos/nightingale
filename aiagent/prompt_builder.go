@@ -106,6 +106,10 @@ func (a *Agent) buildDirectSystemPrompt(rc *runCtx) string {
 
 	sb.WriteString(llm.BuildEnvSection())
 
+	// 收尾建议规则（放最后，利用 recency 让模型记牢）
+	sb.WriteString("\n")
+	sb.WriteString(prompts.GuidedFollowupRule)
+
 	return sb.String()
 }
 
@@ -138,6 +142,10 @@ func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 
 	// 环境信息
 	sb.WriteString(llm.BuildEnvSection())
+
+	// 收尾建议规则（放最后，利用 recency 让模型记牢）
+	sb.WriteString("\n")
+	sb.WriteString(prompts.GuidedFollowupRule)
 
 	return sb.String()
 }
@@ -218,6 +226,10 @@ func (a *Agent) buildSynthesisPrompt(rc *runCtx) string {
 		}
 		sb.WriteString(llm.BuildSkillsSection(skillContents))
 	}
+
+	// 收尾建议规则：plan 模式的最终答案由 synthesis 产出，这里也要带上
+	sb.WriteString("\n")
+	sb.WriteString(prompts.GuidedFollowupRule)
 
 	return sb.String()
 }
