@@ -148,3 +148,33 @@ func TestNormalizeReActMarkers_Idempotent(t *testing.T) {
 		t.Fatalf("not idempotent:\n got=%q\nwant=%q", got, s)
 	}
 }
+
+// looksLikeToolCall 在 step.Action=="" 时区分"模型把工具调用以非 ReAct 形态泄漏到正文"
+// （应纠正后重试）与"真正的最终答案"（应直接返回）。误判任一方向都有害：
+// 漏判 → 工具调用被当最终答案静默终止；误判 → 正常答案被反复要求"改格式"。
+func TestLooksLikeToolCall(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		// 复现线上 a3558c6f：裸 JSON 并行工具调用数组（截图原始形态）。
+		{"parallel json array", "Thought: 先做两件事并行\n```json\n[ { \"name\": \"list_files\", \"arguments\": { \"base\": \"integrations/Linux\", \"path\": \"alerts\" } }, { \"name\": \"list_metrics\", \"arguments\": { \"datasource_id\": 10246, \"keyword\": \"cpu_usage\" } } ]\n```", true},
+		{"single json object", `{"name": "list_metrics", "arguments": {"datasource_id": 10246}}`, true},
+		{"parameters key variant", `{"name": "read_file", "parameters": {"path": "x"}}`, true},
+		{"nous hermes xml tag", "<tool_call>{\"name\":\"list_files\",\"arguments\":{}}</tool_call>", true},
+		{"anthropic native tags", "<function_calls><invoke name=\"list_files\"></invoke></function_calls>", true},
+		{"openai envelope", `{"tool_calls": [{"id": "call_1"}]}`, true},
+
+		// 真正的最终答案：不得误判。
+		{"plain markdown answer", "## 结论\n已为业务组 60 创建 Linux CPU 告警规则。\n## 证据\n- cpu_usage_idle 在数据源 10246 有数据", false},
+		{"answer mentioning the word arguments", "你的论点（arguments）已记录，但这不是工具调用。", false},
+		{"answer with only a name key", `配置示例：{"name": "my-rule"}，无需调用工具。`, false},
+		{"empty", "", false},
+	}
+	for _, c := range cases {
+		if got := looksLikeToolCall(c.in); got != c.want {
+			t.Errorf("%s: looksLikeToolCall = %v, want %v", c.name, got, c.want)
+		}
+	}
+}

@@ -16,6 +16,13 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 
 	streaming := config.StreamChan != nil
 
+	// 连续"格式纠正"重试计数：模型用非 ReAct 形态发工具调用（空 Action）时，
+	// 回灌纠错 Observation 让它重发，而不是把整段当 Final Answer 静默终止。
+	// 连续超过 maxFormatRetries 次仍纠正不过来，则优雅兜底为最终答案，
+	// 避免在格式纠缠上烧光全部迭代。解析出有效 Action 后清零。
+	formatRetries := 0
+	const maxFormatRetries = 2
+
 	for iteration := 0; iteration < config.MaxIterations; iteration++ {
 		select {
 		case <-ctx.Done():
@@ -57,13 +64,29 @@ func (a *Agent) runReActLoop(ctx context.Context, req *AgentRequest, messages []
 			return resp
 		}
 
-		// Action 为空 → 将原始响应作为 Final Answer
+		// Action 为空：可能是 (a) 真正的最终答案，或 (b) 模型用非 ReAct 形态
+		// （裸 JSON 工具调用数组 / 原生 function-calling / 未归一化的 XML）发了工具调用，
+		// 被整段吸进了 Thought。后者绝不能当成 Final Answer 静默成功返回——那样工具一个
+		// 都没执行，对话会在第 0 轮就"假完成"终止（用户报告的"对话没完成就终止"）。
 		if step.Action == "" {
+			if looksLikeToolCall(response) && formatRetries < maxFormatRetries {
+				formatRetries++
+				logger.Warningf("%s iteration %d: empty Action but response looks like a non-ReAct tool call; "+
+					"injecting format-correction and retrying (%d/%d)",
+					config.LogPrefix, iteration, formatRetries, maxFormatRetries)
+				messages = append(messages, ChatMessage{Role: "assistant", Content: response})
+				messages = append(messages, ChatMessage{Role: "user", Content: reactFormatCorrection})
+				continue
+			}
+			// 真正的最终答案，或多次纠正未果的优雅兜底。
 			resp.Content = response
 			resp.Iterations = iteration + 1
 			resp.Success = true
 			return resp
 		}
+
+		// 解析出有效 Action，模型已回到规范形态 → 清零连续纠正计数。
+		formatRetries = 0
 
 		// 发送 tool_call（流式模式）
 		if streaming {
