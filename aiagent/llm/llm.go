@@ -63,10 +63,11 @@ type GenerateRequest struct {
 
 // GenerateResponse is the unified response from LLM generation
 type GenerateResponse struct {
-	Content      string     `json:"content"`
-	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
-	FinishReason string     `json:"finish_reason"`
-	Usage        *Usage     `json:"usage,omitempty"`
+	Content          string     `json:"content"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
+	FinishReason     string     `json:"finish_reason"`
+	Usage            *Usage     `json:"usage,omitempty"`
 }
 
 // Usage represents token usage statistics
