@@ -106,6 +106,34 @@ func PreflightCreation(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatR
 	return emitFormSelect(deps, req, user, spec.skillName, spec.requiredContexts)
 }
 
+// alertRuleEditURLRe pulls the rule id out of an /alert-rules/edit/<id> link
+// the user may have pasted (e.g. "http://host/alert-rules/edit/178 改成20").
+var alertRuleEditURLRe = regexp.MustCompile(`/alert-rules/edit/(\d+)`)
+
+// PreflightEdit is the preflight hook for the "edit" action_key. It does the
+// cheap, deterministic part of target resolution — lifting a rule id out of a
+// pasted /alert-rules/edit/<id> URL — and injects it as rule_id so the agent
+// can skip straight to get_alert_rule_detail.
+//
+// It never halts: when the rule can't be resolved deterministically here, the
+// edit agent still resolves it via tools (event_id → get_alert_event_detail,
+// or list_alert_rules by name) per buildEditPrompt. Business group / datasource
+// are read off the rule, so — unlike creation — edit never needs a form.
+func PreflightEdit(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (bool, []models.AssistantMessageResponse, error) {
+	if !hasContext(req.Context, "rule_id") {
+		if m := alertRuleEditURLRe.FindStringSubmatch(req.UserInput); m != nil {
+			if id, err := strconv.ParseInt(m[1], 10, 64); err == nil && id > 0 {
+				if req.Context == nil {
+					req.Context = map[string]interface{}{}
+				}
+				req.Context["rule_id"] = id
+				logger.Infof("[preflight] edit: resolved rule_id=%d from URL in user text", id)
+			}
+		}
+	}
+	return false, nil, nil
+}
+
 // requiresContext 报告 key 是否在该 skill 的必填上下文里。
 func requiresContext(required []string, key string) bool {
 	for _, k := range required {

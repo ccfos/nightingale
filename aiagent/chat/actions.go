@@ -101,6 +101,13 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt: buildCreationPrompt,
 		BuildInputs: buildCreationInputs,
 	},
+	"edit": {
+		Description: "Modify an EXISTING monitoring resource (修改/编辑现有资源). Trigger verbs: 修改/编辑/调整/更新/改成/设为/启用/禁用/改阈值. Scope: alert rules (改阈值/级别/启停/重命名/改查询/改持续时长). Examples: '把这条告警规则的阈值改成20', '这个告警对应的规则级别调成P1', '禁用这条规则', '把刚才那条规则持续时长改成5分钟'. The target rule is resolved from context (rule_id / the /alert-rules/edit/<id> URL / a referenced alert event); business group and datasource are read from the rule itself — never ask the user for them. NOTE: 新建资源走 creation; 排查'为什么触发/没触发'走 troubleshooting; 纯查看走 resource_query.",
+		Preflight:   PreflightEdit,
+		SelectTools: selectEditTools,
+		BuildPrompt: buildEditPrompt,
+		BuildInputs: buildCreationInputs,
+	},
 	"troubleshooting": {
 		Description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
 		SelectTools: selectTroubleshootingTools,
@@ -497,7 +504,7 @@ Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
 
 2. **n9e / categraf / 夜莺 SPECIFIC FACTUAL questions** (e.g. "ping 监控对应的 promql", "Severity 1 是什么", "config.toml http 段作用", "categraf_self 指标怎么获取", "Token 调接口 401 怎么回事", "[http] 段是不是给 Prometheus 抓的"): MUST call **search_n9e_docs** first to get authoritative facts. The doc index contains real toml samples + V9 documentation. NEVER answer such questions from memory — you have a documented history of hallucinating field names / metric names / Severity mappings / Header names when answering without doc retrieval (Severity=Critical / Authorization: Bearer / ping_result_code / [[inputs.xxx]] / enable_queue / N9E_ADDR ... 这些都是历史翻车样本)。
 
-   When search_n9e_docs returns ` + "`quality: empty`" + ` or ` + "`must_refuse: true`" + `, you MUST NOT invent specific identifiers — instead reply with the refusal template (see below) and offer vendor-neutral concept guidance.
+   When search_n9e_docs returns `+"`quality: empty`"+` or `+"`must_refuse: true`"+`, you MUST NOT invent specific identifiers — instead reply with the refusal template (see below) and offer vendor-neutral concept guidance.
 
 3. **CURRENT system state / data queries** (e.g. "我现在有哪些告警", "查一下 ES 索引日志数", "哪些机器掉线了", "datasource 列表"): use the appropriate read tool to fetch real data. Prefer the most specific tool. Don't fan-out.
 
@@ -506,7 +513,7 @@ Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
 5. This fallback path is READ-ONLY. If the user asks to create or import resources, instruct them to phrase it as an explicit creation request (e.g. "创建/新建...") so it routes to the dedicated creation flow with proper business-group selection.
 
 Refusal template (use VERBATIM when search_n9e_docs is empty for a factual question):
-` + "```" + `
+`+"```"+`
 我在 n9e/categraf 官方文档里没有找到关于 <用户问题里的关键名词> 的明确描述，
 为避免给你错误信息，我不直接回答这个问题。建议:
 
@@ -515,7 +522,7 @@ Refusal template (use VERBATIM when search_n9e_docs is empty for a factual quest
 3. 💬 加夜莺社区群直接问研发
 
 [可选: 这里附一段 vendor-neutral 的概念引导, 不带任何 n9e/categraf 特定标识符]
-` + "```" + `
+`+"```"+`
 
 Answer in the user's language. Use well-formatted Markdown.
 
@@ -677,6 +684,55 @@ func buildCreationInputs(req *AIChatRequest) map[string]string {
 	return inputs
 }
 
+// --- edit action ---
+
+// selectEditTools is the toolset for modifying an existing resource: the tools
+// needed to (1) locate the target rule, (2) read its current config, (3) apply
+// the change. Deliberately NO create_* tools — edit must never fall back to
+// creating a new resource.
+func selectEditTools(req *AIChatRequest) []string {
+	return []string{
+		"update_alert_rule",
+		"get_alert_rule_detail",
+		"list_alert_rules",
+		"get_alert_event_detail", // map a referenced event → its rule_id
+		"search_active_alerts",
+		"search_history_alerts",
+		"list_datasources",
+		"list_busi_groups",
+	}
+}
+
+func buildEditPrompt(req *AIChatRequest) string {
+	// Preflight (PreflightEdit) may have already resolved the target rule and
+	// injected rule_id. Surface it so the agent skips re-resolution.
+	var ctxHint strings.Builder
+	if id := ctxInt64(req.Context, "rule_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nResolved target: rule_id=%d (call get_alert_rule_detail(id=%d) first to read its current config).", id, id))
+	}
+	if id := ctxInt64(req.Context, "event_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nReferenced alert event_id=%d — if rule_id is not already known, call get_alert_event_detail(id=%d) to get its rule_id.", id, id))
+	}
+
+	return fmt.Sprintf(`You are a monitoring assistant helping the user MODIFY an existing alert rule in Nightingale (n9e).
+
+User request: %s%s
+
+Workflow:
+1. Resolve the target rule, in this order — stop at the first that works:
+   a. rule_id already provided in the context block above.
+   b. a rule id parsed from a /alert-rules/edit/<id> URL in the user's message.
+   c. a referenced alert event (event_id) → get_alert_event_detail → its rule_id.
+   d. otherwise call list_alert_rules and match by the name/keywords the user gave; if still ambiguous, ask the user which rule (show the candidates), do NOT guess.
+2. Call get_alert_rule_detail(id) to read the current configuration.
+3. Call update_alert_rule with the id and ONLY the fields the user asked to change. For a threshold-only change on a prometheus rule, pass just id + threshold — the tool keeps the existing PromQL and operator.
+
+Hard rules:
+- The business group and datasource belong to the rule already — read them from the rule, NEVER ask the user for busi_group or datasource.
+- Never create a new rule to satisfy an edit. If you cannot find the target, ask the user to identify it.
+- Before writing, briefly state the change you are about to make (e.g. "将规则『X』(id=107) 的阈值 10 → 20"). Keep the Final Answer short; the result card is rendered separately by the UI.`, req.UserInput, ctxHint.String())
+}
+
 // --- troubleshooting action ---
 
 func selectTroubleshootingTools(req *AIChatRequest) []string {
@@ -767,9 +823,9 @@ Respond in the user's language (中文用户中文，英文用户英文), Markdo
 
 // buildDocQAPrompt 是 thin shell: 真正的工作流 / 翻车案例 / 输出格式 / 索引版本约束
 // 全部在 n9e-doc-qa skill 的 SKILL.md 里, 这里只做三件事:
-//   1. 注入 user input
-//   2. 强调 "禁止凭训练记忆答" 这一最高指令 (反正 LLM 会读 SKILL.md, 这条再喊一遍兜底)
-//   3. 提醒 Final Answer 前必须调 verify_answer (与 SKILL.md 的强制工作流保持一致)
+//  1. 注入 user input
+//  2. 强调 "禁止凭训练记忆答" 这一最高指令 (反正 LLM 会读 SKILL.md, 这条再喊一遍兜底)
+//  3. 提醒 Final Answer 前必须调 verify_answer (与 SKILL.md 的强制工作流保持一致)
 //
 // 不再在 prompt 里复述 landmine 案例、source 标记说明、三段式输出协议 ——
 // 那些规则只在 SKILL.md + landmines.yaml 里维护, 单一事实源, 避免漂移。

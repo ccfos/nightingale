@@ -104,6 +104,7 @@ const (
 	ActionKeyAlertQuery          AssistantActionKey = "alert_query"
 	ActionKeyResourceQuery       AssistantActionKey = "resource_query"
 	ActionKeyCreation            AssistantActionKey = "creation"
+	ActionKeyEdit                AssistantActionKey = "edit"
 	ActionKeyTroubleshooting     AssistantActionKey = "troubleshooting"
 	ActionKeyNotifyTemplate      AssistantActionKey = "notify_template_generator"
 	ActionKeyNotifyChannel       AssistantActionKey = "notify_channel_copilot"
