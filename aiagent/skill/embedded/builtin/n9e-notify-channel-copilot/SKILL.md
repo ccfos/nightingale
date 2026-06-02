@@ -1,7 +1,8 @@
 ---
 name: n9e-notify-channel-copilot
 description: 帮助用户修改、新建或排障夜莺(n9e)通知媒介(notify_channel)。当用户要求改钉钉/飞书/企微/邮件/短信/语音/Webhook 等媒介的 URL、请求体、签名、headers、代理、TLS、@人或接收人字段，或问"怎么接入 X 平台"、"为什么发不出去/报 9499/Bad Request"时使用。本技能专注**媒介通道层配置**——若用户改的是"消息内容/字段/渲染"，应改用 n9e-generate-message-template。
-
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 通知媒介修改

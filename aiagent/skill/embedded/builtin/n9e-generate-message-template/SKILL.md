@@ -1,6 +1,8 @@
 ---
 name: n9e-generate-message-template
 description: 生成或修改夜莺(n9e)告警通知消息模板。当用户要求写通知模板、改消息格式、加主机名/恢复值/级别、钉钉/飞书/Lark/邮件/短信/电话模板时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 通知消息模板生成

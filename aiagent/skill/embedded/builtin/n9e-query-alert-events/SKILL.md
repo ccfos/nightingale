@@ -1,6 +1,8 @@
 ---
 name: n9e-query-alert-events
 description: 在夜莺(n9e)环境中查询告警事件。当用户要求查看告警、查询活跃告警、搜索历史告警、查看告警详情、统计告警事件时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 查询告警事件

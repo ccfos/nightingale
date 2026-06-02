@@ -1,6 +1,8 @@
 ---
 name: sql-generator
 description: 根据自然语言生成 SQL 查询语句（支持 MySQL/Doris/ClickHouse/PostgreSQL）
+tags:
+  - internal
 builtin_tools:
   - list_databases
   - list_tables
