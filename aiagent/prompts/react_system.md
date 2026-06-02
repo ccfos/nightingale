@@ -25,6 +25,25 @@ Action: [The tool name to use, or the literal string "Final Answer"]
 Action Input: [JSON parameters for tools, or your final result for "Final Answer"]
 ```
 
+### Exactly ONE tool per response — no parallel / batch / native tool calls
+
+Call only ONE tool at a time. You will receive its `Observation:` and can then
+call the next tool. If you want to do several things, do the FIRST one now.
+
+❌ WRONG — DO NOT emit a JSON array / parallel / batch tool call. The host parser
+finds no `Action:` line, so NOTHING runs and the conversation dead-ends:
+```
+Thought: do two things in parallel.
+```json
+[ { "name": "list_files", "arguments": {...} },
+  { "name": "list_metrics", "arguments": {...} } ]
+```
+```
+
+❌ WRONG — DO NOT use native function-calling syntax, ```json fenced tool calls,
+`<tool_call>` / `<function_calls>` tags, or a `{"tool_calls": [...]}` envelope.
+The ONLY accepted way to invoke a tool is the `Action:` / `Action Input:` lines above.
+
 ### When you have the answer
 
 To return your final answer, the Action MUST be the literal string `Final Answer`

@@ -491,6 +491,57 @@ func hasReActActionMarker(response string) bool {
 	return false
 }
 
+var (
+	// 工具调用 JSON 指纹：同时出现 "name": 与 "arguments":/"parameters":。
+	// 这是模型用原生/并行 function-calling 形态泄漏到正文的特征
+	// （OpenAI 风格 [{"name":...,"arguments":{...}}, ...] 或单对象），
+	// ReAct 文本解析器无法把它变成 Action。
+	toolCallNameKeyRe = regexp.MustCompile(`"name"\s*:`)
+	toolCallArgsKeyRe = regexp.MustCompile(`"(arguments|parameters)"\s*:`)
+	// 未被 normalizeXMLToolCall 归一化的工具调用标签：
+	// Nous/Hermes <tool_call>{...}</tool_call>、Anthropic <function_calls><invoke …>、
+	// 以及裸 <tool_calls> 外层包裹。
+	toolCallTagRe = regexp.MustCompile(`(?i)<(tool_call|tool_calls|function_call|function_calls|invoke)\b`)
+	// OpenAI/通用 envelope：{"tool_calls":[…]} / {"function_call":{…}}。
+	toolCallEnvelopeKeyRe = regexp.MustCompile(`"(tool_calls|function_call)"\s*:`)
+)
+
+// looksLikeToolCall 判断一段【已解析出空 Action】的响应，是否其实是模型用非 ReAct
+// 形态发出的工具调用（裸 JSON 工具调用数组/对象、OpenAI/Anthropic 原生 function-calling
+// 语法、或未被归一化的 tool_call XML 标签）。
+//
+// runReActLoop 用它把【真正的最终答案】（应直接返回）与【格式漂移】（必须纠正后重试，
+// 而不是当成最终答案静默接受）区分开。后者若被当成 Final Answer，工具一个都不执行，
+// 对话在第 0 轮就"假完成"终止。
+//
+// 仅在 step.Action=="" 时调用。要求 JSON 形态【同时】命中 "name": 与
+// "arguments":/"parameters":，避免把恰好含其中一个词的正常 markdown 答案误判为工具调用。
+func looksLikeToolCall(response string) bool {
+	if toolCallTagRe.MatchString(response) || toolCallEnvelopeKeyRe.MatchString(response) {
+		return true
+	}
+	return toolCallNameKeyRe.MatchString(response) && toolCallArgsKeyRe.MatchString(response)
+}
+
+// reactFormatCorrection 是检测到工具调用格式漂移后回灌给模型的 Observation 文本，
+// 指导它改回规范 ReAct 形态、且一次只发一个工具。
+const reactFormatCorrection = `Observation: ⚠️ Format error: your previous response was NOT in the required ReAct format. ` +
+	`No "Action:" line was found, so no tool was executed and nothing has happened yet.
+
+You appear to have emitted a tool call as raw JSON, a parallel/batch tool-call array, ` +
+	"a ```json fenced block, a <tool_call> tag, or native function-calling syntax. " +
+	`None of these are supported by this host.
+
+You MUST reply in EXACTLY this three-line text format, and call only ONE tool per response:
+
+Thought: <your reasoning>
+Action: <one tool name>
+Action Input: <JSON arguments for that one tool>
+
+Do NOT output JSON arrays, multiple tool calls in one response, code fences, XML tags, or native ` +
+	`function-calling syntax. If you need several tools, call the FIRST one now — you will get its ` +
+	`Observation and can call the next one afterwards. Re-emit your intended tool call now in the correct format.`
+
 // extractJSONObject 取 s 中第一个 '{' 到最后一个 '}' 的子串；找不到返回空串。
 func extractJSONObject(s string) string {
 	i := strings.Index(s, "{")
