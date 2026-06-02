@@ -18,6 +18,7 @@ import (
 const (
 	PermAlertRules        = "/alert-rules"
 	PermAlertRulesAdd     = "/alert-rules/add"
+	PermAlertRulesPut     = "/alert-rules/put"
 	PermDashboards        = "/dashboards"
 	PermDashboardsAdd     = "/dashboards/add"
 	PermAlertMutes        = "/alert-mutes"
@@ -336,7 +337,6 @@ func parseTimeRange(tr string) (int64, int64) {
 	stime := now.Add(-duration).Unix()
 	return stime, etime
 }
-
 
 // =============================================================================
 // Registration shorthand

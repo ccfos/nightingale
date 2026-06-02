@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +48,7 @@ func init() {
 	register(defs.ListAlertRules, listAlertRules)
 	register(defs.GetAlertRuleDetail, getAlertRuleDetail)
 	register(defs.CreateAlertRule, createAlertRule)
+	register(defs.UpdateAlertRule, updateAlertRule)
 	register(defs.ListLegacyNotifyAlertRules, listLegacyNotifyAlertRules)
 	register(defs.ImportPromRuleYAML, importPromRuleYAML)
 	register(defs.PreviewPromRuleYAML, previewPromRuleYAML)
@@ -607,6 +609,317 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	}
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil
+}
+
+// promThresholdRe splits a baked v1 prometheus expression of the form
+// "<base> <op> <number>" into its three parts. Longer operators come first
+// in the alternation so ">=" wins over ">".
+var promThresholdRe = regexp.MustCompile(`^(.*?)\s*(>=|<=|==|!=|>|<)\s*(-?\d+(?:\.\d+)?)\s*$`)
+
+// rebuildBakedPromQL recomputes the baked "<base> <op> <num>" expression used
+// by the simple Prometheus path. It keeps whichever component the caller did
+// NOT override, parsed from the current expression. newBase, when supplied, is
+// wrapped via wrapIfComplex; the parsed base is kept verbatim (it was already
+// wrapped at create time, so re-wrapping would just add redundant parens).
+func rebuildBakedPromQL(current, newBase, newOp string, newThreshold float64, hasThreshold bool) (string, error) {
+	var base, op string
+	var thr float64
+	hasThr := hasThreshold
+	if m := promThresholdRe.FindStringSubmatch(strings.TrimSpace(current)); m != nil {
+		base, op = strings.TrimSpace(m[1]), m[2]
+		if !hasThr {
+			if v, err := strconv.ParseFloat(m[3], 64); err == nil {
+				thr = v
+				hasThr = true
+			}
+		}
+	}
+	if newBase != "" {
+		base = wrapIfComplex(newBase)
+	}
+	if newOp != "" {
+		op = newOp
+	}
+	if hasThreshold {
+		thr = newThreshold
+	}
+	if base == "" {
+		return "", fmt.Errorf("could not determine the metric expression to keep; pass prom_ql explicitly")
+	}
+	if op == "" {
+		op = ">"
+	}
+	if !isValidOperator(op) {
+		return "", fmt.Errorf("invalid operator %q (allowed: > >= < <= == !=)", op)
+	}
+	if !hasThr {
+		return "", fmt.Errorf("threshold is required: the current rule has no parseable threshold, pass threshold explicitly")
+	}
+	return fmt.Sprintf("%s %s %v", base, op, thr), nil
+}
+
+// promQueries extracts the rule_config "queries" array as mutable maps. The
+// returned maps alias the ones inside rc, so mutating them mutates rc. Returns
+// ok=false when rc is not the simple {queries:[{...}]} prometheus shape.
+func promQueries(rc interface{}) ([]map[string]interface{}, bool) {
+	m, ok := rc.(map[string]interface{})
+	if !ok {
+		return nil, false
+	}
+	raw, ok := m["queries"].([]interface{})
+	if !ok || len(raw) == 0 {
+		return nil, false
+	}
+	out := make([]map[string]interface{}, 0, len(raw))
+	for _, q := range raw {
+		qm, ok := q.(map[string]interface{})
+		if !ok {
+			return nil, false
+		}
+		out = append(out, qm)
+	}
+	return out, true
+}
+
+// updateAlertRule patches an existing alert rule in place. Only the fields
+// present in args are touched; everything else keeps its stored value. The
+// business group and datasource are read from the rule itself — the tool never
+// asks the caller for them. See defs.UpdateAlertRule for the field contract.
+func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	// Match the FE edit route: PUT /busi-group/:id/alert-rule/:arid is gated by
+	// perm("/alert-rules/put") — a distinct operation from add.
+	if err := checkPerm(deps, user, PermAlertRulesPut); err != nil {
+		return "", err
+	}
+
+	id := getArgInt64(args, "id")
+	if id == 0 {
+		return "", fmt.Errorf("id is required")
+	}
+
+	existing, err := models.AlertRuleGetById(deps.DBCtx, id)
+	if err != nil {
+		return "", fmt.Errorf("failed to get alert rule: %v", err)
+	}
+	if existing == nil {
+		return fmt.Sprintf(`{"error":"alert rule not found: id=%d"}`, id), nil
+	}
+
+	// Data-level permission: editing requires rw on the rule's busi group, not
+	// just membership — mirrors the FE's bgrw check and createAlertRule. Using
+	// getUserBgids (membership only) would let read-only members edit.
+	bg, err := models.BusiGroupGetById(deps.DBCtx, existing.GroupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", existing.GroupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	updated := *existing
+	var changes []string
+
+	if v := getArgString(args, "name"); v != "" {
+		updated.Name = v
+		changes = append(changes, "name")
+	}
+	if v := getArgString(args, "note"); v != "" {
+		updated.Note = v
+		changes = append(changes, "note")
+	}
+	if v := getArgString(args, "runbook_url"); v != "" {
+		updated.RunbookUrl = v
+		changes = append(changes, "runbook_url")
+	}
+	// Numeric fields use getArgFloat (presence-aware) rather than getArgInt,
+	// which has a v>0 guard that would silently drop the meaningful zeros
+	// "disabled=0" (启用) and "for_duration=0" (一触即发).
+	if f, ok := getArgFloat(args, "disabled"); ok {
+		d := int(f)
+		if d != 0 && d != 1 {
+			return "", fmt.Errorf("disabled must be 0 (enabled) or 1 (disabled)")
+		}
+		updated.Disabled = d
+		changes = append(changes, "disabled")
+	}
+	if f, ok := getArgFloat(args, "eval_interval"); ok {
+		n := int(f)
+		if n <= 0 {
+			return "", fmt.Errorf("eval_interval must be a positive number of seconds")
+		}
+		updated.PromEvalInterval = n
+		// Keep the auto-derived cron schedule consistent (see DB2FE).
+		updated.CronPattern = fmt.Sprintf("@every %ds", n)
+		changes = append(changes, "eval_interval")
+	}
+	if f, ok := getArgFloat(args, "for_duration"); ok {
+		n := int(f)
+		if n < 0 {
+			return "", fmt.Errorf("for_duration must be >= 0 seconds")
+		}
+		updated.PromForDuration = n
+		changes = append(changes, "for_duration")
+	}
+	if v := getArgString(args, "append_tags"); v != "" {
+		var tags []string
+		for _, t := range strings.Fields(v) {
+			if t != "" {
+				tags = append(tags, t)
+			}
+		}
+		updated.AppendTagsJSON = tags
+		changes = append(changes, "append_tags")
+	}
+	if v := getArgString(args, "notify_rule_ids"); v != "" {
+		var ids []int64
+		if err := json.Unmarshal([]byte(v), &ids); err != nil {
+			return "", fmt.Errorf("notify_rule_ids must be a JSON array of integers (got %q): %v", v, err)
+		}
+		updated.NotifyRuleIds = ids
+		changes = append(changes, "notify_rule_ids")
+	}
+
+	severityProvided := false
+	if f, ok := getArgFloat(args, "severity"); ok {
+		sev := int(f)
+		if sev < 1 || sev > 3 {
+			return "", fmt.Errorf("severity must be 1 (critical), 2 (warning) or 3 (info)")
+		}
+		updated.Severity = sev
+		severityProvided = true
+		changes = append(changes, "severity")
+	}
+
+	// Query / threshold edits.
+	rawRC := getArgString(args, "rule_config_json")
+	_, thresholdProvided := getArgFloat(args, "threshold")
+	promQLProvided := getArgString(args, "prom_ql") != ""
+	operatorProvided := getArgString(args, "operator") != ""
+	simpleQueryEdit := thresholdProvided || promQLProvided || operatorProvided
+
+	switch {
+	case rawRC != "":
+		var rc map[string]interface{}
+		if err := json.Unmarshal([]byte(rawRC), &rc); err != nil {
+			return "", fmt.Errorf("rule_config_json must be a valid JSON object (got parse error: %v)", err)
+		}
+		normalizeQueryIntervals(rc)
+		updated.RuleConfigJson = rc
+		updated.PromQl = "" // avoid FE2DB's legacy-clobber branch overriding rule_config
+		changes = append(changes, "rule_config")
+	case simpleQueryEdit:
+		if updated.Cate != "prometheus" {
+			return "", fmt.Errorf("threshold/prom_ql/operator shortcuts only apply to cate=prometheus; for cate=%s pass rule_config_json to replace the whole config", updated.Cate)
+		}
+		current := currentBakedPromQL(updated.RuleConfigJson)
+		if current == "" {
+			current = existing.PromQl // legacy rules store the expression at top level
+		}
+		thr, hasThr := getArgFloat(args, "threshold")
+		baked, err := rebuildBakedPromQL(current, getArgString(args, "prom_ql"), getArgString(args, "operator"), thr, hasThr)
+		if err != nil {
+			return "", err
+		}
+		qs, ok := promQueries(updated.RuleConfigJson)
+		if !ok {
+			return "", fmt.Errorf("this rule's config is not a simple prometheus threshold rule; pass rule_config_json to replace the whole config instead")
+		}
+		qs[0]["prom_ql"] = baked
+		updated.PromQl = ""
+		if thresholdProvided {
+			changes = append(changes, "threshold")
+		}
+		if promQLProvided {
+			changes = append(changes, "prom_ql")
+		}
+		if operatorProvided {
+			changes = append(changes, "operator")
+		}
+	}
+
+	// Severity is also carried inside rule_config per query/trigger: prometheus
+	// uses queries[i].severity, host and the other cate types use
+	// triggers[i].severity (see models.AlertRule.UpdateColumn). Sync them so the
+	// eval engine uses the new level instead of the stale per-element value.
+	if severityProvided {
+		applyRuleConfigSeverity(updated.RuleConfigJson, updated.Severity)
+	}
+
+	if len(changes) == 0 {
+		return "", fmt.Errorf("no updatable fields provided. Pass id plus at least one of: threshold/prom_ql/operator, name, note, severity, disabled, eval_interval, for_duration, append_tags, runbook_url, notify_rule_ids, rule_config_json")
+	}
+
+	updated.UpdateBy = user.Username
+
+	if err := existing.Update(deps.DBCtx, updated); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return "", fmt.Errorf("alert rule name %q already exists in busi_group %d; pick a different name", updated.Name, existing.GroupId)
+		}
+		return "", fmt.Errorf("failed to update alert rule: %v", err)
+	}
+
+	logger.Infof("update_alert_rule: user=%s, id=%d, group_id=%d, changed=%v",
+		user.Username, id, existing.GroupId, changes)
+
+	result := map[string]interface{}{
+		"id":       existing.Id,
+		"group_id": existing.GroupId,
+		"name":     updated.Name,
+		"cate":     updated.Cate,
+		"severity": updated.Severity,
+		"disabled": updated.Disabled,
+		"updated":  changes,
+	}
+	if updated.Cate == "prometheus" {
+		if baked := currentBakedPromQL(updated.RuleConfigJson); baked != "" {
+			result["prom_ql"] = baked
+		}
+	}
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
+}
+
+// currentBakedPromQL returns queries[0].prom_ql from a simple prometheus
+// rule_config, or "" when rc is not that shape.
+func currentBakedPromQL(rc interface{}) string {
+	qs, ok := promQueries(rc)
+	if !ok {
+		return ""
+	}
+	if s, ok := qs[0]["prom_ql"].(string); ok {
+		return s
+	}
+	return ""
+}
+
+// applyRuleConfigSeverity writes sev into the per-element severity carried in a
+// rule_config map: prometheus rules keep it in queries[i].severity, host and the
+// other cate types in triggers[i].severity (see models.AlertRule.UpdateColumn).
+// Works on the generic decoded map so it stays type-agnostic; no-op when rc is
+// not a map or carries neither array.
+func applyRuleConfigSeverity(rc interface{}, sev int) {
+	m, ok := rc.(map[string]interface{})
+	if !ok {
+		return
+	}
+	for _, key := range []string{"queries", "triggers"} {
+		arr, ok := m[key].([]interface{})
+		if !ok {
+			continue
+		}
+		for _, e := range arr {
+			if em, ok := e.(map[string]interface{}); ok {
+				em["severity"] = sev
+			}
+		}
+	}
 }
 
 // isValidOperator returns true for the comparison operators the n9e

@@ -50,7 +50,6 @@ import (
 )
 
 // Part metadata keys the n9e A2A server tags streamed parts with. Kept in sync
-// with aiagent/a2a (server side) and fc-model-server's tools_n9e (peer client).
 const (
 	metaThought     = "adk_thought"      // bool: reasoning / chain-of-thought, rendered separately
 	metaContentType = "n9e_content_type" // string: part.Text() carries a JSON structured payload

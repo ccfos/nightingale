@@ -55,7 +55,9 @@ Routing rules (apply in priority order, first match wins):
    - asks about categraf plugin existence / 默认行为 / supported inputs
 
 2. PRODUCT OPERATIONS → matching specialized action_key
-   - 创建 / 新建 / 添加 → creation
+   - 创建 / 新建 / 添加 一个 NEW 资源 → creation
+   - 修改 / 编辑 / 调整 / 更新 / 改阈值 / 改级别 / 启用 / 禁用 一个 EXISTING 资源 → edit
+     (e.g. '把这条告警规则阈值改成20', '禁用这条规则', '这个告警对应的规则级别调成P1')
    - 查看 / 列出 → resource_query / alert_query
    - 实际跑查询拿数据 → datasource_query
    - 排查告警 / 诊断 → troubleshooting
