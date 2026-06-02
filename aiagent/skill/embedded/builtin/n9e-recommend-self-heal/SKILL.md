@@ -1,6 +1,8 @@
 ---
 name: n9e-recommend-self-heal
 description: 为已触发的告警事件推荐自愈动作（半自愈 / auto-heal recommendation）。当用户从告警事件详情页或通知卡片打开 Copilot 问"这条告警能自愈吗"、"推荐个自愈脚本"、"帮我处理一下"、"一键修复"时使用。本技能只做**推荐**——不执行；执行走前端按钮调 ibex 接口。需要 context.event_id。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 告警自愈推荐（半自愈）

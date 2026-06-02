@@ -1,6 +1,8 @@
 ---
 name: n9e-query-datasource
 description: 在夜莺(n9e)环境中查询各种数据源的数据。支持 Prometheus 指标查询、Elasticsearch/Loki 日志查询、ClickHouse/MySQL/PostgreSQL/TDengine/Doris 等 SQL 数据源查询。当用户要求查询指标、查看监控数据、搜索日志、执行 PromQL 或 SQL 查询时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 查询数据源数据

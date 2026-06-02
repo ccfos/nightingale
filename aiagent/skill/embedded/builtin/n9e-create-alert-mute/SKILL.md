@@ -1,6 +1,8 @@
 ---
 name: n9e-create-alert-mute
 description: 在夜莺(n9e)环境中创建告警屏蔽规则。当用户要求创建屏蔽规则、屏蔽告警、静默告警、添加告警抑制时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 创建告警屏蔽规则

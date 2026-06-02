@@ -1,6 +1,8 @@
 ---
 name: promql-generator
 description: 根据自然语言生成 PromQL 查询语句
+tags:
+  - internal
 builtin_tools:
   - list_metrics
   - get_metric_labels

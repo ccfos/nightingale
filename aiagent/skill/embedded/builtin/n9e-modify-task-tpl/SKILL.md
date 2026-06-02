@@ -1,6 +1,8 @@
 ---
 name: n9e-modify-task-tpl
 description: 帮助用户生成、修改或排障夜莺(n9e)告警自愈脚本（task_tpl / ibex 脚本）。当用户要求"写一个磁盘清理/重启服务/清理日志/dump 进程/reload nginx"等自愈脚本，或问"自愈脚本怎么拿告警传过来的参数"、"stdin 是什么格式"、"timeout 应该填多少"、"为什么 is_recovered 永远 false"、"为什么自愈脚本拿不到 k8s namespace"、"脚本一直 running 怎么办"时使用。本技能专注**脚本正文层**——若用户要改告警规则、接收人或通知模板，引导到对应 skill。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 告警自愈脚本（task_tpl）生成
