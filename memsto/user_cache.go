@@ -103,6 +103,18 @@ func (uc *UserCacheType) GetByUserIds(ids []int64) []*models.User {
 	return users
 }
 
+func (uc *UserCacheType) GetAllUsers() []*models.User {
+	uc.RLock()
+	defer uc.RUnlock()
+
+	users := make([]*models.User, 0, len(uc.users))
+	for _, v := range uc.users {
+		users = append(users, v)
+	}
+
+	return users
+}
+
 func (uc *UserCacheType) GetMaintainerUsers() []*models.User {
 	uc.RLock()
 	defer uc.RUnlock()
