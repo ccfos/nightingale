@@ -1,6 +1,8 @@
 ---
 name: n9e-create-notify-rule
 description: 在夜莺(n9e)环境中创建通知规则。当用户要求创建通知规则、添加通知策略、配置告警通知方式、设置通知渠道时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 创建通知规则

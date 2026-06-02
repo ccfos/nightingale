@@ -1,6 +1,8 @@
 ---
 name: n9e-create-alert-subscribe
 description: 在夜莺(n9e)环境中创建告警订阅规则。当用户要求创建订阅规则、订阅告警、添加告警订阅、配置告警事件转发时使用。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 创建告警订阅规则

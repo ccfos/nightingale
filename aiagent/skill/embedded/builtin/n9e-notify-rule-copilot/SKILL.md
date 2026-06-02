@@ -1,6 +1,8 @@
 ---
 name: n9e-notify-rule-copilot
 description: 帮助用户在夜莺(n9e)中创建、编辑、复制、排障通知规则(notify_rule)——尤其是把"P1 工作时间发钉钉+电话、非工作时间只电话""按业务组/标签路由""分级走不同通道""恢复时不打电话"这类**自然语言需求**拆成正确的 NotifyConfig 数组。当用户要求"配通知规则 / 编辑通知规则 / 调整路由 / 改适用属性 / 分级通知 / 修复匹配不上 / 拆分接收人"时使用。本技能专注**通知规则的路由层**——不动通知媒介本身（→ n9e-notify-channel-copilot），不动消息模板（→ n9e-generate-message-template），不查"为什么没发出"（→ n9e-alert-rule-troubleshoot 流程 B）。
+tags:
+  - internal
 ---
 
 # 夜莺(n9e) 通知规则 Copilot
