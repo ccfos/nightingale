@@ -1,6 +1,8 @@
 ---
 name: n9e-host-health-diagnose
 description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网络抖动 / 维护中。当用户问"为什么这台机器失联"、"host 失联告警是不是误报"、"categraf 卡住了吗"、"心跳停了为啥还能 ping 通"等触发本技能。核心立场：**agent 失联 ≠ 主机宕机**。只看 target_up==0 / BeatTime 停就下"宕机"结论，是常见的误报根源。
+tags:
+  - internal
 ---
 
 # 主机健康综合判断（host-health-diagnose）

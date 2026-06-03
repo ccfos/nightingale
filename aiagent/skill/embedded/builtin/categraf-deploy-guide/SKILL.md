@@ -1,6 +1,8 @@
 ---
 name: categraf-deploy-guide
 description: 解答"如何部署 categraf 采集器"。触发场景：用户问"怎么装 categraf / categraf 怎么部署 / 用 Docker 跑 categraf / Windows 装 categraf / categraf 怎么注册成系统服务 / categraf 上报到夜莺 / categraf config.toml 怎么写 / 怎么验证 categraf 采集到数据"。覆盖二进制+systemd、Docker、Windows、K8s 提示、关键配置、常见验证命令。本 skill 是教学/指引型，不调任何工具，输出可粘贴执行的命令与配置片段。
+tags:
+  - internal
 ---
 
 # Categraf 部署指南
