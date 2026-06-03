@@ -163,14 +163,14 @@ type HTTPRequestConfig struct {
 - **加签 vs 关键字**：n9e 内置 dingtalk provider **只支持关键字校验**，加签机制需要在 URL query 拼 `&timestamp=&sign=`，目前没有原生开关。如果用户必须用加签：
   1. 用 `callback` 媒介自己拼带签名的 URL（写在 `URL` 里渲染时不好做，需要前置脚本），或
   2. 改用 `script` 媒介调脚本。
-  3. **推荐说法**："钉钉机器人请改用关键字校验；加签机制开源版未原生支持。" —— 这是维护者的官方答复（issue #2025-06-12 群里多次确认）。
+  3. **推荐说法**："钉钉机器人请改用关键字校验；加签机制开源版未原生支持。"
 - **@人**：依赖消息体中的 `at.atMobiles` / `atUserIds` 数组。内置 dingtalk provider 的请求体由消息模板拼出，**模板里用 `{{batchContactsAts}}` 或自己 range `$event.NotifyUsersObj` 取 `.Phone`**。
 
 ### 2) 企业微信群机器人 `wecom`
 
 - `URL`: 群机器人 webhook
 - `Method`: `POST`, `Content-Type: application/json`
-- **限制**：群机器人 markdown 不支持 `<font color>`；@人靠 `mentioned_mobile_list`/`mentioned_list`；**新版企业微信已下线群机器人**（社区 2025-11-11 反馈），新建群没 webhook 地址了——这时只能改走 `wecomapp` 自建应用。
+- **限制**：群机器人 markdown 不支持 `<font color>`；@人靠 `mentioned_mobile_list`/`mentioned_list`；**新版企业微信已下线群机器人**，新建群没 webhook 地址了——这时只能改走 `wecomapp` 自建应用。
 
 ### 3) 企微自建应用 `wecomapp`
 
@@ -214,7 +214,7 @@ type HTTPRequestConfig struct {
 ### 8) 短信/语音（腾讯云/阿里云）`tx-sms` / `tx-voice` / `ali-sms` / `ali-voice`
 
 - 共同结构：用 `HTTPRequestConfig`，但**真实凭证靠 `ParamConfig.Custom.Params` 自定义参数填**（SecretId / SecretKey / SDKAppId / TemplateId / SignName 等）。
-- **模板变量缺失报错**："测试通知显示模板变量缺少对应参数值"（社区 2026-02-28）——短信模板的参数顺序/数量必须和服务商后台审批通过的模板**严格一致**。
+- **模板变量缺失报错**："测试通知显示模板变量缺少对应参数值"——短信模板的参数顺序/数量必须和服务商后台审批通过的模板**严格一致**。
   - 排查路径：① 服务商后台 → 找到 TemplateId → 看模板内容有几个 `${1}` `${2}`；② n9e 模板里 `params` 数组要按这个数量填；③ 字段名/顺序要对齐。
 - **中文乱码（语音/回调）**：n9e 默认按 UTF-8 编码 body，部分语音服务商接口要求 GBK 或 url-encode 中文——参数里走 `{{$event.RuleName | escape}}` 试试，或在脚本媒介里转码。
 
@@ -262,7 +262,7 @@ type HTTPRequestConfig struct {
 ### 路径 A：UI（推荐）
 - 路径：`系统配置 → 通知配置 → 通知媒介` → 选媒介 → 编辑
 - 适用：90% 场景。改 URL、改 timeout、改 body、改 headers、加自定义参数。
-- 一个**重要坑**：UI 上"媒介类型"（即 `Ident`）一旦创建**不允许修改**（issue #2025-06-25 晓理"已创建不能改"已确认）。要换类型只能删除重建。
+- 一个**重要坑**：UI 上"媒介类型"（即 `Ident`）一旦创建**不允许修改**。要换类型只能删除重建。
 
 ### 路径 B：HTTP API
 - `POST /api/n9e/notify-channel`（新建）、`PUT /api/n9e/notify-channel/:id`（更新）、`DELETE /api/n9e/notify-channel/:id`
@@ -323,7 +323,7 @@ ORDER BY id DESC LIMIT 20;
 
 ### 测试 OK 但实际告警发不出去
 
-社区高频问题（#2851 / 群多人）。根因是**测试和真实告警的 sendtos 来源不一样**：
+社区高频问题（#2851）。根因是**测试和真实告警的 sendtos 来源不一样**：
 
 - **测试按钮**：`POST /notify-rule/test` → 测试者在 UI 表单里直接填接收人，sendtos 由表单填的值产生。媒介本身的 URL/Body/Headers 没问题就能发出。
 - **真实告警**：走 `alert/dispatch/dispatch.go GetNotifyConfigParams`，从 notify_rule 的 `user_ids` / `user_group_ids` → 查 user → 按 `ContactKey` 从 `contact_info` 取字段 → 组 sendtos。**任意一处缺失都会让 sendtos 为空**，这一路就静默不发。
@@ -402,5 +402,5 @@ ORDER BY id DESC LIMIT 20;
 2. 给出**字段级指令**：动 `notify_channel.request_config.http_request_config.headers` 这种精确路径，不是泛泛"去后台改一下"。
 3. 如果有内置 ident 能用，**优先内置**（feishucard 比手写 feishu webhook 强）。
 4. 涉及签名/特殊编码/反斜杠这种已知坑，**直接报"踩过"**并给方案，不要让用户走一遍试错。
-5. 引用一条相关 issue / 群反馈作支撑（如 `issue #2821 反斜杠 9499`、`社区 2025-11-11 企微下线群机器人`），让用户知道这不是孤立现象。
+5. 涉及已知坑时，可引用相关 issue（如 `#2821`）作支撑。
 6. 全程**不替用户改库或调 API**——只告诉他改哪个字段、怎么验证。

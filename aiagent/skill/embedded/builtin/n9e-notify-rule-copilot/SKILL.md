@@ -195,13 +195,13 @@ type TimeRanges struct {
 ]
 ```
 
-事件命中本规则后会按 pipeline 顺序走 EventDrop / Callback / EventUpdate / Relabel / AISummary 等处理器。**这是 v8 把"事件处理"从一级菜单挪到通知规则齿轮里**后的位置（社区林枫等多人找过）。pipeline 本身的内容不在本 skill 范围，只负责把它挂上来。
+事件命中本规则后会按 pipeline 顺序走 EventDrop / Callback / EventUpdate / Relabel / AISummary 等处理器。**这是 v8 把"事件处理"从一级菜单挪到通知规则齿轮里**后的位置。pipeline 本身的内容不在本 skill 范围，只负责把它挂上来。
 
 ---
 
 ## 复杂语义 → NotifyConfig 拆解模板（copilot 核心价值）
 
-这一节是 copilot 对比 `n9e-create-notify-rule` 的核心差异化能力。下面 6 个模板覆盖了社区 80% 的"我想这样路由"需求：
+这一节是 copilot 对比 `n9e-create-notify-rule` 的核心差异化能力。下面 6 个模板覆盖了绝大多数"我想这样路由"的需求：
 
 ### 模板 A：分级走不同通道
 
@@ -301,7 +301,7 @@ type TimeRanges struct {
 }
 ```
 
-**关键决策**：电话那条加 `is_recovered == "false"` 属性即可；钉钉那条不加属性，告警和恢复都走。社区呼声 ≥ 3 次（全时施想 2025-05-15、每一段路-人人 2025-06-23、R 2026-03-09）这是标准解法。
+**关键决策**：电话那条加 `is_recovered == "false"` 属性即可；钉钉那条不加属性，告警和恢复都走。这是标准解法。
 
 ### 模板 D：按业务组路由到不同群
 
@@ -404,7 +404,7 @@ type TimeRanges struct {
 
 - 入口：`告警管理 → 通知规则`
 - 适用：用户对 API 不熟、字段少、不熟悉 JSON 结构。
-- 一个**重要坑**：UI 上"切换新版"按钮位置历经多次变迁（beta14 隐藏 / 8.4.x 在右上角批量更新里），社区从 2025-03 一直问到 2025-12。如果用户找不到，先让他升到 8.5.1+，再去**告警规则列表的"批量更新"弹窗**找。
+- 一个**重要坑**：UI 上"切换新版"按钮位置历经多次变迁（beta14 隐藏 / 8.4.x 在右上角批量更新里）。如果用户找不到，先让他升到 8.5.1+，再去**告警规则列表的"批量更新"弹窗**找。
 
 ### 路径 C：直改 DB（最后手段）
 
@@ -419,10 +419,10 @@ type TimeRanges struct {
 | 现象 | 大概率原因 | 处理 |
 |---|---|---|
 | 测试发送 OK，真实告警没出来 | 接收人 `contact_info.<ContactKey>` 为空 → `sendtos` 空 → 静默不发 | 转 `n9e-alert-rule-troubleshoot` 流程 B；本 skill 只负责让用户检查 channel 的 `ContactKey` 和 user 的 contact_info |
-| 告警规则保存了但通知记录一直为空 | 告警规则没关联到这条通知规则（`alert_rule.notify_rule_ids` 为空 / 仍走老版 `notify_groups`） | 告警规则列表 → 批量更新 → 关联通知规则；社区 ≥ 25 次问 |
+| 告警规则保存了但通知记录一直为空 | 告警规则没关联到这条通知规则（`alert_rule.notify_rule_ids` 为空 / 仍走老版 `notify_groups`） | 告警规则列表 → 批量更新 → 关联通知规则 |
 | 业务组改名后规则突然失配 | `attributes.group_name == "old-name"` 按名字硬绑（#2803） | 改用 `=~` 加正则，或同步改这条规则 |
-| `attributes` 用 `in` 多个值无效 | value 写成逗号分隔 `"a,b,c"` | 改成**空格**：`"a b c"`（社区奥利给 2025-04-23 翻车） |
-| 多个 NotifyConfig 部分匹配失败时日志暴增 | 现版本日志级别问题，#2871 紫夜尘埃 | 本 skill 范围内能做的：建议用户加一条"兜底 NotifyConfig"（模板 F） |
+| `attributes` 用 `in` 多个值无效 | value 写成逗号分隔 `"a,b,c"` | 改成**空格**：`"a b c"` |
+| 多个 NotifyConfig 部分匹配失败时日志暴增 | 现版本日志级别问题（#2871） | 本 skill 范围内能做的：建议用户加一条"兜底 NotifyConfig"（模板 F） |
 | 同一 webhook 被 N 条规则共用，单点宕机阻塞所有规则 | #3140 队头阻塞 | 关键链路用独立 channel，本 skill 提示用户拆 channel |
 | 编辑保存后某个字段被清空 | PATCH 误用，或前端表单 normalizeValues 把空时间段过滤掉了 | 用 PUT 时**先 GET 再改再 PUT**，保留所有字段 |
 | 跨午夜时段（如 22:00–02:00）不生效 | 引擎不跨天，需要拆成两段 | 拆 `22:00–23:59` + `00:00–02:00` |
@@ -471,7 +471,7 @@ SendNotifyChannelMessage(notify_config, events)           ← 真实发送
 1. **第一句话锁定层**：判断用户是不是真在改"规则层"。如果是"为什么没发出"——转 `n9e-alert-rule-troubleshoot`；如果是"模板里少字段"——转 `n9e-generate-message-template`。**不替别人的 skill 做事**。
 2. **拆解成 NotifyConfig 数组**：把用户的自然语言路由意图直接映射到上面 6 个模板里最贴近的一个，给出**完整 JSON 草稿**——不要让用户自己去填字段名。
 3. **字段级精确指令**：动 `notify_configs[1].attributes[0].func` 这种路径，不是"改一下属性"。
-4. **预警已知坑**：用户写出会踩 #2803 / `in` 用逗号 / 跨午夜不拆段这些常见错误时，**主动纠正**并引用一句 issue/群反馈作支撑（让用户知道这不是孤立现象）。
+4. **预警已知坑**：用户写出会踩 #2803 / `in` 用逗号 / 跨午夜不拆段这些常见错误时，**主动纠正**并给出正确做法。
 5. **建议先 dry-run 再保存**：拿一条历史事件 ID 用 `POST /notify-rule/test` 验证 → 没问题再正式 PUT/POST。
 6. **多条 NotifyConfig 优先于复杂模板**：用户想"在模板里 if-else 判断级别"的时候，引导他**拆 NotifyConfig**，这是夜莺设计的本意。模板只做"内容渲染"，不做"路由决策"。
 7. **编辑场景必须 先 GET → 改 → PUT**：不要让用户拿着脑子里的"我大概记得这条规则长什么样"直接 PUT，整体替换会丢字段。

@@ -1,6 +1,6 @@
 ---
 name: n9e-host-health-diagnose
-description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网络抖动 / 维护中。当用户问"为什么这台机器失联"、"host 失联告警是不是误报"、"categraf 卡住了吗"、"心跳停了为啥还能 ping 通"等触发本技能。核心立场：**agent 失联 ≠ 主机宕机**。只看 target_up==0 / BeatTime 停就下"宕机"结论，是社区高频误报根源（炸药、石头、Jayden、Allen、L.、南栀花开、静心 等多次反馈，2025-12 起一个月内 ≥12 次跨群重复）。
+description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网络抖动 / 维护中。当用户问"为什么这台机器失联"、"host 失联告警是不是误报"、"categraf 卡住了吗"、"心跳停了为啥还能 ping 通"等触发本技能。核心立场：**agent 失联 ≠ 主机宕机**。只看 target_up==0 / BeatTime 停就下"宕机"结论，是常见的误报根源。
 ---
 
 # 主机健康综合判断（host-health-diagnose）
@@ -121,12 +121,11 @@ Final Answer 用 Markdown，用户语言。**四段**：
 - ❌ 用 `query_prometheus` 拉一长串原始时序点回来 token 爆掉。`query_host_metrics_window` 已经按"min/max/avg/last"做过压缩，先看聚合够用了再决定是否要细看。
 - ❌ 不告诉用户验证方法。建议动作里至少给一条"如果你想自证 agent 是不是真死了，可以这样做"的步骤（远程 ssh 进去看 `systemctl status categraf` / `ps -ef | grep categraf` / `journalctl -u categraf --since "5 min ago"`）。
 
-## 相关 issue / 反馈口径
+## 相关 issue
 
 - #2829 edge 失联风暴：心跳通道在 server 高负载下出现批量延迟，看着像集群同时下线，其实是 Redis 写阻塞。**遇到 summary 整片 stale 时主动提这个可能性。**
 - #1589 心跳更新滞后：Redis 写心跳的 goroutine 被慢 IO 卡住，agent 在发 server 在收但 BeatTime 不更新。
 - #1888 redis nil：心跳 key 偶发被清空/驱逐，配合 maxmemory-policy 配置看。
-- 2025-12-23 静心："agent 失联不等于宕机" — 维护者明确表态。
 
 ## 输出风格
 

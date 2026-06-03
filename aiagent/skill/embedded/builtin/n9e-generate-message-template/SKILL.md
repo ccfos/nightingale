@@ -343,7 +343,7 @@ tags:
 - **触发时值**: {{if or (eq $event.TriggerValue "+Inf") (eq $event.TriggerValue "NaN")}}N/A{{else}}{{formatDecimal $event.TriggerValue 2}}{{end}}
 ```
 
-> PromQL 的 `/0` 会返回 `+Inf`，缺数据的聚合会返回 `NaN`。直接渲染到飞书/钉钉里就是字面 `+Inf`，看着像 bug（issue #2 群里多次反馈）。
+> PromQL 的 `/0` 会返回 `+Inf`，缺数据的聚合会返回 `NaN`。直接渲染到飞书/钉钉里就是字面 `+Inf`，看着像 bug。
 
 ### 12) "Edge 模式下事件 Id=0 — 跳转链接降级"
 
