@@ -21,13 +21,15 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-type HeartbeatHookFunc func(ident string) map[string]interface{}
+// HeartbeatHookFunc 接收完整的 HostMeta，hook 实现除了能拿到 ident（Hostname），
+// 还能读取采集器上报的本地事实（如 LocalIbexEnable），用于派生 ibex_status 等。
+type HeartbeatHookFunc func(req models.HostMeta) map[string]interface{}
 
 func (rt *Router) heartbeat(c *gin.Context) {
 	req, err := HandleHeartbeat(c, rt.Ctx, rt.Alert.Heartbeat.EngineName, rt.MetaSet, rt.IdentSet, rt.TargetCache)
 	ginx.Dangerous(err)
 
-	m := rt.HeartbeatHook(req.Hostname)
+	m := rt.HeartbeatHook(req)
 	ginx.NewRender(c).Data(m, err)
 }
 
