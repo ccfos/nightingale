@@ -110,6 +110,10 @@ func PreflightCreation(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatR
 // the user may have pasted (e.g. "http://host/alert-rules/edit/178 改成20").
 var alertRuleEditURLRe = regexp.MustCompile(`/alert-rules/edit/(\d+)`)
 
+// dashboardURLRe pulls the dashboard id out of a /dashboards/<id> (or
+// /dashboard/<id>) link the user may have pasted when asking to modify a board.
+var dashboardURLRe = regexp.MustCompile(`/dashboards?/(\d+)`)
+
 // PreflightEdit is the preflight hook for the "edit" action_key. It does the
 // cheap, deterministic part of target resolution — lifting a rule id out of a
 // pasted /alert-rules/edit/<id> URL — and injects it as rule_id so the agent
@@ -128,6 +132,28 @@ func PreflightEdit(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatReque
 				}
 				req.Context["rule_id"] = id
 				logger.Infof("[preflight] edit: resolved rule_id=%d from URL in user text", id)
+			}
+		}
+	}
+	// Dashboard edits: lift a dashboard id out of a pasted /dashboards/<id> URL.
+	// An explicitly pasted URL is an intentional target and OVERRIDES any
+	// page-context dashboard_id: the user may have opened the Copilot on board A
+	// but pasted board B's link asking to modify B — honoring the stale page
+	// context would silently edit the wrong board. Guard on alertRuleEditURLRe
+	// NOT matching so an /alert-rules/edit/<id> link (which also contains digits)
+	// never gets misread as a dashboard id.
+	if !alertRuleEditURLRe.MatchString(req.UserInput) {
+		if m := dashboardURLRe.FindStringSubmatch(req.UserInput); m != nil {
+			if id, err := strconv.ParseInt(m[1], 10, 64); err == nil && id > 0 {
+				if req.Context == nil {
+					req.Context = map[string]interface{}{}
+				}
+				if prev := ctxInt64Get(req.Context, "dashboard_id"); prev > 0 && prev != id {
+					logger.Infof("[preflight] edit: pasted dashboard URL id=%d overrides page-context dashboard_id=%d", id, prev)
+				} else {
+					logger.Infof("[preflight] edit: resolved dashboard_id=%d from URL in user text", id)
+				}
+				req.Context["dashboard_id"] = id
 			}
 		}
 	}

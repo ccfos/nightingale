@@ -490,6 +490,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// Inject user_id for permission-aware builtin tools
 	inputs["user_id"] = fmt.Sprintf("%d", userId)
 
+	// Inject chat/turn identity so write tools can enforce cross-turn confirmation
+	// (e.g. update_dashboard's two-phase propose→confirm gate): a confirmation is
+	// only honored if it arrives in a later SeqID than the proposal.
+	inputs["chat_id"] = msg.ChatID
+	inputs["seq_id"] = fmt.Sprintf("%d", msg.SeqID)
+
 	// 用 UserPromptRendered 而非 UserPromptTemplate：handler.BuildPrompt 已经用
 	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
 	// 解析——否则用户问 "告警模板怎么写 {{ .Alertname }}" 会让 Parse 失败，整轮 500。

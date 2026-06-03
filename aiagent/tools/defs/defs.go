@@ -281,11 +281,37 @@ var ListDashboards = aiagent.AgentTool{
 }
 
 var GetDashboardDetail = aiagent.AgentTool{
-	Name:        "get_dashboard_detail",
-	Description: "获取单个仪表盘的详细信息",
-	Type:        aiagent.ToolTypeBuiltin,
+	Name: "get_dashboard_detail",
+	Description: `获取单个仪表盘的详细信息。
+默认只返回元信息（名称/业务组/标签等）。修改仪表盘前请传 include_config=true，会额外返回当前的变量定义（var）与图表（panel）摘要，以及一份变量健康检查（variable_lint，列出图表/变量里引用了未定义变量等坏味道），作为"改动前"的依据。`,
+	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "仪表盘ID", Required: true},
+		{Name: "include_config", Type: "boolean", Description: "是否返回变量与图表摘要 + 变量健康检查（修改仪表盘前置为 true）。默认 false 只返回元信息", Required: false},
+	},
+}
+
+var UpdateDashboard = aiagent.AgentTool{
+	Name: "update_dashboard",
+	Description: `修改一个已存在的仪表盘（外科手术式增量更新）。只改你传入的变量/图表，仪表盘其余配置（布局、阈值、单位、overrides 等）原样保留，绝不重建整盘。
+改前必须先 get_dashboard_detail(id, include_config=true) 读现状。
+**两阶段确认（服务端强制）**：
+- 第一步「提案」：不带 confirmed 调用本工具。工具不会写库，而是返回 proposal_id + changes（改动摘要），applied=false。把这些改动用 Markdown 表格在对话里列出「改动前 → 改动后」。
+- 第二步「确认」：必须等用户在**下一轮**明确确认后，再次调用本工具，带上同样的 id、上一步返回的 proposal_id 和 confirmed=true 才会真正落库（确认时变量/图表等改动参数无需重传，以提案为准）。
+- 服务端会校验：proposal_id 有效且未过期、确认发生在比提案更晚的对话轮次、仪表盘当前配置与提案基线未被他人改动；任一不满足都会报错要求重新提案。**禁止在生成提案的同一轮里自行带 confirmed=true 确认。**
+能力：
+- 改变量（variables）：按 name 匹配已有变量，合并你传的字段（definition / label / multi / default_value / type）；name 不存在则新增一个 query 变量；传 delete=true 删除该变量。
+- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；delete=true 删除整个图表。
+- 修复变量/数据源引用（fix_datasource=true）：把图表与变量里悬空/写死的数据源引用统一重指到大盘的数据源变量（修复"图表查不到数据/数据源引用不一致"类坏味道）。
+业务组、数据源从仪表盘本身读取，不需要、也不要向用户索要。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的仪表盘 ID（必填）", Required: true},
+		{Name: "variables", Type: "string", Description: `变量改动 JSON 数组，按 name 匹配。每项: {"name":"ident", "definition":"label_values(cpu_usage_idle, ident)", "label":"主机", "multi":true, "default_value":"", "delete":false}。只写要改的字段；name 不存在则新增；delete=true 删除`, Required: false},
+		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
+		{Name: "fix_datasource", Type: "boolean", Description: "是否修复悬空/写死的数据源引用，统一重指到大盘数据源变量。默认 false", Required: false},
+		{Name: "proposal_id", Type: "string", Description: "确认阶段必填：第一步「提案」调用返回的 proposal_id。提案阶段不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "确认阶段必填，置为 true：表示用户已在更晚的一轮确认了提案，连同 proposal_id 一起传才会真正写库。提案阶段不要传（默认 false）", Required: false},
 	},
 }
 

@@ -541,6 +541,37 @@ func getDashboardDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		UpdateBy: board.UpdateBy,
 	}
 
+	// include_config surfaces the variable/panel summary + variable lint so the
+	// agent can show a "before → after" diff before calling update_dashboard.
+	// Default-off keeps the common read path lean (payloads can be large).
+	// getArgBool (not a raw .(bool)) so a string-form "true" from the LLM still
+	// turns the config summary on — otherwise the edit flow's "before" snapshot
+	// silently comes back empty.
+	if getArgBool(args, "include_config") {
+		out := map[string]interface{}{"dashboard": result}
+		// BoardGetByID does not hydrate the board_payload row, so the config
+		// lives in a separate table — load it explicitly. Without this the
+		// variables/panels/lint summary would always be empty for real
+		// dashboards and the "before → after" diff would have no "before".
+		payload, err := models.BoardPayloadGet(deps.DBCtx, id)
+		if err != nil {
+			return "", fmt.Errorf("failed to get dashboard config: %v", err)
+		}
+		if strings.TrimSpace(payload) != "" {
+			var configs map[string]interface{}
+			if err := json.Unmarshal([]byte(payload), &configs); err != nil {
+				out["config_error"] = fmt.Sprintf("invalid config payload: %v", err)
+			} else {
+				vars, panels := summarizeConfigs(configs)
+				out["variables"] = vars
+				out["panels"] = panels
+				out["variable_lint"] = lintVariables(configs)
+			}
+		}
+		bytes, _ := json.Marshal(out)
+		return string(bytes), nil
+	}
+
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil
 }

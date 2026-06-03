@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -102,7 +103,7 @@ var registry = map[string]*ActionHandler{
 		BuildInputs: buildCreationInputs,
 	},
 	"edit": {
-		Description: "Modify an EXISTING monitoring resource (修改/编辑现有资源). Trigger verbs: 修改/编辑/调整/更新/改成/设为/启用/禁用/改阈值. Scope: alert rules (改阈值/级别/启停/重命名/改查询/改持续时长). Examples: '把这条告警规则的阈值改成20', '这个告警对应的规则级别调成P1', '禁用这条规则', '把刚才那条规则持续时长改成5分钟'. The target rule is resolved from context (rule_id / the /alert-rules/edit/<id> URL / a referenced alert event); business group and datasource are read from the rule itself — never ask the user for them. NOTE: 新建资源走 creation; 排查'为什么触发/没触发'走 troubleshooting; 纯查看走 resource_query.",
+		Description: "Modify an EXISTING monitoring resource (修改/编辑现有资源). Trigger verbs: 修改/编辑/调整/更新/改成/设为/启用/禁用/改阈值. Scope: (1) alert rules — 改阈值/级别/启停/重命名/改查询/改持续时长; (2) dashboards (仪表盘/大盘) — 改模板变量(取值表达式/默认值/多选/显示名)、检查并修复变量、改图表(面板/panel)的曲线(PromQL/SQL/legend/单位/增删曲线)/重命名图表. Examples: '把这条告警规则的阈值改成20', '禁用这条规则', '把这个仪表盘的 ident 变量默认值改成 web01', '检查下这个大盘的变量并修复', '把 CPU 图表的查询改成只看总核', '给内存图表加一条 swap 曲线'. The target is resolved from context (rule_id / dashboard_id / a /alert-rules/edit/<id> or /dashboards/<id> URL / a referenced alert event); business group and datasource are read from the resource itself — never ask the user for them. NOTE: 新建资源走 creation; 排查'为什么触发/没触发'走 troubleshooting; 纯查看走 resource_query.",
 		Preflight:   PreflightEdit,
 		SelectTools: selectEditTools,
 		BuildPrompt: buildEditPrompt,
@@ -687,23 +688,176 @@ func buildCreationInputs(req *AIChatRequest) map[string]string {
 // --- edit action ---
 
 // selectEditTools is the toolset for modifying an existing resource: the tools
-// needed to (1) locate the target rule, (2) read its current config, (3) apply
-// the change. Deliberately NO create_* tools — edit must never fall back to
-// creating a new resource.
+// needed to (1) locate the target, (2) read its current config, (3) apply the
+// change. Covers both alert rules and dashboards. Deliberately NO create_*
+// tools — edit must never fall back to creating a new resource.
 func selectEditTools(req *AIChatRequest) []string {
 	return []string{
+		// alert rule edit
 		"update_alert_rule",
 		"get_alert_rule_detail",
 		"list_alert_rules",
 		"get_alert_event_detail", // map a referenced event → its rule_id
 		"search_active_alerts",
 		"search_history_alerts",
+		// dashboard edit
+		"update_dashboard",
+		"get_dashboard_detail",
+		"list_dashboards",
+		"list_metrics",
+		"get_metric_labels",
+		"query_prometheus",
+		// shared
 		"list_datasources",
 		"list_busi_groups",
 	}
 }
 
+// dashboardEditRe / dashboardEditKeywords detect when an edit request targets a
+// dashboard rather than an alert rule, so buildEditPrompt can frame the right
+// workflow. Keyword match is a soft hint — the autoselected skill (n9e-modify-
+// dashboard vs the alert-rule path) carries the substantive guidance.
+var dashboardEditURLRe = regexp.MustCompile(`/dashboards?/(\d+)`)
+
+var dashboardEditKeywords = []string{
+	"仪表盘", "大盘", "dashboard", "面板", "panel", "图表", "曲线", "图例", "legend",
+}
+
+// alertRuleEditKeywords are strong "this is an alert-rule edit" signals. Kept
+// narrow (full phrases, not bare "规则" which also matches 屏蔽规则/订阅规则) so a
+// genuine dashboard edit that merely mentions alerts isn't hijacked.
+var alertRuleEditKeywords = []string{
+	"告警规则", "报警规则", "alert rule", "alert-rule", "告警策略", "告警阈值", "告警级别",
+}
+
+// looksLikeAlertRuleEdit reports whether the request carries a structured or
+// strong-keyword alert-rule signal. Structured targets (rule_id / event_id /
+// a pasted /alert-rules/edit/<id> URL) are unambiguous; they must win over a
+// stale dashboard_id page context so editing a rule from a dashboard page isn't
+// misrouted into the dashboard workflow.
+func looksLikeAlertRuleEdit(req *AIChatRequest) bool {
+	if ctxInt64(req.Context, "rule_id") > 0 || ctxInt64(req.Context, "event_id") > 0 {
+		return true
+	}
+	input := strings.ToLower(req.UserInput)
+	if alertRuleEditURLRe.MatchString(input) {
+		return true
+	}
+	for _, kw := range alertRuleEditKeywords {
+		if strings.Contains(input, strings.ToLower(kw)) {
+			return true
+		}
+	}
+	return false
+}
+
+func looksLikeDashboardEdit(req *AIChatRequest) bool {
+	input := strings.ToLower(req.UserInput)
+	// A pasted /dashboards/<id> URL is an explicit, intentional dashboard target
+	// and wins outright.
+	if dashboardEditURLRe.MatchString(input) {
+		return true
+	}
+	// Strong alert-rule signals (rule_id/event_id/alert URL/告警规则 keywords)
+	// take precedence over a dashboard_id page context and over the generic
+	// dashboard keywords (图表/曲线/panel/legend), which legitimately appear in
+	// alert-rule edit requests too.
+	if looksLikeAlertRuleEdit(req) {
+		return false
+	}
+	if ctxInt64(req.Context, "dashboard_id") > 0 {
+		return true
+	}
+	for _, kw := range dashboardEditKeywords {
+		if strings.Contains(input, strings.ToLower(kw)) {
+			return true
+		}
+	}
+	// No fresh target signal in this turn. This is the bare-confirmation case
+	// (e.g. the user replies "确认" to a pending update_dashboard proposal): the
+	// dashboard_id was only ever parsed from a URL in an earlier message and is
+	// not re-supplied here, and "确认" carries no keywords. Without this fallback
+	// the turn would default to the alert-rule edit workflow and the agent would
+	// abandon the dashboard proposal to ask "which alert rule?". Continue editing
+	// whatever resource the in-flight edit targeted, inferred from history.
+	return lastEditTargetInHistory(req.History) == editTargetDashboard
+}
+
+// editTarget identifies which resource an in-flight edit conversation is about.
+type editTarget int
+
+const (
+	editTargetUnknown editTarget = iota
+	editTargetDashboard
+	editTargetAlertRule
+)
+
+// lastEditTargetInHistory infers the resource of an in-flight edit by scanning
+// the conversation backwards for the most recent dashboard vs alert-rule signal.
+// A follow-up confirmation ("确认") carries no target of its own, so routing must
+// fall back to whatever the previous turns were editing. Most-recent-wins; within
+// a single message alert-rule signals are checked first (mirroring
+// looksLikeAlertRuleEdit's precedence) so a panel that merely mentions an alert
+// doesn't mask a genuine rule edit. Returns editTargetUnknown when nothing matches.
+func lastEditTargetInHistory(history []aiagent.ChatMessage) editTarget {
+	for i := len(history) - 1; i >= 0; i-- {
+		msg := strings.ToLower(history[i].Content)
+		if msg == "" {
+			continue
+		}
+		for _, kw := range alertRuleEditKeywords {
+			if strings.Contains(msg, strings.ToLower(kw)) {
+				return editTargetAlertRule
+			}
+		}
+		if alertRuleEditURLRe.MatchString(msg) || strings.Contains(msg, "update_alert_rule") {
+			return editTargetAlertRule
+		}
+		if dashboardEditURLRe.MatchString(msg) || strings.Contains(msg, "dbprop_") ||
+			strings.Contains(msg, "update_dashboard") {
+			return editTargetDashboard
+		}
+		for _, kw := range dashboardEditKeywords {
+			if strings.Contains(msg, strings.ToLower(kw)) {
+				return editTargetDashboard
+			}
+		}
+	}
+	return editTargetUnknown
+}
+
 func buildEditPrompt(req *AIChatRequest) string {
+	if looksLikeDashboardEdit(req) {
+		return buildDashboardEditPrompt(req)
+	}
+	return buildAlertRuleEditPrompt(req)
+}
+
+// buildDashboardEditPrompt frames the "modify an existing dashboard" workflow.
+// The substantive steps (read with include_config, propose via update_dashboard
+// without confirmed, show a before→after table, wait, then confirm with the
+// returned proposal_id) live in the n9e-modify-dashboard SKILL.md, which the
+// skill autoselector loads from the description; this prompt just frames the
+// task and reinforces the two-phase confirm-before-write contract.
+func buildDashboardEditPrompt(req *AIChatRequest) string {
+	var ctxHint strings.Builder
+	if id := ctxInt64(req.Context, "dashboard_id"); id > 0 {
+		ctxHint.WriteString(fmt.Sprintf("\nResolved target: dashboard_id=%d (call get_dashboard_detail(id=%d, include_config=true) first to read its current variables/panels).", id, id))
+	}
+
+	return fmt.Sprintf(`You are a monitoring assistant helping the user MODIFY an existing dashboard in Nightingale (n9e). Follow the n9e-modify-dashboard skill (SKILL.md) for the substantive workflow.
+
+User request: %s%s
+
+Hard rules (the skill spells out the rest):
+1. Locate the dashboard: use dashboard_id from the context block above if present; else parse it from a /dashboards/<id> URL; else list_dashboards by name (ask the user if ambiguous — never guess).
+2. Read the current config with get_dashboard_detail(id, include_config=true) — this returns variables, panels, and a variable_lint report.
+3. update_dashboard is a TWO-PHASE write. In this first turn, after computing the changes, call update_dashboard with ONLY the variables/panels to change but WITHOUT confirmed — this does NOT write; it returns a proposal_id and applied=false. Then present the changes as a Markdown table (改动前 → 改动后), ask the user to confirm, and STOP (end the turn). Do NOT set confirmed=true in this turn.
+4. Only after the user explicitly confirms in a later message, call update_dashboard again passing ONLY id + the proposal_id from step 3 + confirmed=true (no need to resend variables/panels) to actually write. If the user says 不对/取消/先别改, do NOT confirm; discard the proposal and (if they want changes) regenerate a fresh proposal.
+5. Business group and datasource belong to the dashboard — read them from it, never ask. Never create a new dashboard to satisfy an edit.`, req.UserInput, ctxHint.String())
+}
+
+func buildAlertRuleEditPrompt(req *AIChatRequest) string {
 	// Preflight (PreflightEdit) may have already resolved the target rule and
 	// injected rule_id. Surface it so the agent skips re-resolution.
 	var ctxHint strings.Builder
