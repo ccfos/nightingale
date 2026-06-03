@@ -90,7 +90,7 @@ interval = 10
 - `[global].hostname`：留空走系统 hostname；如果 `hostname` 命令在容器/克隆机里取出来全是 `localhost.localdomain` 这种重名，**必须显式指定**，否则不同机器会互相覆盖。
 - `[global].labels`：全局打 tag，写好区分维度（region / env / idc）后面建大盘和告警很省心。
 
-⚠️ **不要把 `omit_hostname` 设成 true**——它会去掉 `ident` 标签，结果是机器列表 OS/agent_version 全是 unknown（社区 FAQ 高频翻车）。
+⚠️ **不要把 `omit_hostname` 设成 true**——它会去掉 `ident` 标签，结果是机器列表 OS/agent_version 全是 unknown（常见翻车点）。
 
 ## 第三步：启动与托管
 

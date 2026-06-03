@@ -76,7 +76,7 @@ type TimeRanges struct {
 ### 1) `name` / `description` / `enable`
 
 - `name` 必填，但**不要硬绑死字面值**——前端列表展示用它，但内部没有 ID 引用关系。
-- `description` 强烈建议写明"这条规则的路由意图"，比如 `P1 全天 + P2/P3 工作时间通知运维`。规则一多（社区有用户 100+ 条）没 description 就只能靠 name 猜，痛点很大。
+- `description` 强烈建议写明"这条规则的路由意图"，比如 `P1 全天 + P2/P3 工作时间通知运维`。规则一多（上百条）没 description 就只能靠 name 猜，痛点很大。
 - `enable=false` 时整条规则不参与匹配，但还在列表里——临时禁用比删除安全（删了告警规则的 `notify_rule_ids` 关联会失效）。
 
 ### 2) `user_group_ids` — **授权团队，不是接收人**
@@ -95,7 +95,7 @@ type TimeRanges struct {
 #### 3.1 `channel_id` — 走哪条媒介
 
 - 必须 > 0，且对应媒介在 `notify_channel` 表里 `enable=true`。
-- 同一 `channel_id` 可被多条 NotifyConfig（甚至跨规则）复用——**注意 #3140 提到的"队头阻塞"风险**：同一 webhook 被多条规则共用，一旦它挂了所有规则都阻塞，关键链路建议每条用独立媒介。
+- 同一 `channel_id` 可被多条 NotifyConfig（甚至跨规则）复用——**注意"队头阻塞"风险**：同一 webhook 被多条规则共用，一旦它挂了所有规则都阻塞，关键链路建议每条用独立媒介。
 - 拿可用列表：`GET /api/n9e/notify-channel-configs`。
 
 #### 3.2 `template_id` — 用哪个消息模板
@@ -128,7 +128,7 @@ type TimeRanges struct {
 { "<custom_key>": "<string_value>", ... }
 ```
 
-`user_ids` 和 `user_group_ids` **是 OR 关系**，所有命中的用户去重后取联系方式。具体哪个字段（phone / email / dingtalk_userid 等）由 channel 的 `ParamConfig.UserInfo.ContactKey` 决定——如果用户的 `contact_info` 里这个字段空着，就**静默不发**（这是社区"测试 OK 真实告警没发出"最常见根因，详见下面"踩坑速查"）。
+`user_ids` 和 `user_group_ids` **是 OR 关系**，所有命中的用户去重后取联系方式。具体哪个字段（phone / email / dingtalk_userid 等）由 channel 的 `ParamConfig.UserInfo.ContactKey` 决定——如果用户的 `contact_info` 里这个字段空着，就**静默不发**（这是"测试 OK 真实告警没发出"最常见根因，详见下面"踩坑速查"）。
 
 群机器人类（dingtalk webhook / wecom 群机器人 / feishu webhook）`ContactKey` 通常留空，此时 `params.user_ids` / `params.user_group_ids` 只用来决定"在卡片里 @ 谁"，不影响是否发送。
 
@@ -159,15 +159,15 @@ type TimeRanges struct {
 - **多个 label_keys 之间是 AND**（`alert/dispatch/dispatch.go:NotifyRuleMatchCheck`）——事件必须同时带 `service=api` 和 `env=prod` 才命中。
 - **同一个 key 不能写多次取 OR**（结构限制）；要 OR 就改用 `attributes` 里的 `in` 操作符，或者拆成多条 NotifyConfig。
 - 拿可选 key 列表：`GET /api/n9e/event-tagkeys`。
-- 注意 #2804：如果事件标签里没有 `ident`（categraf 直写时序库时丢的），按 ident 路由会全部失配——这是模型上的盲区，要让用户确认数据流。
+- 注意：如果事件标签里没有 `ident`（categraf 直写时序库时丢的），按 ident 路由会全部失配——这是模型上的盲区，要让用户确认数据流。
 
 #### 3.7 `attributes` — 按事件**属性**过滤（不是标签）
 
-这是社区**最容易踩坑**的字段。属性 = 事件元数据，不是用户自定义标签。支持的 key 固定：
+这是**最容易踩坑**的字段。属性 = 事件元数据，不是用户自定义标签。支持的 key 固定：
 
 | key | 含义 | 支持操作符 | value 说明 |
 |---|---|---|---|
-| `group_name` | 告警规则所属业务组名 | `==` `!=` `=~` `!~` `in` `not in` | 业务组名称（**注意 #2803：按名绑定，业务组改名后失联**） |
+| `group_name` | 告警规则所属业务组名 | `==` `!=` `=~` `!~` `in` `not in` | 业务组名称（**注意：按名绑定，业务组改名后失联**） |
 | `cluster` | 数据源名 | `==` `!=` `=~` `!~` `in` `not in` | 数据源名称 |
 | `is_recovered` | 是否已恢复 | `==` | `"true"` / `"false"` |
 | `rule_id` | 告警规则 ID | `==` `!=` `in` `not in` | 数字字符串 |
@@ -329,7 +329,7 @@ type TimeRanges struct {
 }
 ```
 
-**关键决策**：用 `attributes.group_name` 而不是 `label_keys`，因为业务组是告警规则的归属属性，不是事件 label。**注意 #2803**：业务组改名后这里会失配，提醒用户业务组改名要同步规则；或者改用 `=~` 加正则更稳。
+**关键决策**：用 `attributes.group_name` 而不是 `label_keys`，因为业务组是告警规则的归属属性，不是事件 label。**注意**：业务组改名后这里会失配，提醒用户业务组改名要同步规则；或者改用 `=~` 加正则更稳。
 
 ### 模板 E：按标签灰度
 
@@ -372,7 +372,7 @@ type TimeRanges struct {
 }
 ```
 
-**关键决策**：留一条"无任何过滤"的规则做兜底——这是 #2871 用户呼声"缺省通知配置"的等价做法。要注意告警规则侧的 `notify_rule_ids` 也得显式挂上这条，否则不生效。
+**关键决策**：留一条"无任何过滤"的规则做兜底——这是"缺省通知配置"的等价做法。要注意告警规则侧的 `notify_rule_ids` 也得显式挂上这条，否则不生效。
 
 ---
 
@@ -420,16 +420,16 @@ type TimeRanges struct {
 |---|---|---|
 | 测试发送 OK，真实告警没出来 | 接收人 `contact_info.<ContactKey>` 为空 → `sendtos` 空 → 静默不发 | 转 `n9e-alert-rule-troubleshoot` 流程 B；本 skill 只负责让用户检查 channel 的 `ContactKey` 和 user 的 contact_info |
 | 告警规则保存了但通知记录一直为空 | 告警规则没关联到这条通知规则（`alert_rule.notify_rule_ids` 为空 / 仍走老版 `notify_groups`） | 告警规则列表 → 批量更新 → 关联通知规则 |
-| 业务组改名后规则突然失配 | `attributes.group_name == "old-name"` 按名字硬绑（#2803） | 改用 `=~` 加正则，或同步改这条规则 |
+| 业务组改名后规则突然失配 | `attributes.group_name == "old-name"` 按名字硬绑 | 改用 `=~` 加正则，或同步改这条规则 |
 | `attributes` 用 `in` 多个值无效 | value 写成逗号分隔 `"a,b,c"` | 改成**空格**：`"a b c"` |
-| 多个 NotifyConfig 部分匹配失败时日志暴增 | 现版本日志级别问题（#2871） | 本 skill 范围内能做的：建议用户加一条"兜底 NotifyConfig"（模板 F） |
-| 同一 webhook 被 N 条规则共用，单点宕机阻塞所有规则 | #3140 队头阻塞 | 关键链路用独立 channel，本 skill 提示用户拆 channel |
+| 多个 NotifyConfig 部分匹配失败时日志暴增 | 现版本日志级别问题 | 本 skill 范围内能做的：建议用户加一条"兜底 NotifyConfig"（模板 F） |
+| 同一 webhook 被 N 条规则共用，单点宕机阻塞所有规则 | 队头阻塞 | 关键链路用独立 channel，本 skill 提示用户拆 channel |
 | 编辑保存后某个字段被清空 | PATCH 误用，或前端表单 normalizeValues 把空时间段过滤掉了 | 用 PUT 时**先 GET 再改再 PUT**，保留所有字段 |
 | 跨午夜时段（如 22:00–02:00）不生效 | 引擎不跨天，需要拆成两段 | 拆 `22:00–23:59` + `00:00–02:00` |
 | `week` 写反了（把 1 当周日） | 用了中国习惯 1=Mon 而非 ISO 0=Sun | 纠正：0=周日，1=周一 … 6=周六 |
 | `is_recovered` 值类型踩坑 | 写成 `true`（bool）而不是 `"true"`（字符串） | TagFilter 的 value 字段是 string，必须用 `"true"` / `"false"` |
 | 同一个 label key 想要 OR | 结构上不支持 | 改用 `attributes` 的 `in`，或拆多条 NotifyConfig |
-| 名称带空格在 `in` 里失效 | #2747 业务组名含空格被空格分隔吞掉 | 改用正则 `=~` 转义 |
+| 名称带空格在 `in` 里失效 | 业务组名含空格被空格分隔吞掉 | 改用正则 `=~` 转义 |
 | 用户没权限看到这条规则 | `user_group_ids` 没包含此用户所在团队 | 加上对应团队 ID |
 | 创建报 `forbidden` | 当前用户不在 `user_group_ids` 任何一个团队 | 加上自己所在团队或让 admin 操作 |
 
@@ -471,7 +471,7 @@ SendNotifyChannelMessage(notify_config, events)           ← 真实发送
 1. **第一句话锁定层**：判断用户是不是真在改"规则层"。如果是"为什么没发出"——转 `n9e-alert-rule-troubleshoot`；如果是"模板里少字段"——转 `n9e-generate-message-template`。**不替别人的 skill 做事**。
 2. **拆解成 NotifyConfig 数组**：把用户的自然语言路由意图直接映射到上面 6 个模板里最贴近的一个，给出**完整 JSON 草稿**——不要让用户自己去填字段名。
 3. **字段级精确指令**：动 `notify_configs[1].attributes[0].func` 这种路径，不是"改一下属性"。
-4. **预警已知坑**：用户写出会踩 #2803 / `in` 用逗号 / 跨午夜不拆段这些常见错误时，**主动纠正**并给出正确做法。
+4. **预警已知坑**：用户写出会踩业务组按名绑定 / `in` 用逗号 / 跨午夜不拆段这些常见错误时，**主动纠正**并给出正确做法。
 5. **建议先 dry-run 再保存**：拿一条历史事件 ID 用 `POST /notify-rule/test` 验证 → 没问题再正式 PUT/POST。
 6. **多条 NotifyConfig 优先于复杂模板**：用户想"在模板里 if-else 判断级别"的时候，引导他**拆 NotifyConfig**，这是夜莺设计的本意。模板只做"内容渲染"，不做"路由决策"。
 7. **编辑场景必须 先 GET → 改 → PUT**：不要让用户拿着脑子里的"我大概记得这条规则长什么样"直接 PUT，整体替换会丢字段。

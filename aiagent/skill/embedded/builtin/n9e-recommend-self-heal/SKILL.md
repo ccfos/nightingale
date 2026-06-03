@@ -447,7 +447,7 @@ tags:
 
 用户问"那我直接跑可以吗" → 不要松口让 AI 执行；强调"AI 不执行, 你点按钮"。
 
-用户问"那执行了我怎么看结果" → 答：执行后落进 `task_record` 表（`event_id` 字段就是这次告警的 id），夜莺 UI 任务详情页能看 stdout/stderr/exit_code；若卡 running 多半是 ibex < v8.3.0 的 bug，升级即可（#2841）。
+用户问"那执行了我怎么看结果" → 答：执行后落进 `task_record` 表（`event_id` 字段就是这次告警的 id），夜莺 UI 任务详情页能看 stdout/stderr/exit_code；若卡 running 多半是 ibex < v8.3.0 的 bug，升级即可。
 
 用户语气急（"快点修复"）→ 不要因此降低风险评估标准；该 ⚠️ 还是 ⚠️。半自愈的安全保证 > 速度。
 

@@ -84,13 +84,13 @@ builtin_tools:
 ### 第 2 步 · 验证数据源链路
 调用 `get_datasource_detail(id=<ds_id>)`。重点：
 - 数据源状态正常吗？
-- 数据源是否关联了告警引擎集群？这是规则被纳管的前提（PDF 中的 "告警规则 → 数据源 → 告警引擎集群" 链路）。
+- 数据源是否关联了告警引擎集群？这是规则被纳管的前提（"告警规则 → 数据源 → 告警引擎集群" 链路）。
 
 ### 第 3 步 · 实际跑一遍查询，验证有没有异常点
 从规则配置里提取查询表达式，亲自跑一遍：
 
 - **Prometheus 类**：用 `query_prometheus(query=<promql>, query_type='range', time_range='1h')`。先看 range 趋势，再用 instant 看当前是否真的满足触发条件。
-- **SQL / ES / VictoriaLogs 类**：用 `query_timeseries`，照 R22+ 文档传 `sql + value_key` 或 `index + filter` 或 `query`。**重点提醒用户检查 `value_key` 字段名是否和 SQL 中的列完全一致**（PDF 中明确指出这是常见坑）。
+- **SQL / ES / VictoriaLogs 类**：用 `query_timeseries`，照 R22+ 文档传 `sql + value_key` 或 `index + filter` 或 `query`。**重点提醒用户检查 `value_key` 字段名是否和 SQL 中的列完全一致**（这是常见坑）。
 - **ES `query_string` 大小写坑（ES 日志告警不符合预期时优先排查）**：`AND` / `OR` / `NOT` 必须**大写**才会被识别为布尔操作符，写成 `and` / `or` / `not` 会被当成普通词项，再加上 `query_string` 默认 operator 是 `OR`，整条查询语义彻底变了。
   - 典型症状：告警命中量远大于预期；返回的日志里混进了**不该匹配**的 pod / service / level（比如查询写的是 `logLevel:ERROR and ext_pod:"menuglobal-*"`，结果返回里大量 INFO/WARN，或者其它 pod 的 ERROR 日志）。
   - 排查方法：把规则里的 ES 查询语句拷出来，**逐个字符检查 `and`/`or`/`not` 是否大写**；同时用同一条语句把小写改成大写各跑一次 `query_timeseries`，命中数差异巨大就是这个原因。
@@ -266,7 +266,7 @@ get_event_pipeline_executions(event_id=<事件 id>)
 
 - **flapping**：一天触发恢复几十次，每次只活几秒到几十秒
 - **阈值边缘震荡**：触发值始终贴在阈值 ±5% 的窄带里反复跨线
-- **数据缺失误恢复**：机器关机 / 采集断点导致"无数据"被当成"已恢复"，紧接着数据回来又重新告警（#2999）
+- **数据缺失误恢复**：机器关机 / 采集断点导致"无数据"被当成"已恢复"，紧接着数据回来又重新告警
 
 **排查方法**：
 

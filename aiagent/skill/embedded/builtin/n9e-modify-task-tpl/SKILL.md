@@ -62,7 +62,7 @@ tags:
 - `timeout == 0` → 自动设为 30
 - `timeout > 3600*24*5` → 报错"longer than five days"
 - `title` / `args` / `pause` / `tags` 含 `str.Dangerous` 的字符（`` ` ``、`$()`、`&&` 等）→ 报错
-- `script` 自动 `\r\n → \n`（解掉 Windows 编辑器拷贝的 #1713 CRLF 问题）
+- `script` 自动 `\r\n → \n`（解掉 Windows 编辑器拷贝的 CRLF 问题）
 - `script == ""` → 报错"script is required"
 
 ---
@@ -207,7 +207,7 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 - 想"告警恢复时也跑个动作（发邮件 / 关工单 / 通知 IM）" → 用 **notify_rule + callback 媒介**，在 notify_rule 里勾选"恢复也通知"，callback URL 收到事件 JSON 后再处理。
 - 想"恢复事件触发另一段脚本" → 同上，**不要**试图复用 task_tpl。
 
-历史 issue（lucky0137 #2211）的核心痛点是"恢复也想触发"，文档里写"加 is_recovered 判断"是无效解——本质上需要架构层改 ibex 接受恢复事件，或者用户改走 callback 通道。
+一个核心痛点是"恢复也想触发"，而"加 is_recovered 判断"这个常见思路其实是无效解——本质上需要架构层改 ibex 接受恢复事件，或者用户改走 callback 通道。
 
 ---
 
@@ -216,7 +216,7 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 ### 5.1 timeout（秒）
 
 - 默认 30 秒（`CleanFields` 自动填）
-- 最长 5 天（更长直接报错，#1950 维护者明确"自愈 = 短周期任务"）
+- 最长 5 天（更长直接报错；设计上自愈就是短周期任务）
 - 超时后**进程会被 SIGKILL**，stdout/stderr 在被 kill 之前已写到 task_host 表
 - **与告警评估 interval 没有直接关系**——评估周期 60s 不意味着脚本只有 60s 可跑
 
@@ -229,13 +229,13 @@ func (c *IbexCallBacker) CallBack(ctx CallBackContext) {
 | jstack/jmap 取 heap dump | 300 ~ 600 |
 | yum/apt 安装包 | 600 ~ 1800 |
 
-### 5.2 区分三个"超时类"历史 issue 的根因
+### 5.2 区分三个"超时类"根因
 
-| Issue | 现象 | 真根因 | 解法 |
-|---|---|---|---|
-| #864 | docker-compose 自愈脚本超时 | 误把 telegraf 当 ibex-agent，**通道根本没建立** | 装 categraf（不是 telegraf），看 `categraf -test` 输出 |
-| #1504 | 通知脚本 timeout=0 立即被 kill | fe 表单 DefaultTimeout=0 BUG | 后端 CleanFields 已修（0 → 30） |
-| #2596 | 自愈脚本执行超时 | 脚本本身慢（远程 yum / 大文件拷贝） | 调大 `timeout`；考虑改用 p2p 工具传文件（不要拿 ibex 当文件分发） |
+| 现象 | 真根因 | 解法 |
+|---|---|---|
+| docker-compose 自愈脚本超时 | 误把 telegraf 当 ibex-agent，**通道根本没建立** | 装 categraf（不是 telegraf），看 `categraf -test` 输出 |
+| 通知脚本 timeout=0 立即被 kill | fe 表单 DefaultTimeout=0 BUG | 后端 CleanFields 已修（0 → 30） |
+| 自愈脚本执行超时 | 脚本本身慢（远程 yum / 大文件拷贝） | 调大 `timeout`；考虑改用 p2p 工具传文件（不要拿 ibex 当文件分发） |
 
 **不要混为一谈**——用户说"超时"先问场景。
 
@@ -679,7 +679,7 @@ echo "BGREWRITEAOF triggered, NOT auto-restarting redis; please扩容 maxmemory 
 
 | 现象 | 根因 | 状态 |
 |---|---|---|
-| stdout 不刷新就一直 running | ibex < v8.3.0 的反馈不闭环 bug | #2841 修复，**升级到 v8.3.0+** |
+| stdout 不刷新就一直 running | ibex < v8.3.0 的反馈不闭环 bug | 已修复，**升级到 v8.3.0+** |
 | 脚本里有 `while true; sleep`（自己不退出） | 写法问题 | 加 timeout、加最大循环次数 |
 | 任务超时但 categraf 没收到 kill | 网络抖动 | 等 task_host 表 status 自动转 failed（依赖心跳） |
 

@@ -208,7 +208,7 @@ type HTTPRequestConfig struct {
   - `Host`, `Port`, `Username`, `Password`, `From`
   - `InsecureSkipVerify`: 自签证书时设 true
   - `Batch`: 一次最多塞几个收件人（防止超过 SMTP 服务器单次收件上限）
-- **邮件标题模板**：单独存在 `notify_tpl` 表，ident 是 `mailsubject`（参 `EmailSubject` 常量）。`#2220 标题包含所有标签会泄漏信息` 的修复路径就是改这个模板，不动 channel。
+- **邮件标题模板**：单独存在 `notify_tpl` 表，ident 是 `mailsubject`（参 `EmailSubject` 常量）。`标题包含所有标签会泄漏信息` 的修复路径就是改这个模板，不动 channel。
 - **HTML vs 纯文本**：邮件正文模板走 `text/template`（不转义），所以可以直接写 HTML 标签。其它 IM 类是 `html/template`，要 `unescaped` 兜底。
 
 ### 8) 短信/语音（腾讯云/阿里云）`tx-sms` / `tx-voice` / `ali-sms` / `ali-voice`
@@ -221,7 +221,7 @@ type HTTPRequestConfig struct {
 ### 9) PagerDuty `pagerduty`
 
 - `PagerDutyRequestConfig`: `Proxy`, `ApiKey`（账户级 API Key，不是 routing key），`Timeout`, `RetryTimes`, `RetrySleep`。
-- 走 PagerDuty Events API v2。**ApiKey 别填错成 Integration Key**（社区高频踩坑）。
+- 走 PagerDuty Events API v2。**ApiKey 别填错成 Integration Key**（常见踩坑）。
 
 ### 10) Flashduty `flashduty`
 
@@ -323,7 +323,7 @@ ORDER BY id DESC LIMIT 20;
 
 ### 测试 OK 但实际告警发不出去
 
-社区高频问题（#2851）。根因是**测试和真实告警的 sendtos 来源不一样**：
+常见问题。根因是**测试和真实告警的 sendtos 来源不一样**：
 
 - **测试按钮**：`POST /notify-rule/test` → 测试者在 UI 表单里直接填接收人，sendtos 由表单填的值产生。媒介本身的 URL/Body/Headers 没问题就能发出。
 - **真实告警**：走 `alert/dispatch/dispatch.go GetNotifyConfigParams`，从 notify_rule 的 `user_ids` / `user_group_ids` → 查 user → 按 `ContactKey` 从 `contact_info` 取字段 → 组 sendtos。**任意一处缺失都会让 sendtos 为空**，这一路就静默不发。
@@ -402,5 +402,4 @@ ORDER BY id DESC LIMIT 20;
 2. 给出**字段级指令**：动 `notify_channel.request_config.http_request_config.headers` 这种精确路径，不是泛泛"去后台改一下"。
 3. 如果有内置 ident 能用，**优先内置**（feishucard 比手写 feishu webhook 强）。
 4. 涉及签名/特殊编码/反斜杠这种已知坑，**直接报"踩过"**并给方案，不要让用户走一遍试错。
-5. 涉及已知坑时，可引用相关 issue（如 `#2821`）作支撑。
-6. 全程**不替用户改库或调 API**——只告诉他改哪个字段、怎么验证。
+5. 全程**不替用户改库或调 API**——只告诉他改哪个字段、怎么验证。

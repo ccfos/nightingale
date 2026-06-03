@@ -325,7 +325,7 @@ tags:
 [屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})
 ```
 
-> 直接 `{{$event.TargetIdent}}` 拼进 URL，遇到空格、中文或 `&` 会被 IM 端二次转义（典型表现：`&` 变 `&amp;`，链接打不开——见 issue #1530、#2396）。**所有进入 URL query 的变量都用 `urlquery` 包**。
+> 直接 `{{$event.TargetIdent}}` 拼进 URL，遇到空格、中文或 `&` 会被 IM 端二次转义（典型表现：`&` 变 `&amp;`，链接打不开）。**所有进入 URL query 的变量都用 `urlquery` 包**。
 
 ### 10) "标签 key 含中划线/点/中文 — 用 index 取"
 
@@ -355,7 +355,7 @@ tags:
 {{end}}
 ```
 
-> 已知问题 #1707：Edge 模式下事件 Id 写入是异步的，渲染时拿到 0，跳转链接会落到 `/alert-his-events/0`（404）。模板层加 `gt $event.Id 0` 守护。
+> 已知问题：Edge 模式下事件 Id 写入是异步的，渲染时拿到 0，跳转链接会落到 `/alert-his-events/0`（404）。模板层加 `gt $event.Id 0` 守护。
 
 ### 13) "多告警合并展示"
 
@@ -405,7 +405,7 @@ tags:
 - ❌ `{{if .IsRecoverd}}` — 拼写少一个 `e`。Go template 对不存在的字段**静默走 else 分支**（不报错），后果是恢复通知发的是触发态文案，且很难定位。
 - ✅ `{{if $event.IsRecovered}}`。同类拼写陷阱：`Resoverd` `Recoverd` `recovered`（小写）都不行。
 
-- ❌ `{{if lt $value 10}}` 或 `{{if gt $event.TriggerValue 80}}` — `TriggerValue` 是 string，`lt`/`gt` 跟数字比较会报 `incompatible types`，或被解释成字符串字典序得到错误结果。当前版本**没有内置 `toFloat` helper**（issue #3090 待合并）。数值阈值判断请放回告警规则的条件表达式里，模板层只做展示。
+- ❌ `{{if lt $value 10}}` 或 `{{if gt $event.TriggerValue 80}}` — `TriggerValue` 是 string，`lt`/`gt` 跟数字比较会报 `incompatible types`，或被解释成字符串字典序得到错误结果。当前版本**没有内置 `toFloat` helper**。数值阈值判断请放回告警规则的条件表达式里，模板层只做展示。
 
 - ❌ 拼 URL 时直接 `?ident={{$event.TargetIdent}}` — TargetIdent 含空格/中文/`&` 会破坏链接。
 - ✅ `?ident={{urlquery $event.TargetIdent}}`，**所有进入 URL query 的变量都过 `urlquery`**。
