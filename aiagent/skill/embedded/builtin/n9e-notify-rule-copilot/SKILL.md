@@ -44,7 +44,7 @@ type NotifyRule struct {
     UserGroupIds    []int64          // 授权团队（决定谁能看/改这条规则，不等于"接收人"）
     PipelineConfigs []PipelineConfig // 关联事件处理 pipeline（齿轮里的 Pipeline/EventDrop/Callback）
     NotifyConfigs   []NotifyConfig   // ★ 真正的"路由表"，一条规则可挂 N 条
-    ExtraConfig     interface{}      // plus 商业版字段（escalations 等），开源版不动
+    ExtraConfig     interface{}      
 }
 
 type NotifyConfig struct {

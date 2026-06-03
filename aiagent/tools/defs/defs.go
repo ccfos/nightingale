@@ -568,7 +568,7 @@ var ListNotifyRules = aiagent.AgentTool{
 
 var GetNotifyRuleDetail = aiagent.AgentTool{
 	Name:        "get_notify_rule_detail",
-	Description: "获取单条通知规则的详细信息",
+	Description: "获取单条通知规则的详细信息，含 enable（规则是否启用）和 notify_configs（每条通知配置的渠道+渠道启用状态 channel_enabled、适用级别 severities、生效时段 time_ranges、标签过滤 label_keys、属性过滤 attributes）。排查\"事件产生了却没有通知记录\"时，用这些字段对照事件的级别/标签/触发时刻，判断通知配置为什么没匹配上。",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "通知规则ID", Required: true},

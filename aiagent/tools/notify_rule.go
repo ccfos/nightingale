@@ -20,13 +20,48 @@ type notifyRuleResult struct {
 }
 
 type notifyRuleDetailResult struct {
-	Id           int64   `json:"id"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description,omitempty"`
-	Enable       bool    `json:"enable"`
-	UserGroupIds []int64 `json:"user_group_ids,omitempty"`
-	CreateBy     string  `json:"create_by,omitempty"`
-	UpdateBy     string  `json:"update_by,omitempty"`
+	Id            int64                `json:"id"`
+	Name          string               `json:"name"`
+	Description   string               `json:"description,omitempty"`
+	Enable        bool                 `json:"enable"`
+	UserGroupIds  []int64              `json:"user_group_ids,omitempty"`
+	NotifyConfigs []notifyConfigResult `json:"notify_configs"`
+	CreateBy      string               `json:"create_by,omitempty"`
+	UpdateBy      string               `json:"update_by,omitempty"`
+}
+
+// notifyConfigResult 暴露单条通知配置里"决定一个事件会不会按这条配置发出去"的匹配维度：
+// 渠道（含启用状态）、适用级别、生效时段、标签/属性过滤。排查"事件产生了却没通知记录"时，
+// 需要拿这些条件去和事件标签/级别/触发时刻逐一比对。Params 含 token/手机号等敏感信息，不暴露。
+type notifyConfigResult struct {
+	ChannelID      int64               `json:"channel_id"`
+	ChannelName    string              `json:"channel_name,omitempty"`
+	ChannelIdent   string              `json:"channel_ident,omitempty"`
+	ChannelEnabled *bool               `json:"channel_enabled,omitempty"` // 渠道本身是否启用；渠道被禁用同样不会产生通知记录
+	TemplateID     int64               `json:"template_id,omitempty"`
+	Type           string              `json:"type,omitempty"`
+	Severities     []int               `json:"severities"`            // 适用告警级别；注意：空数组=匹配不到任何事件（不是"不限"），引擎对空 severities 直接判不匹配
+	TimeRanges     []models.TimeRanges `json:"time_ranges,omitempty"` // 适用时段；空=不限时段（匹配全部）；非空且事件触发时刻不在任一时段内则不发
+	LabelKeys      []tagFilterResult   `json:"label_keys"`            // 标签过滤；空=不按标签过滤（匹配全部）
+	Attributes     []tagFilterResult   `json:"attributes,omitempty"`  // 属性过滤
+}
+
+type tagFilterResult struct {
+	Key   string      `json:"key"`
+	Op    string      `json:"op"`
+	Value interface{} `json:"value"`
+}
+
+func mapTagFilters(in []models.TagFilter) []tagFilterResult {
+	out := make([]tagFilterResult, 0, len(in))
+	for _, t := range in {
+		op := t.Op
+		if op == "" {
+			op = t.Func
+		}
+		out = append(out, tagFilterResult{Key: t.Key, Op: op, Value: t.Value})
+	}
+	return out
 }
 
 func init() {
@@ -123,14 +158,48 @@ func getNotifyRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[str
 		}
 	}
 
+	// 解析渠道：一次性把全部渠道捞出来建索引，给每条通知配置补上渠道名/类型/启用状态。
+	// 用 enabled=-1 把禁用渠道也捞进来（NotifyChannelGetsAll 只返回启用的），否则没法把
+	// channel_enabled 报成 false——而渠道被禁用恰恰是"通知发不出"的常见原因之一。
+	// 渠道查询失败不致命——退化为只返回 channel_id。
+	chMap := make(map[int64]*models.NotifyChannelConfig)
+	if channels, cerr := models.NotifyChannelGets(deps.DBCtx, 0, "", "", -1); cerr == nil {
+		for _, ch := range channels {
+			chMap[ch.ID] = ch
+		}
+	} else {
+		logger.Warningf("get_notify_rule_detail: load notify channels failed: %v", cerr)
+	}
+
+	configs := make([]notifyConfigResult, 0, len(rule.NotifyConfigs))
+	for _, nc := range rule.NotifyConfigs {
+		cr := notifyConfigResult{
+			ChannelID:  nc.ChannelID,
+			TemplateID: nc.TemplateID,
+			Type:       nc.Type,
+			Severities: nc.Severities,
+			TimeRanges: nc.TimeRanges,
+			LabelKeys:  mapTagFilters(nc.LabelKeys),
+			Attributes: mapTagFilters(nc.Attributes),
+		}
+		if ch, ok := chMap[nc.ChannelID]; ok {
+			cr.ChannelName = ch.Name
+			cr.ChannelIdent = ch.Ident
+			enabled := ch.Enable
+			cr.ChannelEnabled = &enabled
+		}
+		configs = append(configs, cr)
+	}
+
 	result := notifyRuleDetailResult{
-		Id:           rule.ID,
-		Name:         rule.Name,
-		Description:  rule.Description,
-		Enable:       rule.Enable,
-		UserGroupIds: rule.UserGroupIds,
-		CreateBy:     rule.CreateBy,
-		UpdateBy:     rule.UpdateBy,
+		Id:            rule.ID,
+		Name:          rule.Name,
+		Description:   rule.Description,
+		Enable:        rule.Enable,
+		UserGroupIds:  rule.UserGroupIds,
+		NotifyConfigs: configs,
+		CreateBy:      rule.CreateBy,
+		UpdateBy:      rule.UpdateBy,
 	}
 
 	bytes, _ := json.Marshal(result)

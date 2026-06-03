@@ -226,7 +226,7 @@ type HTTPRequestConfig struct {
 ### 10) Flashduty `flashduty`
 
 - `FlashDutyRequestConfig`: `IntegrationUrl`（一个集成一个 URL）, `Proxy`, `Timeout`, `RetryTimes`, `RetrySleep`。
-- 商业版 Flashduty 提供的集成入口，模板由 Flashduty 后端处理，n9e 这边几乎是"透传 events 数组"。
+- Flashduty 提供的集成入口，模板由 Flashduty 后端处理，n9e 这边几乎是"透传 events 数组"。
 
 ### 11) Script `script`
 

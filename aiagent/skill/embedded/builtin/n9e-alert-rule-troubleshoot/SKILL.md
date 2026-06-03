@@ -20,6 +20,8 @@ builtin_tools:
   - get_event_pipeline_executions
   - list_alert_mutes
   - get_alert_mute_detail
+  - list_notify_rules
+  - get_notify_rule_detail
   - list_alert_engine_instances
   - list_busi_groups
 ---
@@ -205,6 +207,28 @@ get_event_processing_logs(event_hash=<事件 hash>)
 - 是否在某一步被**屏蔽**
 - 是否走了**通知脚本**，脚本执行结果如何
 
+### 第 2.5 步 · 通知规则有效性 + 级别/时段/标签匹配核对（「通知结果」表全空时必查）
+
+> 用户看到的「通知结果 / notification_record」表**一条记录都没有**（成功、失败都没有），是这个流程里最高频的现象。**关键认知：空表 ≠ 发送失败。** 引擎里只有"静默跳过"路径才会让表全空；如果是**渠道被禁用、通知模板缺失**，引擎反而会写入一条**失败记录**（通知状态=失败），表就不是空的。所以**表全空时，优先怀疑下面这些"根本没走到发送"的原因**，而不是去查渠道 token 对不对。
+
+processing logs 是引擎黑盒，记没记看运气；这一步要把规则绑定的通知规则**主动拉出来独立核对**。按顺序：
+
+**① 规则有没有绑通知规则**
+`get_alert_rule_detail` 取 `notify_rule_ids`：
+- **为空** → 规则压根没绑新版通知规则（可能还停留在老式 `notify_groups`/`notify_version=0`，或谁都没配），自然没有任何通知记录。让用户在规则上绑定通知规则。
+
+**② 每条通知规则是否启用 + 渠道/级别/时段/标签是否匹配**
+对每个 `notify_rule_id` 调 `get_notify_rule_detail(id=...)`，逐条核对（引擎判定口径已和工具字段对齐）：
+
+- **`enable=false`** → 通知规则被禁用。引擎只加载 `enable=true` 的规则，禁用的直接 `continue`、**不留任何记录**。**这是表全空最常见、最容易被忽略的原因，先查这个。**
+- 遍历 `notify_configs`，把每条配置和**当前事件**逐项比对（任一项不满足，这条配置就被 `continue` 跳过、不发不记）：
+  - **`severities` 不含事件级别** → 事件是 S1（severity=1），若 `severities` 不含 1 就不匹配。**重点坑：`severities` 为空数组 = 匹配不到任何事件（不是"不限级别"）**，引擎对空 severities 直接判不匹配——常见于 API/导入创建的通知规则。
+  - **`time_ranges` 不覆盖触发时刻** → 事件 16:05 触发，若时段配的是 00:00–09:00 之类就不发；务必同时核对**星期 `week`**。（`time_ranges` 为空 = 不限时段，匹配全部）
+  - **`label_keys` / `attributes` 对不上事件标签** → 把每个过滤项（`key`/`op`/`value`）拿去和事件标签逐条匹配，匹配语义同屏蔽规则（`==`/`=~`/`in`/`!=`/`!~`/`not in`）。（`label_keys` 为空 = 不按标签过滤，匹配全部）
+  - **`channel_enabled=false`** → 渠道被禁用。注意：这种情况引擎会写一条**失败记录**（"notify_channel not found"），表里能看到失败行——如果表是**全空**，渠道禁用反而不是主因，但仍应核对。
+
+**判定**：一条通知规则下只要有**任意一条** `notify_config` 全部匹配，就应产生记录；**全部 config 都匹配不上**，这条规则才对该事件不产生记录。把绑定的所有通知规则都核对一遍，命中"未绑定 / 规则禁用 / 所有 config 级别-时段-标签都匹配不上"其一，即定位到通知没发的直接原因。
+
 ### 第 3 步 · 通知频率核对（重复通知 / 最大次数）
 
 很多"没收到通知"其实是被频控了。`get_alert_rule_detail` 取规则配置后核对：
@@ -316,6 +340,9 @@ get_event_pipeline_executions(event_id=<事件 id>)
 5. **屏蔽规则核对**（如有）：<命中的 mute_id 或"无命中">
 6. **事件处理日志**（get_event_processing_logs，流程 B 时）：
    - 关键日志：<截取最相关的 2~5 行>
+7. **通知规则核对**（get_notify_rule_detail，流程 B「通知结果」空时）：
+   - 绑定的 notify_rule_ids：<列表 / 为空>
+   - 各规则 enable 状态、命中/未命中的 notify_config（级别/时段/标签匹配结果）：<结论>
 
 ### 3. 定位结论
 - **直接原因**：<一句话说清楚卡在哪一步>
@@ -340,6 +367,11 @@ get_event_pipeline_executions(event_id=<事件 id>)
 | event 存在但 processing logs 显示 `notify skipped` | 通知规则不匹配 / 订阅未命中 |
 | event 存在但 processing logs 显示 callback 错误 | 第三方接口（IM / webhook）异常 |
 | event 存在，processing logs 没通知动作 | 没绑定 notify_rule、被 notify_repeat_step 频控、或达到 notify_max_number |
+| 「通知结果」表**全空**（成功失败都没有） | 走的是"静默跳过"：通知规则 `enable=false` / 规则没绑 notify_rule_ids / 所有 notify_config 的级别-时段-标签都没匹配上 / 被频控 / pipeline 丢弃；用 get_notify_rule_detail 逐条核对（第 2.5 步）。注意空表≠发送失败 |
+| get_notify_rule_detail 显示 `enable=false` | 通知规则被禁用，引擎只加载启用的规则，直接不发不记 |
+| notify_config 的 `severities` 为空数组 | 引擎判定为"匹配不到任何事件"（不是不限级别），该 config 永远不发；常见于 API/导入创建，给 severities 补上事件级别 |
+| 事件级别/标签/触发时刻 与 notify_config 的 severities/label_keys/time_ranges 对不上 | 该 config 被跳过；规则下所有 config 都对不上则整条规则不产生记录 |
+| 「通知结果」表里有**失败记录**（通知状态=失败） | 不是匹配问题，是发送问题：渠道被禁用(channel_enabled=false)/渠道删了/通知模板缺失/第三方接口报错，看记录里的 details |
 | pipeline executions 里有 `status=failed` | 事件处理器节点报错阻断了链路，看 error_node/error_message |
 | 所有引擎实例 `stale_seconds > 30` | n9e-server 进程挂了，重启 |
 | 多个 engine_cluster 同时心跳 | 旧版本实例没下线，可能抢规则纳管 |

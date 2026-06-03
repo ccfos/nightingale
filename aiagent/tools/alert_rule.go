@@ -482,13 +482,6 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		simpleOp = op
 		simpleThreshold = threshold
 
-		// Emit v1 rule_config (threshold baked into prom_ql). v2 format would
-		// be cleaner conceptually, but the frontend's v2 editor is gated by
-		// IS_PLUS — in OSS n9e it's always false, so a v2 rule loads into the
-		// v1 form which reads `prom_ql` and finds nothing (v2 uses `query`),
-		// producing an empty editor. v1 format is the only one that renders
-		// correctly in both editions.
-		//
 		// Wrap the PromQL in parentheses when it contains operators, so e.g.
 		// `a/b > 0.5` parses as `(a/b) > 0.5`, not `a/(b > 0.5)`.
 		bakedPromQL := fmt.Sprintf("%s %s %v", wrapIfComplex(promQL), op, threshold)
