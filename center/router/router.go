@@ -99,7 +99,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		UserTokenCache:        utc,
 		Ctx:                   ctx,
 		LogDir:                logDir,
-		HeartbeatHook:         func(req models.HostMeta) map[string]interface{} { return nil },
+		HeartbeatHook:         func(ident string) map[string]interface{} { return nil },
 		AlertRuleModifyHook:   func(ar *models.AlertRule) {},
 		streamBus:             aiagent.NewStreamBus(redis),
 		pubsubBus:             storage.NewPubsubBus(redis),

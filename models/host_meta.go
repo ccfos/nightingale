@@ -18,9 +18,6 @@ type HostMeta struct {
 	GlobalLabels map[string]string      `json:"global_labels"`
 	ExtendInfo   map[string]interface{} `json:"extend_info"`
 	Config       interface{}            `json:"config"`
-	// LocalIbexEnable 采集器上报的「本地配置文件是否启用了 ibex（命令通道）」事实。
-	// 指针：老采集器不上报为 nil（区分「未上报」与「上报 false」），服务端据此派生 ibex_status。
-	LocalIbexEnable *bool `json:"local_ibex_enable,omitempty"`
 }
 
 type HostUpdateTime struct {
