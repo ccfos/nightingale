@@ -168,6 +168,34 @@ var PreviewPromRuleYAML = aiagent.AgentTool{
 	},
 }
 
+var UpdateAlertRule = aiagent.AgentTool{
+	Name: "update_alert_rule",
+	Description: `修改一条已存在的告警规则。只传 id + 需要改的字段，未传的字段一律保持原值（增量 patch，绝不清空）。
+改前请先 get_alert_rule_detail(id) 看现状再改。
+- 改阈值（最常见）：cate=prometheus 时只传 id + threshold 即可，工具会保留原 PromQL 和操作符，只替换阈值；也可同时传 prom_ql / operator 一起改。
+- 改其他标量字段：name / note / severity / disabled / eval_interval / for_duration / append_tags / runbook_url / notify_rule_ids。
+- 复杂结构（非 prometheus 或要整体替换查询）：传 rule_config_json 全量覆盖（先读 skill 的 datasources/<cate>.md）。
+业务组、数据源从规则本身读取，不需要、也不要向用户索要。
+注意：name/note/append_tags/runbook_url 传空字符串视为"不修改"，本工具无法把这些字段清空。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的告警规则 ID（必填）。可由 get_alert_rule_detail / list_alert_rules / 从 /alert-rules/edit/<id> URL / 告警事件 event 获取", Required: true},
+		{Name: "threshold", Type: "number", Description: "新阈值（仅 cate=prometheus 简化路径）。只改阈值时只传这个即可，原 PromQL 与操作符保持不变", Required: false},
+		{Name: "operator", Type: "string", Description: "新比较操作符: > / >= / < / <= / == / !=（仅 cate=prometheus 简化路径，可选）", Required: false},
+		{Name: "prom_ql", Type: "string", Description: "新 PromQL 查询表达式（仅 cate=prometheus 简化路径，只写查询不含阈值，可选）", Required: false},
+		{Name: "name", Type: "string", Description: "新规则名称（同业务组内不能重名）", Required: false},
+		{Name: "note", Type: "string", Description: "新告警说明/通知正文", Required: false},
+		{Name: "severity", Type: "integer", Description: "新告警级别: 1=Critical, 2=Warning, 3=Info", Required: false},
+		{Name: "disabled", Type: "integer", Description: "启停: 0=启用, 1=禁用", Required: false},
+		{Name: "eval_interval", Type: "integer", Description: "新评估周期（秒）", Required: false},
+		{Name: "for_duration", Type: "integer", Description: "新持续时长（秒），告警条件需持续这么久才触发", Required: false},
+		{Name: "append_tags", Type: "string", Description: "附加标签，多个用空格分隔，如 \"service=cpu mod=host\"（全量覆盖原标签）", Required: false},
+		{Name: "runbook_url", Type: "string", Description: "应急处理手册 URL", Required: false},
+		{Name: "notify_rule_ids", Type: "string", Description: "关联通知规则 ID 列表 JSON，如 \"[1,2]\"（全量覆盖）", Required: false},
+		{Name: "rule_config_json", Type: "string", Description: "完整 rule_config JSON 字符串，用于整体替换查询/触发结构（非 prometheus 简化路径时使用）", Required: false},
+	},
+}
+
 var ImportPromRuleYAML = aiagent.AgentTool{
 	Name: "import_prom_rule_yaml",
 	Description: `把 Prometheus 告警规则 YAML 批量导入到指定业务组。
@@ -540,7 +568,7 @@ var ListNotifyRules = aiagent.AgentTool{
 
 var GetNotifyRuleDetail = aiagent.AgentTool{
 	Name:        "get_notify_rule_detail",
-	Description: "获取单条通知规则的详细信息",
+	Description: "获取单条通知规则的详细信息，含 enable（规则是否启用）和 notify_configs（每条通知配置的渠道+渠道启用状态 channel_enabled、适用级别 severities、生效时段 time_ranges、标签过滤 label_keys、属性过滤 attributes）。排查\"事件产生了却没有通知记录\"时，用这些字段对照事件的级别/标签/触发时刻，判断通知配置为什么没匹配上。",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "通知规则ID", Required: true},

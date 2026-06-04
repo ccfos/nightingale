@@ -103,10 +103,11 @@ func (r openAIRequest) MarshalJSON() ([]byte, error) {
 }
 
 type openAIMessage struct {
-	Role       string           `json:"role"`
-	Content    string           `json:"content,omitempty"`
-	ToolCalls  []openAIToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string           `json:"tool_call_id,omitempty"`
+	Role             string           `json:"role"`
+	Content          string           `json:"content,omitempty"`
+	ReasoningContent string           `json:"reasoning_content,omitempty"`
+	ToolCalls        []openAIToolCall `json:"tool_calls,omitempty"`
+	ToolCallID       string           `json:"tool_call_id,omitempty"`
 }
 
 type openAITool struct {
@@ -334,6 +335,7 @@ func (o *OpenAI) convertResponse(resp *openAIResponse) *GenerateResponse {
 	if len(resp.Choices) > 0 {
 		choice := resp.Choices[0]
 		result.Content = choice.Message.Content
+		result.ReasoningContent = choice.Message.ReasoningContent
 		result.FinishReason = choice.FinishReason
 
 		// Convert tool calls

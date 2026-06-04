@@ -1,6 +1,8 @@
 ---
 name: n9e-host-health-diagnose
-description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网络抖动 / 维护中。当用户问"为什么这台机器失联"、"host 失联告警是不是误报"、"categraf 卡住了吗"、"心跳停了为啥还能 ping 通"等触发本技能。核心立场：**agent 失联 ≠ 主机宕机**。只看 target_up==0 / BeatTime 停就下"宕机"结论，是社区高频误报根源（炸药、石头、Jayden、Allen、L.、南栀花开、静心 等多次反馈，2025-12 起一个月内 ≥12 次跨群重复）。
+description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网络抖动 / 维护中。当用户问"为什么这台机器失联"、"host 失联告警是不是误报"、"categraf 卡住了吗"、"心跳停了为啥还能 ping 通"等触发本技能。核心立场：**agent 失联 ≠ 主机宕机**。只看 target_up==0 / BeatTime 停就下"宕机"结论，是常见的误报根源。
+tags:
+  - internal
 ---
 
 # 主机健康综合判断（host-health-diagnose）
@@ -26,7 +28,7 @@ description: 帮用户判断一台机器到底是 真宕机 / agent 假死 / 网
 n9e 显示一台机器失联，可能来自：
 - agent 真挂了（进程 panic / OOM）
 - agent 还活着但发不出心跳（网络分区 / DNS / 代理坏了 / Redis 写不进去）
-- server 端 Redis 写延迟（issue #1589 / #1888 / #2829）
+- server 端 Redis 写延迟
 - 用户手动停了 agent 做维护，但没加屏蔽
 - 主机真宕了
 
@@ -45,7 +47,7 @@ n9e 显示一台机器失联，可能来自：
 
 **关键判断**：
 - `status=stale_no_heartbeat` 而 `update_at_db` 是几天前 — agent 从来没接通过，部署问题。
-- `status=stale_no_heartbeat` 而 `update_at_db` 是几分钟前 — Redis 这层挂了或被清理，issue #1888 那条路径。
+- `status=stale_no_heartbeat` 而 `update_at_db` 是几分钟前 — Redis 这层挂了或被清理。
 - `status=stale` 而 `cpu_util` / `mem_util` 上一次上报的是低位 — 可能是优雅退出（关机 / OOM 后内核回收），偏向"真宕机"。
 - `status=stale` 而 `cpu_util` 上一次上报的是高位（>90%）— 偏向"agent 假死 / 主机 hang"。
 - `offset` 绝对值 > 30s — 不一定宕机，但 agent 时钟有问题，会拖垮告警判定，要单独提示。
@@ -57,7 +59,7 @@ n9e 显示一台机器失联，可能来自：
 **关键判断**：
 - `samples_count=0` 且 `series=0` — Prom 这一层完全没数据。和 BeatTime 一起停在同一时刻 → 心跳和指标同源（categraf），同时停说明 agent 真没在发；不同时刻停说明数据流被不同环节切断。
 - `last_ts` 远早于 `now` — 指标也停了，配合 BeatTime 看停止时间是否一致。
-- `samples_count > 0` 但 BeatTime 已 stale — **典型 agent 假死或 Redis 写延迟**：指标流还在（categraf 主进程在发），但心跳写不进 Redis。这是 issue #1589 的形态。
+- `samples_count > 0` 但 BeatTime 已 stale — **典型 agent 假死或 Redis 写延迟**：指标流还在（categraf 主进程在发），但心跳写不进 Redis。
 - `cpu_usage_active.last` > 95% + `system_load1.last` 远超 cpu_num — 主机 hang 的强信号。
 - `net_bytes_recv.last + net_bytes_sent.last` 接近 0 — 网卡静默，结合 BeatTime 停止可推"真宕机"或"网络断"。
 
@@ -84,7 +86,7 @@ n9e 显示一台机器失联，可能来自：
 |---|---|---|
 | BeatTime stale + 指标也停（last_ts ≈ beat_time）+ 邻居 active 占多 + 最后 cpu/mem 是低位 | **真宕机** | 高 |
 | BeatTime stale + 指标也停 + 同业务组多台同时 stale | **集群事件**（不是单台宕机，引导排上游） | 高 |
-| BeatTime stale + 指标还在动（samples_count > 0 且 last_ts 接近 now）| **agent 假死 / Redis 心跳通道异常**（issue #1589/#1888） | 高 |
+| BeatTime stale + 指标还在动（samples_count > 0 且 last_ts 接近 now）| **agent 假死 / Redis 心跳通道异常** | 高 |
 | BeatTime lagging 30–180s + 邻居有几台同步 lagging | **网络抖动 / 短暂分区**，多半会自愈 | 中 |
 | 命中 mute / 维护窗口 | **维护中** | 高 |
 | BeatTime stale + 最后 cpu_util > 95% / load 飙高 + 邻居正常 | **主机 hang**（CPU 100%、IO 卡、kernel softlockup），算"广义宕机"但建议方向不一样 | 中 |
@@ -117,16 +119,15 @@ Final Answer 用 Markdown，用户语言。**四段**：
 
 - ❌ 只看 `BeatTime` 一个字段就说"宕机"。永远要拉指标窗口和邻居作交叉验证。
 - ❌ 把"个体故障"和"集群故障"混着报。邻居全 stale 时不要继续聚焦单台，要明确告诉用户"问错了，是集群事件"。
-- ❌ 没看 mute 就给"立刻拉人查机器"的建议。社区高频翻车点：维护中告警被当成误报投诉。
+- ❌ 没看 mute 就给"立刻拉人查机器"的建议。常见翻车点：维护中告警被当成误报投诉。
 - ❌ 用 `query_prometheus` 拉一长串原始时序点回来 token 爆掉。`query_host_metrics_window` 已经按"min/max/avg/last"做过压缩，先看聚合够用了再决定是否要细看。
 - ❌ 不告诉用户验证方法。建议动作里至少给一条"如果你想自证 agent 是不是真死了，可以这样做"的步骤（远程 ssh 进去看 `systemctl status categraf` / `ps -ef | grep categraf` / `journalctl -u categraf --since "5 min ago"`）。
 
-## 相关 issue / 反馈口径
+## 已知故障形态
 
-- #2829 edge 失联风暴：心跳通道在 server 高负载下出现批量延迟，看着像集群同时下线，其实是 Redis 写阻塞。**遇到 summary 整片 stale 时主动提这个可能性。**
-- #1589 心跳更新滞后：Redis 写心跳的 goroutine 被慢 IO 卡住，agent 在发 server 在收但 BeatTime 不更新。
-- #1888 redis nil：心跳 key 偶发被清空/驱逐，配合 maxmemory-policy 配置看。
-- 2025-12-23 静心："agent 失联不等于宕机" — 维护者明确表态。
+- edge 失联风暴：心跳通道在 server 高负载下出现批量延迟，看着像集群同时下线，其实是 Redis 写阻塞。**遇到 summary 整片 stale 时主动提这个可能性。**
+- 心跳更新滞后：Redis 写心跳的 goroutine 被慢 IO 卡住，agent 在发 server 在收但 BeatTime 不更新。
+- redis nil：心跳 key 偶发被清空/驱逐，配合 maxmemory-policy 配置看。
 
 ## 输出风格
 

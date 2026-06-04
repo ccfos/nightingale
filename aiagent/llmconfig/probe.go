@@ -77,7 +77,7 @@ func Test(p *models.AILLMConfig) error {
 	if err != nil {
 		return classifyProbeError(p, err)
 	}
-	if resp == nil || strings.TrimSpace(resp.Content) == "" {
+	if resp == nil || (strings.TrimSpace(resp.Content) == "" && strings.TrimSpace(resp.ReasoningContent) == "") {
 		return &ProbeError{Kind: ProbeErrorNoContent, Model: p.Model}
 	}
 	return nil
@@ -97,7 +97,7 @@ func buildLLMConfig(p *models.AILLMConfig) *llm.Config {
 		Proxy:         p.ExtraConfig.Proxy,
 		Temperature:   p.ExtraConfig.Temperature,
 		MaxTokens:     p.ExtraConfig.MaxTokens,
-		ExtraBody:     p.ExtraConfig.CustomParams,
+		ExtraBody:     llm.NormalizeThinkingParams(p.APIType, p.APIURL, p.Model, p.ExtraConfig.CustomParams),
 	}
 }
 

@@ -1,6 +1,6 @@
 ---
 name: n9e-host-onboard-diagnose
-description: 排查"categraf 已装/在跑但夜莺机器列表看不到、或显示 unknown / 无指标"的接入失败问题。当用户问"新装的机器为什么没出现"、"机器列表 OS 都是 unknown"、"Helm 装了 3 个采集器只看到 1 个"、"agent 注册不进来"、"装完 categraf 主机没显示"时触发。与 n9e-host-host-health-diagnose **互斥**：那个处理"曾经接入过、现在失联"，本 skill 处理"压根没接入进来"。核心立场：**机器没出现不是一个原因，而是接入链路上某一段断了**。只看 heartbeat.enable 一项就让用户改 categraf，是社区 FAQ 高频翻车点（很多用户改了还是看不到，因为问题在 omit_hostname / ident shell / TLS / token / edge redis / 多集群路由）。
+description: 排查"categraf 已装/在跑但夜莺机器列表看不到、或显示 unknown / 无指标"的接入失败问题。当用户问"新装的机器为什么没出现"、"机器列表 OS 都是 unknown"、"Helm 装了 3 个采集器只看到 1 个"、"agent 注册不进来"、"装完 categraf 主机没显示"时触发。与 n9e-host-host-health-diagnose **互斥**：那个处理"曾经接入过、现在失联"，本 skill 处理"压根没接入进来"。核心立场：**机器没出现不是一个原因，而是接入链路上某一段断了**。只看 heartbeat.enable 一项就让用户改 categraf，是常见翻车点（很多用户改了还是看不到，因为问题在 omit_hostname / ident shell / TLS / token / edge redis / 多集群路由）。
 max_iterations: 18
 builtin_tools:
   - probe_target_onboard_status
@@ -31,7 +31,7 @@ builtin_tools:
 
 ## 一句话原则
 
-**机器没出现 ≠ 一个原因。** 接入链路有 5 段，每段卡住的表现都不一样，只看一段就让用户改配置是高频翻车点。**先取证、再分段定位、最后给修复命令。**
+**机器没出现 ≠ 一个原因。** 接入链路有 5 段，每段卡住的表现都不一样，只看一段就让用户改配置是常见翻车点。**先取证、再分段定位、最后给修复命令。**
 
 ## 接入链路 5 段
 
@@ -57,7 +57,7 @@ builtin_tools:
 - `in_prom_target_up` + `target_up_last` + `prom_metrics_hit` → 段 5 证据
 - `likely_segment` + `likely_causes` → **工具层已聚合的诊断**，**不要绕过它自己重推**
 
-如果用户没给 ident，先 `list_targets` 让用户挑，或者按 OS=unknown / agent_version 空过滤出候选（这是社区 #416 的"未分配 / 半接入"视图）。
+如果用户没给 ident，先 `list_targets` 让用户挑，或者按 OS=unknown / agent_version 空过滤出候选（"未分配 / 半接入"视图）。
 
 ## 决策表（按 likely_segment 分支）
 
@@ -67,7 +67,7 @@ builtin_tools:
 | `segment_3` | target 有但 OS/agent_version 空 | 检查 categraf 的 `config.toml`：`[heartbeat] enable=true` 且 `omit_hostname=false`；版本 ≥ v0.2.35 |
 | `segment_4` | target 落库但 redis 没数据 | 检查 n9e/edge 是否配 redis；edge 模式下 `edge.toml` 的 `[Redis]`；n9e 与 n9e-edge 版本是否一致 |
 | `segment_5` | redis 有 beat 但 prom 查不到 | 检查 categraf `[[writers]]` 是否配置；多集群部署时数据源是否走对；ident 是否含 `()` `[]` `*` 等特殊字符 |
-| `ok` | 接入正常 | 如用户仍坚持"看不到"，引导他刷新页面 / 检查业务组过滤 / 检查浏览器缓存（#2823） |
+| `ok` | 接入正常 | 如用户仍坚持"看不到"，引导他刷新页面 / 检查业务组过滤 / 检查浏览器缓存 |
 
 ## 段 5 的三条变体查询（用 `query_prometheus`）
 
@@ -118,16 +118,16 @@ Final Answer 用 Markdown，用户语言。**四段**：
 
 - ❌ 不调 `probe_target_onboard_status` 直接让用户改 `heartbeat.enable`。**先取证**。许多用户 heartbeat 已经开了，问题在 omit_hostname / TLS / 版本。
 - ❌ 只看 `in_target_db=false` 就说"categraf 没装"。要看 redis 段和 segment_1_or_2 的 causes 综合判断，是网络问题还是进程问题，建议动作完全不同。
-- ❌ 段 3 卡住时只让用户改 heartbeat，不提 omit_hostname / 版本。这两条同样高频。
-- ❌ 段 5 卡住时不跑 3 条变体 PromQL 就让用户改 writers。ident 标签问题（#2052 #2163）也会卡在段 5。
+- ❌ 段 3 卡住时只让用户改 heartbeat，不提 omit_hostname / 版本。这两条同样常见。
+- ❌ 段 5 卡住时不跑 3 条变体 PromQL 就让用户改 writers。ident 标签问题也会卡在段 5。
 - ❌ 输出里不给具体命令，只说"检查 categraf 配置"。每条建议必须是用户能直接粘贴执行的。
 
-## 相关 issue / 口径
+## 各段已知故障形态
 
-- **段 1/2**：#1543（categraf 连不上 center）, #1492（连接拒绝）, #2772（TLS unknown authority）, #2574（自签证书）, #1808（BasicAuth 失效）, #524（ams token 不匹配）, #1730（Helm 多节点只见 1）, #780（Windows）, #2520（Win2008 不支持）
-- **段 3**：#1996（heartbeat enable=false）, #1667/#1435/#1609（unknown 字段 / omit_hostname=true）, #1078/#1954（categraf 版本过低）, #1434（v6 需 v0.2.35+）, #39/#359/#471/#253/#663（identity shell 取 IP 失败）, #2536/#1964（hostname 重名）
-- **段 4**：#1888（edge redis nil）, #2834（n9e 与 n9e-edge 版本不一致）, #2764（CenterApi missing）, #2177（edge 部署中心看不到机器）
-- **段 5**：#2052/#2163（ident 带括号大盘查不到）, #1396（host=* bug）, #1976/#2899（snmp 用 ident 冲突）, #1609（omit_hostname=true 导致 ident 标签丢失）, #989（多集群数据源走错）, #2885（write queue full 499）, #2789（global.labels 覆盖）
+- **段 1/2**：categraf 连不上 center、连接拒绝、TLS unknown authority、自签证书、BasicAuth 失效、ams token 不匹配、Helm 多节点只见 1、Windows、Win2008 不支持
+- **段 3**：heartbeat enable=false、unknown 字段 / omit_hostname=true、categraf 版本过低、v6 需 v0.2.35+、identity shell 取 IP 失败、hostname 重名
+- **段 4**：edge redis nil、n9e 与 n9e-edge 版本不一致、CenterApi missing、edge 部署中心看不到机器
+- **段 5**：ident 带括号大盘查不到、host=* bug、snmp 用 ident 冲突、omit_hostname=true 导致 ident 标签丢失、多集群数据源走错、write queue full 499、global.labels 覆盖
 
 ## 输出风格
 
@@ -135,4 +135,4 @@ Final Answer 用 Markdown，用户语言。**四段**：
 - 证据要给具体字段值，不要写"看起来正常"。
 - 修复命令必须可粘贴执行，避免"检查一下"这种废话。
 - 用户语言回答（中文用户中文，英文用户英文）。
-- 如果 `likely_segment=ok` 但用户坚持机器没出现，提示去查：业务组过滤（机器在但前端按业务组隐藏）、浏览器缓存（#2823）、登录用户的可见业务组权限。
+- 如果 `likely_segment=ok` 但用户坚持机器没出现，提示去查：业务组过滤（机器在但前端按业务组隐藏）、浏览器缓存、登录用户的可见业务组权限。

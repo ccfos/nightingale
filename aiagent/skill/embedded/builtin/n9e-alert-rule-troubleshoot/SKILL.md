@@ -20,6 +20,8 @@ builtin_tools:
   - get_event_pipeline_executions
   - list_alert_mutes
   - get_alert_mute_detail
+  - list_notify_rules
+  - get_notify_rule_detail
   - list_alert_engine_instances
   - list_busi_groups
 ---
@@ -57,6 +59,7 @@ builtin_tools:
    B. 产生了告警事件但没收到通知 → 走流程 B
    C. 用户认为"这条告警不该被触发"（曲线对不上 / 触发值不合理 / 反复抖动 / 没数据被判恢复 等"疑似误报"） → 走流程 C
    D. 不确定                  → 先 search_history_alerts 看下规则最近有没有产生过事件，再分流
+   ※ 规则含 ≥2 个查询（A、B…）且"某个查询/条件满足了却没按预期触发或恢复" → 必走流程 A 第 3.5 步
 ```
 
 ---
@@ -83,13 +86,13 @@ builtin_tools:
 ### 第 2 步 · 验证数据源链路
 调用 `get_datasource_detail(id=<ds_id>)`。重点：
 - 数据源状态正常吗？
-- 数据源是否关联了告警引擎集群？这是规则被纳管的前提（PDF 中的 "告警规则 → 数据源 → 告警引擎集群" 链路）。
+- 数据源是否关联了告警引擎集群？这是规则被纳管的前提（"告警规则 → 数据源 → 告警引擎集群" 链路）。
 
 ### 第 3 步 · 实际跑一遍查询，验证有没有异常点
 从规则配置里提取查询表达式，亲自跑一遍：
 
 - **Prometheus 类**：用 `query_prometheus(query=<promql>, query_type='range', time_range='1h')`。先看 range 趋势，再用 instant 看当前是否真的满足触发条件。
-- **SQL / ES / VictoriaLogs 类**：用 `query_timeseries`，照 R22+ 文档传 `sql + value_key` 或 `index + filter` 或 `query`。**重点提醒用户检查 `value_key` 字段名是否和 SQL 中的列完全一致**（PDF 中明确指出这是常见坑）。
+- **SQL / ES / VictoriaLogs 类**：用 `query_timeseries`，照 R22+ 文档传 `sql + value_key` 或 `index + filter` 或 `query`。**重点提醒用户检查 `value_key` 字段名是否和 SQL 中的列完全一致**（这是常见坑）。
 - **ES `query_string` 大小写坑（ES 日志告警不符合预期时优先排查）**：`AND` / `OR` / `NOT` 必须**大写**才会被识别为布尔操作符，写成 `and` / `or` / `not` 会被当成普通词项，再加上 `query_string` 默认 operator 是 `OR`，整条查询语义彻底变了。
   - 典型症状：告警命中量远大于预期；返回的日志里混进了**不该匹配**的 pod / service / level（比如查询写的是 `logLevel:ERROR and ext_pod:"menuglobal-*"`，结果返回里大量 INFO/WARN，或者其它 pod 的 ERROR 日志）。
   - 排查方法：把规则里的 ES 查询语句拷出来，**逐个字符检查 `and`/`or`/`not` 是否大写**；同时用同一条语句把小写改成大写各跑一次 `query_timeseries`，命中数差异巨大就是这个原因。
@@ -99,6 +102,38 @@ builtin_tools:
 - **查得到 + 满足条件** → 进入第 4 步看引擎为什么没产生事件
 - **查得到但不满足条件** → 报告"实际数据不满足阈值"，结束
 - **查不到** → 可能是数据上报延迟，让用户确认采集端是否正常；也可能是查询表达式本身有问题
+
+> **多查询规则的陷阱**：如果规则有 ≥2 个查询（A、B…），「A 单独查有值、B 单独查也有值」并**不**等于「应该触发」。多个查询要按标签合并后才参与判断，下面第 3.5 步专门排查这一类。别在这一步就下"数据满足、应该报警"的结论。
+
+### 第 3.5 步 · 多查询/多变量阈值判断核对（rule_config.queries ≥ 2 时必查）
+
+当规则配置里有两个及以上查询（各自有 ref：A、B…），且触发/恢复表达式引用了多个 ref 时，有一组**专属于多变量**的坑。只要 `rule_config.queries` 长度 ≥ 2 就走这一步。
+
+**① 先理清 ref 与表达式的对应关系**
+从 `rule_config` 取出 `queries`（每个 query 有自己的 ref）和 `triggers`，对每个 trigger 看清楚：
+- `triggers[].exp`（触发表达式）引用了哪些 `$ref`，如 `$A > 0`
+- `triggers[].recover_config.judge_type` 与 `recover_config.recover_exp`（恢复条件）引用了哪些 `$ref`，如 `judge_type=recover_on_condition` + `$B > 0`
+
+**② 恢复条件里的 ref 不会触发告警（语义澄清）**
+只有**触发表达式（exp）**会产生告警事件；**恢复条件（recover_exp）只决定已触发的告警何时恢复**，它引用的查询**自己永远不会发告警**。
+- 典型误用：用户配了 A、B 两个查询，把 `$A > 0` 放触发、`$B > 0` 放"恢复条件"，然后期望"B 满足时也能报警"。这是把查询放错了槽位，不是数据问题。要让 B 也独立报警，得把 B 加成一个**独立触发条件**（多 trigger / 表达式模式），而不是放恢复条件里。
+- 识别：用户说"第二个查询/条件数据预览有值却不触发"，且该 ref 只出现在 `recover_exp`、没出现在任何 `exp` → 直接定位为此项。
+
+**③ 恢复条件引用了触发表达式里没有的 ref → 恢复永远判不成立（关键坑，可在 eval log 实锤）**
+引擎为某组曲线做判断时，变量表只会塞进**触发表达式 exp 里出现过的** `$ref` 的值；**只在 recover_exp 里出现、exp 里没有的 ref**（如 exp=`$A>0`、recover_exp=`$B>0` 里的 B）**不会被填进变量表**。于是恢复条件 `$B > 0` 拿一个未定义的变量去算，表达式编译报错、判定恒为 false，**恢复条件永远不满足**。
+- **eval log 签名**：`get_alert_eval_logs` 里会出现类似 `exp:$B > 0 data:map[$A:...] error: ... B ...`（变量 B 未定义）的报错行。看到即实锤。
+- 修复：要么把恢复用到的变量也写进触发表达式（让它进变量表），要么恢复方式改回默认的"结果不满足触发条件即恢复"（origin），不要在恢复条件里单独引用一个触发表达式没用到的 ref。
+
+**④ 多 ref 按"标签完全一致"分组合并（配置页橙色提示"请确保所有变量标签一致"那句的真实含义）**
+引擎把各 query 的曲线按 **group by 标签集合（tagHash）** 分组，只有 A、B 的标签集合**逐字段完全一致**时才会落进同一组、一起参与跨 ref 的表达式判断（默认无显式 join 时按 tag 求并集）。所以：
+- A、B 的 **group by 维度必须完全一致**（字段、keyword 后缀都要一样）。
+- 即使维度一致，A、B 的**过滤条件不同**导致返回的标签**取值**不同（比如 A 查 `message:"Disconnecting"`、B 查 `message:"Received logon"`，两类日志的 `fctags`/`filename` 天然不一样），它们的 tagHash 对不上，**永远进不了同一组**，跨 ref 的表达式（含恢复条件）就判不出来。
+- 排查动作：分别用 `query_timeseries` 跑 A 和 B，把两边返回 series 的标签集合列出来，**人工核对是否存在标签完全相同的一对**。一对都对不上，就是这个原因。
+
+**判定与建议**
+- ref 放错槽位（B 在恢复条件却期望它报警）→ 告知语义，建议把 B 加成独立触发条件。
+- 恢复条件引用了触发表达式没有的 ref → 用 eval log 报错实锤，建议把变量并入触发表达式，或改回 origin 恢复方式。
+- A、B 标签对不齐 → 建议统一 group by 维度、确认两个过滤条件能产出标签相同的曲线，或干脆拆成两条独立规则。
 
 ### 第 4 步 · 拉告警引擎评估日志（关键步骤）
 **这是 R22+ 排障最核心的工具**：
@@ -172,6 +207,28 @@ get_event_processing_logs(event_hash=<事件 hash>)
 - 是否在某一步被**屏蔽**
 - 是否走了**通知脚本**，脚本执行结果如何
 
+### 第 2.5 步 · 通知规则有效性 + 级别/时段/标签匹配核对（「通知结果」表全空时必查）
+
+> 用户看到的「通知结果 / notification_record」表**一条记录都没有**（成功、失败都没有），是这个流程里最高频的现象。**关键认知：空表 ≠ 发送失败。** 引擎里只有"静默跳过"路径才会让表全空；如果是**渠道被禁用、通知模板缺失**，引擎反而会写入一条**失败记录**（通知状态=失败），表就不是空的。所以**表全空时，优先怀疑下面这些"根本没走到发送"的原因**，而不是去查渠道 token 对不对。
+
+processing logs 是引擎黑盒，记没记看运气；这一步要把规则绑定的通知规则**主动拉出来独立核对**。按顺序：
+
+**① 规则有没有绑通知规则**
+`get_alert_rule_detail` 取 `notify_rule_ids`：
+- **为空** → 规则压根没绑新版通知规则（可能还停留在老式 `notify_groups`/`notify_version=0`，或谁都没配），自然没有任何通知记录。让用户在规则上绑定通知规则。
+
+**② 每条通知规则是否启用 + 渠道/级别/时段/标签是否匹配**
+对每个 `notify_rule_id` 调 `get_notify_rule_detail(id=...)`，逐条核对（引擎判定口径已和工具字段对齐）：
+
+- **`enable=false`** → 通知规则被禁用。引擎只加载 `enable=true` 的规则，禁用的直接 `continue`、**不留任何记录**。**这是表全空最常见、最容易被忽略的原因，先查这个。**
+- 遍历 `notify_configs`，把每条配置和**当前事件**逐项比对（任一项不满足，这条配置就被 `continue` 跳过、不发不记）：
+  - **`severities` 不含事件级别** → 事件是 S1（severity=1），若 `severities` 不含 1 就不匹配。**重点坑：`severities` 为空数组 = 匹配不到任何事件（不是"不限级别"）**，引擎对空 severities 直接判不匹配——常见于 API/导入创建的通知规则。
+  - **`time_ranges` 不覆盖触发时刻** → 事件 16:05 触发，若时段配的是 00:00–09:00 之类就不发；务必同时核对**星期 `week`**。（`time_ranges` 为空 = 不限时段，匹配全部）
+  - **`label_keys` / `attributes` 对不上事件标签** → 把每个过滤项（`key`/`op`/`value`）拿去和事件标签逐条匹配，匹配语义同屏蔽规则（`==`/`=~`/`in`/`!=`/`!~`/`not in`）。（`label_keys` 为空 = 不按标签过滤，匹配全部）
+  - **`channel_enabled=false`** → 渠道被禁用。注意：这种情况引擎会写一条**失败记录**（"notify_channel not found"），表里能看到失败行——如果表是**全空**，渠道禁用反而不是主因，但仍应核对。
+
+**判定**：一条通知规则下只要有**任意一条** `notify_config` 全部匹配，就应产生记录；**全部 config 都匹配不上**，这条规则才对该事件不产生记录。把绑定的所有通知规则都核对一遍，命中"未绑定 / 规则禁用 / 所有 config 级别-时段-标签都匹配不上"其一，即定位到通知没发的直接原因。
+
 ### 第 3 步 · 通知频率核对（重复通知 / 最大次数）
 
 很多"没收到通知"其实是被频控了。`get_alert_rule_detail` 取规则配置后核对：
@@ -233,7 +290,7 @@ get_event_pipeline_executions(event_id=<事件 id>)
 
 - **flapping**：一天触发恢复几十次，每次只活几秒到几十秒
 - **阈值边缘震荡**：触发值始终贴在阈值 ±5% 的窄带里反复跨线
-- **数据缺失误恢复**：机器关机 / 采集断点导致"无数据"被当成"已恢复"，紧接着数据回来又重新告警（社区高频反馈：冷枫洛夜 #2999、狐狸"机器死了被认为恢复"）
+- **数据缺失误恢复**：机器关机 / 采集断点导致"无数据"被当成"已恢复"，紧接着数据回来又重新告警
 
 **排查方法**：
 
@@ -283,6 +340,9 @@ get_event_pipeline_executions(event_id=<事件 id>)
 5. **屏蔽规则核对**（如有）：<命中的 mute_id 或"无命中">
 6. **事件处理日志**（get_event_processing_logs，流程 B 时）：
    - 关键日志：<截取最相关的 2~5 行>
+7. **通知规则核对**（get_notify_rule_detail，流程 B「通知结果」空时）：
+   - 绑定的 notify_rule_ids：<列表 / 为空>
+   - 各规则 enable 状态、命中/未命中的 notify_config（级别/时段/标签匹配结果）：<结论>
 
 ### 3. 定位结论
 - **直接原因**：<一句话说清楚卡在哪一步>
@@ -307,6 +367,11 @@ get_event_pipeline_executions(event_id=<事件 id>)
 | event 存在但 processing logs 显示 `notify skipped` | 通知规则不匹配 / 订阅未命中 |
 | event 存在但 processing logs 显示 callback 错误 | 第三方接口（IM / webhook）异常 |
 | event 存在，processing logs 没通知动作 | 没绑定 notify_rule、被 notify_repeat_step 频控、或达到 notify_max_number |
+| 「通知结果」表**全空**（成功失败都没有） | 走的是"静默跳过"：通知规则 `enable=false` / 规则没绑 notify_rule_ids / 所有 notify_config 的级别-时段-标签都没匹配上 / 被频控 / pipeline 丢弃；用 get_notify_rule_detail 逐条核对（第 2.5 步）。注意空表≠发送失败 |
+| get_notify_rule_detail 显示 `enable=false` | 通知规则被禁用，引擎只加载启用的规则，直接不发不记 |
+| notify_config 的 `severities` 为空数组 | 引擎判定为"匹配不到任何事件"（不是不限级别），该 config 永远不发；常见于 API/导入创建，给 severities 补上事件级别 |
+| 事件级别/标签/触发时刻 与 notify_config 的 severities/label_keys/time_ranges 对不上 | 该 config 被跳过；规则下所有 config 都对不上则整条规则不产生记录 |
+| 「通知结果」表里有**失败记录**（通知状态=失败） | 不是匹配问题，是发送问题：渠道被禁用(channel_enabled=false)/渠道删了/通知模板缺失/第三方接口报错，看记录里的 details |
 | pipeline executions 里有 `status=failed` | 事件处理器节点报错阻断了链路，看 error_node/error_message |
 | 所有引擎实例 `stale_seconds > 30` | n9e-server 进程挂了，重启 |
 | 多个 engine_cluster 同时心跳 | 旧版本实例没下线，可能抢规则纳管 |
@@ -316,6 +381,9 @@ get_event_pipeline_executions(event_id=<事件 id>)
 | 触发值始终贴在阈值 ±5% 窄带 | 阈值边缘震荡，需上调阈值远离震荡带 |
 | 恢复前 eval logs 显示 `series=0` | 数据缺失被判恢复（Prom 风格"无数据=恢复"），用 RecoverDuration 让恢复延迟出或独立 host 失联规则承接 |
 | ES 日志告警命中量远超预期 / 返回里混进不该匹配的 pod 或 level | `query_string` 里 `and`/`or`/`not` 写成了小写，被当成词项 + 默认 OR 拼接，改成大写 `AND`/`OR`/`NOT` 或改用 `bool.must` |
+| 多查询规则，B 单独预览有值却"不触发"，且 B 只出现在恢复条件 | 恢复条件的 ref 不产生告警、只控制恢复；要让 B 报警需把它加成独立触发条件（流程 A 第 3.5 步②） |
+| eval log 出现 `exp:$B > 0 data:map[$A:...] error: ...B...` | 恢复条件引用了触发表达式没有的 ref，变量没进表，恢复恒不成立；把变量并入触发 exp 或改回 origin 恢复（第 3.5 步③） |
+| 多查询 A/B 各自有数据，但跨 ref 表达式/恢复始终判不出来 | A、B 的 group by 维度或过滤产出的标签取值不一致，tagHash 对不齐进不了同一组；统一 group by 或拆成独立规则（第 3.5 步④） |
 
 ---
 

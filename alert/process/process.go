@@ -315,43 +315,17 @@ func (p *Processor) HandleRecover(alertingKeys map[string]struct{}, now int64, i
 
 }
 
+// HandleRecoverEvent 处理需要恢复的事件。
+// 恢复不做抑制合并：每个已 fire 的事件各自独立恢复，保证 fire/recover 对称。
+// inhibit 形参保留以兼容调用方签名，恢复阶段不再使用。
 func (p *Processor) HandleRecoverEvent(hashArr []string, now int64, inhibit bool) {
 	cachedRule := p.rule
 	if cachedRule == nil {
 		return
 	}
 
-	if !inhibit {
-		for _, hash := range hashArr {
-			p.RecoverSingle(false, hash, now, nil)
-		}
-		return
-	}
-
-	eventMap := make(map[string]models.AlertCurEvent)
 	for _, hash := range hashArr {
-		event, has := p.fires.Get(hash)
-		if !has {
-			continue
-		}
-
-		e, exists := eventMap[event.Tags]
-		if !exists {
-			eventMap[event.Tags] = *event
-			continue
-		}
-
-		if e.Severity > event.Severity {
-			// hash 对应的恢复事件的被抑制了，把之前的事件删除
-			p.fires.Delete(e.Hash)
-			p.pendings.Delete(e.Hash)
-			models.AlertCurEventDelByHash(p.ctx, e.Hash)
-			eventMap[event.Tags] = *event
-		}
-	}
-
-	for _, event := range eventMap {
-		p.RecoverSingle(false, event.Hash, now, nil)
+		p.RecoverSingle(false, hash, now, nil)
 	}
 }
 

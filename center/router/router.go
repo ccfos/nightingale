@@ -62,6 +62,7 @@ type Router struct {
 	pubsubBus             storage.PubsubBus
 	llmClientCache        *llm.ClientCache
 	TargetDeleteHook      models.TargetDeleteHookFunc
+	TargetDeleteCheck     TargetDeleteCheckFunc
 	TargetBgidChangeCheck TargetBgidChangeCheckFunc
 	AlertRuleModifyHook   AlertRuleModifyHookFunc
 
@@ -73,7 +74,13 @@ type Router struct {
 	aiSkillSyncMu   sync.Mutex
 }
 
-type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) error
+// TargetDeleteCheckFunc 删除机器前的前置校验，返回不满足删除条件的机器及原因（ident -> 错误信息）。
+// 返回的 map 为空表示全部机器均可删除。
+type TargetDeleteCheckFunc func(idents []string) map[string]string
+
+// TargetBgidChangeCheckFunc 机器变更业务组（del/reset）前的前置校验，返回不满足变更条件的机器及
+// 原因（ident -> 错误信息）。返回的 map 为空表示全部机器均可变更；error 用于内部错误（如 DB 查询失败）。
+type TargetBgidChangeCheckFunc func(idents []string, action string, bgids []int64) (map[string]string, error)
 
 func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex conf.Ibex,
 	operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
@@ -105,7 +112,8 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		pubsubBus:             storage.NewPubsubBus(redis),
 		llmClientCache:        llm.NewClientCache(),
 		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
-		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) error { return nil },
+		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
+		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
 	}
 
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant

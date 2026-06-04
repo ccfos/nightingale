@@ -159,8 +159,6 @@ func NewSyncStats() *Stats {
 	// Negative values encode error states:
 	//   -1 = query error
 	//   -2 = client / config missing
-	//   -3 = convert or remote-write error (only set by the n9e-plus enterprise pipeline;
-	//        the upstream simple path has no such phase and never writes -3)
 	GaugeRecordSeriesCount := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Subsystem: subsystem,

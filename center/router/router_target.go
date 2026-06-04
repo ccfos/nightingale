@@ -546,16 +546,29 @@ func (rt *Router) targetBindBgids(c *gin.Context) {
 	case "add":
 		ginx.NewRender(c).Data(failedResults, models.TargetBindBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
 	case "del":
+		// 非强制时逐台校验是否满足移出条件，有机器不满足则原样返回且不执行，前端确认后带 force=true 重试。
 		if !f.Force {
-			if err := rt.TargetBgidChangeCheck(f.Idents, "del", f.Bgids); err != nil {
-				bombErr(http.StatusBadRequest, err)
+			blocked, err := rt.TargetBgidChangeCheck(f.Idents, "del", f.Bgids)
+			ginx.Dangerous(err)
+			if len(blocked) > 0 {
+				for ident, msg := range blocked {
+					failedResults[ident] = msg
+				}
+				ginx.NewRender(c).Data(failedResults, nil)
+				return
 			}
 		}
 		ginx.NewRender(c).Data(failedResults, models.TargetUnbindBgids(rt.Ctx, f.Idents, f.Bgids))
 	case "reset":
 		if !f.Force {
-			if err := rt.TargetBgidChangeCheck(f.Idents, "reset", f.Bgids); err != nil {
-				bombErr(http.StatusBadRequest, err)
+			blocked, err := rt.TargetBgidChangeCheck(f.Idents, "reset", f.Bgids)
+			ginx.Dangerous(err)
+			if len(blocked) > 0 {
+				for ident, msg := range blocked {
+					failedResults[ident] = msg
+				}
+				ginx.NewRender(c).Data(failedResults, nil)
+				return
 			}
 		}
 		ginx.NewRender(c).Data(failedResults, models.TargetOverrideBgids(rt.Ctx, f.Idents, f.Bgids, f.Tags))
@@ -603,6 +616,18 @@ func (rt *Router) targetDel(c *gin.Context) {
 	failedResults, f.Idents, err = models.TargetsGetIdentsByIdentsAndHostIps(rt.Ctx, f.Idents, f.HostIps)
 	if err != nil {
 		bombErr(http.StatusBadRequest, err)
+	}
+
+	// 非强制删除时，先逐台校验是否满足删除条件（如仍被采集任务引用）。
+	// 只要有机器不满足，就把它们连同原因一并返回，且不执行任何删除；前端确认后带 force=true 重试。
+	if !f.Force {
+		if blocked := rt.TargetDeleteCheck(f.Idents); len(blocked) > 0 {
+			for ident, msg := range blocked {
+				failedResults[ident] = msg
+			}
+			ginx.NewRender(c).Data(failedResults, nil)
+			return
+		}
 	}
 
 	ginx.NewRender(c).Data(failedResults, models.TargetDel(rt.Ctx, f.Idents, f.Force, rt.TargetDeleteHook))
