@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 	"unicode"
@@ -257,9 +258,16 @@ func (d *Doris) ShowResources(ctx context.Context, resourceType string) ([]strin
 		return []string{}, err
 	}
 
+	// Doris 不支持对 SHOW 语句做服务端预编译（DSN 未开 interpolateParams），
+	// 无法使用 ? 占位符，故用白名单校验后拼接，防止注入
+	validResourceTypes := []string{"ODBC_CATALOG", "S3", "JDBC", "HDFS", "HMS", "ES", "AZURE"}
+	if !slices.Contains(validResourceTypes, strings.ToUpper(resourceType)) {
+		return nil, fmt.Errorf("invalid resource type: %s", resourceType)
+	}
+
 	// 使用 SHOW RESOURCES 命令
-	rows, err := db.QueryContext(timeoutCtx,
-		"SHOW RESOURCES WHERE RESOURCETYPE = ?", resourceType)
+	query := fmt.Sprintf("SHOW RESOURCES WHERE RESOURCETYPE = '%s'", resourceType)
+	rows, err := db.QueryContext(timeoutCtx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
