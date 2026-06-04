@@ -9,7 +9,8 @@ import (
 	"github.com/toolkits/pkg/net/httplib"
 )
 
-var Version = "unknown"
+// 版本号
+var Version = "v1.0"
 var GithubVersion atomic.Value
 
 func CompareVersion(v1, v2 string) (int, error) {
