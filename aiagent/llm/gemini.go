@@ -77,6 +77,12 @@ type geminiPart struct {
 	Text             string                  `json:"text,omitempty"`
 	FunctionCall     *geminiFunctionCall     `json:"functionCall,omitempty"`
 	FunctionResponse *geminiFunctionResponse `json:"functionResponse,omitempty"`
+
+	// 思考模型字段：Thought 标记该 part 是思考摘要（路由到 reasoning 通道，
+	// 不算答案）；ThoughtSignature 附在 functionCall part 上，续轮请求必须
+	// 原样回传（Gemini 3 缺失会 4xx）——native 下放开 thinking 的前提。
+	Thought          bool   `json:"thought,omitempty"`
+	ThoughtSignature string `json:"thoughtSignature,omitempty"`
 }
 
 type geminiFunctionCall struct {
@@ -239,13 +245,18 @@ func (g *Gemini) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 			for _, part := range candidate.Content.Parts {
 				if part.Text != "" {
-					chunk.Content += part.Text
+					if part.Thought {
+						chunk.Reasoning += part.Text // 思考摘要走 reasoning 通道，不是答案
+					} else {
+						chunk.Content += part.Text
+					}
 				}
 				if part.FunctionCall != nil {
 					argsJSON, _ := json.Marshal(part.FunctionCall.Args)
 					chunk.ToolCalls = append(chunk.ToolCalls, ToolCall{
-						Name:      part.FunctionCall.Name,
-						Arguments: string(argsJSON),
+						Name:             part.FunctionCall.Name,
+						Arguments:        string(argsJSON),
+						ThoughtSignature: part.ThoughtSignature,
 					})
 				}
 			}
@@ -343,15 +354,53 @@ func (g *Gemini) convertRequest(req *GenerateRequest) *geminiRequest {
 			continue
 		}
 
+		// 工具结果轮：functionResponse part。Gemini 的
+		// role 只允许 user|model，结果归 user；按 ToolName 匹配（不用 id），
+		// response 要求对象形态。连续多条结果（并行调用）合并进同一个 user
+		// content——Gemini 同样要求 user/model 交替。
+		if msg.Role == RoleTool {
+			part := geminiPart{FunctionResponse: &geminiFunctionResponse{
+				Name:     msg.ToolName,
+				Response: parseToolJSONObject(msg.Content, "result"),
+			}}
+			if n := len(geminiReq.Contents); n > 0 && geminiReq.Contents[n-1].Role == "user" &&
+				len(geminiReq.Contents[n-1].Parts) > 0 && geminiReq.Contents[n-1].Parts[0].FunctionResponse != nil {
+				geminiReq.Contents[n-1].Parts = append(geminiReq.Contents[n-1].Parts, part)
+			} else {
+				geminiReq.Contents = append(geminiReq.Contents, geminiContent{
+					Role:  "user",
+					Parts: []geminiPart{part},
+				})
+			}
+			continue
+		}
+
 		// Map roles
 		role := msg.Role
 		if role == RoleAssistant {
 			role = "model"
 		}
 
+		// assistant 工具调用轮：text part（如有）+ functionCall parts；
+		// 纯文本轮保持原有单 text part 形态。
+		var parts []geminiPart
+		if msg.Content != "" || len(msg.ToolCalls) == 0 {
+			parts = append(parts, geminiPart{Text: msg.Content})
+		}
+		for _, tc := range msg.ToolCalls {
+			parts = append(parts, geminiPart{
+				FunctionCall: &geminiFunctionCall{
+					Name: tc.Name,
+					Args: parseToolJSONObject(tc.Arguments, "input"),
+				},
+				// 回传思考签名（Gemini 3 工具续轮硬性要求）。
+				ThoughtSignature: tc.ThoughtSignature,
+			})
+		}
+
 		geminiReq.Contents = append(geminiReq.Contents, geminiContent{
 			Role:  role,
-			Parts: []geminiPart{{Text: msg.Content}},
+			Parts: parts,
 		})
 	}
 
@@ -381,13 +430,18 @@ func (g *Gemini) convertResponse(resp *geminiResponse) *GenerateResponse {
 		var textParts []string
 		for _, part := range candidate.Content.Parts {
 			if part.Text != "" {
-				textParts = append(textParts, part.Text)
+				if part.Thought {
+					result.ReasoningContent += part.Text // 思考摘要不进答案
+				} else {
+					textParts = append(textParts, part.Text)
+				}
 			}
 			if part.FunctionCall != nil {
 				argsJSON, _ := json.Marshal(part.FunctionCall.Args)
 				result.ToolCalls = append(result.ToolCalls, ToolCall{
-					Name:      part.FunctionCall.Name,
-					Arguments: string(argsJSON),
+					Name:             part.FunctionCall.Name,
+					Arguments:        string(argsJSON),
+					ThoughtSignature: part.ThoughtSignature,
 				})
 			}
 		}

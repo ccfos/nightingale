@@ -263,6 +263,7 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 			delta := streamResp.Choices[0].Delta
 			chunk := StreamChunk{
 				Content:      delta.Content,
+				Reasoning:    delta.ReasoningContent,
 				FinishReason: streamResp.Choices[0].FinishReason,
 			}
 
@@ -306,12 +307,21 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 		openAIReq.MaxTokens = *o.config.MaxTokens
 	}
 
-	// Convert messages
+	// Convert messages. 结构化工具轮：assistant 的 ToolCalls 与 RoleTool 结果轮
+	// 直接映射到 OpenAI 原生 tool_calls/tool 角色。
 	for _, msg := range req.Messages {
-		openAIReq.Messages = append(openAIReq.Messages, openAIMessage{
-			Role:    msg.Role,
-			Content: msg.Content,
-		})
+		oaMsg := openAIMessage{
+			Role:       msg.Role,
+			Content:    msg.Content,
+			ToolCallID: msg.ToolCallID,
+		}
+		for _, tc := range msg.ToolCalls {
+			oaTC := openAIToolCall{ID: tc.ID, Type: "function"}
+			oaTC.Function.Name = tc.Name
+			oaTC.Function.Arguments = tc.Arguments
+			oaMsg.ToolCalls = append(oaMsg.ToolCalls, oaTC)
+		}
+		openAIReq.Messages = append(openAIReq.Messages, oaMsg)
 	}
 
 	// Convert tools

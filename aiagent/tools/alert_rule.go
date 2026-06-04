@@ -370,9 +370,11 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：缺业务组时以表单中断向用户取值。
+	// 告警规则表单同时带出数据源字段（页面默认是提示不是承诺，让用户确认或改选）。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -1273,9 +1275,10 @@ func importAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：同 create_alert_rule。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))

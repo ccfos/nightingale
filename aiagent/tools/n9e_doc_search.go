@@ -386,7 +386,6 @@ func refreshDocIndex() error {
 //	                                           历史遗留命名，introduction 开头会明示）
 //	/flashcat-monitor/categraf/...         → 不分版本，保留
 //	/flashcat-partner/...                  → 不分版本，保留
-//	/flashcat/...                          → flashcat 企业版，保留
 //
 // 这里只杀 nightingale 旧版本（V5-V8），categraf 等辅助文档不动 —— 它们不带版本
 // 漂移问题。如果将来 V10 来了，把 nightingale-v9 改成 nightingale-v10 即可，

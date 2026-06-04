@@ -11,11 +11,8 @@ import "time"
 
 // Agent 运行期默认值（AgentConfig 字段缺省时使用）
 const (
-	DefaultMaxIterations     = 25
-	DefaultTimeout           = 60000 // 60 秒（毫秒单位，和 llm.Config.Timeout 保持一致）
-	DefaultMaxPlanSteps      = 10
-	DefaultMaxReplanCount    = 2
-	DefaultMaxStepIterations = 10
+	DefaultMaxIterations = 25
+	DefaultTimeout       = 60000 // 60 秒（毫秒单位，和 llm.Config.Timeout 保持一致）
 )
 
 // 工具执行器相关
@@ -29,6 +26,23 @@ const (
 
 	// FileReadMaxBytes read_file 内置工具的单文件读取上限。
 	FileReadMaxBytes = 64 * 1024
+)
+
+// 上下文投影相关（见 context_manager.go）
+const (
+	// DefaultHistoryBudgetBytes 喂给模型的历史投影默认预算（字节）。粗略对应
+	// 2~4 万 token（中英混排），给 system prompt / skills / 本轮产出留足余量。
+	// 可经 AgentConfig.HistoryBudgetBytes 按 LLM 配置覆盖。
+	DefaultHistoryBudgetBytes = 96 * 1024
+
+	// HistoryObservationCapBytes 历史中单条工具观测的截断上限。大查询结果在
+	// 后续轮次只剩参考价值，保留头部（关键产物如 proposal_id 都在 JSON 头部）。
+	HistoryObservationCapBytes = 16 * 1024
+
+	// HistoryKeepRecentObservations 旧观测清理（投影第 2 步）保留原文的最近观测
+	// 条数；更早的观测在超预算时被替换为占位文本（对齐 Anthropic context editing
+	// clear_tool_uses 的 keep 语义）。
+	HistoryKeepRecentObservations = 5
 )
 
 // Stream cache 相关

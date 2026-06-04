@@ -1000,18 +1000,34 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 
 	logger.Infof("update_dashboard: user=%s, id=%d, proposed changes=%v, proposal_id=%s", user.Username, id, allChanges, proposalID)
 
-	result := map[string]interface{}{
-		"id":                    board.Id,
-		"group_id":              board.GroupId,
-		"name":                  board.Name,
-		"changes":               allChanges,
-		"proposal_id":           proposalID,
-		"confirmation_required": true,
-		"applied":               false,
-		"next_step":             "尚未写库。请把 changes 用 Markdown 表格向用户展示「改动前 → 改动后」，等用户在下一轮明确确认后，再次调用 update_dashboard 并带上同样的 id、proposal_id 和 confirmed=true 才会落库。不要在本轮自行确认。",
+	// 人在环中断：确认文案由工具确定性渲染、重放参数
+	// 一次性备好。运行时把本轮以该文案收尾并持久化 Pending；用户下一轮明确确认时
+	// 由运行时直接以 ResumeArgs 重放本工具（confirmDashboardProposal 腿）——确认
+	// 环节零 LLM 参与，模型无需记忆/复述 proposal_id。原有服务端门（晚于提案轮、
+	// 单次消费、基线哈希）全部保留生效。
+	resumeArgs, _ := json.Marshal(map[string]interface{}{
+		"id":          board.Id,
+		"proposal_id": proposalID,
+		"confirmed":   true,
+	})
+	return "", &aiagent.ToolInterrupt{
+		Kind:       aiagent.InterruptKindApproval,
+		Prompt:     renderDashboardProposalPrompt(board.Name, board.Id, allChanges),
+		ResumeArgs: string(resumeArgs),
 	}
-	bytes, _ := json.Marshal(result)
-	return string(bytes), nil
+}
+
+// renderDashboardProposalPrompt 把提案改动渲染成给用户的确认文案（markdown）。
+// 由工具确定性生成，不再依赖模型转述，保证用户看到的就是将要写入的全部改动。
+func renderDashboardProposalPrompt(name string, id int64, changes []string) string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("即将修改仪表盘 **%s**（id=%d），改动如下：\n", name, id))
+	for _, c := range changes {
+		sb.WriteString("\n- ")
+		sb.WriteString(c)
+	}
+	sb.WriteString("\n\n以上改动尚未写入。回复「确认」立即生效，回复「取消」放弃本次修改，也可以直接提出新的调整要求。")
+	return sb.String()
 }
 
 // confirmDashboardProposal applies a previously proposed change set. It enforces

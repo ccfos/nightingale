@@ -22,7 +22,7 @@ import (
 //     before a creation flow). Returns halt=true to stop; halt=false to proceed.
 //  3. SelectTools / BuildPrompt — configure the agent for this action.
 type ActionHandler struct {
-	Description   string // human-readable description used by LLM intent inference
+	Description   string // human-readable description（文档用途；路由收缩后不再喂给 LLM 分类器）
 	Validate      func(req *AIChatRequest) error
 	Preflight     func(ctx context.Context, deps *aiagent.ToolDeps, req *AIChatRequest, user *models.User) (halt bool, resps []models.AssistantMessageResponse, err error)
 	SelectTools   func(req *AIChatRequest) []string
@@ -30,12 +30,13 @@ type ActionHandler struct {
 	BuildInputs   func(req *AIChatRequest) map[string]string
 	ParseResponse func(content string) []models.AssistantMessageResponse // split AI output into typed response elements
 
-	// RequiredSkills 声明本 action 路径上需要加载的 skill 名列表。
-	// 非 nil 时 router 用它覆盖 agent 默认 SkillConfig，跳过 LLM autoselect 的 round-trip。
+	// RequiredSkills 声明本 action 路径上确定性预载的 skill 名列表（意图路由已定、
+	// skill 由代码事实唯一确定时使用；开放路径走目录 + load_skill 模型自取）。
+	// 非 nil 时 router 用它覆盖 agent 默认 SkillConfig。静态映射用 pinSkills 简写；
 	// 用函数而非 []string 是为了允许依赖 req.Context 决定具体 skill
 	// （如 query_generator 按 datasource_type 在 promql/sql skill 之间二选一）。
 	//
-	// 返回 nil 表示"本次不需要任何 skill"（注意不同于"未声明此字段"——未声明走 agent 默认配置）。
+	// 返回空表示"本次不预载任何 skill"（注意不同于"未声明此字段"——未声明走 agent 默认配置）。
 	RequiredSkills func(req *AIChatRequest) []string
 
 	// AgentMode 覆盖默认 ReAct 模式。空字符串走 ReAct。AgentModeDirect 适用于：
@@ -44,6 +45,12 @@ type ActionHandler struct {
 	//   3. 单轮纯文本生成
 	// 满足以上条件时改 Direct 可省 ReAct 的 Thought/Action 包装开销。
 	AgentMode string
+}
+
+// pinSkills 返回固定 skill 列表的 RequiredSkills——action→skill 静态 1:1（或 1:N）
+// 映射的简写。零参调用 pinSkills() 表示"显式不预载"。
+func pinSkills(names ...string) func(*AIChatRequest) []string {
+	return func(*AIChatRequest) []string { return names }
 }
 
 var registry = map[string]*ActionHandler{
@@ -70,44 +77,24 @@ var registry = map[string]*ActionHandler{
 		// 兜底 action：作为意图分类失败或其他 action validate 失败时的最终落脚点，
 		// 挂全部内置工具走 ReAct，以便兜底场景也能真正调用工具（查数据源、查告警、查资源等），
 		// 而不是只能凭模型常识空答。
-		// RequiredSkills 保持 nil（不引入额外 skill 内容膨胀 system prompt）。
+		// 显式不预载任何 skill（防 agent 绑定的 skill 膨胀兜底 prompt）；
+		// 目录 + load_skill 自取路径仍然可用。
 		SelectTools:    selectGeneralChatTools,
-		RequiredSkills: func(_ *AIChatRequest) []string { return nil },
-	},
-	"alert_query": {
-		Description: "Query and analyze alert events (查询告警事件). Examples: '最近1小时有哪些告警', '当前有多少P1告警', '查看活跃告警', '历史告警统计', '告警ID 123的详情'",
-		SelectTools: selectAlertQueryTools,
-		BuildPrompt: buildAlertQueryPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-query-alert-events"}
-		},
-	},
-	"resource_query": {
-		Description: "Query monitoring system resources and configurations (查询监控系统资源配置). Examples: '我有哪些业务组', '查看告警规则列表', '有哪些机器', '仪表盘列表', '屏蔽规则', '订阅规则', '自愈脚本', '通知规则', '数据源列表', '用户列表', '团队列表'",
-		SelectTools: selectResourceQueryTools,
-		BuildPrompt: buildResourceQueryPrompt,
-	},
-	"datasource_query": {
-		Description: "Execute actual queries against monitoring datasources and return the data (查询数据源真实数据并返回结果). Scope: 实际跑查询拿数据 — 'ES 索引 logs-* 最近1h 日志数量', '查 prometheus up{} 现在多少', '帮我查 MySQL orders 表最近1h 写入量', 'CK 错误日志条数', '看下 VictoriaLogs 最近5m 的 error 日志'. NOTE: 只是'帮我写一条 PromQL/SQL'（不执行，仅要查询文本）走 query_generator; 查告警事件走 alert_query; 查资源配置（数据源列表本身、规则列表等）走 resource_query.",
-		SelectTools: selectDatasourceQueryTools,
-		BuildPrompt: buildDatasourceQueryPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-query-datasource"}
-		},
+		RequiredSkills: pinSkills(),
 	},
 	"creation": {
-		Description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are resource_query, NOT creation.",
+		Description: "Create or add NEW monitoring resources (创建/新建资源). Trigger verbs: 创建/新建/加一条/添加/建一个/create/add/build. Scope: alert rules, dashboards, alert mutes, alert subscribes, notify rules. Examples: '创建一条 CPU 告警', '新建一个仪表盘', '给这条告警加屏蔽', '添加一个订阅规则', '创建通知规则'. NOTE: queries like '查看告警规则', '有哪些仪表盘' are read-only queries handled by the general agent, NOT creation.",
 		Preflight:   PreflightCreation,
 		SelectTools: selectCreationTools,
 		BuildPrompt: buildCreationPrompt,
-		BuildInputs: buildCreationInputs,
+		// busi_group_id/datasource_id/team_ids 经 router 默认的 ContextForwardInputs
+		// 转发抵达工具层，无需 action 级 BuildInputs。
 	},
 	"edit": {
-		Description: "Modify an EXISTING monitoring resource (修改/编辑现有资源). Trigger verbs: 修改/编辑/调整/更新/改成/设为/启用/禁用/改阈值. Scope: (1) alert rules — 改阈值/级别/启停/重命名/改查询/改持续时长; (2) dashboards (仪表盘/大盘) — 改模板变量(取值表达式/默认值/多选/显示名)、检查并修复变量、改图表(面板/panel)的曲线(PromQL/SQL/legend/单位/增删曲线)/重命名图表. Examples: '把这条告警规则的阈值改成20', '禁用这条规则', '把这个仪表盘的 ident 变量默认值改成 web01', '检查下这个大盘的变量并修复', '把 CPU 图表的查询改成只看总核', '给内存图表加一条 swap 曲线'. The target is resolved from context (rule_id / dashboard_id / a /alert-rules/edit/<id> or /dashboards/<id> URL / a referenced alert event); business group and datasource are read from the resource itself — never ask the user for them. NOTE: 新建资源走 creation; 排查'为什么触发/没触发'走 troubleshooting; 纯查看走 resource_query.",
-		Preflight:   PreflightEdit,
-		SelectTools: selectEditTools,
-		BuildPrompt: buildEditPrompt,
-		BuildInputs: buildCreationInputs,
+		Description:    "Modify an EXISTING monitoring resource (修改/编辑现有资源). Trigger verbs: 修改/编辑/调整/更新/改成/设为/启用/禁用/改阈值. Scope: (1) alert rules — 改阈值/级别/启停/重命名/改查询/改持续时长; (2) dashboards (仪表盘/大盘) — 改模板变量(取值表达式/默认值/多选/显示名)、检查并修复变量、改图表(面板/panel)的曲线(PromQL/SQL/legend/单位/增删曲线)/重命名图表. Examples: '把这条告警规则的阈值改成20', '禁用这条规则', '把这个仪表盘的 ident 变量默认值改成 web01', '检查下这个大盘的变量并修复', '把 CPU 图表的查询改成只看总核', '给内存图表加一条 swap 曲线'. The target is resolved from context (rule_id / dashboard_id / a /alert-rules/edit/<id> or /dashboards/<id> URL / a referenced alert event); business group and datasource are read from the resource itself — never ask the user for them. NOTE: 新建资源走 creation; 排查'为什么触发/没触发'走 troubleshooting; 纯查看由通用 agent 处理.",
+		SelectTools:    selectEditTools,
+		BuildPrompt:    buildEditPrompt,
+		RequiredSkills: editRequiredSkills,
 	},
 	"troubleshooting": {
 		Description: "Troubleshoot incidents, diagnose alerts, analyze root causes (故障排查/根因分析). Examples: '这条告警为什么触发', '帮我分析一下刚才的故障', '排查一下 CPU 飙高的原因', 'troubleshoot this incident'",
@@ -115,44 +102,34 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt: buildTroubleshootingPrompt,
 	},
 	"notify_template_generator": {
-		Description: "Generate or modify Go templates for alert notification messages (告警通知消息模板). Scope: 模板内容/字段/变量/渲染/卡片标题/颜色. Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'. NOTE: 改 URL/Webhook 地址/请求头/签名/秘钥/接入新平台 是 notify_channel_copilot, NOT this.",
-		BuildPrompt: buildNotifyTemplatePrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-generate-message-template"}
-		},
-		AgentMode: aiagent.AgentModeDirect,
+		Description:    "Generate or modify Go templates for alert notification messages (告警通知消息模板). Scope: 模板内容/字段/变量/渲染/卡片标题/颜色. Examples: '告警内容里加主机名', '把 trigger_value 保留两位小数', '钉钉模板 at 告警接收人', '生成一个飞书卡片模板', 'add hostname to notification template'. NOTE: 改 URL/Webhook 地址/请求头/签名/秘钥/接入新平台 是 notify_channel_copilot, NOT this.",
+		BuildPrompt:    buildNotifyTemplatePrompt,
+		RequiredSkills: pinSkills("n9e-generate-message-template"),
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"notify_channel_copilot": {
-		Description: "Configure, onboard, or troubleshoot notification channel/media (通知媒介通道配置/接入/排障). Scope: 媒介通道层 (notify_channel) ——URL/Webhook 地址、请求体、headers、签名、秘钥、AppID/AppSecret/CorpID、超时、代理、TLS、@人/接收人字段. Examples: '怎么接入 Slack/通用 webhook/自建 HTTP', '钉钉媒介加签怎么配', '飞书机器人 URL 写哪', '企微媒介 9499 是什么意思', '为什么发不出去 Bad Request', '改一下钉钉媒介的请求头', '新建一个邮件媒介'. NOTE: 改模板内容/字段渲染 是 notify_template_generator; 改发给谁/订阅 是 creation 里的 notify rule.",
-		BuildPrompt: buildNotifyChannelPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-notify-channel-copilot"}
-		},
-		AgentMode: aiagent.AgentModeDirect,
+		Description:    "Configure, onboard, or troubleshoot notification channel/media (通知媒介通道配置/接入/排障). Scope: 媒介通道层 (notify_channel) ——URL/Webhook 地址、请求体、headers、签名、秘钥、AppID/AppSecret/CorpID、超时、代理、TLS、@人/接收人字段. Examples: '怎么接入 Slack/通用 webhook/自建 HTTP', '钉钉媒介加签怎么配', '飞书机器人 URL 写哪', '企微媒介 9499 是什么意思', '为什么发不出去 Bad Request', '改一下钉钉媒介的请求头', '新建一个邮件媒介'. NOTE: 改模板内容/字段渲染 是 notify_template_generator; 改发给谁/订阅 是 creation 里的 notify rule.",
+		BuildPrompt:    buildNotifyChannelPrompt,
+		RequiredSkills: pinSkills("n9e-notify-channel-copilot"),
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"host_health_diagnose": {
-		Description: "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 走 resource_query; 分析'某条告警为什么触发'走 troubleshooting; '新装机器没出现 / 显示 unknown / 没接入' 走 host_onboard_diagnose（曾经能看到现在失联走本 action，没接入过走 onboard）.",
-		SelectTools: selectHostHealthTools,
-		BuildPrompt: buildHostHealthPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-host-health-diagnose"}
-		},
+		Description:    "Diagnose host/agent reachability — distinguish 真宕机 / agent 假死 / 网络抖动 / 维护中 (主机健康综合判断). Trigger when the user asks why a host is offline, whether categraf is alive, or pushes back on a 'host loss' alert. Examples: '为什么 xxx 这台机器失联了', '这台主机是不是宕机了', 'agent 卡住了吗', 'host 失联告警是不是误报', '这台机器心跳停了', 'target down 是真的吗'. NOTE: 创建/修改告警规则 走 creation; 单纯查看机器列表/详情 由通用 agent 处理; 分析'某条告警为什么触发'走 troubleshooting; '新装机器没出现 / 显示 unknown / 没接入' 走 host_onboard_diagnose（曾经能看到现在失联走本 action，没接入过走 onboard）.",
+		SelectTools:    selectHostHealthTools,
+		BuildPrompt:    buildHostHealthPrompt,
+		RequiredSkills: pinSkills("n9e-host-health-diagnose"),
 	},
 	"host_onboard_diagnose": {
-		Description: "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留走 resource_query; '我要装 categraf / 教我部署' 走 agent_deploy_guide（还没装 vs 装完没出现）.",
-		SelectTools: selectHostOnboardTools,
-		BuildPrompt: buildHostOnboardPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-host-onboard-diagnose"}
-		},
+		Description:    "Diagnose host onboarding failure — 主机接入失败排障（装好 categraf 但夜莺看不到 / 显示 unknown / 无指标）. Trigger when the user asks why a newly installed agent doesn't appear, why the host list shows unknown OS/CPU/version, or why Helm-deployed collectors are partially missing. Examples: '新装的机器为什么没出现', '机器列表 OS 都是 unknown', 'Helm 装了 3 个采集器只看到 1 个', 'agent 注册不进来', '装完 categraf 主机没显示', 'categraf 装好了但夜莺看不到', 'why is my new host not showing up'. NOTE: '曾经能看到现在失联' 走 host_health_diagnose, NOT this; ident 改名后想清理残留由通用 agent 处理; '我要装 categraf / 教我部署' 走 agent_deploy_guide（还没装 vs 装完没出现）.",
+		SelectTools:    selectHostOnboardTools,
+		BuildPrompt:    buildHostOnboardPrompt,
+		RequiredSkills: pinSkills("n9e-host-onboard-diagnose"),
 	},
 	"agent_deploy_guide": {
-		Description: "Teach the user how to install / deploy / configure the categraf collector (部署 / 安装 / 启动 categraf 采集器). Scope: 下载二进制 / systemd 注册 / Docker 跑 categraf / Windows 服务 / K8s DaemonSet / config.toml 怎么写（writers / heartbeat / hostname / labels）/ 验证采集 / 自升级 / 资源限制. Examples: '怎么部署 categraf', 'categraf 怎么安装', '教我装一下采集器', 'docker 跑 categraf', 'categraf --install', 'win-service-install', 'config.toml writers 怎么写', 'categraf 上报到夜莺地址', 'k8s 装 categraf', '怎么验证 categraf 采集到了'. IMPORTANT — 覆盖默认规则: 即使用户用 '如何 / 怎么 / how to' 这类知识问法，只要是问 categraf 部署/安装/配置/启动/上报，**必须**归到本 action，**不要**走 general_chat. NOTE: '装完看不到机器 / 显示 unknown' 走 host_onboard_diagnose; '曾经在线现在失联' 走 host_health_diagnose; 配置某个具体 input 插件（mysql/nginx/snmp 等）的采集细节也归本 action.",
-		BuildPrompt: buildAgentDeployGuidePrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"categraf-deploy-guide"}
-		},
-		AgentMode: aiagent.AgentModeDirect,
+		Description:    "Teach the user how to install / deploy / configure the categraf collector (部署 / 安装 / 启动 categraf 采集器). Scope: 下载二进制 / systemd 注册 / Docker 跑 categraf / Windows 服务 / K8s DaemonSet / config.toml 怎么写（writers / heartbeat / hostname / labels）/ 验证采集 / 自升级 / 资源限制. Examples: '怎么部署 categraf', 'categraf 怎么安装', '教我装一下采集器', 'docker 跑 categraf', 'categraf --install', 'win-service-install', 'config.toml writers 怎么写', 'categraf 上报到夜莺地址', 'k8s 装 categraf', '怎么验证 categraf 采集到了'. IMPORTANT — 覆盖默认规则: 即使用户用 '如何 / 怎么 / how to' 这类知识问法，只要是问 categraf 部署/安装/配置/启动/上报，**必须**归到本 action，**不要**走 general_chat. NOTE: '装完看不到机器 / 显示 unknown' 走 host_onboard_diagnose; '曾经在线现在失联' 走 host_health_diagnose; 配置某个具体 input 插件（mysql/nginx/snmp 等）的采集细节也归本 action.",
+		BuildPrompt:    buildAgentDeployGuidePrompt,
+		RequiredSkills: pinSkills("categraf-deploy-guide"),
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"datasource_diagnose": {
 		Description: "Diagnose datasource connectivity or configuration errors (数据源连通性/配置诊断). Examples: 'ES 报 x509 证书错误怎么处理', 'VictoriaMetrics 的 url 怎么写', '数据源测试连通 401 是什么原因', 'timeout 连不上 Loki', 'clickhouse 对接夜莺'",
@@ -160,35 +137,29 @@ var registry = map[string]*ActionHandler{
 		BuildPrompt: buildDatasourceDiagnosePrompt,
 	},
 	"task_tpl_copilot": {
-		Description: "Generate or modify Nightingale (n9e) self-healing scripts / 告警自愈脚本 (task_tpl/ibex). Scope: 脚本正文 / stdin 解析 / 超时 / 批次 / 容忍度 / 参数 / 危险命令规避. Examples: '写一个磁盘满清理 /var/log 的自愈脚本', '把这个脚本加上 stdin 解析', '清理 docker 镜像层缓存的脚本', 'Java OOM 自动 dump+重启', 'reload nginx 的安全脚本', '自愈脚本怎么拿告警标签', 'is_recovered 怎么用', 'timeout 应该填多少'. NOTE: 改告警规则/接收人/通知模板都不在这里——分别走 creation / notify rule / notify_template_generator.",
-		BuildPrompt: buildTaskTplCopilotPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-modify-task-tpl"}
-		},
-		AgentMode: aiagent.AgentModeDirect,
+		Description:    "Generate or modify Nightingale (n9e) self-healing scripts / 告警自愈脚本 (task_tpl/ibex). Scope: 脚本正文 / stdin 解析 / 超时 / 批次 / 容忍度 / 参数 / 危险命令规避. Examples: '写一个磁盘满清理 /var/log 的自愈脚本', '把这个脚本加上 stdin 解析', '清理 docker 镜像层缓存的脚本', 'Java OOM 自动 dump+重启', 'reload nginx 的安全脚本', '自愈脚本怎么拿告警标签', 'is_recovered 怎么用', 'timeout 应该填多少'. NOTE: 改告警规则/接收人/通知模板都不在这里——分别走 creation / notify rule / notify_template_generator.",
+		BuildPrompt:    buildTaskTplCopilotPrompt,
+		RequiredSkills: pinSkills("n9e-modify-task-tpl"),
+		AgentMode:      aiagent.AgentModeDirect,
 	},
 	"doc_qa": {
 		// 这是"找文档读"型 action，专门接 n9e 平台特有术语 / UI 操作 / 显式查文档诉求。
 		// 边界写得长是因为它跟很多 action 的"配置/如何"语义相邻，必须显式让出地盘。
 		// 工作流走 ReAct（默认），因为必须调 search_n9e_docs 工具；SKILL.md 的 frontmatter
 		// 已声明 builtin_tools，appendSkillTools 会自动注入，所以这里不设 SelectTools。
-		Description: "Look up the n9e (Nightingale) / Flashcat OFFICIAL DOCS + integrations/ config samples to answer platform-specific factual questions. TRIGGER WHEN the user asks about ANY of: (a) doc references — '从文档里查', '文档里怎么说', 'docs 里有没有'; (b) 夜莺-specific terms/UI — 业务组/BusiGroup, 订阅规则, 屏蔽规则, edge 模式, Token, 附属告警, 通知 pipeline, 自愈触发条件; (c) **categraf input plugin field meaning / metric name / default value / environment variable / config syntax** — '[[instances]] 怎么写', 'ping_average_response_ms 单位是什么', 'http_response_result_code 各值含义', 'net_response 失败时返回啥', 'mysql input 哪些字段', 'N9E_API_URL 是干啥的', 'Severity 1 代表什么'; (d) n9e behavior/internal logic — 心跳判定逻辑, target sync 间隔, ingest 队列长度, omit_hostname 影响. Examples: '业务组是什么', 'edge 模式和中心模式区别', '订阅规则怎么用', 'categraf 怎么写 mysql 配置', 'ping 监控对应的指标名是什么', 'Severity 1 是 Critical 吗'. NOTE — STRICT BOUNDARIES (do NOT take these): 创建/新建任何资源 → creation; 教用户从零部署 categraf (二进制下载/systemd注册/docker run/k8s yaml) → agent_deploy_guide; 配通知通道/Webhook/签名 → notify_channel_copilot; 改通知模板字段 → notify_template_generator; 写自愈脚本 → task_tpl_copilot; 排查告警/诊断故障 → troubleshooting; 数据源连不上 → datasource_diagnose; 真正 vendor-neutral 的监控概念 ('什么是P99','PromQL vs MetricsQL') → general_chat.",
-		BuildPrompt: buildDocQAPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-doc-qa"}
-		},
+		Description:    "Look up the n9e (Nightingale) / Flashcat OFFICIAL DOCS + integrations/ config samples to answer platform-specific factual questions. TRIGGER WHEN the user asks about ANY of: (a) doc references — '从文档里查', '文档里怎么说', 'docs 里有没有'; (b) 夜莺-specific terms/UI — 业务组/BusiGroup, 订阅规则, 屏蔽规则, edge 模式, Token, 附属告警, 通知 pipeline, 自愈触发条件; (c) **categraf input plugin field meaning / metric name / default value / environment variable / config syntax** — '[[instances]] 怎么写', 'ping_average_response_ms 单位是什么', 'http_response_result_code 各值含义', 'net_response 失败时返回啥', 'mysql input 哪些字段', 'N9E_API_URL 是干啥的', 'Severity 1 代表什么'; (d) n9e behavior/internal logic — 心跳判定逻辑, target sync 间隔, ingest 队列长度, omit_hostname 影响. Examples: '业务组是什么', 'edge 模式和中心模式区别', '订阅规则怎么用', 'categraf 怎么写 mysql 配置', 'ping 监控对应的指标名是什么', 'Severity 1 是 Critical 吗'. NOTE — STRICT BOUNDARIES (do NOT take these): 创建/新建任何资源 → creation; 教用户从零部署 categraf (二进制下载/systemd注册/docker run/k8s yaml) → agent_deploy_guide; 配通知通道/Webhook/签名 → notify_channel_copilot; 改通知模板字段 → notify_template_generator; 写自愈脚本 → task_tpl_copilot; 排查告警/诊断故障 → troubleshooting; 数据源连不上 → datasource_diagnose; 真正 vendor-neutral 的监控概念 ('什么是P99','PromQL vs MetricsQL') → general_chat.",
+		BuildPrompt:    buildDocQAPrompt,
+		RequiredSkills: pinSkills("n9e-doc-qa"),
 		// SKILL.md frontmatter 已声明 builtin_tools (search_n9e_docs / verify_answer),
 		// appendSkillTools 自动注入, 这里无需 SelectTools。
 	},
 	"auto_heal_recommend": {
-		Description: "Recommend a self-healing action for a fired alert event (告警自愈推荐 / 半自愈). Given an alert event, gather three-layer evidence (event → rule → history), find the safest matching task_tpl, show what it would do (脚本要点 + 风险 + dry-run hint), and emit a 一键执行 marker — OR draft a new task_tpl spec and hand off to task_tpl_copilot when no candidate fits. Examples: '这条告警能自愈吗', '帮我处理一下这个告警', '推荐一个自愈脚本', '能不能一键修复', '建议下怎么自愈', 'auto-heal this alert', 'fix this incident'. NOTE: 直接写脚本走 task_tpl_copilot; 排查为什么告警触发走 troubleshooting; 判断主机活没活走 host_health_diagnose. Requires context.event_id.",
-		Validate:    validateAutoHealRecommend,
-		Preflight:   preflightAutoHealRecommend,
-		SelectTools: selectAutoHealRecommendTools,
-		BuildPrompt: buildAutoHealRecommendPrompt,
-		RequiredSkills: func(_ *AIChatRequest) []string {
-			return []string{"n9e-recommend-self-heal"}
-		},
+		Description:    "Recommend a self-healing action for a fired alert event (告警自愈推荐 / 半自愈). Given an alert event, gather three-layer evidence (event → rule → history), find the safest matching task_tpl, show what it would do (脚本要点 + 风险 + dry-run hint), and emit a 一键执行 marker — OR draft a new task_tpl spec and hand off to task_tpl_copilot when no candidate fits. Examples: '这条告警能自愈吗', '帮我处理一下这个告警', '推荐一个自愈脚本', '能不能一键修复', '建议下怎么自愈', 'auto-heal this alert', 'fix this incident'. NOTE: 直接写脚本走 task_tpl_copilot; 排查为什么告警触发走 troubleshooting; 判断主机活没活走 host_health_diagnose. Requires context.event_id.",
+		Validate:       validateAutoHealRecommend,
+		Preflight:      preflightAutoHealRecommend,
+		SelectTools:    selectAutoHealRecommendTools,
+		BuildPrompt:    buildAutoHealRecommendPrompt,
+		RequiredSkills: pinSkills("n9e-recommend-self-heal"),
 	},
 }
 
@@ -497,7 +468,7 @@ ONLY answer questions in these domains:
 
 If the user asks anything outside these domains (general programming help unrelated to ops, life advice, news, personal questions, creative writing, math homework, etc.), politely decline in the user's language and remind them this assistant is specialized for n9e and observability topics. Do NOT attempt to answer such questions even partially.
 
-This is the fallback action — earlier intent classification didn't pinpoint a specialized action, so handle a broad range of (in-domain) requests yourself.
+This is the default general agent path — handle a broad range of (in-domain) requests yourself, loading a matching skill from the Available Skills catalog when one clearly applies.
 
 Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
 
@@ -508,10 +479,12 @@ Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
    When search_n9e_docs returns `+"`quality: empty`"+` or `+"`must_refuse: true`"+`, you MUST NOT invent specific identifiers — instead reply with the refusal template (see below) and offer vendor-neutral concept guidance.
 
 3. **CURRENT system state / data queries** (e.g. "我现在有哪些告警", "查一下 ES 索引日志数", "哪些机器掉线了", "datasource 列表"): use the appropriate read tool to fetch real data. Prefer the most specific tool. Don't fan-out.
+   - Alert events: default to search_active_alerts (currently firing). ONLY use search_history_alerts when the user explicitly asks about historical/past/recovered alerts (历史告警/已恢复/过去的告警). Severity levels: 1=Critical, 2=Warning, 3=Info.
+   - Resource/config listing (告警规则/机器/仪表盘/屏蔽/订阅/通知规则/用户/团队/业务组): use the matching list_* tool first for browsing, the get_*_detail tool for a specific item. If a tool returns "forbidden", tell the user they lack permission.
 
-4. **For datasource data queries**: list_datasources first if datasource not specified; then pick query_prometheus / query_timeseries / query_log by plugin_type.
+4. **For datasource data queries**: list_datasources first if datasource not specified; then pick by plugin_type — prometheus → query_prometheus (PromQL); mysql/ck/pgsql/doris/tdengine → query_timeseries (aggregations) or query_log (raw rows); elasticsearch/opensearch/victorialogs → query_timeseries (counts) or query_log (raw docs). For SQL-class datasources use list_databases / list_tables / describe_table first if schema unknown. Default time_range = 1h unless specified.
 
-5. This fallback path is READ-ONLY. If the user asks to create or import resources, instruct them to phrase it as an explicit creation request (e.g. "创建/新建...") so it routes to the dedicated creation flow with proper business-group selection.
+5. **Creation / modification requests** (创建/新建/修改/编辑 告警规则、仪表盘等): you CAN do these directly with the write tools (create_alert_rule / import_alert_rule_template / create_dashboard / import_dashboard_template / update_alert_rule / update_dashboard). Before acting, load the matching skill from the Available Skills catalog (e.g. n9e-create-dashboard) and follow its workflow. If the business group is unknown, just call the create tool — it will pause and ask the user with a structured form; do NOT pick a business group on the user's behalf. Modifications go through a propose→confirm gate automatically.
 
 Refusal template (use VERBATIM when search_n9e_docs is empty for a factual question):
 `+"```"+`
@@ -528,80 +501,6 @@ Refusal template (use VERBATIM when search_n9e_docs is empty for a factual quest
 Answer in the user's language. Use well-formatted Markdown.
 
 User request: %s`, capabilityListCache, req.UserInput)
-}
-
-// --- alert_query action ---
-
-func selectAlertQueryTools(req *AIChatRequest) []string {
-	return []string{"search_active_alerts", "search_history_alerts", "get_alert_event_detail"}
-}
-
-func buildAlertQueryPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are an alert analysis expert for a monitoring system. The user wants to query or analyze alert events.
-
-User request: %s
-
-Tool selection strategy:
-- By DEFAULT, use search_active_alerts to query currently active (unrecovered) alerts
-- ONLY use search_history_alerts when the user explicitly mentions historical/past/recovered alerts (e.g. "历史告警", "已恢复", "过去的告警")
-- Use get_alert_event_detail to get full details of a specific alert event
-- Severity levels: 1=Critical, 2=Warning, 3=Info
-
-IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Structure your response like this:
-
-## 告警概览
-- 总数、活跃数、已恢复数
-- 按级别分布
-
-## 告警详情
-Use a markdown table to list the alerts:
-| 告警规则 | 级别 | 触发对象 | 触发时间 | 状态 |
-
-## 分析与建议
-- Notable patterns
-- Recommendations`, req.UserInput)
-}
-
-// --- resource_query action ---
-
-func selectResourceQueryTools(req *AIChatRequest) []string {
-	return []string{
-		"list_alert_rules", "get_alert_rule_detail",
-		"list_targets", "get_target_detail",
-		"list_dashboards", "get_dashboard_detail",
-		"list_alert_mutes", "get_alert_mute_detail",
-		"list_alert_subscribes", "get_alert_subscribe_detail",
-		"list_task_tpls", "get_task_tpl_detail",
-		"list_notify_rules", "get_notify_rule_detail",
-		"list_datasources", "get_datasource_detail",
-		"list_users",
-		"list_teams",
-		"list_busi_groups",
-	}
-}
-
-func buildResourceQueryPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a monitoring system assistant. The user wants to query system resources or configurations.
-
-User request: %s
-
-Choose the appropriate tool based on the user's question:
-- Alert rules (告警规则): list_alert_rules / get_alert_rule_detail
-- Targets/hosts (机器/主机): list_targets / get_target_detail
-- Dashboards (仪表盘): list_dashboards / get_dashboard_detail
-- Alert mutes (屏蔽规则): list_alert_mutes / get_alert_mute_detail
-- Alert subscribes (订阅规则): list_alert_subscribes / get_alert_subscribe_detail
-- Task templates (自愈脚本): list_task_tpls / get_task_tpl_detail
-- Notify rules (通知规则): list_notify_rules / get_notify_rule_detail
-- Datasources (数据源): list_datasources / get_datasource_detail
-- Users (用户): list_users
-- Teams (团队): list_teams
-- Business groups (业务组): list_busi_groups
-
-Use the list tool first for browsing. Use the detail tool when the user asks about a specific item by ID or name.
-If a tool returns a "forbidden" error, inform the user they don't have permission.
-
-IMPORTANT: Your Final Answer MUST be in well-formatted Markdown (NOT JSON). Use the user's language. Use tables for list results.`, req.UserInput)
 }
 
 // --- creation action ---
@@ -663,11 +562,17 @@ Guidelines:
 - After a successful creation, keep the Final Answer short (one sentence). Structured result cards are rendered separately by the UI.`, req.UserInput, ctxHint.String())
 }
 
-// buildCreationInputs forwards preflight-selected context (busi_group_id,
+// ContextForwardInputs forwards structured context (busi_group_id,
 // datasource_id, team_ids) to the agent as tool params, so tools like
 // create_alert_rule / create_dashboard can read them via getDatasourceId etc.
 // without relying on the LLM to thread them through arguments.
-func buildCreationInputs(req *AIChatRequest) map[string]string {
+//
+// router 对所有 action 默认调用本函数（不依赖各 handler 声明 BuildInputs）：
+// 写工具缺参门（tools/form_gate.go）的确定性回退通道是 params["busi_group_id"]，
+// 而缺参门的设计目标恰是接住通用路径（general_chat）下的创建。若只有声明了
+// BuildInputs 的 action 才转发，general_chat 表单提交值只进提示词文本
+// （ContextDump），模型不复写 group_id 时缺参门会再次弹同一张表单（表单回环）。
+func ContextForwardInputs(req *AIChatRequest) map[string]string {
 	inputs := map[string]string{}
 	if id := ctxInt64(req.Context, "busi_group_id"); id > 0 {
 		inputs["busi_group_id"] = fmt.Sprintf("%d", id)
@@ -773,14 +678,58 @@ func looksLikeDashboardEdit(req *AIChatRequest) bool {
 			return true
 		}
 	}
-	// No fresh target signal in this turn. This is the bare-confirmation case
+	// No fresh target signal in this turn. This is the bare-continuation case
 	// (e.g. the user replies "确认" to a pending update_dashboard proposal): the
 	// dashboard_id was only ever parsed from a URL in an earlier message and is
-	// not re-supplied here, and "确认" carries no keywords. Without this fallback
-	// the turn would default to the alert-rule edit workflow and the agent would
-	// abandon the dashboard proposal to ask "which alert rule?". Continue editing
-	// whatever resource the in-flight edit targeted, inferred from history.
+	// not re-supplied here, and "确认" carries no keywords. Without a fallback the
+	// turn would default to the alert-rule edit workflow and the agent would
+	// abandon the dashboard proposal to ask "which alert rule?".
+	//
+	// First consult the persisted route state from the previous turn (the router
+	// injects prev_edit_target from models.ConversationRoute — "routing is
+	// state"): the conversation stays on whatever resource it was editing.
+	switch ctxStr(req.Context, "prev_edit_target") {
+	case EditTargetDashboard:
+		return true
+	case EditTargetAlertRule:
+		return false
+	}
+	// Bootstrap fallback for conversations without persisted route state (first
+	// turn after deploy, prior turn halted): infer from the transcript.
 	return lastEditTargetInHistory(req.History) == editTargetDashboard
+}
+
+// Edit-target values persisted in models.ConversationRoute.EditTarget and read
+// back via the prev_edit_target context key.
+const (
+	EditTargetDashboard = "dashboard"
+	EditTargetAlertRule = "alert_rule"
+)
+
+// ResolveEditTarget reports which resource an "edit" turn targets, as a
+// persistable string. Deterministic on req (current-turn signals → persisted
+// prev_edit_target → transcript bootstrap), so the router can call it once for
+// route persistence while buildEditPrompt independently reaches the same
+// decision for prompt framing.
+func ResolveEditTarget(req *AIChatRequest) string {
+	if looksLikeDashboardEdit(req) {
+		return EditTargetDashboard
+	}
+	return EditTargetAlertRule
+}
+
+// editRequiredSkills resolves the skill set for an edit turn from the SAME
+// edit-target decision that frames the prompt (ResolveEditTarget), replacing the
+// per-turn LLM skill autoselect for this action: one decision → prompt and skill
+// agree by construction (the original "确认改大盘被当成改告警规则" bug was exactly
+// these two disagreeing). The alert-rule branch has no dedicated modify skill —
+// buildAlertRuleEditPrompt carries the whole workflow — so it returns nil
+// (no skill injected, autoselect still bypassed).
+func editRequiredSkills(req *AIChatRequest) []string {
+	if ResolveEditTarget(req) == EditTargetDashboard {
+		return []string{"n9e-modify-dashboard"}
+	}
+	return nil
 }
 
 // editTarget identifies which resource an in-flight edit conversation is about.
@@ -852,13 +801,13 @@ User request: %s%s
 Hard rules (the skill spells out the rest):
 1. Locate the dashboard: use dashboard_id from the context block above if present; else parse it from a /dashboards/<id> URL; else list_dashboards by name (ask the user if ambiguous — never guess).
 2. Read the current config with get_dashboard_detail(id, include_config=true) — this returns variables, panels, and a variable_lint report.
-3. update_dashboard is a TWO-PHASE write. In this first turn, after computing the changes, call update_dashboard with ONLY the variables/panels to change but WITHOUT confirmed — this does NOT write; it returns a proposal_id and applied=false. Then present the changes as a Markdown table (改动前 → 改动后), ask the user to confirm, and STOP (end the turn). Do NOT set confirmed=true in this turn.
-4. Only after the user explicitly confirms in a later message, call update_dashboard again passing ONLY id + the proposal_id from step 3 + confirmed=true (no need to resend variables/panels) to actually write. If the user says 不对/取消/先别改, do NOT confirm; discard the proposal and (if they want changes) regenerate a fresh proposal.
+3. To apply changes, call update_dashboard ONCE with ONLY the variables/panels to change. The tool itself presents the change summary to the user and pauses for confirmation; the system applies the change after the user confirms — confirmation does NOT go through you. One call ends your job for this turn: do NOT render a diff table yourself, and NEVER pass proposal_id/confirmed (they belong to the system's confirmation channel).
+4. If the user rejects or asks for adjustments, you'll get that as a new message — recompute and call update_dashboard again with the revised changes (the old proposal is voided automatically).
 5. Business group and datasource belong to the dashboard — read them from it, never ask. Never create a new dashboard to satisfy an edit.`, req.UserInput, ctxHint.String())
 }
 
 func buildAlertRuleEditPrompt(req *AIChatRequest) string {
-	// Preflight (PreflightEdit) may have already resolved the target rule and
+	// EnrichContextFromText may have already resolved the target rule and
 	// injected rule_id. Surface it so the agent skips re-resolution.
 	var ctxHint strings.Builder
 	if id := ctxInt64(req.Context, "rule_id"); id > 0 {
@@ -1308,38 +1257,10 @@ Refuse to emit a {{action:run_task_tpl}} marker for any candidate that, after re
 Respond in the user's language.`, req.UserInput, ctxHint.String())
 }
 
-// --- datasource_query action ---
-
-func selectDatasourceQueryTools(req *AIChatRequest) []string {
-	return []string{
-		"list_datasources", "get_datasource_detail",
-		"query_prometheus", "query_timeseries", "query_log",
-		"list_metrics", "get_metric_labels",
-		"list_databases", "list_tables", "describe_table",
-	}
-}
-
-func buildDatasourceQueryPrompt(req *AIChatRequest) string {
-	return fmt.Sprintf(`You are a datasource query expert. The user wants to ACTUALLY execute a query and get the data back (NOT just generate query text for them to run later).
-
-User request: %s
-
-Workflow:
-1. If the user didn't specify a datasource, call list_datasources first and pick the matching one (by name keyword or plugin_type). If multiple match, ask the user to choose.
-2. Pick the right tool by datasource plugin_type:
-   - prometheus → query_prometheus (PromQL)
-   - mysql/ck/pgsql/doris/tdengine → query_timeseries (sql + value_key) for metric/aggregation; query_log for raw rows
-   - elasticsearch/opensearch → query_timeseries (index + filter, for counts/aggregations) or query_log (raw documents)
-   - victorialogs → query_timeseries / query_log with LogsQL query
-3. For SQL-class datasources, use list_databases / list_tables / describe_table first if the user didn't specify schema details.
-4. Default time_range = 1h unless the user specified otherwise.
-
-IMPORTANT: Your Final Answer MUST be well-formatted Markdown (NOT JSON). Use the user's language. Present numerical/aggregated results in tables or clear statements; truncate long log lists to top-N with a note.`, req.UserInput)
-}
-
-// --- general_chat action (fallback) ---
-// general_chat 是兜底 action：分类失败/validate 失败时落地于此。挂全部内置工具走 ReAct，
-// 让模型在兜底场景也能调用工具去查数据，而不是只能凭常识空答。
+// --- general_chat action (默认通用路径) ---
+// general_chat 是开放输入的默认 action（路由收缩后的主路径）：挂只读全集 +
+// 带门写工具走 ReAct，配合技能目录 + load_skill 自取（诊断/专项工具随技能注入，
+// 见工具渐进披露）。
 //
 // 工具集包含 search_n9e_docs, 用于"问数据 + 问文档"的混合场景。例如先 list_metrics
 // 列出指标名, 再 search_n9e_docs 查每个指标的真实含义, 避免凭记忆瞎解释。
@@ -1370,9 +1291,12 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		// 这里取证, 不能凭训练记忆答 — 否则会编 Severity=Critical / Authorization
 		// Bearer / ping_result_code / [[inputs.xxx]] 等不存在的标识符。
 		"search_n9e_docs",
-		// 注意：兜底路径故意不暴露写操作工具（create_alert_rule / create_dashboard /
-		// import_prom_rule_yaml / preview_prom_rule_yaml）。这些走 creation action 才能
-		// 触发 PreflightCreation 让用户先选业务组；兜底场景没有 preflight 保护，
-		// 模型直接调写工具会因缺 busi_group_id 误建到错误业务组或参数缺失 500。
+		// 写操作（创建/编辑）。历史上通用路径不暴露写工具——"没有 preflight 保护，
+		// 缺 busi_group_id 会误建"。该约束已由工具级缺参门解除（agent-routing-
+		// contraction §3）：create/import 工具缺业务组时返回 input 中断弹表单，
+		// 任何路径下都不会瞎选业务组；update 工具自带两阶段提案确认门。
+		"create_alert_rule", "import_alert_rule_template", "preview_alert_rule_template",
+		"create_dashboard", "import_dashboard_template",
+		"update_alert_rule", "update_dashboard",
 	}
 }

@@ -2,9 +2,9 @@ package aiagent
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -149,6 +149,9 @@ func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 		sb.WriteString(llm.BuildToolsSection(convertToolsToInfo(rc.tools)))
 	}
 
+	// 可用技能目录（按需 load_skill）
+	a.appendSkillCatalog(&sb, rc)
+
 	// 环境信息
 	sb.WriteString(llm.BuildEnvSection())
 
@@ -157,14 +160,64 @@ func (a *Agent) buildReActSystemPrompt(rc *runCtx) string {
 	return sb.String()
 }
 
-// buildPlanningPrompt 构建规划阶段的系统提示词
-func (a *Agent) buildPlanningPrompt(rc *runCtx) string {
+// appendSkillCatalog 在系统提示词常驻「可用技能目录」（名 + 一行描述），供模型经
+// load_skill 工具按需加载（渐进披露：目录是技能进入上下文的唯一自取入口，
+// 无 LLM 预选）。已预加载（rc.skills）的不再列出；无 registry / 目录为空时
+// 不输出。按名字典序排序，保持提示词稳定（利于 prompt cache）。
+//
+// 选择纪律：先扫描再决定、选最具体的、一开始最多读一个、无明显适用就不读——
+// 这四条显著降低模型"凭常识硬答"和"乱加载撑爆上下文"两类失败。
+func (a *Agent) appendSkillCatalog(sb *strings.Builder, rc *runCtx) {
+	if a.cfg.Skills == nil || a.skillRegistry == nil {
+		return
+	}
+	loaded := map[string]bool{}
+	for _, s := range rc.skills {
+		if s != nil && s.Metadata != nil {
+			loaded[s.Metadata.Name] = true
+		}
+	}
+	var lines []string
+	for _, m := range a.skillRegistry.ListAll() {
+		if m == nil || loaded[m.Name] {
+			continue
+		}
+		desc := m.Description
+		if i := strings.IndexByte(desc, '\n'); i >= 0 {
+			desc = desc[:i]
+		}
+		lines = append(lines, fmt.Sprintf("- %s: %s", m.Name, desc))
+	}
+	if len(lines) == 0 {
+		return
+	}
+	sort.Strings(lines)
+
+	sb.WriteString("## Available Skills (on-demand)\n\n")
+	sb.WriteString(`动手前先扫描以下技能目录：
+- 恰好一个技能明显适用：先调用 load_skill(name) 读取其工作流，再严格按步骤执行；
+- 多个技能可能适用：选描述最具体匹配的那个，再读取/执行；
+- 没有技能明显适用：不要加载任何技能，直接处理。
+约束：一开始最多只加载一个技能；其工作流指引已出现在上下文中时无需重复加载。
+
+`)
+	for _, l := range lines {
+		sb.WriteString(l)
+		sb.WriteString("\n")
+	}
+	sb.WriteString("\n")
+}
+
+// buildNativeSystemPrompt 构建原生 function-calling 模式的系统提示词：
+// 与 buildReActSystemPrompt 同样注入 Skills 与环境信息，但不含 ReAct 三行文本
+// 协议的格式约束，也不在提示词里铺工具说明——工具经原生 tools 参数下发
+// （见 buildNativeToolDefs）。
+func (a *Agent) buildNativeSystemPrompt(rc *runCtx) string {
 	var sb strings.Builder
 
-	sb.WriteString(prompts.PlanSystemPrompt)
+	sb.WriteString(prompts.NativeSystemPrompt)
 	sb.WriteString("\n\n")
 
-	// Skills 知识
 	if len(rc.skills) > 0 {
 		skillContents := make([]string, len(rc.skills))
 		for i, skill := range rc.skills {
@@ -175,124 +228,15 @@ func (a *Agent) buildPlanningPrompt(rc *runCtx) string {
 			}
 		}
 		sb.WriteString(llm.BuildSkillsSection(skillContents))
-		sb.WriteString("**Important**: Use the workflow from the loaded Skills above to guide your planning.\n")
-		sb.WriteString("The steps in your plan should follow the phases and methods defined in the Skills.\n\n")
+		sb.WriteString("**Important**: Follow the workflow and guidelines defined in the loaded Skills when applicable.\n\n")
 	}
 
-	// 工具列表（简洁版）
-	if len(rc.tools) > 0 {
-		sb.WriteString(llm.BuildToolsListBrief(convertToolsToInfo(rc.tools)))
-	}
+	// 可用技能目录（按需 load_skill）
+	a.appendSkillCatalog(&sb, rc)
 
-	return sb.String()
-}
+	sb.WriteString(llm.BuildEnvSection())
 
-// buildStepExecutionPrompt 构建步骤执行的系统提示词
-func (a *Agent) buildStepExecutionPrompt(step *PlanStep, previousFindings []string, rc *runCtx) string {
-	var sb strings.Builder
-
-	sb.WriteString(prompts.StepExecutionPrompt)
-	sb.WriteString("\n\n")
-
-	// Skills 知识
-	if len(rc.skills) > 0 {
-		skillContents := make([]string, len(rc.skills))
-		for i, skill := range rc.skills {
-			skillContents[i] = skill.MainContent
-		}
-		sb.WriteString(llm.BuildSkillsSection(skillContents))
-	}
-
-	// 当前步骤目标
-	sb.WriteString(llm.BuildCurrentStepSection(step.Goal, step.Approach))
-
-	// 之前的发现
-	sb.WriteString(llm.BuildPreviousFindingsSection(previousFindings))
-
-	// 工具列表
-	if len(rc.tools) > 0 {
-		sb.WriteString(llm.BuildToolsListBrief(convertToolsToInfo(rc.tools)))
-	}
-
-	sb.WriteString("\nUse 'Step Complete' as the Action when you have gathered enough information for this step.\n")
-
-	return sb.String()
-}
-
-// buildSynthesisPrompt 构建综合分析提示词
-func (a *Agent) buildSynthesisPrompt(rc *runCtx) string {
-	var sb strings.Builder
-
-	sb.WriteString(prompts.SynthesisPrompt)
-	sb.WriteString("\n\n")
-
-	if len(rc.skills) > 0 {
-		skillContents := make([]string, len(rc.skills))
-		for i, skill := range rc.skills {
-			skillContents[i] = skill.MainContent
-		}
-		sb.WriteString(llm.BuildSkillsSection(skillContents))
-	}
-
-	// plan 模式的最终答案由 synthesis 产出，收尾建议也要带上
 	a.appendGuidedFollowup(&sb)
-
-	return sb.String()
-}
-
-// buildStepUserMessage 构建步骤的用户消息（通用，不依赖 Event）
-func (a *Agent) buildStepUserMessage(req *AgentRequest, step *PlanStep) string {
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("## Step %d\n\n", step.StepNumber))
-	sb.WriteString(fmt.Sprintf("**Goal**: %s\n", step.Goal))
-	sb.WriteString(fmt.Sprintf("**Suggested Approach**: %s\n\n", step.Approach))
-
-	// 从 Params 提供上下文
-	sb.WriteString("## Task Context\n")
-	if len(req.Params) > 0 {
-		for k, v := range req.Params {
-			if isSensitiveKey(k) {
-				continue
-			}
-			sb.WriteString(fmt.Sprintf("- **%s**: %s\n", k, v))
-		}
-	}
-
-	sb.WriteString("\nPlease investigate according to this step's goal.")
-
-	return sb.String()
-}
-
-// buildSynthesisUserMessage 构建综合分析的用户消息
-func (a *Agent) buildSynthesisUserMessage(req *AgentRequest, plan *ExecutionPlan, allFindings []string) string {
-	var sb strings.Builder
-
-	// 从 Params 提取任务标题
-	if taskName := req.Params["alert_name"]; taskName != "" {
-		sb.WriteString(fmt.Sprintf("## Task: %s\n\n", taskName))
-	} else if req.UserMessage != "" {
-		title := req.UserMessage
-		if len(title) > 100 {
-			title = title[:100] + "..."
-		}
-		sb.WriteString(fmt.Sprintf("## Task: %s\n\n", title))
-	}
-
-	sb.WriteString("## Investigation Findings\n\n")
-	for _, finding := range allFindings {
-		sb.WriteString(fmt.Sprintf("- %s\n", finding))
-	}
-
-	sb.WriteString("\n## Step Summaries\n\n")
-	for _, step := range plan.Steps {
-		if step.Status == "completed" && step.Summary != "" {
-			sb.WriteString(fmt.Sprintf("### Step %d: %s\n", step.StepNumber, step.Goal))
-			sb.WriteString(fmt.Sprintf("%s\n\n", step.Summary))
-		}
-	}
-
-	sb.WriteString("\nPlease synthesize these findings into a comprehensive analysis.")
 
 	return sb.String()
 }
@@ -605,66 +549,4 @@ func setStepField(step *ReActStep, field, value string) {
 	case "action_input":
 		step.ActionInput = value
 	}
-}
-
-// parsePlanResponse 解析 LLM 返回的计划
-func (a *Agent) parsePlanResponse(response string) *ExecutionPlan {
-	plan := &ExecutionPlan{}
-
-	jsonStart := strings.Index(response, "{")
-	jsonEnd := strings.LastIndex(response, "}")
-
-	if jsonStart >= 0 && jsonEnd > jsonStart {
-		jsonStr := response[jsonStart : jsonEnd+1]
-
-		var parsed struct {
-			TaskSummary string   `json:"task_summary"`
-			Goal        string   `json:"goal"`
-			FocusAreas  []string `json:"focus_areas"`
-			Steps       []struct {
-				StepNumber int    `json:"step_number"`
-				Goal       string `json:"goal"`
-				Approach   string `json:"approach"`
-			} `json:"steps"`
-		}
-
-		if err := json.Unmarshal([]byte(jsonStr), &parsed); err == nil {
-			plan.TaskSummary = parsed.TaskSummary
-			plan.Goal = parsed.Goal
-			plan.FocusAreas = parsed.FocusAreas
-
-			for _, s := range parsed.Steps {
-				plan.Steps = append(plan.Steps, PlanStep{
-					StepNumber: s.StepNumber,
-					Goal:       s.Goal,
-					Approach:   s.Approach,
-					Status:     "pending",
-				})
-			}
-		}
-	}
-
-	// 兜底：默认计划
-	if len(plan.Steps) == 0 {
-		plan.Goal = "Investigate the task"
-		plan.Steps = []PlanStep{
-			{StepNumber: 1, Goal: "Gather initial information", Approach: "Query relevant data sources", Status: "pending"},
-			{StepNumber: 2, Goal: "Identify patterns", Approach: "Look for anomalies or relevant patterns", Status: "pending"},
-			{StepNumber: 3, Goal: "Synthesize findings", Approach: "Correlate findings and draw conclusions", Status: "pending"},
-		}
-	}
-
-	return plan
-}
-
-// extractStepFindings 从步骤结果中提取关键发现
-func (a *Agent) extractStepFindings(stepResult *AgentResponse) string {
-	if stepResult.Content != "" {
-		findings := stepResult.Content
-		if len(findings) > 500 {
-			findings = findings[:500] + "..."
-		}
-		return findings
-	}
-	return ""
 }

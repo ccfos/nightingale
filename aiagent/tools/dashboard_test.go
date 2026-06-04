@@ -30,6 +30,28 @@ func newDashboardTestDeps(t *testing.T) *aiagent.ToolDeps {
 	return &aiagent.ToolDeps{DBCtx: c}
 }
 
+// proposeInterrupt drives update_dashboard's propose leg and returns the
+// ToolInterrupt the runtime would persist（确认文案 + 备好的重放参数），plus the
+// parsed proposal_id for tests that drive/tamper the confirm leg directly.
+// (propose 腿不再返回 JSON observation，而是以人在环中断收尾)
+func proposeInterrupt(t *testing.T, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (*aiagent.ToolInterrupt, string) {
+	t.Helper()
+	out, err := updateDashboard(context.Background(), deps, args, params)
+	require.Empty(t, out, "propose leg must interrupt, not return an observation")
+	var ti *aiagent.ToolInterrupt
+	require.ErrorAs(t, err, &ti, "propose leg must return a ToolInterrupt")
+	require.Equal(t, aiagent.InterruptKindApproval, ti.Kind)
+	require.NotEmpty(t, ti.Prompt, "interrupt must carry the user-facing confirmation prompt")
+	var ra struct {
+		ProposalID string `json:"proposal_id"`
+		Confirmed  bool   `json:"confirmed"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(ti.ResumeArgs), &ra))
+	require.NotEmpty(t, ra.ProposalID, "resume args must carry the proposal_id")
+	require.True(t, ra.Confirmed, "resume args must be the complete confirm-leg call")
+	return ti, ra.ProposalID
+}
+
 // TestGetDashboardDetail_IncludeConfigLoadsPayload is the regression for the bug
 // where include_config=true read board.Configs — which BoardGetByID never
 // hydrates (it's a gorm:"-" field stored in the separate board_payload table) —
@@ -89,23 +111,13 @@ func TestUpdateDashboard_PersistsPatchedPayload(t *testing.T) {
 
 	// Phase 1 (propose): compute the change set without writing. seq_id=1 marks
 	// the turn the proposal was made in; the later confirm must use a larger one.
-	out, err := updateDashboard(context.Background(), deps,
+	ti, proposalID := proposeInterrupt(t, deps,
 		map[string]interface{}{
 			"id":        float64(11),
 			"variables": `[{"name":"ident","label":"实例"}]`,
 		},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
-	require.NoError(t, err)
-
-	var proposeResp struct {
-		Changes    []string `json:"changes"`
-		ProposalID string   `json:"proposal_id"`
-		Applied    bool     `json:"applied"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &proposeResp))
-	require.False(t, proposeResp.Applied, "the propose call must not write")
-	require.NotEmpty(t, proposeResp.ProposalID, "the propose call must return a proposal_id")
-	require.NotEmpty(t, proposeResp.Changes, "a label change should produce a change entry")
+	require.Contains(t, ti.Prompt, "rw", "the prompt must name the dashboard being changed")
 
 	// The propose phase must NOT have touched the stored payload yet.
 	pre, err := models.BoardPayloadGet(deps.DBCtx, 11)
@@ -116,11 +128,12 @@ func TestUpdateDashboard_PersistsPatchedPayload(t *testing.T) {
 	require.Equal(t, "主机", preV0["label"], "propose must not persist the patch")
 
 	// Phase 2 (confirm): a later turn (seq_id=2) carrying the proposal_id +
-	// confirmed=true is what actually writes.
-	out, err = updateDashboard(context.Background(), deps,
+	// confirmed=true is what actually writes. (运行时 resume 正是以 ti.ResumeArgs
+	// 重放——这里直接驱动同一条腿。)
+	out, err := updateDashboard(context.Background(), deps,
 		map[string]interface{}{
 			"id":          float64(11),
-			"proposal_id": proposeResp.ProposalID,
+			"proposal_id": proposalID,
 			"confirmed":   true,
 		},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "2"})
@@ -157,25 +170,19 @@ func TestUpdateDashboard_RejectedConfirmDoesNotBurnProposal(t *testing.T) {
 	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 21, payload))
 
 	// Propose in turn seq=5.
-	out, err := updateDashboard(context.Background(), deps,
+	_, proposalID := proposeInterrupt(t, deps,
 		map[string]interface{}{"id": float64(21), "variables": `[{"name":"ident","label":"实例"}]`},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "5"})
-	require.NoError(t, err)
-	var pr struct {
-		ProposalID string `json:"proposal_id"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &pr))
-	require.NotEmpty(t, pr.ProposalID)
 
 	// Misbehaving same-turn confirm (seq=5) → rejected by the cross-turn gate.
-	_, err = updateDashboard(context.Background(), deps,
-		map[string]interface{}{"id": float64(21), "proposal_id": pr.ProposalID, "confirmed": true},
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(21), "proposal_id": proposalID, "confirmed": true},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "5"})
 	require.Error(t, err, "same-turn confirm must be rejected")
 
 	// The genuine confirm next turn (seq=6) must still find the proposal and apply it.
-	out, err = updateDashboard(context.Background(), deps,
-		map[string]interface{}{"id": float64(21), "proposal_id": pr.ProposalID, "confirmed": true},
+	out, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(21), "proposal_id": proposalID, "confirmed": true},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "6"})
 	require.NoError(t, err, "proposal must survive the rejected same-turn confirm")
 	var cr struct {
@@ -193,7 +200,7 @@ func TestUpdateDashboard_RejectedConfirmDoesNotBurnProposal(t *testing.T) {
 
 	// And the proposal is now consumed — a replay must fail.
 	_, err = updateDashboard(context.Background(), deps,
-		map[string]interface{}{"id": float64(21), "proposal_id": pr.ProposalID, "confirmed": true},
+		map[string]interface{}{"id": float64(21), "proposal_id": proposalID, "confirmed": true},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "7"})
 	require.Error(t, err, "a confirmed proposal must be single-use (no replay)")
 }
@@ -208,21 +215,14 @@ func TestUpdateDashboard_TolerantPanelScalars(t *testing.T) {
 	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 33,
 		`{"panels":[{"id":"p1","type":"timeseries","name":"CPU","datasourceCate":"prometheus","targets":[{"refId":"A","expr":"old"}]}]}`))
 
-	out, err := updateDashboard(context.Background(), deps,
+	// 容错解析成功的标志：走到了提案中断（而非 "invalid panels JSON" 错误）。
+	ti, _ := proposeInterrupt(t, deps,
 		map[string]interface{}{
 			"id":     float64(33),
 			"panels": `[{"id":"p1","delete":"false","queries":[{"ref":"A","promql":"new","step":15.0,"instant":"false","hide":"true"}]}]`,
 		},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
-	require.NoError(t, err, "float/string scalars in panels JSON must not abort the parse")
-
-	var pr struct {
-		Changes []string `json:"changes"`
-		Applied bool     `json:"applied"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &pr))
-	require.False(t, pr.Applied)
-	require.NotEmpty(t, pr.Changes)
+	require.Contains(t, ti.Prompt, "p1", "the change summary should mention the patched panel")
 }
 
 // TestUpdateDashboard_ConfirmFailsClosedWithoutChatContext locks the fail-closed
@@ -234,18 +234,13 @@ func TestUpdateDashboard_ConfirmFailsClosedWithoutChatContext(t *testing.T) {
 	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 31, `{"var":[{"name":"ident","type":"query","label":"主机"}]}`))
 
 	// Propose with NO chat context.
-	out, err := updateDashboard(context.Background(), deps,
+	_, proposalID := proposeInterrupt(t, deps,
 		map[string]interface{}{"id": float64(31), "variables": `[{"name":"ident","label":"实例"}]`},
 		map[string]string{"user_id": "1"})
-	require.NoError(t, err)
-	var pr struct {
-		ProposalID string `json:"proposal_id"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &pr))
 
 	// Confirm without chat/turn identity → must fail closed.
-	_, err = updateDashboard(context.Background(), deps,
-		map[string]interface{}{"id": float64(31), "proposal_id": pr.ProposalID, "confirmed": true},
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(31), "proposal_id": proposalID, "confirmed": true},
 		map[string]string{"user_id": "1"})
 	require.Error(t, err, "a confirm without chat/turn identity must be refused")
 
@@ -263,17 +258,12 @@ func TestUpdateDashboard_ConfirmRejectsUnparseableSeq(t *testing.T) {
 	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 32, GroupId: 1, Name: "rw"}).Error)
 	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 32, `{"var":[{"name":"ident","type":"query","label":"主机"}]}`))
 
-	out, err := updateDashboard(context.Background(), deps,
+	_, proposalID := proposeInterrupt(t, deps,
 		map[string]interface{}{"id": float64(32), "variables": `[{"name":"ident","label":"实例"}]`},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
-	require.NoError(t, err)
-	var pr struct {
-		ProposalID string `json:"proposal_id"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &pr))
 
-	_, err = updateDashboard(context.Background(), deps,
-		map[string]interface{}{"id": float64(32), "proposal_id": pr.ProposalID, "confirmed": true},
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(32), "proposal_id": proposalID, "confirmed": true},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "not-a-number"})
 	require.Error(t, err, "an unparseable seq_id must fail the turn gate closed")
 }
@@ -336,18 +326,10 @@ func TestUpdateDashboard_FixDatasourceStringBool(t *testing.T) {
 	}`
 	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 13, payload))
 
-	out, err := updateDashboard(context.Background(), deps,
+	// 走到提案中断 = 修复被触发（而非 "nothing to change" 错误）。
+	proposeInterrupt(t, deps,
 		map[string]interface{}{"id": float64(13), "fix_datasource": "true"}, // string, not bool
 		map[string]string{"user_id": "1"})
-	require.NoError(t, err, "string-form fix_datasource=\"true\" must not error as nothing-to-change")
-
-	var resp struct {
-		Changes []string `json:"changes"`
-		Applied bool     `json:"applied"`
-	}
-	require.NoError(t, json.Unmarshal([]byte(out), &resp))
-	require.False(t, resp.Applied, "propose phase must not write")
-	require.NotEmpty(t, resp.Changes, "fix_datasource via string bool must produce a change")
 }
 
 // TestGetDashboardDetail_WithoutIncludeConfig confirms the lean default path

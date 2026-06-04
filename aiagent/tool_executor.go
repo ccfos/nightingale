@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,15 +19,20 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// executeTool 执行工具
-// tools 为本次 Run 的可见工具表（runCtx.tools 快照），不再从 a.cfg.Tools 读取
-func (a *Agent) executeTool(ctx context.Context, toolName string, input string, req *AgentRequest, tools []AgentTool) string {
+// executeToolI 执行工具并透出人在环中断：内置工具返回
+// *ToolInterrupt 时原样上交给调用方（chat 的两个主循环据此停轮、交路由层持久化
+// Pending）。tools 为本次 Run 的可见工具表（runCtx.tools 快照），不再从 a.cfg.Tools 读取。
+func (a *Agent) executeToolI(ctx context.Context, toolName string, input string, req *AgentRequest, tools []AgentTool) (string, *ToolInterrupt) {
 	// 1. 优先检查并执行内置工具
 	if result, handled, err := ExecuteBuiltinTool(ctx, a.toolDeps, toolName, req.Params, input); handled {
 		if err != nil {
-			return fmt.Sprintf("Error: %v", err)
+			var ti *ToolInterrupt
+			if errors.As(err, &ti) {
+				return "", ti
+			}
+			return fmt.Sprintf("Error: %v", err), nil
 		}
-		return result
+		return result, nil
 	}
 
 	// 2. 查找配置的工具定义
@@ -43,7 +49,7 @@ func (a *Agent) executeTool(ctx context.Context, toolName string, input string, 
 		for i, t := range tools {
 			available[i] = t.Name
 		}
-		return fmt.Sprintf("Error: tool '%s' not found. Available tools: %v. Please use one of these exact tool names.", toolName, available)
+		return fmt.Sprintf("Error: tool '%s' not found. Available tools: %v. Please use one of these exact tool names.", toolName, available), nil
 	}
 
 	// 解析输入参数
@@ -54,24 +60,24 @@ func (a *Agent) executeTool(ctx context.Context, toolName string, input string, 
 		}
 	}
 
-	// 3. 根据工具类型执行
+	// 3. 根据工具类型执行（HTTP/MCP/外部处理器不支持中断——中断是内置工具专属能力）
 	switch tool.Type {
 	case ToolTypeHTTP:
-		return a.executeHTTPTool(ctx, tool, args, req)
+		return a.executeHTTPTool(ctx, tool, args, req), nil
 	case ToolTypeMCP:
-		return a.executeMCPTool(ctx, tool, args)
+		return a.executeMCPTool(ctx, tool, args), nil
 	case ToolTypeProcessor, ToolTypeSkill:
 		// 委托给外部工具处理器（由适配层注入）
 		if a.externalToolHandler != nil {
 			result, err := a.externalToolHandler(ctx, tool, args, req)
 			if err != nil {
-				return fmt.Sprintf("Error: %v", err)
+				return fmt.Sprintf("Error: %v", err), nil
 			}
-			return result
+			return result, nil
 		}
-		return fmt.Sprintf("Error: tool type '%s' requires ExternalToolHandler (not configured)", tool.Type)
+		return fmt.Sprintf("Error: tool type '%s' requires ExternalToolHandler (not configured)", tool.Type), nil
 	default:
-		return fmt.Sprintf("Error: unsupported tool type '%s'", tool.Type)
+		return fmt.Sprintf("Error: unsupported tool type '%s'", tool.Type), nil
 	}
 }
 

@@ -172,9 +172,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 		if len(resp.Steps) > 0 {
 			wfCtx.Output[outputField+"_steps"] = resp.Steps
 		}
-		if resp.Plan != nil {
-			wfCtx.Output[outputField+"_plan"] = resp.Plan
-		}
 		return
 	}
 
@@ -188,10 +185,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 	if len(resp.Steps) > 0 {
 		stepsJSON, _ := json.Marshal(resp.Steps)
 		event.AnnotationsJSON[outputField+"_steps"] = string(stepsJSON)
-	}
-	if resp.Plan != nil {
-		planJSON, _ := json.Marshal(resp.Plan)
-		event.AnnotationsJSON[outputField+"_plan"] = string(planJSON)
 	}
 
 	b, _ := json.Marshal(event.AnnotationsJSON)
@@ -339,4 +332,3 @@ func executeSkillTool(ctxObj *ctx.Context, tool *AgentTool, args map[string]inte
 
 	return result.String(), nil
 }
-

@@ -57,22 +57,6 @@ func BuildToolsSection(tools []ToolInfo) string {
 	return sb.String()
 }
 
-// BuildToolsListBrief 构建简洁的工具列表（用于 Plan 模式）
-func BuildToolsListBrief(tools []ToolInfo) string {
-	if len(tools) == 0 {
-		return ""
-	}
-
-	var sb strings.Builder
-	sb.WriteString("## Available Tools\n\n")
-
-	for _, tool := range tools {
-		sb.WriteString(fmt.Sprintf("- **%s**: %s\n", tool.Name, tool.Description))
-	}
-
-	return sb.String()
-}
-
 // BuildEnvSection 构建环境信息段落
 func BuildEnvSection() string {
 	var sb strings.Builder
@@ -104,30 +88,5 @@ func BuildSkillsSection(skillContents []string) string {
 		}
 	}
 
-	return sb.String()
-}
-
-// BuildPreviousFindingsSection 构建之前发现段落
-func BuildPreviousFindingsSection(findings []string) string {
-	if len(findings) == 0 {
-		return ""
-	}
-
-	var sb strings.Builder
-	sb.WriteString("## Previous Findings\n\n")
-	for _, finding := range findings {
-		sb.WriteString(fmt.Sprintf("- %s\n", finding))
-	}
-	sb.WriteString("\n")
-
-	return sb.String()
-}
-
-// BuildCurrentStepSection 构建当前步骤段落
-func BuildCurrentStepSection(goal, approach string) string {
-	var sb strings.Builder
-	sb.WriteString("## Current Step\n\n")
-	sb.WriteString(fmt.Sprintf("**Goal**: %s\n", goal))
-	sb.WriteString(fmt.Sprintf("**Approach**: %s\n\n", approach))
 	return sb.String()
 }

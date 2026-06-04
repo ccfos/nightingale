@@ -5,6 +5,7 @@ package llm
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -20,7 +21,7 @@ const (
 	ProviderOllama  = "ollama"  // Ollama local models
 	ProviderBedrock = "bedrock" // AWS Bedrock
 	ProviderVertex  = "vertex"  // Google Vertex AI
-	ProviderKimi    = "kimi"   // Kimi Code (OpenAI-compatible)
+	ProviderKimi    = "kimi"    // Kimi Code (OpenAI-compatible)
 )
 
 // Role constants
@@ -28,12 +29,31 @@ const (
 	RoleSystem    = "system"
 	RoleUser      = "user"
 	RoleAssistant = "assistant"
+	// RoleTool 标记一条工具结果消息（原生 function calling 协议）。各 provider
+	// 适配：OpenAI → role:"tool"+tool_call_id；Claude → user 轮 tool_result block；
+	// Gemini → user 轮 functionResponse part（按 ToolName 匹配）。
+	RoleTool = "tool"
 )
 
 // Message represents a chat message
+//
+// 工具相关字段构成统一的"结构化工具轮"表示，由各 provider 的 convertRequest
+// 翻译成原生形态；ReAct 文本协议不使用它们（调用编码在 Content 里）。
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+
+	// ToolCalls 仅 assistant 轮：本轮发起的工具调用。
+	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
+
+	// ToolCallID/ToolName 仅 RoleTool 结果轮：ID 对应 assistant 轮 ToolCall.ID
+	// （OpenAI tool_call_id / Claude tool_use_id）；ToolName 是函数名——Gemini
+	// 的 functionResponse 按名字而非 id 匹配，必须带上。
+	ToolCallID string `json:"tool_call_id,omitempty"`
+	ToolName   string `json:"tool_name,omitempty"`
+
+	// ThinkingBlocks 仅 assistant 轮：Anthropic 扩展思考块（带签名），续轮回填用。
+	ThinkingBlocks []ThinkingBlock `json:"thinking_blocks,omitempty"`
 }
 
 // ToolCall represents a tool/function call from the LLM
@@ -41,6 +61,21 @@ type ToolCall struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`
+
+	// ThoughtSignature 是 Gemini 思考模型附在 functionCall part 上的签名，
+	// 续轮请求必须原样回传（Gemini 3 缺失会 4xx）。其它 provider 恒空。
+	ThoughtSignature string `json:"thought_signature,omitempty"`
+}
+
+// ThinkingBlock 是 Anthropic 扩展思考的内容块（Kimi 的 Claude 兼容线同语义）。
+// 开启 thinking 后工具续轮必须把上一条 assistant 消息的思考块**带签名原样回填**，
+// 否则 API 报 400——这是"有状态思考协议"，与 OpenAI 系无状态的 reasoning_content
+// 本质不同。Type: "thinking"（Thinking+Signature）| "redacted_thinking"（Data）。
+type ThinkingBlock struct {
+	Type      string `json:"type"`
+	Thinking  string `json:"thinking,omitempty"`
+	Signature string `json:"signature,omitempty"`
+	Data      string `json:"data,omitempty"`
 }
 
 // ToolDefinition defines a tool that the LLM can call
@@ -63,11 +98,12 @@ type GenerateRequest struct {
 
 // GenerateResponse is the unified response from LLM generation
 type GenerateResponse struct {
-	Content          string     `json:"content"`
-	ReasoningContent string     `json:"reasoning_content,omitempty"`
-	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
-	FinishReason     string     `json:"finish_reason"`
-	Usage            *Usage     `json:"usage,omitempty"`
+	Content          string          `json:"content"`
+	ReasoningContent string          `json:"reasoning_content,omitempty"`
+	ThinkingBlocks   []ThinkingBlock `json:"thinking_blocks,omitempty"` // Anthropic 系：续轮回填用
+	ToolCalls        []ToolCall      `json:"tool_calls,omitempty"`
+	FinishReason     string          `json:"finish_reason"`
+	Usage            *Usage          `json:"usage,omitempty"`
 }
 
 // Usage represents token usage statistics
@@ -79,11 +115,35 @@ type Usage struct {
 
 // StreamChunk represents a chunk in streaming response
 type StreamChunk struct {
-	Content      string     `json:"content,omitempty"`
-	ToolCalls    []ToolCall `json:"tool_calls,omitempty"`
-	FinishReason string     `json:"finish_reason,omitempty"`
-	Done         bool       `json:"done"`
-	Error        error      `json:"error,omitempty"`
+	Content string `json:"content,omitempty"`
+	// Reasoning 是思考模型的推理增量（OpenAI 兼容端点的 delta.reasoning_content、
+	// Anthropic 的 thinking_delta、Gemini 的 thought part），用于实时展示。
+	// 与 Content 分通道，宿主可分别路由到 thinking/answer。
+	Reasoning string `json:"reasoning,omitempty"`
+	// ThinkingBlock 是 Anthropic 系思考块收尾时（content_block_stop）发出的完整
+	// 块（含签名），调用方累积后随 assistant 轮回填。与 Reasoning 增量并存：
+	// 增量管展示，块管协议正确性。
+	ThinkingBlock *ThinkingBlock `json:"thinking_block,omitempty"`
+	ToolCalls     []ToolCall     `json:"tool_calls,omitempty"`
+	FinishReason  string         `json:"finish_reason,omitempty"`
+	Done          bool           `json:"done"`
+	Error         error          `json:"error,omitempty"`
+}
+
+// parseToolJSONObject 把工具调用参数/结果字符串解析为 JSON 对象——Claude 的
+// tool_use.input、Gemini 的 functionCall.args / functionResponse.response 都要求
+// 对象形态。非对象 JSON（数组/标量）或非 JSON 文本退化为 {fallbackKey: raw}，
+// 空串退化为空对象，保证请求始终合法。
+func parseToolJSONObject(raw, fallbackKey string) map[string]interface{} {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return map[string]interface{}{}
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &m); err == nil && m != nil {
+		return m
+	}
+	return map[string]interface{}{fallbackKey: raw}
 }
 
 // LLM is the unified interface for all LLM providers
@@ -135,8 +195,8 @@ type Config struct {
 	//   - Gemini：API 形态没有"顶层平铺"逃生口，**仅消费 thinking_config / thinkingConfig
 	//     这一个 key**，桥接进 generationConfig.thinkingConfig；其它 key 会被忽略
 	//     （会打 debug 日志提示）。
-	// 通常由 NormalizeThinkingParams 自动注入 thinking 控制字段；用户也可以在 LLMConfig
-	// 的 CustomParams 里手填覆盖。
+	// chat 路径直接透传 LLMConfig 的 CustomParams；连接测试 probe 路径上会经
+	// NormalizeThinkingParams 叠加"关思考"控制字段。
 	ExtraBody map[string]any `json:"extra_body,omitempty"`
 }
 

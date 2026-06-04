@@ -29,15 +29,14 @@ builtin_tools:
 | **检查并修复变量** | 扫描变量定义和图表里对变量的引用，发现坏味道（图表引用了未定义变量、变量取不到值、数据源引用不一致等）并修复 |
 | **改图表曲线** | 某个图表(panel)的曲线：查询表达式(PromQL/SQL)、legend、单位(unit)、增删曲线、改标题 |
 
-## 铁律：生成提案 → 列改动表格 → 等用户确认 → 才写回
+## 铁律：一次提案调用即收尾，确认由系统完成
 
-`update_dashboard` 是**两阶段写入**：第一次调用（不带 `confirmed`）只生成提案、**不写库**，返回 `proposal_id` 和 `applied:false`；只有第二次带上 `proposal_id` + `confirmed:true` 才真正落库。**绝对不要**在同一轮里既生成提案又确认。流程：
+`update_dashboard` 是**提案式写入**：你调用它（只传要改的部分）后，工具会计算改动、**直接向用户展示改动清单并暂停对话**；用户确认后由系统自动落库——确认环节不需要也不经过你。因此：
 
 1. 先 `get_dashboard_detail(id, include_config=true)` 读到当前的变量、图表摘要和变量健康检查。
-2. 算出要改的部分后，调一次 `update_dashboard`，**只传**要改的 `variables`/`panels`/`fix_datasource`，**不要带 `confirmed`**。这次不写库，会返回 `proposal_id`、`applied:false` 和 `changes`。
-3. 把**拟改动项**用 Markdown 表格列出来，一行一项，**「改动前 → 改动后」**两列对照，用一句话问用户「确认按以上改动写回吗？」然后**停下，结束本轮**，等用户回复。本轮**不要**带 `confirmed:true`。
-4. 只有当用户在后续消息里明确确认（「确认 / 对 / 改吧 / 可以」）后，再调一次 `update_dashboard`，**只传** `id` + 第 2 步拿到的 `proposal_id` + `confirmed:true`（无需重复传 variables/panels），才真正落库。
-5. 用户回复「不对 / 取消 / 先别改 / 再改下」时，**不要**带 `proposal_id`/`confirmed` 去确认；旧提案直接作废，按反馈调整后重新走第 2 步生成新提案。
+2. 算出要改的部分后，调一次 `update_dashboard`，**只传**要改的 `variables`/`panels`/`fix_datasource`。这一调用就是你本轮的最后一步，系统会接管展示与确认。
+3. **不要**自己渲染改动表格（系统会展示工具生成的清单），**不要**传 `proposal_id`/`confirmed`（那是系统确认通道的参数）。
+4. 用户拒绝或提出新要求时，你会在新一轮收到反馈：按反馈重新算改动、再调一次 `update_dashboard` 即可（旧提案自动作废）。
 
 ## 第一步：定位仪表盘
 
@@ -60,31 +59,15 @@ get_dashboard_detail(id=<id>, include_config=true)
 
 **定位图表优先用 `id`**（如 `panel-3`），名字可能重复。
 
-## 第三步：列改动表格
+## 第三步：校验查询能不能取到值（可选但推荐）
 
-用「改动前 → 改动后」表格。示例：
+改 PromQL 或修变量 definition 时，可先用 `query_prometheus` / `list_metrics` / `get_metric_labels` 验证新表达式确实有数据再提案，避免改完还是空。
 
-**改变量：**
+修复变量类任务：把 `variable_lint` 命中项逐条确定修复动作（改 definition / 重命名引用 / 修数据源引用），一并放进同一次提案。
 
-| 项 | 改动前 | 改动后 |
-|----|--------|--------|
-| 变量 `ident` 默认值 | (空) | `web01` |
-| 变量 `ident` 是否多选 | 是 | 否 |
+## 第四步：提交提案（调 update_dashboard，一次即可）
 
-**改图表曲线：**
-
-| 图表 | 项 | 改动前 | 改动后 |
-|------|----|--------|--------|
-| CPU使用率 (panel-2) | 曲线A PromQL | `cpu_usage_active{ident=~"$ident"}` | `avg(cpu_usage_active{cpu="cpu-total",ident=~"$ident"})` |
-| CPU使用率 (panel-2) | 单位 | (无) | percent |
-
-**检查并修复变量：** 把 `variable_lint` 命中项逐条列出，并给出每条的修复动作（改 definition / 重命名引用 / 修数据源引用）。
-
-列完表格 → 问确认 → 停。
-
-## 第四步：生成提案（调 update_dashboard，不带 confirmed）
-
-第一次调 `update_dashboard`，**只传**要改的部分（其余配置原样保留，工具不会动）、**不带 `confirmed`**。这次只生成提案、不写库，返回 `proposal_id` 和 `applied:false`：
+调 `update_dashboard`，**只传**要改的部分（其余配置原样保留，工具不会动）。工具会向用户展示改动清单并等待确认，本轮到此为止：
 
 - **改/增/删变量** → `variables`（JSON 数组，按 `name` 匹配）：
   ```json
@@ -100,26 +83,10 @@ get_dashboard_detail(id=<id>, include_config=true)
   - `new_name` 改标题，`unit` 改单位，`description` 改说明，`delete:true`（在面板项上）删整个图表。不传 `queries` 就不动曲线。
 - **修复数据源引用** → `fix_datasource: true`：把图表/变量里悬空或写死的数据源引用统一重指到大盘数据源变量。适合修「图表查不到数据 / 数据源引用不一致」类坏味道。
 
-### 校验查询能不能取到值（可选但推荐）
+## 第五步：特殊情况的答复
 
-改 PromQL 或修变量 definition 时，可先用 `query_prometheus` / `list_metrics` / `get_metric_labels` 验证新表达式确实有数据，再列进改动表格，避免改完还是空。
-
-## 第五步：用户确认后落库（带 proposal_id + confirmed）
-
-用户在**后续轮次**明确确认后，再调一次 `update_dashboard`，**只传** `id` + 第四步返回的 `proposal_id` + `confirmed:true`（不必重传 variables/panels）。这次才真正写库，返回 `applied:true`。
-
-```json
-{"id": 7, "proposal_id": "dbprop_...", "confirmed": true}
-```
-
-- 提案是**一次性**的，且必须在生成它之后的**新一轮**才能确认（同一轮里不能既生成又确认）。
-- 若提示提案已过期/找不到、或仪表盘在此期间被改过（提案已失效），重新走第四步生成新提案、再列表格确认。
-
-## 第六步：输出结果
-
-写回成功后保持简短，一句话即可：
-
-> ✅ 已更新仪表盘「<名字>」：<改了什么>。刷新页面即可看到生效。
+- 读完现状发现**无需改动**、查询校验**取不到数**、或**定位不到**目标图表/变量时：不调 `update_dashboard`，直接一句话说明原因并给出建议。
+- 用户在新一轮反馈「提案过期/失效」（仪表盘在此期间被他人改过）时：重新读现状、重新提案即可。
 
 工具返回的 `changes` 列表是实际落库的改动项，可据此向用户复述。
 
@@ -128,4 +95,4 @@ get_dashboard_detail(id=<id>, include_config=true)
 - 多选变量在 PromQL 里用 `=~` 不用 `=`，如 `ident=~"$ident"`。
 - 改/加曲线时 legend 模板用 `{{label}}` 形式，如 `{{ident}}`。
 - 不确定指标名/标签时先 `list_metrics` / `get_metric_labels` 探一下，别凭空编。
-- 一次对话里用户连续提多个改动，可以合并成一次 `update_dashboard` 调用（`variables` 和 `panels` 一起传），但表格确认这一步不能省。
+- 一次对话里用户连续提多个改动，可以合并成一次 `update_dashboard` 调用（`variables` 和 `panels` 一起传）；改动清单与确认由系统把关，不会被跳过。

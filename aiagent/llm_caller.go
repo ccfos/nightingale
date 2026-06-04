@@ -12,10 +12,18 @@ import (
 )
 
 // buildLLMRequest 将 Agent 内部的 ChatMessage 转成 llm.GenerateRequest
+// （含结构化工具轮字段的透传）
 func buildLLMRequest(messages []ChatMessage, stop []string) *llm.GenerateRequest {
 	llmMessages := make([]llm.Message, len(messages))
 	for i, msg := range messages {
-		llmMessages[i] = llm.Message{Role: msg.Role, Content: msg.Content}
+		llmMessages[i] = llm.Message{
+			Role:           msg.Role,
+			Content:        msg.Content,
+			ToolCalls:      msg.ToolCalls,
+			ToolCallID:     msg.ToolCallID,
+			ToolName:       msg.ToolName,
+			ThinkingBlocks: msg.ThinkingBlocks,
+		}
 	}
 	return &llm.GenerateRequest{Messages: llmMessages, Stop: stop}
 }
@@ -61,6 +69,16 @@ func (a *Agent) callLLMWithStreamOutput(ctx context.Context, messages []ChatMess
 			// 取消 + 最后一个 error chunk 也写进去为止——但那个最后写同样是 blocking）。
 			go drainStream(stream)
 			return fullContent.String(), fmt.Errorf("stream error: %w", chunk.Error)
+		}
+		// 思考模型的推理增量：透传到思考面板，而不是静默丢弃让用户面对长时间
+		// 空白。不计入 fullContent（推理不是答案，也不参与 ReAct 文本协议解析）。
+		if chunk.Reasoning != "" {
+			streamChan <- &StreamChunk{
+				Type:      StreamTypeThinking,
+				Delta:     chunk.Reasoning,
+				RequestID: requestID,
+				Timestamp: time.Now().UnixMilli(),
+			}
 		}
 		if chunk.Content != "" {
 			fullContent.WriteString(chunk.Content)
