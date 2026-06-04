@@ -1,12 +1,12 @@
 # 💡 Nightingale Docker 部署使用指南 (example)
 
-本目录提供了将夜莺监控系统 (Nightingale) 打包为 Docker 镜像并运行的完整示例，支持一键构建与部署。
+本目录提供了将夜莺监控系统 (Nightingale) 后端服务打包为 Docker 镜像并运行的完整示例，支持一键构建与部署。
 
 ---
 
 ## 📂 目录结构
 
-* `Dockerfile`: 多阶段构建定义文件，自动打包前端静态文件并编译 Go 后端服务，最终构建出最小化运行时镜像。
+* `Dockerfile`: 多阶段构建定义文件，专注于编译 Go 后端服务，最终构建出最小化运行时镜像。
 * `start.ps1`: Windows PowerShell 一键构建启动脚本。
 * `start.sh`: Linux / macOS / Git Bash 一键构建启动脚本。
 * `README.md`: 本指南。
@@ -40,7 +40,7 @@ chmod +x start.sh
 
 > [!WARNING]
 > **注意构建上下文 (Build Context)**
-> 由于 Dockerfile 中需要复制主项目的 `go.mod`、`go.sum` 等文件，执行 `docker build` 时必须以 **Nightingale 项目根目录** 作为构建上下文。
+> 由于 Dockerfile 中需要复制主项目的 `go.mod`、`go.sum` 等依赖文件，执行 `docker build` 时必须以 **Nightingale 项目根目录** 作为构建上下文。
 
 #### 1. 构建 Docker 镜像
 在 **Nightingale 项目根目录** (即本目录的上一级) 下执行：
