@@ -127,7 +127,7 @@ func TestGeminiConvertRequest_ToolTurns(t *testing.T) {
 	}
 }
 
-// Plain-text conversations (the ReAct path) must be wire-identical to the
+// Plain-text conversations (no tool turns) must be wire-identical to the
 // pre-Step-2 behavior across all three providers.
 func TestConvertRequest_PlainTextUnchanged(t *testing.T) {
 	msgs := []Message{

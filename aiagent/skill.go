@@ -45,7 +45,7 @@ type SkillMetadata struct {
 	RecommendedTools []string `yaml:"recommended_tools,omitempty" json:"recommended_tools,omitempty"`
 	BuiltinTools     []string `yaml:"builtin_tools,omitempty" json:"builtin_tools,omitempty"` // 内置工具列表
 
-	// MaxIterations 覆盖 Agent 默认的 ReAct 迭代上限。多步 skill（如创建仪表盘
+	// MaxIterations 覆盖 Agent 默认的工具循环迭代上限。多步 skill（如创建仪表盘
 	// 需要 list_busi_groups → list_datasources → list_files → list_metrics →
 	// read_file → create_dashboard 至少 7-10 步）应声明更高的值，避免在正常
 	// 流程末尾被 DefaultMaxIterations=10 截断。为 0 时使用 Agent 默认值。

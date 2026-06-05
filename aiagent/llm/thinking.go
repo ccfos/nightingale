@@ -7,8 +7,8 @@ import "strings"
 // 当前仅用于连接测试 probe 路径（aiagent/llmconfig）：探测请求 MaxTokens=5，
 // 思考模型会把 token 全烧在 reasoning 上导致 content 为空、误报失败，所以探测前
 // 按 BaseURL > Provider > Model 三层路由自动注入"关思考"字段。chat 路径不再注入
-// ——native 下思考是一等公民，react 下 reasoning 走独立通道不影响协议解析，
-// 想关思考的用户在 CustomParams 里显式配置。
+// ——思考是一等公民（思考流接入 thinking 通道），想关思考的用户在 CustomParams
+// 里显式配置。
 //
 // 注入规则（优先级从高到低）：
 //  1. 用户在 extra 里已显式设置过任何 thinking 控制字段 → 原样返回，不覆盖用户意图

@@ -11,36 +11,21 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// 本文件实现原生 function-calling 工具协议：loop 与 ReAct 共用同一套内部表示
-// （runCtx 工具表、StreamChunk 契约、结构化 transcript），只是工具落线方式不同——
-// tools 参数 + tool_calls 解析，替代三行文本协议 + "Observation:" 注入。
+// 本文件实现原生 function-calling 工具循环（AgentModeReAct 的唯一执行体）：
+// 工具经 tools 参数下发、调用经 tool_calls 解析，结构化 transcript 持久化。
 //
-// 流式通道约定（与路由层 demux/抽卡/A2A 的既有契约严格一致；字段独占路由：
+// 流式通道约定（与路由层抽卡/A2A 的既有契约严格一致；字段独占路由：
 // 思考与正文互斥，绝不双发）：
 //   - 推理增量（reasoning_content / 思考块）→ StreamTypeThinking（thinking 面板）。
 //   - 模型正文增量 → StreamTypeContent 实时流，直接落 content 通道。中间轮的
 //     pre-tool-call 评论同样进 content（轮间补段落分隔）。最终答案因此已逐
-//     token 下发——executeReActWithDone 的 Done chunk 据 contentStreamed 打标，
+//     token 下发——executeNativeWithDone 的 Done chunk 据 contentStreamed 打标，
 //     路由层只把 Done.Content 当作解析/持久化用的权威正文（= 最终轮正文，
 //     不含中间轮评论），不再二次推流，无重复。
-//   - 唯一押后：首轮带工具时，疑似文本形态工具调用的正文（裸 JSON/<tool_call>/
-//     代码围栏起头）先押住不发——坐实则 fallback ReAct 重跑且该段丢弃，证伪则
-//     整段补发（见 callLLMNative 与 looksLikeNativeFallback，两处判定必须同口径）。
-//   - 工具调用/结果 emit 与 ReAct 完全相同形状的 StreamTypeToolCall /
-//     StreamTypeToolResult（Metadata["tool"]）→ 抽卡与 A2A 零改动。
+//   - 工具调用/结果 emit StreamTypeToolCall / StreamTypeToolResult
+//     （Metadata["tool"]）→ 抽卡与 A2A 据此渲染。
 
-// ResolveToolProtocol 归一工具协议：显式 "react" 才走文本协议，其余（含空值）
-// 一律原生 function calling——**原生是默认**，react 是不支持原生 FC 端点的显式
-// 降级。dispatch（executeReAct）与 thinking 策略（router）共用此语义，保证
-// "同一配置同一协议"。
-func ResolveToolProtocol(s string) string {
-	if s == ToolProtocolReAct {
-		return ToolProtocolReAct
-	}
-	return ToolProtocolNative
-}
-
-// executeNative 原生协议的执行入口，与 executeReAct 一一对应。
+// executeNative 工具循环的执行入口（Run 的流式/非流式两条路径都经由此函数）。
 func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx) *AgentResponse {
 	userMessage, err := a.buildUserMessage(req)
 	if err != nil {
@@ -49,7 +34,8 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 
 	systemPrompt := a.buildNativeSystemPrompt(rc)
 
-	// 历史投影：与 ReAct 路径共用同一投影点，canonical transcript 不变。
+	// 历史投影：canonical transcript 不变，喂模型的是截断/收窗后的投影
+	// （见 context_manager.go）。
 	messages := []ChatMessage{{Role: "system", Content: systemPrompt}}
 	if len(req.History) > 0 {
 		messages = append(messages, projectHistory(req.History, a.cfg.HistoryBudgetBytes)...)
@@ -77,8 +63,8 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 }
 
 // runNativeLoop 原生 function-calling 循环：调 LLM（带 tools）→ 无 tool_calls
-// 即最终答案；有则逐个执行、回灌结构化 tool 结果轮，并 emit 与 ReAct 同形状的
-// 流式事件 + 结构化 transcript。
+// 即最终答案；有则逐个执行、回灌结构化 tool 结果轮，并 emit 流式事件 +
+// 结构化 transcript。
 func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages []ChatMessage, toolDefs []llm.ToolDefinition, config *ReActLoopConfig) *AgentResponse {
 	resp := &AgentResponse{Steps: []ReActStep{}}
 	streaming := config.StreamChan != nil
@@ -93,10 +79,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		default:
 		}
 
-		// holdSuspicious：仅首轮带工具时可能触发 fallbackToReAct，该轮疑似文本
-		// 形态工具调用的正文须押住——fallback 后它绝不能已经进了 content 通道。
-		holdSuspicious := iteration == 0 && len(toolDefs) > 0
-		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID, holdSuspicious)
+		content, calls, thinking, err := a.callLLMNative(ctx, messages, toolDefs, config.StreamChan, config.RequestID)
 		if err != nil {
 			resp.Error = fmt.Sprintf("LLM call failed at iteration %d: %v", iteration, err)
 			resp.Iterations = iteration
@@ -105,19 +88,8 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 
 		logger.Debugf("%s iteration %d: content_len=%d, tool_calls=%d", config.LogPrefix, iteration, len(content), len(calls))
 
-		// 无工具调用 = 最终答案（原生协议的天然完成信号，无需 IsComplete 解析）。
+		// 无工具调用 = 最终答案（原生协议的天然完成信号）。
 		if len(calls) == 0 {
-			// 自动降级探测：首轮就零 tool_calls、但正文是文本形态的工具调用
-			// （裸 JSON {"name":...,"arguments":...} / <tool_call> 标签 / tool_calls
-			// envelope），说明端点把 tools 参数当空气——典型的"OpenAI 兼容但不
-			// 支持原生 FC"。这坨文本绝不是答案：置 fallbackToReAct，由
-			// executeReAct 改用文本协议重跑本轮（首轮无任何已执行工具，重跑干净；
-			// callLLMNative 以同口径押住了这段正文，content 通道未被污染）。
-			if iteration == 0 && len(toolDefs) > 0 && looksLikeNativeFallback(content) {
-				resp.fallbackToReAct = true
-				resp.Iterations = 1
-				return resp
-			}
 			resp.Content = content
 			resp.contentStreamed = streaming // 正文已逐 token 走 StreamTypeContent，Done 不再推流
 			resp.Iterations = iteration + 1
@@ -235,17 +207,12 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 // 工具调用增量按"空 ID+空 Name → 续接上一个调用的 Arguments"规则合并 OpenAI
 // 风格的分片（provider 流式把一次调用的 arguments 拆成多个 delta 下发）；
 // Anthropic 系的完整思考块（含签名）在块收尾时整块到达，累积后随 assistant 轮回填。
-//
-// holdSuspicious（仅首轮带工具时为 true）：疑似文本形态工具调用的正文先押住
-// 不进 content 通道——坐实（looksLikeNativeFallback，与 runNativeLoop 的降级
-// 判定同口径）则丢弃，该轮将由 ReAct 文本协议重跑；证伪则整段补发，仅损失
-// 这一轮的逐 token 流式（答案以 JSON/标签/围栏起头的场景，罕见且可接受）。
-func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID string, holdSuspicious bool) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
+func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
 	if err := a.checkLLMClient(); err != nil {
 		return "", nil, nil, err
 	}
 
-	llmReq := buildLLMRequest(messages, nil)
+	llmReq := buildLLMRequest(messages)
 	llmReq.Tools = toolDefs
 
 	if streamChan == nil {
@@ -274,12 +241,6 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		}
 	}
 
-	// 正文押后缓冲：holdSuspicious 时在前缀形态判明前先积攒。判明无嫌疑即整段
-	// 补发并转为逐 token 直发；判明疑似则押到收尾，由"是否坐实文本形态工具调用"
-	// 决定补发还是丢弃。
-	var hold strings.Builder
-	holding := holdSuspicious
-
 	for chunk := range stream {
 		if chunk.Error != nil {
 			go drainStream(stream)
@@ -293,16 +254,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		}
 		if chunk.Content != "" {
 			content.WriteString(chunk.Content)
-			if holding {
-				hold.WriteString(chunk.Content)
-				if suspicious, determined := suspiciousToolCallPrefix(hold.String()); determined && !suspicious {
-					holding = false
-					emit(StreamTypeContent, hold.String())
-					hold.Reset()
-				}
-			} else {
-				emit(StreamTypeContent, chunk.Content)
-			}
+			emit(StreamTypeContent, chunk.Content)
 		}
 		for _, tc := range chunk.ToolCalls {
 			if tc.ID == "" && tc.Name == "" && len(calls) > 0 {
@@ -316,37 +268,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		}
 	}
 
-	// 押到收尾仍未发的正文：坐实为文本形态工具调用（且无原生 calls）时丢弃——
-	// runNativeLoop 将以同一口径触发 fallbackToReAct，这段不该进回答区；否则补发。
-	if hold.Len() > 0 && !(len(calls) == 0 && looksLikeNativeFallback(content.String())) {
-		emit(StreamTypeContent, hold.String())
-	}
 	return content.String(), calls, thinking, nil
-}
-
-// suspiciousToolCallPrefix 判断正文开头是否可能是文本形态的工具调用——端点把
-// tools 参数当空气时，典型输出从第一个非空白字符就是 JSON 对象/数组、XML 标签
-// 或代码围栏。determined=false 表示目前还全是空白，需继续观望。
-func suspiciousToolCallPrefix(s string) (suspicious, determined bool) {
-	t := strings.TrimLeft(s, " \t\r\n")
-	if t == "" {
-		return false, false
-	}
-	switch t[0] {
-	case '{', '[', '<', '`':
-		return true, true
-	}
-	return false, true
-}
-
-// looksLikeNativeFallback 原生 loop"端点不支持原生 FC"的降级判定：在
-// looksLikeToolCall 的形状匹配之上再要求疑似前缀。收紧的目的是与 callLLMNative
-// 的正文押后保持同一口径——fallback 触发 ⇒ 该轮正文从未进入 content 通道，
-// ReAct 重跑的答案不会与之重复。正文以普通文字开头、中段才嵌工具 JSON 的漂移
-// 不再触发降级（目标场景"端点完全无视 tools"的输出都是裸 JSON 从头开始）。
-func looksLikeNativeFallback(content string) bool {
-	suspicious, determined := suspiciousToolCallPrefix(content)
-	return determined && suspicious && looksLikeToolCall(content)
 }
 
 // buildNativeToolDefs 把 AgentTool 的扁平参数表编译成 JSON-Schema 形态的
@@ -398,7 +320,7 @@ func normalizeJSONSchemaType(t string) string {
 }
 
 // maxIterationsForSkills 取全局默认与所有激活 skill 声明的 MaxIterations 的最大值
-// （skill 可在 frontmatter 为多步工作流抬高上限），ReAct 与 native 两条协议共用。
+// （skill 可在 frontmatter 为多步工作流抬高上限）。
 func (a *Agent) maxIterationsForSkills(rc *runCtx) int {
 	maxIter := a.cfg.MaxIterations
 	for _, sk := range rc.skills {
@@ -411,4 +333,77 @@ func (a *Agent) maxIterationsForSkills(rc *runCtx) int {
 		}
 	}
 	return maxIter
+}
+
+// emitInterrupt 把工具的人在环中断交给路由层（持久化 Pending 并结束本轮）。
+func emitInterrupt(config *ReActLoopConfig, ti *ToolInterrupt, toolName string) {
+	if config.StreamChan == nil {
+		return
+	}
+	config.StreamChan <- &StreamChunk{
+		Type:    StreamTypeInterrupt,
+		Content: ti.Prompt,
+		Metadata: map[string]interface{}{
+			"kind":        ti.Kind,
+			"tool":        toolName,
+			"resume_args": ti.ResumeArgs,
+			// form 仅 input 类非空：form_select 载荷，路由层渲染成与 preflight
+			// 同契约的表单 response。
+			"form": ti.Form,
+		},
+		RequestID: config.RequestID,
+		Timestamp: time.Now().UnixMilli(),
+	}
+}
+
+// emitTranscript 在流式且开启 EmitTranscript 时，把本轮新追加的规范消息经 StreamChan
+// 交给路由层持久化。非流式或关闭时为 no-op。
+func emitTranscript(config *ReActLoopConfig, msgs ...ChatMessage) {
+	if config.StreamChan == nil || !config.EmitTranscript || len(msgs) == 0 {
+		return
+	}
+	config.StreamChan <- &StreamChunk{
+		Type:       StreamTypeTranscript,
+		Transcript: msgs,
+		RequestID:  config.RequestID,
+		Timestamp:  time.Now().UnixMilli(),
+	}
+}
+
+// executeNativeWithDone 执行工具循环并在流式模式下发送 done/error chunk
+// 用于流式模式的顶层调用
+func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc *runCtx) {
+	streamChan := req.StreamChan
+	requestID := ""
+	if req.Metadata != nil {
+		requestID = req.Metadata["request_id"]
+	}
+
+	resp := a.executeNative(ctx, req, rc)
+
+	if resp.Error != "" && !resp.Success {
+		streamChan <- &StreamChunk{
+			Type:      StreamTypeError,
+			Error:     resp.Error,
+			Done:      true,
+			RequestID: requestID,
+			Timestamp: time.Now().UnixMilli(),
+		}
+		return
+	}
+
+	done := &StreamChunk{
+		Type:      StreamTypeDone,
+		Content:   resp.Content,
+		Done:      true,
+		RequestID: requestID,
+		Timestamp: time.Now().UnixMilli(),
+	}
+	if resp.contentStreamed {
+		// 流式路径：正文已逐 token 走 StreamTypeContent 下发。打标让路由层
+		// 把 Done.Content 仅当作解析/持久化用的权威正文（= 最终轮正文，不含中间轮
+		// 评论），不再二次推流——否则回答整段重复。
+		done.Metadata = map[string]interface{}{"content_streamed": true}
+	}
+	streamChan <- done
 }

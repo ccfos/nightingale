@@ -9,12 +9,11 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// executeDirect 执行单次 LLM 调用（无 ReAct 包装）。适用于无工具、纯文本生成的 action。
+// executeDirect 执行单次 LLM 调用（无工具循环包装）。适用于无工具、纯文本生成的 action。
 //
-// 跟 ReAct 的关键差异：
-//   - system prompt 不带 ReactSystemPrompt（~70 行格式说明），节省 ~1.5KB 输入 token
-//   - 输出不需要先写 Thought/Action/Action Input 包装，首字延迟降低
-//   - 不传 Observation: 作为 stop 序列（没工具，不需要保护）
+// 跟工具循环模式的关键差异：
+//   - system prompt 不带 NativeSystemPrompt，也不下发 tools 参数
+//   - 单次调用即终态，无迭代
 //   - 流式 token 用 StreamTypeContent 类型发出，router 会路由进 content 通道而非 reason
 func (a *Agent) executeDirect(ctx context.Context, req *AgentRequest, rc *runCtx) *AgentResponse {
 	// Direct 模式不消费 tools——如果上游配了，记 warn 但不中断（让 action 配置错误
@@ -84,8 +83,8 @@ func (a *Agent) executeDirectWithDone(ctx context.Context, req *AgentRequest, rc
 	}
 }
 
-// callLLMDirect 跟 callLLMWithStreamOutput 区别只在 chunk Type——这里发 StreamTypeContent，
-// 那边发 StreamTypeText。不复用是因为复用要加分支参数反而难读，独立 80 行更直观。
+// callLLMDirect 单次 LLM 调用：非流式直接返回正文；流式把 token 逐个以
+// StreamTypeContent 发出（不经 thinking/工具通道）。
 func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, streamChan chan *StreamChunk, requestID string) (string, error) {
 	if err := a.checkLLMClient(); err != nil {
 		return "", err
@@ -93,7 +92,7 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 
 	// 非流式
 	if streamChan == nil {
-		resp, err := a.llmClient.Generate(ctx, buildLLMRequest(messages, nil))
+		resp, err := a.llmClient.Generate(ctx, buildLLMRequest(messages))
 		if err != nil {
 			return "", fmt.Errorf("LLM generate error: %w", err)
 		}
@@ -102,7 +101,7 @@ func (a *Agent) callLLMDirect(ctx context.Context, messages []ChatMessage, strea
 
 	// 流式
 	tStreamStart := time.Now()
-	stream, err := a.llmClient.GenerateStream(ctx, buildLLMRequest(messages, nil))
+	stream, err := a.llmClient.GenerateStream(ctx, buildLLMRequest(messages))
 	if err != nil {
 		logger.Errorf("[Agent] direct GenerateStream failed provider=%s: %v", a.llmClient.Name(), err)
 		return "", fmt.Errorf("LLM stream error: %w", err)

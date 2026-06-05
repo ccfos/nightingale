@@ -16,14 +16,8 @@ import (
 
 const (
 	// Agent 模式
-	AgentModeReAct  = "react"  // 工具循环模式（默认），内部按 ToolProtocol 分流 native/text
-	AgentModeDirect = "direct" // 单次 LLM 调用，无 ReAct 格式包装，适用于无工具的纯生成 action
-
-	// 工具协议：loop 说一套内部表示，协议只是落线方式。native = 原生 function
-	// calling（tools 参数 + tool_calls，**默认**）；react = 三行文本协议
-	// （不支持原生 FC 的端点显式配置的降级 adapter）。
-	ToolProtocolReAct  = "react"
-	ToolProtocolNative = "native"
+	AgentModeReAct  = "react"  // 工具循环模式（默认）：原生 function calling loop
+	AgentModeDirect = "direct" // 单次 LLM 调用，无工具循环包装，适用于无工具的纯生成 action
 
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
@@ -36,11 +30,10 @@ const (
 	StreamTypeThinking   = "thinking"
 	StreamTypeToolCall   = "tool_call"
 	StreamTypeToolResult = "tool_result"
-	StreamTypeText       = "text"
-	StreamTypeContent    = "content" // Direct 模式 token，路由层归入 content 通道（非 reason）
+	StreamTypeContent    = "content" // 正文 token，路由层归入 content 通道（非 reason）
 	StreamTypeDone       = "done"
 	StreamTypeError      = "error"
-	// StreamTypeTranscript 携带本轮 ReAct 产生的规范消息（工具调用轮 + Observation 轮），
+	// StreamTypeTranscript 携带本轮工具循环产生的规范消息（assistant 工具调用轮 + tool 结果轮），
 	// 供路由层收集并持久化为下一轮可回放的结构化 transcript。仅在该 chunk 的 Transcript 字段非空。
 	// 它不写入 stream bus，也不转发给 A2A，纯粹是 agent→router 的内部带外通道。
 	StreamTypeTranscript = "transcript"
@@ -50,9 +43,6 @@ const (
 	StreamTypeInterrupt = "interrupt"
 
 	// 注：Agent 运行期默认值、HTTP 状态码上界等调优参数见 defaults.go。
-
-	// ReAct 特殊标记
-	ActionFinalAnswer = "Final Answer"
 )
 
 // ==================== Agent 核心类型 ====================
@@ -93,11 +83,6 @@ type AgentConfig struct {
 	Skills *SkillConfig `json:"skills,omitempty"`
 	MCP    *mcp.Config  `json:"mcp,omitempty"`
 	Stream bool         `json:"stream,omitempty"`
-
-	// ToolProtocol 选择工具落线协议：ToolProtocolNative | ToolProtocolReAct。
-	// 空值 = native（默认；语义由 ResolveToolProtocol 统一）。端点不支持原生
-	// function calling 时在 LLM 配置 ExtraConfig.tool_protocol 显式配 "react" 降级。
-	ToolProtocol string `json:"tool_protocol,omitempty"`
 
 	// HistoryBudgetBytes 历史投影预算（字节），0 = DefaultHistoryBudgetBytes。
 	// router 从 LLM 配置 ExtraConfig.context_length 粗略折算（token×3）。
@@ -157,12 +142,8 @@ type AgentResponse struct {
 	Success    bool        `json:"success"`         // 是否成功
 	Error      string      `json:"error,omitempty"` // 错误信息
 
-	// fallbackToReAct（仅包内）：原生 loop 首轮识别出端点不支持原生 FC，
-	// 请求 executeReAct 用文本协议重跑本轮。
-	fallbackToReAct bool
-
 	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
-	// 下发。executeReActWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
+	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
 	// 当作解析/持久化用的权威正文，不再二次推流（防思考/回答整段重复）。
 	contentStreamed bool
 }
@@ -179,7 +160,7 @@ type StreamChunk struct {
 	Error     string                 `json:"error,omitempty"`
 
 	// Transcript 仅在 Type==StreamTypeTranscript 时设置：本轮新追加的规范消息
-	// （按 wire 顺序，如 assistant 工具调用轮 + user "Observation:" 轮）。
+	// （按 wire 顺序，如 assistant 工具调用轮 + tool 结果轮）。
 	Transcript []ChatMessage `json:"transcript,omitempty"`
 }
 
@@ -248,9 +229,9 @@ type BuiltinToolFunc func(ctx context.Context, deps *ToolDeps, args map[string]i
 // 由适配层注入，核心 Agent 不关心具体实现
 type ExternalToolHandler func(ctx context.Context, tool *AgentTool, args map[string]interface{}, req *AgentRequest) (string, error)
 
-// ==================== ReAct 类型 ====================
+// ==================== 工具循环类型 ====================
 
-// ReActStep ReAct 循环中的一步
+// ReActStep 工具循环执行轨迹中的一步（reason-act 模式：思考 → 调工具 → 观测）
 type ReActStep struct {
 	Thought     string `json:"thought"`
 	Action      string `json:"action"`
@@ -258,7 +239,7 @@ type ReActStep struct {
 	Observation string `json:"observation"`
 }
 
-// ReActLoopConfig ReAct 循环配置
+// ReActLoopConfig 工具循环配置
 type ReActLoopConfig struct {
 	MaxIterations  int
 	TimeoutMessage string
@@ -271,13 +252,11 @@ type ReActLoopConfig struct {
 	StreamChan chan *StreamChunk
 	RequestID  string
 
-	// 完成判断
-	IsComplete           func(action string) bool
 	ExtractPartialResult bool
 
-	// EmitTranscript 为真时，循环在每次向上下文追加工具调用轮/Observation 轮（及格式
-	// 纠正轮）后，经 StreamChan 发一个 StreamTypeTranscript chunk，让路由层持久化本轮
-	// 完整 transcript。仅顶层 chat ReAct（executeReAct）置真。
+	// EmitTranscript 为真时，循环在每次向上下文追加工具调用轮/结果轮后，经
+	// StreamChan 发一个 StreamTypeTranscript chunk，让路由层持久化本轮完整
+	// transcript。仅顶层 chat（executeNative）置真。
 	EmitTranscript bool
 }
 
@@ -292,9 +271,8 @@ type runCtx struct {
 
 // ChatMessage OpenAI 格式的消息
 //
-// 工具字段是"结构化工具轮"的统一表示（原生 function calling 协议），与
-// llm.Message 一一对应并随 transcript 持久化；ReAct 文本协议不使用它们
-// （调用编码在 Content 文本里），两种协议共用同一 transcript schema。
+// 工具字段是"结构化工具轮"的统一表示（原生 function calling），与
+// llm.Message 一一对应并随 transcript 持久化。
 type ChatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`

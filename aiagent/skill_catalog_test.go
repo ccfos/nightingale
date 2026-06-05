@@ -20,7 +20,7 @@ func writeTestSkill(t *testing.T, skillsDir, name, desc string) {
 }
 
 // TestSkillCatalogInSystemPrompts: the always-present, sorted catalog
-// appears in BOTH protocol system prompts, excludes preloaded skills, and is
+// appears in the system prompt, excludes preloaded skills, and is
 // absent when the skill subsystem is off.
 func TestSkillCatalogInSystemPrompts(t *testing.T) {
 	skillsDir := t.TempDir()
@@ -41,11 +41,6 @@ func TestSkillCatalogInSystemPrompts(t *testing.T) {
 	// Deterministic ordering (prompt-cache friendly): a before b.
 	if strings.Index(native, "- test-skill-a:") > strings.Index(native, "- test-skill-b:") {
 		t.Fatal("catalog must be sorted by name")
-	}
-
-	react := a.buildReActSystemPrompt(&runCtx{})
-	if !strings.Contains(react, "Available Skills (on-demand)") {
-		t.Fatalf("react prompt missing catalog")
 	}
 
 	// Preloaded skills (RequiredSkills/agent 绑定) are excluded from the catalog.

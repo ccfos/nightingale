@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
+	"github.com/ccfos/nightingale/v6/aiagent/llm"
 )
 
 func msg(role, content string) aiagent.ChatMessage {
@@ -19,8 +20,8 @@ func TestAssembleTurnHistory(t *testing.T) {
 		msg("assistant", "a0"),
 	}
 	turnMsgs := []aiagent.ChatMessage{
-		msg("assistant", "Thought: x\nAction: update_dashboard\nAction Input: {\"id\":5}"),
-		msg("user", "Observation: {\"proposal_id\":\"dbprop_X\"}"),
+		{Role: "assistant", ToolCalls: []llm.ToolCall{{ID: "c1", Name: "update_dashboard", Arguments: `{"id":5}`}}},
+		{Role: llm.RoleTool, ToolCallID: "c1", ToolName: "update_dashboard", Content: `{"proposal_id":"dbprop_X"}`},
 	}
 
 	got := assembleTurnHistory(prev, "确认", turnMsgs, "已写回")
@@ -29,8 +30,8 @@ func TestAssembleTurnHistory(t *testing.T) {
 		msg("user", "q0"),
 		msg("assistant", "a0"),
 		msg("user", "确认"),
-		msg("assistant", "Thought: x\nAction: update_dashboard\nAction Input: {\"id\":5}"),
-		msg("user", "Observation: {\"proposal_id\":\"dbprop_X\"}"),
+		turnMsgs[0],
+		turnMsgs[1],
 		msg("assistant", "已写回"),
 	}
 	assertMsgsEqual(t, got, want)
@@ -68,15 +69,15 @@ func TestAssembleTurnHistory_EmptyFinal(t *testing.T) {
 }
 
 // TestProposalIDSurvivesToConfirmTurn is the headline correctness proof for Step 1
-// (design doc bug #2): a proposal_id returned in a tool Observation on turn N must
-// be visible to the model on the confirm turn N+1, while staying OUT of the intent
-// classifier's view.
+// (design doc bug #2): a proposal_id returned in a tool result on turn N must
+// be visible to the model on the confirm turn N+1.
 func TestProposalIDSurvivesToConfirmTurn(t *testing.T) {
-	// Turn N: the agent proposed a dashboard change; the tool Observation carries
-	// the proposal_id. This is exactly what the ReAct loop emits as turnMsgs.
+	// Turn N: the agent proposed a dashboard change; the tool result carries
+	// the proposal_id. This is exactly what the tool loop emits as turnMsgs.
 	turnMsgs := []aiagent.ChatMessage{
-		msg("assistant", "Thought: 生成提案\nAction: update_dashboard\nAction Input: {\"id\":5,\"panels\":[...]}"),
-		msg("user", "Observation: {\"proposal_id\":\"dbprop_e5c0147422b95ec0\",\"applied\":false,\"changes\":[\"panel-0 PromQL 包裹 max()\"]}"),
+		{Role: "assistant", ToolCalls: []llm.ToolCall{{ID: "c1", Name: "update_dashboard", Arguments: `{"id":5,"panels":[]}`}}},
+		{Role: llm.RoleTool, ToolCallID: "c1", ToolName: "update_dashboard",
+			Content: `{"proposal_id":"dbprop_e5c0147422b95ec0","applied":false,"changes":["panel-0 PromQL 包裹 max()"]}`},
 	}
 	turnN := assembleTurnHistory(nil, "把大盘5第一行改为显示最大值", turnMsgs, "已生成提案：第一行包裹 max()，确认吗？")
 
@@ -94,18 +95,9 @@ func TestProposalIDSurvivesToConfirmTurn(t *testing.T) {
 	}
 	reloaded := env.Messages // == AgentRequest.History on the confirm turn
 
-	// (1) The proposal_id reaches the model next turn.
+	// The proposal_id reaches the model next turn.
 	if !containsContent(reloaded, "dbprop_e5c0147422b95ec0") {
 		t.Fatalf("proposal_id did not survive into next-turn history: %+v", reloaded)
-	}
-
-	// (2) But the intent classifier's view stays clean (no Observation scaffolding).
-	vis := aiagent.VisibleConversation(reloaded)
-	if containsContent(vis, "dbprop_e5c0147422b95ec0") {
-		t.Fatalf("classifier view leaked the Observation/proposal_id: %+v", vis)
-	}
-	if containsContent(vis, "Observation:") {
-		t.Fatalf("classifier view contains an Observation turn: %+v", vis)
 	}
 }
 

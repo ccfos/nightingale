@@ -313,7 +313,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	extraConfig := llmCfg.ExtraConfig
 	// llmCallTimeout caps a single LLM HTTP call (per-iteration). agentTotalTimeout
-	// caps the entire ReAct loop across all tool calls. Multi-turn ReAct flows
+	// caps the entire tool loop across all tool calls. Multi-turn agent flows
 	// (e.g. dashboard creation: list_busi_groups → list_datasources → list_files
 	// → read_file → create_dashboard) easily run 7+ iterations, so the agent
 	// budget must be several times the per-call budget.
@@ -341,11 +341,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		// 路径把它平铺到 request body 顶层）。
 		//
 		// chat 路径不再自动注入"关思考"参数（NormalizeThinkingParams 仅存于连接测试
-		// probe 路径）：native（默认协议）下思考是一等公民——思考流接入 thinking 通道、
-		// 有状态思考协议（Anthropic 思考块回填 / Gemini thoughtSignature）已在 provider
-		// 适配层实现；react 降级下 reasoning 走独立通道（reasoning_content）同样不进
-		// 三行协议解析（见 llm_caller.go），代价只是每轮迭代的思考延迟。想关思考的
-		// 用户在 CustomParams 里按厂商字段显式配置即可。
+		// probe 路径）：思考是一等公民——思考流接入 thinking 通道、有状态思考协议
+		// （Anthropic 思考块回填 / Gemini thoughtSignature）已在 provider 适配层实现。
+		// 想关思考的用户在 CustomParams 里按厂商字段显式配置即可。
 		ExtraBody: extraConfig.CustomParams,
 	})
 	if err != nil {
@@ -513,7 +511,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		GuidedFollowup:     true, // 交互式 chat：末尾给可点选的"下一步"建议
 		Skills:             rt.resolveSkillConfig(handler, chatReq, agent),
 		MCP:                rt.buildMCPConfigForAgent(agent),
-		ToolProtocol:       llmCfg.ExtraConfig.ToolProtocol, // 默认 native；端点不支持原生 FC 时按 LLM 配置显式 react 降级
 		HistoryBudgetBytes: historyBudgetFromContextLength(llmCfg.ExtraConfig.ContextLength),
 	}, aiagent.WithLLMClient(llmClient), aiagent.WithToolDeps(toolDeps))
 
@@ -544,7 +541,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	var fullReasoning string
 	var createdAlertRules []string
 	var createdDashboards []string
-	var turnMsgs []aiagent.ChatMessage    // 本轮 ReAct 工具调用轮 + Observation 轮，用于持久化结构化 transcript
+	var turnMsgs []aiagent.ChatMessage    // 本轮工具调用轮 + 结果轮，用于持久化结构化 transcript
 	var pendingI *models.PendingInterrupt // 非空 = 本轮以人在环中断收尾（Step 4）
 	var interruptForm string              // input 类中断附带的 form_select 载荷（与 preflight 同契约）
 	executedTools := false
@@ -559,11 +556,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			msg.ChatID, msg.SeqID, kind, (tFirstToken - tAgentStart).Milliseconds(), tFirstToken.Milliseconds())
 	}
 
-	// reactDemux splits a ReAct raw stream into "reason" (everything up to
-	// "Final Answer:") and "content" (everything after). See reactStreamDemuxer
-	// for the rationale — without this split, the final-answer body would only
-	// reach the content channel as one big Done chunk, defeating streaming.
-	demux := &reactStreamDemuxer{}
 	for chunk := range streamChan {
 		select {
 		case <-parentCtx.Done():
@@ -583,26 +575,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				fullReasoning += delta
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
-		case aiagent.StreamTypeText:
-			delta := chunk.Delta
-			if delta == "" {
-				delta = chunk.Content
-			}
-			if delta == "" {
-				break
-			}
-			markFirstToken("text")
-			reasonPart, contentPart := demux.Feed(delta)
-			if reasonPart != "" {
-				fullReasoning += reasonPart
-				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: reasonPart, P: "reason"})
-			}
-			if contentPart != "" {
-				fullContent += contentPart
-				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: contentPart, P: "content"})
-			}
 		case aiagent.StreamTypeContent:
-			// Direct 模式：token 直接归 content 通道。同时累加到 fullContent，
+			// 正文 token 直接归 content 通道。同时累加到 fullContent，
 			// 因为 executeDirectWithDone 的 Done chunk 刻意把 Content 置空（避免重复
 			// append），但 router 末尾还要靠 fullContent 写最终 AssistantMessageResponse。
 			delta := chunk.Delta
@@ -628,13 +602,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
-			// ReAct iteration boundary: next StreamTypeText delta starts a
-			// fresh "Thought:" from a new LLM call, so the Final-Answer
-			// detection state must be cleared. Also push a P:"step" frame so
-			// downstream consumers (A2A bridge) can close out the current
-			// reasoning artifact and start a new one — without this, multi-
-			// step thoughts render as one undelimited blob.
-			demux.Reset()
+			// Iteration boundary: push a P:"step" frame so downstream
+			// consumers (A2A bridge) can close out the current reasoning
+			// artifact and start a new one — without this, multi-step
+			// thoughts render as one undelimited blob.
 			stepText := "tool_result"
 			if chunk.Metadata != nil {
 				if toolName, _ := chunk.Metadata["tool"].(string); toolName != "" {
@@ -663,9 +634,10 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				}
 			}
 		case aiagent.StreamTypeTranscript:
-			// 本轮 ReAct 产生的规范消息（工具调用轮 + Observation 轮）。收集起来在
-			// 末尾持久化为下一轮可回放的结构化 transcript，使工具产物（如 proposal_id）
-			// 跨轮对模型可见。纯 agent→router 内部通道：不写 stream bus、不转发 A2A。
+			// 本轮工具循环产生的规范消息（assistant 工具调用轮 + tool 结果轮）。收集
+			// 起来在末尾持久化为下一轮可回放的结构化 transcript，使工具产物（如
+			// proposal_id）跨轮对模型可见。纯 agent→router 内部通道：不写 stream
+			// bus、不转发 A2A。
 			turnMsgs = append(turnMsgs, chunk.Transcript...)
 		case aiagent.StreamTypeInterrupt:
 			// 工具人在环中断（Step 4）：记录 Pending，本轮以确认文案收尾（文案经
@@ -692,7 +664,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			rt.finishMessage(state, streamID, 500, errMsg)
 			return
 		case aiagent.StreamTypeDone:
-			// Native FC path (Metadata.content_streamed): the body already
+			// Streamed path (Metadata.content_streamed): the body already
 			// streamed through StreamTypeContent frame by frame, possibly
 			// preceded by intermediate-round commentary. Done.Content is the
 			// authoritative final body (final-round text only) — use it for
@@ -704,22 +676,12 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				}
 				break
 			}
-			// Normal ReAct path: fullContent was already accumulated from the
-			// post-marker portion of the raw stream above, so Done with
-			// non-empty Content here would just re-push the same body. Skip
-			// to avoid duplication — symmetric with Direct mode, where
-			// executeDirectWithDone deliberately leaves chunk.Content empty.
-			//
-			// Fallback path: reactFinalSeen=false means the LLM never emitted
-			// a "Final Answer:" marker (react.go's step.Action=="" branch
-			// where the whole response is treated as the answer). Without a
-			// marker we couldn't split content out from the raw stream, so
-			// rely on chunk.Content as the canonical body. The reason stream
-			// already carries this same text — we accept the duplication on
-			// this rare unstructured path rather than guess at boundaries.
-			// Also reached by non-streamed native bodies (interrupt prompts,
-			// max-iteration partials), which were never pushed to any channel.
-			if !demux.FinalSeen() && chunk.Content != "" {
+			// Non-streamed bodies (interrupt prompts, max-iteration partials):
+			// never pushed to any channel, so Done.Content is the only copy —
+			// adopt it and push to the content channel. Direct mode never
+			// lands here with content (executeDirectWithDone deliberately
+			// leaves chunk.Content empty after streaming).
+			if chunk.Content != "" {
 				fullContent = chunk.Content
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: chunk.Content, P: "content"})
 			}
@@ -756,8 +718,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 	if len(responses) == 0 {
 		// Defensive: some models wrap a markdown final answer in a JSON envelope
-		// like {"query": "## 结论\n..."}, conditioned by the shared ReAct system
-		// prompt's example. Unwrap before rendering as markdown so the user sees
+		// like {"query": "## 结论\n..."}, conditioned by tool-call argument
+		// examples. Unwrap before rendering as markdown so the user sees
 		// real newlines instead of literal "\n" escapes.
 		markdown := chat.UnwrapJSONEnvelope(fullContent)
 
@@ -1032,7 +994,7 @@ func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, hist
 
 // assembleTurnHistory builds the persisted conversation transcript for one turn:
 // prior history + the user query + this turn's tool-call/observation messages
-// (turnMsgs, emitted by the ReAct loop via StreamTypeTranscript) + a single
+// (turnMsgs, emitted by the tool loop via StreamTypeTranscript) + a single
 // terminal assistant message holding the cleaned final answer (fullContent).
 //
 // The terminal assistant turn is always (re)built here from fullContent rather

@@ -156,7 +156,7 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	case AgentModeDirect:
 		resp = a.executeDirect(timeoutCtx, req, rc)
 	default:
-		resp = a.executeReAct(timeoutCtx, req, rc)
+		resp = a.executeNative(timeoutCtx, req, rc)
 	}
 
 	return resp, nil
@@ -178,7 +178,7 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 		case AgentModeDirect:
 			a.executeDirectWithDone(ctx, req, rc)
 		default:
-			a.executeReActWithDone(ctx, req, rc)
+			a.executeNativeWithDone(ctx, req, rc)
 		}
 		logger.Infof("[Agent] Stream goroutine finished")
 	}()

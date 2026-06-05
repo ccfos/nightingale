@@ -2,14 +2,13 @@ package aiagent
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 )
 
 // 本文件实现上下文投影：canonical transcript（路由层持久化的完整历史）永不被
-// 有损改写，喂给模型的只是它的一个"投影"——在消息组装点（executeReAct /
-// executeNative）对 req.History 做确定性收敛：
+// 有损改写，喂给模型的只是它的一个"投影"——在消息组装点（executeNative）对
+// req.History 做确定性收敛：
 //
 //  1. 单条工具观测截断：超长观测（大查询结果等）截到 HistoryObservationCapBytes，
 //     保留头部（proposal_id 等关键产物都在 JSON 头部）。load_skill 的结果豁免——
@@ -20,9 +19,9 @@ import (
 //     到"调过什么工具"，丢的只是陈旧观测正文（对齐 Anthropic context editing
 //     clear_tool_uses 的零 LLM 确定性版：长会话的体积大头是工具结果，优先清
 //     它们能保住对话骨架，比直接掐头丢整段消息损失小得多）。
-//  3. 预算窗口：仍超预算时保留最新后缀，并保证窗口不以孤儿工具结果/Observation
-//     开窗——工具结果必须跟在它的 assistant 调用之后，否则 provider 以配对不完整
-//     拒绝（4xx）；优先从一条真实用户消息开始。被丢弃的部分用一条省略标记替代。
+//  3. 预算窗口：仍超预算时保留最新后缀，并保证窗口不以孤儿工具结果开窗——
+//     工具结果必须跟在它的 assistant 调用之后，否则 provider 以配对不完整
+//     拒绝（4xx）；优先从一条用户消息开始。被丢弃的部分用一条省略标记替代。
 //
 // 全部为纯确定性策略（零额外 LLM 成本）；LLM 摘要压缩可在其上替换第 3 步。
 
@@ -66,12 +65,11 @@ func projectHistory(history []ChatMessage, budget int) []ChatMessage {
 			if total <= budget {
 				break
 			}
-			cleared := clearedObservation(projected[i])
-			if len(cleared) >= len(projected[i].Content) {
+			if len(clearedObservationNote) >= len(projected[i].Content) {
 				continue // 原文已比占位文本短，清了不省反亏
 			}
-			total -= len(projected[i].Content) - len(cleared)
-			projected[i].Content = cleared
+			total -= len(projected[i].Content) - len(clearedObservationNote)
+			projected[i].Content = clearedObservationNote
 		}
 	}
 
@@ -90,8 +88,8 @@ func projectHistory(history []ChatMessage, budget int) []ChatMessage {
 		start = i
 	}
 
-	// 边界修正：窗口必须从一条真实用户消息开始（跳过孤儿工具结果 / Observation /
-	// ReAct 中间工具轮 / 无主 assistant 轮），最远推进到最后一条用户消息为止。
+	// 边界修正：窗口必须从一条用户消息开始（跳过孤儿工具结果 / 无主 assistant 轮），
+	// 最远推进到最后一条用户消息为止。
 	lastUser := len(projected) - 1
 	for lastUser > 0 && !isRealUserTurn(projected[lastUser]) {
 		lastUser--
@@ -99,7 +97,7 @@ func projectHistory(history []ChatMessage, budget int) []ChatMessage {
 	for start < lastUser && !isRealUserTurn(projected[start]) {
 		start++
 	}
-	// 最后一条真实 user 之后的内容单独就超预算时（start 已越过 lastUser），上面
+	// 最后一条 user 之后的内容单独就超预算时（start 已越过 lastUser），上面
 	// 的修正无从落点，窗口可能停在孤儿观测上——其 assistant 调用轮已被丢弃，
 	// 以它开窗会被 provider 以配对不完整拒绝（4xx）。继续跳过观测轮直到合法落点。
 	for start < len(projected)-1 && isObservationTurn(projected[start]) {
@@ -130,36 +128,23 @@ func msgSize(m ChatMessage) int {
 	return n
 }
 
-// clearedObservation 返回观测轮被清理后的占位文本。模型据此知道"这里曾有一条
-// 工具结果、需要时可重调工具"。文本协议的 Observation 用户轮必须保留
-// "Observation:" 前缀，isObservationTurn / isRealUserTurn 的分类才不漂移。
-func clearedObservation(m ChatMessage) string {
-	const note = "(历史工具结果已因上下文长度限制清理；如需该数据请重新调用对应工具)"
-	if m.Role == llm.RoleTool {
-		return note
-	}
-	return "Observation: " + note
-}
+// clearedObservationNote 是观测轮被清理后的占位文本。模型据此知道"这里曾有一条
+// 工具结果、需要时可重调工具"。
+const clearedObservationNote = "(历史工具结果已因上下文长度限制清理；如需该数据请重新调用对应工具)"
 
-// isObservationTurn 报告一条消息是否为工具观测轮：结构化 tool 结果轮或 ReAct
-// 文本协议的 "Observation:" 用户轮。观测轮不能脱离其 assistant 调用轮独立开窗。
+// isObservationTurn 报告一条消息是否为工具观测轮（结构化 tool 结果轮）。
+// 观测轮不能脱离其 assistant 调用轮独立开窗。
 func isObservationTurn(m ChatMessage) bool {
-	if m.Role == llm.RoleTool {
-		return true
-	}
-	return m.Role == "user" && strings.HasPrefix(strings.TrimSpace(m.Content), "Observation:")
+	return m.Role == llm.RoleTool
 }
 
 // isCappableObservation 报告一条观测是否可截断。load_skill 结果豁免（截断会
-// 破坏技能工作流），无法识别工具名的文本观测不豁免。
+// 破坏技能工作流）。
 func isCappableObservation(m ChatMessage) bool {
-	if m.Role == llm.RoleTool {
-		return m.ToolName != "load_skill"
-	}
-	return isObservationTurn(m)
+	return m.Role == llm.RoleTool && m.ToolName != "load_skill"
 }
 
-// isRealUserTurn 报告一条消息是否为真实用户发言（非 Observation 注入）。
+// isRealUserTurn 报告一条消息是否为用户发言。
 func isRealUserTurn(m ChatMessage) bool {
-	return m.Role == "user" && !strings.HasPrefix(strings.TrimSpace(m.Content), "Observation:")
+	return m.Role == "user"
 }

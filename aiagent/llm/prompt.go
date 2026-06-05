@@ -7,56 +7,6 @@ import (
 	"time"
 )
 
-// ToolInfo 工具信息（用于提示词构建）
-type ToolInfo struct {
-	Name        string
-	Description string
-	Parameters  []ToolParamInfo
-}
-
-// ToolParamInfo 工具参数信息
-type ToolParamInfo struct {
-	Name        string
-	Type        string
-	Description string
-	Required    bool
-}
-
-// PromptData 提示词模板数据
-type PromptData struct {
-	Platform string // 操作系统
-	Date     string // 当前日期
-}
-
-// BuildToolsSection 构建工具描述段落
-func BuildToolsSection(tools []ToolInfo) string {
-	if len(tools) == 0 {
-		return ""
-	}
-
-	var sb strings.Builder
-	sb.WriteString("## Available Tools\n\n")
-
-	for _, tool := range tools {
-		sb.WriteString(fmt.Sprintf("### %s\n", tool.Name))
-		sb.WriteString(fmt.Sprintf("%s\n", tool.Description))
-
-		if len(tool.Parameters) > 0 {
-			sb.WriteString("Parameters:\n")
-			for _, param := range tool.Parameters {
-				required := ""
-				if param.Required {
-					required = " (required)"
-				}
-				sb.WriteString(fmt.Sprintf("- %s (%s)%s: %s\n", param.Name, param.Type, required, param.Description))
-			}
-		}
-		sb.WriteString("\n")
-	}
-
-	return sb.String()
-}
-
 // BuildEnvSection 构建环境信息段落
 func BuildEnvSection() string {
 	var sb strings.Builder

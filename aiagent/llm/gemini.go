@@ -109,7 +109,6 @@ type geminiGenerationConfig struct {
 	Temperature     float64               `json:"temperature,omitempty"`
 	TopP            float64               `json:"topP,omitempty"`
 	MaxOutputTokens int                   `json:"maxOutputTokens,omitempty"`
-	StopSequences   []string              `json:"stopSequences,omitempty"`
 	ThinkingConfig  *geminiThinkingConfig `json:"thinkingConfig,omitempty"`
 }
 
@@ -273,8 +272,7 @@ func (g *Gemini) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 func (g *Gemini) convertRequest(req *GenerateRequest) *geminiRequest {
 	genCfg := &geminiGenerationConfig{
-		TopP:          req.TopP,
-		StopSequences: req.Stop,
+		TopP: req.TopP,
 	}
 
 	switch {

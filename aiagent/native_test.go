@@ -54,7 +54,7 @@ func (s *scriptedNativeLLM) GenerateStream(ctx context.Context, req *llm.Generat
 
 // TestRunNativeLoop_ContractAndTranscript drives one tool round (with OpenAI-style
 // fragmented arguments) + a final text round, and asserts the native loop honors
-// the established stream contract (same ToolCall/ToolResult shapes as ReAct) and
+// the established stream contract (ToolCall/ToolResult chunk shapes) and
 // emits a STRUCTURED transcript pair.
 func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
@@ -83,12 +83,9 @@ func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 		t.Fatalf("steps = %+v, want one tool step", resp.Steps)
 	}
 
-	var types []string
 	var toolCallChunk, toolResultChunk *StreamChunk
 	var transcripts [][]ChatMessage
-	sawText := false
 	for ch := range streamChan {
-		types = append(types, ch.Type)
 		switch ch.Type {
 		case StreamTypeToolCall:
 			toolCallChunk = ch
@@ -96,13 +93,11 @@ func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 			toolResultChunk = ch
 		case StreamTypeTranscript:
 			transcripts = append(transcripts, ch.Transcript)
-		case StreamTypeText:
-			sawText = true
 		}
 	}
 
-	// Contract: same chunk shapes as the ReAct loop, so router card-extraction
-	// and the A2A bridge need zero changes.
+	// Contract: the chunk shapes router card-extraction and the A2A bridge
+	// rely on.
 	if toolCallChunk == nil || toolCallChunk.Content != "noop_lookup" ||
 		toolCallChunk.Metadata["input"] != `{"id":5}` {
 		t.Fatalf("ToolCall chunk = %+v, want Content=name + merged input args", toolCallChunk)
@@ -110,9 +105,6 @@ func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 	if toolResultChunk == nil || toolResultChunk.Metadata["tool"] != "noop_lookup" ||
 		toolResultChunk.Content == "" {
 		t.Fatalf("ToolResult chunk = %+v, want Metadata.tool=name + observation content", toolResultChunk)
-	}
-	if sawText {
-		t.Fatalf("native loop must not emit StreamTypeText (ReAct-only channel); got %v", types)
 	}
 
 	// Structured transcript: assistant{ToolCalls} + tool{ToolCallID/ToolName}.
@@ -130,82 +122,18 @@ func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 	}
 }
 
-func TestResolveToolProtocol(t *testing.T) {
-	for in, want := range map[string]string{
-		"":        ToolProtocolNative, // 空值 = 默认 native
-		"native":  ToolProtocolNative,
-		"react":   ToolProtocolReAct, // 只有显式 react 走文本协议降级
-		"unknown": ToolProtocolNative,
-	} {
-		if got := ResolveToolProtocol(in); got != want {
-			t.Fatalf("ResolveToolProtocol(%q) = %q, want %q", in, got, want)
-		}
-	}
-}
-
-// TestExecuteReAct_DefaultsToNative：未配置 ToolProtocol（空值）即走原生 loop——
-// 证据是工具从原生 tool_calls 被执行（文本协议永远不会执行原生形态的调用）。
-func TestExecuteReAct_DefaultsToNative(t *testing.T) {
+// TestExecuteNative_EndToEnd：executeNative 端到端（非流式）——组装系统提示词
+// 与历史后，工具从原生 tool_calls 被执行，最终文本轮收敛为答案。
+func TestExecuteNative_EndToEnd(t *testing.T) {
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
 		{{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}}},
 		{{Content: "done"}},
 	}}
 	a := &Agent{
-		cfg:       &AgentConfig{MaxIterations: 3, Timeout: 30000, UserPromptRendered: "改大盘"}, // ToolProtocol 留空
+		cfg:       &AgentConfig{MaxIterations: 3, Timeout: 30000, UserPromptRendered: "改大盘"},
 		llmClient: fake,
 	}
-	resp := a.executeReAct(context.Background(), &AgentRequest{}, &runCtx{})
-	if !resp.Success || resp.Content != "done" || len(resp.Steps) != 1 {
-		t.Fatalf("resp = %+v, want native execution by default (1 tool step + final)", resp)
-	}
-}
-
-// TestExecuteReAct_AutoFallbackToText：默认 native 下，端点不支持原生 FC（首轮
-// 零 tool_calls、正文是文本形态的工具调用）→ 当轮自动降级为 ReAct 文本协议重跑，
-// 而不是把那坨文本当最终答案返回。
-func TestExecuteReAct_AutoFallbackToText(t *testing.T) {
-	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
-		// 第 1 次调用（native 尝试）：端点无视 tools 参数，把工具调用吐进正文
-		{{Content: `{"name":"noop_lookup","arguments":{"id":5}}`}},
-		// 第 2 次调用（react 重跑的首轮）：规范 ReAct 最终答案
-		{{Content: "Thought: ok\nAction: Final Answer\nAction Input: 答案"}},
-	}}
-	a := &Agent{
-		cfg:       &AgentConfig{MaxIterations: 3, Timeout: 30000, UserPromptRendered: "查一下"}, // ToolProtocol 留空 = native 默认
-		llmClient: fake,
-	}
-	rc := &runCtx{tools: []AgentTool{{Name: "noop_lookup", Type: ToolTypeBuiltin}}} // 有工具表才会触发探测
-
-	resp := a.executeReAct(context.Background(), &AgentRequest{}, rc)
-	if !resp.Success {
-		t.Fatalf("resp = %+v", resp)
-	}
-	if strings.TrimSpace(resp.Content) != "答案" {
-		t.Fatalf("content = %q, want the ReAct rerun's final answer (not the raw text-form tool call)", resp.Content)
-	}
-	if fake.call != 2 {
-		t.Fatalf("LLM called %d times, want 2 (native attempt + react rerun)", fake.call)
-	}
-}
-
-// TestExecuteReAct_DispatchesNative proves the single protocol seam: with
-// ToolProtocol=native, executeReAct hands the whole run to the native loop
-// (which executes tools from native tool_calls — the text loop never would).
-func TestExecuteReAct_DispatchesNative(t *testing.T) {
-	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
-		{{ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}}},
-		{{Content: "done"}},
-	}}
-	a := &Agent{
-		cfg: &AgentConfig{
-			ToolProtocol:       ToolProtocolNative,
-			MaxIterations:      3,
-			Timeout:            30000,
-			UserPromptRendered: "改大盘",
-		},
-		llmClient: fake,
-	}
-	resp := a.executeReAct(context.Background(), &AgentRequest{}, &runCtx{})
+	resp := a.executeNative(context.Background(), &AgentRequest{}, &runCtx{})
 	if !resp.Success || resp.Content != "done" || len(resp.Steps) != 1 {
 		t.Fatalf("resp = %+v, want native execution (1 tool step + final 'done')", resp)
 	}
@@ -401,39 +329,9 @@ func TestRunNativeLoop_ContentChannelExclusive(t *testing.T) {
 	}
 }
 
-// TestRunNativeLoop_FallbackHoldsContent：首轮疑似文本形态工具调用的正文被押住，
-// fallback 触发时绝不进 content 通道——ReAct 重跑的答案才是唯一正文，不重复。
-func TestRunNativeLoop_FallbackHoldsContent(t *testing.T) {
-	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
-		{
-			{Content: `{"name":"noop_lookup",`},
-			{Content: `"arguments":{"id":5}}`},
-		},
-	}}
-	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
-
-	tools := []AgentTool{{Name: "noop_lookup", Type: ToolTypeBuiltin}}
-	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "查"}}, buildNativeToolDefs(tools), &ReActLoopConfig{
-		MaxIterations: 3,
-		StreamChan:    streamChan,
-		Tools:         tools,
-	})
-	close(streamChan)
-
-	if !resp.fallbackToReAct {
-		t.Fatalf("resp = %+v, want fallbackToReAct", resp)
-	}
-	for ch := range streamChan {
-		if ch.Type == StreamTypeContent {
-			t.Fatalf("suspected text-form tool call leaked to content channel: %q", ch.Delta)
-		}
-	}
-}
-
-// TestRunNativeLoop_HeldInnocentContentFlushes：首轮带工具、正文以普通文字开头
-// → 押后判定立即证伪，正文照常进 content 通道（整段补发 + 后续逐 token）。
-func TestRunNativeLoop_HeldInnocentContentFlushes(t *testing.T) {
+// TestRunNativeLoop_ContentStreamsWithToolsOffered：首轮带工具、模型直接出正文
+// → 正文不被押住、不丢失，逐 token 进 content 通道。
+func TestRunNativeLoop_ContentStreamsWithToolsOffered(t *testing.T) {
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
 		{
 			{Content: "好的，"},
@@ -462,27 +360,5 @@ func TestRunNativeLoop_HeldInnocentContentFlushes(t *testing.T) {
 	}
 	if contentDeltas != "好的，这是答案" {
 		t.Fatalf("content channel = %q, want full body", contentDeltas)
-	}
-}
-
-// TestLooksLikeNativeFallback：降级判定与正文押后同口径——只认"裸 JSON/标签/
-// 围栏起头"的文本形态工具调用；普通文字起头（即使中段嵌了工具 JSON）不降级。
-func TestLooksLikeNativeFallback(t *testing.T) {
-	cases := []struct {
-		in   string
-		want bool
-	}{
-		{`{"name":"t","arguments":{}}`, true},
-		{"  <tool_call>{\"name\":\"t\"}</tool_call>", true},
-		{"```json\n{\"name\":\"t\",\"arguments\":{}}\n```", true},
-		{`[{"name":"t","arguments":{}}]`, true},
-		{"正常的 markdown 答案", false},
-		{`先解释一下，然后 {"name":"t","arguments":{}}`, false},
-		{"", false},
-	}
-	for _, c := range cases {
-		if got := looksLikeNativeFallback(c.in); got != c.want {
-			t.Fatalf("looksLikeNativeFallback(%q) = %v, want %v", c.in, got, c.want)
-		}
 	}
 }

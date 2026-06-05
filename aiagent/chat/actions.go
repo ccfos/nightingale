@@ -39,11 +39,11 @@ type ActionHandler struct {
 	// 返回空表示"本次不预载任何 skill"（注意不同于"未声明此字段"——未声明走 agent 默认配置）。
 	RequiredSkills func(req *AIChatRequest) []string
 
-	// AgentMode 覆盖默认 ReAct 模式。空字符串走 ReAct。AgentModeDirect 适用于：
+	// AgentMode 覆盖默认 ReAct（工具循环）模式。空字符串走工具循环。AgentModeDirect 适用于：
 	//   1. SelectTools 为 nil 或返回空（无工具调用）
 	//   2. RequiredSkills 涉及的 skill 不含 skill_tools
 	//   3. 单轮纯文本生成
-	// 满足以上条件时改 Direct 可省 ReAct 的 Thought/Action 包装开销。
+	// 满足以上条件时改 Direct 可省 NativeSystemPrompt + tools 参数 + 循环调度的开销。
 	AgentMode string
 }
 

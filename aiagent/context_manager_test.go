@@ -30,20 +30,17 @@ func TestProjectHistory_CapsOversizedObservation(t *testing.T) {
 	h := []ChatMessage{
 		{Role: "user", Content: "查一下"},
 		{Role: llm.RoleTool, ToolCallID: "c1", ToolName: "query_prometheus", Content: big},
-		{Role: "user", Content: "Observation: " + big}, // ReAct 文本形态同样截断
 		{Role: "assistant", Content: "done"},
 	}
 	got := projectHistory(h, 10*1024*1024) // 预算充裕，只测截断
-	for _, i := range []int{1, 2} {
-		if len(got[i].Content) > HistoryObservationCapBytes+200 {
-			t.Fatalf("[%d] not capped: %d bytes", i, len(got[i].Content))
-		}
-		if !strings.Contains(got[i].Content, "dbprop_head") {
-			t.Fatalf("[%d] head (with proposal_id) must survive the cap", i)
-		}
-		if !strings.Contains(got[i].Content, "已截断") {
-			t.Fatalf("[%d] missing truncation note", i)
-		}
+	if len(got[1].Content) > HistoryObservationCapBytes+200 {
+		t.Fatalf("not capped: %d bytes", len(got[1].Content))
+	}
+	if !strings.Contains(got[1].Content, "dbprop_head") {
+		t.Fatal("head (with proposal_id) must survive the cap")
+	}
+	if !strings.Contains(got[1].Content, "已截断") {
+		t.Fatal("missing truncation note")
 	}
 	// 原切片不被修改（投影不回写）
 	if len(h[1].Content) <= HistoryObservationCapBytes {
@@ -136,38 +133,6 @@ func TestProjectHistory_ClearingExemptsLoadSkill(t *testing.T) {
 	// 普通旧观测确实被清了（证明清理路径在工作，而不是预算根本没超）
 	if !strings.Contains(got[4].Content, "已因上下文长度限制清理") {
 		t.Fatalf("ordinary old observation must be cleared, got %q", truncStr(got[4].Content, 80))
-	}
-}
-
-// TestProjectHistory_ReActObservationClearedKeepsPrefix：文本协议的 Observation
-// 用户轮被清理后必须保留 "Observation:" 前缀，否则窗口边界修正会把它误判成
-// 真实用户消息。
-func TestProjectHistory_ReActObservationClearedKeepsPrefix(t *testing.T) {
-	filler := strings.Repeat("z", 8*1024)
-	var h []ChatMessage
-	for i := 0; i < 10; i++ {
-		h = append(h,
-			ChatMessage{Role: "user", Content: "问题"},
-			ChatMessage{Role: "assistant", Content: "Thought: ...\nAction: get_x\nAction Input: {}"},
-			ChatMessage{Role: "user", Content: "Observation: " + filler},
-			ChatMessage{Role: "assistant", Content: "答"},
-		)
-	}
-	got := projectHistory(h, 52*1024)
-	cleared := false
-	for _, m := range got {
-		if m.Role == "user" && strings.Contains(m.Content, "已因上下文长度限制清理") {
-			cleared = true
-			if !strings.HasPrefix(m.Content, "Observation:") {
-				t.Fatalf("cleared ReAct observation must keep its prefix, got %q", truncStr(m.Content, 80))
-			}
-			if isRealUserTurn(m) {
-				t.Fatal("cleared observation must not be classified as a real user turn")
-			}
-		}
-	}
-	if !cleared {
-		t.Fatal("expected at least one cleared ReAct observation")
 	}
 }
 

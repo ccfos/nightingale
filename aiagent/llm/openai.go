@@ -68,7 +68,6 @@ type openAIRequest struct {
 	MaxTokens   int             `json:"max_tokens,omitempty"`
 	Temperature float64         `json:"temperature,omitempty"`
 	TopP        float64         `json:"top_p,omitempty"`
-	Stop        []string        `json:"stop,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
 
 	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
@@ -287,7 +286,6 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
 		Model:     o.config.Model,
 		TopP:      req.TopP,
-		Stop:      req.Stop,
 		extraBody: o.config.ExtraBody,
 	}
 

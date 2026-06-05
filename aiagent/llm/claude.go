@@ -46,7 +46,6 @@ type claudeRequest struct {
 	MaxTokens   int             `json:"max_tokens"`
 	Temperature float64         `json:"temperature,omitempty"`
 	TopP        float64         `json:"top_p,omitempty"`
-	Stop        []string        `json:"stop_sequences,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
 	Tools       []claudeTool    `json:"tools,omitempty"`
 
@@ -317,7 +316,6 @@ func (c *Claude) convertRequest(req *GenerateRequest) *claudeRequest {
 	claudeReq := &claudeRequest{
 		Model:     c.config.Model,
 		TopP:      req.TopP,
-		Stop:      req.Stop,
 		extraBody: c.config.ExtraBody,
 	}
 

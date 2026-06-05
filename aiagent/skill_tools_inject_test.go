@@ -71,21 +71,17 @@ func TestSkillNameFromLoadHelpers(t *testing.T) {
 	}
 }
 
-// TestAppendToolsFromLoadedSkills：跨轮回放——history 中 native / ReAct 文本两种
-// 形态的 load_skill 结果轮都能让已加载技能的工具重新进表。
+// TestAppendToolsFromLoadedSkills：跨轮回放——history 中的 load_skill 结果轮
+// 能让已加载技能的工具重新进表。
 func TestAppendToolsFromLoadedSkills(t *testing.T) {
-	registerFakeBuiltinTools("inj_replay_a", "inj_replay_b")
+	registerFakeBuiltinTools("inj_replay_a")
 	dir := t.TempDir()
 	writeInjectTestSkill(t, dir, "skill-native", []string{"inj_replay_a"})
-	writeInjectTestSkill(t, dir, "skill-react", []string{"inj_replay_b"})
 	a := &Agent{cfg: &AgentConfig{Skills: &SkillConfig{}}, skillRegistry: NewSkillRegistry(dir)}
 
 	history := []ChatMessage{
 		{Role: "user", Content: "建个大盘"},
-		// native 形态
 		{Role: llm.RoleTool, ToolCallID: "c1", ToolName: "load_skill", Content: "# Skill: skill-native\n\n工作流..."},
-		// ReAct 文本形态
-		{Role: "user", Content: "Observation: # Skill: skill-react\n工作流..."},
 		// 普通观测不应触发
 		{Role: llm.RoleTool, ToolCallID: "c2", ToolName: "query_prometheus", Content: "{}"},
 	}
@@ -94,10 +90,10 @@ func TestAppendToolsFromLoadedSkills(t *testing.T) {
 	for _, tl := range tools {
 		names[tl.Name] = true
 	}
-	if !names["inj_replay_a"] || !names["inj_replay_b"] {
+	if !names["inj_replay_a"] {
 		t.Fatalf("replayed tools missing: %+v", tools)
 	}
-	if len(tools) != 2 {
+	if len(tools) != 1 {
 		t.Fatalf("unexpected extra tools: %+v", tools)
 	}
 }

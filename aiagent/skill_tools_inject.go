@@ -68,26 +68,18 @@ func skillNameFromLoadResult(result string) string {
 	return strings.TrimSpace(rest)
 }
 
-// appendToolsFromLoadedSkills 扫描 history 中已成功加载的技能（load_skill 结果
-// 轮），把它们声明的 builtin_tools 注入 tools——跨轮回放：上一轮加载的技能在
-// 本轮 transcript 里仍可见，其工具也必须仍可调。覆盖两种协议形态：
-//   - native：role=tool 且 ToolName=load_skill 的结果轮；
-//   - ReAct 文本：user 轮 "Observation: # Skill: <name>"。
+// appendToolsFromLoadedSkills 扫描 history 中已成功加载的技能（role=tool 且
+// ToolName=load_skill 的结果轮），把它们声明的 builtin_tools 注入 tools——
+// 跨轮回放：上一轮加载的技能在本轮 transcript 里仍可见，其工具也必须仍可调。
 func (a *Agent) appendToolsFromLoadedSkills(tools []AgentTool, history []ChatMessage) []AgentTool {
 	if a.skillRegistry == nil {
 		return tools
 	}
 	for _, m := range history {
-		name := ""
-		switch {
-		case m.Role == llm.RoleTool && m.ToolName == "load_skill":
-			name = skillNameFromLoadResult(m.Content)
-		case m.Role == "user":
-			obs := strings.TrimSpace(m.Content)
-			if strings.HasPrefix(obs, "Observation:") {
-				name = skillNameFromLoadResult(strings.TrimSpace(strings.TrimPrefix(obs, "Observation:")))
-			}
+		if m.Role != llm.RoleTool || m.ToolName != "load_skill" {
+			continue
 		}
+		name := skillNameFromLoadResult(m.Content)
 		if name == "" {
 			continue
 		}

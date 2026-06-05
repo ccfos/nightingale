@@ -19,11 +19,6 @@ type LLMExtraConfig struct {
 	Temperature    *float64          `json:"temperature,omitempty"`
 	MaxTokens      *int              `json:"max_tokens,omitempty"`
 	ContextLength  *int              `json:"context_length,omitempty"`
-
-	// ToolProtocol 选择 agent 的工具落线协议："native"（原生 function calling，
-	// **默认**，空值即 native）或 "react"（三行文本协议）。端点不支持原生 FC 时
-	// 显式配 "react" 降级。
-	ToolProtocol string `json:"tool_protocol,omitempty"`
 }
 
 type AILLMConfig struct {

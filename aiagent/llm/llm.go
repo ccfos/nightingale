@@ -38,7 +38,7 @@ const (
 // Message represents a chat message
 //
 // 工具相关字段构成统一的"结构化工具轮"表示，由各 provider 的 convertRequest
-// 翻译成原生形态；ReAct 文本协议不使用它们（调用编码在 Content 里）。
+// 翻译成原生形态。
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
@@ -92,7 +92,6 @@ type GenerateRequest struct {
 	MaxTokens   *int             `json:"max_tokens,omitempty"`
 	Temperature *float64         `json:"temperature,omitempty"`
 	TopP        float64          `json:"top_p,omitempty"`
-	Stop        []string         `json:"stop,omitempty"`
 	Stream      bool             `json:"stream,omitempty"`
 }
 
