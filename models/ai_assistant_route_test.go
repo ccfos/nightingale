@@ -3,15 +3,15 @@ package models
 import "testing"
 
 // TestConversationRouteSurvivesEncodeDecode proves the persisted route state
-// round-trips through the gzip+base64 row encoding, so a
-// follow-up turn really can inherit the previous turn's action/edit target.
+// round-trips through the gzip+base64 row encoding, so a follow-up form
+// submission really can inherit the previous turn's action.
 func TestConversationRouteSurvivesEncodeDecode(t *testing.T) {
 	msg := AssistantMessage{
 		ChatID: "c1",
 		SeqID:  3,
 		Extra: AssistantMessageExtra{
 			HistoryMessages: []byte(`{"schema_version":1,"messages":[]}`),
-			Route:           &ConversationRoute{ActionKey: "edit", EditTarget: "dashboard"},
+			Route:           &ConversationRoute{ActionKey: "creation", AwaitingForm: true},
 		},
 	}
 
@@ -26,8 +26,8 @@ func TestConversationRouteSurvivesEncodeDecode(t *testing.T) {
 	if back == nil || back.Extra.Route == nil {
 		t.Fatalf("route lost in round-trip: %+v", back)
 	}
-	if back.Extra.Route.ActionKey != "edit" || back.Extra.Route.EditTarget != "dashboard" {
-		t.Fatalf("route = %+v, want {edit dashboard}", back.Extra.Route)
+	if back.Extra.Route.ActionKey != "creation" || !back.Extra.Route.AwaitingForm {
+		t.Fatalf("route = %+v, want {creation awaiting_form}", back.Extra.Route)
 	}
 	if string(back.Extra.HistoryMessages) != `{"schema_version":1,"messages":[]}` {
 		t.Fatalf("history blob corrupted: %s", back.Extra.HistoryMessages)

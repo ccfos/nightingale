@@ -11,7 +11,8 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-// 本文件实现原生 function-calling 工具循环（AgentModeReAct 的唯一执行体）：
+// 本文件实现 agent 的唯一执行体：原生 function-calling 工具循环（ReAct 文本
+// 协议与无工具的 Direct 模式均已删，不存在其他执行路径）。
 // 工具经 tools 参数下发、调用经 tool_calls 解析，结构化 transcript 持久化。
 //
 // 流式通道约定（与路由层抽卡/A2A 的既有契约严格一致；字段独占路由：
@@ -50,7 +51,7 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 	logger.Infof("[Agent] native starting: messages=%d, system_len=%d, user_len=%d, history=%d, tools=%d, streaming=%v",
 		len(messages), len(systemPrompt), len(userMessage), len(req.History), len(rc.tools), req.StreamChan != nil)
 
-	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(rc.tools), &ReActLoopConfig{
+	return a.runNativeLoop(ctx, req, messages, buildNativeToolDefs(rc.tools), &ToolLoopConfig{
 		MaxIterations:        a.maxIterationsForSkills(rc),
 		TimeoutMessage:       "agent execution timeout",
 		LogPrefix:            "AI Agent(native)",
@@ -65,10 +66,10 @@ func (a *Agent) executeNative(ctx context.Context, req *AgentRequest, rc *runCtx
 // runNativeLoop 原生 function-calling 循环：调 LLM（带 tools）→ 无 tool_calls
 // 即最终答案；有则逐个执行、回灌结构化 tool 结果轮，并 emit 流式事件 +
 // 结构化 transcript。
-func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages []ChatMessage, toolDefs []llm.ToolDefinition, config *ReActLoopConfig) *AgentResponse {
-	resp := &AgentResponse{Steps: []ReActStep{}}
+func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages []ChatMessage, toolDefs []llm.ToolDefinition, config *ToolLoopConfig) *AgentResponse {
+	resp := &AgentResponse{Steps: []ToolStep{}}
 	streaming := config.StreamChan != nil
-	dedup := newTurnWriteDeduper() // 写类工具轮内幂等
+	dedup := newTurnWriteDeduper() // 写类工具幂等：整个循环（跨迭代）内同名同参只执行一次
 
 	for iteration := 0; iteration < config.MaxIterations; iteration++ {
 		select {
@@ -123,7 +124,7 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 		turn := []ChatMessage{asstTurn}
 
 		for _, tc := range calls {
-			step := ReActStep{Thought: content, Action: tc.Name, ActionInput: tc.Arguments}
+			step := ToolStep{Thought: content, Action: tc.Name, ActionInput: tc.Arguments}
 
 			if streaming {
 				config.StreamChan <- &StreamChunk{
@@ -199,13 +200,13 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 	return resp
 }
 
-// callLLMNative 以原生 tools 参数调用 LLM 并聚合一轮结果（正文、工具调用、
-// 思考块）。
+// callLLMNative 以原生 tools 参数调用 LLM 并聚合单次调用的结果（正文、
+// 工具调用、思考块）。
 //
 // 流式时按字段独占路由（杜绝"思考面板 ≡ 回答"的双发）：推理增量走
 // StreamTypeThinking，正文增量走 StreamTypeContent，互斥。
-// 工具调用增量按"空 ID+空 Name → 续接上一个调用的 Arguments"规则合并 OpenAI
-// 风格的分片（provider 流式把一次调用的 arguments 拆成多个 delta 下发）；
+// 工具调用由各 provider 在流内聚合完整后整块抛出（OpenAI 按 index 归槽、
+// Claude 在 content_block_stop 收尾），这里直接累积即可；
 // Anthropic 系的完整思考块（含签名）在块收尾时整块到达，累积后随 assistant 轮回填。
 func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolDefs []llm.ToolDefinition, streamChan chan *StreamChunk, requestID string) (string, []llm.ToolCall, []llm.ThinkingBlock, error) {
 	if err := a.checkLLMClient(); err != nil {
@@ -256,13 +257,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 			content.WriteString(chunk.Content)
 			emit(StreamTypeContent, chunk.Content)
 		}
-		for _, tc := range chunk.ToolCalls {
-			if tc.ID == "" && tc.Name == "" && len(calls) > 0 {
-				calls[len(calls)-1].Arguments += tc.Arguments
-			} else {
-				calls = append(calls, tc)
-			}
-		}
+		calls = append(calls, chunk.ToolCalls...)
 		if chunk.Done {
 			break
 		}
@@ -336,7 +331,7 @@ func (a *Agent) maxIterationsForSkills(rc *runCtx) int {
 }
 
 // emitInterrupt 把工具的人在环中断交给路由层（持久化 Pending 并结束本轮）。
-func emitInterrupt(config *ReActLoopConfig, ti *ToolInterrupt, toolName string) {
+func emitInterrupt(config *ToolLoopConfig, ti *ToolInterrupt, toolName string) {
 	if config.StreamChan == nil {
 		return
 	}
@@ -358,7 +353,7 @@ func emitInterrupt(config *ReActLoopConfig, ti *ToolInterrupt, toolName string) 
 
 // emitTranscript 在流式且开启 EmitTranscript 时，把本轮新追加的规范消息经 StreamChan
 // 交给路由层持久化。非流式或关闭时为 no-op。
-func emitTranscript(config *ReActLoopConfig, msgs ...ChatMessage) {
+func emitTranscript(config *ToolLoopConfig, msgs ...ChatMessage) {
 	if config.StreamChan == nil || !config.EmitTranscript || len(msgs) == 0 {
 		return
 	}

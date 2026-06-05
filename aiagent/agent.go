@@ -151,15 +151,7 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	// 非流式模式
 	defer cancel()
 
-	var resp *AgentResponse
-	switch a.cfg.AgentMode {
-	case AgentModeDirect:
-		resp = a.executeDirect(timeoutCtx, req, rc)
-	default:
-		resp = a.executeNative(timeoutCtx, req, rc)
-	}
-
-	return resp, nil
+	return a.executeNative(timeoutCtx, req, rc), nil
 }
 
 // runWithStream 流式执行 - 启动 goroutine 后立即返回
@@ -173,13 +165,8 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 			defer cancel()
 		}
 
-		logger.Infof("[Agent] Stream goroutine started, mode=%s", a.cfg.AgentMode)
-		switch a.cfg.AgentMode {
-		case AgentModeDirect:
-			a.executeDirectWithDone(ctx, req, rc)
-		default:
-			a.executeNativeWithDone(ctx, req, rc)
-		}
+		logger.Infof("[Agent] Stream goroutine started")
+		a.executeNativeWithDone(ctx, req, rc)
 		logger.Infof("[Agent] Stream goroutine finished")
 	}()
 
@@ -216,9 +203,6 @@ func (a *Agent) applyDefaults() {
 	}
 	if cfg.OutputField == "" {
 		cfg.OutputField = "ai_analysis"
-	}
-	if cfg.AgentMode == "" {
-		cfg.AgentMode = AgentModeReAct
 	}
 
 	// MCP 初始化

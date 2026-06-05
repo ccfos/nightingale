@@ -80,16 +80,12 @@ type PendingInterrupt struct {
 	SeqID      int64             `json:"seq_id"`      // 提案所在轮
 }
 
-// ConversationRoute 会话级路由状态，随每条 AssistantMessage 持久化、下一轮加载继承。
+// ConversationRoute 会话级路由状态，随每条 AssistantMessage 持久化、下一轮加载读取。
 type ConversationRoute struct {
-	// ActionKey 本轮最终解析出的 action（如 "edit"/"creation"），作为下一轮意图
-	// 分类的先验：延续性消息保持不变，仅显式切换话题时改变。
+	// ActionKey 本轮最终解析出的 action（如 "creation"/"general_chat"）。
+	// 仅在表单提交轮（上轮 AwaitingForm + 本轮带 action.param）被确定性继承；
+	// 普通延续轮不继承，由 resolveActionKey 重新解析。
 	ActionKey string `json:"action_key,omitempty"`
-
-	// EditTarget 是 edit action 的资源子路由：EditTargetDashboard | EditTargetAlertRule
-	// （aiagent/chat 包定义）。无信号的"确认"靠它续接上一轮在编辑的资源，
-	// 而不是兜底到告警规则工作流。非 edit 轮为空。
-	EditTarget string `json:"edit_target,omitempty"`
 
 	// AwaitingForm 为真 = 本轮以 form_select 表单收尾（preflight 表单或写工具的
 	// input 中断），等待用户提交。下一轮带 action.param 的提交据此确定性继承
@@ -134,21 +130,12 @@ type AssistantMessageResponse struct {
 
 type AssistantActionKey string
 
+// 仅存对话路径实际可达的两个 action（路由收缩 + fe 剥 action.key 后，
+// 历史上的专用 action 常量已随 chat.registry 条目一并删除；
+// 未知 key 由 router 兜底降级到 general_chat）。
 const (
-	ActionKeyQueryGenerator      AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat         AssistantActionKey = "general_chat"
-	ActionKeyCreation            AssistantActionKey = "creation"
-	ActionKeyEdit                AssistantActionKey = "edit"
-	ActionKeyTroubleshooting     AssistantActionKey = "troubleshooting"
-	ActionKeyNotifyTemplate      AssistantActionKey = "notify_template_generator"
-	ActionKeyNotifyChannel       AssistantActionKey = "notify_channel_copilot"
-	ActionKeyDatasourceDiagnose  AssistantActionKey = "datasource_diagnose"
-	ActionKeyHostHealthDiagnose  AssistantActionKey = "host_health_diagnose"
-	ActionKeyHostOnboardDiagnose AssistantActionKey = "host_onboard_diagnose"
-	ActionKeyTaskTplCopilot      AssistantActionKey = "task_tpl_copilot"
-	ActionKeyAutoHealRecommend   AssistantActionKey = "auto_heal_recommend"
-	ActionKeyAgentDeployGuide    AssistantActionKey = "agent_deploy_guide"
-	ActionKeyDocQA               AssistantActionKey = "doc_qa"
+	ActionKeyGeneralChat AssistantActionKey = "general_chat"
+	ActionKeyCreation    AssistantActionKey = "creation"
 )
 
 type AssistantAction struct {

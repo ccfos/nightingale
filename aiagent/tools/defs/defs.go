@@ -106,7 +106,7 @@ var ListAlertRules = aiagent.AgentTool{
 
 var GetAlertRuleDetail = aiagent.AgentTool{
 	Name:        "get_alert_rule_detail",
-	Description: "获取单条告警规则的详细信息",
+	Description: "获取单条告警规则的详细信息，含 rule_config（查询/触发条件/阈值）、执行频率、持续时长等",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "告警规则ID", Required: true},

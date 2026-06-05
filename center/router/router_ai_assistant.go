@@ -245,9 +245,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	if msg.SeqID > 1 {
 		prevMsg, _ := models.AssistantMessageGet(rt.Ctx, msg.ChatID, msg.SeqID-1)
 		if prevMsg != nil {
-			// Route state: the previous turn's resolved action + edit sub-route
-			// ("routing is state") — continuation turns inherit instead of
-			// re-deriving from a contentless message.
+			// Route state: the previous turn's resolved action。仅表单提交轮
+			// （上轮 AwaitingForm + 本轮带 action.param）确定性继承 ActionKey；
+			// 普通延续轮重新解析（落回 general_chat）。
 			prevRoute = prevMsg.Extra.Route
 			// Pending interrupt: the previous turn ended awaiting user confirmation.
 			prevPending = prevMsg.Extra.Pending
@@ -268,7 +268,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// 人在环 resume 短路：上一轮以待确认中断收尾时，
 	// 明确的确认/拒绝由运行时确定性处理（确认 = 直接重放工具 apply 腿，零 LLM），
-	// 不进入意图分类与 agent 流程；语义不明的回复回归正常流程，pending 不再携带
+	// 不进入 action 解析与 agent 流程；语义不明的回复回归正常流程，pending 不再携带
 	// （旧提案由工具自身 TTL/单次消费门作废）。
 	if prevPending != nil && rt.tryResumePending(state, streamID, prevPending, history, prevRoute) {
 		return
@@ -354,27 +354,29 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// ③ Resolve action key —— 全部确定性信号，零 LLM（LLM 意图分类已删除：
 	// 旁路分类器看不到完整语境、串行 1.4-3s、分错即漏门；
-	// 开放输入交给通用 agent + 技能目录自取，确定性门由工具层兜底）：
+	// 开放输入交给通用 agent + 技能目录自取，确定性门由工具层兜底。
+	// 前端 action.key 通道已废弃——fe 发送前一律剥掉 key，
+	// 专用 action 条目随之删除；未来非对话场景需要时再加回）：
 	//   1. Creation fast-path — 创建动词命中 → creation（保住零 LLM 即时弹表单的 UX）
-	//   2. 前端首条消息明确指定 action — 产品入口（按钮）保留完整专用配置
-	//   3. 表单延续 — 上轮以 form_select 收尾且本轮带 action.param（= 表单提交），
+	//   2. 表单延续 — 上轮以 form_select 收尾且本轮带 action.param（= 表单提交），
 	//      确定性继承上轮 action，替代原先靠分类器判"延续"
-	//   4. 默认 — general_chat 通用路径
+	//   3. 默认 — general_chat 通用路径
 	tIntentStart := time.Now()
-	actionKey, method := resolveActionKey(msg.Query.Content, msg.SeqID, string(msg.Query.Action.Key), len(msg.Query.Action.Param), prevRoute)
+	actionKey, method := resolveActionKey(msg.Query.Content, len(msg.Query.Action.Param), prevRoute)
 	intentMethod = method
 	tIntent = time.Since(tStart)
 	intentDur := time.Since(tIntentStart)
 
 	handler, ok := chat.Lookup(actionKey)
 	if !ok {
-		// Unknown key from frontend — fall back to general_chat
+		// 陈旧 key——唯一来源是旧版本持久化的 Route.ActionKey 经 form 分支
+		// 继承而来（对应 action 已随路由收缩删除），兜底 general_chat
 		actionKey = string(models.ActionKeyGeneralChat)
 		handler, _ = chat.Lookup(actionKey)
 	}
 
-	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s front_key=%q content=%q",
-		msg.ChatID, msg.SeqID, actionKey, msg.Query.Action.Key, msg.Query.Content)
+	logger.Infof("[Assistant] chat=%s seq=%d action_key=%s content=%q",
+		msg.ChatID, msg.SeqID, actionKey, msg.Query.Content)
 	logger.Infof("[Assistant.Timing] chat=%s seq=%d phase=intent_resolved method=%s dur=%dms total=%dms action_key=%s",
 		msg.ChatID, msg.SeqID, intentMethod, intentDur.Milliseconds(), tIntent.Milliseconds(), actionKey)
 
@@ -401,25 +403,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// rule_id/dashboard_id 注入 Context，通用路径上的编辑请求免一轮工具解析。
 	chat.EnrichContextFromText(chatReq)
 
-	// Inherit the edit sub-route from the previous turn:
-	// a contentless continuation ("确认") stays on the resource being edited.
-	// Explicit current-turn signals still win inside the edit-target resolution.
-	if prevRoute != nil && prevRoute.EditTarget != "" {
-		chatReq.Context["prev_edit_target"] = prevRoute.EditTarget
-	}
-
-	// ④ Validate — on failure, silently fall back to general_chat instead of returning error
-	if handler.Validate != nil {
-		if err := handler.Validate(chatReq); err != nil {
-			logger.Infof("[Assistant] validate failed for action_key=%s: %v, falling back to general_chat", actionKey, err)
-			actionKey = string(models.ActionKeyGeneralChat)
-			handler, _ = chat.Lookup(actionKey)
-			chatReq.ActionKey = actionKey
-			chatReq.Context = make(map[string]interface{})
-		}
-	}
-
-	// ⑤ Preflight — hard gate. May halt the turn and emit structured responses
+	// ④ Preflight — hard gate. May halt the turn and emit structured responses
 	// (e.g. ask the user to pick a busi group before a creation skill runs).
 	toolDeps := rt.buildToolDeps()
 
@@ -451,15 +435,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		tValidatePre = time.Since(tStart)
 	}
 
-	// Resolve the edit sub-route once for route persistence (buildEditPrompt
-	// reaches the same decision deterministically from the same req). Resolved
-	// AFTER preflight so URL-parsed dashboard_id/rule_id in Context count as
-	// current-turn signals.
-	editTarget := ""
-	if actionKey == string(models.ActionKeyEdit) {
-		editTarget = chat.ResolveEditTarget(chatReq)
-	}
-
 	// Select tools
 	var tools []aiagent.AgentTool
 	if handler.SelectTools != nil {
@@ -489,7 +464,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// nothing.
 	userPrompt += chat.ContextDump(chatReq.Context)
 
-	inputs := buildAgentInputs(handler, chatReq, userId, msg.ChatID, msg.SeqID)
+	inputs := buildAgentInputs(chatReq, userId, msg.ChatID, msg.SeqID)
 
 	// 用 UserPromptRendered 而非 UserPromptTemplate：handler.BuildPrompt 已经用
 	// fmt.Sprintf 把 msg.Query.Content 原样拼进 userPrompt，不能再经 text/template
@@ -498,12 +473,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// Skills / MCP 绑定：agent.SkillIds/MCPServerIds 非空时走"精确注入"路径
 	// （SkillNames + 固定 MCP server 列表），空则不预载——系统提示词常驻技能目录，
 	// 模型经 load_skill 自取。action handler 若声明了 RequiredSkills，则覆盖上述两者——见 resolveSkillConfig。
-	agentMode := aiagent.AgentModeReAct
-	if handler != nil && handler.AgentMode != "" {
-		agentMode = handler.AgentMode
-	}
 	agentRunner := aiagent.NewAgent(&aiagent.AgentConfig{
-		AgentMode:          agentMode,
 		Tools:              tools,
 		Timeout:            agentTotalTimeout,
 		Stream:             true,
@@ -538,7 +508,8 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 	// Consume stream chunks
 	var fullContent string
-	var fullReasoning string
+	var segAcc segmentAccumulator // 按到达顺序累积 reasoning/content 展示段，终态按段分块持久化
+	finalBodyStreamed := false    // Done(content_streamed) 置位：最终轮正文已逐 token 流出，其原始段由权威 markdown 替代
 	var createdAlertRules []string
 	var createdDashboards []string
 	var turnMsgs []aiagent.ChatMessage    // 本轮工具调用轮 + 结果轮，用于持久化结构化 transcript
@@ -572,13 +543,13 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 			if delta != "" {
 				markFirstToken("thinking")
-				fullReasoning += delta
+				segAcc.append(segmentKindReasoning, delta)
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "reason"})
 			}
 		case aiagent.StreamTypeContent:
-			// 正文 token 直接归 content 通道。同时累加到 fullContent，
-			// 因为 executeDirectWithDone 的 Done chunk 刻意把 Content 置空（避免重复
-			// append），但 router 末尾还要靠 fullContent 写最终 AssistantMessageResponse。
+			// 正文 token 直接归 content 通道。同时累加到 fullContent——Done.Content
+			// 虽是权威正文，但异常断流时 Done 可能缺席，router 末尾写最终
+			// AssistantMessageResponse 仍需有正文可用。
 			delta := chunk.Delta
 			if delta == "" {
 				delta = chunk.Content
@@ -586,6 +557,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			if delta != "" {
 				markFirstToken("content")
 				fullContent += delta
+				segAcc.append(segmentKindContent, delta)
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: delta, P: "content"})
 			}
 		case aiagent.StreamTypeToolCall:
@@ -599,6 +571,9 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 				m.ExecutedTools = true
 			})
 		case aiagent.StreamTypeToolResult:
+			// 轮边界：收口当前展示段（与下方 P:"step" 帧同点位）。下一轮的思考/正文
+			// 开新段，否则跨轮思考在持久化块里粘成一段。
+			segAcc.closeCurrent()
 			state.Update(parentCtx, func(m *models.AssistantMessage) {
 				m.CurStep = "Processing tool result..."
 			})
@@ -671,6 +646,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			// parsing/persistence, but do NOT re-append to the bus, or the
 			// answer would render twice.
 			if streamed, _ := chunk.Metadata["content_streamed"].(bool); streamed {
+				finalBodyStreamed = true
 				if chunk.Content != "" {
 					fullContent = chunk.Content
 				}
@@ -678,9 +654,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 			}
 			// Non-streamed bodies (interrupt prompts, max-iteration partials):
 			// never pushed to any channel, so Done.Content is the only copy —
-			// adopt it and push to the content channel. Direct mode never
-			// lands here with content (executeDirectWithDone deliberately
-			// leaves chunk.Content empty after streaming).
+			// adopt it and push to the content channel.
 			if chunk.Content != "" {
 				fullContent = chunk.Content
 				_ = rt.streamBus.Append(parentCtx, msg.ChatID, streamID, aiagent.StreamMessage{V: chunk.Content, P: "content"})
@@ -711,36 +685,29 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	// 兜底。终态写入和 finishMessage 保持一致用 Background。
 	_ = rt.streamBus.Finish(context.Background(), msg.ChatID, streamID)
 
-	// Build final response: try action-specific parsing first, fall back to single markdown
-	var responses []models.AssistantMessageResponse
-	if handler.ParseResponse != nil {
-		responses = handler.ParseResponse(fullContent)
-	}
-	if len(responses) == 0 {
-		// Defensive: some models wrap a markdown final answer in a JSON envelope
-		// like {"query": "## 结论\n..."}, conditioned by tool-call argument
-		// examples. Unwrap before rendering as markdown so the user sees
-		// real newlines instead of literal "\n" escapes.
-		markdown := chat.UnwrapJSONEnvelope(fullContent)
+	// Build the authoritative final-answer markdown (the terminal block of the
+	// response list).
+	// Defensive: some models wrap a markdown final answer in a JSON envelope
+	// like {"query": "## 结论\n..."}, conditioned by tool-call argument
+	// examples. Unwrap before rendering as markdown so the user sees
+	// real newlines instead of literal "\n" escapes.
+	markdown := chat.UnwrapJSONEnvelope(fullContent)
 
-		// general_chat 后置校验: 必须在 UnwrapJSONEnvelope 之后跑——若
-		// fullContent 是 JSON envelope, append stamp 会破坏末尾 `}` 让 unwrap
-		// 短路返回 raw JSON。scope 限定 general_chat (它无 ParseResponse, 必走 fallback)。
-		if actionKey == string(models.ActionKeyGeneralChat) && markdown != "" {
-			if clean, hits := chat.ValidateRestrictedGCOutput(markdown); !clean {
-				logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, appending stamp (chat=%s seq=%d)",
-					hits, msg.ChatID, msg.SeqID)
-				markdown += chat.BuildHallucinationStamp(hits)
-			}
+	// general_chat 后置校验: 必须在 UnwrapJSONEnvelope 之后跑——若
+	// fullContent 是 JSON envelope, append stamp 会破坏末尾 `}` 让 unwrap
+	// 短路返回 raw JSON。
+	if actionKey == string(models.ActionKeyGeneralChat) && markdown != "" {
+		if clean, hits := chat.ValidateRestrictedGCOutput(markdown); !clean {
+			logger.Warningf("[Assistant] general_chat post-check hit forbidden patterns: %v, appending stamp (chat=%s seq=%d)",
+				hits, msg.ChatID, msg.SeqID)
+			markdown += chat.BuildHallucinationStamp(hits)
 		}
-
-		responses = []models.AssistantMessageResponse{
-			{ContentType: models.ContentTypeMarkdown, Content: markdown, StreamID: streamID, IsFinish: true, IsFromAI: true},
-		}
-	} else {
-		// Attach streamID to the first element for frontend stream matching
-		responses[0].StreamID = streamID
 	}
+
+	// 按到达顺序把流式段落地成块：每轮思考/过渡语独立成块，末尾是权威 markdown
+	// 终答块。块结构与流式视图同构（前端/A2A 按 P:"step" 帧切段），历史回放不再
+	// 把多轮思考塌成单块、也不再丢失中间轮过渡语。
+	responses := assembleSegmentResponses(segAcc.segments, markdown, streamID, finalBodyStreamed)
 
 	// Append structured alert_rule cards for each successful create_alert_rule invocation.
 	for _, ruleJSON := range createdAlertRules {
@@ -773,18 +740,6 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		})
 	}
 
-	// Prepend reasoning as the first response item so it is persisted and
-	// returned when loading historical conversations.
-	if fullReasoning != "" {
-		reasoningResp := models.AssistantMessageResponse{
-			ContentType: models.ContentTypeReasoning,
-			Content:     fullReasoning,
-			IsFinish:    true,
-			IsFromAI:    true,
-		}
-		responses = append([]models.AssistantMessageResponse{reasoningResp}, responses...)
-	}
-
 	// Cancel race guard：/cancel handler 已经把 cancelled 的终态写进 Redis 快照 +
 	// DB data + DB status=-2。如果 owner 在收到 cancel 信号之前正好把 chunks 跑完
 	// 走到这里，下面的 AssistantMessageSet / state.Persist 会把成功态盖回去——
@@ -807,13 +762,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	env := aiagent.TranscriptEnvelope{SchemaVersion: aiagent.TranscriptSchemaVersion, Messages: newHistory}
 	msg.Extra.HistoryMessages, _ = json.Marshal(env)
 
-	// Persist route state: the resolved action + edit
-	// sub-route carry forward so the next turn inherits instead of re-deriving.
-	// AwaitingForm 标记"本轮以表单收尾"——下一轮带 action.param 的提交据此确定性
-	// 继承本 action（form 延续信号）。
+	// Persist route state. AwaitingForm 标记"本轮以表单收尾"——下一轮带
+	// action.param 的提交据此确定性继承本 action（form 延续信号）；
+	// 除此之外 ActionKey 不跨轮继承，普通延续轮重新解析。
 	msg.Extra.Route = &models.ConversationRoute{
 		ActionKey:    actionKey,
-		EditTarget:   editTarget,
 		AwaitingForm: pendingI != nil && pendingI.Kind == aiagent.InterruptKindInput && interruptForm != "",
 	}
 	// Persist the pending interrupt if this turn ended awaiting confirmation (Step 4, I5).
@@ -852,16 +805,16 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 
 // resolveActionKey 是路由收缩后的确定性 action 解析，纯函数零 LLM。优先级：
 //  1. fast    — 创建动词命中 → creation（保住零 LLM 即时弹业务组表单的 UX）；
-//  2. front   — 首条消息前端显式指定 action（按钮产品入口，保留专用配置）；
-//  3. form    — 上轮以 form_select 收尾（AwaitingForm）且本轮带 action.param
+//  2. form    — 上轮以 form_select 收尾（AwaitingForm）且本轮带 action.param
 //     （= 表单提交），确定性继承上轮 action；
-//  4. default — general_chat 通用 agent（工具全集 + 技能目录自取 + 工具级门）。
-func resolveActionKey(content string, seqID int64, frontKey string, paramCount int, prevRoute *models.ConversationRoute) (string, string) {
+//  3. default — general_chat 通用 agent（工具全集 + 技能目录自取 + 工具级门）。
+//
+// 历史上还有 front 分支（首条消息前端显式指定 action）：fe 发送前一律剥掉
+// action.key，该通道已死，连同专用 action 一并删除。
+func resolveActionKey(content string, paramCount int, prevRoute *models.ConversationRoute) (string, string) {
 	switch {
 	case chat.HasCreationIntent(content):
 		return string(models.ActionKeyCreation), "fast"
-	case seqID == 1 && frontKey != "":
-		return frontKey, "front"
 	case prevRoute != nil && prevRoute.AwaitingForm && prevRoute.ActionKey != "" && paramCount > 0:
 		return prevRoute.ActionKey, "form"
 	default:
@@ -872,22 +825,16 @@ func resolveActionKey(content string, seqID int64, frontKey string, paramCount i
 // buildAgentInputs 组装 agent 运行的确定性工具参数通道（params）。分层合并，后者覆盖前者：
 //  1. user_input — 恒存在，下游（日志、工具参数）可依赖；
 //  2. Context 结构化值默认转发（所有 action 生效）— 表单提交/页面上下文里的
-//     busi_group_id/datasource_id/team_ids 不依赖 handler 声明 BuildInputs 即达工具层。
+//     busi_group_id/datasource_id/team_ids 直达工具层。
 //     这是写工具缺参门（tools/form_gate.go）的确定性回填通道：general_chat 路径上
 //     缺参表单的提交值必须经此抵达 params，否则只剩提示词文本（ContextDump）一条
 //     模型自觉通道，模型不复写 group_id 时同一张表单会再次弹出（表单回环）；
-//  3. handler.BuildInputs — action 专属补充（如 query_generator 的 datasource_type）；
-//  4. 身份键（user_id/chat_id/seq_id）— 权限工具与跨轮确认门（update_dashboard 的
+//  3. 身份键（user_id/chat_id/seq_id）— 权限工具与跨轮确认门（update_dashboard 的
 //     propose→confirm：确认必须晚于提案轮 SeqID）依赖，恒为 router 权威值。
-func buildAgentInputs(handler *chat.ActionHandler, chatReq *chat.AIChatRequest, userId int64, chatID string, seqID int64) map[string]string {
+func buildAgentInputs(chatReq *chat.AIChatRequest, userId int64, chatID string, seqID int64) map[string]string {
 	inputs := map[string]string{"user_input": chatReq.UserInput}
 	for k, v := range chat.ContextForwardInputs(chatReq) {
 		inputs[k] = v
-	}
-	if handler.BuildInputs != nil {
-		for k, v := range handler.BuildInputs(chatReq) {
-			inputs[k] = v
-		}
 	}
 	inputs["user_id"] = fmt.Sprintf("%d", userId)
 	inputs["chat_id"] = chatID
@@ -990,6 +937,99 @@ func (rt *Router) finishHaltedMessage(state *MessageState, streamID string, hist
 		logger.Errorf("[Assistant] failed to save halted message: %v", err)
 	}
 	state.Persist(context.Background())
+}
+
+// ==================== Stream Segments ====================
+
+// streamSegment 是消费循环按到达顺序累积的展示段。切分规则与 aiagent/a2a/bridge.go
+// 的 step 分段、前端流式 reducer 三方同构——同类追加、类型切换开新段、轮边界
+// (tool_result) 收口——保证流式视图与持久化视图的块结构一致。
+type streamSegment struct {
+	kind   string // segmentKindReasoning | segmentKindContent
+	text   strings.Builder
+	closed bool // 轮边界置位：下一个同类 delta 必须开新段，避免跨轮思考粘连
+}
+
+const (
+	segmentKindReasoning = "reasoning"
+	segmentKindContent   = "content"
+)
+
+// segmentAccumulator 聚合一条消息的全部展示段。零值可用。
+type segmentAccumulator struct {
+	segments []*streamSegment
+}
+
+func (a *segmentAccumulator) append(kind, delta string) {
+	if n := len(a.segments); n > 0 && a.segments[n-1].kind == kind && !a.segments[n-1].closed {
+		a.segments[n-1].text.WriteString(delta)
+		return
+	}
+	a.closeCurrent()
+	seg := &streamSegment{kind: kind}
+	seg.text.WriteString(delta)
+	a.segments = append(a.segments, seg)
+}
+
+func (a *segmentAccumulator) closeCurrent() {
+	if n := len(a.segments); n > 0 {
+		a.segments[n-1].closed = true
+	}
+}
+
+// assembleSegmentResponses 把流式段转成持久化 Response 块，并在末尾追加权威
+// markdown 终答块（fullContent 管线产出：UnwrapJSONEnvelope + general_chat 校验）。
+// 纯函数，单测见 router_ai_assistant_test.go。
+//
+// finalBodyStreamed 为真（正常流式收尾）时，最后一个 content 段是终答的原始
+// 流式形态——丢弃它，避免与权威终答块重复；从尾部搜索而非固定取末段，是为了
+// 容错"终答后还有尾随思考"的少见 provider 时序。为假（interrupt 确认文案、
+// max-iteration partial 等非流式 Done）时全部保留：此时段里只有中间轮的思考与
+// 过渡语，终答块另行承载 Done.Content。
+//
+// 空白段（如轮间 "\n\n" 分隔帧）被过滤。终答块即使为空也保留，维持"至少一个
+// markdown 块"的既有不变量。消息级 streamID 锚在第一个块上（前端
+// findStreamResponse 取第一个带 stream_id 的块做流匹配）。
+func assembleSegmentResponses(segments []*streamSegment, finalMarkdown, streamID string, finalBodyStreamed bool) []models.AssistantMessageResponse {
+	if finalBodyStreamed {
+		for i := len(segments) - 1; i >= 0; i-- {
+			if segments[i].kind == segmentKindContent {
+				rest := make([]*streamSegment, 0, len(segments)-1)
+				rest = append(rest, segments[:i]...)
+				rest = append(rest, segments[i+1:]...)
+				segments = rest
+				break
+			}
+		}
+	}
+
+	responses := make([]models.AssistantMessageResponse, 0, len(segments)+1)
+	for _, seg := range segments {
+		text := strings.TrimSpace(seg.text.String())
+		if text == "" {
+			continue
+		}
+		ct := models.ContentTypeReasoning
+		if seg.kind == segmentKindContent {
+			ct = models.ContentTypeMarkdown
+		}
+		responses = append(responses, models.AssistantMessageResponse{
+			ContentType: ct,
+			Content:     text,
+			IsFinish:    true,
+			IsFromAI:    true,
+		})
+	}
+
+	responses = append(responses, models.AssistantMessageResponse{
+		ContentType: models.ContentTypeMarkdown,
+		Content:     finalMarkdown,
+		IsFinish:    true,
+		IsFromAI:    true,
+	})
+
+	responses[0].StreamID = streamID
+	return responses
 }
 
 // assembleTurnHistory builds the persisted conversation transcript for one turn:

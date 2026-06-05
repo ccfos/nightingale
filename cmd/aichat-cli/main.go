@@ -33,7 +33,6 @@ var (
 	flagUser      = flag.String("user", "root", "X-Service-Username (n9e username to act as)")
 	flagBasicAuth = flag.String("basic-auth", "user001:ccc26da7b9aba533cbb263a36c07dcc5", "HTTP Basic auth as user:pass; defaults match etc/config.toml's APIForService.BasicAuth, pass empty to disable")
 	flagPage      = flag.String("page", "explorer", "initial page (explorer|dashboards|alert_history|active_alert)")
-	flagAction    = flag.String("action", "", "optional action key for the first message (general_chat|alert_query|resource_query|query_generator)")
 	flagDsType    = flag.String("ds-type", "", "optional action.param.datasource_type")
 	flagDsID      = flag.Int64("ds-id", 0, "optional action.param.datasource_id")
 	flagDB        = flag.String("db", "", "optional action.param.database_name")
@@ -208,13 +207,13 @@ func (c *client) newChat(ctx context.Context, page string, param json.RawMessage
 // client that fires the next message immediately after seeing finish can
 // race the server's lock release and get a 409. We retry briefly on 409
 // to absorb that race; any other error is returned immediately.
-func (c *client) sendMessage(ctx context.Context, chatID, content, actionKey string, ap actionParam) (int64, error) {
+func (c *client) sendMessage(ctx context.Context, chatID, content string, ap actionParam) (int64, error) {
+	// action.key 通道已废弃（路由收缩，fe 发送前也一律剥掉 key），只传 param。
 	body := map[string]any{
 		"chat_id": chatID,
 		"query": map[string]any{
 			"content": content,
 			"action": map[string]any{
-				"key":   actionKey,
 				"param": ap,
 			},
 		},
@@ -456,17 +455,16 @@ func (r *repl) resolveStreamID(ctx context.Context, seqID int64) (string, *messa
 	}
 }
 
-func (r *repl) actionForFirstMessage() (string, actionParam) {
+func (r *repl) actionForFirstMessage() actionParam {
 	if !r.firstMsg {
-		return "", actionParam{}
+		return actionParam{}
 	}
-	ap := actionParam{
+	return actionParam{
 		DatasourceType: *flagDsType,
 		DatasourceID:   *flagDsID,
 		DatabaseName:   *flagDB,
 		TableName:      *flagTable,
 	}
-	return *flagAction, ap
 }
 
 func (r *repl) sendOnce(ctx context.Context, content string) {
@@ -475,8 +473,8 @@ func (r *repl) sendOnce(ctx context.Context, content string) {
 		return
 	}
 
-	actionKey, ap := r.actionForFirstMessage()
-	seqID, err := r.c.sendMessage(ctx, r.chat.ChatID, content, actionKey, ap)
+	ap := r.actionForFirstMessage()
+	seqID, err := r.c.sendMessage(ctx, r.chat.ChatID, content, ap)
 	if err != nil {
 		fmt.Println(red("[error] sendMessage: " + err.Error()))
 		return

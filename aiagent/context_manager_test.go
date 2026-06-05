@@ -154,12 +154,18 @@ func TestProjectHistory_WindowStartsAtRealUserTurn(t *testing.T) {
 	if len(got) >= len(h) {
 		t.Fatalf("over budget must shrink: %d >= %d", len(got), len(h))
 	}
+	// 省略标记并入首条 user 轮，而非独立成轮——否则与窗口首条 user 形成
+	// 连续两条 user 消息，严格校验交替的 provider 会 4xx
 	if !strings.Contains(got[0].Content, "已省略") {
-		t.Fatalf("first message must be the elision marker, got %+v", got[0])
+		t.Fatalf("first message must carry the elision marker, got %+v", got[0])
 	}
-	first := got[1]
-	if !isRealUserTurn(first) {
-		t.Fatalf("window must start at a real user turn, got %+v", first)
+	if !isRealUserTurn(got[0]) {
+		t.Fatalf("window must start at a real user turn, got %+v", got[0])
+	}
+	for i := 1; i < len(got); i++ {
+		if got[i].Role == "user" && got[i-1].Role == "user" {
+			t.Fatalf("consecutive user turns at %d: %+v", i, got[i])
+		}
 	}
 	// 工具结果配对完整：窗口里每条 tool 消息之前必须存在其 assistant 调用轮
 	for i, m := range got {
@@ -210,6 +216,12 @@ func TestProjectHistory_MegaTurnSkipsOrphanObservations(t *testing.T) {
 	if isObservationTurn(got[1]) {
 		t.Fatalf("window must not start at an orphan observation: %+v", got[1])
 	}
+	// 兜底路径下标记独立成轮（落点是 assistant），仍须保持 user/assistant 交替
+	for i := 1; i < len(got); i++ {
+		if got[i].Role == "user" && got[i-1].Role == "user" {
+			t.Fatalf("consecutive user turns at %d: %+v", i, got[i])
+		}
+	}
 	// 窗口内任何 tool 结果都必须有在前的 assistant 调用轮
 	for i, m := range got {
 		if m.Role == llm.RoleTool {
@@ -244,8 +256,8 @@ func TestProjectHistory_CountsToolCallArguments(t *testing.T) {
 	if len(got) >= len(h) {
 		t.Fatal("tool-call arguments must count toward the budget (window must shrink)")
 	}
-	if !isRealUserTurn(got[1]) || got[1].Content != "再看看" {
-		t.Fatalf("window must restart at the later real user turn, got %+v", got[1])
+	if !isRealUserTurn(got[0]) || !strings.Contains(got[0].Content, "再看看") {
+		t.Fatalf("window must restart at the later real user turn, got %+v", got[0])
 	}
 }
 

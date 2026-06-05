@@ -21,7 +21,8 @@ import (
 //     它们能保住对话骨架，比直接掐头丢整段消息损失小得多）。
 //  3. 预算窗口：仍超预算时保留最新后缀，并保证窗口不以孤儿工具结果开窗——
 //     工具结果必须跟在它的 assistant 调用之后，否则 provider 以配对不完整
-//     拒绝（4xx）；优先从一条用户消息开始。被丢弃的部分用一条省略标记替代。
+//     拒绝（4xx）；优先从一条用户消息开始。被丢弃的部分以省略标记说明，
+//     标记并入窗口首条 user 轮（独立成轮会破坏 user/assistant 严格交替）。
 //
 // 全部为纯确定性策略（零额外 LLM 成本）；LLM 摘要压缩可在其上替换第 3 步。
 
@@ -108,11 +109,19 @@ func projectHistory(history []ChatMessage, budget int) []ChatMessage {
 		return projected
 	}
 
+	marker := fmt.Sprintf("（系统提示：本会话较早的 %d 条消息因长度限制已省略，以下为最近的对话）", start)
+	// 标记并入窗口首条 user 轮正文，而非独立成轮——独立插一条 user 消息会与
+	// 它形成连续两条 user 轮，严格校验 user/assistant 交替的 provider/网关会
+	// 4xx（converter 的连续 user 合并只覆盖 tool_result，不救纯文本）。
+	// projected 是私有拷贝（第 1 步），原地改不影响调用方历史。
+	if isRealUserTurn(projected[start]) {
+		projected[start].Content = marker + "\n\n" + projected[start].Content
+		return projected[start:]
+	}
+	// 窗口不以 user 开头（最后一条 user 之后单独超预算的兜底路径，落点是
+	// assistant 轮）：前插独立 user 标记恰好补齐交替。
 	out := make([]ChatMessage, 0, len(projected)-start+1)
-	out = append(out, ChatMessage{
-		Role:    "user",
-		Content: fmt.Sprintf("（系统提示：本会话较早的 %d 条消息因长度限制已省略，以下为最近的对话）", start),
-	})
+	out = append(out, ChatMessage{Role: "user", Content: marker})
 	out = append(out, projected[start:]...)
 	return out
 }

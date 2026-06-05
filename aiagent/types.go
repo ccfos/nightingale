@@ -15,10 +15,6 @@ import (
 // ==================== 常量 ====================
 
 const (
-	// Agent 模式
-	AgentModeReAct  = "react"  // 工具循环模式（默认）：原生 function calling loop
-	AgentModeDirect = "direct" // 单次 LLM 调用，无工具循环包装，适用于无工具的纯生成 action
-
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
 	ToolTypeBuiltin   = "builtin"   // 内置工具
@@ -71,7 +67,6 @@ type Agent struct {
 // AgentConfig Agent 配置（仅包含 Agent 行为相关字段，LLM 配置通过 WithLLMClient 注入）
 type AgentConfig struct {
 	// Agent 行为
-	AgentMode     string `json:"agent_mode,omitempty"`
 	MaxIterations int    `json:"max_iterations"`
 	Timeout       int    `json:"timeout"`
 	OutputField   string `json:"output_field"`
@@ -137,7 +132,7 @@ type AgentRequest struct {
 // AgentResponse Agent 执行结果
 type AgentResponse struct {
 	Content    string      `json:"content"`         // 最终结果文本
-	Steps      []ReActStep `json:"steps"`           // 执行轨迹
+	Steps      []ToolStep `json:"steps"`           // 执行轨迹
 	Iterations int         `json:"iterations"`      // 迭代次数
 	Success    bool        `json:"success"`         // 是否成功
 	Error      string      `json:"error,omitempty"` // 错误信息
@@ -231,16 +226,17 @@ type ExternalToolHandler func(ctx context.Context, tool *AgentTool, args map[str
 
 // ==================== 工具循环类型 ====================
 
-// ReActStep 工具循环执行轨迹中的一步（reason-act 模式：思考 → 调工具 → 观测）
-type ReActStep struct {
+// ToolStep 工具循环执行轨迹中的一步（思考 → 调工具 → 观测）。
+// JSON 字段名是对外 API 的 wire 格式（沿用早期 ReAct 协议词汇），不可随类型改名。
+type ToolStep struct {
 	Thought     string `json:"thought"`
 	Action      string `json:"action"`
 	ActionInput string `json:"action_input"`
 	Observation string `json:"observation"`
 }
 
-// ReActLoopConfig 工具循环配置
-type ReActLoopConfig struct {
+// ToolLoopConfig 工具循环配置
+type ToolLoopConfig struct {
 	MaxIterations  int
 	TimeoutMessage string
 	LogPrefix      string

@@ -11,9 +11,10 @@
 | 字段 | 来源 | 说明 |
 |------|------|------|
 | `query.content` | 本文档表格里的「文案」列 | 直接作为用户消息内容 |
-| `query.action.key` | 各页面章节标注的 `action.key` | 决定后端的处理路径（`AssistantActionKey`） |
 | `query.action.param` | `/chat/new` 时使用的 `param`（即会话的 `page_from.param`） | 前端把页面级上下文透传到 action |
 | `query.page_from` | 当前会话的 `page_from` | 与 `/chat/new` 请求一致 |
+
+> **不传 `action.key`**：该字段已废弃，后端不再读取（前端发送前会剥掉）。处理路径由后端从 `content` 确定性解析——创建类文案命中 `creation` 关键词 fast-path，其余走 `general_chat` 通用 agent。详见 ai-chat.md 中「[action 路由](./ai-chat.md#action-路由)」。
 
 示例（在 explorer 页面点击第 1 条快捷提问）：
 
@@ -23,7 +24,6 @@
   "query": {
     "content": "帮我生成一个查询主机 CPU 使用率的语句",
     "action": {
-      "key": "query_generator",
       "param": { "datasource_type": "prometheus", "datasource_id": 1 }
     },
     "page_from": {
@@ -36,16 +36,16 @@
 
 ## 页面预置提示词总览
 
-| page | 来源页面 | action.key | 提示词条数 | 页面 param 建议字段 |
-|------|----------|------------|-----------|---------------------|
-| `explorer` | 时序数据探索 | `query_generator` | 3 | `datasource_type`, `datasource_id` |
-| `dashboards` | 仪表盘列表 | `creation` | 3 | `busi_group_id`（可选） |
-| `alert_rule` | 告警规则列表 | `creation` | 3 | `busi_group_id`（可选） |
-| `alert_history` | 历史告警列表 | `alert_query` | 3 | 可省略 |
-| `active_alert` | 活跃告警列表 | `alert_query` | 3 | 可省略 |
-| `notify_tpl` | 消息模板配置 | `notify_template_generator` | 4 | 可省略 |
-| `datasource` | 数据源配置 | `datasource_diagnose` | 3 | `datasource_type`, `datasource_id`（可选） |
-| `alert_event_detail` | 告警事件详情 | `troubleshooting` | 3 | `event_id`（必填），可选 `rule_id`、`target_ident`、`datasource_id` |
+| page | 来源页面 | 提示词条数 | 页面 param 建议字段 |
+|------|----------|-----------|---------------------|
+| `explorer` | 时序数据探索 | 3 | `datasource_type`, `datasource_id` |
+| `dashboards` | 仪表盘列表 | 3 | `busi_group_id`（可选） |
+| `alert_rule` | 告警规则列表 | 3 | `busi_group_id`（可选） |
+| `alert_history` | 历史告警列表 | 3 | 可省略 |
+| `active_alert` | 活跃告警列表 | 3 | 可省略 |
+| `notify_tpl` | 消息模板配置 | 4 | 可省略 |
+| `datasource` | 数据源配置 | 3 | `datasource_type`, `datasource_id`（可选） |
+| `alert_event_detail` | 告警事件详情 | 3 | `event_id`（必填），可选 `rule_id`、`target_ident`、`datasource_id` |
 
 未列出的 `page` 值不展示快捷提问。
 
@@ -55,19 +55,15 @@
 
 ### `explorer` — 时序数据探索
 
-action.key = `query_generator`
-
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
 | 1 | Generate a query for host CPU usage | 帮我生成一个查询主机 CPU 使用率的语句 |
 | 2 | Generate a query for memory usage | 帮我生成一个查询机器内存使用率的语句 |
 | 3 | Generate a query for host disk usage | 帮我生成一个查询机器磁盘使用率的语句 |
 
-`param` 通常携带当前查询编辑器的数据源（`datasource_type`, `datasource_id`），后端 `query_generator` 据此选择目标 LLM/Skill。
+`param` 通常携带当前查询编辑器的数据源（`datasource_type`, `datasource_id`），后端将其注入提示词并转发到查询工具层。生成的查询语句以 Markdown 代码块内嵌在 `markdown` 回答正文中。
 
 ### `dashboards` — 仪表盘列表
-
-action.key = `creation`
 
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
@@ -75,11 +71,9 @@ action.key = `creation`
 | 2 | Create a MySQL dashboard | 帮我创建一个 MySQL 的仪表盘 |
 | 3 | Create a Redis dashboard | 帮我创建一个 Redis 的仪表盘 |
 
-> `creation` 操作会触发 preflight：若 `param` 中缺少 `busi_group_id` 等必填上下文，后端会先返回 `form_select` 让用户补齐。详见 ai-chat.md 中「创建类操作的 preflight 流程」。
+> 这些文案会命中后端 `creation` 关键词 fast-path 并触发 preflight：若 `param` 中缺少 `busi_group_id` 等必填上下文，后端会先返回 `form_select` 让用户补齐。详见 ai-chat.md 中「创建类操作的 preflight 流程」。
 
 ### `alert_rule` — 告警规则列表
-
-action.key = `creation`
 
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
@@ -87,11 +81,9 @@ action.key = `creation`
 | 2 | Create a host down alert rule based on target heartbeat loss | 创建一条主机失联的告警规则 |
 | 3 | Create a disk usage alert rule with a threshold above 85% | 创建一条机器磁盘使用率超过 85% 的告警规则 |
 
-> 与 `dashboards` 一样会走 preflight；`n9e-create-alert-rule` skill 同时要求 `busi_group_id` 与 `datasource_id`。
+> 与 `dashboards` 一样会命中 creation fast-path 并走 preflight；`n9e-create-alert-rule` skill 同时要求 `busi_group_id` 与 `datasource_id`。
 
 ### `alert_history` — 历史告警列表
-
-action.key = `alert_query`
 
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
@@ -101,8 +93,6 @@ action.key = `alert_query`
 
 ### `active_alert` — 活跃告警列表
 
-action.key = `alert_query`
-
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
 | 1 | Summarize the distribution of currently active alerts | 总结当前活跃告警的分布情况 |
@@ -110,8 +100,6 @@ action.key = `alert_query`
 | 3 | Group current active alerts by severity and busi group | 按级别和业务组汇总当前活跃告警 |
 
 ### `notify_tpl` — 消息模板配置
-
-action.key = `notify_template_generator`
 
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
@@ -122,8 +110,6 @@ action.key = `notify_template_generator`
 
 ### `datasource` — 数据源配置
 
-action.key = `datasource_diagnose`
-
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
 | 1 | Diagnose why datasource connection fails with an x509 certificate error | 数据源连接报 x509 证书错误，如何排查 |
@@ -132,15 +118,13 @@ action.key = `datasource_diagnose`
 
 ### `alert_event_detail` — 告警事件详情
 
-action.key = `troubleshooting`
-
 | # | 英文（缺省） | zh_CN |
 |---|-------------|-------|
 | 1 | Analyze the root cause of this alert event | 分析这条告警事件的根因 |
 | 2 | Find similar historical alerts on the same target/rule | 查找同对象/同规则下的相似历史告警 |
 | 3 | Show other active alerts on the same target around this time | 看下同一对象在这个时间点附近还有哪些活跃告警 |
 
-> `param` 必须携带 `event_id`，后端 `troubleshooting` action 据此读取事件详情；如能一并传入 `rule_id`、`target_ident`、`datasource_id` 可减少二次查询。
+> `param` 必须携带 `event_id`，后端将其注入提示词上下文，通用 agent 据此调用 `get_alert_event_detail` 等工具读取事件详情；如能一并传入 `rule_id`、`target_ident`、`datasource_id` 可减少二次查询。
 
 ## 新增/修改预置提示词
 

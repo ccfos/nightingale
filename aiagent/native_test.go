@@ -30,13 +30,7 @@ func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateReque
 	resp := &llm.GenerateResponse{}
 	for _, c := range s.take() {
 		resp.Content += c.Content
-		for _, tc := range c.ToolCalls {
-			if tc.ID == "" && tc.Name == "" && len(resp.ToolCalls) > 0 {
-				resp.ToolCalls[len(resp.ToolCalls)-1].Arguments += tc.Arguments
-			} else {
-				resp.ToolCalls = append(resp.ToolCalls, tc)
-			}
-		}
+		resp.ToolCalls = append(resp.ToolCalls, c.ToolCalls...)
 	}
 	return resp, nil
 }
@@ -52,15 +46,15 @@ func (s *scriptedNativeLLM) GenerateStream(ctx context.Context, req *llm.Generat
 	return out, nil
 }
 
-// TestRunNativeLoop_ContractAndTranscript drives one tool round (with OpenAI-style
-// fragmented arguments) + a final text round, and asserts the native loop honors
-// the established stream contract (ToolCall/ToolResult chunk shapes) and
-// emits a STRUCTURED transcript pair.
+// TestRunNativeLoop_ContractAndTranscript drives one tool round + a final text
+// round, and asserts the native loop honors the established stream contract
+// (ToolCall/ToolResult chunk shapes) and emits a STRUCTURED transcript pair.
+// Provider 在流内聚合分片后整块抛出（见 llm/openai.go 的 aggregator），
+// 所以这里 mock 直接给完整调用。
 func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
-		{ // round 0: a tool call whose arguments arrive in two fragments
-			{ToolCalls: []llm.ToolCall{{ID: "call_a", Name: "noop_lookup", Arguments: `{"id":`}}},
-			{ToolCalls: []llm.ToolCall{{Arguments: `5}`}}},
+		{ // round 0: a complete tool call (provider-side aggregation already done)
+			{ToolCalls: []llm.ToolCall{{ID: "call_a", Name: "noop_lookup", Arguments: `{"id":5}`}}},
 		},
 		{ // round 1: final answer as plain text
 			{Content: "已生成提案，确认吗？"},
@@ -69,7 +63,7 @@ func TestRunNativeLoop_ContractAndTranscript(t *testing.T) {
 	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
 
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ToolLoopConfig{
 		MaxIterations:  5,
 		StreamChan:     streamChan,
 		EmitTranscript: true,
@@ -154,7 +148,7 @@ func TestRunNativeLoop_ThinkingBlocksPersist(t *testing.T) {
 	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
 
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ToolLoopConfig{
 		MaxIterations:  5,
 		StreamChan:     streamChan,
 		EmitTranscript: true,
@@ -208,7 +202,7 @@ func TestRunNativeLoop_Interrupt(t *testing.T) {
 	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
 
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改大盘"}}, nil, &ToolLoopConfig{
 		MaxIterations:  5,
 		StreamChan:     streamChan,
 		EmitTranscript: true,
@@ -300,7 +294,7 @@ func TestRunNativeLoop_ContentChannelExclusive(t *testing.T) {
 	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
 
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, nil, &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, nil, &ToolLoopConfig{
 		MaxIterations: 3,
 		StreamChan:    streamChan,
 	})
@@ -342,7 +336,7 @@ func TestRunNativeLoop_ContentStreamsWithToolsOffered(t *testing.T) {
 
 	tools := []AgentTool{{Name: "noop_lookup", Type: ToolTypeBuiltin}}
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, buildNativeToolDefs(tools), &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, buildNativeToolDefs(tools), &ToolLoopConfig{
 		MaxIterations: 3,
 		StreamChan:    streamChan,
 		Tools:         tools,

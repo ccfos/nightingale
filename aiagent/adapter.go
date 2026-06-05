@@ -93,8 +93,8 @@ func (p *ProcessorAdapter) Process(ctxObj *ctx.Context, wfCtx *models.WorkflowCo
 	// 5. 非流式模式：将结果写回 WorkflowContext
 	writeResponseToWorkflowContext(wfCtx, resp, p.agent.cfg.OutputField)
 
-	msg := fmt.Sprintf("AI Agent (%s mode) completed: %d iterations, success=%v",
-		p.agent.cfg.AgentMode, resp.Iterations, resp.Success)
+	msg := fmt.Sprintf("AI Agent completed: %d iterations, success=%v",
+		resp.Iterations, resp.Success)
 	if resp.Error != "" {
 		return wfCtx, msg, fmt.Errorf("agent error: %s", resp.Error)
 	}

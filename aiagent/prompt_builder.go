@@ -92,35 +92,6 @@ func (a *Agent) appendGuidedFollowup(sb *strings.Builder) {
 	sb.WriteString(prompts.GuidedFollowupRule)
 }
 
-// buildDirectSystemPrompt 构建 Direct 模式系统提示词。
-// 跟工具循环版（buildNativeSystemPrompt）的关键差异：
-//   - 不包含 NativeSystemPrompt（Direct 模式无工具，不需要 agent 行为约束）
-//   - 不含技能目录（Direct 模式没有 load_skill 工具，目录无从消费）
-//   - 保留 Skills 内容（真正的知识，决定回答质量）
-//   - 保留 Env 信息（语言、时间等上下文）
-func (a *Agent) buildDirectSystemPrompt(rc *runCtx) string {
-	var sb strings.Builder
-
-	if len(rc.skills) > 0 {
-		skillContents := make([]string, len(rc.skills))
-		for i, skill := range rc.skills {
-			if len(rc.skills) > 1 {
-				skillContents[i] = fmt.Sprintf("### %s\n\n%s", skill.Metadata.Name, skill.MainContent)
-			} else {
-				skillContents[i] = skill.MainContent
-			}
-		}
-		sb.WriteString(llm.BuildSkillsSection(skillContents))
-		sb.WriteString("**Important**: Follow the workflow and guidelines defined in the loaded Skills when applicable.\n\n")
-	}
-
-	sb.WriteString(llm.BuildEnvSection())
-
-	a.appendGuidedFollowup(&sb)
-
-	return sb.String()
-}
-
 // appendSkillCatalog 在系统提示词常驻「可用技能目录」（名 + 一行描述），供模型经
 // load_skill 工具按需加载（渐进披露：目录是技能进入上下文的唯一自取入口，
 // 无 LLM 预选）。已预加载（rc.skills）的不再列出；无 registry / 目录为空时

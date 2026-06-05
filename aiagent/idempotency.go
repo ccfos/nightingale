@@ -2,8 +2,9 @@ package aiagent
 
 import "strings"
 
-// 本文件是写类工具幂等的 agent 侧原语：轮内去重。resume 重放的跨进程效果台账
-// 在路由层（center/router/router_ai_interrupt.go，Redis 实现）。
+// 本文件是写类工具幂等的 agent 侧原语：单次 Run 的整个工具循环内（跨迭代）
+// 去重。resume 重放的跨进程效果台账在路由层
+// （center/router/router_ai_interrupt.go，Redis 实现）。
 
 // writeToolPrefixes 标记"会产生副作用"的内置工具命名前缀（与路由层抽卡名单的
 // create_*/update_*/import_* 同一命名约定）。
@@ -19,10 +20,11 @@ func isWriteTool(name string) bool {
 	return false
 }
 
-// turnWriteDeduper 在单轮 loop 内对写类工具做"同名同参只执行一次"：模型在一轮里
-// 用完全相同的参数重复调用同一个写工具，几乎必然是迷惑/重试（合法的"再建一条"
-// 参数必然不同），直接复用首次结果，避免重复落库。读类工具不去重（重复读无害，
-// 且轮询类工具需要重复执行）。
+// turnWriteDeduper 对写类工具做"同名同参只执行一次"。作用域 = 单次 Run 的
+// 整个工具循环（**跨迭代**，turn 级而非 iteration 级；每个 Run 新建实例，
+// 不跨对话轮）：模型在同一循环内用完全相同的参数重复调用同一个写工具，
+// 几乎必然是迷惑/重试（合法的"再建一条"参数必然不同），直接复用首次结果，
+// 避免重复落库。读类工具不去重（重复读无害，且轮询类工具需要重复执行）。
 type turnWriteDeduper struct {
 	seen map[string]string // tool+"\x00"+args → 首次执行结果
 }

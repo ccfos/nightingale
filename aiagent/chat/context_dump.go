@@ -19,11 +19,8 @@ import (
 // never saw it. After Param was relaxed to map[string]interface{} (verbatim
 // passthrough into req.Context), the router-side leak was closed, but each
 // BuildPrompt still has to remember to surface its relevant keys via ctxHint.
-// Several actions (alert_query / resource_query / datasource_query /
-// host_health_diagnose / host_onboard_diagnose / task_tpl_copilot) read
-// nothing from req.Context today. This dump runs after BuildPrompt and
-// guarantees the LLM at least sees the raw context, even when the action
-// handler doesn't proactively highlight it.
+// This dump runs after BuildPrompt and guarantees the LLM at least sees the
+// raw context, even when the action handler doesn't proactively highlight it.
 //
 // Format:
 //
@@ -37,9 +34,9 @@ import (
 //
 // Soft wording ("use only when relevant") prevents the LLM from forcing
 // irrelevant context into responses — action-specific emphasis (e.g.
-// troubleshooting's "start by calling get_alert_event_detail(id=N)") still
-// belongs in BuildPrompt itself, since the prompt builder knows which key is
-// the action's central pivot. This dump is fallback, not replacement.
+// creation surfacing the user-selected busi_group_id) still belongs in
+// BuildPrompt itself, since the prompt builder knows which key is the
+// action's central pivot. This dump is fallback, not replacement.
 func ContextDump(ctx map[string]interface{}) string {
 	if len(ctx) == 0 {
 		return ""

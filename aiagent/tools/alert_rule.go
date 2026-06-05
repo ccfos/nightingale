@@ -36,6 +36,9 @@ type alertRuleDetailResult struct {
 	Disabled      int               `json:"disabled"`
 	Cate          string            `json:"cate,omitempty"`
 	PromQl        string            `json:"prom_ql,omitempty"`
+	RuleConfig    interface{}       `json:"rule_config,omitempty"`
+	EvalInterval  int               `json:"eval_interval,omitempty"`
+	ForDuration   int               `json:"for_duration,omitempty"`
 	AppendTags    []string          `json:"append_tags,omitempty"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 	RunbookUrl    string            `json:"runbook_url,omitempty"`
@@ -331,6 +334,9 @@ func getAlertRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		Disabled:      rule.Disabled,
 		Cate:          rule.Cate,
 		PromQl:        rule.PromQl,
+		RuleConfig:    rule.RuleConfigJson,
+		EvalInterval:  rule.PromEvalInterval,
+		ForDuration:   rule.PromForDuration,
 		AppendTags:    rule.AppendTagsJSON,
 		Annotations:   rule.AnnotationsJSON,
 		RunbookUrl:    rule.RunbookUrl,

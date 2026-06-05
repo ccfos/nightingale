@@ -51,9 +51,11 @@ func matchCreationSkill(userInput string) *creationSkillSpec {
 	return nil
 }
 
-// creationVerbs and queryVerbs drive the intent fast-path. Kept conservative:
-// false negatives are fine (we fall back to the LLM classifier), but false
-// positives would mis-route queries like "查询已创建的告警规则" into creation.
+// creationVerbs and queryVerbs drive the creation fast-path. Kept conservative:
+// false negatives are fine — the input just falls through to the general_chat
+// agent, which still creates via the write tools + 缺参门, only the instant-form
+// UX is lost; but false positives would mis-route queries like
+// "查询已创建的告警规则" into creation.
 var (
 	creationVerbs = []string{"创建", "新建", "添加", "加一条", "加一个", "建一条", "建一个", "创一条", "创一个", "create ", "add ", "build ", "make "}
 	// queryVerbs act as an anti-signal — if either a query verb or a past-tense
@@ -68,9 +70,10 @@ var (
 //  2. A creationSkills keyword (告警规则, 仪表盘, 屏蔽, ...).
 //  3. No query verb ("查看", "已创建", "list", ...) that would flip the intent.
 //
-// This is used as a routing fast-path in processAssistantMessage to bypass
-// the LLM classifier (which has been timing out at 15s and falling back to
-// general_chat — see WARNING.log "intent inference failed").
+// This is the creation fast-path consulted by resolveActionKey
+// (center/router)：命中 → 零 LLM 直进 creation action（业务组表单即时弹出）；
+// 未命中 → 落 general_chat 通用 agent（LLM 意图分类器已随路由收缩删除，
+// 不存在"回退分类器"一说）。
 func HasCreationIntent(userInput string) bool {
 	if !hasAnyKeyword(userInput, creationVerbs) {
 		return false

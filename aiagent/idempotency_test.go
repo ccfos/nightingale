@@ -50,7 +50,8 @@ func TestTurnWriteDeduper(t *testing.T) {
 	}
 }
 
-// TestRunNativeLoop_WriteDedup: 一轮内模型用相同参数重复调用写工具，只真正执行一次。
+// TestRunNativeLoop_WriteDedup: 同一次 Run 的工具循环内、先后两个迭代用相同
+// 参数重复调用写工具，只真正执行一次（验证去重是跨迭代的 turn 级作用域）。
 func TestRunNativeLoop_WriteDedup(t *testing.T) {
 	var calls int32
 	RegisterBuiltinTool("create_test_counter", &BuiltinTool{
@@ -69,7 +70,7 @@ func TestRunNativeLoop_WriteDedup(t *testing.T) {
 	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
 
 	streamChan := make(chan *StreamChunk, 100)
-	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "建两次"}}, nil, &ReActLoopConfig{
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "建两次"}}, nil, &ToolLoopConfig{
 		MaxIterations:  5,
 		StreamChan:     streamChan,
 		EmitTranscript: true,

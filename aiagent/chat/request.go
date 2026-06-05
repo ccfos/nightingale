@@ -6,7 +6,7 @@ import (
 
 // AIChatRequest is the generic chat request dispatched by action_key.
 type AIChatRequest struct {
-	ActionKey string                 `json:"action_key"` // e.g. "query_generator"
+	ActionKey string                 `json:"action_key"` // e.g. "creation"
 	UserInput string                 `json:"user_input"`
 	History   []aiagent.ChatMessage  `json:"history,omitempty"`
 	Context   map[string]interface{} `json:"context,omitempty"` // action-specific params
