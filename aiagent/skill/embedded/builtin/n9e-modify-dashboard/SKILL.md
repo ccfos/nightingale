@@ -1,6 +1,6 @@
 ---
 name: n9e-modify-dashboard
-description: 修改夜莺(n9e)上已存在的监控仪表盘。当用户要求改某个仪表盘的变量、检查并修复变量、修改图表/曲线（改 PromQL/SQL、legend、单位、增删曲线）、重命名图表时使用。区别于"从零创建仪表盘"(那是 n9e-create-dashboard)。
+description: 修改夜莺(n9e)上已存在的监控仪表盘。当用户要求改某个仪表盘的变量、检查并修复变量、修改图表/曲线（改 PromQL、legend、单位、增删曲线）、重命名图表时使用。区别于"从零创建仪表盘"(那是 n9e-create-dashboard)。
 max_iterations: 16
 examples:
   - "把这个仪表盘的 ident 变量默认值改成 web01"
@@ -27,7 +27,9 @@ builtin_tools:
 |------|-------------|
 | **改变量** | 模板变量的取值表达式(definition)、默认值、是否多选(multi)、显示名(label) |
 | **检查并修复变量** | 扫描变量定义和图表里对变量的引用，发现坏味道（图表引用了未定义变量、变量取不到值、数据源引用不一致等）并修复 |
-| **改图表曲线** | 某个图表(panel)的曲线：查询表达式(PromQL/SQL)、legend、单位(unit)、增删曲线、改标题 |
+| **改图表曲线** | 某个图表(panel)的曲线：查询表达式(PromQL)、legend、单位(unit)、增删曲线、改标题 |
+
+> 曲线查询(`queries`)编辑**仅支持 Prometheus/VictoriaMetrics 面板**；SQL/日志类面板(mysql、ck、es 等)只能改单位、标题、说明或删除，传 `queries` 会被工具拒绝。
 
 ## 铁律：一次提案调用即收尾，确认由系统完成
 

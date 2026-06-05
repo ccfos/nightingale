@@ -165,6 +165,31 @@ func TestApplyVariablePatches_RequiresName(t *testing.T) {
 	}
 }
 
+// TestApplyVariablePatches_AddRejectsNonQueryType：buildVariable 只会构造 query
+// 型骨架，新增时指定其他 type 只会改写 type 字段、产出字段布局错乱的畸形变量
+// （如 type=datasource 却自带 datasource 子对象），必须拒绝。
+func TestApplyVariablePatches_AddRejectsNonQueryType(t *testing.T) {
+	cfg := sampleConfigs(t)
+	for _, typ := range []string{"custom", "textbox", "datasource"} {
+		if _, err := applyVariablePatches(cfg, []variablePatch{
+			{Name: "env", Type: ptrStr(typ)},
+		}); err == nil {
+			t.Fatalf("expected error adding variable with type %q", typ)
+		}
+	}
+	// 显式 type=query 等价于缺省，照常新增
+	if _, err := applyVariablePatches(cfg, []variablePatch{
+		{Name: "env", Definition: ptrStr("label_values(up, env)"), Type: ptrStr("query")},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	vars := cfg["var"].([]interface{})
+	added := vars[len(vars)-1].(map[string]interface{})
+	if added["type"] != "query" {
+		t.Fatalf("added variable type = %v, want query", added["type"])
+	}
+}
+
 // TestQuerySpec_TolerantDecode is the regression for the strict-decode abort:
 // the LLM quotes scalars ("step":"15", "instant":"true") or writes ints as
 // floats ("step":15.0); none must fail the decode (which would abort the whole

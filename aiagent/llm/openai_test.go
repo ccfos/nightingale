@@ -191,3 +191,25 @@ func TestOpenAIStream_ContentPassthrough(t *testing.T) {
 		t.Errorf("finish_reason lost: %q", finish)
 	}
 }
+
+// TestConvertRequest_ToolTurnEmptyContent 验证工具返回空串时 tool 结果轮被填
+// 占位符——content 经 omitempty 整个丢字段会被严格端点 400 拒绝；assistant
+// tool-call 轮的空 content 则必须保持可省略。
+func TestConvertRequest_ToolTurnEmptyContent(t *testing.T) {
+	o := &OpenAI{config: &Config{Model: "gpt-x"}}
+	out := o.convertRequest(&GenerateRequest{Messages: []Message{
+		{Role: RoleAssistant, ToolCalls: []ToolCall{{ID: "c1", Name: "noop", Arguments: "{}"}}},
+		{Role: RoleTool, ToolCallID: "c1", Content: ""},
+		{Role: RoleTool, ToolCallID: "c1", Content: "real result"},
+	}})
+
+	if out.Messages[0].Content != "" {
+		t.Errorf("assistant tool-call turn content should stay empty, got %q", out.Messages[0].Content)
+	}
+	if out.Messages[1].Content == "" {
+		t.Errorf("empty tool result must get a placeholder, got empty (field would be dropped by omitempty)")
+	}
+	if out.Messages[2].Content != "real result" {
+		t.Errorf("non-empty tool result must pass through, got %q", out.Messages[2].Content)
+	}
+}

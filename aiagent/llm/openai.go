@@ -406,6 +406,11 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 			Content:    msg.Content,
 			ToolCallID: msg.ToolCallID,
 		}
+		// tool 结果轮 content 必填：工具返回空串时，omitempty 会把 content 字段
+		// 整个丢掉（对 assistant tool-call 轮是对的），严格端点直接 400 拒绝整单。
+		if msg.Role == RoleTool && oaMsg.Content == "" {
+			oaMsg.Content = "(empty result)"
+		}
 		for _, tc := range msg.ToolCalls {
 			oaTC := openAIToolCall{ID: tc.ID, Type: "function"}
 			oaTC.Function.Name = tc.Name

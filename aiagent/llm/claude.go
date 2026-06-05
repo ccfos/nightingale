@@ -132,6 +132,12 @@ type claudeStreamEvent struct {
 	Delta        *claudeStreamDelta  `json:"delta,omitempty"`
 	Message      *claudeResponse     `json:"message,omitempty"`
 	Usage        *claudeStreamUsage  `json:"usage,omitempty"`
+	// Error 仅 type=error 事件：服务端的具体失败原因（限流/超长/超额等），
+	// 不解析就只剩一句没有信息量的 "stream error"。
+	Error *struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
 }
 
 type claudeStreamDelta struct {
@@ -306,7 +312,11 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 			return
 
 		case "error":
-			ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error")}
+			if event.Error != nil && event.Error.Message != "" {
+				ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error: %s (%s)", event.Error.Message, event.Error.Type)}
+			} else {
+				ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error")}
+			}
 			return
 		}
 	}

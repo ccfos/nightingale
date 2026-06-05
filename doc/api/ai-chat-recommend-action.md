@@ -2,8 +2,6 @@
 
 新会话创建后，AICopilot 在空会话面板上展示「快捷提问」按钮，文案根据 `/chat/new` 请求里携带的 `page` 决定。**这些预置提示词由前端硬编码维护**（不再由后端 `/chat/new` 接口下发），本文档作为前后端共同的提示词规格。
 
-> 接口请求/响应字段、整体交互时序见 [ai-chat.md](./ai-chat.md)。
-
 ## 设计约定
 
 每条快捷提问最终会作为一次 `/message/new` 调用发出，前端按下表填充 `query` 字段：
@@ -14,7 +12,7 @@
 | `query.action.param` | `/chat/new` 时使用的 `param`（即会话的 `page_from.param`） | 前端把页面级上下文透传到 action |
 | `query.page_from` | 当前会话的 `page_from` | 与 `/chat/new` 请求一致 |
 
-> **不传 `action.key`**：该字段已废弃，后端不再读取（前端发送前会剥掉）。处理路径由后端从 `content` 确定性解析——创建类文案命中 `creation` 关键词 fast-path，其余走 `general_chat` 通用 agent。详见 ai-chat.md 中「[action 路由](./ai-chat.md#action-路由)」。
+> **不传 `action.key`**：该字段已废弃，后端不再读取（前端发送前会剥掉）。处理路径由后端从 `content` 确定性解析——创建类文案命中 `creation` 关键词 fast-path，其余走 `general_chat` 通用 agent。
 
 示例（在 explorer 页面点击第 1 条快捷提问）：
 
@@ -71,7 +69,7 @@
 | 2 | Create a MySQL dashboard | 帮我创建一个 MySQL 的仪表盘 |
 | 3 | Create a Redis dashboard | 帮我创建一个 Redis 的仪表盘 |
 
-> 这些文案会命中后端 `creation` 关键词 fast-path 并触发 preflight：若 `param` 中缺少 `busi_group_id` 等必填上下文，后端会先返回 `form_select` 让用户补齐。详见 ai-chat.md 中「创建类操作的 preflight 流程」。
+> 这些文案会命中后端 `creation` 关键词 fast-path 并触发 preflight：若 `param` 中缺少 `busi_group_id` 等必填上下文，后端会先返回 `form_select` 让用户补齐。
 
 ### `alert_rule` — 告警规则列表
 
@@ -130,4 +128,4 @@
 
 1. 在前端 AICopilot 的预置提示词常量表里新增/修改对应 `page` 下的条目，文案在前端 i18n 资源中补齐多语种翻译。
 2. 同步更新本文件里对应章节的表格。
-3. 如新增的是新 `page` 类型，需要在后端 `models/ai_assistant.go` 的 `AssistantPageType` 常量、以及 ai-chat.md 的 `page` 枚举值表里同步登记，确保 `/chat/new` 接收到新值时不会被当作未知 page。
+3. 如新增的是新 `page` 类型，需要在后端 `models/ai_assistant.go` 的 `AssistantPageType` 常量里同步登记（本文「页面预置提示词总览」表也一并更新），确保 `/chat/new` 接收到新值时不会被当作未知 page。

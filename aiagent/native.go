@@ -144,8 +144,19 @@ func (a *Agent) runNativeLoop(ctx context.Context, req *AgentRequest, messages [
 				var interrupt *ToolInterrupt
 				observation, interrupt = a.executeToolI(ctx, tc.Name, tc.Arguments, req, config.Tools)
 				if interrupt != nil {
-					// 人在环中断：确认文案即本轮答复；本轮不产 ToolResult/transcript
-					// （重放所需状态在 Pending 里，无需进入对话历史）。
+					// 人在环中断：确认文案即本轮答复；被中断的调用不产 ToolResult/
+					// transcript（重放所需状态在 Pending 里，无需进入对话历史）。
+					// 同轮先行工具可能已执行（写操作已落库）：把已完成的调用配对
+					// 持久化，否则下一轮模型对已发生的副作用失忆、可能重复执行。
+					// assistant 轮的 ToolCalls 必须裁剪到只保留有结果的调用——带上
+					// 被中断/未执行的调用会形成孤儿 tool_use，回放链路没有配对修复
+					// （assembleTurnHistory 纯拼接），provider 会整单拒绝。
+					if len(turn) > 1 {
+						executed := turn[1:]
+						asst := turn[0]
+						asst.ToolCalls = asst.ToolCalls[:len(executed)] // 按序执行，前 N 个即已完成的
+						emitTranscript(config, append([]ChatMessage{asst}, executed...)...)
+					}
 					emitInterrupt(config, interrupt, tc.Name)
 					resp.Content = interrupt.Prompt
 					resp.Iterations = iteration + 1
@@ -221,7 +232,8 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 		if err != nil {
 			return "", nil, nil, err
 		}
-		return genResp.Content, genResp.ToolCalls, genResp.ThinkingBlocks, nil
+		content, err := applyFinishReason(genResp.Content, genResp.ToolCalls, genResp.FinishReason, nil)
+		return content, genResp.ToolCalls, genResp.ThinkingBlocks, err
 	}
 
 	stream, err := a.llmClient.GenerateStream(ctx, llmReq)
@@ -233,6 +245,7 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 	var content strings.Builder
 	var calls []llm.ToolCall
 	var thinking []llm.ThinkingBlock
+	var finishReason string
 	emit := func(chunkType, delta string) {
 		streamChan <- &StreamChunk{
 			Type:      chunkType,
@@ -257,13 +270,40 @@ func (a *Agent) callLLMNative(ctx context.Context, messages []ChatMessage, toolD
 			content.WriteString(chunk.Content)
 			emit(StreamTypeContent, chunk.Content)
 		}
+		if chunk.FinishReason != "" {
+			finishReason = chunk.FinishReason
+		}
 		calls = append(calls, chunk.ToolCalls...)
 		if chunk.Done {
 			break
 		}
 	}
 
-	return content.String(), calls, thinking, nil
+	finalContent, err := applyFinishReason(content.String(), calls, finishReason,
+		func(note string) { emit(StreamTypeContent, note) })
+	return finalContent, calls, thinking, err
+}
+
+// applyFinishReason 把 provider 上报的异常结束原因转成显式信号：拦截类
+// （SAFETY/content_filter/refusal）判错——正文不可信，不能伪装成完整回答；
+// 截断类（max_tokens/length）在正文尾部追加可见提示，半截答案仍有价值。
+// 有 tool_calls 时不干预：截断的调用参数本就靠工具执行报错喂回模型重试
+// （见 openai.go finish 的注释），整轮报错反而打断该机制。
+func applyFinishReason(content string, calls []llm.ToolCall, reason string, emitNote func(string)) (string, error) {
+	if len(calls) > 0 {
+		return content, nil
+	}
+	switch llm.ClassifyFinish(reason) {
+	case llm.FinishBlocked:
+		return content, fmt.Errorf("LLM output blocked by provider (finish_reason=%s)", reason)
+	case llm.FinishTruncated:
+		note := "\n\n（输出达到长度上限，回答被截断）"
+		if emitNote != nil {
+			emitNote(note)
+		}
+		return content + note, nil
+	}
+	return content, nil
 }
 
 // buildNativeToolDefs 把 AgentTool 的扁平参数表编译成 JSON-Schema 形态的
@@ -376,7 +416,12 @@ func (a *Agent) executeNativeWithDone(ctx context.Context, req *AgentRequest, rc
 
 	resp := a.executeNative(ctx, req, rc)
 
-	if resp.Error != "" && !resp.Success {
+	// 纯失败（LLM 错误/超时，无任何可展示产出）才走 Error chunk。带部分产出的
+	// max-iteration 截断（ExtractPartialResult 拼好的 "Analysis incomplete..."）
+	// 落到下面的 Done 分支：路由层把这类非流式正文当唯一拷贝推流并持久化
+	// （见 router 消费侧 "max-iteration partials" 注释），用户能看到已有分析
+	// 而非一句超时错误。
+	if resp.Error != "" && !resp.Success && resp.Content == "" {
 		streamChan <- &StreamChunk{
 			Type:      StreamTypeError,
 			Error:     resp.Error,

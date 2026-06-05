@@ -385,6 +385,12 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 			changes = append(changes, fmt.Sprintf("更新变量 %q", p.Name))
 
 		default: // add new variable
+			// buildVariable 只会构造 query 型骨架（definition/datasource 等字段）。
+			// 放任 type 覆盖会产出字段布局错乱的畸形变量（如 type=datasource 却
+			// 自带 datasource 子对象自指），直接拒绝，让模型改走其他途径。
+			if p.Type != nil && *p.Type != "query" {
+				return nil, fmt.Errorf("cannot add variable %q: only query-type variables can be added (got type %q)", p.Name, *p.Type)
+			}
 			spec := VariableSpec{Name: p.Name}
 			if p.Definition != nil {
 				spec.Definition = *p.Definition
@@ -407,9 +413,6 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 			}
 			if p.DefaultValue != nil {
 				nv["defaultValue"] = *p.DefaultValue
-			}
-			if p.Type != nil {
-				nv["type"] = *p.Type
 			}
 			vars = append(vars, nv)
 			changes = append(changes, fmt.Sprintf("新增变量 %q", p.Name))

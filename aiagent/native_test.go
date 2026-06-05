@@ -31,6 +31,9 @@ func (s *scriptedNativeLLM) Generate(ctx context.Context, req *llm.GenerateReque
 	for _, c := range s.take() {
 		resp.Content += c.Content
 		resp.ToolCalls = append(resp.ToolCalls, c.ToolCalls...)
+		if c.FinishReason != "" {
+			resp.FinishReason = c.FinishReason
+		}
 	}
 	return resp, nil
 }
@@ -354,5 +357,152 @@ func TestRunNativeLoop_ContentStreamsWithToolsOffered(t *testing.T) {
 	}
 	if contentDeltas != "好的，这是答案" {
 		t.Fatalf("content channel = %q, want full body", contentDeltas)
+	}
+}
+
+// TestExecuteNativeWithDone_MaxIterationPartialGoesDone：max-iteration 截断且
+// 带部分产出时走 Done 而非 Error——路由层把 Done.Content 当唯一正文推流并
+// 持久化，用户能看到已有分析。
+func TestExecuteNativeWithDone_MaxIterationPartialGoesDone(t *testing.T) {
+	// 每轮都发工具调用，永不收敛 → 必然打到 MaxIterations
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{Content: "查一下", ToolCalls: []llm.ToolCall{{ID: "c1", Name: "noop_lookup", Arguments: `{}`}}}},
+		{{Content: "再查", ToolCalls: []llm.ToolCall{{ID: "c2", Name: "noop_lookup", Arguments: `{}`}}}},
+	}}
+	a := &Agent{
+		cfg:       &AgentConfig{MaxIterations: 2, Timeout: 30000, UserPromptRendered: "排查问题"},
+		llmClient: fake,
+	}
+
+	streamChan := make(chan *StreamChunk, 100)
+	a.executeNativeWithDone(context.Background(), &AgentRequest{StreamChan: streamChan}, &runCtx{})
+	close(streamChan)
+
+	var doneChunk *StreamChunk
+	for ch := range streamChan {
+		switch ch.Type {
+		case StreamTypeError:
+			t.Fatalf("max-iteration partial must not surface as Error chunk: %+v", ch)
+		case StreamTypeDone:
+			doneChunk = ch
+		}
+	}
+	if doneChunk == nil || !strings.Contains(doneChunk.Content, "Analysis incomplete") {
+		t.Fatalf("Done chunk = %+v, want partial content from ExtractPartialResult", doneChunk)
+	}
+	if streamed, _ := doneChunk.Metadata["content_streamed"].(bool); streamed {
+		t.Fatalf("partial body never streamed as final answer, content_streamed must be unset")
+	}
+}
+
+// TestRunNativeLoop_TruncatedFinishAppendsNote：finish_reason 表明输出被长度
+// 上限截断时，正文尾部追加可见提示（流式同步推一条 content 增量），
+// 不把半截回答伪装成完整答案。
+func TestRunNativeLoop_TruncatedFinishAppendsNote(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{Content: "前半截回答", FinishReason: "MAX_TOKENS"}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, nil, &ToolLoopConfig{
+		MaxIterations: 3,
+		StreamChan:    streamChan,
+	})
+	close(streamChan)
+
+	if !resp.Success || !strings.HasPrefix(resp.Content, "前半截回答") || !strings.Contains(resp.Content, "截断") {
+		t.Fatalf("resp = %+v, want partial content with truncation note", resp)
+	}
+	var contentDeltas string
+	for ch := range streamChan {
+		if ch.Type == StreamTypeContent {
+			contentDeltas += ch.Delta
+		}
+	}
+	if !strings.Contains(contentDeltas, "截断") {
+		t.Fatalf("content channel = %q, truncation note must stream too", contentDeltas)
+	}
+}
+
+// TestRunNativeLoop_BlockedFinishFails：被安全策略拦截（SAFETY/content_filter）
+// 的输出不可信，判错而非伪装成正常回答。
+func TestRunNativeLoop_BlockedFinishFails(t *testing.T) {
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{Content: "被拦截的半截", FinishReason: "SAFETY"}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 3, Timeout: 30000}, llmClient: fake}
+
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "问"}}, nil, &ToolLoopConfig{
+		MaxIterations: 3,
+		StreamChan:    streamChan,
+	})
+	close(streamChan)
+
+	if resp.Success || !strings.Contains(resp.Error, "SAFETY") {
+		t.Fatalf("resp = %+v, want failure carrying finish_reason", resp)
+	}
+}
+
+// TestRunNativeLoop_InterruptAfterExecutedWrite：同一 assistant 轮"先行工具已
+// 执行 + 后续工具中断"时，已执行部分必须配对持久化进 transcript（assistant 轮
+// 裁剪到有结果的调用 + 对应结果轮）——否则下一轮模型对已落库的副作用失忆、
+// 可能重复执行；同时被中断的调用不得留下孤儿 tool_use（回放链路没有配对修复，
+// provider 会整单拒绝）。
+func TestRunNativeLoop_InterruptAfterExecutedWrite(t *testing.T) {
+	RegisterBuiltinTool("test_interrupt_after_write", &BuiltinTool{
+		Definition: AgentTool{Name: "test_interrupt_after_write", Type: ToolTypeBuiltin},
+		Handler: func(ctx context.Context, deps *ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+			return "", &ToolInterrupt{
+				Kind:       InterruptKindApproval,
+				Prompt:     "确认修改吗？",
+				ResumeArgs: `{"confirmed":true}`,
+			}
+		},
+	})
+
+	fake := &scriptedNativeLLM{rounds: [][]llm.StreamChunk{
+		{{ToolCalls: []llm.ToolCall{
+			{ID: "c1", Name: "noop_lookup", Arguments: `{}`},                // 先行工具：正常执行出结果
+			{ID: "c2", Name: "test_interrupt_after_write", Arguments: `{}`}, // 后续工具：中断
+		}}},
+	}}
+	a := &Agent{cfg: &AgentConfig{MaxIterations: 5, Timeout: 30000}, llmClient: fake}
+
+	streamChan := make(chan *StreamChunk, 100)
+	resp := a.runNativeLoop(context.Background(), &AgentRequest{}, []ChatMessage{{Role: "user", Content: "改"}}, nil, &ToolLoopConfig{
+		MaxIterations:  5,
+		StreamChan:     streamChan,
+		EmitTranscript: true,
+	})
+	close(streamChan)
+
+	if !resp.Success || resp.Content != "确认修改吗？" {
+		t.Fatalf("resp = %+v, want interrupt prompt as answer", resp)
+	}
+
+	var transcript []ChatMessage
+	interruptSeen := false
+	for ch := range streamChan {
+		switch ch.Type {
+		case StreamTypeTranscript:
+			transcript = append(transcript, ch.Transcript...)
+		case StreamTypeInterrupt:
+			interruptSeen = true
+		}
+	}
+	if !interruptSeen {
+		t.Fatal("interrupt chunk must still be emitted")
+	}
+	if len(transcript) != 2 {
+		t.Fatalf("transcript = %+v, want assistant + 1 executed tool result", transcript)
+	}
+	asst, toolTurn := transcript[0], transcript[1]
+	if asst.Role != "assistant" || len(asst.ToolCalls) != 1 || asst.ToolCalls[0].ID != "c1" {
+		t.Fatalf("assistant turn = %+v, want ToolCalls trimmed to the executed call only (no orphan tool_use)", asst)
+	}
+	if toolTurn.Role != llm.RoleTool || toolTurn.ToolCallID != "c1" {
+		t.Fatalf("tool turn = %+v, want paired result for the executed call", toolTurn)
 	}
 }
