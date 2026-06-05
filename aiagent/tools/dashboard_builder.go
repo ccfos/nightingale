@@ -21,11 +21,60 @@ type PanelSpec struct {
 	Desc    string      `json:"description,omitempty"`
 }
 
-// QuerySpec AI 生成的简化查询描述
+// QuerySpec AI 生成的简化查询描述。
+//
+// Ref/Step/Hide/Instant/Delete are only meaningful for update_dashboard's
+// incremental panel edit (see mergeTargets): Ref locates the existing target to
+// edit in place — an empty Ref always adds a new curve (no positional matching)
+// — the pointer fields (Instant/Step/Hide) distinguish "not provided" (nil →
+// keep the existing target's value) from an explicit set (incl. instant=false),
+// and Delete removes the ref-matched curve. create_dashboard ignores Ref/Delete
+// (refIds are assigned sequentially) but still honors Instant/Step/Hide.
 type QuerySpec struct {
 	PromQL  string `json:"promql"`            // PromQL 表达式
 	Legend  string `json:"legend,omitempty"`   // 图例模板, 如 "{{ident}}"
-	Instant bool   `json:"instant,omitempty"`  // 即时查询(用于 stat/table)
+	Instant *bool  `json:"instant,omitempty"`  // 即时查询(用于 stat/table); nil 保留原值, true/false 均可显式设置
+	Ref     string `json:"ref,omitempty"`      // 编辑已有曲线时按 refId 匹配(如 "A"); 留空一律视为新增曲线
+	Step    *int   `json:"step,omitempty"`     // 固定查询步长(秒); nil 保留原值
+	Hide    *bool  `json:"hide,omitempty"`     // 是否隐藏该曲线; nil 保留原值
+	Delete  bool   `json:"delete,omitempty"`   // 编辑时删除按 ref 匹配到的曲线(留空 ref 不会匹配任何曲线)
+}
+
+// UnmarshalJSON decodes a QuerySpec tolerantly: the LLM often quotes the scalar
+// fields ("step":"15", "instant":"true") or writes integers as floats
+// ("step":15.0), all of which the default decoder rejects — aborting the entire
+// panels/variables parse. The loose fields go through flex* coercion; the rest
+// decode normally. Used by both create_dashboard (PanelSpec.Queries) and
+// update_dashboard (panelPatch.Queries).
+func (q *QuerySpec) UnmarshalJSON(data []byte) error {
+	var r struct {
+		PromQL  string          `json:"promql"`
+		Legend  string          `json:"legend"`
+		Ref     string          `json:"ref"`
+		Instant json.RawMessage `json:"instant"`
+		Step    json.RawMessage `json:"step"`
+		Hide    json.RawMessage `json:"hide"`
+		Delete  json.RawMessage `json:"delete"`
+	}
+	if err := json.Unmarshal(data, &r); err != nil {
+		return err
+	}
+	q.PromQL, q.Legend, q.Ref = r.PromQL, r.Legend, r.Ref
+
+	var err error
+	if q.Instant, err = flexBoolPtr(r.Instant); err != nil {
+		return fmt.Errorf("query field instant: %w", err)
+	}
+	if q.Hide, err = flexBoolPtr(r.Hide); err != nil {
+		return fmt.Errorf("query field hide: %w", err)
+	}
+	if q.Step, err = flexIntPtr(r.Step); err != nil {
+		return fmt.Errorf("query field step: %w", err)
+	}
+	if q.Delete, err = flexBool(r.Delete); err != nil {
+		return fmt.Errorf("query field delete: %w", err)
+	}
+	return nil
 }
 
 // VariableSpec AI 生成的简化变量描述
@@ -219,10 +268,21 @@ func buildTargets(queries []QuerySpec) []interface{} {
 			"expr":  q.PromQL,
 		}
 		if q.Legend != "" {
-			t["legendFormat"] = q.Legend
+			// n9e's FE editor, renderer, and every built-in/integration board
+			// store a target's legend template under "legend" — NOT the Grafana
+			// "legendFormat" key. Writing legendFormat persists silently but the
+			// page ignores it, so the legend never renders. See targetLegend for
+			// the read side (which still tolerates historical legendFormat).
+			t["legend"] = q.Legend
 		}
-		if q.Instant {
-			t["instant"] = true
+		if q.Instant != nil {
+			t["instant"] = *q.Instant
+		}
+		if q.Step != nil {
+			t["step"] = *q.Step
+		}
+		if q.Hide != nil {
+			t["hide"] = *q.Hide
 		}
 		targets = append(targets, t)
 	}
@@ -232,9 +292,11 @@ func buildTargets(queries []QuerySpec) []interface{} {
 func buildOptions(spec PanelSpec) map[string]interface{} {
 	opts := map[string]interface{}{}
 
-	// standardOptions
+	// standardOptions. Panels are emitted at schema version 3.4.0, and the FE
+	// renderer/editor reads the unit from "unit" (the legacy "util" key is only
+	// migrated to "unit" for panels older than 3.3.0), so we must write "unit".
 	if spec.Unit != "" {
-		opts["standardOptions"] = map[string]interface{}{"util": spec.Unit}
+		opts["standardOptions"] = map[string]interface{}{"unit": spec.Unit}
 	} else {
 		opts["standardOptions"] = map[string]interface{}{}
 	}

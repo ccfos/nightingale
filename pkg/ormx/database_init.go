@@ -1378,9 +1378,13 @@ func (InitTaskSchedulerHealth) TableOptions() string {
 	return "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
 }
 
+// InitTaskHostDoing holds one row per (task id, host), so id alone must NOT be
+// the primary key. GORM force-promotes a lone `id` column to primary key (and
+// implicitly marks int primary keys auto-increment), so declare the natural
+// composite key (id, host) with autoIncrement explicitly disabled.
 type InitTaskHostDoing struct {
-	ID     uint64 `gorm:"primaryKey;index"`
-	Host   string `gorm:"size:128;not null;index"`
+	ID     uint64 `gorm:"primaryKey;autoIncrement:false;index"`
+	Host   string `gorm:"size:128;not null;primaryKey;index"`
 	Clock  int64  `gorm:"not null;default:0"`
 	Action string `gorm:"size:16;not null"`
 }

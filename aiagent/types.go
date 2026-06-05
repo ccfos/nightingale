@@ -15,11 +15,6 @@ import (
 // ==================== 常量 ====================
 
 const (
-	// Agent 模式
-	AgentModeReAct     = "react"      // ReAct 模式（默认）
-	AgentModePlanReAct = "plan_react" // Plan + ReAct 混合模式
-	AgentModeDirect    = "direct"     // 单次 LLM 调用，无 ReAct 格式包装，适用于无工具的纯生成 action
-
 	// 工具类型
 	ToolTypeHTTP      = "http"      // HTTP 请求工具
 	ToolTypeBuiltin   = "builtin"   // 内置工具
@@ -31,20 +26,19 @@ const (
 	StreamTypeThinking   = "thinking"
 	StreamTypeToolCall   = "tool_call"
 	StreamTypeToolResult = "tool_result"
-	StreamTypeText       = "text"
-	StreamTypeContent    = "content" // Direct 模式 token，路由层归入 content 通道（非 reason）
+	StreamTypeContent    = "content" // 正文 token，路由层归入 content 通道（非 reason）
 	StreamTypeDone       = "done"
 	StreamTypeError      = "error"
-	StreamTypePlan       = "plan"
-	StreamTypeStep       = "step"
-	StreamTypeSynthesis  = "synthesis"
+	// StreamTypeTranscript 携带本轮工具循环产生的规范消息（assistant 工具调用轮 + tool 结果轮），
+	// 供路由层收集并持久化为下一轮可回放的结构化 transcript。仅在该 chunk 的 Transcript 字段非空。
+	// 它不写入 stream bus，也不转发给 A2A，纯粹是 agent→router 的内部带外通道。
+	StreamTypeTranscript = "transcript"
+	// StreamTypeInterrupt：工具触发人在环中断（见 ToolInterrupt）。Content=确认
+	// 文案，Metadata 携带 kind/tool/resume_args，路由层据此持久化 Pending 并结束
+	// 本轮。同样是 agent→router 内部带外通道，不进 stream bus / A2A。
+	StreamTypeInterrupt = "interrupt"
 
 	// 注：Agent 运行期默认值、HTTP 状态码上界等调优参数见 defaults.go。
-
-	// ReAct 特殊标记
-	ActionFinalAnswer = "Final Answer"
-	ActionReplan      = "Replan"
-	ActionStepComplete = "Step Complete"
 )
 
 // ==================== Agent 核心类型 ====================
@@ -58,7 +52,6 @@ type Agent struct {
 
 	// Skills
 	skillRegistry *SkillRegistry
-	skillSelector *LLMSkillSelector
 
 	// MCP
 	mcpClientManager *mcp.ClientManager
@@ -74,7 +67,6 @@ type Agent struct {
 // AgentConfig Agent 配置（仅包含 Agent 行为相关字段，LLM 配置通过 WithLLMClient 注入）
 type AgentConfig struct {
 	// Agent 行为
-	AgentMode     string `json:"agent_mode,omitempty"`
 	MaxIterations int    `json:"max_iterations"`
 	Timeout       int    `json:"timeout"`
 	OutputField   string `json:"output_field"`
@@ -82,15 +74,14 @@ type AgentConfig struct {
 	// 仅交互式 chat 在最终答案末尾追加"下一步建议"；workflow/事件路径开启会污染结构化输出，默认 false。
 	GuidedFollowup bool `json:"guided_followup,omitempty"`
 
-	// Plan+ReAct 配置
-	MaxPlanSteps      int `json:"max_plan_steps,omitempty"`
-	MaxReplanCount    int `json:"max_replan_count,omitempty"`
-	MaxStepIterations int `json:"max_step_iterations,omitempty"`
-
 	// 可选能力
 	Skills *SkillConfig `json:"skills,omitempty"`
 	MCP    *mcp.Config  `json:"mcp,omitempty"`
 	Stream bool         `json:"stream,omitempty"`
+
+	// HistoryBudgetBytes 历史投影预算（字节），0 = DefaultHistoryBudgetBytes。
+	// router 从 LLM 配置 ExtraConfig.context_length 粗略折算（token×3）。
+	HistoryBudgetBytes int `json:"history_budget_bytes,omitempty"`
 
 	// 用户提示词模板（支持 Go 模板语法，会被 text/template 解析）。
 	// 适用于 adapter/processor 路径：用户在 JSON config 中显式写模板字符串，
@@ -140,12 +131,16 @@ type AgentRequest struct {
 
 // AgentResponse Agent 执行结果
 type AgentResponse struct {
-	Content    string         `json:"content"`          // 最终结果文本
-	Steps      []ReActStep    `json:"steps"`            // 执行轨迹
-	Plan       *ExecutionPlan `json:"plan,omitempty"`   // 执行计划（plan_react 模式）
-	Iterations int            `json:"iterations"`       // 迭代次数
-	Success    bool           `json:"success"`          // 是否成功
-	Error      string         `json:"error,omitempty"`  // 错误信息
+	Content    string      `json:"content"`         // 最终结果文本
+	Steps      []ToolStep `json:"steps"`           // 执行轨迹
+	Iterations int         `json:"iterations"`      // 迭代次数
+	Success    bool        `json:"success"`         // 是否成功
+	Error      string      `json:"error,omitempty"` // 错误信息
+
+	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
+	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
+	// 当作解析/持久化用的权威正文，不再二次推流（防思考/回答整段重复）。
+	contentStreamed bool
 }
 
 // StreamChunk Agent 自有的流式数据块
@@ -158,6 +153,10 @@ type StreamChunk struct {
 	Timestamp int64                  `json:"timestamp"`
 	Done      bool                   `json:"done,omitempty"`
 	Error     string                 `json:"error,omitempty"`
+
+	// Transcript 仅在 Type==StreamTypeTranscript 时设置：本轮新追加的规范消息
+	// （按 wire 顺序，如 assistant 工具调用轮 + tool 结果轮）。
+	Transcript []ChatMessage `json:"transcript,omitempty"`
 }
 
 // ==================== 工具类型 ====================
@@ -225,18 +224,19 @@ type BuiltinToolFunc func(ctx context.Context, deps *ToolDeps, args map[string]i
 // 由适配层注入，核心 Agent 不关心具体实现
 type ExternalToolHandler func(ctx context.Context, tool *AgentTool, args map[string]interface{}, req *AgentRequest) (string, error)
 
-// ==================== ReAct 类型 ====================
+// ==================== 工具循环类型 ====================
 
-// ReActStep ReAct 循环中的一步
-type ReActStep struct {
+// ToolStep 工具循环执行轨迹中的一步（思考 → 调工具 → 观测）。
+// JSON 字段名是对外 API 的 wire 格式（沿用早期 ReAct 协议词汇），不可随类型改名。
+type ToolStep struct {
 	Thought     string `json:"thought"`
 	Action      string `json:"action"`
 	ActionInput string `json:"action_input"`
 	Observation string `json:"observation"`
 }
 
-// ReActLoopConfig ReAct 循环配置
-type ReActLoopConfig struct {
+// ToolLoopConfig 工具循环配置
+type ToolLoopConfig struct {
 	MaxIterations  int
 	TimeoutMessage string
 	LogPrefix      string
@@ -248,9 +248,12 @@ type ReActLoopConfig struct {
 	StreamChan chan *StreamChunk
 	RequestID  string
 
-	// 完成判断
-	IsComplete           func(action string) bool
 	ExtractPartialResult bool
+
+	// EmitTranscript 为真时，循环在每次向上下文追加工具调用轮/结果轮后，经
+	// StreamChan 发一个 StreamTypeTranscript chunk，让路由层持久化本轮完整
+	// transcript。仅顶层 chat（executeNative）置真。
+	EmitTranscript bool
 }
 
 // runCtx 单次 Run 的运行期状态（per-Run scope）
@@ -260,38 +263,25 @@ type runCtx struct {
 	tools  []AgentTool // 静态（cfg.Tools）+ skill + MCP，按本次选中的 skills 装配
 }
 
-// ==================== Plan+ReAct 类型 ====================
-
-// PlanStep 计划步骤
-type PlanStep struct {
-	StepNumber int    `json:"step_number"`
-	Goal       string `json:"goal"`
-	Approach   string `json:"approach"`
-	Status     string `json:"status"`
-	Summary    string `json:"summary"`
-	Findings   string `json:"findings"`
-	Error      string `json:"error"`
-
-	ReActSteps []ReActStep `json:"react_steps,omitempty"`
-	Iterations int         `json:"iterations"`
-}
-
-// ExecutionPlan 执行计划
-type ExecutionPlan struct {
-	TaskSummary string     `json:"task_summary"`
-	Goal        string     `json:"goal"`
-	FocusAreas  []string   `json:"focus_areas"`
-	Steps       []PlanStep `json:"steps"`
-	CurrentStep int        `json:"current_step"`
-	ReplanCount int        `json:"replan_count"`
-	Synthesis   string     `json:"synthesis"`
-}
-
 // ==================== LLM 消息类型 ====================
 
 // ChatMessage OpenAI 格式的消息
+//
+// 工具字段是"结构化工具轮"的统一表示（原生 function calling），与
+// llm.Message 一一对应并随 transcript 持久化。
 type ChatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
-}
 
+	// ToolCalls 仅 assistant 轮：本轮发起的工具调用。
+	ToolCalls []llm.ToolCall `json:"tool_calls,omitempty"`
+
+	// ToolCallID/ToolName 仅 role="tool" 结果轮（语义见 llm.Message）。
+	ToolCallID string `json:"tool_call_id,omitempty"`
+	ToolName   string `json:"tool_name,omitempty"`
+
+	// ThinkingBlocks 仅 assistant 轮：Anthropic 系扩展思考块（带签名）。随
+	// transcript 持久化，回放时由 provider 适配层回填——开启 thinking 后工具
+	// 续轮的协议硬性要求（语义见 llm.ThinkingBlock）。
+	ThinkingBlocks []llm.ThinkingBlock `json:"thinking_blocks,omitempty"`
+}

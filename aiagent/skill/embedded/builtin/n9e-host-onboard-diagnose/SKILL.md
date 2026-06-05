@@ -9,6 +9,8 @@ builtin_tools:
   - query_prometheus
   - query_host_metrics_window
   - list_datasources
+tags:
+  - internal
 ---
 
 # 主机接入失败诊断（host-onboard-diagnose）

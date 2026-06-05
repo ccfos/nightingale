@@ -19,7 +19,7 @@ func init() {
 
 func listMetrics(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	// Prefer the datasource_id supplied by the LLM via tool args; fall back to
-	// the chat-level params (set by query_generator action when the frontend
+	// the chat-level params (forwarded from the page context when the frontend
 	// pre-selected a datasource).
 	dsId := getArgInt64(args, "datasource_id")
 	if dsId == 0 {

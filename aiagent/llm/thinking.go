@@ -4,9 +4,11 @@ import "strings"
 
 // NormalizeThinkingParams 在 extra 上叠加"关闭深度思考"的厂商特定字段，返回新 map。
 //
-// 设计动机：现在 AI 对话走 ReAct 多轮工具调用，模型的 thinking 段不进入 history，
-// 但要等它输出完才能继续，纯粹是延迟和成本。让用户每个 LLMConfig 手填 enable_thinking
-// 太繁琐，这里按 BaseURL > Provider > Model 三层路由自动注入正确字段。
+// 当前仅用于连接测试 probe 路径（aiagent/llmconfig）：探测请求 MaxTokens=5，
+// 思考模型会把 token 全烧在 reasoning 上导致 content 为空、误报失败，所以探测前
+// 按 BaseURL > Provider > Model 三层路由自动注入"关思考"字段。chat 路径不再注入
+// ——思考是一等公民（思考流接入 thinking 通道），想关思考的用户在 CustomParams
+// 里显式配置。
 //
 // 注入规则（优先级从高到低）：
 //  1. 用户在 extra 里已显式设置过任何 thinking 控制字段 → 原样返回，不覆盖用户意图

@@ -11,14 +11,14 @@ import (
 )
 
 type LLMExtraConfig struct {
-	TimeoutSeconds int                `json:"timeout_seconds,omitempty"`
-	SkipTLSVerify  bool               `json:"skip_tls_verify,omitempty"`
-	Proxy          string             `json:"proxy,omitempty"`
-	CustomHeaders  map[string]string  `json:"custom_headers,omitempty"`
-	CustomParams   map[string]any     `json:"custom_params,omitempty"`
-	Temperature    *float64           `json:"temperature,omitempty"`
-	MaxTokens      *int               `json:"max_tokens,omitempty"`
-	ContextLength  *int               `json:"context_length,omitempty"`
+	TimeoutSeconds int               `json:"timeout_seconds,omitempty"`
+	SkipTLSVerify  bool              `json:"skip_tls_verify,omitempty"`
+	Proxy          string            `json:"proxy,omitempty"`
+	CustomHeaders  map[string]string `json:"custom_headers,omitempty"`
+	CustomParams   map[string]any    `json:"custom_params,omitempty"`
+	Temperature    *float64          `json:"temperature,omitempty"`
+	MaxTokens      *int              `json:"max_tokens,omitempty"`
+	ContextLength  *int              `json:"context_length,omitempty"`
 }
 
 type AILLMConfig struct {

@@ -93,8 +93,8 @@ func (p *ProcessorAdapter) Process(ctxObj *ctx.Context, wfCtx *models.WorkflowCo
 	// 5. 非流式模式：将结果写回 WorkflowContext
 	writeResponseToWorkflowContext(wfCtx, resp, p.agent.cfg.OutputField)
 
-	msg := fmt.Sprintf("AI Agent (%s mode) completed: %d iterations, success=%v",
-		p.agent.cfg.AgentMode, resp.Iterations, resp.Success)
+	msg := fmt.Sprintf("AI Agent completed: %d iterations, success=%v",
+		resp.Iterations, resp.Success)
 	if resp.Error != "" {
 		return wfCtx, msg, fmt.Errorf("agent error: %s", resp.Error)
 	}
@@ -172,9 +172,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 		if len(resp.Steps) > 0 {
 			wfCtx.Output[outputField+"_steps"] = resp.Steps
 		}
-		if resp.Plan != nil {
-			wfCtx.Output[outputField+"_plan"] = resp.Plan
-		}
 		return
 	}
 
@@ -188,10 +185,6 @@ func writeResponseToWorkflowContext(wfCtx *models.WorkflowContext, resp *AgentRe
 	if len(resp.Steps) > 0 {
 		stepsJSON, _ := json.Marshal(resp.Steps)
 		event.AnnotationsJSON[outputField+"_steps"] = string(stepsJSON)
-	}
-	if resp.Plan != nil {
-		planJSON, _ := json.Marshal(resp.Plan)
-		event.AnnotationsJSON[outputField+"_plan"] = string(planJSON)
 	}
 
 	b, _ := json.Marshal(event.AnnotationsJSON)
@@ -339,4 +332,3 @@ func executeSkillTool(ctxObj *ctx.Context, tool *AgentTool, args map[string]inte
 
 	return result.String(), nil
 }
-

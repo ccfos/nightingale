@@ -44,7 +44,7 @@ func parseSeqIDFromStreamID(streamID string) int64 {
 
 // clearWriteDeadline removes the per-connection HTTP write deadline so the
 // caller's response can outlive http.Server.WriteTimeout. Used by SSE / A2A
-// streaming endpoints — without this, long agent runs (single ReAct turn can
+// streaming endpoints — without this, long agent runs (single agent turn can
 // be silent for minutes) would hit "write tcp: i/o timeout" mid-stream.
 //
 // Safe to call even when the underlying ResponseWriter doesn't support
@@ -201,7 +201,7 @@ func (rt *Router) StartAssistantMessage(userID int64, chat *models.AssistantChat
 		return nil, http.StatusInternalServerError, fmt.Errorf("stream init failed: %w", initErr)
 	}
 
-	// 15min headroom — covers worst-case multi-tool ReAct flows.
+	// 15min headroom — covers worst-case multi-tool agent flows.
 	runCtx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	go rt.processAssistantMessage(runCtx, cancel, lock, state, streamID, userID, lang)
 

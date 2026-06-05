@@ -21,7 +21,7 @@ import (
 // from tearing down the connection. Set comfortably below the 60s idle
 // timeouts on common LBs (nginx, AWS ALB) so the heartbeat lands first.
 //
-// A single ReAct turn (LLM reasoning + tool calls) can produce no tokens
+// A single agent turn (LLM reasoning + tool calls) can produce no tokens
 // for minutes; without this, reverse proxies silently close the SSE and
 // the client sees EOF while the server thinks it's still streaming.
 const heartbeatInterval = 30 * time.Second

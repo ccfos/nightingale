@@ -1,6 +1,6 @@
 ---
 name: n9e-doc-qa
-description: This skill should be used when the user asks "how-to" or factual questions about the 夜莺(n9e) / Flashcat platform — UI/where-to-click, 业务组/订阅规则/屏蔽规则/edge 模式, Token 使用, 通知 pipeline, 自愈触发条件; OR about categraf input plugin field meanings, metric names, defaults, environment variables, config syntax (e.g. "[[instances]] 怎么写", "ping_average_response_ms 单位"). NOT for actively troubleshooting an alert or querying metrics.
+description: This skill should be used when the user asks "how-to" or factual questions about the 夜莺(n9e) — UI/where-to-click, 业务组/订阅规则/屏蔽规则/edge 模式, Token 使用, 通知 pipeline, 自愈触发条件; OR about categraf input plugin field meanings, metric names, defaults, environment variables, config syntax (e.g. "[[instances]] 怎么写", "ping_average_response_ms 单位"). NOT for actively troubleshooting an alert or querying metrics.
 version: 1.1.0
 tags:
   - internal

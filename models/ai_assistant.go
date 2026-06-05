@@ -58,7 +58,39 @@ type AssistantMessage struct {
 }
 
 type AssistantMessageExtra struct {
-	HistoryMessages []byte `json:"history_messages"` // json([]ChatMessage)
+	HistoryMessages []byte `json:"history_messages"` // json(aiagent.TranscriptEnvelope)：结构化会话 transcript
+
+	// Route 是会话路由状态：路由一旦确立即随会话携带，后续轮默认继承，而非每轮
+	// 从零重判。一句无信号的跟进（如"确认"）靠它续接上一轮的 action 与编辑目标。
+	Route *ConversationRoute `json:"route,omitempty"`
+
+	// Pending 非空 = 本轮以人在环中断收尾，等待用户确认/输入。
+	Pending *PendingInterrupt `json:"pending,omitempty"`
+}
+
+// PendingInterrupt 是等待用户响应的人在环中断：
+// 工具在 propose 腿要求确认后，运行时把"确认后要重放什么"持久化在此。下一轮用户
+// 明确确认时由 router 直接确定性重放（零 LLM），拒绝则作废，其余回复回归正常流程。
+type PendingInterrupt struct {
+	Kind       string            `json:"kind"`        // approval | input
+	Tool       string            `json:"tool"`        // 待重放的内置工具名
+	ResumeArgs string            `json:"resume_args"` // 重放参数 JSON（工具 propose 腿备好，运行时不解读）
+	Params     map[string]string `json:"params"`      // 原轮 AgentRequest.Params（user_id 等；重放时覆盖 chat_id/seq_id）
+	Prompt     string            `json:"prompt"`      // 当时给用户看的确认文案（拒绝/重提案时供上下文）
+	SeqID      int64             `json:"seq_id"`      // 提案所在轮
+}
+
+// ConversationRoute 会话级路由状态，随每条 AssistantMessage 持久化、下一轮加载读取。
+type ConversationRoute struct {
+	// ActionKey 本轮最终解析出的 action（如 "creation"/"general_chat"）。
+	// 仅在表单提交轮（上轮 AwaitingForm + 本轮带 action.param）被确定性继承；
+	// 普通延续轮不继承，由 resolveActionKey 重新解析。
+	ActionKey string `json:"action_key,omitempty"`
+
+	// AwaitingForm 为真 = 本轮以 form_select 表单收尾（preflight 表单或写工具的
+	// input 中断），等待用户提交。下一轮带 action.param 的提交据此确定性继承
+	// ActionKey（替代 LLM 分类器判"延续"）。
+	AwaitingForm bool `json:"awaiting_form,omitempty"`
 }
 
 // ==================== Message Query ====================
@@ -98,24 +130,12 @@ type AssistantMessageResponse struct {
 
 type AssistantActionKey string
 
+// 仅存对话路径实际可达的两个 action（路由收缩 + fe 剥 action.key 后，
+// 历史上的专用 action 常量已随 chat.registry 条目一并删除；
+// 未知 key 由 router 兜底降级到 general_chat）。
 const (
-	ActionKeyQueryGenerator      AssistantActionKey = "query_generator"
-	ActionKeyGeneralChat         AssistantActionKey = "general_chat"
-	ActionKeyAlertQuery          AssistantActionKey = "alert_query"
-	ActionKeyResourceQuery       AssistantActionKey = "resource_query"
-	ActionKeyCreation            AssistantActionKey = "creation"
-	ActionKeyEdit                AssistantActionKey = "edit"
-	ActionKeyTroubleshooting     AssistantActionKey = "troubleshooting"
-	ActionKeyNotifyTemplate      AssistantActionKey = "notify_template_generator"
-	ActionKeyNotifyChannel       AssistantActionKey = "notify_channel_copilot"
-	ActionKeyDatasourceDiagnose  AssistantActionKey = "datasource_diagnose"
-	ActionKeyHostHealthDiagnose  AssistantActionKey = "host_health_diagnose"
-	ActionKeyHostOnboardDiagnose AssistantActionKey = "host_onboard_diagnose"
-	ActionKeyTaskTplCopilot      AssistantActionKey = "task_tpl_copilot"
-	ActionKeyAutoHealRecommend   AssistantActionKey = "auto_heal_recommend"
-	ActionKeyAgentDeployGuide    AssistantActionKey = "agent_deploy_guide"
-	ActionKeyDatasourceQuery     AssistantActionKey = "datasource_query"
-	ActionKeyDocQA               AssistantActionKey = "doc_qa"
+	ActionKeyGeneralChat AssistantActionKey = "general_chat"
+	ActionKeyCreation    AssistantActionKey = "creation"
 )
 
 type AssistantAction struct {

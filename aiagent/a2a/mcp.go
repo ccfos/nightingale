@@ -120,7 +120,7 @@ func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) 
 	logx.Infof(ctx, "[MCP] message started user_id=%d chat_id=%s seq_id=%d stream_id=%s",
 		user.Id, result.ChatID, result.SeqID, result.StreamID)
 
-	// Drain the stream — we only care about the final text. ReAct may emit
+	// Drain the stream — we only care about the final text. The agent may emit
 	// reasoning ("reason") deltas too; those are dropped here intentionally
 	// to match the natural-language-out contract.
 	//

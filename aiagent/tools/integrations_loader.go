@@ -13,7 +13,7 @@ import (
 // integrations/ 目录下每个组件是 categraf 配置语法和指标命名的权威 ground truth
 // （比 flashcat.cloud/index.json 上的散文文档更可信）。
 // 把 markdown/README.md 和 collect/*/*.toml 转成 docEntry 并入索引,
-// LLM 在 doc_qa 流程里就能直接搜到真实的 [[instances]] 写法。
+// LLM 经 search_n9e_docs 检索时就能直接搜到真实的 [[instances]] 写法。
 //
 // 路径策略跟 center/integration/init.go 保持一致, 都是相对 runner.Cwd 找 integrations/.
 

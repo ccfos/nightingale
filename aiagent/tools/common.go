@@ -21,6 +21,7 @@ const (
 	PermAlertRulesPut     = "/alert-rules/put"
 	PermDashboards        = "/dashboards"
 	PermDashboardsAdd     = "/dashboards/add"
+	PermDashboardsPut     = "/dashboards/put"
 	PermAlertMutes        = "/alert-mutes"
 	PermAlertSubscribes   = "/alert-subscribes"
 	PermJobTpls           = "/job-tpls"
@@ -120,6 +121,19 @@ func getArgInt(args map[string]interface{}, key string, defaultVal int) int {
 	return defaultVal
 }
 
+// getArgBool extracts a boolean arg, accepting both real JSON bools and the
+// string forms ("true"/"false") the LLM sometimes emits. Missing/unparseable → false.
+func getArgBool(args map[string]interface{}, key string) bool {
+	switch v := args[key].(type) {
+	case bool:
+		return v
+	case string:
+		b, _ := strconv.ParseBool(strings.TrimSpace(v))
+		return b
+	}
+	return false
+}
+
 func getArgInt64(args map[string]interface{}, key string) int64 {
 	switch v := args[key].(type) {
 	case float64:
@@ -155,6 +169,73 @@ func getArgFloat(args map[string]interface{}, key string) (float64, bool) {
 		return f, true
 	}
 	return 0, false
+}
+
+// =============================================================================
+// Tolerant JSON scalar decoders
+//
+// The LLM frequently quotes scalars inside nested JSON args ("step":"15",
+// "instant":"true", "step":15.0). encoding/json rejects all of these into a
+// typed int/bool field, which would abort the WHOLE panels/variables parse with
+// "invalid JSON". These helpers, used from the patch types' custom UnmarshalJSON,
+// accept the loose forms the same way getArgBool/getArgFloat do for flat args.
+// A nil/"null"/empty RawMessage decodes to nil (field "not provided").
+// =============================================================================
+
+func flexBoolPtr(raw json.RawMessage) (*bool, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	var b bool
+	if err := json.Unmarshal(raw, &b); err == nil {
+		return &b, nil
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		if strings.TrimSpace(s) == "" {
+			return nil, nil
+		}
+		b, err := strconv.ParseBool(strings.TrimSpace(s))
+		if err != nil {
+			return nil, fmt.Errorf("invalid boolean %q", s)
+		}
+		return &b, nil
+	}
+	return nil, fmt.Errorf("invalid boolean %s", string(raw))
+}
+
+// flexBool is the value-typed form (nil/absent → false).
+func flexBool(raw json.RawMessage) (bool, error) {
+	p, err := flexBoolPtr(raw)
+	if err != nil || p == nil {
+		return false, err
+	}
+	return *p, nil
+}
+
+func flexIntPtr(raw json.RawMessage) (*int, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return nil, nil
+	}
+	// JSON number — float64 tolerates both 15 and 15.0.
+	var f float64
+	if err := json.Unmarshal(raw, &f); err == nil {
+		n := int(f)
+		return &n, nil
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		if strings.TrimSpace(s) == "" {
+			return nil, nil
+		}
+		f, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid number %q", s)
+		}
+		n := int(f)
+		return &n, nil
+	}
+	return nil, fmt.Errorf("invalid number %s", string(raw))
 }
 
 func getDatasourceId(params map[string]string) int64 {

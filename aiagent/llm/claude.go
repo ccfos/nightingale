@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	DefaultClaudeURL     = "https://api.anthropic.com/v1/messages"
-	ClaudeAPIVersion     = "2023-06-01"
+	DefaultClaudeURL       = "https://api.anthropic.com/v1/messages"
+	ClaudeAPIVersion       = "2023-06-01"
 	DefaultClaudeMaxTokens = 4096
 )
 
@@ -46,7 +46,6 @@ type claudeRequest struct {
 	MaxTokens   int             `json:"max_tokens"`
 	Temperature float64         `json:"temperature,omitempty"`
 	TopP        float64         `json:"top_p,omitempty"`
-	Stop        []string        `json:"stop_sequences,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
 	Tools       []claudeTool    `json:"tools,omitempty"`
 
@@ -93,6 +92,12 @@ type claudeContentBlock struct {
 	Input     any    `json:"input,omitempty"`
 	ToolUseID string `json:"tool_use_id,omitempty"`
 	Content   string `json:"content,omitempty"`
+
+	// 扩展思考块（type=thinking / redacted_thinking）。开启 thinking 后工具
+	// 续轮必须把这些块带签名回填进 assistant 消息（native 下放开 thinking 的前提）。
+	Thinking  string `json:"thinking,omitempty"`
+	Signature string `json:"signature,omitempty"`
+	Data      string `json:"data,omitempty"`
 }
 
 type claudeTool struct {
@@ -121,19 +126,27 @@ type claudeResponse struct {
 
 // Claude streaming event types
 type claudeStreamEvent struct {
-	Type         string               `json:"type"`
-	Index        int                  `json:"index,omitempty"`
-	ContentBlock *claudeContentBlock  `json:"content_block,omitempty"`
-	Delta        *claudeStreamDelta   `json:"delta,omitempty"`
-	Message      *claudeResponse      `json:"message,omitempty"`
-	Usage        *claudeStreamUsage   `json:"usage,omitempty"`
+	Type         string              `json:"type"`
+	Index        int                 `json:"index,omitempty"`
+	ContentBlock *claudeContentBlock `json:"content_block,omitempty"`
+	Delta        *claudeStreamDelta  `json:"delta,omitempty"`
+	Message      *claudeResponse     `json:"message,omitempty"`
+	Usage        *claudeStreamUsage  `json:"usage,omitempty"`
+	// Error 仅 type=error 事件：服务端的具体失败原因（限流/超长/超额等），
+	// 不解析就只剩一句没有信息量的 "stream error"。
+	Error *struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
 }
 
 type claudeStreamDelta struct {
-	Type         string `json:"type"`
-	Text         string `json:"text,omitempty"`
-	PartialJSON  string `json:"partial_json,omitempty"`
-	StopReason   string `json:"stop_reason,omitempty"`
+	Type        string `json:"type"`
+	Text        string `json:"text,omitempty"`
+	PartialJSON string `json:"partial_json,omitempty"`
+	StopReason  string `json:"stop_reason,omitempty"`
+	Thinking    string `json:"thinking,omitempty"`  // thinking_delta 增量
+	Signature   string `json:"signature,omitempty"` // signature_delta（思考块收尾签名）
 }
 
 type claudeStreamUsage struct {
@@ -198,6 +211,7 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 	reader := bufio.NewReader(resp.Body)
 	var currentToolCall *ToolCall
+	var currentThinking *ThinkingBlock // 正在累积的扩展思考块（thinking/redacted_thinking）
 
 	for {
 		select {
@@ -231,10 +245,18 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 		switch event.Type {
 		case "content_block_start":
-			if event.ContentBlock != nil && event.ContentBlock.Type == "tool_use" {
-				currentToolCall = &ToolCall{
-					ID:   event.ContentBlock.ID,
-					Name: event.ContentBlock.Name,
+			if event.ContentBlock != nil {
+				switch event.ContentBlock.Type {
+				case "tool_use":
+					currentToolCall = &ToolCall{
+						ID:   event.ContentBlock.ID,
+						Name: event.ContentBlock.Name,
+					}
+				case "thinking":
+					currentThinking = &ThinkingBlock{Type: "thinking"}
+				case "redacted_thinking":
+					// 整块随 start 事件给出（加密数据，无增量）。
+					currentThinking = &ThinkingBlock{Type: "redacted_thinking", Data: event.ContentBlock.Data}
 				}
 			}
 
@@ -249,9 +271,18 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 					if currentToolCall != nil {
 						currentToolCall.Arguments += event.Delta.PartialJSON
 					}
+				case "thinking_delta":
+					if currentThinking != nil {
+						currentThinking.Thinking += event.Delta.Thinking
+					}
+					chunk.Reasoning = event.Delta.Thinking // 增量实时展示
+				case "signature_delta":
+					if currentThinking != nil {
+						currentThinking.Signature += event.Delta.Signature
+					}
 				}
 
-				if chunk.Content != "" {
+				if chunk.Content != "" || chunk.Reasoning != "" {
 					ch <- chunk
 				}
 			}
@@ -262,6 +293,11 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 					ToolCalls: []ToolCall{*currentToolCall},
 				}
 				currentToolCall = nil
+			}
+			if currentThinking != nil {
+				// 完整思考块（含签名）交给调用方，随 assistant 轮回填（续轮硬性要求）。
+				ch <- StreamChunk{ThinkingBlock: currentThinking}
+				currentThinking = nil
 			}
 
 		case "message_delta":
@@ -276,7 +312,11 @@ func (c *Claude) streamResponse(ctx context.Context, resp *http.Response, ch cha
 			return
 
 		case "error":
-			ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error")}
+			if event.Error != nil && event.Error.Message != "" {
+				ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error: %s (%s)", event.Error.Message, event.Error.Type)}
+			} else {
+				ch <- StreamChunk{Done: true, Error: fmt.Errorf("stream error")}
+			}
 			return
 		}
 	}
@@ -286,7 +326,6 @@ func (c *Claude) convertRequest(req *GenerateRequest) *claudeRequest {
 	claudeReq := &claudeRequest{
 		Model:     c.config.Model,
 		TopP:      req.TopP,
-		Stop:      req.Stop,
 		extraBody: c.config.ExtraBody,
 	}
 
@@ -315,12 +354,47 @@ func (c *Claude) convertRequest(req *GenerateRequest) *claudeRequest {
 			continue
 		}
 
-		// Claude uses content blocks instead of plain strings
-		claudeMsg := claudeMessage{
-			Role: msg.Role,
-			Content: []claudeContentBlock{
-				{Type: "text", Text: msg.Content},
-			},
+		// 工具结果轮：Claude 没有 tool 角色，tool_result
+		// 是 user 轮的 content block。连续多条结果（并行工具调用）必须合并进同
+		// 一个 user 轮 —— Messages API 要求 user/assistant 严格交替。
+		if msg.Role == RoleTool {
+			block := claudeContentBlock{Type: "tool_result", ToolUseID: msg.ToolCallID, Content: msg.Content}
+			if n := len(claudeReq.Messages); n > 0 && claudeReq.Messages[n-1].Role == RoleUser &&
+				len(claudeReq.Messages[n-1].Content) > 0 && claudeReq.Messages[n-1].Content[0].Type == "tool_result" {
+				claudeReq.Messages[n-1].Content = append(claudeReq.Messages[n-1].Content, block)
+			} else {
+				claudeReq.Messages = append(claudeReq.Messages, claudeMessage{
+					Role:    RoleUser,
+					Content: []claudeContentBlock{block},
+				})
+			}
+			continue
+		}
+
+		// Claude uses content blocks instead of plain strings.
+		// assistant 轮块顺序：thinking 块（如有，必须在最前——扩展思考开启时
+		// API 要求 assistant 消息以 thinking 块开头）→ text block（如有）→
+		// tool_use blocks。纯文本轮保持原有"单 text block"形态（空文本也保留，
+		// 维持旧行为）。
+		claudeMsg := claudeMessage{Role: msg.Role}
+		for _, tb := range msg.ThinkingBlocks {
+			claudeMsg.Content = append(claudeMsg.Content, claudeContentBlock{
+				Type:      tb.Type,
+				Thinking:  tb.Thinking,
+				Signature: tb.Signature,
+				Data:      tb.Data,
+			})
+		}
+		if msg.Content != "" || (len(msg.ToolCalls) == 0 && len(msg.ThinkingBlocks) == 0) {
+			claudeMsg.Content = append(claudeMsg.Content, claudeContentBlock{Type: "text", Text: msg.Content})
+		}
+		for _, tc := range msg.ToolCalls {
+			claudeMsg.Content = append(claudeMsg.Content, claudeContentBlock{
+				Type:  "tool_use",
+				ID:    tc.ID,
+				Name:  tc.Name,
+				Input: parseToolJSONObject(tc.Arguments, "input"),
+			})
 		}
 		claudeReq.Messages = append(claudeReq.Messages, claudeMsg)
 	}
@@ -342,12 +416,21 @@ func (c *Claude) convertResponse(resp *claudeResponse) *GenerateResponse {
 		FinishReason: resp.StopReason,
 	}
 
-	// Extract text content and tool calls
+	// Extract text content, thinking blocks and tool calls
 	var textParts []string
 	for _, block := range resp.Content {
 		switch block.Type {
 		case "text":
 			textParts = append(textParts, block.Text)
+		case "thinking":
+			result.ReasoningContent += block.Thinking
+			result.ThinkingBlocks = append(result.ThinkingBlocks, ThinkingBlock{
+				Type: "thinking", Thinking: block.Thinking, Signature: block.Signature,
+			})
+		case "redacted_thinking":
+			result.ThinkingBlocks = append(result.ThinkingBlocks, ThinkingBlock{
+				Type: "redacted_thinking", Data: block.Data,
+			})
 		case "tool_use":
 			inputJSON, _ := json.Marshal(block.Input)
 			result.ToolCalls = append(result.ToolCalls, ToolCall{

@@ -134,7 +134,7 @@ type WorkflowContext struct {
 
 // StreamChunk 类型常量
 const (
-	StreamTypeThinking   = "thinking"    // AI 思考过程（ReAct Thought）
+	StreamTypeThinking   = "thinking"    // AI 思考过程
 	StreamTypeToolCall   = "tool_call"   // 工具调用
 	StreamTypeToolResult = "tool_result" // 工具执行结果
 	StreamTypeText       = "text"        // LLM 文本输出

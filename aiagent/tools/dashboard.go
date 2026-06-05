@@ -104,9 +104,10 @@ func createDashboard(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：缺业务组时以表单中断向用户取值，而非纯错误回给模型让它替用户瞎选。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-dashboard", []string{"busi_group_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -217,9 +218,10 @@ func importDashboardTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：同 create_dashboard。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-dashboard", []string{"busi_group_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))
@@ -539,6 +541,37 @@ func getDashboardDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		BuiltIn:  board.BuiltIn,
 		CreateBy: board.CreateBy,
 		UpdateBy: board.UpdateBy,
+	}
+
+	// include_config surfaces the variable/panel summary + variable lint so the
+	// agent can show a "before → after" diff before calling update_dashboard.
+	// Default-off keeps the common read path lean (payloads can be large).
+	// getArgBool (not a raw .(bool)) so a string-form "true" from the LLM still
+	// turns the config summary on — otherwise the edit flow's "before" snapshot
+	// silently comes back empty.
+	if getArgBool(args, "include_config") {
+		out := map[string]interface{}{"dashboard": result}
+		// BoardGetByID does not hydrate the board_payload row, so the config
+		// lives in a separate table — load it explicitly. Without this the
+		// variables/panels/lint summary would always be empty for real
+		// dashboards and the "before → after" diff would have no "before".
+		payload, err := models.BoardPayloadGet(deps.DBCtx, id)
+		if err != nil {
+			return "", fmt.Errorf("failed to get dashboard config: %v", err)
+		}
+		if strings.TrimSpace(payload) != "" {
+			var configs map[string]interface{}
+			if err := json.Unmarshal([]byte(payload), &configs); err != nil {
+				out["config_error"] = fmt.Sprintf("invalid config payload: %v", err)
+			} else {
+				vars, panels := summarizeConfigs(configs)
+				out["variables"] = vars
+				out["panels"] = panels
+				out["variable_lint"] = lintVariables(configs)
+			}
+		}
+		bytes, _ := json.Marshal(out)
+		return string(bytes), nil
 	}
 
 	bytes, _ := json.Marshal(result)
