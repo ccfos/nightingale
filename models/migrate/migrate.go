@@ -28,6 +28,8 @@ func MigrateIbexTables(db *gorm.DB) {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 
+	fixTaskHostDoingPrimaryKey(db)
+
 	dts := []interface{}{&imodels.TaskMeta{}, &imodels.TaskScheduler{}, &TaskHostDoing{}, &imodels.TaskAction{}}
 	for _, dt := range dts {
 		err := db.AutoMigrate(dt)
@@ -48,6 +50,53 @@ func MigrateIbexTables(db *gorm.DB) {
 			}
 		}
 	}
+}
+
+// fixTaskHostDoingPrimaryKey repairs MySQL tables created by older releases that
+// declared id as the sole auto-increment primary key: inserting a second host for
+// the same task violated the primary key. AutoMigrate never alters an existing
+// table's primary key, so drop it manually. The table is deliberately left
+// without a primary key, same as tables created from the SQL init files.
+func fixTaskHostDoingPrimaryKey(db *gorm.DB) {
+	if _, ok := db.Dialector.(*mysql.Dialector); !ok {
+		return
+	}
+
+	if !db.Migrator().HasTable("task_host_doing") {
+		return
+	}
+
+	var pkCols []string
+	err := db.Raw(`SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'task_host_doing'
+		AND CONSTRAINT_NAME = 'PRIMARY' ORDER BY ORDINAL_POSITION`).Scan(&pkCols).Error
+	if err != nil {
+		logger.Errorf("failed to check task_host_doing primary key: %v", err)
+		return
+	}
+
+	if len(pkCols) != 1 || pkCols[0] != "id" {
+		return
+	}
+
+	// MODIFY without AUTO_INCREMENT strips the auto-increment attribute (it must
+	// go before DROP PRIMARY KEY); COLUMN_TYPE keeps the original signedness.
+	var colType string
+	err = db.Raw(`SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+		WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'task_host_doing'
+		AND COLUMN_NAME = 'id'`).Scan(&colType).Error
+	if err != nil || colType == "" {
+		logger.Errorf("failed to get task_host_doing id column type: %v err: %v", colType, err)
+		return
+	}
+
+	err = db.Exec(fmt.Sprintf("ALTER TABLE task_host_doing MODIFY id %s NOT NULL, DROP PRIMARY KEY", colType)).Error
+	if err != nil {
+		logger.Errorf("failed to drop task_host_doing legacy primary key: %v", err)
+		return
+	}
+
+	logger.Info("dropped task_host_doing legacy primary key on id")
 }
 
 func isPostgres(db *gorm.DB) bool {
@@ -295,9 +344,13 @@ type BuiltinPayloads struct {
 	Note        string `json:"note" gorm:"type:varchar(1024);not null;default:'';comment:'note of payload'"`
 }
 
+// TaskHostDoing holds one row per (task id, host), so id alone must NOT be the
+// primary key. `primaryKey:false` does not work: GORM force-promotes a lone
+// `id` column to primary key (and implicitly marks int primary keys
+// auto-increment), so declare the natural composite key (id, host) instead.
 type TaskHostDoing struct {
-	Id             int64  `gorm:"column:id;index;primaryKey:false"`
-	Host           string `gorm:"column:host;size:128;not null;index"`
+	Id             int64  `gorm:"column:id;primaryKey;autoIncrement:false;index"`
+	Host           string `gorm:"column:host;size:128;not null;primaryKey;index"`
 	Clock          int64  `gorm:"column:clock;not null;default:0"`
 	Action         string `gorm:"column:action;size:16;not null"`
 	AlertTriggered bool   `gorm:"-"`
