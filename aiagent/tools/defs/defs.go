@@ -106,7 +106,7 @@ var ListAlertRules = aiagent.AgentTool{
 
 var GetAlertRuleDetail = aiagent.AgentTool{
 	Name:        "get_alert_rule_detail",
-	Description: "获取单条告警规则的详细信息",
+	Description: "获取单条告警规则的详细信息，含 rule_config（查询/触发条件/阈值）、执行频率、持续时长等",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "告警规则ID", Required: true},
@@ -281,11 +281,37 @@ var ListDashboards = aiagent.AgentTool{
 }
 
 var GetDashboardDetail = aiagent.AgentTool{
-	Name:        "get_dashboard_detail",
-	Description: "获取单个仪表盘的详细信息",
-	Type:        aiagent.ToolTypeBuiltin,
+	Name: "get_dashboard_detail",
+	Description: `获取单个仪表盘的详细信息。
+默认只返回元信息（名称/业务组/标签等）。修改仪表盘前请传 include_config=true，会额外返回当前的变量定义（var）与图表（panel）摘要，以及一份变量健康检查（variable_lint，列出图表/变量里引用了未定义变量等坏味道），作为"改动前"的依据。`,
+	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "仪表盘ID", Required: true},
+		{Name: "include_config", Type: "boolean", Description: "是否返回变量与图表摘要 + 变量健康检查（修改仪表盘前置为 true）。默认 false 只返回元信息", Required: false},
+	},
+}
+
+var UpdateDashboard = aiagent.AgentTool{
+	Name: "update_dashboard",
+	Description: `修改一个已存在的仪表盘（外科手术式增量更新）。只改你传入的变量/图表，仪表盘其余配置（布局、阈值、单位、overrides 等）原样保留，绝不重建整盘。
+改前必须先 get_dashboard_detail(id, include_config=true) 读现状。
+**提案即收尾（系统自动确认通道）**：
+- 调用本工具（只传要改的 variables/panels/fix_datasource）即提交「修改提案」：工具会计算改动、直接向用户展示确认文案并暂停对话，等用户确认后由系统自动落库——确认环节不需要也不经过你。
+- 因此一次调用即完成你的全部职责，调用后本轮即结束；**不要**自己渲染改动表格（系统会展示），**不要**传 proposal_id/confirmed（那是系统确认通道的参数）。
+- 用户如果拒绝或提出新要求，你会在新一轮收到反馈，按新要求重新调用提案即可（旧提案自动作废）。
+能力：
+- 改变量（variables）：按 name 匹配已有变量，合并你传的字段（definition / label / multi / default_value / type）；name 不存在则新增一个 query 变量；传 delete=true 删除该变量。
+- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；delete=true 删除整个图表。
+- 修复变量/数据源引用（fix_datasource=true）：把图表与变量里悬空/写死的数据源引用统一重指到大盘的数据源变量（修复"图表查不到数据/数据源引用不一致"类坏味道）。
+业务组、数据源从仪表盘本身读取，不需要、也不要向用户索要。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的仪表盘 ID（必填）", Required: true},
+		{Name: "variables", Type: "string", Description: `变量改动 JSON 数组，按 name 匹配。每项: {"name":"ident", "definition":"label_values(cpu_usage_idle, ident)", "label":"主机", "multi":true, "default_value":"", "delete":false}。只写要改的字段；name 不存在则新增；delete=true 删除`, Required: false},
+		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
+		{Name: "fix_datasource", Type: "boolean", Description: "是否修复悬空/写死的数据源引用，统一重指到大盘数据源变量。默认 false", Required: false},
+		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
 }
 
@@ -501,6 +527,18 @@ var GrepFiles = aiagent.AgentTool{
 		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
 		{Name: "pattern", Type: "string", Description: "搜索关键词（不区分大小写）", Required: true},
 		{Name: "path", Type: "string", Description: "相对搜索路径，不传则搜索整个目录", Required: false},
+	},
+}
+
+// LoadSkill 按需加载技能工作流文档（系统提示词常驻技能目录，agent 运行中自取
+// 所需技能；加载结果经结构化 transcript 跨轮持久）。
+var LoadSkill = aiagent.AgentTool{
+	Name: "load_skill",
+	Description: "按需加载一个技能(Skill)的完整工作流文档。当「可用技能目录」中某个技能匹配当前任务、" +
+		"且其指引尚未出现在上下文中时调用；加载后严格按文档工作流执行。与任务无关时不要加载",
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "name", Type: "string", Description: "技能名，必须取自「可用技能目录」，如 n9e-modify-dashboard", Required: true},
 	},
 }
 

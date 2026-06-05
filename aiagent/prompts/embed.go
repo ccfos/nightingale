@@ -4,33 +4,13 @@ import (
 	_ "embed"
 )
 
-// ReAct 模式系统提示词
+// 工具循环模式系统提示词（身份/原则部分；工具经原生 tools 参数下发）
 //
-//go:embed react_system.md
-var ReactSystemPrompt string
-
-// Plan+ReAct 模式规划阶段系统提示词
-//
-//go:embed plan_system.md
-var PlanSystemPrompt string
-
-// 步骤执行提示词
-//
-//go:embed step_execution.md
-var StepExecutionPrompt string
-
-// 综合分析提示词
-//
-//go:embed synthesis.md
-var SynthesisPrompt string
-
-// 用户提示词默认模板
-//
-//go:embed user_default.md
-var UserDefaultTemplate string
+//go:embed native_system.md
+var NativeSystemPrompt string
 
 // Guided Follow-up 规则：要求最终答案末尾给 1~2 条接地的"下一步"建议。
-// 同时被 ReAct / Direct / Synthesis 三条出答案路径引用，单一真源。
+// 同时被工具循环 / Direct 两条出答案路径引用，单一真源。
 //
 //go:embed guided_followup.md
 var GuidedFollowupRule string

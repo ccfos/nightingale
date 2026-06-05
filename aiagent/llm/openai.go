@@ -68,7 +68,6 @@ type openAIRequest struct {
 	MaxTokens   int             `json:"max_tokens,omitempty"`
 	Temperature float64         `json:"temperature,omitempty"`
 	TopP        float64         `json:"top_p,omitempty"`
-	Stop        []string        `json:"stop,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
 
 	// extraBody 不出现在 JSON tag 里——由 MarshalJSON 平铺到顶层。
@@ -122,6 +121,9 @@ type openAIFunction struct {
 }
 
 type openAIToolCall struct {
+	// Index 仅流式 delta 携带：同轮多个并行 tool_call 靠它区分归属。
+	// 指针以区分"未携带"（部分网关）与合法的 index=0；请求侧序列化时省略。
+	Index    *int   `json:"index,omitempty"`
 	ID       string `json:"id"`
 	Type     string `json:"type"`
 	Function struct {
@@ -215,11 +217,105 @@ func (o *OpenAI) GenerateStream(ctx context.Context, req *GenerateRequest) (<-ch
 	return ch, nil
 }
 
+// openAIToolCallAggregator 按 index 聚合流式下发的 tool_call 分片。
+// OpenAI 流式协议里同轮多个并行调用靠 index 字段区分：规范只保证每个调用首块带
+// id+name，后续块只带 index+arguments 片段，且不同调用的片段可以交错下发；部分
+// 兼容网关（qwen/deepseek 等）还会在每个 delta 重发 id+name。这里统一按 index
+// 归槽累积，流结束时整块抛出（与 claude.go content_block_stop 的做法对齐），
+// 消费端无需感知分片细节。
+type openAIToolCallAggregator struct {
+	slots map[int]*ToolCall
+	order []int // 首见顺序，flush 时按它输出，保持调用顺序稳定
+	last  int   // 最近分片归入的 index：兜底不带 index 的网关（"纯参数片段 → 续接上一个"）
+}
+
+func (a *openAIToolCallAggregator) add(tc openAIToolCall) {
+	var idx int
+	switch {
+	case tc.Index != nil:
+		idx = *tc.Index
+	case tc.ID == "" && tc.Function.Name == "" && len(a.order) > 0:
+		// 无 index 的纯参数片段：续接最近一个调用（旧启发式，仅作兜底）
+		idx = a.last
+	default:
+		// 无 index 但带 id/name → 新调用，合成一个不与已有槽冲突的 index
+		idx = -1
+		for _, used := range a.order {
+			if used >= idx {
+				idx = used + 1
+			}
+		}
+		if idx < 0 {
+			idx = 0
+		}
+	}
+
+	slot, ok := a.slots[idx]
+	if !ok {
+		if a.slots == nil {
+			a.slots = map[int]*ToolCall{}
+		}
+		slot = &ToolCall{}
+		a.slots[idx] = slot
+		a.order = append(a.order, idx)
+	}
+	// id/name 只取首个非空值：网关重发的 id+name 不会再被误判成新调用
+	if slot.ID == "" {
+		slot.ID = tc.ID
+	}
+	if slot.Name == "" {
+		slot.Name = tc.Function.Name
+	}
+	slot.Arguments += tc.Function.Arguments
+	a.last = idx
+}
+
+// flush 按首见顺序吐出聚合完成的调用并清空状态（幂等，重复调用返回 nil）。
+func (a *openAIToolCallAggregator) flush() []ToolCall {
+	if len(a.order) == 0 {
+		return nil
+	}
+	calls := make([]ToolCall, 0, len(a.order))
+	for _, idx := range a.order {
+		calls = append(calls, *a.slots[idx])
+	}
+	a.slots = nil
+	a.order = nil
+	return calls
+}
+
 func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch chan<- StreamChunk) {
 	defer close(ch)
 	defer resp.Body.Close()
 
 	reader := bufio.NewReader(resp.Body)
+	var toolCalls openAIToolCallAggregator
+
+	// finish 在流正常收尾时把聚合好的完整 tool_call 整块抛出后再发 Done；
+	// 出错路径不 flush——参数片段不完整，吐出去只会变成损坏的 JSON 调用。
+	// complete 区分两种收尾：[DONE] 表示协议走完，调用原样下发（模型自产的坏
+	// JSON 也该进工具循环，靠错误观测喂回模型重试）；EOF 兜底（网关没发 [DONE]
+	// 就断流，如 idle timeout 干净 FIN）下连接可能停在 arguments 片段中途，
+	// JSON 不完整的调用丢弃并告警——下游 unmarshal 失败会把残参包成
+	// {"input": raw} 真执行，比丢调用更危险。空 arguments 视为完整（无参调用）。
+	finish := func(complete bool) {
+		calls := toolCalls.flush()
+		if !complete {
+			intact := calls[:0]
+			for _, call := range calls {
+				if call.Arguments == "" || json.Valid([]byte(call.Arguments)) {
+					intact = append(intact, call)
+					continue
+				}
+				logger.Warningf("[OpenAI] stream ended without [DONE], drop tool call with truncated arguments: name=%s id=%s args_len=%d", call.Name, call.ID, len(call.Arguments))
+			}
+			calls = intact
+		}
+		if len(calls) > 0 {
+			ch <- StreamChunk{ToolCalls: calls}
+		}
+		ch <- StreamChunk{Done: true}
+	}
 
 	for {
 		select {
@@ -234,7 +330,7 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 			if err != io.EOF {
 				ch <- StreamChunk{Done: true, Error: err}
 			} else {
-				ch <- StreamChunk{Done: true}
+				finish(false)
 			}
 			return
 		}
@@ -250,7 +346,7 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 
 		data := strings.TrimPrefix(line, "data: ")
 		if data == "[DONE]" {
-			ch <- StreamChunk{Done: true}
+			finish(true)
 			return
 		}
 
@@ -263,21 +359,18 @@ func (o *OpenAI) streamResponse(ctx context.Context, resp *http.Response, ch cha
 			delta := streamResp.Choices[0].Delta
 			chunk := StreamChunk{
 				Content:      delta.Content,
+				Reasoning:    delta.ReasoningContent,
 				FinishReason: streamResp.Choices[0].FinishReason,
 			}
 
-			// Handle tool calls in stream
-			if len(delta.ToolCalls) > 0 {
-				for _, tc := range delta.ToolCalls {
-					chunk.ToolCalls = append(chunk.ToolCalls, ToolCall{
-						ID:        tc.ID,
-						Name:      tc.Function.Name,
-						Arguments: tc.Function.Arguments,
-					})
-				}
+			// tool_call 分片只进聚合器，不随增量 chunk 下发；流收尾时整块抛出
+			for _, tc := range delta.ToolCalls {
+				toolCalls.add(tc)
 			}
 
-			ch <- chunk
+			if chunk.Content != "" || chunk.Reasoning != "" || chunk.FinishReason != "" {
+				ch <- chunk
+			}
 		}
 	}
 }
@@ -286,7 +379,6 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 	openAIReq := &openAIRequest{
 		Model:     o.config.Model,
 		TopP:      req.TopP,
-		Stop:      req.Stop,
 		extraBody: o.config.ExtraBody,
 	}
 
@@ -306,12 +398,26 @@ func (o *OpenAI) convertRequest(req *GenerateRequest) *openAIRequest {
 		openAIReq.MaxTokens = *o.config.MaxTokens
 	}
 
-	// Convert messages
+	// Convert messages. 结构化工具轮：assistant 的 ToolCalls 与 RoleTool 结果轮
+	// 直接映射到 OpenAI 原生 tool_calls/tool 角色。
 	for _, msg := range req.Messages {
-		openAIReq.Messages = append(openAIReq.Messages, openAIMessage{
-			Role:    msg.Role,
-			Content: msg.Content,
-		})
+		oaMsg := openAIMessage{
+			Role:       msg.Role,
+			Content:    msg.Content,
+			ToolCallID: msg.ToolCallID,
+		}
+		// tool 结果轮 content 必填：工具返回空串时，omitempty 会把 content 字段
+		// 整个丢掉（对 assistant tool-call 轮是对的），严格端点直接 400 拒绝整单。
+		if msg.Role == RoleTool && oaMsg.Content == "" {
+			oaMsg.Content = "(empty result)"
+		}
+		for _, tc := range msg.ToolCalls {
+			oaTC := openAIToolCall{ID: tc.ID, Type: "function"}
+			oaTC.Function.Name = tc.Name
+			oaTC.Function.Arguments = tc.Arguments
+			oaMsg.ToolCalls = append(oaMsg.ToolCalls, oaTC)
+		}
+		openAIReq.Messages = append(openAIReq.Messages, oaMsg)
 	}
 
 	// Convert tools

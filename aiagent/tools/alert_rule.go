@@ -36,6 +36,9 @@ type alertRuleDetailResult struct {
 	Disabled      int               `json:"disabled"`
 	Cate          string            `json:"cate,omitempty"`
 	PromQl        string            `json:"prom_ql,omitempty"`
+	RuleConfig    interface{}       `json:"rule_config,omitempty"`
+	EvalInterval  int               `json:"eval_interval,omitempty"`
+	ForDuration   int               `json:"for_duration,omitempty"`
 	AppendTags    []string          `json:"append_tags,omitempty"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 	RunbookUrl    string            `json:"runbook_url,omitempty"`
@@ -331,6 +334,9 @@ func getAlertRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 		Disabled:      rule.Disabled,
 		Cate:          rule.Cate,
 		PromQl:        rule.PromQl,
+		RuleConfig:    rule.RuleConfigJson,
+		EvalInterval:  rule.PromEvalInterval,
+		ForDuration:   rule.PromForDuration,
 		AppendTags:    rule.AppendTagsJSON,
 		Annotations:   rule.AnnotationsJSON,
 		RunbookUrl:    rule.RunbookUrl,
@@ -370,9 +376,11 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：缺业务组时以表单中断向用户取值。
+	// 告警规则表单同时带出数据源字段（页面默认是提示不是承诺，让用户确认或改选）。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -1266,9 +1274,10 @@ func importAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 		return "", err
 	}
 
-	groupId := getArgInt64(args, "group_id")
+	// 缺参门：同 create_alert_rule。
+	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", fmt.Errorf("group_id is required")
+		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))

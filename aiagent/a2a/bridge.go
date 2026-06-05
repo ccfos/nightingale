@@ -13,10 +13,10 @@ import (
 // as the agent's chain-of-thought rather than a regular response. Other clients
 // see it as plain text — no harm done.
 //
-// The router demultiplexes ReAct raw output into P:"reason" (thoughts) and
-// P:"content" (final answer body) before frames reach this bridge — so the
-// rule here is simply: reason → mark thought, content → don't. No marker
-// detection lives in this file.
+// The router routes thinking deltas into P:"reason" (thoughts) and body
+// deltas into P:"content" (final answer body) before frames reach this
+// bridge — so the rule here is simply: reason → mark thought, content →
+// don't. No marker detection lives in this file.
 const thoughtMetadataKey = "adk_thought"
 
 // n9eContentTypeMetadataKey tags an A2A part whose body is a structured n9e
@@ -25,7 +25,7 @@ const thoughtMetadataKey = "adk_thought"
 const n9eContentTypeMetadataKey = "n9e_content_type"
 
 // streamBridge translates aiagent.StreamMessage frames produced by the existing
-// ReAct pipeline into A2A events. It maintains separate "in-flight" artifact
+// agent pipeline into A2A events. It maintains separate "in-flight" artifact
 // IDs for the message body and the reasoning trace so updates accumulate into
 // the same artifact rather than creating one event per delta.
 type streamBridge struct {
@@ -56,7 +56,7 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 		// Status text describing a tool call or workflow step. Surface as a
 		// transient working update so clients can render progress.
 		//
-		// A step frame is also the natural boundary between two ReAct
+		// A step frame is also the natural boundary between two agent
 		// reasoning passes — the next "reason" delta after a tool call is a
 		// fresh thought, not a continuation. Reset reasoningArtifactID so
 		// forwardReason allocates a new artifact for it; otherwise multi-step

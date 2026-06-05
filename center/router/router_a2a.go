@@ -252,7 +252,7 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 // streamingDeadline relaxes the per-connection write deadline for endpoints
 // that may stream longer than http.Server.WriteTimeout (40s default). A2A SSE
 // streams (message:stream, tasks/{id}:subscribe) and long MCP responses can
-// be silent for minutes during a single ReAct turn; without this the TCP
+// be silent for minutes during a single agent turn; without this the TCP
 // connection is closed mid-stream and the SDK's REST encoder fails with
 // "write tcp: i/o timeout".
 func (rt *Router) streamingDeadline() gin.HandlerFunc {

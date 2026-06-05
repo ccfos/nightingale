@@ -19,7 +19,7 @@ import (
 // 设计取舍 (重要):
 //
 // 这是 M3 landmine guard 的"按 skill+tool 收敛"重写版。原方案在 router 落地后扫描,
-// 命中强制 retry+annotate, 100% 确定性兜底。这一版改成 LLM 在 ReAct 里**主动调**,
+// 命中强制 retry+annotate, 100% 确定性兜底。这一版改成 LLM 在工具循环里**主动调**,
 // 由 SKILL.md 规定流程: 草稿 → verify_answer → 命中就用 search_n9e_docs 重搜 → 重写。
 //
 // 取舍:

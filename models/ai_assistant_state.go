@@ -80,7 +80,7 @@ func MsgStateDelete(ctx context.Context, rds storage.Redis, chatID string, seq i
 	return rds.Del(ctx, MsgStateKey(chatID, seq)).Err()
 }
 
-// MsgCancelExists 兜底检查：owner 在 ReAct 循环每轮迭代时可调用此函数确认
+// MsgCancelExists 兜底检查：owner 在工具循环每轮迭代时可调用此函数确认
 // 是否有迟到的 cancel 标志（pubsub 偶发漏发时使用）。
 func MsgCancelExists(ctx context.Context, rds storage.Redis, chatID string, seq int64) (bool, error) {
 	n, err := rds.Exists(ctx, MsgCancelKey(chatID, seq)).Result()

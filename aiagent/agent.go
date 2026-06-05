@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
@@ -58,12 +57,6 @@ func (a *Agent) SetExternalToolHandler(h ExternalToolHandler) {
 // SetSkillRegistry 设置技能注册表
 func (a *Agent) SetSkillRegistry(registry *SkillRegistry) {
 	a.skillRegistry = registry
-
-	if a.cfg.Skills != nil && a.cfg.Skills.AutoSelect && a.skillSelector == nil {
-		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
-			return a.callLLM(ctx, messages, nil)
-		})
-	}
 }
 
 // InitSkills 初始化技能
@@ -86,14 +79,9 @@ func (a *Agent) InitSkills(skillsPath string) {
 	// 内置 skill 的磁盘落地由进程启动期的一次性 ExtractBuiltin 负责（见
 	// center/router/router.go 中 runAISkillSyncLoop 之前的调用），这里不再
 	// 每条消息都 destructive re-extract，避免多 chat 并发时 read_file /
-	// SkillRegistry 在 Step 1 删目录和 Step 2 重写之间读到空目录的竞态。
+	// SkillRegistry 在"删目录—重写"间隙读到空目录的竞态。
 	a.skillRegistry = NewSkillRegistry(skillsPath)
-	if a.cfg.Skills.AutoSelect {
-		a.skillSelector = NewLLMSkillSelector(func(ctx context.Context, messages []ChatMessage) (string, error) {
-			return a.callLLM(ctx, messages, nil)
-		})
-	}
-	logger.Infof("AI Agent Skills initialized: path=%s, auto_select=%v", skillsPath, a.cfg.Skills.AutoSelect)
+	logger.Infof("AI Agent Skills initialized: path=%s, pinned=%d", skillsPath, len(a.cfg.Skills.SkillNames))
 }
 
 // Run 执行 Agent（唯一公开入口）
@@ -109,14 +97,11 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	}
 	timeoutCtx, cancel := context.WithTimeout(parentCtx, time.Duration(a.cfg.Timeout)*time.Millisecond)
 
-	// 加载 Skills
+	// 预载显式指定的 Skills（目录 + load_skill 自取路径不在此预载）
 	tSkillStart := time.Now()
-	var activeSkills []*SkillContent
-	if a.cfg.Skills != nil && a.skillRegistry != nil {
-		activeSkills = a.selectAndLoadSkills(timeoutCtx, req)
-		if len(activeSkills) > 0 {
-			logger.Debugf("AI Agent loaded %d skills", len(activeSkills))
-		}
+	activeSkills := a.loadPinnedSkills()
+	if len(activeSkills) > 0 {
+		logger.Debugf("AI Agent loaded %d skills", len(activeSkills))
 	}
 	tSkillElapsed := time.Since(tSkillStart)
 
@@ -132,6 +117,20 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 		mcpCancel()
 		mcpToolCount = len(tools) - before
 	}
+	// 按需技能加载：技能子系统开启时挂 load_skill 工具，配合系统提示词里常驻的
+	// 「可用技能目录」（appendSkillCatalog），agent 可在运行中自取所需技能；
+	// 加载结果经结构化 transcript 自动跨轮持久。
+	if a.cfg.Skills != nil && a.skillRegistry != nil {
+		if def, ok := GetBuiltinToolDef("load_skill"); ok {
+			tools = appendToolIfAbsent(tools, def)
+		}
+		// 跨轮回放（工具渐进披露，见 skill_tools_inject.go）：history 里已加载
+		// 技能的声明工具重新注入——上一轮 load_skill 进来的工具本轮继续可用。
+		if len(req.History) > 0 {
+			tools = a.appendToolsFromLoadedSkills(tools, req.History)
+		}
+	}
+
 	logger.Infof("[Agent] preparation: skills=%dms (n=%d) tools=%dms (mcp_added=%d total=%d)",
 		tSkillElapsed.Milliseconds(), len(activeSkills),
 		time.Since(tToolStart).Milliseconds(), mcpToolCount, len(tools))
@@ -152,17 +151,7 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 	// 非流式模式
 	defer cancel()
 
-	var resp *AgentResponse
-	switch a.cfg.AgentMode {
-	case AgentModePlanReAct:
-		resp = a.executePlanReAct(timeoutCtx, req, rc)
-	case AgentModeDirect:
-		resp = a.executeDirect(timeoutCtx, req, rc)
-	default:
-		resp = a.executeReAct(timeoutCtx, req, rc)
-	}
-
-	return resp, nil
+	return a.executeNative(timeoutCtx, req, rc), nil
 }
 
 // runWithStream 流式执行 - 启动 goroutine 后立即返回
@@ -176,15 +165,8 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 			defer cancel()
 		}
 
-		logger.Infof("[Agent] Stream goroutine started, mode=%s", a.cfg.AgentMode)
-		switch a.cfg.AgentMode {
-		case AgentModePlanReAct:
-			a.executePlanReActWithDone(ctx, req, rc)
-		case AgentModeDirect:
-			a.executeDirectWithDone(ctx, req, rc)
-		default:
-			a.executeReActWithDone(ctx, req, rc)
-		}
+		logger.Infof("[Agent] Stream goroutine started")
+		a.executeNativeWithDone(ctx, req, rc)
 		logger.Infof("[Agent] Stream goroutine finished")
 	}()
 
@@ -192,6 +174,16 @@ func (a *Agent) runWithStream(ctx context.Context, cancel context.CancelFunc, re
 }
 
 // ==================== 内部辅助方法 ====================
+
+// appendToolIfAbsent 按 Name 去重追加工具（action 的 SelectTools 可能已含同名工具）。
+func appendToolIfAbsent(tools []AgentTool, def AgentTool) []AgentTool {
+	for i := range tools {
+		if tools[i].Name == def.Name {
+			return tools
+		}
+	}
+	return append(tools, def)
+}
 
 func truncStr(s string, maxLen int) string {
 	if len(s) <= maxLen {
@@ -212,18 +204,6 @@ func (a *Agent) applyDefaults() {
 	if cfg.OutputField == "" {
 		cfg.OutputField = "ai_analysis"
 	}
-	if cfg.AgentMode == "" {
-		cfg.AgentMode = AgentModeReAct
-	}
-	if cfg.MaxPlanSteps <= 0 {
-		cfg.MaxPlanSteps = DefaultMaxPlanSteps
-	}
-	if cfg.MaxReplanCount <= 0 {
-		cfg.MaxReplanCount = DefaultMaxReplanCount
-	}
-	if cfg.MaxStepIterations <= 0 {
-		cfg.MaxStepIterations = DefaultMaxStepIterations
-	}
 
 	// MCP 初始化
 	if cfg.MCP != nil && len(cfg.MCP.Servers) > 0 {
@@ -237,56 +217,28 @@ func (a *Agent) applyDefaults() {
 	}
 }
 
-// selectAndLoadSkills 选择并加载技能
-func (a *Agent) selectAndLoadSkills(ctx context.Context, req *AgentRequest) []*SkillContent {
-	if a.cfg.Skills == nil || a.skillRegistry == nil {
+// loadPinnedSkills 加载显式预载的技能（SkillNames：action RequiredSkills / agent
+// 显式绑定）。SkillNames 为空时不预载——目录常驻 + load_skill 自取路径不经过这里，
+// 由模型在循环里按需加载（无 LLM 预选环节，见 SkillConfig 注释）。
+func (a *Agent) loadPinnedSkills() []*SkillContent {
+	if a.cfg.Skills == nil || a.skillRegistry == nil || len(a.cfg.Skills.SkillNames) == 0 {
 		return nil
 	}
 
-	var selectedSkills []*SkillMetadata
-
-	if len(a.cfg.Skills.SkillNames) > 0 {
-		for _, name := range a.cfg.Skills.SkillNames {
-			if skill := a.skillRegistry.GetByName(name); skill != nil {
-				selectedSkills = append(selectedSkills, skill)
-			} else {
-				logger.Warningf("Skill '%s' not found", name)
-			}
-		}
-	} else if a.cfg.Skills.AutoSelect && a.skillSelector != nil {
-		taskContext := a.buildTaskContext(req)
-		availableSkills := a.skillRegistry.ListAll()
-		maxSkills := a.cfg.Skills.MaxSkills
-		if maxSkills <= 0 {
-			maxSkills = DefaultMaxSkills
-		}
-
-		selected, err := a.skillSelector.SelectMultiple(ctx, taskContext, availableSkills, maxSkills)
-		if err != nil {
-			logger.Warningf("Skill selection failed: %v", err)
-		} else {
-			selectedSkills = selected
-		}
-	}
-
-	// 兜底：默认技能
-	if len(selectedSkills) == 0 && len(a.cfg.Skills.DefaultSkills) > 0 {
-		for _, name := range a.cfg.Skills.DefaultSkills {
-			if skill := a.skillRegistry.GetByName(name); skill != nil {
-				selectedSkills = append(selectedSkills, skill)
-			}
-		}
-	}
-
 	var activeSkills []*SkillContent
-	for _, skill := range selectedSkills {
+	for _, name := range a.cfg.Skills.SkillNames {
+		skill := a.skillRegistry.GetByName(name)
+		if skill == nil {
+			logger.Warningf("Skill '%s' not found", name)
+			continue
+		}
 		content, err := a.skillRegistry.LoadContent(skill)
 		if err != nil {
-			logger.Warningf("Failed to load skill content for '%s': %v", skill.Name, err)
+			logger.Warningf("Failed to load skill content for '%s': %v", name, err)
 			continue
 		}
 		activeSkills = append(activeSkills, content)
-		logger.Debugf("Loaded skill: %s", skill.Name)
+		logger.Debugf("Loaded skill: %s", name)
 	}
 
 	return activeSkills
@@ -359,82 +311,4 @@ func (a *Agent) appendSkillTools(base []AgentTool, skills []*SkillContent) []Age
 	}
 
 	return result
-}
-
-// buildTaskContext 构建任务上下文（用于技能选择）
-func (a *Agent) buildTaskContext(req *AgentRequest) string {
-	var sb strings.Builder
-
-	// 从 Params 中提取告警信息（如果有）
-	if alertName := req.Params["alert_name"]; alertName != "" {
-		sb.WriteString("## 告警信息\n")
-		sb.WriteString(fmt.Sprintf("告警名称: %s\n", alertName))
-		if severity := req.Params["severity"]; severity != "" {
-			sb.WriteString(fmt.Sprintf("严重级别: %s\n", severity))
-		}
-		if triggerValue := req.Params["trigger_value"]; triggerValue != "" {
-			sb.WriteString(fmt.Sprintf("触发值: %s\n", triggerValue))
-		}
-		return sb.String()
-	}
-
-	// 通用任务上下文
-	sb.WriteString("## 任务上下文\n")
-
-	if req.Metadata != nil {
-		if mode := req.Metadata["trigger_mode"]; mode != "" {
-			sb.WriteString(fmt.Sprintf("触发模式: %s\n", mode))
-		}
-		if requestID := req.Metadata["request_id"]; requestID != "" {
-			sb.WriteString(fmt.Sprintf("请求ID: %s\n", requestID))
-		}
-	}
-
-	if len(req.Vars) > 0 {
-		sb.WriteString("\n变量:\n")
-		for k, v := range req.Vars {
-			sb.WriteString(fmt.Sprintf("  - %s: %v\n", k, v))
-		}
-	}
-
-	if len(req.Params) > 0 {
-		sb.WriteString("\n输入参数:\n")
-		for k, v := range req.Params {
-			if isSensitiveKey(k) {
-				continue
-			}
-			sb.WriteString(fmt.Sprintf("  - %s: %s\n", k, v))
-		}
-	}
-
-	// 多轮对话历史里的 user 消息也喂给 selector。否则跟进消息（"业务组：xxx
-	// 数据源：xxx"）丢掉 seq=1 的原始意图，selector 看不到"导入"这种动词，
-	// 必然返回 []。只挂最近 4 条 user 消息，避免长会话把 selector prompt 撑爆。
-	if len(req.History) > 0 {
-		const maxHistoryUserMsgs = 4
-		userMsgs := make([]string, 0, maxHistoryUserMsgs)
-		for i := len(req.History) - 1; i >= 0 && len(userMsgs) < maxHistoryUserMsgs; i-- {
-			m := req.History[i]
-			if m.Role != "user" || strings.TrimSpace(m.Content) == "" {
-				continue
-			}
-			userMsgs = append([]string{m.Content}, userMsgs...) // 保持时间顺序
-		}
-		if len(userMsgs) > 0 {
-			sb.WriteString("\n对话历史（user 消息，按时间正序）:\n")
-			for _, msg := range userMsgs {
-				// 截断单条以防一条几 KB 的粘贴撑爆 selector prompt
-				if len(msg) > 1024 {
-					msg = msg[:1024] + "...(truncated)"
-				}
-				sb.WriteString(fmt.Sprintf("  - %s\n", strings.ReplaceAll(msg, "\n", " ")))
-			}
-		}
-	}
-
-	if sb.Len() == 0 {
-		return "无可用上下文信息"
-	}
-
-	return sb.String()
 }

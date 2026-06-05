@@ -8,7 +8,7 @@ import (
 // general_chat 后置校验的禁词正则。LLM 凭记忆答 n9e 问题时会把相邻产品
 // (Telegraf/node_exporter 等, 训练数据里占比远高于 categraf/n9e) 的惯例
 // 误用到 n9e 上, prompt 防不住, 这里硬扫。
-// landmines.yaml 给 doc_qa 的 verify_answer 用, 这里给 general_chat 用。
+// landmines.yaml 给 n9e-doc-qa skill 的 verify_answer 工具用, 这里给 general_chat 用。
 var ForbiddenPatterns = []*regexp.Regexp{
 	// === Severity 命名 (n9e 用 Emergency/Warning/Notice, 不是 Critical/Info) ===
 	// 字符类纳入中文全角冒号 ：, 避免 "Severity 1：Critical" 漏判。
