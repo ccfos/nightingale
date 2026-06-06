@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -133,6 +134,11 @@ var (
 )
 
 const maxPooledBufCap = 8 * 1024 * 1024
+
+// nonCriticalRetryCount 是非关键 backend（AsyncWrite 的 HTTP writer、Kafka writer）写失败的
+// 总尝试次数上限。非关键数据本就允许丢，若复用全局 RetryCount（默认 1000，约 17 分钟），
+// 失败的 goroutine 会长时间占住并发配额，几次不成应直接放弃
+const nonCriticalRetryCount = 3
 
 func filterNaNSamples(items []prompb.TimeSeries) []prompb.TimeSeries {
 	// 早期检查：如果没有NaN值，直接返回原始数据
@@ -309,10 +315,14 @@ type WritersType struct {
 	backends    map[string]Writer
 	queues      map[string]*IdentQueue
 	AllQueueLen atomic.Value
-	// 每个非关键 backend 一个独立的并发计数器（上限都是 PushConcurrency），
+	// 每个非关键 backend 一个独立的并发计数器（上限都是 pushConcurrencyLimit），
 	// 避免某个故障 writer 占满全局并发额度后，连累其他健康 writer 的数据被丢弃。
 	// backends 在启动时初始化完毕后不再变更，因此运行期对该 map 只有读操作，无需加锁。
 	pushConcurrency map[string]*atomic.Int64
+	// 单个 backend 的在途写出 goroutine 上限，按核数推算而非读配置：正常在途量随消费者数
+	// （QueueNumber，默认 NumCPU）缩放；故障时每个在途 goroutine 持有 ~1MB 缓冲直到重试
+	// 结束，该值同时是故障 backend 的内存堆积上限，配太大（如上万）会有 OOM 风险
+	pushConcurrencyLimit int64
 	sync.RWMutex
 }
 
@@ -345,11 +355,12 @@ func (ws *WritersType) SetAllQueueLen() {
 
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
-		backends:        make(map[string]Writer),
-		queues:          make(map[string]*IdentQueue),
-		pushgw:          pushgwConfig,
-		AllQueueLen:     atomic.Value{},
-		pushConcurrency: make(map[string]*atomic.Int64),
+		backends:             make(map[string]Writer),
+		queues:               make(map[string]*IdentQueue),
+		pushgw:               pushgwConfig,
+		AllQueueLen:          atomic.Value{},
+		pushConcurrency:      make(map[string]*atomic.Int64),
+		pushConcurrencyLimit: int64(max(16, runtime.NumCPU())),
 	}
 
 	writers.Init()
@@ -475,11 +486,11 @@ func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.Tim
 	counter := ws.pushConcurrency[key]
 	currentConcurrency := counter.Add(1)
 
-	if currentConcurrency > int64(ws.pushgw.PushConcurrency) {
+	if currentConcurrency > ws.pushConcurrencyLimit {
 		// 超过限制，立即减少计数并丢弃
 		counter.Add(-1)
 		logger.Warningf("push concurrency limit exceeded, current: %d, limit: %d, dropping %d series for backend: %s",
-			currentConcurrency-1, ws.pushgw.PushConcurrency, len(series), key)
+			currentConcurrency-1, ws.pushConcurrencyLimit, len(series), key)
 		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
 		return
 	}
@@ -540,11 +551,16 @@ func (ws *WritersType) initWriters() error {
 			return err
 		}
 
+		retryCount := ws.pushgw.WriterOpt.RetryCount
+		if opts[i].AsyncWrite {
+			retryCount = min(retryCount, nonCriticalRetryCount)
+		}
+
 		writer := WriterType{
 			Opts:             opts[i],
 			Client:           cli,
 			ForceUseServerTS: ws.pushgw.ForceUseServerTS,
-			RetryCount:       ws.pushgw.WriterOpt.RetryCount,
+			RetryCount:       retryCount,
 			RetryInterval:    ws.pushgw.WriterOpt.RetryInterval,
 		}
 
@@ -598,8 +614,9 @@ func (ws *WritersType) initKafkaWriters() error {
 			Opts:             opts[i],
 			ForceUseServerTS: ws.pushgw.ForceUseServerTS,
 			Client:           producer,
-			RetryCount:       ws.pushgw.WriterOpt.RetryCount,
-			RetryInterval:    ws.pushgw.WriterOpt.RetryInterval,
+			// Kafka writer 一律走非关键异步路径，重试次数同步收紧
+			RetryCount:    min(ws.pushgw.WriterOpt.RetryCount, nonCriticalRetryCount),
+			RetryInterval: ws.pushgw.WriterOpt.RetryInterval,
 		}
 		ws.Put(fmt.Sprintf("%v_%s", opts[i].Brokers, opts[i].Topic), writer)
 	}
