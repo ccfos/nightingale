@@ -24,6 +24,8 @@ builtin_tools:
   - list_databases
   - list_tables
   - describe_table
+tags:
+  - export
 ---
 
 # Skill: 夜莺(N9E) 告警规则创建

@@ -35,6 +35,12 @@ type streamBridge struct {
 	// artifact IDs allocated lazily on first delta of each kind.
 	contentArtifactID   a2a.ArtifactID
 	reasoningArtifactID a2a.ArtifactID
+
+	// input_required 帧的记录位：本轮以人在环中断收尾，prompt 是确认问题文本。
+	// bridge 不在此处发终态——终态由 executor 统一收口（cancel/failed 优先级
+	// 高于 input-required，见 executor.Execute 尾部）。
+	inputRequired       bool
+	inputRequiredPrompt string
 }
 
 func newBridge(ec *a2asrv.ExecutorContext, yield func(a2a.Event, error) bool) *streamBridge {
@@ -52,6 +58,12 @@ func (b *streamBridge) Forward(msg aiagent.StreamMessage) bool {
 		return b.forwardReason(msg.V)
 	case aiagent.PhaseResponse:
 		return b.forwardResponse(msg.V)
+	case aiagent.PhaseInputRequired:
+		// 只记录不转发：确认问题文本已经走 content 通道流出过了，这里再发一遍
+		// 会让客户端渲染两份。终态映射在 executor 里做。
+		b.inputRequired = true
+		b.inputRequiredPrompt = msg.V
+		return true
 	case "step":
 		// Status text describing a tool call or workflow step. Surface as a
 		// transient working update so clients can render progress.
@@ -92,10 +104,20 @@ func (b *streamBridge) forwardResponse(body string) bool {
 		return true
 	}
 	part := a2a.NewTextPart(frame.Content)
-	if frame.ContentType != "" {
+	// Tag only machine-readable JSON payloads: the tag is a contract that the
+	// part body parses as JSON. Plain-text frames (markdown — e.g. the resume
+	// path's "已取消本次改动" notice) must stay untagged or A2A clients
+	// json.Unmarshal them and fail on the first multi-byte character.
+	if frame.ContentType.IsStructuredPayload() {
 		part.SetMeta(n9eContentTypeMetadataKey, string(frame.ContentType))
 	}
 	return b.yield(a2a.NewArtifactEvent(b.execCtx, part), nil)
+}
+
+// InputRequiredPrompt 返回流中 input_required 帧携带的确认问题文本。
+// ok=false 表示本轮没有人在环中断。
+func (b *streamBridge) InputRequiredPrompt() (string, bool) {
+	return b.inputRequiredPrompt, b.inputRequired
 }
 
 func (b *streamBridge) forwardReason(delta string) bool {
@@ -111,8 +133,8 @@ func (b *streamBridge) forwardReason(delta string) bool {
 
 // Finalize emits the terminal status update for the task, optionally
 // attaching a human-readable message (used to surface ErrMsg on
-// failed/canceled terminals). An empty msg keeps the status update
-// payload-free.
+// failed/canceled terminals, and the confirmation prompt on input-required).
+// An empty msg keeps the status update payload-free.
 //
 // We deliberately do NOT emit a separate LastChunk artifact-update event:
 // the SDK's taskupdate.Manager rejects ArtifactUpdate events with empty

@@ -33,6 +33,16 @@ func TestClassifyApproval(t *testing.T) {
 		{"算了", approvalNo},
 		{"不要确认", approvalNo},
 		{"cancel", approvalNo},
+		// 反追问惯用语 + 拒绝并存 → 拒绝优先
+		{"不要再次询问，先取消吧", approvalNo},
+		// 强确认句式：句首表态 + 复述改动内容（A2A 上游 agent 代确认的典型形态，
+		// 不受 maxApproveLength 限制）。三条取自线上事故原文。
+		{"用户已确认，请立即执行修改：将仪表盘 896 的第一行面板「CPU利用率」从 hexbin 改为 timeseries（曲线图）。", approvalYes},
+		{"确认，立即执行修改，无需再次确认。将面板「CPU利用率」从 hexbin 改为 timeseries。", approvalYes},
+		{"直接执行写入，不要再次询问确认。立即更新仪表盘 896，将图表 \"21b8b3ab-26aa-47cb-b814-f310f2d143aa\" 从 hexbin 改为 timeseries。执行实际的 API 调用来完成修改。", approvalYes},
+		// 反追问惯用语本身是强确认信号（"别问了直接干"）
+		{"不要再问了，改吧", approvalYes},
+		{"无需确认，直接提交", approvalYes},
 		// 语义不明 / 带新要求 → 回归 agent 流程
 		{"", approvalUnclear},
 		{"把阈值再改成30", approvalUnclear},
@@ -40,6 +50,9 @@ func TestClassifyApproval(t *testing.T) {
 		{"等等，第一行改成平均值", approvalUnclear},
 		{"顺便把内存图也加一条曲线", approvalUnclear},
 		{"确认一下这个改动对生产环境有没有影响，评估完再说", approvalUnclear}, // 长句含「确认」但带新要求
+		{"确认，但把标题也改成 CPU 使用率", approvalUnclear},      // 句首表态 + 转折引入新要求
+		{"已确认，再把阈值改成90", approvalUnclear},            // 句首表态 + 新要求
+		{"立即执行修改吗？", approvalUnclear},                // 句首形似表态实为提问
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {

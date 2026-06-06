@@ -197,3 +197,48 @@ func TestForwardResponseDropsEmptyAndBadFrames(t *testing.T) {
 		t.Fatalf("dropped frames must emit no events, got %d", len(*events))
 	}
 }
+
+// markdown 等纯文本 response 帧不得携带 n9e_content_type：该标记是"part 体可
+// json.Unmarshal"的契约，纯中文文本带标会让 A2A 客户端解析崩溃
+// （invalid character 'å'——首个汉字的 UTF-8 首字节）。
+func TestForwardResponseMarkdownNotTagged(t *testing.T) {
+	b, events := collectBridge(t)
+
+	text := "好的，已取消本次改动，原配置保持不变。"
+	frame := `{"content_type":"markdown","content":` + strconv.Quote(text) + `}`
+	if !b.Forward(aiagent.StreamMessage{P: aiagent.PhaseResponse, V: frame}) {
+		t.Fatal("Forward returned false unexpectedly")
+	}
+
+	if len(*events) != 1 {
+		t.Fatalf("expected 1 artifact event, got %d", len(*events))
+	}
+	part := (*events)[0].(*a2a.TaskArtifactUpdateEvent).Artifact.Parts[0]
+	if part.Text() != text {
+		t.Fatalf("part text = %q, want %q", part.Text(), text)
+	}
+	if _, ok := part.Metadata[n9eContentTypeMetadataKey]; ok {
+		t.Fatalf("markdown part must NOT carry %s metadata, got %v", n9eContentTypeMetadataKey, part.Metadata)
+	}
+}
+
+// input_required 帧只记录不转发：prompt 文本已经走 content 通道流出过，重复
+// 发 artifact 会让客户端渲染两份；终态映射由 executor 收口。
+func TestInputRequiredFrameRecordedNotForwarded(t *testing.T) {
+	b, events := collectBridge(t)
+
+	if _, ok := b.InputRequiredPrompt(); ok {
+		t.Fatal("fresh bridge must not report input-required")
+	}
+	prompt := "是否确认将面板从 hexbin 改为 timeseries？"
+	if !b.Forward(aiagent.StreamMessage{P: aiagent.PhaseInputRequired, V: prompt}) {
+		t.Fatal("Forward returned false unexpectedly")
+	}
+	if len(*events) != 0 {
+		t.Fatalf("input_required frame must not emit events, got %d", len(*events))
+	}
+	got, ok := b.InputRequiredPrompt()
+	if !ok || got != prompt {
+		t.Fatalf("InputRequiredPrompt() = (%q, %v), want (%q, true)", got, ok, prompt)
+	}
+}

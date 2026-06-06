@@ -679,6 +679,22 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
+	// 人在环中断收尾：在 finish 前压一个 input_required 帧（V=确认问题文本）。
+	// A2A bridge 据此把任务终态标成 TaskStateInputRequired，上游 agent 客户端
+	// （fc-model-server 等）会把确认问题转给真人回答——否则确认请求被当成普通
+	// 工具结果，上游模型自行代答"用户已确认"，审批门形同虚设。SSE 前端不认识
+	// 此帧，照常忽略（确认 UI 由 /detail 渲染）。
+	if pendingI != nil {
+		prompt := pendingI.Prompt
+		if prompt == "" {
+			prompt = "请确认是否执行本次改动。"
+		}
+		if err := rt.streamBus.Append(context.Background(), msg.ChatID, streamID,
+			aiagent.StreamMessage{P: aiagent.PhaseInputRequired, V: prompt}); err != nil {
+			logger.Warningf("[Assistant] publish input_required chat=%s stream=%s: %v", msg.ChatID, streamID, err)
+		}
+	}
+
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
 	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog

@@ -47,9 +47,52 @@ var (
 	}
 	approveMarkers   = []string{"确认", "同意", "提交", "没问题"}
 	rejectMarkers    = []string{"取消", "不对", "不要", "别改", "先别", "算了", "不用", "不行", "cancel"}
-	hesitateMarkers  = []string{"不", "别", "先", "吗", "?", "？", "再", "改成", "等", "换", "但"}
+	hesitateMarkers  = []string{"不", "别", "先", "吗", "?", "？", "再", "改成", "等", "换", "但", "一下"}
 	maxApproveLength = 12 // 超过此长度的回复大概率带着新要求，交给 agent 处理
 )
+
+// antiAskIdioms 是"反追问"惯用语：字面带否定词（不要/不用/无需）但语义是强确认
+// （"别问了，直接干"）。必须先于 rejectMarkers 剥离，否则"不要"子串把强确认误判
+// 成拒绝——线上事故：A2A 上游 agent 发"直接执行写入，不要再次询问确认"被判
+// reject，改动被取消。注意"不要确认"（真拒绝）不在此列：区分点是"再/再次/询问/
+// 问"的追问语义。同族内长串在前，保证整体剥除。
+var antiAskIdioms = []string{
+	"不要再次询问确认", "不要再次询问", "不要再询问", "不要询问", "不要再问",
+	"不要再次确认", "不要再确认",
+	"无需再次确认", "无需再确认", "无需二次确认", "无需确认",
+	"不用再次确认", "不用再确认", "不用确认", "不用再询问", "不用再问",
+	"不需要再次确认", "不需要再确认", "不需要确认",
+	"别再询问", "别再问", "别问了",
+}
+
+// strongApprovePrefixes 是"句首即表态"的确认形态。A2A 上游 agent 代用户确认时
+// 常复述改动内容（"已确认，将面板从 hexbin 改为 timeseries"），长度远超
+// maxApproveLength，不能因长度一刀切 unclear。
+var strongApprovePrefixes = []string{
+	"用户已确认", "已确认", "确认", "同意",
+	"请立即执行", "请直接执行", "请执行", "立即执行", "直接执行",
+}
+
+// stripAntiAskIdioms 把反追问惯用语从回复中剥除，返回剥除后的文本和是否命中。
+func stripAntiAskIdioms(t string) (string, bool) {
+	found := false
+	for _, idiom := range antiAskIdioms {
+		if strings.Contains(t, idiom) {
+			t = strings.ReplaceAll(t, idiom, "")
+			found = true
+		}
+	}
+	return strings.Trim(t, "，,。.、；; "), found
+}
+
+func hasStrongApprovePrefix(t string) bool {
+	for _, p := range strongApprovePrefixes {
+		if strings.HasPrefix(t, p) {
+			return true
+		}
+	}
+	return false
+}
 
 // classifyApproval 对"待确认中断"的用户回复做确定性三分类。纯函数，可表测。
 func classifyApproval(text string) string {
@@ -58,28 +101,47 @@ func classifyApproval(text string) string {
 	if t == "" {
 		return approvalUnclear
 	}
+
+	// 反追问惯用语先剥离：它们字面含"不要/不用"，留着会被 rejectMarkers 误伤。
+	stripped, hasAntiAsk := stripAntiAskIdioms(t)
+
 	for _, m := range rejectMarkers {
-		if strings.Contains(t, m) {
+		if strings.Contains(stripped, m) {
 			return approvalNo
 		}
 	}
-	if approveExact[t] {
+	if approveExact[stripped] {
 		return approvalYes
 	}
-	if utf8.RuneCountInString(t) <= maxApproveLength {
+
+	hesitates := func() bool {
+		for _, m := range hesitateMarkers {
+			if strings.Contains(stripped, m) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// 强确认句式：反追问惯用语在场，或句首即明确表态。此类回复常复述改动内容
+	// （A2A 上游 agent 代确认），不设长度上限；但任何犹豫/新要求信号（hesitate）
+	// 都让它回归 agent 流程——宁可多走一轮提案，不可误写库。
+	if hasAntiAsk || hasStrongApprovePrefix(stripped) {
+		if !hesitates() {
+			return approvalYes
+		}
+		return approvalUnclear
+	}
+
+	if utf8.RuneCountInString(stripped) <= maxApproveLength {
 		hasApprove := false
 		for _, m := range approveMarkers {
-			if strings.Contains(t, m) {
+			if strings.Contains(stripped, m) {
 				hasApprove = true
 				break
 			}
 		}
-		if hasApprove {
-			for _, m := range hesitateMarkers {
-				if strings.Contains(t, m) {
-					return approvalUnclear
-				}
-			}
+		if hasApprove && !hesitates() {
 			return approvalYes
 		}
 	}
