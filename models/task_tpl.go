@@ -27,6 +27,7 @@ type TaskTpl struct {
 	Tags             string   `json:"-"`
 	TagsJSON         []string `json:"tags" gorm:"-"`
 	Account          string   `json:"account"`
+	AuthLevel        int      `json:"auth_level"` // AI 任务授权等级：0=关闭，1/2/3=对应授权等级
 	CreateAt         int64    `json:"create_at"`
 	CreateBy         string   `json:"create_by"`
 	UpdateAt         int64    `json:"update_at"`
@@ -256,17 +257,18 @@ func (t *TaskTpl) Update(ctx *ctx.Context, hosts []string) error {
 
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(t).Updates(map[string]interface{}{
-			"title":     t.Title,
-			"batch":     t.Batch,
-			"tolerance": t.Tolerance,
-			"timeout":   t.Timeout,
-			"pause":     t.Pause,
-			"script":    t.Script,
-			"args":      t.Args,
-			"tags":      t.Tags,
-			"account":   t.Account,
-			"update_by": t.UpdateBy,
-			"update_at": t.UpdateAt,
+			"title":      t.Title,
+			"batch":      t.Batch,
+			"tolerance":  t.Tolerance,
+			"timeout":    t.Timeout,
+			"pause":      t.Pause,
+			"script":     t.Script,
+			"args":       t.Args,
+			"tags":       t.Tags,
+			"account":    t.Account,
+			"auth_level": t.AuthLevel,
+			"update_by":  t.UpdateBy,
+			"update_at":  t.UpdateAt,
 		}).Error
 
 		if err != nil {
@@ -360,6 +362,7 @@ type TaskForm struct {
 	Stdin          string   `json:"stdin"`
 	Action         string   `json:"action"`
 	Creator        string   `json:"creator"`
+	AuthLevel      int      `json:"auth_level"` // AI 任务授权等级：0=关闭，1/2/3=对应授权等级
 	Hosts          []string `json:"hosts"`
 	AlertTriggered bool     `json:"alert_triggered"`
 }
@@ -367,6 +370,10 @@ type TaskForm struct {
 func (f *TaskForm) Verify() error {
 	if f.Batch < 0 {
 		return fmt.Errorf("arg(batch) should be nonnegative")
+	}
+
+	if f.AuthLevel < 0 || f.AuthLevel > 3 {
+		return fmt.Errorf("arg(auth_level) invalid, expect 0/1/2/3")
 	}
 
 	if f.Tolerance < 0 {

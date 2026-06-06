@@ -117,6 +117,7 @@ type taskTplForm struct {
 	Args      string   `json:"args"`
 	Tags      []string `json:"tags"`
 	Account   string   `json:"account"`
+	AuthLevel int      `json:"auth_level"` // AI 任务授权等级：0=关闭，1/2/3=对应授权等级
 	Hosts     []string `json:"hosts"`
 }
 
@@ -130,6 +131,10 @@ func (f *taskTplForm) Verify() {
 	}
 
 	f.Hosts = args
+
+	if f.AuthLevel < 0 || f.AuthLevel > 3 {
+		ginx.Bomb(http.StatusBadRequest, "auth_level invalid, expect 0/1/2/3")
+	}
 }
 
 func (rt *Router) taskTplAdd(c *gin.Context) {
@@ -160,6 +165,7 @@ func (rt *Router) taskTplAdd(c *gin.Context) {
 		Args:      f.Args,
 		Tags:      strings.Join(f.Tags, " ") + " ",
 		Account:   f.Account,
+		AuthLevel: f.AuthLevel,
 		CreateBy:  user.Username,
 		UpdateBy:  user.Username,
 		CreateAt:  now,
@@ -199,6 +205,7 @@ func (rt *Router) taskTplPut(c *gin.Context) {
 	tpl.Args = f.Args
 	tpl.Tags = strings.Join(f.Tags, " ") + " "
 	tpl.Account = f.Account
+	tpl.AuthLevel = f.AuthLevel
 	tpl.UpdateBy = user.Username
 	tpl.UpdateAt = time.Now().Unix()
 

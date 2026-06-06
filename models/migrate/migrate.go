@@ -64,7 +64,7 @@ func MigrateTables(db *gorm.DB) error {
 		db = db.Set("gorm:table_options", tableOptions)
 	}
 	dts := []interface{}{&RecordingRule{}, &AlertRule{}, &AlertSubscribe{}, &AlertMute{},
-		&TaskRecord{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
+		&TaskRecord{}, &TaskTpl{}, &ChartShare{}, &Target{}, &Configs{}, &Datasource{}, &NotifyTpl{},
 		&Board{}, &BoardBusigroup{}, &Users{}, &SsoConfig{}, &models.BuiltinMetric{},
 		&models.MetricFilter{}, &models.NotificationRecord{}, &models.TargetBusiGroup{},
 		&models.UserToken{}, &models.DashAnnotation{}, MessageTemplate{}, NotifyRule{}, NotifyChannelConfig{}, &EsIndexPatternMigrate{},
@@ -223,7 +223,11 @@ type ChartShare struct {
 	DatasourceId int64 `gorm:"column:datasource_id;bigint(20);not null;default:0;comment:datasource id"`
 }
 type TaskRecord struct {
-	EventId int64 `gorm:"column:event_id;bigint(20);not null;default:0;comment:event id;index:idx_event_id"`
+	EventId   int64 `gorm:"column:event_id;bigint(20);not null;default:0;comment:event id;index:idx_event_id"`
+	AuthLevel int   `gorm:"column:auth_level;type:int;not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
+}
+type TaskTpl struct {
+	AuthLevel int `gorm:"column:auth_level;type:int;not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
 }
 type AlertHisEvent struct {
 	LastEvalTime  int64   `gorm:"column:last_eval_time;bigint(20);not null;default:0;comment:for time filter;index:idx_last_eval_time"`

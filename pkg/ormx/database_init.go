@@ -996,6 +996,7 @@ type InitTaskTpl struct {
 	Script    string `gorm:"type:text;not null"`
 	Args      string `gorm:"size:512;not null;default:''"`
 	Tags      string `gorm:"size:255;not null;default:'';comment:split by space"`
+	AuthLevel int    `gorm:"not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
 	CreateAt  int64  `gorm:"not null;default:0"`
 	CreateBy  string `gorm:"size:64;not null;default:''"`
 	UpdateAt  int64  `gorm:"not null;default:0"`
@@ -1039,6 +1040,7 @@ type InitTaskRecord struct {
 	Pause        string `gorm:"size:255;not null;default:''"`
 	Script       string `gorm:"type:text;not null"`
 	Args         string `gorm:"size:512;not null;default:''"`
+	AuthLevel    int    `gorm:"not null;default:0;comment:ai task auth level, 0=off 1/2/3=level"`
 	CreateAt     int64  `gorm:"not null;default:0;index:idx_group_id_create_at"`
 	CreateBy     string `gorm:"size:64;not null;default:'';index"`
 }

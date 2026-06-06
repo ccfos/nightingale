@@ -141,6 +141,7 @@ func (rt *Router) taskAdd(c *gin.Context) {
 		Pause:     f.Pause,
 		Script:    f.Script,
 		Args:      f.Args,
+		AuthLevel: f.AuthLevel,
 		CreateAt:  time.Now().Unix(),
 		CreateBy:  f.Creator,
 	}
