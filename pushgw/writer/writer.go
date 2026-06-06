@@ -305,11 +305,14 @@ func (w WriterType) Post(req []byte, headers ...map[string]string) error {
 }
 
 type WritersType struct {
-	pushgw          pconf.Pushgw
-	backends        map[string]Writer
-	queues          map[string]*IdentQueue
-	AllQueueLen     atomic.Value
-	PushConcurrency atomic.Int64
+	pushgw      pconf.Pushgw
+	backends    map[string]Writer
+	queues      map[string]*IdentQueue
+	AllQueueLen atomic.Value
+	// 每个非关键 backend 一个独立的并发计数器（上限都是 PushConcurrency），
+	// 避免某个故障 writer 占满全局并发额度后，连累其他健康 writer 的数据被丢弃。
+	// backends 在启动时初始化完毕后不再变更，因此运行期对该 map 只有读操作，无需加锁。
+	pushConcurrency map[string]*atomic.Int64
 	sync.RWMutex
 }
 
@@ -342,10 +345,11 @@ func (ws *WritersType) SetAllQueueLen() {
 
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
-		backends:    make(map[string]Writer),
-		queues:      make(map[string]*IdentQueue),
-		pushgw:      pushgwConfig,
-		AllQueueLen: atomic.Value{},
+		backends:        make(map[string]Writer),
+		queues:          make(map[string]*IdentQueue),
+		pushgw:          pushgwConfig,
+		AllQueueLen:     atomic.Value{},
+		pushConcurrency: make(map[string]*atomic.Int64),
 	}
 
 	writers.Init()
@@ -357,6 +361,7 @@ func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 
 func (ws *WritersType) Put(name string, writer Writer) {
 	ws.backends[name] = writer
+	ws.pushConcurrency[name] = &atomic.Int64{}
 }
 
 func (ws *WritersType) isCriticalBackend(key string) bool {
@@ -465,12 +470,14 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 }
 
 func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.TimeSeries) {
-	// 原子性地检查并增加并发数
-	currentConcurrency := ws.PushConcurrency.Add(1)
+	// 原子性地检查并增加该 backend 自己的并发数，配额按 backend 隔离，
+	// 某个 backend 故障耗尽自己的配额时，只丢自己的数据，不影响其他 backend
+	counter := ws.pushConcurrency[key]
+	currentConcurrency := counter.Add(1)
 
 	if currentConcurrency > int64(ws.pushgw.PushConcurrency) {
 		// 超过限制，立即减少计数并丢弃
-		ws.PushConcurrency.Add(-1)
+		counter.Add(-1)
 		logger.Warningf("push concurrency limit exceeded, current: %d, limit: %d, dropping %d series for backend: %s",
 			currentConcurrency-1, ws.pushgw.PushConcurrency, len(series), key)
 		pstat.CounterWriteErrorTotal.WithLabelValues(key).Add(float64(len(series)))
@@ -483,7 +490,7 @@ func (ws *WritersType) writeToNonCriticalBackend(key string, series []prompb.Tim
 	// 启动goroutine处理
 	go func(backendKey string, data []prompb.TimeSeries) {
 		defer func() {
-			ws.PushConcurrency.Add(-1)
+			counter.Add(-1)
 			if r := recover(); r != nil {
 				logger.Errorf("panic in non-critical backend %s: %v", backendKey, r)
 			}
