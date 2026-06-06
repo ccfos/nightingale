@@ -18,7 +18,9 @@ type Pushgw struct {
 	UpdateTargetRetryIntervalMills int64
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
-	PushConcurrency                int
+	// PushConcurrency 是异步写出（AsyncWrite 的 HTTP writer、Kafka writer）的并发上限，
+	// 按 backend 各自计数：每个 backend 的在途写出 goroutine 都不超过该值，互不抢占
+	PushConcurrency int
 	UpdateTargetByUrlConcurrency   int
 
 	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
