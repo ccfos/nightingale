@@ -9,6 +9,8 @@ builtin_tools:
   - list_files
   - read_file
   - grep_files
+tags:
+  - export
 ---
 
 # Skill: 夜莺(N9E) 仪表盘创建

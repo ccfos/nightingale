@@ -184,6 +184,16 @@ func (e *executor) Execute(ctx context.Context, ec *a2asrv.ExecutorContext) iter
 			}
 		}
 		state, errMsg := e.terminalState(ctx, result.ChatID, result.SeqID)
+		// 人在环中断收尾：流里出现 input_required 帧且消息正常完结时，把终态升级
+		// 为 input-required 并携带确认问题文本（A2A 规范认可的流结束状态，SDK 在
+		// 此事件后停止处理）。上游 agent 客户端据此把问题转给真人回答，而不是把
+		// 确认请求当成普通工具结果让模型代答。cancel/failed 优先，不覆盖。
+		if state == a2a.TaskStateCompleted {
+			if prompt, ok := bridge.InputRequiredPrompt(); ok {
+				state = a2a.TaskStateInputRequired
+				errMsg = prompt
+			}
+		}
 		logx.Infof(ctx, "[A2A] Execute terminal user_id=%d task_id=%s chat_id=%s seq_id=%d state=%s err=%q",
 			user.Id, ec.TaskID, result.ChatID, result.SeqID, state, errMsg)
 		bridge.Finalize(state, errMsg)
