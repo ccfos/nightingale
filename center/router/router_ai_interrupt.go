@@ -271,13 +271,9 @@ func (rt *Router) tryResumePending(state *MessageState, streamID string, pending
 }
 
 // resumeText 选取确定性 resume 路径的预制文案：这些文案不经 LLM、无法逐语言
-// 生成，只维护 zh/en 两版。zh_* 与未设置走中文（历史默认），其余语言码（含
-// ja_JP/ru_RU 等）统一英文兜底。语言码取值见 chat.LanguageDirective 的映射表。
+// 生成。语言选取规则（zh 默认 / en 兜底）统一在 aiagent.LangText。
 func resumeText(lang, zh, en string) string {
-	if lang == "" || strings.HasPrefix(lang, "zh") {
-		return zh
-	}
-	return en
+	return aiagent.LangText(lang, zh, en)
 }
 
 // formatResumeResult 把工具 apply 腿的 JSON 结果渲染成给用户看的 markdown；
