@@ -17,6 +17,8 @@ builtin_tools:
   - list_metrics
   - get_metric_labels
   - query_prometheus
+tags:
+  - export
 ---
 
 # Skill: 夜莺(N9E) 修改已有仪表盘

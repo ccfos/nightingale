@@ -161,3 +161,49 @@ func IsDefaultBusiGroupName(name string) bool {
 	lower := strings.ToLower(name)
 	return strings.Contains(lower, "default") || strings.Contains(name, "默认")
 }
+
+// ==================== Approval 表单（结构化确认通道） ====================
+
+// ApprovalParamKey 是结构化确认通道的 action.param 键：FE 的 approve/reject
+// 按钮（本文件 BuildApprovalForm 产出的 form_select 字段）和 A2A 上游的
+// metadata.action_param 都落到这里。结构化通道零 NLP，是确认的主路径；文本
+// 分类只是没有结构化能力的客户端的兜底。
+const ApprovalParamKey = "approval"
+
+// Approval 表单候选 ID。form_select 候选经 action.param 回传的是数值 ID，
+// router 按本对常量解码；A2A 上游无表单，直接回字符串 "approve"/"reject"。
+const (
+	ApprovalCandidateApprove int64 = 1
+	ApprovalCandidateReject  int64 = 2
+)
+
+// LangText 选取预制文案：不经 LLM 的固定文案只维护 zh/en 两版，zh_* 与未设置
+// 走中文（历史默认），其余语言码（含 ja_JP/ru_RU 等）统一英文兜底。语言码取值
+// 见 chat.LanguageDirective 的映射表。同一轮 UI 的全部预制文案（resume 提示、
+// approval 按钮）必须经此函数选取，保证语言一致。
+func LangText(lang, zh, en string) string {
+	if lang == "" || strings.HasPrefix(lang, "zh") {
+		return zh
+	}
+	return en
+}
+
+// BuildApprovalForm 构造 approval 类工具中断的二选一 form_select 载荷，与
+// creation 表单同一 JSON 契约，前端渲染成按钮。skillName 位填工具名，仅作
+// 展示/排查。两个候选都不预选——写操作的确认不能替用户默认。
+func BuildApprovalForm(lang, toolName string) string {
+	approve := LangText(lang, "确认执行", "Apply")
+	reject := LangText(lang, "取消", "Cancel")
+	body, _ := json.Marshal(FormPayload{
+		SkillName: toolName,
+		Fields: []FormField{{
+			Key:  ApprovalParamKey,
+			Type: "single",
+			Candidates: []FormCandidate{
+				{ID: ApprovalCandidateApprove, Name: approve},
+				{ID: ApprovalCandidateReject, Name: reject},
+			},
+		}},
+	})
+	return string(body)
+}

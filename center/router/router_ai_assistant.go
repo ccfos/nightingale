@@ -266,11 +266,11 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 	}
 	tHistoryLoaded = time.Since(tStart)
 
-	// 人在环 resume 短路：上一轮以待确认中断收尾时，
-	// 明确的确认/拒绝由运行时确定性处理（确认 = 直接重放工具 apply 腿，零 LLM），
+	// 人在环 resume 短路：上一轮以待确认中断收尾时，approve/reject 由运行时
+	// 处理（approve = 直接重放工具 apply 腿，分层裁决见 router_ai_interrupt.go），
 	// 不进入 action 解析与 agent 流程；语义不明的回复回归正常流程，pending 不再携带
 	// （旧提案由工具自身 TTL/单次消费门作废）。
-	if prevPending != nil && rt.tryResumePending(state, streamID, prevPending, history, prevRoute) {
+	if prevPending != nil && rt.tryResumePending(state, streamID, prevPending, history, prevRoute, lang) {
 		return
 	}
 
@@ -282,27 +282,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		return
 	}
 
-	// LLM 选取：is_default 优先于 agent 绑定。用户在 LLM 配置列表把某条标为
-	// "默认"，直觉预期就是对话立刻切到该模型——若 agent 绑定优先，默认标记
-	// 会被静默忽略，用户很难发现 chat 实际在用 Agent 设置页绑定的另一条配置。
-	// agent 绑定降级为兜底：没有任何配置标默认时才生效。
-	llmCfg, err := models.AILLMConfigPickDefault(rt.Ctx) // 内部已过滤 enabled
-	if err != nil {
-		logger.Warningf("[Assistant] pick default LLM config failed: %v", err)
-	}
-	if llmCfg == nil && agent.LLMConfigId > 0 {
-		llmCfg, err = models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
-		if err != nil {
-			logger.Warningf("[Assistant] load agent LLM config id=%d failed: %v", agent.LLMConfigId, err)
-		}
-		// AILLMConfigGetById 是通用 getter，故意不过滤 enabled——管理后台编辑页要能
-		// 查出已禁用的记录。但用在 chat 业务路径，命中已禁用配置时应当视为"agent 没
-		// 可用 LLM"，找不到可用配置时报错给用户。
-		if llmCfg != nil && !llmCfg.Enabled {
-			logger.Infof("[Assistant] agent's bound LLM config id=%d is disabled", llmCfg.Id)
-			llmCfg = nil
-		}
-	}
+	llmCfg := rt.resolveChatLLMConfig(agent)
 	if llmCfg == nil {
 		// 用 409 作为业务错误码（写进 message.ErrCode），前端读 body.dat.err_code
 		// 识别"未配置 LLM"这条特定错误，弹"去配置"引导而非通用 toast。HTTP 状态
@@ -311,44 +291,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		return
 	}
 
-	extraConfig := llmCfg.ExtraConfig
-	// llmCallTimeout caps a single LLM HTTP call (per-iteration). agentTotalTimeout
-	// caps the entire tool loop across all tool calls. Multi-turn agent flows
-	// (e.g. dashboard creation: list_busi_groups → list_datasources → list_files
-	// → read_file → create_dashboard) easily run 7+ iterations, so the agent
-	// budget must be several times the per-call budget.
-	llmCallTimeout := 120000
-	if extraConfig.TimeoutSeconds > 0 {
-		llmCallTimeout = extraConfig.TimeoutSeconds * 1000
-	}
-	agentTotalTimeout := llmCallTimeout * 5
-	if agentTotalTimeout < 5*60*1000 {
-		agentTotalTimeout = 5 * 60 * 1000
-	}
-
-	llmClient, err := rt.llmClientCache.GetOrCreate(&llm.Config{
-		Provider:      llmCfg.APIType,
-		BaseURL:       llmCfg.APIURL,
-		Model:         llmCfg.Model,
-		APIKey:        llmCfg.APIKey,
-		Headers:       extraConfig.CustomHeaders,
-		Timeout:       llmCallTimeout,
-		SkipSSLVerify: extraConfig.SkipTLSVerify,
-		Proxy:         extraConfig.Proxy,
-		Temperature:   extraConfig.Temperature,
-		MaxTokens:     extraConfig.MaxTokens,
-		// CustomParams 原样透传给 provider，由 provider 决定如何并入请求（OpenAI 兼容
-		// 路径把它平铺到 request body 顶层）。
-		//
-		// chat 路径不再自动注入"关思考"参数（NormalizeThinkingParams 仅存于连接测试
-		// probe 路径）：思考是一等公民——思考流接入 thinking 通道、有状态思考协议
-		// （Anthropic 思考块回填 / Gemini thoughtSignature）已在 provider 适配层实现。
-		// 想关思考的用户在 CustomParams 里按厂商字段显式配置即可。
-		ExtraBody: extraConfig.CustomParams,
-	})
+	llmClient, llmCallTimeout, err := rt.chatLLMClient(llmCfg)
 	if err != nil {
 		rt.finishMessage(state, streamID, 500, fmt.Sprintf("failed to create LLM client: %v", err))
 		return
+	}
+	// agentTotalTimeout caps the entire tool loop across all tool calls. Multi-turn
+	// agent flows (e.g. dashboard creation: list_busi_groups → list_datasources →
+	// list_files → read_file → create_dashboard) easily run 7+ iterations, so the
+	// agent budget must be several times the per-call (llmCallTimeout) budget.
+	agentTotalTimeout := llmCallTimeout * 5
+	if agentTotalTimeout < 5*60*1000 {
+		agentTotalTimeout = 5 * 60 * 1000
 	}
 	tLLMReady = time.Since(tStart)
 
@@ -679,6 +633,30 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		}
 	}
 
+	// 人在环中断收尾：在 finish 前压一个 input_required 帧（V=确认问题文本）。
+	// A2A bridge 据此把任务终态标成 TaskStateInputRequired，上游 agent 客户端
+	// （fc-model-server 等）会把确认问题转给真人回答——否则确认请求被当成普通
+	// 工具结果，上游模型自行代答"用户已确认"，审批门形同虚设。SSE 前端不认识
+	// 此帧，照常忽略（确认 UI 由 /detail 渲染）。
+	if pendingI != nil {
+		prompt := pendingI.Prompt
+		if prompt == "" {
+			prompt = resumeText(lang, "请确认是否执行本次改动。", "Please confirm whether to apply this change.")
+		}
+		// approval 类附协议 token 提示（只上 stream 帧，仅 A2A 可见）：上游 agent
+		// 拿到明确的回复格式，确认轮走零 NLP 的精确匹配；FE 用户看 form_select
+		// 按钮，不需要这一行。
+		if pendingI.Kind == aiagent.InterruptKindApproval {
+			prompt += resumeText(lang,
+				"\n\n（同意请回复 approve，取消请回复 reject；也可以直接说明新的修改要求。）",
+				"\n\n(Reply exactly `approve` to apply or `reject` to cancel; or describe further changes.)")
+		}
+		if err := rt.streamBus.Append(context.Background(), msg.ChatID, streamID,
+			aiagent.StreamMessage{P: aiagent.PhaseInputRequired, V: prompt}); err != nil {
+			logger.Warningf("[Assistant] publish input_required chat=%s stream=%s: %v", msg.ChatID, streamID, err)
+		}
+	}
+
 	// 用 Background 而非 parentCtx：cancel / 超时路径下 parentCtx 已经 Done，
 	// pipe.Exec(parentCtx) 会直接返回 context.Canceled，finish marker 写不进
 	// stream，所有还连着的 SSE 消费者只能等 /stream handler 里的 orphan watchdog
@@ -735,6 +713,18 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		responses = append(responses, models.AssistantMessageResponse{
 			ContentType: models.ContentTypeFormSelect,
 			Content:     interruptForm,
+			IsFinish:    true,
+			IsFromAI:    true,
+		})
+	}
+
+	// approval 类工具中断：附 approve/reject 二选一表单（结构化确认通道）。FE
+	// 渲染成按钮，提交值经 action.param["approval"] 回传，下一轮零 NLP 直接
+	// 裁决；自由文本回复仍走文本分类/agent 流程。
+	if pendingI != nil && pendingI.Kind == aiagent.InterruptKindApproval {
+		responses = append(responses, models.AssistantMessageResponse{
+			ContentType: models.ContentTypeFormSelect,
+			Content:     aiagent.BuildApprovalForm(lang, pendingI.Tool),
 			IsFinish:    true,
 			IsFromAI:    true,
 		})
@@ -801,6 +791,68 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		streamDur,
 		(tPersisted - tStreamDone).Milliseconds(),
 	)
+}
+
+// resolveChatLLMConfig 选取 chat 路径的有效 LLM 配置：is_default 优先于 agent
+// 绑定。用户在 LLM 配置列表把某条标为"默认"，直觉预期就是对话立刻切到该模型——
+// 若 agent 绑定优先，默认标记会被静默忽略，用户很难发现 chat 实际在用 Agent
+// 设置页绑定的另一条配置。agent 绑定降级为兜底：没有任何配置标默认时才生效。
+// 返回 nil = 无可用配置。chat 主流程与 approval 意图分类共用同一选取逻辑。
+func (rt *Router) resolveChatLLMConfig(agent *models.AIAgent) *models.AILLMConfig {
+	llmCfg, err := models.AILLMConfigPickDefault(rt.Ctx) // 内部已过滤 enabled
+	if err != nil {
+		logger.Warningf("[Assistant] pick default LLM config failed: %v", err)
+	}
+	if llmCfg != nil {
+		return llmCfg
+	}
+	if agent == nil || agent.LLMConfigId <= 0 {
+		return nil
+	}
+	llmCfg, err = models.AILLMConfigGetById(rt.Ctx, agent.LLMConfigId)
+	if err != nil {
+		logger.Warningf("[Assistant] load agent LLM config id=%d failed: %v", agent.LLMConfigId, err)
+		return nil
+	}
+	// AILLMConfigGetById 是通用 getter，故意不过滤 enabled——管理后台编辑页要能
+	// 查出已禁用的记录。但用在 chat 业务路径，命中已禁用配置时应当视为"agent 没
+	// 可用 LLM"。
+	if llmCfg != nil && !llmCfg.Enabled {
+		logger.Infof("[Assistant] agent's bound LLM config id=%d is disabled", llmCfg.Id)
+		return nil
+	}
+	return llmCfg
+}
+
+// chatLLMClient 由 LLM 配置构造（缓存的）客户端，并返回单次 LLM HTTP 调用的
+// 超时（ms），供调用方推导 agent 总预算。
+func (rt *Router) chatLLMClient(llmCfg *models.AILLMConfig) (llm.LLM, int, error) {
+	extraConfig := llmCfg.ExtraConfig
+	llmCallTimeout := 120000
+	if extraConfig.TimeoutSeconds > 0 {
+		llmCallTimeout = extraConfig.TimeoutSeconds * 1000
+	}
+	client, err := rt.llmClientCache.GetOrCreate(&llm.Config{
+		Provider:      llmCfg.APIType,
+		BaseURL:       llmCfg.APIURL,
+		Model:         llmCfg.Model,
+		APIKey:        llmCfg.APIKey,
+		Headers:       extraConfig.CustomHeaders,
+		Timeout:       llmCallTimeout,
+		SkipSSLVerify: extraConfig.SkipTLSVerify,
+		Proxy:         extraConfig.Proxy,
+		Temperature:   extraConfig.Temperature,
+		MaxTokens:     extraConfig.MaxTokens,
+		// CustomParams 原样透传给 provider，由 provider 决定如何并入请求（OpenAI 兼容
+		// 路径把它平铺到 request body 顶层）。
+		//
+		// chat 路径不再自动注入"关思考"参数（NormalizeThinkingParams 仅存于连接测试
+		// probe 路径）：思考是一等公民——思考流接入 thinking 通道、有状态思考协议
+		// （Anthropic 思考块回填 / Gemini thoughtSignature）已在 provider 适配层实现。
+		// 想关思考的用户在 CustomParams 里按厂商字段显式配置即可。
+		ExtraBody: extraConfig.CustomParams,
+	})
+	return client, llmCallTimeout, err
 }
 
 // resolveActionKey 是路由收缩后的确定性 action 解析，纯函数零 LLM。优先级：

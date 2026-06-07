@@ -15,6 +15,8 @@ builtin_tools:
   - import_prom_rule_yaml
   - list_busi_groups
   - list_datasources
+tags:
+  - export
 ---
 
 # Skill: 导入 Prometheus 告警规则

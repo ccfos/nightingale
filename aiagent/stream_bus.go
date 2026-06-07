@@ -17,12 +17,19 @@ import (
 // 字段名与原 stream_cache.StreamMessage 完全一致，前端 wire format 不变。
 type StreamMessage struct {
 	V string `json:"v"`
-	P string `json:"p"` // "content" | "reason" | "step" | "response" | "finish"
+	P string `json:"p"` // "content" | "reason" | "step" | "response" | "input_required" | "finish"
 }
 
 // PhaseResponse 的 V 是 ResponseFrame JSON。stream_bus 不认 ContentType，
 // 由下游消费者（A2A bridge 等）自行解读。
 const PhaseResponse = "response"
+
+// PhaseInputRequired 标记"本轮以人在环中断收尾，等待用户确认/输入"，V 是给
+// 用户看的确认问题文本。A2A bridge 据此把任务终态映射成 TaskStateInputRequired
+// （A2A 规范的"任务暂停等输入"状态），上游 agent 客户端（fc-model-server 等）
+// 会把问题转给真人回答而不是让模型代答；SSE 前端不认识此帧，照常忽略（确认 UI
+// 由 /detail 渲染）。
+const PhaseInputRequired = "input_required"
 
 // ResponseFrame 是 PhaseResponse 的 V shape。StreamID / IsFinish / IsFromAI
 // 是 DB-only 字段，不上 wire。

@@ -118,6 +118,20 @@ const (
 	ContentTypeFormSelect AssistantContentType = "form_select"
 )
 
+// IsStructuredPayload reports whether Content carries a machine-readable JSON
+// payload (rendered as a card/widget) rather than human-readable text. The A2A
+// bridge tags only structured parts with n9e_content_type metadata — clients
+// that see the tag are entitled to json.Unmarshal the part body, so tagging a
+// plain-text type (markdown/hint) here would crash them on the first Chinese
+// character. New JSON card types MUST be added to this whitelist.
+func (t AssistantContentType) IsStructuredPayload() bool {
+	switch t {
+	case ContentTypeAlertRule, ContentTypeDashboard, ContentTypeFormSelect:
+		return true
+	}
+	return false
+}
+
 type AssistantMessageResponse struct {
 	ContentType AssistantContentType `json:"content_type"`
 	Content     string               `json:"content"`

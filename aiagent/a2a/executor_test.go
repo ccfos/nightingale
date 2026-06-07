@@ -293,6 +293,22 @@ func (stubStreamBus) Read(context.Context, string, string) <-chan aiagent.Stream
 	return ch
 }
 
+// framesStreamBus 让 Read 回放预置帧后立即关闭——驱动 Execute 走完整个
+// stream 循环而无需 Redis。
+type framesStreamBus struct {
+	stubStreamBus
+	frames []aiagent.StreamMessage
+}
+
+func (f framesStreamBus) Read(context.Context, string, string) <-chan aiagent.StreamMessage {
+	ch := make(chan aiagent.StreamMessage, len(f.frames))
+	for _, m := range f.frames {
+		ch <- m
+	}
+	close(ch)
+	return ch
+}
+
 // executeBackend implements AssistantBackend for tests that exercise the
 // happy fresh-task path end-to-end. It records the chatID handed to
 // EnsureAssistantChat and the query handed to StartAssistantMessage so the
@@ -300,6 +316,8 @@ func (stubStreamBus) Read(context.Context, string, string) <-chan aiagent.Stream
 type executeBackend struct {
 	chat        *models.AssistantChat
 	startResult *MessageStartResult
+	bus         aiagent.StreamBus        // nil = stubStreamBus（空流立即关闭）
+	snap        *models.AssistantMessage // MessageSnapshot 返回值（nil = 快照缺失）
 
 	ensureChatIDArg string
 	startCalled     bool
@@ -323,9 +341,14 @@ func (e *executeBackend) CancelAssistantMessage(context.Context, string, int64) 
 	return nil
 }
 func (e *executeBackend) CheckChatOwner(string, int64) error { return nil }
-func (e *executeBackend) StreamBus() aiagent.StreamBus       { return stubStreamBus{} }
+func (e *executeBackend) StreamBus() aiagent.StreamBus {
+	if e.bus != nil {
+		return e.bus
+	}
+	return stubStreamBus{}
+}
 func (e *executeBackend) MessageSnapshot(context.Context, string, int64) (*models.AssistantMessage, error) {
-	return nil, nil
+	return e.snap, nil
 }
 
 // The minimum-multi-turn contract: a caller that bundles form answers under
@@ -400,5 +423,84 @@ func TestExecuteLeavesActionParamNilWhenMetadataAbsent(t *testing.T) {
 	if be.capturedQuery.Action.Param != nil {
 		t.Fatalf("Action.Param should be nil when metadata absent, got %v",
 			be.capturedQuery.Action.Param)
+	}
+}
+
+// lastStatusEvent returns the final TaskStatusUpdateEvent the executor
+// yielded — the terminal state of the turn.
+func lastStatusEvent(t *testing.T, events []a2a.Event) *a2a.TaskStatusUpdateEvent {
+	t.Helper()
+	var last *a2a.TaskStatusUpdateEvent
+	for _, ev := range events {
+		if su, ok := ev.(*a2a.TaskStatusUpdateEvent); ok {
+			last = su
+		}
+	}
+	if last == nil {
+		t.Fatal("no TaskStatusUpdateEvent emitted")
+	}
+	return last
+}
+
+// 人在环中断收尾的 A2A 终态契约：流中出现 input_required 帧时，终态必须是
+// TaskStateInputRequired 且 status.message 携带确认问题文本——上游 agent
+// 客户端（fc-model-server 等）据此把确认问题转给真人回答；若仍发 COMPLETED，
+// 确认请求会被当成普通工具结果，上游模型自行代答"用户已确认"，审批门失效。
+func TestExecuteInputRequiredTerminal(t *testing.T) {
+	prompt := "已生成改动预览（dbprop_xxx），是否确认写入？"
+	be := &executeBackend{
+		chat:        &models.AssistantChat{ChatID: "c-ir", UserID: 1},
+		startResult: &MessageStartResult{ChatID: "c-ir", SeqID: 3, StreamID: "c-ir:3:s"},
+		bus: framesStreamBus{frames: []aiagent.StreamMessage{
+			{P: "content", V: prompt},
+			{P: aiagent.PhaseInputRequired, V: prompt},
+		}},
+	}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart("把面板改成曲线图"))
+	events, _ := drain(exec.Execute(ctx, &a2asrv.ExecutorContext{
+		Message: msg, ContextID: "c-ir", TaskID: "t-ir",
+	}))
+
+	last := lastStatusEvent(t, events)
+	if last.Status.State != a2a.TaskStateInputRequired {
+		t.Fatalf("terminal state = %s, want %s", last.Status.State, a2a.TaskStateInputRequired)
+	}
+	if last.Status.Message == nil {
+		t.Fatal("input-required terminal must carry the confirmation prompt, got nil message")
+	}
+	var sb string
+	for _, p := range last.Status.Message.Parts {
+		sb += p.Text()
+	}
+	if sb != prompt {
+		t.Fatalf("terminal prompt = %q, want %q", sb, prompt)
+	}
+}
+
+// 错误终态优先：消息以 failed 收尾时，即使流里有 input_required 帧也不得把
+// 终态改写成 input-required——否则上游会把失败轮当成"等用户回答"无限挂起。
+func TestExecuteInputRequiredDoesNotMaskFailure(t *testing.T) {
+	be := &executeBackend{
+		chat:        &models.AssistantChat{ChatID: "c-f", UserID: 1},
+		startResult: &MessageStartResult{ChatID: "c-f", SeqID: 4, StreamID: "c-f:4:s"},
+		bus: framesStreamBus{frames: []aiagent.StreamMessage{
+			{P: aiagent.PhaseInputRequired, V: "确认吗？"},
+		}},
+		snap: &models.AssistantMessage{ChatID: "c-f", SeqID: 4, IsFinish: true, ErrCode: 500, ErrMsg: "boom"},
+	}
+	exec := NewExecutor(be).(*executor)
+
+	ctx := WithUser(context.Background(), &models.User{Id: 1})
+	msg := a2a.NewMessage(a2a.MessageRoleUser, a2a.NewTextPart("hi"))
+	events, _ := drain(exec.Execute(ctx, &a2asrv.ExecutorContext{
+		Message: msg, ContextID: "c-f", TaskID: "t-f",
+	}))
+
+	last := lastStatusEvent(t, events)
+	if last.Status.State != a2a.TaskStateFailed {
+		t.Fatalf("terminal state = %s, want %s (failure must not be masked)", last.Status.State, a2a.TaskStateFailed)
 	}
 }
