@@ -168,7 +168,7 @@ func (rt *Router) processAssistantMessage(parentCtx context.Context, parentCance
 		tHistoryLoaded time.Duration
 		tLLMReady      time.Duration
 		tIntent        time.Duration
-		intentMethod   string // "fast" | "front" | "form" | "default"（全确定性，零 LLM）
+		intentMethod   string // "fast" | "import" | "form" | "default"（全确定性，零 LLM）
 		tValidatePre   time.Duration
 		tAgentStart    time.Duration
 		tFirstToken    time.Duration
@@ -857,9 +857,11 @@ func (rt *Router) chatLLMClient(llmCfg *models.AILLMConfig) (llm.LLM, int, error
 
 // resolveActionKey 是路由收缩后的确定性 action 解析，纯函数零 LLM。优先级：
 //  1. fast    — 创建动词命中 → creation（保住零 LLM 即时弹业务组表单的 UX）；
-//  2. form    — 上轮以 form_select 收尾（AwaitingForm）且本轮带 action.param
+//  2. import  — 导入现成规则包/模板 → 同样进 creation 前置弹表单。与 fast 分开是因为
+//     import 要"列出/有哪些"地浏览包，会被 fast 的 queryVerbs 反信号误挡。
+//  3. form    — 上轮以 form_select 收尾（AwaitingForm）且本轮带 action.param
 //     （= 表单提交），确定性继承上轮 action；
-//  3. default — general_chat 通用 agent（工具全集 + 技能目录自取 + 工具级门）。
+//  4. default — general_chat 通用 agent（工具全集 + 技能目录自取 + 工具级门）。
 //
 // 历史上还有 front 分支（首条消息前端显式指定 action）：fe 发送前一律剥掉
 // action.key，该通道已死，连同专用 action 一并删除。
@@ -867,6 +869,8 @@ func resolveActionKey(content string, paramCount int, prevRoute *models.Conversa
 	switch {
 	case chat.HasCreationIntent(content):
 		return string(models.ActionKeyCreation), "fast"
+	case chat.HasImportIntent(content):
+		return string(models.ActionKeyCreation), "import"
 	case prevRoute != nil && prevRoute.AwaitingForm && prevRoute.ActionKey != "" && paramCount > 0:
 		return prevRoute.ActionKey, "form"
 	default:
