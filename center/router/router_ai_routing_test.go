@@ -27,6 +27,11 @@ func TestResolveActionKey(t *testing.T) {
 		{"上轮非表单收尾不继承", "业务组：123", 1, plainRoute, "general_chat", "default"},
 		{"开放输入默认通用路径", "怎么部署 categraf", 0, nil, "general_chat", "default"},
 		{"查询动词不触发 fast-path", "查看已创建的告警规则", 0, nil, "general_chat", "default"},
+		// 导入快路径：integration 规则包导入也进 creation，业务组+数据源表单前置弹出。
+		{"导入动词 → creation", "从 integrations 导入 Redis 告警规则", 0, nil, "creation", "import"},
+		{"导入+列出不被 query 反信号挡掉（回归）", "帮用户导入 Redis 告警规则，先列出有哪些规则包供选择", 0, nil, "creation", "import"},
+		{"查看已导入不触发导入快路径", "查看已导入的告警规则", 0, nil, "general_chat", "default"},
+		{"prom-rule YAML 导入仍走通用路径", "帮我导入这个 node-exporter.yml 里的告警", 0, nil, "general_chat", "default"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -240,8 +240,8 @@ func buildCreationPrompt(req *AIChatRequest) string {
 User request: %s%s
 
 Pick the correct creation skill based on the user's intent and follow its SKILL.md:
-- Alert rule (告警规则): n9e-create-alert-rule skill → use create_alert_rule tool
-- Dashboard (仪表盘): n9e-create-dashboard skill → use create_dashboard tool
+- Alert rule (告警规则): n9e-create-alert-rule skill → 想导入 integrations 里现成的规则包就用 import_alert_rule_template（先 preview_alert_rule_template 看包里有啥），完全自定义才用 create_alert_rule
+- Dashboard (仪表盘): n9e-create-dashboard skill → 想导入现成模板用 import_dashboard_template，否则 create_dashboard
 - Alert mute (屏蔽规则): n9e-create-alert-mute skill
 - Alert subscribe (订阅规则): n9e-create-alert-subscribe skill
 - Notify rule (通知规则): n9e-create-notify-rule skill

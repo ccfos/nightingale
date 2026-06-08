@@ -64,6 +64,19 @@ var (
 	queryVerbs = []string{"查看", "查询", "查一下", "查下", "看一下", "看下", "列出", "有哪些", "显示", "已创建", "已新建", "已添加", " show ", " list ", " get ", " view "}
 )
 
+var (
+	// importVerbs：导入现成规则包/模板。归入 creation 快路径——matchCreationSkill 命中的
+	// n9e-create-alert-rule/dashboard 工具含 import_*_template，业务组+数据源表单照常弹。
+	importVerbs = []string{"导入", "import "}
+
+	// promRuleImportSignals：批量 YAML/URL 导入属另一个 skill（n9e-import-prom-rule），其
+	// 工具不在 selectCreationTools，必须留 general_chat，否则弹了表单没落库工具。
+	promRuleImportSignals = []string{".yml", ".yaml", "yaml", "http://", "https://", "awesome-prometheus", "node-exporter", "批量"}
+
+	// importQueryVerbs：只挡"看已导入的东西"，不挡"列出可导入的包"（import 天然先浏览）。
+	importQueryVerbs = []string{"已导入", "已经导入", "导入历史", "导入记录", "查看导入", "查询导入"}
+)
+
 // HasCreationIntent returns true when the user input unambiguously asks to
 // create a new resource. Requires all three signals:
 //  1. A creation verb ("创建", "新建", "create", ...).
@@ -82,6 +95,26 @@ func HasCreationIntent(userInput string) bool {
 		return false
 	}
 	if hasAnyKeyword(userInput, queryVerbs) {
+		return false
+	}
+	return true
+}
+
+// HasImportIntent 命中"导入现成规则包/模板"，与 HasCreationIntent 一样路由到 creation，
+// 好让 PreflightCreation 前置弹业务组+数据源表单（表单门只挂 creation）。条件：导入动词 ∧
+// creationSkills 关键词 ∧ 非 promRuleImportSignals ∧ 非 importQueryVerbs。与 HasCreationIntent
+// 不同，它不被 列出/有哪些 反信号否决——导入天然要先浏览包。
+func HasImportIntent(userInput string) bool {
+	if !hasAnyKeyword(userInput, importVerbs) {
+		return false
+	}
+	if matchCreationSkill(userInput) == nil {
+		return false
+	}
+	if hasAnyKeyword(userInput, promRuleImportSignals) {
+		return false
+	}
+	if hasAnyKeyword(userInput, importQueryVerbs) {
 		return false
 	}
 	return true
