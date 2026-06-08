@@ -304,8 +304,8 @@ func backfillCreationContext(deps *aiagent.ToolDeps, req *AIChatRequest, require
 	if req.ChatID == "" {
 		return
 	}
-	if HasCreationIntent(req.UserInput) {
-		return // 新发起的创建从零开始，不继承上一次创建的数据源
+	if HasCreationIntent(req.UserInput) || HasImportIntent(req.UserInput) {
+		return // 新发起的创建/导入从零开始，不继承上一次的数据源（导入 Redis 包不该粘上次 MySQL 的源）
 	}
 
 	missing := make([]string, 0, len(required))
