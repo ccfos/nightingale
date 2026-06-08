@@ -1,11 +1,13 @@
 package router
 
 import (
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/strx"
 
@@ -91,13 +93,18 @@ func (rt *Router) taskRecordAdd(c *gin.Context) {
 }
 
 func (rt *Router) taskAdd(c *gin.Context) {
-	if !rt.Ibex.Enable {
-		bombI18n(c, 400, "This functionality has not been enabled. Please contact the system administrator to activate it.")
-		return
-	}
-
 	var f models.TaskForm
 	ginx.BindJSON(c, &f)
+
+	taskId, err := TaskAdd(rt.Ctx, c, rt.Ibex.Enable, f)
+	ginx.NewRender(c).Data(taskId, err)
+}
+
+func TaskAdd(ctx *ctx.Context, c *gin.Context, ibexEnable bool, f models.TaskForm) (int64, error) {
+	if !ibexEnable {
+		return 0, errors.New("This functionality has not been enabled. Please contact the system administrator to activate it.")
+	}
+
 	// 把 f.Hosts 中的空字符串过滤掉
 	hosts := make([]string, 0, len(f.Hosts))
 	for i := range f.Hosts {
@@ -111,18 +118,23 @@ func (rt *Router) taskAdd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	f.Creator = user.Username
 
-	rt.checkTargetsExistByIndent(f.Hosts)
+	err := CheckTargetsExistByIndent(ctx, f.Hosts)
+	if err != nil {
+		return 0, err
+	}
 
-	err := f.Verify()
-	ginx.Dangerous(err)
+	err = f.Verify()
+	if err != nil {
+		return 0, err
+	}
 
 	f.HandleFH(f.Hosts[0])
 
 	// check permission
-	rt.checkTargetPerm(c, f.Hosts)
+	CheckTargetPerm(ctx, c, f.Hosts)
 
 	// call ibex
-	taskId, err := sender.TaskAdd(f, user.Username, rt.Ctx.IsCenter)
+	taskId, err := sender.TaskAdd(f, user.Username, ctx.IsCenter)
 	ginx.Dangerous(err)
 
 	if taskId <= 0 {
@@ -131,21 +143,22 @@ func (rt *Router) taskAdd(c *gin.Context) {
 
 	// write db
 	record := models.TaskRecord{
-		Id:        taskId,
-		GroupId:   bgid,
-		Title:     f.Title,
-		Account:   f.Account,
-		Batch:     f.Batch,
-		Tolerance: f.Tolerance,
-		Timeout:   f.Timeout,
-		Pause:     f.Pause,
-		Script:    f.Script,
-		Args:      f.Args,
-		AuthLevel: f.AuthLevel,
-		CreateAt:  time.Now().Unix(),
-		CreateBy:  f.Creator,
+		Id:           taskId,
+		GroupId:      bgid,
+		Title:        f.Title,
+		Account:      f.Account,
+		Batch:        f.Batch,
+		Tolerance:    f.Tolerance,
+		Timeout:      f.Timeout,
+		Pause:        f.Pause,
+		Script:       f.Script,
+		Args:         f.Args,
+		SystemCaller: f.SystemCaller,
+		AuthLevel:    f.AuthLevel,
+		CreateAt:     time.Now().Unix(),
+		CreateBy:     f.Creator,
 	}
 
-	err = record.Add(rt.Ctx)
-	ginx.NewRender(c).Data(taskId, err)
+	err = record.Add(ctx)
+	return taskId, err
 }

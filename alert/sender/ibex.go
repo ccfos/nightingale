@@ -222,16 +222,17 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	}
 
 	taskMeta := &imodels.TaskMeta{
-		Title:     f.Title,
-		Account:   f.Account,
-		Batch:     f.Batch,
-		Tolerance: f.Tolerance,
-		Timeout:   f.Timeout,
-		Pause:     f.Pause,
-		Script:    f.Script,
-		Args:      f.Args,
-		Stdin:     f.Stdin,
-		Creator:   f.Creator,
+		Title:        f.Title,
+		Account:      f.Account,
+		Batch:        f.Batch,
+		Tolerance:    f.Tolerance,
+		Timeout:      f.Timeout,
+		Pause:        f.Pause,
+		Script:       f.Script,
+		Args:         f.Args,
+		Stdin:        f.Stdin,
+		Creator:      f.Creator,
+		SystemCaller: f.SystemCaller,
 	}
 
 	err := taskMeta.CleanFields()

@@ -363,6 +363,7 @@ type TaskForm struct {
 	Action         string   `json:"action"`
 	Creator        string   `json:"creator"`
 	AuthLevel      int      `json:"auth_level"` // AI 任务授权等级：0=关闭，1/2/3=对应授权等级
+	SystemCaller   string   `json:"system_caller"`
 	Hosts          []string `json:"hosts"`
 	AlertTriggered bool     `json:"alert_triggered"`
 }

@@ -20,7 +20,8 @@ type TaskRecord struct {
 	Pause        string `json:"pause"`
 	Script       string `json:"script"`
 	Args         string `json:"args"`
-	AuthLevel    int    `json:"auth_level"` // AI 任务授权等级：0=关闭，1/2/3=对应授权等级
+	AuthLevel    int    `json:"auth_level"`
+	SystemCaller string `json:"system_caller"`
 	CreateAt     int64  `json:"create_at"`
 	CreateBy     string `json:"create_by"`
 }
