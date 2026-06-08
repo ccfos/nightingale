@@ -300,15 +300,15 @@ var UpdateDashboard = aiagent.AgentTool{
 - 因此一次调用即完成你的全部职责，调用后本轮即结束；**不要**自己渲染改动表格（系统会展示），**不要**传 proposal_id/confirmed（那是系统确认通道的参数）。
 - 用户如果拒绝或提出新要求，你会在新一轮收到反馈，按新要求重新调用提案即可（旧提案自动作废）。
 能力：
-- 改变量（variables）：按 name 匹配已有变量，合并你传的字段（definition / label / multi / default_value / type）；name 不存在则新增一个 query 变量；传 delete=true 删除该变量。
-- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；delete=true 删除整个图表。
+- 改变量（variables）：按 name 匹配已有变量，合并你传的字段（definition / label / multi / default_value / type）；name 不存在则视为新增一个 query 变量（必须带 definition，否则报错——名字写错会落到新增分支，靠这个守卫拦下）；传 delete=true 删除该变量。
+- 改图表曲线（panels）：按 id（优先）或 name 定位图表；queries 传入则按 ref（即原曲线 refId）与现有曲线做增量合并，只覆盖你写的字段，原曲线的 step/hide/time/__mode__ 等及按 refId 关联的 overrides/transformations 一律保留；改已有曲线必须带上其 ref（不带 ref 一律视为新增曲线，没有位置匹配）；未在 queries 里提及的现有曲线原样保留（不会被删），要删某条曲线在该曲线项上带其 ref 并传 delete=true；每条 {promql, legend?, instant?, ref?, step?, hide?, delete?}；new_name 改标题；unit 改单位；description 改说明；type 改图表类型（仅 timeseries/stat/gauge/barGauge/pie/table，改类型会把该图表的类型样式选项重置为新类型默认值，改成 timeseries 时还会清掉曲线上的 instant 标志以恢复范围查询，row 布局行不能改）；delete=true 删除整个图表。panels 里只有这些字段有效，其他字段（颜色、阈值、布局等）不支持：patch 里只含不支持字段会被直接拒绝；混在支持字段里传则不支持的部分被丢弃，只有返回的改动清单里列出的才是真正写入的改动。
 - 修复变量/数据源引用（fix_datasource=true）：把图表与变量里悬空/写死的数据源引用统一重指到大盘的数据源变量（修复"图表查不到数据/数据源引用不一致"类坏味道）。
 业务组、数据源从仪表盘本身读取，不需要、也不要向用户索要。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "要修改的仪表盘 ID（必填）", Required: true},
-		{Name: "variables", Type: "string", Description: `变量改动 JSON 数组，按 name 匹配。每项: {"name":"ident", "definition":"label_values(cpu_usage_idle, ident)", "label":"主机", "multi":true, "default_value":"", "delete":false}。只写要改的字段；name 不存在则新增；delete=true 删除`, Required: false},
-		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
+		{Name: "variables", Type: "string", Description: `变量改动 JSON 数组，按 name 匹配。每项: {"name":"ident", "definition":"label_values(cpu_usage_idle, ident)", "label":"主机", "multi":true, "default_value":"", "delete":false}。只写要改的字段；name 不存在则视为新增（必须带 definition）；delete=true 删除`, Required: false},
+		{Name: "panels", Type: "string", Description: `图表改动 JSON 数组，按 id（优先）或 name 定位。每项: {"id":"panel-3", "new_name":"CPU使用率(总)", "unit":"percent", "description":"...", "type":"timeseries", "queries":[{"ref":"A","promql":"...","legend":"{{ident}}","instant":false,"step":15,"hide":false}], "delete":false}。type 改图表类型(可选 timeseries/stat/gauge/barGauge/pie/table，会重置该图表的类型样式为新类型默认值；改成 timeseries 时会清掉曲线上的 instant 标志以恢复范围查询)。queries 传入则与现有曲线增量合并：按 ref(原 refId)匹配，只覆盖所写字段，未写字段(含 step/hide/__mode__ 及按 refId 关联的 overrides/transformations)原样保留；改已有曲线必须带上其 ref，不带 ref 一律视为新增曲线(没有位置匹配)；未在 queries 里出现的现有曲线一律原样保留、不会被删。要删某条曲线，在该曲线项上带其 ref 并传 delete:true。instant 传 true 即时查询、传 false 范围查询(true↔false 均可改)。不传 queries 则不动曲线`, Required: false},
 		{Name: "fix_datasource", Type: "boolean", Description: "是否修复悬空/写死的数据源引用，统一重指到大盘数据源变量。默认 false", Required: false},
 		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
@@ -374,6 +374,22 @@ var GetDatasourceDetail = aiagent.AgentTool{
 // =============================================================================
 // Datasource query
 // =============================================================================
+
+var GetDashboardData = aiagent.AgentTool{
+	Name: "get_dashboard_data",
+	Description: `读取仪表盘在指定时间窗内的全部曲线并做服务端统计预筛，用于"分析仪表盘有什么问题"类任务。
+服务端已完成（确定性算法，非模型判断）：MAD 离群检测、突变检测、趋势检测、与上一周期同比（窗口≤24h 即昨日同时段，更长窗口环比上一周期）、周期性降噪标注（昨日同时段同现的尖峰标"疑似周期性"）。
+返回分层 markdown：可疑曲线（特征行+少量采样点，供复核与归因）/ 正常曲线摘要（仅特征行）/ 平直与跳过项清单。
+你的职责是基于预筛结果做跨面板关联归因、业务影响判断和必要的 query_prometheus 下钻，不要逐点重新扫描原始数据。
+仅分析 Prometheus 类面板；table/text/iframe 及其他数据源类型的面板会被跳过并在结果中注明。输出过大被截断时，用 panel_ids 分批聚焦。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "仪表盘 ID（必填）", Required: true},
+		{Name: "time_range", Type: "string", Description: "分析时间窗，如 15m、1h、6h、24h、7d，默认 1h。按用户意图传", Required: false},
+		{Name: "vars", Type: "string", Description: `仪表盘变量选值 JSON，如 {"ident":["host1","host2"],"cluster":"prod"}。用户指定了主机/集群等条件时传入；不传则用变量默认值，无默认值时自动取全量。key 必须是该仪表盘真实存在的变量名，对不上会报错`, Required: false},
+		{Name: "panel_ids", Type: "string", Description: `只分析指定面板，JSON 数组如 ["panel-1","panel-3"]；传 row 布局行的 id 表示分析该分区下全部面板。用于超大盘分批或聚焦分析`, Required: false},
+	},
+}
 
 var QueryPrometheus = aiagent.AgentTool{
 	Name:        "query_prometheus",

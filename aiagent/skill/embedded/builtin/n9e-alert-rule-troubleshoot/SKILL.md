@@ -24,6 +24,8 @@ builtin_tools:
   - get_notify_rule_detail
   - list_alert_engine_instances
   - list_busi_groups
+tags:
+  - export
 ---
 
 # 夜莺(n9e) 告警规则排障专家

@@ -323,6 +323,7 @@ type panelPatch struct {
 	NewName *string      `json:"new_name"`
 	Unit    *string      `json:"unit"`
 	Desc    *string      `json:"description"`
+	Type    *string      `json:"type"`
 	Queries *[]QuerySpec `json:"queries"`
 }
 
@@ -336,19 +337,29 @@ func (p *panelPatch) UnmarshalJSON(data []byte) error {
 		NewName *string         `json:"new_name"`
 		Unit    *string         `json:"unit"`
 		Desc    *string         `json:"description"`
+		Type    *string         `json:"type"`
 		Queries *[]QuerySpec    `json:"queries"`
 		Delete  json.RawMessage `json:"delete"`
 	}
 	if err := json.Unmarshal(data, &r); err != nil {
 		return err
 	}
-	p.ID, p.Name, p.NewName, p.Unit, p.Desc, p.Queries = r.ID, r.Name, r.NewName, r.Unit, r.Desc, r.Queries
+	p.ID, p.Name, p.NewName, p.Unit, p.Desc, p.Type, p.Queries = r.ID, r.Name, r.NewName, r.Unit, r.Desc, r.Type, r.Queries
 
 	var err error
 	if p.Delete, err = flexBool(r.Delete); err != nil {
 		return fmt.Errorf("panel field delete: %w", err)
 	}
 	return nil
+}
+
+// noEditableField reports whether a non-delete panel patch carries nothing to
+// apply. The tolerant decoder above silently drops unknown keys, so a patch
+// like {"id":"panel-0","fontSize":20} would otherwise sail through as a
+// confirmable "更新图表" that writes back an unchanged payload — the agent then
+// announces an edit that never happened.
+func (p *panelPatch) noEditableField() bool {
+	return !p.Delete && p.NewName == nil && p.Unit == nil && p.Desc == nil && p.Type == nil && p.Queries == nil
 }
 
 // applyVariablePatches mutates configs["var"] per the patches and returns a list
@@ -380,6 +391,23 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 			changes = append(changes, fmt.Sprintf("删除变量 %q", p.Name))
 
 		case idx >= 0:
+			// Same lie-prevention as panel patches: unknown fields were dropped
+			// by the decoder, so an all-nil patch must error instead of being
+			// announced as a (no-op) "更新变量".
+			if p.Label == nil && p.Definition == nil && p.Multi == nil && p.DefaultValue == nil && p.Type == nil {
+				return nil, fmt.Errorf("variable patch for %q has no editable field (unknown fields are dropped): supported fields are label / definition / multi / default_value / type / delete", p.Name)
+			}
+			// Mirror the add-path restriction below: flipping an existing
+			// variable to a structural type like datasource leaves a malformed
+			// var (stale label_values definition, no datasource plugin object)
+			// that silently breaks every panel referencing it.
+			if p.Type != nil {
+				switch *p.Type {
+				case "query", "custom", "textbox", "constant":
+				default:
+					return nil, fmt.Errorf("cannot change variable %q to type %q: only query / custom / textbox / constant are supported", p.Name, *p.Type)
+				}
+			}
 			vm := vars[idx].(map[string]interface{})
 			applyVarFields(vm, p)
 			changes = append(changes, fmt.Sprintf("更新变量 %q", p.Name))
@@ -390,6 +418,15 @@ func applyVariablePatches(configs map[string]interface{}, patches []variablePatc
 			// 自带 datasource 子对象自指），直接拒绝，让模型改走其他途径。
 			if p.Type != nil && *p.Type != "query" {
 				return nil, fmt.Errorf("cannot add variable %q: only query-type variables can be added (got type %q)", p.Name, *p.Type)
+			}
+			// Same lie-prevention as the update branch above: a name that matched
+			// nothing plus no definition almost always means a typo'd name whose
+			// real fields were dropped by the tolerant decoder. Without this guard
+			// we would silently create a junk query variable with an empty
+			// definition (which can never resolve values) and announce "新增变量"
+			// for what the model believed was an edit.
+			if p.Definition == nil {
+				return nil, fmt.Errorf("variable %q does not match any existing variable; adding a new query variable requires definition (if you meant to edit an existing variable, check the name)", p.Name)
 			}
 			spec := VariableSpec{Name: p.Name}
 			if p.Definition != nil {
@@ -478,6 +515,15 @@ func applyPanelPatches(configs map[string]interface{}, patches []panelPatch) ([]
 			label = p.Name
 		}
 
+		// Reject patches that carry nothing applicable BEFORE reporting them as
+		// changes: unknown fields were silently dropped by the tolerant decoder,
+		// so an "empty" patch almost always means the model tried to edit an
+		// unsupported field — fail loudly so it can tell the user instead of
+		// announcing a no-op write as success.
+		if p.noEditableField() {
+			return nil, fmt.Errorf("panel patch for %q has no editable field (unknown fields are dropped): supported fields are new_name / unit / description / type / queries / delete", label)
+		}
+
 		// Ambiguity guard for name-based locators. Panel names can repeat within
 		// a board (and across collapsed rows), so a bare name may match >1 panel.
 		// findPanel/deletePanel return the FIRST match, so without this guard a
@@ -515,28 +561,158 @@ func applyPanelPatches(configs map[string]interface{}, patches []panelPatch) ([]
 				return nil, fmt.Errorf("cannot update queries on panel %q: query editing only supports Prometheus/VictoriaMetrics panels, but this panel uses datasource type %q", label, cate)
 			}
 		}
-		applyPanelFields(pm, p)
-		changes = append(changes, fmt.Sprintf("更新图表 %q", label))
+		// Models routinely echo the panel's current type alongside real edits
+		// (read config → patch back), so a same-type re-statement is a no-op
+		// to drop, not a reason to reject the queries/unit/new_name riding in
+		// the same patch. Only when type is the patch's ONLY field does it
+		// stay an error — dropping it there would announce a no-op write as a
+		// successful edit. Compare against the EFFECTIVE type so a type-less
+		// panel (the FE renders it as timeseries) restated as "timeseries" is
+		// recognised as the no-op it is, instead of running a full changePanelType
+		// that would wipe its authored custom render config.
+		if p.Type != nil && effectivePanelType(pm) == *p.Type {
+			typ := *p.Type
+			p.Type = nil
+			if p.noEditableField() {
+				return nil, fmt.Errorf("panel %q is already type %q: nothing to change (re-sending the current type would only reset its style options)", label, typ)
+			}
+		}
+		if p.Type != nil {
+			if err := checkPanelTypeChange(pm, label, *p.Type); err != nil {
+				return nil, err
+			}
+		}
+		parts := applyPanelFields(pm, p)
+		changes = append(changes, fmt.Sprintf("更新图表 %q（%s）", label, strings.Join(parts, "、")))
 	}
 
 	configs["panels"] = panels
 	return changes, nil
 }
 
-func applyPanelFields(pm map[string]interface{}, p panelPatch) {
+// updatablePanelTypes are the chart types a panel can be switched to via
+// update_dashboard — the types buildCustom/typeOptions know how to emit
+// defaults for. "row" is a layout container and "text" keeps its content in
+// custom.content, so converting a query panel to/from either would strand its
+// config rather than re-render it.
+var updatablePanelTypes = map[string]bool{
+	"timeseries": true, "stat": true, "gauge": true, "barGauge": true, "pie": true, "table": true,
+}
+
+// effectivePanelType is the type the FE actually renders a panel as. A panel
+// with no "type" key renders as timeseries, EXCEPT one carrying authored
+// custom.content (markdown), which renders as text — changePanelType
+// wholesale-replaces custom, so that shape must be treated as text (and refused)
+// rather than silently converted.
+func effectivePanelType(pm map[string]interface{}) string {
+	if t := stringVal(pm, "type"); t != "" {
+		return t
+	}
+	if custom, ok := pm["custom"].(map[string]interface{}); ok {
+		if s, _ := custom["content"].(string); strings.TrimSpace(s) != "" {
+			return "text"
+		}
+	}
+	return "timeseries"
+}
+
+func checkPanelTypeChange(pm map[string]interface{}, label, newType string) error {
+	cur := effectivePanelType(pm)
+	switch {
+	case !updatablePanelTypes[newType]:
+		return fmt.Errorf("cannot change panel %q to type %q: supported chart types are timeseries / stat / gauge / barGauge / pie / table", label, newType)
+	case cur == "row":
+		return fmt.Errorf("cannot change type of %q: it is a layout row, not a chart", label)
+	case !updatablePanelTypes[cur]:
+		// changePanelType wholesale-replaces `custom`: on a text panel that
+		// would destroy custom.content (the authored markdown) with no way
+		// back, since non-chart types are not valid conversion targets.
+		return fmt.Errorf("cannot change type of %q: it is a %q panel whose config (e.g. a text panel's content) would be destroyed by the conversion; only chart panels (timeseries / stat / gauge / barGauge / pie / table) can switch types", label, cur)
+	}
+	// Same stance as the queries path above: the defaults changePanelType
+	// writes (buildCustom/typeOptions) are designed and tested for Prometheus
+	// chart panels, so refuse type flips on SQL/log panels too.
+	if cate := stringVal(pm, "datasourceCate"); !promLikeCate(cate) {
+		return fmt.Errorf("cannot change type of panel %q: type changes reset the chart render config, which only supports Prometheus/VictoriaMetrics panels, but this panel uses datasource type %q", label, cate)
+	}
+	return nil
+}
+
+// changePanelType flips a panel's visualization type and resets the
+// type-specific render config — `custom` plus the legend/tooltip options — to
+// the new type's defaults: leftover knobs from the old type (a stat panel's
+// textMode/colorMode on a now-timeseries panel) would confuse the FE editor.
+// standardOptions (unit/decimals), layout and overrides are type-agnostic and
+// survive untouched; targets are left to the caller, which clears the instant
+// flag AFTER any same-patch query merge (see applyPanelFields).
+func changePanelType(pm map[string]interface{}, newType string) {
+	pm["type"] = newType
+	pm["custom"] = buildCustom(PanelSpec{Type: newType})
+	opts, _ := pm["options"].(map[string]interface{})
+	if opts == nil {
+		opts = map[string]interface{}{}
+	}
+	delete(opts, "legend")
+	delete(opts, "tooltip")
+	for k, v := range typeOptions(newType) {
+		opts[k] = v
+	}
+	pm["options"] = opts
+}
+
+// clearTargetsInstant drops the instant flag from every target. The FE picks
+// instant-vs-range purely by target.instant (Renderer/datasource/prometheus.ts),
+// never by panel type — a leftover instant:true from a stat/table panel would
+// render a now-timeseries panel as a single dot instead of a curve. Range
+// targets render fine on every type (value panels calc over the series), so this
+// is applied only when converting TO timeseries.
+func clearTargetsInstant(pm map[string]interface{}) {
+	targets, ok := pm["targets"].([]interface{})
+	if !ok {
+		return
+	}
+	for _, t := range targets {
+		if tm, ok := t.(map[string]interface{}); ok {
+			delete(tm, "instant")
+		}
+	}
+}
+
+// applyPanelFields mutates the panel per the patch and returns one
+// human-readable fragment per field actually applied — the change list shown
+// at confirm time must describe what will really be written, never a bare
+// "更新图表" for fields the tool dropped.
+func applyPanelFields(pm map[string]interface{}, p panelPatch) []string {
+	parts := make([]string, 0, 5)
 	if p.NewName != nil {
 		pm["name"] = *p.NewName
+		parts = append(parts, fmt.Sprintf("标题→%q", *p.NewName))
 	}
 	if p.Desc != nil {
 		pm["description"] = *p.Desc
+		parts = append(parts, "说明")
 	}
 	if p.Unit != nil {
 		setPanelUnit(pm, *p.Unit)
+		parts = append(parts, fmt.Sprintf("单位→%s", *p.Unit))
+	}
+	if p.Type != nil {
+		parts = append(parts, fmt.Sprintf("类型 %s→%s", stringVal(pm, "type"), *p.Type))
+		changePanelType(pm, *p.Type)
 	}
 	if p.Queries != nil {
 		existing, _ := pm["targets"].([]interface{})
 		pm["targets"] = mergeTargets(existing, *p.Queries)
+		parts = append(parts, "曲线")
 	}
+	// Clear instant AFTER the query merge: a →timeseries conversion must leave
+	// no instant targets, but a queries patch riding in the same call re-adds
+	// instant:true via mergeTargets, so the clear has to run once the final
+	// targets are settled — not inside changePanelType.
+	if p.Type != nil && *p.Type == "timeseries" {
+		clearTargetsInstant(pm)
+	}
+	return parts
 }
 
 // mergeTargets produces the targets slice for an *edited* Prometheus panel by
@@ -930,6 +1106,16 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		return "", fmt.Errorf("invalid dashboard config payload: %v", err)
 	}
 
+	// Canonical snapshot of the UNpatched config, taken before any patch
+	// mutates `configs` in place. Compared against the patched marshal below:
+	// patches that only restate current values would otherwise produce a
+	// confirmable "change set" whose write is byte-identical to what's already
+	// stored — the user confirms, the agent announces success, nothing changed.
+	baselineCanon, err := json.Marshal(configs)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal current config: %v", err)
+	}
+
 	allChanges := make([]string, 0)
 
 	if varsJSON := getArgString(args, "variables"); varsJSON != "" {
@@ -978,6 +1164,12 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	newConfigs, err := json.Marshal(configs)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal updated config: %v", err)
+	}
+
+	// No-diff backstop: refuse to propose a write that changes nothing. Don't
+	// re-submit the same call — tell the user the config already matches.
+	if string(newConfigs) == string(baselineCanon) {
+		return "", fmt.Errorf("no-op update: the requested changes produce a config identical to the current one, nothing would be written — the values passed all match the dashboard's current state")
 	}
 
 	// Propose phase: stash the computed change set + resulting payload and return

@@ -1,12 +1,12 @@
 ---
 name: n9e-import-prom-rule
 description: |
-  **批量导入 Prometheus 告警规则 YAML 文件**到夜莺（一次性建一组规则）。专用于处理远端 URL 或本地 YAML 文本，自动解析 `groups` / 纯 `rules` 数组 / 单条 rule 三种格式。
+  **批量导入 Prometheus 告警规则 YAML 文件**（一次性建一组规则）。专用于处理远端 URL 或本地 YAML 文本，自动解析 `groups` / 纯 `rules` 数组 / 单条 rule 三种格式。
   ⚠️ **不要用这个 skill 做单条创建**——用户用自然语言描述一条告警需求时，请改用 n9e-create-alert-rule。
   触发：导入 / import / 批量 / URL / .yml 文件 / .yaml 文件 / awesome-prometheus-alerts / node-exporter.yml / prometheus rule file。
 examples:
   - "帮我导入 https://raw.githubusercontent.com/.../node-exporter.yml"
-  - "把这个 yaml 里的告警建到 n9e"
+  - "把这个 yaml 里的告警都建出来"
   - "导入 awesome-prometheus-alerts 的 mysql 那个文件"
   - "批量建一组 redis 的告警规则，从这个文件 ..."
 builtin_tools:

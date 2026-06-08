@@ -1,6 +1,6 @@
 ---
 name: n9e-modify-dashboard
-description: 修改夜莺(n9e)上已存在的监控仪表盘。当用户要求改某个仪表盘的变量、检查并修复变量、修改图表/曲线（改 PromQL、legend、单位、增删曲线）、重命名图表时使用。区别于"从零创建仪表盘"(那是 n9e-create-dashboard)。
+description: 修改夜莺(n9e)上已存在的监控仪表盘。当用户要求改某个仪表盘的变量、检查并修复变量、修改图表/曲线（改 PromQL、legend、单位、增删曲线）、重命名图表、改图表类型（如数值图改曲线图）时使用。区别于"从零创建仪表盘"(那是 n9e-create-dashboard)。
 max_iterations: 16
 examples:
   - "把这个仪表盘的 ident 变量默认值改成 web01"
@@ -8,6 +8,7 @@ examples:
   - "把 CPU 使用率这个图的查询改成只看总核"
   - "给内存图表加一条 swap 使用率的曲线"
   - "这个面板的单位改成百分比"
+  - "把第一行的图表从数值改成曲线图"
 builtin_tools:
   - list_dashboards
   - get_dashboard_detail
@@ -17,8 +18,7 @@ builtin_tools:
   - list_metrics
   - get_metric_labels
   - query_prometheus
-tags:
-  - export
+
 ---
 
 # Skill: 夜莺(N9E) 修改已有仪表盘
@@ -29,7 +29,7 @@ tags:
 |------|-------------|
 | **改变量** | 模板变量的取值表达式(definition)、默认值、是否多选(multi)、显示名(label) |
 | **检查并修复变量** | 扫描变量定义和图表里对变量的引用，发现坏味道（图表引用了未定义变量、变量取不到值、数据源引用不一致等）并修复 |
-| **改图表曲线** | 某个图表(panel)的曲线：查询表达式(PromQL)、legend、单位(unit)、增删曲线、改标题 |
+| **改图表曲线** | 某个图表(panel)的曲线：查询表达式(PromQL)、legend、单位(unit)、增删曲线、改标题、改图表类型(如 stat→timeseries) |
 
 > 曲线查询(`queries`)编辑**仅支持 Prometheus/VictoriaMetrics 面板**；SQL/日志类面板(mysql、ck、es 等)只能改单位、标题、说明或删除，传 `queries` 会被工具拒绝。
 
@@ -77,14 +77,15 @@ get_dashboard_detail(id=<id>, include_config=true)
   ```json
   [{"name":"ident","default_value":"web01","multi":false}]
   ```
-  - 只写要改的字段；`name` 不存在则新增一个 query 变量；`delete:true` 删除。
+  - 只写要改的字段；`name` 不存在则视为新增一个 query 变量，**新增必须带 `definition`**（不带会报错——名字打错会落到新增分支，靠这个守卫拦下来）；`delete:true` 删除。
 - **改图表曲线** → `panels`（JSON 数组，按 `id` 优先、否则 `name` 定位）：
   ```json
   [{"id":"panel-2","unit":"percent","queries":[{"promql":"avg(cpu_usage_active{cpu=\"cpu-total\",ident=~\"$ident\"})","legend":"{{ident}}"}]}]
   ```
   - `queries` 传入即与现有曲线**增量合并**：按 `ref`（原曲线 refId）匹配，只覆盖你写的字段，其余字段（step/hide/__mode__、按 refId 关联的 overrides 等）原样保留；**不带 `ref` 一律视为新增曲线（没有位置匹配）**。**未在 `queries` 里出现的现有曲线不会被删、原样保留**——所以只改某一条曲线时，传那一条（带上它的 `ref`）即可，不必把整图所有曲线都列出来。
   - **改已有曲线必须带上其 `ref`**（不带 `ref` 会新增曲线而不是改原曲线）；要删某条曲线，在该曲线项上带其 `ref` 并写 `delete:true`。
-  - `new_name` 改标题，`unit` 改单位，`description` 改说明，`delete:true`（在面板项上）删整个图表。不传 `queries` 就不动曲线。
+  - `new_name` 改标题，`unit` 改单位，`description` 改说明，`type` 改图表类型（仅 `timeseries`/`stat`/`gauge`/`barGauge`/`pie`/`table`，改类型会把该图表的类型样式选项重置为新类型默认值，改成 `timeseries` 时还会清掉曲线上的 `instant` 标志以恢复范围查询；row 布局行不能改），`delete:true`（在面板项上）删整个图表。不传 `queries` 就不动曲线。
+  - **面板项里只有上述字段有效**：颜色、阈值、布局坐标等其他字段不支持。patch 里**只含**不支持字段会被工具直接拒绝；混在支持字段里传则不支持的部分会被静默丢弃——所以**只能以工具返回的改动清单为准向用户复述**，清单之外的改动没有发生。用户要改不支持的东西时直接说明做不了，建议到页面上手工改。
 - **修复数据源引用** → `fix_datasource: true`：把图表/变量里悬空或写死的数据源引用统一重指到大盘数据源变量。适合修「图表查不到数据 / 数据源引用不一致」类坏味道。
 
 ## 第五步：特殊情况的答复

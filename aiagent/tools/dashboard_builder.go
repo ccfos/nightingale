@@ -13,11 +13,11 @@ import (
 type PanelSpec struct {
 	Name    string      `json:"name"`              // 面板标题
 	Type    string      `json:"type"`              // timeseries | stat | gauge | barGauge | pie | table | row | text
-	Queries []QuerySpec `json:"queries,omitempty"`  // PromQL 查询列表
-	W       int         `json:"w,omitempty"`        // 宽度(网格列数)，默认按类型自动设置
-	H       int         `json:"h,omitempty"`        // 高度(网格行数)，默认按类型自动设置
-	Unit    string      `json:"unit,omitempty"`     // 单位: percent, bytesIEC, bitsIEC, seconds 等
-	Stack   bool        `json:"stack,omitempty"`    // 是否堆叠(仅 timeseries)
+	Queries []QuerySpec `json:"queries,omitempty"` // PromQL 查询列表
+	W       int         `json:"w,omitempty"`       // 宽度(网格列数)，默认按类型自动设置
+	H       int         `json:"h,omitempty"`       // 高度(网格行数)，默认按类型自动设置
+	Unit    string      `json:"unit,omitempty"`    // 单位: percent, bytesIEC, bitsIEC, seconds 等
+	Stack   bool        `json:"stack,omitempty"`   // 是否堆叠(仅 timeseries)
 	Desc    string      `json:"description,omitempty"`
 }
 
@@ -32,12 +32,12 @@ type PanelSpec struct {
 // (refIds are assigned sequentially) but still honors Instant/Step/Hide.
 type QuerySpec struct {
 	PromQL  string `json:"promql"`            // PromQL 表达式
-	Legend  string `json:"legend,omitempty"`   // 图例模板, 如 "{{ident}}"
-	Instant *bool  `json:"instant,omitempty"`  // 即时查询(用于 stat/table); nil 保留原值, true/false 均可显式设置
-	Ref     string `json:"ref,omitempty"`      // 编辑已有曲线时按 refId 匹配(如 "A"); 留空一律视为新增曲线
-	Step    *int   `json:"step,omitempty"`     // 固定查询步长(秒); nil 保留原值
-	Hide    *bool  `json:"hide,omitempty"`     // 是否隐藏该曲线; nil 保留原值
-	Delete  bool   `json:"delete,omitempty"`   // 编辑时删除按 ref 匹配到的曲线(留空 ref 不会匹配任何曲线)
+	Legend  string `json:"legend,omitempty"`  // 图例模板, 如 "{{ident}}"
+	Instant *bool  `json:"instant,omitempty"` // 即时查询(用于 stat/table); nil 保留原值, true/false 均可显式设置
+	Ref     string `json:"ref,omitempty"`     // 编辑已有曲线时按 refId 匹配(如 "A"); 留空一律视为新增曲线
+	Step    *int   `json:"step,omitempty"`    // 固定查询步长(秒); nil 保留原值
+	Hide    *bool  `json:"hide,omitempty"`    // 是否隐藏该曲线; nil 保留原值
+	Delete  bool   `json:"delete,omitempty"`  // 编辑时删除按 ref 匹配到的曲线(留空 ref 不会匹配任何曲线)
 }
 
 // UnmarshalJSON decodes a QuerySpec tolerantly: the LLM often quotes the scalar
@@ -79,10 +79,10 @@ func (q *QuerySpec) UnmarshalJSON(data []byte) error {
 
 // VariableSpec AI 生成的简化变量描述
 type VariableSpec struct {
-	Name       string `json:"name"`                 // 变量名
-	Label      string `json:"label,omitempty"`       // 显示标签
-	Definition string `json:"definition"`            // 如 label_values(metric, label)
-	Multi      *bool  `json:"multi,omitempty"`       // 是否多选，默认 true
+	Name       string `json:"name"`            // 变量名
+	Label      string `json:"label,omitempty"` // 显示标签
+	Definition string `json:"definition"`      // 如 label_values(metric, label)
+	Multi      *bool  `json:"multi,omitempty"` // 是否多选，默认 true
 }
 
 // ============================================================================
@@ -248,15 +248,15 @@ func buildPanel(spec PanelSpec, index, x, y, w, h int) map[string]interface{} {
 func buildRowPanel(spec PanelSpec, index, y int) map[string]interface{} {
 	panelId := fmt.Sprintf("panel-%d", index)
 	return map[string]interface{}{
-		"version":        "3.4.0",
-		"id":             panelId,
-		"type":           "row",
-		"name":           spec.Name,
-		"layout":         map[string]interface{}{"x": 0, "y": y, "w": 24, "h": 1, "i": panelId, "isResizable": false},
-		"targets":        []interface{}{},
-		"options":        map[string]interface{}{},
-		"custom":         map[string]interface{}{},
-		"overrides":      []interface{}{},
+		"version":   "3.4.0",
+		"id":        panelId,
+		"type":      "row",
+		"name":      spec.Name,
+		"layout":    map[string]interface{}{"x": 0, "y": y, "w": 24, "h": 1, "i": panelId, "isResizable": false},
+		"targets":   []interface{}{},
+		"options":   map[string]interface{}{},
+		"custom":    map[string]interface{}{},
+		"overrides": []interface{}{},
 	}
 }
 
@@ -301,18 +301,34 @@ func buildOptions(spec PanelSpec) map[string]interface{} {
 		opts["standardOptions"] = map[string]interface{}{}
 	}
 
-	switch spec.Type {
-	case "timeseries":
-		opts["legend"] = map[string]interface{}{"displayMode": "table", "placement": "bottom"}
-		opts["tooltip"] = map[string]interface{}{"mode": "all", "sort": "desc"}
-	case "stat":
-		opts["legend"] = map[string]interface{}{"displayMode": "hidden"}
-		opts["tooltip"] = map[string]interface{}{"mode": "single"}
-	case "gauge", "barGauge":
-		opts["legend"] = map[string]interface{}{"displayMode": "hidden"}
+	for k, v := range typeOptions(spec.Type) {
+		opts[k] = v
 	}
 
 	return opts
+}
+
+// typeOptions returns the type-specific rendering options (legend/tooltip) for
+// a panel type. Shared by panel creation (buildOptions) and update_dashboard's
+// type change (changePanelType), so both paths emit the same defaults.
+func typeOptions(panelType string) map[string]interface{} {
+	switch panelType {
+	case "timeseries":
+		return map[string]interface{}{
+			"legend":  map[string]interface{}{"displayMode": "table", "placement": "bottom"},
+			"tooltip": map[string]interface{}{"mode": "all", "sort": "desc"},
+		}
+	case "stat":
+		return map[string]interface{}{
+			"legend":  map[string]interface{}{"displayMode": "hidden"},
+			"tooltip": map[string]interface{}{"mode": "single"},
+		}
+	case "gauge", "barGauge":
+		return map[string]interface{}{
+			"legend": map[string]interface{}{"displayMode": "hidden"},
+		}
+	}
+	return map[string]interface{}{}
 }
 
 func buildCustom(spec PanelSpec) map[string]interface{} {
@@ -343,23 +359,26 @@ func buildCustom(spec PanelSpec) map[string]interface{} {
 		}
 	case "gauge":
 		return map[string]interface{}{
-			"calc":         "lastNotNull",
-			"min":          0,
-			"max":          100,
-			"textSize":     map[string]interface{}{},
+			"calc":     "lastNotNull",
+			"min":      0,
+			"max":      100,
+			"textSize": map[string]interface{}{},
 		}
 	case "barGauge":
 		return map[string]interface{}{
-			"calc":         "lastNotNull",
-			"displayMode":  "basic",
-			"orientation":  "horizontal",
-			"textSize":     map[string]interface{}{},
+			"calc":        "lastNotNull",
+			"displayMode": "basic",
+			"orientation": "horizontal",
+			"textSize":    map[string]interface{}{},
 		}
 	case "pie":
 		return map[string]interface{}{
-			"calc":        "lastNotNull",
-			"legentPosition": "bottom",
-			"detailUrl":   "",
+			"calc": "lastNotNull",
+			// FE reads custom.legengPosition (note the spelling — types.ts /
+			// Renderer/Pie/index.tsx); "legentPosition" silently dropped the
+			// intended bottom placement on both created and type-converted pies.
+			"legengPosition": "bottom",
+			"detailUrl":      "",
 		}
 	case "table":
 		return map[string]interface{}{

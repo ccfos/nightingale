@@ -25,7 +25,7 @@ func (f *AISkillFile) TableName() string {
 	return "ai_skill_file"
 }
 
-const maxFilesPerSkill = 200
+const maxFilesPerSkill = 600
 
 // PostgresAISkillFile is the PostgreSQL-compatible variant of AISkillFile.
 // PostgreSQL does not support mediumtext; its text type is unlimited.
@@ -82,7 +82,6 @@ func (f *AISkillFile) Create(c *ctx.Context) error {
 
 	return Insert(c, f)
 }
-
 
 // BatchUpsert batch-upserts files for a given skill within a single transaction.
 // When fullSync is true, existing files not present in the incoming list are deleted (full replace).
