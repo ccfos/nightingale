@@ -1,6 +1,6 @@
 ---
 name: n9e-create-dashboard
-description: 在夜莺(n9e)平台上创建监控仪表盘。当用户要求创建仪表盘、监控大盘、Dashboard 时使用。
+description: 创建监控仪表盘。当用户要求创建仪表盘、监控大盘、Dashboard 时使用。
 max_iterations: 18
 builtin_tools:
   - import_dashboard_template
