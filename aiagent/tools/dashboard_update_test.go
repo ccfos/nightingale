@@ -190,6 +190,27 @@ func TestApplyVariablePatches_AddRejectsNonQueryType(t *testing.T) {
 	}
 }
 
+// TestApplyVariablePatches_AddRequiresDefinition：name 没匹配上现有变量且不带
+// definition 的 patch，多半是名字手误 + 真正想改的字段被宽容解码丢弃；必须报错，
+// 不能静默新增一个 definition 为空的废变量再宣称"新增变量"成功（与更新分支的
+// 全 nil 守卫同源）。
+func TestApplyVariablePatches_AddRequiresDefinition(t *testing.T) {
+	cfg := sampleConfigs(t)
+	before := len(cfg["var"].([]interface{}))
+
+	// 全 nil patch（如 {"name":"identt","color":"red"}，color 被解码器丢弃）
+	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "identt"}}); err == nil {
+		t.Fatal("expected error adding variable without definition")
+	}
+	// 带了其他字段但没 definition，同样拒绝
+	if _, err := applyVariablePatches(cfg, []variablePatch{{Name: "identt", Label: ptrStr("机器")}}); err == nil {
+		t.Fatal("expected error adding variable with label but no definition")
+	}
+	if got := len(cfg["var"].([]interface{})); got != before {
+		t.Fatalf("vars changed on rejected patch: %d -> %d", before, got)
+	}
+}
+
 // TestQuerySpec_TolerantDecode is the regression for the strict-decode abort:
 // the LLM quotes scalars ("step":"15", "instant":"true") or writes ints as
 // floats ("step":15.0); none must fail the decode (which would abort the whole
@@ -695,6 +716,153 @@ func TestApplyPanelPatches_RejectsQueriesOnNonPromPanel(t *testing.T) {
 	// A non-query edit (e.g. unit) on the same panel must still succeed.
 	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Unit: ptrStr("none")}}); err != nil {
 		t.Fatalf("non-query edit on non-prom panel should succeed: %v", err)
+	}
+}
+
+// TestApplyPanelPatches_TypeChangeGuards covers the two destructive paths
+// checkPanelTypeChange must refuse: converting a non-chart source (a text
+// panel's markdown lives in custom.content and changePanelType would wipe it
+// with no way back), and converting a non-Prometheus panel (the prom-flavored
+// custom/options defaults would strand its render config — same stance as the
+// queries-edit guard).
+func TestApplyPanelPatches_TypeChangeGuards(t *testing.T) {
+	// Text source panel: refused, content untouched.
+	cfg := sampleConfigs(t)
+	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	p["type"] = "text"
+	p["custom"] = map[string]interface{}{"content": "# runbook"}
+	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err == nil {
+		t.Fatal("expected error converting a text panel to a chart type")
+	}
+	if got := p["custom"].(map[string]interface{})["content"]; got != "# runbook" {
+		t.Fatalf("text content must survive the refused conversion, got %v", got)
+	}
+
+	// Non-Prometheus panel: refused, mirroring the queries-edit guard.
+	cfg = sampleConfigs(t)
+	p = findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	p["datasourceCate"] = "mysql"
+	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err == nil {
+		t.Fatal("expected error changing type of a MySQL panel")
+	}
+
+	// A Prometheus chart panel still converts normally.
+	cfg = sampleConfigs(t)
+	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
+		t.Fatalf("type change on a prom panel should succeed: %v", err)
+	}
+	p = findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	if p["type"] != "stat" {
+		t.Fatalf("panel type = %v, want stat", p["type"])
+	}
+}
+
+// TestApplyPanelPatches_TypeChangeClearsInstant is the regression for the
+// broken-chart bug: the FE picks instant-vs-range purely by target.instant
+// (Renderer/datasource/prometheus.ts), so a stat/table panel queried with
+// instant:true and converted to timeseries would render as a single dot
+// instead of a curve unless the flag is cleared. Conversions in the other
+// direction keep targets untouched — range targets render fine on every type.
+func TestApplyPanelPatches_TypeChangeClearsInstant(t *testing.T) {
+	const raw = `{
+		"panels":[
+			{"id":"panel-1","type":"stat","name":"CPU","datasourceCate":"prometheus",
+			 "targets":[
+				{"refId":"A","expr":"cpu_usage_active","instant":true},
+				{"refId":"B","expr":"mem_used_percent","instant":true}
+			 ]}
+		]
+	}`
+	var cfg map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}}); err != nil {
+		t.Fatalf("stat→timeseries should succeed: %v", err)
+	}
+	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	for _, tgt := range p["targets"].([]interface{}) {
+		tm := tgt.(map[string]interface{})
+		if _, has := tm["instant"]; has {
+			t.Fatalf("instant must be cleared on conversion to timeseries, target %v still carries it", tm["refId"])
+		}
+	}
+
+	// timeseries→stat keeps targets untouched (no instant forced on).
+	cfg2 := sampleConfigs(t)
+	if _, err := applyPanelPatches(cfg2, []panelPatch{{ID: "panel-1", Type: ptrStr("stat")}}); err != nil {
+		t.Fatalf("timeseries→stat should succeed: %v", err)
+	}
+	p2 := findPanel(cfg2["panels"].([]interface{}), "panel-1", "")
+	for _, tgt := range p2["targets"].([]interface{}) {
+		if _, has := tgt.(map[string]interface{})["instant"]; has {
+			t.Fatal("conversion away from timeseries must not invent an instant flag")
+		}
+	}
+}
+
+// TestApplyPanelPatches_TypeChangeWithQueriesClearsInstant is the regression for
+// the merge-order bug: when a single patch converts a stat panel to timeseries
+// AND carries queries (which the model routinely echoes back with the panel's
+// existing instant:true), changePanelType cleared instant but the following
+// mergeTargets re-introduced it — so the new timeseries rendered as a single dot.
+// The clear must run AFTER the query merge.
+func TestApplyPanelPatches_TypeChangeWithQueriesClearsInstant(t *testing.T) {
+	const raw = `{
+		"panels":[
+			{"id":"panel-1","type":"stat","name":"CPU","datasourceCate":"prometheus",
+			 "targets":[{"refId":"A","expr":"cpu_usage_active","instant":true}]}
+		]
+	}`
+	var cfg map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	// The model reads the stat panel and patches type→timeseries while echoing
+	// the curve back with its current instant:true.
+	queries := []QuerySpec{{Ref: "A", PromQL: "cpu_usage_active", Instant: ptrBool(true)}}
+	if _, err := applyPanelPatches(cfg, []panelPatch{
+		{ID: "panel-1", Type: ptrStr("timeseries"), Queries: &queries},
+	}); err != nil {
+		t.Fatalf("stat→timeseries with queries should succeed: %v", err)
+	}
+	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	if p["type"] != "timeseries" {
+		t.Fatalf("type = %v, want timeseries", p["type"])
+	}
+	for _, tgt := range p["targets"].([]interface{}) {
+		tm := tgt.(map[string]interface{})
+		if _, has := tm["instant"]; has {
+			t.Fatalf("instant must be cleared even when queries ride in the same patch, target %v still carries it", tm["refId"])
+		}
+	}
+}
+
+// TestApplyPanelPatches_TypelessPanelTimeseriesIsNoOp is the regression for the
+// effective-type bug: a type-less panel (the FE renders it as timeseries) set to
+// type:timeseries is a no-op and must NOT run a full changePanelType, which would
+// wipe the panel's authored custom render config.
+func TestApplyPanelPatches_TypelessPanelTimeseriesIsNoOp(t *testing.T) {
+	const raw = `{
+		"panels":[
+			{"id":"panel-1","name":"CPU","datasourceCate":"prometheus",
+			 "custom":{"drawStyle":"bars","lineWidth":5},
+			 "targets":[{"refId":"A","expr":"cpu_usage_active"}]}
+		]
+	}`
+	var cfg map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	// type:timeseries on an (effectively-timeseries) type-less panel is a no-op.
+	_, err := applyPanelPatches(cfg, []panelPatch{{ID: "panel-1", Type: ptrStr("timeseries")}})
+	if err == nil {
+		t.Fatal("expected a no-op error restating a type-less panel's effective type")
+	}
+	p := findPanel(cfg["panels"].([]interface{}), "panel-1", "")
+	custom := p["custom"].(map[string]interface{})
+	if custom["drawStyle"] != "bars" || custom["lineWidth"] != float64(5) {
+		t.Fatalf("authored custom config must survive the no-op, got %#v", custom)
 	}
 }
 

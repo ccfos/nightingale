@@ -107,6 +107,12 @@ func searchActiveAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 	var stime, etime int64
 	if tr, ok := args["time_range"].(string); ok && tr != "" {
 		stime, etime = parseTimeRange(tr)
+		// parseTimeRange rejects unknown units with (0,0); unguarded that would
+		// silently drop the time filter (the models gate on stime != 0) and
+		// present an all-time result as if it were scoped.
+		if stime == 0 {
+			return "", fmt.Errorf("invalid time_range %q: use formats like 15m / 1h / 24h / 7d", tr)
+		}
 	}
 
 	var severities []int64
@@ -177,6 +183,12 @@ func searchHistoryAlerts(_ context.Context, deps *aiagent.ToolDeps, args map[str
 		timeRange = tr
 	}
 	stime, etime := parseTimeRange(timeRange)
+	// The his-event queries apply `last_eval_time between ? and ?`
+	// unconditionally, so an unparseable range left at (0,0) would match zero
+	// rows — a false "no history alerts" all-clear. Reject it instead.
+	if stime == 0 {
+		return "", fmt.Errorf("invalid time_range %q: use formats like 15m / 1h / 24h / 7d", timeRange)
+	}
 
 	total, err := models.AlertHisEventTotal(dbCtx, nil, nil, stime, etime, severity, recovered, nil, nil, 0, query, nil)
 	if err != nil {

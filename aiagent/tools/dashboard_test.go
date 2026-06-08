@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
@@ -223,6 +224,153 @@ func TestUpdateDashboard_TolerantPanelScalars(t *testing.T) {
 		},
 		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
 	require.Contains(t, ti.Prompt, "p1", "the change summary should mention the patched panel")
+}
+
+// TestUpdateDashboard_ChangePanelType is the regression for the silent no-op
+// that shipped a false "已确认并写入": the model sent {"id":"panel-0",
+// "type":"timeseries"} to turn stat panels into curves, the tolerant decoder
+// dropped the unknown `type` key, and the unchanged payload was confirmed and
+// written back as if the edit happened. `type` is now a first-class patch
+// field: the change must actually persist, reset the type-specific style
+// config to the new type's defaults, and keep type-agnostic config (unit).
+func TestUpdateDashboard_ChangePanelType(t *testing.T) {
+	deps := newDashboardTestDeps(t)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 41, GroupId: 1, Name: "rw"}).Error)
+	const payload = `{"panels":[{"id":"p1","type":"stat","name":"CPU使用率",
+		"options":{"standardOptions":{"unit":"percent"},"legend":{"displayMode":"hidden"},"tooltip":{"mode":"single"}},
+		"custom":{"textMode":"valueAndName","colorMode":"value","calc":"lastNotNull"},
+		"targets":[{"refId":"A","expr":"cpu_usage_active"}]}]}`
+	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 41, payload))
+
+	ti, proposalID := proposeInterrupt(t, deps,
+		map[string]interface{}{"id": float64(41), "panels": `[{"id":"p1","type":"timeseries"}]`},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
+	require.Contains(t, ti.Prompt, "stat→timeseries", "the confirm prompt must spell out the type change")
+
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(41), "proposal_id": proposalID, "confirmed": true},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "2"})
+	require.NoError(t, err)
+
+	saved, err := models.BoardPayloadGet(deps.DBCtx, 41)
+	require.NoError(t, err)
+	var cfg map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(saved), &cfg))
+	pm := cfg["panels"].([]interface{})[0].(map[string]interface{})
+	require.Equal(t, "timeseries", pm["type"], "the type change must persist")
+
+	custom := pm["custom"].(map[string]interface{})
+	require.Equal(t, "lines", custom["drawStyle"], "custom must be rebuilt with the new type's defaults")
+	require.NotContains(t, custom, "textMode", "stat-specific custom knobs must not linger on a timeseries panel")
+
+	opts := pm["options"].(map[string]interface{})
+	require.Equal(t, "percent", opts["standardOptions"].(map[string]interface{})["unit"], "type-agnostic standardOptions must survive")
+	require.Equal(t, "table", opts["legend"].(map[string]interface{})["displayMode"], "legend must be reset to the new type's defaults")
+
+	targets := pm["targets"].([]interface{})
+	require.Len(t, targets, 1, "queries must survive a type change untouched")
+}
+
+// TestUpdateDashboard_RejectsUneditablePanelFields locks the lie-prevention
+// guards around panel patches: a patch whose fields were all dropped as
+// unknown, an unsupported target type, a type change on a layout row, and a
+// type re-statement must each be REJECTED at propose time — none of them may
+// surface a confirmable "更新图表" that would write nothing.
+func TestUpdateDashboard_RejectsUneditablePanelFields(t *testing.T) {
+	deps := newDashboardTestDeps(t)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 42, GroupId: 1, Name: "rw"}).Error)
+	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 42,
+		`{"panels":[{"id":"p1","type":"stat","name":"CPU"},{"id":"row1","type":"row","name":"第一行"}]}`))
+
+	cases := []struct {
+		name   string
+		panels string
+		errHas string
+	}{
+		{"unknown fields only", `[{"id":"p1","fontSize":20}]`, "no editable field"},
+		{"unsupported type", `[{"id":"p1","type":"sankey"}]`, "supported chart types"},
+		{"type change on a row", `[{"id":"row1","type":"timeseries"}]`, "layout row"},
+		{"same type", `[{"id":"p1","type":"stat"}]`, "already type"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := updateDashboard(context.Background(), deps,
+				map[string]interface{}{"id": float64(42), "panels": tc.panels},
+				map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
+			require.Error(t, err)
+			var ti *aiagent.ToolInterrupt
+			require.False(t, errors.As(err, &ti), "must be a hard rejection, not a confirmable proposal")
+			require.Contains(t, err.Error(), tc.errHas)
+		})
+	}
+}
+
+// TestUpdateDashboard_SameTypeEchoWithRealEditApplies: models routinely echo
+// the panel's current type alongside real edits (read config → patch back).
+// The same-type guard must only reject type-ONLY patches; a patch that also
+// carries a real edit must apply it, drop the type no-op silently, and NOT
+// reset the type-specific style config.
+func TestUpdateDashboard_SameTypeEchoWithRealEditApplies(t *testing.T) {
+	deps := newDashboardTestDeps(t)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 45, GroupId: 1, Name: "rw"}).Error)
+	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 45,
+		`{"panels":[{"id":"p1","type":"stat","name":"CPU","custom":{"textMode":"valueAndName","colorMode":"value"}}]}`))
+
+	ti, proposalID := proposeInterrupt(t, deps,
+		map[string]interface{}{"id": float64(45), "panels": `[{"id":"p1","type":"stat","new_name":"CPU 使用率"}]`},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
+	require.Contains(t, ti.Prompt, "CPU 使用率", "the rename must surface in the confirm prompt")
+	require.NotContains(t, ti.Prompt, "类型", "a same-type echo must not be announced as a type change")
+
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(45), "proposal_id": proposalID, "confirmed": true},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "2"})
+	require.NoError(t, err)
+
+	saved, err := models.BoardPayloadGet(deps.DBCtx, 45)
+	require.NoError(t, err)
+	var cfg map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(saved), &cfg))
+	pm := cfg["panels"].([]interface{})[0].(map[string]interface{})
+	require.Equal(t, "CPU 使用率", pm["name"], "the rename must persist")
+	require.Equal(t, "stat", pm["type"])
+	custom := pm["custom"].(map[string]interface{})
+	require.Equal(t, "valueAndName", custom["textMode"], "a same-type echo must not reset the style config")
+}
+
+// TestUpdateDashboard_RejectsNoopVariablePatch is the variables-side twin: a
+// patch matching an existing variable but carrying no editable field must
+// error instead of proposing a no-op "更新变量".
+func TestUpdateDashboard_RejectsNoopVariablePatch(t *testing.T) {
+	deps := newDashboardTestDeps(t)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 43, GroupId: 1, Name: "rw"}).Error)
+	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 43,
+		`{"var":[{"name":"ident","type":"query","label":"主机"}]}`))
+
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(43), "variables": `[{"name":"ident","color":"red"}]`},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no editable field")
+}
+
+// TestUpdateDashboard_RejectsNoDiffProposal locks the propose-phase backstop:
+// a patch that restates current values passes the per-patch guards (it does
+// carry an editable field) but produces a byte-identical payload — proposing
+// it would make the user confirm a write that changes nothing.
+func TestUpdateDashboard_RejectsNoDiffProposal(t *testing.T) {
+	deps := newDashboardTestDeps(t)
+	require.NoError(t, models.DB(deps.DBCtx).Create(&models.Board{Id: 44, GroupId: 1, Name: "rw"}).Error)
+	require.NoError(t, models.BoardPayloadSave(deps.DBCtx, 44,
+		`{"panels":[{"id":"p1","type":"stat","name":"CPU"}]}`))
+
+	_, err := updateDashboard(context.Background(), deps,
+		map[string]interface{}{"id": float64(44), "panels": `[{"id":"p1","new_name":"CPU"}]`},
+		map[string]string{"user_id": "1", "chat_id": "c1", "seq_id": "1"})
+	require.Error(t, err)
+	var ti *aiagent.ToolInterrupt
+	require.False(t, errors.As(err, &ti), "a no-diff edit must not reach the confirm stage")
+	require.Contains(t, err.Error(), "no-op update")
 }
 
 // TestUpdateDashboard_ConfirmFailsClosedWithoutChatContext locks the fail-closed

@@ -404,6 +404,8 @@ func parseTimeRange(tr string) (int64, int64) {
 	}
 	var duration time.Duration
 	switch unit {
+	case "s", "sec":
+		duration = time.Duration(num) * time.Second
 	case "m", "min":
 		duration = time.Duration(num) * time.Minute
 	case "h", "hour":
@@ -413,7 +415,10 @@ func parseTimeRange(tr string) (int64, int64) {
 	case "w", "week":
 		duration = time.Duration(num) * 7 * 24 * time.Hour
 	default:
-		duration = time.Duration(num) * time.Hour
+		// Unknown unit ("1y", "3mo", "100ms"): reject rather than silently
+		// guessing hours — "30s"-as-30h would analyze a window 3600× the one
+		// the model asked for while the report header still echoes "30s".
+		return 0, 0
 	}
 	stime := now.Add(-duration).Unix()
 	return stime, etime
