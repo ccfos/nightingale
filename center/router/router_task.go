@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,12 +15,34 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// parseAuthLevels 解析逗号分隔的 auth_level 字符串，支持不传(返回空)和传多个
+func parseAuthLevels(s string) []int {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+
+	parts := strings.Split(s, ",")
+	levels := make([]int, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if v, err := strconv.Atoi(p); err == nil {
+			levels = append(levels, v)
+		}
+	}
+	return levels
+}
+
 func (rt *Router) taskGets(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
 	mine := ginx.QueryBool(c, "mine", false)
 	days := ginx.QueryInt64(c, "days", 7)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
+	authLevels := parseAuthLevels(ginx.QueryStr(c, "auth_level", ""))
 	user := c.MustGet("user").(*models.User)
 
 	creator := ""
@@ -29,10 +52,10 @@ func (rt *Router) taskGets(c *gin.Context) {
 
 	beginTime := time.Now().Unix() - days*24*3600
 
-	total, err := models.TaskRecordTotal(rt.Ctx, []int64{bgid}, beginTime, creator, query)
+	total, err := models.TaskRecordTotal(rt.Ctx, []int64{bgid}, beginTime, creator, query, authLevels)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskRecordGets(rt.Ctx, []int64{bgid}, beginTime, creator, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskRecordGets(rt.Ctx, []int64{bgid}, beginTime, creator, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -65,6 +88,7 @@ func (rt *Router) taskGetsByGids(c *gin.Context) {
 	days := ginx.QueryInt64(c, "days", 7)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
+	authLevels := parseAuthLevels(ginx.QueryStr(c, "auth_level", ""))
 	user := c.MustGet("user").(*models.User)
 
 	creator := ""
@@ -74,10 +98,10 @@ func (rt *Router) taskGetsByGids(c *gin.Context) {
 
 	beginTime := time.Now().Unix() - days*24*3600
 
-	total, err := models.TaskRecordTotal(rt.Ctx, gids, beginTime, creator, query)
+	total, err := models.TaskRecordTotal(rt.Ctx, gids, beginTime, creator, query, authLevels)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskRecordGets(rt.Ctx, gids, beginTime, creator, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskRecordGets(rt.Ctx, gids, beginTime, creator, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{

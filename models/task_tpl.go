@@ -39,10 +39,14 @@ func (t *TaskTpl) TableName() string {
 	return "task_tpl"
 }
 
-func TaskTplTotal(ctx *ctx.Context, bgids []int64, query string) (int64, error) {
+func TaskTplTotal(ctx *ctx.Context, bgids []int64, query string, authLevels []int) (int64, error) {
 	session := DB(ctx).Model(&TaskTpl{})
 	if len(bgids) > 0 {
 		session = session.Where("group_id in (?)", bgids)
+	}
+
+	if len(authLevels) > 0 {
+		session = session.Where("auth_level in (?)", authLevels)
 	}
 
 	if query == "" {
@@ -85,10 +89,14 @@ func TaskTplGetAll(ctx *ctx.Context) ([]*TaskTpl, error) {
 
 }
 
-func TaskTplGets(ctx *ctx.Context, bgids []int64, query string, limit, offset int) ([]TaskTpl, error) {
+func TaskTplGets(ctx *ctx.Context, bgids []int64, query string, authLevels []int, limit, offset int) ([]TaskTpl, error) {
 	session := DB(ctx).Order("title").Limit(limit).Offset(offset)
 	if len(bgids) > 0 {
 		session = session.Where("group_id in (?)", bgids)
+	}
+
+	if len(authLevels) > 0 {
+		session = session.Where("auth_level in (?)", authLevels)
 	}
 
 	var tpls []TaskTpl

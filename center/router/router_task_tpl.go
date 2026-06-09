@@ -18,11 +18,12 @@ func (rt *Router) taskTplGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	groupId := ginx.UrlParamInt64(c, "id")
+	authLevels := parseAuthLevels(ginx.QueryStr(c, "auth_level", ""))
 
-	total, err := models.TaskTplTotal(rt.Ctx, []int64{groupId}, query)
+	total, err := models.TaskTplTotal(rt.Ctx, []int64{groupId}, query, authLevels)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskTplGets(rt.Ctx, []int64{groupId}, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 	models.FillUpdateByNicknames(rt.Ctx, list)
 
@@ -55,10 +56,12 @@ func (rt *Router) taskTplGetsByGids(c *gin.Context) {
 		}
 	}
 
-	total, err := models.TaskTplTotal(rt.Ctx, gids, query)
+	authLevels := parseAuthLevels(ginx.QueryStr(c, "auth_level", ""))
+
+	total, err := models.TaskTplTotal(rt.Ctx, gids, query, authLevels)
 	ginx.Dangerous(err)
 
-	list, err := models.TaskTplGets(rt.Ctx, gids, query, limit, ginx.Offset(c, limit))
+	list, err := models.TaskTplGets(rt.Ctx, gids, query, authLevels, limit, ginx.Offset(c, limit))
 	ginx.Dangerous(err)
 	models.FillUpdateByNicknames(rt.Ctx, list)
 
