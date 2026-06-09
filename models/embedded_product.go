@@ -71,7 +71,10 @@ func AddEmbeddedProduct(ctx *ctx.Context, eps []EmbeddedProduct) error {
 	}
 
 	// 用主键做冲突判断，有冲突则更新（UPSERT）
+	// 磐维数据库(基于OpenGauss/PostgreSQL 9.2)不支持 ON CONFLICT DO UPDATE（无冲突目标）语法，
+	// 必须显式指定冲突列：ON CONFLICT (id) DO UPDATE SET ...
 	return DB(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
 		UpdateAll: true, // 冲突时更新所有字段
 	}).Create(&eps).Error
 }
