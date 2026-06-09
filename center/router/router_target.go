@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -653,8 +654,12 @@ func (rt *Router) targetDelByService(c *gin.Context) {
 }
 
 func (rt *Router) checkTargetPerm(c *gin.Context, idents []string) {
+	CheckTargetPerm(rt.Ctx, c, idents)
+}
+
+func CheckTargetPerm(ctx *ctx.Context, c *gin.Context, idents []string) {
 	user := c.MustGet("user").(*models.User)
-	nopri, err := user.NopriIdents(rt.Ctx, idents)
+	nopri, err := user.NopriIdents(ctx, idents)
 	ginx.Dangerous(err)
 
 	if len(nopri) > 0 {
@@ -680,13 +685,22 @@ func (rt *Router) targetsOfAlertRule(c *gin.Context) {
 	ginx.NewRender(c).Data(ret, err)
 }
 
-func (rt *Router) checkTargetsExistByIndent(idents []string) {
-	notExists, err := models.TargetNoExistIdents(rt.Ctx, idents)
-	ginx.Dangerous(err)
+func CheckTargetsExistByIndent(ctx *ctx.Context, idents []string) error {
+	notExists, err := models.TargetNoExistIdents(ctx, idents)
+	if err != nil {
+		return err
+	}
 
 	if len(notExists) > 0 {
-		ginx.Bomb(http.StatusBadRequest, "targets not exist: %s", strings.Join(notExists, ", "))
+		return errors.New("targets not exist: " + strings.Join(notExists, ", "))
 	}
+
+	return nil
+}
+
+func (rt *Router) checkTargetsExistByIndent(idents []string) {
+	err := CheckTargetsExistByIndent(rt.Ctx, idents)
+	ginx.Dangerous(err)
 }
 
 func (rt *Router) targetsOfHostQuery(c *gin.Context) {

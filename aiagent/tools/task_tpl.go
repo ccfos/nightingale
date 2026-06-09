@@ -62,12 +62,12 @@ func listTaskTpls(_ context.Context, deps *aiagent.ToolDeps, args map[string]int
 
 	var tpls []models.TaskTpl
 	if isAdmin {
-		tpls, err = models.TaskTplGets(deps.DBCtx, nil, query, limit, 0)
+		tpls, err = models.TaskTplGets(deps.DBCtx, nil, query, nil, limit, 0)
 	} else {
 		if len(bgids) == 0 {
 			return marshalList(0, []taskTplResult{}), nil
 		}
-		tpls, err = models.TaskTplGets(deps.DBCtx, bgids, query, limit, 0)
+		tpls, err = models.TaskTplGets(deps.DBCtx, bgids, query, nil, limit, 0)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to query task templates: %v", err)
