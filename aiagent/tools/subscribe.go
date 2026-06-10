@@ -40,6 +40,80 @@ type alertSubscribeDetailResult struct {
 func init() {
 	register(defs.ListAlertSubscribes, listAlertSubscribes)
 	register(defs.GetAlertSubscribeDetail, getAlertSubscribeDetail)
+	register(defs.CreateAlertSubscribe, createAlertSubscribe)
+}
+
+// createAlertSubscribe 落库一条订阅规则。入参 config 是与前端/HTTP API 同构的 AlertSubscribe
+// JSON（n9e-create-alert-subscribe skill 文档化了字段形状），直接反序列化进 models.AlertSubscribe，
+// 由 AlertSubscribe.Add 内部做 Verify(severities 必填、notify_version 分支校验) + FE2DB + 落库。
+// 业务组缺参门同 create_dashboard。
+func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAlertSubscribesAdd); err != nil {
+		return "", err
+	}
+
+	configJSON := getArgString(args, "config")
+	if configJSON == "" {
+		return "", fmt.Errorf("config is required: a JSON object describing the subscribe (name, severities, tags, notify_version, notify_rule_ids, ...); load the n9e-create-alert-subscribe skill for the exact shape")
+	}
+
+	var sub models.AlertSubscribe
+	if err := json.Unmarshal([]byte(configJSON), &sub); err != nil {
+		return "", fmt.Errorf("invalid config JSON: %v", err)
+	}
+
+	// 业务组缺参门：config 没带 group_id 就回退表单/页面注入的 busi_group_id，仍缺则弹表单。
+	groupId := sub.GroupId
+	if groupId == 0 {
+		groupId = resolveCreationGroupID(args, params)
+	}
+	if groupId == 0 {
+		return "", creationFormInterrupt(deps, user, "n9e-create-alert-subscribe", []string{"busi_group_id"})
+	}
+	sub.GroupId = groupId
+
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	// datasource_ids 缺省为 [0]：同 create_alert_mute，空数组在引擎里已等价"全部"（MatchCluster
+	// 见 DatasourceIdsJson 为空即返回 true），[0] 才是 FE 表示"全部数据源"的标准哨兵——规范化
+	// 成它，落库后前端能正确回显"全部"。
+	if len(sub.DatasourceIdsJson) == 0 {
+		sub.DatasourceIdsJson = []int64{0}
+	}
+
+	sub.Id = 0 // 防止模型把 id 塞进 config 导致主键冲突
+	sub.CreateBy = user.Username
+	sub.UpdateBy = user.Username
+
+	if err := sub.Add(deps.DBCtx); err != nil {
+		return "", fmt.Errorf("failed to create alert subscribe: %v", err)
+	}
+
+	logger.Infof("create_alert_subscribe: user=%s, group_id=%d, name=%s, id=%d", user.Username, groupId, sub.Name, sub.Id)
+
+	result := map[string]interface{}{
+		"id":              sub.Id,
+		"name":            sub.Name,
+		"group_id":        sub.GroupId,
+		"group_name":      bg.Name,
+		"disabled":        sub.Disabled,
+		"notify_rule_ids": sub.NotifyRuleIds,
+	}
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
 }
 
 func listAlertSubscribes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

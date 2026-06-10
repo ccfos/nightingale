@@ -606,6 +606,19 @@ var GetAlertMuteDetail = aiagent.AgentTool{
 	},
 }
 
+var CreateAlertMute = aiagent.AgentTool{
+	Name: "create_alert_mute",
+	Description: `创建告警屏蔽规则（在指定时间窗口内，按标签匹配抑制告警通知）。复杂结构走 config（一个 JSON 对象字符串），不缺业务组就直接落库。
+缺 group_id 时会弹业务组选择表单（无需自己瞎选）。建议先 list_busi_groups 确认业务组。
+时间不用自己算 Unix 时间戳：固定时段优先用 duration 参数（如 "2h"），btime 省略默认当前时间。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "group_id", Type: "integer", Description: "业务组ID。不传则从页面上下文/表单注入；都没有会弹业务组选择表单", Required: false},
+		{Name: "duration", Type: "string", Description: `固定时段屏蔽的持续时长，如 "2h"/"30m"/"7d"/"1d12h"（支持 s/m/h/d/w）。传了它就无需在 config 里算 etime：工具按 etime=btime+duration 自动算（btime 默认当前时间）。`, Required: false},
+		{Name: "config", Type: "string", Description: `屏蔽规则 JSON 对象字符串。形如 {"note":"标题","cause":"屏蔽原因","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"ident","func":"==","value":"web01"}],"mute_time_type":0}。tags 为标签匹配条件数组(func: == / != / =~ / !~ / in / not in；in/not in 的 value 可传数组)。时间：固定时段(mute_time_type=0)优先用顶层 duration 参数，不必填 btime/etime(btime 默认当前时间)；周期屏蔽(mute_time_type=1)填 periodic_mutes(enable_days_of_week 可写"工作日"/"每天"/"周末"，时段可写"全天")，btime/etime 可省。datasource_ids 不传默认全部。`, Required: true},
+	},
+}
+
 // =============================================================================
 // Notify rule
 // =============================================================================
@@ -626,6 +639,36 @@ var GetNotifyRuleDetail = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "通知规则ID", Required: true},
+	},
+}
+
+var CreateNotifyRule = aiagent.AgentTool{
+	Name: "create_notify_rule",
+	Description: `创建通知规则（定义告警事件按什么级别/时段/标签，经哪些通知媒介、发给哪些团队）。复杂结构走 config（一个 JSON 对象字符串）。
+通知规则绑定到团队(用户组)而非业务组：config 没带 user_group_ids 时会弹团队选择表单。notify_configs 里的 channel_id（通知媒介）需先用相应工具或文档确认真实 ID，不要凭空猜。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "config", Type: "string", Description: `通知规则 JSON 对象字符串。形如 {"name":"规则名","description":"备注","enable":true,"user_group_ids":[1,2],"notify_configs":[{"channel_id":1,"template_id":1,"severities":[1,2,3],"time_ranges":[{"week":[1,2,3,4,5],"start":"09:00","end":"18:00"}],"label_keys":[],"attributes":[]}]}。user_group_ids 是接收通知的团队ID列表(没带会弹团队选择表单)。notify_configs[].channel_id 必须>0(真实通知媒介ID，用 list_notify_channels 获取)，severities 取值 1/2/3。time_ranges 为空=不限时段；label_keys/attributes 为标签/属性过滤(func: == / != / =~ / !~ / in / not in)。`, Required: true},
+	},
+}
+
+var ListNotifyChannels = aiagent.AgentTool{
+	Name:        "list_notify_channels",
+	Description: "查询通知媒介(通知渠道)列表，拿到 channel_id 和 ident。创建通知规则配 notify_configs 前先用它确认真实的 channel_id，不要凭空猜。默认只返回已启用的渠道。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "query", Type: "string", Description: "搜索关键词，匹配媒介名称或 ident（如 dingtalk/email/tx-sms）", Required: false},
+		{Name: "include_disabled", Type: "boolean", Description: "是否包含已禁用的渠道，默认 false（只列启用的）", Required: false},
+	},
+}
+
+var ListMessageTemplates = aiagent.AgentTool{
+	Name:        "list_message_templates",
+	Description: "查询消息模板列表，拿到 template_id。创建通知规则时 notify_configs[].template_id 可选；先用 list_notify_channels 拿到媒介的 ident，再用此工具按 notify_channel_ident 过滤出该媒介的模板。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "notify_channel_ident", Type: "string", Description: "按通知媒介 ident 过滤（如 dingtalk），只列该媒介下的模板", Required: false},
+		{Name: "query", Type: "string", Description: "搜索关键词，匹配模板名称", Required: false},
 	},
 }
 
@@ -686,6 +729,17 @@ var GetAlertSubscribeDetail = aiagent.AgentTool{
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "订阅规则ID", Required: true},
+	},
+}
+
+var CreateAlertSubscribe = aiagent.AgentTool{
+	Name: "create_alert_subscribe",
+	Description: `创建告警订阅规则（按级别/标签订阅告警事件，再经通知规则重新路由通知，可改写级别/收件人）。复杂结构走 config（一个 JSON 对象字符串）。
+缺 group_id 时会弹业务组选择表单。severities 必填；推荐用新版路由 notify_version=1 + notify_rule_ids（先 list_notify_rules 拿到真实通知规则ID）。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "group_id", Type: "integer", Description: "业务组ID。不传则从页面上下文/表单注入；都没有会弹业务组选择表单", Required: false},
+		{Name: "config", Type: "string", Description: `订阅规则 JSON 对象字符串。形如 {"name":"订阅名","note":"备注","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"app","func":"==","value":"redis"}],"rule_ids":[],"notify_version":1,"notify_rule_ids":[5]}。severities 必填(取值 1/2/3)。tags 为事件标签过滤(func: == / != / =~ / !~ / in / not in)。新版路由用 notify_version=1 且 notify_rule_ids 非空(关联的通知规则ID)。rule_ids 可选(只订阅指定告警规则的事件)。datasource_ids 不传默认全部。`, Required: true},
 	},
 }
 

@@ -196,10 +196,10 @@ User request: %s`, req.UserInput)
 // --- creation action ---
 
 // selectCreationTools is the union of builtin_tools declared by the functional
-// n9e-create-* skills (alert-rule, dashboard). The non-tool-backed creation
-// skills (alert-mute, alert-subscribe, notify-rule) rely on HTTP flows and
-// don't contribute to this list. list_* tools are included so the agent can
-// resolve names → IDs when the user refers to groups/datasources by name.
+// n9e-create-* skills. alert-rule/dashboard 以外，notify-rule/alert-mute/
+// alert-subscribe 也都已有对应的 create_* 工具（带 busi_group_id / team_ids 缺参门），
+// 一并挂上，创建快路径就能闭环落库，而不再依赖外部 A2A 的 HTTP flow。list_* 工具用于
+// 在用户以名字指代业务组/数据源/通知规则时解析 名字 → ID。
 func selectCreationTools(req *AIChatRequest) []string {
 	return []string{
 		"create_alert_rule",
@@ -207,11 +207,17 @@ func selectCreationTools(req *AIChatRequest) []string {
 		"preview_alert_rule_template",
 		"create_dashboard",
 		"import_dashboard_template",
+		"create_notify_rule",
+		"create_alert_mute",
+		"create_alert_subscribe",
 		"list_busi_groups",
 		"list_datasources",
 		"list_metrics",
 		"get_metric_labels",
 		"list_notify_rules",
+		"list_notify_channels",
+		"list_message_templates",
+		"list_teams",
 		"list_files",
 		"read_file",
 		"grep_files",
@@ -239,12 +245,12 @@ func buildCreationPrompt(req *AIChatRequest) string {
 
 User request: %s%s
 
-Pick the correct creation skill based on the user's intent and follow its SKILL.md:
-- Alert rule (告警规则): n9e-create-alert-rule skill → 想导入 integrations 里现成的规则包就用 import_alert_rule_template（先 preview_alert_rule_template 看包里有啥），完全自定义才用 create_alert_rule
-- Dashboard (仪表盘): n9e-create-dashboard skill → 想导入现成模板用 import_dashboard_template，否则 create_dashboard
-- Alert mute (屏蔽规则): n9e-create-alert-mute skill
-- Alert subscribe (订阅规则): n9e-create-alert-subscribe skill
-- Notify rule (通知规则): n9e-create-notify-rule skill
+Pick the right approach based on the user's intent. 站内对话优先直接调用对应的 create_* 工具落库（缺业务组/团队会自动弹表单），不要去走 skill 里描述的 HTTP 登录+POST 流程（那是给外部 A2A agent 的）：
+- Alert rule (告警规则): 想导入 integrations 里现成的规则包就用 import_alert_rule_template（先 preview_alert_rule_template 看包里有啥），完全自定义才用 create_alert_rule（参考 n9e-create-alert-rule skill 的配置说明）
+- Dashboard (仪表盘): 想导入现成模板用 import_dashboard_template，否则 create_dashboard
+- Alert mute (屏蔽规则): 用 create_alert_mute 工具（config 字段形状见工具说明）
+- Alert subscribe (订阅规则): 用 create_alert_subscribe 工具
+- Notify rule (通知规则): 用 create_notify_rule 工具（绑定团队/用户组；notify_configs 里的 channel_id 需先确认真实通知媒介 ID）
 
 Guidelines:
 - If the request maps to multiple skills (e.g. "创建一个仪表盘和告警"), do them one at a time and confirm each.
@@ -295,6 +301,7 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"list_alert_subscribes", "get_alert_subscribe_detail",
 		"list_task_tpls", "get_task_tpl_detail",
 		"list_notify_rules", "get_notify_rule_detail",
+		"list_notify_channels", "list_message_templates",
 		"list_datasources", "get_datasource_detail",
 		"list_dashboards", "get_dashboard_detail",
 		"list_targets", "get_target_detail", "list_neighbor_targets",
@@ -312,10 +319,13 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"search_n9e_docs",
 		// 写操作（创建/编辑）。历史上通用路径不暴露写工具——"没有 preflight 保护，
 		// 缺 busi_group_id 会误建"。该约束已由工具级缺参门解除（agent-routing-
-		// contraction §3）：create/import 工具缺业务组时返回 input 中断弹表单，
-		// 任何路径下都不会瞎选业务组；update 工具自带两阶段提案确认门。
+		// contraction §3）：create/import 工具缺业务组(通知规则为团队)时返回 input
+		// 中断弹表单，任何路径下都不会瞎选；update 工具自带两阶段提案确认门。
+		// 通知规则/屏蔽/订阅也挂上对应 create_* 工具——表单应答这类输入常落到
+		// general_chat（无创建动词），只有这里挂了工具才能自愈完成落库，不再只回操作步骤。
 		"create_alert_rule", "import_alert_rule_template", "preview_alert_rule_template",
 		"create_dashboard", "import_dashboard_template",
+		"create_notify_rule", "create_alert_mute", "create_alert_subscribe",
 		"update_alert_rule", "update_dashboard",
 	}
 }

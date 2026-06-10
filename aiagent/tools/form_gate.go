@@ -2,6 +2,7 @@ package tools
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/models"
@@ -28,6 +29,31 @@ func resolveCreationGroupID(args map[string]interface{}, params map[string]strin
 		}
 	}
 	return 0
+}
+
+// resolveCreationTeamIDs 解析创建通知规则的目标团队(用户组)：优先工具已从 config 解析出的
+// user_group_ids，回退 preflight/表单经 inputs 注入的 params["team_ids"]("1,2,3")。
+// 通知规则没有业务组维度，权限/收件人都挂在团队(UserGroup)上，故缺参门收的是 team_ids
+// 而非 busi_group_id——与 BuildCreationForm 对 "team_ids" 的多选表单一一对应。
+func resolveCreationTeamIDs(fromConfig []int64, params map[string]string) []int64 {
+	if len(fromConfig) > 0 {
+		return fromConfig
+	}
+	s, ok := params["team_ids"]
+	if !ok {
+		return nil
+	}
+	var ids []int64
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if id, err := strconv.ParseInt(part, 10, 64); err == nil && id > 0 {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 // creationFormInterrupt 构造创建类工具的 input 中断：Form 为与 preflight 字节级

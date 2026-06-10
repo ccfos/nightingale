@@ -11,83 +11,41 @@ tags:
 
 ---
 
-## 前置条件
+## 前提
 
-用户需要提供：
-- **n9e 地址**：如 `http://<n9e-host>:<port>`
-- **用户名/密码**：如 `<username>/<password>`
-- **订阅内容描述**：如 "订阅所有 CPU 相关的告警并通知运维组"
-
-如果用户未提供以上信息，使用 AskUserQuestion 工具询问。
+你是 n9e 站内 AI 助手，运行在 n9e 进程内、已以当前用户身份认证。**直接调用内置工具创建，不要登录、不要调 HTTP API、不要用 http_fetch 打自家接口。**
 
 ---
 
 ## 执行步骤
 
-### 第一步：登录获取 Token
+### 第一步：确定业务组
 
-```
-POST /api/n9e/auth/login
-Content-Type: application/json
-Body: {"username":"<用户名>","password":"<密码>"}
-```
+订阅规则属于某个业务组。用 `list_busi_groups` 列出可选业务组，拿到 `group_id`。
+> 用户在对话里点名了业务组、或前端已弹出业务组选择表单时，直接用其 ID，不必再问。
 
-从响应中提取 `dat.access_token`，后续请求都带上 `Authorization: Bearer <token>`。
+### 第二步：确定关联的通知规则（推荐的新版路由）
 
-### 第二步：询问业务组
+新版订阅用 `notify_version=1` + `notify_rule_ids` 经通知规则转发通知。用 `list_notify_rules` 列出可选通知规则，拿到 `notify_rule_ids`。
+> 还没有合适的通知规则？先用 `create_notify_rule` 建一条，再回来订阅。
 
-调用 API 获取业务组列表：
+### 第三步（可选）：限定要订阅的告警规则
 
-```
-GET /api/n9e/busi-groups
-Authorization: Bearer <token>
-```
+只想订阅某些告警规则的事件时，用 `list_alert_rules` 拿到对应的 `rule_ids`；不限定就不填（按 severities/tags 订阅全部）。
 
-将返回的业务组列表通过 **AskUserQuestion** 工具展示给用户，让用户选择要创建订阅规则的业务组。
+### 第四步：构建 config 并调用 create_alert_subscribe
 
-### 第三步：根据用户描述构建订阅规则
+按下文「config 结构」拼成一个 JSON 对象，调用 `create_alert_subscribe` 工具，`group_id` 传第一步的业务组（也可写在 config 里），`config` 传 JSON 字符串。
+- `severities` 必填（订阅哪些级别）。
+- 若没带 `group_id`，工具会自动弹出业务组选择表单，用户选完会续上本次创建。
 
-根据用户的订阅需求，构建订阅规则 payload 并调用创建 API：
+### 第五步：回报结果
 
-```
-POST /api/n9e/busi-group/<busi_group_id>/alert-subscribes
-Authorization: Bearer <token>
-Content-Type: application/json
-Body: <订阅规则对象>
-```
-
-如果用户需要选择具体的告警规则来订阅，先获取告警规则列表：
-
-```
-GET /api/n9e/busi-group/<busi_group_id>/alert-rules
-Authorization: Bearer <token>
-```
-
-将返回的告警规则列表通过 **AskUserQuestion** 工具展示给用户，让用户选择要订阅的告警规则。
-
-### 第四步：询问并关联通知规则
-
-获取通知规则列表：
-
-```
-GET /api/n9e/notify-rules
-Authorization: Bearer <token>
-```
-
-将返回的通知规则列表通过 **AskUserQuestion** 工具展示给用户，让用户选择要关联的通知规则。
-
-### 第五步：验证
-
-```
-GET /api/n9e/busi-group/<busi_group_id>/alert-subscribes
-Authorization: Bearer <token>
-```
-
-在返回列表中找到刚创建的订阅规则，向用户输出创建结果摘要。
+工具返回 `{id, name, group_id, disabled, notify_rule_ids}`。据此向用户简要汇报即可。
 
 ---
 
-## 订阅规则 Payload 结构
+## config 结构
 
 ```json
 {
@@ -321,7 +279,8 @@ Authorization: Bearer <token>
 
 ## 关键注意事项
 
-1. **创建 API 接收对象而非数组**：与告警规则不同，订阅规则 payload 是单个对象 `{...}`，不是数组
+1. **config 是单个 JSON 对象**：`create_alert_subscribe` 的 `config` 传一个订阅规则对象 `{...}`，不是数组
+   - `datasource_ids` 不传或为空时，工具默认按"全部数据源"处理
 2. **name 字段是订阅规则名称**：用于标识订阅规则，note 是备注说明
 3. **notify_version 固定为 1**：通过 `notify_rule_ids` 关联通知规则
 4. **severities 不能为空**：至少指定一个告警级别

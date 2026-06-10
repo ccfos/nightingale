@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
@@ -67,6 +68,149 @@ func mapTagFilters(in []models.TagFilter) []tagFilterResult {
 func init() {
 	register(defs.ListNotifyRules, listNotifyRules)
 	register(defs.GetNotifyRuleDetail, getNotifyRuleDetail)
+	register(defs.CreateNotifyRule, createNotifyRule)
+}
+
+// createNotifyRule 落库一条通知规则。入参 config 是与前端/HTTP API 同构的 NotifyRule
+// JSON（n9e-create-notify-rule skill 文档化了字段形状），直接反序列化进 models.NotifyRule，
+// 由 NotifyRule.Verify 做业务校验。通知规则没有业务组维度，权限挂在团队(UserGroup)上：
+// config 未带 user_group_ids 时回退表单注入的 team_ids，仍缺则经缺参门弹团队选择表单。
+func createNotifyRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermNotificationRulesAdd); err != nil {
+		return "", err
+	}
+
+	configJSON := getArgString(args, "config")
+	if configJSON == "" {
+		return "", fmt.Errorf("config is required: a JSON object describing the notify rule (name, user_group_ids, notify_configs); load the n9e-create-notify-rule skill for the exact shape")
+	}
+
+	var rule models.NotifyRule
+	if err := json.Unmarshal([]byte(configJSON), &rule); err != nil {
+		return "", fmt.Errorf("invalid config JSON: %v", err)
+	}
+
+	// team(用户组) 缺参门：config 没带就回退表单/页面注入的 team_ids，仍缺则弹团队选择表单
+	// 而不是替用户瞎选——和 create_dashboard 的业务组缺参门同一套前端契约。
+	rule.UserGroupIds = resolveCreationTeamIDs(rule.UserGroupIds, params)
+	if len(rule.UserGroupIds) == 0 {
+		return "", creationFormInterrupt(deps, user, "n9e-create-notify-rule", []string{"team_ids"})
+	}
+
+	if rule.Name == "" {
+		return "", fmt.Errorf("name is required in config")
+	}
+
+	// 非管理员只能建绑定到自己所属团队的规则（与 notifyRulesAdd 路由的越权校验一致）。
+	if !user.IsAdmin() {
+		myGroupIds, err := getUserGroupIds(deps, user.Id)
+		if err != nil {
+			return "", err
+		}
+		if !int64SlicesOverlap(myGroupIds, rule.UserGroupIds) {
+			return "", fmt.Errorf("forbidden: you can only create notify rules bound to teams you belong to")
+		}
+	}
+
+	// enable 缺省为 true：用户明确要创建规则，建出来就该是启用态（与前端默认一致）；
+	// 只有 config 顶层显式写了 enable 才尊重其取值（按顶层 key 判断，避免标签名恰为
+	// enable 时误判）。
+	var topLevel map[string]json.RawMessage
+	if json.Unmarshal([]byte(configJSON), &topLevel) == nil {
+		if _, ok := topLevel["enable"]; !ok {
+			rule.Enable = true
+		}
+	}
+
+	// template_id 缺省时按渠道 ident 反查默认消息模板回填：普通渠道 template_id=0 会被
+	// dispatch 以 "message_template not found" 直接丢通知，规则建出来却发不出（见 fillDefaultTemplates）。
+	fillDefaultTemplates(deps, &rule)
+
+	if err := rule.Verify(); err != nil {
+		return "", fmt.Errorf("invalid notify rule: %v", err)
+	}
+
+	now := time.Now().Unix()
+	rule.ID = 0 // 防止模型把 id 塞进 config 导致主键冲突
+	rule.CreateBy = user.Username
+	rule.CreateAt = now
+	rule.UpdateBy = user.Username
+	rule.UpdateAt = now
+
+	if err := models.Insert(deps.DBCtx, &rule); err != nil {
+		return "", fmt.Errorf("failed to create notify rule: %v", err)
+	}
+
+	logger.Infof("create_notify_rule: user=%s, name=%s, teams=%v, configs=%d, id=%d",
+		user.Username, rule.Name, rule.UserGroupIds, len(rule.NotifyConfigs), rule.ID)
+
+	result := map[string]interface{}{
+		"id":                   rule.ID,
+		"name":                 rule.Name,
+		"enable":               rule.Enable,
+		"user_group_ids":       rule.UserGroupIds,
+		"notify_configs_count": len(rule.NotifyConfigs),
+	}
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
+}
+
+// fillDefaultTemplates 给 notify_config 补默认消息模板：template_id 缺省(0)时，按 channel_id
+// 反查渠道拿到 ident，再取该 ident 下 weight 最小的消息模板回填——与前端"选完渠道自动选第一个
+// 模板"(FE TemplateSelect)完全同路。普通渠道 template_id=0 时 dispatch 会以
+// "message_template not found" 直接丢通知，所以即便模型/用户没填也必须兜底。
+// flashduty/pagerduty 渠道本就不需要模板，跳过。渠道或模板查不到不致命：保持 0 并记 warning，
+// 交回 Verify/dispatch 处理，不阻断创建。
+func fillDefaultTemplates(deps *aiagent.ToolDeps, rule *models.NotifyRule) {
+	chCache := make(map[int64]*models.NotifyChannelConfig) // channel_id -> channel(可能为 nil 表示查不到)
+	tplCache := make(map[string]int64)                     // channel ident -> 默认模板 id(0 表示无)
+
+	for i := range rule.NotifyConfigs {
+		nc := &rule.NotifyConfigs[i]
+		if nc.TemplateID != 0 || nc.ChannelID <= 0 {
+			continue
+		}
+
+		ch, ok := chCache[nc.ChannelID]
+		if !ok {
+			// enabled=-1：禁用渠道也要能反查 ident（规则可引用禁用渠道，模板归属与启用态无关）
+			chs, err := models.NotifyChannelGets(deps.DBCtx, nc.ChannelID, "", "", -1)
+			if err != nil {
+				logger.Warningf("create_notify_rule: load channel %d for default template failed: %v", nc.ChannelID, err)
+				continue
+			}
+			if len(chs) > 0 {
+				ch = chs[0]
+			}
+			chCache[nc.ChannelID] = ch
+		}
+		if ch == nil {
+			continue
+		}
+		if ch.RequestType == "flashduty" || ch.RequestType == "pagerduty" {
+			continue
+		}
+
+		tplID, ok := tplCache[ch.Ident]
+		if !ok {
+			tpls, err := models.MessageTemplatesGetBy(deps.DBCtx, []string{ch.Ident})
+			if err != nil {
+				logger.Warningf("create_notify_rule: load templates for channel ident %q failed: %v", ch.Ident, err)
+			} else if len(tpls) > 0 {
+				tplID = tpls[0].ID // MessageTemplatesGetBy 已按 weight asc 排序，首个即默认
+			}
+			tplCache[ch.Ident] = tplID
+		}
+		if tplID != 0 {
+			nc.TemplateID = tplID
+		} else {
+			logger.Warningf("create_notify_rule: no default message template for channel %d ident %q", nc.ChannelID, ch.Ident)
+		}
+	}
 }
 
 func listNotifyRules(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

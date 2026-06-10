@@ -16,17 +16,20 @@ import (
 // =============================================================================
 
 const (
-	PermAlertRules        = "/alert-rules"
-	PermAlertRulesAdd     = "/alert-rules/add"
-	PermAlertRulesPut     = "/alert-rules/put"
-	PermDashboards        = "/dashboards"
-	PermDashboardsAdd     = "/dashboards/add"
-	PermDashboardsPut     = "/dashboards/put"
-	PermAlertMutes        = "/alert-mutes"
-	PermAlertSubscribes   = "/alert-subscribes"
-	PermJobTpls           = "/job-tpls"
-	PermNotificationRules = "/notification-rules"
-	PermUsers             = "/users"
+	PermAlertRules           = "/alert-rules"
+	PermAlertRulesAdd        = "/alert-rules/add"
+	PermAlertRulesPut        = "/alert-rules/put"
+	PermDashboards           = "/dashboards"
+	PermDashboardsAdd        = "/dashboards/add"
+	PermDashboardsPut        = "/dashboards/put"
+	PermAlertMutes           = "/alert-mutes"
+	PermAlertMutesAdd        = "/alert-mutes/add"
+	PermAlertSubscribes      = "/alert-subscribes"
+	PermAlertSubscribesAdd   = "/alert-subscribes/add"
+	PermJobTpls              = "/job-tpls"
+	PermNotificationRules    = "/notification-rules"
+	PermNotificationRulesAdd = "/notification-rules/add"
+	PermUsers                = "/users"
 )
 
 // =============================================================================
