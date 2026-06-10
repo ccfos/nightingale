@@ -341,6 +341,27 @@ func (s *AlertSubscribe) Update(ctx *ctx.Context, selectField interface{}, selec
 	return DB(ctx).Model(s).Select(selectField, selectFields...).Updates(s).Error
 }
 
+// UpdateFull 整行替换式更新（同 AlertMute.Update）：Id/GroupId/CreateAt/CreateBy 强制保留
+// 旧值，其余列全部以 ref 为准——ref 必须基于 DB2FE 后的完整现有行构造，否则未触及的
+// 序列化字段会被空值清掉。
+func (s *AlertSubscribe) UpdateFull(ctx *ctx.Context, ref AlertSubscribe) error {
+	ref.Id = s.Id
+	ref.GroupId = s.GroupId
+	ref.CreateAt = s.CreateAt
+	ref.CreateBy = s.CreateBy
+	ref.UpdateAt = time.Now().Unix()
+
+	if err := ref.Verify(); err != nil {
+		return err
+	}
+
+	if err := ref.FE2DB(); err != nil {
+		return err
+	}
+
+	return DB(ctx).Model(s).Select("*").Updates(ref).Error
+}
+
 func AlertSubscribeDel(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil

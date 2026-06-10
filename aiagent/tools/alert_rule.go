@@ -686,7 +686,7 @@ func promQueries(rc interface{}) ([]map[string]interface{}, bool) {
 // present in args are touched; everything else keeps its stored value. The
 // business group and datasource are read from the rule itself — the tool never
 // asks the caller for them. See defs.UpdateAlertRule for the field contract.
-func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+func updateAlertRule(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	user, err := getUser(deps, params)
 	if err != nil {
 		return "", err
@@ -709,6 +709,9 @@ func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	if existing == nil {
 		return fmt.Sprintf(`{"error":"alert rule not found: id=%d"}`, id), nil
 	}
+	// 提案基线（见 update_proposal.go）必须在任何改写之前取：updated 与 existing 共享
+	// RuleConfigJson 底层 map，下面的查询/级别改写会就地污染它。
+	baseline := updateBaselineHash(existing)
 
 	// Data-level permission: editing requires rw on the rule's busi group, not
 	// just membership — mirrors the FE's bgrw check and createAlertRule. Using
@@ -857,6 +860,53 @@ func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", fmt.Errorf("no updatable fields provided. Pass id plus at least one of: threshold/prom_ql/operator, name, note, severity, disabled, eval_interval, for_duration, append_tags, runbook_url, notify_rule_ids, rule_config_json")
 	}
 
+	// 确认文案：标量字段直接展示新值；查询类捷径(threshold/prom_ql/operator)合并为
+	// 最终烘焙后的查询条件一行，用户看到的就是将要写入的表达式。
+	changeDescs := make([]string, 0, len(changes)+1)
+	queryEdited := false
+	for _, k := range changes {
+		switch k {
+		case "threshold", "prom_ql", "operator":
+			queryEdited = true
+		case "rule_config":
+			changeDescs = append(changeDescs, "`rule_config` → 整体替换查询/触发结构")
+		default:
+			if v, ok := args[k]; ok {
+				changeDescs = append(changeDescs, fmt.Sprintf("`%s` → %v", k, v))
+			} else {
+				changeDescs = append(changeDescs, fmt.Sprintf("`%s`", k))
+			}
+		}
+	}
+	if queryEdited {
+		if baked := currentBakedPromQL(updated.RuleConfigJson); baked != "" {
+			changeDescs = append(changeDescs, fmt.Sprintf("查询条件 → `%s`", baked))
+		}
+	}
+
+	// 两阶段写（见 update_proposal.go）：首次调用是提案——展示改动并中断等用户确认，
+	// 不写库；用户确认后运行时以 ResumeArgs（原 args 原样回放）重放本工具走 confirm 腿。
+	confirmed := getArgBool(args, "confirmed")
+	if proposalID := getArgString(args, "proposal_id"); !confirmed && proposalID == "" {
+		logger.Infof("update_alert_rule: user=%s, id=%d, proposed changes=%v", user.Username, id, changes)
+
+		resumeArgs := make(map[string]interface{}, len(args))
+		for k, v := range args {
+			resumeArgs[k] = v
+		}
+		return proposeUpdate(ctx, deps, params, &updateProposal{
+			Kind:         "alert_rule",
+			TargetID:     id,
+			BaselineHash: baseline,
+			Changes:      changeDescs,
+		}, renderUpdateProposalPrompt(fmt.Sprintf("告警规则 **%s**（id=%d）", existing.Name, id), changeDescs), resumeArgs)
+	}
+
+	// confirm 腿：基线哈希保证此刻基于当前规则重算出的 updated 与提案时展示的一致。
+	if _, err := confirmUpdateGate(ctx, deps, params, "update_alert_rule", "alert_rule", id, getArgString(args, "proposal_id"), confirmed, baseline); err != nil {
+		return "", err
+	}
+
 	updated.UpdateBy = user.Username
 
 	if err := existing.Update(deps.DBCtx, updated); err != nil {
@@ -866,7 +916,7 @@ func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		return "", fmt.Errorf("failed to update alert rule: %v", err)
 	}
 
-	logger.Infof("update_alert_rule: user=%s, id=%d, group_id=%d, changed=%v",
+	logger.Infof("update_alert_rule: user=%s, id=%d, group_id=%d, applied changes=%v",
 		user.Username, id, existing.GroupId, changes)
 
 	result := map[string]interface{}{
@@ -877,6 +927,10 @@ func updateAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		"severity": updated.Severity,
 		"disabled": updated.Disabled,
 		"updated":  changes,
+		// changes(人类可读) + applied + name 是确认回执渲染契约
+		// （router_ai_interrupt.go formatResumeResult）。
+		"changes": changeDescs,
+		"applied": true,
 	}
 	if updated.Cate == "prometheus" {
 		if baked := currentBakedPromQL(updated.RuleConfigJson); baked != "" {

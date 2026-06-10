@@ -174,7 +174,7 @@ Tool usage policy (IMPORTANT — pick the right tool, don't fan out):
 
 4. **For datasource data queries**: list_datasources first if datasource not specified; then pick by plugin_type — prometheus → query_prometheus (PromQL); mysql/ck/pgsql/doris/tdengine → query_timeseries (aggregations) or query_log (raw rows); elasticsearch/opensearch/victorialogs → query_timeseries (counts) or query_log (raw docs). For SQL-class datasources use list_databases / list_tables / describe_table first if schema unknown. Default time_range = 1h unless specified.
 
-5. **Creation / modification requests** (创建/新建/修改/编辑 告警规则、仪表盘等): you CAN do these directly with the write tools (create_alert_rule / import_alert_rule_template / create_dashboard / import_dashboard_template / update_alert_rule / update_dashboard). Before acting, load the matching skill from the Available Skills catalog (e.g. n9e-create-dashboard) and follow its workflow. If the business group is unknown, just call the create tool — it will pause and ask the user with a structured form; do NOT pick a business group on the user's behalf. Modifications go through a propose→confirm gate automatically.
+5. **Creation / modification requests** (创建/新建/修改/编辑 告警规则、仪表盘、通知/屏蔽/订阅规则等): you CAN do these directly with the write tools (create_* / import_*_template / update_alert_rule / update_dashboard / update_notify_rule / update_alert_mute / update_alert_subscribe). Before acting, load the matching skill from the Available Skills catalog (e.g. n9e-create-dashboard) and follow its workflow. If the business group is unknown, just call the create tool — it will pause and ask the user with a structured form; do NOT pick a business group on the user's behalf. Modifications go through a propose→confirm gate automatically.
 
 Refusal template (use VERBATIM when search_n9e_docs is empty for a factual question):
 `+"```"+`
@@ -217,6 +217,7 @@ func selectCreationTools(req *AIChatRequest) []string {
 		"list_notify_rules",
 		"list_notify_channels",
 		"list_message_templates",
+		"list_notify_rule_custom_params",
 		"list_teams",
 		"list_files",
 		"read_file",
@@ -301,7 +302,7 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"list_alert_subscribes", "get_alert_subscribe_detail",
 		"list_task_tpls", "get_task_tpl_detail",
 		"list_notify_rules", "get_notify_rule_detail",
-		"list_notify_channels", "list_message_templates",
+		"list_notify_channels", "list_message_templates", "list_notify_rule_custom_params",
 		"list_datasources", "get_datasource_detail",
 		"list_dashboards", "get_dashboard_detail",
 		"list_targets", "get_target_detail", "list_neighbor_targets",
@@ -327,5 +328,6 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"create_dashboard", "import_dashboard_template",
 		"create_notify_rule", "create_alert_mute", "create_alert_subscribe",
 		"update_alert_rule", "update_dashboard",
+		"update_notify_rule", "update_alert_mute", "update_alert_subscribe",
 	}
 }

@@ -41,10 +41,11 @@ func init() {
 	register(defs.ListAlertSubscribes, listAlertSubscribes)
 	register(defs.GetAlertSubscribeDetail, getAlertSubscribeDetail)
 	register(defs.CreateAlertSubscribe, createAlertSubscribe)
+	register(defs.UpdateAlertSubscribe, updateAlertSubscribe)
 }
 
 // createAlertSubscribe 落库一条订阅规则。入参 config 是与前端/HTTP API 同构的 AlertSubscribe
-// JSON（n9e-create-alert-subscribe skill 文档化了字段形状），直接反序列化进 models.AlertSubscribe，
+// JSON（n9e-alert-subscribe-copilot skill 文档化了字段形状），直接反序列化进 models.AlertSubscribe，
 // 由 AlertSubscribe.Add 内部做 Verify(severities 必填、notify_version 分支校验) + FE2DB + 落库。
 // 业务组缺参门同 create_dashboard。
 func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
@@ -58,7 +59,7 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
-		return "", fmt.Errorf("config is required: a JSON object describing the subscribe (name, severities, tags, notify_version, notify_rule_ids, ...); load the n9e-create-alert-subscribe skill for the exact shape")
+		return "", fmt.Errorf("config is required: a JSON object describing the subscribe (name, severities, tags, notify_version, notify_rule_ids, ...); load the n9e-alert-subscribe-copilot skill for the exact shape")
 	}
 
 	var sub models.AlertSubscribe
@@ -72,7 +73,7 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 		groupId = resolveCreationGroupID(args, params)
 	}
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-alert-subscribe", []string{"busi_group_id"})
+		return "", creationFormInterrupt(deps, user, "n9e-alert-subscribe-copilot", []string{"busi_group_id"})
 	}
 	sub.GroupId = groupId
 
@@ -111,9 +112,146 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 		"group_name":      bg.Name,
 		"disabled":        sub.Disabled,
 		"notify_rule_ids": sub.NotifyRuleIds,
+		// 站内配置页相对路径。最终回复以 [name](url) 链接展示规则名，用户可点击直达。
+		"url": fmt.Sprintf("/alert-subscribes/edit/%d", sub.Id),
 	}
 	bytes, _ := json.Marshal(result)
 	return string(bytes), nil
+}
+
+// updateAlertSubscribe 增量修改一条订阅规则：config(只含要改的字段)二次 Unmarshal 到 DB2FE
+// 后的现有规则副本上（encoding/json 只覆盖 JSON 里出现的字段，数组整体替换）。
+// 两阶段写（见 update_proposal.go）：首次调用是提案——算出改动、向用户展示确认文案并中断，
+// 不写库；用户确认后运行时以 ResumeArgs 重放本工具走 confirm 腿，门禁通过才真正落库。
+// 落库走 AlertSubscribe.UpdateFull 整行替换（内部 Verify + FE2DB，并保 Id/GroupId/CreateAt/
+// CreateBy）；订阅不支持跨业务组移动。
+func updateAlertSubscribe(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	// 对齐 FE 编辑路由 PUT /busi-group/:id/alert-subscribes 的 perm("/alert-subscribes/put")。
+	if err := checkPerm(deps, user, PermAlertSubscribesPut); err != nil {
+		return "", err
+	}
+
+	id := getArgInt64(args, "id")
+	if id == 0 {
+		return "", fmt.Errorf("id is required")
+	}
+
+	existing, err := models.AlertSubscribeGet(deps.DBCtx, "id=?", id)
+	if err != nil {
+		return "", fmt.Errorf("failed to get alert subscribe: %v", err)
+	}
+	if existing == nil {
+		return fmt.Sprintf(`{"error":"alert subscribe not found: id=%d"}`, id), nil
+	}
+	// merge 底座必须是 FE 形态：datasource_ids/webhooks/extra_config/severities 在 DB 行里是
+	// 序列化串，不先 DB2FE，未修改的这些字段会在 Update 的 FE2DB 里被空 FE 值清掉。
+	if err := existing.DB2FE(); err != nil {
+		return "", fmt.Errorf("failed to parse alert subscribe: %v", err)
+	}
+	// 提案基线必须在 merge 之前取：merge 的 Unmarshal 会复用 existing 切片的底层数组。
+	baseline := updateBaselineHash(existing)
+
+	// 数据级权限同 createAlertSubscribe：要求对规则所属业务组有 rw。
+	bg, err := models.BusiGroupGetById(deps.DBCtx, existing.GroupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", existing.GroupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	configJSON := getArgString(args, "config")
+	if configJSON == "" {
+		return "", fmt.Errorf("config is required: a JSON object with only the fields to change; see update_alert_subscribe tool description")
+	}
+	patch, changed, err := configPatch(configJSON)
+	if err != nil {
+		return "", err
+	}
+	if err := patchGroupIDGuard(patch, existing.GroupId); err != nil {
+		return "", err
+	}
+	if err := rejectEmptyArrayPatch(patch, "webhooks"); err != nil {
+		return "", err
+	}
+	if len(changed) == 0 {
+		return "", fmt.Errorf("nothing to update: config contains no changeable fields")
+	}
+
+	merged := *existing
+	if err := json.Unmarshal([]byte(configJSON), &merged); err != nil {
+		return "", fmt.Errorf("invalid config JSON: %v", err)
+	}
+	merged.Id = existing.Id
+	merged.GroupId = existing.GroupId
+	// rule_ids 已取代 rule_id：与 alertSubscribePut 路由一样置 0，防遗留的旧字段引发误订阅。
+	merged.RuleId = 0
+	// 空 datasource_ids 规范化为 [0]（FE 的"全部数据源"哨兵），同 createAlertSubscribe。
+	if len(merged.DatasourceIdsJson) == 0 {
+		merged.DatasourceIdsJson = []int64{0}
+	}
+
+	// 提案前整体校验（Verify 会就地改写副本，用 check 隔离），别让用户确认完才发现 config 不合法。
+	check := merged
+	if err := check.Verify(); err != nil {
+		return "", fmt.Errorf("invalid config: %v", err)
+	}
+
+	changeDescs := describePatchChanges(patch, changed)
+
+	// confirm 腿：用户确认后运行时以 ResumeArgs 重放本工具。基线哈希保证此刻重算出的
+	// merged 与提案时展示的一致。
+	confirmed := getArgBool(args, "confirmed")
+	if proposalID := getArgString(args, "proposal_id"); confirmed || proposalID != "" {
+		if _, err := confirmUpdateGate(ctx, deps, params, "update_alert_subscribe", "alert_subscribe", id, proposalID, confirmed, baseline); err != nil {
+			return "", err
+		}
+
+		merged.UpdateBy = user.Username
+
+		if err := existing.UpdateFull(deps.DBCtx, merged); err != nil {
+			return "", fmt.Errorf("failed to update alert subscribe: %v", err)
+		}
+
+		logger.Infof("update_alert_subscribe: user=%s, id=%d, group_id=%d, applied changes=%v", user.Username, id, existing.GroupId, changed)
+
+		result := map[string]interface{}{
+			"id":              existing.Id,
+			"name":            merged.Name,
+			"group_id":        existing.GroupId,
+			"group_name":      bg.Name,
+			"disabled":        merged.Disabled,
+			"notify_rule_ids": merged.NotifyRuleIds,
+			"updated":         changed,
+			// changes(人类可读) + applied + name 是确认回执渲染契约
+			// （router_ai_interrupt.go formatResumeResult）。
+			"changes": changeDescs,
+			"applied": true,
+			// 站内配置页相对路径。最终回复以 [name](url) 链接展示规则名，用户可点击直达。
+			"url": fmt.Sprintf("/alert-subscribes/edit/%d", existing.Id),
+		}
+		bytes, _ := json.Marshal(result)
+		return string(bytes), nil
+	}
+
+	// propose 腿：展示改动清单并中断等用户确认，不写库。
+	logger.Infof("update_alert_subscribe: user=%s, id=%d, proposed changes=%v", user.Username, id, changed)
+	return proposeUpdate(ctx, deps, params, &updateProposal{
+		Kind:         "alert_subscribe",
+		TargetID:     id,
+		BaselineHash: baseline,
+		Changes:      changeDescs,
+	}, renderUpdateProposalPrompt(fmt.Sprintf("订阅规则 **%s**（id=%d）", existing.Name, id), changeDescs), map[string]interface{}{
+		"id":     id,
+		"config": configJSON,
+	})
 }
 
 func listAlertSubscribes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
