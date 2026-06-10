@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
@@ -124,8 +123,8 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 // 后的现有规则副本上（encoding/json 只覆盖 JSON 里出现的字段，数组整体替换）。
 // 两阶段写（见 update_proposal.go）：首次调用是提案——算出改动、向用户展示确认文案并中断，
 // 不写库；用户确认后运行时以 ResumeArgs 重放本工具走 confirm 腿，门禁通过才真正落库。
-// 落库沿用 alertSubscribePut 路由的列清单调 AlertSubscribe.Update（内部 Verify + FE2DB）；
-// group_id 不在列清单中，订阅不支持跨业务组移动。
+// 落库走 AlertSubscribe.UpdateFull 整行替换（内部 Verify + FE2DB，并保 Id/GroupId/CreateAt/
+// CreateBy）；订阅不支持跨业务组移动。
 func updateAlertSubscribe(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
 	user, err := getUser(deps, params)
 	if err != nil {
@@ -216,16 +215,8 @@ func updateAlertSubscribe(ctx context.Context, deps *aiagent.ToolDeps, args map[
 		}
 
 		merged.UpdateBy = user.Username
-		merged.UpdateAt = time.Now().Unix()
 
-		// 列清单与 alertSubscribePut 路由一致：不含 group_id/create_*。
-		if err := merged.Update(deps.DBCtx,
-			"name", "disabled", "prod", "cate", "datasource_ids", "cluster",
-			"rule_id", "rule_ids", "tags", "redefine_severity", "new_severity",
-			"redefine_channels", "new_channels", "user_group_ids", "update_at", "update_by",
-			"webhooks", "for_duration", "redefine_webhooks", "severities",
-			"extra_config", "busi_groups", "note", "notify_rule_ids", "notify_version",
-		); err != nil {
+		if err := existing.UpdateFull(deps.DBCtx, merged); err != nil {
 			return "", fmt.Errorf("failed to update alert subscribe: %v", err)
 		}
 
