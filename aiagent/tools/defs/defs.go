@@ -172,6 +172,7 @@ var UpdateAlertRule = aiagent.AgentTool{
 	Name: "update_alert_rule",
 	Description: `修改一条已存在的告警规则。只传 id + 需要改的字段，未传的字段一律保持原值（增量 patch，绝不清空）。
 改前请先 get_alert_rule_detail(id) 看现状再改。
+**提案即收尾（系统自动确认通道）**：调用本工具即提交「修改提案」——工具会向用户展示改动清单并暂停对话，等用户确认后由系统自动落库，确认环节不需要也不经过你。因此一次调用即完成你的全部职责；不要自己复述改动清单（系统会展示），不要传 proposal_id/confirmed（那是系统确认通道的参数）。用户拒绝或提出新要求时，你会在新一轮收到反馈，按新要求重新调用即可（旧提案自动作废）。
 - 改阈值（最常见）：cate=prometheus 时只传 id + threshold 即可，工具会保留原 PromQL 和操作符，只替换阈值；也可同时传 prom_ql / operator 一起改。
 - 改其他标量字段：name / note / severity / disabled / eval_interval / for_duration / append_tags / runbook_url / notify_rule_ids。
 - 复杂结构（非 prometheus 或要整体替换查询）：传 rule_config_json 全量覆盖（先读 skill 的 datasources/<cate>.md）。
@@ -193,6 +194,8 @@ var UpdateAlertRule = aiagent.AgentTool{
 		{Name: "runbook_url", Type: "string", Description: "应急处理手册 URL", Required: false},
 		{Name: "notify_rule_ids", Type: "string", Description: "关联通知规则 ID 列表 JSON，如 \"[1,2]\"（全量覆盖）", Required: false},
 		{Name: "rule_config_json", Type: "string", Description: "完整 rule_config JSON 字符串，用于整体替换查询/触发结构（非 prometheus 简化路径时使用）", Required: false},
+		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
 }
 
@@ -610,12 +613,31 @@ var CreateAlertMute = aiagent.AgentTool{
 	Name: "create_alert_mute",
 	Description: `创建告警屏蔽规则（在指定时间窗口内，按标签匹配抑制告警通知）。复杂结构走 config（一个 JSON 对象字符串），不缺业务组就直接落库。
 缺 group_id 时会弹业务组选择表单（无需自己瞎选）。建议先 list_busi_groups 确认业务组。
-时间不用自己算 Unix 时间戳：固定时段优先用 duration 参数（如 "2h"），btime 省略默认当前时间。`,
+时间不用自己算 Unix 时间戳：固定时段优先用 duration 参数（如 "2h"），btime 省略默认当前时间。
+创建成功返回 {id, note, cause, url, ...}，最终回复务必把规则标题以 Markdown 链接 [note](url) 形式展示，让用户可点击打开配置页。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "group_id", Type: "integer", Description: "业务组ID。不传则从页面上下文/表单注入；都没有会弹业务组选择表单", Required: false},
 		{Name: "duration", Type: "string", Description: `固定时段屏蔽的持续时长，如 "2h"/"30m"/"7d"/"1d12h"（支持 s/m/h/d/w）。传了它就无需在 config 里算 etime：工具按 etime=btime+duration 自动算（btime 默认当前时间）。`, Required: false},
 		{Name: "config", Type: "string", Description: `屏蔽规则 JSON 对象字符串。形如 {"note":"标题","cause":"屏蔽原因","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"ident","func":"==","value":"web01"}],"mute_time_type":0}。tags 为标签匹配条件数组(func: == / != / =~ / !~ / in / not in；in/not in 的 value 可传数组)。时间：固定时段(mute_time_type=0)优先用顶层 duration 参数，不必填 btime/etime(btime 默认当前时间)；周期屏蔽(mute_time_type=1)填 periodic_mutes(enable_days_of_week 可写"工作日"/"每天"/"周末"，时段可写"全天")，btime/etime 可省。datasource_ids 不传默认全部。`, Required: true},
+	},
+}
+
+var UpdateAlertMute = aiagent.AgentTool{
+	Name: "update_alert_mute",
+	Description: `修改一条已存在的屏蔽规则。增量 patch：config 里只写要改的字段，未写的字段一律保持原值；数组字段（tags/severities/datasource_ids/periodic_mutes）提供时整体替换。
+改前先 get_alert_mute_detail(id) 看现状。业务组从规则本身读取，group_id 不可改。
+- 延长/重设屏蔽时长（最常见）：直接传 duration 参数（如 "2h"/"7d"），etime 按"从当前时刻（btime 在未来则从 btime）再屏蔽这么久"重算，不用自己算 Unix 时间戳
+- 临时停用/恢复：config 传 {"disabled":1} / {"disabled":0}
+**提案即收尾（系统自动确认通道）**：调用本工具即提交「修改提案」——工具会向用户展示改动清单并暂停对话，等用户确认后由系统自动落库，确认环节不需要也不经过你。一次调用即完成你的全部职责；不要自己复述改动清单，不要传 proposal_id/confirmed。用户拒绝或提出新要求时按新要求重新调用即可（旧提案自动作废）。
+落库成功返回 {id, updated, applied:true, url, ...}，最终回复务必把规则标题以 Markdown 链接 [note](url) 形式展示。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的屏蔽规则 ID（必填）。可由 list_alert_mutes / get_alert_mute_detail / /alert-mutes/edit/<id> URL 获取", Required: true},
+		{Name: "config", Type: "string", Description: `增量 patch JSON 对象字符串，只含要修改的字段，字段形状与 create_alert_mute 的 config 一致（如 {"cause":"维护窗口延长","tags":[{"key":"ident","func":"==","value":"web01"}],"disabled":0}）。id/group_id 不可改。与 duration 至少传一个`, Required: false},
+		{Name: "duration", Type: "string", Description: `新的屏蔽时长，如 "2h"/"7d"/"1d12h"（支持 s/m/h/d/w）：从当前时刻（btime 在未来则从 btime）起重算 etime，等价"再屏蔽这么久"。与 config 至少传一个`, Required: false},
+		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
 }
 
@@ -645,10 +667,26 @@ var GetNotifyRuleDetail = aiagent.AgentTool{
 var CreateNotifyRule = aiagent.AgentTool{
 	Name: "create_notify_rule",
 	Description: `创建通知规则（定义告警事件按什么级别/时段/标签，经哪些通知媒介、发给哪些团队）。复杂结构走 config（一个 JSON 对象字符串）。
-通知规则绑定到团队(用户组)而非业务组：config 没带 user_group_ids 时会弹团队选择表单。notify_configs 里的 channel_id（通知媒介）需先用相应工具或文档确认真实 ID，不要凭空猜。`,
+通知规则绑定到团队(用户组)而非业务组：config 没带 user_group_ids 时会弹团队选择表单。notify_configs 里的 channel_id（通知媒介）需先用相应工具或文档确认真实 ID，不要凭空猜。
+创建成功返回 {id, name, url, ...}，最终回复务必把规则名以 Markdown 链接 [name](url) 形式展示，让用户可点击打开配置页。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "config", Type: "string", Description: `通知规则 JSON 对象字符串。形如 {"name":"规则名","description":"备注","enable":true,"user_group_ids":[1,2],"notify_configs":[{"channel_id":1,"template_id":1,"severities":[1,2,3],"time_ranges":[{"week":[1,2,3,4,5],"start":"09:00","end":"18:00"}],"label_keys":[],"attributes":[]}]}。user_group_ids 是接收通知的团队ID列表(没带会弹团队选择表单)。notify_configs[].channel_id 必须>0(真实通知媒介ID，用 list_notify_channels 获取)，severities 取值 1/2/3。time_ranges 为空=不限时段；label_keys/attributes 为标签/属性过滤(func: == / != / =~ / !~ / in / not in)。`, Required: true},
+	},
+}
+
+var UpdateNotifyRule = aiagent.AgentTool{
+	Name: "update_notify_rule",
+	Description: `修改一条已存在的通知规则。增量 patch：config 里只写要改的字段，未写的字段一律保持原值；notify_configs / user_group_ids 提供时整体替换（不是追加）——改 notify_configs 前务必先 get_notify_rule_detail(id) 拿全量现状，在其基础上改出完整数组再传，否则会丢掉未提及的通知配置。
+通知规则绑定团队而非业务组：非管理员只能改自己所属团队的规则，且改 user_group_ids 时新列表仍须包含自己所属的团队。notify_configs 里新增配置的 channel_id 需先用 list_notify_channels 确认真实 ID。
+**提案即收尾（系统自动确认通道）**：调用本工具即提交「修改提案」——工具会向用户展示改动清单并暂停对话，等用户确认后由系统自动落库，确认环节不需要也不经过你。一次调用即完成你的全部职责；不要自己复述改动清单，不要传 proposal_id/confirmed。用户拒绝或提出新要求时按新要求重新调用即可（旧提案自动作废）。
+落库成功返回 {id, name, updated, applied:true, url, ...}，最终回复务必把规则名以 Markdown 链接 [name](url) 形式展示。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的通知规则 ID（必填）。可由 list_notify_rules / get_notify_rule_detail / /notification-rules/edit/<id> URL 获取", Required: true},
+		{Name: "config", Type: "string", Description: `增量 patch JSON 对象字符串，只含要修改的字段，字段形状与 create_notify_rule 的 config 一致（如 {"enable":false} 或 {"notify_configs":[...完整数组...]}）。id 不可改`, Required: true},
+		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
 }
 
@@ -735,11 +773,28 @@ var GetAlertSubscribeDetail = aiagent.AgentTool{
 var CreateAlertSubscribe = aiagent.AgentTool{
 	Name: "create_alert_subscribe",
 	Description: `创建告警订阅规则（按级别/标签订阅告警事件，再经通知规则重新路由通知，可改写级别/收件人）。复杂结构走 config（一个 JSON 对象字符串）。
-缺 group_id 时会弹业务组选择表单。severities 必填；推荐用新版路由 notify_version=1 + notify_rule_ids（先 list_notify_rules 拿到真实通知规则ID）。`,
+缺 group_id 时会弹业务组选择表单。severities 必填；推荐用新版路由 notify_version=1 + notify_rule_ids（先 list_notify_rules 拿到真实通知规则ID）。
+创建成功返回 {id, name, url, ...}，最终回复务必把规则名以 Markdown 链接 [name](url) 形式展示，让用户可点击打开配置页。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "group_id", Type: "integer", Description: "业务组ID。不传则从页面上下文/表单注入；都没有会弹业务组选择表单", Required: false},
 		{Name: "config", Type: "string", Description: `订阅规则 JSON 对象字符串。形如 {"name":"订阅名","note":"备注","prod":"metric","cate":"prometheus","severities":[1,2,3],"tags":[{"key":"app","func":"==","value":"redis"}],"rule_ids":[],"notify_version":1,"notify_rule_ids":[5]}。severities 必填(取值 1/2/3)。tags 为事件标签过滤(func: == / != / =~ / !~ / in / not in)。新版路由用 notify_version=1 且 notify_rule_ids 非空(关联的通知规则ID)。rule_ids 可选(只订阅指定告警规则的事件)。datasource_ids 不传默认全部。`, Required: true},
+	},
+}
+
+var UpdateAlertSubscribe = aiagent.AgentTool{
+	Name: "update_alert_subscribe",
+	Description: `修改一条已存在的订阅规则。增量 patch：config 里只写要改的字段，未写的字段一律保持原值；数组字段（tags/severities/rule_ids/notify_rule_ids/busi_groups/datasource_ids）提供时整体替换。
+改前先 get_alert_subscribe_detail(id) 看现状。业务组（管理归属）从规则本身读取，group_id 不可改。
+常见操作：临时停用/恢复传 {"disabled":1}/{"disabled":0}；改告警升级阈值传 {"for_duration":600}；换通知出口传 {"notify_rule_ids":[...]}（先 list_notify_rules 确认 ID）。
+**提案即收尾（系统自动确认通道）**：调用本工具即提交「修改提案」——工具会向用户展示改动清单并暂停对话，等用户确认后由系统自动落库，确认环节不需要也不经过你。一次调用即完成你的全部职责；不要自己复述改动清单，不要传 proposal_id/confirmed。用户拒绝或提出新要求时按新要求重新调用即可（旧提案自动作废）。
+落库成功返回 {id, name, updated, applied:true, url, ...}，最终回复务必把规则名以 Markdown 链接 [name](url) 形式展示。`,
+	Type: aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "id", Type: "integer", Description: "要修改的订阅规则 ID（必填）。可由 list_alert_subscribes / get_alert_subscribe_detail / /alert-subscribes/edit/<id> URL 获取", Required: true},
+		{Name: "config", Type: "string", Description: `增量 patch JSON 对象字符串，只含要修改的字段，字段形状与 create_alert_subscribe 的 config 一致（如 {"for_duration":600,"severities":[1,2]}）。id/group_id 不可改`, Required: true},
+		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
+		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
 }
 

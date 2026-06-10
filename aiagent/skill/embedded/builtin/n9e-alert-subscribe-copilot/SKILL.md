@@ -73,19 +73,20 @@ tags:
 2. **确定关联的通知规则**：用 `list_notify_rules` 拿 `notify_rule_ids`（新版路由的通知出口）。
 3. **（可选）限定订阅范围**：只订阅某些告警规则就用 `list_alert_rules` 拿 `rule_ids`；按标签/业务组/级别/持续时长收窄就填对应过滤字段。
 4. **调用 `create_alert_subscribe`**：`group_id` 传第一步的业务组（也可写在 config 里），`config` 传单个 JSON 对象字符串（不是数组）。若没带 `group_id`，工具会自动弹业务组选择表单，用户选完会续上本次创建。
-5. **回报结果**：工具返回 `{id, name, group_id, disabled, notify_rule_ids}`，简要汇报订阅条件和通知出口即可。
+5. **回报结果**：工具返回 `{id, name, group_id, disabled, notify_rule_ids, url}`，简要汇报订阅条件和通知出口即可。**规则名用站内链接展示：`[<name>](<url>)`**（url 即返回的 `/alert-subscribes/edit/<id>`），用户可点击直达配置页核对。
 
 ## 工作流二：编辑 / 排障
 
-站内**没有 update/delete 订阅规则的工具**，这样做：
-
-1. 用 `list_alert_subscribes` / `get_alert_subscribe_detail` 拿到现有规则。
-2. 在回复里给出**修改后的完整 config JSON + 字段级说明**，让用户在 UI（告警管理 → 订阅规则）对照修改；用户明确要 curl 时按 `http-api.md` 给完整命令。
-3. 临时停用 = `disabled` 置 1（缓存层直接过滤，立即彻底失效）。
-4. 用户说"订阅了没收到"时，按 `troubleshooting.md` 的排查链逐关核对，**主动指出**哪一关最可能没过（常见：for_duration 设太大、busi_groups 名字不匹配、notify_rule_ids 指向的通知规则本身没配对）。
+1. 用 `list_alert_subscribes` / `get_alert_subscribe_detail` 拿到规则 ID 和现状，确认要改什么。
+2. 调用 `update_alert_subscribe`（**提案制**：调用即向用户展示改动清单并暂停，用户确认后系统自动落库，确认环节不经过你）：`id` 必填，`config` 只写要改的字段（**增量 patch**：未写的字段保持原值；tags/severities/rule_ids/notify_rule_ids/busi_groups/datasource_ids 等数组字段提供时**整体替换**——先从 detail 拿现有数组，在其基础上改出完整数组再传）。常见操作：
+   - **临时停用** = config 传 `{"disabled":1}`（缓存层直接过滤，立即彻底失效），恢复 = `{"disabled":0}`
+   - **调告警升级阈值** = `{"for_duration":600}`；**换通知出口** = `{"notify_rule_ids":[...]}`（先 `list_notify_rules` 确认 ID）
+   - 业务组（管理归属）不可改；**删除**站内没有工具，让用户在 UI（告警管理 → 订阅规则）操作
+3. 用户说"订阅了没收到"时，按 `troubleshooting.md` 的排查链逐关核对，**主动指出**哪一关最可能没过（常见：for_duration 设太大、busi_groups 名字不匹配、notify_rule_ids 指向的通知规则本身没配对）；确认是某关配置问题后，可直接用 `update_alert_subscribe` 修正。
 
 ## 输出风格
 
-1. 创建走工具直接落库；编辑只给指令和完整 JSON，不替用户改库或调 API（除非用户明确说"帮我用 curl 调一下"——也只给命令模板，不执行）。
+1. 创建走工具直接落库；修改是提案制——调用 `update_alert_subscribe` 后系统会向用户展示改动清单并等确认，所以**调用前不要自己再复述一遍改动**（避免双重确认），调用即完成本轮职责，也不要传 proposal_id/confirmed；HTTP API 仅在用户明确要 curl 时按 `http-api.md` 给命令模板，不执行。
 2. 订阅的效果依赖下游通知规则——给方案时把"订阅条件"和"通知出口（notify_rule_ids 指向谁）"分开讲清楚，必要时用 `get_notify_rule_detail` 核对出口配置。
-3. 全局无过滤订阅（rule_ids、tags、busi_groups 全空）会复制所有事件，落库前向用户复述影响面。
+3. 全局无过滤订阅（rule_ids、tags、busi_groups 全空）会复制所有事件，无论创建还是改出来的，落库前向用户复述影响面。
+4. 修改成功后同样按工作流一第 5 步的链接形式展示规则名（`update_alert_subscribe` 返回值里也有 `url`）。

@@ -94,20 +94,22 @@ tags:
 1. **确定接收通知的团队（用户组）**：用 `list_teams` 拿 `user_group_ids`。用户点名了团队、或前端已弹团队表单时直接用其 ID，不必再问。
 2. **确定通知媒介和模板**：`list_notify_channels` 列出已启用媒介，按用户描述（钉钉/邮件/电话/短信…）匹配 `channel_id`；匹配不到就把候选列给用户选。`template_id` 按上文规则通常不填。
 3. **拼 config 调用 `create_notify_rule`**：复合路由需求先对照 `recipes.md` 拆 NotifyConfig；`config` 传单个 JSON 对象（不是数组），一次建一条。若没带 `user_group_ids`，工具会自动弹团队选择表单，用户选完会续上本次创建。
-4. **回报结果**：工具返回 `{id, name, user_group_ids, notify_configs_count}`，简要汇报规则名、关联团队、通知配置条数即可。创建完成后可在告警规则中通过 `notify_rule_ids` 关联。
+4. **回报结果**：工具返回 `{id, name, user_group_ids, notify_configs_count, url}`，简要汇报规则名、关联团队、通知配置条数即可。**规则名用站内链接展示：`[<name>](<url>)`**（url 即返回的 `/notification-rules/edit/<id>`），用户可点击直达配置页核对。创建完成后可在告警规则中通过 `notify_rule_ids` 关联。
 
 ## 工作流二：编辑 / 复制 / 排障
 
-站内**没有 update/delete 通知规则的工具**，编辑场景这样做：
-
-1. 用 `list_notify_rules` / `get_notify_rule_detail` 拿到现有规则的完整 JSON。
-2. 在回复里给出**修改后的完整 config JSON + 字段级精确说明**（动的是 `notify_configs[1].attributes[0].func` 这种路径，不是"改一下属性"），让用户在 UI（告警管理 → 通知规则）粘贴/对照修改；用户明确要 curl 时按 `http-api.md` 给完整命令（PUT 是整体替换，必须先 GET 再改再 PUT）。
-3. 复制规则 = get 详情 → 改名/改差异字段 → `create_notify_rule` 新建一条。
-4. 用户写出会踩坑的配置（业务组按名绑定 / `in` 用逗号 / 跨午夜不拆段 / week 写反…）时，对照 `troubleshooting.md` **主动纠正**。
-5. 改完建议用户先 dry-run 验证再放量：拿一条真实历史事件 ID 走 `POST /api/n9e/notify-rule/test`（见 `troubleshooting.md`）。
+1. 用 `list_notify_rules` / `get_notify_rule_detail` 拿到规则 ID 和现有配置的完整 JSON。
+2. 调用 `update_notify_rule`（**提案制**：调用即向用户展示改动清单并暂停，用户确认后系统自动落库，确认环节不经过你）：`id` 必填，`config` 只写要改的字段（**增量 patch**：未写的字段保持原值）。两类改法注意区分：
+   - **顶层标量**（启停/改名/改描述）：config 只传那一个字段即可，如 `{"enable":false}`
+   - **`notify_configs` / `user_group_ids` 是整体替换不是追加**：哪怕只动 `notify_configs[1].attributes[0].func` 一个值，也必须基于 detail 的现状改出**完整数组**再传，否则未提及的通知配置会被丢掉
+3. 非管理员只能改自己所属团队的规则；改 `user_group_ids` 时新列表仍须包含自己所属的团队。新增通知配置缺 `template_id` 时工具会自动补该渠道默认模板（同创建）。
+4. 复制规则 = get 详情 → 改名/改差异字段 → `create_notify_rule` 新建一条。
+5. 用户写出会踩坑的配置（业务组按名绑定 / `in` 用逗号 / 跨午夜不拆段 / week 写反…）时，对照 `troubleshooting.md` **主动纠正**。
+6. 改完建议用户先 dry-run 验证再放量：拿一条真实历史事件 ID 走 `POST /api/n9e/notify-rule/test`（见 `troubleshooting.md`）。
 
 ## 输出风格
 
 1. 第一句话锁定层（规则层才接，否则转对应 skill，不替别人的 skill 做事）。
 2. 复合路由需求直接映射到 `recipes.md` 最贴近的模板，给**完整 JSON 草稿**，不让用户自己填字段名。
-3. 创建走工具直接落库；编辑只给指令和完整 JSON，不替用户改库或调 API（除非用户明确说"帮我用 curl 调一下"——也只给命令模板，不执行）。
+3. 创建走工具直接落库；修改是提案制——调用 `update_notify_rule` 后系统会向用户展示改动清单并等确认，**调用前不要自己再复述一遍改动**（避免双重确认），也不要传 proposal_id/confirmed。例外：改 `notify_configs` 整组替换时，系统文案只能展示整组 JSON（超长截断），调用前可用一句话点明实际动的字段路径（如"只把 `notify_configs[1].severities` 改成 [1,2]"）；HTTP API 仅在用户明确要 curl 时按 `http-api.md` 给命令模板，不执行。
+4. 修改成功后同样按工作流一第 4 步的链接形式展示规则名（`update_notify_rule` 返回值里也有 `url`）。

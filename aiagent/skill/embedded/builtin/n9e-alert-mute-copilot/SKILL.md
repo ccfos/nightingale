@@ -67,19 +67,21 @@ tags:
 1. **确定业务组**：用 `list_busi_groups` 拿 `group_id`。用户点名了业务组、或前端已弹业务组表单时直接用其 ID，不必再问。
 2. **构建 config**：按用户描述拼 tags（屏蔽哪台机器/哪类规则/哪些标签）和时间模式；拿不准字段读 `reference.md`。
 3. **调用 `create_alert_mute`**：`group_id` 传业务组（也可写在 config 里），`config` 传单个 JSON 对象字符串（不是数组）；固定时段把时长传 `duration` 参数。若没带 `group_id`，工具会自动弹业务组选择表单，用户选完会续上本次创建。
-4. **回报结果**：工具返回 `{id, group_id, cause, btime, etime}`，简要汇报屏蔽对象、生效区间即可。
+4. **回报结果**：工具返回 `{id, group_id, note, cause, btime, etime, url}`，简要汇报屏蔽对象、生效区间即可。**规则标题用站内链接展示：`[<note>](<url>)`**（url 即返回的 `/alert-mutes/edit/<id>?bgid=<group_id>`，**bgid 参数必须保留**，缺了前端页面不渲染；`note` 为空就用 `cause` 作链接文本），用户可点击直达配置页核对。
 
 ## 工作流二：编辑 / 延长 / 排障
 
-站内**没有 update/delete 屏蔽规则的工具**，这样做：
-
-1. 用 `list_alert_mutes` / `get_alert_mute_detail` 拿到现有规则。
-2. 在回复里给出**修改后的完整 config JSON + 字段级说明**（如"把 `etime` 延到 X / 给 `tags[0].value` 加一台机器"），让用户在 UI（告警管理 → 告警屏蔽）对照修改；用户明确要 curl 时按 `http-api.md` 给完整命令（PUT 单对象整体替换，先 GET 再改再 PUT）。
-3. 延长屏蔽 = 改 `etime`；临时停用 = `disabled` 置 1（比删除安全）；过期的固定时段屏蔽不会自动删除，可提醒用户定期清理。
-4. 用户说"屏蔽了还在告警"时，按 `troubleshooting.md` 的排查链逐关核对，**主动指出**哪一关最可能没过。
+1. 用 `list_alert_mutes` / `get_alert_mute_detail` 拿到规则 ID 和现状，确认要改什么。
+2. 调用 `update_alert_mute`（**提案制**：调用即向用户展示改动清单并暂停，用户确认后系统自动落库，确认环节不经过你）：`id` 必填，`config` 只写要改的字段（**增量 patch**：未写的字段保持原值；tags/severities/datasource_ids/periodic_mutes 等数组字段提供时**整体替换**——改 tags 先从 detail 拿现有数组，在其基础上改出完整数组再传）。常见操作：
+   - **延长/重设屏蔽时长**：直接传 `duration` 参数（如 `"2h"`/`"7d"`），etime 按"从现在再屏蔽这么久"重算，不用算时间戳；用户给绝对截止时刻才在 config 里填 `etime`（Unix 秒）
+   - **临时停用** = config 传 `{"disabled":1}`（比删除安全），恢复 = `{"disabled":0}`
+   - 业务组不可改；**删除**站内没有工具，让用户在 UI（告警管理 → 告警屏蔽）操作
+3. 过期的固定时段屏蔽不会自动删除，可提醒用户定期清理。
+4. 用户说"屏蔽了还在告警"时，按 `troubleshooting.md` 的排查链逐关核对，**主动指出**哪一关最可能没过；确认是某关配置问题后，可直接用 `update_alert_mute` 修正。
 
 ## 输出风格
 
-1. 创建走工具直接落库；编辑只给指令和完整 JSON，不替用户改库或调 API（除非用户明确说"帮我用 curl 调一下"——也只给命令模板，不执行）。
+1. 创建走工具直接落库；修改是提案制——调用 `update_alert_mute` 后系统会向用户展示改动清单并等确认，所以**调用前不要自己再复述一遍改动**（避免双重确认），调用即完成本轮职责，也不要传 proposal_id/confirmed；HTTP API 仅在用户明确要 curl 时按 `http-api.md` 给命令模板，不执行。
 2. 用户描述模糊时（"屏蔽一下那个告警"），先用 `list_alert_mutes` / 事件标签确认屏蔽对象，再给带真实标签值的草稿，不要凭空猜 key。
-3. 无条件屏蔽（tags 空）和超长屏蔽（如 30 天）属于高危配置，落库前向用户复述影响面。
+3. 无条件屏蔽（tags 空）和超长屏蔽（如 30 天）属于高危配置，无论创建还是改出来的，落库前向用户复述影响面。
+4. 修改成功后同样按工作流一第 4 步的链接形式展示规则标题（`update_alert_mute` 返回值里也有 `url`）。
