@@ -73,7 +73,7 @@ tags:
 
 1. 用 `list_alert_mutes` / `get_alert_mute_detail` 拿到规则 ID 和现状，确认要改什么。
 2. 调用 `update_alert_mute`（**提案制**：调用即向用户展示改动清单并暂停，用户确认后系统自动落库，确认环节不经过你）：`id` 必填，`config` 只写要改的字段（**增量 patch**：未写的字段保持原值；tags/severities/datasource_ids/periodic_mutes 等数组字段提供时**整体替换**——改 tags 先从 detail 拿现有数组，在其基础上改出完整数组再传）。常见操作：
-   - **延长/重设屏蔽时长**：直接传 `duration` 参数（如 `"2h"`/`"7d"`），etime 按"从现在再屏蔽这么久"重算，不用算时间戳；用户给绝对截止时刻才在 config 里填 `etime`（Unix 秒）
+   - **延长/重设屏蔽时长**：直接传 `duration` 参数（如 `"2h"`/`"7d"`），etime 按"从现在再屏蔽这么久"重算，不用算时间戳；用户给绝对截止时刻才在 config 里填 `etime`（Unix 秒）——`etime` 与 `duration` 互斥，二选一，同传会被拒
    - **临时停用** = config 传 `{"disabled":1}`（比删除安全），恢复 = `{"disabled":0}`
    - 业务组不可改；**删除**站内没有工具，让用户在 UI（告警管理 → 告警屏蔽）操作
 3. 过期的固定时段屏蔽不会自动删除，可提醒用户定期清理。

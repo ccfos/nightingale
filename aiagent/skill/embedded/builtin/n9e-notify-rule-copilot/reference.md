@@ -35,20 +35,44 @@
 
 ## params 渠道参数
 
-### 标准用户类渠道（dingtalk/feishu/wecom/email/sms/voice…）
+**params 的形状由所选媒介决定，不同媒介需要用户提供的信息完全不同。** `list_notify_channels` 返回的 `contact_key` / `custom_params` / `request_type` 三个字段就是判定依据，对号入座：
+
+| 判定 | params 形状 | 需要用户提供什么 |
+|---|---|---|
+| `contact_key` 非空（email/短信/电话…） | `{"user_ids":[...], "user_group_ids":[...]}` | 接收人是谁（人或团队） |
+| `custom_params` 非空（钉钉/企微/飞书群机器人、callback、telegram、自定义 webhook…） | `{"<key>": "<值>"}` 逐个 key 填字符串 | 每个 key 的值，如群机器人的 access_token |
+| `request_type=flashduty` | `{"ids": [<协作空间 channel_id>]}` | FlashDuty 协作空间 ID（不填走集成默认空间） |
+| `request_type=pagerduty` | 见下方 PagerDuty | 勾选目标 Service（工具场景让用户给 integration key） |
+
+前两行**不互斥**：用户自建渠道可能 `contact_key` 与 `custom_params` 同时非空，此时 custom_params 决定是否发送（**必填**），`user_ids`/`user_group_ids` 只决定在群里 @ 谁（可选）——别只按第一行命中就漏掉 token。
+
+**缺信息就停下来问用户，不要留空或编造**——问的时候附上下方《媒介参数速查与文档链接》里对应的官方文档，告诉用户去哪里拿这个值（如"钉钉群 → 群设置 → 智能群助手 → 机器人 Webhook URL 里 access_token= 后面那串"）。
+
+### 用户接收人类（contact_key 非空）
 
 ```json
 { "user_ids": [1, 2, 3], "user_group_ids": [1, 2] }
 ```
 
 - `user_ids` 与 `user_group_ids` 是 **OR** 关系，命中的用户去重后取联系方式。
-- 具体取哪个联系字段（phone/email/dingtalk_userid…）由渠道 `ParamConfig.UserInfo.ContactKey` 决定——用户 `contact_info` 里这个字段空着就**静默不发**（"测试 OK 真实告警没发出"最常见根因）。
-- 群机器人类（钉钉/企微/飞书群 webhook）`ContactKey` 通常留空，此时 `params` 只决定"在卡片里 @ 谁"，不影响是否发送。
+- 具体取哪个联系字段（phone/email/dingtalk_userid…）就是 `contact_key`——用户 `contact_info` 里这个字段空着就**静默不发**（"测试 OK 真实告警没发出"最常见根因），让用户确认接收人已在个人中心/用户管理里填了该字段。
+
+### 自定义参数类（custom_params 非空）
+
+params 的 key 与 `custom_params` 返回的 key 一一对应，值都是字符串，由用户提供。内置群机器人渠道都是这类：
+
+```json
+{ "access_token": "xxxx", "bot_name": "夜莺告警" }
+```
+
+- 是否发送只取决于这些参数（如 access_token 对不对），与接收人无关；若媒介上配置了"联系方式"（contact_key 也非空），可再加 `user_ids` 决定在群里 **@ 谁**。
+- token/key/url 必须用户给；`bot_name` / `note` 这类**备注参数**在要 token 时顺带问一句（"这个机器人是哪个群/什么用途，给个备注"）——用户没给就**不要追问也不要留空**，按通知规则的配置自动生成一个（用规则名/路由意图，如"夜莺告警-核心服务P1"），规则多了没备注就分不清哪个 token 对应哪个群。
+- **复用已填过的值**：用 `list_notify_rule_custom_params(notify_channel_id)` 查其他规则在该媒介下填过的参数值（按取值分组、附使用它的规则名）。用户说"发到和规则 X 同一个钉钉群"或没带 token 时先查这里，匹配上了就直接复用、不必让用户翻 Webhook；查不到或用户明说是新群，再问用户要。
 
 ### Flashduty 渠道
 
 ```json
-{ "ids": ["flashduty_channel_id_1"] }
+{ "ids": [123] }
 ```
 
 ### PagerDuty 渠道
@@ -60,9 +84,27 @@
 }
 ```
 
-### 自定义 Webhook 渠道
+### 媒介参数速查与文档链接
 
-params 的 key 由渠道配置中的 `param_config.custom.params` 定义，值为字符串类型。复制其他规则的自定义参数可用 `GET /api/n9e/notify-rule-custom-params?notify_channel_id=<id>`。
+向用户要参数时附上对应链接（站外可点）。URL 前缀统一为 `https://flashcat.cloud/docs/content/flashcat-monitor/nightingale-v9/usage/alert-notify/notify-channel/`，下表只写末段：
+
+| 媒介 ident | 通知规则里要用户提供 | 文档末段 |
+|---|---|---|
+| `dingtalk` 钉钉群机器人 | `access_token`：群设置→智能群助手→机器人 Webhook URL 里 `access_token=` 后的串 | `dingtalk/` |
+| `wecom` 企微群机器人 | `key`：群机器人 Webhook URL 里 `key=` 后的串 | `wecom/` |
+| `feishucard` 飞书群卡片 | `access_token`：群机器人 Webhook URL 末段 | `feishucard/` |
+| `larkcard` Lark 群卡片（国际版） | `access_token`：同上 | `larkcard/` |
+| `email` 邮件 | 接收人（用户须已配邮箱） | `email/` |
+| `ali-sms` / `tx-sms` 短信 | 接收人（用户须已配手机号） | `ali-sms/` `tx-sms/` |
+| `ali-voice` / `tx-voice` 电话 | 接收人（用户须已配手机号） | `ali-voice/` `tx-voice/` |
+| `flashduty` FlashDuty | 协作空间 ID（不填走集成默认空间） | `flashduty/` |
+| `pagerduty` PagerDuty | 目标 Service（前端下拉勾选；API 场景要 integration key） | `pagerduty/` |
+| `callback` 回调 | `callback_url`：能被夜莺访问的 HTTP(S) 地址 | `callback/` |
+| `telegram` Telegram | Bot Token + Chat ID | `telegram/` |
+| `jsm_alert` JSM Alert | API Key（JSM API 集成生成） | `jsm-alert/` |
+| `script` 脚本 | 通常无需参数（脚本在媒介里） | `script/` |
+
+用户自建的媒介（ident 不在上表）以 `custom_params` 返回的 key 为准逐个问；问不出含义时给用户通知媒介总览文档：`.../notify-channel/`（即上述前缀本身）。
 
 ## time_ranges 适用时段
 

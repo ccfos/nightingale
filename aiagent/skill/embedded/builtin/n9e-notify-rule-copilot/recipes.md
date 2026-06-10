@@ -2,6 +2,8 @@
 
 把用户的自然语言路由意图映射到下面最贴近的模板，给出**完整 JSON 草稿**——不要让用户自己填字段名。`<xxx_id>` 占位符用 `list_notify_channels` / `list_teams` 查到的真实 ID 替换。
 
+> **params 只是接收人类渠道的示意**：实际形状以 `list_notify_channels` 返回的 `contact_key`/`custom_params` 为准（对照表与各媒介文档链接见 `reference.md`）。内置钉钉/企微/飞书**群机器人**渠道的 params 是 `{"access_token": "...", "bot_name": "<备注>"}` / `{"key": "...", "bot_name": "<备注>"}`，不是 user_ids——token 用户没给就先 `list_notify_rule_custom_params` 查已有规则能不能复用，再不行问用户并附文档链接说明去哪拿；备注（bot_name/note）顺带问一句，用户没给就按规则名/路由意图生成，不留空。
+
 ## 模板 A：分级走不同通道
 
 > 「P1 告警打电话 + 钉钉，P2/P3 告警只发钉钉」

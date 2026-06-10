@@ -207,6 +207,11 @@ func updateAlertMute(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 		if err := rejectEmptyArrayPatch(patch, "severities"); err != nil {
 			return "", err
 		}
+		// etime 与 duration 互斥：同传时写入以 duration 为准，但确认文案会出现两行
+		// 矛盾的 etime——违背"用户看到的就是将要写入的全部改动"，直接拒绝让模型改参重试。
+		if _, ok := patch["etime"]; ok && durStr != "" {
+			return "", fmt.Errorf("etime (in config) and duration are mutually exclusive: pass duration to re-mute relative to now, or etime alone for an absolute end time")
+		}
 		if err := json.Unmarshal([]byte(configJSON), &merged); err != nil {
 			return "", fmt.Errorf("invalid config JSON: %v", err)
 		}
@@ -225,10 +230,9 @@ func updateAlertMute(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 			base = merged.Btime
 		}
 		merged.Etime = base + secs
-		if !slices.Contains(changed, "etime") {
-			changed = append(changed, "etime")
-			slices.Sort(changed)
-		}
+		// patch 里的 etime 已被上面的互斥守卫拒掉，这里不会重复。
+		changed = append(changed, "etime")
+		slices.Sort(changed)
 		changeDescs = append(changeDescs, fmt.Sprintf("`etime` → 约 %s（再屏蔽 %s，自确认时刻起算）", formatUnixTime(merged.Etime), durStr))
 	}
 	// configPatch 滤掉了 id/group_id：config 只含这俩（或为 {}）且没传 duration 时是零改动。

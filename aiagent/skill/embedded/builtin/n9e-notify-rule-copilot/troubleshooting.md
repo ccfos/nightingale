@@ -5,6 +5,7 @@
 | 现象 | 大概率原因 | 处理 |
 |---|---|---|
 | 测试发送 OK，真实告警没出来 | 接收人 `contact_info.<ContactKey>` 为空 → `sendtos` 空 → 静默不发 | 转 `n9e-alert-rule-troubleshoot` 流程 B；本 skill 只负责让用户检查渠道的 `ContactKey` 和用户的 contact_info |
+| 群机器人渠道（钉钉/企微/飞书）一直没发出 | params 没填该渠道的自定义参数（`access_token`/`key`），或 token 填错——这类渠道发送只看 token，与接收人无关 | 对照 `list_notify_channels` 的 `custom_params` 补齐 params；token 哪里拿见 `reference.md` 速查表对应文档链接 |
 | 告警规则保存了但通知记录一直为空 | 告警规则没关联到这条通知规则（`alert_rule.notify_rule_ids` 为空 / 仍走老版 `notify_groups`） | 告警规则列表 → 批量更新 → 关联通知规则 |
 | 业务组改名后规则突然失配 | `attributes.group_name == "old-name"` 按名字硬绑 | 改用 `=~` 加正则，或同步改这条规则 |
 | `attributes` 用 `in` 多个值无效 | value 写成逗号分隔 `"a,b,c"` | 改成**空格**：`"a b c"` |

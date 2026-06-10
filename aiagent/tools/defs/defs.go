@@ -634,8 +634,8 @@ var UpdateAlertMute = aiagent.AgentTool{
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "id", Type: "integer", Description: "要修改的屏蔽规则 ID（必填）。可由 list_alert_mutes / get_alert_mute_detail / /alert-mutes/edit/<id> URL 获取", Required: true},
-		{Name: "config", Type: "string", Description: `增量 patch JSON 对象字符串，只含要修改的字段，字段形状与 create_alert_mute 的 config 一致（如 {"cause":"维护窗口延长","tags":[{"key":"ident","func":"==","value":"web01"}],"disabled":0}）。id/group_id 不可改。与 duration 至少传一个`, Required: false},
-		{Name: "duration", Type: "string", Description: `新的屏蔽时长，如 "2h"/"7d"/"1d12h"（支持 s/m/h/d/w）：从当前时刻（btime 在未来则从 btime）起重算 etime，等价"再屏蔽这么久"。与 config 至少传一个`, Required: false},
+		{Name: "config", Type: "string", Description: `增量 patch JSON 对象字符串，只含要修改的字段，字段形状与 create_alert_mute 的 config 一致（如 {"cause":"维护窗口延长","tags":[{"key":"ident","func":"==","value":"web01"}],"disabled":0}）。id/group_id 不可改；etime 与 duration 参数二选一。与 duration 至少传一个`, Required: false},
+		{Name: "duration", Type: "string", Description: `新的屏蔽时长，如 "2h"/"7d"/"1d12h"（支持 s/m/h/d/w）：从当前时刻（btime 在未来则从 btime）起重算 etime，等价"再屏蔽这么久"。与 config 里的 etime 互斥（同传会报错），要指定绝对截止时刻就只在 config 写 etime。与 config 至少传一个`, Required: false},
 		{Name: "proposal_id", Type: "string", Description: "系统确认通道专用（用户确认后由系统自动重放时携带），模型不要传", Required: false},
 		{Name: "confirmed", Type: "boolean", Description: "系统确认通道专用，模型不要传", Required: false},
 	},
@@ -671,7 +671,7 @@ var CreateNotifyRule = aiagent.AgentTool{
 创建成功返回 {id, name, url, ...}，最终回复务必把规则名以 Markdown 链接 [name](url) 形式展示，让用户可点击打开配置页。`,
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
-		{Name: "config", Type: "string", Description: `通知规则 JSON 对象字符串。形如 {"name":"规则名","description":"备注","enable":true,"user_group_ids":[1,2],"notify_configs":[{"channel_id":1,"template_id":1,"severities":[1,2,3],"time_ranges":[{"week":[1,2,3,4,5],"start":"09:00","end":"18:00"}],"label_keys":[],"attributes":[]}]}。user_group_ids 是接收通知的团队ID列表(没带会弹团队选择表单)。notify_configs[].channel_id 必须>0(真实通知媒介ID，用 list_notify_channels 获取)，severities 取值 1/2/3。time_ranges 为空=不限时段；label_keys/attributes 为标签/属性过滤(func: == / != / =~ / !~ / in / not in)。`, Required: true},
+		{Name: "config", Type: "string", Description: `通知规则 JSON 对象字符串。形如 {"name":"规则名","description":"备注","enable":true,"user_group_ids":[1,2],"notify_configs":[{"channel_id":1,"template_id":1,"severities":[1,2,3],"time_ranges":[{"week":[1,2,3,4,5],"start":"09:00","end":"18:00"}],"label_keys":[],"attributes":[]}]}。user_group_ids 是接收通知的团队ID列表(没带会弹团队选择表单)。notify_configs[].channel_id 必须>0(真实通知媒介ID，用 list_notify_channels 获取)，severities 取值 1/2/3。notify_configs[].params 按媒介形状填：contact_key 类媒介填 {"user_ids":[...],"user_group_ids":[...]} 选接收人；custom_params 类媒介(钉钉/企微/飞书群机器人等)逐 key 填字符串值(如 {"access_token":"...","bot_name":"..."})：token/key/url 必须由用户提供不要编造；bot_name/note 等备注参数用户没给时按规则名/用途自动生成，不要留空。time_ranges 为空=不限时段；label_keys/attributes 为标签/属性过滤(func: == / != / =~ / !~ / in / not in)。`, Required: true},
 	},
 }
 
@@ -692,7 +692,7 @@ var UpdateNotifyRule = aiagent.AgentTool{
 
 var ListNotifyChannels = aiagent.AgentTool{
 	Name:        "list_notify_channels",
-	Description: "查询通知媒介(通知渠道)列表，拿到 channel_id 和 ident。创建通知规则配 notify_configs 前先用它确认真实的 channel_id，不要凭空猜。默认只返回已启用的渠道。",
+	Description: "查询通知媒介(通知渠道)列表，拿到 channel_id 和 ident。创建通知规则配 notify_configs 前先用它确认真实的 channel_id，不要凭空猜。返回的 contact_key/custom_params 描述该媒介的 params 需要用户提供什么信息（如钉钉群机器人要 access_token、邮件要选接收人），缺了要先问用户。默认只返回已启用的渠道。",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
 		{Name: "query", Type: "string", Description: "搜索关键词，匹配媒介名称或 ident（如 dingtalk/email/tx-sms）", Required: false},
@@ -707,6 +707,15 @@ var ListMessageTemplates = aiagent.AgentTool{
 	Parameters: []aiagent.ToolParameter{
 		{Name: "notify_channel_ident", Type: "string", Description: "按通知媒介 ident 过滤（如 dingtalk），只列该媒介下的模板", Required: false},
 		{Name: "query", Type: "string", Description: "搜索关键词，匹配模板名称", Required: false},
+	},
+}
+
+var ListNotifyRuleCustomParams = aiagent.AgentTool{
+	Name:        "list_notify_rule_custom_params",
+	Description: "查询已有通知规则里为某个通知媒介填过的自定义参数值（access_token/key 等），按取值分组并附使用它的规则名。复用场景用：用户说\"发到和规则 X 同一个钉钉群\"或新建规则缺 token 时先查这里，能匹配上就不必再让用户去翻 Webhook；查不到或用户要发新群仍须向用户要值。仅对 custom_params 类媒介有意义。",
+	Type:        aiagent.ToolTypeBuiltin,
+	Parameters: []aiagent.ToolParameter{
+		{Name: "notify_channel_id", Type: "integer", Description: "通知媒介 ID，用 list_notify_channels 获取", Required: true},
 	},
 }
 

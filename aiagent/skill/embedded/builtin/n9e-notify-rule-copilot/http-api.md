@@ -12,7 +12,7 @@
 | 更新 | `PUT` | `/api/n9e/notify-rule/<id>` | Body 是单对象，会**整体替换**——必须先 GET 再改再 PUT |
 | 删除 | `POST` | `/api/n9e/notify-rules/del` | Body: `{"ids":[1,2,3]}` |
 | 测试发送 | `POST` | `/api/n9e/notify-rule/test` | Body: `{"event_ids":[<history_event_id>], "notify_config":{...}}` |
-| 拿自定义 webhook 参数 | `GET` | `/api/n9e/notify-rule-custom-params?notify_channel_id=<id>` | 用于复制其他规则的自定义参数 |
+| 拿自定义 webhook 参数 | `GET` | `/api/n9e/notify-rule/custom-params?notify_channel_id=<id>` | 用于复制其他规则的自定义参数 |
 | 可用媒介列表 | `GET` | `/api/n9e/notify-channel-configs` | 拿 channel_id |
 | 模板列表 | `GET` | `/api/n9e/message-templates?channel_id=<id>` | 拿 template_id |
 | 事件标签 key | `GET` | `/api/n9e/event-tagkeys` | label_keys 可选 key |
