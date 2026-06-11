@@ -397,6 +397,15 @@ func (s *AlertSubscribe) MatchCate(cate string) bool {
 	if s.Cate == "" || cate == "" {
 		return true
 	}
+
+	// 历史版本表单中 cate 必填且默认 prometheus，且后端不参与匹配，
+	// 存量数据中的 prometheus 多为表单默认值而非筛选意图，视为不过滤
+	// legacy form forced cate=prometheus by default and it was never matched
+	// against, so treat prometheus as no filter to keep old subscribes working
+	if s.Cate == PROMETHEUS {
+		return true
+	}
+
 	return s.Cate == cate
 }
 
