@@ -50,7 +50,11 @@ func CloseDB(db *gorm.DB) error {
 func ShowTables(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]string, error) {
 	tables := make([]string, 0)
 
-	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := sqlDB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +79,11 @@ func ShowTables(ctx context.Context, db *gorm.DB, query string, args ...interfac
 func ShowDatabases(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]string, error) {
 	var databases []string
 
-	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := sqlDB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +106,11 @@ func ShowDatabases(ctx context.Context, db *gorm.DB, query string, args ...inter
 
 // DescTable describes the schema of a specified table in MySQL or PostgreSQL
 func DescTable(ctx context.Context, db *gorm.DB, query string, args ...interface{}) ([]*types.ColumnProperty, error) {
-	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := sqlDB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +160,11 @@ func DescTable(ctx context.Context, db *gorm.DB, query string, args ...interface
 
 // ExecQuery executes the specified query and returns the result rows
 func ExecQuery(ctx context.Context, db *gorm.DB, sql string, args ...interface{}) ([]map[string]interface{}, error) {
-	rows, err := db.WithContext(ctx).Raw(sql, args...).Rows()
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := sqlDB.QueryContext(ctx, sql, args...)
 	if err != nil {
 		return nil, err
 	}
