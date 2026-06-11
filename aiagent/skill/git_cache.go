@@ -1,4 +1,4 @@
-package router
+package skill
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/aiagent/skill"
 	"github.com/toolkits/pkg/logger"
 	"golang.org/x/sync/singleflight"
 )
@@ -18,27 +17,26 @@ type remoteCommitCacheValue struct {
 	Err       string
 }
 
-type remoteCommitCache struct {
+type RemoteCommitCache struct {
 	mu           sync.Mutex
 	values       map[string]remoteCommitCacheValue
 	refreshGroup singleflight.Group
 	ttl          time.Duration
 }
 
-func newRemoteCommitCache(ttl time.Duration) *remoteCommitCache {
+func NewRemoteCommitCache(ttl time.Duration) *RemoteCommitCache {
 	if ttl <= 0 {
 		ttl = 30 * time.Minute
 	}
-	c := &remoteCommitCache{
+	return &RemoteCommitCache{
 		values: make(map[string]remoteCommitCacheValue),
 		ttl:    ttl,
 	}
-	return c
 }
 
-func remoteCommitCacheKey(cfg skill.GitConfig) string {
+func remoteCommitCacheKey(cfg GitConfig) string {
 	tokenKey := ""
-	if cfg.AuthType == skill.GitAuthToken && cfg.Token != "" {
+	if cfg.AuthType == GitAuthToken && cfg.Token != "" {
 		sum := sha256.Sum256([]byte(cfg.Token))
 		tokenKey = hex.EncodeToString(sum[:])
 	}
@@ -48,8 +46,8 @@ func remoteCommitCacheKey(cfg skill.GitConfig) string {
 // Get returns the cached remote commit immediately. If the value is missing or
 // expired, it schedules a singleflight-backed background refresh and still
 // returns the old value (if any) without blocking the caller.
-func (c *remoteCommitCache) Get(cfg skill.GitConfig) (string, bool) {
-	if c == nil || cfg.RefType == skill.GitRefCommit {
+func (c *RemoteCommitCache) Get(cfg GitConfig) (string, bool) {
+	if c == nil || cfg.RefType == GitRefCommit {
 		return "", false
 	}
 	key := remoteCommitCacheKey(cfg)
@@ -70,7 +68,7 @@ func (c *remoteCommitCache) Get(cfg skill.GitConfig) (string, bool) {
 	return v.Commit, true
 }
 
-func (c *remoteCommitCache) refreshAsync(key string, cfg skill.GitConfig) {
+func (c *RemoteCommitCache) refreshAsync(key string, cfg GitConfig) {
 	// DoChan runs the refresh in the background and coalesces concurrent calls
 	// for the same key. The result is stored in c.values, so the channel can be
 	// ignored.
@@ -80,11 +78,11 @@ func (c *remoteCommitCache) refreshAsync(key string, cfg skill.GitConfig) {
 	})
 }
 
-func (c *remoteCommitCache) refresh(key string, cfg skill.GitConfig) {
+func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	commit, err := skill.LatestGitCommit(ctx, cfg)
+	commit, err := LatestGitCommit(ctx, cfg)
 	now := time.Now()
 
 	c.mu.Lock()

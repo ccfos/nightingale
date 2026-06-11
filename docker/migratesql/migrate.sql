@@ -433,13 +433,7 @@ CREATE TABLE `ai_skill` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai skills';
 
 ALTER TABLE `ai_skill` ADD COLUMN `source_type` varchar(16) NOT NULL DEFAULT 'local' COMMENT 'skill source type: local/git' AFTER `enabled`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_url` varchar(2048) NOT NULL DEFAULT '' COMMENT 'git repository url' AFTER `source_type`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_ref_type` varchar(16) NOT NULL DEFAULT '' COMMENT 'git ref type: branch/tag/commit' AFTER `git_url`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_ref` varchar(255) NOT NULL DEFAULT '' COMMENT 'git ref value' AFTER `git_ref_type`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_auth_type` varchar(16) NOT NULL DEFAULT '' COMMENT 'git auth type: none/token' AFTER `git_ref`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_token` text COMMENT 'encrypted git token' AFTER `git_auth_type`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_subdir` varchar(512) NOT NULL DEFAULT '' COMMENT 'skill subdir in git repository' AFTER `git_token`;
-ALTER TABLE `ai_skill` ADD COLUMN `git_current_commit` varchar(64) NOT NULL DEFAULT '' COMMENT 'current synced git commit' AFTER `git_subdir`;
+ALTER TABLE `ai_skill` ADD COLUMN `git_info` text COMMENT 'git source info (JSON)' AFTER `source_type`;
 
 CREATE TABLE `mcp_server` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,

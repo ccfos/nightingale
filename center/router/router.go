@@ -73,7 +73,7 @@ type Router struct {
 	aiSkillSyncOnce sync.Once
 	aiSkillSyncMu   sync.Mutex
 
-	aiSkillRemoteCommitCache *remoteCommitCache
+	aiSkillRemoteCommitCache *skill.RemoteCommitCache
 }
 
 // TargetDeleteCheckFunc 删除机器前的前置校验，返回不满足删除条件的机器及原因（ident -> 错误信息）。
@@ -117,7 +117,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
 
-		aiSkillRemoteCommitCache: newRemoteCommitCache(6 * time.Hour),
+		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(6 * time.Hour),
 	}
 
 	// per-skill 文件数上限：toml 的 AIAgent.MaxFilesPerSkill 是唯一来源，这里写入

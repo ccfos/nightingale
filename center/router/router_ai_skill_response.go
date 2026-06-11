@@ -18,35 +18,35 @@ func (rt *Router) decorateAISkill(s *models.AISkill) {
 		return
 	}
 	s.SetDefaultSourceType()
-	s.GitToken = ""
 	s.Builtin = s.CreatedBy == "system"
-	if s.Builtin {
-		rt.fillBuiltinGitHasNewVersion(s)
-		s.GitURL = ""
-		s.GitRefType = ""
-		s.GitRef = ""
-		s.GitAuthType = ""
-		s.GitSubdir = ""
+	if s.GitInfo == nil {
+		return
 	}
+	if s.Builtin {
+		rt.fillBuiltinGitHasNewVersion(s, *s.GitInfo)
+		s.GitInfo = &models.AISkillGitInfo{CurrentCommit: s.GitInfo.CurrentCommit}
+		return
+	}
+	s.GitInfo.Token = ""
 }
 
-func (rt *Router) fillBuiltinGitHasNewVersion(s *models.AISkill) {
-	token, err := rt.decryptGitToken(s.GitToken)
+func (rt *Router) fillBuiltinGitHasNewVersion(s *models.AISkill, gitInfo models.AISkillGitInfo) {
+	token, err := rt.decryptGitToken(gitInfo.Token)
 	if err != nil {
 		logger.Warningf("[AISkillGit] decrypt token for builtin skill %q failed: %v", s.Name, err)
 		return
 	}
 	cfg := skill.GitConfig{
-		URL:      s.GitURL,
-		RefType:  s.GitRefType,
-		Ref:      s.GitRef,
-		AuthType: s.GitAuthType,
+		URL:      gitInfo.URL,
+		RefType:  gitInfo.RefType,
+		Ref:      gitInfo.Ref,
+		AuthType: gitInfo.AuthType,
 		Token:    token,
-		Subdir:   s.GitSubdir,
+		Subdir:   gitInfo.Subdir,
 	}
 	latest, ok := rt.aiSkillRemoteCommitCache.Get(cfg)
-	if !ok || latest == "" || s.GitCurrentCommit == "" {
+	if !ok || latest == "" || gitInfo.CurrentCommit == "" {
 		return
 	}
-	s.HasNewVersion = latest != s.GitCurrentCommit
+	s.HasNewVersion = latest != gitInfo.CurrentCommit
 }
