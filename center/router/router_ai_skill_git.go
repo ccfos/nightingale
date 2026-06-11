@@ -82,14 +82,9 @@ func (rt *Router) aiSkillGitInstallPut(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 	ref := models.AISkill{
-		SourceType:  models.AISkillSourceGit,
-		GitURL:      fields.URL,
-		GitRefType:  fields.RefType,
-		GitRef:      fields.Ref,
-		GitAuthType: fields.AuthType,
-		GitToken:    fields.Token,
-		GitSubdir:   fields.Subdir,
-		UpdatedBy:   me.Username,
+		SourceType: models.AISkillSourceGit,
+		GitInfo:    aiSkillGitInfoFromFields(fields),
+		UpdatedBy:  me.Username,
 	}
 	ginx.Dangerous(current.UpdateGitFields(rt.Ctx, ref))
 	ginx.NewRender(c).Data(id, nil)
@@ -123,14 +118,18 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 }
 
 func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
+	var gitInfo models.AISkillGitInfo
+	if obj.GitInfo != nil {
+		gitInfo = *obj.GitInfo
+	}
 	var req aiSkillGitRequest
-	req.GitURL = nonEmptyStringPtr(obj.GitURL)
-	req.GitRefType = nonEmptyStringPtr(obj.GitRefType)
-	req.GitRef = nonEmptyStringPtr(obj.GitRef)
-	req.GitAuthType = nonEmptyStringPtr(obj.GitAuthType)
-	req.GitSubdir = nonEmptyStringPtr(obj.GitSubdir)
-	if obj.GitToken != "" {
-		req.GitToken = &obj.GitToken
+	req.GitURL = nonEmptyStringPtr(gitInfo.URL)
+	req.GitRefType = nonEmptyStringPtr(gitInfo.RefType)
+	req.GitRef = nonEmptyStringPtr(gitInfo.Ref)
+	req.GitAuthType = nonEmptyStringPtr(gitInfo.AuthType)
+	req.GitSubdir = nonEmptyStringPtr(gitInfo.Subdir)
+	if gitInfo.Token != "" {
+		req.GitToken = &gitInfo.Token
 	}
 
 	var current *models.AISkill
@@ -218,12 +217,16 @@ func (rt *Router) gitConfigForInstall(req aiSkillGitRequest) (skill.GitConfig, a
 }
 
 func (rt *Router) gitConfigForUpdate(current *models.AISkill, req aiSkillGitRequest, builtin bool) (skill.GitConfig, aiSkillGitFields, error) {
+	var currentGitInfo models.AISkillGitInfo
+	if current.GitInfo != nil {
+		currentGitInfo = *current.GitInfo
+	}
 	cfg := skill.GitConfig{
-		URL:      current.GitURL,
-		RefType:  current.GitRefType,
-		Ref:      current.GitRef,
-		AuthType: current.GitAuthType,
-		Subdir:   current.GitSubdir,
+		URL:      currentGitInfo.URL,
+		RefType:  currentGitInfo.RefType,
+		Ref:      currentGitInfo.Ref,
+		AuthType: currentGitInfo.AuthType,
+		Subdir:   currentGitInfo.Subdir,
 	}
 
 	if !builtin {
@@ -247,7 +250,7 @@ func (rt *Router) gitConfigForUpdate(current *models.AISkill, req aiSkillGitRequ
 		cfg.AuthType = skill.GitAuthNone
 	}
 
-	storedToken := current.GitToken
+	storedToken := currentGitInfo.Token
 	if cfg.AuthType == skill.GitAuthToken {
 		if !builtin && req.GitToken != nil {
 			token, err := rt.gitTokenForUse(*req.GitToken)
@@ -261,7 +264,7 @@ func (rt *Router) gitConfigForUpdate(current *models.AISkill, req aiSkillGitRequ
 			}
 			storedToken = encrypted
 		} else {
-			token, err := rt.decryptGitToken(current.GitToken)
+			token, err := rt.decryptGitToken(currentGitInfo.Token)
 			if err != nil {
 				return cfg, aiSkillGitFields{}, err
 			}
@@ -291,24 +294,18 @@ func (rt *Router) doSkillGitImport(meta skill.Frontmatter, instructions string, 
 	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 		obj := models.AISkill{
-			Name:             meta.Name,
-			Description:      meta.Description,
-			Instructions:     instructions,
-			License:          meta.License,
-			Compatibility:    meta.Compatibility,
-			Metadata:         meta.Metadata,
-			AllowedTools:     meta.AllowedTools,
-			Enabled:          enabled,
-			SourceType:       models.AISkillSourceGit,
-			GitURL:           gitFields.URL,
-			GitRefType:       gitFields.RefType,
-			GitRef:           gitFields.Ref,
-			GitAuthType:      gitFields.AuthType,
-			GitToken:         gitFields.Token,
-			GitSubdir:        gitFields.Subdir,
-			GitCurrentCommit: gitFields.Commit,
-			CreatedBy:        username,
-			UpdatedBy:        username,
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			Enabled:       enabled,
+			SourceType:    models.AISkillSourceGit,
+			GitInfo:       aiSkillGitInfoFromFields(gitFields),
+			CreatedBy:     username,
+			UpdatedBy:     username,
 		}
 		if err := obj.Create(tCtx); err != nil {
 			return err
@@ -323,23 +320,17 @@ func (rt *Router) doSkillGitUpdate(current *models.AISkill, meta skill.Frontmatt
 	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 		ref := models.AISkill{
-			Name:             meta.Name,
-			Description:      meta.Description,
-			Instructions:     instructions,
-			License:          meta.License,
-			Compatibility:    meta.Compatibility,
-			Metadata:         meta.Metadata,
-			AllowedTools:     meta.AllowedTools,
-			Enabled:          current.Enabled,
-			SourceType:       models.AISkillSourceGit,
-			GitURL:           gitFields.URL,
-			GitRefType:       gitFields.RefType,
-			GitRef:           gitFields.Ref,
-			GitAuthType:      gitFields.AuthType,
-			GitToken:         gitFields.Token,
-			GitSubdir:        gitFields.Subdir,
-			GitCurrentCommit: gitFields.Commit,
-			UpdatedBy:        username,
+			Name:          meta.Name,
+			Description:   meta.Description,
+			Instructions:  instructions,
+			License:       meta.License,
+			Compatibility: meta.Compatibility,
+			Metadata:      meta.Metadata,
+			AllowedTools:  meta.AllowedTools,
+			Enabled:       current.Enabled,
+			SourceType:    models.AISkillSourceGit,
+			GitInfo:       aiSkillGitInfoFromFields(gitFields),
+			UpdatedBy:     username,
 		}
 		if err := current.UpdateWithGit(tCtx, ref); err != nil {
 			return err
@@ -358,6 +349,18 @@ func upsertSkillFiles(c *ctx.Context, skillId int64, files map[string]string, us
 		})
 	}
 	return models.AISkillFileBatchUpsert(c, skillId, skillFiles, fullSync)
+}
+
+func aiSkillGitInfoFromFields(fields aiSkillGitFields) *models.AISkillGitInfo {
+	return &models.AISkillGitInfo{
+		URL:           fields.URL,
+		RefType:       fields.RefType,
+		Ref:           fields.Ref,
+		AuthType:      fields.AuthType,
+		Token:         fields.Token,
+		Subdir:        fields.Subdir,
+		CurrentCommit: fields.Commit,
+	}
 }
 
 func (rt *Router) encryptGitToken(token string) (string, error) {

@@ -11,32 +11,36 @@ import (
 )
 
 type AISkill struct {
-	Id               int64             `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name             string            `json:"name"`
-	Description      string            `json:"description" gorm:"type:varchar(4096)"`
-	Instructions     string            `json:"instructions" gorm:"type:text"`
-	License          string            `json:"license,omitempty" gorm:"type:varchar(255)"`
-	Compatibility    string            `json:"compatibility,omitempty" gorm:"type:varchar(255)"`
-	Metadata         map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
-	AllowedTools     string            `json:"allowed_tools,omitempty" gorm:"type:varchar(4096)"`
-	Enabled          bool              `json:"enabled"`
-	SourceType       string            `json:"source_type" gorm:"type:varchar(16);default:'local'"`
-	GitURL           string            `json:"git_url,omitempty" gorm:"type:varchar(2048)"`
-	GitRefType       string            `json:"git_ref_type,omitempty" gorm:"type:varchar(16)"`
-	GitRef           string            `json:"git_ref,omitempty" gorm:"type:varchar(255)"`
-	GitAuthType      string            `json:"git_auth_type,omitempty" gorm:"type:varchar(16)"`
-	GitToken         string            `json:"git_token,omitempty" gorm:"type:text"`
-	GitSubdir        string            `json:"git_subdir,omitempty" gorm:"type:varchar(512)"`
-	GitCurrentCommit string            `json:"git_current_commit,omitempty" gorm:"column:git_current_commit;type:varchar(64)"`
-	CreatedAt        int64             `json:"created_at"`
-	CreatedBy        string            `json:"created_by"`
-	UpdatedAt        int64             `json:"updated_at"`
-	UpdatedBy        string            `json:"updated_by"`
+	Id            int64             `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name          string            `json:"name"`
+	Description   string            `json:"description" gorm:"type:varchar(4096)"`
+	Instructions  string            `json:"instructions" gorm:"type:text"`
+	License       string            `json:"license,omitempty" gorm:"type:varchar(255)"`
+	Compatibility string            `json:"compatibility,omitempty" gorm:"type:varchar(255)"`
+	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
+	AllowedTools  string            `json:"allowed_tools,omitempty" gorm:"type:varchar(4096)"`
+	Enabled       bool              `json:"enabled"`
+	SourceType    string            `json:"source_type" gorm:"type:varchar(16);default:'local'"`
+	GitInfo       *AISkillGitInfo   `json:"git_info,omitempty" gorm:"column:git_info;type:text;serializer:json"`
+	CreatedAt     int64             `json:"created_at"`
+	CreatedBy     string            `json:"created_by"`
+	UpdatedAt     int64             `json:"updated_at"`
+	UpdatedBy     string            `json:"updated_by"`
 
 	// Runtime fields, not stored in DB
 	Files         []*AISkillFile `json:"files,omitempty" gorm:"-"`
 	Builtin       bool           `json:"builtin" gorm:"-"`
 	HasNewVersion bool           `json:"has_new_version,omitempty" gorm:"-"`
+}
+
+type AISkillGitInfo struct {
+	URL           string `json:"url,omitempty"`
+	RefType       string `json:"ref_type,omitempty"`
+	Ref           string `json:"ref,omitempty"`
+	AuthType      string `json:"auth_type,omitempty"`
+	Token         string `json:"token,omitempty"`
+	Subdir        string `json:"subdir,omitempty"`
+	CurrentCommit string `json:"current_commit"`
 }
 
 func (s *AISkill) TableName() string {
@@ -150,16 +154,14 @@ func (s *AISkill) UpdateWithGit(c *ctx.Context, ref AISkill) error {
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "description", "instructions",
 		"license", "compatibility", "metadata", "allowed_tools", "enabled",
-		"source_type", "git_url", "git_ref_type", "git_ref", "git_auth_type",
-		"git_token", "git_subdir", "git_current_commit",
+		"source_type", "git_info",
 		"updated_at", "updated_by").Updates(ref).Error
 }
 
 func (s *AISkill) UpdateGitFields(c *ctx.Context, ref AISkill) error {
 	ref.SetDefaultSourceType()
 	ref.UpdatedAt = time.Now().Unix()
-	return DB(c).Model(s).Select("source_type", "git_url", "git_ref_type",
-		"git_ref", "git_auth_type", "git_token", "git_subdir",
+	return DB(c).Model(s).Select("source_type", "git_info",
 		"updated_at", "updated_by").Updates(ref).Error
 }
 

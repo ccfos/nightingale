@@ -73,7 +73,7 @@ type Router struct {
 	aiSkillSyncOnce sync.Once
 	aiSkillSyncMu   sync.Mutex
 
-	aiSkillRemoteCommitCache *remoteCommitCache
+	aiSkillRemoteCommitCache *skill.RemoteCommitCache
 }
 
 // TargetDeleteCheckFunc 删除机器前的前置校验，返回不满足删除条件的机器及原因（ident -> 错误信息）。
@@ -117,7 +117,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
 
-		aiSkillRemoteCommitCache: newRemoteCommitCache(6 * time.Hour),
+		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(6 * time.Hour),
 	}
 
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant

@@ -18,12 +18,7 @@
 | allowed_tools | string | 否 | 预授权工具列表，空格分隔，如 `Bash(git:*) Read` |
 | enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
 | source_type | string | 否 | 来源类型：`local` / `git`，默认 `local` |
-| git_url | string | 否 | Git HTTPS 仓库地址。内置 Skill 不返回该字段 |
-| git_ref_type | string | 否 | Git 引用类型：`branch` / `tag` / `commit`。内置 Skill 不返回该字段 |
-| git_ref | string | 否 | Git 分支、Tag 或 Commit。内置 Skill 不返回该字段 |
-| git_auth_type | string | 否 | Git 认证类型：`none` / `token`。内置 Skill 不返回该字段 |
-| git_subdir | string | 否 | Skill 在仓库内的相对目录。内置 Skill 不返回该字段 |
-| git_current_commit | string | 否 | 当前已同步 commit。内置 Skill 不返回该字段 |
+| git_info | AISkillGitInfo | 否 | Git 来源信息。内置 Skill 仅返回 `current_commit` |
 | has_new_version | bool | - | 内置 Git Skill 返回；基于后台缓存异步判断是否有新版本 |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
@@ -31,9 +26,21 @@
 | updated_by | string | - | 更新人 |
 | files | AISkillFile[] | - | 关联的资源文件列表（仅详情接口返回，不含 content） |
 
-> `git_token` 仅允许写入，不在接口响应中返回。内置 Skill 在所有接口中都会隐藏 Git URL、ref、认证类型、子目录和当前 commit；`has_new_version` 对内置 Git Skill 有意义。
+> Git token 仅允许写入，不在接口响应中返回。内置 Skill 在所有接口中只返回 `git_info.current_commit`，其他 Git 配置都会隐藏；`has_new_version` 对内置 Git Skill 有意义。
 
 > `license`、`compatibility`、`metadata`、`allowed_tools` 字段参考 [Agent Skills Specification](https://agentskills.io/specification)。
+
+### AISkillGitInfo
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| url | string | 否 | Git HTTPS 仓库地址 |
+| ref_type | string | 否 | Git 引用类型：`branch` / `tag` / `commit` |
+| ref | string | 否 | Git 分支、Tag 或 Commit |
+| auth_type | string | 否 | Git 认证类型：`none` / `token` |
+| token | string | 否 | Git token，仅请求允许写入，响应不返回 |
+| subdir | string | 否 | Skill 在仓库内的相对目录 |
+| current_commit | string | 否 | 当前已同步 commit |
 
 ### AISkillFile
 
@@ -270,7 +277,7 @@ POST /api/n9e/ai-skills/git/install
 - `git_auth_type` 支持 `none` 和 `token`；使用 `token` 时 `git_token` 必填，可传明文或 `enc:` RSA 密文。Deploy Token 等需要用户名的凭据，请使用 `用户名:令牌` 格式；不含冒号时使用默认用户名。
 - `git_ref_type` 支持 `branch`、`tag`、`commit`。
 - `git_subdir` 只能是仓库内相对路径。
-- 拉取成功后会创建 `ai_skill` 和 `ai_skill_file`，并记录 `git_current_commit`。
+- 拉取成功后会创建 `ai_skill` 和 `ai_skill_file`，并记录 `git_info.current_commit`。
 - `git_token` 加密存储，响应不回显。
 
 ### 响应
@@ -752,11 +759,13 @@ Git 来源请求示例：
 ```json
 {
   "source_type": "git",
-  "git_url": "https://github.com/example/my-skill.git",
-  "git_ref_type": "branch",
-  "git_ref": "main",
-  "git_auth_type": "none",
-  "git_subdir": "skills/foo",
+  "git_info": {
+    "url": "https://github.com/example/my-skill.git",
+    "ref_type": "branch",
+    "ref": "main",
+    "auth_type": "none",
+    "subdir": "skills/foo"
+  },
   "enabled": true
 }
 ```
