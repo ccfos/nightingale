@@ -124,6 +124,11 @@ func (o *Oracle) NewConn(ctx context.Context, database string) (*gorm.DB, error)
 
 	shard := o.Shards[0]
 
+	// FIX: 当传入的database参数为空（如InitClient调用时），使用数据源配置中的shard.DB做兜底，防止go-ora驱动报错 empty SID 并导致DsCache缓存未注册而出现cluster not exists。
+	if database == "" {
+		database = shard.DB
+	}
+
 	if shard.Timeout == 0 {
 		shard.Timeout = 60
 	}
