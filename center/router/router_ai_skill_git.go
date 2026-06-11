@@ -14,7 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type aiSkillGitRequest struct {
@@ -48,13 +47,9 @@ func (rt *Router) aiSkillGitInstall(c *gin.Context) {
 	ginx.Dangerous(err)
 	fields.Commit = result.Commit
 
-	enabled := true
-	if req.Enabled != nil {
-		enabled = *req.Enabled
-	}
 	me := c.MustGet("user").(*models.User)
 
-	id, err := rt.doSkillGitImport(result.Meta, result.Instructions, result.Files, me.Username, enabled, fields)
+	id, err := rt.doSkillImport(result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields))
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(id, nil)
 }
@@ -113,7 +108,7 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 	fields.Commit = result.Commit
 
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(rt.doSkillGitUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, fields))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields)))
 	ginx.NewRender(c).Data(id, nil)
 }
 
@@ -159,10 +154,10 @@ func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
 
 	var id int64
 	if current != nil {
-		err = rt.doSkillGitUpdate(current, result.Meta, result.Instructions, result.Files, "system", fields)
+		err = rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields))
 		id = current.Id
 	} else {
-		id, err = rt.doSkillGitImport(result.Meta, result.Instructions, result.Files, "system", obj.Enabled, fields)
+		id, err = rt.doSkillImport(result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields))
 	}
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(id, nil)
@@ -287,56 +282,6 @@ func (rt *Router) gitConfigForUpdate(current *models.AISkill, req aiSkillGitRequ
 		Subdir:   cfg.Subdir,
 	}
 	return cfg, fields, nil
-}
-
-func (rt *Router) doSkillGitImport(meta skill.Frontmatter, instructions string, files map[string]string, username string, enabled bool, gitFields aiSkillGitFields) (int64, error) {
-	var skillId int64
-	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
-		obj := models.AISkill{
-			Name:          meta.Name,
-			Description:   meta.Description,
-			Instructions:  instructions,
-			License:       meta.License,
-			Compatibility: meta.Compatibility,
-			Metadata:      meta.Metadata,
-			AllowedTools:  meta.AllowedTools,
-			Enabled:       enabled,
-			SourceType:    models.AISkillSourceGit,
-			GitInfo:       aiSkillGitInfoFromFields(gitFields),
-			CreatedBy:     username,
-			UpdatedBy:     username,
-		}
-		if err := obj.Create(tCtx); err != nil {
-			return err
-		}
-		skillId = obj.Id
-		return upsertSkillFiles(tCtx, skillId, files, username, false)
-	})
-	return skillId, err
-}
-
-func (rt *Router) doSkillGitUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string, gitFields aiSkillGitFields) error {
-	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
-		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
-		ref := models.AISkill{
-			Name:          meta.Name,
-			Description:   meta.Description,
-			Instructions:  instructions,
-			License:       meta.License,
-			Compatibility: meta.Compatibility,
-			Metadata:      meta.Metadata,
-			AllowedTools:  meta.AllowedTools,
-			Enabled:       current.Enabled,
-			SourceType:    models.AISkillSourceGit,
-			GitInfo:       aiSkillGitInfoFromFields(gitFields),
-			UpdatedBy:     username,
-		}
-		if err := current.UpdateWithGit(tCtx, ref); err != nil {
-			return err
-		}
-		return upsertSkillFiles(tCtx, current.Id, files, username, true)
-	})
 }
 
 func upsertSkillFiles(c *ctx.Context, skillId int64, files map[string]string, username string, fullSync bool) error {

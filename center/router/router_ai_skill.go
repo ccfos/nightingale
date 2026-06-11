@@ -242,10 +242,14 @@ func extractSkillArchive(c *gin.Context) (meta skill.Frontmatter, instructions s
 }
 
 // doSkillImport creates a new skill inside a transaction and returns the new skill ID.
-func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string) (int64, error) {
+func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) (int64, error) {
 	var skillId int64
 	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+		sourceType := models.AISkillSourceLocal
+		if gitInfo != nil {
+			sourceType = models.AISkillSourceGit
+		}
 
 		skill := models.AISkill{
 			Name:          meta.Name,
@@ -256,7 +260,8 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
 			Enabled:       true,
-			SourceType:    models.AISkillSourceLocal,
+			SourceType:    sourceType,
+			GitInfo:       gitInfo,
 			CreatedBy:     username,
 			UpdatedBy:     username,
 		}
@@ -271,7 +276,7 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 }
 
 // doSkillImportUpdate updates an existing skill inside a transaction.
-func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string) error {
+func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) error {
 	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 
@@ -284,7 +289,7 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
 			Enabled:       current.Enabled,
-			SourceType:    models.AISkillSourceLocal,
+			GitInfo:       gitInfo,
 			UpdatedBy:     username,
 		}
 		if err := current.UpdateWithGit(tCtx, ref); err != nil {
@@ -298,7 +303,7 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 func (rt *Router) aiSkillImport(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username)
+	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username, nil)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -312,7 +317,7 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 	}
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username, nil))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
@@ -358,7 +363,7 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 
 func (rt *Router) aiSkillImportByService(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
-	skillId, err := rt.doSkillImport(meta, instructions, files, "system")
+	skillId, err := rt.doSkillImport(meta, instructions, files, "system", nil)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -371,7 +376,7 @@ func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
 	meta, instructions, files := extractSkillArchive(c)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system"))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system", nil))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 

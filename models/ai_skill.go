@@ -150,12 +150,10 @@ func (s *AISkill) UpdateWithGit(c *ctx.Context, ref AISkill) error {
 		}
 	}
 
-	ref.SetDefaultSourceType()
 	ref.UpdatedAt = time.Now().Unix()
 	return DB(c).Model(s).Select("name", "description", "instructions",
 		"license", "compatibility", "metadata", "allowed_tools", "enabled",
-		"source_type", "git_info",
-		"updated_at", "updated_by").Updates(ref).Error
+		"git_info", "updated_at", "updated_by").Updates(ref).Error
 }
 
 func (s *AISkill) UpdateGitFields(c *ctx.Context, ref AISkill) error {
