@@ -17,11 +17,21 @@
 | metadata | map[string]string | 否 | 扩展元数据，如 `{"author": "org", "version": "1.0"}` |
 | allowed_tools | string | 否 | 预授权工具列表，空格分隔，如 `Bash(git:*) Read` |
 | enabled | bool | 否 | 是否启用，请显式传入 `true` 或 `false` |
+| source_type | string | 否 | 来源类型：`local` / `git`，默认 `local` |
+| git_url | string | 否 | Git HTTPS 仓库地址。内置 Skill 不返回该字段 |
+| git_ref_type | string | 否 | Git 引用类型：`branch` / `tag` / `commit`。内置 Skill 不返回该字段 |
+| git_ref | string | 否 | Git 分支、Tag 或 Commit。内置 Skill 不返回该字段 |
+| git_auth_type | string | 否 | Git 认证类型：`none` / `token`。内置 Skill 不返回该字段 |
+| git_subdir | string | 否 | Skill 在仓库内的相对目录。内置 Skill 不返回该字段 |
+| git_current_commit | string | 否 | 当前已同步 commit。内置 Skill 不返回该字段 |
+| has_new_version | bool | - | 内置 Git Skill 返回；基于后台缓存异步判断是否有新版本 |
 | created_at | int64 | - | 创建时间（Unix 时间戳） |
 | created_by | string | - | 创建人 |
 | updated_at | int64 | - | 更新时间（Unix 时间戳） |
 | updated_by | string | - | 更新人 |
 | files | AISkillFile[] | - | 关联的资源文件列表（仅详情接口返回，不含 content） |
+
+> `git_token` 仅允许写入，不在接口响应中返回。内置 Skill 在所有接口中都会隐藏 Git URL、ref、认证类型、子目录和当前 commit；`has_new_version` 对内置 Git Skill 有意义。
 
 > `license`、`compatibility`、`metadata`、`allowed_tools` 字段参考 [Agent Skills Specification](https://agentskills.io/specification)。
 
@@ -230,6 +240,140 @@ PUT /api/n9e/ai-skill/:id
 ### 错误
 
 - `404` Skill 不存在
+
+---
+
+## 从 Git 安装 Skill
+
+从 HTTPS Git 仓库拉取 Skill。仓库根目录或 `git_subdir` 指定目录必须包含 `SKILL.md`。
+
+```
+POST /api/n9e/ai-skills/git/install
+```
+
+### 请求体
+
+```json
+{
+  "git_url": "https://github.com/example/my-skill.git",
+  "git_ref_type": "branch",
+  "git_ref": "main",
+  "git_auth_type": "token",
+  "git_token": "github_pat_xxx",
+  "git_subdir": "skills/foo",
+  "enabled": true
+}
+```
+
+### 说明
+
+- `git_auth_type` 支持 `none` 和 `token`；使用 `token` 时 `git_token` 必填，可传明文或 `enc:` RSA 密文。Deploy Token 等需要用户名的凭据，请使用 `用户名:令牌` 格式；不含冒号时使用默认用户名。
+- `git_ref_type` 支持 `branch`、`tag`、`commit`。
+- `git_subdir` 只能是仓库内相对路径。
+- 拉取成功后会创建 `ai_skill` 和 `ai_skill_file`，并记录 `git_current_commit`。
+- `git_token` 加密存储，响应不回显。
+
+### 响应
+
+```json
+{
+  "dat": 1,
+  "err": ""
+}
+```
+
+返回新创建的 Skill ID。
+
+---
+
+## 更新 Git 配置
+
+只更新已有 Git Skill 的 Git 来源配置，不拉取仓库，不覆盖 Skill 内容和资源文件。
+
+```
+PUT /api/n9e/ai-skill/:id/git/install
+```
+
+### 路径参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | Skill ID |
+
+### 请求体
+
+字段未传时沿用已有配置。`git_auth_type=token` 且当前没有已保存 token 时，必须传 `git_token`。
+
+```json
+{
+  "git_url": "https://github.com/example/my-skill.git",
+  "git_ref_type": "branch",
+  "git_ref": "main",
+  "git_auth_type": "token",
+  "git_token": "new-token-if-rotated",
+  "git_subdir": "skills/foo"
+}
+```
+
+### 响应
+
+```json
+{
+  "dat": 1,
+  "err": ""
+}
+```
+
+### 错误
+
+- `404` Skill 不存在
+- `400` 目标 Skill 不是 Git 来源
+- `400` 内置 Git Skill 不允许通过该接口修改 Git 配置
+
+---
+
+## 从 Git 更新 Skill
+
+重新从 Git 拉取并覆盖已有 Git Skill 的内容和资源文件。
+
+```
+POST /api/n9e/ai-skill/:id/git/update
+```
+
+### 路径参数
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| id | int64 | Skill ID |
+
+### 请求体
+
+普通 Git Skill 可以传入新的 Git 配置；字段未传时沿用现有配置。
+
+```json
+{
+  "git_ref_type": "branch",
+  "git_ref": "main",
+  "git_token": "new-token-if-rotated",
+  "git_subdir": ""
+}
+```
+
+内置 Git Skill 会忽略请求体中的 Git 配置，只使用数据库中预置的 Git 信息更新，避免前端暴露或篡改内置来源。
+
+### 响应
+
+```json
+{
+  "dat": 1,
+  "err": ""
+}
+```
+
+### 错误
+
+- `404` Skill 不存在
+- `400` 目标 Skill 不是 Git 来源
 
 ---
 
@@ -600,6 +744,22 @@ POST /v1/n9e/ai-skills
 
 - `name` 必填（自动 trim）
 - `instructions` 必填（自动 trim）
+- 仅当 `source_type=git` 时按 Git 来源处理：服务端会先拉取仓库，以仓库中的 `SKILL.md` 和资源文件作为最终内容；请求体中的 `name` 仅用于查找已有记录。
+- Service 接口允许写入内置 Skill 的 Git 信息，但所有查询接口都不会暴露内置 Skill 的 Git 配置。
+
+Git 来源请求示例：
+
+```json
+{
+  "source_type": "git",
+  "git_url": "https://github.com/example/my-skill.git",
+  "git_ref_type": "branch",
+  "git_ref": "main",
+  "git_auth_type": "none",
+  "git_subdir": "skills/foo",
+  "enabled": true
+}
+```
 
 #### 响应
 
