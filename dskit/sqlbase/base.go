@@ -5,6 +5,7 @@ package sqlbase
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
@@ -53,6 +54,10 @@ func ShowTables(ctx context.Context, db *gorm.DB, query string, args ...interfac
 	if err != nil {
 		return nil, err
 	}
+	// FIX: 增加nil指针防御
+	if rows == nil {
+		return nil, errors.New("empty rows returned")
+	}
 	defer rows.Close()
 
 	for rows.Next() {
@@ -74,6 +79,10 @@ func ShowDatabases(ctx context.Context, db *gorm.DB, query string, args ...inter
 	if err != nil {
 		return nil, err
 	}
+	// FIX: 增加nil指针防御
+	if rows == nil {
+		return nil, errors.New("empty rows returned")
+	}
 	defer rows.Close()
 
 	for rows.Next() {
@@ -92,6 +101,10 @@ func DescTable(ctx context.Context, db *gorm.DB, query string, args ...interface
 	rows, err := db.WithContext(ctx).Raw(query, args...).Rows()
 	if err != nil {
 		return nil, err
+	}
+	// FIX: 增加nil指针防御
+	if rows == nil {
+		return nil, errors.New("empty rows returned")
 	}
 	defer rows.Close()
 
@@ -138,6 +151,10 @@ func ExecQuery(ctx context.Context, db *gorm.DB, sql string, args ...interface{}
 	rows, err := db.WithContext(ctx).Raw(sql, args...).Rows()
 	if err != nil {
 		return nil, err
+	}
+	// FIX: 增加nil指针防御
+	if rows == nil {
+		return nil, errors.New("empty rows returned")
 	}
 	defer rows.Close()
 
