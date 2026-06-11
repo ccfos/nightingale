@@ -394,14 +394,10 @@ func (s *AlertSubscribe) MatchProd(prod string) bool {
 }
 
 func (s *AlertSubscribe) MatchCate(cate string) bool {
-	if s.Cate == "" {
+	if s.Cate == "" || cate == "" {
 		return true
 	}
-
-	if s.Cate == "host" {
-		return cate == "host"
-	}
-	return true
+	return s.Cate == cate
 }
 
 func (s *AlertSubscribe) MatchCluster(dsId int64) bool {
