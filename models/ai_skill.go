@@ -11,27 +11,47 @@ import (
 )
 
 type AISkill struct {
-	Id            int64             `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name          string            `json:"name"`
-	Description   string            `json:"description" gorm:"type:varchar(4096)"`
-	Instructions  string            `json:"instructions" gorm:"type:text"`
-	License       string            `json:"license,omitempty" gorm:"type:varchar(255)"`
-	Compatibility string            `json:"compatibility,omitempty" gorm:"type:varchar(255)"`
-	Metadata      map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
-	AllowedTools  string            `json:"allowed_tools,omitempty" gorm:"type:varchar(4096)"`
-	Enabled       bool              `json:"enabled"`
-	CreatedAt     int64             `json:"created_at"`
-	CreatedBy     string            `json:"created_by"`
-	UpdatedAt     int64             `json:"updated_at"`
-	UpdatedBy     string            `json:"updated_by"`
+	Id               int64             `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name             string            `json:"name"`
+	Description      string            `json:"description" gorm:"type:varchar(4096)"`
+	Instructions     string            `json:"instructions" gorm:"type:text"`
+	License          string            `json:"license,omitempty" gorm:"type:varchar(255)"`
+	Compatibility    string            `json:"compatibility,omitempty" gorm:"type:varchar(255)"`
+	Metadata         map[string]string `json:"metadata,omitempty" gorm:"serializer:json"`
+	AllowedTools     string            `json:"allowed_tools,omitempty" gorm:"type:varchar(4096)"`
+	Enabled          bool              `json:"enabled"`
+	SourceType       string            `json:"source_type" gorm:"type:varchar(16);default:'local'"`
+	GitURL           string            `json:"git_url,omitempty" gorm:"type:varchar(2048)"`
+	GitRefType       string            `json:"git_ref_type,omitempty" gorm:"type:varchar(16)"`
+	GitRef           string            `json:"git_ref,omitempty" gorm:"type:varchar(255)"`
+	GitAuthType      string            `json:"git_auth_type,omitempty" gorm:"type:varchar(16)"`
+	GitToken         string            `json:"git_token,omitempty" gorm:"type:text"`
+	GitSubdir        string            `json:"git_subdir,omitempty" gorm:"type:varchar(512)"`
+	GitCurrentCommit string            `json:"git_current_commit,omitempty" gorm:"column:git_current_commit;type:varchar(64)"`
+	CreatedAt        int64             `json:"created_at"`
+	CreatedBy        string            `json:"created_by"`
+	UpdatedAt        int64             `json:"updated_at"`
+	UpdatedBy        string            `json:"updated_by"`
 
 	// Runtime fields, not stored in DB
-	Files   []*AISkillFile `json:"files,omitempty" gorm:"-"`
-	Builtin bool           `json:"builtin" gorm:"-"`
+	Files         []*AISkillFile `json:"files,omitempty" gorm:"-"`
+	Builtin       bool           `json:"builtin" gorm:"-"`
+	HasNewVersion bool           `json:"has_new_version,omitempty" gorm:"-"`
 }
 
 func (s *AISkill) TableName() string {
 	return "ai_skill"
+}
+
+const (
+	AISkillSourceLocal = "local"
+	AISkillSourceGit   = "git"
+)
+
+func (s *AISkill) SetDefaultSourceType() {
+	if s.SourceType == "" {
+		s.SourceType = AISkillSourceLocal
+	}
 }
 
 func (s *AISkill) Verify() error {
@@ -43,6 +63,7 @@ func (s *AISkill) Verify() error {
 	if s.Instructions == "" {
 		return fmt.Errorf("instructions is required")
 	}
+	s.SetDefaultSourceType()
 	return nil
 }
 
@@ -54,6 +75,7 @@ func AISkillGets(c *ctx.Context, search string) ([]*AISkill, error) {
 	}
 	err := session.Find(&lst).Error
 	for _, s := range lst {
+		s.SetDefaultSourceType()
 		s.Builtin = s.CreatedBy == "system"
 	}
 	return lst, err
@@ -68,6 +90,7 @@ func AISkillGet(c *ctx.Context, where string, args ...interface{}) (*AISkill, er
 		}
 		return nil, err
 	}
+	obj.SetDefaultSourceType()
 	return &obj, nil
 }
 
@@ -89,6 +112,7 @@ func (s *AISkill) Create(c *ctx.Context) error {
 	}
 
 	now := time.Now().Unix()
+	s.SetDefaultSourceType()
 	s.CreatedAt = now
 	s.UpdatedAt = now
 	return Insert(c, s)
@@ -109,6 +133,34 @@ func (s *AISkill) Update(c *ctx.Context, ref AISkill) error {
 	return DB(c).Model(s).Select("name", "description", "instructions",
 		"license", "compatibility", "metadata", "allowed_tools",
 		"enabled", "updated_at", "updated_by").Updates(ref).Error
+}
+
+func (s *AISkill) UpdateWithGit(c *ctx.Context, ref AISkill) error {
+	if ref.Name != s.Name {
+		exist, err := AISkillGetByName(c, ref.Name)
+		if err != nil {
+			return err
+		}
+		if exist != nil {
+			return fmt.Errorf("ai skill name %s already exists", ref.Name)
+		}
+	}
+
+	ref.SetDefaultSourceType()
+	ref.UpdatedAt = time.Now().Unix()
+	return DB(c).Model(s).Select("name", "description", "instructions",
+		"license", "compatibility", "metadata", "allowed_tools", "enabled",
+		"source_type", "git_url", "git_ref_type", "git_ref", "git_auth_type",
+		"git_token", "git_subdir", "git_current_commit",
+		"updated_at", "updated_by").Updates(ref).Error
+}
+
+func (s *AISkill) UpdateGitFields(c *ctx.Context, ref AISkill) error {
+	ref.SetDefaultSourceType()
+	ref.UpdatedAt = time.Now().Unix()
+	return DB(c).Model(s).Select("source_type", "git_url", "git_ref_type",
+		"git_ref", "git_auth_type", "git_token", "git_subdir",
+		"updated_at", "updated_by").Updates(ref).Error
 }
 
 func (s *AISkill) Delete(c *ctx.Context) error {
