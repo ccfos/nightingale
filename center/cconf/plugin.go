@@ -45,18 +45,24 @@ var Plugins = []Plugin{
 	},
 	{
 		Id:       8,
+		Category: "timeseries",
+		Type:     "oracle",
+		TypeName: "Oracle",
+	},
+	{
+		Id:       9,
 		Category: "logging",
 		Type:     "doris",
 		TypeName: "Doris",
 	},
 	{
-		Id:       9,
+		Id:       10,
 		Category: "logging",
 		Type:     "opensearch",
 		TypeName: "OpenSearch",
 	},
 	{
-		Id:       10,
+		Id:       11,
 		Category: "logging",
 		Type:     "victorialogs",
 		TypeName: "VictoriaLogs",

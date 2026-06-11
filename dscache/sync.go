@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/datasource/es"
 	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
 	_ "github.com/ccfos/nightingale/v6/datasource/opensearch"
+	_ "github.com/ccfos/nightingale/v6/datasource/oracle"
 	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"
 	_ "github.com/ccfos/nightingale/v6/datasource/victorialogs"
 	"github.com/ccfos/nightingale/v6/dskit/tdengine"

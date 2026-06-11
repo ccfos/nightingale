@@ -53,6 +53,7 @@ require (
 	github.com/prometheus/prometheus v0.47.1
 	github.com/rakyll/statik v0.1.7
 	github.com/redis/go-redis/v9 v9.0.2
+	github.com/sijms/go-ora/v2 v2.9.0
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tidwall/gjson v1.14.2
@@ -65,7 +66,7 @@ require (
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/driver/sqlite v1.5.5
-	gorm.io/gorm v1.25.10
+	gorm.io/gorm v1.25.11
 )
 
 require (

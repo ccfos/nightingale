@@ -32,6 +32,7 @@ const (
 	POSTGRESQL    = "pgsql"
 	DORIS         = "doris"
 	OPENSEARCH    = "opensearch"
+	ORACLE        = "oracle"
 
 	CLICKHOUSE   = "ck"
 	VICTORIALOGS = "victorialogs"
@@ -1304,6 +1305,7 @@ func (ar *AlertRule) IsInnerRule() bool {
 		ar.Cate == POSTGRESQL ||
 		ar.Cate == DORIS ||
 		ar.Cate == OPENSEARCH ||
+		ar.Cate == ORACLE ||
 		ar.Cate == VICTORIALOGS
 }
 
