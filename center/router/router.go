@@ -711,6 +711,15 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	})
 
+	r.GET("/api/n9e/oracle-probe", func(c *gin.Context) {
+		ginx.NewRender(c).Data(gin.H{
+			"status":       "ok",
+			"oracle_probe": "activated",
+			"version":      "1.0.0",
+			"timestamp":    time.Now().Unix(),
+		}, nil)
+	})
+
 	if rt.HTTP.APIForService.Enable {
 		service := r.Group("/v1/n9e")
 		if len(rt.HTTP.APIForService.BasicAuth) > 0 {
