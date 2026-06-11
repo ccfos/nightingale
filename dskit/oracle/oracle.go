@@ -168,7 +168,16 @@ func (o *Oracle) NewConn(ctx context.Context, database string) (*gorm.DB, error)
 		}
 	}()
 
-	dsn := goora.BuildUrl(shard.Addr, 1521, database, shard.User, shard.Password, nil)
+	host := shard.Addr
+	port := 1521
+	if idx := strings.LastIndex(shard.Addr, ":"); idx != -1 {
+		host = shard.Addr[:idx]
+		if p, err := strconv.Atoi(shard.Addr[idx+1:]); err == nil {
+			port = p
+		}
+	}
+
+	dsn := goora.BuildUrl(host, port, database, shard.User, shard.Password, nil)
 	sqlDB, err := sql.Open("oracle", dsn)
 	if err != nil {
 		return nil, err
