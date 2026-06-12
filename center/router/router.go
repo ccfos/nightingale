@@ -117,7 +117,7 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
 
-		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(6 * time.Hour),
+		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(30 * time.Minute),
 	}
 
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
