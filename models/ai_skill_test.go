@@ -67,6 +67,48 @@ func TestAISkillGitInfoPersists(t *testing.T) {
 	}
 }
 
+func TestAISkillGetsOrdersBuiltinFirst(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if err := db.AutoMigrate(&models.AISkill{}); err != nil {
+		t.Fatalf("migrate ai_skill: %v", err)
+	}
+
+	c := &ctx.Context{DB: db}
+	inputs := []*models.AISkill{
+		{Name: "custom-old", Instructions: "custom old", CreatedBy: "alice"},
+		{Name: "builtin-first", Instructions: "builtin first", CreatedBy: "system"},
+		{Name: "custom-new", Instructions: "custom new", CreatedBy: "bob"},
+		{Name: "builtin-second", Instructions: "builtin second", CreatedBy: "system"},
+	}
+	for _, input := range inputs {
+		if err := input.Create(c); err != nil {
+			t.Fatalf("create skill %s: %v", input.Name, err)
+		}
+	}
+
+	got, err := models.AISkillGets(c, "")
+	if err != nil {
+		t.Fatalf("get skills: %v", err)
+	}
+
+	names := make([]string, 0, len(got))
+	for _, s := range got {
+		names = append(names, s.Name)
+	}
+	want := []string{"builtin-first", "builtin-second", "custom-old", "custom-new"}
+	if strings.Join(names, ",") != strings.Join(want, ",") {
+		t.Fatalf("skill order mismatch: got %v, want %v", names, want)
+	}
+	if !got[0].Builtin || !got[1].Builtin || got[2].Builtin || got[3].Builtin {
+		t.Fatalf("builtin flags mismatch: %+v", got)
+	}
+}
+
 func TestAISkillGitInfoJSON(t *testing.T) {
 	var skill models.AISkill
 	err := json.Unmarshal([]byte(`{

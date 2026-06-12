@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -82,6 +83,9 @@ func AISkillGets(c *ctx.Context, search string) ([]*AISkill, error) {
 		s.SetDefaultSourceType()
 		s.Builtin = s.CreatedBy == "system"
 	}
+	sort.SliceStable(lst, func(i, j int) bool {
+		return lst[i].Builtin && !lst[j].Builtin
+	})
 	return lst, err
 }
 
