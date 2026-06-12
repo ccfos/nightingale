@@ -16,9 +16,9 @@ func TestMatchCate(t *testing.T) {
 		{"exact match", "elasticsearch", "elasticsearch", true},
 		{"mismatch", "elasticsearch", "tdengine", false},
 		{"mismatch against host", "elasticsearch", "host", false},
-		// 存量订阅的 prometheus 是历史表单默认值，视为不过滤
+		// 存量订阅的 prometheus 是历史表单默认值，视为不过滤，但 host 事件除外
 		{"legacy prometheus matches all", "prometheus", "elasticsearch", true},
-		{"legacy prometheus matches host", "prometheus", "host", true},
+		{"legacy prometheus does not match host", "prometheus", "host", false},
 		{"legacy prometheus matches itself", "prometheus", "prometheus", true},
 	}
 
