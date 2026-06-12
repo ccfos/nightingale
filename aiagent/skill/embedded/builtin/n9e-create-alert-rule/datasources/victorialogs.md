@@ -33,6 +33,12 @@ service:payment AND level:error
 - 分组用 `stats by (field1, field2) ...`
 - 过滤部分可以是任意 LogsQL filter：`_msg:keyword`, `field:value`, `field:"value with space"`, `_time:5m` 等
 
+## triggers 硬规则（必读）
+
+- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
+- 本数据源的变量写法：`$<ref>.<stats 输出别名>`，如 `$A.value > 20`（对应 `stats count() as value`）；只有一个 stats 输出时可省略别名直接写 `$A`
+- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.value > 10 && $B.value < 5"`
+
 ## rule_config 结构
 
 ```json
@@ -47,10 +53,8 @@ service:payment AND level:error
     ],
     "triggers": [
       {
-        "mode": 0,
-        "expressions": [
-          {"ref": "A", "comparisonOperator": ">", "value": 20, "logicalOperator": "&&"}
-        ],
+        "mode": 1,
+        "exp": "$A.value > 20",
         "severity": 2,
         "recover_config": {"judge_type": 0}
       }
@@ -90,8 +94,8 @@ service:payment AND level:error
     ],
     "triggers": [
       {
-        "mode": 0,
-        "expressions": [{"ref": "A", "comparisonOperator": ">", "value": 20, "logicalOperator": "&&"}],
+        "mode": 1,
+        "exp": "$A.value > 20",
         "severity": 2,
         "recover_config": {"judge_type": 0}
       }

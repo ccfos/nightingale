@@ -163,7 +163,7 @@ read_file(base="n9e-create-alert-rule", path="datasources/<cate>.md")
   "cate": "mysql",
   "datasource_id": 4,
   "severity": 2,
-  "rule_config_json": "{\"queries\":[{\"ref\":\"A\",\"sql\":\"SELECT count(*) AS value FROM orders WHERE created_at >= NOW() - INTERVAL 5 MINUTE AND status='failed'\",\"keys\":{\"valueKey\":\"value\",\"labelKey\":\"\"},\"interval\":60}],\"triggers\":[{\"mode\":0,\"expressions\":[{\"ref\":\"A\",\"comparisonOperator\":\">\",\"value\":10,\"logicalOperator\":\"&&\"}],\"severity\":2,\"recover_config\":{\"judge_type\":1}}]}"
+  "rule_config_json": "{\"queries\":[{\"ref\":\"A\",\"sql\":\"SELECT count(*) AS value FROM orders WHERE created_at >= NOW() - INTERVAL 5 MINUTE AND status='failed'\",\"keys\":{\"valueKey\":\"value\",\"labelKey\":\"\"},\"interval\":60}],\"triggers\":[{\"mode\":1,\"exp\":\"$A.value > 10\",\"severity\":2,\"recover_config\":{\"judge_type\":1}}]}"
 }
 ```
 
