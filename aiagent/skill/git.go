@@ -52,8 +52,8 @@ func (c *GitConfig) Validate(requireToken bool) error {
 	if err != nil {
 		return fmt.Errorf("invalid git_url: %w", err)
 	}
-	if u.Scheme != "https" || u.Host == "" {
-		return fmt.Errorf("git_url must be an https URL")
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("git_url must be an http or https URL")
 	}
 	switch c.RefType {
 	case GitRefBranch, GitRefTag, GitRefCommit:
@@ -113,9 +113,10 @@ func FetchGitSkill(ctx context.Context, cfg GitConfig) (*GitFetchResult, error) 
 	defer os.RemoveAll(tmpDir)
 
 	repo, err := gogit.PlainCloneContext(ctx, tmpDir, false, &gogit.CloneOptions{
-		URL:  cfg.URL,
-		Auth: gitAuth(cfg),
-		Tags: gogit.AllTags,
+		URL:             cfg.URL,
+		Auth:            gitAuth(cfg),
+		Tags:            gogit.AllTags,
+		InsecureSkipTLS: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("clone git repository: %w", err)
@@ -177,7 +178,10 @@ func LatestGitCommit(ctx context.Context, cfg GitConfig) (string, error) {
 		Name: "origin",
 		URLs: []string{cfg.URL},
 	})
-	refs, err := remote.ListContext(ctx, &gogit.ListOptions{Auth: gitAuth(cfg)})
+	refs, err := remote.ListContext(ctx, &gogit.ListOptions{
+		Auth:            gitAuth(cfg),
+		InsecureSkipTLS: true,
+	})
 	if err != nil {
 		return "", fmt.Errorf("list remote refs: %w", err)
 	}
