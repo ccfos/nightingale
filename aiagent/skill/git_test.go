@@ -41,3 +41,39 @@ func TestGitAuthCredential(t *testing.T) {
 		})
 	}
 }
+
+func TestGitConfigValidateAllowsHTTPAndHTTPS(t *testing.T) {
+	base := GitConfig{
+		RefType:  GitRefBranch,
+		Ref:      "main",
+		AuthType: GitAuthNone,
+	}
+
+	for _, url := range []string{
+		"http://git.example.com/group/skills.git",
+		"https://git.example.com/group/skills.git",
+	} {
+		t.Run(url, func(t *testing.T) {
+			cfg := base
+			cfg.URL = url
+			if err := cfg.Validate(false); err != nil {
+				t.Fatalf("expected %s to be valid, got %v", url, err)
+			}
+		})
+	}
+}
+
+func TestGitConfigValidateRejectsUnsupportedScheme(t *testing.T) {
+	cfg := GitConfig{
+		URL:      "ssh://git.example.com/group/skills.git",
+		RefType:  GitRefBranch,
+		Ref:      "main",
+		AuthType: GitAuthNone,
+	}
+
+	if err := cfg.Validate(false); err == nil {
+		t.Fatalf("expected unsupported scheme to be rejected")
+	} else if err.Error() != "git_url must be an http or https URL" {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
