@@ -25,7 +25,12 @@ func (f *AISkillFile) TableName() string {
 	return "ai_skill_file"
 }
 
-const maxFilesPerSkill = 200
+// MaxFilesPerSkill caps how many files (ai_skill_file rows, SKILL.md included)
+// a single skill may hold. It is the single source of truth for this limit,
+// shared with the archive extractor in aiagent/skill. The default of 1000 is
+// overwritten at startup from cconf.AIAgent.MaxFilesPerSkill (see router init),
+// and kept here as a safe fallback for code paths that run before injection.
+var MaxFilesPerSkill = 1000
 
 // PostgresAISkillFile is the PostgreSQL-compatible variant of AISkillFile.
 // PostgreSQL does not support mediumtext; its text type is unlimited.
@@ -76,13 +81,12 @@ func (f *AISkillFile) Create(c *ctx.Context) error {
 
 	var count int64
 	DB(c).Model(&AISkillFile{}).Where("skill_id = ?", f.SkillId).Count(&count)
-	if count >= maxFilesPerSkill {
-		return fmt.Errorf("max %d files per skill", maxFilesPerSkill)
+	if count >= int64(MaxFilesPerSkill) {
+		return fmt.Errorf("max %d files per skill", MaxFilesPerSkill)
 	}
 
 	return Insert(c, f)
 }
-
 
 // BatchUpsert batch-upserts files for a given skill within a single transaction.
 // When fullSync is true, existing files not present in the incoming list are deleted (full replace).
@@ -150,8 +154,8 @@ func AISkillFileBatchUpsert(c *ctx.Context, skillId int64, files []*AISkillFile,
 		if err := tx.Model(&AISkillFile{}).Where("skill_id = ?", skillId).Count(&totalCount).Error; err != nil {
 			return err
 		}
-		if totalCount+int64(len(toInsert)) > maxFilesPerSkill {
-			return fmt.Errorf("max %d files per skill, current: %d, importing: %d", maxFilesPerSkill, totalCount, len(toInsert))
+		if totalCount+int64(len(toInsert)) > int64(MaxFilesPerSkill) {
+			return fmt.Errorf("max %d files per skill, current: %d, importing: %d", MaxFilesPerSkill, totalCount, len(toInsert))
 		}
 
 		return tx.Create(&toInsert).Error
