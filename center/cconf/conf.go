@@ -38,6 +38,13 @@ type AIAgent struct {
 	// loop and only run once at startup — appropriate for environments where
 	// skill content is fully baked at deploy time.
 	SkillSyncInterval time.Duration `toml:"SkillSyncInterval"`
+
+	// MaxFilesPerSkill caps how many files a single skill may hold (the row
+	// count of ai_skill_file for one skill, SKILL.md included). It is the single
+	// source of truth shared by two enforcement points: the DB writers in the
+	// models package and the archive extractor in aiagent/skill (zip/tar.gz
+	// upload). Defaults to 1000; a value <= 0 falls back to the default.
+	MaxFilesPerSkill int `toml:"MaxFilesPerSkill"`
 }
 
 type Plugin struct {
@@ -70,5 +77,8 @@ func (c *Center) PreCheck() {
 	// explicit "disable periodic sync" signal and must round-trip unchanged.
 	if c.AIAgent.SkillSyncInterval == 0 {
 		c.AIAgent.SkillSyncInterval = 60 * time.Second
+	}
+	if c.AIAgent.MaxFilesPerSkill <= 0 {
+		c.AIAgent.MaxFilesPerSkill = 1000
 	}
 }
