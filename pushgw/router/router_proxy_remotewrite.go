@@ -121,12 +121,34 @@ func (rt *Router) proxyRemoteWrite(c *gin.Context) {
 
 	rawQuery := c.Request.URL.RawQuery
 
-	// 串行转发给所有 writer。
-	// 并行可以把耗时从 sum(latency) 降到 max(latency)，但会放大"任一慢 writer 拖累所有请求"的木桶效应；
-	// 当前在 (a) 背压保护下，串行足以扛住慢后端——慢请求只会占用 in-flight slot，到阈值后新请求被 429 拒掉。
-	for index := range rt.Pushgw.Writers {
-		writer := rt.Pushgw.Writers[index]
-		rt.forwardToWriter(bs, writer, rawQuery, contentType, contentEncoding, userAgent, rwVersion)
+	// 转发给所有 writer，尽力而为、不重试、单 writer 失败不传播。
+	// 默认串行；ProxyConcurrentForward 开启且 writer 数大于 1 时并行，把单请求耗时从
+	// sum(latency) 降到 max(latency)，缩短 in-flight slot 持有时间、缓解慢 writer 拖累健康 writer。
+	// 无论串并行，这里都要等所有转发结束再返回：bs 复用自 buffer pool，提前归还会让仍在读它的
+	// goroutine 与下个请求竞争同一块内存。
+	writers := rt.Pushgw.Writers
+	if rt.Pushgw.ProxyConcurrentForward && len(writers) > 1 {
+		var wg sync.WaitGroup
+		wg.Add(len(writers))
+		for index := range writers {
+			writer := writers[index]
+			go func() {
+				defer wg.Done()
+				// 串行分支的 panic 由 gin Recovery 兜住，并行分支在子 goroutine 里 panic 会直接
+				// crash 整个进程，必须自己 recover（与 writer.go 的 AsyncWrite 子 goroutine 一致）。
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Errorf("[forward-timeseries] panic forwarding to %s: %v", writer.Url, r)
+					}
+				}()
+				rt.forwardToWriter(bs, writer, rawQuery, contentType, contentEncoding, userAgent, rwVersion)
+			}()
+		}
+		wg.Wait()
+	} else {
+		for index := range writers {
+			rt.forwardToWriter(bs, writers[index], rawQuery, contentType, contentEncoding, userAgent, rwVersion)
+		}
 	}
 }
 
