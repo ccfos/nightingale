@@ -158,6 +158,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 		Stdin:          string(tags),
 		Action:         "start",
 		Creator:        tpl.UpdateBy,
+		AuthLevel:      tpl.AuthLevel,
 		Hosts:          []string{host},
 		AlertTriggered: true,
 	}
@@ -182,6 +183,7 @@ func CallIbex(ctx *ctx.Context, id int64, host string,
 		Pause:     in.Pause,
 		Script:    in.Script,
 		Args:      in.Args,
+		AuthLevel: in.AuthLevel,
 		CreateAt:  time.Now().Unix(),
 		CreateBy:  in.Creator,
 	}
@@ -220,16 +222,17 @@ func TaskAdd(f models.TaskForm, authUser string, isCenter bool) (int64, error) {
 	}
 
 	taskMeta := &imodels.TaskMeta{
-		Title:     f.Title,
-		Account:   f.Account,
-		Batch:     f.Batch,
-		Tolerance: f.Tolerance,
-		Timeout:   f.Timeout,
-		Pause:     f.Pause,
-		Script:    f.Script,
-		Args:      f.Args,
-		Stdin:     f.Stdin,
-		Creator:   f.Creator,
+		Title:        f.Title,
+		Account:      f.Account,
+		Batch:        f.Batch,
+		Tolerance:    f.Tolerance,
+		Timeout:      f.Timeout,
+		Pause:        f.Pause,
+		Script:       f.Script,
+		Args:         f.Args,
+		Stdin:        f.Stdin,
+		Creator:      f.Creator,
+		SystemCaller: f.SystemCaller,
 	}
 
 	err := taskMeta.CleanFields()
