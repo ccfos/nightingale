@@ -481,9 +481,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/trace-logs/:traceid", rt.traceLogsPage)
 
 		// card logic
+		// list/card 同时注册 GET 与 POST：选中聚合卡片后改用 POST body 携带 selections，避免 event id 拼进 URL 导致 414
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
+		pages.POST("/alert-cur-events/list", rt.auth(), rt.user(), rt.alertCurEventsList)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
-		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
+		pages.POST("/alert-cur-events/card", rt.auth(), rt.user(), rt.alertCurEventsCard)
+		// card/details 走 selections 时会按业务组解析事件，需要 user 上下文，故与 list/card 一致挂上 rt.user()
+		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.user(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.user(), rt.alertHisEventsList)
 		pages.DELETE("/alert-his-events", rt.auth(), rt.admin(), rt.alertHisEventsDelete)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)

@@ -330,39 +330,76 @@ func parseAggrRules(rule string) []*AggrRule {
 }
 
 func (e *AlertCurEvent) GenCardTitle(rule string) (string, error) {
+	dims, err := e.GenCardDimensions(rule)
+	if err != nil {
+		return "", err
+	}
+
+	arr := make([]string, len(dims))
+	for i := 0; i < len(dims); i++ {
+		arr[i] = dims[i].Value
+	}
+	return strings.Join(arr, "::"), nil
+}
+
+// CardDimension 描述聚合卡片身份中的一个维度。
+// Type 为聚合规则里的取值方式：field / tagkey；当 rule 走 go template 渲染时 Type 为 template，
+// 此时整条标题作为单一维度，Field 为空。Value 为渲染/取值后的结果（空值统一归为 "Others"）。
+type CardDimension struct {
+	Type  string `json:"type"`
+	Field string `json:"field"`
+	Value string `json:"value"`
+}
+
+// CardSelection 表示一次卡片下钻的"身份"：在某个聚合视图(ViewId 决定聚合规则)下，
+// 被选中卡片对应的各维度取值。多级下钻即为多个 CardSelection 组成的身份链。
+type CardSelection struct {
+	ViewId     int64           `json:"view_id"`
+	Dimensions []CardDimension `json:"dimensions"`
+}
+
+// GenCardDimensions 按聚合规则解析出事件所属卡片的结构化维度。
+// 与 GenCardTitle 共用同一套取值逻辑，因此卡片身份与卡片显示标题始终一致；
+// 使用结构化数组（而非按 "::" 拼接的标题）可避免维度值本身含 "::" 时的歧义。
+func (e *AlertCurEvent) GenCardDimensions(rule string) ([]CardDimension, error) {
 	if strings.Contains(rule, "{{") {
-		// 有 {{ 表示使用的是新的配置方式，使用 go template 进行格式化
-
-		tmpl, err := template.New("card_title").Parse(rule)
-		if err != nil {
-			return fmt.Sprintf("failed to parse card title: %v", err), nil
-		}
-
-		var buf bytes.Buffer
-		if err := tmpl.Execute(&buf, e); err != nil {
-			return fmt.Sprintf("failed to execute card title: %v", err), nil
-		}
-		return buf.String(), nil
+		// 有 {{ 表示使用的是新的配置方式，使用 go template 进行格式化，整条标题作为单一维度
+		return []CardDimension{{Type: "template", Value: e.execCardTemplate(rule)}}, nil
 	}
 
 	rules := parseAggrRules(rule)
-	arr := make([]string, len(rules))
+	dims := make([]CardDimension, len(rules))
 	for i := 0; i < len(rules); i++ {
-		rule := rules[i]
-
-		if rule.Type == "field" {
-			arr[i] = e.GetField(rule.Value)
+		var value string
+		switch rules[i].Type {
+		case "field":
+			value = e.GetField(rules[i].Value)
+		case "tagkey":
+			value = e.GetTagValue(rules[i].Value)
 		}
 
-		if rule.Type == "tagkey" {
-			arr[i] = e.GetTagValue(rule.Value)
+		if len(value) == 0 {
+			value = "Others"
 		}
 
-		if len(arr[i]) == 0 {
-			arr[i] = "Others"
-		}
+		dims[i] = CardDimension{Type: rules[i].Type, Field: rules[i].Value, Value: value}
 	}
-	return strings.Join(arr, "::"), nil
+	return dims, nil
+}
+
+// execCardTemplate 用 go template 渲染卡片标题；解析/执行失败时把错误信息当作标题返回，
+// 与历史行为保持一致（不向上抛错，避免单个事件渲染失败影响整页）。
+func (e *AlertCurEvent) execCardTemplate(rule string) string {
+	tmpl, err := template.New("card_title").Parse(rule)
+	if err != nil {
+		return fmt.Sprintf("failed to parse card title: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, e); err != nil {
+		return fmt.Sprintf("failed to execute card title: %v", err)
+	}
+	return buf.String()
 }
 
 func (e *AlertCurEvent) GetTagValue(tagkey string) string {
@@ -713,6 +750,61 @@ func AlertCurEventsGet(ctx *ctx.Context, prods []string, bgids []int64, stime, e
 	}
 
 	return lst, err
+}
+
+// AlertCurEventsFilterByCard 按"卡片身份"在内存中定位一批事件：先用 base filter 拉取事件集合
+// （上限 50000，不带 event id），再沿 selections 身份链逐级用对应聚合规则在内存里匹配筛选。
+// 这样选中聚合卡片后无需把成百上千的 event id 回传到请求里，避免 URL 超长 / SQL IN 参数过多。
+// 之所以"重聚合 + 内存匹配"而不是把卡片条件下推成 SQL WHERE：rule_name/annotations 走 go template
+// 渲染、tagkey 从 tags 串里取值、空值归 Others，无法可靠翻译成 SQL，内存匹配才能与卡片显示 100% 一致。
+func AlertCurEventsFilterByCard(ctx *ctx.Context, prods []string, bgids []int64, stime, etime int64,
+	severity []int64, dsIds []int64, cates []string, ruleId int64, query string, selections []CardSelection) (
+	[]AlertCurEvent, error) {
+
+	list, err := AlertCurEventsGet(ctx, prods, bgids, stime, etime, severity, dsIds, cates, ruleId, query, 50000, 0, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 同一 view 的聚合规则只查一次库
+	ruleCache := make(map[int64]string)
+	for _, sel := range selections {
+		rule, ok := ruleCache[sel.ViewId]
+		if !ok {
+			view, err := GetAlertAggrViewByViewID(ctx, sel.ViewId)
+			if err != nil {
+				return nil, err
+			}
+			rule = view.Rule
+			ruleCache[sel.ViewId] = rule
+		}
+
+		filtered := make([]AlertCurEvent, 0, len(list))
+		for i := range list {
+			dims, err := list[i].GenCardDimensions(rule)
+			if err != nil {
+				return nil, err
+			}
+			if cardDimensionsEqual(dims, sel.Dimensions) {
+				filtered = append(filtered, list[i])
+			}
+		}
+		list = filtered
+	}
+
+	return list, nil
+}
+
+func cardDimensionsEqual(a, b []CardDimension) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Type != b[i].Type || a[i].Field != b[i].Field || a[i].Value != b[i].Value {
+			return false
+		}
+	}
+	return true
 }
 
 func AlertCurEventCountByRuleId(ctx *ctx.Context, rids []int64, stime, etime int64) map[int64]int64 {

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -22,6 +23,79 @@ func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, erro
 	}
 	me := ctx.MustGet("user").(*models.User)
 	return models.MyGroupIds(rt.Ctx, me.Id)
+}
+
+func queryRuleProds(c *gin.Context) []string {
+	prod := ginx.QueryStr(c, "prods", "")
+	if prod == "" {
+		prod = ginx.QueryStr(c, "rule_prods", "")
+	}
+	if prod == "" {
+		return []string{}
+	}
+	return strings.Split(prod, ",")
+}
+
+func queryRuleCates(c *gin.Context) []string {
+	cate := ginx.QueryStr(c, "cate", "$all")
+	if cate == "$all" {
+		return []string{}
+	}
+	return strings.Split(cate, ",")
+}
+
+// BindCardSelections 从请求 body 解析卡片下钻身份链；GET 或空 body 时视为无下钻（忽略解析错误）。
+// 导出供 pro 版活跃告警接口复用，保证两端解析口径一致。
+func BindCardSelections(c *gin.Context) []models.CardSelection {
+	if c.Request == nil || c.Request.Body == nil {
+		return nil
+	}
+
+	var body struct {
+		Selections []models.CardSelection `json:"selections"`
+	}
+	_ = c.ShouldBindJSON(&body)
+	return body.Selections
+}
+
+func cardTitle(dims []models.CardDimension) string {
+	parts := make([]string, len(dims))
+	for i := range dims {
+		parts[i] = dims[i].Value
+	}
+	return strings.Join(parts, "::")
+}
+
+// cardDimensionsKey 生成无冲突的卡片分组 key：用长度前缀拼接各维度，避免维度值含分隔符时碰撞。
+func cardDimensionsKey(dims []models.CardDimension) string {
+	var b strings.Builder
+	for _, d := range dims {
+		b.WriteString(strconv.Itoa(len(d.Type)))
+		b.WriteByte(':')
+		b.WriteString(d.Type)
+		b.WriteString(strconv.Itoa(len(d.Field)))
+		b.WriteByte(':')
+		b.WriteString(d.Field)
+		b.WriteString(strconv.Itoa(len(d.Value)))
+		b.WriteByte(':')
+		b.WriteString(d.Value)
+	}
+	return b.String()
+}
+
+// PageEvents 对内存中的事件切片做分页（事件已按 trigger_time 倒序排列）。导出供 pro 版复用。
+func PageEvents(list []models.AlertCurEvent, offset, limit int) []models.AlertCurEvent {
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= len(list) {
+		return []models.AlertCurEvent{}
+	}
+	end := len(list)
+	if limit > 0 && offset+limit < end {
+		end = offset + limit
+	}
+	return list[offset:end]
 }
 
 func (rt *Router) alertCurEventsCard(c *gin.Context) {
@@ -51,65 +125,56 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
-	prod := ginx.QueryStr(c, "prods", "")
-	if prod == "" {
-		prod = ginx.QueryStr(c, "rule_prods", "")
-	}
-	prods := []string{}
-	if prod != "" {
-		prods = strings.Split(prod, ",")
-	}
-
-	cate := ginx.QueryStr(c, "cate", "$all")
-	cates := []string{}
-	if cate != "$all" {
-		cates = strings.Split(cate, ",")
-	}
+	prods := queryRuleProds(c)
+	cates := queryRuleCates(c)
 
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, myGroups)
 	ginx.Dangerous(err)
 
-	// 最多获取50000个，获取太多也没啥意义
-	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
-		cates, 0, query, 50000, 0, []int64{})
+	selections := BindCardSelections(c)
+
+	// 先按 base filter + 已选下钻身份链取出事件子集（上限 50000），再对子集按当前视图规则重新聚合
+	list, err := models.AlertCurEventsFilterByCard(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
+		cates, 0, query, selections)
 	ginx.Dangerous(err)
 
 	cardmap := make(map[string]*AlertCard)
-	for _, event := range list {
-		title, err := event.GenCardTitle(alertView.Rule)
+	keys := make([]string, 0)
+	for i := range list {
+		dims, err := list[i].GenCardDimensions(alertView.Rule)
 		ginx.Dangerous(err)
-		if _, has := cardmap[title]; has {
-			cardmap[title].Total++
-			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
-			if event.Severity < cardmap[title].Severity {
-				cardmap[title].Severity = event.Severity
+
+		key := cardDimensionsKey(dims)
+		card, has := cardmap[key]
+		if !has {
+			card = &AlertCard{
+				Title:      cardTitle(dims),
+				Dimensions: dims,
+				Severity:   list[i].Severity,
 			}
-		} else {
-			cardmap[title] = &AlertCard{
-				Total:    1,
-				EventIds: []int64{event.Id},
-				Title:    title,
-				Severity: event.Severity,
-			}
+			cardmap[key] = card
+			keys = append(keys, key)
 		}
 
-		if cardmap[title].Severity < 1 {
-			cardmap[title].Severity = 3
+		card.Total++
+		card.EventIds = append(card.EventIds, list[i].Id)
+		if list[i].Severity < card.Severity {
+			card.Severity = list[i].Severity
+		}
+		if card.Severity < 1 {
+			card.Severity = 3
 		}
 	}
 
-	titles := make([]string, 0, len(cardmap))
-	for title := range cardmap {
-		titles = append(titles, title)
+	cards := make([]*AlertCard, 0, len(keys))
+	for _, key := range keys {
+		cards = append(cards, cardmap[key])
 	}
 
-	sort.Strings(titles)
-
-	cards := make([]*AlertCard, len(titles))
-	for i := 0; i < len(titles); i++ {
-		cards[i] = cardmap[titles[i]]
-	}
-
+	// 先按标题字典序排序，再按严重度升序、数量降序，保持与改造前一致的展示顺序
+	sort.SliceStable(cards, func(i, j int) bool {
+		return cards[i].Title < cards[j].Title
+	})
 	sort.SliceStable(cards, func(i, j int) bool {
 		if cards[i].Severity != cards[j].Severity {
 			return cards[i].Severity < cards[j].Severity
@@ -121,17 +186,18 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 }
 
 type AlertCard struct {
-	Title    string  `json:"title"`
-	Total    int     `json:"total"`
-	EventIds []int64 `json:"event_ids"`
-	Severity int     `json:"severity"`
+	Title      string                 `json:"title"`
+	Total      int                    `json:"total"`
+	EventIds   []int64                `json:"event_ids"`
+	Dimensions []models.CardDimension `json:"dimensions"`
+	Severity   int                    `json:"severity"`
 }
 
 func (rt *Router) alertCurEventsCardDetails(c *gin.Context) {
-	var f idsForm
+	var f cardDetailsForm
 	ginx.BindJSON(c, &f)
 
-	list, err := models.AlertCurEventGetByIds(rt.Ctx, f.Ids)
+	list, err := rt.resolveCardEvents(c, f)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(list); i++ {
@@ -140,6 +206,39 @@ func (rt *Router) alertCurEventsCardDetails(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(list, err)
+}
+
+type cardDetailsForm struct {
+	Ids        []int64                `json:"ids"`
+	Selections []models.CardSelection `json:"selections"`
+}
+
+// resolveCardEvents 把整卡操作要处理的事件解析出来：优先按卡片身份(selections)在后端展开成真实事件，
+// 仅当未传 selections 时才回退到旧的按 id 列表查询，保证新旧入参都能用。
+func (rt *Router) resolveCardEvents(c *gin.Context, f cardDetailsForm) ([]*models.AlertCurEvent, error) {
+	if len(f.Selections) == 0 {
+		return models.AlertCurEventGetByIds(rt.Ctx, f.Ids)
+	}
+
+	myGroups := ginx.QueryBool(c, "my_groups", false)
+	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, myGroups)
+	if err != nil {
+		return nil, err
+	}
+	stime, etime := getTimeRange(c)
+	events, err := models.AlertCurEventsFilterByCard(rt.Ctx, queryRuleProds(c), bgids, stime, etime,
+		strx.IdsInt64ForAPI(ginx.QueryStr(c, "severity", ""), ","), queryDatasourceIds(c), queryRuleCates(c),
+		0, ginx.QueryStr(c, "query", ""), f.Selections)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]*models.AlertCurEvent, len(events))
+	for i := range events {
+		event := events[i]
+		list[i] = &event
+	}
+	return list, nil
 }
 
 // alertCurEventsGetByRid
@@ -161,26 +260,33 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	eventIds := strx.IdsInt64ForAPI(ginx.QueryStr(c, "event_ids", ""), ",")
 
-	prod := ginx.QueryStr(c, "prods", "")
-	if prod == "" {
-		prod = ginx.QueryStr(c, "rule_prods", "")
-	}
-
-	prods := []string{}
-	if prod != "" {
-		prods = strings.Split(prod, ",")
-	}
-
-	cate := ginx.QueryStr(c, "cate", "$all")
-	cates := []string{}
-	if cate != "$all" {
-		cates = strings.Split(cate, ",")
-	}
+	prods := queryRuleProds(c)
+	cates := queryRuleCates(c)
 
 	ruleId := ginx.QueryInt64(c, "rid", 0)
 
 	bgids, err := GetBusinessGroupIds(c, rt.Ctx, rt.Center.EventHistoryGroupView, myGroups)
 	ginx.Dangerous(err)
+
+	cache := make(map[int64]*models.UserGroup)
+
+	// 选中聚合卡片（含多级下钻）后，按卡片身份在内存里筛选并分页，避免把海量 event id 拼进请求
+	if selections := BindCardSelections(c); len(selections) > 0 {
+		all, err := models.AlertCurEventsFilterByCard(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
+			cates, ruleId, query, selections)
+		ginx.Dangerous(err)
+
+		list := PageEvents(all, ginx.Offset(c, limit), limit)
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(rt.Ctx, cache)
+		}
+
+		ginx.NewRender(c).Data(gin.H{
+			"list":  list,
+			"total": len(all),
+		}, nil)
+		return
+	}
 
 	total, err := models.AlertCurEventTotal(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
 		cates, ruleId, query, eventIds)
@@ -189,8 +295,6 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 	list, err := models.AlertCurEventsGet(rt.Ctx, prods, bgids, stime, etime, severity, dsIds,
 		cates, ruleId, query, limit, ginx.Offset(c, limit), eventIds)
 	ginx.Dangerous(err)
-
-	cache := make(map[int64]*models.UserGroup)
 
 	for i := 0; i < len(list); i++ {
 		list[i].FillNotifyGroups(rt.Ctx, cache)
