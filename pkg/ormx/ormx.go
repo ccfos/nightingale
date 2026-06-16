@@ -154,12 +154,12 @@ func createMysqlDatabase(dsn string, gconfig *gorm.Config) error {
 func parseMysqlDatabaseDSN(dsn string) (string, string, error) {
 	cfg, err := mysqlDriver.ParseDSN(dsn)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to parse DSN: %s", dsn)
+		return "", "", fmt.Errorf("failed to parse DSN: %w", err)
 	}
 
 	dbName := cfg.DBName
 	if dbName == "" {
-		return "", "", fmt.Errorf("failed to parse database name from DSN: %s", dsn)
+		return "", "", fmt.Errorf("failed to parse database name from DSN")
 	}
 
 	cfg.DBName = ""
@@ -237,15 +237,7 @@ func checkMysqlDatabaseExist(c DBConfig) (bool, error) {
 		return false, err
 	}
 
-	var dialector gorm.Dialector
-	switch strings.ToLower(c.DBType) {
-	case "mysql":
-		dialector = mysql.Open(serverDSN)
-	case "postgres":
-		dialector = postgres.Open(serverDSN)
-	default:
-		return false, fmt.Errorf("unsupported database type: %s", c.DBType)
-	}
+	dialector := mysql.Open(serverDSN)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{

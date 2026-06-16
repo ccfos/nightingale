@@ -39,8 +39,8 @@ func TestParseMysqlDatabaseDSN(t *testing.T) {
 			addr:   "/var/run/mysqld/mysqld.sock",
 		},
 		{
-			name:     "Unix socket with slash in query param",
-			dsn:      "root:1234@unix(/var/run/mysqld/mysqld.sock)/test?charset=utf8mb4&arg=/some/path.ext",
+			name:     "Unix socket with escaped slash in query param",
+			dsn:      "root:1234@unix(/var/run/mysqld/mysqld.sock)/test?charset=utf8mb4&arg=%2Fsome%2Fpath.ext",
 			dbName:   "test",
 			net:      "unix",
 			addr:     "/var/run/mysqld/mysqld.sock",
