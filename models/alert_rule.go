@@ -1498,6 +1498,39 @@ func GetTargetsOfHostAlertRule(ctx *ctx.Context, engineName string) (map[string]
 	return m, nil
 }
 
+// HostAlertRuleTargetsSig 计算 host 告警规则 -> target 映射的输入签名。
+// 该映射由三部分输入共同决定，任一变化都会改变结果，签名随之变化：
+//  1. host 告警规则（增删/改/启停，都会改变 count 或 max(update_at)）
+//  2. 机器与业务组的归属关系 target_busi_group
+//  3. 机器自身的 tags/host_tags 等字段（变更时 router_heartbeat 会 bump target.update_at）
+//
+// 供 memsto 在每轮同步前做变更检测：签名未变即可跳过整轮规则查询，
+// 避免每个周期对所有 host 规则各发一条全表扫描的过滤 SQL。仅 center 直连 DB 时调用。
+func HostAlertRuleTargetsSig(ctx *ctx.Context) (string, error) {
+	var ruleStat []*Statistics
+	err := DB(ctx).Model(&AlertRule{}).
+		Select("count(*) as total", "max(update_at) as last_updated").
+		Where("prod = ?", HOST).Find(&ruleStat).Error
+	if err != nil {
+		return "", err
+	}
+
+	bgStat, err := StatisticsGet(ctx, &TargetBusiGroup{})
+	if err != nil {
+		return "", err
+	}
+
+	tgStat, err := StatisticsGet(ctx, &Target{})
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%d:%d|%d:%d|%d:%d",
+		ruleStat[0].Total, ruleStat[0].LastUpdated,
+		bgStat.Total, bgStat.LastUpdated,
+		tgStat.Total, tgStat.LastUpdated), nil
+}
+
 func (ar *AlertRule) Copy(ctx *ctx.Context) (*AlertRule, error) {
 	newAr := &AlertRule{}
 	err := copier.Copy(newAr, ar)
