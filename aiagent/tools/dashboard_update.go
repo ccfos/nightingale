@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -1173,114 +1172,33 @@ func updateDashboard(ctx context.Context, deps *aiagent.ToolDeps, args map[strin
 	}
 
 	// Propose phase: stash the computed change set + resulting payload and return
-	// without writing. The write happens only on a later confirm call that quotes
-	// this proposal_id (see confirmDashboardProposal).
-	proposalID, err = newProposalID()
-	if err != nil {
-		return "", fmt.Errorf("failed to generate proposal id: %v", err)
-	}
-	seqID, _ := strconv.ParseInt(params["seq_id"], 10, 64)
-	if err := dashboardProposals.put(ctx, deps.Redis, &dashboardProposal{
-		ID:           proposalID,
-		ChatID:       params["chat_id"],
-		SeqID:        seqID,
-		BoardID:      id,
+	// without writing — proposeUpdate ends the turn with an approval interrupt:
+	// 确认文案由工具确定性渲染、重放参数一次性备好，运行时把本轮以该文案收尾并持久化
+	// Pending；用户下一轮明确确认时由运行时直接以 ResumeArgs 重放本工具
+	// （confirmDashboardProposal 腿）——确认环节零 LLM 参与，模型无需记忆/复述
+	// proposal_id。服务端门（晚于提案轮、单次消费、基线哈希）见 confirmUpdateGate。
+	logger.Infof("update_dashboard: user=%s, id=%d, proposed changes=%v", user.Username, id, allChanges)
+	return proposeUpdate(ctx, deps, params, &updateProposal{
+		Kind:         "dashboard",
+		TargetID:     id,
 		BaselineHash: hashConfigs(board.Configs),
-		NewConfigs:   string(newConfigs),
+		Payload:      string(newConfigs),
 		Changes:      allChanges,
-		CreatedAt:    time.Now(),
-	}); err != nil {
-		return "", fmt.Errorf("failed to stash dashboard proposal: %v", err)
-	}
-
-	logger.Infof("update_dashboard: user=%s, id=%d, proposed changes=%v, proposal_id=%s", user.Username, id, allChanges, proposalID)
-
-	// 人在环中断：确认文案由工具确定性渲染、重放参数
-	// 一次性备好。运行时把本轮以该文案收尾并持久化 Pending；用户下一轮明确确认时
-	// 由运行时直接以 ResumeArgs 重放本工具（confirmDashboardProposal 腿）——确认
-	// 环节零 LLM 参与，模型无需记忆/复述 proposal_id。原有服务端门（晚于提案轮、
-	// 单次消费、基线哈希）全部保留生效。
-	resumeArgs, _ := json.Marshal(map[string]interface{}{
-		"id":          board.Id,
-		"proposal_id": proposalID,
-		"confirmed":   true,
+	}, renderUpdateProposalPrompt(fmt.Sprintf("仪表盘 **%s**（id=%d）", board.Name, board.Id), allChanges), map[string]interface{}{
+		"id": board.Id,
 	})
-	return "", &aiagent.ToolInterrupt{
-		Kind:       aiagent.InterruptKindApproval,
-		Prompt:     renderDashboardProposalPrompt(board.Name, board.Id, allChanges),
-		ResumeArgs: string(resumeArgs),
-	}
 }
 
-// renderDashboardProposalPrompt 把提案改动渲染成给用户的确认文案（markdown）。
-// 由工具确定性生成，不再依赖模型转述，保证用户看到的就是将要写入的全部改动。
-func renderDashboardProposalPrompt(name string, id int64, changes []string) string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("即将修改仪表盘 **%s**（id=%d），改动如下：\n", name, id))
-	for _, c := range changes {
-		sb.WriteString("\n- ")
-		sb.WriteString(c)
-	}
-	sb.WriteString("\n\n以上改动尚未写入。回复「确认」立即生效，回复「取消」放弃本次修改，也可以直接提出新的调整要求。")
-	return sb.String()
-}
-
-// confirmDashboardProposal applies a previously proposed change set. It enforces
-// the guarantees the prompt alone couldn't: the proposal must exist (and be
-// single-use), it must target this dashboard, the confirmation must land in a
-// LATER chat turn than the proposal (so a single model turn can't propose and
-// confirm itself), and the dashboard's payload must be unchanged since the
-// proposal baseline (so a concurrent edit isn't silently overwritten).
+// confirmDashboardProposal applies a previously proposed change set once
+// confirmUpdateGate passes (single-use proposal, same chat, strictly later
+// turn, unchanged baseline — see update_proposal.go for the guarantees).
 func confirmDashboardProposal(ctx context.Context, deps *aiagent.ToolDeps, params map[string]string, user *models.User, board *models.Board, id int64, proposalID string, confirmed bool) (string, error) {
-	if !confirmed {
-		return "", fmt.Errorf("proposal_id was provided but confirmed is not true: pass confirmed=true to apply the proposal")
-	}
-	if strings.TrimSpace(proposalID) == "" {
-		return "", fmt.Errorf("confirmed=true requires the proposal_id returned by the initial call; first call update_dashboard without confirmed to generate a proposal, show the diff, then confirm")
+	p, err := confirmUpdateGate(ctx, deps, params, "update_dashboard", "dashboard", id, proposalID, confirmed, hashConfigs(board.Configs))
+	if err != nil {
+		return "", err
 	}
 
-	// Validate against a PEEKED copy (no delete yet): a confirm rejected by the
-	// gate below must NOT burn the proposal, or the user's genuine confirm next
-	// turn would fail with "not found". The proposal is consumed only once every
-	// check passes and we're about to write (the take() right before the save).
-	p := dashboardProposals.peek(ctx, deps.Redis, proposalID)
-	if p == nil {
-		return "", fmt.Errorf("proposal %q not found or expired; call update_dashboard again without confirmed to regenerate a fresh proposal against the current config, show the diff, and confirm again", proposalID)
-	}
-	if p.BoardID != id {
-		return "", fmt.Errorf("proposal %q is for dashboard id=%d, not id=%d", proposalID, p.BoardID, id)
-	}
-
-	// Turn-identity gate — FAIL CLOSED. A destructive dashboard edit is applied
-	// only when the confirmation provably arrives in a LATER chat turn than the
-	// proposal (proof that a real user message landed in between). The assistant
-	// router always injects a non-empty chat_id + numeric seq_id (chat_id is
-	// required upstream). A caller that supplies neither — a headless workflow or
-	// CLI agent — can't prove a human confirmed, so we REFUSE rather than let one
-	// model turn both propose and confirm: the model already sees the proposal_id
-	// in the propose response, so it is no barrier on its own. Rejection here is
-	// recoverable — the proposal was only peeked, not consumed.
-	curSeq, seqErr := strconv.ParseInt(strings.TrimSpace(params["seq_id"]), 10, 64)
-	switch {
-	case params["chat_id"] == "" || params["chat_id"] != p.ChatID:
-		return "", fmt.Errorf("this dashboard update can only be confirmed inside the same chat conversation that proposed it; regenerate the proposal here, show the diff, and confirm")
-	case seqErr != nil || curSeq <= p.SeqID:
-		return "", fmt.Errorf("a dashboard update must be confirmed by the user in a later turn than the proposal; show the diff, wait for the user to confirm, then call update_dashboard again with the proposal_id")
-	}
-
-	// Conflict guard: refuse if the board changed since the proposal baseline.
-	if hashConfigs(board.Configs) != p.BaselineHash {
-		return "", fmt.Errorf("dashboard id=%d has changed since this proposal was generated, so it is stale; call update_dashboard again without confirmed to regenerate against the current config, show the new diff, and confirm again", id)
-	}
-
-	// All checks passed — consume now (atomic single-use). If another confirm
-	// won the race, or the proposal expired between the peek and here, take()
-	// returns nil and we don't write twice.
-	if dashboardProposals.take(ctx, deps.Redis, proposalID) == nil {
-		return "", fmt.Errorf("proposal %q is no longer available (already confirmed or expired); call update_dashboard again without confirmed to regenerate", proposalID)
-	}
-
-	if err := models.BoardPayloadSave(deps.DBCtx, id, p.NewConfigs); err != nil {
+	if err := models.BoardPayloadSave(deps.DBCtx, id, p.Payload); err != nil {
 		return "", fmt.Errorf("failed to save dashboard config: %v", err)
 	}
 

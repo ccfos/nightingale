@@ -4,10 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -38,6 +44,416 @@ type alertMuteDetailResult struct {
 func init() {
 	register(defs.ListAlertMutes, listAlertMutes)
 	register(defs.GetAlertMuteDetail, getAlertMuteDetail)
+	register(defs.CreateAlertMute, createAlertMute)
+	register(defs.UpdateAlertMute, updateAlertMute)
+}
+
+// createAlertMute 落库一条屏蔽规则。入参 config 是与前端/HTTP API 同构的 AlertMute JSON
+// （n9e-alert-mute-copilot skill 文档化了字段形状），直接反序列化进 models.AlertMute，由
+// AlertMute.Add 内部做 Verify(etime>btime、标签解析) + FE2DB(datasource/periodic/severities
+// 序列化) + 落库。业务组缺参门同 create_dashboard：config 未带 group_id 时回退表单注入的
+// busi_group_id，仍缺则弹业务组选择表单。
+func createAlertMute(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	if err := checkPerm(deps, user, PermAlertMutesAdd); err != nil {
+		return "", err
+	}
+
+	configJSON := getArgString(args, "config")
+	if configJSON == "" {
+		return "", fmt.Errorf("config is required: a JSON object describing the mute (cause, tags, btime, etime, ...); load the n9e-alert-mute-copilot skill for the exact shape")
+	}
+
+	var mute models.AlertMute
+	if err := json.Unmarshal([]byte(configJSON), &mute); err != nil {
+		return "", fmt.Errorf("invalid config JSON: %v", err)
+	}
+
+	// 业务组缺参门：config 没带 group_id 就回退表单/页面注入的 busi_group_id，仍缺则弹表单。
+	groupId := mute.GroupId
+	if groupId == 0 {
+		groupId = resolveCreationGroupID(args, params)
+	}
+	if groupId == 0 {
+		return "", creationFormInterrupt(deps, user, "n9e-alert-mute-copilot", []string{"busi_group_id"})
+	}
+	mute.GroupId = groupId
+
+	bg, err := models.BusiGroupGetById(deps.DBCtx, groupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", groupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	// datasource_ids 缺省为 [0]：空数组在引擎里已等价"全部"（MatchMute 见 DatasourceIdsJson
+	// 为空即跳过数据源过滤），但 [0] 才是 FE 表示"全部数据源"的标准哨兵——规范化成它，落库后
+	// 前端能正确回显"全部"，也避免模型照搬 skill 示例里的 [] 时存成空串。
+	if len(mute.DatasourceIdsJson) == 0 {
+		mute.DatasourceIdsJson = []int64{0}
+	}
+
+	// 时间兜底：让 LLM 不必自己算 Unix 时间戳（btime=now、duration→etime、periodic 缺省一年）。
+	if err := fillMuteTime(&mute, args); err != nil {
+		return "", err
+	}
+
+	// tags / periodic 归一化：接受人话/数组，转成引擎要的 wire 形式，并对非法 func 早报错
+	// （引擎对非法 func 不报错却永不匹配，是静默坑）。
+	if err := normalizeMuteTags(&mute); err != nil {
+		return "", err
+	}
+	normalizeMutePeriodic(&mute)
+
+	mute.Id = 0 // 防止模型把 id 塞进 config 导致主键冲突
+	mute.CreateBy = user.Username
+	mute.UpdateBy = user.Username
+
+	if err := mute.Add(deps.DBCtx); err != nil {
+		return "", fmt.Errorf("failed to create alert mute: %v", err)
+	}
+
+	logger.Infof("create_alert_mute: user=%s, group_id=%d, cause=%s, id=%d", user.Username, groupId, mute.Cause, mute.Id)
+
+	result := map[string]interface{}{
+		"id":         mute.Id,
+		"group_id":   mute.GroupId,
+		"group_name": bg.Name,
+		"note":       mute.Note,
+		"cause":      mute.Cause,
+		"btime":      formatUnixTime(mute.Btime),
+		"etime":      formatUnixTime(mute.Etime),
+		// 站内配置页相对路径。最终回复以 [note](url) 链接展示规则标题，用户可点击直达。
+		// bgid 必带：前端 shield/edit.tsx 只在 bgid && id 同时存在时才拉数据，缺了页面空白。
+		"url": fmt.Sprintf("/alert-mutes/edit/%d?bgid=%d", mute.Id, mute.GroupId),
+	}
+	bytes, _ := json.Marshal(result)
+	return string(bytes), nil
+}
+
+// updateAlertMute 增量修改一条屏蔽规则：config(只含要改的字段)二次 Unmarshal 到 DB2FE 后的
+// 现有规则副本上——encoding/json 只覆盖 JSON 里出现的字段，天然就是 patch 语义（数组整体
+// 替换）。duration 参数承接"延长屏蔽"这一最高频诉求：从当前时刻（btime 在未来则从 btime）
+// 重算 etime，LLM 不必算 Unix 时间戳。
+// 两阶段写（见 update_proposal.go）：首次调用是提案——算出改动、向用户展示确认文案并中断，
+// 不写库；用户确认后运行时以 ResumeArgs 重放本工具走 confirm 腿，门禁通过才真正落库
+// （AlertMute.Update 内部 Verify + FE2DB + 整行替换，并保 Id/GroupId/CreateAt/CreateBy）。
+func updateAlertMute(ctx context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
+	user, err := getUser(deps, params)
+	if err != nil {
+		return "", err
+	}
+	// 对齐 FE 编辑路由 PUT /busi-group/:id/alert-mute/:amid 的 perm("/alert-mutes/put")。
+	if err := checkPerm(deps, user, PermAlertMutesPut); err != nil {
+		return "", err
+	}
+
+	id := getArgInt64(args, "id")
+	if id == 0 {
+		return "", fmt.Errorf("id is required")
+	}
+
+	existing, err := models.AlertMuteGetById(deps.DBCtx, id)
+	if err != nil {
+		return "", fmt.Errorf("failed to get alert mute: %v", err)
+	}
+	if existing == nil {
+		return fmt.Sprintf(`{"error":"alert mute not found: id=%d"}`, id), nil
+	}
+	// merge 底座必须是 FE 形态（否则未修改的序列化字段会在 Update 的 FE2DB 里被空值清掉）；
+	// AlertMuteGetById 已做 DB2FE，不必再调。subscribe 的 AlertSubscribeGet 不做，须显式调。
+	// 提案基线必须在 merge 之前取：merge 的 Unmarshal 会复用 existing 切片的底层数组。
+	// Activated 由 DB2FE 按当前时刻算出，propose→confirm 之间窗口边界穿越（延长快到期
+	// 的屏蔽正是高频场景）会让它翻转，须从基线剔除，否则确认必然误报 stale。
+	forHash := *existing
+	forHash.Activated = 0
+	baseline := updateBaselineHash(&forHash)
+
+	// 数据级权限同 createAlertMute：要求对规则所属业务组有 rw。
+	bg, err := models.BusiGroupGetById(deps.DBCtx, existing.GroupId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get busi group: %v", err)
+	}
+	if bg == nil {
+		return "", fmt.Errorf("busi group not found: id=%d", existing.GroupId)
+	}
+	if err := checkBgRW(deps, user, bg); err != nil {
+		return "", err
+	}
+
+	configJSON := getArgString(args, "config")
+	durStr := getArgString(args, "duration")
+	if configJSON == "" && durStr == "" {
+		return "", fmt.Errorf("nothing to update: pass config (fields to change) and/or duration (new mute length)")
+	}
+
+	merged := *existing
+	var changed, changeDescs []string
+	if configJSON != "" {
+		patch, keys, err := configPatch(configJSON)
+		if err != nil {
+			return "", err
+		}
+		if err := patchGroupIDGuard(patch, existing.GroupId); err != nil {
+			return "", err
+		}
+		if err := rejectEmptyArrayPatch(patch, "severities"); err != nil {
+			return "", err
+		}
+		// etime 与 duration 互斥：同传时写入以 duration 为准，但确认文案会出现两行
+		// 矛盾的 etime——违背"用户看到的就是将要写入的全部改动"，直接拒绝让模型改参重试。
+		if _, ok := patch["etime"]; ok && durStr != "" {
+			return "", fmt.Errorf("etime (in config) and duration are mutually exclusive: pass duration to re-mute relative to now, or etime alone for an absolute end time")
+		}
+		if err := json.Unmarshal([]byte(configJSON), &merged); err != nil {
+			return "", fmt.Errorf("invalid config JSON: %v", err)
+		}
+		merged.Id = existing.Id
+		merged.GroupId = existing.GroupId
+		changed = keys
+		changeDescs = describePatchChanges(patch, keys)
+	}
+	if durStr != "" {
+		secs, err := parseDurationSeconds(durStr)
+		if err != nil {
+			return "", err
+		}
+		base := time.Now().Unix()
+		if merged.Btime > base {
+			base = merged.Btime
+		}
+		merged.Etime = base + secs
+		// patch 里的 etime 已被上面的互斥守卫拒掉，这里不会重复。
+		changed = append(changed, "etime")
+		slices.Sort(changed)
+		changeDescs = append(changeDescs, fmt.Sprintf("`etime` → 约 %s（再屏蔽 %s，自确认时刻起算）", formatUnixTime(merged.Etime), durStr))
+	}
+	// configPatch 滤掉了 id/group_id：config 只含这俩（或为 {}）且没传 duration 时是零改动。
+	if len(changed) == 0 {
+		return "", fmt.Errorf("nothing to update: config contains no changeable fields; pass the fields to change and/or duration")
+	}
+
+	if err := normalizeMuteTags(&merged); err != nil {
+		return "", err
+	}
+	normalizeMutePeriodic(&merged)
+
+	// 提案前整体校验（Verify 会改写副本的 datasource_ids，用 check 隔离），
+	// 别让用户确认完才发现 config 不合法。
+	check := merged
+	if err := check.Verify(); err != nil {
+		return "", fmt.Errorf("invalid config: %v", err)
+	}
+
+	title := merged.Note
+	if title == "" {
+		title = merged.Cause
+	}
+
+	// confirm 腿：用户确认后运行时以 ResumeArgs 重放本工具。基线哈希保证此刻重算出的
+	// merged 与提案时展示的一致（duration 例外：自确认时刻重算 etime，屏蔽时长不缩水）。
+	confirmed := getArgBool(args, "confirmed")
+	if proposalID := getArgString(args, "proposal_id"); confirmed || proposalID != "" {
+		if _, err := confirmUpdateGate(ctx, deps, params, "update_alert_mute", "alert_mute", id, proposalID, confirmed, baseline); err != nil {
+			return "", err
+		}
+
+		merged.UpdateBy = user.Username
+		if err := existing.Update(deps.DBCtx, merged); err != nil {
+			return "", fmt.Errorf("failed to update alert mute: %v", err)
+		}
+
+		logger.Infof("update_alert_mute: user=%s, id=%d, group_id=%d, applied changes=%v", user.Username, id, existing.GroupId, changed)
+
+		result := map[string]interface{}{
+			"id":         existing.Id,
+			"group_id":   existing.GroupId,
+			"group_name": bg.Name,
+			"name":       title,
+			"note":       merged.Note,
+			"cause":      merged.Cause,
+			"disabled":   merged.Disabled,
+			"btime":      formatUnixTime(merged.Btime),
+			"etime":      formatUnixTime(merged.Etime),
+			"updated":    changed,
+			// changes(人类可读) + applied + name 是确认回执渲染契约
+			// （router_ai_interrupt.go formatResumeResult）。
+			"changes": changeDescs,
+			"applied": true,
+			// 站内配置页相对路径，bgid 必带（同 createAlertMute）。
+			"url": fmt.Sprintf("/alert-mutes/edit/%d?bgid=%d", existing.Id, existing.GroupId),
+		}
+		bytes, _ := json.Marshal(result)
+		return string(bytes), nil
+	}
+
+	// propose 腿：展示改动清单并中断等用户确认，不写库。
+	logger.Infof("update_alert_mute: user=%s, id=%d, proposed changes=%v", user.Username, id, changed)
+
+	resumeArgs := map[string]interface{}{"id": id}
+	if configJSON != "" {
+		resumeArgs["config"] = configJSON
+	}
+	if durStr != "" {
+		resumeArgs["duration"] = durStr
+	}
+	return proposeUpdate(ctx, deps, params, &updateProposal{
+		Kind:         "alert_mute",
+		TargetID:     id,
+		BaselineHash: baseline,
+		Changes:      changeDescs,
+	}, renderUpdateProposalPrompt(fmt.Sprintf("屏蔽规则 **%s**（id=%d）", title, id), changeDescs), resumeArgs)
+}
+
+// fillMuteTime 给屏蔽规则补时间，把"算 Unix 时间戳"这件 LLM 容易错的活搬到服务端：
+//   - btime 缺省(0) → 当前时间；
+//   - 传了 duration 参数(如 "2h"/"7d"/"1d12h") → etime = btime + duration（覆盖 config 里的 etime）；
+//   - 周期屏蔽(type=1)缺 etime → 默认一年：btime/etime 仅用于过 Verify(etime>btime)，
+//     周期匹配 IsWithinPeriodicMute 根本不看这俩，给足够大的区间即可；
+//   - 固定屏蔽(type=0)既无 duration 又无 etime → 明确报错，而不是落到 Verify 那句晦涩的 etime<=btime。
+func fillMuteTime(mute *models.AlertMute, args map[string]interface{}) error {
+	if mute.Btime == 0 {
+		mute.Btime = time.Now().Unix()
+	}
+
+	if durStr := getArgString(args, "duration"); durStr != "" {
+		secs, err := parseDurationSeconds(durStr)
+		if err != nil {
+			return err
+		}
+		mute.Etime = mute.Btime + secs
+	} else if mute.MuteTimeType == models.Periodic && mute.Etime == 0 {
+		mute.Etime = mute.Btime + 365*24*3600
+	}
+
+	if mute.Etime == 0 {
+		return fmt.Errorf("固定时间屏蔽需要结束时间：请用 duration 参数（如 \"2h\"、\"7d\"）或在 config 里给 etime（Unix 秒）")
+	}
+	return nil
+}
+
+var durationSegRe = regexp.MustCompile(`(\d+)(w|d|h|m|s)`)
+
+// parseDurationSeconds 解析 "2h"/"7d"/"30m"/"1d12h"/"1w" 这类时长为秒。
+// 在 Go time.ParseDuration(只认到 h)之上补了 d(天)/w(周)；用全量覆盖校验拒绝 "2x" 这类残渣。
+func parseDurationSeconds(s string) (int64, error) {
+	compact := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(s), " ", ""))
+	if compact == "" {
+		return 0, fmt.Errorf("duration 不能为空")
+	}
+	if leftover := durationSegRe.ReplaceAllString(compact, ""); leftover != "" {
+		return 0, fmt.Errorf("无法解析时长 %q（残留 %q）：支持 s/m/h/d/w，如 2h、7d、1d12h", s, leftover)
+	}
+	unitSec := map[string]int64{"s": 1, "m": 60, "h": 3600, "d": 86400, "w": 604800}
+	var total int64
+	for _, m := range durationSegRe.FindAllStringSubmatch(compact, -1) {
+		n, _ := strconv.ParseInt(m[1], 10, 64)
+		total += n * unitSec[m[2]]
+	}
+	if total <= 0 {
+		return 0, fmt.Errorf("时长必须大于 0：%q", s)
+	}
+	return total, nil
+}
+
+var validTagFuncs = map[string]bool{"==": true, "!=": true, "=~": true, "!~": true, "in": true, "not in": true}
+
+// normalizeMuteTags 校验并归一化 tags：func 缺省回退 op；非法 func 早报错；
+// in/not in 的 value 接受数组或逗号分隔，统一成空格分隔字符串（FE/引擎约定）。
+func normalizeMuteTags(mute *models.AlertMute) error {
+	if len([]byte(mute.Tags)) == 0 {
+		return nil
+	}
+	var filters []models.TagFilter
+	if err := json.Unmarshal(mute.Tags, &filters); err != nil {
+		return fmt.Errorf("invalid tags: %v", err)
+	}
+	for i := range filters {
+		f := &filters[i]
+		if f.Func == "" {
+			f.Func = f.Op
+		}
+		if f.Key == "" {
+			return fmt.Errorf("tags[%d]: key 不能为空", i)
+		}
+		if !validTagFuncs[f.Func] {
+			return fmt.Errorf("tags[%d]: func %q 非法，必须是 == / != / =~ / !~ / in / not in 之一", i, f.Func)
+		}
+		f.Op = f.Func // 保持 op 与 func 一致
+		if f.Func == "in" || f.Func == "not in" {
+			f.Value = normalizeInValue(f.Value)
+		}
+	}
+	b, err := json.Marshal(filters)
+	if err != nil {
+		return fmt.Errorf("failed to normalize tags: %v", err)
+	}
+	mute.Tags = ormx.JSONArr(b)
+	return nil
+}
+
+// normalizeInValue 把 in/not in 的 value 统一成空格分隔字符串：数组→空格拼接；含逗号的串→逗号转空格。
+func normalizeInValue(v interface{}) interface{} {
+	switch val := v.(type) {
+	case []interface{}:
+		parts := make([]string, 0, len(val))
+		for _, item := range val {
+			parts = append(parts, fmt.Sprintf("%v", item))
+		}
+		return strings.Join(parts, " ")
+	case string:
+		if strings.ContainsRune(val, ',') {
+			fields := strings.FieldsFunc(val, func(r rune) bool { return r == ',' || r == ' ' })
+			return strings.Join(fields, " ")
+		}
+		return val
+	default:
+		return v
+	}
+}
+
+// weekdayWords 把常见的中英文星期说法映射到引擎要的"空格分隔数字串"(0=周日…6=周六)。
+var weekdayWords = map[string]string{
+	"每天": "0 1 2 3 4 5 6", "everyday": "0 1 2 3 4 5 6", "daily": "0 1 2 3 4 5 6",
+	"工作日": "1 2 3 4 5", "weekday": "1 2 3 4 5", "weekdays": "1 2 3 4 5",
+	"周末": "0 6", "weekend": "0 6", "weekends": "0 6",
+}
+
+// normalizeMutePeriodic 归一化周期屏蔽的人话写法：
+//   - enable_days_of_week 接受 工作日/每天/周末 → 数字串；逗号 → 空格；
+//   - enable_stime/etime 写 "全天"/"allday" → 00:00 ~ 23:59。
+func normalizeMutePeriodic(mute *models.AlertMute) {
+	for i := range mute.PeriodicMutesJson {
+		p := &mute.PeriodicMutesJson[i]
+
+		dow := strings.TrimSpace(p.EnableDaysOfWeek)
+		if mapped, ok := weekdayWords[strings.ToLower(dow)]; ok {
+			p.EnableDaysOfWeek = mapped
+		} else if strings.ContainsRune(dow, ',') {
+			fields := strings.FieldsFunc(dow, func(r rune) bool { return r == ',' || r == ' ' })
+			p.EnableDaysOfWeek = strings.Join(fields, " ")
+		}
+
+		if isAllDayWord(p.EnableStime) || isAllDayWord(p.EnableEtime) {
+			p.EnableStime = "00:00"
+			p.EnableEtime = "23:59"
+		}
+	}
+}
+
+func isAllDayWord(s string) bool {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "全天", "allday", "all day", "24h":
+		return true
+	}
+	return false
 }
 
 func listAlertMutes(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {

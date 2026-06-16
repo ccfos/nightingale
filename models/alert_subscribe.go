@@ -341,6 +341,27 @@ func (s *AlertSubscribe) Update(ctx *ctx.Context, selectField interface{}, selec
 	return DB(ctx).Model(s).Select(selectField, selectFields...).Updates(s).Error
 }
 
+// UpdateFull 整行替换式更新（同 AlertMute.Update）：Id/GroupId/CreateAt/CreateBy 强制保留
+// 旧值，其余列全部以 ref 为准——ref 必须基于 DB2FE 后的完整现有行构造，否则未触及的
+// 序列化字段会被空值清掉。
+func (s *AlertSubscribe) UpdateFull(ctx *ctx.Context, ref AlertSubscribe) error {
+	ref.Id = s.Id
+	ref.GroupId = s.GroupId
+	ref.CreateAt = s.CreateAt
+	ref.CreateBy = s.CreateBy
+	ref.UpdateAt = time.Now().Unix()
+
+	if err := ref.Verify(); err != nil {
+		return err
+	}
+
+	if err := ref.FE2DB(); err != nil {
+		return err
+	}
+
+	return DB(ctx).Model(s).Select("*").Updates(ref).Error
+}
+
 func AlertSubscribeDel(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
@@ -394,14 +415,21 @@ func (s *AlertSubscribe) MatchProd(prod string) bool {
 }
 
 func (s *AlertSubscribe) MatchCate(cate string) bool {
-	if s.Cate == "" {
+	if s.Cate == "" || cate == "" {
 		return true
 	}
 
-	if s.Cate == "host" {
-		return cate == "host"
+	// host 事件只投递给显式订阅 host 的规则，此分支须在 prometheus 通配之前
+	if cate == HOST {
+		return s.Cate == HOST
 	}
-	return true
+
+	// 存量数据中的 prometheus 多为历史表单默认值而非筛选意图，视为不过滤
+	if s.Cate == PROMETHEUS {
+		return true
+	}
+
+	return s.Cate == cate
 }
 
 func (s *AlertSubscribe) MatchCluster(dsId int64) bool {

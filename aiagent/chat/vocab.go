@@ -26,9 +26,9 @@ type creationSkillSpec struct {
 var creationSkills = []creationSkillSpec{
 	// Alert subscribe / mute must come before the generic "告警" keyword used
 	// by alert-rule, otherwise "创建订阅" would route to alert-rule.
-	{"n9e-create-alert-subscribe", []string{"告警订阅", "订阅规则", "subscribe"}, []string{"busi_group_id"}},
-	{"n9e-create-alert-mute", []string{"屏蔽", "静默", "mute"}, []string{"busi_group_id"}},
-	{"n9e-create-notify-rule", []string{"通知规则", "notify rule", "notify"}, []string{"team_ids"}},
+	{"n9e-alert-subscribe-copilot", []string{"告警订阅", "订阅规则", "subscribe"}, []string{"busi_group_id"}},
+	{"n9e-alert-mute-copilot", []string{"屏蔽", "静默", "mute"}, []string{"busi_group_id"}},
+	{"n9e-notify-rule-copilot", []string{"通知规则", "notify rule", "notify"}, []string{"team_ids"}},
 	// Dashboard 只需业务组——面板可以跨数据源，数据源交给 LLM 从 page context
 	// 或 list_datasources 自行解决，preflight 强制选一个反而限制了后续灵活性。
 	{"n9e-create-dashboard", []string{"仪表盘", "dashboard", "面板"}, []string{"busi_group_id"}},

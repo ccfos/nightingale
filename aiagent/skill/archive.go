@@ -17,11 +17,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ccfos/nightingale/v6/models"
 )
 
-// 归档安全限制：防止 zip bomb / 过大单文件
+// 归档安全限制：防止 zip bomb / 过大单文件。
+//
+// 注意：单个归档的最大文件数不在这里定义，而是统一复用 models.MaxFilesPerSkill
+// —— 归档里的每个文件（含 SKILL.md）最终都会作为一条 ai_skill_file 记录落库，
+// 所以解压期的文件数上限和 DB 层 per-skill 行数上限本就是同一个边界，由 toml 的
+// AIAgent.MaxFilesPerSkill 一处配置、两处强制。
 const (
-	MaxFileCount      = 600              // 单个归档最多文件数（不含 SKILL.md 本身的上限余量）
 	MaxTotalExtracted = 50 * 1024 * 1024 // 解压后总大小上限
 	MaxSingleFile     = 16 * 1024 * 1024 // 单文件上限（对齐 MEDIUMTEXT）
 	MaxSkillMD        = 64 * 1024        // SKILL.md 本身的上限（对齐 TEXT）
@@ -29,7 +35,7 @@ const (
 
 // isArchiveNoise 判断归档条目是否是系统/打包工具产生的噪声（macOS AppleDouble、
 // Finder 资源 fork、.DS_Store 等）。这些条目对 skill 内容无意义，且会撑爆
-// MaxFileCount 配额，所以在 Extract 阶段就直接跳过，与 walker.go 的过滤语义保持一致。
+// models.MaxFilesPerSkill 配额，所以在 Extract 阶段就直接跳过，与 walker.go 的过滤语义保持一致。
 func isArchiveNoise(name string) bool {
 	if strings.HasPrefix(name, "__MACOSX/") {
 		return true
@@ -58,8 +64,8 @@ func ExtractZip(data []byte, destDir string) error {
 			continue
 		}
 		fileCount++
-		if fileCount > MaxFileCount+1 {
-			return fmt.Errorf("too many files in archive, max %d", MaxFileCount)
+		if fileCount > models.MaxFilesPerSkill {
+			return fmt.Errorf("too many files in archive, max %d", models.MaxFilesPerSkill)
 		}
 		if f.UncompressedSize64 > uint64(MaxSingleFile) {
 			return fmt.Errorf("file %s exceeds %dMB limit (%d bytes)", f.Name, MaxSingleFile/1024/1024, f.UncompressedSize64)
@@ -160,8 +166,8 @@ func ExtractTarGz(r io.Reader, destDir string) error {
 		}
 
 		fileCount++
-		if fileCount > MaxFileCount+1 {
-			return fmt.Errorf("too many files in archive, max %d", MaxFileCount)
+		if fileCount > models.MaxFilesPerSkill {
+			return fmt.Errorf("too many files in archive, max %d", models.MaxFilesPerSkill)
 		}
 
 		if hdr.Size > MaxSingleFile {

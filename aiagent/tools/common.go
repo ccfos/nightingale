@@ -3,6 +3,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,17 +17,23 @@ import (
 // =============================================================================
 
 const (
-	PermAlertRules        = "/alert-rules"
-	PermAlertRulesAdd     = "/alert-rules/add"
-	PermAlertRulesPut     = "/alert-rules/put"
-	PermDashboards        = "/dashboards"
-	PermDashboardsAdd     = "/dashboards/add"
-	PermDashboardsPut     = "/dashboards/put"
-	PermAlertMutes        = "/alert-mutes"
-	PermAlertSubscribes   = "/alert-subscribes"
-	PermJobTpls           = "/job-tpls"
-	PermNotificationRules = "/notification-rules"
-	PermUsers             = "/users"
+	PermAlertRules           = "/alert-rules"
+	PermAlertRulesAdd        = "/alert-rules/add"
+	PermAlertRulesPut        = "/alert-rules/put"
+	PermDashboards           = "/dashboards"
+	PermDashboardsAdd        = "/dashboards/add"
+	PermDashboardsPut        = "/dashboards/put"
+	PermAlertMutes           = "/alert-mutes"
+	PermAlertMutesAdd        = "/alert-mutes/add"
+	PermAlertMutesPut        = "/alert-mutes/put"
+	PermAlertSubscribes      = "/alert-subscribes"
+	PermAlertSubscribesAdd   = "/alert-subscribes/add"
+	PermAlertSubscribesPut   = "/alert-subscribes/put"
+	PermJobTpls              = "/job-tpls"
+	PermNotificationRules    = "/notification-rules"
+	PermNotificationRulesAdd = "/notification-rules/add"
+	PermNotificationRulesPut = "/notification-rules/put"
+	PermUsers                = "/users"
 )
 
 // =============================================================================
@@ -169,6 +176,64 @@ func getArgFloat(args map[string]interface{}, key string) (float64, bool) {
 		return f, true
 	}
 	return 0, false
+}
+
+// configPatch parses an update tool's incremental-patch config: the raw
+// top-level fields (presence checks / guards) plus the sorted key list reported
+// back to the model as "updated" and rendered into the confirmation copy.
+// id/group_id stay in the map (patchGroupIDGuard needs them) but are excluded
+// from the key list — handlers force-keep both, so they are never an applied
+// change. Merge itself happens by a second Unmarshal of configJSON onto the
+// DB2FE'd existing struct — encoding/json only overwrites fields present in the
+// JSON, which is exactly patch semantics (arrays are replaced wholesale, never
+// appended).
+func configPatch(configJSON string) (map[string]json.RawMessage, []string, error) {
+	var patch map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(configJSON), &patch); err != nil {
+		return nil, nil, fmt.Errorf("invalid config JSON (must be a single object with only the fields to change): %v", err)
+	}
+	keys := make([]string, 0, len(patch))
+	for k := range patch {
+		if k == "id" || k == "group_id" {
+			continue
+		}
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return patch, keys, nil
+}
+
+// rejectEmptyArrayPatch rejects fields patched to an empty array when the
+// model's FE2DB only re-serializes non-empty values (AlertMute severities,
+// AlertSubscribe webhooks): the write would silently keep the old value while
+// the confirmation copy promised a change.
+func rejectEmptyArrayPatch(patch map[string]json.RawMessage, fields ...string) error {
+	for _, f := range fields {
+		raw, ok := patch[f]
+		if !ok {
+			continue
+		}
+		var arr []json.RawMessage
+		if err := json.Unmarshal(raw, &arr); err == nil && len(arr) == 0 {
+			return fmt.Errorf("%s cannot be cleared to an empty array (storage would keep the old value); pass a non-empty array to replace it, or omit the field to keep it unchanged", f)
+		}
+	}
+	return nil
+}
+
+// patchGroupIDGuard rejects a patch that tries to move the rule to another busi
+// group: group_id is the rule's management home and every permission check runs
+// against it — a silent move would bypass the bgrw check on the target group.
+func patchGroupIDGuard(patch map[string]json.RawMessage, existingGroupID int64) error {
+	raw, ok := patch["group_id"]
+	if !ok {
+		return nil
+	}
+	var gid int64
+	if err := json.Unmarshal(raw, &gid); err == nil && gid != 0 && gid != existingGroupID {
+		return fmt.Errorf("group_id cannot be changed (the rule stays in busi group %d); to move it, recreate in the target group and delete the old one", existingGroupID)
+	}
+	return nil
 }
 
 // =============================================================================

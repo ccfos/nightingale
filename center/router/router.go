@@ -120,6 +120,10 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(30 * time.Minute),
 	}
 
+	// per-skill 文件数上限：toml 的 AIAgent.MaxFilesPerSkill 是唯一来源，这里写入
+	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
+	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
+
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
 	// 消息的 InitSkills 里 destructive re-extract，多 chat 并发时 Step 1 删目录
 	// 和 Step 2 重写之间会被别的请求读到空目录，引发偶发 "file not found"。

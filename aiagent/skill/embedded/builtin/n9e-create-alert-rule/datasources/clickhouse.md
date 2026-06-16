@@ -14,6 +14,12 @@
 - 过去 N 小时：`WHERE timestamp >= now() - INTERVAL 1 HOUR`
 - 今天：`WHERE toDate(timestamp) = today()`
 
+## triggers 硬规则（必读）
+
+- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
+- 本数据源的变量写法：`$<ref>.<valueKey 别名>`，如 `$A.value > 100`；只有一个 valueKey 时可省略别名直接写 `$A`，多个 valueKey 时**必须带别名**（裸 `$A` 取值不确定）
+- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.value > 10 && $B.value < 5"`
+
 ## rule_config 结构
 
 ```json
@@ -32,10 +38,8 @@
     ],
     "triggers": [
       {
-        "mode": 0,
-        "expressions": [
-          {"ref": "A", "comparisonOperator": ">", "value": 100, "logicalOperator": "&&"}
-        ],
+        "mode": 1,
+        "exp": "$A.value > 100",
         "severity": 2,
         "recover_config": {"judge_type": 1}
       }

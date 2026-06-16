@@ -18,7 +18,6 @@ type Pushgw struct {
 	UpdateTargetRetryIntervalMills int64
 	UpdateTargetTimeoutMills       int64
 	UpdateTargetBatchSize          int
-	PushConcurrency                int
 	UpdateTargetByUrlConcurrency   int
 
 	GetHeartbeatFromMetric bool // 是否从时序数据中提取机器心跳时间，默认 false
@@ -137,10 +136,6 @@ func (p *Pushgw) PreCheck() {
 		p.UpdateTargetBatchSize = 20
 	}
 
-	if p.PushConcurrency <= 0 {
-		p.PushConcurrency = 16
-	}
-
 	if p.UpdateTargetByUrlConcurrency <= 0 {
 		p.UpdateTargetByUrlConcurrency = 10
 	}
@@ -208,6 +203,21 @@ func (p *Pushgw) PreCheck() {
 	}
 
 	for index := range p.Writers {
+		// 超时不能为 0：0 会被透传成 transport 的"无超时"，端点 hang 死时
+		// 写出 goroutine 永久卡住，非关键 backend 的并发配额也永不释放。
+		// 默认值与 etc/config.toml 示例一致
+		if p.Writers[index].Timeout <= 0 {
+			p.Writers[index].Timeout = 10000
+		}
+
+		if p.Writers[index].DialTimeout <= 0 {
+			p.Writers[index].DialTimeout = 3000
+		}
+
+		if p.Writers[index].TLSHandshakeTimeout <= 0 {
+			p.Writers[index].TLSHandshakeTimeout = 30000
+		}
+
 		for _, relabel := range p.Writers[index].WriteRelabels {
 			if relabel.Regex == "" {
 				relabel.Regex = "(.*)"

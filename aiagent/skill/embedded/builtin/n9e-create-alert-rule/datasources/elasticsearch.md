@@ -12,6 +12,12 @@
 - `cate`: `"opensearch"`
 - 结构与 Elasticsearch **完全相同**，只是 `cate` 不同，且不支持 `index_pattern`
 
+## triggers 硬规则（必读）
+
+- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
+- 本数据源的变量写法：count 等单值查询用 `$<ref>`，如 `$A > 100`
+- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A > 10 && $B < 5"`
+
 ## rule_config 结构
 
 ```json
@@ -39,10 +45,8 @@
     ],
     "triggers": [
       {
-        "mode": 0,
-        "expressions": [
-          {"ref": "A", "comparisonOperator": ">", "value": 100, "logicalOperator": "&&"}
-        ],
+        "mode": 1,
+        "exp": "$A > 100",
         "severity": 2,
         "recover_config": {"judge_type": 0}
       }
@@ -91,8 +95,8 @@
     ],
     "triggers": [
       {
-        "mode": 0,
-        "expressions": [{"ref": "A", "comparisonOperator": ">", "value": 100, "logicalOperator": "&&"}],
+        "mode": 1,
+        "exp": "$A > 100",
         "severity": 2,
         "recover_config": {"judge_type": 0}
       }
