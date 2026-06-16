@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	tklog "github.com/toolkits/pkg/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -128,26 +129,14 @@ func createPostgresDatabase(dsn string, gconfig *gorm.Config) error {
 }
 
 func createMysqlDatabase(dsn string, gconfig *gorm.Config) error {
-	dsnParts := strings.SplitN(dsn, "/", 2)
-	if len(dsnParts) != 2 {
-		return fmt.Errorf("failed to parse DSN: %s", dsn)
+	dbName, serverDSN, err := parseMysqlDatabaseDSN(dsn)
+	if err != nil {
+		return err
 	}
 
-	connectionInfo := dsnParts[0]
-	dbInfo := dsnParts[1]
-	dbName := dbInfo
-
-	queryIndex := strings.Index(dbInfo, "?")
-	if queryIndex != -1 {
-		dbName = dbInfo[:queryIndex]
-	} else {
-		return fmt.Errorf("failed to parse database name from DSN: %s", dsn)
-	}
-
-	connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
 	createDBQuery := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s CHARACTER SET utf8mb4", dbName)
 
-	tempDialector := mysql.Open(connectionWithoutDB)
+	tempDialector := mysql.Open(serverDSN)
 
 	tempDB, err := gorm.Open(tempDialector, gconfig)
 	if err != nil {
@@ -160,6 +149,21 @@ func createMysqlDatabase(dsn string, gconfig *gorm.Config) error {
 	}
 
 	return nil
+}
+
+func parseMysqlDatabaseDSN(dsn string) (string, string, error) {
+	cfg, err := mysqlDriver.ParseDSN(dsn)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to parse DSN: %w", err)
+	}
+
+	dbName := cfg.DBName
+	if dbName == "" {
+		return "", "", fmt.Errorf("failed to parse database name from DSN")
+	}
+
+	cfg.DBName = ""
+	return dbName, cfg.FormatDSN(), nil
 }
 
 func checkDatabaseExist(c DBConfig) (bool, error) {
@@ -228,33 +232,12 @@ func checkPostgresDatabaseExist(c DBConfig) (bool, error) {
 }
 
 func checkMysqlDatabaseExist(c DBConfig) (bool, error) {
-	dsnParts := strings.SplitN(c.DSN, "/", 2)
-	if len(dsnParts) != 2 {
-		return false, fmt.Errorf("failed to parse DSN: %s", c.DSN)
+	dbName, serverDSN, err := parseMysqlDatabaseDSN(c.DSN)
+	if err != nil {
+		return false, err
 	}
 
-	connectionInfo := dsnParts[0]
-	dbInfo := dsnParts[1]
-	dbName := dbInfo
-
-	queryIndex := strings.Index(dbInfo, "?")
-	if queryIndex != -1 {
-		dbName = dbInfo[:queryIndex]
-	} else {
-		return false, fmt.Errorf("failed to parse database name from DSN: %s", c.DSN)
-	}
-
-	connectionWithoutDB := connectionInfo + "/?" + dbInfo[queryIndex+1:]
-
-	var dialector gorm.Dialector
-	switch strings.ToLower(c.DBType) {
-	case "mysql":
-		dialector = mysql.Open(connectionWithoutDB)
-	case "postgres":
-		dialector = postgres.Open(connectionWithoutDB)
-	default:
-		return false, fmt.Errorf("unsupported database type: %s", c.DBType)
-	}
+	dialector := mysql.Open(serverDSN)
 
 	gconfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
