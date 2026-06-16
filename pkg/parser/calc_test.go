@@ -529,3 +529,262 @@ func TestCalc(t *testing.T) {
 		})
 	}
 }
+
+// TestCalcDegrade 覆盖子条件因变量缺失/无数据求值报错时按布尔逻辑降级为 false 的行为。
+func TestCalcDegrade(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     string
+		data     map[string]interface{}
+		expected bool
+	}{
+		// OR：报错项当 false 跳过，其它项为真即触发
+		{
+			name:     "OR with nodata, A true -> trigger",
+			expr:     "$A || $B",
+			data:     map[string]interface{}{"$A": 1},
+			expected: true,
+		},
+		{
+			name:     "OR with nodata, A false -> not trigger",
+			expr:     "$A || $B",
+			data:     map[string]interface{}{"$A": 0},
+			expected: false,
+		},
+		{
+			name:     "OR multi with nodata, one true -> trigger",
+			expr:     "$A || $B || $C",
+			data:     map[string]interface{}{"$C": 1},
+			expected: true,
+		},
+		// AND：报错项当 false，使整条为 false
+		{
+			name:     "AND with nodata, A true -> not trigger",
+			expr:     "$A && $B",
+			data:     map[string]interface{}{"$A": 1},
+			expected: false,
+		},
+		{
+			name:     "AND all present true -> trigger",
+			expr:     "$A && $B",
+			data:     map[string]interface{}{"$A": 1, "$B": 1},
+			expected: true,
+		},
+		// 混合：&& 紧于 ||
+		{
+			name:     "Mixed A||B&&C, B nodata, A true -> trigger",
+			expr:     "$A || $B && $C",
+			data:     map[string]interface{}{"$A": 1, "$C": 1},
+			expected: true,
+		},
+		{
+			name:     "Mixed A||B&&C, A nodata, B&&C true -> degrade to B&&C true",
+			expr:     "$A || $B && $C",
+			data:     map[string]interface{}{"$B": 1, "$C": 1},
+			expected: true,
+		},
+		{
+			name:     "Mixed A||B&&C, A nodata, B&&C false -> degrade to B&&C false",
+			expr:     "$A || $B && $C",
+			data:     map[string]interface{}{"$B": 1, "$C": 0},
+			expected: false,
+		},
+		// 取反：作用在无数据子条件上 -> 保守不触发
+		{
+			name:     "NOT nodata -> not trigger",
+			expr:     "!$A",
+			data:     map[string]interface{}{},
+			expected: false,
+		},
+		{
+			name:     "NOT present false -> trigger",
+			expr:     "!$A",
+			data:     map[string]interface{}{"$A": 0},
+			expected: true,
+		},
+		{
+			name:     "NOT group with nodata operand, other false -> conservative not trigger",
+			expr:     "!($A || $B)",
+			data:     map[string]interface{}{"$B": 0},
+			expected: false,
+		},
+		{
+			name:     "NOT group, other true -> not trigger",
+			expr:     "!($A || $B)",
+			data:     map[string]interface{}{"$B": 1},
+			expected: false,
+		},
+		{
+			name:     "not word form on nodata -> not trigger",
+			expr:     "not $A",
+			data:     map[string]interface{}{},
+			expected: false,
+		},
+		// 全部子条件报错 -> 整条 false，不 panic
+		{
+			name:     "OR all nodata -> false",
+			expr:     "$A || $B || $C",
+			data:     map[string]interface{}{},
+			expected: false,
+		},
+		{
+			name:     "AND all nodata -> false",
+			expr:     "$A && $B && $C",
+			data:     map[string]interface{}{},
+			expected: false,
+		},
+		// 子条件粒度降级（带比较与括号）
+		{
+			name:     "grouped AND nodata in one OR branch, other branch triggers",
+			expr:     "($A.x > 0 && $A.y > 0) || ($B.x > 0)",
+			data:     map[string]interface{}{"$A.x": 1, "$A.y": 1},
+			expected: true,
+		},
+		{
+			name:     "grouped AND with nodata label degrades whole branch to false",
+			expr:     "($A.x > 0 && $A.y > 0) || ($B.x > 0)",
+			data:     map[string]interface{}{"$A.x": 1, "$B.x": 0},
+			expected: false,
+		},
+		{
+			name:     "or word form, nodata branch skipped",
+			expr:     "$A.cnt > 0 or $B.cnt > 0",
+			data:     map[string]interface{}{"$A.cnt": 5},
+			expected: true,
+		},
+		// 语法错误 -> 按现状判 false（不降级）
+		{
+			name:     "syntax error -> false",
+			expr:     "$A >",
+			data:     map[string]interface{}{"$A": 1},
+			expected: false,
+		},
+		{
+			name:     "trailing operator -> false",
+			expr:     "$A && ",
+			data:     map[string]interface{}{"$A": 1},
+			expected: false,
+		},
+		// 短路语义：左侧已定结果时不求值右侧，避免本不该执行的运行期错误（如越界）
+		{
+			name:     "OR short-circuit avoids right runtime error",
+			expr:     "$.A > 0 || $.Arr[0] > 0",
+			data:     map[string]interface{}{"$.A": 1, "$.Arr": []interface{}{}},
+			expected: true,
+		},
+		{
+			name:     "AND short-circuit avoids right runtime error",
+			expr:     "$.A > 0 && $.Arr[0] > 0",
+			data:     map[string]interface{}{"$.A": 0, "$.Arr": []interface{}{}},
+			expected: false,
+		},
+		{
+			name:     "runtime error on evaluated branch -> hard error false",
+			expr:     "$.A > 0 && $.Arr[0] > 0",
+			data:     map[string]interface{}{"$.A": 1, "$.Arr": []interface{}{}},
+			expected: false,
+		},
+		// 未知函数（拼写错误）不应被当成无数据降级，整条按硬错误判 false
+		{
+			name:     "unknown function not degraded, other branch true -> false",
+			expr:     "betwen($.A, [1,2]) || $.B > 0",
+			data:     map[string]interface{}{"$.A": 1, "$.B": 1},
+			expected: false,
+		},
+		{
+			name:     "unknown function in short-circuited OR branch -> false",
+			expr:     "$.B > 0 || betwen($.A, [1,2])",
+			data:     map[string]interface{}{"$.A": 1.5, "$.B": 1},
+			expected: false,
+		},
+		{
+			name:     "syntax error in short-circuited OR branch -> false",
+			expr:     "$.B > 0 || $.A >",
+			data:     map[string]interface{}{"$.A": 1, "$.B": 1},
+			expected: false,
+		},
+		{
+			name:     "valid between still works",
+			expr:     "between($.A, [1,2]) || $.B > 0",
+			data:     map[string]interface{}{"$.A": 1.5, "$.B": 0},
+			expected: true,
+		},
+		// 反引号字符串：其中的 or/and 不应被误切
+		{
+			name:     "backtick string with or not split",
+			expr:     "$.A == `foo or bar` || $.B > 0",
+			data:     map[string]interface{}{"$.A": "foo or bar", "$.B": 0},
+			expected: true,
+		},
+		{
+			name:     "backtick string with and not split",
+			expr:     "$.A == `x and y` && $.B > 0",
+			data:     map[string]interface{}{"$.A": "x and y", "$.B": 1},
+			expected: true,
+		},
+		// 三元表达式：分支/条件里的 || && 不是顶层逻辑，整体交给 MathCalc
+		{
+			name:     "ternary with OR in true branch",
+			expr:     "$.C ? $.A > 0 || $.B > 0 : false",
+			data:     map[string]interface{}{"$.C": true, "$.A": 0, "$.B": 1},
+			expected: true,
+		},
+		{
+			name:     "ternary false branch decides",
+			expr:     "$.C ? $.A > 0 : $.B > 0",
+			data:     map[string]interface{}{"$.C": false, "$.A": 0, "$.B": 1},
+			expected: true,
+		},
+		{
+			name:     "parenthesized ternary still allows OR split and degrade",
+			expr:     "($.A > 0 ? 1 : 0) || $.B > 0",
+			data:     map[string]interface{}{"$.A": 1},
+			expected: true,
+		},
+		// 未加括号混用 ?? 与 ||/&&：expr 视为整体语法错误，切分不应绕过该校验
+		{
+			name:     "coalesce mixed with OR without parens -> false",
+			expr:     "$.A ?? $.B || $.C",
+			data:     map[string]interface{}{"$.A": 1, "$.B": 1, "$.C": 1},
+			expected: false,
+		},
+		{
+			name:     "coalesce mixed with AND without parens -> false",
+			expr:     "$.A ?? $.B && $.C",
+			data:     map[string]interface{}{"$.A": 1, "$.B": 1, "$.C": 1},
+			expected: false,
+		},
+		{
+			name:     "coalesce parenthesized with OR -> valid",
+			expr:     "($.A ?? $.B) > 0 || $.C > 0",
+			data:     map[string]interface{}{"$.A": 1, "$.B": 0, "$.C": 0},
+			expected: true,
+		},
+		// 有数据时与改造前一致（回归）
+		{
+			name:     "regression: comparison OR with data",
+			expr:     "$A.count > 100 or $A.count2 > -3",
+			data:     map[string]interface{}{"$A.count": 5, "$A.count2": -1},
+			expected: true,
+		},
+		{
+			name:     "regression: nested parens with data",
+			expr:     "($A.yesterday_rate > 2 && $A.byesterday_rate > 2) or ($A.yesterday_rate <= 0.7 && $A.byesterday_rate <= 0.7)",
+			data:     map[string]interface{}{"$A.yesterday_rate": 3, "$A.byesterday_rate": 3},
+			expected: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := Calc(tc.expr, tc.data)
+			if result != tc.expected {
+				t.Errorf("Expected result for expr '%s' (data:%v) to be %v, got %v", tc.expr, tc.data, tc.expected, result)
+			}
+			// CalcWithRid 共用同一套求值逻辑，结果应保持一致
+			if r := CalcWithRid(tc.expr, tc.data, 1); r != tc.expected {
+				t.Errorf("CalcWithRid result for expr '%s' (data:%v) to be %v, got %v", tc.expr, tc.data, tc.expected, r)
+			}
+		})
+	}
+}
