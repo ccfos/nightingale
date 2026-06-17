@@ -123,10 +123,18 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		BaseURL:         rt.HTTP.A2A.BaseURL,
 		A2APath:         "/a2a",
 		TokenHeaderName: tokenHeader,
+		// When RS auth is on, advertise the IdP's OIDC discovery so A2A clients
+		// can self-discover the OAuth option. Passed as a resolver so it is
+		// evaluated per request — enabling RS/OIDC (or changing the IdP) at
+		// runtime reflects in the card without a center restart.
+		OIDCDiscoveryURL: rt.oidcDiscoveryURL,
 	}))
 	// Canonical A2A v0.3+ path; alias kept for older clients.
 	r.GET("/.well-known/agent-card.json", cardHandler)
 	r.GET("/.well-known/agent.json", cardHandler)
+	// RFC 9728 Protected Resource Metadata — public, served only while RS auth
+	// is active (else 404). Lets OAuth-aware clients discover the trusted AS.
+	r.GET("/.well-known/oauth-protected-resource", rt.oauthProtectedResource)
 
 	// The SDK's internal http.ServeMux is registered at root paths like
 	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a

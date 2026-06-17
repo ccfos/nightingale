@@ -2,9 +2,12 @@ package router
 
 import (
 	"context"
+	"net/http"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/models"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/toolkits/pkg/logger"
 )
@@ -16,6 +19,33 @@ import (
 func (rt *Router) rsAuthEnabled() bool {
 	return rt.HTTP.RSAuth.Enable && rt.HTTP.RSAuth.Audience != "" &&
 		rt.Sso != nil && rt.Sso.OIDC != nil && rt.Sso.OIDC.Enable
+}
+
+// oidcDiscoveryURL returns the trusted IdP's OpenID Connect discovery URL to
+// advertise (in the AgentCard and the resource metadata), or "" when RS auth is
+// not active so nothing is advertised.
+func (rt *Router) oidcDiscoveryURL() string {
+	if !rt.rsAuthEnabled() {
+		return ""
+	}
+	return strings.TrimSuffix(rt.Sso.OIDC.SsoAddr, "/") + "/.well-known/openid-configuration"
+}
+
+// oauthProtectedResource serves the RFC 9728 Protected Resource Metadata so
+// OAuth-aware clients can discover which authorization server issues tokens for
+// this service and which audience to request. It returns 404 while RS auth is
+// inactive, so a disabled feature advertises nothing. (The 401 WWW-Authenticate
+// discovery hint is intentionally not emitted yet — see doc/api/a2a-oauth-rs.md.)
+func (rt *Router) oauthProtectedResource(c *gin.Context) {
+	if !rt.rsAuthEnabled() {
+		c.JSON(http.StatusNotFound, gin.H{"error": "oauth resource server is not enabled"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"resource":                 rt.HTTP.RSAuth.Audience,
+		"authorization_servers":    []string{rt.Sso.OIDC.SsoAddr},
+		"bearer_methods_supported": []string{"header"},
+	})
 }
 
 // tokenHasIssuer reports whether a JWT carries a non-empty `iss` claim, without

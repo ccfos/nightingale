@@ -113,9 +113,30 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 - **开关启停**：`Enable=false` 时 RS 分支整体跳过，OAuth token 不再被接受，其余鉴权与现状完全一致。
 - **并列不互斥**：开启后 `X-User-Token`、自签 JWT 行为不变；三档满足任一即放行。
 - **作用范围**：RS 校验挂在共享的 `tokenAuth()` 中间件上，所以除 `/a2a` `/mcp` 外，其它走 `tokenAuth` 的接口（`/api/n9e/*`）同样接受该 token——这是预期行为（凭证即用户身份）。
-- **本期不做开放生态发现链路**：不发布 `/.well-known/oauth-protected-resource`，401 不带 `WWW-Authenticate` 头，AgentCard 不新增 oidc 档（作为后续可选第二步）。
+- **发现链路（见第六节）**：RS 启用时会发布 `/.well-known/oauth-protected-resource` 并在 AgentCard 增加 oidc 档;但 401 暂不带 `WWW-Authenticate` 头（MCP 的自动发现入口仍待补）。
 
-## 六、排错
+## 六、发现链路（OAuth 自动发现）
+
+为减少调用方手工配置，RS 启用时（`rsAuthEnabled`）会主动暴露两处「发现」信息，让支持 OAuth 的客户端自动找到受信 IdP：
+
+- **AgentCard 增加 `oidc` 档**（A2A 客户端用）：`GET /.well-known/agent-card.json` 的 `securitySchemes` 在原有 `x-user-token` 之外增加一档 `oidc`（`type=openIdConnect`，`openIdConnectUrl` 指向 IdP 的 `…/.well-known/openid-configuration`），并加入 `security` 数组——两档**满足任一**即可，A2A 客户端据此自动选择走 OAuth。
+- **RFC 9728 资源元数据端点**（OAuth/MCP 客户端用）：`GET /.well-known/oauth-protected-resource`（公开、无需鉴权）返回：
+
+  ```json
+  {
+    "resource": "n9e-a2a-rs",
+    "authorization_servers": ["https://idp.example.com/realms/yourrealm"],
+    "bearer_methods_supported": ["header"]
+  }
+  ```
+
+  `resource` = `[HTTP.RSAuth].Audience`（建议配成 https URL 以完全契合 RFC 9728），`authorization_servers` = OIDC `SsoAddr`。RS 未启用时该端点返回 404，不广告任何东西。
+
+**尚未做的一环（②）**：401 响应**暂不**带 `WWW-Authenticate: Bearer resource_metadata="…"` 头。影响：**A2A 客户端不受影响**（靠 AgentCard 自发现）;**MCP 客户端**（ChatGPT/Claude connector）的标准自动发现入口正是这个 401 头，缺它则需**手动配置** IdP 与 audience（功能可用，只是非零配置）。日后补 ② 时，上面两处元数据已就绪、直接指向即可。
+
+> 说明：AgentCard 的 `oidc` 档与资源元数据端点一样**每次请求实时计算**——运行时启用 RS/OIDC 或更换 IdP 后，下一次拉取 AgentCard 即生效，**无需重启 center**。
+
+## 七、排错
 
 | 现象 | 可能原因 |
 |---|---|
@@ -126,9 +147,11 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 
 开启 debug 日志可看到校验失败原因：`[RS] verify access token failed: <err>`。
 
-## 七、涉及代码
+## 八、涉及代码
 
 - `pkg/httpx/httpx.go` — `RSAuth` 配置
 - `pkg/oidcx/oidc.go` — `VerifyAccessToken`（复用 provider 的 JWKS 验签 + issuer/audience/过期，映射 claim）
-- `center/router/router_rsauth.go` — `rsAuthEnabled` / `tokenHasIssuer` / `authByIdPAccessToken`（JIT 建用户）
+- `center/router/router_rsauth.go` — `rsAuthEnabled` / `tokenHasIssuer` / `authByIdPAccessToken`（JIT 建用户）/ `oidcDiscoveryURL` / `oauthProtectedResource`（RFC 9728 元数据）
 - `center/router/router_mw.go` — `tokenAuth()` 中的 RS 分支
+- `center/router/router_a2a.go` — 注册 `/.well-known/oauth-protected-resource`，并把 OIDC 发现 URL 传入 AgentCard
+- `aiagent/a2a/agent_card.go` — AgentCard 的 `oidc` securityScheme 档
