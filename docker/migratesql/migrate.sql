@@ -432,6 +432,9 @@ CREATE TABLE `ai_skill` (
     KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai skills';
 
+ALTER TABLE `ai_skill` ADD COLUMN `source_type` varchar(16) NOT NULL DEFAULT 'local' COMMENT 'skill source type: local/git' AFTER `enabled`;
+ALTER TABLE `ai_skill` ADD COLUMN `git_info` text COMMENT 'git source info (JSON)' AFTER `source_type`;
+
 CREATE TABLE `mcp_server` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'mcp server name',
