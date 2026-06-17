@@ -1,6 +1,9 @@
 package skill
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestGitAuthCredential(t *testing.T) {
 	tests := []struct {
@@ -37,6 +40,49 @@ func TestGitAuthCredential(t *testing.T) {
 			}
 			if gotPassword != tt.wantPassword {
 				t.Fatalf("password expected %q, got %q", tt.wantPassword, gotPassword)
+			}
+		})
+	}
+}
+
+func TestRedactedGitURL(t *testing.T) {
+	tests := []struct {
+		name      string
+		rawURL    string
+		notWant   []string
+		wantParts []string
+	}{
+		{
+			name:      "redacts username and password",
+			rawURL:    "https://alice:secret@git.example.com/group/skills.git",
+			notWant:   []string{"alice", "secret"},
+			wantParts: []string{"https://xxxxx@git.example.com/group/skills.git"},
+		},
+		{
+			name:      "redacts token-only userinfo",
+			rawURL:    "https://github_pat_xxx@git.example.com/group/skills.git",
+			notWant:   []string{"github_pat_xxx"},
+			wantParts: []string{"https://xxxxx@git.example.com/group/skills.git"},
+		},
+		{
+			name:      "keeps url without userinfo",
+			rawURL:    "https://git.example.com/group/skills.git",
+			wantParts: []string{"https://git.example.com/group/skills.git"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RedactedGitURL(tt.rawURL)
+			for _, s := range tt.notWant {
+				if strings.Contains(got, s) {
+					t.Fatalf("expected %q to be redacted from %q", s, got)
+				}
+			}
+			for _, s := range tt.wantParts {
+				if !strings.Contains(got, s) {
+					t.Fatalf("expected %q to contain %q", got, s)
+				}
 			}
 		})
 	}
