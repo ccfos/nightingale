@@ -24,6 +24,21 @@ func getUserGroupIds(ctx *gin.Context, rt *Router, myGroups bool) ([]int64, erro
 	return models.MyGroupIds(rt.Ctx, me.Id)
 }
 
+// readEventIds 读取按事件 id 过滤的参数。事件 id 可能多达数千个，拼到 URL query 会超长被
+// nginx 以 414 中断，因此 POST 时改从请求体读取；GET 仍兼容 query，不影响其他调用方。
+func readEventIds(c *gin.Context) []int64 {
+	eventIdsStr := ginx.QueryStr(c, "event_ids", "")
+	if c.Request.Method == http.MethodPost {
+		var f struct {
+			EventIds string `json:"event_ids"`
+		}
+		if err := c.ShouldBindJSON(&f); err == nil && f.EventIds != "" {
+			eventIdsStr = f.EventIds
+		}
+	}
+	return strx.IdsInt64ForAPI(eventIdsStr, ",")
+}
+
 func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	stime, etime := getTimeRange(c)
 	severity := strx.IdsInt64ForAPI(ginx.QueryStr(c, "severity", ""), ",")
@@ -159,7 +174,7 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 
 	dsIds := queryDatasourceIds(c)
 
-	eventIds := strx.IdsInt64ForAPI(ginx.QueryStr(c, "event_ids", ""), ",")
+	eventIds := readEventIds(c)
 
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
