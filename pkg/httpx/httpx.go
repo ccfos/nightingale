@@ -40,6 +40,7 @@ type Config struct {
 	APIForService    BasicAuths
 	RSA              RSAConfig
 	TokenAuth        TokenAuth
+	RSAuth           RSAuth
 	A2A              A2AConfig
 }
 
@@ -91,6 +92,21 @@ type JWTAuth struct {
 type TokenAuth struct {
 	Enable             bool
 	HeaderUserTokenKey string
+}
+
+// RSAuth turns n9e's TokenAuth-protected endpoints (notably the A2A/MCP agent
+// endpoints) into an OAuth 2.1 Resource Server: a Bearer access token minted by
+// the external IdP already configured for OIDC login is accepted as a per-user
+// credential. The token is verified against that IdP's JWKS (signature, issuer,
+// expiry) and its `aud` must contain Audience, so a token issued for another
+// application cannot be replayed here. Disabled by default; the existing
+// X-User-Token and session-JWT paths are unaffected.
+type RSAuth struct {
+	Enable bool
+	// Audience is this service's resource identifier; the access token's `aud`
+	// must contain it. Binding the audience is the security floor and is
+	// mandatory — RS auth stays off while it is empty.
+	Audience string
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},

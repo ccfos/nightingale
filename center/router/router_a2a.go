@@ -84,6 +84,14 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	if !rt.HTTP.TokenAuth.Enable {
 		logger.Warning("[A2A] HTTP.TokenAuth.Enable=false — AgentCard advertises X-User-Token apiKey but the server will only accept JWT credentials. Enable HTTP.TokenAuth so the advertised auth scheme actually works.")
 	}
+	if rt.HTTP.RSAuth.Enable {
+		if rt.HTTP.RSAuth.Audience == "" {
+			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but HTTP.RSAuth.Audience is empty — OAuth access tokens are rejected until you set Audience to this service's resource identifier.")
+		}
+		if rt.Sso == nil || rt.Sso.OIDC == nil || !rt.Sso.OIDC.Enable {
+			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but OIDC login is not enabled — RSAuth reuses the OIDC provider's JWKS to verify tokens, so enable OIDC for the trusted IdP.")
+		}
+	}
 
 	backend := &a2aBackend{rt: rt}
 

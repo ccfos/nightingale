@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/toolkits/pkg/logger"
 )
 
 const (
@@ -86,6 +87,23 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 					c.Next()
 					return
 				}
+			}
+		}
+
+		// 外置 IdP 签发的 OAuth access token（Resource Server 模式）。n9e 自签的
+		// session JWT 不带 iss，只有携带 iss 的 Bearer token 才走 RS 校验；校验失败
+		// 直接拒绝，避免被误当成 session JWT 二次验签。
+		if rt.rsAuthEnabled() {
+			if raw := rt.extractToken(c.Request); raw != "" && tokenHasIssuer(raw) {
+				user, err := rt.authByIdPAccessToken(c.Request.Context(), raw)
+				if err != nil {
+					logger.Debugf("[RS] verify access token failed: %v", err)
+					ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+				}
+				c.Set("userid", user.Id)
+				c.Set("username", user.Username)
+				c.Next()
+				return
 			}
 		}
 

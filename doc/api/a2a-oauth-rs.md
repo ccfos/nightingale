@@ -1,0 +1,134 @@
+# A2A / MCP 对接企业 IdP（OAuth 2.1 Resource Server）
+
+让 n9e 的 a2a / mcp agent 端点接受**外置企业 IdP（Keycloak / Entra ID / Okta / Auth0 等）签发的 OAuth access token**，
+作为「按用户」的凭证。各类 Agent 编排平台代表某个具体用户调用 n9e 时，携带该用户的 access token，
+n9e 验 token 后把调用落到对应的本地用户——审计按人留痕、权限与该用户一致，不再共享一个机器人身份。
+
+该档与现有 `X-User-Token`（PAT）、自签 session JWT **并列**，满足任一即放行；默认关闭，开启后不影响原有两条鉴权路径。
+
+## 一、工作原理
+
+- **复用同一个 IdP**：受信 IdP 直接复用 n9e 现有 **OIDC 登录**配置指向的那个 IdP，不需要再配第二个授权服务器。
+  RS 校验借用 OIDC provider 的 issuer 与 JWKS。
+- **只校验、不签发**：n9e 只做 Resource Server（验别人发的 token），AS（授权服务器）始终是外置的 IdP。
+- **如何识别 OAuth token**：请求带 `Authorization: Bearer <token>`。n9e 自签的 session JWT **不带 `iss` claim**，
+  因此只有**携带 `iss`** 的 Bearer token 才走 RS 校验；自签 JWT 仍走原路径，**回归不破**。
+- **校验内容**（任一不过即 401）：
+  1. 用 IdP 公钥（JWKS）验**签名**；
+  2. 校验 **issuer**（须等于 OIDC 配置 IdP 的 issuer）；
+  3. 校验 **audience**：token 的 `aud` 必须包含配置的 `Audience`（绑定本服务，防止 IdP 发给其它应用的 token 被重放）；
+  4. 校验**过期时间** `exp`。
+- **用户映射**：从 token 取用户名 claim（复用 OIDC 的 `Attributes.Username`，默认 `sub`，可改 `preferred_username`），映射到本地用户。
+- **自动建用户（JIT）**：查无此人时，按现有 OIDC 登录的同款规则自动建用户——`Belong=oidc`、默认角色用 OIDC `DefaultRoles`、默认团队用 OIDC `DefaultTeams`。已存在的用户不会重复创建。
+- **权限**：沿用该用户在 n9e 自身的角色，本期不引入基于 OAuth scope 的额外授权。
+
+## 二、配置（两处）
+
+对接 IdP 需要改两处：① n9e 配置文件里的 `[HTTP.RSAuth]` 开关；② OIDC 登录配置（指定受信 IdP）。
+
+### 2.1 配置文件 `etc/config.toml`：`[HTTP.RSAuth]`
+
+```toml
+[HTTP.RSAuth]
+# 总开关。true 时 a2a/mcp 等走 tokenAuth 的端点开始接受外置 IdP 的 OAuth access token
+Enable = true
+# 本服务的资源标识；access token 的 aud 必须包含它。Enable=true 时必填，留空则 RS 校验不生效
+Audience = "n9e-a2a-rs"
+```
+
+| 字段 | 类型 | 默认 | 说明 |
+|---|---|---|---|
+| Enable | bool | false | RS 校验总开关。关闭时整条分支跳过，行为与现状完全一致 |
+| Audience | string | "" | 本服务资源标识，须与 token 的 `aud` 匹配。**空值时 RS 不生效**（安全底座，强制绑定 audience） |
+
+配置结构定义见 `pkg/httpx/httpx.go` 的 `RSAuth`。改 `config.toml` 后需**重启** center 生效。
+
+### 2.2 OIDC 登录配置：指定受信 IdP
+
+RS 复用 OIDC 配置里的 IdP，所以必须先把 OIDC 配好且 **`Enable = true`**（否则 RS 拿不到 provider/JWKS，不生效）。
+OIDC 配置存在数据库 `sso_config` 表，通过 **Web UI（系统设置 → 单点登录 → OIDC）** 或接口 `PUT /api/n9e/sso-config` 维护，**不在 config.toml 里**。
+
+与 RS 相关的关键字段：
+
+```toml
+Enable = true
+# IdP 的 issuer 根地址；n9e 据此拉 <SsoAddr>/.well-known/openid-configuration 与 JWKS
+SsoAddr = 'https://idp.example.com/realms/yourrealm'
+ClientId = '<oidc-client-id>'
+ClientSecret = '<oidc-client-secret>'
+DefaultRoles = ['Standard']      # JIT 建用户时赋的默认角色
+DefaultTeams = [2]               # JIT 建用户时加入的默认团队 id（可空）
+
+[Attributes]
+# RS 从 access token 取哪个 claim 当用户名；Keycloak 常用 preferred_username
+Username = 'preferred_username'
+Nickname = 'name'
+Email = 'email'
+```
+
+> 说明：RS 校验 audience 用的是 `[HTTP.RSAuth].Audience`，**不是** OIDC 的 `ClientId`——两者通常不同。
+> OIDC 的 `ClientId/Secret` 仅用于交互式登录流程；RS 只需要 `SsoAddr`（拿 issuer/JWKS）、`Attributes.Username`、`DefaultRoles`、`DefaultTeams`。
+
+### 2.3 IdP 侧：让 access token 带上 `aud`
+
+多数 IdP 默认不会把你的资源标识写进 access token 的 `aud`，需要显式配置一个 audience：
+
+- **Keycloak**：给 client 加一个 *Audience* 协议映射器（Client scopes → 你的 scope → Mappers → Add → Audience），
+  `Included Custom Audience` 填 `n9e-a2a-rs`，勾选 *Add to access token*。
+- **Auth0**：请求 token 时带 `audience=n9e-a2a-rs`（在 API 中注册该 Identifier）。
+- **Entra ID**：*Expose an API* 配置 Application ID URI / scope，使 access token 的 `aud` 为该值，`Audience` 填成对应值。
+
+另外确保：
+
+- IdP 签发的是 **JWT access token**（非 opaque）。本期不支持 opaque token 的 introspection。
+- n9e 进程能访问 IdP 的 discovery 与 JWKS 地址。**若环境有 HTTP 代理**，需把 IdP 地址加进 `NO_PROXY`/`no_proxy`，否则拉 JWKS/discovery 会失败。
+
+## 三、对接步骤（以 Keycloak 为例）
+
+1. **Keycloak**：建/选一个 realm 与 client；加 Audience 映射器，使 access token 的 `aud` 含 `n9e-a2a-rs`；确认用户名落在 `preferred_username`。
+2. **n9e config.toml**：设 `[HTTP.RSAuth] Enable = true`、`Audience = "n9e-a2a-rs"`，重启 center。
+3. **n9e OIDC**：Web UI 系统设置 → 单点登录 → OIDC：`Enable=true`，`SsoAddr` 指向 Keycloak realm，填 `ClientId/Secret`，`Attributes.Username = preferred_username`，按需设 `DefaultRoles` / `DefaultTeams`。保存（约 9s 内热加载生效）。
+4. **取 token 自测**：从 Keycloak 取一个用户的 access token，调 a2a/mcp（见下）。
+5. **核验**：调用返回非 401（MCP 返回工具列表 / A2A 进入协议处理器）；n9e 日志出现 `[A2A] done ... user=<该用户>` / `[MCP] done ... user=<该用户>`；若该用户原本不存在，用户管理页会新出现该用户（默认角色/团队）。
+
+## 四、自测（curl）
+
+```bash
+# 1) 从 IdP 取该用户的 access token（Keycloak 密码模式示例）
+TOKEN=$(curl -s --noproxy '*' \
+  -d 'grant_type=password' -d 'client_id=<client>' -d 'client_secret=<secret>' \
+  -d 'username=carol' -d 'password=<pwd>' -d 'scope=openid' \
+  'https://idp.example.com/realms/yourrealm/protocol/openid-connect/token' | jq -r .access_token)
+
+# 2) 调 MCP（合法 token → 200，返回 result.tools）
+curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+
+# 3) 反例：aud 不符 / 过期 / 改坏签名 / iss 不符 → 一律 401 unauthorized
+```
+
+## 五、行为与边界
+
+- **开关启停**：`Enable=false` 时 RS 分支整体跳过，OAuth token 不再被接受，其余鉴权与现状完全一致。
+- **并列不互斥**：开启后 `X-User-Token`、自签 JWT 行为不变；三档满足任一即放行。
+- **作用范围**：RS 校验挂在共享的 `tokenAuth()` 中间件上，所以除 `/a2a` `/mcp` 外，其它走 `tokenAuth` 的接口（`/api/n9e/*`）同样接受该 token——这是预期行为（凭证即用户身份）。
+- **本期不做开放生态发现链路**：不发布 `/.well-known/oauth-protected-resource`，401 不带 `WWW-Authenticate` 头，AgentCard 不新增 oidc 档（作为后续可选第二步）。
+
+## 六、排错
+
+| 现象 | 可能原因 |
+|---|---|
+| OAuth token 一律 401 | `RSAuth.Enable=false` / `Audience` 空 / OIDC 未启用（`Enable=false`）；启动日志会打印对应 warning |
+| 合法 token 仍 401 | token 的 `aud` 不含 `Audience`（IdP 未配 audience 映射）；`iss` 与 OIDC `SsoAddr` 的 issuer 不一致；token 已过期；n9e 拉不到 JWKS（代理/网络） |
+| 建了用户但用户名不对 | OIDC `Attributes.Username` 取错 claim（如该用 `preferred_username` 却配了 `sub`） |
+| 未自动建用户/没进团队 | OIDC `DefaultRoles` / `DefaultTeams` 未配 |
+
+开启 debug 日志可看到校验失败原因：`[RS] verify access token failed: <err>`。
+
+## 七、涉及代码
+
+- `pkg/httpx/httpx.go` — `RSAuth` 配置
+- `pkg/oidcx/oidc.go` — `VerifyAccessToken`（复用 provider 的 JWKS 验签 + issuer/audience/过期，映射 claim）
+- `center/router/router_rsauth.go` — `rsAuthEnabled` / `tokenHasIssuer` / `authByIdPAccessToken`（JIT 建用户）
+- `center/router/router_mw.go` — `tokenAuth()` 中的 RS 分支
