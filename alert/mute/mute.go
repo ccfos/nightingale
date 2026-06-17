@@ -20,15 +20,15 @@ func IsMuted(rule *models.AlertRule, event *models.AlertCurEvent, targetCache *m
 	}
 
 	if TimeSpanMuteStrategy(rule, event) {
-		return true, "rule is not effective for period of time", 0
+		return true, "rule is not effective for period of time, was muted", 0
 	}
 
 	if IdentNotExistsMuteStrategy(rule, event, targetCache) {
-		return true, "ident not exists mute", 0
+		return true, "ident not exists, was muted", 0
 	}
 
 	if BgNotMatchMuteStrategy(rule, event, targetCache) {
-		return true, "bg not match mute", 0
+		return true, "ident not match busigroup, was muted", 0
 	}
 
 	hit, muteId := EventMuteStrategy(event, alertMuteCache)
