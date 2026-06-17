@@ -82,11 +82,13 @@ func (c *RemoteCommitCache) refreshAsync(key string, cfg GitConfig) {
 }
 
 func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
+	started := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	commit, err := c.latestCommit(ctx, cfg)
 	now := time.Now()
+	cost := time.Since(started).Milliseconds()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -95,11 +97,14 @@ func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
 	v.CheckedAt = now
 	if err != nil {
 		v.Err = err.Error()
-		logger.Warningf("[AISkillGit] refresh remote commit failed: %v", err)
+		logger.Warningf("[AISkillGit] refresh remote commit failed url=%s ref_type=%s ref=%q dur=%dms err=%v",
+			RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cost, err)
 		c.values[key] = v
 		return
 	}
 	v.Commit = commit
 	v.Err = ""
 	c.values[key] = v
+	logger.Infof("[AISkillGit] refresh remote commit success url=%s ref_type=%s ref=%q commit=%s dur=%dms",
+		RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, commit, cost)
 }
