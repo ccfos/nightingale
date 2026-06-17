@@ -734,6 +734,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/user/:id", rt.userProfilePutByService)
 			service.DELETE("/user/:id", rt.userDel)
 			service.GET("/users", rt.userFindAll)
+			service.POST("/user-token", rt.getXUserToken)
 
 			service.GET("/user-groups", rt.userGroupGetsByService)
 			service.GET("/user-group-members", rt.userGroupMemberGetsByService)

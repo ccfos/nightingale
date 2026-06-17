@@ -7,9 +7,10 @@ import (
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/flashduty"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/secu"
-	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/logger"
@@ -470,4 +471,54 @@ func (rt *Router) usersPhoneDecrypt(c *gin.Context) {
 func isPhoneEncrypted(phone string) bool {
 	// 检查是否有 "enc:" 前缀标记
 	return len(phone) > 4 && phone[:4] == "enc:"
+}
+
+type xUserTokenReq struct {
+	RawToken string `json:"raw_token"`
+	Username string `json:"username"`
+}
+
+func (rt *Router) getXUserToken(c *gin.Context) {
+	var f xUserTokenReq
+	ginx.BindJSON(c, &f)
+
+	var user *models.User
+	username := f.Username
+	if f.RawToken != "" {
+		// 验证过的身份是唯一可信来源，覆盖调用方传入的 username
+		if !rt.rsAuthEnabled() {
+			ginx.Bomb(http.StatusServiceUnavailable, "oauth resource server is not enabled")
+		}
+
+		u, err := rt.authByIdPAccessToken(c.Request.Context(), f.RawToken)
+		if err != nil {
+			logger.Debugf("[RS] verify access token failed: %v", err)
+			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+		username = u.Username
+		user = u
+	}
+
+	if username == "" {
+		ginx.Bomb(http.StatusBadRequest, "raw_token or username required")
+	}
+
+	if user == nil {
+		u, err := models.UserGetByUsername(rt.Ctx, username)
+		ginx.Dangerous(err)
+		if u == nil {
+			ginx.Bomb(http.StatusNotFound, "user not found")
+		}
+	}
+
+	userTokens, err := models.GetTokensByUsername(rt.Ctx, username)
+	ginx.Dangerous(err)
+	if len(userTokens) > 0 {
+		ginx.NewRender(c).Data(userTokens[0], nil)
+		return
+	}
+
+	userToken, err := models.AddToken(rt.Ctx, username, uuid.New().String(), "user-token")
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(userToken, nil)
 }
