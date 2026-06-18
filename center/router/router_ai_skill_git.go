@@ -14,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/secu"
 
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 )
 
 type aiSkillGitRequest struct {
@@ -40,17 +41,29 @@ func (rt *Router) aiSkillGitInstall(c *gin.Context) {
 	var req aiSkillGitRequest
 	ginx.BindJSON(c, &req)
 
+	me := c.MustGet("user").(*models.User)
 	cfg, fields, err := rt.gitConfigForInstall(req)
 	ginx.Dangerous(err)
 
+	started := time.Now()
+	logger.Infof("[AISkillGit] install start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
+		me.Username, "", skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, cfg.AuthType)
 	result, err := fetchGitSkillWithTimeout(c.Request.Context(), cfg)
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warningf("[AISkillGit] install failed phase=fetch operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			me.Username, "", skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
 	fields.Commit = result.Commit
 
-	me := c.MustGet("user").(*models.User)
-
 	id, err := rt.doSkillImport(result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields))
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warningf("[AISkillGit] install failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
+	logger.Infof("[AISkillGit] install success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
+		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
 }
 
@@ -76,12 +89,21 @@ func (rt *Router) aiSkillGitInstallPut(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	me := c.MustGet("user").(*models.User)
+	started := time.Now()
+	logger.Infof("[AISkillGit] install_config_update start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
+		me.Username, current.Name, skill.RedactedGitURL(fields.URL), fields.RefType, fields.Ref, fields.Subdir, fields.AuthType)
 	ref := models.AISkill{
 		SourceType: models.AISkillSourceGit,
 		GitInfo:    aiSkillGitInfoFromFields(fields),
 		UpdatedBy:  me.Username,
 	}
-	ginx.Dangerous(current.UpdateGitFields(rt.Ctx, ref))
+	if err := current.UpdateGitFields(rt.Ctx, ref); err != nil {
+		logger.Warningf("[AISkillGit] install_config_update failed phase=update_fields operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			me.Username, current.Name, skill.RedactedGitURL(fields.URL), fields.RefType, fields.Ref, fields.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
+	logger.Infof("[AISkillGit] install_config_update success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
+		me.Username, id, current.Name, skill.RedactedGitURL(fields.URL), fields.RefType, fields.Ref, fields.Subdir, fields.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
 }
 
@@ -103,12 +125,26 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 	cfg, fields, err := rt.gitConfigForUpdate(current, req, builtin)
 	ginx.Dangerous(err)
 
+	me := c.MustGet("user").(*models.User)
+	started := time.Now()
+	logger.Infof("[AISkillGit] update start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
+		me.Username, current.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, cfg.AuthType)
 	result, err := fetchGitSkillWithTimeout(c.Request.Context(), cfg)
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warningf("[AISkillGit] update failed phase=fetch operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			me.Username, current.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
 	fields.Commit = result.Commit
 
-	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields)))
+	if err := rt.doSkillImportUpdate(current, result.Meta, result.Instructions, result.Files, me.Username, aiSkillGitInfoFromFields(fields)); err != nil {
+		logger.Warningf("[AISkillGit] update failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
+	rt.aiSkillRemoteCommitCache.SetKnownCommit(cfg, result.Commit)
+	logger.Infof("[AISkillGit] update success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
+		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
 }
 
@@ -143,13 +179,24 @@ func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
 	}
 	ginx.Dangerous(err)
 
+	started := time.Now()
+	logger.Infof("[AISkillGit] service_upsert start operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q auth_type=%s",
+		"system", strings.TrimSpace(obj.Name), skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, cfg.AuthType)
 	result, err := fetchGitSkillWithTimeout(c.Request.Context(), cfg)
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warningf("[AISkillGit] service_upsert failed phase=fetch operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			"system", strings.TrimSpace(obj.Name), skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
 	fields.Commit = result.Commit
 
 	if current == nil {
 		current, err = models.AISkillGetByName(rt.Ctx, result.Meta.Name)
-		ginx.Dangerous(err)
+		if err != nil {
+			logger.Warningf("[AISkillGit] service_upsert failed phase=lookup operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+				"system", result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+			ginx.Dangerous(err)
+		}
 	}
 
 	var id int64
@@ -159,7 +206,13 @@ func (rt *Router) aiSkillAddGitByService(c *gin.Context, obj models.AISkill) {
 	} else {
 		id, err = rt.doSkillImport(result.Meta, result.Instructions, result.Files, "system", aiSkillGitInfoFromFields(fields))
 	}
-	ginx.Dangerous(err)
+	if err != nil {
+		logger.Warningf("[AISkillGit] service_upsert failed phase=import operator=%s skill=%q url=%s ref_type=%s ref=%q subdir=%q dur=%dms err=%v",
+			"system", result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
+		ginx.Dangerous(err)
+	}
+	logger.Infof("[AISkillGit] service_upsert success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
+		"system", id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
 }
 

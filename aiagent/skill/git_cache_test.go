@@ -96,6 +96,78 @@ func TestRemoteCommitCacheRefreshesAtMostOncePerInterval(t *testing.T) {
 	}
 }
 
+func TestRemoteCommitCacheSetKnownCommit(t *testing.T) {
+	cache := NewRemoteCommitCache(time.Hour)
+	cfg := GitConfig{
+		URL:      "https://git.example.com/group/skills.git",
+		RefType:  GitRefBranch,
+		Ref:      "main",
+		AuthType: GitAuthNone,
+	}
+
+	var calls atomic.Int64
+	cache.latestCommit = func(context.Context, GitConfig) (string, error) {
+		calls.Add(1)
+		return "remote", nil
+	}
+
+	cache.SetKnownCommit(cfg, "known")
+	got, ok := cache.Get(cfg)
+	if !ok || got != "known" {
+		t.Fatalf("expected known commit, got commit=%q ok=%v", got, ok)
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	if got := calls.Load(); got != 0 {
+		t.Fatalf("known commit should be fresh and skip refresh, got %d calls", got)
+	}
+}
+
+func TestRemoteCommitCacheRefreshDoesNotOverwriteNewerKnownCommit(t *testing.T) {
+	cache := NewRemoteCommitCache(time.Hour)
+	cfg := GitConfig{
+		URL:      "https://git.example.com/group/skills.git",
+		RefType:  GitRefBranch,
+		Ref:      "main",
+		AuthType: GitAuthNone,
+	}
+	key := remoteCommitCacheKey(cfg)
+
+	started := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan struct{})
+	cache.latestCommit = func(context.Context, GitConfig) (string, error) {
+		close(started)
+		<-release
+		return "stale", nil
+	}
+
+	go func() {
+		defer close(done)
+		cache.refresh(key, cfg)
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatalf("refresh was not started")
+	}
+
+	cache.SetKnownCommit(cfg, "known")
+	close(release)
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatalf("refresh did not finish")
+	}
+
+	got, ok := cache.Get(cfg)
+	if !ok || got != "known" {
+		t.Fatalf("expected newer known commit to win, got commit=%q ok=%v", got, ok)
+	}
+}
+
 func waitFor(t *testing.T, timeout time.Duration, fn func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)

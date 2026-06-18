@@ -71,6 +71,24 @@ func (c *RemoteCommitCache) Get(cfg GitConfig) (string, bool) {
 	return v.Commit, true
 }
 
+// SetKnownCommit stores a commit learned from a successful fetch and marks the
+// cache key freshly checked. This keeps later Get calls from reporting stale
+// remote-commit state while the periodic refresh window is still active.
+func (c *RemoteCommitCache) SetKnownCommit(cfg GitConfig, commit string) {
+	if c == nil || cfg.RefType == GitRefCommit || commit == "" {
+		return
+	}
+	key := remoteCommitCacheKey(cfg)
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.values[key] = remoteCommitCacheValue{
+		Commit:    commit,
+		CheckedAt: time.Now(),
+	}
+}
+
 func (c *RemoteCommitCache) refreshAsync(key string, cfg GitConfig) {
 	// DoChan runs the refresh in the background and coalesces concurrent calls
 	// for the same key. The result is stored in c.values, so the channel can be
@@ -82,24 +100,32 @@ func (c *RemoteCommitCache) refreshAsync(key string, cfg GitConfig) {
 }
 
 func (c *RemoteCommitCache) refresh(key string, cfg GitConfig) {
+	started := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	commit, err := c.latestCommit(ctx, cfg)
 	now := time.Now()
+	cost := time.Since(started).Milliseconds()
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	v := c.values[key]
+	if v.CheckedAt.After(started) {
+		return
+	}
 	v.CheckedAt = now
 	if err != nil {
 		v.Err = err.Error()
-		logger.Warningf("[AISkillGit] refresh remote commit failed: %v", err)
+		logger.Warningf("[AISkillGit] refresh remote commit failed url=%s ref_type=%s ref=%q dur=%dms err=%v",
+			RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cost, err)
 		c.values[key] = v
 		return
 	}
 	v.Commit = commit
 	v.Err = ""
 	c.values[key] = v
+	logger.Infof("[AISkillGit] refresh remote commit success url=%s ref_type=%s ref=%q commit=%s dur=%dms",
+		RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, commit, cost)
 }

@@ -101,6 +101,24 @@ func gitAuthCredential(token string) (string, string) {
 	return username, password
 }
 
+func RedactedGitURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil || u == nil {
+		return rawURL
+	}
+	if u.User == nil {
+		return u.Redacted()
+	}
+
+	redacted := u.Redacted()
+	redactedURL, err := url.Parse(redacted)
+	if err != nil || redactedURL == nil {
+		return redacted
+	}
+	redactedURL.User = url.User("xxxxx")
+	return redactedURL.String()
+}
+
 func FetchGitSkill(ctx context.Context, cfg GitConfig) (*GitFetchResult, error) {
 	if err := cfg.Validate(true); err != nil {
 		return nil, err
@@ -119,7 +137,7 @@ func FetchGitSkill(ctx context.Context, cfg GitConfig) (*GitFetchResult, error) 
 		InsecureSkipTLS: true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("clone git repository: %w", err)
+		return nil, fmt.Errorf("clone git repository url=%s: %w", RedactedGitURL(cfg.URL), err)
 	}
 
 	hash, err := resolveGitCommit(repo, cfg)
@@ -183,7 +201,7 @@ func LatestGitCommit(ctx context.Context, cfg GitConfig) (string, error) {
 		InsecureSkipTLS: true,
 	})
 	if err != nil {
-		return "", fmt.Errorf("list remote refs: %w", err)
+		return "", fmt.Errorf("list remote refs url=%s: %w", RedactedGitURL(cfg.URL), err)
 	}
 
 	switch cfg.RefType {
