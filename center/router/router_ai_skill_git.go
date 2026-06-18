@@ -142,6 +142,7 @@ func (rt *Router) aiSkillGitUpdate(c *gin.Context) {
 			me.Username, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, time.Since(started).Milliseconds(), err)
 		ginx.Dangerous(err)
 	}
+	rt.aiSkillRemoteCommitCache.SetKnownCommit(cfg, result.Commit)
 	logger.Infof("[AISkillGit] update success operator=%s skill_id=%d skill=%q url=%s ref_type=%s ref=%q subdir=%q commit=%s dur=%dms",
 		me.Username, id, result.Meta.Name, skill.RedactedGitURL(cfg.URL), cfg.RefType, cfg.Ref, cfg.Subdir, result.Commit, time.Since(started).Milliseconds())
 	ginx.NewRender(c).Data(id, nil)
