@@ -96,17 +96,26 @@ type TokenAuth struct {
 
 // RSAuth turns n9e's TokenAuth-protected endpoints (notably the A2A/MCP agent
 // endpoints) into an OAuth 2.1 Resource Server: a Bearer access token minted by
-// the external IdP already configured for OIDC login is accepted as a per-user
-// credential. The token is verified against that IdP's JWKS (signature, issuer,
-// expiry) and its `aud` must contain Audience, so a token issued for another
-// application cannot be replayed here. Disabled by default; the existing
-// X-User-Token and session-JWT paths are unaffected.
+// the external IdP already configured for SSO login is accepted as a per-user
+// credential. Provider selects how the token is verified — "oidc" validates
+// JWTs against the IdP's JWKS, "oauth2" validates opaque tokens via the OAuth2
+// SSO config's RSVerifyMethod. Disabled by default; the existing X-User-Token
+// and session-JWT paths are unaffected.
 type RSAuth struct {
 	Enable bool
-	// Audience is this service's resource identifier; the access token's `aud`
-	// must contain it. Binding the audience is the security floor and is
-	// mandatory — RS auth stays off while it is empty.
+	// Audience is this service's resource identifier; RS auth stays off while it
+	// is empty. NOTE: `aud` is only enforced by the oidc (JWKS) path and the
+	// oauth2 introspection path (RSVerifyMethod=introspect). The oauth2 userinfo
+	// path — the oauth2 default — cannot read an `aud` and therefore does NOT
+	// enforce it: any valid token from the trusted IdP is accepted. Set the
+	// OAuth2 SSO config's RSVerifyMethod=introspect when audience binding is
+	// required.
 	Audience string
+	// Provider selects which SSO login provider verifies RS access tokens:
+	// "oidc" (default) validates JWTs locally via the IdP's JWKS; "oauth2"
+	// validates opaque tokens via the OAuth2 SSO config's RSVerifyMethod
+	// (userinfo by default, or RFC 7662 introspection).
+	Provider string
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},

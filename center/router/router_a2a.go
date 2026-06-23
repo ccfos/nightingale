@@ -88,7 +88,22 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		if rt.HTTP.RSAuth.Audience == "" {
 			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but HTTP.RSAuth.Audience is empty — OAuth access tokens are rejected until you set Audience to this service's resource identifier.")
 		}
-		if rt.Sso == nil || rt.Sso.OIDC == nil || !rt.Sso.OIDC.Enable {
+		if rt.rsAuthProvider() == "oauth2" {
+			switch {
+			case rt.Sso == nil || rt.Sso.OAuth2 == nil || !rt.Sso.OAuth2.Enable:
+				logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 but OAuth2 login is disabled — enable the OAuth2 SSO config for the trusted IdP.")
+			case rt.Sso.OAuth2.RSVerifyMethod == "introspect":
+				if rt.Sso.OAuth2.IntrospectAddr == "" {
+					logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 RSVerifyMethod=introspect but its IntrospectAddr is empty — set the RFC 7662 introspection endpoint (or leave RSVerifyMethod empty to use userinfo).")
+				}
+			default: // "" (default) or "userinfo"
+				if rt.Sso.OAuth2.UserInfoAddr == "" {
+					logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 (userinfo mode) but OAuth2 UserInfoAddr is empty — set UserInfoAddr so opaque tokens can be validated.")
+				} else {
+					logger.Warning("[A2A] HTTP.RSAuth Provider=oauth2 is in userinfo mode — token audience is NOT enforced (the UserInfo response carries no aud), so any valid token from this IdP is accepted. Set RSVerifyMethod=introspect (RFC 7662) when stronger assurance is required.")
+				}
+			}
+		} else if rt.Sso == nil || rt.Sso.OIDC == nil || !rt.Sso.OIDC.Enable {
 			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but OIDC login is not enabled — RSAuth reuses the OIDC provider's JWKS to verify tokens, so enable OIDC for the trusted IdP.")
 		}
 	}

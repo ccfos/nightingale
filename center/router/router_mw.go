@@ -90,11 +90,13 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			}
 		}
 
-		// 外置 IdP 签发的 OAuth access token（Resource Server 模式）。n9e 自签的
-		// session JWT 不带 iss，只有携带 iss 的 Bearer token 才走 RS 校验；校验失败
-		// 直接拒绝，避免被误当成 session JWT 二次验签。
+		// 外置 IdP 签发的 OAuth access token（Resource Server 模式）。OIDC 走 JWT
+		// 验签（凭 iss 与 n9e 自签 session JWT 区分）；OAuth2 走 introspection/userinfo
+		// （opaque token，经由不同请求头区分：n9e 固定 token 走 X-User-Token 头、已在
+		// 上面处理，extractToken 只读 Authorization: Bearer，故此处非 JWT 即外部 token）。
+		// 校验失败直接拒绝，避免被误当成 session JWT 二次验签。
 		if rt.rsAuthEnabled() {
-			if raw := rt.extractToken(c.Request); raw != "" && tokenHasIssuer(raw) {
+			if raw := rt.extractToken(c.Request); raw != "" && rt.shouldVerifyAsRS(raw) {
 				user, err := rt.authByIdPAccessToken(c.Request.Context(), raw)
 				if err != nil {
 					logger.Debugf("[RS] verify access token failed: %v", err)

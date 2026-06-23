@@ -79,6 +79,10 @@ Enable = false
 # 本服务的资源标识；access token 的 aud 必须包含它，否则拒绝（防止 IdP 发给其它应用的
 # token 被重放）。Enable=true 时必填，留空则 RS 校验不生效
 # Audience = "n9e-a2a-rs"
+# 受信 IdP 协议：oidc（默认，JWT 经 JWKS 本地验签）或 oauth2（opaque token 校验）。
+# oauth2 的校验方式在 OAuth2 登录配置的 RSVerifyMethod 里选：留空（默认）走 userinfo（靠 UserInfo
+# 判定有效性，对接省事但不校验 aud），有安全要求切到 introspect（RFC 7662，校验 aud）。
+# Provider = "oidc"
 
 [HTTP.RSA]
 # open RSA
