@@ -387,6 +387,10 @@ func (ncc *NotifyChannelConfig) Verify() error {
 		return errors.New("invalid request type, must be one of 'http', 'smtp', 'script', 'flashduty', 'pagerduty', 'feishuapp', 'wecomapp'")
 	}
 
+	if ncc.RequestType == "script" {
+		ncc.RequestConfig.HTTPRequestConfig = nil
+	}
+
 	if ncc.ParamConfig != nil {
 		for _, param := range ncc.ParamConfig.Custom.Params {
 			if param.Key != "" && param.CName == "" {
