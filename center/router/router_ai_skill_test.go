@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func TestDoSkillImportUpdatePreservesGitInfoWhenArchiveImport(t *testing.T) {
+func TestDoSkillImportUpdateClearsCurrentCommitWhenArchiveImport(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -34,7 +34,8 @@ func TestDoSkillImportUpdatePreservesGitInfoWhenArchiveImport(t *testing.T) {
 			URL:           "https://github.com/example/skills.git",
 			RefType:       skill.GitRefBranch,
 			Ref:           "main",
-			AuthType:      skill.GitAuthNone,
+			AuthType:      skill.GitAuthToken,
+			Token:         "enc:token",
 			Subdir:        "skills/demo",
 			CurrentCommit: "abc123",
 		},
@@ -73,9 +74,12 @@ func TestDoSkillImportUpdatePreservesGitInfoWhenArchiveImport(t *testing.T) {
 		got.GitInfo.RefType != current.GitInfo.RefType ||
 		got.GitInfo.Ref != current.GitInfo.Ref ||
 		got.GitInfo.AuthType != current.GitInfo.AuthType ||
-		got.GitInfo.Subdir != current.GitInfo.Subdir ||
-		got.GitInfo.CurrentCommit != current.GitInfo.CurrentCommit {
+		got.GitInfo.Token != current.GitInfo.Token ||
+		got.GitInfo.Subdir != current.GitInfo.Subdir {
 		t.Fatalf("git_info changed: got %+v want %+v", got.GitInfo, current.GitInfo)
+	}
+	if got.GitInfo.CurrentCommit != "" {
+		t.Fatalf("current_commit was not cleared: %+v", got.GitInfo)
 	}
 	if got.Description != "new description" || got.Instructions != "new instructions" {
 		t.Fatalf("skill content was not updated: %+v", got)
