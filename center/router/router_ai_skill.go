@@ -296,6 +296,13 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			if err := current.UpdateWithGit(tCtx, ref); err != nil {
 				return err
 			}
+		} else if current.GitInfo != nil {
+			gitInfo := *current.GitInfo
+			gitInfo.CurrentCommit = ""
+			ref.GitInfo = &gitInfo
+			if err := current.UpdateWithGit(tCtx, ref); err != nil {
+				return err
+			}
 		} else if err := current.Update(tCtx, ref); err != nil {
 			return err
 		}
