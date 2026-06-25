@@ -27,6 +27,12 @@ func commonAllowedSyscalls() []int {
 		unix.SYS_STATFS, unix.SYS_FSTATFS, unix.SYS_FACCESSAT,
 		unix.SYS_FSYNC, unix.SYS_FDATASYNC, unix.SYS_FTRUNCATE, unix.SYS_FALLOCATE,
 		unix.SYS_FADVISE64, unix.SYS_FLOCK, unix.SYS_SYNC,
+		// Zero-copy data movement between fds. Go's net poller uses splice() for
+		// conn→conn copies (the egress forwarder relies on it) and sendfile() for
+		// file→socket; Python skills use them too. Benign (no new access) and in
+		// Docker's default profile. Without splice the forwarder relay gets EPERM
+		// and moves zero bytes (verified on a real sandbox, 2026-06-25).
+		unix.SYS_SPLICE, unix.SYS_SENDFILE,
 		unix.SYS_MMAP, unix.SYS_MUNMAP, unix.SYS_MPROTECT, unix.SYS_MREMAP,
 		unix.SYS_MADVISE, unix.SYS_MSYNC, unix.SYS_MLOCK, unix.SYS_MUNLOCK, unix.SYS_BRK,
 		unix.SYS_RT_SIGACTION, unix.SYS_RT_SIGPROCMASK, unix.SYS_RT_SIGRETURN,
@@ -46,7 +52,7 @@ func commonAllowedSyscalls() []int {
 		unix.SYS_CLONE, unix.SYS_EXECVE, unix.SYS_EXECVEAT, unix.SYS_PRCTL,
 		unix.SYS_GETPID, unix.SYS_GETPPID, unix.SYS_GETUID, unix.SYS_GETEUID,
 		unix.SYS_GETGID, unix.SYS_GETEGID, unix.SYS_GETTID,
-		unix.SYS_GETPGID, unix.SYS_GETSID, unix.SYS_SETSID,
+		unix.SYS_GETPGID, unix.SYS_SETPGID, unix.SYS_GETSID, unix.SYS_SETSID,
 		unix.SYS_GETRANDOM, unix.SYS_MEMFD_CREATE, unix.SYS_MEMBARRIER,
 		unix.SYS_DUP, unix.SYS_DUP3, unix.SYS_PIPE2,
 		unix.SYS_EPOLL_CREATE1, unix.SYS_EPOLL_CTL, unix.SYS_EPOLL_PWAIT,
