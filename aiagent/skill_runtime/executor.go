@@ -86,7 +86,19 @@ func Execute(c context.Context, d Deps, req Request) (string, error) {
 		trigger = "llm_tool"
 	}
 
-	spec := buildExecSpec(d.Sandbox.Config(), ws, entry, hostEntry, req.Args, req.Stdin, ident, execID, req.SkillName, trigger)
+	// Start this run's control channels (egress proxy + Skill Gateway, §10/§12)
+	// and tear them down when it ends. On setup failure, degrade to a safe run
+	// with no network and no gateway rather than launching half-wired.
+	netMode := resolveNetwork(d.Sandbox)
+	cc, cerr := setupControlChannels(d, execID, req.SkillName, netMode, req.User)
+	if cerr != nil {
+		logger.Warningf("sandbox: control channels for exec %s failed, running with network=none and no gateway: %v", execID, cerr)
+		netMode = sandbox.NetworkNone
+		cc = nil
+	}
+	defer cc.close()
+
+	spec := buildExecSpec(d.Sandbox.Config(), ws, entry, hostEntry, req.Args, req.Stdin, ident, execID, req.SkillName, trigger, netMode, cc.mounts(), cc.env())
 
 	res, runErr := d.Sandbox.Run(c, spec)
 	d.writeAudit(req, spec, entry, res, runErr)

@@ -10,3 +10,4 @@ package sandbox
 // default repo build free of committed multi-MB binaries.
 func embeddedBwrap() []byte     { return nil }
 func embeddedBaseTarGz() []byte { return nil }
+func embeddedInit() []byte      { return nil }

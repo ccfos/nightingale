@@ -18,23 +18,31 @@ import (
 // is embedded — the common default-build case — so callers can fall back to an
 // external bwrap (PATH) + Rootfs.Path. Extraction is content-addressed and
 // idempotent: re-running with the same assets is a no-op.
-func extractEmbeddedAssets(dataDir string) (bwrapPath, basePath string, err error) {
+func extractEmbeddedAssets(dataDir string) (bwrapPath, basePath, initPath string, err error) {
 	bw := embeddedBwrap()
 	base := embeddedBaseTarGz()
-	if len(bw) == 0 && len(base) == 0 {
-		return "", "", nil
+	ini := embeddedInit()
+	if len(bw) == 0 && len(base) == 0 && len(ini) == 0 {
+		return "", "", "", nil
 	}
 	if len(bw) > 0 {
-		if bwrapPath, err = writeEmbeddedBwrap(dataDir, bw); err != nil {
-			return "", "", fmt.Errorf("extract embedded bwrap: %w", err)
+		if bwrapPath, err = writeEmbeddedExecutable(dataDir, "bwrap", bw); err != nil {
+			return "", "", "", fmt.Errorf("extract embedded bwrap: %w", err)
 		}
 	}
 	if len(base) > 0 {
 		if basePath, err = extractEmbeddedBase(dataDir, base); err != nil {
-			return "", "", fmt.Errorf("extract embedded python-base: %w", err)
+			return "", "", "", fmt.Errorf("extract embedded python-base: %w", err)
 		}
 	}
-	return bwrapPath, basePath, nil
+	if len(ini) > 0 {
+		// The egress forwarder (§10.2); extracted next to bwrap and bind-mounted
+		// into the sandbox by the bubblewrap engine when network=proxy.
+		if initPath, err = writeEmbeddedExecutable(dataDir, "n9e-sandbox-init", ini); err != nil {
+			return "", "", "", fmt.Errorf("extract embedded n9e-sandbox-init: %w", err)
+		}
+	}
+	return bwrapPath, basePath, initPath, nil
 }
 
 func shortHash(b []byte) string {
@@ -42,19 +50,21 @@ func shortHash(b []byte) string {
 	return hex.EncodeToString(sum[:])[:12]
 }
 
-// writeEmbeddedBwrap writes the bwrap binary to dataDir/bin/bwrap-<hash> (exec
-// bit set) and returns its path, skipping the write when it already exists.
-func writeEmbeddedBwrap(dataDir string, bw []byte) (string, error) {
+// writeEmbeddedExecutable writes an embedded helper binary to
+// dataDir/bin/<name>-<hash> (exec bit set), content-addressed so it is written
+// once and reused, and returns its path. Used for bwrap and the egress
+// forwarder (n9e-sandbox-init).
+func writeEmbeddedExecutable(dataDir, name string, bin []byte) (string, error) {
 	dir := filepath.Join(dataDir, "bin")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
-	path := filepath.Join(dir, "bwrap-"+shortHash(bw))
-	if st, err := os.Stat(path); err == nil && st.Size() == int64(len(bw)) {
+	path := filepath.Join(dir, name+"-"+shortHash(bin))
+	if st, err := os.Stat(path); err == nil && st.Size() == int64(len(bin)) {
 		return path, nil
 	}
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, bw, 0o755); err != nil {
+	if err := os.WriteFile(tmp, bin, 0o755); err != nil {
 		return "", err
 	}
 	if err := os.Chmod(tmp, 0o755); err != nil {
@@ -90,8 +100,9 @@ func extractEmbeddedBase(dataDir string, targz []byte) (string, error) {
 		return "", err
 	}
 	// Base contract: bwrap binds these read-only/read-write onto the rootfs; the
-	// rootfs is ro so the mountpoints must pre-exist.
-	for _, mp := range []string{"skill", "input", "workspace", "output"} {
+	// rootfs is ro so the mountpoints must pre-exist. /run hosts the control-plane
+	// tmpfs (egress + gateway sockets, the forwarder binary, §10.2/§12.1).
+	for _, mp := range []string{"skill", "input", "workspace", "output", "run"} {
 		if err := os.MkdirAll(filepath.Join(dir, mp), 0o755); err != nil {
 			return "", err
 		}

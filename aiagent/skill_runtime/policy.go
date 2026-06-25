@@ -30,6 +30,9 @@ func buildExecSpec(
 	stdin []byte,
 	ident identity,
 	execID, skillName, trigger string,
+	netMode sandbox.NetworkPolicy,
+	controlMounts []sandbox.MountSpec,
+	controlEnv map[string]string,
 ) sandbox.ExecSpec {
 	res := cfg.DefaultResources()
 	clampResources(&res, cfg.Skill)
@@ -49,6 +52,11 @@ func buildExecSpec(
 		"TMPDIR":                  ws.Workspace,
 		"PYTHONDONTWRITEBYTECODE": "1",
 		"PYTHONUNBUFFERED":        "1",
+	}
+	// Control-channel env (HTTP(S)_PROXY → forwarder, gateway socket path). Added
+	// last; it never overrides the essentials above (disjoint keys).
+	for k, v := range controlEnv {
+		env[k] = v
 	}
 
 	profile := "bash-minimal"
@@ -71,11 +79,12 @@ func buildExecSpec(
 			{Source: ws.Workspace, Target: "/workspace"},
 			{Source: ws.Output, Target: "/output"},
 		},
-		Resources:   res,
-		Network:     sandbox.NetworkNone,
-		Policy:      sandbox.SecurityProfile{Profile: profile, NoNewPrivs: true},
-		TriggerType: trigger,
-		Audit:       map[string]string{"username": ident.Username},
+		ControlMounts: controlMounts,
+		Resources:     res,
+		Network:       netMode,
+		Policy:        sandbox.SecurityProfile{Profile: profile, NoNewPrivs: true},
+		TriggerType:   trigger,
+		Audit:         map[string]string{"username": ident.Username},
 	}
 }
 

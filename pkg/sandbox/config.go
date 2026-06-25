@@ -3,10 +3,10 @@ package sandbox
 import "time"
 
 // Config mirrors the `[Sandbox]` section (design §16.3). It is loaded as part of
-// the top-level n9e config and PreCheck() fills defaults. Many fields
-// (SkillPolicy / Deny / EgressProxy) are parsed now for forward-compatibility
-// but only exercised once egress + gateway land in a later phase — this phase
-// supports network=none only.
+// the top-level n9e config and PreCheck() fills defaults. SkillPolicy / Deny /
+// EgressProxy now drive the live egress proxy (§10) and Skill Gateway (§12); both
+// stay off until an admin populates EgressAllowlist / GrantableN9eAPI (the safe
+// default is no egress, no n9e API).
 type Config struct {
 	Enabled bool
 
@@ -92,15 +92,36 @@ type DenyConfig struct {
 	N9eAPI      []string
 }
 
-// EgressProxyConfig configures the host-side egress proxy (future phase).
+// EgressProxyConfig configures the host-side egress proxy (§10). Phase 1 wires
+// the simple form: per-exec UNIX-socket CONNECT/forward proxy with allowlist +
+// DNS-pin + SSRF, no TLS interception (§10.3). The allowlist + hard-deny CIDRs
+// live in SkillPolicy.EgressAllowlist / Deny.EgressCIDRs; this struct holds the
+// transport knobs.
 type EgressProxyConfig struct {
-	Enabled             bool
-	TLSInspect          bool
-	DefaultTimeoutSecs  int
-	MaxResponseBytes    int64
-	DenyPrivateCIDRs    bool
-	DenyMetadataService bool
-	DenyUDP             bool
+	// TLSInspect (MITM) is NOT phase 1 (§10.5); kept for forward-compat. When
+	// true the proxy still tunnels without decrypting and logs a warning.
+	TLSInspect bool
+
+	// AllowPlainHTTP forwards absolute-form plain-HTTP in addition to HTTPS
+	// CONNECT. Default true so http:// APIs work; set false for HTTPS-only egress.
+	AllowPlainHTTP bool
+	// DenyPrivateCIDRs denies RFC1918/ULA resolved IPs (default true). loopback /
+	// link-local / IMDS are denied unconditionally regardless of this flag.
+	DenyPrivateCIDRs bool
+	// DenyUDP is informational: a CONNECT/forward proxy is TCP-only by
+	// construction, so UDP/QUIC egress is already impossible (§10.4). Kept for
+	// the admin-facing posture report.
+	DenyUDP bool
+
+	DialTimeoutSecs  int   // upstream connect timeout (default 10)
+	IdleTimeoutSecs  int   // tunnel idle timeout (default 120)
+	MaxResponseBytes int64 // reserved; unenforceable on an undecrypted CONNECT tunnel
+
+	// ForwarderPath points at an external n9e-sandbox-init forwarder binary for
+	// non-embedded builds. The embedded binary (-tags sandbox_embed) takes
+	// precedence; this is the fallback so a plain `go build` can still run proxy
+	// mode if the operator supplies the helper (parallel to Rootfs.Path).
+	ForwarderPath string
 }
 
 // Defaults (mirrors §8.2 / §16.3).

@@ -151,6 +151,9 @@ ExtraLayers = []
 
 # Default per-execution policy envelope.
 [Center.Sandbox.DefaultPolicy]
+# none (default) | proxy. "proxy" routes skill egress through the host egress
+# proxy + allowlist below (bubblewrap engine only); it has no effect unless
+# SkillPolicy.EgressAllowlist is non-empty. "direct" is not implemented (§10.5).
 Network = "none"
 TimeoutSeconds = 30
 MemoryMB = 256
@@ -172,17 +175,41 @@ MaxMemoryMB = 1024
 MaxPids = 128
 AllowedNetworkModes = ["none", "proxy"]
 
-# Global skill policy envelope (egress + n9e-api grants reserved for the egress
-# phase; this release supports Network="none" only).
+# Global skill policy envelope (§10/§12). All default-empty = no egress, no n9e
+# API: a skill can reach nothing until an admin opts in here.
 [Center.Sandbox.SkillPolicy]
+# Specific hosts a network="proxy" skill may reach (§10.4). Prefer exact hosts;
+# "*.example.com" wildcards are allowed but discouraged. Example:
+#   EgressAllowlist = ["api.openai.com", "pypi.org", "files.pythonhosted.org"]
 EgressAllowlist = []
+# n9e internal APIs the Skill Gateway may expose, as <domain>:<verb> grants
+# (§12.2). Intersected with the launching user's own RBAC. Phase 1 ships read-only
+# ops (list_alert_rules / list_datasources / list_targets / query_cur_events /
+# whoami). Example:
+#   GrantableN9eAPI = ["alert:read", "datasource:read", "target:read", "event:read"]
 GrantableN9eAPI = []
 JitConfirm = ["n9e_api:write", "network:new_domain", "network:direct"]
 
-# Hard deny — no skill/layer can override.
+# Hard deny — no skill/layer can override (§16.3). EgressCIDRs is additive on top
+# of the built-in SSRF classes (loopback/link-local/IMDS are always denied).
 [Center.Sandbox.Deny]
 EgressCIDRs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8"]
 N9eAPI = ["*:write", "*:delete", "user:*"]
+
+# Host-side egress proxy transport knobs (§10.2/§10.3). Allowlist + deny CIDRs
+# live above; this section is just the transport. TLS is tunneled, never
+# decrypted (no CA to install).
+[Center.Sandbox.EgressProxy]
+# Also forward absolute-form plain HTTP (http://). false = HTTPS/CONNECT only.
+AllowPlainHTTP = true
+# Deny RFC1918/ULA resolved IPs (loopback/link-local/IMDS denied regardless).
+DenyPrivateCIDRs = true
+DialTimeoutSecs = 10
+IdleTimeoutSecs = 120
+# External n9e-sandbox-init forwarder path for non-embedded builds; the embedded
+# one (-tags sandbox_embed) takes precedence. Build it with:
+#   GOOS=linux GOARCH=<arch> CGO_ENABLED=0 go build ./cmd/n9e-sandbox-init
+ForwarderPath = ""
 
 [Pushgw]
 # use target labels in database instead of in series

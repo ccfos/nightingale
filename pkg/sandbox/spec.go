@@ -102,6 +102,16 @@ type ExecSpec struct {
 	Network   NetworkPolicy
 	Policy    SecurityProfile
 
+	// ControlMounts are host UNIX-domain sockets (and the occasional helper
+	// binary) the control plane binds into the sandbox so the script can reach
+	// out-of-sandbox brokers without real network: the egress proxy socket
+	// (§10.2) and the Skill Gateway socket (§12.1). They are kept separate from
+	// Mounts because they are platform plumbing, not skill data — the engine
+	// binds them onto a private /run tmpfs and never path-remaps Command/Cwd/Env
+	// against them. Only mount-namespace engines (bubblewrap) honour them; the
+	// others ignore them (the channels are unavailable on those tiers, §10/§12).
+	ControlMounts []MountSpec
+
 	// TriggerType labels who initiated the run for audit/metrics
 	// ("llm_tool" / "api" / "test"). Kept here so the engine-agnostic audit
 	// record can carry it without a side channel.

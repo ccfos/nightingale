@@ -16,6 +16,7 @@ type Capabilities struct {
 	Seccomp           bool   // seccomp-bpf available
 	Landlock          bool   // Landlock LSM available (5.13+)
 	BwrapPath         string // resolved bubblewrap binary path, or ""
+	InitPath          string // resolved n9e-sandbox-init forwarder path, or "" (§10.2)
 	Notes             []string
 }
 

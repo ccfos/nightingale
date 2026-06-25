@@ -37,7 +37,7 @@ func New(cfg Config) *Sandbox {
 	// data dir at startup. They take precedence over host-provided ones so
 	// "install + run" needs no external bwrap or Rootfs.Path. Default builds
 	// embed nothing, so this is a no-op.
-	if bwrapPath, basePath, err := extractEmbeddedAssets(cfg.DataDir); err != nil {
+	if bwrapPath, basePath, initPath, err := extractEmbeddedAssets(cfg.DataDir); err != nil {
 		caps.note("embedded asset extraction failed: %v", err)
 	} else {
 		if bwrapPath != "" {
@@ -46,6 +46,10 @@ func New(cfg Config) *Sandbox {
 		if basePath != "" && cfg.Rootfs.Path == "" {
 			cfg.Rootfs.Path = basePath
 			caps.note("using embedded python-base at %s", basePath)
+		}
+		if initPath != "" {
+			caps.InitPath = initPath
+			caps.note("using embedded egress forwarder at %s", initPath)
 		}
 	}
 
@@ -159,6 +163,17 @@ func (s *Sandbox) EngineName() string {
 func (s *Sandbox) Tier() Tier                 { return s.tier }
 func (s *Sandbox) Capabilities() Capabilities { return s.caps }
 func (s *Sandbox) Config() Config             { return s.cfg }
+
+// EngineCaps reports what the selected backend can actually enforce on this host
+// (zero value when disabled). The control plane consults it to decide whether to
+// wire egress (needs Network) and the Skill Gateway (needs a mount namespace to
+// bind the socket) for a run — both are bubblewrap-only in phase 1 (§10/§12).
+func (s *Sandbox) EngineCaps() EngineCaps {
+	if s == nil || s.engine == nil {
+		return EngineCaps{}
+	}
+	return s.engine.Caps()
+}
 
 // Run executes spec under the selected engine, gated by admission control and
 // wrapped with metrics. A *DisabledError means the host can't run skills; an

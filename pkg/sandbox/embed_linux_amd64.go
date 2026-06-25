@@ -12,5 +12,9 @@ var bwrapBin []byte
 //go:embed embedassets/linux_amd64/python-base.tar.gz
 var baseTarGz []byte
 
+//go:embed embedassets/linux_amd64/n9e-sandbox-init
+var initBin []byte
+
 func embeddedBwrap() []byte     { return bwrapBin }
 func embeddedBaseTarGz() []byte { return baseTarGz }
+func embeddedInit() []byte      { return initBin }

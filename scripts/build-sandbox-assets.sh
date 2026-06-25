@@ -66,6 +66,12 @@ docker export "$cid" | gzip -9 > "$OUT/python-base.tar.gz"
 docker rm "$cid" >/dev/null
 docker rmi "n9e-pybase-$ARCH" >/dev/null 2>&1 || true
 
+echo ">> [$ARCH] building STATIC n9e-sandbox-init egress forwarder (§10.2)"
+# CGO_ENABLED=0 → a fully static binary that runs in the minimal python-base
+# rootfs with no libc; it is the in-netns TCP↔UDS relay (the socat replacement).
+GOOS=linux GOARCH="$ARCH" CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" \
+  -o "$OUT/n9e-sandbox-init" "$ROOT/cmd/n9e-sandbox-init"
+
 echo ">> done:"
 ls -lah "$OUT"
 echo ">> build an embedded binary with:"
