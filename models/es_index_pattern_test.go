@@ -130,3 +130,41 @@ func TestEsIndexPatternUpdateWeights(t *testing.T) {
 		t.Fatalf("EsIndexPatternUpdateWeights(nil): %v", err)
 	}
 }
+
+// 普通编辑（payload 不带 weight，即零值）不得覆盖已有 weight，
+// weight 只能由 EsIndexPatternUpdateWeights 维护。
+func TestEsIndexPatternUpdate_PreservesWeight(t *testing.T) {
+	db := newEsIndexPatternDB(t)
+	c := ctx.NewContext(context.Background(), db, true)
+
+	if err := db.Exec(
+		"INSERT INTO es_index_pattern (id, datasource_id, name, time_field, weight) VALUES (?, ?, ?, ?, ?)",
+		1, 1, "a", "@timestamp", 99,
+	).Error; err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+
+	ei, err := models.EsIndexPatternGetById(c, 1)
+	if err != nil || ei == nil {
+		t.Fatalf("get by id: %v err=%v", ei, err)
+	}
+
+	// 模拟普通编辑：只改了 time_field，payload 里 weight 为零值
+	eip := *ei
+	eip.Weight = 0
+	eip.TimeField = "ts"
+	if err := ei.Update(c, eip); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	got, err := models.EsIndexPatternGetById(c, 1)
+	if err != nil || got == nil {
+		t.Fatalf("get after update: %v err=%v", got, err)
+	}
+	if got.Weight != 99 {
+		t.Fatalf("weight 应保持为 99，实际 %d", got.Weight)
+	}
+	if got.TimeField != "ts" {
+		t.Fatalf("time_field 应更新为 ts，实际 %q", got.TimeField)
+	}
+}

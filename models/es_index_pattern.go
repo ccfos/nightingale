@@ -134,6 +134,7 @@ func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
 	eip.CreateAt = ei.CreateAt
 	eip.CreateBy = ei.CreateBy
 	eip.UpdateAt = time.Now().Unix()
+	eip.Weight = ei.Weight // weight 由专用排序接口维护，普通更新不应覆盖
 
 	eip.FE2DB()
 
