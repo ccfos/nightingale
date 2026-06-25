@@ -149,11 +149,11 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 - **开关启停**：`Enable=false` 时 RS 分支整体跳过，OAuth token 不再被接受，其余鉴权与现状完全一致。
 - **并列不互斥**：开启后 `X-User-Token`、自签 JWT 行为不变；三档满足任一即放行。
 - **作用范围**：RS 校验挂在共享的 `tokenAuth()` 中间件上，所以除 `/a2a` `/mcp` 外，其它走 `tokenAuth` 的接口（`/api/n9e/*`）同样接受该 token——这是预期行为（凭证即用户身份）。
-- **发现链路（见第六节）**：RS 启用时会发布 `/.well-known/oauth-protected-resource` 并在 AgentCard 增加 oidc 档;但 401 暂不带 `WWW-Authenticate` 头（MCP 的自动发现入口仍待补）。
+- **发现链路（见第六节）**：RS 启用时会发布 `/.well-known/oauth-protected-resource`、在 AgentCard 增加 oidc 档,并在 `/a2a` `/mcp` 的 401 响应带上 `WWW-Authenticate: Bearer resource_metadata="…"` 头——三处发现入口齐备,MCP 客户端可零配置自动发现受信 IdP。
 
 ## 六、发现链路（OAuth 自动发现）
 
-为减少调用方手工配置，RS 启用时（`rsAuthEnabled`）会主动暴露两处「发现」信息，让支持 OAuth 的客户端自动找到受信 IdP：
+为减少调用方手工配置，RS 启用时（`rsAuthEnabled`）会主动暴露三处「发现」信息，让支持 OAuth 的客户端自动找到受信 IdP：
 
 - **AgentCard 增加 `oidc` 档**（A2A 客户端用，**仅 `Provider=oidc` 时**）：`GET /.well-known/agent-card.json` 的 `securitySchemes` 在原有 `x-user-token` 之外增加一档 `oidc`（`type=openIdConnect`，`openIdConnectUrl` 指向 IdP 的 `…/.well-known/openid-configuration`），并加入 `security` 数组——两档**满足任一**即可，A2A 客户端据此自动选择走 OAuth。`Provider=oauth2` 时纯 OAuth2 IdP 无 OIDC discovery 文档，AgentCard **不**增加该档（只保留 `x-user-token`）。
 - **RFC 9728 资源元数据端点**（OAuth/MCP 客户端用）：`GET /.well-known/oauth-protected-resource`（公开、无需鉴权）返回：
@@ -166,9 +166,10 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
   }
   ```
 
-  `resource` = `[HTTP.RSAuth].Audience`（建议配成 https URL 以完全契合 RFC 9728），`authorization_servers` = 受信 provider 的 `SsoAddr`（`oidc` 取 OIDC、`oauth2` 取 OAuth2）。RS 未启用时该端点返回 404，不广告任何东西。
+  `resource` = `[HTTP.RSAuth].Audience`（建议配成 https URL 以完全契合 RFC 9728），`authorization_servers` = 受信 provider 的 `SsoAddr`（`oidc` 取 OIDC、`oauth2` 取 OAuth2）。RS 未启用时该端点返回 404，不广告任何东西。该端点另注册了带路径后缀的别名 `/.well-known/oauth-protected-resource/a2a`、`/.well-known/oauth-protected-resource/mcp`（RFC 9728 的 well-known-URI 插入式路径，部分 MCP 客户端按连接的端点推导），内容与根路径一致。
 
-**尚未做的一环（②）**：401 响应**暂不**带 `WWW-Authenticate: Bearer resource_metadata="…"` 头。影响：**A2A 客户端不受影响**（靠 AgentCard 自发现）;**MCP 客户端**（ChatGPT/Claude connector）的标准自动发现入口正是这个 401 头，缺它则需**手动配置** IdP 与 audience（功能可用，只是非零配置）。日后补 ② 时，上面两处元数据已就绪、直接指向即可。
+- **401 `WWW-Authenticate` 发现头（②）**：RS 启用时，`/a2a` `/mcp` 端点的 **401** 响应带上 `WWW-Authenticate: Bearer resource_metadata="<base>/.well-known/oauth-protected-resource"`（已带 Bearer 但校验失败时追加 `error="invalid_token"`）。这正是 **MCP 客户端**（ChatGPT/Claude connector）标准自动发现的入口：无 token 调用 → 收到 401 + 指针 → 拉资源元数据 → 找到受信 IdP → 走 OAuth，**无需手动配置 IdP 与 audience**。`base` 优先取 `[HTTP.A2A].BaseURL`，否则按请求的 `Host` + `X-Forwarded-Proto` 推导（与 AgentCard 同源）。
+  该头**仅挂在 `/a2a` `/mcp` 上**（由 `rsAuthChallenge` 中间件实现），共享 `tokenAuth` 的其它 API（如浏览器 session JWT 登录流）的 401 **不带**该头，保持原状。RS 未启用时同样不带。
 
 > 说明：AgentCard 的 `oidc` 档与资源元数据端点一样**每次请求实时计算**——运行时启用 RS/OIDC 或更换 IdP 后，下一次拉取 AgentCard 即生效，**无需重启 center**。
 
@@ -188,7 +189,7 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 - `pkg/httpx/httpx.go` — `RSAuth` 配置（`Enable` / `Audience` / `Provider`）
 - `pkg/oidcx/oidc.go` — `VerifyAccessToken`（`oidc` provider：复用 provider 的 JWKS 验签 + issuer/audience/过期，映射 claim）
 - `pkg/oauth2x/oauth2x.go` — `VerifyAccessToken`（`oauth2` provider：introspect/userinfo 两种校验 + 按 token 哈希缓存）
-- `center/router/router_rsauth.go` — `rsAuthProvider` / `rsAuthEnabled` / `shouldVerifyAsRS`（按 provider 区分 token）/ `authByIdPAccessToken`（JIT 建用户）/ `oidcDiscoveryURL` / `rsAuthServerAddr` / `oauthProtectedResource`（RFC 9728 元数据）
+- `center/router/router_rsauth.go` — `rsAuthProvider` / `rsAuthEnabled` / `shouldVerifyAsRS`（按 provider 区分 token）/ `authByIdPAccessToken`（JIT 建用户）/ `oidcDiscoveryURL` / `rsAuthServerAddr` / `oauthProtectedResource`（RFC 9728 元数据）/ `rsAuthChallenge`（401 `WWW-Authenticate` 发现头中间件）/ `wwwAuthenticateChallenge` / `protectedResourceMetadataURL`
 - `center/router/router_mw.go` — `tokenAuth()` 中的 RS 分支
-- `center/router/router_a2a.go` — 注册 `/.well-known/oauth-protected-resource`，并把 OIDC 发现 URL 传入 AgentCard
+- `center/router/router_a2a.go` — 注册 `/.well-known/oauth-protected-resource`（含 `/a2a` `/mcp` 路径别名），把 `rsAuthChallenge` 挂进 a2a/mcp 中间件链，并把 OIDC 发现 URL 传入 AgentCard
 - `aiagent/a2a/agent_card.go` — AgentCard 的 `oidc` securityScheme 档

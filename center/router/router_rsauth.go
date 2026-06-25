@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/toolkits/pkg/errorx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -81,6 +83,71 @@ func (rt *Router) oauthProtectedResource(c *gin.Context) {
 		"authorization_servers":    []string{rt.rsAuthServerAddr()},
 		"bearer_methods_supported": []string{"header"},
 	})
+}
+
+// protectedResourceMetadataURL builds the absolute URL of this service's RFC
+// 9728 Protected Resource Metadata document, used as the `resource_metadata`
+// pointer in the 401 WWW-Authenticate challenge. It prefers the configured A2A
+// BaseURL and otherwise derives scheme+host from the request (honouring a
+// reverse proxy's X-Forwarded-Proto), mirroring how the AgentCard derives its
+// own base so the two discovery surfaces always agree.
+func (rt *Router) protectedResourceMetadataURL(c *gin.Context) string {
+	base := strings.TrimSuffix(rt.HTTP.A2A.BaseURL, "/")
+	if base == "" {
+		scheme := "http"
+		if c.Request.TLS != nil || strings.EqualFold(c.GetHeader("X-Forwarded-Proto"), "https") {
+			scheme = "https"
+		}
+		base = scheme + "://" + c.Request.Host
+	}
+	return base + "/.well-known/oauth-protected-resource"
+}
+
+// wwwAuthenticateChallenge builds the RFC 6750 / RFC 9728 `WWW-Authenticate`
+// header advertised on 401s from the OAuth-protected agent endpoints. The
+// `resource_metadata` parameter is the discovery entry point an MCP client
+// follows to learn the trusted authorization server with zero manual config;
+// `error="invalid_token"` is appended only when a Bearer token was actually
+// presented and rejected (vs. simply absent), per RFC 6750 §3.1.
+func (rt *Router) wwwAuthenticateChallenge(c *gin.Context) string {
+	challenge := fmt.Sprintf("Bearer resource_metadata=%q", rt.protectedResourceMetadataURL(c))
+	if rt.extractToken(c.Request) != "" {
+		challenge += `, error="invalid_token"`
+	}
+	return challenge
+}
+
+// rsAuthChallenge completes the OAuth discovery entry point by attaching the
+// WWW-Authenticate hint to 401 responses from the a2a/mcp endpoints while
+// Resource Server auth is active — the missing third leg alongside the
+// protected-resource metadata endpoint and the AgentCard oidc scheme. An MCP
+// client (ChatGPT/Claude connector) that calls without a token gets the 401 +
+// pointer and can self-discover the IdP; without it those clients require
+// manual IdP/audience configuration.
+//
+// It is scoped to the agent groups on purpose: tokenAuth is shared with the
+// rest of the API, and the browser session-JWT login flow must keep getting a
+// plain 401 with no OAuth challenge. Downstream auth middlewares
+// (tokenAuth/user) report failure by panicking with errorx.PageError via
+// ginx.Bomb; this recovers a 401, sets the header on the still-unwritten
+// response, and re-panics so the global aop.Recovery renders the body as
+// before. Non-401 panics are re-raised untouched.
+func (rt *Router) rsAuthChallenge() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !rt.rsAuthEnabled() {
+			c.Next()
+			return
+		}
+		defer func() {
+			if r := recover(); r != nil {
+				if e, ok := r.(errorx.PageError); ok && e.Code == http.StatusUnauthorized {
+					c.Header("WWW-Authenticate", rt.wwwAuthenticateChallenge(c))
+				}
+				panic(r)
+			}
+		}()
+		c.Next()
+	}
 }
 
 // tokenHasIssuer reports whether a JWT carries a non-empty `iss` claim, without

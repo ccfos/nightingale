@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/ccfos/nightingale/v6/center/sso"
+	"github.com/ccfos/nightingale/v6/pkg/aop"
+	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/oauth2x"
 	"github.com/ccfos/nightingale/v6/pkg/oidcx"
@@ -192,6 +194,111 @@ func TestOAuthProtectedResource(t *testing.T) {
 
 		if w.Code != http.StatusNotFound {
 			t.Fatalf("status = %d, want 404", w.Code)
+		}
+	})
+}
+
+func TestWWWAuthenticateChallenge(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rt := newRSRouter(true)
+
+	newCtx := func(auth string) *gin.Context {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodPost, "/mcp", nil)
+		c.Request.Host = "n9e.example.com"
+		if auth != "" {
+			c.Request.Header.Set("Authorization", auth)
+		}
+		return c
+	}
+
+	// No credential presented: only the discovery pointer, no error code.
+	if got, want := rt.wwwAuthenticateChallenge(newCtx("")),
+		`Bearer resource_metadata="http://n9e.example.com/.well-known/oauth-protected-resource"`; got != want {
+		t.Errorf("no-token challenge = %q, want %q", got, want)
+	}
+
+	// A rejected Bearer adds error="invalid_token" (RFC 6750 §3.1).
+	if got, want := rt.wwwAuthenticateChallenge(newCtx("Bearer bad-token")),
+		`Bearer resource_metadata="http://n9e.example.com/.well-known/oauth-protected-resource", error="invalid_token"`; got != want {
+		t.Errorf("invalid-token challenge = %q, want %q", got, want)
+	}
+
+	// Configured A2A BaseURL wins over the request host (and trailing slash trimmed).
+	rt.HTTP.A2A.BaseURL = "https://gateway.example.com/"
+	if got, want := rt.wwwAuthenticateChallenge(newCtx("")),
+		`Bearer resource_metadata="https://gateway.example.com/.well-known/oauth-protected-resource"`; got != want {
+		t.Errorf("baseurl challenge = %q, want %q", got, want)
+	}
+}
+
+func TestRSAuthChallengeMiddleware(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	// build mounts the challenge middleware ahead of a handler that optionally
+	// bombs with the given status, under the shared aop.Recovery so PageError
+	// panics render exactly like production.
+	build := func(rt *Router, bombCode int) *gin.Engine {
+		r := gin.New()
+		r.Use(aop.Recovery())
+		g := r.Group("/mcp")
+		g.Use(rt.rsAuthChallenge())
+		g.GET("", func(c *gin.Context) {
+			if bombCode != 0 {
+				ginx.Bomb(bombCode, "unauthorized")
+			}
+			c.String(http.StatusOK, "ok")
+		})
+		return r
+	}
+
+	do := func(r *gin.Engine) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/mcp", nil)
+		req.Host = "n9e.example.com"
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	const want = `Bearer resource_metadata="http://n9e.example.com/.well-known/oauth-protected-resource"`
+
+	t.Run("401 with RS enabled carries challenge", func(t *testing.T) {
+		w := do(build(newRSRouter(true), http.StatusUnauthorized))
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("status = %d, want 401", w.Code)
+		}
+		if got := w.Header().Get("WWW-Authenticate"); got != want {
+			t.Errorf("WWW-Authenticate = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("RS disabled leaves a plain 401", func(t *testing.T) {
+		w := do(build(newRSRouter(false), http.StatusUnauthorized))
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("status = %d, want 401", w.Code)
+		}
+		if got := w.Header().Get("WWW-Authenticate"); got != "" {
+			t.Errorf("WWW-Authenticate = %q, want empty when RS disabled", got)
+		}
+	})
+
+	t.Run("non-401 panic gets no challenge", func(t *testing.T) {
+		w := do(build(newRSRouter(true), http.StatusForbidden))
+		if w.Code != http.StatusForbidden {
+			t.Fatalf("status = %d, want 403", w.Code)
+		}
+		if got := w.Header().Get("WWW-Authenticate"); got != "" {
+			t.Errorf("WWW-Authenticate = %q, want empty on 403", got)
+		}
+	})
+
+	t.Run("success gets no challenge", func(t *testing.T) {
+		w := do(build(newRSRouter(true), 0))
+		if w.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200", w.Code)
+		}
+		if got := w.Header().Get("WWW-Authenticate"); got != "" {
+			t.Errorf("WWW-Authenticate = %q, want empty on 200", got)
 		}
 	})
 }

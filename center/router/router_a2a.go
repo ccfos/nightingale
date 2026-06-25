@@ -149,7 +149,12 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	r.GET("/.well-known/agent.json", cardHandler)
 	// RFC 9728 Protected Resource Metadata — public, served only while RS auth
 	// is active (else 404). Lets OAuth-aware clients discover the trusted AS.
+	// The path-suffixed aliases match the well-known-URI-insertion form
+	// (`/.well-known/oauth-protected-resource/{a2a,mcp}`) that MCP clients derive
+	// from the endpoint they connect to; all serve the same metadata.
 	r.GET("/.well-known/oauth-protected-resource", rt.oauthProtectedResource)
+	r.GET("/.well-known/oauth-protected-resource/a2a", rt.oauthProtectedResource)
+	r.GET("/.well-known/oauth-protected-resource/mcp", rt.oauthProtectedResource)
 
 	// The SDK's internal http.ServeMux is registered at root paths like
 	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a
@@ -159,14 +164,14 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	a2aGroup := r.Group("/a2a")
 	// requestLog runs first so auth failures (which short-circuit tokenAuth)
 	// still produce a structured "[A2A] start/done" pair carrying trace_id.
-	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 	a2aGroup.Any("", gin.WrapH(a2aHandler))
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
-		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}
