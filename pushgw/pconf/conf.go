@@ -35,6 +35,11 @@ type Pushgw struct {
 	// 和 ProxyInflightMax 配套：并发 × 单请求大小 = pushgw 内存占用上限。<=0 使用默认值。
 	ProxyMaxBodyBytes int64
 
+	// ProxyConcurrentForward 控制 /proxy/v1/write 转发给多个 writer 时是否并行。
+	// 默认 false 串行；置 true 且 writer 数大于 1 时并行转发，把单请求耗时从 sum(latency)
+	// 降到 max(latency)，同时缩短 in-flight slot 持有时间、缓解慢 writer 拖累健康 writer。
+	ProxyConcurrentForward bool
+
 	LabelRewrite     bool
 	ForceUseServerTS bool
 	DebugSample      map[string]string
