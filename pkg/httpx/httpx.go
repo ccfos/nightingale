@@ -41,6 +41,7 @@ type Config struct {
 	RSA              RSAConfig
 	TokenAuth        TokenAuth
 	RSAuth           RSAuth
+	MCPAuth          MCPAuth
 	A2A              A2AConfig
 }
 
@@ -116,6 +117,50 @@ type RSAuth struct {
 	// validates opaque tokens via the OAuth2 SSO config's RSVerifyMethod
 	// (userinfo by default, or RFC 7662 introspection).
 	Provider string
+}
+
+// MCPAuth turns n9e itself into an OAuth 2.1 Authorization Server (co-located
+// with the Resource Server) so generic MCP clients (Claude / ChatGPT connector)
+// can connect to /a2a /mcp with zero pre-configuration via RFC 7591 Dynamic
+// Client Registration — the "no external IdP" counterpart to RSAuth. Disabled by
+// default; orthogonal to RSAuth (both may be enabled, both advertised in the
+// RFC 9728 protected-resource metadata). The existing PAT, session-JWT and
+// external-IdP RS paths are unaffected.
+//
+// Design (see doc/api/mcp-oauth-as.md): stateless signed JWTs everywhere — the
+// client_id, authorization-request ticket, authorization code, access and
+// refresh tokens are all HS256 JWTs distinguished by a token_use claim and
+// signed with a key derived from JWTAuth.SigningKey (or SigningKey below),
+// cryptographically separate from the session-JWT key. The only shared state is
+// a one-time-use guard for authorization codes in the shared Redis, so the AS
+// is correct across all center instances behind a load balancer.
+type MCPAuth struct {
+	// Enable turns the built-in Authorization Server on.
+	Enable bool
+	// Issuer is this AS's canonical URL (the `iss` of issued tokens and the
+	// `issuer` of the RFC 8414 metadata). In multi-instance deployments set it
+	// explicitly so every instance advertises an identical issuer regardless of
+	// which hostname/proto a request arrives on; left empty it is derived from
+	// the request (A2A.BaseURL, else Host + X-Forwarded-Proto / TLS).
+	Issuer string
+	// Resource is the MCP resource identifier bound into the access token `aud`
+	// (RFC 8707). Left empty it falls back to RSAuth.Audience, else to
+	// "<base>/mcp". When both MCPAuth and RSAuth are enabled, set this equal to
+	// RSAuth.Audience so the two share one resource id.
+	Resource string
+	// SigningKey, when set, signs all MCP OAuth JWTs. Left empty a 32-byte key is
+	// derived from JWTAuth.SigningKey via HKDF-SHA256 (deterministic across
+	// instances, independent from the session key). Must be identical on every
+	// instance; never auto-generate per process.
+	SigningKey string
+	// AccessTTL / RefreshTTL / CodeTTL are token lifetimes in seconds; zero
+	// values fall back to 3600 / 604800 / 60.
+	AccessTTL  int64
+	RefreshTTL int64
+	CodeTTL    int64
+	// RequireConsent, when false, lets the frontend skip the explicit consent
+	// screen for an already-logged-in user (still issues the code). Default true.
+	RequireConsent bool
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},

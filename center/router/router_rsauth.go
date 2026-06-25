@@ -69,18 +69,35 @@ func (rt *Router) rsAuthServerAddr() string {
 }
 
 // oauthProtectedResource serves the RFC 9728 Protected Resource Metadata so
-// OAuth-aware clients can discover which authorization server issues tokens for
-// this service and which audience to request. It returns 404 while RS auth is
-// inactive, so a disabled feature advertises nothing. (The 401 WWW-Authenticate
-// discovery hint is intentionally not emitted yet — see doc/api/a2a-oauth-rs.md.)
+// OAuth-aware clients can discover which authorization server(s) issue tokens for
+// this service and which audience to request. It returns 404 while neither the
+// external-IdP RS nor the built-in AS is enabled, so a disabled feature
+// advertises nothing.
 func (rt *Router) oauthProtectedResource(c *gin.Context) {
-	if !rt.rsAuthEnabled() {
-		c.JSON(http.StatusNotFound, gin.H{"error": "oauth resource server is not enabled"})
+	rsOn := rt.rsAuthEnabled()
+	mcpOn := rt.mcpAuthEnabled()
+	if !rsOn && !mcpOn {
+		c.JSON(http.StatusNotFound, gin.H{"error": "oauth is not enabled"})
 		return
 	}
+	// authorization_servers lists every AS that can mint tokens for this
+	// resource: the built-in AS (n9e itself) and/or the trusted external IdP.
+	// A client picks one it can use — generic MCP clients need the built-in AS's
+	// Dynamic Client Registration, enterprise clients use their IdP.
+	var servers []string
+	if mcpOn {
+		servers = append(servers, rt.mcpIssuer(c))
+	}
+	if rsOn {
+		servers = append(servers, rt.rsAuthServerAddr())
+	}
+	resource := strings.TrimSpace(rt.HTTP.RSAuth.Audience)
+	if resource == "" && mcpOn {
+		resource = rt.mcpResource(c)
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"resource":                 rt.HTTP.RSAuth.Audience,
-		"authorization_servers":    []string{rt.rsAuthServerAddr()},
+		"resource":                 resource,
+		"authorization_servers":    servers,
 		"bearer_methods_supported": []string{"header"},
 	})
 }
@@ -134,7 +151,7 @@ func (rt *Router) wwwAuthenticateChallenge(c *gin.Context) string {
 // before. Non-401 panics are re-raised untouched.
 func (rt *Router) rsAuthChallenge() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !rt.rsAuthEnabled() {
+		if !rt.rsAuthEnabled() && !rt.mcpAuthEnabled() {
 			c.Next()
 			return
 		}

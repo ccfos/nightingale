@@ -156,6 +156,20 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	r.GET("/.well-known/oauth-protected-resource/a2a", rt.oauthProtectedResource)
 	r.GET("/.well-known/oauth-protected-resource/mcp", rt.oauthProtectedResource)
 
+	// Built-in OAuth 2.1 Authorization Server endpoints (router_mcp_oauth.go).
+	// Public by design — the AS metadata, DCR, authorize and token endpoints are
+	// reached before any n9e credential exists; each handler 404s / errors when
+	// MCPAuth.Enable is off. The interactive consent screen is a frontend SPA
+	// route (/oauth-consent) the authorize endpoint redirects to; the SPA then
+	// calls the protected decision API registered in router.go.
+	r.GET(mcpASMetaPath, rt.MCPOAuthServerMetadata)
+	r.GET(mcpASMetaPath+"/a2a", rt.MCPOAuthServerMetadata)
+	r.GET(mcpASMetaPath+"/mcp", rt.MCPOAuthServerMetadata)
+	r.POST(mcpRegisterPath, rt.MCPOAuthRegister)
+	r.GET(mcpAuthorizePath, rt.MCPOAuthAuthorize)
+	r.POST(mcpTokenPath, rt.MCPOAuthToken)
+	r.POST(mcpRevokePath, rt.MCPOAuthRevoke)
+
 	// The SDK's internal http.ServeMux is registered at root paths like
 	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a
 	// mount prefix before delegating; otherwise the SDK's mux sees

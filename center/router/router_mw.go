@@ -90,6 +90,21 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			}
 		}
 
+		// 内建 OAuth 2.1 授权服务器（builtin AS）自签发的 access token：用本服务的 MCP
+		// 签名密钥验签（与外部 IdP token、session JWT 密码学隔离，验不过即非本类 token），
+		// 命中则按 token 内的用户放行。必须排在 RS 之前——builtin token 也带 iss，靠签名
+		// 甄别才不会被误送外部 IdP 验签。
+		if rt.mcpAuthEnabled() {
+			if raw := rt.extractToken(c.Request); raw != "" {
+				if uid, uname, ok := rt.mcpVerifyAccessToken(raw); ok {
+					c.Set("userid", uid)
+					c.Set("username", uname)
+					c.Next()
+					return
+				}
+			}
+		}
+
 		// 外置 IdP 签发的 OAuth access token（Resource Server 模式）。OIDC 走 JWT
 		// 验签（凭 iss 与 n9e 自签 session JWT 区分）；OAuth2 走 introspection/userinfo
 		// （opaque token，经由不同请求头区分：n9e 固定 token 走 X-User-Token 头、已在
