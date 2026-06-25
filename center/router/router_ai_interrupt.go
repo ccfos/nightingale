@@ -357,5 +357,6 @@ func (rt *Router) buildToolDeps() *aiagent.ToolDeps {
 		GetAlertEvalLogs:       rt.getAlertEvalLogs,
 		GetEventProcessingLogs: rt.getEventLogs,
 		Redis:                  rt.Redis,
+		Sandbox:                rt.Sandbox,
 	}
 }

@@ -124,6 +124,13 @@ func (a *Agent) Run(ctx context.Context, req *AgentRequest) (*AgentResponse, err
 		if def, ok := GetBuiltinToolDef("load_skill"); ok {
 			tools = appendToolIfAbsent(tools, def)
 		}
+		// 技能脚本执行：只有当 sandbox 控制器存在且在本宿主可执行时才挂
+		// run_skill_script，避免在无法执行的环境里给模型一个必然失败的工具。
+		if a.toolDeps != nil && a.toolDeps.Sandbox != nil && a.toolDeps.Sandbox.Enabled() {
+			if def, ok := GetBuiltinToolDef("run_skill_script"); ok {
+				tools = appendToolIfAbsent(tools, def)
+			}
+		}
 		// 跨轮回放（工具渐进披露，见 skill_tools_inject.go）：history 里已加载
 		// 技能的声明工具重新注入——上一轮 load_skill 进来的工具本轮继续可用。
 		if len(req.History) > 0 {

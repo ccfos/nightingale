@@ -125,6 +125,65 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
+# Sandbox isolates execution of user-uploaded Skill Python/Bash scripts.
+# Disabled by default (executes untrusted code). On a capable Linux host set
+# Enabled=true and (production) leave Engine="auto" + DevMode=false. On non-Linux
+# / kernel-incapable hosts execution stays OFF unless DevMode=true picks the
+# UNSAFE (no-isolation) engine — dev only, never production.
+[Center.Sandbox]
+Enabled = false
+# auto | bubblewrap | confined | unsafe  (runsc/nsjail reserved for the future)
+Engine = "auto"
+# Allow the unsafe engine when kernel capabilities are insufficient (dev only).
+DevMode = false
+# Explicitly accept the outer container as the host boundary so `auto` may use
+# the container-confined engine when unprivileged userns is unavailable (§5.3).
+ContainerAsBoundary = false
+DataDir = "/var/lib/n9e/sandbox"
+# audit | enforce  (first release may run audit to collect denied syscalls)
+SeccompMode = "enforce"
+
+[Center.Sandbox.Rootfs]
+# embedded (base baked into the binary) | path (external base) | download
+Source = "embedded"
+Path = ""
+ExtraLayers = []
+
+# Default per-execution policy envelope.
+[Center.Sandbox.DefaultPolicy]
+Network = "none"
+TimeoutSeconds = 30
+MemoryMB = 256
+CPUQuota = "100000 100000"
+Pids = 32
+StdoutBytes = 262144
+StderrBytes = 262144
+
+# Host-level admission control (caps total concurrent runs + memory budget).
+[Center.Sandbox.Admission]
+MaxConcurrent = 32
+MaxTotalMemoryMB = 8192
+
+# Per-skill ceilings (a skill cannot request beyond these).
+[Center.Sandbox.Skill]
+Enabled = true
+MaxTimeoutSeconds = 300
+MaxMemoryMB = 1024
+MaxPids = 128
+AllowedNetworkModes = ["none", "proxy"]
+
+# Global skill policy envelope (egress + n9e-api grants reserved for the egress
+# phase; this release supports Network="none" only).
+[Center.Sandbox.SkillPolicy]
+EgressAllowlist = []
+GrantableN9eAPI = []
+JitConfirm = ["n9e_api:write", "network:new_domain", "network:direct"]
+
+# Hard deny — no skill/layer can override.
+[Center.Sandbox.Deny]
+EgressCIDRs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8"]
+N9eAPI = ["*:write", "*:delete", "user:*"]
+
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true

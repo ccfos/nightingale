@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 )
 
 type Center struct {
@@ -22,6 +23,11 @@ type Center struct {
 	MigrateBusiGroupLabel     bool
 	RSA                       httpx.RSAConfig
 	AIAgent                   AIAgent
+
+	// Sandbox isolates execution of user-uploaded Skill Python/Bash scripts
+	// (pkg/sandbox). Default-disabled-but-safe: non-Linux / insufficient kernel
+	// capabilities degrade to "skill execution off" unless dev_mode is set.
+	Sandbox sandbox.Config
 }
 
 type AIAgent struct {
@@ -81,4 +87,5 @@ func (c *Center) PreCheck() {
 	if c.AIAgent.MaxFilesPerSkill <= 0 {
 		c.AIAgent.MaxFilesPerSkill = 1000
 	}
+	c.Sandbox.PreCheck()
 }
