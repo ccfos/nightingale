@@ -10,6 +10,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type EsIndexPattern struct {
@@ -27,6 +28,7 @@ type EsIndexPattern struct {
 	UpdateByNickname           string `json:"update_by_nickname" gorm:"-"`
 	CrossClusterEnabled        int    `json:"cross_cluster_enabled"`
 	Note                       string `json:"note"`
+	Weight                     int    `json:"weight"`
 }
 
 func (t *EsIndexPattern) TableName() string {
@@ -132,10 +134,34 @@ func (ei *EsIndexPattern) Update(ctx *ctx.Context, eip EsIndexPattern) error {
 	eip.CreateAt = ei.CreateAt
 	eip.CreateBy = ei.CreateBy
 	eip.UpdateAt = time.Now().Unix()
+	eip.Weight = ei.Weight // weight 由专用排序接口维护，普通更新不应覆盖
 
 	eip.FE2DB()
 
 	return DB(ctx).Model(ei).Select("*").Updates(eip).Error
+}
+
+// EsIndexPatternWeight 批量更新排序权重时的单项
+type EsIndexPatternWeight struct {
+	Id     int64 `json:"id"`
+	Weight int   `json:"weight"`
+}
+
+// EsIndexPatternUpdateWeights 批量更新索引模式的排序权重，只更新 weight 列，整体放在一个事务里
+func EsIndexPatternUpdateWeights(ctx *ctx.Context, items []EsIndexPatternWeight) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	return DB(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, item := range items {
+			if err := tx.Model(&EsIndexPattern{}).Where("id = ?", item.Id).
+				Update("weight", item.Weight).Error; err != nil {
+				return errors.WithMessage(err, "failed to update es index pattern weight")
+			}
+		}
+		return nil
+	})
 }
 
 func (dbIndexPattern *EsIndexPattern) DB2FE() {
@@ -156,7 +182,8 @@ func EsIndexPatternGets(ctx *ctx.Context, where string, args ...interface{}) ([]
 		return lst, err
 	}
 	var objs []*EsIndexPattern
-	err := DB(ctx).Where(where, args...).Find(&objs).Error
+	// 按 weight 升序展示，weight 相同时按 id 升序保证顺序稳定
+	err := DB(ctx).Where(where, args...).Order("weight asc, id asc").Find(&objs).Error
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to query es index pattern")
 	}

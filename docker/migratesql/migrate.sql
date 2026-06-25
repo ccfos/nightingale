@@ -489,3 +489,6 @@ CREATE TABLE `ai_assistant_message` (
     UNIQUE KEY `uk_chat_seq` (`chat_id`, `seq_id`),
     KEY `idx_am_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai assistant messages';
+
+/* v9 2026-06-25 es_index_pattern weight for sorting */
+ALTER TABLE `es_index_pattern` ADD COLUMN `weight` int not null default 0;

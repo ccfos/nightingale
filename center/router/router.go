@@ -560,6 +560,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
 		pages.POST("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/add"), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternPut)
+		pages.PUT("/es-index-patterns/weights", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternUpdateWeights)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/del"), rt.esIndexPatternDel)
 
 		pages.GET("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards"), rt.embeddedDashboardsGet)
