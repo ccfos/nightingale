@@ -30,9 +30,28 @@ type Sandbox struct {
 // *DisabledError with an actionable reason. cfg is PreCheck'd defensively.
 func New(cfg Config) *Sandbox {
 	cfg.PreCheck()
+	caps := probeCapabilities()
+
+	// Embedded assets (release builds, -tags sandbox_embed, §9.3): a self-
+	// contained binary carries its own bwrap + python-base, extracted to the
+	// data dir at startup. They take precedence over host-provided ones so
+	// "install + run" needs no external bwrap or Rootfs.Path. Default builds
+	// embed nothing, so this is a no-op.
+	if bwrapPath, basePath, err := extractEmbeddedAssets(cfg.DataDir); err != nil {
+		caps.note("embedded asset extraction failed: %v", err)
+	} else {
+		if bwrapPath != "" {
+			caps.BwrapPath = bwrapPath
+		}
+		if basePath != "" && cfg.Rootfs.Path == "" {
+			cfg.Rootfs.Path = basePath
+			caps.note("using embedded python-base at %s", basePath)
+		}
+	}
+
 	s := &Sandbox{
 		cfg:  cfg,
-		caps: probeCapabilities(),
+		caps: caps,
 		adm:  newAdmission(cfg.Admission),
 	}
 	s.tier, s.tierReason = selectTier(cfg, s.caps)
