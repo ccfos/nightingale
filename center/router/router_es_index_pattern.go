@@ -45,6 +45,14 @@ func (rt *Router) esIndexPatternPut(c *gin.Context) {
 	ginx.NewRender(c).Message(esIndexPattern.Update(rt.Ctx, f))
 }
 
+// 批量更新 ES Index Pattern 的排序权重
+func (rt *Router) esIndexPatternUpdateWeights(c *gin.Context) {
+	var items []models.EsIndexPatternWeight
+	ginx.BindJSON(c, &items)
+
+	ginx.NewRender(c).Message(models.EsIndexPatternUpdateWeights(rt.Ctx, items))
+}
+
 // 删除 ES Index Pattern
 func (rt *Router) esIndexPatternDel(c *gin.Context) {
 	var f idsForm
