@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"github.com/toolkits/pkg/logger"
@@ -50,7 +52,11 @@ func init() {
 func (e *bwrapEngine) Name() string { return EngineBwrap }
 
 func (e *bwrapEngine) Caps() EngineCaps {
-	return EngineCaps{Namespaces: true, Cgroup: true, Network: true}
+	c := EngineCaps{Namespaces: true, Cgroup: true, Network: true}
+	if _, ok := archSeccompToken(); ok && e.cfg.SeccompMode != "" && e.cfg.SeccompMode != "off" {
+		c.Seccomp = true
+	}
+	return c
 }
 
 func (e *bwrapEngine) Run(ctx context.Context, spec ExecSpec) (ExecResult, error) {
@@ -60,10 +66,24 @@ func (e *bwrapEngine) Run(ctx context.Context, spec ExecSpec) (ExecResult, error
 	cg := setupCgroup(spec.ExecID, spec.Resources)
 	defer cg.cleanup()
 
-	args := e.buildArgs(spec)
-	logger.Debugf("sandbox[bwrap]: skill=%s argv=%v", spec.SkillName, spec.Command)
+	// Compile the seccomp filter and hand it to bwrap as an inherited fd. The
+	// first ExtraFiles entry is fd 3 in the child; bwrap installs the filter on
+	// the payload just before exec (after its own privileged setup).
+	var extraFiles []*os.File
+	seccompFD := -1
+	if r, ok, serr := seccompProgramReader(e.cfg.SeccompMode); serr != nil {
+		logger.Warningf("sandbox[bwrap]: seccomp build failed, running WITHOUT seccomp: %v", serr)
+	} else if ok {
+		extraFiles = append(extraFiles, r)
+		seccompFD = 3 // ExtraFiles[0]
+		defer r.Close()
+	}
+
+	args := e.buildArgs(spec, seccompFD)
+	logger.Debugf("sandbox[bwrap]: skill=%s seccomp=%s seccompFD=%d argv=%v", spec.SkillName, e.cfg.SeccompMode, seccompFD, spec.Command)
 
 	cmd := exec.Command(e.bwrap, args...)
+	cmd.ExtraFiles = extraFiles
 	if len(spec.Stdin) > 0 {
 		cmd.Stdin = bytes.NewReader(spec.Stdin)
 	}
@@ -118,7 +138,7 @@ func (e *bwrapEngine) Run(ctx context.Context, spec ExecSpec) (ExecResult, error
 // file system". The python-base rootfs MUST therefore ship those mount-point
 // directories as empty dirs. The embedded-base build (§9.3, TODO) must create
 // them; an externally-supplied Rootfs.Path must contain them too.
-func (e *bwrapEngine) buildArgs(spec ExecSpec) []string {
+func (e *bwrapEngine) buildArgs(spec ExecSpec, seccompFD int) []string {
 	a := []string{
 		"--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup",
 		"--die-with-parent", "--new-session",
@@ -127,6 +147,11 @@ func (e *bwrapEngine) buildArgs(spec ExecSpec) []string {
 		"--proc", "/proc",
 		"--dev", "/dev",
 		"--tmpfs", "/tmp",
+	}
+	if seccompFD >= 0 {
+		// bwrap reads the compiled cBPF program from this inherited fd and
+		// installs it on the payload right before exec.
+		a = append(a, "--seccomp", strconv.Itoa(seccompFD))
 	}
 	if spec.Network == NetworkNone || spec.Network == "" {
 		a = append(a, "--unshare-net")
