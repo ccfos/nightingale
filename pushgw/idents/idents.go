@@ -114,7 +114,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 
 	if !s.ctx.IsCenter {
 		t := TargetUpdate{
-			Lst: lst,
+			Lst: append([]string(nil), lst...),
 			Now: now,
 		}
 
