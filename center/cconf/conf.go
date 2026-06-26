@@ -12,6 +12,7 @@ type Center struct {
 	OpsYamlFile               string
 	BuiltinIntegrationsDir    string
 	I18NHeaderKey             string
+	NotificationLang          string // Language for default notification templates: "zh", "en". Default: "zh".
 	MetricDesc                MetricDescType
 	AnonymousAccess           AnonymousAccess
 	UseFileAssets             bool
