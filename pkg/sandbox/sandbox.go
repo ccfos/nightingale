@@ -137,6 +137,12 @@ func (s *Sandbox) logStartup() {
 	}
 	logger.Infof("sandbox: ready engine=%s tier=%s os=%s kernel=%s caps=%+v",
 		s.engine.Name(), s.tier, s.caps.OS, s.caps.KernelVersion, s.engine.Caps())
+
+	switch strings.ToLower(strings.TrimSpace(s.cfg.Egress)) {
+	case EgressOff, EgressOpen, EgressAllowlist:
+	default:
+		logger.Warningf("sandbox: unrecognized Egress=%q (want off|open|allowlist) — treating as off (no skill network)", s.cfg.Egress)
+	}
 }
 
 // Enabled reports whether skill execution can run on this host.

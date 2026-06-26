@@ -134,6 +134,16 @@ AlertDetail = true
 Enabled = false
 # auto | bubblewrap | confined | unsafe  (runsc/nsjail reserved for the future)
 Engine = "auto"
+# Egress preset — the one knob for skill outbound network (§10.1):
+#   off       — no network. Most isolated.
+#   open      — (default) skills reach public AND private (RFC1918/ULA) hosts
+#               through the audited proxy, out of the box. ALWAYS blocked even in
+#               open: host loopback (127.x) and cloud metadata / link-local
+#               (169.254.x) — a skill must never hit n9e's own API/DB or steal
+#               cloud credentials. UDP blocked; every call audited.
+#   allowlist — reach only SkillPolicy.EgressAllowlist hosts; private blocked.
+# Tighten to "allowlist" or "off" for stricter / multi-tenant deployments.
+Egress = "open"
 # Allow the unsafe engine when kernel capabilities are insufficient (dev only).
 DevMode = false
 # Explicitly accept the outer container as the host boundary so `auto` may use
@@ -149,12 +159,8 @@ Source = "embedded"
 Path = ""
 ExtraLayers = []
 
-# Default per-execution policy envelope.
+# Default per-execution policy envelope. (Egress posture is set by Egress above.)
 [Center.Sandbox.DefaultPolicy]
-# none (default) | proxy. "proxy" routes skill egress through the host egress
-# proxy + allowlist below (bubblewrap engine only); it has no effect unless
-# SkillPolicy.EgressAllowlist is non-empty. "direct" is not implemented (§10.5).
-Network = "none"
 TimeoutSeconds = 30
 MemoryMB = 256
 CPUQuota = "100000 100000"
@@ -178,9 +184,10 @@ AllowedNetworkModes = ["none", "proxy"]
 # Global skill policy envelope (§10/§12). All default-empty = no egress, no n9e
 # API: a skill can reach nothing until an admin opts in here.
 [Center.Sandbox.SkillPolicy]
-# Specific hosts a network="proxy" skill may reach (§10.4). Prefer exact hosts;
-# "*.example.com" wildcards are allowed but discouraged. Example:
-#   EgressAllowlist = ["api.openai.com", "pypi.org", "files.pythonhosted.org"]
+# Used only when Egress = "allowlist": the specific hosts a skill may reach.
+# Prefer exact hosts; "*.example.com" wildcards allowed but discouraged; "*" = all
+# (which is what Egress = "open" does). Example:
+#   EgressAllowlist = ["api.openai.com", "hooks.slack.com"]
 EgressAllowlist = []
 # n9e internal APIs the Skill Gateway may expose, as <domain>:<verb> grants
 # (§12.2). Intersected with the launching user's own RBAC. Phase 1 ships read-only
@@ -190,10 +197,12 @@ EgressAllowlist = []
 GrantableN9eAPI = []
 JitConfirm = ["n9e_api:write", "network:new_domain", "network:direct"]
 
-# Hard deny — no skill/layer can override (§16.3). EgressCIDRs is additive on top
-# of the built-in SSRF classes (loopback/link-local/IMDS are always denied).
+# Hard deny — no skill/layer can override (§16.3). The built-in SSRF floor
+# (loopback + link-local/metadata) is ALWAYS blocked in code, in every mode.
+# EgressCIDRs adds extra ranges to block in ALL proxy modes — use it to also block
+# a sensitive internal subnet even under Egress = "open". Default empty.
 [Center.Sandbox.Deny]
-EgressCIDRs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16", "127.0.0.0/8"]
+EgressCIDRs = []
 N9eAPI = ["*:write", "*:delete", "user:*"]
 
 # Host-side egress proxy transport knobs (§10.2/§10.3). Allowlist + deny CIDRs
@@ -202,8 +211,6 @@ N9eAPI = ["*:write", "*:delete", "user:*"]
 [Center.Sandbox.EgressProxy]
 # Also forward absolute-form plain HTTP (http://). false = HTTPS/CONNECT only.
 AllowPlainHTTP = true
-# Deny RFC1918/ULA resolved IPs (loopback/link-local/IMDS denied regardless).
-DenyPrivateCIDRs = true
 DialTimeoutSecs = 10
 IdleTimeoutSecs = 120
 # External n9e-sandbox-init forwarder path for non-embedded builds; the embedded

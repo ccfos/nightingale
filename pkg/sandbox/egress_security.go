@@ -35,6 +35,12 @@ func hostAllowed(allowlist []string, host string) bool {
 		if pat == "" {
 			continue
 		}
+		// Bare "*" = allow every host (the Egress="open" sentinel). Note the IP-
+		// level SSRF deny still runs afterward, so "*" reaches public + private but
+		// never loopback / cloud-metadata (ipDenied).
+		if pat == "*" {
+			return true
+		}
 		if suffix, ok := strings.CutPrefix(pat, "*."); ok {
 			// "*.example.com" → host must end with ".example.com" and have at
 			// least one label in front (so the apex itself does not match).

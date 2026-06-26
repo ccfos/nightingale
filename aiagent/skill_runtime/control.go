@@ -29,30 +29,18 @@ type controlChannels struct {
 	dir     string // per-exec host dir holding the sockets
 }
 
-// resolveNetwork picks a run's egress posture (§10.1/§11.2): proxy only when the
-// global default policy asks for it, the skill ceilings permit it, AND the active
-// engine can actually enforce it (bubblewrap). Everything else → none.
+// resolveNetwork picks a run's egress posture from the Egress preset (§10.1):
+// proxy when Egress is open/allowlist AND the active engine can enforce it
+// (bubblewrap has the forwarder); otherwise none.
 func resolveNetwork(s *sandbox.Sandbox) sandbox.NetworkPolicy {
-	cfg := s.Config()
-	if sandbox.NetworkPolicy(cfg.DefaultPolicy.Network) != sandbox.NetworkProxy {
-		return sandbox.NetworkNone
-	}
-	if !allowedMode(cfg.Skill.AllowedNetworkModes, string(sandbox.NetworkProxy)) {
+	proxy, _, _ := s.Config().EgressPlan()
+	if !proxy {
 		return sandbox.NetworkNone
 	}
 	if !s.EngineCaps().Network { // engine cannot enforce a proxy posture (no forwarder)
 		return sandbox.NetworkNone
 	}
 	return sandbox.NetworkProxy
-}
-
-func allowedMode(modes []string, want string) bool {
-	for _, m := range modes {
-		if m == want {
-			return true
-		}
-	}
-	return false
 }
 
 // setupControlChannels starts whichever channels this run needs. It is
@@ -77,11 +65,15 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 	cc := &controlChannels{dir: dir}
 
 	if needEgress {
+		// open → allowlist=["*"], denyPrivate=false (public + private reachable);
+		// allowlist → the configured hosts, denyPrivate=true. The loopback +
+		// metadata floor is enforced unconditionally in the proxy regardless (§10.4).
+		_, allowlist, denyPrivate := cfg.EgressPlan()
 		ep, err := sandbox.StartEgressProxy(filepath.Join(dir, "egress.sock"), sandbox.EgressOptions{
 			ExecID:         execID,
-			Allowlist:      cfg.SkillPolicy.EgressAllowlist,
+			Allowlist:      allowlist,
 			DenyCIDRs:      cfg.Deny.EgressCIDRs,
-			DenyPrivate:    true, // phase 1 never permits internal egress (§10.4)
+			DenyPrivate:    denyPrivate,
 			AllowPlainHTTP: cfg.EgressProxy.AllowPlainHTTP,
 			DialTimeout:    time.Duration(cfg.EgressProxy.DialTimeoutSecs) * time.Second,
 			IdleTimeout:    time.Duration(cfg.EgressProxy.IdleTimeoutSecs) * time.Second,

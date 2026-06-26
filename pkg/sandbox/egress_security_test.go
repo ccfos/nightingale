@@ -29,6 +29,50 @@ func TestHostAllowed(t *testing.T) {
 	if hostAllowed(nil, "anything.com") {
 		t.Error("empty allowlist must deny all")
 	}
+	// bare "*" (the Egress="open" sentinel) allows any host.
+	for _, h := range []string{"anything.com", "internal.corp", "1.2.3.4"} {
+		if !hostAllowed([]string{"*"}, h) {
+			t.Errorf("hostAllowed([*], %q) should allow", h)
+		}
+	}
+}
+
+func TestEgressPlan(t *testing.T) {
+	cases := []struct {
+		egress   string
+		proxy    bool
+		allowAll bool // allowlist == ["*"]
+		denyPriv bool
+	}{
+		{"open", true, true, false},
+		{"OPEN", true, true, false}, // case-insensitive
+		{"allowlist", true, false, true},
+		{"off", false, false, false},
+		{"", true, true, false},          // unset → default open
+		{"garbage", false, false, false}, // unrecognized → fail safe (off)
+	}
+	for _, c := range cases {
+		cfg := Config{Egress: c.egress, SkillPolicy: SkillPolicyConfig{EgressAllowlist: []string{"a.com"}}}
+		proxy, allow, denyPriv := cfg.EgressPlan()
+		allowAll := len(allow) == 1 && allow[0] == "*"
+		if proxy != c.proxy || denyPriv != c.denyPriv || allowAll != c.allowAll {
+			t.Errorf("Egress=%q → proxy=%v allowAll=%v denyPriv=%v, want %v/%v/%v",
+				c.egress, proxy, allowAll, denyPriv, c.proxy, c.allowAll, c.denyPriv)
+		}
+	}
+
+	// open's catastrophic floor: with denyPrivate=false the IP gate must still let
+	// RFC1918 through but ALWAYS block loopback + cloud metadata.
+	_, _, denyPriv := Config{Egress: "open"}.EgressPlan()
+	if d, _ := ipDenied(net.ParseIP("10.0.0.5"), nil, denyPriv); d {
+		t.Error("open: RFC1918 (private) should be reachable")
+	}
+	if d, _ := ipDenied(net.ParseIP("127.0.0.1"), nil, denyPriv); !d {
+		t.Error("open: host loopback must STILL be blocked")
+	}
+	if d, _ := ipDenied(net.ParseIP("169.254.169.254"), nil, denyPriv); !d {
+		t.Error("open: cloud metadata must STILL be blocked")
+	}
 }
 
 func TestIPDenied(t *testing.T) {

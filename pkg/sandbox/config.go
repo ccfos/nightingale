@@ -1,18 +1,38 @@
 package sandbox
 
-import "time"
+import (
+	"strings"
+	"time"
+)
+
+// Egress preset values for Config.Egress — the one-knob egress posture (§10.1).
+const (
+	EgressOff       = "off"       // no network (loopback-only netns)
+	EgressOpen      = "open"      // public + private (RFC1918) via the audited proxy
+	EgressAllowlist = "allowlist" // only SkillPolicy.EgressAllowlist hosts; private blocked
+)
 
 // Config mirrors the `[Sandbox]` section (design §16.3). It is loaded as part of
 // the top-level n9e config and PreCheck() fills defaults. SkillPolicy / Deny /
-// EgressProxy now drive the live egress proxy (§10) and Skill Gateway (§12); both
-// stay off until an admin populates EgressAllowlist / GrantableN9eAPI (the safe
-// default is no egress, no n9e API).
+// EgressProxy drive the live egress proxy (§10) and Skill Gateway (§12).
 type Config struct {
 	Enabled bool
 
 	// Engine selects the backend: auto | bubblewrap | confined | unsafe.
 	// auto follows the capability tier table (§6).
 	Engine string
+
+	// Egress is the single-knob egress preset (§10.1): off | open | allowlist.
+	//   - off:       no network (most isolated).
+	//   - open:      (default) skills reach public AND private (RFC1918/ULA) hosts
+	//                through the audited proxy, out of the box. The catastrophic
+	//                floor stays blocked regardless: host loopback (127/8, ::1) and
+	//                cloud-metadata / link-local (169.254/16, fe80::/10) are NEVER
+	//                reachable — a skill must not hit n9e's own API/DB or steal
+	//                cloud credentials. UDP blocked; every call audited.
+	//   - allowlist: reach only SkillPolicy.EgressAllowlist hosts; private blocked.
+	// It supersedes the lower-level DefaultPolicy.Network knob.
+	Egress string
 
 	// DevMode permits the unsafe engine when capabilities are insufficient
 	// (non-Linux / userns off). Production must leave this false.
@@ -105,8 +125,9 @@ type EgressProxyConfig struct {
 	// AllowPlainHTTP forwards absolute-form plain-HTTP in addition to HTTPS
 	// CONNECT. Default true so http:// APIs work; set false for HTTPS-only egress.
 	AllowPlainHTTP bool
-	// DenyPrivateCIDRs denies RFC1918/ULA resolved IPs (default true). loopback /
-	// link-local / IMDS are denied unconditionally regardless of this flag.
+	// DenyPrivateCIDRs is SUPERSEDED by the Egress preset (open allows private,
+	// allowlist denies it) and no longer consulted. Kept for config compatibility.
+	// loopback / link-local / metadata are always blocked regardless (ipDenied).
 	DenyPrivateCIDRs bool
 	// DenyUDP is informational: a CONNECT/forward proxy is TCP-only by
 	// construction, so UDP/QUIC egress is already impossible (§10.4). Kept for
@@ -147,6 +168,9 @@ const (
 func (c *Config) PreCheck() {
 	if c.Engine == "" {
 		c.Engine = "auto"
+	}
+	if c.Egress == "" {
+		c.Egress = EgressOpen
 	}
 	if c.DataDir == "" {
 		c.DataDir = defaultDataDir
@@ -207,6 +231,29 @@ func (c *Config) PreCheck() {
 	}
 	if s.MaxFiles == 0 {
 		s.MaxFiles = defaultSkillMaxFiles
+	}
+}
+
+// EgressPlan resolves the Egress preset into the effective proxy posture: whether
+// to run the proxy at all, the host allowlist (["*"] = all hosts, used by open),
+// and whether to deny RFC1918/ULA private IPs. The catastrophic floor (loopback +
+// link-local/metadata) is always blocked in ipDenied regardless of this plan, so
+// even "open" cannot reach the host's own services or the cloud metadata endpoint.
+// An empty/unset value defaults to open (out-of-the-box network); a recognized-
+// but-not-open value behaves as written; an unrecognized value falls back to off
+// (fail safe — a typo must not silently turn network on).
+func (c Config) EgressPlan() (proxy bool, allowlist []string, denyPrivate bool) {
+	mode := strings.ToLower(strings.TrimSpace(c.Egress))
+	if mode == "" {
+		mode = EgressOpen // unset → default open
+	}
+	switch mode {
+	case EgressOpen:
+		return true, []string{"*"}, false
+	case EgressAllowlist:
+		return true, c.SkillPolicy.EgressAllowlist, true
+	default: // off, or an unrecognized value → no network
+		return false, nil, false
 	}
 }
 
