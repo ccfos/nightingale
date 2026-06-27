@@ -220,6 +220,13 @@ type ToolDeps struct {
 	// Sandbox 是 Skill Python/Bash 脚本执行的隔离控制器（pkg/sandbox）。run_skill_script
 	// 工具据此执行某 skill 的入口脚本。nil 或未启用时，工具回报「执行未开启」而非报错。
 	Sandbox *sandbox.Sandbox
+
+	// N9eAPIBaseURL 是 Skill Gateway 回环自调 n9e 自身 API 的基址（如
+	// "http://127.0.0.1:17000"）。空则 Gateway 不启用。
+	N9eAPIBaseURL string
+	// CacheUserToken 把新建的 user token 即时注入 token 缓存（包装
+	// memsto.UserTokenCache.Inject），让 Gateway 刚建的 token 当场可认证。
+	CacheUserToken func(token string, user *models.User)
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

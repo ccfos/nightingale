@@ -12,6 +12,14 @@ const (
 	EgressAllowlist = "allowlist" // only SkillPolicy.EgressAllowlist hosts; private blocked
 )
 
+// N9eAPI preset values for Config.N9eAPI — the one-knob Skill Gateway posture
+// (§12.1), parallel to Egress. Read-only either way; the Deny.N9eAPI floor
+// (writes/deletes/user:*) applies on top, so a write op can never slip through.
+const (
+	N9eAPIReadonly = "readonly" // (default) skills may call read-only n9e ops as the launching user
+	N9eAPIOff      = "off"      // no n9e API access (the gateway is not started)
+)
+
 // Config mirrors the `[Sandbox]` section (design §16.3). It is loaded as part of
 // the top-level n9e config and PreCheck() fills defaults. SkillPolicy / Deny /
 // EgressProxy drive the live egress proxy (§10) and Skill Gateway (§12).
@@ -33,6 +41,19 @@ type Config struct {
 	//   - allowlist: reach only SkillPolicy.EgressAllowlist hosts; private blocked.
 	// It supersedes the lower-level DefaultPolicy.Network knob.
 	Egress string
+
+	// N9eAPI is the single-knob Skill Gateway preset (§12.1), parallel to Egress:
+	//   - readonly: (default) a skill may call n9e's OWN /api/n9e/* via the Skill
+	//               Gateway, GET-only, AS the launching user. The user's API token
+	//               is held host-side and never given to the sandbox; n9e's route
+	//               middleware still enforces that user's RBAC + busi-group scope.
+	//               A path deny-list (built-in defaults + Deny.N9eAPI) refuses the
+	//               secret-bearing reads (datasource configs, notify-channel
+	//               secrets, user tokens, SSO, datasource proxy).
+	//   - off:      no n9e API access (the gateway is not started).
+	// Writes (POST/PUT/DELETE) are refused wholesale regardless of preset.
+	// Unrecognized values fail safe to off.
+	N9eAPI string
 
 	// DevMode permits the unsafe engine when capabilities are insufficient
 	// (non-Linux / userns off). Production must leave this false.
@@ -102,6 +123,8 @@ type SkillLimits struct {
 // SkillPolicyConfig is the global envelope shared by all skills (§11.2 / §16.3).
 type SkillPolicyConfig struct {
 	EgressAllowlist []string
+	// GrantableN9eAPI is RESERVED (the Skill Gateway is now an HTTP passthrough
+	// gated by a path deny-list, not grant tokens). Kept for config compatibility.
 	GrantableN9eAPI []string
 	JitConfirm      []string
 }
@@ -109,7 +132,10 @@ type SkillPolicyConfig struct {
 // DenyConfig is the hard deny no skill/layer can override (§16.3).
 type DenyConfig struct {
 	EgressCIDRs []string
-	N9eAPI      []string
+	// N9eAPI is the Skill Gateway deny-list: case-insensitive path PREFIXES (under
+	// /api/n9e) refused on top of the gateway's built-in defaults — e.g.
+	// ["/datasource", "/notify-channel"]. Adds to, never removes from, the floor.
+	N9eAPI []string
 }
 
 // EgressProxyConfig configures the host-side egress proxy (§10). Phase 1 wires
@@ -171,6 +197,9 @@ func (c *Config) PreCheck() {
 	}
 	if c.Egress == "" {
 		c.Egress = EgressOpen
+	}
+	if c.N9eAPI == "" {
+		c.N9eAPI = N9eAPIReadonly
 	}
 	if c.DataDir == "" {
 		c.DataDir = defaultDataDir
@@ -255,6 +284,15 @@ func (c Config) EgressPlan() (proxy bool, allowlist []string, denyPrivate bool) 
 	default: // off, or an unrecognized value → no network
 		return false, nil, false
 	}
+}
+
+// N9eAPIEnabled reports whether the Skill Gateway's read passthrough is on.
+// readonly (the default, or unset) = on; off — or any unrecognized value,
+// fail-safe — = the gateway is not started. The deny-list (Deny.N9eAPI + the
+// gateway's built-in defaults) and GET-only gate bound what a skill can reach.
+func (c Config) N9eAPIEnabled() bool {
+	m := strings.ToLower(strings.TrimSpace(c.N9eAPI))
+	return m == "" || m == N9eAPIReadonly
 }
 
 // DefaultResources builds a ResourceSpec from the configured default policy.

@@ -53,7 +53,7 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 	bindsMounts := d.Sandbox.EngineCaps().Namespaces
 
 	needEgress := netMode == sandbox.NetworkProxy
-	needGateway := bindsMounts && d.DBCtx != nil && user != nil && len(cfg.SkillPolicy.GrantableN9eAPI) > 0
+	needGateway := bindsMounts && d.DBCtx != nil && user != nil && cfg.N9eAPIEnabled() && d.N9eBaseURL != ""
 	if !needEgress && !needGateway {
 		return nil, nil
 	}
@@ -90,15 +90,16 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 
 	if needGateway {
 		gw, err := skillgateway.Start(filepath.Join(dir, "gw.sock"), skillgateway.Params{
-			ExecID:    execID,
-			SkillName: skillName,
-			UserID:    user.Id,
-			DBCtx:     d.DBCtx,
+			ExecID:     execID,
+			SkillName:  skillName,
+			UserID:     user.Id,
+			DBCtx:      d.DBCtx,
+			CacheToken: d.CacheToken,
 			Config: skillgateway.Config{
-				GrantableAPI: cfg.SkillPolicy.GrantableN9eAPI,
-				DenyAPI:      cfg.Deny.N9eAPI,
-				RatePerSec:   5,
-				RateBurst:    10,
+				BaseURL:    d.N9eBaseURL,
+				DenyPaths:  cfg.Deny.N9eAPI,
+				RatePerSec: 5,
+				RateBurst:  10,
 			},
 		})
 		if err != nil {

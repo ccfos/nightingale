@@ -15,12 +15,14 @@ type identity struct {
 }
 
 // buildExecSpec synthesizes the OS-agnostic ExecSpec from the global policy
-// envelope + convention-inferred runtime + bound identity (§11.2). This phase:
-// network is always none; resources start from the default policy and are
-// clamped to the skill ceilings; env is a clean whitelist (host env never
-// inherited, §9.4). Command/Cwd use real host paths (the unsafe engine runs
-// them directly); Mounts carry the canonical /skill,/input,/workspace,/output
-// targets for the Linux engines to bind.
+// envelope + convention-inferred runtime + bound identity (§11.2). Network is
+// the caller-resolved netMode (Egress preset × engine caps — see
+// resolveNetwork; default Egress=open → proxy on bubblewrap); resources start
+// from the default policy and are clamped to the skill ceilings; env is a clean
+// whitelist (host env never inherited, §9.4) plus the control-channel env
+// (HTTP(S)_PROXY → forwarder, gateway socket). Command/Cwd use real host paths
+// (the unsafe engine runs them directly); Mounts carry the canonical
+// /skill,/input,/workspace,/output targets for the Linux engines to bind.
 func buildExecSpec(
 	cfg sandbox.Config,
 	ws *sandbox.Workspace,

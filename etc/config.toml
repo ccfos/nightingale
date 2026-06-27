@@ -144,6 +144,21 @@ Engine = "auto"
 #   allowlist — reach only SkillPolicy.EgressAllowlist hosts; private blocked.
 # Tighten to "allowlist" or "off" for stricter / multi-tenant deployments.
 Egress = "open"
+# N9eAPI preset — the one knob for a skill calling n9e's OWN APIs via the Skill
+# Gateway (§12), parallel to Egress. The gateway is an HTTP PASSTHROUGH: it
+# forwards the skill's GET requests to n9e's own /api/n9e/* AS the launching user
+# (using that user's API token, held host-side and never given to the sandbox;
+# one is auto-created if the user has none). Deny-list model:
+#   readonly  — (default) any GET under /api/n9e is reachable, EXCEPT the path
+#               blacklist (datasource configs, notify-channel secrets, user tokens,
+#               SSO, datasource proxy — built-in defaults in
+#               aiagent/skill_gateway/policy.go, extended by Deny.N9eAPI). Writes
+#               (POST/PUT/DELETE) are refused wholesale. n9e's own route middleware
+#               still enforces the user's RBAC + business-group scope on each call.
+#   off       — no n9e API access (the gateway is not started).
+# Set "off" for stricter / multi-tenant deployments. NOTE: the blacklist is
+# fail-OPEN — a read endpoint not on it is reachable; widen Deny.N9eAPI to tighten.
+N9eAPI = "readonly"
 # Allow the unsafe engine when kernel capabilities are insufficient (dev only).
 DevMode = false
 # Explicitly accept the outer container as the host boundary so `auto` may use
@@ -181,19 +196,17 @@ MaxMemoryMB = 1024
 MaxPids = 128
 AllowedNetworkModes = ["none", "proxy"]
 
-# Global skill policy envelope (§10/§12). All default-empty = no egress, no n9e
-# API: a skill can reach nothing until an admin opts in here.
+# Global skill policy envelope (§10/§12). Out of the box: Egress=open (network
+# on) and N9eAPI=readonly (read-only n9e API on); both are clamped by the floors
+# below and the launching user's RBAC. The lists here only NARROW the presets.
 [Center.Sandbox.SkillPolicy]
 # Used only when Egress = "allowlist": the specific hosts a skill may reach.
 # Prefer exact hosts; "*.example.com" wildcards allowed but discouraged; "*" = all
 # (which is what Egress = "open" does). Example:
 #   EgressAllowlist = ["api.openai.com", "hooks.slack.com"]
 EgressAllowlist = []
-# n9e internal APIs the Skill Gateway may expose, as <domain>:<verb> grants
-# (§12.2). Intersected with the launching user's own RBAC. Phase 1 ships read-only
-# ops (list_alert_rules / list_datasources / list_targets / query_cur_events /
-# whoami). Example:
-#   GrantableN9eAPI = ["alert:read", "datasource:read", "target:read", "event:read"]
+# RESERVED — the Skill Gateway is now an HTTP passthrough gated by a path
+# deny-list (Deny.N9eAPI), not grant tokens. Kept for config compatibility; unused.
 GrantableN9eAPI = []
 JitConfirm = ["n9e_api:write", "network:new_domain", "network:direct"]
 
@@ -203,7 +216,11 @@ JitConfirm = ["n9e_api:write", "network:new_domain", "network:direct"]
 # a sensitive internal subnet even under Egress = "open". Default empty.
 [Center.Sandbox.Deny]
 EgressCIDRs = []
-N9eAPI = ["*:write", "*:delete", "user:*"]
+# Skill Gateway blacklist: EXTRA path prefixes (under /api/n9e) to refuse, added
+# on top of the built-in defaults (datasource/notify-channel/users/sso/...). Use
+# it to also block a sensitive read endpoint specific to your deployment. Example:
+#   N9eAPI = ["/my-secret-config", "/integrations/export"]
+N9eAPI = []
 
 # Host-side egress proxy transport knobs (§10.2/§10.3). Allowlist + deny CIDRs
 # live above; this section is just the transport. TLS is tunneled, never

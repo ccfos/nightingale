@@ -329,5 +329,8 @@ func selectGeneralChatTools(req *AIChatRequest) []string {
 		"create_notify_rule", "create_alert_mute", "create_alert_subscribe",
 		"update_alert_rule", "update_dashboard",
 		"update_notify_rule", "update_alert_mute", "update_alert_subscribe",
+		// 技能创作（n9e-skill-creator）：让用户在对话里把流程固化成可复用技能。
+		// 写工具自带 /ai-config/skills 权限门 + 两阶段确认门，只读的发现工具无副作用。
+		"list_skill_builtin_tools", "get_skill", "create_skill", "update_skill",
 	}
 }

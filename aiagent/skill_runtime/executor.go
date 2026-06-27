@@ -23,6 +23,11 @@ type Deps struct {
 	DBCtx      *ctx.Context
 	SkillsPath string
 	Policy     sandbox.SkillPolicyConfig
+	// N9eBaseURL is the loopback base for the Skill Gateway's HTTP passthrough to
+	// n9e's own API (empty disables the gateway). CacheToken injects a freshly
+	// created user token into the live auth cache (see skill_gateway).
+	N9eBaseURL string
+	CacheToken func(token string, user *models.User)
 }
 
 // Request describes one skill execution. Identity (User) is bound by the caller

@@ -45,6 +45,8 @@ func runSkillScript(ctx context.Context, deps *aiagent.ToolDeps, args map[string
 		DBCtx:      deps.DBCtx,
 		SkillsPath: deps.SkillsPath,
 		Policy:     deps.Sandbox.Config().SkillPolicy,
+		N9eBaseURL: deps.N9eAPIBaseURL,
+		CacheToken: deps.CacheUserToken,
 	}, skillruntime.Request{
 		SkillName:   skillName,
 		Entry:       strings.TrimSpace(getArgString(args, "entry")),
