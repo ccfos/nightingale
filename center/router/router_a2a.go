@@ -84,6 +84,29 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	if !rt.HTTP.TokenAuth.Enable {
 		logger.Warning("[A2A] HTTP.TokenAuth.Enable=false — AgentCard advertises X-User-Token apiKey but the server will only accept JWT credentials. Enable HTTP.TokenAuth so the advertised auth scheme actually works.")
 	}
+	if rt.HTTP.RSAuth.Enable {
+		if rt.HTTP.RSAuth.Audience == "" {
+			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but HTTP.RSAuth.Audience is empty — OAuth access tokens are rejected until you set Audience to this service's resource identifier.")
+		}
+		if rt.rsAuthProvider() == "oauth2" {
+			switch {
+			case rt.Sso == nil || rt.Sso.OAuth2 == nil || !rt.Sso.OAuth2.Enable:
+				logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 but OAuth2 login is disabled — enable the OAuth2 SSO config for the trusted IdP.")
+			case rt.Sso.OAuth2.RSVerifyMethod == "introspect":
+				if rt.Sso.OAuth2.IntrospectAddr == "" {
+					logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 RSVerifyMethod=introspect but its IntrospectAddr is empty — set the RFC 7662 introspection endpoint (or leave RSVerifyMethod empty to use userinfo).")
+				}
+			default: // "" (default) or "userinfo"
+				if rt.Sso.OAuth2.UserInfoAddr == "" {
+					logger.Warning("[A2A] HTTP.RSAuth.Enable=true with Provider=oauth2 (userinfo mode) but OAuth2 UserInfoAddr is empty — set UserInfoAddr so opaque tokens can be validated.")
+				} else {
+					logger.Warning("[A2A] HTTP.RSAuth Provider=oauth2 is in userinfo mode — token audience is NOT enforced (the UserInfo response carries no aud), so any valid token from this IdP is accepted. Set RSVerifyMethod=introspect (RFC 7662) when stronger assurance is required.")
+				}
+			}
+		} else if rt.Sso == nil || rt.Sso.OIDC == nil || !rt.Sso.OIDC.Enable {
+			logger.Warning("[A2A] HTTP.RSAuth.Enable=true but OIDC login is not enabled — RSAuth reuses the OIDC provider's JWKS to verify tokens, so enable OIDC for the trusted IdP.")
+		}
+	}
 
 	backend := &a2aBackend{rt: rt}
 
@@ -115,10 +138,37 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		BaseURL:         rt.HTTP.A2A.BaseURL,
 		A2APath:         "/a2a",
 		TokenHeaderName: tokenHeader,
+		// When RS auth is on, advertise the IdP's OIDC discovery so A2A clients
+		// can self-discover the OAuth option. Passed as a resolver so it is
+		// evaluated per request — enabling RS/OIDC (or changing the IdP) at
+		// runtime reflects in the card without a center restart.
+		OIDCDiscoveryURL: rt.oidcDiscoveryURL,
 	}))
 	// Canonical A2A v0.3+ path; alias kept for older clients.
 	r.GET("/.well-known/agent-card.json", cardHandler)
 	r.GET("/.well-known/agent.json", cardHandler)
+	// RFC 9728 Protected Resource Metadata — public, served only while RS auth
+	// is active (else 404). Lets OAuth-aware clients discover the trusted AS.
+	// The path-suffixed aliases match the well-known-URI-insertion form
+	// (`/.well-known/oauth-protected-resource/{a2a,mcp}`) that MCP clients derive
+	// from the endpoint they connect to; all serve the same metadata.
+	r.GET("/.well-known/oauth-protected-resource", rt.oauthProtectedResource)
+	r.GET("/.well-known/oauth-protected-resource/a2a", rt.oauthProtectedResource)
+	r.GET("/.well-known/oauth-protected-resource/mcp", rt.oauthProtectedResource)
+
+	// Built-in OAuth 2.1 Authorization Server endpoints (router_mcp_oauth.go).
+	// Public by design — the AS metadata, DCR, authorize and token endpoints are
+	// reached before any n9e credential exists; each handler 404s / errors when
+	// MCPAuth.Enable is off. The interactive consent screen is a frontend SPA
+	// route (/oauth-consent) the authorize endpoint redirects to; the SPA then
+	// calls the protected decision API registered in router.go.
+	r.GET(mcpASMetaPath, rt.MCPOAuthServerMetadata)
+	r.GET(mcpASMetaPath+"/a2a", rt.MCPOAuthServerMetadata)
+	r.GET(mcpASMetaPath+"/mcp", rt.MCPOAuthServerMetadata)
+	r.POST(mcpRegisterPath, rt.MCPOAuthRegister)
+	r.GET(mcpAuthorizePath, rt.MCPOAuthAuthorize)
+	r.POST(mcpTokenPath, rt.MCPOAuthToken)
+	r.POST(mcpRevokePath, rt.MCPOAuthRevoke)
 
 	// The SDK's internal http.ServeMux is registered at root paths like
 	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a
@@ -128,14 +178,14 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	a2aGroup := r.Group("/a2a")
 	// requestLog runs first so auth failures (which short-circuit tokenAuth)
 	// still produce a structured "[A2A] start/done" pair carrying trace_id.
-	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 	a2aGroup.Any("", gin.WrapH(a2aHandler))
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
-		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}

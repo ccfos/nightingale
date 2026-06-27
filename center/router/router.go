@@ -320,6 +320,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
 		pages.GET("/auth/perms", rt.auth(), rt.user(), rt.allPerms)
 
+		// Built-in MCP OAuth Authorization Server — consent decision endpoint.
+		// The frontend /oauth-consent page (which holds the session token and
+		// handles SSO login) POSTs the signed authorization-request ticket here;
+		// behind auth()+user() the handler mints the authorization code for the
+		// logged-in user. See router_mcp_oauth.go / doc/api/mcp-oauth-as.md.
+		pages.POST("/mcp/oauth/authorize", rt.auth(), rt.user(), rt.MCPOAuthDecision)
+
 		pages.GET("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetFile)
 		pages.POST("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetMap)
 
@@ -742,6 +749,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/user/:id", rt.userProfilePutByService)
 			service.DELETE("/user/:id", rt.userDel)
 			service.GET("/users", rt.userFindAll)
+			service.POST("/user-token", rt.getXUserToken)
 
 			service.GET("/user-groups", rt.userGroupGetsByService)
 			service.GET("/user-group-members", rt.userGroupMemberGetsByService)
