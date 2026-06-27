@@ -40,8 +40,6 @@ Resource = "https://n9e.example.com/mcp"
 # AccessTTL = 3600
 # RefreshTTL = 604800
 # CodeTTL = 60
-# 已登录用户是否仍需显式同意页，默认 true
-# RequireConsent = true
 ```
 
 | 字段 | 默认 | 说明 |
@@ -51,7 +49,6 @@ Resource = "https://n9e.example.com/mcp"
 | Resource | "" | access token 的 aud；空→RSAuth.Audience→`<base>/mcp` |
 | SigningKey | "" | 空则 HKDF 自 `JWTAuth.SigningKey`（与 session 隔离、全实例一致） |
 | AccessTTL/RefreshTTL/CodeTTL | 3600/604800/60 | 秒 |
-| RequireConsent | true | 前端是否强制同意页 |
 
 > ⚠️ **多实例约束**：① `SigningKey`（或其派生源 `JWTAuth.SigningKey`）必须**全实例逐字节一致**，切勿每进程随机生成，否则 token 只在签发实例上验得过。② 多实例请**显式配置 `Issuer`/`Resource`**，不要依赖请求派生。③ 除授权码一次性（共享 Redis）外全部无状态，**禁止用进程内缓存**存码/票据。
 

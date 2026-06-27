@@ -158,9 +158,6 @@ type MCPAuth struct {
 	AccessTTL  int64
 	RefreshTTL int64
 	CodeTTL    int64
-	// RequireConsent, when false, lets the frontend skip the explicit consent
-	// screen for an already-logged-in user (still issues the code). Default true.
-	RequireConsent bool
 }
 
 func GinEngine(mode string, cfg Config, printBodyPaths func() map[string]struct{},

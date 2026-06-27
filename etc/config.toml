@@ -102,8 +102,6 @@ Enable = false
 # AccessTTL = 3600
 # RefreshTTL = 604800
 # CodeTTL = 60
-# 已登录用户是否仍需显式同意页，默认 true
-# RequireConsent = true
 
 [HTTP.RSA]
 # open RSA

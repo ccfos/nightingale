@@ -504,9 +504,10 @@ func (rt *Router) getXUserToken(c *gin.Context) {
 	}
 
 	if user == nil {
-		u, err := models.UserGetByUsername(rt.Ctx, username)
+		var err error
+		user, err = models.UserGetByUsername(rt.Ctx, username)
 		ginx.Dangerous(err)
-		if u == nil {
+		if user == nil {
 			ginx.Bomb(http.StatusNotFound, "user not found")
 		}
 	}
