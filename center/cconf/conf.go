@@ -51,6 +51,14 @@ type AIAgent struct {
 	// models package and the archive extractor in aiagent/skill (zip/tar.gz
 	// upload). Defaults to 1000; a value <= 0 falls back to the default.
 	MaxFilesPerSkill int `toml:"MaxFilesPerSkill"`
+
+	// HideBuiltinSkills hides the embedded builtin skills from the skill list
+	// page (GET /ai-skills) and their read-only detail view (negative ids in
+	// GET /ai-skill/:id). It has NO effect on the agent runtime — builtin skills
+	// are always extracted to disk and remain available to the model regardless
+	// of this flag. Defaults to false (builtins are shown); the plus
+	// distribution sets it true to keep the list page to user-authored skills.
+	HideBuiltinSkills bool `toml:"HideBuiltinSkills"`
 }
 
 type Plugin struct {

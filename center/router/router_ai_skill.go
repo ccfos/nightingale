@@ -61,14 +61,103 @@ func metadataEqual(a, b map[string]string) bool {
 	return reflect.DeepEqual(a, b)
 }
 
+// builtinSkillEntry 把内置 skill 的 frontmatter 合成一条只读 AISkill。
+// id 用负数：列表与详情共用 skill.ListBuiltinFrontmatters() 的稳定排序，
+// 列表项取 id = -(index+1)，详情页据此反查（见 aiSkillGet 的 id < 0 分支）。
+// 内置 skill 不进 DB，created_by 固定 "system"（与 models.AISkill.Builtin 的判定一致）。
+func builtinSkillEntry(fm skill.Frontmatter, id int64) *models.AISkill {
+	return &models.AISkill{
+		Id:            id,
+		Name:          fm.Name,
+		Description:   fm.Description,
+		License:       fm.License,
+		Compatibility: fm.Compatibility,
+		Metadata:      fm.Metadata,
+		AllowedTools:  fm.AllowedTools,
+		Enabled:       true,
+		CreatedBy:     "system",
+		UpdatedBy:     "system",
+		Builtin:       true,
+	}
+}
+
+// skillSearchMatch 复刻 AISkillGets 里 name/description 的 LIKE 过滤，用于 overlay
+// 的内置 skill。统一走大小写不敏感，避免不同 DB 的 LIKE 行为差异导致两段结果不一致。
+func skillSearchMatch(search, name, desc string) bool {
+	if search == "" {
+		return true
+	}
+	s := strings.ToLower(search)
+	return strings.Contains(strings.ToLower(name), s) ||
+		strings.Contains(strings.ToLower(desc), s)
+}
+
 func (rt *Router) aiSkillGets(c *gin.Context) {
 	search := ginx.QueryStr(c, "search", "")
 	lst, err := models.AISkillGets(rt.Ctx, search)
-	ginx.NewRender(c).Data(lst, err)
+	ginx.Dangerous(err)
+
+	// overlay：把随二进制打包的内置 skill 作为只读条目追加到列表尾部。embedded FS
+	// 是内置 skill 的唯一真相源（不进 DB、不参与 dbsync），这里读取时叠加。
+	if !rt.Center.AIAgent.HideBuiltinSkills {
+		// 同名 DB skill 优先（用户覆盖了内置），丢弃对应 overlay 避免重复，
+		// 与 dbsync "DB 胜出" 语义一致。
+		existing := make(map[string]struct{}, len(lst))
+		for _, s := range lst {
+			existing[s.Name] = struct{}{}
+		}
+		// 注意：id = -(i+1) 按原始 index 分配，去重跳过的项不重新编号，
+		// 保证 id↔index 在本次构建内稳定，详情页能据 id 反查到同一条。
+		for i, fm := range skill.ListBuiltinFrontmatters() {
+			if _, dup := existing[fm.Name]; dup {
+				continue
+			}
+			if !skillSearchMatch(search, fm.Name, fm.Description) {
+				continue
+			}
+			lst = append(lst, builtinSkillEntry(fm, -int64(i+1)))
+		}
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 func (rt *Router) aiSkillGet(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
+
+	// 负 id = 内置 skill 的只读详情（见 aiSkillGets 的 overlay）。从 embedded FS
+	// 取 SKILL.md 正文作为 instructions 展示，不查 DB。
+	if id < 0 {
+		if rt.Center.AIAgent.HideBuiltinSkills {
+			ginx.Bomb(http.StatusNotFound, "ai skill not found")
+		}
+		builtins := skill.ListBuiltinFrontmatters()
+		idx := int(-id) - 1
+		if idx < 0 || idx >= len(builtins) {
+			ginx.Bomb(http.StatusNotFound, "ai skill not found")
+		}
+		fm := builtins[idx]
+		obj := builtinSkillEntry(fm, id)
+		if body, ok := skill.BuiltinInstructions(fm.Name); ok {
+			obj.Instructions = body
+		}
+		// 附件（含子目录文件）以只读条目挂在 obj.Files 上。文件内容仍走现有的
+		// /ai-skill-file/:fileId 懒加载——这里给每个内置文件分配稳定负 id
+		// (= -(全局序号+1))，aiSkillFileGet 的负 id 分支据此反查 embed 取内容。
+		for gi, bf := range skill.ListBuiltinFiles() {
+			if bf.Skill != fm.Name {
+				continue
+			}
+			obj.Files = append(obj.Files, &models.AISkillFile{
+				Id:   -int64(gi + 1),
+				Name: bf.RelPath,
+				Size: bf.Size,
+			})
+		}
+		ginx.NewRender(c).Data(obj, nil)
+		return
+	}
+
 	obj, err := models.AISkillGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 	if obj == nil {
@@ -327,6 +416,34 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 
 func (rt *Router) aiSkillFileGet(c *gin.Context) {
 	fileId := ginx.UrlParamInt64(c, "fileId")
+
+	// 负 id = 内置 skill 的只读附件（见 aiSkillGet 给 obj.Files 分配的负 id）。
+	// 按全局序号反查 embed 取内容，不查 DB。
+	if fileId < 0 {
+		if rt.Center.AIAgent.HideBuiltinSkills {
+			ginx.Bomb(http.StatusNotFound, "file not found")
+		}
+		files := skill.ListBuiltinFiles()
+		idx := int(-fileId) - 1
+		if idx < 0 || idx >= len(files) {
+			ginx.Bomb(http.StatusNotFound, "file not found")
+		}
+		bf := files[idx]
+		content, ok := skill.BuiltinFileContent(bf.Skill, bf.RelPath)
+		if !ok {
+			ginx.Bomb(http.StatusNotFound, "file not found")
+		}
+		ginx.NewRender(c).Data(&models.AISkillFile{
+			Id:        fileId,
+			Name:      bf.RelPath,
+			Content:   content,
+			Size:      bf.Size,
+			CreatedBy: "system",
+			UpdatedBy: "system",
+		}, nil)
+		return
+	}
+
 	obj, err := models.AISkillFileGetById(rt.Ctx, fileId)
 	ginx.Dangerous(err)
 	if obj == nil {
