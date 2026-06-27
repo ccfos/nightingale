@@ -15,11 +15,11 @@ tags:
 - "categraf 怎么注册成 systemd 服务 / 开机自启"
 - "categraf 上报到夜莺 / config.toml 怎么写 / writer 地址写啥"
 - "怎么验证 categraf 采集到了数据"
-- "categraf 装好了但夜莺看不到机器" → **不进本 skill**，转 `n9e-host-onboard-diagnose`
+- "categraf 装好了但夜莺看不到机器" → **不进本 skill**，转 `host-onboard-diagnose`
 
 **不进本 skill**：
-- 已装但接入失败的诊断 → `n9e-host-onboard-diagnose`
-- 已接入但指标异常 → `n9e-host-health-diagnose`
+- 已装但接入失败的诊断 → `host-onboard-diagnose`
+- 已接入但指标异常 → `host-health-diagnose`
 - 配置某个具体 input 插件（mysql / redis / nginx / snmp 等）的采集 → 引导用户查 `conf/input.<name>/` 下的注释，本 skill 只做"装起来 + 通起来"
 
 ## 一句话原则
@@ -199,7 +199,7 @@ kill -HUP `pidof categraf`   # Linux 专用，Windows 不支持
 ### 4.3 在夜莺侧验证
 
 - 浏览器打开 n9e → **基础设施 / 机器列表**，应能看到这台 `ident`，且 OS/CPU/agent_version 都不是 unknown。
-- 没出现 → 转 `n9e-host-onboard-diagnose` 走 5 段排障，不要在这里硬猜。
+- 没出现 → 转 `host-onboard-diagnose` 走 5 段排障，不要在这里硬猜。
 
 ### 4.4 自升级（v0.3.36+）
 
@@ -226,4 +226,4 @@ kill -HUP `pidof categraf`   # Linux 专用，Windows 不支持
 - **配置示例必须带占位符替换说明**（`N9E_HOST` 之类），让用户知道哪里要改。
 - 用户语言回答（中文用户中文，英文用户英文）。
 - 部署完后**必须提醒做一次 `--test --inputs cpu`** 和"去夜莺机器列表看一眼"，否则当下不知道有没有装通。
-- 如果用户说"装完了看不到机器" → 不要再给部署指令，直接引导到 `n9e-host-onboard-diagnose`。
+- 如果用户说"装完了看不到机器" → 不要再给部署指令，直接引导到 `host-onboard-diagnose`。

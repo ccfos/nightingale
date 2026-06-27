@@ -2,7 +2,7 @@ package chat
 
 import "strings"
 
-// creationSkillSpec declares, for one n9e-create-* skill, the keywords that
+// creationSkillSpec declares, for one create-* skill, the keywords that
 // identify it from the user's raw input and the context keys the skill
 // requires before the agent can usefully run. The preflight for the
 // "creation" action_key walks this table: first match by keyword, then halt
@@ -26,13 +26,13 @@ type creationSkillSpec struct {
 var creationSkills = []creationSkillSpec{
 	// Alert subscribe / mute must come before the generic "告警" keyword used
 	// by alert-rule, otherwise "创建订阅" would route to alert-rule.
-	{"n9e-alert-subscribe-copilot", []string{"告警订阅", "订阅规则", "subscribe"}, []string{"busi_group_id"}},
-	{"n9e-alert-mute-copilot", []string{"屏蔽", "静默", "mute"}, []string{"busi_group_id"}},
-	{"n9e-notify-rule-copilot", []string{"通知规则", "notify rule", "notify"}, []string{"team_ids"}},
+	{"alert-subscribe-copilot", []string{"告警订阅", "订阅规则", "subscribe"}, []string{"busi_group_id"}},
+	{"alert-mute-copilot", []string{"屏蔽", "静默", "mute"}, []string{"busi_group_id"}},
+	{"notify-rule-copilot", []string{"通知规则", "notify rule", "notify"}, []string{"team_ids"}},
 	// Dashboard 只需业务组——面板可以跨数据源，数据源交给 LLM 从 page context
 	// 或 list_datasources 自行解决，preflight 强制选一个反而限制了后续灵活性。
-	{"n9e-create-dashboard", []string{"仪表盘", "dashboard", "面板"}, []string{"busi_group_id"}},
-	{"n9e-create-alert-rule", []string{"告警规则", "告警", "alert rule"}, []string{"busi_group_id", "datasource_id"}},
+	{"create-dashboard", []string{"仪表盘", "dashboard", "面板"}, []string{"busi_group_id"}},
+	{"create-alert-rule", []string{"告警规则", "告警", "alert rule"}, []string{"busi_group_id", "datasource_id"}},
 }
 
 // matchCreationSkill returns the first creationSkillSpec whose keyword is
@@ -66,10 +66,10 @@ var (
 
 var (
 	// importVerbs：导入现成规则包/模板。归入 creation 快路径——matchCreationSkill 命中的
-	// n9e-create-alert-rule/dashboard 工具含 import_*_template，业务组+数据源表单照常弹。
+	// create-alert-rule/dashboard 工具含 import_*_template，业务组+数据源表单照常弹。
 	importVerbs = []string{"导入", "import "}
 
-	// promRuleImportSignals：批量 YAML/URL 导入属另一个 skill（n9e-import-prom-rule），其
+	// promRuleImportSignals：批量 YAML/URL 导入属另一个 skill（import-prom-rule），其
 	// 工具不在 selectCreationTools，必须留 general_chat，否则弹了表单没落库工具。
 	promRuleImportSignals = []string{".yml", ".yaml", "yaml", "http://", "https://", "awesome-prometheus", "node-exporter", "批量"}
 

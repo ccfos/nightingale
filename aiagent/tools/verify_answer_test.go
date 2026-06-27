@@ -25,7 +25,7 @@ func resetVerifyAnswerForTest() {
 func setupTestSkillsPath(t *testing.T, yaml string) string {
 	t.Helper()
 	root := t.TempDir()
-	skillDir := filepath.Join(root, "n9e-doc-qa")
+	skillDir := filepath.Join(root, "doc-qa")
 	if err := os.MkdirAll(skillDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestVerifyAnswer_RealLandmineYaml(t *testing.T) {
 	// 从 aiagent/tools/ 找仓库根 — 与 integrations_loader_test 同样的策略
 	root := wd
 	for i := 0; i < 8; i++ {
-		candidate := filepath.Join(root, "aiagent", "skill", "embedded", "builtin", "n9e-doc-qa", "landmines.yaml")
+		candidate := filepath.Join(root, "aiagent", "skill", "embedded", "builtin", "doc-qa", "landmines.yaml")
 		if _, err := os.Stat(candidate); err == nil {
 			break
 		}

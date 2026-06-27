@@ -19,7 +19,7 @@ import (
 
 // =============================================================================
 // Skill authoring tools — let the agent create/edit user skills mid-conversation
-// (the engine behind the n9e-skill-creator skill).
+// (the engine behind the skill-creator skill).
 //
 // Persistence reuses the exact model layer the HTTP route uses (AISkill.Create /
 // AISkillFileBatchUpsert), so both surfaces converge on one write path. The one

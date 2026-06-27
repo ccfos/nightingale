@@ -141,7 +141,7 @@ var CreateAlertRule = aiagent.AgentTool{
 		{Name: "cate", Type: "string", Description: "数据源类型: prometheus|loki|elasticsearch|opensearch|tdengine|ck|mysql|pgsql|doris|victorialogs|host（默认 prometheus）", Required: false},
 		{Name: "prod", Type: "string", Description: "产品类型: metric|logging|host。不传时按 cate 自动推导", Required: false},
 		{Name: "datasource_id", Type: "integer", Description: "数据源 ID（host 类型不需要；其他类型必填）", Required: false},
-		{Name: "rule_config_json", Type: "string", Description: "完整的 rule_config JSON 对象字符串。仅在 cate != prometheus 时必填；先调用 read_file(base=\"n9e-create-alert-rule\", path=\"datasources/<cate>.md\") 获取该类型的结构模板", Required: false},
+		{Name: "rule_config_json", Type: "string", Description: "完整的 rule_config JSON 对象字符串。仅在 cate != prometheus 时必填；先调用 read_file(base=\"create-alert-rule\", path=\"datasources/<cate>.md\") 获取该类型的结构模板", Required: false},
 		{Name: "prom_ql", Type: "string", Description: "PromQL 查询表达式（仅 cate=prometheus 简化路径使用），只写查询不要包含阈值，例如 cpu_usage_active{cpu=\"cpu-total\"}", Required: false},
 		{Name: "threshold", Type: "number", Description: "触发阈值（仅 cate=prometheus 简化路径使用），例如 80", Required: false},
 		{Name: "operator", Type: "string", Description: "比较操作符: > / >= / < / <= / == / !=（默认 >，仅 cate=prometheus 简化路径使用）", Required: false},
@@ -480,15 +480,15 @@ var HTTPFetch = aiagent.AgentTool{
 // N9e Docs
 // =============================================================================
 
-// VerifyAnswer 给 n9e-doc-qa skill 用: LLM 在 Final Answer 之前调一次, 让代码层
+// VerifyAnswer 给 doc-qa skill 用: LLM 在 Final Answer 之前调一次, 让代码层
 // 用正则扫一遍草稿, 把"编造的字段名/环境变量/Severity 命名"等 n9e 域确定性错误捞回来。
-// 规则放在 <skillsPath>/n9e-doc-qa/landmines.yaml 里, 跟 skill 同居; 这里只声明
+// 规则放在 <skillsPath>/doc-qa/landmines.yaml 里, 跟 skill 同居; 这里只声明
 // tool 接口和入参。规则是数据, 不是代码 — 这条工具的 Go 实现是通用的, 任何 skill
 // 想用都可以拷一份 yaml 然后在自己的 SKILL.md 里 builtin_tools 引一下。
 var VerifyAnswer = aiagent.AgentTool{
 	Name: "verify_answer",
 	Description: `在 Final Answer **之前**强制调一次, 把你即将发给用户的 markdown 草稿传进来。
-工具会用正则跑一遍 n9e 域的确定性错误规则 (来自 n9e-doc-qa/landmines.yaml), 返回:
+工具会用正则跑一遍 n9e 域的确定性错误规则 (来自 doc-qa/landmines.yaml), 返回:
   - hits: 命中的规则列表, 每条带 matched (匹配到的具体字符串)、severity、annotate (给用户的警告)、retry_hint (修复方向)
   - must_revise: 是否必须修改后重新调本工具 (HIGH severity 命中即 true)
   - clean: hits 为空时为 true
@@ -523,7 +523,7 @@ var ListFiles = aiagent.AgentTool{
 	Description: "列出技能或集成模板目录下的文件和子目录",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
-		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
+		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
 		{Name: "path", Type: "string", Description: "相对子路径，如 dashboards 或 metrics。不传则列出根目录", Required: false},
 	},
 }
@@ -533,7 +533,7 @@ var ReadFile = aiagent.AgentTool{
 	Description: "读取技能文档或集成模板文件内容",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
-		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
+		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
 		{Name: "path", Type: "string", Description: "相对文件路径，如 dashboards/categraf-detail.json 或 metrics/categraf-base.json", Required: true},
 	},
 }
@@ -543,7 +543,7 @@ var GrepFiles = aiagent.AgentTool{
 	Description: "在技能或集成模板目录下搜索包含指定关键词的文件和行",
 	Type:        aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
-		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 n9e-create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
+		{Name: "base", Type: "string", Description: "基础目录名: 技能名(如 create-dashboard)或 integrations/分类(如 integrations/Linux)", Required: true},
 		{Name: "pattern", Type: "string", Description: "搜索关键词（不区分大小写）", Required: true},
 		{Name: "path", Type: "string", Description: "相对搜索路径，不传则搜索整个目录", Required: false},
 	},
@@ -557,7 +557,7 @@ var LoadSkill = aiagent.AgentTool{
 		"且其指引尚未出现在上下文中时调用；加载后严格按文档工作流执行。与任务无关时不要加载",
 	Type: aiagent.ToolTypeBuiltin,
 	Parameters: []aiagent.ToolParameter{
-		{Name: "name", Type: "string", Description: "技能名，必须取自「可用技能目录」，如 n9e-modify-dashboard", Required: true},
+		{Name: "name", Type: "string", Description: "技能名，必须取自「可用技能目录」，如 modify-dashboard", Required: true},
 	},
 }
 
@@ -972,7 +972,7 @@ var RunSkillScript = aiagent.AgentTool{
 // =============================================================================
 // Skill authoring (create / edit user skills in-conversation)
 //
-// These power the n9e-skill-creator skill: they let the agent persist a new
+// These power the skill-creator skill: they let the agent persist a new
 // skill (or patch an existing one) straight into the ai_skill / ai_skill_file
 // tables and materialize it to disk so it's usable on the next turn. Writes are
 // gated by the /ai-config/skills permission and a two-phase user confirmation,

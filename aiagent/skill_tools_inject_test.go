@@ -57,13 +57,13 @@ func TestInjectSkillTools(t *testing.T) {
 }
 
 func TestSkillNameFromLoadHelpers(t *testing.T) {
-	if got := skillNameFromLoadArgs(`{"name":" n9e-doc-qa "}`); got != "n9e-doc-qa" {
+	if got := skillNameFromLoadArgs(`{"name":" doc-qa "}`); got != "doc-qa" {
 		t.Fatalf("args parse: %q", got)
 	}
 	if got := skillNameFromLoadArgs(`not-json`); got != "" {
 		t.Fatalf("bad json must yield empty, got %q", got)
 	}
-	if got := skillNameFromLoadResult("# Skill: n9e-doc-qa\n\n正文..."); got != "n9e-doc-qa" {
+	if got := skillNameFromLoadResult("# Skill: doc-qa\n\n正文..."); got != "doc-qa" {
 		t.Fatalf("result parse: %q", got)
 	}
 	if got := skillNameFromLoadResult("普通工具结果"); got != "" {
