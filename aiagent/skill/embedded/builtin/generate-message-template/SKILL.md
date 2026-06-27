@@ -1,28 +1,28 @@
 ---
 name: generate-message-template
-description: 生成或修改夜莺(n9e)告警通知消息模板。当用户要求写通知模板、改消息格式、加主机名/恢复值/级别、钉钉/飞书/Lark/邮件/短信/电话模板时使用。
+description: Generate or modify Nightingale (n9e) alert notification message templates. Use when the user asks to write a notification template, change the message format, add hostname/recovery value/severity, or create DingTalk/Feishu/Lark/email/SMS/voice templates.
 tags:
   - internal
 ---
 
-# 夜莺(n9e) 通知消息模板生成
+# Nightingale (n9e) Notification Message Template Generation
 
-夜莺的消息模板是 Go `text/template` / `html/template` 语法（邮件走 `text/template`，其他走 `html/template` 再做转义）。用户在「通知管理 → 消息模板」页面编辑，保存后被通知规则引用，触发告警时按渲染数据替换变量后发送到各通道。
+Nightingale message templates use Go `text/template` / `html/template` syntax (email uses `text/template`, others use `html/template` and then escape). Users edit them on the "Notification Management → Message Templates" page; once saved they are referenced by notification rules, and when an alert fires the variables are substituted with rendered data and sent to each channel.
 
-本技能专注于**写/改模板片段本身**，不涉及创建通知规则或通道配置。
+This skill focuses on **writing/modifying the template fragment itself**, and does not cover creating notification rules or channel configuration.
 
 ---
 
-## 渲染上下文
+## Render Context
 
-后端执行时传入的 `renderData`：
+The `renderData` passed in when the backend executes:
 
-| key | 类型 | 说明 |
+| key | type | description |
 |---|---|---|
-| `.events` | `[]*AlertCurEvent` | 当前批次的告警事件列表，通常只有 1 条 |
-| `.domain` | `string` | n9e 站点 URL，用于拼跳转链接 |
+| `.events` | `[]*AlertCurEvent` | The list of alert events in the current batch, usually just 1 |
+| `.domain` | `string` | The n9e site URL, used to build redirect links |
 
-**自动注入的简写**（不用手写）：
+**Automatically injected shorthands** (no need to write by hand):
 
 ```gotemplate
 {{ $events := .events }}
@@ -31,384 +31,384 @@ tags:
 {{ $value := $event.TriggerValue }}
 ```
 
-所以模板里可以直接使用 `$event.xxx`、`$labels.agent_hostname`、`$value`。
+So inside the template you can directly use `$event.xxx`, `$labels.agent_hostname`, and `$value`.
 
 ---
 
-## `$event` 可用字段（`*AlertCurEvent`）
+## Available `$event` Fields (`*AlertCurEvent`)
 
-### 常用字段
-| 字段 | 类型 | 说明 |
+### Common Fields
+| field | type | description |
 |---|---|---|
-| `.Id` | int64 | 告警事件 ID（拼跳转链用） |
-| `.RuleId` | int64 | 告警规则 ID |
-| `.RuleName` | string | 规则名称 |
-| `.RuleNote` | string | 规则备注 |
-| `.Severity` | int | 告警级别：1=Critical, 2=Warning, 3=Info |
-| `.PromQl` | string | 告警触发表达式 |
-| `.RuleAlgo` | string | 规则算法类型 |
-| `.TriggerTime` | int64 | 触发时间 unix 秒 |
-| `.TriggerValue` | string | 触发时的指标值（已为字符串） |
-| `.FirstTriggerTime` | int64 | 首次异常时间（连续告警） |
-| `.LastEvalTime` | int64 | 最近一次评估时间，**恢复时作为恢复时间使用** |
-| `.IsRecovered` | bool | 是否已恢复 |
-| `.NotifyCurNumber` | int | 本次通知是第几次发送 |
-| `.TargetIdent` | string | 监控对象（通常是 agent_hostname） |
-| `.TargetNote` | string | 对象备注 |
-| `.GroupId` / `.GroupName` | int64 / string | 业务组 |
-| `.Cluster` | string | 数据源集群名 |
-| `.Cate` | string | 数据源类型（prometheus / host / mysql / ...） |
-| `.RunbookUrl` | string | 运行手册链接 |
+| `.Id` | int64 | Alert event ID (used to build the redirect link) |
+| `.RuleId` | int64 | Alert rule ID |
+| `.RuleName` | string | Rule name |
+| `.RuleNote` | string | Rule note |
+| `.Severity` | int | Alert severity: 1=Critical, 2=Warning, 3=Info |
+| `.PromQl` | string | Alert trigger expression |
+| `.RuleAlgo` | string | Rule algorithm type |
+| `.TriggerTime` | int64 | Trigger time, unix seconds |
+| `.TriggerValue` | string | Metric value at trigger time (already a string) |
+| `.FirstTriggerTime` | int64 | First abnormal time (for consecutive alerts) |
+| `.LastEvalTime` | int64 | Most recent evaluation time, **used as the recovery time on recovery** |
+| `.IsRecovered` | bool | Whether it has recovered |
+| `.NotifyCurNumber` | int | Which notification number this send is |
+| `.TargetIdent` | string | Monitored object (usually agent_hostname) |
+| `.TargetNote` | string | Object note |
+| `.GroupId` / `.GroupName` | int64 / string | Business group |
+| `.Cluster` | string | Data source cluster name |
+| `.Cate` | string | Data source type (prometheus / host / mysql / ...) |
+| `.RunbookUrl` | string | Runbook link |
 
-### 标签 / 注解 / 触发值对象
-| 字段 | 类型 | 说明 |
+### Labels / Annotations / Trigger Value Objects
+| field | type | description |
 |---|---|---|
-| `.TagsMap` | `map[string]string` | 事件标签，优先用：`{{$labels.agent_hostname}}` |
-| `.TagsJSON` | `[]string` | 形如 `["k=v", ...]` 的字符串数组（早期模板常用） |
-| `.AnnotationsJSON` | `map[string]string` | 注解，常用 `.AnnotationsJSON.recovery_value` |
-| `.TriggerValuesJson.ValuesWithUnit` | map | 带单位的触发值（多值场景） |
+| `.TagsMap` | `map[string]string` | Event labels, preferred: `{{$labels.agent_hostname}}` |
+| `.TagsJSON` | `[]string` | A string array like `["k=v", ...]` (commonly used in early templates) |
+| `.AnnotationsJSON` | `map[string]string` | Annotations, commonly `.AnnotationsJSON.recovery_value` |
+| `.TriggerValuesJson.ValuesWithUnit` | map | Trigger values with units (multi-value scenarios) |
 
-### 通知对象
-| 字段 | 类型 | 说明 |
+### Notification Objects
+| field | type | description |
 |---|---|---|
-| `.NotifyUsersObj` | `[]*User` | 本次要通知的用户对象（有 Username/Nickname/Phone/Email） |
-| `.NotifyGroupsObj` | `[]*UserGroup` | 关联用户组 |
+| `.NotifyUsersObj` | `[]*User` | The user objects to notify this time (with Username/Nickname/Phone/Email) |
+| `.NotifyGroupsObj` | `[]*UserGroup` | Associated user groups |
 
-> 用户对象在钉钉/飞书/Lark 模板里常用来拼 at，见下文 `ats` 系列 helper。
+> User objects are commonly used in DingTalk/Feishu/Lark templates to build @-mentions; see the `ats` family of helpers below.
 
 ---
 
-## 可用 helper 函数（`tplx.TemplateFuncMap`）
+## Available Helper Functions (`tplx.TemplateFuncMap`)
 
-### 时间
-- `timeformat <unix>` — 默认 `"2006-01-02 15:04:05"`；传第二个参数覆盖：`{{timeformat $event.TriggerTime "15:04:05"}}`
-- `timestamp` — 当前时间字符串
-- `now.Unix` — 当前 unix 秒（`now` 是 Go template 内置）
+### Time
+- `timeformat <unix>` — defaults to `"2006-01-02 15:04:05"`; pass a second argument to override: `{{timeformat $event.TriggerTime "15:04:05"}}`
+- `timestamp` — current time string
+- `now.Unix` — current unix seconds (`now` is a Go template builtin)
 - `humanizeDuration <sec>` — `"3m15s"`
-- `humanizeDurationInterface <interface>` — 同上但接受 interface
-- `toTime <unix>` — 返回 `time.Time`，可链式调用
-- `parseDuration <"5m">` — 返回 `time.Duration`
+- `humanizeDurationInterface <interface>` — same as above but accepts an interface
+- `toTime <unix>` — returns a `time.Time`, can be chained
+- `parseDuration <"5m">` — returns a `time.Duration`
 
-### 数值 / 格式
-- `formatDecimal <v> <n>` — 保留 n 位小数（`{{formatDecimal $event.TriggerValue 2}}`）
-- `humanize <v>` — K/M/G 单位（1000 进制，SI）
-- `humanize1024 <v>` — Ki/Mi/Gi（1024 进制）
-- `humanizePercentage <v>` / `humanizePercentageH <v>` — 百分比
-- `add / sub / mul / div <a> <b>` — 四则
+### Numbers / Formatting
+- `formatDecimal <v> <n>` — keep n decimal places (`{{formatDecimal $event.TriggerValue 2}}`)
+- `humanize <v>` — K/M/G units (base 1000, SI)
+- `humanize1024 <v>` — Ki/Mi/Gi (base 1024)
+- `humanizePercentage <v>` / `humanizePercentageH <v>` — percentage
+- `add / sub / mul / div <a> <b>` — arithmetic
 - `printf "%.2f" <v>` — Go `fmt.Sprintf`
 
-### 字符串
-- `toUpper / toLower / title` — 大小写
-- `contains <s> <sub>` — 子串
-- `match <regex> <s>` — 正则匹配（bool）
-- `reReplaceAll <regex> <repl> <s>` — 正则替换
+### Strings
+- `toUpper / toLower / title` — case conversion
+- `contains <s> <sub>` — substring
+- `match <regex> <s>` — regex match (bool)
+- `reReplaceAll <regex> <repl> <s>` — regex replace
 - `split <s> <sep>` / `join <slice> <sep>`
 - `stripPort <host:port>` / `stripDomain <host.domain>`
 - `b64enc` / `b64dec` — base64
 
-### 链接 / 转义
-- `escape <s>` — URL 路径转义
-- `unescaped <s>` — 输出 raw HTML（不转义）
-- `safeHtml <s>` — 同上
+### Links / Escaping
+- `escape <s>` — URL path escape
+- `unescaped <s>` — output raw HTML (no escaping)
+- `safeHtml <s>` — same as above
 - `urlconvert <s>`
 
-### 标签 / 触发值
+### Labels / Trigger Values
 - `label <key> <labelMap>` / `value <key> <m>` / `strvalue <v>`
-- `first <slice>` — 取第一个
-- `tagsMapToStr <map>` — 标签拼成 `k=v,k=v`
-- `sortByLabel <items> <key>` — 按标签排序
+- `first <slice>` — take the first
+- `tagsMapToStr <map>` — join labels into `k=v,k=v`
+- `sortByLabel <items> <key>` — sort by label
 
-### @人（钉钉/飞书/Lark 专用）
-- `ats <users> <platform>` — 生成 at 片段
-- `batchContactsAts <contacts> <platform>` — 批量 at
-- `batchContactsAtsInFeishuEmail <contacts>` / `batchContactsAtsInFeishuId <contacts>` — 飞书专用
+### @-mention (DingTalk/Feishu/Lark only)
+- `ats <users> <platform>` — generate an at fragment
+- `batchContactsAts <contacts> <platform>` — batch at
+- `batchContactsAtsInFeishuEmail <contacts>` / `batchContactsAtsInFeishuId <contacts>` — Feishu only
 - `batchContactsJoinComma <contacts>` / `batchContactsJsonMarshal <contacts>`
 - `mappingAndJoin <map> <kvSep> <itemSep>`
 
-### 其它
-- `jsonMarshal <v>` — 序列化为 JSON 字符串
-- `mapDifference <a> <b>` — 集合差
+### Others
+- `jsonMarshal <v>` — serialize to a JSON string
+- `mapDifference <a> <b>` — set difference
 
 ---
 
-## 各通道（`notify_channel_ident`）语法差异
+## Syntax Differences Across Channels (`notify_channel_ident`)
 
-消息模板绑在具体通道上，通道 ident 决定文本引擎和转义行为：
+A message template is bound to a specific channel; the channel ident determines the text engine and escaping behavior:
 
-| Ident | 引擎 | 说明 |
+| Ident | Engine | Description |
 |---|---|---|
-| `email` | `text/template` | 不再次转义，HTML 模板直接写标签 |
-| `slackwebhook` / `slackbot` | `html/template` | 渲染后把 `"` / `\n` 转义并包成 `template.HTML`；通常写 Markdown |
-| 其它（`dingtalk` / `feishu` / `feishucard` / `larkcard` / `wecom` / `tx-sms` / `ali-voice` …） | `html/template` | 渲染后对 `"` `\n` `\r` 做 JSON 字符串转义，适合直接塞入 webhook payload |
+| `email` | `text/template` | No re-escaping; HTML templates can write tags directly |
+| `slackwebhook` / `slackbot` | `html/template` | After rendering, `"` / `\n` are escaped and wrapped into `template.HTML`; usually written in Markdown |
+| Others (`dingtalk` / `feishu` / `feishucard` / `larkcard` / `wecom` / `tx-sms` / `ali-voice` …) | `html/template` | After rendering, `"` `\n` `\r` are JSON-string-escaped, suitable for stuffing directly into a webhook payload |
 
-> 重要：`html/template` 会对 `<` `>` `&` 自动转义。**不想转义的地方要用 `{{unescaped "…"}}` 或 `{{safeHtml .X}}`**，否则钉钉里渲染出来会看到字面 `&lt;`。
-
----
-
-## 写模板的工作流
-
-1. **确认通道 ident**：用户说"钉钉"就是 `dingtalk`，"飞书卡片"是 `feishucard`，"邮件"是 `email`。不同通道风格差异大。
-2. **判断是否需要渲染恢复状态**：默认要分 `$event.IsRecovered` 两个分支。只有短信/语音可以省略。
-3. **挑字段**：
-   - 标签优先用 `$labels.<key>`，而不是 `$event.TagsJSON`。
-   - 触发值用 `$event.TriggerValue`；要两位小数就 `{{formatDecimal $event.TriggerValue 2}}`。
-   - 时间戳一律过 `timeformat`。
-   - 跳转链接拼 `{{.domain}}/share/alert-his-events/{{$event.Id}}`。
-4. **级别显示**：
-   - 数字：`{{$event.Severity}}`
-   - 中文：`{{if eq $event.Severity 1}}一级{{else if eq $event.Severity 2}}二级{{else}}三级{{end}}`
-   - 英文：`Critical / Warning / Info`
-5. **@人（钉钉/飞书）**：
-   - 钉钉 `@全员`：在模板末尾加一行 `@all`（钉钉按空格分词匹配）。精确 at 手机号：`{{range $event.NotifyUsersObj}}@{{.Phone}} {{end}}`。
-   - 飞书卡片：用 `{{batchContactsAtsInFeishuEmail $event.NotifyUsersObj}}` 拼出 `<at email=...></at>` 片段。
-6. **输出**：用 markdown 代码块 ``` ```gotemplate ``` 包裹模板主体，末尾给一段**变量/函数说明**，每个非平凡变量/函数单独一行。
+> Important: `html/template` automatically escapes `<` `>` `&`. **Where you don't want escaping, use `{{unescaped "…"}}` or `{{safeHtml .X}}`**, otherwise DingTalk will render a literal `&lt;`.
 
 ---
 
-## 输出格式
+## Template Writing Workflow
 
-回复给用户时：
+1. **Confirm the channel ident**: when the user says "DingTalk" it is `dingtalk`, "Feishu card" is `feishucard`, "email" is `email`. Different channels differ significantly in style.
+2. **Decide whether to render the recovery state**: by default you should split into two branches on `$event.IsRecovered`. Only SMS/voice may omit it.
+3. **Pick fields**:
+   - For labels, prefer `$labels.<key>` rather than `$event.TagsJSON`.
+   - For the trigger value use `$event.TriggerValue`; for two decimal places use `{{formatDecimal $event.TriggerValue 2}}`.
+   - Always pass timestamps through `timeformat`.
+   - Build the redirect link as `{{.domain}}/share/alert-his-events/{{$event.Id}}`.
+4. **Severity display**:
+   - Number: `{{$event.Severity}}`
+   - Worded: `{{if eq $event.Severity 1}}Critical{{else if eq $event.Severity 2}}Warning{{else}}Info{{end}}`
+   - English: `Critical / Warning / Info`
+5. **@-mention (DingTalk/Feishu)**:
+   - DingTalk `@everyone`: add a line `@all` at the end of the template (DingTalk matches by splitting on spaces). To at an exact phone number: `{{range $event.NotifyUsersObj}}@{{.Phone}} {{end}}`.
+   - Feishu card: use `{{batchContactsAtsInFeishuEmail $event.NotifyUsersObj}}` to build `<at email=...></at>` fragments.
+6. **Output**: wrap the template body in a markdown ``` ```gotemplate ``` code block, and at the end provide a **variable/function explanation** with each non-trivial variable/function on its own line.
 
-1. 一到两句导语说明模板用途、适配哪个通道。
+---
+
+## Output Format
+
+When replying to the user:
+
+1. One or two sentences of introduction explaining what the template is for and which channel it fits.
 2. ```gotemplate
-   <模板内容>
+   <template content>
    ```
-3. `**变量说明**`：列出模板里用到的非平凡字段和函数（`$event.TargetIdent`、`formatDecimal`、`timeformat` 之类），每项一行。
-4. 如果用户的需求有歧义（比如"加主机名"——到底是 `target_ident` 还是某个 tag），**在导语里直接点出做了什么假设**，不要反问。
+3. `**Variable explanation**`: list the non-trivial fields and functions used in the template (such as `$event.TargetIdent`, `formatDecimal`, `timeformat`), one per line.
+4. If the user's request is ambiguous (for example "add the hostname" — is it `target_ident` or some tag), **state directly in the introduction what assumption you made**, rather than asking back.
 
-语言跟随用户输入（中文输入就用中文）。
+The language follows the user's input (use Chinese if the input is Chinese).
 
 ---
 
-## 内置参考模板（改造起点）
+## Built-in Reference Templates (Starting Points for Customization)
 
-### 钉钉 markdown（完整版）
+### DingTalk markdown (full version)
 
 ```gotemplate
 #### {{if $event.IsRecovered}}<font color="#008800">💚{{$event.RuleName}}</font>{{else}}<font color="#FF0000">💔{{$event.RuleName}}</font>{{end}}
 ---
 {{$duration := sub now.Unix $event.FirstTriggerTime}}{{if $event.IsRecovered}}{{$duration = sub $event.LastEvalTime $event.FirstTriggerTime}}{{end}}
-- **告警级别**: S{{$event.Severity}}
+- **Alert Level**: S{{$event.Severity}}
 {{- if $event.RuleNote}}
-- **规则备注**: {{$event.RuleNote}}
+- **Rule Note**: {{$event.RuleNote}}
 {{- end}}
 {{- if $event.TargetIdent}}
-- **监控对象**: {{$event.TargetIdent}}
+- **Target**: {{$event.TargetIdent}}
 {{- end}}
 {{- if not $event.IsRecovered}}
-- **触发时值**: {{$event.TriggerValue}}
-- **触发时间**: {{timeformat $event.TriggerTime}}
-- **持续时长**: {{humanizeDurationInterface $duration}}
+- **Trigger Value**: {{$event.TriggerValue}}
+- **Trigger Time**: {{timeformat $event.TriggerTime}}
+- **Duration**: {{humanizeDurationInterface $duration}}
 {{- else}}
-- **恢复时间**: {{timeformat $event.LastEvalTime}}
-- **持续时长**: {{humanizeDurationInterface $duration}}
+- **Recovery Time**: {{timeformat $event.LastEvalTime}}
+- **Duration**: {{humanizeDurationInterface $duration}}
 {{- end}}
-- **事件标签**:
+- **Event Tags**:
 {{- range $k, $v := $labels}}
 {{- if ne $k "rulename"}}
     - {{$k}}: {{$v}}
 {{- end}}
 {{- end}}
-[事件详情]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})
+[Event Detail]({{.domain}}/share/alert-his-events/{{$event.Id}}) | [Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})
 ```
 
-### 飞书卡片（简洁版）
+### Feishu card (concise version)
 
 ```gotemplate
 {{- if $event.IsRecovered}}
-**级别状态:** S{{$event.Severity}} Recovered
-**告警名称:** {{$event.RuleName}}
-**事件标签:** {{$event.TagsJSON}}
-**恢复时间:** {{timeformat $event.LastEvalTime}}
+**Severity/State:** S{{$event.Severity}} Recovered
+**Alert Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Recovery Time:** {{timeformat $event.LastEvalTime}}
 {{- else}}
-**级别状态:** S{{$event.Severity}} Triggered
-**告警名称:** {{$event.RuleName}}
-**事件标签:** {{$event.TagsJSON}}
-**触发时间:** {{timeformat $event.TriggerTime}}
-**触发时值:** {{$event.TriggerValue}}
+**Severity/State:** S{{$event.Severity}} Triggered
+**Alert Name:** {{$event.RuleName}}
+**Event Tags:** {{$event.TagsJSON}}
+**Trigger Time:** {{timeformat $event.TriggerTime}}
+**Trigger Value:** {{$event.TriggerValue}}
 {{- if $event.RuleNote}}
-**告警描述:** {{$event.RuleNote}}
+**Alert Description:** {{$event.RuleNote}}
 {{- end}}
 {{- end}}
 ```
 
-### 短信 / 语音（极简）
+### SMS / Voice (minimal)
 
 ```gotemplate
-级别状态: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} 规则: {{$event.RuleName}} 对象: {{$event.TargetIdent}}
+Severity/State: S{{$event.Severity}} {{if $event.IsRecovered}}Recovered{{else}}Triggered{{end}} Rule: {{$event.RuleName}} Target: {{$event.TargetIdent}}
 ```
 
 ---
 
-## 典型改造场景
+## Typical Customization Scenarios
 
-### 1) "在钉钉模板里加主机名"
+### 1) "Add the hostname to the DingTalk template"
 
 ```gotemplate
-- **主机**: {{$event.TargetIdent}}
+- **Host**: {{$event.TargetIdent}}
 {{- if $labels.ip}}
 - **IP**: {{$labels.ip}}
 {{- end}}
 ```
 
-> 说明：`target_ident` 一般就是主机名；如果需要 IP，优先看标签 `ip`、`instance`、`host`。
+> Note: `target_ident` is usually the hostname; if you need the IP, prefer the labels `ip`, `instance`, `host`.
 
-### 2) "把 trigger_value 保留两位小数"
+### 2) "Keep trigger_value to two decimal places"
 
 ```gotemplate
-- **触发时值**: {{formatDecimal $event.TriggerValue 2}}
+- **Trigger Value**: {{formatDecimal $event.TriggerValue 2}}
 ```
 
-> `TriggerValue` 本身是字符串，`formatDecimal` 会先转浮点再格式化，非数字会原样返回。
+> `TriggerValue` is itself a string; `formatDecimal` first converts it to a float and then formats it, and returns non-numeric values unchanged.
 
-### 3) "钉钉模板末尾 @ 告警接收人"
+### 3) "@-mention the alert recipients at the end of the DingTalk template"
 
 ```gotemplate
-...模板正文...
+...template body...
 
 {{- range $event.NotifyUsersObj}}@{{.Phone}} {{end}}
 ```
 
-> 钉钉按 "空格 + 手机号" 识别被 at 的用户。或者统一 `@all`。
+> DingTalk identifies @-mentioned users by "space + phone number". Or uniformly use `@all`.
 
-### 4) "恢复时显示恢复时的值"
+### 4) "Show the recovery value on recovery"
 
 ```gotemplate
 {{- if $event.IsRecovered}}
 {{- if $event.AnnotationsJSON.recovery_value}}
-- **恢复时值**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
+- **Recovery Value**: {{formatDecimal $event.AnnotationsJSON.recovery_value 4}}
 {{- end}}
-- **恢复时间**: {{timeformat $event.LastEvalTime}}
+- **Recovery Time**: {{timeformat $event.LastEvalTime}}
 {{- end}}
 ```
 
-> 恢复值由告警引擎在恢复时写入 `AnnotationsJSON.recovery_value`，**仅在有恢复值的情况下存在**，用 `if` 保护。
+> The recovery value is written into `AnnotationsJSON.recovery_value` by the alert engine on recovery, and **only exists when there is a recovery value**, so guard it with `if`.
 
-### 5) "告警级别用中文"
+### 5) "Use Chinese for the alert severity"
 
 ```gotemplate
-- **级别**: {{if eq $event.Severity 1}}一级（紧急）{{else if eq $event.Severity 2}}二级（重要）{{else}}三级（提示）{{end}}
+- **Severity**: {{if eq $event.Severity 1}}Critical{{else if eq $event.Severity 2}}Warning{{else}}Info{{end}}
 ```
 
-### 6) "只发生产环境告警相关机器"
+### 6) "Only send alerts for production-environment machines"
 
-模板本身不做过滤——过滤应放在**通知规则**的 `attributes` / `label_keys`。模板里只负责展示。如果用户问到这里要提示一下。
+The template itself does not do filtering — filtering should go into the `attributes` / `label_keys` of the **notification rule**. The template is only responsible for display. If the user asks about this, point it out.
 
-### 7) "按状态/级别切色"
+### 7) "Color by state/severity"
 
-钉钉/邮件用 `<font color>`，飞书卡片靠 `template` 字段填颜色 keyword：
+DingTalk/email use `<font color>`, Feishu cards use the `template` field to fill in a color keyword:
 
 ```gotemplate
-{{/* 钉钉 markdown：标题前置 emoji + 颜色 */}}
+{{/* DingTalk markdown: prepend emoji + color to the title */}}
 #### {{if $event.IsRecovered}}<font color="#008800">✅ {{$event.RuleName}}</font>{{else}}<font color="#FF0000">🚨 {{$event.RuleName}}</font>{{end}}
 
-{{/* 飞书 feishucard 的 template 字段（决定卡片头部色块） */}}
+{{/* The template field for Feishu feishucard (determines the card header color block) */}}
 {{if $event.IsRecovered}}turquoise{{else}}{{if eq $event.Severity 1}}red{{else if eq $event.Severity 2}}orange{{else}}grey{{end}}{{end}}
 ```
 
-> 飞书卡片只认枚举色：`red / orange / yellow / green / turquoise / blue / indigo / purple / carmine / grey`，hex 颜色码会被忽略。
+> Feishu cards only recognize enumerated colors: `red / orange / yellow / green / turquoise / blue / indigo / purple / carmine / grey`; hex color codes are ignored.
 
-### 8) "显示告警持续时间"
+### 8) "Show the alert duration"
 
 ```gotemplate
 {{$duration := sub now.Unix $event.FirstTriggerTime}}
 {{- if $event.IsRecovered}}{{$duration = sub $event.LastEvalTime $event.FirstTriggerTime}}{{end}}
-- **持续**: {{humanizeDurationInterface $duration}}
+- **Duration**: {{humanizeDurationInterface $duration}}
 ```
 
-> 触发态：`当前时间 - FirstTriggerTime`；恢复态：`LastEvalTime - FirstTriggerTime`。`humanizeDurationInterface` 输出 `1h3m5s` 这种人类可读形式。
+> Triggered state: `current time - FirstTriggerTime`; recovered state: `LastEvalTime - FirstTriggerTime`. `humanizeDurationInterface` outputs a human-readable form like `1h3m5s`.
 
-### 9) "URL 中嵌入 tag 值，避免空格/特殊字符破坏链接"
+### 9) "Embed a tag value in a URL, avoiding spaces/special characters breaking the link"
 
 ```gotemplate
-[查看仪表盘]({{.domain}}/dashboards/123?ident={{urlquery $event.TargetIdent}}&host={{urlquery (index $labels "host")}})
-[屏蔽1小时]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})
+[View Dashboard]({{.domain}}/dashboards/123?ident={{urlquery $event.TargetIdent}}&host={{urlquery (index $labels "host")}})
+[Mute 1h]({{.domain}}/alert-mutes/add?__event_id={{$event.Id}})
 ```
 
-> 直接 `{{$event.TargetIdent}}` 拼进 URL，遇到空格、中文或 `&` 会被 IM 端二次转义（典型表现：`&` 变 `&amp;`，链接打不开）。**所有进入 URL query 的变量都用 `urlquery` 包**。
+> Stuffing `{{$event.TargetIdent}}` directly into a URL will, when it contains spaces, Chinese, or `&`, get double-escaped on the IM side (typical symptom: `&` becomes `&amp;` and the link won't open). **Wrap every variable that goes into a URL query in `urlquery`.**
 
-### 10) "标签 key 含中划线/点/中文 — 用 index 取"
+### 10) "Tag keys containing hyphens/dots/Chinese — use index to fetch"
 
 ```gotemplate
-- **应用**: {{index $labels "app-name"}}
-- **K8s 域**: {{index $labels "k8s.io/cluster"}}
-- **业务面板**: {{index $event.AnnotationsJSON "dashboard_url"}}
+- **Application**: {{index $labels "app-name"}}
+- **K8s Cluster**: {{index $labels "k8s.io/cluster"}}
+- **Business Dashboard**: {{index $event.AnnotationsJSON "dashboard_url"}}
 ```
 
-> `$labels.app-name` 会被 Go template 解析成"`app` 减 `name`"必然失败。Key **只要不是纯字母数字下划线**，一律 `index` 取，Annotations 同理。
+> `$labels.app-name` will be parsed by Go template as "`app` minus `name`" and is bound to fail. As long as a key **is not pure alphanumerics plus underscore**, always fetch it with `index`; the same goes for Annotations.
 
-### 11) "数值异常（+Inf / NaN）兜底"
+### 11) "Fallback for abnormal values (+Inf / NaN)"
 
 ```gotemplate
-- **触发时值**: {{if or (eq $event.TriggerValue "+Inf") (eq $event.TriggerValue "NaN")}}N/A{{else}}{{formatDecimal $event.TriggerValue 2}}{{end}}
+- **Trigger Value**: {{if or (eq $event.TriggerValue "+Inf") (eq $event.TriggerValue "NaN")}}N/A{{else}}{{formatDecimal $event.TriggerValue 2}}{{end}}
 ```
 
-> PromQL 的 `/0` 会返回 `+Inf`，缺数据的聚合会返回 `NaN`。直接渲染到飞书/钉钉里就是字面 `+Inf`，看着像 bug。
+> A `/0` in PromQL returns `+Inf`, and an aggregation over missing data returns `NaN`. Rendered directly into Feishu/DingTalk they appear as literal `+Inf`, which looks like a bug.
 
-### 12) "Edge 模式下事件 Id=0 — 跳转链接降级"
+### 12) "In Edge mode the event Id=0 — degrade the redirect link"
 
 ```gotemplate
 {{if gt $event.Id 0}}
-[事件详情]({{.domain}}/share/alert-his-events/{{$event.Id}})
+[Event Detail]({{.domain}}/share/alert-his-events/{{$event.Id}})
 {{else}}
-（Edge 模式事件，请到中心端查看详情）
+(Edge-mode event — view details on the central server)
 {{end}}
 ```
 
-> 已知问题：Edge 模式下事件 Id 写入是异步的，渲染时拿到 0，跳转链接会落到 `/alert-his-events/0`（404）。模板层加 `gt $event.Id 0` 守护。
+> Known issue: in Edge mode the event Id is written asynchronously, so at render time it is 0, and the redirect link would land on `/alert-his-events/0` (404). Add a `gt $event.Id 0` guard at the template layer.
 
-### 13) "多告警合并展示"
+### 13) "Merge and display multiple alerts"
 
 ```gotemplate
 {{range $i, $e := .events}}
 {{- if $i}}
 ---
 {{end -}}
-- 规则：{{$e.RuleName}}
-- 对象：{{$e.TargetIdent}}
-- 触发值：{{$e.TriggerValue}}
-- 时间：{{timeformat $e.TriggerTime}}
+- Rule: {{$e.RuleName}}
+- Target: {{$e.TargetIdent}}
+- Trigger Value: {{$e.TriggerValue}}
+- Time: {{timeformat $e.TriggerTime}}
 {{end}}
 ```
 
-> 默认场景下一条通知就一个事件，模板按 `$event = index .events 0` 渲染。当一条通知聚合了多个事件（订阅聚合、批量发送）时必须 `range .events` 才能展开。
+> In the default scenario one notification has exactly one event, and the template renders with `$event = index .events 0`. When one notification aggregates multiple events (subscription aggregation, batch send) you must `range .events` to expand them.
 
 ---
 
-## 关键注意事项
+## Key Considerations
 
-1. **`html/template` 会 HTML 转义**。钉钉/飞书/Lark 里 `<font>`、`<at>` 等标签**必须用 `unescaped` 包裹或放在内容里由 Go template 自己识别**。邮件走 `text/template` 不受此限。
-2. **`TriggerValue` 是字符串**：直接比较大小要用 `parseDuration`/自定义，常规只做显示就好。
-3. **不要手动写 `{{$events := .events}}` 等头部**——系统会自动注入。
-4. **恢复分支不能漏**：`NotifyRecovered=1` 的规则会复用同一模板发恢复消息。
-5. **标签 key 里的中划线/点**：`$labels.agent_hostname` 能用，但 `$labels.app-name` 不行，要用 `index $labels "app-name"`。
-6. **时间字段全部是 unix 秒**（`int64`），不要直接 `{{$event.TriggerTime}}` 当文本，用 `timeformat` 或 `toTime`。
-7. **多告警合并**：`.events` 可能有多条，钉钉/飞书默认模板只渲染第 0 条（`$event`）；如果用户要批量展示，用 `{{range .events}}`。
-8. **链接用 `.domain`**：不要硬编码 `http://localhost:17000`，否则切环境就坏。
+1. **`html/template` HTML-escapes**. Tags such as `<font>` and `<at>` in DingTalk/Feishu/Lark **must be wrapped in `unescaped` or placed in content where Go template recognizes them itself**. Email uses `text/template` and is not subject to this.
+2. **`TriggerValue` is a string**: to compare magnitudes directly use `parseDuration`/custom logic; for normal display-only purposes leave it as is.
+3. **Do not manually write headers like `{{$events := .events}}`** — the system injects them automatically.
+4. **Don't drop the recovery branch**: rules with `NotifyRecovered=1` reuse the same template to send the recovery message.
+5. **Hyphens/dots in tag keys**: `$labels.agent_hostname` works, but `$labels.app-name` does not — use `index $labels "app-name"`.
+6. **All time fields are unix seconds** (`int64`); don't use `{{$event.TriggerTime}}` directly as text — use `timeformat` or `toTime`.
+7. **Merging multiple alerts**: `.events` may have multiple entries; the default DingTalk/Feishu templates only render entry 0 (`$event`); if the user wants a batch display, use `{{range .events}}`.
+8. **Use `.domain` for links**: don't hardcode `http://localhost:17000`, otherwise switching environments breaks it.
 
 ---
 
-## 常见错误
+## Common Mistakes
 
-- ❌ `{{$event.TriggerValue | printf "%.2f"}}` — `printf` 第一个参数才是 format，且 `TriggerValue` 是 string。
+- ❌ `{{$event.TriggerValue | printf "%.2f"}}` — for `printf`, the first argument is the format, and `TriggerValue` is a string.
 - ✅ `{{formatDecimal $event.TriggerValue 2}}`
 
-- ❌ `{{$event.TriggerTime}}` 直接展示 — 会输出 unix 秒。
+- ❌ Displaying `{{$event.TriggerTime}}` directly — it outputs unix seconds.
 - ✅ `{{timeformat $event.TriggerTime}}`
 
-- ❌ 钉钉里写 `<font color="red">` 不转义 — `html/template` 会转义成 `&lt;font&gt;`。
-- ✅ 放在条件分支里（Go template 的 `{{if}}` 分支字面量不会被 HTML 转义内部标签），或整体 `{{unescaped "…"}}`。夜莺官方钉钉模板直接写 `<font>` 能生效，是因为外层是纯文本区段（不在属性值里）——遵循官方样例即可。
+- ❌ Writing `<font color="red">` in DingTalk without escaping — `html/template` will escape it into `&lt;font&gt;`.
+- ✅ Put it inside a conditional branch (Go template's `{{if}}` branch literals do not get the inner tags HTML-escaped), or wrap the whole thing in `{{unescaped "…"}}`. Nightingale's official DingTalk template writes `<font>` directly and it works, because the outer area is a plain-text section (not inside an attribute value) — just follow the official sample.
 
-- ❌ 忘记分恢复分支 — 恢复通知里触发时间误导人。
-- ✅ 所有动态内容先用 `{{if $event.IsRecovered}}…{{else}}…{{end}}` 包好。
+- ❌ Forgetting to split the recovery branch — the trigger time in a recovery notification is misleading.
+- ✅ Wrap all dynamic content first with `{{if $event.IsRecovered}}…{{else}}…{{end}}`.
 
-- ❌ `{{if .IsRecoverd}}` — 拼写少一个 `e`。Go template 对不存在的字段**静默走 else 分支**（不报错），后果是恢复通知发的是触发态文案，且很难定位。
-- ✅ `{{if $event.IsRecovered}}`。同类拼写陷阱：`Resoverd` `Recoverd` `recovered`（小写）都不行。
+- ❌ `{{if .IsRecoverd}}` — a missing `e` in the spelling. Go template **silently takes the else branch** for a nonexistent field (without erroring), so the consequence is that the recovery notification sends the triggered-state copy, and it is very hard to track down.
+- ✅ `{{if $event.IsRecovered}}`. Similar spelling traps: `Resoverd`, `Recoverd`, `recovered` (lowercase) all fail.
 
-- ❌ `{{if lt $value 10}}` 或 `{{if gt $event.TriggerValue 80}}` — `TriggerValue` 是 string，`lt`/`gt` 跟数字比较会报 `incompatible types`，或被解释成字符串字典序得到错误结果。当前版本**没有内置 `toFloat` helper**。数值阈值判断请放回告警规则的条件表达式里，模板层只做展示。
+- ❌ `{{if lt $value 10}}` or `{{if gt $event.TriggerValue 80}}` — `TriggerValue` is a string; comparing with `lt`/`gt` against a number will report `incompatible types`, or be interpreted as a string lexicographic comparison and yield a wrong result. The current version **has no built-in `toFloat` helper**. Put numeric threshold checks back into the alert rule's condition expression, and keep the template layer for display only.
 
-- ❌ 拼 URL 时直接 `?ident={{$event.TargetIdent}}` — TargetIdent 含空格/中文/`&` 会破坏链接。
-- ✅ `?ident={{urlquery $event.TargetIdent}}`，**所有进入 URL query 的变量都过 `urlquery`**。
+- ❌ Building a URL with `?ident={{$event.TargetIdent}}` directly — a TargetIdent containing spaces/Chinese/`&` will break the link.
+- ✅ `?ident={{urlquery $event.TargetIdent}}`, **pass every variable that goes into a URL query through `urlquery`**.
 
-- ❌ `{{$labels.app-name}}` 或 `{{$labels.k8s.io/cluster}}` — 含中划线/点/斜杠的 key 会被解析失败。
-- ✅ `{{index $labels "app-name"}}`、`{{index $labels "k8s.io/cluster"}}`。
+- ❌ `{{$labels.app-name}}` or `{{$labels.k8s.io/cluster}}` — keys containing hyphens/dots/slashes fail to parse.
+- ✅ `{{index $labels "app-name"}}`, `{{index $labels "k8s.io/cluster"}}`.

@@ -1,35 +1,35 @@
-# Prometheus / VictoriaMetrics 指标查询
+# Prometheus / VictoriaMetrics Metric Queries
 
 - **plugin_type**: `prometheus`
-- **查询语言**: PromQL
-- **适用场景**: 指标/时序查询
+- **Query language**: PromQL
+- **Use case**: Metric/time-series queries
 
 ---
 
-## 探测可用指标
+## Discover Available Metrics
 
-获取所有指标名称列表：
+Retrieve the list of all metric names:
 
 ```
 GET /api/n9e/proxy/<datasource_id>/api/v1/label/__name__/values
 Authorization: Bearer <token>
 ```
 
-## 获取所有标签名
+## Get All Label Names
 
 ```
 GET /api/n9e/proxy/<datasource_id>/api/v1/labels
 Authorization: Bearer <token>
 ```
 
-## 获取标签值
+## Get Label Values
 
 ```
 GET /api/n9e/proxy/<datasource_id>/api/v1/label/<label_name>/values
 Authorization: Bearer <token>
 ```
 
-## 查询时间序列元数据
+## Query Time-Series Metadata
 
 ```
 GET /api/n9e/proxy/<datasource_id>/api/v1/series?match[]=<metric_selector>&start=<unix_ts>&end=<unix_ts>
@@ -38,9 +38,9 @@ Authorization: Bearer <token>
 
 ---
 
-## 即时查询（Instant Query）
+## Instant Query
 
-查询某一时刻的指标值：
+Query the metric value at a specific point in time:
 
 ```
 POST /api/n9e/query-instant-batch
@@ -60,13 +60,13 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `datasource_id` | int64 | 是 | 数据源 ID |
-| `queries[].time` | int64 | 是 | 查询时间，Unix 时间戳（秒） |
-| `queries[].query` | string | 是 | PromQL 表达式 |
+| `datasource_id` | int64 | Yes | Datasource ID |
+| `queries[].time` | int64 | Yes | Query time, Unix timestamp (seconds) |
+| `queries[].query` | string | Yes | PromQL expression |
 
-**响应格式**：
+**Response format**:
 
 ```json
 {
@@ -86,9 +86,9 @@ Content-Type: application/json
 
 ---
 
-## 范围查询（Range Query）
+## Range Query
 
-查询一段时间内的指标趋势：
+Query the metric trend over a period of time:
 
 ```
 POST /api/n9e/query-range-batch
@@ -110,24 +110,24 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `datasource_id` | int64 | 是 | 数据源 ID |
-| `queries[].start` | int64 | 是 | 开始时间，Unix 时间戳（秒） |
-| `queries[].end` | int64 | 是 | 结束时间，Unix 时间戳（秒） |
-| `queries[].step` | int64 | 是 | 采样步长（秒） |
-| `queries[].query` | string | 是 | PromQL 表达式 |
+| `datasource_id` | int64 | Yes | Datasource ID |
+| `queries[].start` | int64 | Yes | Start time, Unix timestamp (seconds) |
+| `queries[].end` | int64 | Yes | End time, Unix timestamp (seconds) |
+| `queries[].step` | int64 | Yes | Sampling step (seconds) |
+| `queries[].query` | string | Yes | PromQL expression |
 
-**step 建议值**：
+**Recommended step values**:
 
-| 时间范围 | step |
+| Time Range | step |
 |---|---|
-| 1 小时 | 15s |
-| 6 小时 | 60s |
-| 24 小时 | 300s |
-| 7 天 | 1800s |
+| 1 hour | 15s |
+| 6 hours | 60s |
+| 24 hours | 300s |
+| 7 days | 1800s |
 
-**响应格式**：
+**Response format**:
 
 ```json
 {
@@ -151,9 +151,9 @@ Content-Type: application/json
 
 ---
 
-## 通过代理直接查询
+## Query Directly Through the Proxy
 
-也可通过代理直接调用 Prometheus 原生 API：
+You can also call the native Prometheus API directly through the proxy:
 
 ```
 GET /api/n9e/proxy/<datasource_id>/api/v1/query?query=up&time=<unix_ts>
@@ -163,16 +163,16 @@ Authorization: Bearer <token>
 
 ---
 
-## 常用 PromQL 示例
+## Common PromQL Examples
 
-| 需求 | PromQL |
+| Requirement | PromQL |
 |---|---|
-| CPU 使用率 | `cpu_usage_active` |
-| 内存使用率 | `mem_used_percent` |
-| 磁盘使用率 | `disk_used_percent{path="/"}` |
-| 网络入流量速率 | `rate(net_bytes_recv[5m])` |
-| 1分钟负载 | `system_load1` |
-| HTTP 请求速率 | `rate(http_requests_total[5m])` |
-| 某实例的所有指标 | `{ident="web-01"}` |
-| 聚合：按实例求平均 | `avg by (ident)(cpu_usage_active)` |
+| CPU usage | `cpu_usage_active` |
+| Memory usage | `mem_used_percent` |
+| Disk usage | `disk_used_percent{path="/"}` |
+| Inbound network throughput rate | `rate(net_bytes_recv[5m])` |
+| 1-minute load | `system_load1` |
+| HTTP request rate | `rate(http_requests_total[5m])` |
+| All metrics of a given instance | `{ident="web-01"}` |
+| Aggregation: average per instance | `avg by (ident)(cpu_usage_active)` |
 | Top 10 CPU | `topk(10, cpu_usage_active)` |

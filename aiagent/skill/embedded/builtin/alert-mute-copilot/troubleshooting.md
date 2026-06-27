@@ -1,45 +1,45 @@
-# 屏蔽不生效排查 + 行为语义
+# Troubleshooting "mute not working" + behavior semantics
 
-## "屏蔽了还在告警"排查链
+## "I muted it but it's still alerting" troubleshooting chain
 
-引擎匹配函数 `alert/mute/mute.go:MatchMute` 按以下顺序判断，**任何一关不过就不屏蔽**。按序核对：
+The engine match function `alert/mute/mute.go:MatchMute` judges in the following order, and **if any gate fails, the event is not muted**. Check in order:
 
-| # | 检查项 | 不过的常见原因 |
+| # | Check item | Common reasons it fails |
 |---|---|---|
-| 0 | 缓存同步 | 刚改完规则，内存缓存最多延迟 **9 秒**；过期的固定时段屏蔽不会被加载进缓存 |
-| 1 | 业务组 | 屏蔽按 `group_id` 隔离，**事件所属业务组和屏蔽规则不在同一业务组**（最常见根因之一） |
-| 2 | `disabled` | 规则被禁用（`disabled=1`） |
-| 3 | 数据源 | `datasource_ids` 非全部（不含 0）且事件的 `datasource_id` 不在列表里 |
-| 4 | 时间 | 固定时段：事件触发时间不在 `[btime, etime]` 闭区间；周期：星期或 HH:mm 时段没命中（用的是 n9e 进程本地时区；0=周日） |
-| 5 | 级别 | `severities` 非空且事件级别不在其中 |
-| 6 | 标签 | `tags` 多条是 AND，事件少任何一个标签或值不匹配就不屏蔽；`in` 的 value 写成逗号分隔也会失配（必须空格） |
+| 0 | Cache sync | Just changed a rule; the in-memory cache lags by at most **9 seconds**; expired fixed-period mutes are not loaded into the cache |
+| 1 | Business group | Muting is isolated by `group_id`; **the event's business group and the mute rule are not in the same business group** (one of the most common root causes) |
+| 2 | `disabled` | The rule is disabled (`disabled=1`) |
+| 3 | Datasource | `datasource_ids` is not all (does not contain 0) and the event's `datasource_id` is not in the list |
+| 4 | Time | Fixed period: the event trigger time is not in the closed interval `[btime, etime]`; periodic: the weekday or HH:mm period did not match (uses the n9e process's local timezone; 0=Sunday) |
+| 5 | Severity | `severities` is non-empty and the event severity is not in it |
+| 6 | Tags | Multiple `tags` are AND'd; if the event is missing any one tag or value mismatch, it is not muted; writing the `in` value as comma-separated will also mismatch (must be spaces) |
 
-另注意：屏蔽只拦**新评估出的事件**。事件早已产生、活跃告警还挂着 → 屏蔽不会清掉它（见下方行为语义）。
+Also note: muting only blocks **newly evaluated events**. If an event was already produced and the active alert is still hanging there → muting will not clear it (see behavior semantics below).
 
-## 行为语义（回答用户疑问时引用）
+## Behavior semantics (cite when answering user questions)
 
-| 行为 | 语义 |
+| Behavior | Semantics |
 |---|---|
-| 被屏蔽的事件去哪了 | 评估阶段直接丢弃（`alert/process/process.go`）：**不落库（无活跃/历史记录）、不发通知**，只在服务端日志和 mute 计数指标里留痕 |
-| 屏蔽期间会误恢复吗 | 不会。被屏蔽事件的 hash 仍记入 alerting 集合，已触发的告警不会因屏蔽被判定为"已恢复" |
-| 屏蔽影响已有活跃告警吗 | 不影响。屏蔽前已产生的活跃告警继续挂在列表里；屏蔽生效后它不再收到新通知（新事件被拦了），但记录不会被清理 |
-| 过期屏蔽会自动删吗 | **不会**。过期的固定时段屏蔽留在 DB（前端可用 `expired=1` 查询），只是不再加载进匹配缓存。管理员可用批量清理 API（`DELETE /api/n9e/alert-mutes`）后台清理；周期屏蔽不会被清理 |
-| `Activated` 字段 | 前端展示字段，表示"此刻是否在生效时段内"，由查询时计算，非存储状态 |
-| 改动多久生效 | 缓存每 9 秒轮询一次 DB 统计，有变化才重载；**最多 9 秒**，无需重启 |
-| prod/cate/cluster 参与匹配吗 | **不参与**，仅存储展示 |
+| Where do muted events go | Dropped directly during the evaluation stage (`alert/process/process.go`): **not persisted (no active/historical record), no notification sent**; only leaves a trace in the server log and the mute count metric |
+| Will it falsely recover during the mute | No. The hash of a muted event is still recorded into the alerting set, so an already-triggered alert will not be judged as "recovered" because of muting |
+| Does muting affect existing active alerts | No. Active alerts produced before muting continue to hang in the list; after muting takes effect, they no longer receive new notifications (new events are blocked), but the records are not cleared |
+| Are expired mutes deleted automatically | **No.** Expired fixed-period mutes remain in the DB (the frontend can query them with `expired=1`); they are just no longer loaded into the matching cache. Admins can clean up in the background via the bulk cleanup API (`DELETE /api/n9e/alert-mutes`); periodic mutes are not cleaned up |
+| `Activated` field | A frontend display field indicating "whether it is within the effective period at this moment", computed at query time, not a stored state |
+| How long until a change takes effect | The cache polls the DB stats every 9 seconds and reloads only when there is a change; **at most 9 seconds**, no restart needed |
+| Do prod/cate/cluster participate in matching | **No**, stored for display only |
 
-## 其他坑
+## Other gotchas
 
-| 现象 | 原因 | 处理 |
+| Symptom | Cause | Handling |
 |---|---|---|
-| `etime <= btime` 报错 | Verify 硬校验，周期屏蔽也要求 | 用工具的 `duration` 参数或省略 btime/etime 让工具自动补 |
-| 周期屏蔽到了 btime/etime 边界行为不符预期 | 当前实现周期匹配**不看** btime/etime，只看星期+时段 | 想要"只在某月生效的周期屏蔽"，目前要到期手动禁用/删除 |
-| `enable_days_of_week` 写 `1-5` 或 `周一到周五` 不生效 | 引擎按空格分隔的数字串做 contains 匹配 | 写 `"1 2 3 4 5"`，或用工具识别的别名 `"工作日"` |
-| tags 写了 `key` 但 `value` 留空 | 空值参与精确匹配，多半失配 | 确认真实标签值；不确定时先看一条真实事件的标签 |
-| 想屏蔽"某条告警规则" | 事件标签里有 `rulename` | 用 `{"key":"rulename","func":"==","value":"<规则名>"}`，规则名变更后记得同步 |
-| 大范围误屏蔽 | tags 空数组 = 屏蔽业务组内全部告警 | 创建前跟用户确认；排障时先查有没有"无条件屏蔽"规则在生效 |
+| `etime <= btime` error | Verify's hard validation, required for periodic mutes too | Use the tool's `duration` parameter, or omit btime/etime and let the tool fill them in automatically |
+| Behavior at the periodic-mute btime/etime boundary is unexpected | The current implementation's periodic matching **does not look at** btime/etime, only the weekday + time period | To get a "periodic mute that only takes effect in a certain month", you currently have to manually disable/delete it when it expires |
+| `enable_days_of_week` written as `1-5` or `Monday to Friday` does not work | The engine does a contains match on the space-separated digit string | Write `"1 2 3 4 5"`, or use a tool-recognized alias such as `"weekday"` |
+| tags has `key` but `value` left empty | An empty value participates in exact matching and mostly mismatches | Confirm the real tag value; when unsure, first look at the tags of one real event |
+| Want to mute "a certain alert rule" | The event tags contain `rulename` | Use `{"key":"rulename","func":"==","value":"<rule name>"}`; remember to sync after the rule name changes |
+| Large-scope accidental muting | An empty tags array = mute all alerts within the business group | Confirm with the user before creating; when troubleshooting, first check whether an "unconditional mute" rule is in effect |
 
-## 验证手段
+## Verification methods
 
-- 站内：`get_alert_mute_detail` 核对字段；`list_alert_mutes` 查同业务组是否有别的屏蔽规则干扰判断。
-- HTTP（给用户出指令）：`POST /api/n9e/busi-group/:id/alert-mutes/preview` 预览会被该屏蔽命中的活跃事件；`POST /api/n9e/alert-mute-tryrun` 用规则草稿试跑。见 `http-api.md`。
+- In-app: `get_alert_mute_detail` to verify fields; `list_alert_mutes` to check whether other mute rules in the same business group interfere with the judgment.
+- HTTP (give the user commands): `POST /api/n9e/busi-group/:id/alert-mutes/preview` previews the active events that would be hit by the mute; `POST /api/n9e/alert-mute-tryrun` does a trial run with a rule draft. See `http-api.md`.

@@ -1,24 +1,24 @@
-# Elasticsearch / OpenSearch 告警规则
+# Elasticsearch / OpenSearch alert rules
 
 ## Elasticsearch
 
 - `prod`: `"logging"`
 - `cate`: `"elasticsearch"`
-- `recover_config.judge_type`: `0`（日志类型）
+- `recover_config.judge_type`: `0` (log type)
 
 ## OpenSearch
 
 - `prod`: `"logging"`
 - `cate`: `"opensearch"`
-- 结构与 Elasticsearch **完全相同**，只是 `cate` 不同，且不支持 `index_pattern`
+- The structure is **exactly the same** as Elasticsearch, only `cate` differs, and `index_pattern` is not supported
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：count 等单值查询用 `$<ref>`，如 `$A > 100`
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A > 10 && $B < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: use `$<ref>` for single-value queries such as count, e.g. `$A > 100`
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A > 10 && $B < 5"`
 
-## rule_config 结构
+## rule_config structure
 
 ```json
 {
@@ -55,25 +55,25 @@
 }
 ```
 
-## query 字段说明
+## query field reference
 
-| 字段 | 说明 |
+| Field | Description |
 |---|---|
-| `index_type` | `"index"` 或 `"index_pattern"`（OpenSearch 不支持 index_pattern） |
-| `index` | 索引名，支持通配符如 `logs-*` |
-| `filter` | ES 查询过滤条件 |
-| `date_field` | 时间字段名，通常为 `@timestamp` |
-| `interval` | 查询聚合时间窗口，**单位：总秒数**（60=1分钟，300=5分钟，3600=1小时）。**不要写 `interval_unit`** |
-| `value.func` | 聚合函数：`count` / `avg` / `sum` / `max` / `min` / `p90` / `p95` / `p99` |
-| `value.field` | 聚合字段名（`count` 时不需要） |
-| `group_by` | 分组配置，`cate` 可选 `terms` / `filters` / `histogram` |
+| `index_type` | `"index"` or `"index_pattern"` (OpenSearch does not support index_pattern) |
+| `index` | Index name, supports wildcards such as `logs-*` |
+| `filter` | ES query filter condition |
+| `date_field` | Time field name, usually `@timestamp` |
+| `interval` | Query aggregation time window, **unit: total seconds** (60=1 minute, 300=5 minutes, 3600=1 hour). **Do not write `interval_unit`** |
+| `value.func` | Aggregation function: `count` / `avg` / `sum` / `max` / `min` / `p90` / `p95` / `p99` |
+| `value.field` | Aggregation field name (not needed for `count`) |
+| `group_by` | Grouping configuration; `cate` can be `terms` / `filters` / `histogram` |
 
-## 完整示例（Elasticsearch）
+## Complete example (Elasticsearch)
 
 ```json
 [{
-  "name": "ES错误日志过多",
-  "note": "5分钟内错误日志超过100条",
+  "name": "Too many ES error logs",
+  "note": "More than 100 error logs within 5 minutes",
   "prod": "logging",
   "cate": "elasticsearch",
   "datasource_ids": [2],

@@ -1,12 +1,12 @@
-# PostgreSQL 查询
+# PostgreSQL Queries
 
 - **plugin_type**: `pgsql`
-- **查询语言**: SQL
-- **适用场景**: 指标查询
+- **Query language**: SQL
+- **Use case**: Metric queries
 
 ---
 
-## 查询数据库列表
+## Query Database List
 
 ```
 POST /api/n9e/db-databases
@@ -15,7 +15,7 @@ Content-Type: application/json
 Body: {"cate": "pgsql", "datasource_id": 1, "query": []}
 ```
 
-## 查询表列表
+## Query Table List
 
 ```
 POST /api/n9e/db-tables
@@ -24,7 +24,7 @@ Content-Type: application/json
 Body: {"cate": "pgsql", "datasource_id": 1, "query": ["database_name"]}
 ```
 
-## 查询表结构
+## Query Table Structure
 
 ```
 POST /api/n9e/db-desc-table
@@ -35,7 +35,7 @@ Body: {"cate": "pgsql", "datasource_id": 1, "query": [{"database": "mydb", "tabl
 
 ---
 
-## 执行时序查询
+## Run a Time-Series Query
 
 ```
 POST /api/n9e/ds-query
@@ -62,25 +62,25 @@ Content-Type: application/json
 
 ---
 
-## 查询参数
+## Query Parameters
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `sql` | string | 是 | SQL 查询语句，支持 `$from`、`$to` 时间变量 |
-| `keys.valueKey` | string | 否 | 数值列名（时序查询必填），多个用空格分隔 |
-| `keys.labelKey` | string | 否 | 标签/分组列名，多个用空格分隔 |
-| `keys.timeKey` | string | 否 | 时间列名 |
+| `sql` | string | Yes | SQL query statement, supports `$from` and `$to` time variables |
+| `keys.valueKey` | string | No | Numeric column name (required for time-series queries); separate multiple with spaces |
+| `keys.labelKey` | string | No | Label/grouping column name; separate multiple with spaces |
+| `keys.timeKey` | string | No | Time column name |
 
-## 常用 SQL 示例
+## Common SQL Examples
 
-| 需求 | SQL |
+| Requirement | SQL |
 |---|---|
-| 按分钟聚合计数 | `SELECT date_trunc('minute', created_at) AS ts, COUNT(*) AS value FROM events WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY ts ORDER BY ts` |
-| 按字段分组统计 | `SELECT status, COUNT(*) AS value FROM events WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY status` |
-| 计算百分位 | `SELECT date_trunc('minute', created_at) AS ts, percentile_cont(0.95) WITHIN GROUP (ORDER BY response_time) AS value FROM requests WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY ts ORDER BY ts` |
+| Count aggregated per minute | `SELECT date_trunc('minute', created_at) AS ts, COUNT(*) AS value FROM events WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY ts ORDER BY ts` |
+| Group statistics by field | `SELECT status, COUNT(*) AS value FROM events WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY status` |
+| Compute percentile | `SELECT date_trunc('minute', created_at) AS ts, percentile_cont(0.95) WITHIN GROUP (ORDER BY response_time) AS value FROM requests WHERE created_at >= to_timestamp($from) AND created_at < to_timestamp($to) GROUP BY ts ORDER BY ts` |
 
-## 注意事项
+## Considerations
 
-- **只读**：禁止 CREATE、INSERT、UPDATE、DELETE、ALTER、DROP 等写操作
-- **时间变量**：`$from` 和 `$to` 为 Unix 时间戳（秒），需用 `to_timestamp()` 转换
-- **时间聚合**：使用 `date_trunc('minute', col)` 做时间分桶
+- **Read-only**: Write operations such as CREATE, INSERT, UPDATE, DELETE, ALTER, DROP are prohibited
+- **Time variables**: `$from` and `$to` are Unix timestamps (seconds) and must be converted with `to_timestamp()`
+- **Time aggregation**: Use `date_trunc('minute', col)` for time bucketing

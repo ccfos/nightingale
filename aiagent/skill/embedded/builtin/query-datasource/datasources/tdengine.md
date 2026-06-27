@@ -1,14 +1,14 @@
-# TDengine 查询
+# TDengine Queries
 
 - **plugin_type**: `tdengine`
-- **查询语言**: SQL（TDengine 方言）
-- **适用场景**: 时序查询
+- **Query language**: SQL (TDengine dialect)
+- **Use case**: Time-series queries
 
-TDengine 有独立的元数据查询端点，与通用 SQL 数据源不同。
+TDengine has dedicated metadata query endpoints, different from the generic SQL datasources.
 
 ---
 
-## 查询数据库列表
+## Query Database List
 
 ```
 POST /api/n9e/tdengine-databases
@@ -23,7 +23,7 @@ Content-Type: application/json
 }
 ```
 
-## 查询表列表
+## Query Table List
 
 ```
 POST /api/n9e/tdengine-tables
@@ -40,12 +40,12 @@ Content-Type: application/json
 }
 ```
 
-| 字段 | 说明 |
+| Field | Description |
 |---|---|
-| `db` | 数据库名 |
-| `is_stable` | `false`=普通表, `true`=超级表(stable) |
+| `db` | Database name |
+| `is_stable` | `false`=regular table, `true`=super table (stable) |
 
-## 查询表字段
+## Query Table Columns
 
 ```
 POST /api/n9e/tdengine-columns
@@ -64,7 +64,7 @@ Content-Type: application/json
 
 ---
 
-## 执行时序查询
+## Run a Time-Series Query
 
 ```
 POST /api/n9e/ds-query
@@ -95,37 +95,37 @@ Content-Type: application/json
 
 ---
 
-## 查询参数
+## Query Parameters
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `query` | string | 是 | TDengine SQL 查询，支持 `$from`、`$to`、`$interval` 变量 |
-| `from` | string | 是 | 开始时间，ISO 8601 格式 |
-| `to` | string | 是 | 结束时间，ISO 8601 格式 |
-| `interval` | int | 否 | 采样间隔数值 |
-| `interval_unit` | string | 否 | 间隔单位：`s`（秒）、`m`（分）、`h`（小时） |
-| `keys.metricKey` | string | 否 | 数值列名 |
-| `keys.labelKey` | string | 否 | 标签/分组列名 |
-| `keys.timeFormat` | string | 否 | 时间格式 |
+| `query` | string | Yes | TDengine SQL query, supports `$from`, `$to`, `$interval` variables |
+| `from` | string | Yes | Start time, ISO 8601 format |
+| `to` | string | Yes | End time, ISO 8601 format |
+| `interval` | int | No | Sampling interval value |
+| `interval_unit` | string | No | Interval unit: `s` (seconds), `m` (minutes), `h` (hours) |
+| `keys.metricKey` | string | No | Numeric column name |
+| `keys.labelKey` | string | No | Label/grouping column name |
+| `keys.timeFormat` | string | No | Time format |
 
-## 时间变量
+## Time Variables
 
-| 变量 | 说明 |
+| Variable | Description |
 |---|---|
-| `$from` | 开始时间 |
-| `$to` | 结束时间 |
-| `$interval` | 采样间隔，如 `60s` |
+| `$from` | Start time |
+| `$to` | End time |
+| `$interval` | Sampling interval, e.g. `60s` |
 
-## 常用 SQL 示例
+## Common SQL Examples
 
-| 需求 | SQL |
+| Requirement | SQL |
 |---|---|
-| 按间隔聚合平均值 | `SELECT _wstart AS ts, AVG(current) AS value FROM power.meters WHERE ts >= $from AND ts < $to INTERVAL($interval)` |
-| 按标签分组 | `SELECT _wstart AS ts, location, AVG(current) AS value FROM power.meters WHERE ts >= $from AND ts < $to PARTITION BY location INTERVAL($interval)` |
-| 最新值 | `SELECT LAST(current) AS value, location FROM power.meters GROUP BY location` |
+| Aggregate average by interval | `SELECT _wstart AS ts, AVG(current) AS value FROM power.meters WHERE ts >= $from AND ts < $to INTERVAL($interval)` |
+| Group by label | `SELECT _wstart AS ts, location, AVG(current) AS value FROM power.meters WHERE ts >= $from AND ts < $to PARTITION BY location INTERVAL($interval)` |
+| Latest value | `SELECT LAST(current) AS value, location FROM power.meters GROUP BY location` |
 
-## 注意事项
+## Considerations
 
-- **专用 API**：元数据查询（databases/tables/columns）使用 `/tdengine-*` 专用端点，不走通用 `/db-*` 端点
-- **超级表**：查询 stable（超级表）时设 `is_stable: true`
-- **INTERVAL**：TDengine 的 `INTERVAL()` 子句用于时间窗口聚合，结合 `_wstart` 获取窗口起始时间
+- **Dedicated API**: Metadata queries (databases/tables/columns) use the dedicated `/tdengine-*` endpoints, not the generic `/db-*` endpoints
+- **Super table**: Set `is_stable: true` when querying a stable (super table)
+- **INTERVAL**: TDengine's `INTERVAL()` clause is used for time-window aggregation; combine it with `_wstart` to get the window start time

@@ -1,12 +1,12 @@
-# Doris 查询
+# Doris Queries
 
 - **plugin_type**: `doris`
-- **查询语言**: SQL（MySQL 兼容方言）
-- **适用场景**: 日志查询
+- **Query language**: SQL (MySQL-compatible dialect)
+- **Use case**: Log queries
 
 ---
 
-## 查询数据库列表
+## Query Database List
 
 ```
 POST /api/n9e/db-databases
@@ -15,7 +15,7 @@ Content-Type: application/json
 Body: {"cate": "doris", "datasource_id": 1, "query": []}
 ```
 
-## 查询表列表
+## Query Table List
 
 ```
 POST /api/n9e/db-tables
@@ -24,7 +24,7 @@ Content-Type: application/json
 Body: {"cate": "doris", "datasource_id": 1, "query": ["database_name"]}
 ```
 
-## 查询表结构
+## Query Table Structure
 
 ```
 POST /api/n9e/db-desc-table
@@ -35,7 +35,7 @@ Body: {"cate": "doris", "datasource_id": 1, "query": [{"database": "logs_db", "t
 
 ---
 
-## 执行日志查询
+## Run a Log Query
 
 ```
 POST /api/n9e/logs-query
@@ -58,7 +58,7 @@ Content-Type: application/json
 }
 ```
 
-## 执行时序查询
+## Run a Time-Series Query
 
 ```
 POST /api/n9e/ds-query
@@ -88,21 +88,21 @@ Content-Type: application/json
 
 ---
 
-## 查询参数
+## Query Parameters
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `sql` | string | 是 | SQL 查询语句，支持 `$from`、`$to` 时间变量 |
-| `from` | int64 | 是 | 开始时间，Unix 时间戳（秒） |
-| `to` | int64 | 是 | 结束时间，Unix 时间戳（秒） |
-| `database` | string | 是 | 数据库名（Doris 必填） |
-| `keys.valueKey` | string | 否 | 数值列名（时序查询必填） |
-| `keys.labelKey` | string | 否 | 标签/分组列名 |
-| `keys.timeKey` | string | 否 | 时间列名 |
+| `sql` | string | Yes | SQL query statement, supports `$from` and `$to` time variables |
+| `from` | int64 | Yes | Start time, Unix timestamp (seconds) |
+| `to` | int64 | Yes | End time, Unix timestamp (seconds) |
+| `database` | string | Yes | Database name (required for Doris) |
+| `keys.valueKey` | string | No | Numeric column name (required for time-series queries) |
+| `keys.labelKey` | string | No | Label/grouping column name |
+| `keys.timeKey` | string | No | Time column name |
 
-## 注意事项
+## Considerations
 
-- **只读**：禁止写操作
-- **database 必填**：Doris 查询必须指定 `database` 字段
-- **时间函数**：支持 `DATE_TRUNC()`、`NOW()`、`FROM_UNIXTIME()` 等
-- **MySQL 兼容**：Doris SQL 语法与 MySQL 基本兼容
+- **Read-only**: Write operations are prohibited
+- **database is required**: A Doris query must specify the `database` field
+- **Time functions**: Supports `DATE_TRUNC()`, `NOW()`, `FROM_UNIXTIME()`, etc.
+- **MySQL compatible**: Doris SQL syntax is largely compatible with MySQL

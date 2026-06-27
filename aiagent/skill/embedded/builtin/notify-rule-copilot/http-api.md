@@ -1,39 +1,39 @@
-# 通知规则 HTTP API（外部 A2A agent / 给用户出 curl 指令时用）
+# Notify rule HTTP API (for external A2A agents / when producing curl commands for the user)
 
-> 站内 AI 助手**不要**走这些接口（用内置 FC 工具）；本文件供外部 agent 程序化操作、或站内向用户解释"自己怎么用 curl 改"时引用。认证：`Authorization: Bearer <token>`。
+> The in-app AI assistant should **not** use these endpoints (use the built-in FC tools); this file is for external agents operating programmatically, or for the in-app assistant to reference when explaining to a user "how to change it themselves with curl". Authentication: `Authorization: Bearer <token>`.
 
-## 路径 A：HTTP API（可程序化）
+## Path A: HTTP API (programmable)
 
-| 操作 | 方法 | 路径 | 注意 |
+| Operation | Method | Path | Notes |
 |---|---|---|---|
-| 列表 | `GET` | `/api/n9e/notify-rules` | 仅返回当前用户授权团队下的规则 |
-| 详情 | `GET` | `/api/n9e/notify-rule/<id>` | |
-| 创建 | `POST` | `/api/n9e/notify-rules` | **Body 必须是数组**，即使只建 1 条：`[{...}]` |
-| 更新 | `PUT` | `/api/n9e/notify-rule/<id>` | Body 是单对象，会**整体替换**——必须先 GET 再改再 PUT |
-| 删除 | `POST` | `/api/n9e/notify-rules/del` | Body: `{"ids":[1,2,3]}` |
-| 测试发送 | `POST` | `/api/n9e/notify-rule/test` | Body: `{"event_ids":[<history_event_id>], "notify_config":{...}}` |
-| 拿自定义 webhook 参数 | `GET` | `/api/n9e/notify-rule/custom-params?notify_channel_id=<id>` | 用于复制其他规则的自定义参数 |
-| 可用媒介列表 | `GET` | `/api/n9e/notify-channel-configs` | 拿 channel_id |
-| 模板列表 | `GET` | `/api/n9e/message-templates?channel_id=<id>` | 拿 template_id |
-| 事件标签 key | `GET` | `/api/n9e/event-tagkeys` | label_keys 可选 key |
+| List | `GET` | `/api/n9e/notify-rules` | Returns only the rules under the current user's authorized teams |
+| Detail | `GET` | `/api/n9e/notify-rule/<id>` | |
+| Create | `POST` | `/api/n9e/notify-rules` | **Body must be an array**, even when creating just 1: `[{...}]` |
+| Update | `PUT` | `/api/n9e/notify-rule/<id>` | Body is a single object and **replaces wholesale** — you must GET first, modify, then PUT |
+| Delete | `POST` | `/api/n9e/notify-rules/del` | Body: `{"ids":[1,2,3]}` |
+| Test send | `POST` | `/api/n9e/notify-rule/test` | Body: `{"event_ids":[<history_event_id>], "notify_config":{...}}` |
+| Fetch custom webhook params | `GET` | `/api/n9e/notify-rule/custom-params?notify_channel_id=<id>` | Used to copy another rule's custom parameters |
+| Available media list | `GET` | `/api/n9e/notify-channel-configs` | Get channel_id |
+| Template list | `GET` | `/api/n9e/message-templates?channel_id=<id>` | Get template_id |
+| Event label keys | `GET` | `/api/n9e/event-tagkeys` | Selectable keys for label_keys |
 
-**编辑动作的正确姿势**：
+**The correct way to edit**:
 
 ```text
-1. GET /api/n9e/notify-rule/<id>      → 拿到完整 NotifyRule JSON
-2. 在本地修改某个字段（如 notify_configs[1].severities = [1]）
-3. PUT /api/n9e/notify-rule/<id>      → 整体提交回去
+1. GET /api/n9e/notify-rule/<id>      → get the complete NotifyRule JSON
+2. Modify a field locally (e.g. notify_configs[1].severities = [1])
+3. PUT /api/n9e/notify-rule/<id>      → submit the whole thing back
 ```
 
-**不要试图 PATCH 局部更新**——PUT 走的是 `Update(...).Select("*")`（`models/notify_rule.go`），未传字段会被清空。
+**Do not attempt a partial PATCH update** — PUT goes through `Update(...).Select("*")` (`models/notify_rule.go`), and fields not passed will be cleared.
 
-## 路径 B：UI
+## Path B: UI
 
-- 入口：`告警管理 → 通知规则`
-- 适用：用户对 API 不熟、字段少、不熟悉 JSON 结构。
+- Entry: `Alert management → Notify rules`
+- Suitable for: users unfamiliar with the API, with few fields, who aren't comfortable with the JSON structure.
 
-## 路径 C：直改 DB（最后手段）
+## Path C: directly modify the DB (last resort)
 
-- 表 `notify_rule`，`notify_configs` / `pipeline_configs` / `user_group_ids` 都是 JSON 字段。
-- n9e 内存里有 `NotifyRuleCache`，改完会被缓存层在 ~9s 内自动重载，无需重启。
-- 改前 `mysqldump -t notify_rule > backup.sql`。
+- Table `notify_rule`; `notify_configs` / `pipeline_configs` / `user_group_ids` are all JSON fields.
+- n9e has a `NotifyRuleCache` in memory; after a change, the cache layer auto-reloads it within ~9s, no restart needed.
+- Before changing, run `mysqldump -t notify_rule > backup.sql`.

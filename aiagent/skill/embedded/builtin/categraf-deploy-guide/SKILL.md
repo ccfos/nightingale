@@ -1,73 +1,73 @@
 ---
 name: categraf-deploy-guide
-description: 解答"如何部署 categraf 采集器"。触发场景：用户问"怎么装 categraf / categraf 怎么部署 / 用 Docker 跑 categraf / Windows 装 categraf / categraf 怎么注册成系统服务 / categraf 上报到夜莺 / categraf config.toml 怎么写 / 怎么验证 categraf 采集到数据"。覆盖二进制+systemd、Docker、Windows、K8s 提示、关键配置、常见验证命令。本 skill 是教学/指引型，不调任何工具，输出可粘贴执行的命令与配置片段。
+description: Answers "how do I deploy the categraf collector". Trigger scenarios: the user asks "how to install categraf / how to deploy categraf / run categraf with Docker / install categraf on Windows / how to register categraf as a system service / report categraf to Nightingale / how to write categraf config.toml / how to verify that categraf is collecting data". Covers binary + systemd, Docker, Windows, K8s tips, key configuration, and common verification commands. This skill is instructional/guidance-oriented, calls no tools, and outputs ready-to-paste commands and configuration snippets.
 tags:
   - internal
 ---
 
-# Categraf 部署指南
+# Categraf Deployment Guide
 
-## 适用范围
+## Scope
 
-**进本 skill**：
-- "categraf 怎么装 / 怎么部署 / 怎么启动"
-- "Docker / Kubernetes / Windows / Linux 上跑 categraf"
-- "categraf 怎么注册成 systemd 服务 / 开机自启"
-- "categraf 上报到夜莺 / config.toml 怎么写 / writer 地址写啥"
-- "怎么验证 categraf 采集到了数据"
-- "categraf 装好了但夜莺看不到机器" → **不进本 skill**，转 `host-onboard-diagnose`
+**Enter this skill**:
+- "how to install / how to deploy / how to start categraf"
+- "run categraf on Docker / Kubernetes / Windows / Linux"
+- "how to register categraf as a systemd service / start on boot"
+- "report categraf to Nightingale / how to write config.toml / what to put in the writer URL"
+- "how to verify that categraf is collecting data"
+- "categraf is installed but Nightingale can't see the machine" → **do not enter this skill**, route to `host-onboard-diagnose`
 
-**不进本 skill**：
-- 已装但接入失败的诊断 → `host-onboard-diagnose`
-- 已接入但指标异常 → `host-health-diagnose`
-- 配置某个具体 input 插件（mysql / redis / nginx / snmp 等）的采集 → 引导用户查 `conf/input.<name>/` 下的注释，本 skill 只做"装起来 + 通起来"
+**Do not enter this skill**:
+- Diagnosing onboarding failures after install → `host-onboard-diagnose`
+- Abnormal metrics after onboarding → `host-health-diagnose`
+- Configuring collection for a specific input plugin (mysql / redis / nginx / snmp, etc.) → guide the user to read the comments under `conf/input.<name>/`; this skill only covers "get it installed + get it connected"
 
-## 一句话原则
+## One-Sentence Principle
 
-**categraf 部署 = 三个动作**：拿到二进制 → 写对 `config.toml` 的 `[[writers]]` → 启动并验证。其他都是这三步的变体（容器化、systemd 托管、Windows 服务等）。
+**categraf deployment = three actions**: get the binary → correctly write the `[[writers]]` section of `config.toml` → start it and verify. Everything else is a variant of these three steps (containerization, systemd management, Windows service, etc.).
 
-## 部署方式速查
+## Deployment Methods Quick Reference
 
-| 场景 | 推荐方式 | 说明 |
+| Scenario | Recommended method | Notes |
 |---|---|---|
-| Linux 物理机 / VM | **二进制 + systemd** | v0.3.35+ 内置 `--install` 一行注册 |
-| Linux 但无 root | 二进制 + `--user --install` | v0.4.5+ 支持 |
-| 容器/编排环境 | **Docker** 或 K8s DaemonSet | 采集宿主机指标需挂 `/proc /sys` |
-| Windows | `categraf.exe --win-service-install` | 或 `win_run.bat` 后台运行 |
-| macOS（开发/调试） | 二进制直跑 | 生产不建议 |
+| Linux physical machine / VM | **binary + systemd** | v0.3.35+ has a built-in `--install` one-liner to register |
+| Linux but no root | binary + `--user --install` | supported in v0.4.5+ |
+| Container / orchestration environment | **Docker** or K8s DaemonSet | collecting host metrics requires mounting `/proc /sys` |
+| Windows | `categraf.exe --win-service-install` | or run in the background with `win_run.bat` |
+| macOS (development/debugging) | run the binary directly | not recommended for production |
 
-操作系统支持：Linux 内核 2.6.32+ / Windows 10+ 或 Server 2008+ / macOS 10.15+。
+Operating system support: Linux kernel 2.6.32+ / Windows 10+ or Server 2008+ / macOS 10.15+.
 
-## 第一步：拿到二进制
+## Step 1: Get the Binary
 
-下载地址（任选其一）：
-- 官方下载中心：https://flashcat.cloud/download/categraf/
-- GitHub releases：https://github.com/flashcatcloud/categraf/releases
+Download URLs (pick either one):
+- Official download center: https://flashcat.cloud/download/categraf/
+- GitHub releases: https://github.com/flashcatcloud/categraf/releases
 
-包命名规则：`categraf-{version}-{os}-{arch}.tar.gz`，例如 `categraf-v0.3.35-linux-amd64.tar.gz`。**先确认架构**（`uname -m`：x86_64 选 amd64，aarch64 选 arm64）。
+Package naming convention: `categraf-{version}-{os}-{arch}.tar.gz`, for example `categraf-v0.3.35-linux-amd64.tar.gz`. **Confirm the architecture first** (`uname -m`: choose amd64 for x86_64, arm64 for aarch64).
 
-解压后目录结构：
+Directory structure after extraction:
 
 ```
 categraf/
-├── categraf              # 主程序
+├── categraf              # main program
 └── conf/
-    ├── config.toml       # 主配置（hostname / writers / heartbeat）
-    └── input.*/          # 各类采集插件的子配置目录
+    ├── config.toml       # main config (hostname / writers / heartbeat)
+    └── input.*/          # sub-config directories for the various collection plugins
 ```
 
-## 第二步：写对 `conf/config.toml`
+## Step 2: Correctly Write `conf/config.toml`
 
-最小可用配置（上报到夜莺 n9e）：
+Minimal working configuration (reporting to Nightingale n9e):
 
 ```toml
 [global]
-hostname = ""                  # 留空让 categraf 自动取主机名；多机重名时显式指定
-interval = 15                  # 全局采集频率（秒）
+hostname = ""                  # leave empty to let categraf auto-detect the hostname; specify explicitly when multiple machines share a name
+interval = 15                  # global collection frequency (seconds)
 providers = ["local"]
 
 [global.labels]
-# region = "shanghai"          # 全局附加标签，可选
+# region = "shanghai"          # global extra labels, optional
 # env = "prod"
 
 [[writers]]
@@ -79,39 +79,39 @@ dial_timeout = 2500
 max_idle_conns_per_host = 100
 
 [heartbeat]
-enable = true                  # 必须开，否则夜莺机器列表看不到这台机器
+enable = true                  # must be enabled, otherwise this machine won't appear in the Nightingale machine list
 url = "http://N9E_HOST:17000/api/n9e/heartbeat"
 interval = 10
 ```
 
-**关键字段**：
-- `[[writers]].url`：n9e 的 remote write 接收端点，路径固定 `/prometheus/v1/write`，端口默认 17000。
-- `[heartbeat].enable=true` + `[heartbeat].url`：心跳上报，让"机器列表"能看到这台机器；**漏配 → 装了也看不到**。
-- `[global].hostname`：留空走系统 hostname；如果 `hostname` 命令在容器/克隆机里取出来全是 `localhost.localdomain` 这种重名，**必须显式指定**，否则不同机器会互相覆盖。
-- `[global].labels`：全局打 tag，写好区分维度（region / env / idc）后面建大盘和告警很省心。
+**Key fields**:
+- `[[writers]].url`: n9e's remote write receiving endpoint; the path is fixed at `/prometheus/v1/write`, and the default port is 17000.
+- `[heartbeat].enable=true` + `[heartbeat].url`: heartbeat reporting, which lets the "machine list" see this machine; **if missing → installed but invisible**.
+- `[global].hostname`: leave empty to use the system hostname; if the `hostname` command in a container/cloned machine returns a duplicated name like `localhost.localdomain`, **you must specify it explicitly**, otherwise different machines will overwrite each other.
+- `[global].labels`: global tags; setting good distinguishing dimensions (region / env / idc) makes building dashboards and alerts much easier later.
 
-⚠️ **不要把 `omit_hostname` 设成 true**——它会去掉 `ident` 标签，结果是机器列表 OS/agent_version 全是 unknown（常见翻车点）。
+⚠️ **Do not set `omit_hostname` to true** — it strips the `ident` label, with the result that the machine list shows OS/agent_version all as unknown (a common pitfall).
 
-## 第三步：启动与托管
+## Step 3: Start and Manage
 
-### 方案 A：Linux + systemd（v0.3.35 及以上，推荐）
+### Option A: Linux + systemd (v0.3.35 and above, recommended)
 
 ```bash
 cd /path/to/categraf
-sudo ./categraf --install      # 注册成系统服务
-sudo ./categraf --start        # 启动
-sudo ./categraf --status       # 查看状态
-sudo ./categraf --stop         # 停止
+sudo ./categraf --install      # register as a system service
+sudo ./categraf --start        # start
+sudo ./categraf --status       # check status
+sudo ./categraf --stop         # stop
 ```
 
-非 root 用户（v0.4.5+）：
+Non-root user (v0.4.5+):
 
 ```bash
 ./categraf --user --install
 ./categraf --user --start
 ```
 
-systemd 资源限制（编辑 `/etc/systemd/system/categraf.service`）：
+systemd resource limits (edit `/etc/systemd/system/categraf.service`):
 
 ```ini
 [Service]
@@ -119,11 +119,11 @@ CPUQuota=200%
 MemoryLimit=1G
 ```
 
-改完 `systemctl daemon-reload && systemctl restart categraf`。
+After editing, run `systemctl daemon-reload && systemctl restart categraf`.
 
-### 方案 B：Docker
+### Option B: Docker
 
-最小化（只采容器内/网络指标）：
+Minimal (collects only in-container/network metrics):
 
 ```bash
 docker run -td \
@@ -134,7 +134,7 @@ docker run -td \
   flashcatcloud/categraf:latest
 ```
 
-**采集宿主机 CPU/内存/磁盘**（最常用，必须挂宿主机的 `/proc` `/sys` 并用 host 网络）：
+**Collecting host CPU/memory/disk** (the most common case; you must mount the host's `/proc` `/sys` and use host networking):
 
 ```bash
 docker run -td \
@@ -151,11 +151,11 @@ docker run -td \
   flashcatcloud/categraf:latest
 ```
 
-资源限制：追加 `--cpus=2 --memory=1g`。
+Resource limits: append `--cpus=2 --memory=1g`.
 
-### 方案 C：Windows
+### Option C: Windows
 
-注册成服务：
+Register as a service:
 
 ```cmd
 categraf.exe --win-service-install
@@ -164,66 +164,66 @@ categraf.exe --win-service-stop
 categraf.exe --win-service-uninstall
 ```
 
-或者用脚本后台跑：
+Or run in the background with a script:
 
 ```cmd
 win_run.bat start
 win_run.bat stop
 ```
 
-Windows 不支持 `kill -HUP` 重载，改配置后用 `--win-service-stop` + `--win-service-start`。
+Windows does not support `kill -HUP` reload; after changing the config, use `--win-service-stop` + `--win-service-start`.
 
-### 方案 D：Kubernetes
+### Option D: Kubernetes
 
-K8s 一般用 DaemonSet（每个 Node 一份采宿主机指标）+ ConfigMap（统一下发 `config.toml`），官方 release 包里有 `k8s/` 目录给的 YAML 样例，直接 `kubectl apply -f k8s/`。**重点改两处**：
-1. ConfigMap 里的 `[[writers]].url` 和 `[heartbeat].url` 指向你的 n9e；
-2. 如果用了多集群，给 `[global.labels]` 加 `cluster = "xxx"` 区分。
+On K8s you typically use a DaemonSet (one per Node to collect host metrics) + a ConfigMap (to distribute `config.toml` uniformly). The official release package includes a `k8s/` directory with sample YAML; just run `kubectl apply -f k8s/`. **The two things you must change**:
+1. The `[[writers]].url` and `[heartbeat].url` in the ConfigMap should point to your n9e;
+2. If you use multiple clusters, add `cluster = "xxx"` to `[global.labels]` to distinguish them.
 
-## 第四步：验证
+## Step 4: Verify
 
-### 4.1 单插件调试（不会真正上报，只打印一次）
-
-```bash
-./categraf --test --inputs cpu              # 只测一个
-./categraf --test --inputs cpu:mem:disk     # 多个用冒号分隔
-```
-
-看到 stdout 出现 metric 行就说明本机采集 OK；如果报错（连接 mysql 失败 / 权限不足等），先把这一步过了再启服务。
-
-### 4.2 重载配置（不重启进程）
+### 4.1 Single-plugin debugging (does not actually report, prints once)
 
 ```bash
-kill -HUP `pidof categraf`   # Linux 专用，Windows 不支持
+./categraf --test --inputs cpu              # test just one
+./categraf --test --inputs cpu:mem:disk     # use colons to separate multiple
 ```
 
-### 4.3 在夜莺侧验证
+If metric lines appear on stdout, local collection is OK; if it errors out (failed to connect to mysql / insufficient permissions, etc.), get past this step before starting the service.
 
-- 浏览器打开 n9e → **基础设施 / 机器列表**，应能看到这台 `ident`，且 OS/CPU/agent_version 都不是 unknown。
-- 没出现 → 转 `host-onboard-diagnose` 走 5 段排障，不要在这里硬猜。
+### 4.2 Reload config (without restarting the process)
 
-### 4.4 自升级（v0.3.36+）
+```bash
+kill -HUP `pidof categraf`   # Linux-only, not supported on Windows
+```
+
+### 4.3 Verify on the Nightingale side
+
+- Open n9e in a browser → **Infrastructure / Machine List**; you should be able to see this `ident`, with OS/CPU/agent_version all not unknown.
+- If it doesn't appear → route to `host-onboard-diagnose` and run the 5-stage troubleshooting; don't guess blindly here.
+
+### 4.4 Self-upgrade (v0.3.36+)
 
 ```bash
 ./categraf --update --update_url https://download.flashcat.cloud/categraf-vX.Y.Z-linux-amd64.tar.gz
 ```
 
-## 常见踩坑（一句话版）
+## Common Pitfalls (one-liner version)
 
-| 现象 | 原因 | 修复 |
+| Symptom | Cause | Fix |
 |---|---|---|
-| 机器列表看不到 | `[heartbeat].enable=false` 或 `url` 没改 | 改 toml，重启 |
-| 机器列表 OS=unknown | `omit_hostname=true` 或 categraf 版本 < v0.2.35 | 关掉 omit_hostname，升级版本 |
-| 多台机器互相覆盖 | hostname 重名（localhost / VM 克隆） | 显式设 `[global].hostname` 或 ident shell |
-| Docker 里采不到宿主机 CPU | 没挂 `/proc /sys` 也没设 `HOST_*` env | 用上面"采宿主机"那段命令 |
-| 写入 prom 报 499 / queue full | n9e 后端 ingest 队列满 | 调 n9e 写入并发，或减少 categraf interval |
-| TLS x509 unknown authority | 用了自签证书没装 CA | writer 段加 `insecure_skip_verify = true`（仅测试），或装 CA |
-| BasicAuth 401 | n9e 开了 BasicAuth 但 categraf 没配 | 填 `basic_auth_user/pass` |
+| Not visible in the machine list | `[heartbeat].enable=false` or `url` not changed | edit the toml, restart |
+| Machine list shows OS=unknown | `omit_hostname=true` or categraf version < v0.2.35 | turn off omit_hostname, upgrade the version |
+| Multiple machines overwrite each other | duplicated hostname (localhost / VM clone) | explicitly set `[global].hostname` or an ident shell |
+| Can't collect host CPU in Docker | `/proc /sys` not mounted and `HOST_*` env not set | use the "collect host" command above |
+| Writing to prom returns 499 / queue full | n9e backend ingest queue is full | tune n9e write concurrency, or reduce the categraf interval |
+| TLS x509 unknown authority | a self-signed certificate is used without installing the CA | add `insecure_skip_verify = true` to the writer section (test only), or install the CA |
+| BasicAuth 401 | n9e has BasicAuth enabled but categraf is not configured | fill in `basic_auth_user/pass` |
 
-## 输出风格
+## Output Style
 
-- **先问清楚再给方案**：用户没说 OS / 部署形态时，先问"你是要装在 Linux 物理机、Docker 还是 K8s 上？n9e 的访问地址是什么？"
-- **每条建议都给可粘贴的命令**——不要写"修改一下配置"，要写"把 `config.toml` 里 `[[writers]].url` 改成 `http://your-n9e:17000/prometheus/v1/write`"。
-- **配置示例必须带占位符替换说明**（`N9E_HOST` 之类），让用户知道哪里要改。
-- 用户语言回答（中文用户中文，英文用户英文）。
-- 部署完后**必须提醒做一次 `--test --inputs cpu`** 和"去夜莺机器列表看一眼"，否则当下不知道有没有装通。
-- 如果用户说"装完了看不到机器" → 不要再给部署指令，直接引导到 `host-onboard-diagnose`。
+- **Clarify before giving a solution**: when the user hasn't stated the OS / deployment form, first ask "Do you want to install it on a Linux physical machine, Docker, or K8s? What is the n9e access URL?"
+- **Give a ready-to-paste command for every suggestion** — don't write "tweak the config", write "change `[[writers]].url` in `config.toml` to `http://your-n9e:17000/prometheus/v1/write`".
+- **Configuration examples must include placeholder-replacement notes** (such as `N9E_HOST`) so the user knows what to change.
+- Reply in the user's language (Chinese for Chinese users, English for English users).
+- After deployment, **always remind them to run `--test --inputs cpu` once** and "take a look at the Nightingale machine list", otherwise there's no way to know right then whether the install is working.
+- If the user says "I finished installing but can't see the machine" → don't give more deployment instructions; route them directly to `host-onboard-diagnose`.

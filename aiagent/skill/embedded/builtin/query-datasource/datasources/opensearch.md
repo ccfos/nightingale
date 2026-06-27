@@ -1,14 +1,14 @@
-# OpenSearch 查询
+# OpenSearch Queries
 
 - **plugin_type**: `opensearch`
-- **查询语言**: Elasticsearch DSL / Lucene（与 Elasticsearch 兼容）
-- **适用场景**: 日志查询
+- **Query language**: Elasticsearch DSL / Lucene (compatible with Elasticsearch)
+- **Use case**: Log queries
 
-OpenSearch 的查询方式与 Elasticsearch 完全相同，使用独立的 API 端点。
+OpenSearch is queried exactly the same way as Elasticsearch, using dedicated API endpoints.
 
 ---
 
-## 获取索引列表
+## Get Index List
 
 ```
 POST /api/n9e/os-indices
@@ -23,7 +23,7 @@ Content-Type: application/json
 }
 ```
 
-## 获取索引字段
+## Get Index Fields
 
 ```
 POST /api/n9e/os-fields
@@ -39,7 +39,7 @@ Content-Type: application/json
 }
 ```
 
-## 获取字段值
+## Get Field Values
 
 ```
 POST /api/n9e/os-variable
@@ -62,9 +62,9 @@ Content-Type: application/json
 
 ---
 
-## 搜索日志
+## Search Logs
 
-通过代理执行 `_msearch`，用法与 Elasticsearch 完全相同：
+Execute `_msearch` through the proxy; usage is exactly the same as Elasticsearch:
 
 ```
 POST /api/n9e/proxy/<datasource_id>/_msearch
@@ -77,12 +77,12 @@ Content-Type: application/x-ndjson
 {"size":50,"query":{"bool":{"filter":[{"range":{"@timestamp":{"gte":"now-1h","lte":"now","format":"strict_date_optional_time"}}},{"query_string":{"query":"level:ERROR"}}]}},"sort":[{"@timestamp":{"order":"desc"}}]}
 ```
 
-详细用法参见 [elasticsearch.md](elasticsearch.md)。
+For detailed usage, see [elasticsearch.md](elasticsearch.md).
 
 ---
 
-## 注意事项
+## Considerations
 
-- **独立端点**：元数据查询使用 `/os-indices`、`/os-fields`、`/os-variable`（不是 `/indices`、`/fields`、`/es-variable`）
-- **代理通用**：日志搜索（`_msearch`）通过通用代理 `/proxy/<id>/` 执行，与 Elasticsearch 一致
-- **查询语法相同**：DSL 和 Lucene 查询语法与 Elasticsearch 完全兼容
+- **Dedicated endpoints**: Metadata queries use `/os-indices`, `/os-fields`, `/os-variable` (not `/indices`, `/fields`, `/es-variable`)
+- **Generic proxy**: Log search (`_msearch`) is executed through the generic proxy `/proxy/<id>/`, consistent with Elasticsearch
+- **Same query syntax**: DSL and Lucene query syntax is fully compatible with Elasticsearch

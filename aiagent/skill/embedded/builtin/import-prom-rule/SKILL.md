@@ -1,14 +1,14 @@
 ---
 name: import-prom-rule
 description: |
-  **批量导入 Prometheus 告警规则 YAML 文件**（一次性建一组规则）。专用于处理远端 URL 或本地 YAML 文本，自动解析 `groups` / 纯 `rules` 数组 / 单条 rule 三种格式。
-  ⚠️ **不要用这个 skill 做单条创建**——用户用自然语言描述一条告警需求时，请改用 create-alert-rule。
-  触发：导入 / import / 批量 / URL / .yml 文件 / .yaml 文件 / awesome-prometheus-alerts / node-exporter.yml / prometheus rule file。
+  **Bulk import of a Prometheus alert rule YAML file** (create a whole set of rules at once). Dedicated to handling a remote URL or local YAML text, automatically parsing the three formats `groups` / a plain `rules` array / a single rule.
+  ⚠️ **Do not use this skill for single-rule creation** — when the user describes a single alert requirement in natural language, use create-alert-rule instead.
+  Triggers: import / import / bulk / URL / .yml file / .yaml file / awesome-prometheus-alerts / node-exporter.yml / prometheus rule file.
 examples:
-  - "帮我导入 https://raw.githubusercontent.com/.../node-exporter.yml"
-  - "把这个 yaml 里的告警都建出来"
-  - "导入 awesome-prometheus-alerts 的 mysql 那个文件"
-  - "批量建一组 redis 的告警规则，从这个文件 ..."
+  - "Help me import https://raw.githubusercontent.com/.../node-exporter.yml"
+  - "Create all the alerts in this yaml"
+  - "Import the mysql file from awesome-prometheus-alerts"
+  - "Bulk-create a set of redis alert rules from this file ..."
 builtin_tools:
   - http_fetch
   - preview_prom_rule_yaml
@@ -19,100 +19,100 @@ tags:
   - export
 ---
 
-# Skill: 导入 Prometheus 告警规则
+# Skill: Import Prometheus Alert Rules
 
-## 概述
+## Overview
 
-把 Prometheus 官方 rule YAML（含 `groups`、纯 `rules` 数组、或单条规则三种形态）批量建到 n9e。典型来源：
+Bulk-create Prometheus official rule YAML (in any of the three forms: with `groups`, a plain `rules` array, or a single rule) into n9e. Typical sources:
 
-- 远端 URL（如 GitHub raw 上的 awesome-prometheus-alerts）
-- 用户直接粘贴的 YAML 文本
+- A remote URL (e.g. awesome-prometheus-alerts on GitHub raw)
+- YAML text pasted directly by the user
 
-工作流固定四步：**抓 YAML 到文件 → 选业务组 + 数据源 → 预览 → 落库**。
+The workflow is a fixed four steps: **fetch YAML to a file → choose business group + datasource → preview → write to DB**.
 
-⚠️ **核心约束：YAML 文件不进 LLM 上下文**。`http_fetch` 用 `save_to_file=true` 把内容写到临时文件，后续 `preview_prom_rule_yaml` 和 `import_prom_rule_yaml` 都用 `payload_file` 读这个路径。文件大小可能几 KB 到几 MB，让它进 prompt 会显著拖慢、增加成本，还容易被 LLM 截断改写。
+⚠️ **Core constraint: the YAML file does not enter the LLM context**. `http_fetch` with `save_to_file=true` writes the content to a temporary file, and the subsequent `preview_prom_rule_yaml` and `import_prom_rule_yaml` both read that path via `payload_file`. The file size can range from a few KB to a few MB; letting it enter the prompt would significantly slow things down, increase cost, and make it easy for the LLM to truncate or rewrite it.
 
-## 可用工具
+## Available Tools
 
-| 工具 | 作用 |
+| Tool | Purpose |
 |---|---|
-| `http_fetch` | GET 一个公网 URL。**`save_to_file=true` 时把正文写到临时文件，返回里只含 `file_path` 不含 body**。仅 http/https，自动拒绝内网/回环地址 |
-| `preview_prom_rule_yaml` | 解析 YAML 不写库。**优先用 `payload_file` 入参**（http_fetch 返回的 file_path），避免大文件进上下文。返回每条规则的 name/severity/prom_ql 等用于让用户确认 |
-| `import_prom_rule_yaml` | 解析 YAML 并按业务组+数据源批量落库。**优先用 `payload_file`**。返回每条规则的 id 或 error |
-| `list_busi_groups` | 查可见的业务组，让用户挑 `group_id` |
-| `list_datasources` | 查数据源，按 `plugin_type=prometheus` 过滤 |
+| `http_fetch` | GET a public URL. **When `save_to_file=true`, writes the body to a temporary file; the return contains only `file_path`, not the body**. Only http/https; automatically rejects intranet/loopback addresses |
+| `preview_prom_rule_yaml` | Parse the YAML without writing to the DB. **Prefer the `payload_file` argument** (the file_path returned by http_fetch) to avoid large files entering the context. Returns each rule's name/severity/prom_ql etc. for the user to confirm |
+| `import_prom_rule_yaml` | Parse the YAML and bulk-write to the DB by business group + datasource. **Prefer `payload_file`**. Returns each rule's id or error |
+| `list_busi_groups` | List visible business groups so the user can pick a `group_id` |
+| `list_datasources` | List datasources, filtered by `plugin_type=prometheus` |
 
-## 执行步骤
+## Execution Steps
 
-### 第一步：抓 YAML 到临时文件
+### Step 1: Fetch the YAML to a temporary file
 
-**用户给了 URL** —— 一定带 `save_to_file=true`：
+**User gave a URL** — always include `save_to_file=true`:
 
 ```
 http_fetch(url="https://.../node-exporter.yml", save_to_file=true)
 ```
 
-返回是：
+The return is:
 ```json
 {"status_code":200,"content_type":"text/plain","size":8731,"truncated":false,
  "file_path":"/var/folders/.../n9e-aiagent-fetch-xxx.yml"}
 ```
 
-记住 `file_path`，后两步都要用。
+Remember the `file_path`; the last two steps both need it.
 
-**用户直接粘贴了 YAML 文本** —— 跳过 http_fetch，直接把文本作为后续工具的 `payload` 入参传（这种 case YAML 反正已经在上下文里了，没必要再落盘）。
+**User pasted YAML text directly** — skip http_fetch and pass the text directly as the `payload` argument of the subsequent tools (in this case the YAML is already in the context anyway, so there is no point writing it to disk).
 
-**异常处理**：
-- `truncated=true` 表示超过 `max_bytes`（默认 1 MiB）。再调一次 `http_fetch(url=..., save_to_file=true, max_bytes=8388608)`（8 MiB 是硬上限）。
-- `status_code` 非 2xx：把状态码告诉用户，问要不要换 URL。
-- "blocked: ... resolves to non-public address" 这类错误：用户给的是内网地址，让用户把 YAML 内容直接粘过来。
+**Error handling**:
+- `truncated=true` means it exceeds `max_bytes` (default 1 MiB). Call `http_fetch(url=..., save_to_file=true, max_bytes=8388608)` again (8 MiB is the hard upper limit).
+- `status_code` not 2xx: tell the user the status code and ask whether to try another URL.
+- Errors like "blocked: ... resolves to non-public address": the user gave an intranet address; ask the user to paste the YAML content directly.
 
-### 第二步：选业务组和数据源
+### Step 2: Choose the business group and datasource
 
-并发调用（不要串行）：
-- `list_busi_groups()` 查可见业务组。优先 `is_default=true` 的；只有一个时直接用；多于一个时**用 AskUserQuestion 让用户选**
-- `list_datasources(plugin_type="prometheus")` 查 Prom 数据源。只有一个直接用；多于一个让用户选
+Call concurrently (do not serialize):
+- `list_busi_groups()` to list visible business groups. Prefer the one with `is_default=true`; if there is only one, use it directly; if there is more than one, **use AskUserQuestion to let the user choose**
+- `list_datasources(plugin_type="prometheus")` to list Prom datasources. If there is only one, use it directly; if more than one, let the user choose
 
-如果用户请求里已经指明了业务组名 / 数据源名，按名称匹配后直接用，不必再问。
+If the user's request already specifies a business group name / datasource name, match by name and use it directly without asking again.
 
-### 第三步：预览
+### Step 3: Preview
 
 ```
-preview_prom_rule_yaml(payload_file=<第一步的 file_path>)
+preview_prom_rule_yaml(payload_file=<file_path from step 1>)
 ```
 
-返回是 `{total, items:[{name, severity, prom_ql, for_duration_sec, append_tags, annotations}]}`。
+The return is `{total, items:[{name, severity, prom_ql, for_duration_sec, append_tags, annotations}]}`.
 
-**汇报给用户的话要短**，挑前 3-5 条 + 总计就够，不要把所有规则全列出来：
+**Keep the report to the user short** — listing the first 3-5 rules plus the total is enough; do not list every rule:
 
-> 解析到 38 条规则（critical 9 / warning 27 / info 2），例如：
+> Parsed 38 rules (critical 9 / warning 27 / info 2), for example:
 > - `HostHighCpuLoad` (warning, for=0s)
 > - `HostOutOfMemory` (warning, for=2m)
 > - `HostOomKillDetected` (warning, for=0s)
-> 是否全部导入到业务组「default」的 Prometheus 数据源「prom-prod」？
+> Import all of them into the Prometheus datasource "prom-prod" of business group "default"?
 
-### 第四步：落库
+### Step 4: Write to the DB
 
-用户确认后：
+After the user confirms:
 
 ```
 import_prom_rule_yaml(
-  group_id=<第二步>,
-  datasource_ids="[<第二步 ds id>]",
-  payload_file=<第一步的 file_path>
+  group_id=<from step 2>,
+  datasource_ids="[<ds id from step 2>]",
+  payload_file=<file_path from step 1>
 )
 ```
 
-`datasource_ids` 必须是 JSON 数组字符串，比如 `"[1]"` 或 `"[1,3]"`。
+`datasource_ids` must be a JSON array string, e.g. `"[1]"` or `"[1,3]"`.
 
-返回结构：
+The return structure:
 
 ```json
 {
   "total":   38,
   "created": 36,
-  "skipped": 2,        // 重名规则，自动跳过，不是失败
-  "failed":  0,        // 真正的写入错误（DB/校验等）
+  "skipped": 2,        // duplicate-name rules, automatically skipped, not a failure
+  "failed":  0,        // real write errors (DB/validation, etc.)
   "items": [
     {"name":"HostHighCpuLoad", "status":"skipped_duplicate"},
     {"name":"HostOutOfMemory", "status":"created", "id":177},
@@ -121,93 +121,93 @@ import_prom_rule_yaml(
 }
 ```
 
-每条规则的 `status` 三选一：
-- `created` — 新建成功，有 `id`
-- `skipped_duplicate` — 同名规则已存在，**未做任何改动**，不需要重试
-- `failed` — 真错误（DB、校验等），看 `error`
+Each rule's `status` is one of three:
+- `created` — created successfully, has an `id`
+- `skipped_duplicate` — a rule with the same name already exists, **no change was made**, no retry needed
+- `failed` — a real error (DB, validation, etc.); see `error`
 
-#### 处理重名（重要）
+#### Handling duplicate names (important)
 
-⚠️ **同名规则会被自动跳过（status=skipped_duplicate），不是失败**。看到 skipped > 0 时**绝对不要**用 `name_prefix` "重试整份 YAML"——那会让已经成功创建的 N 条规则全部多写一份带前缀的副本，造成翻倍数据污染。
+⚠️ **A rule with the same name is automatically skipped (status=skipped_duplicate), not a failure**. When you see skipped > 0, **never** "retry the whole YAML" with `name_prefix` — that would create a prefixed duplicate of all the N rules that were already created successfully, doubling the data and polluting it.
 
-正确的汇报方式：直接告诉用户哪几条因重名跳过，让用户决定怎么办：
+The correct way to report: just tell the user which rules were skipped due to duplicate names, and let the user decide what to do:
 
-> ✅ 已导入 36 条规则。另有 2 条因同名已存在被跳过：HostHighCpuLoad、HostOutOfMemory。
-> 如果想覆盖它们，请到告警规则页面删掉旧的再重新导入；如果想让新旧并存（如做对比测试），可以加 name_prefix 重新导入但要清楚**所有 38 条都会被加前缀**。
+> ✅ Imported 36 rules. Another 2 were skipped because rules with the same name already exist: HostHighCpuLoad, HostOutOfMemory.
+> If you want to overwrite them, go to the alert rules page, delete the old ones, and re-import; if you want the old and new ones to coexist (e.g. for comparison testing), you can re-import with name_prefix, but be aware that **all 38 rules will be prefixed**.
 
-只有用户**明确要求并存**（极少见的对比测试场景）才用 `name_prefix`/`name_suffix`，且要提前告知 LLM 会把全量规则都加前缀。
+Only use `name_prefix`/`name_suffix` when the user **explicitly requests coexistence** (a very rare comparison-testing scenario), and inform the user in advance that the LLM will prefix all of the rules.
 
-#### 真正的失败（status=failed）才需要排查
+#### Only real failures (status=failed) need investigation
 
-如果出现 `status=failed`，看 `error` 字段：常见的有数据源校验失败、字段格式错误等。这些是 YAML 本身或环境问题，name_prefix 治不了。
+If `status=failed` appears, look at the `error` field: common cases include datasource validation failure, field format errors, etc. These are problems with the YAML itself or the environment; name_prefix cannot fix them.
 
-#### 谨慎模式
+#### Cautious mode
 
-用户说"先建好但别启用" → 传 `disabled=1`。
+User says "create them but don't enable them yet" → pass `disabled=1`.
 
-### 第五步：输出结果
+### Step 5: Output the result
 
-**保持简短**：
+**Keep it short**:
 
-> ✅ 已向业务组「default」导入 36 条告警规则。
-> ⚠️ 2 条因同名已存在被跳过：HostHighCpuLoad、HostOutOfMemory。需要覆盖请在告警规则页面手动删除旧规则后重导。
+> ✅ Imported 36 alert rules into business group "default".
+> ⚠️ 2 were skipped because rules with the same name already exist: HostHighCpuLoad, HostOutOfMemory. To overwrite, manually delete the old rules on the alert rules page, then re-import.
 
-不要把 36 条规则的 ID 全列出来，前端会用卡片展示。**不要主动建议 "用 name_prefix 重试"——除非用户明确要并存。**
+Do not list all 36 rule IDs; the frontend will display them as cards. **Do not proactively suggest "retry with name_prefix" — unless the user explicitly wants coexistence.**
 
-## payload vs payload_file 怎么选
+## How to choose between payload and payload_file
 
-| 场景 | 用哪个 |
+| Scenario | Which to use |
 |---|---|
-| 通过 http_fetch 抓的远端文件 | **`payload_file`**（http_fetch 配 `save_to_file=true`） |
-| 用户在聊天里直接粘贴的小段 YAML（< 50 行） | `payload`（YAML 反正已经在上下文了，再落盘没意义） |
-| 用户在聊天里直接粘贴的大段 YAML（数十条规则） | 提示用户用 URL 或上传文件；如果坚持粘贴，仍用 `payload` |
+| A remote file fetched via http_fetch | **`payload_file`** (http_fetch with `save_to_file=true`) |
+| A small snippet of YAML the user pasted directly in chat (< 50 lines) | `payload` (the YAML is already in the context anyway, so writing it to disk is pointless) |
+| A large block of YAML the user pasted directly in chat (dozens of rules) | Suggest the user use a URL or upload a file; if they insist on pasting, still use `payload` |
 
-**两者二选一，不能同时传**（工具会报错）。
+**Pick one of the two; you cannot pass both** (the tool will error).
 
-## severity 映射（自动）
+## severity mapping (automatic)
 
-工具自动把 `labels.severity` 字符串映射到 n9e 的数字：
+The tool automatically maps the `labels.severity` string to n9e's number:
 
 | Prom labels.severity | n9e severity |
 |---|---|
 | critical / error / fatal / page / sev1 | 1 |
 | warning / warn / sev2 | 2 |
 | info / notice / sev3 | 3 |
-| 其他 / 缺失 | 2（默认 warning） |
+| other / missing | 2 (defaults to warning) |
 
-不需要 LLM 手动转换。
+No manual conversion by the LLM is needed.
 
-## 其他 labels 处理
+## Handling of other labels
 
-除 `severity` 之外的所有 labels 会自动拼成 n9e 的 `append_tags`（格式 `k=v`，空格会被去掉）。
+All labels other than `severity` are automatically assembled into n9e's `append_tags` (format `k=v`, spaces are stripped).
 
-## 常见坑
+## Common Pitfalls
 
-1. **`datasource_ids` 必须是 JSON 数组字符串**：传 `"[1]"`，不是 `"1"` 或 `1`。
-2. **`http_fetch` 不能抓内网**：用户给的是 `http://10.x.x.x/...` 会直接拒绝。让用户改用公网 URL 或直接粘贴内容。
-3. **`payload_file` 必须是 http_fetch 写出来的**：tool 会校验路径必须在 `os.TempDir()` 下且以 `n9e-aiagent-fetch-` 开头。不能用任意路径。
-4. **YAML 里的 `expr` 原样落库**：n9e 直接存原表达式（含阈值），不要 LLM 拆 `>`/`<` 和阈值。
-5. **`for` 字段转秒**：`5m` → 300，`1h` → 3600。原 YAML 没写 `for`，n9e 用 0 秒（立即触发）。
-6. **不要去查 `list_alert_rules` 检测重名**。直接调 import，按返回的 error 决定是否加前缀重试。
+1. **`datasource_ids` must be a JSON array string**: pass `"[1]"`, not `"1"` or `1`.
+2. **`http_fetch` cannot fetch from the intranet**: a `http://10.x.x.x/...` URL given by the user will be rejected outright. Ask the user to use a public URL or paste the content directly.
+3. **`payload_file` must be one written by http_fetch**: the tool validates that the path is under `os.TempDir()` and starts with `n9e-aiagent-fetch-`. An arbitrary path cannot be used.
+4. **The `expr` in the YAML is stored verbatim**: n9e stores the original expression directly (including thresholds); do not have the LLM split the `>`/`<` and the threshold.
+5. **The `for` field is converted to seconds**: `5m` → 300, `1h` → 3600. If the original YAML has no `for`, n9e uses 0 seconds (triggers immediately).
+6. **Do not query `list_alert_rules` to detect duplicate names**. Call import directly and decide whether to retry with a prefix based on the returned error.
 
-## 示例对话
+## Example Conversation
 
-**用户：** 帮我导入 https://raw.githubusercontent.com/samber/awesome-prometheus-alerts/refs/heads/master/dist/rules/host-and-hardware/node-exporter.yml
+**User:** Help me import https://raw.githubusercontent.com/samber/awesome-prometheus-alerts/refs/heads/master/dist/rules/host-and-hardware/node-exporter.yml
 
-**Thought →** 并发抓 URL（存到文件）+ 查业务组 + 查数据源。
+**Thought →** Concurrently fetch the URL (save to file) + list business groups + list datasources.
 
 **Action 1:** `http_fetch(url="https://...", save_to_file=true)` → `{file_path: "/var/.../n9e-aiagent-fetch-abc.yml", size: 8731, ...}`
-**Action 2:** `list_busi_groups()` → 只有 default
-**Action 3:** `list_datasources(plugin_type="prometheus")` → 只有 prom-prod
+**Action 2:** `list_busi_groups()` → only default
+**Action 3:** `list_datasources(plugin_type="prometheus")` → only prom-prod
 
-**Action 4:** `preview_prom_rule_yaml(payload_file="/var/.../n9e-aiagent-fetch-abc.yml")` → 38 条规则
+**Action 4:** `preview_prom_rule_yaml(payload_file="/var/.../n9e-aiagent-fetch-abc.yml")` → 38 rules
 
-**Final answer（预览阶段）:**
-> 解析到 38 条规则…… 是否导入到业务组「default」/数据源「prom-prod」？
+**Final answer (preview stage):**
+> Parsed 38 rules... Import them into business group "default" / datasource "prom-prod"?
 
-**用户：** 嗯
+**User:** Yes
 
 **Action 5:** `import_prom_rule_yaml(group_id=1, datasource_ids="[2]", payload_file="/var/.../n9e-aiagent-fetch-abc.yml")`
 
 **Final answer:**
-> ✅ 已导入 38 条告警规则到「default / prom-prod」。
+> ✅ Imported 38 alert rules into "default / prom-prod".

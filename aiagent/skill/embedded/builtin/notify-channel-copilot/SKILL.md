@@ -1,250 +1,250 @@
 ---
 name: notify-channel-copilot
-description: 帮助用户修改、新建或排障夜莺(n9e)通知媒介(notify_channel)。当用户要求改钉钉/飞书/企微/邮件/短信/语音/Webhook 等媒介的 URL、请求体、签名、headers、代理、TLS、@人或接收人字段，或问"怎么接入 X 平台"、"为什么发不出去/报 9499/Bad Request"时使用。本技能专注**媒介通道层配置**——若用户改的是"消息内容/字段/渲染"，应改用 generate-message-template。
+description: Helps users modify, create, or troubleshoot Nightingale (n9e) notify channels (notify_channel). Use it when the user asks to change the URL, request body, signature, headers, proxy, TLS, @-mentions, or recipient fields of channels such as DingTalk/Feishu/WeCom/email/SMS/voice/Webhook, or asks "how do I integrate platform X" or "why can't it send / why am I getting 9499 / Bad Request". This skill focuses on **the channel-layer configuration**—if the user is changing "message content/fields/rendering", switch to generate-message-template instead.
 tags:
   - internal
 ---
 
-# 夜莺(n9e) 通知媒介修改
+# Nightingale (n9e) Notify Channel Modification
 
-## 适用范围（先确定用户在改哪一层）
+## Scope (first determine which layer the user is changing)
 
-夜莺通知链路分三层，每层痛点不同：
+The Nightingale notification pipeline has three layers, each with different pain points:
 
-| 层 | 实体 | 关键文件 | 本 skill 是否管 |
+| Layer | Entity | Key files | Does this skill cover it |
 |---|---|---|---|
-| **媒介** Notify Channel | `notify_channel` 表，`NotifyChannelConfig` | `models/notify_channel.go`、`alert/sender/provider/*.go` | **是** |
-| 消息模板 Notify Template | `notify_tpl` 表 | `models/notify_tpl.go` | 否（用 `generate-message-template`） |
-| 通知规则 Notify Rule | `notify_rule` 表 | `models/notify_rule.go` | 否 |
+| **Channel** Notify Channel | `notify_channel` table, `NotifyChannelConfig` | `models/notify_channel.go`, `alert/sender/provider/*.go` | **Yes** |
+| Message Template Notify Template | `notify_tpl` table | `models/notify_tpl.go` | No (use `generate-message-template`) |
+| Notify Rule | `notify_rule` table | `models/notify_rule.go` | No |
 
-**判断口径**：
-- 用户原话出现"URL/Webhook 地址/请求头/超时/代理/签名/秘钥/AppID/AppSecret/CorpID/接入"——**媒介层**，进本 skill。
-- 用户原话出现"模板/正文/字段/变量/渲染/标题/卡片颜色"——**模板层**，转 `generate-message-template`。
-- 用户原话出现"发给谁/接收人/订阅/过滤/标签匹配"——**规则层**，不在本 skill 范围。
+**How to decide**:
+- The user's wording mentions "URL/Webhook address/request header/timeout/proxy/signature/secret key/AppID/AppSecret/CorpID/integration"—**channel layer**, stay in this skill.
+- The user's wording mentions "template/body/field/variable/rendering/title/card color"—**template layer**, switch to `generate-message-template`.
+- The user's wording mentions "who to send to/recipient/subscription/filter/label matching"—**rule layer**, out of scope for this skill.
 
 ---
 
-## 数据模型 `NotifyChannelConfig`
+## Data model `NotifyChannelConfig`
 
 `models/notify_channel.go`:
 
 ```go
 type NotifyChannelConfig struct {
     ID          int64
-    Name        string                // 显示名
-    Ident       string                // 媒介类型（路由 provider 的 key，下表）
+    Name        string                // display name
+    Ident       string                // channel type (the key that routes to a provider, see table below)
     Description string
     Enable      bool
 
-    ParamConfig   *NotifyParamConfig   // 用户参数：contact_key + 自定义 params
+    ParamConfig   *NotifyParamConfig   // user parameters: contact_key + custom params
     RequestType   string               // http | smtp | script | flashduty | pagerduty
-    RequestConfig *RequestConfig       // 按 ident/request_type 取对应子结构
+    RequestConfig *RequestConfig       // pick the matching sub-struct by ident/request_type
 
     Weight int
 }
 ```
 
-`RequestConfig` 是 union：按媒介类型只填其中一个字段：
+`RequestConfig` is a union: only one field is filled depending on the channel type:
 
-| 字段 | 适用 ident |
+| Field | Applicable ident |
 |---|---|
-| `HTTPRequestConfig` | 所有走纯 HTTP webhook 的媒介（dingtalk、feishu、wecom、telegram、slackwebhook、callback、…） |
+| `HTTPRequestConfig` | all channels that use a pure HTTP webhook (dingtalk, feishu, wecom, telegram, slackwebhook, callback, …) |
 | `SMTPRequestConfig` | `email` |
 | `ScriptRequestConfig` | `script` |
 | `FlashDutyRequestConfig` | `flashduty` |
 | `PagerDutyRequestConfig` | `pagerduty` |
-| `DingtalkAppRequestConfig` | `dingtalkapp`（钉钉应用，目前未注册，见 `provider/init.go`） |
+| `DingtalkAppRequestConfig` | `dingtalkapp` (DingTalk app, currently not registered, see `provider/init.go`) |
 | `FeishuAppRequestConfig` | `feishuapp` |
 | `WecomAppRequestConfig` | `wecomapp` |
 
 ---
 
-## 内置 ident 一览（`models/user.go` + `alert/sender/provider/init.go`）
+## Built-in ident overview (`models/user.go` + `alert/sender/provider/init.go`)
 
-| Ident | Provider | Request 类型 | 一句话 |
+| Ident | Provider | Request type | One-liner |
 |---|---|---|---|
-| `dingtalk` | DingtalkProvider | HTTP | 钉钉群机器人 webhook |
-| `wecom` | WecomProvider | HTTP | 企业微信群机器人 webhook |
-| `feishu` | simpleHTTPProvider | HTTP | 飞书群机器人 markdown（早期） |
-| `feishucard` | FeishuCardProvider | HTTP | 飞书消息卡片（支持切色/@人） |
-| `lark` | simpleHTTPProvider | HTTP | Lark（国际版飞书）markdown |
-| `larkcard` | LarkCardProvider | HTTP | Lark 卡片 |
-| `feishuapp` | FeishuAppProvider | HTTP (App) | 飞书应用机器人（私聊/群） |
-| `wecomapp` | WecomAppProvider | HTTP (App) | 企微自建应用 |
+| `dingtalk` | DingtalkProvider | HTTP | DingTalk group robot webhook |
+| `wecom` | WecomProvider | HTTP | WeCom group robot webhook |
+| `feishu` | simpleHTTPProvider | HTTP | Feishu group robot markdown (early) |
+| `feishucard` | FeishuCardProvider | HTTP | Feishu message card (supports color switching/@-mentions) |
+| `lark` | simpleHTTPProvider | HTTP | Lark (international Feishu) markdown |
+| `larkcard` | LarkCardProvider | HTTP | Lark card |
+| `feishuapp` | FeishuAppProvider | HTTP (App) | Feishu app robot (DM/group) |
+| `wecomapp` | WecomAppProvider | HTTP (App) | WeCom self-built app |
 | `telegram` | simpleHTTPProvider | HTTP | Telegram Bot |
 | `discord` | simpleHTTPProvider | HTTP | Discord webhook |
 | `slackbot` / `slackwebhook` | simpleHTTPProvider | HTTP | Slack |
 | `mattermostbot` / `mattermostwebhook` | simpleHTTPProvider | HTTP | Mattermost |
-| `jira` / `jsm_alert` | simpleHTTPProvider | HTTP | Jira / JSM 工单类 |
-| `email` | EmailProvider | SMTP | 邮件 |
-| `tx-sms` | TencentSmsProvider | HTTP | 腾讯云短信 |
-| `tx-voice` | TencentVoiceProvider | HTTP | 腾讯云语音 |
-| `ali-sms` | AliyunSmsProvider | HTTP | 阿里云短信 |
-| `ali-voice` | AliyunVoiceProvider | HTTP | 阿里云语音 |
+| `jira` / `jsm_alert` | simpleHTTPProvider | HTTP | Jira / JSM ticket-type |
+| `email` | EmailProvider | SMTP | Email |
+| `tx-sms` | TencentSmsProvider | HTTP | Tencent Cloud SMS |
+| `tx-voice` | TencentVoiceProvider | HTTP | Tencent Cloud voice |
+| `ali-sms` | AliyunSmsProvider | HTTP | Alibaba Cloud SMS |
+| `ali-voice` | AliyunVoiceProvider | HTTP | Alibaba Cloud voice |
 | `pagerduty` | PagerDutyProvider | HTTP | PagerDuty |
-| `flashduty` | FlashDutyProvider | HTTP | Flashduty 集成 |
-| `script` | ScriptProvider | Script | shell/python 脚本（兼容老 notify.py） |
-| `callback` | CallbackProvider | HTTP | 通用 HTTP 回调 |
+| `flashduty` | FlashDutyProvider | HTTP | Flashduty integration |
+| `script` | ScriptProvider | Script | shell/python script (compatible with the legacy notify.py) |
+| `callback` | CallbackProvider | HTTP | generic HTTP callback |
 
-**注册机制**：`provider/registry.go` 的 `Resolve()`：先按 `Ident` 精确查 → 找不到按 `RequestType` 兜底到通用 provider（`callback`/`script`/`email`/`flashduty`/`pagerduty`）。所以**自定义 ident（如 `my-internal-webhook`）只要 `request_type=http` 就能用 callback 兜底**。
+**Registration mechanism**: `Resolve()` in `provider/registry.go`: first does an exact lookup by `Ident` → if not found, falls back by `RequestType` to a generic provider (`callback`/`script`/`email`/`flashduty`/`pagerduty`). So **a custom ident (e.g. `my-internal-webhook`) works as long as `request_type=http`, falling back to callback**.
 
 ---
 
-## `HTTPRequestConfig` 字段详解
+## `HTTPRequestConfig` field details
 
 ```go
 type HTTPRequestConfig struct {
-    URL           string                 // 完整 URL，可含 {{ ... }} 模板变量
+    URL           string                 // full URL, may contain {{ ... }} template variables
     Method        string                 // GET | POST | PUT
-    Headers       map[string]string      // header 值也可含模板变量
-    Proxy         string                 // 形如 http://proxy:port，留空走直连
-    Timeout       int                    // 毫秒，默认 10000
-    Concurrency   int                    // 并发，默认 5
-    RetryTimes    int                    // 默认 3
-    RetryInterval int                    // 毫秒，默认 100
+    Headers       map[string]string      // header values may also contain template variables
+    Proxy         string                 // like http://proxy:port, empty means direct connection
+    Timeout       int                    // milliseconds, default 10000
+    Concurrency   int                    // concurrency, default 5
+    RetryTimes    int                    // default 3
+    RetryInterval int                    // milliseconds, default 100
     TLS           *TLSConfig             // {Enable, CertFile, KeyFile, CAFile, SkipVerify}
     Request       RequestDetail          // {Parameters: query string, Form, Body}
 }
 ```
 
-**Body 字段是字符串**，里面用 Go template 语法引用事件，**真实数据按 `generate-message-template` 那套字段字典写**（`$event.RuleName`、`$labels.ident`、`timeformat`、`unescaped` 等）。Body 渲染走 `html/template`，所以 `<`、`&` 会被转义——JSON Body 通常不受影响，但**模板里写 HTML 标签时要 `{{unescaped "<b>..."}}`**。
+**The Body field is a string**; inside it you reference the event using Go template syntax, and **the actual data fields follow the field dictionary from `generate-message-template`** (`$event.RuleName`, `$labels.ident`, `timeformat`, `unescaped`, etc.). The Body is rendered through `html/template`, so `<` and `&` get escaped—a JSON Body is usually unaffected, but **when writing HTML tags in the template you need `{{unescaped "<b>..."}}`**.
 
-**URL / Headers / Parameters 同样走模板渲染**（`alert/sender/provider/http_common.go:113-142 replaceVariables`）。关键细节：
-- 只有含 `{{` 才会走 `html/template`，否则原样保留（`needsTemplateRendering` 先过滤）。
-- 上下文与 Body 共享，是下一节那 6 个变量。
+**URL / Headers / Parameters are rendered through templates the same way** (`alert/sender/provider/http_common.go:113-142 replaceVariables`). Key details:
+- Only when it contains `{{` does it go through `html/template`; otherwise it is kept verbatim (`needsTemplateRendering` filters it first).
+- The context is shared with the Body—the 6 variables from the next section.
 
-例：
-- URL 按级别分路由：`http://bot/notify?level={{$event.Severity}}`
-- Header 注入鉴权：`Authorization: Bearer {{$params.token}}`
-- 把所有接收人手机号串到 query：
+Examples:
+- Route the URL by severity level: `http://bot/notify?level={{$event.Severity}}`
+- Inject auth into a header: `Authorization: Bearer {{$params.token}}`
+- Concatenate all recipients' phone numbers into the query:
   `?ats={{range $i,$s := $sendtos}}{{if $i}},{{end}}{{$s}}{{end}}`
 
 ---
 
-## 模板上下文 — 你能用的变量
+## Template context — variables you can use
 
-所有 HTTP 类 provider 共用 `alert/sender/provider/http_common.go:SendHTTPRequest`，渲染 Body / URL / Headers / Parameters 时统一注入这 6 个变量（line 34-44）：
+All HTTP-type providers share `alert/sender/provider/http_common.go:SendHTTPRequest`. When rendering Body / URL / Headers / Parameters, these 6 variables are injected uniformly (line 34-44):
 
-| 变量 | 来源 | 典型用途 |
+| Variable | Source | Typical use |
 |---|---|---|
-| `$event` | `events[0]`，本批次第一条 `AlertCurEvent` | `{{$event.RuleName}}` / `{{$event.Severity}}` / `{{$event.TriggerValue}}` |
-| `$events` | `[]*AlertCurEvent` 整批 | callback 默认模板 `{{ jsonMarshal $events }}` |
-| `$sendtos` | `[]string`，按媒介的 `ContactKey` 从接收人 `contact_info` 解出 | `{{range $sendtos}}...{{end}}`、`{{ jsonMarshal $sendtos }}` |
-| `$sendto` | `sendtos[0]`，仅当 `len(sendtos)>0` 时存在 | 单人渲染 |
-| `$params` | 媒介 `ParamConfig.Custom.Params` | 短信模板的 `SignName` / `TemplateId` |
-| `$tpl` | 通知模板里挂的自定义字段 | 模板与媒介解耦时用 |
+| `$event` | `events[0]`, the first `AlertCurEvent` of this batch | `{{$event.RuleName}}` / `{{$event.Severity}}` / `{{$event.TriggerValue}}` |
+| `$events` | `[]*AlertCurEvent`, the whole batch | callback default template `{{ jsonMarshal $events }}` |
+| `$sendtos` | `[]string`, resolved from each recipient's `contact_info` by the channel's `ContactKey` | `{{range $sendtos}}...{{end}}`, `{{ jsonMarshal $sendtos }}` |
+| `$sendto` | `sendtos[0]`, present only when `len(sendtos)>0` | single-recipient rendering |
+| `$params` | the channel's `ParamConfig.Custom.Params` | SMS template's `SignName` / `TemplateId` |
+| `$tpl` | custom fields attached in the notify template | used when decoupling the template from the channel |
 
-此外 `$event.NotifyUsersObj` 也是合法的：`[]*User` 数组，包含本批次全部接收人完整 User 对象（`models/alert_cur_event.go:65` + `alert/dispatch/dispatch.go:971`）。原是 v6 notify.py 时代留的字段（`gorm:"-"`，runtime-only），v8 仍在填充。和 `$sendtos` 的区别：
+In addition, `$event.NotifyUsersObj` is also valid: a `[]*User` array containing the complete User objects of all recipients in this batch (`models/alert_cur_event.go:65` + `alert/dispatch/dispatch.go:971`). It is a field left over from the v6 notify.py era (`gorm:"-"`, runtime-only), and is still populated in v8. The difference from `$sendtos`:
 
-- `$sendtos`：纯字符串数组，已按 ContactKey 解析好，**简单场景首选**。
-- `$event.NotifyUsersObj`：完整 User 对象数组，模板里同时要拿 Phone+Email+Username 等多字段时用，如 `{{range $event.NotifyUsersObj}}{{.Phone}} {{.Username}}{{end}}`。
+- `$sendtos`: a plain string array, already resolved by ContactKey, **preferred for simple scenarios**.
+- `$event.NotifyUsersObj`: a full User object array, used when the template needs multiple fields like Phone + Email + Username at the same time, e.g. `{{range $event.NotifyUsersObj}}{{.Phone}} {{.Username}}{{end}}`.
 
-**`$sendtos` 是怎么来的**（`alert/dispatch/dispatch.go:451-541 GetNotifyConfigParams`）：
-拿到 notify_rule 这条 NotifyConfig 的 `user_ids` + `user_group_ids` → 查 UserCache → 按媒介的 `ParamConfig.UserInfo.ContactKey` 从每个 user 的 `contact_info` JSON 取值 → 去重 → 组 `[]string`。
+**Where `$sendtos` comes from** (`alert/dispatch/dispatch.go:451-541 GetNotifyConfigParams`):
+Take the `user_ids` + `user_group_ids` from this notify_rule's NotifyConfig → query UserCache → read the value from each user's `contact_info` JSON by the channel's `ParamConfig.UserInfo.ContactKey` → deduplicate → build `[]string`.
 
-⚠️ 因此：
-- `ContactKey=phone` 但用户 `contact_info.phone` 为空 → 此人不进 sendtos。
-- `ContactKey=dingtalk_robot_token` 这种自定义键，用户 `contact_info` JSON 里也要有同名键。否则 `$sendtos` 是空数组，`$sendto` 直接未定义。
-- 这是「测试通知 OK 但真实告警发不出去」最常见的根因（见调试章节"测试 OK 但实际告警发不出去"专项）。
+⚠️ Therefore:
+- `ContactKey=phone` but the user's `contact_info.phone` is empty → this person doesn't make it into sendtos.
+- For a custom key like `ContactKey=dingtalk_robot_token`, the user's `contact_info` JSON must also have a key of the same name. Otherwise `$sendtos` is an empty array, and `$sendto` is simply undefined.
+- This is the most common root cause of "test notification works but real alerts don't go out" (see the dedicated "Test works but real alerts don't go out" section in the debugging chapter).
 
 ---
 
-## 各媒介的"必填字段地图"
+## The "required-fields map" for each channel
 
-下面按媒介给出最小可用配置——用户问"怎么接入 X"时，直接告诉他填这几格。
+Below is the minimal usable configuration for each channel—when the user asks "how do I integrate X", just tell them to fill in these few fields.
 
-### 1) 钉钉群机器人 `dingtalk`
+### 1) DingTalk group robot `dingtalk`
 
-- `request_type=http`，`HTTPRequestConfig`:
-  - `URL`: 群机器人 webhook（钉钉后台 → 群设置 → 智能群助手 → 添加机器人 → 自定义）
+- `request_type=http`, `HTTPRequestConfig`:
+  - `URL`: the group robot webhook (DingTalk admin → group settings → Group Assistant → Add Robot → Custom)
   - `Method`: `POST`
   - `Headers`: `Content-Type: application/json`
-  - `Body`: JSON markdown，参考 `provider/dingtalk_provider.go`。`text` 字段里要含**关键词**（钉钉群机器人加白校验：你在钉钉建机器人时填的关键字必须出现在消息文本中）。
-- **加签 vs 关键字**：n9e 内置 dingtalk provider **只支持关键字校验**，加签机制需要在 URL query 拼 `&timestamp=&sign=`，目前没有原生开关。如果用户必须用加签：
-  1. 用 `callback` 媒介自己拼带签名的 URL（写在 `URL` 里渲染时不好做，需要前置脚本），或
-  2. 改用 `script` 媒介调脚本。
-  3. **推荐说法**："钉钉机器人请改用关键字校验；加签机制开源版未原生支持。"
-- **@人**：依赖消息体中的 `at.atMobiles` / `atUserIds` 数组。内置 dingtalk provider 的请求体由消息模板拼出，**模板里用 `{{batchContactsAts}}` 或自己 range `$event.NotifyUsersObj` 取 `.Phone`**。
+  - `Body`: JSON markdown, see `provider/dingtalk_provider.go`. The `text` field must contain a **keyword** (DingTalk group robot allowlist check: the keyword you set when creating the robot in DingTalk must appear in the message text).
+- **Signing vs keyword**: the built-in DingTalk provider in n9e **only supports keyword validation**. The signing mechanism requires appending `&timestamp=&sign=` to the URL query, and there is currently no native toggle for it. If the user must use signing:
+  1. Use the `callback` channel and assemble the signed URL yourself (writing it in `URL` for render-time is awkward and needs a pre-script), or
+  2. Switch to the `script` channel to call a script.
+  3. **Recommended wording**: "For the DingTalk robot, please switch to keyword validation; the signing mechanism is not natively supported in the open-source version."
+- **@-mentions**: depend on the `at.atMobiles` / `atUserIds` arrays in the message body. The built-in DingTalk provider's request body is assembled by the message template, so **in the template use `{{batchContactsAts}}` or range over `$event.NotifyUsersObj` yourself to get `.Phone`**.
 
-### 2) 企业微信群机器人 `wecom`
+### 2) WeCom group robot `wecom`
 
-- `URL`: 群机器人 webhook
+- `URL`: the group robot webhook
 - `Method`: `POST`, `Content-Type: application/json`
-- **限制**：群机器人 markdown 不支持 `<font color>`；@人靠 `mentioned_mobile_list`/`mentioned_list`；**新版企业微信已下线群机器人**，新建群没 webhook 地址了——这时只能改走 `wecomapp` 自建应用。
+- **Limitations**: the group robot markdown does not support `<font color>`; @-mentions rely on `mentioned_mobile_list`/`mentioned_list`; **the new version of WeCom has retired group robots**, so newly created groups no longer have a webhook address—at that point you can only switch to the `wecomapp` self-built app.
 
-### 3) 企微自建应用 `wecomapp`
+### 3) WeCom self-built app `wecomapp`
 
-- `request_type=http`，但用 `WecomAppRequestConfig`:
-  - `CorpID`, `CorpSecret`, `AgentID`（企业微信管理后台拿）
+- `request_type=http`, but uses `WecomAppRequestConfig`:
+  - `CorpID`, `CorpSecret`, `AgentID` (obtained from the WeCom admin console)
   - `Proxy` / `Timeout` / `RetryTimes` / `RetrySleep`
-- 走 `provider/wecomapp_provider.go`，自动管 access_token 刷新。
-- **接收人字段**：用户的 `contact_info.wecom_userid`（在用户管理里填）。
+- Uses `provider/wecomapp_provider.go`, which automatically manages access_token refresh.
+- **Recipient field**: the user's `contact_info.wecom_userid` (filled in user management).
 
-### 4) 飞书群机器人（markdown）`feishu`
+### 4) Feishu group robot (markdown) `feishu`
 
-- 走 `simpleHTTPProvider`，模板驱动。`HTTPRequestConfig.URL` 填群机器人 webhook，`Body` 填 JSON 模板。
-- **签名校验**：飞书群机器人秘钥（secret）和钉钉加签一样属于"消息体内嵌时间戳+签名"。**n9e 内置 feishu provider 同样没有自动签名**。处理方案：
-  1. 群机器人创建时**不勾选「签名校验」**，改用「自定义关键词」或「IP 白名单」。
-  2. 若必须用签名 → 自定义 `script` 媒介。
-- **反斜杠 Bad Request 9499**：飞书 webhook 接收的是 JSON，反斜杠 `\` 是 JSON 转义字符。Windows 路径 `D:\foo`、`device="D:"` 这种标签值如果直接进 body 会破坏 JSON。**模板里用 `{{$labels.path | jsonMarshal}}` 把字符串转成合法 JSON 字符串**（带引号），或在 PromQL/规则源头用 `label_replace` 把 `\` 替换掉。
+- Uses `simpleHTTPProvider`, template-driven. Set `HTTPRequestConfig.URL` to the group robot webhook, and `Body` to a JSON template.
+- **Signature validation**: a Feishu group robot secret, like DingTalk signing, falls under "timestamp + signature embedded in the message body". **The built-in feishu provider in n9e likewise has no automatic signing.** Solutions:
+  1. When creating the group robot, **do not check "Signature validation"**, and use "Custom keyword" or "IP allowlist" instead.
+  2. If signing is mandatory → use a custom `script` channel.
+- **Backslash Bad Request 9499**: the Feishu webhook receives JSON, and a backslash `\` is a JSON escape character. Label values like the Windows path `D:\foo` or `device="D:"` will break the JSON if they go directly into the body. **In the template use `{{$labels.path | jsonMarshal}}` to convert the string into a valid JSON string** (with quotes), or use `label_replace` at the PromQL/rule source to strip out the `\`.
 
-### 5) 飞书卡片 `feishucard` / Lark 卡片 `larkcard`
+### 5) Feishu card `feishucard` / Lark card `larkcard`
 
-- 走 `FeishuCardProvider` / `LarkCardProvider`，发飞书 v2 消息卡片。
-- 配置项跟 `feishu` 一样（URL + 可选 secret）。`Body` 是完整的 `interactive` 卡片 JSON。
-- **卡片切色**：飞书卡片只认枚举色（`red / orange / yellow / green / turquoise / blue / indigo / purple / carmine / grey`），写 hex 无效。颜色写在 `header.template` 字段，由模板根据 `IsRecovered / Severity` 渲染。
-- **@人**：用 `<at email=...></at>` 或 `<at id=...></at>`；模板用 `{{batchContactsAtsInFeishuEmail $event.NotifyUsersObj}}` 或 `{{batchContactsAtsInFeishuId ...}}`。
+- Uses `FeishuCardProvider` / `LarkCardProvider`, sending Feishu v2 message cards.
+- Configuration items are the same as `feishu` (URL + optional secret). `Body` is a complete `interactive` card JSON.
+- **Card color switching**: a Feishu card only recognizes enumerated colors (`red / orange / yellow / green / turquoise / blue / indigo / purple / carmine / grey`); writing hex is invalid. The color is written in the `header.template` field and rendered by the template based on `IsRecovered / Severity`.
+- **@-mentions**: use `<at email=...></at>` or `<at id=...></at>`; the template uses `{{batchContactsAtsInFeishuEmail $event.NotifyUsersObj}}` or `{{batchContactsAtsInFeishuId ...}}`.
 
-### 6) 飞书自建应用 `feishuapp`
+### 6) Feishu self-built app `feishuapp`
 
-- 用 `FeishuAppRequestConfig`:
+- Uses `FeishuAppRequestConfig`:
   - `AppID`, `AppSecret`
-  - `ReceiveIDType`: `open_id` / `user_id` / `email` / `chat_id`（决定 `contact_info.feishu_*` 用哪个字段）
-- 走 `provider/feishuapp_provider.go`，自动管 tenant_access_token。
+  - `ReceiveIDType`: `open_id` / `user_id` / `email` / `chat_id` (determines which `contact_info.feishu_*` field is used)
+- Uses `provider/feishuapp_provider.go`, which automatically manages tenant_access_token.
 
-### 7) 邮件 `email`
+### 7) Email `email`
 
-- `request_type=smtp`，`SMTPRequestConfig`:
+- `request_type=smtp`, `SMTPRequestConfig`:
   - `Host`, `Port`, `Username`, `Password`, `From`
-  - `InsecureSkipVerify`: 自签证书时设 true
-  - `Batch`: 一次最多塞几个收件人（防止超过 SMTP 服务器单次收件上限）
-- **邮件标题模板**：单独存在 `notify_tpl` 表，ident 是 `mailsubject`（参 `EmailSubject` 常量）。`标题包含所有标签会泄漏信息` 的修复路径就是改这个模板，不动 channel。
-- **HTML vs 纯文本**：邮件正文模板走 `text/template`（不转义），所以可以直接写 HTML 标签。其它 IM 类是 `html/template`，要 `unescaped` 兜底。
+  - `InsecureSkipVerify`: set to true for self-signed certificates
+  - `Batch`: how many recipients to pack in at most per send (to avoid exceeding the SMTP server's per-send recipient limit)
+- **Email subject template**: stored separately in the `notify_tpl` table, with ident `mailsubject` (see the `EmailSubject` constant). The fix path for "the subject contains all labels and leaks information" is to change this template, not touch the channel.
+- **HTML vs plain text**: the email body template uses `text/template` (no escaping), so you can write HTML tags directly. Other IM-type channels use `html/template` and need `unescaped` as a fallback.
 
-### 8) 短信/语音（腾讯云/阿里云）`tx-sms` / `tx-voice` / `ali-sms` / `ali-voice`
+### 8) SMS/voice (Tencent Cloud / Alibaba Cloud) `tx-sms` / `tx-voice` / `ali-sms` / `ali-voice`
 
-- 共同结构：用 `HTTPRequestConfig`，但**真实凭证靠 `ParamConfig.Custom.Params` 自定义参数填**（SecretId / SecretKey / SDKAppId / TemplateId / SignName 等）。
-- **模板变量缺失报错**："测试通知显示模板变量缺少对应参数值"——短信模板的参数顺序/数量必须和服务商后台审批通过的模板**严格一致**。
-  - 排查路径：① 服务商后台 → 找到 TemplateId → 看模板内容有几个 `${1}` `${2}`；② n9e 模板里 `params` 数组要按这个数量填；③ 字段名/顺序要对齐。
-- **中文乱码（语音/回调）**：n9e 默认按 UTF-8 编码 body，部分语音服务商接口要求 GBK 或 url-encode 中文——参数里走 `{{$event.RuleName | escape}}` 试试，或在脚本媒介里转码。
+- Common structure: uses `HTTPRequestConfig`, but **the real credentials are filled via the custom parameters in `ParamConfig.Custom.Params`** (SecretId / SecretKey / SDKAppId / TemplateId / SignName, etc.).
+- **Template-variable-missing error**: "test notification shows the template variable is missing a corresponding parameter value"—the order/count of SMS template parameters must be **strictly consistent** with the template approved in the provider's console.
+  - Investigation path: ① provider console → find the TemplateId → see how many `${1}` `${2}` the template content has; ② the `params` array in the n9e template must be filled according to this count; ③ the field names/order must align.
+- **Chinese garbled text (voice/callback)**: n9e encodes the body as UTF-8 by default, but some voice provider interfaces require GBK or url-encoded Chinese—try `{{$event.RuleName | escape}}` in the parameters, or transcode in the script channel.
 
 ### 9) PagerDuty `pagerduty`
 
-- `PagerDutyRequestConfig`: `Proxy`, `ApiKey`（账户级 API Key，不是 routing key），`Timeout`, `RetryTimes`, `RetrySleep`。
-- 走 PagerDuty Events API v2。**ApiKey 别填错成 Integration Key**（常见踩坑）。
+- `PagerDutyRequestConfig`: `Proxy`, `ApiKey` (account-level API Key, not a routing key), `Timeout`, `RetryTimes`, `RetrySleep`.
+- Uses the PagerDuty Events API v2. **Don't mistakenly fill the ApiKey with an Integration Key** (a common pitfall).
 
 ### 10) Flashduty `flashduty`
 
-- `FlashDutyRequestConfig`: `IntegrationUrl`（一个集成一个 URL）, `Proxy`, `Timeout`, `RetryTimes`, `RetrySleep`。
-- Flashduty 提供的集成入口，模板由 Flashduty 后端处理，n9e 这边几乎是"透传 events 数组"。
+- `FlashDutyRequestConfig`: `IntegrationUrl` (one URL per integration), `Proxy`, `Timeout`, `RetryTimes`, `RetrySleep`.
+- The integration entry point provided by Flashduty; the template is handled by the Flashduty backend, so on the n9e side it is almost a "pass-through of the events array".
 
 ### 11) Script `script`
 
 - `ScriptRequestConfig`:
   - `ScriptType`: `python` / `shell`
-  - `Script`: 脚本内容（运行时写入临时文件再执行）
-  - `Path`: 也可以直接给已存在的脚本路径
-  - `Timeout`: 毫秒
-- **告警数据通过 stdin 以 JSON 形式传入**——脚本里读 stdin 解析。
-- **历史包袱**：v6 时代的 `notify.py` 就是这条路径的兜底——任何 IM/系统的怪需求（自定义签名、私有协议、复杂 at 逻辑）最后都能用 script 兜住。
+  - `Script`: the script content (written to a temp file at runtime and then executed)
+  - `Path`: you can also directly give the path of an existing script
+  - `Timeout`: milliseconds
+- **The alert data is passed in via stdin as JSON**—read stdin in the script and parse it.
+- **Historical baggage**: the v6-era `notify.py` is exactly this fallback path—any weird IM/system requirement (custom signing, private protocol, complex @ logic) can ultimately be covered by script.
 
-### 12) Callback `callback`（通用 HTTP）
+### 12) Callback `callback` (generic HTTP)
 
-- 任何"打 HTTP 把事件 JSON 发过去"的场景都走它。
-- `HTTPRequestConfig.Body` 默认模板是 `{{ jsonMarshal $events }}`（注意是 `$events` 复数，整批传过去）。
-- **自定义 ident 兜底也走 callback**：`my-custom-webhook` 这种 ident 只要 `request_type=http` 就能跑（见 `Registry.Resolve`）。
+- Any scenario of "hit an HTTP endpoint and send the event JSON over" uses this.
+- The default template of `HTTPRequestConfig.Body` is `{{ jsonMarshal $events }}` (note it is `$events`, plural—the whole batch is passed over).
+- **Custom ident fallback also goes through callback**: an ident like `my-custom-webhook` works as long as `request_type=http` (see `Registry.Resolve`).
 
-⚠️ **v6/v7 升级上来的用户最常踩**：`$sendtos` 已经在模板上下文里自动注入（`http_common.go:36`），但 Callback **默认 Body 模板 `{{ jsonMarshal $events }}` 只输出 events**，并没引用 sendtos。下游 jenkins / 外呼 / 自愈脚本想拿"本次通知的接收人联系方式"会拿不到。改法是把 Body 显式加上：
+⚠️ **The most common pitfall for users upgrading from v6/v7**: `$sendtos` is already auto-injected into the template context (`http_common.go:36`), but Callback's **default Body template `{{ jsonMarshal $events }}` only outputs events** and does not reference sendtos. A downstream jenkins / auto-dial / self-healing script that wants "the recipient contact info of this notification" won't get it. The fix is to explicitly add it to the Body:
 
 ```json
 {
@@ -253,128 +253,128 @@ type HTTPRequestConfig struct {
 }
 ```
 
-不是上下文里没有，是默认模板没引用。
+It's not that the context lacks it—it's that the default template doesn't reference it.
 
 ---
 
-## 修改通知媒介的三条路径
+## Three paths to modify a notify channel
 
-### 路径 A：UI（推荐）
-- 路径：`系统配置 → 通知配置 → 通知媒介` → 选媒介 → 编辑
-- 适用：90% 场景。改 URL、改 timeout、改 body、改 headers、加自定义参数。
-- 一个**重要坑**：UI 上"媒介类型"（即 `Ident`）一旦创建**不允许修改**。要换类型只能删除重建。
+### Path A: UI (recommended)
+- Path: `System Config → Notification Config → Notify Channel` → select channel → Edit
+- Applies to: 90% of scenarios. Change the URL, change the timeout, change the body, change the headers, add custom parameters.
+- One **important pitfall**: once created, the "channel type" (i.e. `Ident`) **cannot be modified** in the UI. To switch the type you can only delete and recreate.
 
-### 路径 B：HTTP API
-- `POST /api/n9e/notify-channel`（新建）、`PUT /api/n9e/notify-channel/:id`（更新）、`DELETE /api/n9e/notify-channel/:id`
-- 看 `center/router/router_notify_channel.go` 找具体路径和请求体格式。
-- 适用：批量改、迁移、CI 灌配置。
+### Path B: HTTP API
+- `POST /api/n9e/notify-channel` (create), `PUT /api/n9e/notify-channel/:id` (update), `DELETE /api/n9e/notify-channel/:id`
+- Look at `center/router/router_notify_channel.go` for the exact paths and request body formats.
+- Applies to: bulk changes, migration, provisioning config in CI.
 
-### 路径 C：直改 DB（最后手段）
-- 表 `notify_channel`，`request_config` 是 JSON 字段。
-- 注意：① 改完要让 server 重新载入（n9e 每 9 秒拉一次，不用重启）；② JSON 改错会导致 Verify 失败，整条媒介不可用——改前 `mysqldump -t notify_channel > backup.sql`。
+### Path C: edit the DB directly (last resort)
+- Table `notify_channel`, where `request_config` is a JSON field.
+- Note: ① after editing, the server must reload (n9e pulls every 9 seconds, no restart needed); ② a bad JSON edit will cause Verify to fail and make the whole channel unusable—before editing, `mysqldump -t notify_channel > backup.sql`.
 
 ---
 
-## 调试与排错
+## Debugging and troubleshooting
 
-### 看媒介有没有真的发出请求
+### Check whether the channel actually sent a request
 
-两层证据，从粗到细。
+Two layers of evidence, from coarse to fine.
 
-**第一层：`notification_record` 表**——每次媒介调用一条记录，无论成功失败：
+**Layer 1: the `notification_record` table**—one record per channel call, regardless of success or failure:
 
 ```sql
 SELECT id, target, channel, status, error_message, send_time, details
 FROM notification_record
-WHERE channel = '<媒介 ident>'
+WHERE channel = '<channel ident>'
 ORDER BY id DESC LIMIT 20;
 ```
 
-- `status=success`：发出去了，对端怎么处理跟 n9e 无关。
-- `status=failure`：`error_message` 通常带对端 HTTP 状态码或错误描述。
-- **`details` 字段是 `varchar(2048)`**（`models/notification_record.go:22`），长 body 会被截断 —— 这时走第二层。
+- `status=success`: it was sent; how the peer handles it is unrelated to n9e.
+- `status=failure`: `error_message` usually carries the peer's HTTP status code or an error description.
+- **The `details` field is `varchar(2048)`** (`models/notification_record.go:22`), so a long body gets truncated—at that point go to layer 2.
 
-**第二层：center 服务日志**——`alert/sender/provider/http_common.go` 里的真实日志格式：
+**Layer 2: the center service log**—the real log formats in `alert/sender/provider/http_common.go`:
 
-| 级别 | 出处 | grep 关键字 | 内容 |
+| Level | Location | grep keyword | Content |
 |---|---|---|---|
-| Info | line 55 | `url:` | 渲染后的 URL / Headers / Parameters |
-| Error | line 63/69/80 | `send_http: failed` | 失败时的 url + request_body + error，**info 级即可看到** |
-| Debug | line 78 | `send http request:` | 完整 req + resp + 响应 body |
-| Debug | line 213 | `URL:` | 完整 `URL, Method, Headers, params, Body`（含模板渲染后内容） |
+| Info | line 55 | `url:` | the rendered URL / Headers / Parameters |
+| Error | line 63/69/80 | `send_http: failed` | on failure, the url + request_body + error, **visible at info level** |
+| Debug | line 78 | `send http request:` | the full req + resp + response body |
+| Debug | line 213 | `URL:` | the full `URL, Method, Headers, params, Body` (including template-rendered content) |
 
-操作：
-1. 失败排查 **不需要开 debug**，直接 `grep 'send_http: failed' n9e-center.log` 就能拿到 url + body + error。
-2. 想看成功但内容异常的完整请求体 → 把 center log level 改 `debug`（默认 info），再 `grep -E 'send http request:|^.*URL:' n9e-center.log`。
-3. Debug 日志不受 `notification_record.details` 2048 字节截断影响。
+Steps:
+1. Failure troubleshooting **does not require enabling debug**; just `grep 'send_http: failed' n9e-center.log` to get the url + body + error.
+2. To see the full request body when sending succeeds but the content looks wrong → change the center log level to `debug` (default info), then `grep -E 'send http request:|^.*URL:' n9e-center.log`.
+3. Debug logs are not affected by the 2048-byte truncation of `notification_record.details`.
 
-### 常见报错速查
+### Quick reference for common errors
 
-| 现象 | 大概率原因 | 排查 |
+| Symptom | Most likely cause | Investigation |
 |---|---|---|
-| 飞书 `{"code":9499,"msg":"Bad Request"}` | body JSON 不合法，多半是反斜杠/未转义引号 | 模板里所有标签值用 `{{... \| jsonMarshal}}` 或确认引号都转义了 |
-| 钉钉 "关键词不匹配" | 钉钉机器人开了关键字校验，但文本中没出现 | 把规则名/告警标题里固定带上关键字，或机器人加白名单 |
-| 钉钉/飞书 "timestamp is invalid" / "sign not match" | 开了签名校验但 n9e 没自动签 | 改用关键字/IP 白名单，或走 script 媒介 |
-| 邮件 `tls: handshake failure` | SMTP 服务器证书校验失败 | `InsecureSkipVerify: true` 或换 port（587 STARTTLS / 465 SSL） |
-| `connect: i/o timeout` | 网络不通或需要代理 | `HTTPRequestConfig.Proxy` 填代理地址，并确认机器能解析 webhook 域名 |
-| 短信 "模板变量缺少对应参数值" | 阿里云/腾讯云短信模板里 `${1}` 个数和 n9e 里 params 数组对不上 | 服务商后台对照模板内容，按顺序补齐 |
-| 自定义 ident 保存提示 `unsupported channel` | ident 没注册且 request_type 不在 fallback 表里 | `RequestType` 必须填 `http/script/smtp/flashduty/pagerduty` 之一 |
-| 一条媒介测试 OK 实际告警发不出 | sendtos 在真实告警时为空（接收人 contact_info 缺字段） / notify_rule 没选这条媒介 | 见下面"测试 OK 但实际告警发不出去"专项 |
+| Feishu `{"code":9499,"msg":"Bad Request"}` | the body JSON is invalid, most likely a backslash/unescaped quote | use `{{... \| jsonMarshal}}` for all label values in the template, or confirm all quotes are escaped |
+| DingTalk "keyword does not match" | the DingTalk robot has keyword validation enabled, but the keyword doesn't appear in the text | always include the keyword in the rule name/alert title, or add the robot to the allowlist |
+| DingTalk/Feishu "timestamp is invalid" / "sign not match" | signature validation is enabled but n9e didn't sign automatically | switch to keyword/IP allowlist, or use the script channel |
+| Email `tls: handshake failure` | the SMTP server certificate verification failed | `InsecureSkipVerify: true` or change the port (587 STARTTLS / 465 SSL) |
+| `connect: i/o timeout` | the network is unreachable or a proxy is needed | fill `HTTPRequestConfig.Proxy` with the proxy address, and confirm the machine can resolve the webhook domain |
+| SMS "template variable is missing a corresponding parameter value" | the count of `${1}` in the Alibaba Cloud/Tencent Cloud SMS template doesn't match the params array in n9e | compare against the template content in the provider console and fill in the missing ones in order |
+| Saving a custom ident shows `unsupported channel` | the ident is not registered and request_type is not in the fallback table | `RequestType` must be one of `http/script/smtp/flashduty/pagerduty` |
+| A channel tests OK but real alerts don't go out | sendtos is empty for real alerts (the recipient's contact_info is missing the field) / the notify_rule didn't select this channel | see the dedicated "Test works but real alerts don't go out" section below |
 
-### 测试 OK 但实际告警发不出去
+### Test works but real alerts don't go out
 
-常见问题。根因是**测试和真实告警的 sendtos 来源不一样**：
+A common problem. The root cause is **the source of sendtos differs between a test and a real alert**:
 
-- **测试按钮**：`POST /notify-rule/test` → 测试者在 UI 表单里直接填接收人，sendtos 由表单填的值产生。媒介本身的 URL/Body/Headers 没问题就能发出。
-- **真实告警**：走 `alert/dispatch/dispatch.go GetNotifyConfigParams`，从 notify_rule 的 `user_ids` / `user_group_ids` → 查 user → 按 `ContactKey` 从 `contact_info` 取字段 → 组 sendtos。**任意一处缺失都会让 sendtos 为空**，这一路就静默不发。
+- **The test button**: `POST /notify-rule/test` → the tester fills the recipients directly in the UI form, and sendtos comes from the values filled in the form. As long as the channel's own URL/Body/Headers are fine, it can send.
+- **Real alerts**: go through `alert/dispatch/dispatch.go GetNotifyConfigParams`, taking the notify_rule's `user_ids` / `user_group_ids` → query users → read the field from `contact_info` by `ContactKey` → build sendtos. **A gap anywhere makes sendtos empty**, and this path silently sends nothing.
 
-排查三步：
+Three investigation steps:
 
-1. 看 notify_rule 这条配置的接收人范围：
+1. Look at the recipient scope of this notify_rule config:
    ```sql
    SELECT user_ids, user_group_ids FROM notify_rule WHERE id=<id>;
    ```
-2. 把这些 user 拉出来，看 ContactKey 对应字段是否为空：
+2. Pull out these users and check whether the field corresponding to ContactKey is empty:
    ```sql
    SELECT id, username, contact_info FROM users WHERE id IN (...);
    ```
-   ContactKey 是 `phone` 时看 `contact_info.phone`；自定义 key（如 `dingtalk_robot_token`）同名取。
-3. 走业务组 / 团队的情况，再查团队成员表：
+   When ContactKey is `phone`, look at `contact_info.phone`; for a custom key (e.g. `dingtalk_robot_token`), read the value under the same name.
+3. For the business-group / team case, also query the team membership table:
    ```sql
    SELECT user_id FROM team_user WHERE team_id=<id>;
    ```
 
-任意一层空 → sendtos 空 → 真实告警这一路不发，但测试发表单填了就能发。
+If any layer is empty → sendtos is empty → real alerts don't send on this path, but the test sends because the form filled in the values.
 
-### 端到端验证步骤
+### End-to-end verification steps
 
-1. **媒介页"测试"按钮**：后端是 `POST /notify-rule/test`（`center/router/router_notify_rule.go:142, 172-264`），直接调 `Provider.Notify` **真实发送一条**——表单里填的接收人/标题/正文会真的过 webhook 出去到群里。
-   注意这步**不调 sendtos 解析逻辑**，表单填啥就发啥。能发说明这条媒介的 URL / Headers / Body 模板 / 网络 / 凭证 / 签名都没问题；不能发就是这条媒介本身的链路有问题。
-   （代码里**没有** `Provider.Check` 方法，不要在文档/口头上误导用户去找。）
-2. 测试通过仍发不出 → 进上面"测试 OK 但实际告警发不出去"专项排查 sendtos。
-3. 真实告警发出但内容异常 → 进上一节"看媒介有没有真的发出请求"第二层，开 debug log 抓完整请求体。
+1. **The "Test" button on the channel page**: the backend is `POST /notify-rule/test` (`center/router/router_notify_rule.go:142, 172-264`), which directly calls `Provider.Notify` to **actually send one message**—the recipient/title/body filled in the form really go through the webhook out to the group.
+   Note this step **does not invoke the sendtos resolution logic**; it sends whatever is filled in the form. If it can send, it means this channel's URL / Headers / Body template / network / credentials / signature are all fine; if it can't send, the channel's own pipeline has a problem.
+   (There is **no** `Provider.Check` method in the code; don't mislead the user in docs or speech into looking for it.)
+2. Test passes but still can't send → go to the "Test works but real alerts don't go out" section above to investigate sendtos.
+3. Real alerts go out but the content is wrong → go to layer 2 of the "Check whether the channel actually sent a request" section above, enable debug log, and capture the full request body.
 
 ---
 
-## "新增/复制一个媒介" 的标准动作
+## The standard procedure for "adding/copying a channel"
 
-用户问"我想接入 Slack / 飞书加签 / 内部 HTTP 系统"，给他这套模板：
+When the user asks "I want to integrate Slack / Feishu with signing / an internal HTTP system", give them this template:
 
-1. **选 ident**：
-   - 公开常用平台（Slack/Discord/Telegram/Lark/Jira）→ 用内置 ident。
-   - 私有系统/自建 HTTP 服务 → ident 随便起（如 `my-internal-bot`），`request_type=http` 即可。
-   - 复杂签名/状态机/编码 → ident 自起，`request_type=script`。
+1. **Choose the ident**:
+   - Common public platforms (Slack/Discord/Telegram/Lark/Jira) → use the built-in ident.
+   - A private system/self-built HTTP service → pick any ident (e.g. `my-internal-bot`), `request_type=http` is enough.
+   - Complex signing/state machine/encoding → pick your own ident, `request_type=script`.
 
-2. **填 `RequestConfig`**：HTTP 类的填 `HTTPRequestConfig`，至少 `URL` + `Method` + `Headers.Content-Type` + `Body`。
+2. **Fill in `RequestConfig`**: HTTP-type channels fill `HTTPRequestConfig`, at minimum `URL` + `Method` + `Headers.Content-Type` + `Body`.
 
-3. **`Body` 模板的最小骨架**（拿钉钉 markdown 举例）：
+3. **The minimal skeleton of the `Body` template** (using DingTalk markdown as an example):
 
    ```json
    {
      "msgtype": "markdown",
      "markdown": {
        "title": "{{$event.RuleName}}",
-       "text": "#### {{if $event.IsRecovered}}恢复{{else}}告警{{end}}: {{$event.RuleName}}\n- 对象: {{$event.TargetIdent}}\n- 触发值: {{$event.TriggerValue}}\n- 时间: {{timeformat $event.TriggerTime}}"
+       "text": "#### {{if $event.IsRecovered}}Recovered{{else}}Alerting{{end}}: {{$event.RuleName}}\n- Object: {{$event.TargetIdent}}\n- Trigger value: {{$event.TriggerValue}}\n- Time: {{timeformat $event.TriggerTime}}"
      },
      "at": {
        "atMobiles": [{{range $i, $u := $event.NotifyUsersObj}}{{if $i}},{{end}}"{{$u.Phone}}"{{end}}],
@@ -383,23 +383,23 @@ ORDER BY id DESC LIMIT 20;
    }
    ```
 
-4. **接收人字段** `ParamConfig.UserInfo.ContactKey`：
-   - 钉钉群机器人 / 飞书群机器人 → 留空（群级别，不挑人）
-   - 钉钉应用 / 飞书应用 / 企微应用 → 用 `dingtalk_userid` / `feishu_userid` / `wecom_userid`
-   - 邮件 → `email`
-   - 短信/语音 → `phone`
-   - 完全自定义的 contact（如 `slack_user_id`）→ 自己起 key 名，去 `user` 表 `contact_info` JSON 里填值。
+4. **The recipient field** `ParamConfig.UserInfo.ContactKey`:
+   - DingTalk group robot / Feishu group robot → leave empty (group-level, doesn't pick a person)
+   - DingTalk app / Feishu app / WeCom app → use `dingtalk_userid` / `feishu_userid` / `wecom_userid`
+   - Email → `email`
+   - SMS/voice → `phone`
+   - A fully custom contact (e.g. `slack_user_id`) → pick your own key name and fill the value into the `contact_info` JSON in the `user` table.
 
-5. **测试 → 保存 → 通知规则选上**。
+5. **Test → Save → select it in the notify rule.**
 
 ---
 
-## 输出风格
+## Output style
 
-用户问"怎么改 X" 时按这个套路答：
+When the user asks "how do I change X", answer using this routine:
 
-1. 一句话点出**改哪一层**（媒介/模板/规则）。如果用户其实在问模板/规则，先纠到对的 skill。
-2. 给出**字段级指令**：动 `notify_channel.request_config.http_request_config.headers` 这种精确路径，不是泛泛"去后台改一下"。
-3. 如果有内置 ident 能用，**优先内置**（feishucard 比手写 feishu webhook 强）。
-4. 涉及签名/特殊编码/反斜杠这种已知坑，**直接报"踩过"**并给方案，不要让用户走一遍试错。
-5. 全程**不替用户改库或调 API**——只告诉他改哪个字段、怎么验证。
+1. In one sentence, point out **which layer to change** (channel/template/rule). If the user is actually asking about the template/rule, first redirect them to the correct skill.
+2. Give **field-level instructions**: touch a precise path like `notify_channel.request_config.http_request_config.headers`, not a vague "go change it in the admin console".
+3. If a built-in ident can be used, **prefer the built-in** (feishucard is better than a hand-written feishu webhook).
+4. For known pitfalls like signing/special encoding/backslashes, **say directly that you've "hit this before"** and give the solution—don't make the user go through trial and error.
+5. Throughout, **never change the database or call the API on the user's behalf**—only tell them which field to change and how to verify.

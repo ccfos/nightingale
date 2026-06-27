@@ -1,45 +1,45 @@
-# VictoriaLogs 告警规则
+# VictoriaLogs alert rules
 
 - `prod`: `"logging"`
 - `cate`: `"victorialogs"`
-- `recover_config.judge_type`: `0`（日志类型）
+- `recover_config.judge_type`: `0` (log type)
 
-## ⚠️ 核心约束：必须用 pipe 语法
+## ⚠️ Core constraint: you must use pipe syntax
 
-VictoriaLogs 告警走的是 **`/select/logsql/stats_query`** 端点（见 `dskit/victorialogs/victorialogs.go:StatsQuery`），它**只接受带 `| stats` 管道的聚合查询**，不接受纯过滤查询。
+VictoriaLogs alerts go through the **`/select/logsql/stats_query`** endpoint (see `dskit/victorialogs/victorialogs.go:StatsQuery`), which **only accepts aggregation queries with a `| stats` pipe**, not pure filter queries.
 
-错误写法（只会报错或返回空）：
+Wrong approach (only errors out or returns empty):
 ```
 _msg:error
 service:payment AND level:error
 ```
 
-正确写法：
+Correct approach:
 ```
-<过滤条件> | stats <聚合函数>
+<filter condition> | stats <aggregation function>
 ```
 
-| 需求 | LogsQL |
+| Need | LogsQL |
 |---|---|
-| 过去 5 分钟错误日志条数 | `_msg:error \| stats count() as value` |
-| 某服务的错误日志条数 | `service:payment AND level:error \| stats count() as value` |
-| 按服务分组统计 | `level:error \| stats by (service) count() as value` |
-| 平均响应时间 | `* \| stats avg(duration) as value` |
-| 多个聚合 | `_msg:error \| stats count() as error_count, avg(duration) as avg_dur` |
+| Number of error logs in the last 5 minutes | `_msg:error \| stats count() as value` |
+| Number of error logs for a service | `service:payment AND level:error \| stats count() as value` |
+| Count grouped by service | `level:error \| stats by (service) count() as value` |
+| Average response time | `* \| stats avg(duration) as value` |
+| Multiple aggregations | `_msg:error \| stats count() as error_count, avg(duration) as avg_dur` |
 
-**关键规则**：
-- `| stats` 后面必须给每个聚合函数起别名（`as value` / `as count` 等）
-- 别名会作为返回结果的字段名，告警引擎按别名匹配
-- 分组用 `stats by (field1, field2) ...`
-- 过滤部分可以是任意 LogsQL filter：`_msg:keyword`, `field:value`, `field:"value with space"`, `_time:5m` 等
+**Key rules**:
+- After `| stats`, you must alias each aggregation function (`as value` / `as count`, etc.)
+- The alias becomes the field name of the returned result, and the alert engine matches by alias
+- Group with `stats by (field1, field2) ...`
+- The filter part can be any LogsQL filter: `_msg:keyword`, `field:value`, `field:"value with space"`, `_time:5m`, etc.
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：`$<ref>.<stats 输出别名>`，如 `$A.value > 20`（对应 `stats count() as value`）；只有一个 stats 输出时可省略别名直接写 `$A`
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.value > 10 && $B.value < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: `$<ref>.<stats output alias>`, e.g. `$A.value > 20` (corresponding to `stats count() as value`); with only one stats output you may omit the alias and write `$A` directly
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A.value > 10 && $B.value < 5"`
 
-## rule_config 结构
+## rule_config structure
 
 ```json
 {
@@ -63,20 +63,20 @@ service:payment AND level:error
 }
 ```
 
-## query 字段说明
+## query field reference
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `ref` | ✅ | 查询引用名 |
-| `query` | ✅ | LogsQL 查询，**必须是 `<过滤> \| stats <函数>` 格式** |
-| `interval` | ❌ | 查询间隔，**单位：总秒数**（60=1分钟，300=5分钟）。**不要写 `interval_unit`** |
+| `ref` | ✅ | Query reference name |
+| `query` | ✅ | LogsQL query, **must be in the `<filter> \| stats <function>` format** |
+| `interval` | ❌ | Query interval, **unit: total seconds** (60=1 minute, 300=5 minutes). **Do not write `interval_unit`** |
 
-## 完整示例
+## Complete example
 
 ```json
 [{
-  "name": "应用错误日志告警",
-  "note": "过去 1 分钟 payment 服务错误日志超过 20 条",
+  "name": "Application error log alert",
+  "note": "More than 20 error logs for the payment service in the last 1 minute",
   "prod": "logging",
   "cate": "victorialogs",
   "datasource_ids": [11],
@@ -105,10 +105,10 @@ service:payment AND level:error
 }]
 ```
 
-## 错误排查
+## Troubleshooting
 
-| 现象 | 原因 | 修复 |
+| Symptom | Cause | Fix |
 |---|---|---|
-| 规则保存成功但始终无数据 | query 只写了过滤条件，没有 `\| stats` | 加上 `\| stats count() as value` 或其他聚合 |
-| `no stats clause` 错误 | 同上 | 同上 |
-| 聚合值取不到 | 聚合没有 alias | 给聚合加 `as value`，并让 `value` 与阈值匹配对应 |
+| Rule saves successfully but always has no data | The query only has a filter condition, no `\| stats` | Add `\| stats count() as value` or another aggregation |
+| `no stats clause` error | Same as above | Same as above |
+| Aggregation value cannot be obtained | The aggregation has no alias | Add `as value` to the aggregation, and make `value` match the threshold |

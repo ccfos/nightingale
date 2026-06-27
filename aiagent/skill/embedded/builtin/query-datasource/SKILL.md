@@ -1,54 +1,54 @@
 ---
 name: query-datasource
-description: 在夜莺(n9e)环境中查询各种数据源的数据。支持 Prometheus 指标查询、Elasticsearch/Loki 日志查询、ClickHouse/MySQL/PostgreSQL/TDengine/Doris 等 SQL 数据源查询。当用户要求查询指标、查看监控数据、搜索日志、执行 PromQL 或 SQL 查询时使用。
+description: Query data from various datasources in a Nightingale (n9e) environment. Supports Prometheus metric queries, Elasticsearch/Loki log queries, and SQL datasource queries such as ClickHouse/MySQL/PostgreSQL/TDengine/Doris. Use when the user asks to query metrics, view monitoring data, search logs, or run PromQL or SQL queries.
 tags:
   - internal
 ---
 
-# 夜莺(n9e) 查询数据源数据
+# Nightingale (n9e) Query Datasource Data
 
-在夜莺监控平台上查询各种数据源的监控指标、日志和时序数据。
+Query monitoring metrics, logs, and time-series data from various datasources on the Nightingale monitoring platform.
 
-根据用户需要的数据源类型，读取 `datasources/` 目录下对应的文件获取查询方式和参数格式：
-- [datasources/prometheus.md](datasources/prometheus.md) - Prometheus / VictoriaMetrics 指标查询（PromQL）
-- [datasources/elasticsearch.md](datasources/elasticsearch.md) - Elasticsearch 日志查询（ES DSL / Lucene）
-- [datasources/loki.md](datasources/loki.md) - Loki 日志查询（LogQL）
-- [datasources/clickhouse.md](datasources/clickhouse.md) - ClickHouse 指标/日志查询（SQL）
-- [datasources/mysql.md](datasources/mysql.md) - MySQL 指标查询（SQL）
-- [datasources/pgsql.md](datasources/pgsql.md) - PostgreSQL 指标查询（SQL）
-- [datasources/tdengine.md](datasources/tdengine.md) - TDengine 时序查询（SQL）
-- [datasources/doris.md](datasources/doris.md) - Doris 日志查询（SQL）
-- [datasources/opensearch.md](datasources/opensearch.md) - OpenSearch 日志查询（ES DSL）
-- [datasources/victorialogs.md](datasources/victorialogs.md) - VictoriaLogs 日志查询（LogsQL）
-
----
-
-## 前置条件
-
-用户需要提供：
-- **n9e 地址**：如 `http://<n9e-host>:<port>`
-- **用户名/密码**：如 `<username>/<password>`
-- **查询需求描述**：如 "查询最近1小时的 CPU 使用率"、"搜索包含 error 的日志"
-
-如果用户未提供以上信息，使用 AskUserQuestion 工具询问。
+Based on the datasource type the user needs, read the corresponding file under the `datasources/` directory to get the query method and parameter format:
+- [datasources/prometheus.md](datasources/prometheus.md) - Prometheus / VictoriaMetrics metric queries (PromQL)
+- [datasources/elasticsearch.md](datasources/elasticsearch.md) - Elasticsearch log queries (ES DSL / Lucene)
+- [datasources/loki.md](datasources/loki.md) - Loki log queries (LogQL)
+- [datasources/clickhouse.md](datasources/clickhouse.md) - ClickHouse metric/log queries (SQL)
+- [datasources/mysql.md](datasources/mysql.md) - MySQL metric queries (SQL)
+- [datasources/pgsql.md](datasources/pgsql.md) - PostgreSQL metric queries (SQL)
+- [datasources/tdengine.md](datasources/tdengine.md) - TDengine time-series queries (SQL)
+- [datasources/doris.md](datasources/doris.md) - Doris log queries (SQL)
+- [datasources/opensearch.md](datasources/opensearch.md) - OpenSearch log queries (ES DSL)
+- [datasources/victorialogs.md](datasources/victorialogs.md) - VictoriaLogs log queries (LogsQL)
 
 ---
 
-## 执行步骤
+## Prerequisites
 
-### 第一步：登录获取 Token
+The user needs to provide:
+- **n9e address**: e.g. `http://<n9e-host>:<port>`
+- **Username/password**: e.g. `<username>/<password>`
+- **Query requirement description**: e.g. "query CPU usage over the last hour", "search logs containing error"
+
+If the user has not provided the above information, use the AskUserQuestion tool to ask.
+
+---
+
+## Execution Steps
+
+### Step 1: Log in to obtain a Token
 
 ```
 POST /api/n9e/auth/login
 Content-Type: application/json
-Body: {"username":"<用户名>","password":"<密码>"}
+Body: {"username":"<username>","password":"<password>"}
 ```
 
-从响应中提取 `dat.access_token`，后续请求都带上 `Authorization: Bearer <token>`。
+Extract `dat.access_token` from the response, and include `Authorization: Bearer <token>` in all subsequent requests.
 
-### 第二步：查询可用数据源
+### Step 2: Query available datasources
 
-获取数据源列表，确定要查询的数据源 ID 和类型：
+Retrieve the datasource list to determine the datasource ID and type to query:
 
 ```
 POST /api/n9e/datasource/list
@@ -57,56 +57,56 @@ Content-Type: application/json
 Body: {}
 ```
 
-响应中每个数据源包含 `id`、`name`、`plugin_type`。
+Each datasource in the response contains `id`, `name`, and `plugin_type`.
 
-如果用户未指定数据源，通过 **AskUserQuestion** 工具展示可用数据源让用户选择。
+If the user has not specified a datasource, use the **AskUserQuestion** tool to display the available datasources and let the user choose.
 
-### 第三步：根据数据源类型执行查询
+### Step 3: Run the query based on the datasource type
 
-根据数据源的 `plugin_type`，读取对应的 `datasources/*.md` 文件获取查询 API 和参数格式。
+Based on the datasource's `plugin_type`, read the corresponding `datasources/*.md` file to get the query API and parameter format.
 
-### 第四步：格式化输出
+### Step 4: Format the output
 
-将查询结果以可读的 Markdown 表格或列表形式展示给用户。
+Present the query result to the user as a readable Markdown table or list.
 
 ---
 
-## 数据源类型速查表
+## Datasource Type Quick Reference
 
-| plugin_type | 数据源 | 查询语言 | 适用场景 | 参考文件 |
+| plugin_type | Datasource | Query Language | Use Case | Reference File |
 |---|---|---|---|---|
-| `prometheus` | Prometheus / VictoriaMetrics | PromQL | 指标/时序查询 | [prometheus.md](datasources/prometheus.md) |
-| `elasticsearch` | Elasticsearch | ES DSL / Lucene | 日志查询 | [elasticsearch.md](datasources/elasticsearch.md) |
-| `opensearch` | OpenSearch | ES DSL / Lucene | 日志查询 | [opensearch.md](datasources/opensearch.md) |
-| `loki` | Loki | LogQL | 日志查询 | [loki.md](datasources/loki.md) |
-| `ck` | ClickHouse | SQL | 指标/日志查询 | [clickhouse.md](datasources/clickhouse.md) |
-| `mysql` | MySQL | SQL | 指标查询 | [mysql.md](datasources/mysql.md) |
-| `pgsql` | PostgreSQL | SQL | 指标查询 | [pgsql.md](datasources/pgsql.md) |
-| `tdengine` | TDengine | SQL | 时序查询 | [tdengine.md](datasources/tdengine.md) |
-| `doris` | Doris | SQL | 日志查询 | [doris.md](datasources/doris.md) |
-| `victorialogs` | VictoriaLogs | LogsQL | 日志查询 | [victorialogs.md](datasources/victorialogs.md) |
+| `prometheus` | Prometheus / VictoriaMetrics | PromQL | Metric/time-series query | [prometheus.md](datasources/prometheus.md) |
+| `elasticsearch` | Elasticsearch | ES DSL / Lucene | Log query | [elasticsearch.md](datasources/elasticsearch.md) |
+| `opensearch` | OpenSearch | ES DSL / Lucene | Log query | [opensearch.md](datasources/opensearch.md) |
+| `loki` | Loki | LogQL | Log query | [loki.md](datasources/loki.md) |
+| `ck` | ClickHouse | SQL | Metric/log query | [clickhouse.md](datasources/clickhouse.md) |
+| `mysql` | MySQL | SQL | Metric query | [mysql.md](datasources/mysql.md) |
+| `pgsql` | PostgreSQL | SQL | Metric query | [pgsql.md](datasources/pgsql.md) |
+| `tdengine` | TDengine | SQL | Time-series query | [tdengine.md](datasources/tdengine.md) |
+| `doris` | Doris | SQL | Log query | [doris.md](datasources/doris.md) |
+| `victorialogs` | VictoriaLogs | LogsQL | Log query | [victorialogs.md](datasources/victorialogs.md) |
 
 ---
 
-## 通用代理 API
+## Generic Proxy API
 
-所有数据源都可以通过通用代理访问其原生 API：
+All datasources can access their native APIs through the generic proxy:
 
 ```
-<ANY_METHOD> /api/n9e/proxy/<datasource_id>/<原生API路径>
+<ANY_METHOD> /api/n9e/proxy/<datasource_id>/<native API path>
 Authorization: Bearer <token>
 ```
 
-例如：
+For example:
 - Prometheus: `/api/n9e/proxy/1/api/v1/query?query=up`
 - Elasticsearch: `/api/n9e/proxy/2/_cat/health`
 - Loki: `/api/n9e/proxy/3/loki/api/v1/labels`
 
 ---
 
-## 通用时序查询 API
+## Generic Time-Series Query API
 
-所有数据源（Prometheus 除外）都可以使用统一的时序查询接口：
+All datasources (except Prometheus) can use the unified time-series query endpoint:
 
 ```
 POST /api/n9e/ds-query
@@ -118,11 +118,11 @@ Content-Type: application/json
 {
   "cate": "<plugin_type>",
   "datasource_id": 1,
-  "query": [<查询对象>]
+  "query": [<query object>]
 }
 ```
 
-通用日志查询接口：
+Generic log query endpoint:
 
 ```
 POST /api/n9e/logs-query
@@ -134,25 +134,25 @@ Content-Type: application/json
 {
   "cate": "<plugin_type>",
   "datasource_id": 1,
-  "query": [<查询对象>]
+  "query": [<query object>]
 }
 ```
 
-查询对象的具体结构因数据源类型而异，详见各数据源文件。
+The exact structure of the query object varies by datasource type; see each datasource file for details.
 
 ---
 
-## SQL 类数据源通用元数据 API
+## Generic Metadata API for SQL-type Datasources
 
-ClickHouse、MySQL、PostgreSQL、Doris 共享以下元数据查询端点：
+ClickHouse, MySQL, PostgreSQL, and Doris share the following metadata query endpoints:
 
 ```
-POST /api/n9e/db-databases     // 列出数据库
-POST /api/n9e/db-tables        // 列出表
-POST /api/n9e/db-desc-table    // 查看表结构
+POST /api/n9e/db-databases     // List databases
+POST /api/n9e/db-tables        // List tables
+POST /api/n9e/db-desc-table    // View table structure
 ```
 
-TDengine 使用独立端点：
+TDengine uses dedicated endpoints:
 
 ```
 POST /api/n9e/tdengine-databases
@@ -162,10 +162,10 @@ POST /api/n9e/tdengine-columns
 
 ---
 
-## 关键注意事项
+## Key Considerations
 
-1. **先查询数据源列表获取 ID**：所有查询都需要 `datasource_id`，先通过 `POST /api/n9e/datasource/list` 获取
-2. **SQL 查询只读**：SQL 类数据源禁止 CREATE、INSERT、UPDATE、DELETE、ALTER、DROP 等写操作
-3. **时间变量**：SQL 查询中用 `$from` 和 `$to` 表示时间范围，系统会自动替换
-4. **keys 字段**：时序查询需指定 `valueKey`（数值列）和 `labelKey`（分组列），多列用空格分隔
-5. **响应格式统一**：所有 API 响应都包裹在 `{"dat": <data>}` 结构中
+1. **Query the datasource list first to get the ID**: All queries require a `datasource_id`; obtain it first via `POST /api/n9e/datasource/list`
+2. **SQL queries are read-only**: SQL-type datasources prohibit write operations such as CREATE, INSERT, UPDATE, DELETE, ALTER, DROP
+3. **Time variables**: In SQL queries, use `$from` and `$to` to represent the time range; the system replaces them automatically
+4. **keys field**: Time-series queries must specify `valueKey` (numeric column) and `labelKey` (grouping column); separate multiple columns with spaces
+5. **Unified response format**: All API responses are wrapped in a `{"dat": <data>}` structure

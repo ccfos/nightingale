@@ -1,18 +1,18 @@
-# Loki 告警规则
+# Loki alert rules
 
 - `prod`: `"logging"`
 - `cate`: `"loki"`
-- `recover_config.judge_type`: `0`（日志类型）
+- `recover_config.judge_type`: `0` (log type)
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：单值查询用 `$<ref>`，如 `$A > 10`（阈值已写进 LogQL 时 exp 形同二次确认，仍必须填）
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A > 10 && $B < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: use `$<ref>` for a single-value query, e.g. `$A > 10` (when the threshold is already written into the LogQL, exp acts as a second confirmation, but it is still required)
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A > 10 && $B < 5"`
 
-## rule_config 结构
+## rule_config structure
 
-Loki 使用 LogQL 查询语言，但字段名复用 `prom_ql`。
+Loki uses the LogQL query language, but the field name reuses `prom_ql`.
 
 ```json
 {
@@ -35,12 +35,12 @@ Loki 使用 LogQL 查询语言，但字段名复用 `prom_ql`。
 }
 ```
 
-## 完整示例
+## Complete example
 
 ```json
 [{
-  "name": "应用错误日志过多",
-  "note": "5分钟内错误日志超过10条",
+  "name": "Too many application error logs",
+  "note": "More than 10 error logs within 5 minutes",
   "prod": "logging",
   "cate": "loki",
   "datasource_ids": [2],

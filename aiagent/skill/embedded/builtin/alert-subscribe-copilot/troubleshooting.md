@@ -1,51 +1,51 @@
-# 订阅不生效排查 + 行为语义
+# Troubleshooting a subscription not taking effect + behavioral semantics
 
-## "订阅了没收到"排查链
+## "I subscribed but didn't receive anything" troubleshooting chain
 
-引擎匹配链 `alert/dispatch/dispatch.go:handleSub`，按以下顺序判断，**任何一关不过就跳过该订阅**。按序核对：
+Engine matching chain `alert/dispatch/dispatch.go:handleSub`, evaluated in the following order; **failing any single gate skips that subscription**. Check in order:
 
-| # | 检查项 | 不过的常见原因 |
+| # | Check item | Common reason for failure |
 |---|---|---|
-| 0 | 缓存同步 | 刚改完规则，内存缓存最多延迟 **9 秒** |
-| 1 | `disabled` | 规则被禁用（`disabled=1`，缓存层直接过滤） |
-| 2 | 数据源 | `datasource_ids` 非全部且事件的 `datasource_id` 不在列表里 |
-| 3 | prod | `prod` 非空且与事件 RuleProd 不相等（注意是精确匹配） |
-| 4 | cate | 填了 `"host"` 但事件不是 host 类（其他取值不会导致失配） |
-| 5 | 标签 | `tags` 多条是 AND；`in` 的 value 写成逗号分隔会失配（必须空格） |
-| 6 | 业务组名 | `busi_groups` 对事件**业务组名**匹配——业务组改名后按名硬绑的条件失联；正则没考虑全名 |
-| 7 | 持续时长 | `for_duration` 大于事件已持续时长（`trigger_time - first_trigger_time`）——告警刚触发时一定不命中，要等持续够久的**下一次**通知周期 |
-| 8 | 级别 | `severities` 不含事件级别 |
-| 9 | 下游出口 | 以上全过、克隆事件已产生，但 `notify_rule_ids` 指向的**通知规则本身**没配对（渠道/接收人/适用属性不命中）→ 转 notify-rule-copilot 排查 |
+| 0 | Cache sync | Just changed the rule; the in-memory cache lags by **9 seconds** at most |
+| 1 | `disabled` | The rule is disabled (`disabled=1`, filtered directly at the cache layer) |
+| 2 | Datasource | `datasource_ids` is not "all" and the event's `datasource_id` is not in the list |
+| 3 | prod | `prod` is non-empty and not equal to the event's RuleProd (note this is an exact match) |
+| 4 | cate | `"host"` was filled in but the event is not a host type (other values do not cause a mismatch) |
+| 5 | Tags | Multiple `tags` entries are AND'd; writing the `in` value comma-separated causes a mismatch (it must be space-separated) |
+| 6 | Business group name | `busi_groups` matches against the event's **business group name** — a condition hard-bound by name loses its target after the business group is renamed; the regex did not account for the full name |
+| 7 | Duration | `for_duration` is greater than the event's elapsed duration (`trigger_time - first_trigger_time`) — when an alert has just fired it will definitely not match; you must wait for the **next** notification cycle once it has persisted long enough |
+| 8 | Severity | `severities` does not include the event's severity |
+| 9 | Downstream outlet | All of the above passed and the cloned event was produced, but the **notification rule itself** that `notify_rule_ids` points to is not configured correctly (channel/recipient/applicable attributes do not match) → hand off to notify-rule-copilot to troubleshoot |
 
-还要确认源头：**原始告警事件得真的产生**——订阅不会无中生有；事件被屏蔽（评估阶段拦截）就根本到不了订阅这一步。
+Also confirm the source: **the original alert event must actually be produced** — a subscription does not conjure things out of nothing; if the event is muted (intercepted at the evaluation stage) it never reaches the subscription step at all.
 
-## 行为语义（回答用户疑问时引用）
+## Behavioral semantics (cite when answering user questions)
 
-| 行为 | 语义 |
+| Behavior | Semantics |
 |---|---|
-| 订阅会替代原始通知吗 | **不会**。原始事件照常走自己的通知路径；订阅克隆一份额外转发。同一个人在两条链路都被配置就会收到两次——这是设计 |
-| 会重复打回调（webhook）吗 | 不会。克隆事件的 callbacks 默认被**清空**（`models/alert_subscribe.go:ModifyEvent`），只有旧版显式 `redefine_webhooks=1` 才带上订阅自己的 webhooks |
-| 订阅范围受 group_id 限制吗 | 不受。`group_id` 只是管理归属（权限）；订阅天然收所有业务组的事件，收窄靠 `busi_groups`/`rule_ids`/`tags` |
-| `for_duration` 怎么生效 | 比较的是事件的 `trigger_time - first_trigger_time`。事件首次触发时差值为 0，必不命中；告警持续重复通知到第 N 次、差值超过阈值后，那次事件的克隆才被转发——所以"升级"依赖告警规则本身配了重复通知 |
-| 新版能改写级别/渠道吗 | 不能。`notify_version=1` 时 Verify 会清空 redefine_* 字段；级别/渠道路由去通知规则层做 |
-| 恢复事件也会被订阅吗 | 会走同一条匹配链；恢复通知是否发出取决于下游通知规则的配置（如 `is_recovered` 属性过滤） |
-| 改动多久生效 | 缓存每 9 秒轮询，最多 9 秒，无需重启 |
-| 怎么看一个事件是不是订阅转发的 | 克隆事件带 `sub_rule_id`（订阅规则 ID），通知记录/事件详情可见 |
+| Does a subscription replace the original notification | **No**. The original event still travels its own notification path as usual; the subscription clones a copy and forwards it additionally. If the same person is configured on both chains they will receive it twice — this is by design |
+| Will it re-hit callbacks (webhooks) | No. The cloned event's callbacks are **cleared** by default (`models/alert_subscribe.go:ModifyEvent`); only the old version with explicit `redefine_webhooks=1` carries the subscription's own webhooks |
+| Is the subscription scope limited by group_id | No. `group_id` is only the management ownership (permissions); a subscription inherently receives events from all business groups, and you narrow it via `busi_groups`/`rule_ids`/`tags` |
+| How does `for_duration` take effect | It compares the event's `trigger_time - first_trigger_time`. When the event first fires the difference is 0, so it definitely does not match; only after the alert has repeatedly notified to the Nth time and the difference exceeds the threshold is the clone of that event forwarded — so "escalation" depends on the alert rule itself having repeated notifications configured |
+| Can the new version rewrite severity/channels | No. When `notify_version=1`, Verify clears the redefine_* fields; do severity/channel routing at the notification rule layer |
+| Are recovery events also subscribed | They go through the same matching chain; whether the recovery notification is sent depends on the downstream notification rule's config (e.g. the `is_recovered` attribute filter) |
+| How long until changes take effect | The cache polls every 9 seconds, 9 seconds at most, no restart needed |
+| How to tell whether an event was forwarded by a subscription | The cloned event carries `sub_rule_id` (the subscription rule ID), visible in the notification record / event detail |
 
-## 其他坑
+## Other gotchas
 
-| 现象 | 原因 | 处理 |
+| Symptom | Cause | Handling |
 |---|---|---|
-| 创建报 `severities is required` | 新旧版都必填 | 至少填 `[1,2,3]` |
-| 创建报 `no notify rules selected` | `notify_version=1` 但 `notify_rule_ids` 空 | 先 `list_notify_rules` 拿 ID，没有就先建通知规则 |
-| 创建报 `new_channels is required` | 旧版指定了 `user_group_ids` 却没填 `new_channels` | 补 `new_channels`，或改用新版 |
-| 保存后 redefine 字段全没了 | 新版 Verify 主动清空旧版字段 | 预期行为，不是丢数据 |
-| 升级订阅一直不触发 | 告警规则没配重复通知（notify_repeat_step=0），事件不会再来第二次 | 让用户检查告警规则的重复通知间隔 |
-| 全局订阅事件量爆炸 | rule_ids/tags/busi_groups 全空 = 复制所有事件 | 至少加一层过滤；或下游通知规则收窄 |
-| 业务组改名后订阅失联 | `busi_groups` 按名匹配 | 改用 `=~` 正则，或改名时同步订阅 |
+| Creation reports `severities is required` | Required in both new and old versions | Fill in at least `[1,2,3]` |
+| Creation reports `no notify rules selected` | `notify_version=1` but `notify_rule_ids` is empty | First use `list_notify_rules` to get IDs; if there are none, create a notification rule first |
+| Creation reports `new_channels is required` | The old version specified `user_group_ids` but did not fill in `new_channels` | Add `new_channels`, or switch to the new version |
+| The redefine fields are all gone after saving | The new-version Verify proactively clears the old-version fields | Expected behavior, not data loss |
+| The escalation subscription never triggers | The alert rule has no repeated notifications configured (notify_repeat_step=0), so the event will not come a second time | Have the user check the alert rule's repeated-notification interval |
+| Event volume from a global subscription explodes | rule_ids/tags/busi_groups all empty = copies all events | Add at least one filter layer; or narrow it at the downstream notification rule |
+| The subscription loses its target after a business group rename | `busi_groups` matches by name | Switch to a `=~` regex, or sync the subscription when renaming |
 
-## 验证手段
+## Verification methods
 
-- 站内：`get_alert_subscribe_detail` 核对字段；`get_notify_rule_detail` 核对下游出口。
-- HTTP（给用户出指令）：`POST /api/n9e/alert-subscribe/alert-subscribes-tryrun` 用历史事件 ID + 订阅草稿试跑，能看到匹配在哪一步失败、新版还会真实走一次通知规则测试发送。见 `http-api.md`。
-- 真实验证：触发一条匹配的告警，到 `历史告警 → 详情` 看是否出现带 `sub_rule_id` 的克隆事件及其通知记录。
+- In-app: `get_alert_subscribe_detail` to verify fields; `get_notify_rule_detail` to verify the downstream outlet.
+- HTTP (give the user commands): `POST /api/n9e/alert-subscribe/alert-subscribes-tryrun` runs a trial using a historical event ID + subscription draft, showing at which step the match failed; the new version even runs the notification rule's real test send. See `http-api.md`.
+- Real verification: trigger a matching alert, then go to `Historical Alerts → Detail` to check whether a cloned event carrying `sub_rule_id` and its notification record appear.

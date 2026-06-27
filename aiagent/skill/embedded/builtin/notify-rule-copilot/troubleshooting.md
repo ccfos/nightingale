@@ -1,52 +1,52 @@
-# 通知规则已知坑速查 + 测试验证
+# Notify rule known-pitfalls quick lookup + test verification
 
-## 已知坑速查
+## Known-pitfalls quick lookup
 
-| 现象 | 大概率原因 | 处理 |
+| Symptom | Most likely cause | Handling |
 |---|---|---|
-| 测试发送 OK，真实告警没出来 | 接收人 `contact_info.<ContactKey>` 为空 → `sendtos` 空 → 静默不发 | 转 `alert-rule-troubleshoot` 流程 B；本 skill 只负责让用户检查渠道的 `ContactKey` 和用户的 contact_info |
-| 群机器人渠道（钉钉/企微/飞书）一直没发出 | params 没填该渠道的自定义参数（`access_token`/`key`），或 token 填错——这类渠道发送只看 token，与接收人无关 | 对照 `list_notify_channels` 的 `custom_params` 补齐 params；token 哪里拿见 `reference.md` 速查表对应文档链接 |
-| 告警规则保存了但通知记录一直为空 | 告警规则没关联到这条通知规则（`alert_rule.notify_rule_ids` 为空 / 仍走老版 `notify_groups`） | 告警规则列表 → 批量更新 → 关联通知规则 |
-| 业务组改名后规则突然失配 | `attributes.group_name == "old-name"` 按名字硬绑 | 改用 `=~` 加正则，或同步改这条规则 |
-| `attributes` 用 `in` 多个值无效 | value 写成逗号分隔 `"a,b,c"` | 改成**空格**：`"a b c"` |
-| 多个 NotifyConfig 部分匹配失败时日志暴增 | 现版本日志级别问题 | 建议用户加一条"兜底 NotifyConfig"（recipes.md 模板 F） |
-| 同一 webhook 被 N 条规则共用，单点宕机阻塞所有规则 | 队头阻塞 | 关键链路用独立 channel，提示用户拆 channel |
-| 编辑保存后某个字段被清空 | PATCH 误用，或前端表单 normalizeValues 把空时间段过滤掉了 | 用 PUT 时**先 GET 再改再 PUT**，保留所有字段 |
-| 跨午夜时段（如 22:00–02:00）不生效 | 引擎不跨天 | 拆 `22:00–23:59` + `00:00–02:00` 两段 |
-| `week` 写反了（把 1 当周日） | 用了中国习惯 1=Mon 而非 ISO 0=Sun | 纠正：0=周日，1=周一 … 6=周六 |
-| `is_recovered` 值类型踩坑 | 写成 `true`（bool）而不是 `"true"`（字符串） | TagFilter 的 value 是 string，必须用 `"true"` / `"false"` |
-| 同一个 label key 想要 OR | 结构上不支持 | 改用 `attributes` 的 `in`，或拆多条 NotifyConfig |
-| 名称带空格在 `in` 里失效 | 业务组名含空格被空格分隔吞掉 | 改用正则 `=~` 转义 |
-| 用户没权限看到这条规则 | `user_group_ids` 没包含此用户所在团队 | 加上对应团队 ID |
-| 创建报 `forbidden` | 当前用户不在 `user_group_ids` 任何一个团队 | 加上自己所在团队或让 admin 操作 |
-| 按 ident 路由全部失配 | 事件标签里没有 `ident`（如 categraf 直写时序库丢失） | 让用户确认数据流，用 `GET /api/n9e/event-tagkeys` 看实际标签 |
-| UI 找不到"切换新版"按钮 | 按钮位置历经多次变迁（beta14 隐藏 / 8.4.x 挪位置） | 升到 8.5.1+，去**告警规则列表的"批量更新"弹窗**找 |
+| Test send is OK, but the real alert doesn't come out | Recipient's `contact_info.<ContactKey>` is empty → `sendtos` is empty → silently not sent | Hand off to `alert-rule-troubleshoot` flow B; this skill is only responsible for having the user check the channel's `ContactKey` and the user's contact_info |
+| A group-bot channel (DingTalk/WeCom/Feishu) never sends | params didn't fill in that channel's custom parameter (`access_token`/`key`), or the token is wrong — for these channels, sending depends only on the token, unrelated to recipients | Fill in params against the `custom_params` from `list_notify_channels`; for where to get the token, see the corresponding doc link in the `reference.md` quick lookup table |
+| The alert rule is saved but the notification records stay empty | The alert rule isn't associated with this notify rule (`alert_rule.notify_rule_ids` is empty / still using the old-style `notify_groups`) | Alert rule list → batch update → associate the notify rule |
+| A rule suddenly stops matching after a business group is renamed | `attributes.group_name == "old-name"` is hard-bound by name | Switch to `=~` with a regex, or sync-update this rule |
+| `attributes` with multiple `in` values has no effect | The value was written comma-separated `"a,b,c"` | Change to **spaces**: `"a b c"` |
+| Logs explode when some of multiple NotifyConfigs fail to match | Log-level issue in the current version | Suggest the user add a "catch-all NotifyConfig" (recipes.md template F) |
+| One webhook is shared by N rules, and a single point of failure blocks all rules | Head-of-line blocking | Use a dedicated channel for critical paths, prompt the user to split the channel |
+| A field gets cleared after editing and saving | PATCH misused, or the frontend form's normalizeValues filtered out empty time ranges | When using PUT, **GET first, then modify, then PUT**, preserving all fields |
+| A cross-midnight window (e.g. 22:00–02:00) doesn't take effect | The engine doesn't roll over to the next day | Split into `22:00–23:59` + `00:00–02:00` two segments |
+| `week` is written backwards (treating 1 as Sunday) | Used the Chinese convention 1=Mon instead of ISO 0=Sun | Correct it: 0=Sunday, 1=Monday … 6=Saturday |
+| `is_recovered` value-type pitfall | Written as `true` (bool) instead of `"true"` (string) | The TagFilter value is a string, must use `"true"` / `"false"` |
+| Wanting OR on the same label key | Not supported structurally | Switch to `attributes`' `in`, or split into multiple NotifyConfigs |
+| A name with spaces fails inside `in` | A business group name containing a space gets swallowed by space-separation | Switch to regex `=~` with escaping |
+| The user has no permission to see this rule | `user_group_ids` doesn't include this user's team | Add the corresponding team ID |
+| Creation returns `forbidden` | The current user is in none of the `user_group_ids` teams | Add the user's own team, or have an admin do it |
+| Routing by ident fails to match everything | The event labels don't contain `ident` (e.g. lost when categraf writes directly to the time-series store) | Have the user confirm the data flow; use `GET /api/n9e/event-tagkeys` to see the actual labels |
+| Can't find the "switch to new version" button in the UI | The button's location has changed several times (hidden in beta14 / moved in 8.4.x) | Upgrade to 8.5.1+, and look in the **"batch update" dialog of the alert rule list** |
 
-## 测试与验证
+## Testing and verification
 
-### 用真实事件做 dry-run
+### Dry-run with a real event
 
-`POST /api/n9e/notify-rule/test` 的语义比 UI 上"测试通知"按钮强：它会**用历史事件 ID + 你传入的 NotifyConfig** 做匹配并真实发送：
+The semantics of `POST /api/n9e/notify-rule/test` are stronger than the "test notification" button in the UI: it **matches and actually sends using a historical event ID + the NotifyConfig you pass in**:
 
 ```
 Body: {"event_ids":[<history_event_id>], "notify_config":{...}}
 
 hisEvents = AlertHisEventGetByIds(event_ids)
 for each event:
-    dispatch.NotifyRuleMatchCheck(notify_config, event)   ← 真实匹配函数
-SendNotifyChannelMessage(notify_config, events)           ← 真实发送
+    dispatch.NotifyRuleMatchCheck(notify_config, event)   ← the real matching function
+SendNotifyChannelMessage(notify_config, events)           ← the real send
 ```
 
-意味着：
+This means:
 
-- 拿一条**真实历史事件 ID**（从历史告警里挑），传入草稿 NotifyConfig，能立刻看到"会不会命中"和"发出去的样子"——比 UI 上凭空 mock event 准。
-- 失败时返回的 error 能区分是匹配失败（哪一步）还是 channel 调用失败。
-- 但**它不能验证 `notify_rule_ids` 关联**——这条规则有没有被告警规则挂上去是另一回事，要去 alert_rule 表 / 告警规则页面看。
+- Take a **real historical event ID** (pick one from the historical alerts), pass in the draft NotifyConfig, and you can immediately see "whether it matches" and "what the sent message looks like" — more accurate than mocking an event out of thin air in the UI.
+- On failure, the returned error can distinguish whether it's a match failure (and at which step) or a channel-call failure.
+- But **it cannot verify the `notify_rule_ids` association** — whether this rule has been attached by an alert rule is a separate matter; check it in the alert_rule table / on the alert rule page.
 
-### 编辑后的最小验证清单
+### Minimal verification checklist after editing
 
-每次修改一条通知规则，让用户走这 3 步确认：
+Every time a notify rule is modified, have the user run these 3 confirmation steps:
 
-1. `GET /api/n9e/notify-rule/<id>`（站内用 `get_notify_rule_detail`）看是不是改对了字段。
-2. `POST /api/n9e/notify-rule/test` 用一条相关历史事件验证匹配 + 发送。
-3. 真实告警出来后到 `历史告警 → 详情 → 通知记录` 看是否有这条规则的发送日志。
+1. `GET /api/n9e/notify-rule/<id>` (in-app, use `get_notify_rule_detail`) to see whether the right fields were changed.
+2. `POST /api/n9e/notify-rule/test` to verify matching + sending with a relevant historical event.
+3. After a real alert comes out, go to `Historical alerts → details → notification records` to see whether there is a send log for this rule.

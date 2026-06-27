@@ -1,12 +1,12 @@
-# ClickHouse 查询
+# ClickHouse Queries
 
 - **plugin_type**: `ck`
-- **查询语言**: SQL
-- **适用场景**: 指标/日志查询
+- **Query language**: SQL
+- **Use case**: Metric/log queries
 
 ---
 
-## 查询数据库列表
+## Query Database List
 
 ```
 POST /api/n9e/db-databases
@@ -22,7 +22,7 @@ Content-Type: application/json
 }
 ```
 
-## 查询表列表
+## Query Table List
 
 ```
 POST /api/n9e/db-tables
@@ -38,7 +38,7 @@ Content-Type: application/json
 }
 ```
 
-## 查询表结构
+## Query Table Structure
 
 ```
 POST /api/n9e/db-desc-table
@@ -56,7 +56,7 @@ Content-Type: application/json
 
 ---
 
-## 执行时序数据查询
+## Run a Time-Series Data Query
 
 ```
 POST /api/n9e/ds-query
@@ -84,7 +84,7 @@ Content-Type: application/json
 }
 ```
 
-## 执行日志查询
+## Run a Log Query
 
 ```
 POST /api/n9e/logs-query
@@ -108,22 +108,22 @@ Content-Type: application/json
 
 ---
 
-## 查询参数
+## Query Parameters
 
-| 字段 | 类型 | 必填 | 说明 |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `ref` | string | 否 | 查询引用标识，如 `"A"` |
-| `sql` | string | 是 | SQL 查询语句，支持 `$from`、`$to` 时间变量 |
-| `from` | int64 | 是 | 开始时间，Unix 时间戳（秒） |
-| `to` | int64 | 是 | 结束时间，Unix 时间戳（秒） |
-| `keys.valueKey` | string | 否 | 数值列名（时序查询必填），多个用空格分隔 |
-| `keys.labelKey` | string | 否 | 标签/分组列名，多个用空格分隔 |
-| `keys.timeKey` | string | 否 | 时间列名 |
-| `database` | string | 否 | 数据库名 |
-| `table` | string | 否 | 表名 |
-| `limit` | int | 否 | 返回行数限制 |
+| `ref` | string | No | Query reference identifier, e.g. `"A"` |
+| `sql` | string | Yes | SQL query statement, supports `$from` and `$to` time variables |
+| `from` | int64 | Yes | Start time, Unix timestamp (seconds) |
+| `to` | int64 | Yes | End time, Unix timestamp (seconds) |
+| `keys.valueKey` | string | No | Numeric column name (required for time-series queries); separate multiple with spaces |
+| `keys.labelKey` | string | No | Label/grouping column name; separate multiple with spaces |
+| `keys.timeKey` | string | No | Time column name |
+| `database` | string | No | Database name |
+| `table` | string | No | Table name |
+| `limit` | int | No | Row count limit for returned results |
 
-## 时序查询响应格式
+## Time-Series Query Response Format
 
 ```json
 {
@@ -140,17 +140,17 @@ Content-Type: application/json
 
 ---
 
-## 常用 SQL 示例
+## Common SQL Examples
 
-| 需求 | SQL |
+| Requirement | SQL |
 |---|---|
-| 按分钟聚合计数 | `SELECT toStartOfMinute(ts) AS t, count() AS value FROM logs WHERE ts >= $from AND ts < $to GROUP BY t ORDER BY t` |
-| 按字段分组统计 | `SELECT service, count() AS value FROM logs WHERE ts >= $from AND ts < $to GROUP BY service ORDER BY value DESC LIMIT 10` |
-| 搜索日志 | `SELECT * FROM logs WHERE ts >= $from AND ts < $to AND message LIKE '%error%' ORDER BY ts DESC LIMIT 100` |
+| Count aggregated per minute | `SELECT toStartOfMinute(ts) AS t, count() AS value FROM logs WHERE ts >= $from AND ts < $to GROUP BY t ORDER BY t` |
+| Group statistics by field | `SELECT service, count() AS value FROM logs WHERE ts >= $from AND ts < $to GROUP BY service ORDER BY value DESC LIMIT 10` |
+| Search logs | `SELECT * FROM logs WHERE ts >= $from AND ts < $to AND message LIKE '%error%' ORDER BY ts DESC LIMIT 100` |
 
-## 注意事项
+## Considerations
 
-- **只读**：禁止 CREATE、INSERT、UPDATE、DELETE、ALTER、DROP 等写操作
-- **时间变量**：SQL 中用 `$from` 和 `$to`，系统自动替换为 Unix 时间戳（秒）
-- **keys.valueKey**：时序查询必须指定，多列用空格分隔
-- **时间函数**：使用 `toStartOfMinute()`、`toStartOfHour()` 等 ClickHouse 函数做时间聚合
+- **Read-only**: Write operations such as CREATE, INSERT, UPDATE, DELETE, ALTER, DROP are prohibited
+- **Time variables**: Use `$from` and `$to` in SQL; the system automatically replaces them with Unix timestamps (seconds)
+- **keys.valueKey**: Required for time-series queries; separate multiple columns with spaces
+- **Time functions**: Use ClickHouse functions such as `toStartOfMinute()` and `toStartOfHour()` for time aggregation

@@ -1,6 +1,6 @@
 ---
 name: host-onboard-diagnose
-description: 排查"categraf 已装/在跑但夜莺机器列表看不到、或显示 unknown / 无指标"的接入失败问题。当用户问"新装的机器为什么没出现"、"机器列表 OS 都是 unknown"、"Helm 装了 3 个采集器只看到 1 个"、"agent 注册不进来"、"装完 categraf 主机没显示"时触发。与 host-health-diagnose **互斥**：那个处理"曾经接入过、现在失联"，本 skill 处理"压根没接入进来"。核心立场：**机器没出现不是一个原因，而是接入链路上某一段断了**。只看 heartbeat.enable 一项就让用户改 categraf，是常见翻车点（很多用户改了还是看不到，因为问题在 omit_hostname / ident shell / TLS / token / edge redis / 多集群路由）。
+description: Diagnose onboarding failures where "categraf is installed/running but the host does not show up in the Nightingale host list, or shows unknown / has no metrics". Triggers when the user asks "why doesn't my newly installed host appear", "all the OS values in the host list are unknown", "I installed 3 collectors via Helm but only see 1", "the agent won't register", or "categraf is installed but the host doesn't show". **Mutually exclusive** with host-health-diagnose: that one handles "was onboarded before, now lost contact", while this skill handles "never got onboarded at all". Core stance: **a missing host is not a single cause, but rather one segment of the onboarding pipeline being broken**. Looking only at heartbeat.enable and telling the user to change categraf is a common pitfall (many users change it and still can't see the host, because the problem is in omit_hostname / ident shell / TLS / token / edge redis / multi-cluster routing).
 max_iterations: 18
 builtin_tools:
   - probe_target_onboard_status
@@ -13,128 +13,128 @@ tags:
   - internal
 ---
 
-# 主机接入失败诊断（host-onboard-diagnose）
+# Host Onboarding Failure Diagnosis (host-onboard-diagnose)
 
-## 适用范围
+## Scope
 
-**进本 skill**：
-- "新装的 categraf 机器在夜莺看不到"
-- "agent 装了在跑，但机器列表里没出现"
-- "机器列表里这台 OS / CPU / 版本 全是 unknown"
-- "Helm 部了 3 台 categraf，平台只看到 1 个"
-- "Windows 装了 agent 注册不进来"
-- "刚改了 hostname 后机器消失了"（如果伴随 categraf 在跑）
+**Enter this skill**:
+- "My newly installed categraf host doesn't show up in Nightingale"
+- "The agent is installed and running, but the host doesn't appear in the host list"
+- "For this host in the list, the OS / CPU / version are all unknown"
+- "I deployed 3 categraf hosts via Helm, but the platform only sees 1"
+- "I installed the agent on Windows but it won't register"
+- "The host disappeared right after I changed its hostname" (if categraf is still running)
 
-**不进本 skill**：
-- 曾经能看到、最近失联 → `host-health-diagnose`
-- ident 重名 / 改名后想清理残留 → `host-ident-cleanup`（待建）
-- 想改告警规则 / 屏蔽 → `creation` / `create-alert-rule`
-- 看告警没发出来为啥 → `alert-rule-troubleshoot`
+**Do NOT enter this skill**:
+- Was visible before, recently lost contact → `host-health-diagnose`
+- ident duplicate / want to clean up residue after renaming → `host-ident-cleanup` (to be built)
+- Want to change alert rules / mutes → `creation` / `create-alert-rule`
+- Looking into why an alert didn't fire → `alert-rule-troubleshoot`
 
-## 一句话原则
+## One-Sentence Principle
 
-**机器没出现 ≠ 一个原因。** 接入链路有 5 段，每段卡住的表现都不一样，只看一段就让用户改配置是常见翻车点。**先取证、再分段定位、最后给修复命令。**
+**A missing host ≠ a single cause.** The onboarding pipeline has 5 segments, and each segment getting stuck looks different. Looking at just one segment and telling the user to change config is a common pitfall. **Gather evidence first, then localize segment by segment, and finally give fix commands.**
 
-## 接入链路 5 段
+## The 5 Segments of the Onboarding Pipeline
 
 ```
-[1] categraf 本机进程     在不在 / 配置对不对 / heartbeat.enable 开没
+[1] categraf local process    Is it present / is the config correct / is heartbeat.enable on
         │
-[2] 心跳上报 HTTP          能不能打到 /v1/n9e/heartbeat（网络 / TLS / BasicAuth）
+[2] heartbeat report HTTP      Can it reach /v1/n9e/heartbeat (network / TLS / BasicAuth)
         │
-[3] server / edge 接收     token / 版本兼容 / hostname 重名校验
+[3] server / edge receive      token / version compatibility / hostname duplicate check
         │
-[4] target 表落库          DB 里有没有这条 ident，redis 里有没有 meta
+[4] target table persistence   Is this ident in the DB, is the meta in redis
         │
-[5] Redis + 指标流          时序库能不能查到 ident 的样本
+[5] Redis + metric stream       Can the time-series store find samples for this ident
 ```
 
-## 第一动作：调 `probe_target_onboard_status`
+## First Action: Call `probe_target_onboard_status`
 
-这是本 skill **唯一**的诊断入口工具，一次性返回 5 段足迹。**永远先调它**，再决定下一步。
+This is the **only** diagnostic entry tool in this skill; it returns the footprint of all 5 segments in one shot. **Always call it first**, then decide the next step.
 
-返回的关键字段：
-- `in_target_db` + `target.os` + `target.agent_version` → 段 3/4 证据
-- `in_redis_beat` + `redis_meta.hostname` + `redis_meta.remote_addr` → 段 4 证据
-- `in_prom_target_up` + `target_up_last` + `prom_metrics_hit` → 段 5 证据
-- `likely_segment` + `likely_causes` → **工具层已聚合的诊断**，**不要绕过它自己重推**
+Key fields returned:
+- `in_target_db` + `target.os` + `target.agent_version` → evidence for segments 3/4
+- `in_redis_beat` + `redis_meta.hostname` + `redis_meta.remote_addr` → evidence for segment 4
+- `in_prom_target_up` + `target_up_last` + `prom_metrics_hit` → evidence for segment 5
+- `likely_segment` + `likely_causes` → **diagnosis already aggregated at the tool layer**; **do not bypass it and re-derive it yourself**
 
-如果用户没给 ident，先 `list_targets` 让用户挑，或者按 OS=unknown / agent_version 空过滤出候选（"未分配 / 半接入"视图）。
+If the user did not provide an ident, first call `list_targets` and let the user pick, or filter out candidates by OS=unknown / empty agent_version (the "unassigned / partially onboarded" view).
 
-## 决策表（按 likely_segment 分支）
+## Decision Table (branch by likely_segment)
 
-| likely_segment | 含义 | 优先建议的修复动作 |
+| likely_segment | Meaning | Preferred fix action |
 |---|---|---|
-| `segment_1_or_2` | DB / redis / prom 都没这台机器 | 在目标机器上：`systemctl status categraf` → `journalctl -u categraf --since "5 min ago"` → 看是否报 `connection refused` / `x509` / `401` |
-| `segment_3` | target 有但 OS/agent_version 空 | 检查 categraf 的 `config.toml`：`[heartbeat] enable=true` 且 `omit_hostname=false`；版本 ≥ v0.2.35 |
-| `segment_4` | target 落库但 redis 没数据 | 检查 n9e/edge 是否配 redis；edge 模式下 `edge.toml` 的 `[Redis]`；n9e 与 n9e-edge 版本是否一致 |
-| `segment_5` | redis 有 beat 但 prom 查不到 | 检查 categraf `[[writers]]` 是否配置；多集群部署时数据源是否走对；ident 是否含 `()` `[]` `*` 等特殊字符 |
-| `ok` | 接入正常 | 如用户仍坚持"看不到"，引导他刷新页面 / 检查业务组过滤 / 检查浏览器缓存 |
+| `segment_1_or_2` | This host is in none of DB / redis / prom | On the target host: `systemctl status categraf` → `journalctl -u categraf --since "5 min ago"` → check whether it reports `connection refused` / `x509` / `401` |
+| `segment_3` | target exists but OS/agent_version empty | Check categraf's `config.toml`: `[heartbeat] enable=true` and `omit_hostname=false`; version ≥ v0.2.35 |
+| `segment_4` | target persisted but no data in redis | Check whether n9e/edge has redis configured; in edge mode the `[Redis]` of `edge.toml`; whether n9e and n9e-edge versions are consistent |
+| `segment_5` | redis has the beat but prom can't query it | Check whether categraf `[[writers]]` is configured; whether the datasource is correct in a multi-cluster deployment; whether the ident contains special characters like `()` `[]` `*` |
+| `ok` | Onboarding is normal | If the user still insists "I can't see it", guide them to refresh the page / check business-group filtering / check browser cache |
 
-## 段 5 的三条变体查询（用 `query_prometheus`）
+## Three Variant Queries for Segment 5 (use `query_prometheus`)
 
-当 `likely_segment=segment_5` 时，**必须**用 `query_prometheus` 跑下面 3 条查询确认是 ident 标签问题还是真的没数据：
+When `likely_segment=segment_5`, you **must** run the following 3 queries with `query_prometheus` to confirm whether it is an ident label problem or truly no data:
 
 ```promql
-# 1. 标准 ident 等值匹配（最常用）
+# 1. Standard ident exact match (most common)
 target_up{ident="<ident>"}
 
-# 2. 模糊匹配（ident 带 IP 前缀 / 别名时用）
+# 2. Fuzzy match (use when ident has an IP prefix / alias)
 target_up{ident=~".*<host>.*"}
 
-# 3. 极端兜底：是否走到了 instance 标签（snmp / 自定义 tag 场景）
+# 3. Extreme fallback: did it land on the instance label (snmp / custom tag scenario)
 {instance=~".*<host>.*"}
 ```
 
-三条都没数据 → 数据流确实没到 prom，回查 categraf writers / TLS / n9e ingest 队列。
-只有 (2) 或 (3) 有数据 → **ident 标签问题**（特殊字符 / global_labels 覆盖 / snmp agent_host_tag 误用），引导用户走 `host-ident-cleanup`（待建）或修 categraf 配置。
+All three return no data → the data stream truly never reached prom; go back and check categraf writers / TLS / n9e ingest queue.
+Only (2) or (3) has data → **ident label problem** (special characters / global_labels override / snmp agent_host_tag misuse); guide the user to `host-ident-cleanup` (to be built) or to fix the categraf config.
 
-## 输出模板（强约束）
+## Output Template (strongly enforced)
 
-Final Answer 用 Markdown，用户语言。**四段**：
+The Final Answer uses Markdown, in the user's language. **Four sections**:
 
 ```
-## 结论
-<一句话：卡在第 X 段：xxxx（或：接入正常，看不到是 yyy 原因）>
+## Conclusion
+<one sentence: stuck at segment X: xxxx (or: onboarding is normal, the reason you can't see it is yyy)>
 
-## 接入链路证据
-- 段 1/2（categraf 本机/HTTP）：<未取证 / 推断异常：xxx>
-- 段 3（server 接收）：target in_db=true, os=unknown, agent_version="" → heartbeat 元数据未落
-- 段 4（target 落库 + redis）：target update_at=2026-05-14 10:23:11 但 redis 无心跳
-- 段 5（Prom）：target_up 无数据 / prom_metrics_hit=0
+## Onboarding Pipeline Evidence
+- Segment 1/2 (categraf local/HTTP): <not gathered / inferred anomaly: xxx>
+- Segment 3 (server receive): target in_db=true, os=unknown, agent_version="" → heartbeat metadata not persisted
+- Segment 4 (target persistence + redis): target update_at=2026-05-14 10:23:11 but no heartbeat in redis
+- Segment 5 (Prom): target_up has no data / prom_metrics_hit=0
 
-## 修复命令
-1. 在目标主机执行：
+## Fix Commands
+1. Run on the target host:
    `grep -E 'heartbeat|omit_hostname' /etc/categraf/conf/config.toml`
-   预期：heartbeat 段 enable=true，omit_hostname=false。任一不符合就改并 `systemctl restart categraf`。
+   Expected: in the heartbeat section enable=true, omit_hostname=false. If either doesn't match, change it and `systemctl restart categraf`.
 2. ...
 3. ...
 
-## 自证步骤
-<给用户"如果你想确认修好了，可以这样验证"的 1-2 条命令，例如：
-- 重启 categraf 后 30s 内回平台刷新机器列表，应能看到 OS/CPU 字段非 unknown
+## Self-Verification Steps
+<give the user 1-2 commands for "if you want to confirm it's fixed, you can verify like this", for example:
+- Within 30s after restarting categraf, refresh the host list back in the platform; the OS/CPU fields should be non-unknown
 - `curl -s http://<n9e>:17000/api/n9e/self-metrics | grep <ident>`>
 ```
 
-## 反模式（这些不要做）
+## Anti-Patterns (do NOT do these)
 
-- ❌ 不调 `probe_target_onboard_status` 直接让用户改 `heartbeat.enable`。**先取证**。许多用户 heartbeat 已经开了，问题在 omit_hostname / TLS / 版本。
-- ❌ 只看 `in_target_db=false` 就说"categraf 没装"。要看 redis 段和 segment_1_or_2 的 causes 综合判断，是网络问题还是进程问题，建议动作完全不同。
-- ❌ 段 3 卡住时只让用户改 heartbeat，不提 omit_hostname / 版本。这两条同样常见。
-- ❌ 段 5 卡住时不跑 3 条变体 PromQL 就让用户改 writers。ident 标签问题也会卡在段 5。
-- ❌ 输出里不给具体命令，只说"检查 categraf 配置"。每条建议必须是用户能直接粘贴执行的。
+- ❌ Telling the user to change `heartbeat.enable` directly without calling `probe_target_onboard_status`. **Gather evidence first.** Many users already have heartbeat enabled; the problem is in omit_hostname / TLS / version.
+- ❌ Saying "categraf isn't installed" just because `in_target_db=false`. You must look at the redis segment and the segment_1_or_2 causes to judge holistically whether it's a network problem or a process problem — the recommended actions are completely different.
+- ❌ When segment 3 is stuck, only telling the user to change heartbeat without mentioning omit_hostname / version. Those two are just as common.
+- ❌ When segment 5 is stuck, telling the user to change writers without running the 3 variant PromQL queries. An ident label problem also gets stuck at segment 5.
+- ❌ Not giving concrete commands in the output, only saying "check the categraf config". Every recommendation must be something the user can paste and run directly.
 
-## 各段已知故障形态
+## Known Failure Modes Per Segment
 
-- **段 1/2**：categraf 连不上 center、连接拒绝、TLS unknown authority、自签证书、BasicAuth 失效、ams token 不匹配、Helm 多节点只见 1、Windows、Win2008 不支持
-- **段 3**：heartbeat enable=false、unknown 字段 / omit_hostname=true、categraf 版本过低、v6 需 v0.2.35+、identity shell 取 IP 失败、hostname 重名
-- **段 4**：edge redis nil、n9e 与 n9e-edge 版本不一致、CenterApi missing、edge 部署中心看不到机器
-- **段 5**：ident 带括号大盘查不到、host=* bug、snmp 用 ident 冲突、omit_hostname=true 导致 ident 标签丢失、多集群数据源走错、write queue full 499、global.labels 覆盖
+- **Segment 1/2**: categraf can't reach center, connection refused, TLS unknown authority, self-signed certificate, BasicAuth invalid, ams token mismatch, Helm multi-node only 1 seen, Windows, Win2008 not supported
+- **Segment 3**: heartbeat enable=false, unknown fields / omit_hostname=true, categraf version too low, v6 requires v0.2.35+, identity shell fails to get IP, hostname duplicate
+- **Segment 4**: edge redis nil, n9e and n9e-edge version mismatch, CenterApi missing, host not visible in the center under edge deployment
+- **Segment 5**: ident with parentheses not found in dashboards, host=* bug, snmp ident conflict, omit_hostname=true causing the ident label to be lost, wrong datasource in multi-cluster, write queue full 499, global.labels override
 
-## 输出风格
+## Output Style
 
-- 不卖关子。结论第一段第一行。
-- 证据要给具体字段值，不要写"看起来正常"。
-- 修复命令必须可粘贴执行，避免"检查一下"这种废话。
-- 用户语言回答（中文用户中文，英文用户英文）。
-- 如果 `likely_segment=ok` 但用户坚持机器没出现，提示去查：业务组过滤（机器在但前端按业务组隐藏）、浏览器缓存、登录用户的可见业务组权限。
+- Don't be coy. The conclusion goes in the first line of the first section.
+- Evidence must give concrete field values; don't write "looks normal".
+- Fix commands must be paste-and-run; avoid fluff like "go check it".
+- Answer in the user's language (Chinese for Chinese users, English for English users).
+- If `likely_segment=ok` but the user insists the host doesn't appear, prompt them to check: business-group filtering (the host is present but hidden by business group in the frontend), browser cache, and the visible-business-group permissions of the logged-in user.

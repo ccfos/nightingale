@@ -1,12 +1,12 @@
-# Host 机器监控告警规则
+# Host machine monitoring alert rules
 
 - `prod`: `"host"`
 - `cate`: `"host"`
-- **不需要指定 datasource_ids**
+- **No need to specify datasource_ids**
 
-Host 类型比较特殊，queries 和 triggers 结构与其他类型完全不同。
+The Host type is rather special; its queries and triggers structures are completely different from the other types.
 
-## rule_config 结构
+## rule_config structure
 
 ```json
 {
@@ -29,44 +29,44 @@ Host 类型比较特殊，queries 和 triggers 结构与其他类型完全不同
 }
 ```
 
-## queries 字段说明
+## queries field reference
 
-### key 可选值
+### key options
 
-| key | 说明 | values 示例 |
+| key | Description | values example |
 |---|---|---|
-| `all_hosts` | 所有主机 | `[]` |
-| `group_ids` | 按业务组筛选 | `[1, 2, 3]` |
-| `tags` | 按标签筛选 | `["env=prod", "region=cn"]` |
-| `hosts` | 按主机名筛选 | `["web-01", "web-02"]` |
+| `all_hosts` | All hosts | `[]` |
+| `group_ids` | Filter by business group | `[1, 2, 3]` |
+| `tags` | Filter by tag | `["env=prod", "region=cn"]` |
+| `hosts` | Filter by hostname | `["web-01", "web-02"]` |
 
-### op 可选值
+### op options
 
-| op | 说明 |
+| op | Description |
 |---|---|
-| `==` | 等于 |
-| `!=` | 不等于 |
-| `=~` | 正则匹配（仅 `hosts` key 支持） |
-| `!~` | 正则不匹配（仅 `hosts` key 支持） |
+| `==` | Equals |
+| `!=` | Not equals |
+| `=~` | Regex match (only supported for the `hosts` key) |
+| `!~` | Regex non-match (only supported for the `hosts` key) |
 
-多个 queries 之间是 AND 逻辑关系。
+Multiple queries are in an AND logical relationship.
 
-## triggers 字段说明
+## triggers field reference
 
-### type 可选值
+### type options
 
-| type | 说明 | 额外字段 |
+| type | Description | Extra field |
 |---|---|---|
-| `target_miss` | 机器失联 | `duration`（秒） |
-| `pct_target_miss` | 机器失联百分比 | `duration`（秒）+ `percent`（百分比） |
-| `offset` | 时间偏移过大 | `duration`（秒） |
+| `target_miss` | Machine unreachable | `duration` (seconds) |
+| `pct_target_miss` | Percentage of machines unreachable | `duration` (seconds) + `percent` (percentage) |
+| `offset` | Time offset too large | `duration` (seconds) |
 
-## 完整示例（机器失联告警）
+## Complete example (machine unreachable alert)
 
 ```json
 [{
-  "name": "机器失联告警",
-  "note": "机器超过60秒未上报数据",
+  "name": "Machine unreachable alert",
+  "note": "Machine has not reported data for more than 60 seconds",
   "prod": "host",
   "cate": "host",
   "datasource_ids": [],

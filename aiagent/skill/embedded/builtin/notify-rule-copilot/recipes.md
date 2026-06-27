@@ -1,17 +1,17 @@
-# 复杂语义 → NotifyConfig 拆解模板 + 完整示例
+# Complex semantics → NotifyConfig decomposition templates + complete examples
 
-把用户的自然语言路由意图映射到下面最贴近的模板，给出**完整 JSON 草稿**——不要让用户自己填字段名。`<xxx_id>` 占位符用 `list_notify_channels` / `list_teams` 查到的真实 ID 替换。
+Map the user's natural-language routing intent to the closest template below, and give a **complete JSON draft** — don't make the user fill in field names. Replace the `<xxx_id>` placeholders with real IDs looked up via `list_notify_channels` / `list_teams`.
 
-> **params 只是接收人类渠道的示意**：实际形状以 `list_notify_channels` 返回的 `contact_key`/`custom_params` 为准（对照表与各媒介文档链接见 `reference.md`）。内置钉钉/企微/飞书**群机器人**渠道的 params 是 `{"access_token": "...", "bot_name": "<备注>"}` / `{"key": "...", "bot_name": "<备注>"}`，不是 user_ids——token 用户没给就先 `list_notify_rule_custom_params` 查已有规则能不能复用，再不行问用户并附文档链接说明去哪拿；备注（bot_name/note）顺带问一句，用户没给就按规则名/路由意图生成，不留空。
+> **params is only illustrative for recipient-type channels**: the actual shape goes by the `contact_key`/`custom_params` returned by `list_notify_channels` (comparison table and per-medium doc links in `reference.md`). For the built-in DingTalk/WeCom/Feishu **group bot** channels, params is `{"access_token": "...", "bot_name": "<note>"}` / `{"key": "...", "bot_name": "<note>"}`, not user_ids — if the user hasn't given the token, first run `list_notify_rule_custom_params` to see whether an existing rule's value can be reused, and only if that fails ask the user and attach the doc link explaining where to get it; ask for the note (bot_name/note) in passing, and if the user doesn't give one, generate it from the rule name / routing intent, leaving nothing blank.
 
-## 模板 A：分级走不同通道
+## Template A: tier to different channels
 
-> 「P1 告警打电话 + 钉钉，P2/P3 告警只发钉钉」
+> "P1 alerts: phone call + DingTalk; P2/P3 alerts: DingTalk only"
 
 ```json
 {
-  "name": "线上分级告警路由",
-  "description": "P1: 电话 + 钉钉；P2/P3: 钉钉",
+  "name": "Online tiered alert routing",
+  "description": "P1: phone + DingTalk; P2/P3: DingTalk",
   "enable": true,
   "user_group_ids": [<oncall_team_id>],
   "notify_configs": [
@@ -33,15 +33,15 @@
 }
 ```
 
-**关键决策**：钉钉那条 severities 写全 `[1,2,3]`（P1 也发，作为电话之外的"留痕"通道），不要写 `[2,3]` 漏掉 P1 的钉钉记录。
+**Key decision**: write the DingTalk entry's severities as the full `[1,2,3]` (P1 is sent too, as a "paper trail" channel besides the phone call), don't write `[2,3]` and miss the DingTalk record for P1.
 
-## 模板 B：工作时间 vs 非工作时间不同动作
+## Template B: different actions during working hours vs. outside working hours
 
-> 「工作时间（周一到周五 9-18 点）发钉钉群；非工作时间打电话 + 钉钉」
+> "During working hours (Mon–Fri 9 AM–6 PM) send to a DingTalk group; outside working hours, phone call + DingTalk"
 
 ```json
 {
-  "name": "值班动作分时段",
+  "name": "On-call action by time window",
   "user_group_ids": [<oncall_team_id>],
   "notify_configs": [
     {
@@ -74,11 +74,11 @@
 }
 ```
 
-**关键决策**：周末 24h 走电话路径，所以是 `week=[0,6]` 全天；工作日跨午夜要拆 18:00–23:59 + 00:00–09:00 两段（不能写 18:00–09:00，引擎当天看）。
+**Key decision**: weekends take the phone path 24h, so it's `week=[0,6]` all day; weekdays crossing midnight must be split into 18:00–23:59 + 00:00–09:00 two segments (you can't write 18:00–09:00, the engine looks within the same day).
 
-## 模板 C：恢复时不打电话
+## Template C: don't call on recovery
 
-> 「告警时打电话 + 钉钉；恢复时只发钉钉，不要打电话」
+> "On alert: phone call + DingTalk; on recovery: DingTalk only, no phone call"
 
 ```json
 {
@@ -102,11 +102,11 @@
 }
 ```
 
-**关键决策**：电话那条加 `is_recovered == "false"` 属性即可；钉钉那条不加属性，告警和恢复都走。这是标准解法。
+**Key decision**: just add the `is_recovered == "false"` attribute to the phone entry; the DingTalk entry adds no attribute, so both alert and recovery go through. This is the standard solution.
 
-## 模板 D：按业务组路由到不同群
+## Template D: route to different groups by business group
 
-> 「一套告警规则覆盖三个业务组（zone-a/zone-b/zone-c），每个业务组的告警推送到对应钉钉群」
+> "One set of alert rules covers three business groups (zone-a/zone-b/zone-c), and each business group's alerts are pushed to the corresponding DingTalk group"
 
 ```json
 {
@@ -130,11 +130,11 @@
 }
 ```
 
-**关键决策**：用 `attributes.group_name` 而不是 `label_keys`，因为业务组是告警规则的归属属性，不是事件 label。**注意**：业务组改名后这里会失配，提醒用户业务组改名要同步规则；或改用 `=~` 加正则更稳。
+**Key decision**: use `attributes.group_name` rather than `label_keys`, because the business group is an ownership attribute of the alert rule, not an event label. **Note**: this will fail to match after a business group is renamed, so remind the user to sync the rule when renaming a business group; or switch to `=~` with a regex for more robustness.
 
-## 模板 E：按标签灰度
+## Template E: label-based canary
 
-> 「只通知 env=prod 且 service=payment 的告警，其他全部忽略」
+> "Only notify alerts with env=prod and service=payment, ignore everything else"
 
 ```json
 {
@@ -151,16 +151,16 @@
 }
 ```
 
-**关键决策**：两条 label_keys 是 AND，事件必须同时带这两个标签。如果 `service` 在某些告警事件里不存在（如主机失联告警），这条规则会直接不命中——可以先用 `GET /api/n9e/event-tagkeys` 看事件实际有哪些 key。
+**Key decision**: the two label_keys are AND'd, so the event must carry both labels at once. If `service` does not exist in some alert events (e.g. host-unreachable alerts), this rule simply won't match — you can first use `GET /api/n9e/event-tagkeys` to see which keys events actually have.
 
-## 模板 F：兜底通知（避免漏告）
+## Template F: catch-all notification (avoid missed alerts)
 
-> 「我有 N 条精细通知规则，但担心漏，再来一条接所有事件发给 SRE 团队做留痕」
+> "I have N fine-grained notify rules but worry about misses, so add one more that catches all events and sends to the SRE team for a paper trail"
 
 ```json
 {
-  "name": "全量留痕兜底",
-  "description": "所有事件都进 SRE 钉钉群，纯留痕用",
+  "name": "Full catch-all paper trail",
+  "description": "All events go to the SRE DingTalk group, purely for a paper trail",
   "notify_configs": [
     {
       "channel_id": <sre_archive_ding_id>,
@@ -173,18 +173,18 @@
 }
 ```
 
-**关键决策**：留一条"无任何过滤"的规则做兜底。注意告警规则侧的 `notify_rule_ids` 也得显式挂上这条，否则不生效。
+**Key decision**: keep one rule "with no filters at all" as a catch-all. Note that the `notify_rule_ids` on the alert-rule side must also explicitly attach this rule, otherwise it won't take effect.
 
 ---
 
-# 基础完整示例
+# Complete basic examples
 
-## 示例一：基础通知规则（全天候通知所有级别告警）
+## Example 1: basic notify rule (notify all severities around the clock)
 
 ```json
 {
-  "name": "运维团队告警通知",
-  "description": "所有级别的告警都通知运维团队",
+  "name": "Ops team alert notification",
+  "description": "Notify the ops team for alerts of all severities",
   "enable": true,
   "user_group_ids": [1],
   "notify_configs": [
@@ -201,12 +201,12 @@
 }
 ```
 
-## 示例二：按级别分渠道通知
+## Example 2: notify by severity to different channels
 
 ```json
 {
-  "name": "分级通知策略",
-  "description": "一级告警电话通知，二三级告警邮件通知",
+  "name": "Tiered notification policy",
+  "description": "Level-1 alerts notify by phone, level-2/3 alerts notify by email",
   "enable": true,
   "user_group_ids": [1, 2],
   "notify_configs": [
@@ -232,12 +232,12 @@
 }
 ```
 
-## 示例三：工作时间通知 + 属性过滤
+## Example 3: working-hours notification + attribute filter
 
 ```json
 {
-  "name": "生产环境工作时间通知",
-  "description": "仅工作日工作时间通知生产环境的告警",
+  "name": "Production environment working-hours notification",
+  "description": "Notify production-environment alerts only during working hours on workdays",
   "enable": true,
   "user_group_ids": [1],
   "notify_configs": [
@@ -258,12 +258,12 @@
 }
 ```
 
-## 示例四：按标签和属性联合过滤
+## Example 4: combined label and attribute filtering
 
 ```json
 {
-  "name": "API服务告警通知",
-  "description": "通知 API 服务相关的未恢复告警",
+  "name": "API service alert notification",
+  "description": "Notify unrecovered alerts related to the API service",
   "enable": true,
   "user_group_ids": [3],
   "notify_configs": [

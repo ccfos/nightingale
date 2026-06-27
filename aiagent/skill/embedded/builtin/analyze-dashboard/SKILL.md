@@ -1,12 +1,12 @@
 ---
 name: analyze-dashboard
-description: 分析夜莺(n9e)上某个仪表盘在一段时间内的数据健康状况。当用户要求"分析某仪表盘有什么问题"、"看看 xx 大盘最近 24 小时正不正常"、"巡检这个大盘"、"这个 dashboard 有没有异常"时使用。区别于修改仪表盘(modify-dashboard)和创建仪表盘(create-dashboard)。
+description: Analyze the data health of a given dashboard on Nightingale (n9e) over a time window. Use when the user asks to "analyze what problems a dashboard has", "check whether the xx dashboard has been normal over the last 24 hours", "inspect this dashboard", or "does this dashboard have any anomalies". Distinct from modifying a dashboard (modify-dashboard) and creating a dashboard (create-dashboard).
 max_iterations: 12
 examples:
-  - "分析下 etcd 仪表盘 24 小时内数据有哪些问题"
-  - "看看 Linux 主机监控大盘最近一小时正常吗"
-  - "巡检一下这个大盘"
-  - "这个仪表盘里 web01 这台机器最近一天有没有异常"
+  - "Analyze what data problems the etcd dashboard has within 24 hours"
+  - "Check whether the Linux host monitoring dashboard has been normal over the last hour"
+  - "Inspect this dashboard"
+  - "Has the host web01 in this dashboard had any anomalies over the last day"
 builtin_tools:
   - list_dashboards
   - get_dashboard_data
@@ -17,70 +17,70 @@ tags:
   - internal
 ---
 
-# Skill: 夜莺(N9E) 分析仪表盘
+# Skill: Nightingale (N9E) Analyze Dashboard
 
-帮用户分析一个**已存在仪表盘**在指定时间窗内的数据健康状况，产出异常清单与建议。
+Help the user analyze the data health of an **existing dashboard** over a given time window, and produce an anomaly list with recommendations.
 
-核心工具是 `get_dashboard_data`：它在服务端完成取数与**统计预筛**（MAD 离群、突变、趋势、同比四种确定性检测 + 周期性降噪），返回分层结果。同比基准：窗口 ≤24h 比昨日同时段，更长窗口环比上一个同长周期（digest 头部会写明前移量，按它表述）。**检测已经做完了，你的职责是归因、关联和解释，不是逐点重新扫描。**
+The core tool is `get_dashboard_data`: it performs data fetching and **statistical pre-screening** on the server side (four deterministic detections — MAD outliers, sudden changes, trends, year-over-year comparison — plus periodicity denoising), and returns layered results. Year-over-year baseline: for a window ≤24h it compares against the same period yesterday; for a longer window it compares against the previous period of the same length (the digest header states the shift amount — describe it accordingly). **The detection is already done; your job is attribution, correlation, and explanation, not re-scanning point by point.**
 
-## 第一步：定位仪表盘
+## Step 1: Locate the dashboard
 
-- 上下文里已带 `dashboard_id`（前端从 `/dashboards/<id>` 注入）→ 直接用。
-- 用户贴了 `/dashboards/<id>` 链接 → 取 id。
-- 只给了名字 → `list_dashboards(query="...")` 按名匹配；多候选或匹配不到就列出来问用户，**不要**乱猜。
+- The context already carries a `dashboard_id` (injected by the frontend from `/dashboards/<id>`) → use it directly.
+- The user pasted a `/dashboards/<id>` link → take the id.
+- Only a name was given → match by name with `list_dashboards(query="...")`; if there are multiple candidates or no match, list them and ask the user — **do not** guess.
 
-## 第二步：调 get_dashboard_data
+## Step 2: Call get_dashboard_data
 
 ```
 get_dashboard_data(id=<id>, time_range="24h")
 ```
 
-- `time_range` 按用户意图传（"最近一天"→`24h`，"这周"→`7d`）；用户没说就用默认 `1h`，并在结论里注明分析窗口。
-- 用户限定了主机/集群等条件（"看看 web01 这台"）→ 通过 `vars` 传：`vars={"ident":["web01"]}`（变量名以 `get_dashboard_detail(include_config=true)` 里的变量定义为准，拿不准先查一下）。
-- **一次调用就够**。不要先调 get_dashboard_detail 再逐面板 query_prometheus 跑全量——那是工具已经替你做掉的事。
+- Pass `time_range` according to user intent ("the last day" → `24h`, "this week" → `7d`); if the user did not specify, use the default `1h` and note the analysis window in the conclusion.
+- The user constrained host/cluster, etc. ("look at the host web01") → pass it via `vars`: `vars={"ident":["web01"]}` (the variable name follows the variable definition in `get_dashboard_detail(include_config=true)`; if unsure, check it first).
+- **One call is enough.** Do not first call get_dashboard_detail and then run query_prometheus over every panel at full scale — that is what the tool has already done for you.
 
-## 第三步：解读预筛结果（你的核心价值）
+## Step 3: Interpret the pre-screening results (your core value)
 
-工具返回分层结果：⚠ 可疑曲线（特征+采样点）/ ✓ 正常摘要 / 略过清单（含**平直线**一类——值恒定的曲线单独计数；若平直但与昨日水平不同，会按同比异常进可疑区，如 qps 卡死在 0）。你要做的：
+The tool returns layered results: ⚠ suspicious curves (features + sampled points) / ✓ normal summary / skipped list (including a **flat-line** category — curves with a constant value are counted separately; if a curve is flat but at a different level than yesterday, it goes into the suspicious section as a year-over-year anomaly, e.g. qps stuck at 0). What you should do:
 
-1. **跨面板关联**：同一时刻多条曲线异动是最重要的信号。比如 `14:32 CPU 突变 +312%` 与 `14:32 磁盘延迟离群` 同现 → 大概率同一事件，合并成一个问题陈述，而不是罗列两条。
-2. **结合指标语义判断影响**：WAL fsync 延迟上升 → 写入受影响；连接数趋势上涨逼近上限 → 容量风险。讲"这意味着什么"，不是复读数字。
-3. **复核"疑似周期性"标记**：被标周期性的尖峰通常是定时任务，一般不算异常；但若用户问的就是"为什么每天这个点慢"，它反而是答案。
-4. **必要时下钻**：对关键可疑指标用 `query_prometheus` 缩小时间窗看细节（如突变前后 ±15 分钟、step 调小），或查相关指标验证假设。**最多下钻 2-3 个**最关键的，不要每条可疑曲线都查一遍。
-5. **不要复述采样点**：附带的"点:"序列是给你看形状的证据，结论里引用关键时刻和数值即可。
+1. **Cross-panel correlation**: simultaneous movement of multiple curves at the same moment is the most important signal. For example, `14:32 CPU sudden change +312%` co-occurring with `14:32 disk latency outlier` → likely the same event; merge them into a single problem statement rather than listing them as two.
+2. **Judge impact in light of metric semantics**: rising WAL fsync latency → writes are affected; a rising connection-count trend approaching the limit → capacity risk. Talk about "what this means", not re-reading the numbers.
+3. **Re-examine the "suspected periodic" flag**: spikes flagged as periodic are usually scheduled jobs and generally do not count as anomalies; but if the user is specifically asking "why is it slow at this same time every day", it is in fact the answer.
+4. **Drill down when necessary**: for a key suspicious metric, use `query_prometheus` to narrow the time window and inspect details (e.g. ±15 minutes around the sudden change, with a smaller step), or query a related metric to validate a hypothesis. **Drill down into at most 2-3** of the most critical ones; do not query every suspicious curve.
+5. **Do not recite the sampled points**: the attached "points:" series is evidence for you to see the shape; in the conclusion just cite the key moments and values.
 
-## 第四步：输出分析报告
+## Step 4: Output the analysis report
 
 ```
-## <仪表盘名> 健康分析（窗口 24h）
+## <dashboard name> Health Analysis (window 24h)
 
-**总体结论**：一句话（如：发现 1 起疑似磁盘性能事件，影响 etcd-2 节点；其余指标正常）
+**Overall conclusion**: one sentence (e.g.: found 1 suspected disk performance event affecting the etcd-2 node; all other metrics normal)
 
-### 异常（按严重度）
-1. **etcd-2 磁盘性能劣化（14:30 起）**
-   - 证据：WAL fsync 延迟 4ms→89ms（突变+312%@14:30，同比窗口无此现象）；CPU 同时刻冲到 96%
-   - 影响：写入延迟会被直接拉高
+### Anomalies (by severity)
+1. **etcd-2 disk performance degradation (starting at 14:30)**
+   - Evidence: WAL fsync latency 4ms→89ms (sudden change +312%@14:30, no such phenomenon in the year-over-year window); CPU spiked to 96% at the same moment
+   - Impact: write latency will be driven up directly
 2. ...
 
-### 关联分析
-（多指标在时间上的关联推断）
+### Correlation analysis
+(correlation inference of multiple metrics over time)
 
-### 建议
-- 可操作的下一步（查 etcd-2 所在宿主机磁盘 / iostat / 是否有快照任务...）
+### Recommendations
+- Actionable next steps (check the disk of the host where etcd-2 resides / iostat / whether there is a snapshot job...)
 ```
 
-- 无可疑曲线时明确说"未发现异常"，**不要硬编问题**；注明覆盖范围（窗口、被跳过的面板）。
-- 输出被截断（超大盘）→ 用 `panel_ids` 对关键面板分批再调，最后合并结论。
+- When there are no suspicious curves, state clearly "no anomalies found"; **do not fabricate problems**. Note the coverage (window, skipped panels).
+- The output was truncated (very large dashboard) → use `panel_ids` to re-call key panels in batches, then merge the conclusions at the end.
 
-## 边界与特殊情况
+## Boundaries and special cases
 
-- 整盘没有 Prometheus 面板 → 工具会报错并列出数据源分布，直接向用户说明暂不支持。
-- 变量未取到值时工具会注明"已用 .* 全匹配"，多实例大盘数据可能偏多，结论里带上这个前提。
-- "昨日有、今日无"的曲线（实例消失）值得在异常里提一句——掉实例往往比指标波动更严重。注意窗口 >24h 时这一段实际比较的是上一个同长周期（如上个 7 天），表述时别说成"昨天还在"。
-- 用户接着要改大盘（加图表/改阈值）→ 加载 modify-dashboard；要对异常指标建告警 → 加载 create-alert-rule。
+- The dashboard has no Prometheus panels at all → the tool returns an error and lists the data source distribution; tell the user directly that this is not supported for now.
+- When a variable resolves to no value, the tool notes "matched everything with .*"; the data for a multi-instance dashboard may be excessive, so carry this premise in the conclusion.
+- A curve that "existed yesterday but is gone today" (an instance disappeared) is worth a mention in the anomalies — losing an instance is often more serious than metric fluctuation. Note that when the window is >24h, this segment actually compares against the previous period of the same length (e.g. the previous 7 days), so do not phrase it as "it was still there yesterday".
+- The user then wants to modify the dashboard (add charts / change thresholds) → load modify-dashboard; to create an alert on an anomalous metric → load create-alert-rule.
 
-## 注意事项
+## Notes
 
-- 报告里时间一律用工具返回的时刻格式（HH:MM），别自行换算时区。
-- 数字保留工具给出的精度即可，重点是趋势和量级，不是小数位。
-- 可疑 ≠ 故障：检测是统计性的，结论用"疑似/可能"的措辞，把判断依据讲清楚。
+- In the report, always use the moment format returned by the tool (HH:MM); do not convert time zones yourself.
+- Keep the precision the tool gives for numbers; the focus is the trend and order of magnitude, not decimal places.
+- Suspicious ≠ failure: the detection is statistical, so word the conclusion as "suspected/possible" and make the basis for the judgment clear.

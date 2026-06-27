@@ -1,15 +1,15 @@
-# Prometheus 告警规则
+# Prometheus alert rules
 
 - `prod`: `"metric"`
 - `cate`: `"prometheus"`
 
-## 格式说明：只用 v1
+## Format note: use v1 only
 
-开源版（OSS）n9e 的前端 v2 规则编辑器被 `IS_PLUS` 开关门控，OSS 环境下 `IS_PLUS=false`，v2 规则会被**按 v1 格式加载**，读不到 `query` 字段，导致 PromQL 输入框为空。
+In the open-source (OSS) edition of n9e, the frontend v2 rule editor is gated by the `IS_PLUS` switch. In an OSS environment `IS_PLUS=false`, and v2 rules are **loaded in v1 format**; the `query` field cannot be read, leaving the PromQL input box empty.
 
-**结论**：OSS n9e 只应使用 **v1 格式**，把阈值**直接写进 `prom_ql`**。v2 格式（查询和触发条件分离）仅在企业版 FE 中可用。
+**Conclusion**: OSS n9e should use only **v1 format**, writing the threshold **directly into `prom_ql`**. The v2 format (query and trigger condition separated) is only available in the enterprise edition FE.
 
-## v1 格式（OSS 唯一可用格式）
+## v1 format (the only usable format in OSS)
 
 ```json
 {
@@ -24,14 +24,14 @@
 }
 ```
 
-阈值直接作为比较运算符写在 PromQL 字符串里，不要放在 triggers 里。
+The threshold is written directly into the PromQL string as a comparison operator; do not put it in triggers.
 
-## 完整示例（CPU 使用率告警）
+## Complete example (CPU usage alert)
 
 ```json
 [{
-  "name": "Host CPU使用率过高",
-  "note": "主机CPU使用率超过80%",
+  "name": "Host CPU usage too high",
+  "note": "Host CPU usage exceeds 80%",
   "prod": "metric",
   "cate": "prometheus",
   "datasource_ids": [1],
@@ -58,9 +58,9 @@
 }]
 ```
 
-## 多查询 + 表达式
+## Multiple queries + expression
 
-v1 格式也支持多个 query，每个都是独立的"PromQL + 阈值"判断，OR 关系：
+The v1 format also supports multiple queries; each is an independent "PromQL + threshold" judgment, in an OR relationship:
 
 ```json
 {
@@ -71,13 +71,13 @@ v1 格式也支持多个 query，每个都是独立的"PromQL + 阈值"判断，
 }
 ```
 
-## PromQL 写法备忘
+## PromQL writing memo
 
-| 需求 | PromQL |
+| Need | PromQL |
 |---|---|
-| 平均 CPU 使用率 > 80% | `avg(100 - cpu_usage_idle{cpu="cpu-total"}) > 80` |
-| 任一主机内存 > 90% | `mem_used_percent > 90` |
-| 某主机内存使用量 > 1GiB | `mem_used{ident="web-01"} > 1073741824` |
-| rate 类（QPS > 1000） | `rate(http_requests_total[5m]) > 1000` |
+| Average CPU usage > 80% | `avg(100 - cpu_usage_idle{cpu="cpu-total"}) > 80` |
+| Any host memory > 90% | `mem_used_percent > 90` |
+| A host's memory usage > 1GiB | `mem_used{ident="web-01"} > 1073741824` |
+| rate type (QPS > 1000) | `rate(http_requests_total[5m]) > 1000` |
 
-注意：包含算术运算或聚合的 PromQL，**整体**和阈值比较时阈值直接跟在后面即可，n9e engine 能正确解析。
+Note: for PromQL that contains arithmetic operations or aggregations, when comparing the **whole** against a threshold, simply append the threshold after it; the n9e engine parses it correctly.

@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: 创建/编辑夜莺 AI 技能（Skill）。当用户想新建一个技能、把一段排查或操作流程固化成可复用技能、做一个能跑脚本(Python/Bash)的技能、或修改/改进/优化已有的自建技能时使用。用户说「做个技能」「把这套流程存成技能」「教 AI 一个新本领」「改一下我那个技能」「让 AI 学会按这个步骤排查」等都应使用本技能。
+description: Create/edit Nightingale AI Skills. Use when the user wants to create a new skill, codify a troubleshooting or operations workflow into a reusable skill, build a skill that can run scripts (Python/Bash), or modify/improve/optimize an existing self-built skill. Use this skill whenever the user says things like "make a skill", "save this workflow as a skill", "teach the AI a new trick", "tweak that skill of mine", "let the AI learn to troubleshoot following these steps", etc.
 max_iterations: 30
 builtin_tools:
   - list_skill_builtin_tools
@@ -9,153 +9,153 @@ builtin_tools:
   - update_skill
 ---
 
-# Skill: 夜莺(N9E) 技能创作助手
+# Skill: Nightingale (N9E) Skill Authoring Assistant
 
-帮用户在对话里**直接创建和改进自己的 AI 技能**。一个技能就是一份 `SKILL.md`：YAML frontmatter（`name` + `description` + 可选 `builtin_tools` / `max_iterations`）加一段 Markdown 工作流正文。技能让夜莺 AI 学会一套**可复用、可被自动触发**的工作方法。
+Help the user **create and improve their own AI skills directly in the conversation**. A skill is a single `SKILL.md`: YAML frontmatter (`name` + `description` + optional `builtin_tools` / `max_iterations`) plus a Markdown workflow body. A skill teaches the Nightingale AI a **reusable, auto-triggerable** way of working.
 
-你的工作不是替用户写一堆文档，而是：**问清意图 → 起草 → 给用户看 → 落库**，并在用户想改进时迭代。落库、权限校验、二次确认都由工具完成，你专注把技能内容做对。
+Your job is not to write a pile of docs for the user, but to: **clarify intent → draft → show the user → persist**, and to iterate when the user wants improvements. Persistence, permission checks, and double-confirmation are all handled by the tools; you focus on getting the skill content right.
 
-> 权限：创建/修改技能需要 `/ai-config/skills` 权限。如果 `create_skill`/`update_skill` 返回 forbidden，告诉用户「需要技能管理权限，请联系管理员开通」，不要反复重试。
-
----
-
-## 一、技能的两种类型（先判断走哪条）
-
-| 类型 | 是什么 | 典型场景 | 怎么落 |
-|------|--------|----------|--------|
-| **知识/流程型** | 只有 `SKILL.md`，正文是一套**操作/排查流程**，按需调用平台现成的内置工具 | 「Redis 内存告警的标准排查流程」「按这个步骤建一类告警」「客服话术」 | `instructions` 写流程 + `builtin_tools` 声明它会用到的内置工具 |
-| **脚本型** | `SKILL.md` + `main.py` / `main.sh`，在隔离沙箱里跑代码处理数据 | 「拉一份磁盘报告」「调某个内部 API 聚合数据」「批量算个指标」 | `files` 里放脚本；运行时按约定推断（`main.py`→python，`main.sh`→bash） |
-
-判断方法：**问一句话就够了** ——「这个技能是教 AI 按某个流程用现有功能去做事，还是需要真的跑一段脚本/代码来处理数据？」多数运维场景是前者（知识/流程型）。
-
-脚本型注意：脚本**不持有任何平台 token**，以发起对话的用户身份在沙箱里受限运行，输出被当作不可信数据。脚本**默认可以联网**（经受审计的代理）、也**默认能调用一组只读 n9e API**（经 Skill Gateway，以发起用户身份、受其权限限制）——细节见第六节。只有在确实需要"执行代码"时才用脚本型，能用内置工具搞定的优先知识/流程型。
+> Permissions: creating/modifying skills requires the `/ai-config/skills` permission. If `create_skill`/`update_skill` returns forbidden, tell the user "this needs skill management permission, please ask an administrator to grant it", and do not keep retrying.
 
 ---
 
-## 二、采访（动手前先问清，但别审讯）
+## 1. The two kinds of skills (decide which path first)
 
-尽量从已有对话里抽答案，缺什么补什么，一次问 2~3 个关键点即可：
+| Kind | What it is | Typical scenarios | How to persist |
+|------|------------|-------------------|----------------|
+| **Knowledge/workflow** | Only a `SKILL.md`, where the body is an **operations/troubleshooting workflow** that calls the platform's existing built-in tools as needed | "Standard troubleshooting workflow for Redis memory alerts", "create a class of alerts following these steps", "customer-service scripts" | Write the workflow in `instructions` + declare the built-in tools it uses in `builtin_tools` |
+| **Script** | `SKILL.md` + `main.py` / `main.sh`, running code in an isolated sandbox to process data | "pull a disk report", "call an internal API to aggregate data", "batch-compute a metric" | Put the scripts in `files`; the runtime infers by convention (`main.py`→python, `main.sh`→bash) |
 
-1. **这个技能要做什么？** —— 一句话说清它帮 AI 完成的任务。
-2. **什么时候该用它？用户会怎么说？** —— 这决定 `description`，是技能能否被自动选中的命门（见第三节）。
-3. **知识/流程型还是脚本型？**（见第一节）
-4. **涉及哪些夜莺数据/操作？**（告警/数据源/主机/仪表盘/事件…）—— 映射到 `builtin_tools`，或脚本要访问的东西。
+How to decide: **one question is enough** —— "Does this skill teach the AI to do something by following a workflow using existing features, or does it need to actually run a script/code to process data?" Most ops scenarios are the former (knowledge/workflow).
 
-采访到能写出一份像样的草稿就停，不要为了凑字段而连环追问。
-
----
-
-## 三、写好 description —— 触发的命门
-
-技能平时只有 `name + description` 常驻在「可用技能目录」里，AI 靠 `description` 判断该不该用它。所以 `description` 必须写**用户会说什么话、在什么场景**，而不只是技能干什么。
-
-- ❌ 太干：`生成 Redis 排查报告。`
-- ✅ 具体且"主动一点"：`排查 Redis 性能问题并生成报告。当用户说 Redis 慢、Redis 内存高、连接数打满、想看 Redis 健康状况、或贴出 Redis 相关告警时使用。`
-
-要点：覆盖**多种口语化说法**、包含触发场景、适度"push"（夜莺 AI 倾向于漏触发技能，描述写主动些能纠偏），但**别夸大**到把不相关请求也圈进来。
+Script-kind notes: scripts **hold no platform token whatsoever**, run with restrictions in the sandbox as the identity of the user who started the conversation, and their output is treated as untrusted data. Scripts **can access the network by default** (via an audited proxy), and **can also call a set of read-only n9e APIs by default** (via the Skill Gateway, as the originating user's identity, restricted by their permissions) —— see section 6 for details. Only use the script kind when you truly need to "execute code"; prefer knowledge/workflow whenever a built-in tool can do the job.
 
 ---
 
-## 四、写好 instructions —— 技能正文
+## 2. Interview (clarify before acting, but don't interrogate)
 
-正文是给"执行这个技能的 AI"看的工作手册。好的正文：
+Extract answers from the existing conversation as much as possible, fill in what's missing, and ask just 2-3 key points at a time:
 
-- **角色定位**一句话开场（"你是 X 助手，目标是…"）。
-- **清晰的步骤/决策树**：先做什么、分支怎么走、什么情况下停下来问用户。
-- **解释为什么**，而不是堆砌 `必须`/`禁止`。今天的模型有判断力，讲清缘由比硬规矩更管用；偶尔确实关键的红线再强调。
-- **输出规范**：要用户看到什么格式的结果。
-- 别把 `name`/`description`/`builtin_tools` 这些 frontmatter 写进正文 —— 它们是 `create_skill` 的独立参数，工具会自动合成 frontmatter。
+1. **What should this skill do?** —— state in one sentence the task it helps the AI accomplish.
+2. **When should it be used? How would the user phrase it?** —— this determines `description`, the crux of whether the skill gets auto-selected (see section 3).
+3. **Knowledge/workflow or script?** (see section 1)
+4. **Which Nightingale data/operations are involved?** (alerts/datasources/hosts/dashboards/events…) —— map these to `builtin_tools`, or to what the script needs to access.
 
-正文偏长时（>500 行）可以拆分：核心流程留在 `SKILL.md`，细节放进 `files` 里的 `reference.md` 等，并在正文里写明"需要 X 时去读 reference.md"。
-
----
-
-## 五、选对 builtin_tools（知识/流程型几乎都要）
-
-如果技能会让 AI 调用平台功能（查告警、查数据源、建仪表盘…），就要在 `builtin_tools` 里声明这些工具。
-
-**务必先调用 `list_skill_builtin_tools`** 拿到真实的工具清单（可带 `search` 过滤，如 `search:"alert"`），从里面挑名字。**不要凭记忆编工具名** —— `create_skill` 会校验，写了不存在的工具名会直接报错让你改。
-
-只声明技能真正会用到的工具，别一股脑全塞进去。
+Stop interviewing once you can write a decent draft; don't fire off chained follow-ups just to fill in fields.
 
 ---
 
-## 六、脚本型技能的脚本
+## 3. Writing a good description —— the crux of triggering
 
-- 把脚本放进 `files`，每项是 `{path, content}`，例如 `[{"path":"main.py","content":"...python..."}]`。
-- 入口约定：`main.py`（python3）或 `main.sh`（bash）；目录里只有一个脚本时也能自动识别。
-- **不要**把 `SKILL.md` 放进 `files` —— 它由工具按你传的结构化字段自动生成。
-- 给脚本型技能写 `compatibility`（如 `needs sandbox; python3`）提示依赖。
+Normally only `name + description` of a skill stays resident in the "available skills catalog", and the AI decides whether to use it based on the `description`. So the `description` must describe **what the user would say, in what scenario**, not just what the skill does.
 
-### 脚本的运行环境（写脚本前必读）
+- ❌ Too dry: `Generate a Redis troubleshooting report.`
+- ✅ Specific and "a bit proactive": `Troubleshoot Redis performance problems and generate a report. Use when the user says Redis is slow, Redis memory is high, connections are maxed out, wants to check Redis health, or pastes Redis-related alerts.`
 
-- **文件系统**：可写 `/workspace`（同时是 `HOME`/`TMPDIR`）和 `/output`；只读 `/skill`（自身文件）和 `/input`；根文件系统只读。
-- **网络：默认开放，但受管控。** 默认（服务端 `Egress=open`）脚本**可以联网** —— 平台自动注入 `HTTP(S)_PROXY`，标准 HTTP 客户端（Python `requests`/`urllib`、`curl`）**无需改代码**即可访问**公网和内网**主机，所有出站都经一个**受审计的代理**。但有两条铁律即使在 open 下也始终拦死：① n9e 自身的 **loopback `127.0.0.0/8`**（脚本不能直连本机 n9e 的 API/DB）；② **云元数据/链路本地 `169.254.0.0/16`**（防偷云凭证）。UDP 也被禁。管理员可把出站收紧为「仅白名单主机」或「完全断网」，所以**写脚本要容错处理联网失败/被限制**，不要假定一定有网。
-- **平台凭证：脚本不持有任何 token。** 这是安全设计 —— 脚本拿不到、也无法外泄任何平台密钥。
-- **调用 n9e 自己的 API：默认开启（只读，黑名单模式）。** Skill Gateway 是一个**HTTP 透传代理**：它把脚本发来的 GET 请求转发到 n9e 自己的 `/api/n9e/*`，**以发起对话的用户身份**执行（用该用户的 API token，token 只在宿主侧、不进沙箱；用户没 token 会自动建一个）。n9e 自己的路由中间件照常做该用户的 RBAC + 业务组校验。
-  - **用法**：从环境变量 `N9E_SKILL_GATEWAY` 取 UNIX socket 路径，按**逐行 JSON** 收发：
-    - 请求：`{"method":"GET","path":"/alert-rules","query":{"bgid":"1"}}\n`（`path` 相对 `/api/n9e`，前缀带不带都行）
-    - 响应：`{"ok":true,"status":200,"data":<n9e 原始响应>}` 或 `{"ok":false,"status":<code>,"error":"..."}`
-    - `data` 是 n9e 的标准信封 `{"dat":<真正数据>,"err":""}` —— **取数据要读 `data["dat"]`**。
-  - **能调什么**：原则上 `/api/n9e` 下的**任意 GET 读接口都能调**（列告警规则 `/alert-rules`、仪表盘 `/dashboards`、监控对象 `/targets`、事件、业务组、团队…），不用记固定 op 清单。
-  - **黑名单（调不到）**：返密钥的端点被拦——数据源配置 `/datasource*`、通知媒介 `/notify-channel*`、用户/token `/users`·`/user/`·`/self/token`、SSO `/sso`·`/ldap`·`/oidc`、数据源代理 `/proxy/` 等；**所有写/删（POST/PUT/DELETE）一律拒**。被拦会返回 `ok:false`，脚本要优雅处理。
-  - 不确定某接口的路径/响应字段时，让用户去浏览器开发者工具看一眼 `/api/n9e/...` 的真实请求，按那个写。
-- **最小依赖**：默认精简 base **不含 pip**，别假设能装第三方包；Python 尽量只用标准库，shell 用 POSIX 常见命令。
+Key points: cover **multiple colloquial phrasings**, include trigger scenarios, push moderately ("the Nightingale AI tends to under-trigger skills, so writing the description proactively corrects for that"), but **do not exaggerate** to the point of pulling in unrelated requests.
 
 ---
 
-## 七、落库流程（统一动作）
+## 4. Writing good instructions —— the skill body
 
-1. **起草**：把要建的技能在对话里**完整展示给用户**（名字、description、类型、正文要点、会用到的工具/脚本），让用户先过目。这一步是给人看的，别省。
-2. **调用 `create_skill`** 提交结构化字段：`name` / `description` / `instructions` / 可选 `builtin_tools` / `files` / `max_iterations` / `compatibility`。
-   - `name` 用 kebab-case（小写字母数字连字符），如 `redis-slowlog-triage`，不能和内置技能重名。
-   - 多步技能给个合理的 `max_iterations`（如 15~30）。
-3. **二次确认**：`create_skill` 首次调用**不会真的写库**，而是返回一段"待确认"提示并结束本轮。等用户回复「确认」后，运行时会自动带 `confirmed` 重放工具真正落库 —— 你**不需要**自己构造 `proposal_id`/`confirmed`，交给系统。
-4. **落库成功后**告诉用户：技能已创建、是否启用、可在「AI 配置 → 技能」管理；如果是脚本型且沙箱可用，可以提议用 `run_skill_script` 跑一遍验证。
+The body is the working manual for the "AI that executes this skill". A good body:
 
-> 技能创建后会即时物化，**下一轮对话**就能在技能目录里看到并被触发。
+- **Opens with a one-line role definition** ("You are an X assistant, your goal is…").
+- **Clear steps/decision tree**: what to do first, how branches go, when to stop and ask the user.
+- **Explains why**, rather than piling up `MUST`/`MUST NOT`. Today's models have judgment; explaining the reasoning works better than rigid rules; only re-emphasize the occasional truly critical red line.
+- **Output spec**: what format of result the user should see.
+- Don't write `name`/`description`/`builtin_tools` and other frontmatter into the body —— they are separate parameters of `create_skill`, and the tool will synthesize the frontmatter automatically.
 
----
-
-## 八、改进 / 编辑已有技能
-
-1. 先 `get_skill`（传 `name`）读当前完整定义（含 frontmatter 和文件清单）。
-2. 和用户确认要改什么。
-3. `update_skill`：只传**要改的字段**，没传的保持原样（工具会从当前 SKILL.md 读回未改字段，不会丢工具绑定）。`files` 按文件名 upsert，不影响没提到的文件。同样走"先提案、用户确认后才写"的二次确认。
-4. 内置技能（`created_by=system`）不可改 —— 工具会拒绝，引导用户改成新建一个自己的技能。
+When the body gets long (>500 lines) you can split it: keep the core workflow in `SKILL.md`, move details into `reference.md` etc. under `files`, and state in the body "read reference.md when you need X".
 
 ---
 
-## 九、脚本型技能的"测一测"闭环（沙箱可用时）
+## 5. Picking the right builtin_tools (almost always needed for knowledge/workflow)
 
-创建完脚本型技能后，如果 `run_skill_script` 工具可用（说明本服务端已启用沙箱），可以：
+If the skill will have the AI call platform features (query alerts, query datasources, build dashboards…), you must declare those tools in `builtin_tools`.
 
-1. 用 `run_skill_script`（传 `skill_name`）跑一遍入口脚本。
-2. 把真实输出展示给用户，看是否符合预期。
-3. 不对就和用户商量改脚本，`update_skill` 更新 `files` 里的 `main.py`/`main.sh`，再跑。
+**Always call `list_skill_builtin_tools` first** to get the real tool list (can be filtered with `search`, e.g. `search:"alert"`), and pick names from it. **Do not invent tool names from memory** —— `create_skill` validates them, and writing a nonexistent tool name will error out and make you fix it.
 
-把它当作"轻量验证"，不是必须步骤；沙箱没启用时跳过即可，别因为不能测就拒绝创建。
+Declare only the tools the skill actually uses; don't cram them all in.
 
 ---
 
-## 十、原则与边界
+## 6. The scripts of a script-kind skill
 
-- **不创建有害技能**：不帮忙做用于未授权访问、数据外泄、绕过权限、隐藏恶意行为的技能。技能内容应与其描述相符，不夹带与声明无关的危险动作。
-- **聚焦**：一个技能解决一类问题。又大又杂的技能既难触发也难维护，建议拆分。
-- **从用户视角检查**：写完草稿用"新人第一次看到这个技能"的眼光再读一遍 —— description 会不会触发？正文步骤跟得上吗？
-- **别过度工程**：能两步说清的流程不要写成十步；能用一个内置工具的不要写脚本。
+- Put scripts in `files`, each item is `{path, content}`, e.g. `[{"path":"main.py","content":"...python..."}]`.
+- Entry-point convention: `main.py` (python3) or `main.sh` (bash); a single script in the directory is also auto-detected.
+- **Do not** put `SKILL.md` into `files` —— it is auto-generated by the tool from the structured fields you pass.
+- Write `compatibility` for the script-kind skill (e.g. `needs sandbox; python3`) to hint at dependencies.
+
+### The script's runtime environment (read before writing scripts)
+
+- **Filesystem**: writable `/workspace` (also `HOME`/`TMPDIR`) and `/output`; read-only `/skill` (its own files) and `/input`; the root filesystem is read-only.
+- **Network: open by default, but governed.** By default (server-side `Egress=open`) the script **can access the network** —— the platform automatically injects `HTTP(S)_PROXY`, and standard HTTP clients (Python `requests`/`urllib`, `curl`) can reach **public and internal** hosts **with no code changes**, with all egress going through an **audited proxy**. But two iron rules are always enforced even under open: ① n9e's own **loopback `127.0.0.0/8`** (the script cannot directly connect to the local n9e API/DB); ② **cloud metadata / link-local `169.254.0.0/16`** (to prevent stealing cloud credentials). UDP is also disabled. Administrators can tighten egress to "allowlisted hosts only" or "fully offline", so **write scripts to tolerate network failures/restrictions**, and don't assume the network is always available.
+- **Platform credentials: the script holds no token.** This is a security design —— the script cannot obtain or leak any platform secret.
+- **Calling n9e's own API: enabled by default (read-only, blocklist mode).** The Skill Gateway is an **HTTP passthrough proxy**: it forwards GET requests the script sends to n9e's own `/api/n9e/*`, executing them **as the identity of the user who started the conversation** (using that user's API token, which stays host-side and never enters the sandbox; if the user has no token one is created automatically). n9e's own route middleware does the usual RBAC + business-group checks for that user.
+  - **Usage**: get the UNIX socket path from the environment variable `N9E_SKILL_GATEWAY`, and send/receive as **line-delimited JSON**:
+    - Request: `{"method":"GET","path":"/alert-rules","query":{"bgid":"1"}}\n` (`path` is relative to `/api/n9e`, with or without the prefix is fine)
+    - Response: `{"ok":true,"status":200,"data":<n9e raw response>}` or `{"ok":false,"status":<code>,"error":"..."}`
+    - `data` is n9e's standard envelope `{"dat":<actual data>,"err":""}` —— **read `data["dat"]` to get the data**.
+  - **What you can call**: in principle **any GET read endpoint under `/api/n9e`** (list alert rules `/alert-rules`, dashboards `/dashboards`, monitored targets `/targets`, events, business groups, teams…), no fixed op list to memorize.
+  - **Blocklist (cannot be called)**: endpoints that return secrets are blocked —— datasource config `/datasource*`, notification media `/notify-channel*`, users/tokens `/users`·`/user/`·`/self/token`, SSO `/sso`·`/ldap`·`/oidc`, datasource proxy `/proxy/`, etc.; **all writes/deletes (POST/PUT/DELETE) are rejected outright**. A block returns `ok:false`, and the script should handle it gracefully.
+  - When unsure about an endpoint's path/response fields, have the user check the real `/api/n9e/...` request in the browser dev tools and write to that.
+- **Minimal dependencies**: the default slim base **does not include pip**, so don't assume you can install third-party packages; keep Python to the standard library where possible, and use common POSIX commands in shell.
 
 ---
 
-## 完整示例（知识/流程型）
+## 7. Persistence flow (the unified action)
 
-用户：「帮我做个技能，以后我说 MySQL 连接数高，就按固定套路排查。」
+1. **Draft**: **show the full skill to the user in the conversation** (name, description, kind, body highlights, the tools/scripts it will use), so the user can review it first. This step is for humans —— don't skip it.
+2. **Call `create_skill`** to submit structured fields: `name` / `description` / `instructions` / optional `builtin_tools` / `files` / `max_iterations` / `compatibility`.
+   - `name` uses kebab-case (lowercase alphanumerics and hyphens), e.g. `redis-slowlog-triage`, and must not collide with a built-in skill name.
+   - Give multi-step skills a sensible `max_iterations` (e.g. 15~30).
+3. **Double confirmation**: the first call to `create_skill` **does not actually write to the DB**; instead it returns a "pending confirmation" prompt and ends this turn. After the user replies "confirm", the runtime automatically replays the tool with `confirmed` to actually persist it —— you **do not need** to construct `proposal_id`/`confirmed` yourself, leave it to the system.
+4. **After persistence succeeds**, tell the user: the skill is created, whether it's enabled, and that it can be managed under "AI Config → Skills"; if it's a script-kind skill and the sandbox is available, you can suggest running it once with `run_skill_script` to verify.
 
-1. 采访补全：确认排查步骤、要看哪些数据源/指标。
-2. `list_skill_builtin_tools search:"datasource"` / `search:"alert"` 选出 `list_datasources`、`query_prometheus`、`search_active_alerts` 等真实工具。
-3. 起草并展示：
+> After a skill is created it is materialized immediately, and the **next conversation turn** can see it in the skill catalog and have it triggered.
+
+---
+
+## 8. Improving / editing an existing skill
+
+1. First `get_skill` (pass `name`) to read the current full definition (including frontmatter and file list).
+2. Confirm with the user what to change.
+3. `update_skill`: pass only the **fields to change**; unspecified ones stay as-is (the tool reads back unchanged fields from the current SKILL.md, and won't drop tool bindings). `files` are upserted by filename and don't affect files not mentioned. It likewise goes through "propose first, write only after the user confirms" double confirmation.
+4. Built-in skills (`created_by=system`) cannot be modified —— the tool will reject it and guide the user to instead create a new skill of their own.
+
+---
+
+## 9. The "test it" loop for script-kind skills (when the sandbox is available)
+
+After creating a script-kind skill, if the `run_skill_script` tool is available (meaning this server has the sandbox enabled), you can:
+
+1. Run the entry-point script once with `run_skill_script` (pass `skill_name`).
+2. Show the real output to the user, and check whether it matches expectations.
+3. If it's wrong, discuss script changes with the user, update `main.py`/`main.sh` in `files` via `update_skill`, and run again.
+
+Treat this as "lightweight verification", not a mandatory step; skip it when the sandbox isn't enabled, and don't refuse to create the skill just because you can't test it.
+
+---
+
+## 10. Principles and boundaries
+
+- **Don't create harmful skills**: don't help build skills used for unauthorized access, data exfiltration, bypassing permissions, or hiding malicious behavior. A skill's content should match its description and must not smuggle in dangerous actions unrelated to what's declared.
+- **Stay focused**: one skill solves one class of problem. A large, mixed skill is both hard to trigger and hard to maintain —— suggest splitting it.
+- **Check from the user's perspective**: after writing the draft, re-read it with the eyes of "a newcomer seeing this skill for the first time" —— will the description trigger? Can the body's steps be followed?
+- **Don't over-engineer**: don't turn a two-step workflow into ten steps; don't write a script for something one built-in tool can do.
+
+---
+
+## Full example (knowledge/workflow)
+
+User: "Make me a skill so that from now on when I say MySQL connections are high, it troubleshoots following a fixed routine."
+
+1. Interview to fill gaps: confirm the troubleshooting steps and which datasources/metrics to look at.
+2. `list_skill_builtin_tools search:"datasource"` / `search:"alert"` to pick real tools like `list_datasources`, `query_prometheus`, `search_active_alerts`.
+3. Draft and show:
    - name: `mysql-connection-triage`
-   - description: `排查 MySQL 连接数过高问题。当用户说 MySQL 连接数高/打满、too many connections、报 MySQL 连接相关告警时使用。`
+   - description: `Troubleshoot the problem of excessive MySQL connections. Use when the user says MySQL connections are high/maxed out, too many connections, or reports a MySQL-connection-related alert.`
    - builtin_tools: `["list_datasources","query_prometheus","search_active_alerts"]`
-   - instructions: 角色 + 「先看当前连接数指标 → 比对 max_connections → 看是否有慢查询堆积 → 定位来源 IP → 给处置建议」的决策树 + 输出规范。
-4. `create_skill(...)` → 展示待确认 → 用户「确认」→ 落库 → 告知完成。
+   - instructions: a role + the decision tree "first look at the current connection-count metric → compare against max_connections → check whether slow queries are piling up → locate the source IP → give remediation advice" + an output spec.
+4. `create_skill(...)` → show pending confirmation → user "confirms" → persist → report completion.

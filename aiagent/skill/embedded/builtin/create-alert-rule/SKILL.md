@@ -1,15 +1,15 @@
 ---
 name: create-alert-rule
 description: |
-  **创建告警规则**。优先复用 integrations 里验证过的规则（标准组件 Linux/MySQL/Redis/Kafka/PostgreSQL/Elasticsearch 等都有现成规则包），导入几条按用户需求来——单条、一批、或整套都行；integration 里没有贴合的规则时再手写自定义规则。支持 Prometheus / Loki / ES / OpenSearch / MySQL / PG / TDengine / ClickHouse / Doris / VictoriaLogs / Host 全部数据源。
-  ⚠️ **不要用这个 skill 做批量 YAML 导入**——用户给的是 URL 或 YAML 文件、awesome-prometheus-alerts、node-exporter.yml 之类，请改用 import-prom-rule。
-  触发：创建一条/加一条告警 / 帮我建个 CPU 告警 / 给 MySQL 加套告警规则 / 给主机配上常用告警 / 我要监控某个指标。
+  **Create alert rules**. Prefer reusing the validated rules in integrations (standard components like Linux/MySQL/Redis/Kafka/PostgreSQL/Elasticsearch all ship ready-made rule packs); import as many rules as the user needs—one rule, a batch, or a whole pack. Only hand-write a custom rule when integrations has nothing that fits. Supports all data sources: Prometheus / Loki / ES / OpenSearch / MySQL / PG / TDengine / ClickHouse / Doris / VictoriaLogs / Host.
+  ⚠️ **Do NOT use this skill for bulk YAML imports**—when the user provides a URL or a YAML file, awesome-prometheus-alerts, node-exporter.yml, and the like, use import-prom-rule instead.
+  Triggers: create an alert / add an alert / help me set up a CPU alert / add a set of alert rules for MySQL / configure common alerts for a host / I want to monitor a metric.
 examples:
-  - "给主机配上一套常用告警规则"
-  - "给 MySQL 加套告警规则"
-  - "帮我建一条 CPU 使用率超过 80% 的告警"
-  - "新增一条 MySQL 慢查询告警规则"
-  - "给主机内存加个告警，超过 90% 报警"
+  - "Configure a set of common alert rules for the host"
+  - "Add a set of alert rules for MySQL"
+  - "Help me create an alert for CPU usage exceeding 80%"
+  - "Add a MySQL slow query alert rule"
+  - "Add a memory alert for the host, fire when it exceeds 90%"
 max_iterations: 20
 builtin_tools:
   - preview_alert_rule_template
@@ -28,138 +28,138 @@ tags:
   - export
 ---
 
-# Skill: 夜莺(N9E) 告警规则创建
+# Skill: Nightingale (N9E) Alert Rule Creation
 
-两个工具：`import_alert_rule_template`（复用 integrations 里验证过的规则）和 `create_alert_rule`（手写规则）。
+Two tools: `import_alert_rule_template` (reuse the validated rules in integrations) and `create_alert_rule` (hand-write rules).
 
-**优先复用 integration 里的规则**：`integrations/<组件>/alerts/` 下的规则是人工精调验证过的成品（级别、持续时长、评估周期、附加标签、注释、生效时间窗都配好了），质量远高于手搓。**但导入几条要按用户需求来，不是无脑整包**：
+**Prefer reusing the rules in integrations**: the rules under `integrations/<component>/alerts/` are finished products that have been hand-tuned and validated (severity, duration, evaluation interval, appended tags, annotations, and effective time windows are all configured), and their quality far exceeds hand-crafted rules. **But import as many as the user needs—do not blindly import the whole pack**:
 
-- 用户要给某组件配「一套 / 常用」告警 → 整包导入（不传 `names`）
-- 用户只点名某几类（如"磁盘和内存告警"）→ 只导这几条（`names` 传这几条）
-- 用户要某个具体指标的**单条**告警 → 如果包里正好有贴合的那条，就只导这一条（`names` 传一个）或参考它的表达式；包里没有贴合的，再用 `create_alert_rule` 手写
+- The user wants "a set / common" alerts for some component → import the whole pack (do not pass `names`)
+- The user names only a few categories (e.g. "disk and memory alerts") → import only those (pass them in `names`)
+- The user wants a **single** alert for a specific metric → if the pack happens to contain a matching rule, import just that one (pass one entry in `names`) or borrow its expression; if the pack has nothing that fits, hand-write with `create_alert_rule`
 
-只有 integration 里没有贴合的规则、或用户给的是完全自定义的查询条件时，才走方式 B（`create_alert_rule`）。
+Only go to Approach B (`create_alert_rule`) when integrations has no matching rule, or when the user provides a fully custom query condition.
 
-同一组件常同时有 categraf 和 exporter 两套规则包时，**优先 categraf**：先探测 categraf 指标有没有数据，能查到就用 categraf 包，查不到才退回 exporter（详见方式 A 第 3 步）。
+When a component ships both a categraf and an exporter rule pack, **prefer categraf**: first probe whether the categraf metrics have data; if found, use the categraf pack, otherwise fall back to the exporter pack (see Approach A step 3 for details).
 
-| 用户需求 | 怎么做 |
+| User need | What to do |
 |------|-----------|
-| 给标准组件配一套/几条告警（Linux / MySQL / Redis / Kafka / PostgreSQL / Elasticsearch / Ceph / Oracle / Windows / MongoDB …） | 方式 A：`preview_alert_rule_template` 看包里有啥 → `import_alert_rule_template` 按需导入 |
-| 某个具体指标的单条告警，且 integration 包里有贴合的那条 | 方式 A：`import_alert_rule_template` + `names` 只导那一条 |
-| 完全自定义、integration 里没有贴合的规则（含 Loki / ES / SQL 查询值 / 日志条数等冷门条件） | 方式 B：`create_alert_rule` |
+| Configure a set / a few alerts for a standard component (Linux / MySQL / Redis / Kafka / PostgreSQL / Elasticsearch / Ceph / Oracle / Windows / MongoDB …) | Approach A: `preview_alert_rule_template` to see what's in the pack → `import_alert_rule_template` to import as needed |
+| A single alert for a specific metric, and the integration pack has a matching rule | Approach A: `import_alert_rule_template` + `names` to import just that one |
+| Fully custom rules that integrations doesn't cover (including niche conditions like Loki / ES / SQL query values / log counts) | Approach B: `create_alert_rule` |
 
-> ⚠️ **不要用这个 skill 做批量 YAML 导入**——用户给的是 URL 或 YAML 文件、awesome-prometheus-alerts、node-exporter.yml 之类，请改用 import-prom-rule。
+> ⚠️ **Do NOT use this skill for bulk YAML imports**—when the user provides a URL or a YAML file, awesome-prometheus-alerts, node-exporter.yml, and the like, use import-prom-rule instead.
 
-## 第一步（两条路径通用）：确定业务组和数据源
+## Step 1 (common to both paths): determine the business group and data source
 
-- 调用 `list_busi_groups` 获取业务组列表
-- 调用 `list_datasources` 获取数据源列表，找到对应类型的数据源 ID（规则包多为 Prometheus 类型）
-- 若会话上下文已预选 `busi_group_id` / `datasource_id`，直接用，**不要**再调 `list_*`
-- `cate=host`（机器失联类）不需要数据源
+- Call `list_busi_groups` to get the list of business groups
+- Call `list_datasources` to get the list of data sources, and find the data source ID of the matching type (rule packs are mostly the Prometheus type)
+- If the session context already has a preselected `busi_group_id` / `datasource_id`, use it directly—**do not** call `list_*` again
+- `cate=host` (host-unreachable class) does not need a data source
 
-### 业务组选择规则
+### Business group selection rules
 
-1. 用户明确指定了业务组名称或 ID，直接使用
-2. 否则按优先级：
-   a. **优先 `is_default: true` 的业务组**（通常是 "Default Busi Group" 或含"默认"的组）
-   b. 只有一个业务组时直接用
-   c. 多个候选且都非默认时，**不要盲取第一个**，在回复里列出让用户确认
+1. If the user explicitly specified a business group name or ID, use it directly
+2. Otherwise, by priority:
+   a. **Prefer the business group with `is_default: true`** (usually "Default Busi Group" or a group whose name contains "Default")
+   b. If there is only one business group, use it directly
+   c. When there are multiple candidates and none is the default, **do not blindly take the first one**; list them in your reply and ask the user to confirm
 
 ---
 
-## 方式 A：复用 integration 里验证过的规则（按需：单条 / 一批 / 整包）
+## Approach A: reuse validated rules in integrations (as needed: single / batch / whole pack)
 
-`import_alert_rule_template` 从 `integrations/<组件>/alerts/` 下的规则包里导入规则（每条规则的级别、持续时长、评估周期、附加标签、注释、生效时间窗全部保留），并把规则绑定到你选的数据源、统一改为启用态。**导入几条由 `names` 参数控制**，按用户需求来。
+`import_alert_rule_template` imports rules from the rule pack under `integrations/<component>/alerts/` (each rule's severity, duration, evaluation interval, appended tags, annotations, and effective time window are all preserved), binds the rules to the data source you select, and uniformly switches them to the enabled state. **How many rules are imported is controlled by the `names` parameter**, driven by the user's need.
 
-### 步骤
+### Steps
 
-1. 看有哪些集成组件：
+1. See which integration components are available:
    ```
    list_files(base="integrations")
    ```
-2. 看该组件下有哪些规则包文件：
+2. See which rule pack files exist under that component:
    ```
    list_files(base="integrations/Linux", path="alerts")
    ```
-3. **挑对规则包文件（categraf 优先）**。规则包常分 categraf 和 exporter 两种采集风格，文件名约定各组件不一（Linux 是 `linux_by_categraf.json` / `linux_by_exporter.json`，也可能是别的后缀）。**优先选文件名含 `categraf` 的包**：
-   - 先探测 categraf 指标在环境里有没有数据：`list_metrics(datasource_id=<X>, keyword="<categraf 指标关键字>")`。
-     - 关键字用能区分两种风格的 categraf 专有指标名，例如 Linux 用 `cpu_usage`（categraf 是 `cpu_usage_idle`，node_exporter 没有这个名字）、`mem_used_percent`、`disk_used_percent`；Redis 用 `redis_used_memory`；MySQL 用 `mysql_global_status_queries`。
-   - **只要 categraf 指标能查到数据（返回非空数组），就直接用文件名含 `categraf` 的包**，不必再比较 exporter。
-   - 只有 categraf 指标查不到数据时，才退回文件名含 `exporter` 的包（如 `linux_by_exporter.json`），并用对应的 exporter 指标关键字（如 `node_cpu_seconds_total`）`list_metrics` 确认有数据后再导入。
-4. **看包里有哪些规则（仅当要按名字挑选时）**。用户要整包导入时可跳过这步；用户只要其中某几条、或要某个具体指标的单条告警时，先预览拿到准确的规则名：
+3. **Pick the right rule pack file (prefer categraf)**. Rule packs often come in two collection styles, categraf and exporter, and the filename convention varies per component (for Linux it's `linux_by_categraf.json` / `linux_by_exporter.json`, but it may use other suffixes). **Prefer the pack whose filename contains `categraf`**:
+   - First probe whether the categraf metrics have data in the environment: `list_metrics(datasource_id=<X>, keyword="<categraf metric keyword>")`.
+     - Use a categraf-specific metric name that distinguishes the two styles as the keyword, e.g. for Linux use `cpu_usage` (categraf uses `cpu_usage_idle`, which node_exporter does not have), `mem_used_percent`, `disk_used_percent`; for Redis use `redis_used_memory`; for MySQL use `mysql_global_status_queries`.
+   - **As long as the categraf metric returns data (a non-empty array), use the pack whose filename contains `categraf`** directly, without comparing against exporter.
+   - Only fall back to the pack whose filename contains `exporter` (e.g. `linux_by_exporter.json`) when the categraf metric has no data, and use the corresponding exporter metric keyword (e.g. `node_cpu_seconds_total`) with `list_metrics` to confirm data exists before importing.
+4. **See which rules are in the pack (only when you need to select by name)**. You can skip this step when the user wants to import the whole pack; when the user wants only a few of them, or a single alert for a specific metric, preview first to get the exact rule names:
    ```
    preview_alert_rule_template(component="Linux", file="linux_by_categraf.json")
    ```
-   返回每条规则的 `name` / `cate` / `severity` / 表达式摘要 / 是否禁用（小载荷）。**不要**用 `read_file` 看大规则包（会截断），用这个工具。
-5. **按需导入**：
-   - 整包（用户要"一套/常用"告警）——不传 `names`：
+   It returns each rule's `name` / `cate` / `severity` / an expression summary / whether it is disabled (a small payload). **Do not** use `read_file` to view a large rule pack (it will be truncated); use this tool.
+5. **Import as needed**:
+   - Whole pack (the user wants "a set / common" alerts)—do not pass `names`:
      ```
-     import_alert_rule_template(group_id=<业务组>, component="Linux", file="linux_by_categraf.json", datasource_id=<数据源>)
+     import_alert_rule_template(group_id=<business group>, component="Linux", file="linux_by_categraf.json", datasource_id=<data source>)
      ```
-   - 一批 / 单条（用户点名某几类或某个指标）——`names` 传精确规则名（从 preview 拿）：
+   - Batch / single (the user names a few categories or a specific metric)—`names` carries the exact rule names (from preview):
      ```
-     import_alert_rule_template(group_id=<业务组>, component="Linux", file="linux_by_categraf.json",
-       datasource_id=<数据源>, names="[\"Machine load - high memory, please pay attention - categraf\"]")
+     import_alert_rule_template(group_id=<business group>, component="Linux", file="linux_by_categraf.json",
+       datasource_id=<data source>, names="[\"Machine load - high memory, please pay attention - categraf\"]")
      ```
 
-> **不要**用 `read_file` 把整个规则包读出来再逐条 `create_alert_rule`——包可能很大且会被截断，逐条转换还会丢字段。要看包里有啥用 `preview_alert_rule_template`，要落库用 `import_alert_rule_template`。
+> **Do not** use `read_file` to read out the entire rule pack and then call `create_alert_rule` one rule at a time—the pack may be large and get truncated, and converting rules one by one also drops fields. To see what's in the pack use `preview_alert_rule_template`; to persist it use `import_alert_rule_template`.
 
-### 注意事项
+### Notes
 
-- **`datasource_id` 强烈建议传**：传了就把导入的规则绑定到该数据源；不传则规则匹配该类型全部数据源（范围偏大）。包里的 `host` 心跳类规则不需要数据源，工具会自动跳过绑定。
-- 规则包里的规则在模板里默认是**禁用态**（它是一份可浏览的目录）。本工具导入时**默认改为启用**（`disabled=0`），让规则立即生效。如果用户希望"先导入但不启用，自己逐条开"，传 `disabled=1`。
-- `names` 里写的名字必须和 `preview_alert_rule_template` 返回的 `name` 完全一致；没匹配上的会在返回的 `not_found_names` 里列出，核对后重试。
-- 同名规则（业务组里已存在）**自动跳过**（`status=skipped_duplicate`），不算失败，**不要**因为看到跳过就用 `name_prefix` 重导一遍。只有当用户明确要和现有规则并存（如对比测试）时才用 `name_prefix`/`name_suffix`。
-- 返回里有 `created` / `skipped` / `failed` 三个计数和每条规则的明细，输出时汇总即可。
-- 导入的规则默认**不绑定任何通知规则**（避免误发告警）。如需绑定，导入后提示用户去规则上手动关联，或改用方式 B 逐条建并传 `notify_rule_ids`。
+- **Strongly recommend passing `datasource_id`**: passing it binds the imported rules to that data source; omitting it makes the rules match every data source of that type (an overly broad scope). The `host` heartbeat rules in the pack don't need a data source, and the tool skips binding for them automatically.
+- The rules in a rule pack are **disabled** by default in the template (it is a browsable catalog). When importing, this tool **switches them to enabled** by default (`disabled=0`) so the rules take effect immediately. If the user wants to "import first but leave them disabled, and enable them one by one themselves", pass `disabled=1`.
+- The names written in `names` must exactly match the `name` returned by `preview_alert_rule_template`; any that don't match are listed in the returned `not_found_names`—double-check and retry.
+- Duplicate rules (already existing in the business group) are **skipped automatically** (`status=skipped_duplicate`); this is not a failure, and **do not** re-import with `name_prefix` just because you see a skip. Only use `name_prefix`/`name_suffix` when the user explicitly wants the rule to coexist with the existing one (e.g. a comparison test).
+- The return includes three counts—`created` / `skipped` / `failed`—plus details for each rule; just summarize them in the output.
+- Imported rules **are not bound to any notify rule** by default (to avoid sending alerts by mistake). If binding is needed, after importing, prompt the user to associate it manually on the rule, or switch to Approach B to create rules one by one and pass `notify_rule_ids`.
 
 ---
 
-## 方式 B：手写自定义规则（integration 里没有贴合规则时）
+## Approach B: hand-write a custom rule (when integrations has no matching rule)
 
-用 `create_alert_rule`。支持 **Prometheus / Loki / Elasticsearch / OpenSearch / TDengine / ClickHouse / MySQL / PostgreSQL / Doris / VictoriaLogs / Host** 全部数据源类型。
+Use `create_alert_rule`. Supports all data source types: **Prometheus / Loki / Elasticsearch / OpenSearch / TDengine / ClickHouse / MySQL / PostgreSQL / Doris / VictoriaLogs / Host**.
 
-> 走到这里前先确认 integration 里确实没有贴合的规则：标准组件的常见指标（CPU/内存/磁盘/连接数…）多半在规则包里有，能复用就别手搓。手搓时也可以先 `preview_alert_rule_template` 看一眼有没有现成表达式可借鉴。
+> Before getting here, confirm that integrations really has no matching rule: common metrics for standard components (CPU/memory/disk/connection count…) are mostly in the rule packs, so reuse rather than hand-craft when you can. Even when hand-crafting, you can first run `preview_alert_rule_template` to glance at whether there's a ready-made expression you can borrow.
 
-工具提供两种调用模式：
+The tool offers two invocation modes:
 
-1. **Prometheus 简化路径**（最常用）——直接传 `prom_ql` + `threshold` + `operator`，工具自动构建规则
-2. **通用路径**——传 `cate` + `rule_config_json`，`rule_config_json` 的结构**先通过 `read_file` 读取 `datasources/<cate>.md` 获取模板**，再填充实际值
+1. **Prometheus simplified path** (most common)—pass `prom_ql` + `threshold` + `operator` directly, and the tool builds the rule automatically
+2. **Generic path**—pass `cate` + `rule_config_json`; **first obtain the structure of `rule_config_json` by reading `datasources/<cate>.md` via `read_file`**, then fill in the actual values
 
-### 模式 1：Prometheus 简化路径
+### Mode 1: Prometheus simplified path
 
-最常用的场景。只需填 PromQL、阈值、操作符。工具内部会把阈值拼进 `prom_ql` 生成 v1 格式的规则（OSS n9e 的 FE v2 编辑器被 `IS_PLUS` 门控，只能用 v1）。
+The most common scenario. You only need to fill in PromQL, threshold, and operator. Internally the tool splices the threshold into `prom_ql` to generate a v1-format rule (the v2 editor in the OSS n9e FE is gated by `IS_PLUS`, so only v1 can be used).
 
 ```json
 {
   "group_id": 1,
-  "name": "CPU 使用率过高",
+  "name": "CPU usage too high",
   "datasource_id": 1,
   "prom_ql": "avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
   "operator": ">",
   "threshold": 80,
   "severity": 2,
-  "note": "CPU 使用率超过 80% 持续 1 分钟",
+  "note": "CPU usage exceeded 80% for 1 minute",
   "for_duration": 60
 }
 ```
 
-### 模式 2：通用路径（非 Prometheus）
+### Mode 2: generic path (non-Prometheus)
 
-对 Loki / ES / MySQL / TDengine / ClickHouse / Doris / VictoriaLogs / Host 等类型，需传 `cate` 和 `rule_config_json`。
+For types such as Loki / ES / MySQL / TDengine / ClickHouse / Doris / VictoriaLogs / Host, you need to pass `cate` and `rule_config_json`.
 
-**关键步骤**：先读该数据源类型的参考文档，获取 `rule_config` 结构模板：
+**Key step**: first read the reference doc for that data source type to obtain the `rule_config` structure template:
 
 ```
 read_file(base="create-alert-rule", path="datasources/<cate>.md")
 ```
 
-然后把文档中的 `rule_config` 对象转成 JSON 字符串传给 `rule_config_json` 参数。示例（MySQL 告警）：
+Then turn the `rule_config` object in the doc into a JSON string and pass it to the `rule_config_json` parameter. Example (MySQL alert):
 
 ```json
 {
   "group_id": 1,
-  "name": "MySQL 失败订单过多",
+  "name": "MySQL too many failed orders",
   "cate": "mysql",
   "datasource_id": 4,
   "severity": 2,
@@ -167,254 +167,253 @@ read_file(base="create-alert-rule", path="datasources/<cate>.md")
 }
 ```
 
-**⚠️ 重要通用规则（所有非 Prometheus 类型都适用）**：
+**⚠️ Important generic rules (apply to all non-Prometheus types)**:
 
-1. **`interval` 字段必须是总秒数**，不要写 `interval_unit`。前端保存时会把 `value × unit → seconds`，读取时再从秒数反推显示单位。
-   - 过去 1 分钟 → `"interval": 60`
-   - 过去 5 分钟 → `"interval": 300`
-   - 过去 1 小时 → `"interval": 3600`
-   - **不要** 写 `"interval": 5, "interval_unit": "min"` —— FE 会按 5 秒显示。
-   - 工具内部有防御式兜底：如果你不小心写了 `interval_unit` 或小于 60 的裸 interval，会自动换算成秒，但最好直接写对。
+1. **The `interval` field must be the total number of seconds**—do not write `interval_unit`. When the frontend saves, it converts `value × unit → seconds`, and when reading it derives the display unit back from the seconds.
+   - Last 1 minute → `"interval": 60`
+   - Last 5 minutes → `"interval": 300`
+   - Last 1 hour → `"interval": 3600`
+   - **Do not** write `"interval": 5, "interval_unit": "min"`—the FE will display it as 5 seconds.
+   - The tool has a defensive fallback: if you accidentally write `interval_unit` or a bare interval smaller than 60, it converts it to seconds automatically, but it's best to write it correctly to begin with.
 
-**⚠️ OSS n9e 的 SQL 类数据源（MySQL/PGSQL/CK/Doris）重要限制**：
-1. **`keys.valueKey` 必填** —— SELECT 语句中数值列的别名，通常是 `"value"`。缺失会报 `valueKey is required`。
-2. **`$from`/`$to`/`$__timeFilter` 不会被替换** —— OSS 的 `macros.Macro` 是 no-op。必须用数据源原生时间函数，例如 MySQL 用 `NOW() - INTERVAL 5 MINUTE`、PG 用 `NOW() - INTERVAL '5 minutes'`、CK 用 `now() - INTERVAL 5 MINUTE`。
-3. **TDengine 是例外** —— 它有独立的变量替换逻辑，`$from`/`$to`/`$interval` 可用。
+**⚠️ Important limitations for OSS n9e SQL-type data sources (MySQL/PGSQL/CK/Doris)**:
+1. **`keys.valueKey` is required**—the alias of the numeric column in the SELECT statement, usually `"value"`. Missing it reports `valueKey is required`.
+2. **`$from`/`$to`/`$__timeFilter` are not substituted**—the OSS `macros.Macro` is a no-op. You must use the data source's native time functions, e.g. MySQL uses `NOW() - INTERVAL 5 MINUTE`, PG uses `NOW() - INTERVAL '5 minutes'`, CK uses `now() - INTERVAL 5 MINUTE`.
+3. **TDengine is the exception**—it has its own variable substitution logic, and `$from`/`$to`/`$interval` are usable.
 
-## create_alert_rule 参数说明（方式 B）
+## create_alert_rule parameter reference (Approach B)
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `group_id` | ✅ | 业务组 ID（从 `list_busi_groups` 获取） |
-| `name` | ✅ | 规则名称（同业务组内不能重名） |
-| `cate` | ❌ | 数据源类型（默认 `prometheus`）。可选：`prometheus` / `loki` / `elasticsearch` / `opensearch` / `tdengine` / `ck` / `mysql` / `pgsql` / `doris` / `victorialogs` / `host` |
-| `prod` | ❌ | 产品类型。不传时按 `cate` 自动推导 |
-| `datasource_id` | 条件必填 | 数据源 ID。**`cate=host` 时不需要**，其他都必填 |
-| `rule_config_json` | 条件必填 | 完整的 `rule_config` JSON 字符串。**`cate=prometheus` 时可以不传（走简化路径）**；其他类型必填 |
-| `prom_ql` | 条件必填 | PromQL 查询（仅 `cate=prometheus` 简化路径用）。**只写查询不写阈值** |
-| `threshold` | 条件必填 | 触发阈值（仅简化路径用） |
-| `operator` | ❌ | 默认 `>`。可选 `>` `>=` `<` `<=` `==` `!=` |
-| `severity` | ❌ | 默认 2。1=Critical, 2=Warning, 3=Info |
-| `note` | ❌ | 告警通知正文 |
-| `eval_interval` | ❌ | 评估周期（秒），默认 30 |
-| `for_duration` | ❌ | 持续时长（秒），默认 60 |
-| `append_tags` | ❌ | 附加标签，多个用空格分隔 |
-| `runbook_url` | ❌ | 应急处理手册 URL |
-| `notify_rule_ids` | ❌ | 关联通知规则 ID 列表 JSON，如 `"[1,2]"` |
+| `group_id` | ✅ | Business group ID (from `list_busi_groups`) |
+| `name` | ✅ | Rule name (must be unique within the business group) |
+| `cate` | ❌ | Data source type (default `prometheus`). Options: `prometheus` / `loki` / `elasticsearch` / `opensearch` / `tdengine` / `ck` / `mysql` / `pgsql` / `doris` / `victorialogs` / `host` |
+| `prod` | ❌ | Product type. When omitted, derived automatically from `cate` |
+| `datasource_id` | Conditionally required | Data source ID. **Not needed when `cate=host`**; required for all others |
+| `rule_config_json` | Conditionally required | The complete `rule_config` JSON string. **Can be omitted when `cate=prometheus` (use the simplified path)**; required for other types |
+| `prom_ql` | Conditionally required | PromQL query (only for the `cate=prometheus` simplified path). **Write only the query, not the threshold** |
+| `threshold` | Conditionally required | Trigger threshold (only for the simplified path) |
+| `operator` | ❌ | Default `>`. Options `>` `>=` `<` `<=` `==` `!=` |
+| `severity` | ❌ | Default 2. 1=Critical, 2=Warning, 3=Info |
+| `note` | ❌ | Alert notification body |
+| `eval_interval` | ❌ | Evaluation interval (seconds), default 30 |
+| `for_duration` | ❌ | Duration (seconds), default 60 |
+| `append_tags` | ❌ | Appended tags, multiple separated by spaces |
+| `runbook_url` | ❌ | Runbook URL |
+| `notify_rule_ids` | ❌ | JSON list of associated notify rule IDs, e.g. `"[1,2]"` |
 
-## 方式 B 详细步骤（create_alert_rule）
+## Approach B detailed steps (create_alert_rule)
 
-> 业务组和数据源的选择见上面「第一步（两条路径通用）」。下面是方式 B 特有的步骤。
+> See "Step 1 (common to both paths)" above for selecting the business group and data source. Below are the steps specific to Approach B.
 
-### B-1：识别数据源类型（cate）
+### B-1: identify the data source type (cate)
 
-根据用户的告警需求判断应该用哪个 `cate`：
+Based on the user's alert need, decide which `cate` to use:
 
-| 用户诉求关键词 | cate | 触发条件 |
+| User-need keyword | cate | Trigger condition |
 |---|---|---|
-| "主机 CPU/内存/磁盘"、"Prometheus 指标" | `prometheus` | 指标阈值 |
-| "机器失联"、"节点离线" | `host` | 心跳超时 |
-| "应用错误日志"、"Loki 日志" | `loki` | 日志条数 |
-| "ES 日志"、"Elasticsearch 聚合" | `elasticsearch` | 日志聚合 |
-| "OpenSearch 日志" | `opensearch` | 日志聚合（同 ES） |
-| "MySQL 查询结果异常" | `mysql` | SQL 查询值 |
-| "PostgreSQL 查询结果异常" | `pgsql` | SQL 查询值 |
-| "ClickHouse 指标/日志" | `ck` | SQL 查询值 |
-| "Doris 日志" | `doris` | SQL 查询值 |
-| "TDengine 时序数据" | `tdengine` | SQL 查询值 |
-| "VictoriaLogs 日志" | `victorialogs` | LogsQL 查询 |
+| "Host CPU/memory/disk", "Prometheus metric" | `prometheus` | Metric threshold |
+| "Machine unreachable", "node offline" | `host` | Heartbeat timeout |
+| "Application error log", "Loki log" | `loki` | Log count |
+| "ES log", "Elasticsearch aggregation" | `elasticsearch` | Log aggregation |
+| "OpenSearch log" | `opensearch` | Log aggregation (same as ES) |
+| "MySQL abnormal query result" | `mysql` | SQL query value |
+| "PostgreSQL abnormal query result" | `pgsql` | SQL query value |
+| "ClickHouse metric/log" | `ck` | SQL query value |
+| "Doris log" | `doris` | SQL query value |
+| "TDengine time-series data" | `tdengine` | SQL query value |
+| "VictoriaLogs log" | `victorialogs` | LogsQL query |
 
-默认值：`prometheus`。数据源也要对应（`cate=mysql` 找 MySQL 数据源、`cate=loki` 找 Loki 数据源等），`cate=host` 不需要数据源。
+Default value: `prometheus`. The data source must match too (`cate=mysql` finds a MySQL data source, `cate=loki` finds a Loki data source, etc.); `cate=host` does not need a data source.
 
-### B-2（仅非 Prometheus）：读取数据源参考文档
+### B-2 (non-Prometheus only): read the data source reference doc
 
-对于 `cate != "prometheus"` 的类型，**必须先读该类型的参考文档**获取 `rule_config` 结构：
+For types where `cate != "prometheus"`, **you must first read the reference doc for that type** to obtain the `rule_config` structure:
 
 ```
 read_file(base="create-alert-rule", path="datasources/<cate>.md")
 ```
 
-例如：
+For example:
 - MySQL → `datasources/mysql.md`
 - Loki → `datasources/loki.md`
 - Host → `datasources/host.md`
 
-参考文档里有完整的字段说明、可选值表格、完整示例。**按示例里的 `rule_config` 对象照搬字段名**，只替换具体值。
+The reference docs contain complete field descriptions, option-value tables, and complete examples. **Copy the field names from the `rule_config` object in the example as-is**, replacing only the concrete values.
 
-### B-3（仅 SQL 类）：探测真实 schema ⚠️
+### B-3 (SQL types only): probe the real schema ⚠️
 
-**`cate ∈ {mysql, pgsql, ck, doris, tdengine}` 时这一步必须做，不可跳过**。
+**This step is mandatory when `cate ∈ {mysql, pgsql, ck, doris, tdengine}`; it cannot be skipped**.
 
-> **TDengine 也支持**：虽然 TDengine 是时序数据库，但它的 REST API 支持 `SHOW DATABASES` / `information_schema.ins_tables` / `information_schema.ins_columns`。`list_databases` / `list_tables` / `describe_table` 对 TDengine 完全可用。
+> **TDengine is also supported**: although TDengine is a time-series database, its REST API supports `SHOW DATABASES` / `information_schema.ins_tables` / `information_schema.ins_columns`. `list_databases` / `list_tables` / `describe_table` are fully usable with TDengine.
 
-**绝对不要凭用户提示词里的字面描述猜数据库/表/字段名**。用户说"查 my_logs 库的 access_log 表"
-很可能只是举例，实际数据源里根本没这个库或这个表。
+**Never guess database/table/column names from the literal description in the user's prompt**. When the user says "query the access_log table in the my_logs database",
+it is very likely just an example, and the actual data source may have no such database or table at all.
 
-必须按顺序探测：
+You must probe in order:
 
-1. **`list_databases(datasource_id=<X>)`** —— 看真实的数据库列表
-   - 对比用户描述，找最贴近的一个
-   - 如果用户描述的库名**不在返回列表里**，**不要硬写进 SQL**。用 AskUserQuestion
-     列出真实库名让用户确认，或选一个看起来相关的让用户认可
+1. **`list_databases(datasource_id=<X>)`**—see the real list of databases
+   - Compare against the user's description and find the closest one
+   - If the database name in the user's description **is not in the returned list**, **do not force it into the SQL**. Use AskUserQuestion
+     to list the real database names for the user to confirm, or pick one that looks relevant and have the user approve it
 
-2. **`list_tables(datasource_id=<X>, database=<挑中的库>)`** —— 看真实的表列表
-   - 同上：用户说的表不在列表里 → 列出真实表让用户选
+2. **`list_tables(datasource_id=<X>, database=<the chosen database>)`**—see the real list of tables
+   - Same as above: if the table the user mentioned is not in the list → list the real tables for the user to choose
 
-3. **`describe_table(datasource_id=<X>, database=<库>, table=<表>)`** —— 拿真实字段
-   - 用返回的字段名拼 SQL，**不要编造** `log_time`、`status`、`created_at` 之类
-     常见字段名（它们未必真的存在于这张表）
-   - 时间字段特别要注意：不同表里可能叫 `ts`、`event_time`、`log_time`、`create_time`、
-     `timestamp` 等等，必须用 `describe_table` 返回的字段名决定
+3. **`describe_table(datasource_id=<X>, database=<database>, table=<table>)`**—get the real columns
+   - Use the returned column names to assemble the SQL—**do not invent** common column names like `log_time`, `status`, `created_at`
+     (they may not actually exist in this table)
+   - Pay special attention to the time column: in different tables it may be called `ts`, `event_time`, `log_time`, `create_time`,
+     `timestamp`, etc.; you must decide based on the column names returned by `describe_table`
 
-只有在拿到真实 schema 后，才能进入 B-4 拼 SQL。
+Only after obtaining the real schema can you proceed to B-4 and assemble the SQL.
 
-#### datasource_id 的传法
+#### How to pass datasource_id
 
-- 会话上下文已经绑定了数据源（从数据源页面进来的对话）：`datasource_id` 可省略，
-  从会话上下文继承
-- 告警规则场景（从告警规则页或纯对话进入）：必须**显式传** `datasource_id`，
-  否则工具会报 `datasource_id required` 错误
+- When the session context already binds a data source (a conversation entered from the data source page): `datasource_id` can be omitted,
+  inherited from the session context
+- In the alert rule scenario (entered from the alert rule page or a plain conversation): you must **explicitly pass** `datasource_id`,
+  otherwise the tool reports a `datasource_id required` error
 
-### B-4：构建 PromQL / SQL / LogQL
+### B-4: build the PromQL / SQL / LogQL
 
-#### 简化路径（cate=prometheus）
+#### Simplified path (cate=prometheus)
 
-根据用户描述构建 **不带阈值** 的 PromQL。下表都是 **categraf（telegraf 风格）** 指标名，**优先用 categraf**：
+Based on the user's description, build a PromQL **without a threshold**. All entries in the table below are **categraf (telegraf-style)** metric names—**prefer categraf**:
 
-| 用户需求 | 推荐 PromQL（categraf 优先） |
+| User need | Recommended PromQL (prefer categraf) |
 |---|---|
-| 主机 CPU 使用率 | `avg by (ident) (100 - cpu_usage_idle{cpu="cpu-total"})` |
-| 主机内存使用率 | `mem_used_percent` |
-| 主机磁盘使用率 | `disk_used_percent` |
-| 主机系统负载 | `system_load1` |
-| 主机网络入向流量 | `rate(net_bytes_recv[5m])` |
+| Host CPU usage | `avg by (ident) (100 - cpu_usage_idle{cpu="cpu-total"})` |
+| Host memory usage | `mem_used_percent` |
+| Host disk usage | `disk_used_percent` |
+| Host system load | `system_load1` |
+| Host inbound network traffic | `rate(net_bytes_recv[5m])` |
 | MySQL QPS | `rate(mysql_global_status_queries[5m])` |
-| MySQL 连接数使用率 | `mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100` |
-| Redis 内存使用率 | `redis_used_memory / redis_maxmemory * 100` |
+| MySQL connection usage | `mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100` |
+| Redis memory usage | `redis_used_memory / redis_maxmemory * 100` |
 
-**categraf 优先 + 探测**：先用 `list_metrics` 确认 categraf 指标在环境里有没有数据，例如
-`list_metrics(datasource_id=<X>, keyword="cpu_usage")`（categraf 是 `cpu_usage_idle`，node_exporter 没有这个名字）。
-- **能查到数据** → 直接用上表的 categraf PromQL。
-- **查不到** → 环境里很可能用的是 node_exporter，改用下面的 exporter 等价表达式，并再用
-  `list_metrics(datasource_id=<X>, keyword="node_")` 确认 node_exporter 指标确实有数据后再建规则。
+**Prefer categraf + probe**: first use `list_metrics` to confirm whether the categraf metric has data in the environment, e.g.
+`list_metrics(datasource_id=<X>, keyword="cpu_usage")` (categraf uses `cpu_usage_idle`, which node_exporter does not have).
+- **Data found** → use the categraf PromQL from the table above directly.
+- **Not found** → the environment very likely uses node_exporter; switch to the equivalent exporter expression below, and use
+  `list_metrics(datasource_id=<X>, keyword="node_")` again to confirm the node_exporter metrics actually have data before creating the rule.
 
-##### node_exporter 回退等价表（仅 categraf 指标查不到时用）
+##### node_exporter fallback equivalence table (use only when the categraf metric has no data)
 
-| 用户需求 | node_exporter 等价 PromQL |
+| User need | node_exporter equivalent PromQL |
 |---|---|
-| 主机 CPU 使用率 | `100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100` |
-| 主机内存使用率 | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
-| 主机磁盘使用率 | `(1 - node_filesystem_avail_bytes{fstype!~"tmpfs\|overlay"} / node_filesystem_size_bytes) * 100` |
-| 主机系统负载 | `node_load1` |
-| 主机网络入向流量 | `rate(node_network_receive_bytes_total[5m])` |
+| Host CPU usage | `100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100` |
+| Host memory usage | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
+| Host disk usage | `(1 - node_filesystem_avail_bytes{fstype!~"tmpfs\|overlay"} / node_filesystem_size_bytes) * 100` |
+| Host system load | `node_load1` |
+| Host inbound network traffic | `rate(node_network_receive_bytes_total[5m])` |
 
-> 磁盘表达式里的 `\|` 只是为了不破坏 Markdown 表格的转义，写进 PromQL 时要还原成 `|`，即 `fstype!~"tmpfs|overlay"`（否则正则会把它当成字面竖线，过滤失效）。
+> The `\|` in the disk expression is only escaped to avoid breaking the Markdown table; when writing it into PromQL, restore it to `|`, i.e. `fstype!~"tmpfs|overlay"` (otherwise the regex treats it as a literal pipe and the filter fails).
 
-#### 通用路径（其他 cate）
+#### Generic path (other cate)
 
-按照 B-2 读到的参考文档，组装 `rule_config` 对象。关键字段：
+Following the reference doc read in B-2, assemble the `rule_config` object. Key fields:
 
-- **SQL 类**（mysql/pgsql/ck/doris）：
-  - 查询必须返回一列别名为 `value` 作为告警判断值
-  - **必填** `keys.valueKey: "value"`（缺失 → `valueKey is required` 错误）
-  - **时间过滤不能用 `$from`/`$to`**，要用数据源原生时间函数：
+- **SQL types** (mysql/pgsql/ck/doris):
+  - The query must return one column aliased `value` as the alert judgment value
+  - **Required** `keys.valueKey: "value"` (missing → `valueKey is required` error)
+  - **Time filtering cannot use `$from`/`$to`**; use the data source's native time functions:
     - MySQL: `NOW() - INTERVAL 5 MINUTE`
     - PostgreSQL: `NOW() - INTERVAL '5 minutes'`
     - ClickHouse: `now() - INTERVAL 5 MINUTE`
     - Doris: `NOW() - INTERVAL 5 MINUTE`
-- **TDengine**：特殊例外，`$from`/`$to`/`$interval` **可以用**，用 `keys.metricKey` 而不是 `keys.valueKey`
-- **日志类**（loki/es/opensearch/victorialogs）：聚合查询返回数值；`recover_config.judge_type` 用 `0`
-- **指标类**（prometheus/mysql/pgsql/ck/tdengine）：`recover_config.judge_type` 用 `1`
-- **Host 类**（host）：`queries` 是 `{key, op, values}` 结构；`triggers` 是 `{type, severity, duration}` 结构；不需要 `datasource_id`
+- **TDengine**: a special exception; `$from`/`$to`/`$interval` **can be used**, and use `keys.metricKey` instead of `keys.valueKey`
+- **Log types** (loki/es/opensearch/victorialogs): the aggregation query returns a numeric value; use `0` for `recover_config.judge_type`
+- **Metric types** (prometheus/mysql/pgsql/ck/tdengine): use `1` for `recover_config.judge_type`
+- **Host type** (host): `queries` is a `{key, op, values}` structure; `triggers` is a `{type, severity, duration}` structure; no `datasource_id` needed
 
-### B-5：调用 create_alert_rule
+### B-5: call create_alert_rule
 
-#### 简化路径（Prometheus）
+#### Simplified path (Prometheus)
 
 ```
 create_alert_rule(
-  group_id=1, name="CPU 过高", datasource_id=1,
+  group_id=1, name="CPU too high", datasource_id=1,
   prom_ql="avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
   threshold=80, operator=">", severity=2
 )
 ```
 
-#### 通用路径（其他类型）
+#### Generic path (other types)
 
 ```
 create_alert_rule(
-  group_id=1, name="MySQL 错误过多",
+  group_id=1, name="MySQL too many errors",
   cate="mysql", datasource_id=4, severity=2,
-  rule_config_json="<把第三步读到的 rule_config 序列化成 JSON 字符串>"
+  rule_config_json="<serialize the rule_config read in step 3 into a JSON string>"
 )
 ```
 
-**注意事项：**
-- Prometheus 简化路径下，阈值单独传 `threshold`，**不要写进 `prom_ql`**
-- 默认 `for_duration=60`，比 `eval_interval=30` 大才合理
-- 如果用户要求"立即触发"，把 `for_duration` 设为 0
-- 如果 `create_alert_rule` 返回 `already exists` 错误，**不要调用 `list_alert_rules`** 去查重名，直接给名字加后缀（如 `-v2`、`-AI` 或时间戳）重试
-- 通用路径下，`rule_config_json` 必须是 **JSON 字符串**（不是对象），记得对引号做转义
-- **SQL 类调用前必须已经完成 B-3 的 schema 探测**。如果 rule_config_json 里的
-  数据库/表/字段没经过 `list_databases`+`list_tables`+`describe_table` 核实过，
-  告警规则大概率无法运行（`Unknown database` / `Unknown column` 等运行时错误）
+**Notes:**
+- On the Prometheus simplified path, pass the threshold separately in `threshold`—**do not write it into `prom_ql`**
+- Default `for_duration=60`, which is only reasonable if it is larger than `eval_interval=30`
+- If the user requests "fire immediately", set `for_duration` to 0
+- If `create_alert_rule` returns an `already exists` error, **do not call `list_alert_rules`** to look up the duplicate name; just add a suffix to the name (e.g. `-v2`, `-AI`, or a timestamp) and retry
+- On the generic path, `rule_config_json` must be a **JSON string** (not an object); remember to escape the quotes
+- **For SQL types, the B-3 schema probe must have been completed before the call**. If the database/table/column in rule_config_json has not been verified via `list_databases`+`list_tables`+`describe_table`,
+  the alert rule will most likely fail to run (`Unknown database` / `Unknown column` and other runtime errors)
 
-### B-6：（可选）关联通知规则
+### B-6: (optional) associate notify rules
 
-如果用户要求绑定通知规则：
-1. 调用 `list_notify_rules` 获取通知规则列表
-2. 调用 `create_alert_rule` 时传入 `notify_rule_ids`，如 `"[1,2]"`
+If the user requests binding notify rules:
+1. Call `list_notify_rules` to get the list of notify rules
+2. When calling `create_alert_rule`, pass `notify_rule_ids`, e.g. `"[1,2]"`
 
-如果用户没明确要求，**不要主动关联通知规则**，避免误发告警。
+If the user does not explicitly request it, **do not proactively associate notify rules**, to avoid sending alerts by mistake.
 
 ---
 
-## 最后一步（两条路径通用）：输出结果
+## Final step (common to both paths): output the result
 
-**保持简短**。一句话确认即可：
+**Keep it short**. A one-sentence confirmation is enough:
 
-- 方式 A（导入规则包）：汇总 `created` / `skipped` / `failed` 三个计数，例如
-  > ✅ 已从 Linux categraf 规则包为您导入 8 条告警规则（跳过 1 条同名），均已启用，详情见下方卡片。
-- 方式 B（单条创建）：
-  > ✅ 已为您创建告警规则「主机 CPU 使用率过高」，详情请查看下方卡片。
+- Approach A (importing a rule pack): summarize the three counts `created` / `skipped` / `failed`, e.g.
+  > ✅ Imported 8 alert rules from the Linux categraf rule pack for you (skipped 1 duplicate name); all are enabled, see the card below for details.
+- Approach B (single creation):
+  > ✅ Created the alert rule "Host CPU usage too high" for you; see the card below for details.
 
-**不要**在 Final Answer 里复述规则 ID、业务组、数据源、PromQL、阈值、告警级别等字段——前端会以结构化卡片展示这些信息，重复输出只会让用户看到两份。如果需要补充说明（例如"这些规则默认未绑定通知规则，请按需关联"），可以再加一两句，但不要把卡片里已有的字段逐条列出来。
+**Do not** restate fields such as rule ID, business group, data source, PromQL, threshold, or alert severity in the Final Answer—the frontend displays this information as a structured card, and repeating it only makes the user see two copies. If you need to add a note (e.g. "these rules are not bound to any notify rule by default; please associate them as needed"), you may add a sentence or two, but do not list out the fields already in the card one by one.
 
-## 严重级别速查
+## Severity quick reference
 
-| severity | 中文 | 适用场景 |
+| severity | Name | Applicable scenario |
 |---|---|---|
-| 1 | Critical（一级） | 服务不可用、核心组件宕机、数据丢失 |
-| 2 | Warning（二级） | 资源使用率高、性能退化、配额接近上限 |
-| 3 | Info（三级） | 信息性告警、容量规划提示 |
+| 1 | Critical (level 1) | Service unavailable, core component down, data loss |
+| 2 | Warning (level 2) | High resource usage, performance degradation, quota approaching limit |
+| 3 | Info (level 3) | Informational alert, capacity planning hint |
 
-默认用 2（Warning）。除非用户明确说"严重"或"紧急"才用 1。
+Use 2 (Warning) by default. Use 1 only when the user explicitly says "severe" or "urgent".
 
-## 单条告警常用模板（方式 B 参考）
+## Common single-alert templates (Approach B reference)
 
-> 用户要的是某个具体指标的单条告警时参考这些。如果用户要的是「给主机加一整套监控告警」，
-> 优先走方式 A 导入 `integrations/Linux/alerts/linux_by_categraf.json` 整包，别在这里一条条手搓。
+> Use these when the user wants a single alert for a specific metric. If the user wants to "add a whole set of monitoring alerts for a host",
+> prefer Approach A to import the whole `integrations/Linux/alerts/linux_by_categraf.json` pack, rather than hand-crafting rules one by one here.
 
-### 主机 CPU 使用率告警
+### Host CPU usage alert
 ```json
 {
   "group_id": 1,
-  "name": "主机 CPU 使用率过高",
+  "name": "Host CPU usage too high",
   "datasource_id": 1,
   "prom_ql": "avg by (ident) (100 - cpu_usage_idle{cpu=\"cpu-total\"})",
   "operator": ">",
   "threshold": 80,
   "severity": 2,
   "for_duration": 300,
-  "note": "主机 {{ $labels.ident }} CPU 使用率持续 5 分钟超过 80%"
+  "note": "Host {{ $labels.ident }} CPU usage exceeded 80% for 5 minutes"
 }
 ```
 
-### 主机内存使用率告警
+### Host memory usage alert
 ```json
 {
   "group_id": 1,
-  "name": "主机内存使用率过高",
+  "name": "Host memory usage too high",
   "datasource_id": 1,
   "prom_ql": "mem_used_percent",
   "operator": ">",
@@ -424,11 +423,11 @@ create_alert_rule(
 }
 ```
 
-### 主机磁盘使用率告警
+### Host disk usage alert
 ```json
 {
   "group_id": 1,
-  "name": "主机磁盘使用率过高",
+  "name": "Host disk usage too high",
   "datasource_id": 1,
   "prom_ql": "disk_used_percent",
   "operator": ">",

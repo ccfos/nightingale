@@ -1,26 +1,26 @@
-# MySQL 告警规则
+# MySQL alert rules
 
 - `prod`: `"metric"`
 - `cate`: `"mysql"`
-- `recover_config.judge_type`: `1`（指标类型）
-- **必填** `keys.valueKey`：SELECT 语句中数值列的别名（通常叫 `value`）
+- `recover_config.judge_type`: `1` (metric type)
+- **Required** `keys.valueKey`: the alias of the numeric column in the SELECT statement (usually called `value`)
 
-## OSS 版本限制
+## OSS edition limitation
 
-**开源版 n9e 的 MySQL 数据源不支持 `$from`/`$to`/`$__timeFilter` 等时间变量**（`macros.Macro` 绑定的是 no-op 实现，变量会原样进入 SQL 导致语法错）。
+**The OSS edition of n9e's MySQL data source does not support time variables such as `$from`/`$to`/`$__timeFilter`** (the bound `macros.Macro` is a no-op implementation, so the variables enter the SQL as-is and cause a syntax error).
 
-**正确写法**：使用 MySQL 原生时间函数，比如：
-- 过去 N 分钟：`WHERE created_at >= NOW() - INTERVAL 5 MINUTE`
-- 过去 N 小时：`WHERE created_at >= NOW() - INTERVAL 1 HOUR`
-- 今天开始至今：`WHERE DATE(created_at) = CURDATE()`
+**Correct approach**: use MySQL's native time functions, for example:
+- Last N minutes: `WHERE created_at >= NOW() - INTERVAL 5 MINUTE`
+- Last N hours: `WHERE created_at >= NOW() - INTERVAL 1 HOUR`
+- From the start of today until now: `WHERE DATE(created_at) = CURDATE()`
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：`$<ref>.<valueKey 别名>`，如 `$A.value > 10`；只有一个 valueKey 时可省略别名直接写 `$A`，多个 valueKey 时**必须带别名**（裸 `$A` 取值不确定）
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.value > 10 && $B.value < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: `$<ref>.<valueKey alias>`, e.g. `$A.value > 10`; with only one valueKey you may omit the alias and write `$A` directly, but with multiple valueKeys you **must include the alias** (a bare `$A` has an undefined value)
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A.value > 10 && $B.value < 5"`
 
-## rule_config 结构
+## rule_config structure
 
 ```json
 {
@@ -48,17 +48,17 @@
 }
 ```
 
-## query 字段说明
+## query field reference
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `ref` | ✅ | 查询引用名，通常是 `A`、`B` ... |
-| `sql` | ✅ | MySQL SQL 查询。**必须有一列别名为 `value`（或与 `keys.valueKey` 一致）作为告警判断值**。时间过滤用 `NOW() - INTERVAL X MINUTE` 等原生写法，不要用 `$from`/`$to` |
-| `keys.valueKey` | ✅ | **必填**，数值列的别名，例如 `"value"` |
-| `keys.labelKey` | ❌ | 标签列别名，多个用空格分隔，用于按维度分组告警（如 `"host service"`） |
-| `interval` | ❌ | 查询执行间隔，**单位：总秒数**。例如 60=1分钟，300=5分钟，3600=1小时。**不要写 `interval_unit`** |
+| `ref` | ✅ | Query reference name, usually `A`, `B`, ... |
+| `sql` | ✅ | MySQL SQL query. **Must have one column aliased `value` (or matching `keys.valueKey`) as the alert judgment value**. Use native syntax for time filtering such as `NOW() - INTERVAL X MINUTE`; do not use `$from`/`$to` |
+| `keys.valueKey` | ✅ | **Required**, the alias of the numeric column, e.g. `"value"` |
+| `keys.labelKey` | ❌ | Label column alias(es), multiple separated by spaces, used to group alerts by dimension (e.g. `"host service"`) |
+| `interval` | ❌ | Query execution interval, **unit: total seconds**. For example 60=1 minute, 300=5 minutes, 3600=1 hour. **Do not write `interval_unit`** |
 
-## 多维度示例（按 host 分组）
+## Multi-dimension example (grouped by host)
 
 ```json
 {

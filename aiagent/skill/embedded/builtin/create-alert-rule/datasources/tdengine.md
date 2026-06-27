@@ -1,36 +1,36 @@
-# TDengine 告警规则
+# TDengine alert rules
 
 - `prod`: `"metric"`
 - `cate`: `"tdengine"`
-- `recover_config.judge_type`: `1`（指标类型）
+- `recover_config.judge_type`: `1` (metric type)
 
-## ⚠️ 核心约束
+## ⚠️ Core constraints
 
-1. **SELECT 结果中必须有 TIMESTAMP 类型列**。n9e 解析时序数据时按 `column_meta` 找类型为 `TIMESTAMP` 的列作为时间轴。如果用 `SELECT *`，原表的 `ts` 或 `_ts` 列会自然包含在内。如果用聚合函数，需要显式 `SELECT _wstart`。
-2. **`value` 是 TDengine 保留字，不能用作别名**。用 `AS val`、`AS metric_val` 等替代。如果误用 `AS value` 会报语法错误，但 n9e 会把错误吞掉显示为 "timestamp column not found"。
-3. **keys.metricKey 和 keys.labelKey 必须与 SELECT 列名精确匹配**。
+1. **The SELECT result must include a column of TIMESTAMP type**. When n9e parses time-series data, it looks at `column_meta` for the column of type `TIMESTAMP` to use as the time axis. If you use `SELECT *`, the original table's `ts` or `_ts` column is naturally included. If you use aggregation functions, you need to explicitly `SELECT _wstart`.
+2. **`value` is a TDengine reserved word and cannot be used as an alias**. Use `AS val`, `AS metric_val`, etc. instead. Accidentally using `AS value` will report a syntax error, but n9e swallows the error and displays it as "timestamp column not found".
+3. **`keys.metricKey` and `keys.labelKey` must match the SELECT column names exactly**.
 
-## 时间变量支持
+## Time variable support
 
-TDengine 是 OSS n9e 中**唯一支持时间变量替换**的 SQL 类数据源：
+TDengine is the **only** SQL-type data source in OSS n9e that **supports time variable substitution**:
 
-| 变量 | 替换为 | 示例值 |
+| Variable | Substituted with | Example value |
 |---|---|---|
-| `$from` | RFC3339 字符串（带单引号） | `'2026-04-09T08:00:00Z'` |
-| `$to` | RFC3339 字符串（带单引号） | `'2026-04-09T08:05:00Z'` |
-| `$interval` | 秒数字符串 | `60s` |
+| `$from` | RFC3339 string (with single quotes) | `'2026-04-09T08:00:00Z'` |
+| `$to` | RFC3339 string (with single quotes) | `'2026-04-09T08:05:00Z'` |
+| `$interval` | seconds string | `60s` |
 
-SQL 里直接写 `_ts >= $from AND _ts < $to`，**不要再加引号**。
+Write `_ts >= $from AND _ts < $to` directly in the SQL—**do not add quotes again**.
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：`$<ref>.<metricKey 列名>`，如 `$A.current > 10`；只有一个 metricKey 列时可省略列名直接写 `$A`，**多 metric 列时必须带列名**（裸 `$A` 取值不确定）
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.current > 10 && $A.voltage < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: `$<ref>.<metricKey column name>`, e.g. `$A.current > 10`; with only one metricKey column you may omit the column name and write `$A` directly, but **with multiple metric columns you must include the column name** (a bare `$A` has an undefined value)
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A.current > 10 && $A.voltage < 5"`
 
-## 标准查询模式（推荐）
+## Standard query pattern (recommended)
 
-最简单可靠的模式：`SELECT * FROM db.table WHERE 时间列 >= $from AND 时间列 < $to`，靠 `keys` 声明哪些列是指标、哪些是标签。
+The simplest, most reliable pattern: `SELECT * FROM db.table WHERE <time column> >= $from AND <time column> < $to`, relying on `keys` to declare which columns are metrics and which are labels.
 
 ```json
 {
@@ -59,15 +59,15 @@ SQL 里直接写 `_ts >= $from AND _ts < $to`，**不要再加引号**。
 }
 ```
 
-**说明**：
-- `SELECT *` 返回所有列（含 TIMESTAMP 列 `ts`），满足 n9e 对时间列的要求
-- `metricKey: "current voltage"` 告诉引擎 `current` 和 `voltage` 是数值指标（空格分隔多个）
-- `labelKey: "location"` 告诉引擎 `location` 是标签维度
-- exp 里 `$A.current > 10` 只判断 `current` 列；要同时监控 `voltage` 需在 exp 中追加条件（如 `$A.current > 10 || $A.voltage > 240`）
+**Notes**:
+- `SELECT *` returns all columns (including the TIMESTAMP column `ts`), satisfying n9e's requirement for a time column
+- `metricKey: "current voltage"` tells the engine that `current` and `voltage` are numeric metrics (multiple separated by spaces)
+- `labelKey: "location"` tells the engine that `location` is a label dimension
+- `$A.current > 10` in exp only judges the `current` column; to monitor `voltage` at the same time, append a condition in exp (e.g. `$A.current > 10 || $A.voltage > 240`)
 
-## 窗口聚合模式（高级）
+## Windowed aggregation pattern (advanced)
 
-需要按时间窗口聚合时（如求平均值），用 `_wstart` + `PARTITION BY` + `INTERVAL`：
+When you need to aggregate over a time window (e.g. computing an average), use `_wstart` + `PARTITION BY` + `INTERVAL`:
 
 ```json
 {
@@ -94,27 +94,27 @@ SQL 里直接写 `_ts >= $from AND _ts < $to`，**不要再加引号**。
 }
 ```
 
-**注意**：
-- **必须 SELECT `_wstart`**，否则结果无 TIMESTAMP 列
-- 别名**不能用 `value`**（保留字），用 `avg_current`、`val`、`metric_val` 等
-- 分组用 **`PARTITION BY`**（TDengine 3.x），不是 `GROUP BY`
-- `metricKey` 必须与别名精确匹配（如 `"avg_current"`）
+**Notes**:
+- **You must SELECT `_wstart`**, otherwise the result has no TIMESTAMP column
+- The alias **cannot be `value`** (a reserved word); use `avg_current`, `val`, `metric_val`, etc.
+- Group with **`PARTITION BY`** (TDengine 3.x), not `GROUP BY`
+- `metricKey` must match the alias exactly (e.g. `"avg_current"`)
 
-## query 字段说明
+## query field reference
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `ref` | ✅ | 查询引用名 |
-| `query` | ✅ | TDengine SQL。结果集**必须包含 TIMESTAMP 列**，别名**不能用 `value`** |
-| `keys.metricKey` | ✅ | 数值列名，多个空格分隔。触发器按这些列的值做阈值判断 |
-| `keys.labelKey` | ❌ | 标签列名，多个空格分隔 |
-| `keys.timeFormat` | ❌ | 时间格式（一般留空） |
-| `interval` | ❌ | 查询间隔，**单位：总秒数**。同时作为 `$interval` 宏的值 |
+| `ref` | ✅ | Query reference name |
+| `query` | ✅ | TDengine SQL. The result set **must include a TIMESTAMP column**, and the alias **cannot be `value`** |
+| `keys.metricKey` | ✅ | Numeric column name(s), multiple separated by spaces. The trigger does threshold judgment on the values of these columns |
+| `keys.labelKey` | ❌ | Label column name(s), multiple separated by spaces |
+| `keys.timeFormat` | ❌ | Time format (usually left empty) |
+| `interval` | ❌ | Query interval, **unit: total seconds**. Also serves as the value of the `$interval` macro |
 
-## 错误排查
+## Troubleshooting
 
-| 报错 | 原因 | 修复 |
+| Error | Cause | Fix |
 |---|---|---|
-| `timestamp column not found` | SELECT 结果中无 TIMESTAMP 列，或 SQL 语法错误被静默吞掉 | 用 `SELECT *` 模式确保包含时间列；检查别名是否用了保留字 `value` |
-| 语法错误但显示 timestamp not found | `value` 是保留字导致 SQL 解析失败，被 QueryTable 吞掉 | 把 `AS value` 改成 `AS val` 或 `AS metric_val` |
-| `Query memory exhausted` | INTERVAL 查询时间范围太大 | 缩小 `$from`~`$to` 范围，或增大 INTERVAL 窗口 |
+| `timestamp column not found` | No TIMESTAMP column in the SELECT result, or a SQL syntax error was silently swallowed | Use the `SELECT *` pattern to ensure a time column is included; check whether the alias used the reserved word `value` |
+| Syntax error but it shows timestamp not found | `value` is a reserved word causing SQL parsing to fail, swallowed by QueryTable | Change `AS value` to `AS val` or `AS metric_val` |
+| `Query memory exhausted` | The INTERVAL query time range is too large | Narrow the `$from`~`$to` range, or enlarge the INTERVAL window |

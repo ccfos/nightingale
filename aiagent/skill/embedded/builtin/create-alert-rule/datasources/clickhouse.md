@@ -1,26 +1,26 @@
-# ClickHouse 告警规则
+# ClickHouse alert rules
 
-- `prod`: `"metric"` 或 `"logging"`
+- `prod`: `"metric"` or `"logging"`
 - `cate`: `"ck"`
-- `recover_config.judge_type`: `1`（指标类型）
-- **必填** `keys.valueKey`：SELECT 语句中数值列的别名
+- `recover_config.judge_type`: `1` (metric type)
+- **Required** `keys.valueKey`: the alias of the numeric column in the SELECT statement
 
-## OSS 版本限制
+## OSS edition limitation
 
-**开源版 n9e 的 ClickHouse 数据源不支持 `$from`/`$to`/`$__timeFilter` 等时间变量**，变量不会被替换。
+**The OSS edition of n9e's ClickHouse data source does not support time variables such as `$from`/`$to`/`$__timeFilter`**; the variables are not substituted.
 
-**正确写法**：使用 ClickHouse 原生时间函数：
-- 过去 N 分钟：`WHERE timestamp >= now() - INTERVAL 5 MINUTE`
-- 过去 N 小时：`WHERE timestamp >= now() - INTERVAL 1 HOUR`
-- 今天：`WHERE toDate(timestamp) = today()`
+**Correct approach**: use ClickHouse's native time functions:
+- Last N minutes: `WHERE timestamp >= now() - INTERVAL 5 MINUTE`
+- Last N hours: `WHERE timestamp >= now() - INTERVAL 1 HOUR`
+- Today: `WHERE toDate(timestamp) = today()`
 
-## triggers 硬规则（必读）
+## triggers hard rules (must read)
 
-- `exp` **必填**，是告警引擎唯一评估的字段（不写 exp 的规则建出来永远不会触发，且无任何报错）
-- 本数据源的变量写法：`$<ref>.<valueKey 别名>`，如 `$A.value > 100`；只有一个 valueKey 时可省略别名直接写 `$A`，多个 valueKey 时**必须带别名**（裸 `$A` 取值不确定）
-- `mode` 固定填 `1`（表达式模式，前端原样展示 exp）；多条件用 `&&` / `||` 连接，如 `"$A.value > 10 && $B.value < 5"`
+- `exp` is **required** and is the only field the alert engine evaluates (a rule without exp will never fire once created, with no error whatsoever)
+- Variable syntax for this data source: `$<ref>.<valueKey alias>`, e.g. `$A.value > 100`; with only one valueKey you may omit the alias and write `$A` directly, but with multiple valueKeys you **must include the alias** (a bare `$A` has an undefined value)
+- `mode` is fixed at `1` (expression mode; the frontend displays exp as-is); join multiple conditions with `&&` / `||`, e.g. `"$A.value > 10 && $B.value < 5"`
 
-## rule_config 结构
+## rule_config structure
 
 ```json
 {
@@ -48,12 +48,12 @@
 }
 ```
 
-## query 字段说明
+## query field reference
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `ref` | ✅ | 查询引用名 |
-| `sql` | ✅ | ClickHouse SQL，数值列别名须与 `keys.valueKey` 一致 |
-| `keys.valueKey` | ✅ | **必填**，数值列的别名 |
-| `keys.labelKey` | ❌ | 标签列别名，多个用空格分隔 |
-| `interval` | ❌ | 查询执行间隔，**单位：总秒数**（60=1分钟，300=5分钟，3600=1小时）。**不要写 `interval_unit`** |
+| `ref` | ✅ | Query reference name |
+| `sql` | ✅ | ClickHouse SQL; the numeric column alias must match `keys.valueKey` |
+| `keys.valueKey` | ✅ | **Required**, the alias of the numeric column |
+| `keys.labelKey` | ❌ | Label column alias(es), multiple separated by spaces |
+| `interval` | ❌ | Query execution interval, **unit: total seconds** (60=1 minute, 300=5 minutes, 3600=1 hour). **Do not write `interval_unit`** |
