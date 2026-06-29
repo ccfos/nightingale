@@ -143,7 +143,7 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
-	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+	reterr := rt.alertRuleAdd(c, lst, username, bgid, c.GetHeader("X-Language"))
 
 	ginx.NewRender(c).Data(reterr, nil)
 }
@@ -296,9 +296,9 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 
 	var reterr map[string]string
 	if force {
-		reterr = rt.alertRuleUpsert(lst, username, bgid, lang)
+		reterr = rt.alertRuleUpsert(c, lst, username, bgid, lang)
 	} else {
-		reterr = rt.alertRuleAdd(lst, username, bgid, lang)
+		reterr = rt.alertRuleAdd(c, lst, username, bgid, lang)
 	}
 
 	ginx.NewRender(c).Data(reterr, nil)
@@ -322,7 +322,7 @@ func (rt *Router) alertRuleAddByImportPromRule(c *gin.Context) {
 	lst := models.DealPromGroup(groups, f.DatasourceQueries, f.Disabled)
 	username := c.MustGet("username").(string)
 	bgid := ginx.UrlParamInt64(c, "id")
-	ginx.NewRender(c).Data(rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language")), nil)
+	ginx.NewRender(c).Data(rt.alertRuleAdd(c, lst, username, bgid, c.GetHeader("X-Language")), nil)
 }
 
 func (rt *Router) alertRuleAddByService(c *gin.Context) {
@@ -373,7 +373,7 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 	return reterr
 }
 
-func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
+func (rt *Router) alertRuleAdd(c *gin.Context, lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
 	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
@@ -383,6 +383,11 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 		if username != "" {
 			lst[i].CreateBy = username
 			lst[i].UpdateBy = username
+		}
+
+		if err := RuleChangeHook(c, &lst[i]); err != nil {
+			reterr[lst[i].Name] = translateText(lang, err.Error())
+			continue
 		}
 
 		if err := lst[i].FE2DB(); err != nil {
@@ -401,7 +406,7 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 
 // alertRuleUpsert 与 alertRuleAdd 对位，命中同名则覆盖；用于 force=true 的导入路径。
 // 注意：FE2DB 由 Upsert 内部按分支调用，这里不要预调用，否则覆盖分支会双调 FE2DB 污染累加型字段（如 EnableDaysOfWeek）。
-func (rt *Router) alertRuleUpsert(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
+func (rt *Router) alertRuleUpsert(c *gin.Context, lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
 	count := len(lst)
 	reterr := make(map[string]string)
 	for i := 0; i < count; i++ {
@@ -410,6 +415,11 @@ func (rt *Router) alertRuleUpsert(lst []models.AlertRule, username string, bgid 
 		if username != "" {
 			lst[i].CreateBy = username // 仅插入路径生效，覆盖路径会被 existing.CreateBy 还原
 			lst[i].UpdateBy = username
+		}
+
+		if err := RuleChangeHook(c, &lst[i]); err != nil {
+			reterr[lst[i].Name] = translateText(lang, err.Error())
+			continue
 		}
 
 		if err := lst[i].Upsert(rt.Ctx); err != nil {
@@ -451,6 +461,10 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 	}
 
 	rt.bgrwCheck(c, ar.GroupId)
+
+	if err := RuleChangeHook(c, &f); err != nil {
+		ginx.Bomb(http.StatusForbidden, "%s", err.Error())
+	}
 
 	f.UpdateBy = c.MustGet("username").(string)
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))

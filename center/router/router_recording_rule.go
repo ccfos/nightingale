@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/strx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
+	"github.com/ccfos/nightingale/v6/pkg/strx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -93,6 +93,12 @@ func (rt *Router) recordingRuleAddByFE(c *gin.Context) {
 		lst[i].GroupId = bgid
 		lst[i].CreateBy = username
 		lst[i].UpdateBy = username
+
+		if err := RuleChangeHook(c, &lst[i]); err != nil {
+			reterr[lst[i].Name] = err.Error()
+			continue
+		}
+
 		lst[i].FE2DB()
 
 		if err := lst[i].Add(rt.Ctx); err != nil {
@@ -119,6 +125,10 @@ func (rt *Router) recordingRulePutByFE(c *gin.Context) {
 
 	rt.bgrwCheck(c, ar.GroupId)
 	rt.bgroCheck(c, f.GroupId)
+
+	if err := RuleChangeHook(c, &f); err != nil {
+		ginx.Bomb(http.StatusForbidden, "%s", err.Error())
+	}
 
 	f.UpdateBy = c.MustGet("username").(string)
 	ginx.NewRender(c).Message(ar.Update(rt.Ctx, f))
