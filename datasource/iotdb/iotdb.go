@@ -38,6 +38,10 @@ type QueryParam struct {
 	From     interface{}     `json:"from" mapstructure:"from"`
 	To       interface{}     `json:"to" mapstructure:"to"`
 	Limit    int             `json:"limit" mapstructure:"limit"`
+	// Interval is the query look-back window in seconds. The alert engine carries
+	// it (normalized from the "时间间隔" UI field) but does not set From/To, so it is
+	// used to derive a [now-Interval, now] time window for the query.
+	Interval int64 `json:"interval" mapstructure:"interval"`
 }
 
 func init() {
@@ -188,6 +192,10 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 	if sqlText == "" {
 		return nil, fmt.Errorf("sql is required")
 	}
+
+	// Derive a time window when the caller gives no explicit range, so the time
+	// filter below scopes the query instead of scanning the whole table.
+	applyIntervalWindow(queryParam)
 
 	hasMacro := strings.Contains(sqlText, "$__")
 	if hasMacro {
@@ -433,6 +441,46 @@ var (
 	explicitTimeFilterOperators = []string{">=", "<=", "<>", "!=", ">", "<", "="}
 	sqlTailClauses              = []string{"group by", "having", "fill", "order by", "offset", "limit"}
 )
+
+func applyIntervalWindow(queryParam *QueryParam) {
+	if !isBlankQueryTime(queryParam.From) {
+		return
+	}
+
+	interval := queryParam.Interval
+	if interval <= 0 {
+		// Align with tdengine/doris: fall back to a bounded window so a missing
+		// interval does not degrade into a whole-table scan.
+		interval = 60
+	}
+
+	now := time.Now().Unix()
+	if isBlankQueryTime(queryParam.To) {
+		queryParam.To = now
+	}
+	queryParam.From = now - interval
+}
+
+func isBlankQueryTime(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return true
+	case string:
+		return strings.TrimSpace(v) == ""
+	case int:
+		return v == 0
+	case int32:
+		return v == 0
+	case int64:
+		return v == 0
+	case float32:
+		return v == 0
+	case float64:
+		return v == 0
+	default:
+		return false
+	}
+}
 
 func appendTimeFilter(sqlText string, queryParam *QueryParam) (string, error) {
 	timeKey := strings.TrimSpace(queryParam.Keys.TimeKey)
