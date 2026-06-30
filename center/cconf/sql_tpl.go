@@ -13,5 +13,3 @@ var TDengineSQLTpl = map[string]string{
 	"net_bytes_sent":       "SELECT _wstart as ts, derivative(bytes_sent,1s, 1) as bytes_out FROM $database.net WHERE host = '$server' and interface = '$netif' and _ts >= $from and _ts <= $to group by tbname",
 	"disk_total":           "SELECT _wstart as ts, avg(total) AS total, avg(used) as used FROM $database.disk WHERE   path = '$mountpoint' and _ts >= $from and _ts <= $to  interval($interval) group by host",
 }
-
-var IotdbSQLTpl = map[string]string{}

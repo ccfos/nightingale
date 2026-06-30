@@ -226,19 +226,13 @@ func (it *IoTDB) queryRows(ctx context.Context, queryParam *QueryParam) ([]map[s
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	resp, err := it.Iotdb.QueryTable(queryParam.Database, sqlText, queryParam.Limit)
+	resp, err := it.Iotdb.QueryTable(timeoutCtx, queryParam.Database, sqlText, queryParam.Limit)
 	if err != nil {
 		logx.Warningf(ctx, "query:%+v get data err:%v", queryParam, err)
 		return nil, err
 	}
 
-	rows := responseToRows(resp)
-	select {
-	case <-timeoutCtx.Done():
-		return nil, timeoutCtx.Err()
-	default:
-	}
-	return rows, nil
+	return responseToRows(resp), nil
 }
 
 func decodeQueryParam(query interface{}) (*QueryParam, error) {

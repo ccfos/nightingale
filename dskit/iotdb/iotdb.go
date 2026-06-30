@@ -97,7 +97,7 @@ func (it *Iotdb) InitCli() {
 	}
 }
 
-func (it *Iotdb) QueryTable(database, query string, rowLimit int) (APIResponse, error) {
+func (it *Iotdb) QueryTable(ctx context.Context, database, query string, rowLimit int) (APIResponse, error) {
 	var apiResp APIResponse
 
 	body, err := json.Marshal(queryRequest{
@@ -109,7 +109,7 @@ func (it *Iotdb) QueryTable(database, query string, rowLimit int) (APIResponse, 
 		return apiResp, err
 	}
 
-	req, err := http.NewRequest("POST", strings.TrimRight(it.Addr, "/")+"/rest/table/v1/query", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(it.Addr, "/")+"/rest/table/v1/query", bytes.NewReader(body))
 	if err != nil {
 		return apiResp, err
 	}
@@ -148,32 +148,32 @@ func (it *Iotdb) QueryTable(database, query string, rowLimit int) (APIResponse, 
 	return apiResp, nil
 }
 
-func (it *Iotdb) ShowDatabases(_ context.Context) ([]string, error) {
-	resp, err := it.QueryTable("", "show databases", 0)
+func (it *Iotdb) ShowDatabases(ctx context.Context) ([]string, error) {
+	resp, err := it.QueryTable(ctx, "", "show databases", 0)
 	if err != nil {
 		return nil, err
 	}
 	return filterDatabases(firstColumn(resp)), nil
 }
 
-func (it *Iotdb) ShowTables(_ context.Context, database string) ([]string, error) {
+func (it *Iotdb) ShowTables(ctx context.Context, database string) ([]string, error) {
 	sql := "show tables"
 	if database == "" {
-		resp, err := it.QueryTable("", sql, 0)
+		resp, err := it.QueryTable(ctx, "", sql, 0)
 		if err != nil {
 			return nil, err
 		}
 		return firstColumn(resp), nil
 	}
 
-	resp, err := it.QueryTable(database, sql, 0)
+	resp, err := it.QueryTable(ctx, database, sql, 0)
 	if err != nil {
 		return nil, err
 	}
 	return firstColumn(resp), nil
 }
 
-func (it *Iotdb) DescribeTable(_ context.Context, query interface{}) ([]*types.ColumnProperty, error) {
+func (it *Iotdb) DescribeTable(ctx context.Context, query interface{}) ([]*types.ColumnProperty, error) {
 	queryMap, ok := query.(map[string]string)
 	if !ok {
 		return nil, fmt.Errorf("invalid query")
@@ -185,7 +185,7 @@ func (it *Iotdb) DescribeTable(_ context.Context, query interface{}) ([]*types.C
 		return nil, fmt.Errorf("table is empty")
 	}
 
-	resp, err := it.QueryTable(database, fmt.Sprintf("describe %s", table), 0)
+	resp, err := it.QueryTable(ctx, database, fmt.Sprintf("describe %s", table), 0)
 	if err != nil {
 		return nil, err
 	}
