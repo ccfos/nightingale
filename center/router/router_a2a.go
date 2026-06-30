@@ -223,7 +223,7 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	a2aGroup := r.Group("/a2a")
 	// requestLog runs first so auth failures (which short-circuit tokenAuth)
 	// still produce a structured "[A2A] start/done" pair carrying trace_id.
-	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.rsAuthChallenge(), rt.agentOAuthScope(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 	// The A2A REST binding mounts every method under a sub-path
 	// (/a2a/message:send, /a2a/message:stream, /a2a/tasks/{id}, ...); the bare
 	// root has no method. Delegating the root to the SDK would StripPrefix it to
@@ -237,7 +237,7 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	if !rt.HTTP.A2A.DisableMCP {
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(backend))
 		mcpGroup := r.Group("/mcp")
-		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.agentOAuthScope(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}

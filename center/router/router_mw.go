@@ -68,6 +68,22 @@ func (rt *Router) proxyAuth() gin.HandlerFunc {
 	}
 }
 
+// agentOAuthScopeKey 标记本请求命中 agent 面（/a2a /mcp）——只有带此标记时 tokenAuth
+// 才受理 OAuth access token（内建 AS 的 MCPAuth、外置 IdP 的 RSAuth）。这样一个为 agent
+// 端点签发的 OAuth token 不能被拿去调用其余 tokenAuth 保护的接口（/api/n9e/*）。由
+// agentOAuthScope() 写入，仅挂在 a2a/mcp 两个 group 上、排在 tokenAuth 之前。
+const agentOAuthScopeKey = "agent_oauth_scope"
+
+// agentOAuthScope 把请求标记为 agent 面调用，使后续的 tokenAuth 在本请求上接受 OAuth
+// access token。只在 a2a/mcp group 上、tokenAuth 之前安装；其它地方无此标记，OAuth
+// token 一律不受理，从而把它约束在签发它的 agent 端点内。
+func (rt *Router) agentOAuthScope() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(agentOAuthScopeKey, true)
+		c.Next()
+	}
+}
+
 // tokenAuth 支持两种方式的认证，固定 token 和 jwt token
 // 因为不太好区分用户使用哪个方式，所以两种方式放在一个中间件里
 func (rt *Router) tokenAuth() gin.HandlerFunc {
@@ -90,11 +106,16 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 			}
 		}
 
+		// OAuth access token（内建 AS 与外置 IdP RS）只在 agent 面（/a2a /mcp）受理，
+		// 收敛权限：避免一个为 agent 签发的 token 被拿去调用其余 /api/n9e/* 接口。无标记
+		// 时整段跳过，token 落到下面的 session-JWT 校验并以 401 结束。
+		agentScope := c.GetBool(agentOAuthScopeKey)
+
 		// 内建 OAuth 2.1 授权服务器（builtin AS）自签发的 access token：用本服务的 MCP
 		// 签名密钥验签（与外部 IdP token、session JWT 密码学隔离，验不过即非本类 token），
 		// 命中则按 token 内的用户放行。必须排在 RS 之前——builtin token 也带 iss，靠签名
 		// 甄别才不会被误送外部 IdP 验签。
-		if rt.mcpAuthEnabled() {
+		if agentScope && rt.mcpAuthEnabled() {
 			if raw := rt.extractToken(c.Request); raw != "" {
 				if uid, uname, ok := rt.mcpVerifyAccessToken(raw); ok {
 					c.Set("userid", uid)
@@ -110,7 +131,7 @@ func (rt *Router) tokenAuth() gin.HandlerFunc {
 		// （opaque token，经由不同请求头区分：n9e 固定 token 走 X-User-Token 头、已在
 		// 上面处理，extractToken 只读 Authorization: Bearer，故此处非 JWT 即外部 token）。
 		// 校验失败直接拒绝，避免被误当成 session JWT 二次验签。
-		if rt.rsAuthEnabled() {
+		if agentScope && rt.rsAuthEnabled() {
 			if raw := rt.extractToken(c.Request); raw != "" && rt.shouldVerifyAsRS(raw) {
 				user, err := rt.authByIdPAccessToken(c.Request.Context(), raw)
 				if err != nil {

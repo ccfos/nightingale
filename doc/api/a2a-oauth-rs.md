@@ -148,7 +148,7 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 
 - **开关启停**：`Enable=false` 时 RS 分支整体跳过，OAuth token 不再被接受，其余鉴权与现状完全一致。
 - **并列不互斥**：开启后 `X-User-Token`、自签 JWT 行为不变；三档满足任一即放行。
-- **作用范围**：RS 校验挂在共享的 `tokenAuth()` 中间件上，所以除 `/a2a` `/mcp` 外，其它走 `tokenAuth` 的接口（`/api/n9e/*`）同样接受该 token——这是预期行为（凭证即用户身份）。
+- **作用范围（限定 agent 面）**：OAuth access token **只在 `/a2a` `/mcp` 端点被受理**。这两个 group 在 `tokenAuth` 之前装了 `agentOAuthScope` 标记，`tokenAuth` 仅在带标记时才走 RS/内建 AS 分支；其余走 `tokenAuth` 的接口（`/api/n9e/*` 管理 API）看不到标记，该 token 会落到 session-JWT 校验并以 401 结束。这样一个为 agent 签发的 token 不能被拿去调用其它接口（最小权限）。`X-User-Token`(PAT) 与浏览器 session JWT 不受此限制，行为不变。
 - **发现链路（见第六节）**：RS 启用时会发布 `/.well-known/oauth-protected-resource`、在 AgentCard 增加 oidc 档,并在 `/a2a` `/mcp` 的 401 响应带上 `WWW-Authenticate: Bearer resource_metadata="…"` 头——三处发现入口齐备,MCP 客户端可零配置自动发现受信 IdP。
 
 ## 六、发现链路（OAuth 自动发现）
@@ -190,6 +190,6 @@ curl -s --noproxy '*' -X POST http://127.0.0.1:17000/mcp \
 - `pkg/oidcx/oidc.go` — `VerifyAccessToken`（`oidc` provider：复用 provider 的 JWKS 验签 + issuer/audience/过期，映射 claim）
 - `pkg/oauth2x/oauth2x.go` — `VerifyAccessToken`（`oauth2` provider：introspect/userinfo 两种校验 + 按 token 哈希缓存）
 - `center/router/router_rsauth.go` — `rsAuthProvider` / `rsAuthEnabled` / `shouldVerifyAsRS`（按 provider 区分 token）/ `authByIdPAccessToken`（JIT 建用户）/ `oidcDiscoveryURL` / `rsAuthServerAddr` / `oauthProtectedResource`（RFC 9728 元数据）/ `rsAuthChallenge`（401 `WWW-Authenticate` 发现头中间件）/ `wwwAuthenticateChallenge` / `protectedResourceMetadataURL`
-- `center/router/router_mw.go` — `tokenAuth()` 中的 RS 分支
+- `center/router/router_mw.go` — `tokenAuth()` 中的 RS 分支；`agentOAuthScope`（把 OAuth 受理限定在 agent 面，分支前置门控）
 - `center/router/router_a2a.go` — 注册 `/.well-known/oauth-protected-resource`（含 `/a2a` `/mcp` 路径别名），把 `rsAuthChallenge` 挂进 a2a/mcp 中间件链，并把 OIDC 发现 URL 传入 AgentCard
 - `aiagent/a2a/agent_card.go` — AgentCard 的 `oidc` securityScheme 档

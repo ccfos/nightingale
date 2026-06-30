@@ -71,7 +71,7 @@ Resource = "https://n9e.example.com/mcp"
 3. n9e 校验 client_id(验签)/redirect_uri(精确匹配)/`response_type=code`/PKCE S256/resource → 签授权请求票据 → **302 到 `/oauth-consent?req=<票据>`**（前端 SPA 路由）。
 4. 前端 SPA：未登录→跳 `/login?redirect=...`（含 SSO）；已登录→展示同意页 → 点「允许」→ `POST /api/n9e/mcp/oauth/authorize {req, decision:"allow"}`（带 session）→ 后端验 session+票据 → 签**授权码**（绑定该用户）→ 返回 `{redirect}` → SPA `window.location` 跳回 `redirect_uri?code=...&state=...`。
 5. 客户端 `POST /oauth/token`（code + code_verifier + resource）→ PKCE 校验 + **一次性 SetNX** + resource 一致 → 签发 access(+refresh)。
-6. 客户端带 `Authorization: Bearer <access>` 调 `/mcp` → n9e 用 MCP 密钥验签放行（映射到对应用户，权限同该用户）。
+6. 客户端带 `Authorization: Bearer <access>` 调 `/mcp` → n9e 用 MCP 密钥验签放行（映射到对应用户，agent 面内权限同该用户）。注意：该 access token **仅在 `/a2a` `/mcp` 端点受理**，不能用于其它 `/api/n9e/*` 接口（见 router_mw.go 的 `agentOAuthScope`）。
 
 ## 七、自测（curl）
 
@@ -105,6 +105,6 @@ curl -s -XPOST $BASE/mcp -H "Authorization: Bearer $ACCESS" -H 'Content-Type: ap
 - `pkg/httpx/httpx.go` — `MCPAuth` 配置
 - `center/router/router_mcp_oauth.go` — AS 全部端点 + 决策 API + JWT/PKCE/HKDF/一次性码助手
 - `center/router/router_rsauth.go` — 发现链开关推广到 `rsAuthEnabled() || mcpAuthEnabled()`；`oauthProtectedResource` 的 `authorization_servers` 含 n9e 自身
-- `center/router/router_mw.go` — `tokenAuth()` 的 builtin 分支（MCP 密钥验签，排在外部 IdP RS 之前）
+- `center/router/router_mw.go` — `tokenAuth()` 的 builtin 分支（MCP 密钥验签，排在外部 IdP RS 之前）；`agentOAuthScope`（把 OAuth 受理限定在 `/a2a` `/mcp`）
 - `center/router/router_a2a.go` / `router.go` — 端点注册（公开 `/oauth/*` 于根，决策 API 于 `/api/n9e`）
 - 前端 `n9e/fe`：`src/pages/oauthConsent` + `src/routers/index.tsx` 路由 `/oauth-consent`

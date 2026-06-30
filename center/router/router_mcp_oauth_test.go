@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 
 	"github.com/alicebob/miniredis/v2"
@@ -398,6 +399,49 @@ func findRedirect(v any) string {
 		}
 	}
 	return ""
+}
+
+// TestAgentOAuthScopeConfinesOAuthToken pins the confinement: a builtin-AS
+// access token authenticates on an agent surface (where agentOAuthScope marks
+// the request) but is refused on an ordinary tokenAuth-protected API route (no
+// marker), so an MCP/RS token cannot be replayed against the rest of /api/n9e/*.
+func TestAgentOAuthScopeConfinesOAuthToken(t *testing.T) {
+	rt := newMCPRouter(t)
+	access, err := rt.mcpSign(jwt.MapClaims{
+		"token_use": mcpUseAccess, "sub": "7", "usr": "alice",
+		"aud": rt.HTTP.MCPAuth.Resource, "exp": time.Now().Add(time.Hour).Unix(),
+	})
+	if err != nil {
+		t.Fatalf("sign access token: %v", err)
+	}
+
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.Use(aop.Recovery())
+	// Agent surface: marker installed before tokenAuth → OAuth token accepted.
+	r.GET("/a2a/ping", rt.agentOAuthScope(), rt.tokenAuth(), func(c *gin.Context) {
+		c.String(http.StatusOK, c.GetString("username"))
+	})
+	// Ordinary API: no marker → OAuth token falls through to the session-JWT
+	// path and is rejected.
+	r.GET("/api/n9e/secret", rt.tokenAuth(), func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
+	do := func(path string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Header.Set("Authorization", "Bearer "+access)
+		r.ServeHTTP(w, req)
+		return w
+	}
+
+	if w := do("/a2a/ping"); w.Code != http.StatusOK || w.Body.String() != "alice" {
+		t.Fatalf("agent endpoint: code=%d body=%q, want 200/alice", w.Code, w.Body.String())
+	}
+	if w := do("/api/n9e/secret"); w.Code != http.StatusUnauthorized {
+		t.Fatalf("non-agent endpoint: code=%d, want 401 (token confined to agent surface)", w.Code)
+	}
 }
 
 func TestMCPRedirectAllowed(t *testing.T) {
