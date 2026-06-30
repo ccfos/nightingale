@@ -71,38 +71,6 @@ DefaultRoles = ["Standard"]
 [HTTP.TokenAuth]
 Enable = true
 
-[HTTP.RSAuth]
-# OAuth 2.1 Resource Server：让 a2a/mcp 等走 tokenAuth 的端点接受外置企业 IdP 签发的
-# OAuth access token（与 X-User-Token、自签 JWT 并列）。受信 IdP 复用 OIDC 登录配置
-# 指向的同一个 IdP，无需再配第二个授权服务器。对接步骤见 doc/api/a2a-oauth-rs.md
-Enable = false
-# 本服务的资源标识；access token 的 aud 必须包含它，否则拒绝（防止 IdP 发给其它应用的
-# token 被重放）。Enable=true 时必填，留空则 RS 校验不生效
-# Audience = "n9e-a2a-rs"
-# 受信 IdP 协议：oidc（默认，JWT 经 JWKS 本地验签）或 oauth2（opaque token 校验）。
-# oauth2 的校验方式在 OAuth2 登录配置的 RSVerifyMethod 里选：留空（默认）走 userinfo（靠 UserInfo
-# 判定有效性，对接省事但不校验 aud），有安全要求切到 introspect（RFC 7662，校验 aud）。
-# Provider = "oidc"
-
-[HTTP.MCPAuth]
-# 内建 OAuth 2.1 授权服务器（AS）：让 n9e 自己签发 token，使通用 MCP 客户端（Claude /
-# ChatGPT connector）经动态客户端注册(DCR)零配置接入 /a2a /mcp。适用于「没有外部企业
-# IdP」的自托管场景，与上面的 RSAuth(外部 IdP) 并列、可同时开启。对接见 doc/api/mcp-oauth-as.md
-Enable = false
-# 本 AS 的 canonical URL（签发 token 的 iss、RFC 8414 元数据的 issuer）。多实例部署务必
-# 显式配置，使各实例广告一致；留空则按请求 Host + X-Forwarded-Proto 推导（仅单机/开发）
-# Issuer = "https://n9e.example.com"
-# MCP 资源标识，绑定进 access token 的 aud（RFC 8707）。留空回退 RSAuth.Audience，再回退
-# "<base>/mcp"。与 RSAuth 同开时建议设成与 RSAuth.Audience 相同
-# Resource = "https://n9e.example.com/mcp"
-# 签发 MCP OAuth token 的密钥。留空则用 HKDF-SHA256 从 JWTAuth.SigningKey 派生（与 session
-# 密钥隔离）。多实例必须各实例一致，切勿每进程随机生成
-# SigningKey = ""
-# token 生命周期（秒），留 0 用默认：access 3600 / refresh 604800 / code 60
-# AccessTTL = 3600
-# RefreshTTL = 604800
-# CodeTTL = 60
-
 [HTTP.RSA]
 # open RSA
 OpenRSA = false
