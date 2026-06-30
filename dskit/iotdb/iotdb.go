@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -128,6 +129,11 @@ func (it *Iotdb) QueryTable(ctx context.Context, database, query string, rowLimi
 	limitedReader := http.MaxBytesReader(nil, resp.Body, maxSize)
 
 	if resp.StatusCode != http.StatusOK {
+		// IoTDB 在鉴权失败/SQL 错误等情况下会把可读原因放在 body，读有限字节拼进错误便于定位。
+		body, _ := io.ReadAll(io.LimitReader(limitedReader, 1024))
+		if msg := strings.TrimSpace(string(body)); msg != "" {
+			return apiResp, fmt.Errorf("HTTP error, status: %s, body: %s", resp.Status, msg)
+		}
 		return apiResp, fmt.Errorf("HTTP error, status: %s", resp.Status)
 	}
 
