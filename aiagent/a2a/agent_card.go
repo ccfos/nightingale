@@ -20,9 +20,20 @@ type AgentCardOptions struct {
 	// TokenHeaderName is the header used for X-User-Token authentication, surfaced
 	// to clients via the SecuritySchemes block.
 	TokenHeaderName string
+	// OIDCDiscoveryURL, when non-nil, is called per request to resolve the
+	// trusted IdP's OpenID Connect discovery URL; a non-empty result makes the
+	// card advertise an additional OpenID Connect security scheme so A2A clients
+	// can discover the agent also accepts an OAuth access token from this IdP
+	// (Resource Server mode). It is evaluated per request — not captured once —
+	// so the card reflects live RS/OIDC config without a center restart.
+	// Returning "" (or leaving this nil) advertises only X-User-Token.
+	OIDCDiscoveryURL func() string
 }
 
-const securitySchemeName a2a.SecuritySchemeName = "x-user-token"
+const (
+	securitySchemeName     a2a.SecuritySchemeName = "x-user-token"
+	oidcSecuritySchemeName a2a.SecuritySchemeName = "oidc"
+)
 
 // AgentCardHandler returns an http.Handler that serves the n9e AgentCard. The
 // card is rebuilt per-request so BaseURL can be auto-derived when not configured.
@@ -45,12 +56,16 @@ func AgentCardHandler(opts AgentCardOptions) http.Handler {
 			path = "/" + path
 		}
 
-		card := buildAgentCard(base+path, opts.TokenHeaderName)
+		oidcDiscoveryURL := ""
+		if opts.OIDCDiscoveryURL != nil {
+			oidcDiscoveryURL = opts.OIDCDiscoveryURL()
+		}
+		card := buildAgentCard(base+path, opts.TokenHeaderName, oidcDiscoveryURL)
 		a2asrv.NewStaticAgentCardHandler(card).ServeHTTP(w, r)
 	})
 }
 
-func buildAgentCard(endpointURL, tokenHeader string) *a2a.AgentCard {
+func buildAgentCard(endpointURL, tokenHeader, oidcDiscoveryURL string) *a2a.AgentCard {
 	if tokenHeader == "" {
 		tokenHeader = "X-User-Token"
 	}
@@ -77,6 +92,27 @@ func buildAgentCard(endpointURL, tokenHeader string) *a2a.AgentCard {
 		}}
 	}
 
+	schemes := a2a.NamedSecuritySchemes{
+		securitySchemeName: a2a.APIKeySecurityScheme{
+			Description: "n9e user API token. Manage tokens under user profile in the n9e UI.",
+			Location:    a2a.APIKeySecuritySchemeLocationHeader,
+			Name:        tokenHeader,
+		},
+	}
+	requirements := a2a.SecurityRequirementsOptions{
+		a2a.SecurityRequirements{securitySchemeName: {}},
+	}
+	// When the OAuth Resource Server path is enabled, advertise an additional
+	// OpenID Connect scheme so A2A clients can discover they may instead present
+	// an IdP-issued OAuth access token (satisfy-any with x-user-token).
+	if oidcDiscoveryURL != "" {
+		schemes[oidcSecuritySchemeName] = a2a.OpenIDConnectSecurityScheme{
+			Description:      "OAuth 2.0 access token from the configured enterprise IdP, sent as 'Authorization: Bearer'. Its audience must be bound to this service.",
+			OpenIDConnectURL: oidcDiscoveryURL,
+		}
+		requirements = append(requirements, a2a.SecurityRequirements{oidcSecuritySchemeName: {}})
+	}
+
 	return &a2a.AgentCard{
 		Name:        "Nightingale Agent",
 		Description: desc,
@@ -89,17 +125,9 @@ func buildAgentCard(endpointURL, tokenHeader string) *a2a.AgentCard {
 		Capabilities: a2a.AgentCapabilities{
 			Streaming: true,
 		},
-		SecuritySchemes: a2a.NamedSecuritySchemes{
-			securitySchemeName: a2a.APIKeySecurityScheme{
-				Description: "n9e user API token. Manage tokens under user profile in the n9e UI.",
-				Location:    a2a.APIKeySecuritySchemeLocationHeader,
-				Name:        tokenHeader,
-			},
-		},
-		SecurityRequirements: a2a.SecurityRequirementsOptions{
-			a2a.SecurityRequirements{securitySchemeName: {}},
-		},
-		Skills: skills,
+		SecuritySchemes:      schemes,
+		SecurityRequirements: requirements,
+		Skills:               skills,
 	}
 }
 
