@@ -208,7 +208,14 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// requestLog runs first so auth failures (which short-circuit tokenAuth)
 	// still produce a structured "[A2A] start/done" pair carrying trace_id.
 	a2aGroup.Use(rt.a2aRequestLog("A2A"), rt.rsAuthChallenge(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
-	a2aGroup.Any("", gin.WrapH(a2aHandler))
+	// The A2A REST binding mounts every method under a sub-path
+	// (/a2a/message:send, /a2a/message:stream, /a2a/tasks/{id}, ...); the bare
+	// root has no method. Delegating the root to the SDK would StripPrefix it to
+	// "" and let net/http's ServeMux 301-redirect to "/", landing a misconfigured
+	// caller (e.g. a legacy JSON-RPC "tasks/send" client posting to the base URL)
+	// on the frontend SPA — an HTML body it can't parse, which looks like a hang.
+	// Answer the root with an explicit JSON hint instead.
+	a2aGroup.Any("", rt.a2aRootEndpointHint)
 	a2aGroup.Any("/*proxyPath", gin.WrapH(a2aHandler))
 
 	if !rt.HTTP.A2A.DisableMCP {
@@ -328,15 +335,62 @@ func (rt *Router) injectA2AUser() gin.HandlerFunc {
 	}
 }
 
-// streamingDeadline relaxes the per-connection write deadline for endpoints
-// that may stream longer than http.Server.WriteTimeout (40s default). A2A SSE
-// streams (message:stream, tasks/{id}:subscribe) and long MCP responses can
-// be silent for minutes during a single agent turn; without this the TCP
-// connection is closed mid-stream and the SDK's REST encoder fails with
-// "write tcp: i/o timeout".
+// streamingDeadline relaxes the per-connection write deadline (default
+// http.Server.WriteTimeout, 40s) ONLY for endpoints whose response can
+// legitimately outlive it:
+//
+//   - /a2a/message:send         runs a full agent turn synchronously before
+//                               writing the final message (can take minutes)
+//   - /a2a/message:stream       SSE; silent for minutes between token bursts
+//   - /a2a/tasks/{id}:subscribe SSE task event stream
+//   - /mcp and /mcp/*           the Streamable HTTP transport answers POST/GET
+//                               on the root with a long-lived text/event-stream
+//
+// Every other endpoint (the bare /a2a root, tasks get/list/cancel, push-config
+// CRUD) is a fast request/response and so KEEPS the WriteTimeout backstop. That
+// way a misrouted or stuck write on those paths can't pin a handler goroutine
+// forever — which is what happened when a bare POST /a2a leaked a goroutine
+// after this middleware used to blanket-clear the deadline for the whole group.
 func (rt *Router) streamingDeadline() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		clearWriteDeadline(c.Writer)
+		if a2aWriteDeadlineExempt(c.Request.URL.Path) {
+			clearWriteDeadline(c.Writer)
+		}
 		c.Next()
 	}
+}
+
+// a2aWriteDeadlineExempt reports whether path serves a streaming or
+// long-running-agent response that must not be cut off by http.Server's
+// WriteTimeout. Kept as a pure path test so it stays trivially unit-testable.
+func a2aWriteDeadlineExempt(path string) bool {
+	switch {
+	case path == "/mcp" || strings.HasPrefix(path, "/mcp/"):
+		// MCP multiplexes unary + streaming over the root; the transport decides
+		// per request, so the whole group needs the relaxed deadline.
+		return true
+	case path == "/a2a/message:send" || path == "/a2a/message:stream":
+		return true
+	case strings.HasPrefix(path, "/a2a/tasks/") && strings.HasSuffix(path, ":subscribe"):
+		return true
+	default:
+		return false
+	}
+}
+
+// a2aRootEndpointHint answers the method-less root /a2a path with 404 + a JSON
+// body pointing the caller at the real A2A v0.3 REST endpoints, instead of the
+// SDK's 301-to-SPA. Auth still runs first (this is the group's final handler),
+// so only authenticated-but-misconfigured callers reach it.
+func (rt *Router) a2aRootEndpointHint(c *gin.Context) {
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "no A2A method at /a2a; this server speaks the A2A v0.3 HTTP+JSON (REST) binding, not legacy JSON-RPC (tasks/send)",
+		"endpoints": gin.H{
+			"send_message":   "POST /a2a/message:send",
+			"stream_message": "POST /a2a/message:stream",
+			"get_task":       "GET /a2a/tasks/{id}",
+			"cancel_task":    "POST /a2a/tasks/{id}:cancel",
+		},
+		"agent_card": "/.well-known/agent-card.json",
+	})
 }
