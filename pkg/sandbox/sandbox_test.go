@@ -66,9 +66,6 @@ func TestConfigPreCheckDefaults(t *testing.T) {
 	if c.Engine != "auto" {
 		t.Errorf("Engine default = %q, want auto", c.Engine)
 	}
-	if c.DefaultPolicy.Network != string(NetworkNone) {
-		t.Errorf("default network = %q, want none", c.DefaultPolicy.Network)
-	}
 	if c.DefaultPolicy.TimeoutSeconds != defaultTimeoutSeconds {
 		t.Errorf("default timeout = %d", c.DefaultPolicy.TimeoutSeconds)
 	}
@@ -221,7 +218,7 @@ func TestUnsafeEngineCleanEnv(t *testing.T) {
 }
 
 func TestSandboxDisabledOnNonDevExplicitUnsafe(t *testing.T) {
-	s := New(Config{Enabled: true, Engine: "unsafe", DevMode: false, DataDir: t.TempDir()})
+	s := New(Config{Disabled: false, Engine: "unsafe", DevMode: false, DataDir: t.TempDir()})
 	if s.Enabled() {
 		t.Fatal("engine=unsafe without dev_mode must be disabled")
 	}
@@ -232,14 +229,14 @@ func TestSandboxDisabledOnNonDevExplicitUnsafe(t *testing.T) {
 }
 
 func TestSandboxDisabledWhenConfigDisabled(t *testing.T) {
-	s := New(Config{Enabled: false, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
+	s := New(Config{Disabled: true, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
 	if s.Enabled() {
-		t.Fatal("enabled=false must disable the sandbox")
+		t.Fatal("disabled=true must disable the sandbox")
 	}
 }
 
 func TestSandboxRunUnsafeDevEndToEnd(t *testing.T) {
-	s := New(Config{Enabled: true, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
+	s := New(Config{Disabled: false, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
 	if !s.Enabled() {
 		t.Fatalf("dev unsafe should be enabled: %s", s.DisabledReason())
 	}

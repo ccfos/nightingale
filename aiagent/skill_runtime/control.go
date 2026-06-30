@@ -74,7 +74,7 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 			Allowlist:      allowlist,
 			DenyCIDRs:      cfg.Deny.EgressCIDRs,
 			DenyPrivate:    denyPrivate,
-			AllowPlainHTTP: cfg.EgressProxy.AllowPlainHTTP,
+			AllowPlainHTTP: !cfg.EgressProxy.DenyPlainHTTP,
 			DialTimeout:    time.Duration(cfg.EgressProxy.DialTimeoutSecs) * time.Second,
 			IdleTimeout:    time.Duration(cfg.EgressProxy.IdleTimeoutSecs) * time.Second,
 			// OnNewDomain nil → deny non-allowlisted hosts (managed lockdown). A

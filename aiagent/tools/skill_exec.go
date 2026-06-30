@@ -39,6 +39,10 @@ func runSkillScript(ctx context.Context, deps *aiagent.ToolDeps, args map[string
 	if err != nil {
 		return "", err
 	}
+	// Running a skill is intentionally NOT gated on /ai-config/skills: the sandbox
+	// isolates the code and the Skill Gateway forwards only under the running
+	// user's own RBAC, so execution can never exceed the caller's own privileges.
+	// Only authoring (create_skill/update_skill) needs that bar.
 
 	out, err := skillruntime.Execute(ctx, skillruntime.Deps{
 		Sandbox:    deps.Sandbox,

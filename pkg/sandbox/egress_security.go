@@ -91,9 +91,10 @@ func parseDenyCIDRs(cidrs []string) []*net.IPNet {
 // to its v4 form by these predicates, so the mapped-address bypass is closed.
 //
 // loopback / unspecified / link-local / multicast are ALWAYS denied (there is no
-// safe egress target there). The RFC1918+ULA private class is gated by
-// denyPrivate (default true) so an on-prem operator with an internal allowlist
-// can opt to permit it — a deliberate, configured choice (§16.3 DenyPrivateCIDRs).
+// safe egress target there). The RFC1918+ULA private class is gated by denyPrivate,
+// which is set by the Egress preset (open allows private, allowlist denies it), so
+// an on-prem operator can reach internal hosts under Egress=open — a deliberate,
+// configured choice (§10.1).
 func ipDenied(ip net.IP, extra []*net.IPNet, denyPrivate bool) (bool, string) {
 	if ip == nil {
 		return true, "unparseable ip"

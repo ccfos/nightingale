@@ -105,7 +105,7 @@ func TestExecuteEndToEnd(t *testing.T) {
 	mustWrite(t, filepath.Join(demo, "main.sh"), `echo "args=$*"; cat`)
 
 	sb := sandbox.New(sandbox.Config{
-		Enabled: true, Engine: "unsafe", DevMode: true, DataDir: t.TempDir(),
+		Disabled: false, Engine: "unsafe", DevMode: true, DataDir: t.TempDir(),
 	})
 	if !sb.Enabled() {
 		t.Fatalf("dev unsafe sandbox should be enabled: %s", sb.DisabledReason())
@@ -133,7 +133,7 @@ func TestExecuteEndToEnd(t *testing.T) {
 }
 
 func TestExecuteDisabledSandbox(t *testing.T) {
-	sb := sandbox.New(sandbox.Config{Enabled: false})
+	sb := sandbox.New(sandbox.Config{Disabled: true})
 	_, err := Execute(context.Background(), Deps{Sandbox: sb, SkillsPath: t.TempDir()}, Request{SkillName: "demo"})
 	if !sandbox.IsDisabled(err) {
 		t.Fatalf("expected DisabledError, got %v", err)

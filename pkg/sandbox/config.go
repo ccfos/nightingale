@@ -24,7 +24,12 @@ const (
 // the top-level n9e config and PreCheck() fills defaults. SkillPolicy / Deny /
 // EgressProxy drive the live egress proxy (§10) and Skill Gateway (§12).
 type Config struct {
-	Enabled bool
+	// Disabled turns the sandbox OFF. The zero value (false) means the sandbox
+	// capability is ON by default; set Disabled=true to refuse all skill script
+	// execution. Inverted on purpose so the secure-by-construction path (running
+	// untrusted skill scripts only inside an isolation engine) is the default and
+	// requires no opt-in.
+	Disabled bool
 
 	// Engine selects the backend: auto | bubblewrap | confined | unsafe.
 	// auto follows the capability tier table (§6).
@@ -39,7 +44,7 @@ type Config struct {
 	//                reachable — a skill must not hit n9e's own API/DB or steal
 	//                cloud credentials. UDP blocked; every call audited.
 	//   - allowlist: reach only SkillPolicy.EgressAllowlist hosts; private blocked.
-	// It supersedes the lower-level DefaultPolicy.Network knob.
+	// This is the single source of truth for a skill's network posture.
 	Egress string
 
 	// N9eAPI is the single-knob Skill Gateway preset (§12.1), parallel to Egress:
@@ -80,21 +85,15 @@ type Config struct {
 	SeccompMode string
 }
 
-// RootfsConfig controls the python-base rootfs and overlay layers (§9).
+// RootfsConfig controls the python-base rootfs (§9).
 type RootfsConfig struct {
-	// Source: embedded (default, base baked into the binary) | path (external /
-	// self-built base) | download (optional prebuilt extra layers only).
-	Source string
 	// Path overrides the embedded base when set (long-tail arch / self-patched).
+	// When empty, the embedded python-base (extracted at startup) is used.
 	Path string
-	// ExtraLayers are read-only dependency layers overlaid on top of base
-	// (e.g. deps/site-local).
-	ExtraLayers []string
 }
 
 // PolicyConfig is the default per-execution policy envelope (§8.2).
 type PolicyConfig struct {
-	Network        string
 	TimeoutSeconds int
 	MemoryMB       int64
 	CPUQuota       string
@@ -109,24 +108,16 @@ type AdmissionConfig struct {
 	MaxTotalMemoryMB int64
 }
 
-// SkillLimits caps what a single skill execution may request (§16.3).
+// SkillLimits caps the resources a single skill execution may request (§16.3).
 type SkillLimits struct {
-	Enabled             bool
-	MaxUploadBytes      int64
-	MaxFiles            int
-	AllowedNetworkModes []string
-	MaxTimeoutSeconds   int
-	MaxMemoryMB         int64
-	MaxPids             int64
+	MaxTimeoutSeconds int
+	MaxMemoryMB       int64
+	MaxPids           int64
 }
 
 // SkillPolicyConfig is the global envelope shared by all skills (§11.2 / §16.3).
 type SkillPolicyConfig struct {
 	EgressAllowlist []string
-	// GrantableN9eAPI is RESERVED (the Skill Gateway is now an HTTP passthrough
-	// gated by a path deny-list, not grant tokens). Kept for config compatibility.
-	GrantableN9eAPI []string
-	JitConfirm      []string
 }
 
 // DenyConfig is the hard deny no skill/layer can override (§16.3).
@@ -144,25 +135,14 @@ type DenyConfig struct {
 // live in SkillPolicy.EgressAllowlist / Deny.EgressCIDRs; this struct holds the
 // transport knobs.
 type EgressProxyConfig struct {
-	// TLSInspect (MITM) is NOT phase 1 (§10.5); kept for forward-compat. When
-	// true the proxy still tunnels without decrypting and logs a warning.
-	TLSInspect bool
+	// DenyPlainHTTP refuses absolute-form plain-HTTP, leaving HTTPS/CONNECT only.
+	// The zero value (false) ALLOWS http:// so plain-HTTP APIs work out of the box;
+	// set true for HTTPS-only egress. Inverted from a positive "allow" flag so the
+	// permissive default needs no entry in config.toml.
+	DenyPlainHTTP bool
 
-	// AllowPlainHTTP forwards absolute-form plain-HTTP in addition to HTTPS
-	// CONNECT. Default true so http:// APIs work; set false for HTTPS-only egress.
-	AllowPlainHTTP bool
-	// DenyPrivateCIDRs is SUPERSEDED by the Egress preset (open allows private,
-	// allowlist denies it) and no longer consulted. Kept for config compatibility.
-	// loopback / link-local / metadata are always blocked regardless (ipDenied).
-	DenyPrivateCIDRs bool
-	// DenyUDP is informational: a CONNECT/forward proxy is TCP-only by
-	// construction, so UDP/QUIC egress is already impossible (§10.4). Kept for
-	// the admin-facing posture report.
-	DenyUDP bool
-
-	DialTimeoutSecs  int   // upstream connect timeout (default 10)
-	IdleTimeoutSecs  int   // tunnel idle timeout (default 120)
-	MaxResponseBytes int64 // reserved; unenforceable on an undecrypted CONNECT tunnel
+	DialTimeoutSecs int // upstream connect timeout (default 10)
+	IdleTimeoutSecs int // tunnel idle timeout (default 120)
 
 	// ForwarderPath points at an external n9e-sandbox-init forwarder binary for
 	// non-embedded builds. The embedded binary (-tags sandbox_embed) takes
@@ -185,8 +165,6 @@ const (
 	defaultSkillMaxTimeout  = 300
 	defaultSkillMaxMemoryMB = 1024
 	defaultSkillMaxPids     = 128
-	defaultSkillMaxUpload   = 1048576
-	defaultSkillMaxFiles    = 100
 )
 
 // PreCheck fills zero-value defaults. It is idempotent and safe to call once at
@@ -207,14 +185,8 @@ func (c *Config) PreCheck() {
 	if c.SeccompMode == "" {
 		c.SeccompMode = "enforce"
 	}
-	if c.Rootfs.Source == "" {
-		c.Rootfs.Source = "embedded"
-	}
 
 	p := &c.DefaultPolicy
-	if p.Network == "" {
-		p.Network = string(NetworkNone)
-	}
 	if p.TimeoutSeconds == 0 {
 		p.TimeoutSeconds = defaultTimeoutSeconds
 	}
@@ -243,9 +215,6 @@ func (c *Config) PreCheck() {
 	}
 
 	s := &c.Skill
-	if len(s.AllowedNetworkModes) == 0 {
-		s.AllowedNetworkModes = []string{string(NetworkNone), string(NetworkProxy)}
-	}
 	if s.MaxTimeoutSeconds == 0 {
 		s.MaxTimeoutSeconds = defaultSkillMaxTimeout
 	}
@@ -254,12 +223,6 @@ func (c *Config) PreCheck() {
 	}
 	if s.MaxPids == 0 {
 		s.MaxPids = defaultSkillMaxPids
-	}
-	if s.MaxUploadBytes == 0 {
-		s.MaxUploadBytes = defaultSkillMaxUpload
-	}
-	if s.MaxFiles == 0 {
-		s.MaxFiles = defaultSkillMaxFiles
 	}
 }
 

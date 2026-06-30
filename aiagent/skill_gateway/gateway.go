@@ -44,6 +44,15 @@ import (
 // payload back through the gateway.
 const maxRespBytes = 1 << 20 // 1 MiB
 
+// Bounds on the host-side listener. The peer is the untrusted in-sandbox process:
+// gatewayIdleTimeout reclaims a connection held open without sending (slowloris),
+// and maxGatewayConns caps host goroutines/fds per execution. The request line
+// itself is already bounded by the scanner buffer in handleConn.
+const (
+	gatewayIdleTimeout = 30 * time.Second
+	maxGatewayConns    = 16
+)
+
 // defaultTokenHeader is n9e's fixed-token auth header (router_mw.DefaultTokenKey).
 const defaultTokenHeader = "X-User-Token"
 
@@ -84,9 +93,10 @@ type Gateway struct {
 	denyPaths   []string
 	client      *http.Client
 
-	ln     net.Listener
-	path   string
-	closed atomic.Bool
+	ln      net.Listener
+	path    string
+	closed  atomic.Bool
+	connSem chan struct{} // per-exec concurrent-connection cap
 }
 
 // Start resolves the bound user + a usable API token, binds sockPath (0600), and
@@ -142,6 +152,7 @@ func Start(sockPath string, p Params) (*Gateway, error) {
 		client:      &http.Client{Timeout: 15 * time.Second},
 		ln:          ln,
 		path:        sockPath,
+		connSem:     make(chan struct{}, maxGatewayConns),
 	}
 	go g.acceptLoop()
 	return g, nil
@@ -202,7 +213,15 @@ func (g *Gateway) acceptLoop() {
 			logger.Warningf("skill-gateway[%s]: accept: %v", g.execID, err)
 			return
 		}
-		go g.handleConn(c)
+		// Per-exec connection cap; blocking acquire backpressures the accept loop.
+		// The per-request read+write deadlines in handleConn guarantee a slot
+		// frees even against a peer that stalls mid-send or stops reading our
+		// response, so a connection-flooding skill can't exhaust host goroutines/fds.
+		g.connSem <- struct{}{}
+		go func() {
+			defer func() { <-g.connSem }()
+			g.handleConn(c)
+		}()
 	}
 }
 
@@ -236,9 +255,21 @@ func (g *Gateway) handleConn(c net.Conn) {
 	sc := bufio.NewScanner(c)
 	sc.Buffer(make([]byte, 0, 8*1024), 1<<20)
 	w := bufio.NewWriter(c)
-	for sc.Scan() {
+	for {
+		// Refresh the idle read deadline before each request so a connection held
+		// open without sending (slowloris) is reclaimed instead of parking this
+		// goroutine indefinitely.
+		_ = c.SetReadDeadline(time.Now().Add(gatewayIdleTimeout))
+		if !sc.Scan() {
+			return
+		}
 		resp := g.handleRequest(sc.Bytes())
 		b, _ := json.Marshal(resp)
+		// A peer that stops reading would otherwise block Flush on a large (≤1 MiB)
+		// response indefinitely, pinning this goroutine and its conn-cap slot; the
+		// write deadline reclaims it. Fresh window so a slow handleRequest doesn't
+		// eat into it.
+		_ = c.SetWriteDeadline(time.Now().Add(gatewayIdleTimeout))
 		_, _ = w.Write(b)
 		_ = w.WriteByte('\n')
 		if w.Flush() != nil {

@@ -84,6 +84,7 @@ type EgressProxy struct {
 	denyCIDRs   []*net.IPNet
 	dialTimeout time.Duration
 	idleTimeout time.Duration
+	connSem     chan struct{} // per-exec concurrent-connection cap (bounds host goroutines/fds)
 
 	// lookupIP / dialTCP are seams: production wires the host resolver + a plain
 	// TCP dial, tests inject deterministic ones (no real DNS / public IP needed).
@@ -98,6 +99,19 @@ type EgressProxy struct {
 const (
 	defaultEgressDialTimeout = 10 * time.Second
 	defaultEgressIdleTimeout = 120 * time.Second
+)
+
+// Bounds on the host-side request parser and accept loop. The peer is the
+// untrusted in-sandbox process, so these cap what it can make the host spend
+// before a request is even authorized (parallel to net/http's ReadHeaderTimeout
+// / MaxHeaderBytes, which this hand-rolled CONNECT parser doesn't get for free).
+const (
+	egressHeaderReadTimeout = 10 * time.Second // slowloris cutoff for the parse phase
+	maxRequestLineLen       = 8 << 10          // CONNECT target / absolute-form URI
+	maxHeaderLineLen        = 8 << 10          // per header line
+	maxHeaderBytesTotal     = 64 << 10         // cumulative header bytes
+	maxHeaderCount          = 100
+	maxEgressConns          = 64 // concurrent connections per execution
 )
 
 // StartEgressProxy binds udsPath, starts the accept loop in the background, and
@@ -129,6 +143,7 @@ func newEgressProxy(opts EgressOptions) *EgressProxy {
 		denyCIDRs:   parseDenyCIDRs(opts.DenyCIDRs),
 		dialTimeout: dialTimeout,
 		idleTimeout: orDur(opts.IdleTimeout, defaultEgressIdleTimeout),
+		connSem:     make(chan struct{}, maxEgressConns),
 		lookupIP: func(host string) ([]net.IP, error) {
 			ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 			defer cancel()
@@ -166,12 +181,26 @@ func (p *EgressProxy) acceptLoop() {
 			logger.Warningf("sandbox egress[%s]: accept: %v", p.opts.ExecID, err)
 			return
 		}
-		go p.handleConn(c)
+		// Per-exec connection cap. Blocking acquire backpressures the accept loop
+		// when the sandbox opens more than maxEgressConns connections; the parse
+		// read deadline guarantees a stuck connection releases its slot, so this
+		// can't wedge. Bounds host goroutines/fds against a connection flood.
+		p.connSem <- struct{}{}
+		go func() {
+			defer func() { <-p.connSem }()
+			p.handleConn(c)
+		}()
 	}
 }
 
 func (p *EgressProxy) handleConn(client net.Conn) {
 	defer client.Close()
+	// The sandbox controls every byte on this socket, so bound the request-parse
+	// phase: a read deadline cuts a slow/idle sender (slowloris) and the
+	// readRequestLine/readHeaders byte caps stop an unbounded line from growing
+	// host memory. splice() clears this deadline when it hands off to the tunnel,
+	// which then applies its own idle timeout.
+	_ = client.SetReadDeadline(time.Now().Add(egressHeaderReadTimeout))
 	br := bufio.NewReader(client)
 
 	method, target, ok := readRequestLine(br)
@@ -322,6 +351,9 @@ func (p *EgressProxy) resolveHost(host string) ([]net.IP, error) {
 // counts (client→upstream, upstream→client). The client read side is the
 // bufio.Reader so any bytes already buffered past the request are not lost.
 func (p *EgressProxy) splice(client net.Conn, clientR io.Reader, upstream net.Conn) (up, down int64) {
+	// Drop the parse-phase read deadline; from here copyIdle owns the (idle)
+	// deadlines so a long but active tunnel is never cut by the header timeout.
+	_ = client.SetReadDeadline(time.Time{})
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -382,13 +414,35 @@ func halfClose(c net.Conn) {
 	}
 }
 
+// readLineLimited reads through the next '\n' and returns the line with any
+// trailing CR/LF trimmed, failing if it grows past max bytes before the newline.
+// Hand-rolled (vs ReadString) so an unbounded line from the untrusted sandbox
+// can't balloon host memory. The bufio.Reader keeps any bytes already read past
+// the line, so a later splice still sees the buffered body.
+func readLineLimited(br *bufio.Reader, max int) (string, error) {
+	var sb strings.Builder
+	for {
+		b, err := br.ReadByte()
+		if err != nil {
+			return "", err
+		}
+		if b == '\n' {
+			return strings.TrimRight(sb.String(), "\r"), nil
+		}
+		if sb.Len() >= max {
+			return "", fmt.Errorf("line exceeds %d bytes", max)
+		}
+		sb.WriteByte(b)
+	}
+}
+
 // readRequestLine reads "METHOD TARGET HTTP/x.y" and returns (method, target).
 func readRequestLine(br *bufio.Reader) (method, target string, ok bool) {
-	line, err := br.ReadString('\n')
+	line, err := readLineLimited(br, maxRequestLineLen)
 	if err != nil {
 		return "", "", false
 	}
-	f := strings.Fields(strings.TrimRight(line, "\r\n"))
+	f := strings.Fields(line)
 	if len(f) < 2 {
 		return "", "", false
 	}
@@ -402,14 +456,21 @@ func drainHeaders(br *bufio.Reader) error {
 
 func readHeaders(br *bufio.Reader) ([]string, error) {
 	var hs []string
+	total := 0
 	for {
-		line, err := br.ReadString('\n')
+		line, err := readLineLimited(br, maxHeaderLineLen)
 		if err != nil {
 			return nil, err
 		}
-		line = strings.TrimRight(line, "\r\n")
 		if line == "" {
 			return hs, nil
+		}
+		total += len(line)
+		if total > maxHeaderBytesTotal {
+			return nil, fmt.Errorf("headers exceed %d bytes", maxHeaderBytesTotal)
+		}
+		if len(hs) >= maxHeaderCount {
+			return nil, fmt.Errorf("too many headers (>%d)", maxHeaderCount)
 		}
 		hs = append(hs, line)
 	}

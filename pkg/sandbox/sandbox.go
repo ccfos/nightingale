@@ -60,8 +60,8 @@ func New(cfg Config) *Sandbox {
 	}
 	s.tier, s.tierReason = selectTier(cfg, s.caps)
 
-	if !cfg.Enabled {
-		s.disable("sandbox.enabled=false")
+	if cfg.Disabled {
+		s.disable("sandbox.disabled=true")
 		return s
 	}
 	s.resolveEngine()
