@@ -250,6 +250,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.iotdbColumns)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -277,6 +280,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.auth(), rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.auth(), rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.auth(), rt.iotdbColumns)
 
 			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
 
