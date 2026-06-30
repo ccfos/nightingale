@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -25,6 +26,21 @@ import (
 // A2A JSON-RPC payloads are normally well under 4KB; the cap exists so a
 // pathological caller cannot blow up the log file by uploading megabytes.
 const a2aLogBodyLimit = 4 * 1024
+
+// a2aLogRespHeadLimit / a2aLogRespTailLimit bound how much of the response we
+// echo into the per-request DEBUG "resp" log. A unary reply (tasks/get, a small message)
+// fits entirely in the head and is logged verbatim. A streaming (SSE) reply
+// can be far larger than the answer it carries — the observed 93KB stream
+// assembled to a ~5KB message — so we keep the head (start of the answer) AND
+// the tail (the terminal event, e.g. TASK_STATE_COMPLETED) and elide the
+// middle. That way the log proves both that the server emitted real content
+// and that it reached a terminal state, which is exactly what's needed to tell
+// a server-side hang apart from a client that failed to render a complete
+// response. bytes_out still reports the full wire size.
+const (
+	a2aLogRespHeadLimit = 16 * 1024
+	a2aLogRespTailLimit = 16 * 1024
+)
 
 // a2aMountPrefix is the API path prefix under which the built-in OAuth 2.1
 // Authorization Server is mirrored (in addition to the root mount). Deployments
@@ -228,10 +244,11 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 }
 
 // a2aRequestLog emits an INFO line at request entry (with captured body) and a
-// matching one at exit (with status, latency, response bytes). scope is "A2A"
-// or "MCP" so the two surfaces can be grepped apart. trace_id is taken from
-// the global traceIdMid (pkg/httpx) so the line stitches together with the
-// rest of the access log.
+// matching one at exit (with status, latency, response byte count). The captured
+// response body rides a separate DEBUG line (correlated by trace_id) so it stays
+// out of normal INFO logs. scope is "A2A" or "MCP" so the two surfaces can be
+// grepped apart. trace_id is taken from the global traceIdMid (pkg/httpx) so the
+// lines stitch together with the rest of the access log.
 //
 // The body is read into memory up to a2aLogBodyLimit and then restored via a
 // MultiReader so the downstream SDK still sees the full payload. Non-JSON
@@ -248,6 +265,15 @@ func (rt *Router) a2aRequestLog(scope string) gin.HandlerFunc {
 		logger.Infof("[%s] start trace_id=%s method=%s path=%s remote=%s body_len=%d body_truncated=%v body=%s",
 			scope, traceID, method, path, remote, len(body), truncated, body)
 
+		// Tee the response so the DEBUG "resp" line can show what was actually
+		// returned to the caller. Installed before c.Next() so every downstream
+		// write — including streaming SSE frames and auth-failure bodies — flows
+		// through it. Only Write/WriteString are intercepted; Flush, Hijack,
+		// Status, Size, etc. are promoted unchanged so SSE streaming and the
+		// accurate bytes_out below keep working.
+		respCap := &a2aResponseCapture{ResponseWriter: c.Writer}
+		c.Writer = respCap
+
 		start := time.Now()
 		c.Next()
 		cost := time.Since(start)
@@ -261,7 +287,84 @@ func (rt *Router) a2aRequestLog(scope string) gin.HandlerFunc {
 
 		logger.Infof("[%s] done trace_id=%s method=%s path=%s user=%s status=%d cost=%s bytes_out=%d",
 			scope, traceID, method, path, username, c.Writer.Status(), cost, c.Writer.Size())
+
+		// The captured response body is large (a streaming SSE reply assembles to
+		// tens of KB) and may carry user content, so keep it off the operational
+		// INFO line and emit it only at DEBUG; trace_id ties it back to the pair.
+		resp, respTruncated := respCap.preview()
+		logger.Debugf("[%s] resp trace_id=%s path=%s resp_truncated=%v resp=%s",
+			scope, traceID, path, respTruncated, resp)
 	}
+}
+
+// a2aResponseCapture wraps gin.ResponseWriter to tee the response body into a
+// bounded in-memory view for logging (see a2aLogRespHeadLimit /
+// a2aLogRespTailLimit). It keeps the first head bytes and the last tail bytes
+// so both the start of the answer and the terminal SSE event survive even when
+// the full stream is much larger. Every method other than Write/WriteString is
+// promoted from the embedded writer, so Flush (SSE), Hijack, Status, Size and
+// friends behave exactly as before.
+type a2aResponseCapture struct {
+	gin.ResponseWriter
+	head  []byte
+	tail  []byte
+	total int
+}
+
+func (w *a2aResponseCapture) capture(b []byte) {
+	w.total += len(b)
+	if room := a2aLogRespHeadLimit - len(w.head); room > 0 {
+		n := len(b)
+		if n > room {
+			n = room
+		}
+		w.head = append(w.head, b[:n]...)
+	}
+	w.tail = append(w.tail, b...)
+	if over := len(w.tail) - a2aLogRespTailLimit; over > 0 {
+		w.tail = w.tail[over:]
+	}
+}
+
+func (w *a2aResponseCapture) Write(b []byte) (int, error) {
+	w.capture(b)
+	return w.ResponseWriter.Write(b)
+}
+
+func (w *a2aResponseCapture) WriteString(s string) (int, error) {
+	w.capture([]byte(s))
+	return w.ResponseWriter.WriteString(s)
+}
+
+// Unwrap exposes the wrapped writer so http.ResponseController (used by
+// clearWriteDeadline on streaming endpoints) can traverse past this wrapper to
+// the underlying connection. gin.ResponseWriter the interface does not declare
+// Unwrap, so embedding it does not promote one — without this method the
+// controller hits its default branch, SetWriteDeadline silently no-ops, and the
+// 40s WriteTimeout it was meant to clear stays armed, cutting off long agent
+// turns / SSE streams.
+func (w *a2aResponseCapture) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+// preview reconstructs a bounded view of the captured response. When the body
+// fits within the head+tail budget it is returned in full (the second branch
+// stitches head and tail back together with no overlap); a larger body returns
+// head + a "<N bytes omitted>" marker + tail. The bool reports whether any
+// bytes were omitted.
+func (w *a2aResponseCapture) preview() (string, bool) {
+	if w.total <= len(w.head) {
+		return string(w.head), false
+	}
+	if w.total <= a2aLogRespHeadLimit+a2aLogRespTailLimit {
+		// No gap between head and tail: the bytes after the head all still live
+		// in the tail ring, so drop the part of the tail already covered by the
+		// head and the concatenation is the exact, complete body.
+		overlap := len(w.tail) - (w.total - len(w.head))
+		return string(w.head) + string(w.tail[overlap:]), false
+	}
+	omitted := w.total - len(w.head) - len(w.tail)
+	return fmt.Sprintf("%s\n...<%d bytes omitted>...\n%s", w.head, omitted, w.tail), true
 }
 
 // captureA2ARequestBody reads up to a2aLogBodyLimit bytes from r.Body for
