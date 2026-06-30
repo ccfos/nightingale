@@ -26,6 +26,13 @@ import (
 // pathological caller cannot blow up the log file by uploading megabytes.
 const a2aLogBodyLimit = 4 * 1024
 
+// a2aMountPrefix is the API path prefix under which the built-in OAuth 2.1
+// Authorization Server is mirrored (in addition to the root mount). Deployments
+// that reverse-proxy only /api/n9e/* to n9e then reach the AS without any extra
+// nginx rule, while clients deriving the metadata location from a root issuer
+// still hit the root copy.
+const a2aMountPrefix = "/api/n9e"
+
 // a2aBackend adapts *Router into the narrow surface expected by aiagent/a2a.
 // Keeps the package boundary clean: aiagent/a2a never imports center/router.
 type a2aBackend struct {
@@ -169,6 +176,28 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	r.GET(mcpAuthorizePath, rt.MCPOAuthAuthorize)
 	r.POST(mcpTokenPath, rt.MCPOAuthToken)
 	r.POST(mcpRevokePath, rt.MCPOAuthRevoke)
+
+	// Mirror the built-in AS (metadata + register/authorize/token/revoke) under
+	// the /api/n9e API prefix. withMount tags each request with its prefix so the
+	// metadata advertises matching /api/n9e/oauth/* endpoints and a
+	// "<base>/api/n9e" issuer (see mcpAPIBaseURL); the root copies above keep
+	// emitting root URLs. Only the AS is mirrored — the A2A/MCP protocol groups
+	// stay root-only because /api/n9e/mcp/*proxyPath would collide with the
+	// existing /api/n9e/mcp/oauth/authorize decision route (gin catch-all vs.
+	// static child).
+	r.GET(a2aMountPrefix+mcpASMetaPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
+	r.GET(a2aMountPrefix+mcpASMetaPath+"/a2a", rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
+	r.GET(a2aMountPrefix+mcpASMetaPath+"/mcp", rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
+	r.POST(a2aMountPrefix+mcpRegisterPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthRegister))
+	r.GET(a2aMountPrefix+mcpAuthorizePath, rt.withMount(a2aMountPrefix, rt.MCPOAuthAuthorize))
+	r.POST(a2aMountPrefix+mcpTokenPath, rt.withMount(a2aMountPrefix, rt.MCPOAuthToken))
+	r.POST(a2aMountPrefix+mcpRevokePath, rt.withMount(a2aMountPrefix, rt.MCPOAuthRevoke))
+	// RFC 8414 well-known-URI insertion: a client given the prefixed issuer
+	// "<base>/api/n9e" looks for the metadata at
+	// "<base>/.well-known/oauth-authorization-server/api/n9e" (inserted at root,
+	// not appended). Serve that alias, tagged with the prefix so it returns the
+	// same prefixed-issuer document.
+	r.GET(mcpASMetaPath+a2aMountPrefix, rt.withMount(a2aMountPrefix, rt.MCPOAuthServerMetadata))
 
 	// The SDK's internal http.ServeMux is registered at root paths like
 	// /message:send /message:stream /tasks/{id}, so we MUST strip the /a2a

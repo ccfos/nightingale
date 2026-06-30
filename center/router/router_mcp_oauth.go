@@ -73,6 +73,12 @@ const (
 
 	mcpCodeRedisPrefix = "/mcp-oauth/code/"
 	mcpKeyDeriveInfo   = "n9e-mcp-oauth"
+
+	// mcpMountKey is the gin-context key holding the API mount prefix the request
+	// arrived on ("" for the root mount, or a2aMountPrefix for the /api/n9e copy).
+	// It lets the AS advertise issuer/endpoint URLs that match the surface the
+	// client actually used. Set by withMount.
+	mcpMountKey = "a2a_mount"
 )
 
 // mcpKeyCache memoizes the HKDF-derived signing key per source key so the hot
@@ -174,13 +180,33 @@ func (rt *Router) mcpBaseURL(c *gin.Context) string {
 	return scheme + "://" + c.Request.Host
 }
 
-// mcpIssuer is this AS's issuer (explicit MCPAuth.Issuer, else the base URL).
-// Multi-instance deployments should set it explicitly so every instance agrees.
+// withMount records the API mount prefix the AS endpoint is served under, so the
+// metadata/endpoint URLs derived downstream (mcpAPIBaseURL) match the surface the
+// request arrived on. Root handlers go unwrapped (mcpMountKey unset → "").
+func (rt *Router) withMount(mount string, h gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(mcpMountKey, mount)
+		h(c)
+	}
+}
+
+// mcpAPIBaseURL is mcpBaseURL plus the active API mount prefix, so the built-in
+// AS advertises endpoints under whichever surface (root or /api/n9e) the client
+// reached it on. NOTE: the interactive consent redirect deliberately uses
+// mcpBaseURL (no mount) because /oauth-consent is a root frontend SPA route.
+func (rt *Router) mcpAPIBaseURL(c *gin.Context) string {
+	return rt.mcpBaseURL(c) + c.GetString(mcpMountKey)
+}
+
+// mcpIssuer is this AS's issuer (explicit MCPAuth.Issuer, else the mount-aware
+// base URL). Multi-instance deployments should set it explicitly so every
+// instance agrees — but doing so pins a single surface, so leave it empty when
+// you want both the root and /api/n9e copies to self-advertise.
 func (rt *Router) mcpIssuer(c *gin.Context) string {
 	if iss := strings.TrimSpace(rt.HTTP.MCPAuth.Issuer); iss != "" {
 		return strings.TrimSuffix(iss, "/")
 	}
-	return rt.mcpBaseURL(c)
+	return rt.mcpAPIBaseURL(c)
 }
 
 // mcpResource is the resource id bound into the access token aud — explicit
@@ -189,7 +215,7 @@ func (rt *Router) mcpResource(c *gin.Context) string {
 	if r := rt.mcpConfiguredResource(); r != "" {
 		return r
 	}
-	return rt.mcpBaseURL(c) + "/mcp"
+	return rt.mcpAPIBaseURL(c) + "/mcp"
 }
 
 // mcpConfiguredResource is the statically-configured resource id (no request
