@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
+	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -147,6 +148,9 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// re-syncs on the configured cadence. See runAISkillSyncLoop for the
 	// design rationale.
 	go rt.runAISkillSyncLoop(rt.Center.AIAgent.SkillSyncInterval)
+
+	// Reap stale http_fetch(save_to_file=true) temp files (startup sweep + hourly).
+	go aitools.StartFetchTempReaper()
 
 	return rt
 }
