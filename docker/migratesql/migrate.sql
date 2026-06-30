@@ -432,6 +432,9 @@ CREATE TABLE `ai_skill` (
     KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai skills';
 
+ALTER TABLE `ai_skill` ADD COLUMN `source_type` varchar(16) NOT NULL DEFAULT 'local' COMMENT 'skill source type: local/git' AFTER `enabled`;
+ALTER TABLE `ai_skill` ADD COLUMN `git_info` text COMMENT 'git source info (JSON)' AFTER `source_type`;
+
 CREATE TABLE `mcp_server` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'mcp server name',
@@ -486,3 +489,6 @@ CREATE TABLE `ai_assistant_message` (
     UNIQUE KEY `uk_chat_seq` (`chat_id`, `seq_id`),
     KEY `idx_am_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ai assistant messages';
+
+/* v9 2026-06-25 es_index_pattern weight for sorting */
+ALTER TABLE `es_index_pattern` ADD COLUMN `weight` int not null default 0;

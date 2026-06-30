@@ -368,6 +368,7 @@ func (TaskHostDoing) TableName() string {
 type EsIndexPatternMigrate struct {
 	CrossClusterEnabled int    `gorm:"column:cross_cluster_enabled;type:int;default:0"`
 	Note                string `gorm:"column:note;type:varchar(1024);default:''"`
+	Weight              int    `gorm:"column:weight;type:int;default:0"`
 }
 
 func (EsIndexPatternMigrate) TableName() string {

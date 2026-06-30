@@ -28,6 +28,7 @@ const (
 
 	PROMETHEUS    = "prometheus"
 	TDENGINE      = "tdengine"
+	IOTDB         = "iotdb"
 	ELASTICSEARCH = "elasticsearch"
 	MYSQL         = "mysql"
 	POSTGRESQL    = "pgsql"
@@ -1317,6 +1318,7 @@ func (ar *AlertRule) IsHostRule() bool {
 
 func (ar *AlertRule) IsInnerRule() bool {
 	return ar.Cate == TDENGINE ||
+		ar.Cate == IOTDB ||
 		ar.Cate == CLICKHOUSE ||
 		ar.Cate == ELASTICSEARCH ||
 		ar.Prod == LOKI || ar.Cate == LOKI ||

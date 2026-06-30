@@ -791,6 +791,7 @@ CREATE TABLE es_index_pattern (
     update_at bigint default '0',
     update_by varchar(64) default '',
     note varchar(4096) not null default '',
+    weight int not null default 0,
     PRIMARY KEY (id),
     UNIQUE (datasource_id, name)
 ) ;

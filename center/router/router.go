@@ -79,6 +79,8 @@ type Router struct {
 	// CRUD sync paths so orphan-cleanup can't race a concurrent insert.
 	aiSkillSyncOnce sync.Once
 	aiSkillSyncMu   sync.Mutex
+
+	aiSkillRemoteCommitCache *skill.RemoteCommitCache
 }
 
 // TargetDeleteCheckFunc 删除机器前的前置校验，返回不满足删除条件的机器及原因（ident -> 错误信息）。
@@ -121,6 +123,8 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 		TargetDeleteHook:      func(tx *gorm.DB, idents []string, force bool) error { return nil },
 		TargetDeleteCheck:     func(idents []string) map[string]string { return nil },
 		TargetBgidChangeCheck: func(idents []string, action string, bgids []int64) (map[string]string, error) { return nil, nil },
+
+		aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(30 * time.Minute),
 	}
 
 	// per-skill 文件数上限：toml 的 AIAgent.MaxFilesPerSkill 是唯一来源，这里写入
@@ -260,6 +264,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.iotdbColumns)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -287,6 +294,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
 			pages.POST("/tdengine-columns", rt.auth(), rt.tdengineColumns)
+			pages.POST("/iotdb-databases", rt.auth(), rt.iotdbDatabases)
+			pages.POST("/iotdb-tables", rt.auth(), rt.iotdbTables)
+			pages.POST("/iotdb-columns", rt.auth(), rt.iotdbColumns)
 
 			pages.POST("/log-query-batch", rt.auth(), rt.user(), rt.QueryLogBatch)
 
@@ -329,6 +339,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/callback/dingtalk", rt.loginCallbackDingTalk)
 		pages.GET("/auth/callback/feishu", rt.loginCallbackFeiShu)
 		pages.GET("/auth/perms", rt.auth(), rt.user(), rt.allPerms)
+
+		// Built-in MCP OAuth Authorization Server — consent decision endpoint.
+		// The frontend /oauth-consent page (which holds the session token and
+		// handles SSO login) POSTs the signed authorization-request ticket here;
+		// behind auth()+user() the handler mints the authorization code for the
+		// logged-in user. See router_mcp_oauth.go / doc/api/mcp-oauth-as.md.
+		pages.POST("/mcp/oauth/authorize", rt.auth(), rt.user(), rt.MCPOAuthDecision)
 
 		pages.GET("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetFile)
 		pages.POST("/metrics/desc", rt.auth(), rt.user(), rt.metricsDescGetMap)
@@ -570,6 +587,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
 		pages.POST("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/add"), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternPut)
+		pages.PUT("/es-index-patterns/weights", rt.auth(), rt.user(), rt.perm("/log/index-patterns/put"), rt.esIndexPatternUpdateWeights)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.user(), rt.perm("/log/index-patterns/del"), rt.esIndexPatternDel)
 
 		pages.GET("/embedded-dashboards", rt.auth(), rt.user(), rt.perm("/embedded-dashboards"), rt.embeddedDashboardsGet)
@@ -614,6 +632,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/ai-skill/:id", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillDel)
 		pages.POST("/ai-skills/import", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillImport)
 		pages.PUT("/ai-skill/:id/import", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillImportUpdate)
+		pages.POST("/ai-skills/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstall)
+		pages.PUT("/ai-skill/:id/git/install", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitInstallPut)
+		pages.POST("/ai-skill/:id/git/update", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillGitUpdate)
 		pages.GET("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileGet)
 		pages.DELETE("/ai-skill-file/:fileId", rt.auth(), rt.user(), rt.perm("/ai-config/skills"), rt.aiSkillFileDel)
 
@@ -748,6 +769,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.PUT("/user/:id", rt.userProfilePutByService)
 			service.DELETE("/user/:id", rt.userDel)
 			service.GET("/users", rt.userFindAll)
+			service.POST("/user-token", rt.getXUserToken)
 
 			service.GET("/user-groups", rt.userGroupGetsByService)
 			service.GET("/user-group-members", rt.userGroupMemberGetsByService)

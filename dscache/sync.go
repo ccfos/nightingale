@@ -11,10 +11,12 @@ import (
 	_ "github.com/ccfos/nightingale/v6/datasource/ck"
 	_ "github.com/ccfos/nightingale/v6/datasource/doris"
 	"github.com/ccfos/nightingale/v6/datasource/es"
+	_ "github.com/ccfos/nightingale/v6/datasource/iotdb"
 	_ "github.com/ccfos/nightingale/v6/datasource/mysql"
 	_ "github.com/ccfos/nightingale/v6/datasource/opensearch"
 	_ "github.com/ccfos/nightingale/v6/datasource/postgresql"
 	_ "github.com/ccfos/nightingale/v6/datasource/victorialogs"
+	iotdbkit "github.com/ccfos/nightingale/v6/dskit/iotdb"
 	"github.com/ccfos/nightingale/v6/dskit/tdengine"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -130,6 +132,8 @@ func getDatasourcesFromDBLoop(ctx *ctx.Context, fromAPI bool) {
 					esN9eToDatasourceInfo(&ds, item)
 				} else if item.PluginType == "tdengine" {
 					tdN9eToDatasourceInfo(&ds, item)
+				} else if item.PluginType == "iotdb" {
+					iotdbN9eToDatasourceInfo(&ds, item)
 				} else {
 					ds.Settings = make(map[string]interface{})
 					for k, v := range item.SettingsJson {
@@ -166,6 +170,21 @@ func tdN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource
 	ds.Settings["tdengine.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
 	ds.Settings["tdengine.headers"] = item.HTTPJson.Headers
 	ds.Settings["tdengine.basic"] = tdengine.TDengineBasicAuth{
+		User:     item.AuthJson.BasicAuthUser,
+		Password: item.AuthJson.BasicAuthPassword,
+	}
+}
+
+func iotdbN9eToDatasourceInfo(ds *datasource.DatasourceInfo, item models.Datasource) {
+	ds.Settings = make(map[string]interface{})
+	ds.Settings["iotdb.cluster_name"] = item.Name
+	ds.Settings["iotdb.addr"] = item.HTTPJson.Url
+	ds.Settings["iotdb.timeout"] = item.HTTPJson.Timeout
+	ds.Settings["iotdb.dial_timeout"] = item.HTTPJson.DialTimeout
+	ds.Settings["iotdb.max_idle_conns_per_host"] = item.HTTPJson.MaxIdleConnsPerHost
+	ds.Settings["iotdb.headers"] = item.HTTPJson.Headers
+	ds.Settings["iotdb.skip_tls_verify"] = item.HTTPJson.TLS.SkipTlsVerify
+	ds.Settings["iotdb.basic"] = iotdbkit.IotdbBasicAuth{
 		User:     item.AuthJson.BasicAuthUser,
 		Password: item.AuthJson.BasicAuthPassword,
 	}

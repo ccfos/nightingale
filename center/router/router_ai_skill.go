@@ -97,6 +97,8 @@ func (rt *Router) aiSkillGets(c *gin.Context) {
 	lst, err := models.AISkillGets(rt.Ctx, search)
 	ginx.Dangerous(err)
 
+	rt.decorateAISkills(lst)
+
 	// overlay：把随二进制打包的内置 skill 作为只读条目追加到列表尾部。embedded FS
 	// 是内置 skill 的唯一真相源（不进 DB、不参与 dbsync），这里读取时叠加。
 	if !rt.Center.AIAgent.HideBuiltinSkills {
@@ -185,6 +187,7 @@ func (rt *Router) aiSkillGet(c *gin.Context) {
 		obj.Files = files
 	}
 
+	rt.decorateAISkill(obj)
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -194,6 +197,7 @@ func (rt *Router) aiSkillAdd(c *gin.Context) {
 	ginx.Dangerous(obj.Verify())
 
 	me := c.MustGet("user").(*models.User)
+	obj.SourceType = models.AISkillSourceLocal
 	obj.CreatedBy = me.Username
 	obj.UpdatedBy = me.Username
 
@@ -326,10 +330,14 @@ func extractSkillArchive(c *gin.Context) (meta skill.Frontmatter, instructions s
 }
 
 // doSkillImport creates a new skill inside a transaction and returns the new skill ID.
-func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string) (int64, error) {
+func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) (int64, error) {
 	var skillId int64
 	err := models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
+		sourceType := models.AISkillSourceLocal
+		if gitInfo != nil {
+			sourceType = models.AISkillSourceGit
+		}
 
 		skill := models.AISkill{
 			Name:          meta.Name,
@@ -340,6 +348,8 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
 			Enabled:       true,
+			SourceType:    sourceType,
+			GitInfo:       gitInfo,
 			CreatedBy:     username,
 			UpdatedBy:     username,
 		}
@@ -348,21 +358,13 @@ func (rt *Router) doSkillImport(meta skill.Frontmatter, instructions string, fil
 		}
 		skillId = skill.Id
 
-		skillFiles := make([]*models.AISkillFile, 0, len(files))
-		for relPath, content := range files {
-			skillFiles = append(skillFiles, &models.AISkillFile{
-				Name:      relPath,
-				Content:   content,
-				CreatedBy: username,
-			})
-		}
-		return models.AISkillFileBatchUpsert(tCtx, skillId, skillFiles, false)
+		return upsertSkillFiles(tCtx, skillId, files, username, false)
 	})
 	return skillId, err
 }
 
 // doSkillImportUpdate updates an existing skill inside a transaction.
-func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string) error {
+func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontmatter, instructions string, files map[string]string, username string, gitInfo *models.AISkillGitInfo) error {
 	return models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 
@@ -375,28 +377,32 @@ func (rt *Router) doSkillImportUpdate(current *models.AISkill, meta skill.Frontm
 			Metadata:      meta.Metadata,
 			AllowedTools:  meta.AllowedTools,
 			Enabled:       current.Enabled,
+			GitInfo:       gitInfo,
 			UpdatedBy:     username,
 		}
-		if err := current.Update(tCtx, ref); err != nil {
+		if gitInfo != nil {
+			if err := current.UpdateWithGit(tCtx, ref); err != nil {
+				return err
+			}
+		} else if current.GitInfo != nil {
+			gitInfo := *current.GitInfo
+			gitInfo.CurrentCommit = ""
+			ref.GitInfo = &gitInfo
+			if err := current.UpdateWithGit(tCtx, ref); err != nil {
+				return err
+			}
+		} else if err := current.Update(tCtx, ref); err != nil {
 			return err
 		}
 
-		skillFiles := make([]*models.AISkillFile, 0, len(files))
-		for relPath, content := range files {
-			skillFiles = append(skillFiles, &models.AISkillFile{
-				Name:      relPath,
-				Content:   content,
-				CreatedBy: username,
-			})
-		}
-		return models.AISkillFileBatchUpsert(tCtx, current.Id, skillFiles, true)
+		return upsertSkillFiles(tCtx, current.Id, files, username, true)
 	})
 }
 
 func (rt *Router) aiSkillImport(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username)
+	skillId, err := rt.doSkillImport(meta, instructions, files, me.Username, nil)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -410,7 +416,7 @@ func (rt *Router) aiSkillImportUpdate(c *gin.Context) {
 	}
 	meta, instructions, files := extractSkillArchive(c)
 	me := c.MustGet("user").(*models.User)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, me.Username, nil))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
@@ -476,6 +482,7 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 	ginx.Dangerous(err)
 	obj.Files = files
 
+	rt.decorateAISkill(obj)
 	ginx.NewRender(c).Data(obj, nil)
 }
 
@@ -483,7 +490,7 @@ func (rt *Router) aiSkillGetWithFileContents(c *gin.Context) {
 
 func (rt *Router) aiSkillImportByService(c *gin.Context) {
 	meta, instructions, files := extractSkillArchive(c)
-	skillId, err := rt.doSkillImport(meta, instructions, files, "system")
+	skillId, err := rt.doSkillImport(meta, instructions, files, "system", nil)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(skillId, nil)
 }
@@ -496,15 +503,22 @@ func (rt *Router) aiSkillImportUpdateByService(c *gin.Context) {
 		ginx.Bomb(http.StatusNotFound, "ai skill not found")
 	}
 	meta, instructions, files := extractSkillArchive(c)
-	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system"))
+	ginx.Dangerous(rt.doSkillImportUpdate(current, meta, instructions, files, "system", nil))
 	ginx.NewRender(c).Data(skillId, nil)
 }
 
 func (rt *Router) aiSkillAddByService(c *gin.Context) {
 	var obj models.AISkill
 	ginx.BindJSON(c, &obj)
+
+	if obj.SourceType == models.AISkillSourceGit {
+		rt.aiSkillAddGitByService(c, obj)
+		return
+	}
+
 	ginx.Dangerous(obj.Verify())
 
+	obj.SourceType = models.AISkillSourceLocal
 	obj.CreatedBy = "system"
 	obj.UpdatedBy = "system"
 
@@ -516,7 +530,7 @@ func (rt *Router) aiSkillAddByService(c *gin.Context) {
 	err = models.DB(rt.Ctx).Transaction(func(tx *gorm.DB) error {
 		tCtx := &ctx.Context{DB: tx, CenterApi: rt.Ctx.CenterApi, Ctx: rt.Ctx.Ctx, IsCenter: rt.Ctx.IsCenter}
 		if exist != nil {
-			if err := exist.Update(tCtx, obj); err != nil {
+			if err := exist.UpdateWithGit(tCtx, obj); err != nil {
 				return err
 			}
 			// 合并 exist + obj 得到更新后的视图，再合成 SKILL.md。
