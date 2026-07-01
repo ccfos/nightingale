@@ -18,8 +18,8 @@ real `/api/n9e/...` request from their browser dev tools rather than guessing.
 ## How to call
 
 - Socket path is in env var `N9E_SKILL_GATEWAY`; talk newline-delimited JSON over it.
-- Request: `{"method":"GET","path":"/alert-his-events/list","query":{"hours":"24","limit":"100"}}\n`
-  - `path` is relative to `/api/n9e` (with or without the prefix is fine).
+- Request: `{"method":"GET","path":"/api/n9e/alert-his-events/list","query":{"hours":"24","limit":"100"}}\n`
+  - **Always include the `/api/n9e` prefix** in `path` (e.g. `/api/n9e/alert-his-events/list`). The per-resource files list paths under `/api/n9e`; prepend it when you build the request.
   - **Mostly GET (reads).** **POST** is permitted **only** for the read-only data-query
     endpoints (`api/data-query.md`), where the query goes in a `body` (a JSON object).
     All other writes/deletes are rejected.

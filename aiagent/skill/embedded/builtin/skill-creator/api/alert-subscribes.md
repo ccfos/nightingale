@@ -6,7 +6,7 @@ datasource, severity, tags, and busi-group. A subscription can also **redefine r
 the matched events in the legacy model: override severity, notification channels, and
 webhooks before the event is delivered.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -72,7 +72,7 @@ Each matcher object has these json fields:
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/busi-groups/alert-subscribes","query":{}}
+{"method":"GET","path":"/api/n9e/busi-groups/alert-subscribes","query":{}}
 ```
 Response (trimmed):
 ```json

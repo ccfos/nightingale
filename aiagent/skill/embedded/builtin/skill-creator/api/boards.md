@@ -2,7 +2,7 @@
 
 In n9e a monitoring dashboard is called a **board**. A board carries its metadata (name, group, tags, note, public flags) in the `board` table, while its panels/layout/variables are stored as one large JSON blob in a separate `board_payload` table. Use these endpoints to list dashboards across your business groups, look up specific boards by id, or fetch a single board together with its full panel configuration.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -70,7 +70,7 @@ Panels are NOT inline fields of `Board`. They live in the separate `board_payloa
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/busi-groups/boards","query":{}}
+{"method":"GET","path":"/api/n9e/busi-groups/boards","query":{}}
 ```
 Response (trimmed):
 ```json
@@ -106,7 +106,7 @@ Response (trimmed):
 
 Fetch one board with its panels:
 ```json
-{"method":"GET","path":"/board/12","query":{}}
+{"method":"GET","path":"/api/n9e/board/12","query":{}}
 ```
 Response (trimmed) — `configs` is now a JSON string you must parse again:
 ```json

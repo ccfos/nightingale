@@ -2,7 +2,7 @@
 
 Fired/recovered alert events. Use these for alert stats, recent-alert summaries, and incident lists. "Historical" = every fired **and** recovered event ever written (server-side paged); "active" = the events currently firing right now.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol + envelope: see `../n9e-api.md`.
+> Gateway call: GET. **Include the `/api/n9e` prefix in `path`** (e.g. `/api/n9e/alert-his-events/list`). Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol + envelope: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -114,7 +114,7 @@ The active-event object (and both `/:eid` responses) shares all fields above, wi
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/alert-his-events/list","query":{"hours":"24","limit":"100","p":"1"}}
+{"method":"GET","path":"/api/n9e/alert-his-events/list","query":{"hours":"24","limit":"100","p":"1"}}
 ```
 Response (trimmed):
 ```json

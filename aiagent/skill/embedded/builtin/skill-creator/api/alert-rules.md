@@ -4,7 +4,7 @@ Alerting rule definitions: what condition fires an event, on which datasource, a
 severity, and how the alert is routed to notifications. Use these endpoints to read rule
 definitions, audit coverage, or summarize how alerting is configured across business groups.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -84,7 +84,7 @@ Each rule is an `AlertRule` (from `models/alert_rule.go`):
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/busi-groups/alert-rules","query":{"gids":"1,2"}}
+{"method":"GET","path":"/api/n9e/busi-groups/alert-rules","query":{"gids":"1,2"}}
 ```
 Response (trimmed):
 ```json

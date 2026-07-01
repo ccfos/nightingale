@@ -2,7 +2,7 @@
 
 Teams are named groups of users. They are the unit that notification routing targets and that busi-group membership grants access through — a rule, subscription, or mute can notify "team X", and a business group lists the teams allowed to see it. Use these endpoints to list the teams the caller can see and to read one team together with its member users.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -34,7 +34,7 @@ Teams are named groups of users. They are the unit that notification routing tar
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/user-groups","query":{"limit":"1500"}}
+{"method":"GET","path":"/api/n9e/user-groups","query":{"limit":"1500"}}
 ```
 Response (trimmed):
 ```json
@@ -61,7 +61,7 @@ Response (trimmed):
 }
 ```
 
-Reading one team with members — request `{"method":"GET","path":"/user-group/1"}` — returns a single object where `users` is filled:
+Reading one team with members — request `{"method":"GET","path":"/api/n9e/user-group/1"}` — returns a single object where `users` is filled:
 ```json
 {
   "id": 1,

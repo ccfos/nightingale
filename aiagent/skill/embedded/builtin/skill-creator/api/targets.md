@@ -6,7 +6,7 @@ Use these endpoints for host inventory, per-host alert context (map an alert's h
 its tags / business groups / OS / agent version), liveness/coverage checks, and agent
 version audits. `/targets` lists hosts; `/targets/stats` gives you rolled-up counts.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -76,7 +76,7 @@ query param; other `/targets` filters do not apply here — it counts the whole 
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/targets","query":{"limit":"100","p":"1"}}
+{"method":"GET","path":"/api/n9e/targets","query":{"limit":"100","p":"1"}}
 ```
 Response (trimmed):
 ```json

@@ -8,7 +8,7 @@ in this reference, these are **POST** (they carry a query body). The gateway all
 (`GET /datasource/brief`). You cannot guess datasource ids.
 
 > Gateway call for these: **POST**, with the query in `body` (a JSON **object**, not a string).
-> Request: `{"method":"POST","path":"/query-range-batch","body":{...}}`. In the body, use
+> Request: `{"method":"POST","path":"/api/n9e/query-range-batch","body":{...}}`. In the body, use
 > **native JSON types** (numbers as numbers) — the string-only rule applies to `query`, not `body`.
 > Response: `{"ok":true,"status":200,"data":{"dat":<result>,"err":""}}` — read `data["dat"]`.
 > Body cap: 256 KiB.

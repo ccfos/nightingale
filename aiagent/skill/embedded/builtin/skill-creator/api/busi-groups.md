@@ -8,7 +8,7 @@ business group here is exactly what other endpoints refer to as `bgid`, `gid`, o
 `/targets`, `/alert-his-events/list`, …). Start here to discover which group ids you may pass to
 those endpoints.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -52,7 +52,7 @@ Notes:
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/busi-groups","query":{"limit":"300"}}
+{"method":"GET","path":"/api/n9e/busi-groups","query":{"limit":"300"}}
 ```
 Response (trimmed):
 ```json
@@ -81,7 +81,7 @@ Response (trimmed):
 
 One group with owning teams:
 ```json
-{"method":"GET","path":"/busi-group/2","query":{}}
+{"method":"GET","path":"/api/n9e/busi-group/2","query":{}}
 ```
 ```json
 {

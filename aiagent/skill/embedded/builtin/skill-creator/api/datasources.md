@@ -4,7 +4,7 @@ To query data you need a `datasource_id` (and its `cate`/plugin type). This endp
 is how a skill discovers them. Datasource **configs** (addresses/credentials) are
 deny-listed; only this **secret-redacted** brief is reachable.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoint
 
@@ -40,7 +40,7 @@ Bare array of datasource objects. Each is a `Datasource` with **secrets stripped
 
 Request:
 ```json
-{"method":"GET","path":"/datasource/brief"}
+{"method":"GET","path":"/api/n9e/datasource/brief"}
 ```
 Response (trimmed):
 ```json

@@ -2,7 +2,7 @@
 
 Alert mutes (a.k.a. silences) suppress alert notifications for events whose tags match the mute's matchers, during a configured time window. The window is either a one-off time range (`mute_time_type=0`, using `btime`/`etime`) or a recurring weekly schedule (`mute_time_type=1`, using `periodic_mutes`). Use these read endpoints to list existing mutes.
 
-> Gateway call: GET, `path` relative to `/api/n9e`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
+> Gateway call: GET. Include the `/api/n9e` prefix in `path`. Response `{"ok":true,"status":200,"data":{"dat":<payload>,"err":""}}` — read `data["dat"]`. Protocol: see `../n9e-api.md`.
 
 ## Endpoints
 | Path | Purpose | `dat` shape |
@@ -55,7 +55,7 @@ Alert mutes (a.k.a. silences) suppress alert notifications for events whose tags
 ## Example
 Request:
 ```json
-{"method":"GET","path":"/busi-groups/alert-mutes","query":{}}
+{"method":"GET","path":"/api/n9e/busi-groups/alert-mutes","query":{}}
 ```
 Response (trimmed):
 ```json
