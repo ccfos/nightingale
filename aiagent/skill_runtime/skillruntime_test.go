@@ -163,3 +163,23 @@ func parseNonce(t *testing.T, fenced string) string {
 	}
 	return rest[:32]
 }
+
+func TestGatewayEnvValue(t *testing.T) {
+	host := "/tmp/n9e-sandbox/run/exec123/gw.sock"
+	// Namespace engine (bubblewrap): the fixed in-sandbox bind path.
+	if got := gatewayEnvValue(true, host); got != sandbox.GatewaySocketTarget {
+		t.Errorf("bind-mount engine: got %q, want %q", got, sandbox.GatewaySocketTarget)
+	}
+	// unsafe-exec: the real host socket path (no mount namespace to bind into).
+	if got := gatewayEnvValue(false, host); got != host {
+		t.Errorf("unsafe-exec: got %q, want host path %q", got, host)
+	}
+}
+
+func TestControlChannelsNoBindMountsNoMounts(t *testing.T) {
+	// A non-namespace engine (unsafe-exec) never bind-mounts control sockets —
+	// the run reaches them at their host paths instead.
+	if m := (&controlChannels{bindMounts: false}).mounts(); m != nil {
+		t.Errorf("unsafe-exec must have no bind mounts, got %v", m)
+	}
+}

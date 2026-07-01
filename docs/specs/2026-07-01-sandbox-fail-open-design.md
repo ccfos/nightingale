@@ -170,6 +170,17 @@ resolveEngine():
 
 改动:`config.go` 的 `PreCheck()` 把 `DataDir` 空值默认从 `/var/lib/n9e/sandbox` 改为 `filepath.Join(os.TempDir(), "n9e-sandbox")`。理由:临时目录几乎总可写(非 root 部署开箱即用);工作区本就每次执行即用即删(`Workspace.Cleanup()`),temp 生命周期正好匹配。运维仍可用显式 `[Sandbox] DataDir` 固定路径。注意:`/tmp` 若 `noexec` 不影响解释型脚本(execve 的是 `python3` 而非脚本文件),仅自带裸 ELF 的技能会踩,属边缘情况。移除了 `defaultDataDir` 常量(改用 `os.TempDir()` 运行时求值)。测试:`TestConfigPreCheckDefaults` 增断言默认值。
 
+## 10.2 附:Skill Gateway 支持 unsafe-exec(N9E_SKILL_GATEWAY)
+
+继续排障:workspace 修好后脚本能跑了,但报 `N9E_SKILL_GATEWAY` 未设置——脚本连不上 n9e API 取告警数据。原因:`skill_runtime/control.go` 把 Skill Gateway 的启动门 `needGateway` 和挂载都 gate 在 `EngineCaps().Namespaces` 上(Phase 1 设计:网关 socket 要挂进 mount namespace,故仅 bubblewrap 生效)。unsafe-exec 无命名空间 → 网关不启动 → 环境变量缺失。
+
+改动(与 fail-open 一致,让 unsafe-exec 端到端可用):**Skill Gateway 改成任意引擎都可达**。
+- `needGateway` 去掉 `bindsMounts` 前提(仍要 DBCtx+user+N9eAPIEnabled+N9eBaseURL)。
+- `controlChannels` 加 `bindMounts` 字段。命名空间引擎:socket 仍 bind-mount 到固定 in-sandbox 路径(`GatewaySocketTarget`);unsafe-exec(直接在宿主跑):不挂载,`mounts()` 返回 nil,`N9E_SKILL_GATEWAY` 直接给**真实宿主 socket 路径**(`gateway.SocketPath()`,抽成纯函数 `gatewayEnvValue` 便于测试)。
+- egress 代理**不**为 unsafe 放开:它要 netns+forwarder 才能强制,unsafe 无 netns、脚本本就有宿主裸网络,放开无意义;`resolveNetwork` 已因 `EngineCaps().Network=false` 让 unsafe 走 NetworkNone。
+
+安全性:unsafe-exec 本就无隔离、以 n9e 用户身份跑、可直连 DB/读配置,给网关 socket 不扩大有效权限;用户 token 仍只在宿主侧、绝不进沙箱(§12.1),网关照旧强制只读+RBAC+deny-paths。测试:`gatewayEnvValue` 两分支 + `controlChannels{bindMounts:false}.mounts()==nil`。
+
 ## 11. 迁移与兼容
 
 - 默认行为变化：原先 fail-closed 的部署升级后将变为 fail-open（无隔离时跑 unsafe）。这是**有意的默认翻转**，通过启动 WARNING 明示。需要维持旧行为的部署设 `RequireIsolation=true`。
