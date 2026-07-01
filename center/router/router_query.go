@@ -40,6 +40,21 @@ var CheckDsPerm CheckDsPermFunc = func(c *gin.Context, dsId int64, cate string, 
 	return true
 }
 
+// RuleChangeHookFunc 在告警规则、记录规则的创建/保存（add/put/upsert）前调用，
+// 作为可拒绝的守卫（return non-nil error 会中断本次保存并把错误透传给前端）。
+// rule 为 *models.AlertRule 或 *models.RecordingRule。
+//
+// 命名上叫 Hook 而非 CheckXxx，是为了给实现方保留在同一个入口内并联
+// 多种校验维度（权限、配额、命名规范、rule 体积等）的空间，而不必给
+// 每种校验都开一个 upstream 变量。上游只保证"这个入口会在 rule 变更前
+// 被调用一次"，具体校什么由实现方决定。
+type RuleChangeHookFunc func(c *gin.Context, rule interface{}) error
+
+// RuleChangeHook 默认放行所有规则。增强实现由外层注入（如 n9e-plus）。
+var RuleChangeHook RuleChangeHookFunc = func(c *gin.Context, rule interface{}) error {
+	return nil
+}
+
 type QueryFrom struct {
 	Queries []Query `json:"queries"`
 	Exps    []Exp   `json:"exps"`
