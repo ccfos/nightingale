@@ -293,6 +293,51 @@ func (s *SsoClient) exchangeUser(code string) (*CallbackOutput, error) {
 	return output, nil
 }
 
+// VerifyAccessToken validates an external IdP-issued OAuth access token in
+// Resource Server mode and maps it to the configured user attributes. It reuses
+// the OIDC login provider's JWKS to check the token signature, the issuer and
+// the expiry, and requires the token's `aud` to contain audience (this n9e
+// service's resource identifier) so a token minted for another application
+// cannot be replayed here. The returned CallbackOutput carries only the
+// user-identity fields; the token fields are left empty.
+func (s *SsoClient) VerifyAccessToken(ctx context.Context, rawToken, audience string) (*CallbackOutput, error) {
+	s.RLock()
+	defer s.RUnlock()
+
+	if !s.Enable || s.Provider == nil {
+		return nil, fmt.Errorf("oidc is not enabled")
+	}
+	if audience == "" {
+		return nil, fmt.Errorf("rs audience is not configured")
+	}
+
+	// A verifier bound to the resource audience — separate from s.Verifier,
+	// whose audience is the OIDC login client id. The provider's remote JWKS is
+	// shared, so this allocation does no network I/O.
+	verifier := s.Provider.Verifier(&oidc.Config{ClientID: audience})
+	token, err := verifier.Verify(ctx, rawToken)
+	if err != nil {
+		return nil, err
+	}
+
+	data := map[string]interface{}{}
+	if err := token.Claims(&data); err != nil {
+		return nil, fmt.Errorf("failed to parse access token claims: %v", err)
+	}
+
+	username := extractClaim(data, s.Attributes.Username)
+	if username == "" {
+		return nil, fmt.Errorf("username claim %q is empty in access token", s.Attributes.Username)
+	}
+
+	return &CallbackOutput{
+		Username: username,
+		Nickname: extractClaim(data, s.Attributes.Nickname),
+		Phone:    extractClaim(data, s.Attributes.Phone),
+		Email:    extractClaim(data, s.Attributes.Email),
+	}, nil
+}
+
 func extractClaim(data map[string]interface{}, key string) string {
 	if value, ok := data[key]; ok {
 		if strValue, ok := value.(string); ok {
