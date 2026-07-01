@@ -1,6 +1,8 @@
 package sandbox
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -167,7 +169,6 @@ type EgressProxyConfig struct {
 
 // Defaults (mirrors §8.2 / §16.3).
 const (
-	defaultDataDir          = "/var/lib/n9e/sandbox"
 	defaultTimeoutSeconds   = 30
 	defaultMemoryMB         = 256
 	defaultCPUQuota         = "100000 100000"
@@ -194,7 +195,12 @@ func (c *Config) PreCheck() {
 		c.N9eAPI = N9eAPIReadonly
 	}
 	if c.DataDir == "" {
-		c.DataDir = defaultDataDir
+		// Default to an always-writable temp location so skill execution works
+		// out of the box on non-root deployments too (a non-root process cannot
+		// create the FHS /var/lib path). Workspaces are per-run and ephemeral —
+		// NewWorkspace creates sessions/<execID> and Cleanup() removes it — so
+		// temp is the right lifecycle. Operators can pin a fixed path via DataDir.
+		c.DataDir = filepath.Join(os.TempDir(), "n9e-sandbox")
 	}
 	if c.SeccompMode == "" {
 		c.SeccompMode = "enforce"

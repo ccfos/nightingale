@@ -3,6 +3,8 @@ package sandbox
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -66,6 +68,9 @@ func TestConfigPreCheckDefaults(t *testing.T) {
 	c.PreCheck()
 	if c.Engine != "auto" {
 		t.Errorf("Engine default = %q, want auto", c.Engine)
+	}
+	if want := filepath.Join(os.TempDir(), "n9e-sandbox"); c.DataDir != want {
+		t.Errorf("DataDir default = %q, want %q", c.DataDir, want)
 	}
 	if c.DefaultPolicy.TimeoutSeconds != defaultTimeoutSeconds {
 		t.Errorf("default timeout = %d", c.DefaultPolicy.TimeoutSeconds)

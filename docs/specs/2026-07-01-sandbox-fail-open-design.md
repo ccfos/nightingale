@@ -164,6 +164,12 @@ resolveEngine():
 - `pkg/sandbox/sandbox_test.go`（及相关 _test）：新增梯子表驱动用例，更新旧断言。
 - 配置样例（`etc*/config.toml` 或文档）：补 `[Sandbox] RequireIsolation` 说明（可选，随实现附带）。
 
+## 10.1 附:DataDir 默认值改为临时目录(fail-open 的一部分)
+
+排障发现:fail-open 让引擎在 .107 可用了,但 `NewWorkspace()` 在 `DataDir/sessions/<execID>` 建目录时失败——默认 `DataDir=/var/lib/n9e/sandbox`(FHS 路径)在非 root 的 `flashcat` 进程下无法创建(`/var/lib` root 所有),报含糊的"permission denied",且发生在 `Run()` 之前故无审计行、无服务端日志。这与"任何环境都可用"矛盾。
+
+改动:`config.go` 的 `PreCheck()` 把 `DataDir` 空值默认从 `/var/lib/n9e/sandbox` 改为 `filepath.Join(os.TempDir(), "n9e-sandbox")`。理由:临时目录几乎总可写(非 root 部署开箱即用);工作区本就每次执行即用即删(`Workspace.Cleanup()`),temp 生命周期正好匹配。运维仍可用显式 `[Sandbox] DataDir` 固定路径。注意:`/tmp` 若 `noexec` 不影响解释型脚本(execve 的是 `python3` 而非脚本文件),仅自带裸 ELF 的技能会踩,属边缘情况。移除了 `defaultDataDir` 常量(改用 `os.TempDir()` 运行时求值)。测试:`TestConfigPreCheckDefaults` 增断言默认值。
+
 ## 11. 迁移与兼容
 
 - 默认行为变化：原先 fail-closed 的部署升级后将变为 fail-open（无隔离时跑 unsafe）。这是**有意的默认翻转**，通过启动 WARNING 明示。需要维持旧行为的部署设 `RequireIsolation=true`。
