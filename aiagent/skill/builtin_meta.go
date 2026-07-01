@@ -2,7 +2,9 @@ package skill
 
 import (
 	"io/fs"
+	"path"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/ccfos/nightingale/v6/aiagent/skill/embedded"
@@ -36,6 +38,81 @@ func LookupBuiltin(name string) (Frontmatter, bool) {
 	loadBuiltin()
 	fm, ok := builtinByID[name]
 	return fm, ok
+}
+
+// BuiltinInstructions 返回内置 skill 的 SKILL.md 正文（去掉 frontmatter）。
+// 列表页详情用：内置 skill 不进 DB，正文直接从 embed 读取。读取失败返回 ("", false)。
+// 内置 SKILL.md 的 frontmatter 在 loadBuiltin 阶段已校验合法，这里只取 body。
+func BuiltinInstructions(name string) (string, bool) {
+	p := BuiltinEmbedRoot + "/" + name + "/" + skillMDName
+	data, err := fs.ReadFile(embedded.FS, p)
+	if err != nil {
+		return "", false
+	}
+	_, body, _ := ParseMarkdown(string(data))
+	return body, true
+}
+
+// BuiltinFile 描述内置 skill 的一个文件（含 SKILL.md 与子目录附件，
+// 如 reference.md、datasources/mysql.md）。RelPath 相对 skill 目录，可带 "/"。
+type BuiltinFile struct {
+	Skill   string
+	RelPath string
+	Size    int64
+}
+
+var (
+	builtinFilesOnce sync.Once
+	builtinFiles     []BuiltinFile
+)
+
+// ListBuiltinFiles 返回所有内置 skill 的全部文件，按 (skill, relPath) 稳定排序，
+// 进程内缓存一次。切片下标即全局序号——接口层据此给内置文件分配稳定负 id，
+// 让只读详情复用现有的 /ai-skill-file/:fileId 取内容路径（见 router_ai_skill.go）。
+func ListBuiltinFiles() []BuiltinFile {
+	builtinFilesOnce.Do(func() {
+		var list []BuiltinFile
+		for _, fm := range ListBuiltinFrontmatters() {
+			dir := BuiltinEmbedRoot + "/" + fm.Name
+			err := fs.WalkDir(embedded.FS, dir, func(p string, d fs.DirEntry, err error) error {
+				if err != nil || d.IsDir() {
+					return nil
+				}
+				rel := strings.TrimPrefix(p, dir+"/")
+				var size int64
+				if info, ierr := d.Info(); ierr == nil {
+					size = info.Size()
+				}
+				list = append(list, BuiltinFile{Skill: fm.Name, RelPath: rel, Size: size})
+				return nil
+			})
+			if err != nil {
+				logger.Warningf("skill: walk builtin %s files failed: %v", fm.Name, err)
+			}
+		}
+		sort.Slice(list, func(i, j int) bool {
+			if list[i].Skill != list[j].Skill {
+				return list[i].Skill < list[j].Skill
+			}
+			return list[i].RelPath < list[j].RelPath
+		})
+		builtinFiles = list
+	})
+	return builtinFiles
+}
+
+// BuiltinFileContent 读取指定内置 skill 下相对路径文件的内容。relPath 先 Clean
+// 归一化，吃掉 ".." 防越界；未命中返回 ("", false)。
+func BuiltinFileContent(skillName, relPath string) (string, bool) {
+	rel := strings.TrimPrefix(path.Clean("/"+relPath), "/")
+	if rel == "" || rel == "." {
+		return "", false
+	}
+	data, err := fs.ReadFile(embedded.FS, BuiltinEmbedRoot+"/"+skillName+"/"+rel)
+	if err != nil {
+		return "", false
+	}
+	return string(data), true
 }
 
 func loadBuiltin() {

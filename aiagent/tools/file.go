@@ -19,7 +19,7 @@ func init() {
 }
 
 // resolveBasePath 解析基础目录路径，支持 skill 目录和 integrations 目录
-// base 可以是技能名(如 "n9e-create-dashboard")或 "integrations/分类"(如 "integrations/Linux")
+// base 可以是技能名(如 "create-dashboard")或 "integrations/分类"(如 "integrations/Linux")
 func resolveBasePath(deps *aiagent.ToolDeps, base, subPath string) (string, error) {
 	if deps == nil {
 		return "", fmt.Errorf("skills path not configured")

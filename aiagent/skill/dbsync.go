@@ -24,6 +24,14 @@ type DBSkill struct {
 	Metadata      map[string]string
 	AllowedTools  string
 	Files         []DBSkillFile
+
+	// BuiltinTools / MaxIterations are frontmatter-only fields (the ai_skill
+	// table has no column for them). The DB→FS sync leaves them zero because it
+	// materializes the stored SKILL.md file verbatim, not via BuildSkillMD. They
+	// exist for the create/update path, where BuildSkillMD synthesizes a fresh
+	// SKILL.md and must round-trip the agent's tool bindings + iteration cap.
+	BuiltinTools  []string
+	MaxIterations int
 }
 
 // DBSkillFile is a single attached file under a DB skill. Name is the relative
@@ -241,6 +249,8 @@ func BuildSkillMD(s *DBSkill) (string, error) {
 		Compatibility string            `yaml:"compatibility,omitempty"`
 		Metadata      map[string]string `yaml:"metadata,omitempty"`
 		AllowedTools  string            `yaml:"allowed-tools,omitempty"`
+		BuiltinTools  []string          `yaml:"builtin_tools,omitempty"`
+		MaxIterations int               `yaml:"max_iterations,omitempty"`
 	}{
 		Name:          s.Name,
 		Description:   s.Description,
@@ -248,6 +258,8 @@ func BuildSkillMD(s *DBSkill) (string, error) {
 		Compatibility: s.Compatibility,
 		Metadata:      s.Metadata,
 		AllowedTools:  s.AllowedTools,
+		BuiltinTools:  s.BuiltinTools,
+		MaxIterations: s.MaxIterations,
 	}
 	buf, err := yaml.Marshal(fm)
 	if err != nil {

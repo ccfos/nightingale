@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 	"github.com/ccfos/nightingale/v6/storage"
 )
 
@@ -131,11 +132,11 @@ type AgentRequest struct {
 
 // AgentResponse Agent 执行结果
 type AgentResponse struct {
-	Content    string      `json:"content"`         // 最终结果文本
+	Content    string     `json:"content"`         // 最终结果文本
 	Steps      []ToolStep `json:"steps"`           // 执行轨迹
-	Iterations int         `json:"iterations"`      // 迭代次数
-	Success    bool        `json:"success"`         // 是否成功
-	Error      string      `json:"error,omitempty"` // 错误信息
+	Iterations int        `json:"iterations"`      // 迭代次数
+	Success    bool       `json:"success"`         // 是否成功
+	Error      string     `json:"error,omitempty"` // 错误信息
 
 	// contentStreamed（仅包内）：流式模式下正文已逐 token 经 StreamTypeContent
 	// 下发。executeNativeWithDone 据此给 Done chunk 打标，路由层只把 Done.Content
@@ -215,6 +216,17 @@ type ToolDeps struct {
 	// Redis 用于读取主机心跳 (n9e_meta_update_time_*) 和 HostMeta (n9e_meta_*)。
 	// host-health-diagnose skill 的实时态判断（BeatTime / Offset / CpuUtil / MemUtil）从这里来。
 	Redis storage.Redis
+
+	// Sandbox 是 Skill Python/Bash 脚本执行的隔离控制器（pkg/sandbox）。run_skill_script
+	// 工具据此执行某 skill 的入口脚本。nil 或未启用时，工具回报「执行未开启」而非报错。
+	Sandbox *sandbox.Sandbox
+
+	// N9eAPIBaseURL 是 Skill Gateway 回环自调 n9e 自身 API 的基址（如
+	// "http://127.0.0.1:17000"）。空则 Gateway 不启用。
+	N9eAPIBaseURL string
+	// CacheUserToken 把新建的 user token 即时注入 token 缓存（包装
+	// memsto.UserTokenCache.Inject），让 Gateway 刚建的 token 当场可认证。
+	CacheUserToken func(token string, user *models.User)
 }
 
 // BuiltinToolFunc 内置工具处理函数（不依赖 WorkflowContext）

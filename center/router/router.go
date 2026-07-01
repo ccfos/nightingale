@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/llm"
 	"github.com/ccfos/nightingale/v6/aiagent/skill"
+	aitools "github.com/ccfos/nightingale/v6/aiagent/tools"
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
@@ -25,6 +26,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ginx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/sandbox"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
@@ -56,6 +58,11 @@ type Router struct {
 	UserTokenCache    *memsto.UserTokenCacheType
 	Ctx               *ctx.Context
 	LogDir            string
+
+	// Sandbox is the Skill script-execution isolation controller (pkg/sandbox).
+	// Built once at New() from the configured capabilities; nil-safe (a disabled
+	// sandbox simply makes run_skill_script report "execution unavailable").
+	Sandbox *sandbox.Sandbox
 
 	HeartbeatHook         HeartbeatHookFunc
 	streamBus             aiagent.StreamBus
@@ -124,6 +131,10 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// models 包级权威值，供 DB 写入(ai_skill_file) 与归档解压(aiagent/skill) 共用。
 	models.MaxFilesPerSkill = rt.Center.AIAgent.MaxFilesPerSkill
 
+	// Skill 脚本执行的隔离 sandbox：启动期探测宿主能力、选定引擎（或在能力不足/
+	// 非 Linux 时禁用），全程只构建一次。run_skill_script 工具经 ToolDeps.Sandbox 用它。
+	rt.Sandbox = sandbox.New(rt.Center.Sandbox)
+
 	// 内置 skill 的磁盘解压只在进程启动时做一次——之前是在每条 assistant
 	// 消息的 InitSkills 里 destructive re-extract，多 chat 并发时 Step 1 删目录
 	// 和 Step 2 重写之间会被别的请求读到空目录，引发偶发 "file not found"。
@@ -141,6 +152,9 @@ func New(httpConfig httpx.Config, center cconf.Center, alert aconf.Alert, ibex c
 	// re-syncs on the configured cadence. See runAISkillSyncLoop for the
 	// design rationale.
 	go rt.runAISkillSyncLoop(rt.Center.AIAgent.SkillSyncInterval)
+
+	// Reap stale http_fetch(save_to_file=true) temp files (startup sweep + hourly).
+	go aitools.StartFetchTempReaper()
 
 	return rt
 }

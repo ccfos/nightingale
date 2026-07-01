@@ -45,7 +45,7 @@ func init() {
 }
 
 // createAlertSubscribe 落库一条订阅规则。入参 config 是与前端/HTTP API 同构的 AlertSubscribe
-// JSON（n9e-alert-subscribe-copilot skill 文档化了字段形状），直接反序列化进 models.AlertSubscribe，
+// JSON（alert-subscribe-copilot skill 文档化了字段形状），直接反序列化进 models.AlertSubscribe，
 // 由 AlertSubscribe.Add 内部做 Verify(severities 必填、notify_version 分支校验) + FE2DB + 落库。
 // 业务组缺参门同 create_dashboard。
 func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[string]interface{}, params map[string]string) (string, error) {
@@ -59,7 +59,7 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 
 	configJSON := getArgString(args, "config")
 	if configJSON == "" {
-		return "", fmt.Errorf("config is required: a JSON object describing the subscribe (name, severities, tags, notify_version, notify_rule_ids, ...); load the n9e-alert-subscribe-copilot skill for the exact shape")
+		return "", fmt.Errorf("config is required: a JSON object describing the subscribe (name, severities, tags, notify_version, notify_rule_ids, ...); load the alert-subscribe-copilot skill for the exact shape")
 	}
 
 	var sub models.AlertSubscribe
@@ -73,7 +73,7 @@ func createAlertSubscribe(_ context.Context, deps *aiagent.ToolDeps, args map[st
 		groupId = resolveCreationGroupID(args, params)
 	}
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-alert-subscribe-copilot", []string{"busi_group_id"})
+		return "", creationFormInterrupt(deps, user, "alert-subscribe-copilot", []string{"busi_group_id"})
 	}
 	sub.GroupId = groupId
 

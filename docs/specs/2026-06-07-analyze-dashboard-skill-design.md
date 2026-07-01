@@ -1,4 +1,4 @@
-# 分析仪表盘 Skill 设计(n9e-analyze-dashboard)
+# 分析仪表盘 Skill 设计(analyze-dashboard)
 
 日期:2026-06-07 | 状态:已批准(分节评审通过,用户选择直接实现)
 
@@ -19,7 +19,7 @@
 
 ## 2. 架构
 
-新增 builtin 工具 `get_dashboard_data`(取数+统计预筛)+ skill `n9e-analyze-dashboard`(工作流编排)。
+新增 builtin 工具 `get_dashboard_data`(取数+统计预筛)+ skill `analyze-dashboard`(工作流编排)。
 
 ```
 用户 → load_skill → 定位大盘 → get_dashboard_data(id, time_range, vars?, panel_ids?)
@@ -99,7 +99,7 @@
 3. 职责约定:工具已预筛,模型做跨 panel 关联归因、指标语义与业务影响判断、"疑似周期性"复核、query_prometheus 缩窗下钻;
 4. 报告格式:总体结论 → 异常清单(按严重度,带时刻+证据) → 关联分析 → 建议;
 5. 边界:无可疑就明说;截断用 panel_ids 分批;非 prom 面板注明覆盖范围;
-6. 交叉引用:改大盘 → n9e-modify-dashboard;建告警 → n9e-create-alert-rule。
+6. 交叉引用:改大盘 → modify-dashboard;建告警 → create-alert-rule。
 
 ## 5. 错误处理
 
@@ -131,6 +131,6 @@
 | `aiagent/tools/dashboard_analyze.go` | handler:变量解析/查询编排/输出渲染 |
 | `aiagent/tools/dashboard_analyze_stats.go` | 统计特征与检测(纯函数) |
 | `aiagent/tools/dashboard_analyze_*_test.go` | 单测+集成测试 |
-| `aiagent/skill/embedded/builtin/n9e-analyze-dashboard/SKILL.md` | skill |
+| `aiagent/skill/embedded/builtin/analyze-dashboard/SKILL.md` | skill |
 
 复用:summarizeConfigs/varRefRe/stringVal(dashboard_update.go)、parseTimeRange/autoStep(datasource_query.go)、newDashboardTestDeps(dashboard_test.go)。

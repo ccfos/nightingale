@@ -348,7 +348,13 @@ func historyBudgetFromContextLength(contextLength *int) int {
 // buildToolDeps 组装内置工具依赖（chat 主流程与 resume 重放共用同一构造）。
 func (rt *Router) buildToolDeps() *aiagent.ToolDeps {
 	return &aiagent.ToolDeps{
-		DBCtx:         rt.Ctx,
+		DBCtx: rt.Ctx,
+		// SkillsPath lets skill-authoring tools (create_skill / update_skill)
+		// materialize a just-saved skill to disk immediately. In the main chat
+		// flow InitSkills overwrites this with the absolute path; setting it here
+		// also covers the resume/replay path (confirm leg of a write proposal),
+		// which builds ToolDeps without going through InitSkills.
+		SkillsPath:    rt.Center.AIAgent.SkillsPath,
 		GetPromClient: func(dsId int64) prom.API { return rt.PromClients.GetCli(dsId) },
 		GetSQLDatasource: func(dsType string, dsId int64) (datasource.Datasource, bool) {
 			return dscache.DsCache.Get(dsType, dsId)
@@ -357,5 +363,16 @@ func (rt *Router) buildToolDeps() *aiagent.ToolDeps {
 		GetAlertEvalLogs:       rt.getAlertEvalLogs,
 		GetEventProcessingLogs: rt.getEventLogs,
 		Redis:                  rt.Redis,
+		Sandbox:                rt.Sandbox,
+		// Skill Gateway HTTP passthrough: loopback base for n9e's own API + a hook
+		// to inject a freshly-created user token into the live auth cache so it
+		// works immediately (skips the ~9s sync). 127.0.0.1 reaches our own
+		// listener (bound 0.0.0.0); the sandbox can't reach it directly (SSRF floor).
+		N9eAPIBaseURL: fmt.Sprintf("http://127.0.0.1:%d", rt.HTTP.Port),
+		CacheUserToken: func(token string, user *models.User) {
+			if rt.UserTokenCache != nil {
+				rt.UserTokenCache.Inject(token, user)
+			}
+		},
 	}
 }

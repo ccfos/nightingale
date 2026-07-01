@@ -359,7 +359,7 @@ func getAlertRuleDetail(_ context.Context, deps *aiagent.ToolDeps, args map[stri
 //
 //  2. Generic path — caller supplies cate (e.g. "mysql", "loki", "host")
 //     and a pre-built rule_config_json string. The LLM is expected to
-//     read skill/n9e-create-alert-rule/datasources/<cate>.md via the
+//     read skill/create-alert-rule/datasources/<cate>.md via the
 //     read_file builtin tool to get the exact structure for that type,
 //     assemble it, and pass it through. This keeps the tool small while
 //     covering every datasource type the platform supports.
@@ -380,7 +380,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 	// 告警规则表单同时带出数据源字段（页面默认是提示不是承诺，让用户确认或改选）。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
+		return "", creationFormInterrupt(deps, user, "create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	name := getArgString(args, "name")
@@ -446,7 +446,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		// FE2DB can re-marshal it consistently.
 		var rc map[string]interface{}
 		if err := json.Unmarshal([]byte(rawRuleConfig), &rc); err != nil {
-			return "", fmt.Errorf("rule_config_json must be a valid JSON object (got parse error: %v). Re-check the structure against skill/n9e-create-alert-rule/datasources/%s.md", err, cate)
+			return "", fmt.Errorf("rule_config_json must be a valid JSON object (got parse error: %v). Re-check the structure against skill/create-alert-rule/datasources/%s.md", err, cate)
 		}
 		// Normalize query interval fields. The frontend expects
 		// queries[i].interval to be a total number of seconds and does
@@ -465,7 +465,7 @@ func createAlertRule(_ context.Context, deps *aiagent.ToolDeps, args map[string]
 		if cate != "prometheus" {
 			return "", fmt.Errorf(
 				"for cate=%s, rule_config_json is required. "+
-					"First call read_file(base=\"n9e-create-alert-rule\", path=\"datasources/%s.md\") "+
+					"First call read_file(base=\"create-alert-rule\", path=\"datasources/%s.md\") "+
 					"to fetch the exact rule_config structure, then pass it as rule_config_json",
 				cate, cate)
 		}
@@ -1331,7 +1331,7 @@ func importAlertRuleTemplate(_ context.Context, deps *aiagent.ToolDeps, args map
 	// 缺参门：同 create_alert_rule。
 	groupId := resolveCreationGroupID(args, params)
 	if groupId == 0 {
-		return "", creationFormInterrupt(deps, user, "n9e-create-alert-rule", []string{"busi_group_id", "datasource_id"})
+		return "", creationFormInterrupt(deps, user, "create-alert-rule", []string{"busi_group_id", "datasource_id"})
 	}
 
 	component := strings.TrimSpace(getArgString(args, "component"))

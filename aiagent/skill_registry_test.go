@@ -16,7 +16,7 @@ func TestLoadMetadata_HandlesBlockScalarDescription(t *testing.T) {
 name: mock-skill
 description: |
   **批量导入 YAML 文件**到夜莺（一次性建一组规则）。
-  ⚠️ 不要用这个 skill 做单条创建——用 n9e-create-alert-rule。
+  ⚠️ 不要用这个 skill 做单条创建——用 create-alert-rule。
   触发：导入 / import / 批量 / URL。
 builtin_tools:
   - http_fetch

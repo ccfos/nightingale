@@ -15,6 +15,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/aiagent"
 	"github.com/ccfos/nightingale/v6/aiagent/tools/defs"
+	"github.com/toolkits/pkg/logger"
 )
 
 func init() {
@@ -201,6 +202,72 @@ func ReadFetchTempFile(path string) ([]byte, error) {
 		return nil, fmt.Errorf("payload_file exceeds %d bytes", httpFetchHardMaxBytes)
 	}
 	return raw, nil
+}
+
+const (
+	// fetchTempTTL bounds how long an http_fetch(save_to_file=true) temp file may
+	// sit in os.TempDir() before the reaper removes it. Nothing deletes these
+	// after use, so without a reaper they leak forever. The TTL must comfortably
+	// outlive a fetch→preview→import chain (seconds to minutes); a reaped file
+	// just makes the downstream tool re-fetch. 6h covers a user who steps away
+	// mid-task without letting the files pile up for days.
+	fetchTempTTL = 6 * time.Hour
+	// fetchTempSweepInterval is how often the reaper rescans for stale files.
+	fetchTempSweepInterval = time.Hour
+)
+
+// SweepStaleFetchTempFiles removes http_fetch temp files — basename prefix
+// HTTPFetchTempFilePrefix, directly under os.TempDir() — whose mtime is older
+// than maxAge. Best-effort: unreadable entries and failed removals are logged
+// and skipped, never fatal. Returns the count removed. Only files OLDER than
+// maxAge are touched, so it can never race an in-flight http_fetch (which writes
+// + closes synchronously before returning a fresh path).
+func SweepStaleFetchTempFiles(maxAge time.Duration) int {
+	dir := os.TempDir()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		logger.Warningf("aiagent: sweep fetch temp files: read %s failed: %v", dir, err)
+		return 0
+	}
+	cutoff := time.Now().Add(-maxAge)
+	removed := 0
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasPrefix(e.Name(), HTTPFetchTempFilePrefix) {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue // raced with another remover; skip
+		}
+		if info.ModTime().After(cutoff) {
+			continue // still fresh — may belong to an in-flight chain
+		}
+		if err := os.Remove(filepath.Join(dir, e.Name())); err != nil {
+			if !os.IsNotExist(err) {
+				logger.Warningf("aiagent: sweep fetch temp file %s failed: %v", e.Name(), err)
+			}
+			continue
+		}
+		removed++
+	}
+	return removed
+}
+
+// StartFetchTempReaper sweeps stale http_fetch temp files once immediately
+// (clearing anything leaked by a previous process run) and then re-sweeps every
+// fetchTempSweepInterval for the lifetime of the process. Intended to be started
+// once at center startup: `go tools.StartFetchTempReaper()`. It never returns.
+func StartFetchTempReaper() {
+	if n := SweepStaleFetchTempFiles(fetchTempTTL); n > 0 {
+		logger.Infof("aiagent: reaped %d stale http_fetch temp file(s) at startup", n)
+	}
+	ticker := time.NewTicker(fetchTempSweepInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		if n := SweepStaleFetchTempFiles(fetchTempTTL); n > 0 {
+			logger.Infof("aiagent: reaped %d stale http_fetch temp file(s)", n)
+		}
+	}
 }
 
 func validateFetchURL(rawURL string) error {
