@@ -181,6 +181,18 @@ resolveEngine():
 
 安全性:unsafe-exec 本就无隔离、以 n9e 用户身份跑、可直连 DB/读配置,给网关 socket 不扩大有效权限;用户 token 仍只在宿主侧、绝不进沙箱(§12.1),网关照旧强制只读+RBAC+deny-paths。测试:`gatewayEnvValue` 两分支 + `controlChannels{bindMounts:false}.mounts()==nil`。
 
+## 10.3 附:Skill Gateway 支持只读数据查询(POST 白名单)
+
+技能要查指标/日志数据,但 n9e 的查询端点全是 **POST**(带查询体),而网关是 **GET-only**;且要查得先拿 `datasource_id`,而列数据源(`/datasource*`)被 deny。两个卡点都堵死了数据查询。
+
+改动(安全边界扩展,`aiagent/skill_gateway/`):
+- **POST 白名单** `postAllowN9eAPIPaths`(policy.go):`/ds-query`、`/query-range-batch`、`/query-instant-batch`、`/logs-query`、`/log-query`、`/log-query-batch`。POST 只对这些放行,其余 POST/PUT/DELETE 一律拒。它们是只读数据查询(handler 里 `CheckDsPerm` 按用户 RBAC 校验),返回数据不返回配置/密钥。
+- **wire 协议加 `body`**(json.RawMessage),`proxy` 对 POST 转发 body + `Content-Type: application/json`;请求体上限 `maxReqBodyBytes=256KiB`。
+- **GET allow-exception** `getAllowExceptions`:`/datasource/brief`(handler 已 `RedactSecrets`,是 UI 下拉用的脱敏数据源列表)在 `/datasource` deny 前缀下重新放行,供技能发现 `datasource_id`;其余 `/datasource*` 仍 deny。
+- `checkAllowed` 重写成 method switch(GET 走 deny-list + exception;POST 只允白名单;其它拒),deny-list 对 GET/POST 都兜底。
+
+安全:不扩权——查询以用户身份、经 RBAC,只读数据;brief 已脱敏;白名单是显式正向(非 GET 的 deny 模型)。测试:`TestPostQueryAllowlistAndBrief`(白名单+brief 放行+其余 datasource 仍 deny)、`TestProxyPostBodyForwarded`(POST body+Content-Type 转发)、`TestPostBodyTooLarge`。文档:`skill-creator/api/data-query.md`(查询端点+请求体 BatchQueryForm/BatchInstantForm/QueryParam+响应形状,`/ds-query` 的 per-cate 查询体指向 `create-alert-rule/datasources/<cate>.md`)+ `api/datasources.md`(`/datasource/brief` 发现)。
+
 ## 11. 迁移与兼容
 
 - 默认行为变化：原先 fail-closed 的部署升级后将变为 fail-open（无隔离时跑 unsafe）。这是**有意的默认翻转**，通过启动 WARNING 明示。需要维持旧行为的部署设 `RequireIsolation=true`。

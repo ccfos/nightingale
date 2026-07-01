@@ -2,6 +2,7 @@ package skillgateway
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,6 +87,69 @@ func TestCheckAllowed(t *testing.T) {
 // TestSafeMethodLabel pins the metric-cardinality guard: known verbs (and the
 // rate-limited "-" marker) pass through, any skill-supplied junk collapses to
 // "other" so a script can't mint unbounded label values via req.Method.
+func TestPostQueryAllowlistAndBrief(t *testing.T) {
+	g := testGateway("http://x", nil)
+	// POST is allowed ONLY for the read-only data-query allowlist.
+	for _, p := range []string{"/ds-query", "/query-range-batch", "/query-instant-batch", "/logs-query", "/log-query", "/log-query-batch"} {
+		if err := g.checkAllowed("POST", p); err != nil {
+			t.Errorf("POST %s should be allowed (data-query): %v", p, err)
+		}
+	}
+	// POST to anything else is refused (incl. /datasource/query which is also deny-listed).
+	for _, p := range []string{"/alert-rules", "/datasource/query", "/targets", "/boards"} {
+		if err := g.checkAllowed("POST", p); err == nil {
+			t.Errorf("POST %s must be denied (not a query endpoint)", p)
+		}
+	}
+	// GET /datasource/brief is re-permitted despite the broad /datasource deny prefix...
+	if err := g.checkAllowed("GET", "/datasource/brief"); err != nil {
+		t.Errorf("GET /datasource/brief should be allowed (secret-redacted): %v", err)
+	}
+	// ...but other /datasource* GETs stay blocked.
+	for _, p := range []string{"/datasource/1", "/datasources", "/datasource/query"} {
+		if err := g.checkAllowed("GET", p); err == nil {
+			t.Errorf("GET %s must stay blacklisted", p)
+		}
+	}
+}
+
+func TestProxyPostBodyForwarded(t *testing.T) {
+	var gotMethod, gotCT, gotBody string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotCT = r.Header.Get("Content-Type")
+		b, _ := io.ReadAll(r.Body)
+		gotBody = string(b)
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(`{"dat":[1,2,3],"err":""}`))
+	}))
+	defer upstream.Close()
+
+	g := testGateway(upstream.URL, nil)
+	resp := g.handleRequest([]byte(`{"method":"POST","path":"/ds-query","body":{"cate":"prometheus","datasource_id":1,"query":[{"promql":"up"}]}}`))
+	if !resp.OK || resp.Status != 200 {
+		t.Fatalf("POST round-trip failed: %+v", resp)
+	}
+	if gotMethod != "POST" {
+		t.Errorf("upstream method = %q, want POST", gotMethod)
+	}
+	if gotCT != "application/json" {
+		t.Errorf("content-type = %q, want application/json", gotCT)
+	}
+	if !strings.Contains(gotBody, `"datasource_id":1`) || !strings.Contains(gotBody, `"promql":"up"`) {
+		t.Errorf("upstream body not forwarded correctly: %q", gotBody)
+	}
+}
+
+func TestPostBodyTooLarge(t *testing.T) {
+	g := testGateway("http://unused", nil)
+	big := strings.Repeat("x", maxReqBodyBytes+1)
+	resp := g.handleRequest([]byte(`{"method":"POST","path":"/ds-query","body":{"q":"` + big + `"}}`))
+	if resp.OK || !strings.Contains(resp.Error, "too large") {
+		t.Fatalf("oversized body should be rejected, got error=%q ok=%v", resp.Error, resp.OK)
+	}
+}
+
 func TestSafeMethodLabel(t *testing.T) {
 	for _, m := range []string{"GET", "POST", "PUT", "DELETE", "PATCH", "-"} {
 		if got := safeMethodLabel(m); got != m {

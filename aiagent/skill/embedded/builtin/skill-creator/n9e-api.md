@@ -20,8 +20,11 @@ real `/api/n9e/...` request from their browser dev tools rather than guessing.
 - Socket path is in env var `N9E_SKILL_GATEWAY`; talk newline-delimited JSON over it.
 - Request: `{"method":"GET","path":"/alert-his-events/list","query":{"hours":"24","limit":"100"}}\n`
   - `path` is relative to `/api/n9e` (with or without the prefix is fine).
-  - **GET only** — writes/deletes are rejected.
-  - **All `query` values must be STRINGS**: `{"limit":"100","p":"1"}`, not `100`.
+  - **Mostly GET (reads).** **POST** is permitted **only** for the read-only data-query
+    endpoints (`api/data-query.md`), where the query goes in a `body` (a JSON object).
+    All other writes/deletes are rejected.
+  - **All `query` values must be STRINGS**: `{"limit":"100","p":"1"}`, not `100`. (This applies
+    to the `query` map; inside a POST `body` use native JSON types.)
 - Response: `{"ok":true,"status":200,"data":<n9e body>}` or `{"ok":false,"status":<code>,"error":"..."}`.
 
 ## Response envelope + the two list shapes
@@ -72,6 +75,8 @@ Events, targets, busi-groups and user-groups are flat (filter with `bgid`/`gids`
 | Alert subscriptions | `api/alert-subscribes.md` | `/busi-groups/alert-subscribes`, `/busi-group/:id/alert-subscribes` |
 | Business groups | `api/busi-groups.md` | `/busi-groups`, `/busi-group/:id` |
 | Teams (user groups) | `api/user-groups.md` | `/user-groups`, `/user-group/:id` |
+| **Data query** (metrics & logs) | `api/data-query.md` | **POST** `/ds-query`, `/query-range-batch`, `/query-instant-batch`, `/logs-query` … |
+| Datasource discovery | `api/datasources.md` | `/datasource/brief` (to get a `datasource_id` before querying) |
 
 Other read endpoints exist under `/api/n9e` (recording rules `/busi-groups/recording-rules`,
 metric views `/metric-views`, builtin metrics `/builtin-metrics`, notify rules `/notify-rules`,
@@ -89,4 +94,5 @@ its exact path/params/response with the user before writing to it.
 Datasource configs `/datasource*`, notify secrets `/notify-channel*` `/notify-config`,
 config-center `/config`, users/tokens `/users` `/user/*` `/self/token` `/user-token`,
 SSO/IdP `/sso` `/ldap` `/oidc` `/oauth` `/cas`, datasource proxy `/proxy/*`, `/webhook*`,
-`/password*`, and **all non-GET methods**. These carry secrets or mutate state.
+`/password*`, and every non-GET method **except the read-only data-query POST allowlist**
+(`api/data-query.md`). These carry secrets or mutate state.
