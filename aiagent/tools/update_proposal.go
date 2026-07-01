@@ -40,13 +40,13 @@ import (
 //      target's current state still matches the baseline captured at propose
 //      time (so a concurrent edit can't be silently clobbered).
 //
-// Storage: proposals live in Redis (SET with a short TTL, consumed via atomic
-// GETDEL) so a propose served by one center instance can be confirmed on
-// another — every center shares the same Redis, so multi-instance deployments
-// behind a round-robin load balancer work. Redis EX enforces the TTL; the
-// atomic GETDEL makes a proposal_id single-use even under concurrent confirms.
-// When no Redis client is wired (CLI / unit tests / single-instance dev), it
-// falls back to a process-local TTL-bounded map.
+// Storage: proposals live in Redis (SET with a short TTL, consumed via an
+// atomic get-and-delete) so a propose served by one center instance can be
+// confirmed on another — every center shares the same Redis, so multi-instance
+// deployments behind a round-robin load balancer work. Redis EX enforces the
+// TTL; the atomic get-and-delete makes a proposal_id single-use even under
+// concurrent confirms. When no Redis client is wired (CLI / unit tests /
+// single-instance dev), it falls back to a process-local TTL-bounded map.
 // ============================================================================
 
 // proposalTTL bounds how long a generated proposal stays confirmable. Kept short
@@ -58,6 +58,21 @@ const proposalTTL = 30 * time.Minute
 const proposalKeyPrefix = "n9e:ai:update_proposal:"
 
 func proposalKey(id string) string { return proposalKeyPrefix + id }
+
+// getDelScript atomically returns and deletes a key — the Redis-2.6-compatible
+// equivalent of the GETDEL command. GETDEL only exists on Redis 6.2+, but plenty
+// of deployments still run Redis 5.x (and some Redis-compatible servers never
+// added it), where GETDEL fails as "unknown command". That failure used to be
+// misreported as "proposal already confirmed or expired", permanently breaking
+// every two-phase confirm on those servers. EVAL has shipped since Redis 2.6, so
+// running GET+DEL inside a script keeps the single-use atomicity everywhere.
+var getDelScript = redis.NewScript(`
+local v = redis.call('GET', KEYS[1])
+if v then
+	redis.call('DEL', KEYS[1])
+end
+return v
+`)
 
 // updateProposal is a pending, not-yet-applied update_* change set.
 type updateProposal struct {
@@ -125,20 +140,22 @@ func (s *proposalStore) peek(ctx context.Context, rds storage.Redis, id string) 
 
 // take returns and removes the proposal for id, or nil if it's missing/expired.
 // Consuming on read makes a proposal_id single-use: a confirm can't be replayed.
-// With Redis the read+delete is one atomic GETDEL, so two concurrent confirms
-// can't both succeed.
+// With Redis the read+delete runs in one atomic Lua script (getDelScript), so
+// two concurrent confirms can't both succeed.
 func (s *proposalStore) take(ctx context.Context, rds storage.Redis, id string) *updateProposal {
 	if rds != nil {
-		body, err := rds.GetDel(ctx, proposalKey(id)).Bytes()
+		// EVAL returns a generic *redis.Cmd; a missing key makes the script return
+		// nil, surfaced as redis.Nil. Text() decodes the bulk-string reply.
+		body, err := getDelScript.Run(ctx, rds, []string{proposalKey(id)}).Text()
 		if err != nil {
 			// redis.Nil = missing/expired (the common "regenerate" path); any
 			// other error is infrastructure trouble worth surfacing in logs.
 			if !errors.Is(err, redis.Nil) {
-				logger.Warningf("update proposal: redis GETDEL %q failed: %v", id, err)
+				logger.Warningf("update proposal: redis get-and-delete %q failed: %v", id, err)
 			}
 			return nil
 		}
-		return decodeProposal(id, body)
+		return decodeProposal(id, []byte(body))
 	}
 
 	s.mu.Lock()
