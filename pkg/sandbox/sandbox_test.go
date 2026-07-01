@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -217,14 +218,38 @@ func TestUnsafeEngineCleanEnv(t *testing.T) {
 	}
 }
 
-func TestSandboxDisabledOnNonDevExplicitUnsafe(t *testing.T) {
-	s := New(Config{Disabled: false, Engine: "unsafe", DevMode: false, DataDir: t.TempDir()})
-	if s.Enabled() {
-		t.Fatal("engine=unsafe without dev_mode must be disabled")
+func TestSandboxExplicitUnsafeFailOpen(t *testing.T) {
+	// fail-open default: explicit unsafe runs without dev_mode.
+	s := New(Config{Engine: "unsafe", DataDir: t.TempDir()})
+	if !s.Enabled() || s.EngineName() != EngineUnsafe {
+		t.Fatalf("explicit unsafe should be enabled by default (fail-open): enabled=%v engine=%q reason=%s",
+			s.Enabled(), s.EngineName(), s.DisabledReason())
 	}
-	_, err := s.Run(context.Background(), ExecSpec{Command: []string{"true"}})
-	if !IsDisabled(err) {
+	// RequireIsolation is the safety ceiling: it refuses the unsafe floor even
+	// when unsafe is requested explicitly.
+	s2 := New(Config{Engine: "unsafe", RequireIsolation: true, DataDir: t.TempDir()})
+	if s2.Enabled() {
+		t.Fatal("RequireIsolation=true must refuse explicit unsafe")
+	}
+	if _, err := s2.Run(context.Background(), ExecSpec{Command: []string{"true"}}); !IsDisabled(err) {
 		t.Fatalf("expected DisabledError, got %v", err)
+	}
+}
+
+func TestSandboxAutoFailOpenToUnsafe(t *testing.T) {
+	// On a host with no usable isolation engine (darwin, or linux without a
+	// bwrap+rootfs), auto degrades to unsafe-exec by default so scripts still run.
+	s := New(Config{Engine: "auto", DataDir: t.TempDir()})
+	if !s.Enabled() || s.EngineName() != EngineUnsafe {
+		t.Fatalf("auto should fail-open to unsafe on a no-isolation host: enabled=%v engine=%q",
+			s.Enabled(), s.EngineName())
+	}
+	if s.Tier() != TierUnsafe {
+		t.Errorf("tier=%v, want unsafe", s.Tier())
+	}
+	// The same host with RequireIsolation refuses to run.
+	if New(Config{Engine: "auto", RequireIsolation: true, DataDir: t.TempDir()}).Enabled() {
+		t.Fatal("RequireIsolation=true must disable when only unsafe is available")
 	}
 }
 
@@ -253,5 +278,88 @@ func TestSandboxRunUnsafeDevEndToEnd(t *testing.T) {
 	}
 	if strings.TrimSpace(string(res.Stdout)) != "ok" || res.Engine != EngineUnsafe {
 		t.Fatalf("unexpected result: stdout=%q engine=%q", res.Stdout, res.Engine)
+	}
+}
+
+// fakeEngine is a no-op Engine used to drive resolveEngine's ladder/policy
+// deterministically, independent of host capabilities and real engine deps.
+type fakeEngine struct{ name string }
+
+func (f fakeEngine) Name() string      { return f.name }
+func (f fakeEngine) Caps() EngineCaps  { return EngineCaps{} }
+func (f fakeEngine) Run(context.Context, ExecSpec) (ExecResult, error) {
+	return ExecResult{Engine: f.name}, nil
+}
+
+// swapEngineRegistry replaces the global registry with fakes for the four
+// ladder engines: a fake succeeds iff feasible[name] is true. Restored on
+// cleanup. White-box: only valid inside package sandbox tests.
+func swapEngineRegistry(t *testing.T, feasible map[string]bool) {
+	t.Helper()
+	saved := engineRegistry
+	t.Cleanup(func() { engineRegistry = saved })
+	engineRegistry = map[string]engineFactory{}
+	for _, name := range strengthOrder {
+		n := name
+		ok := feasible[n]
+		engineRegistry[n] = func(cfg Config, caps Capabilities) (Engine, error) {
+			if ok {
+				return fakeEngine{name: n}, nil
+			}
+			return nil, fmt.Errorf("fake %s infeasible", n)
+		}
+	}
+}
+
+func TestResolveEngineLadder(t *testing.T) {
+	cases := []struct {
+		name       string
+		engine     string // cfg.Engine
+		requireIso bool
+		feasible   map[string]bool
+		wantEngine string // "" means disabled
+		wantTier   Tier
+	}{
+		{"auto-picks-bwrap", "auto", false, map[string]bool{EngineBwrap: true, EngineUnsafe: true}, EngineBwrap, TierBubblewrap},
+		{"auto-no-cgroupv2-still-bwrap", "", false, map[string]bool{EngineBwrap: true, EngineUnsafe: true}, EngineBwrap, TierBubblewrap},
+		{"auto-picks-strongest-runsc", "auto", false, map[string]bool{EngineRunsc: true, EngineBwrap: true, EngineUnsafe: true}, EngineRunsc, TierStrong},
+		{"auto-confined-when-bwrap-infeasible", "auto", false, map[string]bool{EngineConfined: true, EngineUnsafe: true}, EngineConfined, TierConfined},
+		{"auto-failopen-unsafe", "auto", false, map[string]bool{EngineUnsafe: true}, EngineUnsafe, TierUnsafe},
+		{"auto-requireiso-disabled", "auto", true, map[string]bool{EngineUnsafe: true}, "", TierDisabled},
+		{"explicit-bwrap-degrades-unsafe", "bubblewrap", false, map[string]bool{EngineUnsafe: true}, EngineUnsafe, TierUnsafe},
+		{"explicit-bwrap-requireiso-disabled", "bubblewrap", true, map[string]bool{EngineUnsafe: true}, "", TierDisabled},
+		{"explicit-unsafe-enabled", "unsafe", false, map[string]bool{EngineUnsafe: true}, EngineUnsafe, TierUnsafe},
+		{"explicit-unsafe-requireiso-disabled", "unsafe", true, map[string]bool{EngineUnsafe: true}, "", TierDisabled},
+		{"nothing-feasible-disabled", "auto", false, map[string]bool{}, "", TierDisabled},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			swapEngineRegistry(t, tc.feasible)
+			s := &Sandbox{cfg: Config{Engine: tc.engine, RequireIsolation: tc.requireIso}, caps: Capabilities{OS: "linux"}}
+			s.tier, s.tierReason = selectTier(s.cfg, s.caps)
+			s.resolveEngine()
+
+			if tc.wantEngine == "" {
+				if s.Enabled() {
+					t.Fatalf("want disabled, got engine=%q", s.EngineName())
+				}
+				if s.DisabledReason() == "" {
+					t.Error("disabled but DisabledReason is empty")
+				}
+				if s.Tier() != TierDisabled {
+					t.Errorf("tier=%v, want disabled", s.Tier())
+				}
+				return
+			}
+			if !s.Enabled() {
+				t.Fatalf("want engine=%q, got disabled: %s", tc.wantEngine, s.DisabledReason())
+			}
+			if s.EngineName() != tc.wantEngine {
+				t.Errorf("engine=%q, want %q", s.EngineName(), tc.wantEngine)
+			}
+			if s.Tier() != tc.wantTier {
+				t.Errorf("tier=%v, want %v", s.Tier(), tc.wantTier)
+			}
+		})
 	}
 }

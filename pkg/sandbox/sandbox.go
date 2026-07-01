@@ -22,7 +22,11 @@ type Sandbox struct {
 
 	engine Engine // nil when disabled
 	reason string // why disabled (when engine == nil)
-	adm    *admission
+	// unsafeReason records why no stronger engine was available, set when the
+	// selected engine is the unsafe-exec floor. Surfaced in the startup WARNING
+	// so operators see what to install for real isolation.
+	unsafeReason string
+	adm          *admission
 }
 
 // New probes the host, selects the engine, and returns a ready controller. It
@@ -69,74 +73,112 @@ func New(cfg Config) *Sandbox {
 	return s
 }
 
-// resolveEngine picks the backend: explicit engine name, or auto via the tier
-// table, with a dev-only unsafe fallback. It never lowers isolation silently —
-// the only fallback to unsafe requires dev_mode and logs loudly.
+// resolveEngine walks a strength-ordered feasibility ladder and selects the
+// first engine this host can actually build (fail-open + max-isolation ladder,
+// see spec 2026-07-01-sandbox-fail-open). unsafe-exec is the universal floor so
+// skill scripts stay runnable on any host; RequireIsolation=true refuses that
+// floor (fail-closed) for security-sensitive deployments. It never lowers
+// isolation silently — every degradation is recorded and logged loudly.
 func (s *Sandbox) resolveEngine() {
 	cfg := s.cfg
 
-	var desired string
+	// Candidate list, strongest first. auto walks the full ladder; an explicit
+	// engine forces that one, then falls through to the unsafe-exec floor.
+	var candidates []string
 	if cfg.Engine == "" || strings.EqualFold(cfg.Engine, "auto") {
-		desired = tierEngineName(s.tier) // "" when tier is disabled
+		candidates = strengthOrder
 	} else {
 		name, ok := configEngineToName(cfg.Engine)
 		if !ok {
 			s.disable(fmt.Sprintf("unknown sandbox.engine %q (want auto|bubblewrap|confined|unsafe)", cfg.Engine))
 			return
 		}
-		desired = name
+		candidates = []string{name}
+		if name != EngineUnsafe {
+			candidates = append(candidates, EngineUnsafe) // degradation floor
+		}
 	}
 
-	// unsafe-exec has no isolation; only allowed in dev.
-	if desired == EngineUnsafe && !cfg.DevMode {
-		s.disable("engine=unsafe requires dev_mode=true (unsafe-exec provides NO isolation; dev only)")
+	var lastReason string
+	for _, name := range candidates {
+		if name == EngineUnsafe {
+			// The no-isolation floor. RequireIsolation refuses it outright.
+			if cfg.RequireIsolation {
+				reason := "RequireIsolation=true and no isolation-capable engine is available on this host"
+				if lastReason != "" {
+					reason += " (" + lastReason + ")"
+				}
+				s.disable(reason)
+				return
+			}
+			if f, ok := lookupEngine(EngineUnsafe); ok {
+				if eng, err := f(cfg, s.caps); err == nil {
+					s.engine = eng
+					s.tier = tierForEngine(EngineUnsafe)
+					s.unsafeReason = lastReason
+					return
+				} else {
+					lastReason = fmt.Sprintf("unsafe-exec unavailable: %v", err)
+				}
+			} else {
+				lastReason = "unsafe-exec engine not compiled into this build"
+			}
+			break
+		}
+
+		f, ok := lookupEngine(name)
+		if !ok {
+			// Not compiled in (e.g. runsc/nsjail in a default build). Skip; only
+			// note it so an explicit request has an actionable reason.
+			lastReason = fmt.Sprintf("engine %q not compiled into this build", name)
+			continue
+		}
+		eng, err := f(cfg, s.caps)
+		if err != nil {
+			lastReason = fmt.Sprintf("engine %q not usable on this host: %v", name, err)
+			logger.Warningf("sandbox: %s", lastReason)
+			continue
+		}
+		s.engine = eng
+		s.tier = tierForEngine(name)
 		return
 	}
 
-	// Build the desired engine if it is compiled in and usable on this host.
-	if desired != "" {
-		if f, ok := lookupEngine(desired); ok {
-			if eng, err := f(cfg, s.caps); err == nil {
-				s.engine = eng
-				return
-			} else {
-				logger.Warningf("sandbox: engine %q not usable on this host: %v", desired, err)
-			}
-		} else {
-			logger.Warningf("sandbox: engine %q is not compiled into this build", desired)
-		}
+	// Fell off the ladder with no engine (unsafe refused or unbuildable).
+	if lastReason == "" {
+		lastReason = s.tierReason
 	}
-
-	// Dev fallback: unsafe-exec, loudly, never in production.
-	if cfg.DevMode {
-		if f, ok := lookupEngine(EngineUnsafe); ok {
-			if eng, err := f(cfg, s.caps); err == nil {
-				logger.Warningf("sandbox: DEGRADED to unsafe-exec (NO ISOLATION) because dev_mode=true and engine %q is unavailable — DO NOT use in production", strOrAuto(desired))
-				s.engine = eng
-				return
-			}
-		}
-	}
-
-	s.disable(s.tierReason)
+	s.disable(lastReason)
 }
 
 func (s *Sandbox) disable(reason string) {
 	s.engine = nil
 	s.reason = reason
+	s.tier = TierDisabled
 }
 
 func (s *Sandbox) logStartup() {
 	for _, n := range s.caps.Notes {
 		logger.Infof("sandbox probe: %s", n)
 	}
-	if s.engine == nil {
+	switch {
+	case s.engine == nil:
 		logger.Warningf("sandbox: SKILL EXECUTION DISABLED — %s (tier=%s, os=%s, kernel=%s)",
 			s.reason, s.tier, s.caps.OS, s.caps.KernelVersion)
 		return
+	case s.engine.Name() == EngineUnsafe:
+		reason := s.unsafeReason
+		if reason == "" {
+			reason = "no isolation-capable engine available on this host"
+		}
+		logger.Warningf("sandbox: SKILL EXECUTION RUNNING WITHOUT ISOLATION (unsafe-exec) — "+
+			"install bubblewrap + a python-base rootfs for real isolation, or set "+
+			"Sandbox.RequireIsolation=true to refuse. reason: %s (tier=%s, os=%s, kernel=%s)",
+			reason, s.tier, s.caps.OS, s.caps.KernelVersion)
+	default:
+		logger.Infof("sandbox: ready engine=%s tier=%s os=%s kernel=%s caps=%+v",
+			s.engine.Name(), s.tier, s.caps.OS, s.caps.KernelVersion, s.engine.Caps())
 	}
-	logger.Infof("sandbox: ready engine=%s tier=%s os=%s kernel=%s caps=%+v",
-		s.engine.Name(), s.tier, s.caps.OS, s.caps.KernelVersion, s.engine.Caps())
 
 	switch strings.ToLower(strings.TrimSpace(s.cfg.Egress)) {
 	case EgressOff, EgressOpen, EgressAllowlist:
@@ -245,13 +287,6 @@ func killReasonLabel(killedBy string) string {
 		return killedBy[:i]
 	}
 	return killedBy
-}
-
-func strOrAuto(s string) string {
-	if s == "" {
-		return "auto/none"
-	}
-	return s
 }
 
 // Preflight probes the host and returns a human-readable self-check report
