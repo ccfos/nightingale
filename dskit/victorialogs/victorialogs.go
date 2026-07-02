@@ -57,9 +57,23 @@ type PrometheusItem struct {
 
 // HitsResult hits 查询响应
 type HitsResult struct {
-	Hits []struct {
-		Total int64 `json:"total"`
-	}
+	Hits []HitResult `json:"hits"`
+}
+
+type HitResult struct {
+	Total      int64             `json:"total"`
+	Timestamps []interface{}     `json:"timestamps"`
+	Values     []interface{}     `json:"values"`
+	Fields     map[string]string `json:"fields"`
+}
+
+type streamValuesResponse struct {
+	Values []StreamFieldValue `json:"values"`
+}
+
+type StreamFieldValue struct {
+	Value string `json:"value"`
+	Hits  int64  `json:"hits"`
 }
 
 // InitHTTPClient 初始化 HTTP 客户端
@@ -89,6 +103,10 @@ func (vl *VictoriaLogs) InitHTTPClient() error {
 // Query 执行日志查询
 // GET/POST /select/logsql/query?query=<query>&start=<start>&end=<end>&limit=<limit>
 func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int64, limit int) ([]LogEntry, error) {
+	return vl.QueryWithOffset(ctx, query, start, end, limit, 0)
+}
+
+func (vl *VictoriaLogs) QueryWithOffset(ctx context.Context, query string, start, end int64, limit, offset int) ([]LogEntry, error) {
 	params := url.Values{}
 	params.Set("query", query)
 
@@ -102,6 +120,9 @@ func (vl *VictoriaLogs) Query(ctx context.Context, query string, start, end int6
 		params.Set("limit", strconv.Itoa(limit))
 	} else {
 		params.Set("limit", strconv.Itoa(vl.MaxQueryRows)) // 默认 1000 条
+	}
+	if offset > 0 {
+		params.Set("offset", strconv.Itoa(offset))
 	}
 
 	endpoint := fmt.Sprintf("%s/select/logsql/query", vl.VictorialogsAddr)
@@ -229,6 +250,23 @@ func (vl *VictoriaLogs) StatsQueryRange(ctx context.Context, query string, start
 // HitsLogs 返回查询命中的日志数量，用于计算 total
 // POST /select/logsql/hits?query=<query>&start=<start>&end=<end>
 func (vl *VictoriaLogs) HitsLogs(ctx context.Context, query string, start, end int64) (int64, error) {
+	result, err := vl.QueryHits(ctx, query, start, end, "")
+	if err != nil {
+		return 0, err
+	}
+
+	if len(result.Hits) == 0 {
+		return 0, nil
+	}
+
+	return result.Hits[0].Total, nil
+}
+
+func (vl *VictoriaLogs) QueryHits(ctx context.Context, query string, start, end int64, step string, groupByFields ...string) (*HitsResult, error) {
+	return vl.QueryHitsWithFieldsLimit(ctx, query, start, end, step, 5, groupByFields...)
+}
+
+func (vl *VictoriaLogs) QueryHitsWithFieldsLimit(ctx context.Context, query string, start, end int64, step string, fieldsLimit int, groupByFields ...string) (*HitsResult, error) {
 	params := url.Values{}
 	params.Set("query", query)
 
@@ -238,34 +276,105 @@ func (vl *VictoriaLogs) HitsLogs(ctx context.Context, query string, start, end i
 	if end > 0 {
 		params.Set("end", strconv.FormatInt(end, 10))
 	}
+	if step != "" {
+		params.Set("step", step)
+	}
+	if len(groupByFields) > 0 {
+		hasField := false
+		for _, field := range groupByFields {
+			if field != "" {
+				params.Add("field", field)
+				hasField = true
+			}
+		}
+		if hasField {
+			if fieldsLimit <= 0 {
+				fieldsLimit = 5
+			}
+			params.Set("fields_limit", strconv.Itoa(fieldsLimit))
+		}
+	}
 
 	endpoint := fmt.Sprintf("%s/select/logsql/hits", vl.VictorialogsAddr)
 
 	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("read response body failed: %w", err)
+		return nil, fmt.Errorf("read response body failed: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("hits query failed: status=%d, body=%s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("hits query failed: status=%d, body=%s", resp.StatusCode, string(body))
 	}
 
 	var result HitsResult
 	if err := json.Unmarshal(body, &result); err != nil {
-		return 0, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
+		return nil, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
 	}
 
-	if len(result.Hits) == 0 {
-		return 0, nil
+	return &result, nil
+}
+
+func (vl *VictoriaLogs) StreamFieldNames(ctx context.Context, query string, start, end int64, filter string) ([]StreamFieldValue, error) {
+	return vl.streamFieldValues(ctx, "stream_field_names", query, start, end, "", 0, filter)
+}
+
+func (vl *VictoriaLogs) StreamFieldValues(ctx context.Context, query string, start, end int64, field string, limit int, filter string) ([]StreamFieldValue, error) {
+	return vl.streamFieldValues(ctx, "stream_field_values", query, start, end, field, limit, filter)
+}
+
+func (vl *VictoriaLogs) streamFieldValues(ctx context.Context, path, query string, start, end int64, field string, limit int, filter string) ([]StreamFieldValue, error) {
+	params := url.Values{}
+	if query == "" {
+		query = "*"
+	}
+	params.Set("query", query)
+	params.Set("ignore_pipes", "1")
+
+	if start > 0 {
+		params.Set("start", strconv.FormatInt(start, 10))
+	}
+	if end > 0 {
+		params.Set("end", strconv.FormatInt(end, 10))
+	}
+	if field != "" {
+		params.Set("field", field)
+	}
+	if limit > 0 {
+		params.Set("limit", strconv.Itoa(limit))
+	}
+	if filter != "" {
+		params.Set("filter", filter)
 	}
 
-	return result.Hits[0].Total, nil
+	endpoint := fmt.Sprintf("%s/select/logsql/%s", vl.VictorialogsAddr, path)
+
+	resp, err := vl.doRequest(ctx, "POST", endpoint, params)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body failed: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%s query failed: status=%d, body=%s", path, resp.StatusCode, string(body))
+	}
+
+	var result streamValuesResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("decode response failed: %w, body=%s", err, string(body))
+	}
+
+	return result.Values, nil
 }
 
 // doRequest 执行 HTTP 请求

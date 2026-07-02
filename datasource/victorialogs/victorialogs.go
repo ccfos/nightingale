@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/datasource"
@@ -27,13 +29,29 @@ type VictoriaLogs struct {
 
 // Query 查询参数
 type Query struct {
-	Query string `json:"query" mapstructure:"query"` // LogsQL 查询语句
-	Start int64  `json:"start" mapstructure:"start"` // 开始时间（秒）
-	End   int64  `json:"end" mapstructure:"end"`     // 结束时间（秒）
-	Time  int64  `json:"time" mapstructure:"time"`   // 单点时间（秒）- 用于告警
-	Step  string `json:"step" mapstructure:"step"`   // 步长，如 "1m", "5m"
-	Limit int    `json:"limit" mapstructure:"limit"` // 限制返回数量
-	Ref   string `json:"ref" mapstructure:"ref"`     // 变量引用名（如 A、B）
+	Query  string `json:"query" mapstructure:"query"`   // LogsQL 查询语句
+	Start  int64  `json:"start" mapstructure:"start"`   // 开始时间（秒）
+	End    int64  `json:"end" mapstructure:"end"`       // 结束时间（秒）
+	Time   int64  `json:"time" mapstructure:"time"`     // 单点时间（秒）- 用于告警
+	Step   string `json:"step" mapstructure:"step"`     // 步长，如 "1m", "5m"
+	Limit  int    `json:"limit" mapstructure:"limit"`   // 限制返回数量
+	Offset int    `json:"offset" mapstructure:"offset"` // 偏移量
+	Ref    string `json:"ref" mapstructure:"ref"`       // 变量引用名（如 A、B）
+}
+
+type HistogramQuery struct {
+	Query       string `json:"query" mapstructure:"query"`
+	Start       int64  `json:"start" mapstructure:"start"`
+	End         int64  `json:"end" mapstructure:"end"`
+	Step        string `json:"step" mapstructure:"step"`
+	GroupBy     string `json:"group_by" mapstructure:"group_by"`
+	FieldsLimit int    `json:"fields_limit" mapstructure:"fields_limit"`
+}
+
+type HistogramValues struct {
+	Ref    string                 `json:"ref"`
+	Metric map[string]interface{} `json:"metric"`
+	Values [][]interface{}        `json:"values"`
 }
 
 // IsInstantQuery 判断是否为即时查询（告警场景）
@@ -114,7 +132,7 @@ func (vl *VictoriaLogs) QueryLog(ctx context.Context, queryParam interface{}) ([
 		return nil, 0, fmt.Errorf("decode query param failed: %w", err)
 	}
 
-	logs, err := vl.Query(ctx, param.Query, param.Start, param.End, param.Limit)
+	logs, err := vl.QueryWithOffset(ctx, param.Query, param.Start, param.End, param.Limit, param.Offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -133,6 +151,28 @@ func (vl *VictoriaLogs) QueryLog(ctx context.Context, queryParam interface{}) ([
 	}
 
 	return result, total, nil
+}
+
+func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface{}) ([]HistogramValues, error) {
+	param := new(HistogramQuery)
+	if err := mapstructure.Decode(queryParam, param); err != nil {
+		return nil, fmt.Errorf("decode query param failed: %w", err)
+	}
+
+	var groupByFields []string
+	if param.GroupBy != "" {
+		groupByFields = append(groupByFields, param.GroupBy)
+	}
+	if param.Step == "" {
+		param.Step = defaultHistogramStep(param.Start, param.End)
+	}
+
+	result, err := vl.QueryHitsWithFieldsLimit(ctx, param.Query, param.Start, param.End, param.Step, param.FieldsLimit, groupByFields...)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertHitsToHistogramValues(result.Hits, param.GroupBy), nil
 }
 
 // QueryData 指标数据查询
@@ -251,6 +291,172 @@ func convertPrometheusRangeToDataResp(resp *victorialogs.PrometheusResponse, ref
 	}
 
 	return dataResps
+}
+
+func convertHitsToHistogramValues(hits []victorialogs.HitResult, groupBy string) []HistogramValues {
+	ret := make([]HistogramValues, 0, len(hits))
+	for _, hit := range hits {
+		metric := make(map[string]interface{}, len(hit.Fields))
+		for k, v := range hit.Fields {
+			metric[k] = v
+		}
+
+		values := make([][]interface{}, 0, len(hit.Values))
+		for i, value := range hit.Values {
+			if i >= len(hit.Timestamps) {
+				break
+			}
+
+			timestamp, ok := parseHistogramTimestamp(hit.Timestamps[i])
+			if !ok {
+				continue
+			}
+
+			count, ok := parseHistogramValue(value)
+			if !ok {
+				values = append(values, []interface{}{timestamp, nil})
+				continue
+			}
+			values = append(values, []interface{}{timestamp, count})
+		}
+
+		ret = append(ret, HistogramValues{
+			Ref:    histogramRef(hit.Fields, groupBy),
+			Metric: metric,
+			Values: values,
+		})
+	}
+
+	return ret
+}
+
+func parseHistogramTimestamp(value interface{}) (int64, bool) {
+	switch v := value.(type) {
+	case float64:
+		return normalizeUnixTimestamp(v), true
+	case int64:
+		return normalizeUnixTimestamp(float64(v)), true
+	case int:
+		return normalizeUnixTimestamp(float64(v)), true
+	case string:
+		if ts, err := strconv.ParseFloat(v, 64); err == nil {
+			return normalizeUnixTimestamp(ts), true
+		}
+		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
+			return t.Unix(), true
+		}
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return t.Unix(), true
+		}
+		return 0, false
+	default:
+		return 0, false
+	}
+}
+
+func normalizeUnixTimestamp(value float64) int64 {
+	if value > 1e17 {
+		return int64(value / 1e9)
+	}
+	if value > 1e14 {
+		return int64(value / 1e6)
+	}
+	if value > 1e11 {
+		return int64(value / 1000)
+	}
+	return int64(value)
+}
+
+func defaultHistogramStep(start, end int64) string {
+	return histogramWidthToStep(defaultHistogramWidthBySeconds(start, end))
+}
+
+func defaultHistogramWidthBySeconds(start, end int64) int64 {
+	diff := end - start
+	switch {
+	case diff <= 60:
+		return 1
+	case diff <= 300:
+		return 5
+	case diff <= 900:
+		return 30
+	case diff <= 1800:
+		return 30
+	case diff <= 3600:
+		return 60
+	case diff <= 3600*6:
+		return 5 * 60
+	case diff <= 3600*12:
+		return 10 * 60
+	case diff <= 3600*24:
+		return 30 * 60
+	case diff <= 3600*24*2:
+		return 60 * 60
+	case diff <= 3600*24*7:
+		return 3 * 60 * 60
+	case diff <= 3600*24*30:
+		return 12 * 60 * 60
+	case diff <= 3600*24*90:
+		return 24 * 60 * 60
+	default:
+		return 2 * 24 * 60 * 60
+	}
+}
+
+func histogramWidthToStep(width int64) string {
+	switch {
+	case width%86400 == 0:
+		return fmt.Sprintf("%dd", width/86400)
+	case width%3600 == 0:
+		return fmt.Sprintf("%dh", width/3600)
+	case width%60 == 0:
+		return fmt.Sprintf("%dm", width/60)
+	default:
+		return fmt.Sprintf("%ds", width)
+	}
+}
+
+func parseHistogramValue(value interface{}) (float64, bool) {
+	switch v := value.(type) {
+	case nil:
+		return 0, false
+	case float64:
+		return v, true
+	case int64:
+		return float64(v), true
+	case int:
+		return float64(v), true
+	case string:
+		f, err := strconv.ParseFloat(v, 64)
+		return f, err == nil
+	default:
+		return 0, false
+	}
+}
+
+func histogramRef(fields map[string]string, groupBy string) string {
+	if len(fields) == 0 {
+		return ""
+	}
+
+	if groupBy != "" {
+		if value, ok := fields[groupBy]; ok {
+			return value
+		}
+	}
+
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%s", key, fields[key]))
+	}
+
+	return strings.Join(parts, ",")
 }
 
 // MakeLogQuery 构造日志查询参数

@@ -267,6 +267,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.POST("/iotdb-databases", rt.iotdbDatabases)
 			pages.POST("/iotdb-tables", rt.iotdbTables)
 			pages.POST("/iotdb-columns", rt.iotdbColumns)
+			pages.POST("/victorialogs-stream-fields", rt.QueryVictoriaLogsStreamFields)
+			pages.POST("/victorialogs-stream-field-values", rt.QueryVictoriaLogsStreamFieldValues)
+			pages.POST("/victorialogs-histogram", rt.QueryVictoriaLogsHistogram)
 
 			pages.POST("/log-query-batch", rt.QueryLogBatch)
 
@@ -290,6 +293,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			pages.POST("/ds-query", rt.auth(), rt.user(), rt.QueryData)
 			pages.POST("/logs-query", rt.auth(), rt.user(), rt.QueryLogV2)
+			pages.POST("/victorialogs-stream-fields", rt.auth(), rt.user(), rt.QueryVictoriaLogsStreamFields)
+			pages.POST("/victorialogs-stream-field-values", rt.auth(), rt.user(), rt.QueryVictoriaLogsStreamFieldValues)
+			pages.POST("/victorialogs-histogram", rt.auth(), rt.user(), rt.QueryVictoriaLogsHistogram)
 
 			pages.POST("/tdengine-databases", rt.auth(), rt.tdengineDatabases)
 			pages.POST("/tdengine-tables", rt.auth(), rt.tdengineTables)
