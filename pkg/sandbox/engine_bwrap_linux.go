@@ -42,6 +42,13 @@ func init() {
 		if caps.BwrapPath == "" {
 			return nil, fmt.Errorf("bwrap binary not found in PATH")
 		}
+		// bubblewrap isolates via unprivileged user namespaces; without userns it
+		// would construct fine but fail on every Run. Gate here so the auto ladder
+		// degrades to the next engine instead. (setuid bwrap on a userns-off host
+		// is legacy and not auto-detected this phase.)
+		if !caps.UserNS {
+			return nil, fmt.Errorf("unprivileged userns unavailable")
+		}
 		base := resolveRootfsBase(cfg)
 		if base == "" {
 			return nil, fmt.Errorf("no python-base rootfs available: set sandbox Rootfs.Path to an external base (embedded base is a TODO)")

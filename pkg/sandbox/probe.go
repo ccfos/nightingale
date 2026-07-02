@@ -48,21 +48,6 @@ func selectTier(cfg Config, caps Capabilities) (Tier, string) {
 	return TierDisabled, "insufficient capabilities (need userns+seccomp+cgroup for bubblewrap, or seccomp+landlock+container_as_boundary for confined)"
 }
 
-// tierEngineName returns the auto-selected engine name for a tier, or "" when
-// no production engine fits the tier (caller decides dev fallback).
-func tierEngineName(t Tier) string {
-	switch t {
-	case TierBubblewrap:
-		return EngineBwrap
-	case TierConfined:
-		return EngineConfined
-	case TierStrong:
-		return EngineRunsc
-	default:
-		return ""
-	}
-}
-
 // baseCaps seeds the OS field so probe_* only fill the kernel bits.
 func baseCaps() Capabilities {
 	return Capabilities{OS: runtime.GOOS}

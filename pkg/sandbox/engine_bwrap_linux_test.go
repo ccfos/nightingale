@@ -17,6 +17,37 @@ func hasSeq(args []string, sub ...string) bool {
 	return false
 }
 
+// TestBwrapFactoryGates checks the bubblewrap engine's construction-time gates:
+// it needs a bwrap binary + a rootfs base + unprivileged userns, but crucially
+// does NOT require cgroup v2 (that only affects resource limits, which degrade
+// gracefully). This is the .107 scenario: userns✓ but cgroup v1.
+func TestBwrapFactoryGates(t *testing.T) {
+	f, ok := lookupEngine(EngineBwrap)
+	if !ok {
+		t.Fatal("bubblewrap engine not registered on linux")
+	}
+	withRootfs := Config{Rootfs: RootfsConfig{Path: t.TempDir()}}
+
+	// Happy path WITHOUT cgroup v2 → real isolation still available.
+	eng, err := f(withRootfs, Capabilities{OS: "linux", BwrapPath: "/usr/bin/bwrap", UserNS: true, CgroupV2Delegated: false})
+	if err != nil || eng == nil {
+		t.Fatalf("bwrap factory must succeed without cgroup v2: eng=%v err=%v", eng, err)
+	}
+
+	// userns missing → infeasible, so the ladder degrades to the next engine.
+	if _, err := f(withRootfs, Capabilities{OS: "linux", BwrapPath: "/usr/bin/bwrap", UserNS: false}); err == nil {
+		t.Error("bwrap factory must fail without unprivileged userns")
+	}
+	// bwrap binary missing → infeasible.
+	if _, err := f(withRootfs, Capabilities{OS: "linux", UserNS: true}); err == nil {
+		t.Error("bwrap factory must fail without a bwrap binary")
+	}
+	// rootfs base missing (no Rootfs.Path, no embed) → infeasible.
+	if _, err := f(Config{}, Capabilities{OS: "linux", BwrapPath: "/usr/bin/bwrap", UserNS: true}); err == nil {
+		t.Error("bwrap factory must fail without a rootfs base")
+	}
+}
+
 func TestBwrapBuildArgsNetworkNone(t *testing.T) {
 	e := &bwrapEngine{bwrap: "/bin/bwrap", base: "/base", initPath: "/host/init"}
 	args := e.buildArgs(ExecSpec{

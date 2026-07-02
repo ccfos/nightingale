@@ -43,8 +43,9 @@ type Engine interface {
 type Tier int
 
 const (
-	// TierDisabled — non-Linux / userns off / no usable engine. Skill execution
-	// is disabled unless dev_mode allows the unsafe engine.
+	// TierDisabled — no usable engine and RequireIsolation refused the unsafe
+	// floor (or sandbox.enabled=false). Otherwise a no-isolation host reports
+	// TierUnsafe, not TierDisabled (fail-open).
 	TierDisabled Tier = iota
 	// TierConfined — Linux container, userns unavailable but seccomp+Landlock+
 	// rlimit are, and the operator declared container_as_boundary. Uses the
@@ -56,6 +57,11 @@ const (
 	// TierStrong — controlled host requiring the strongest isolation (gVisor).
 	// Reserved; not implemented this phase (档 2).
 	TierStrong
+	// TierUnsafe — no isolation engine was usable, so skill scripts run via the
+	// unsafe-exec floor (bare exec, control-plane limits only). Reported honestly
+	// for audit/admin so operators can see when a host is running without
+	// isolation. Appended last to keep the existing iota values stable.
+	TierUnsafe
 )
 
 func (t Tier) String() string {
@@ -66,7 +72,32 @@ func (t Tier) String() string {
 		return "bubblewrap"
 	case TierStrong:
 		return "strong"
+	case TierUnsafe:
+		return "unsafe"
 	default:
 		return "disabled"
+	}
+}
+
+// strengthOrder lists the engines from strongest to weakest isolation. auto
+// (Config.Engine=="" | "auto") walks it and selects the first engine this host
+// can actually build; unsafe-exec is the universal floor (see resolveEngine).
+var strengthOrder = []string{EngineRunsc, EngineBwrap, EngineConfined, EngineUnsafe}
+
+// tierForEngine maps a selected engine name to the tier reported for audit and
+// admin display, so Tier() reflects the ACTUAL isolation level in force rather
+// than the host's ideal tier.
+func tierForEngine(name string) Tier {
+	switch name {
+	case EngineRunsc:
+		return TierStrong
+	case EngineBwrap:
+		return TierBubblewrap
+	case EngineConfined:
+		return TierConfined
+	case EngineUnsafe:
+		return TierUnsafe
+	default:
+		return TierDisabled
 	}
 }

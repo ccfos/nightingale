@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -106,7 +105,7 @@ func Execute(c context.Context, d Deps, req Request) (string, error) {
 	spec := buildExecSpec(d.Sandbox.Config(), ws, entry, hostEntry, req.Args, req.Stdin, ident, execID, req.SkillName, trigger, netMode, cc.mounts(), cc.env())
 
 	res, runErr := d.Sandbox.Run(c, spec)
-	d.writeAudit(req, spec, entry, res, runErr)
+	logAudit(req, spec, entry, res, runErr)
 	if runErr != nil {
 		return "", runErr
 	}
@@ -131,54 +130,34 @@ func fenceNote(res sandbox.ExecResult) string {
 	return strings.Join(notes, "; ")
 }
 
-func (d Deps) writeAudit(req Request, spec sandbox.ExecSpec, entry entryInfo, res sandbox.ExecResult, runErr error) {
-	if d.DBCtx == nil {
-		return
-	}
-	rec := &models.SandboxExecutionRecord{
-		ExecId:          spec.ExecID,
-		SessionId:       req.SessionID,
-		SkillName:       req.SkillName,
-		Entrypoint:      entry.Rel,
-		Argv:            truncate(strings.Join(spec.Command, " "), 2000),
-		Engine:          res.Engine,
-		NetworkPolicy:   string(spec.Network),
-		TriggerType:     spec.TriggerType,
-		ExitCode:        res.ExitCode,
-		Timeout:         res.Timeout,
-		KilledBy:        res.KilledBy,
-		DurationMs:      res.Duration.Milliseconds(),
-		StdoutSample:    sample(res.Stdout, 2048),
-		StderrSample:    sample(res.Stderr, 2048),
-		StdoutTruncated: res.StdoutTruncated,
-		StderrTruncated: res.StderrTruncated,
-		CreatedAt:       time.Now().Unix(),
-	}
+// logAudit records one Skill script execution as a single INFO line (design
+// §15). The audit used to be persisted to the sandbox_execution_record table,
+// but the feature never shipped, so we keep it lightweight: full stdout/stderr
+// still goes to the LLM as a fenced tool_result, and here we only log the
+// outcome metadata. Argv/error are truncated to keep the line bounded.
+func logAudit(req Request, spec sandbox.ExecSpec, entry entryInfo, res sandbox.ExecResult, runErr error) {
+	var userID int64
+	var username string
 	if req.User != nil {
-		rec.UserId = req.User.Id
-		rec.Username = req.User.Username
+		userID = req.User.Id
+		username = req.User.Username
 	}
+	var errMsg string
 	if runErr != nil {
-		rec.ErrorMsg = truncate(runErr.Error(), 2000)
+		errMsg = truncate(runErr.Error(), 2000)
 	} else if res.Error != "" {
-		rec.ErrorMsg = truncate(res.Error, 2000)
+		errMsg = truncate(res.Error, 2000)
 	}
-	if err := rec.Add(d.DBCtx); err != nil {
-		logger.Warningf("sandbox: write audit record for exec %s failed: %v", spec.ExecID, err)
-	}
+	logger.Infof("sandbox audit: exec_id=%s user_id=%d username=%q session=%q skill=%q entry=%q engine=%q network=%q trigger=%q exit_code=%d timeout=%v killed_by=%q duration_ms=%d error=%q argv=%q",
+		spec.ExecID, userID, username, req.SessionID, req.SkillName, entry.Rel,
+		res.Engine, spec.Network, spec.TriggerType, res.ExitCode, res.Timeout, res.KilledBy,
+		res.Duration.Milliseconds(), errMsg, truncate(strings.Join(spec.Command, " "), 2000))
 }
 
 func newExecID() string {
 	var b [8]byte
 	_, _ = rand.Read(b[:])
 	return "se_" + hex.EncodeToString(b[:])
-}
-
-func sample(b []byte, max int) string {
-	if len(b) > max {
-		return string(b[:max])
-	}
-	return string(b)
 }
 
 func truncate(s string, max int) string {
