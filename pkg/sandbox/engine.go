@@ -43,8 +43,9 @@ type Engine interface {
 type Tier int
 
 const (
-	// TierDisabled — non-Linux / userns off / no usable engine. Skill execution
-	// is disabled unless dev_mode allows the unsafe engine.
+	// TierDisabled — no usable engine and RequireIsolation refused the unsafe
+	// floor (or sandbox.enabled=false). Otherwise a no-isolation host reports
+	// TierUnsafe, not TierDisabled (fail-open).
 	TierDisabled Tier = iota
 	// TierConfined — Linux container, userns unavailable but seccomp+Landlock+
 	// rlimit are, and the operator declared container_as_boundary. Uses the

@@ -16,8 +16,8 @@ import (
 // the dev fallback when no kernel-isolation engine is available (§5.2). It still
 // applies the cheap, OS-portable controls the control plane owns: a clean
 // (non-inherited) env, a working dir, a wall-clock timeout that kills the whole
-// process group, and byte-capped output. It must never be selected in
-// production (gated behind dev_mode in resolveEngine).
+// process group, and byte-capped output. It is the fail-open floor of last
+// resort (resolveEngine); set RequireIsolation=true to refuse it in production.
 type unsafeEngine struct{}
 
 func init() {

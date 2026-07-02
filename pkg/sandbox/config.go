@@ -65,12 +65,6 @@ type Config struct {
 	// Unrecognized values fail safe to off.
 	N9eAPI string
 
-	// DevMode is a dev-only convenience flag. Since the sandbox is fail-open by
-	// default (unsafe-exec is the universal floor, see RequireIsolation), DevMode
-	// no longer gates the unsafe fallback. It remains available for dev-only
-	// conveniences and is otherwise inert to engine selection.
-	DevMode bool
-
 	// RequireIsolation is the safety ceiling. When true, skill execution is
 	// REFUSED whenever the only feasible engine is unsafe-exec (no isolation) —
 	// i.e. it restores the fail-closed posture for security-sensitive deployments.

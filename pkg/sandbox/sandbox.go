@@ -214,8 +214,10 @@ func (s *Sandbox) Config() Config             { return s.cfg }
 
 // EngineCaps reports what the selected backend can actually enforce on this host
 // (zero value when disabled). The control plane consults it to decide whether to
-// wire egress (needs Network) and the Skill Gateway (needs a mount namespace to
-// bind the socket) for a run — both are bubblewrap-only in phase 1 (§10/§12).
+// wire egress, which needs a real network namespace and so is bubblewrap-only
+// (§10). The Skill Gateway is wired on ANY engine — namespace engines bind its
+// socket into the sandbox, unsafe-exec gets the host socket path (see
+// skill_runtime/control.go) — so it is NOT gated on this.
 func (s *Sandbox) EngineCaps() EngineCaps {
 	if s == nil || s.engine == nil {
 		return EngineCaps{}

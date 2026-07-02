@@ -6,8 +6,8 @@ import (
 )
 
 // DisabledError is returned by Sandbox.Run when skill execution is disabled on
-// this host (non-Linux without dev_mode, insufficient capabilities, or
-// sandbox.enabled=false). Reason is operator-actionable (what to enable / set).
+// this host (sandbox.enabled=false, or RequireIsolation=true with no isolation-
+// capable engine). Reason is operator-actionable (what to enable / set).
 type DisabledError struct {
 	Reason string
 }

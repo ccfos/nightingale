@@ -224,7 +224,7 @@ func TestUnsafeEngineCleanEnv(t *testing.T) {
 }
 
 func TestSandboxExplicitUnsafeFailOpen(t *testing.T) {
-	// fail-open default: explicit unsafe runs without dev_mode.
+	// fail-open default: explicit unsafe runs (no special flag needed).
 	s := New(Config{Engine: "unsafe", DataDir: t.TempDir()})
 	if !s.Enabled() || s.EngineName() != EngineUnsafe {
 		t.Fatalf("explicit unsafe should be enabled by default (fail-open): enabled=%v engine=%q reason=%s",
@@ -259,16 +259,16 @@ func TestSandboxAutoFailOpenToUnsafe(t *testing.T) {
 }
 
 func TestSandboxDisabledWhenConfigDisabled(t *testing.T) {
-	s := New(Config{Disabled: true, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
+	s := New(Config{Disabled: true, Engine: "unsafe", DataDir: t.TempDir()})
 	if s.Enabled() {
 		t.Fatal("disabled=true must disable the sandbox")
 	}
 }
 
-func TestSandboxRunUnsafeDevEndToEnd(t *testing.T) {
-	s := New(Config{Disabled: false, Engine: "unsafe", DevMode: true, DataDir: t.TempDir()})
+func TestSandboxRunUnsafeEndToEnd(t *testing.T) {
+	s := New(Config{Disabled: false, Engine: "unsafe", DataDir: t.TempDir()})
 	if !s.Enabled() {
-		t.Fatalf("dev unsafe should be enabled: %s", s.DisabledReason())
+		t.Fatalf("unsafe should be enabled: %s", s.DisabledReason())
 	}
 	if s.EngineName() != EngineUnsafe {
 		t.Fatalf("engine = %q, want unsafe", s.EngineName())

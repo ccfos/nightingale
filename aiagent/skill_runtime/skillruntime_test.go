@@ -105,10 +105,10 @@ func TestExecuteEndToEnd(t *testing.T) {
 	mustWrite(t, filepath.Join(demo, "main.sh"), `echo "args=$*"; cat`)
 
 	sb := sandbox.New(sandbox.Config{
-		Disabled: false, Engine: "unsafe", DevMode: true, DataDir: t.TempDir(),
+		Disabled: false, Engine: "unsafe", DataDir: t.TempDir(),
 	})
 	if !sb.Enabled() {
-		t.Fatalf("dev unsafe sandbox should be enabled: %s", sb.DisabledReason())
+		t.Fatalf("unsafe sandbox should be enabled: %s", sb.DisabledReason())
 	}
 
 	out, err := Execute(context.Background(), Deps{Sandbox: sb, SkillsPath: skillsDir}, Request{
