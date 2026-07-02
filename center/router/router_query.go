@@ -50,7 +50,7 @@ var CheckDsPerm CheckDsPermFunc = func(c *gin.Context, dsId int64, cate string, 
 // 被调用一次"，具体校什么由实现方决定。
 type RuleChangeHookFunc func(c *gin.Context, rule interface{}) error
 
-// RuleChangeHook 默认放行所有规则。增强实现由外层注入（如 n9e-plus）。
+// RuleChangeHook 默认放行所有规则。增强实现由外层注入。
 var RuleChangeHook RuleChangeHookFunc = func(c *gin.Context, rule interface{}) error {
 	return nil
 }
