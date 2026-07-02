@@ -2,6 +2,7 @@ package skillgateway
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -27,12 +28,17 @@ import (
 // user, so a skill can survey the platform without n9e enumerating every read
 // endpoint. Deny-list security model:
 //
-//   - Only GET is allowed — all writes (POST/PUT/DELETE/PATCH) are refused
-//     wholesale, so there is no write surface to blacklist.
+//   - GET is allowed by default (deny-list, below). POST is refused wholesale
+//     EXCEPT a small allowlist of read-only DATA-query endpoints (postAllowN9eAPIPaths:
+//     /ds-query, /query-range-batch, …) that carry a JSON query body — they run
+//     under the user's RBAC and return data, not config. PUT/DELETE/PATCH are
+//     always refused, so there is no write surface to blacklist.
 //   - A path blacklist (built-in defaults + Deny.N9eAPI) refuses the GETs that
 //     return secrets (datasource configs, notify-channel secrets, user tokens,
 //     SSO configs, datasource proxy). This is fail-OPEN by nature: a read endpoint
 //     not on the list is reachable, so the default list must stay comprehensive.
+//     A tiny allow-exception set (getAllowExceptions) re-permits specific safe
+//     sub-paths shadowed by a broad deny prefix (e.g. the redacted /datasource/brief).
 //   - n9e's own route middleware still enforces the user's RBAC + busi-group
 //     scope on every forwarded call (the gateway acts strictly AS the user).
 //
@@ -43,6 +49,10 @@ import (
 // maxRespBytes caps a forwarded response so a skill can't pull an unbounded
 // payload back through the gateway.
 const maxRespBytes = 1 << 20 // 1 MiB
+
+// maxReqBodyBytes caps the JSON body a skill may POST to a data-query endpoint,
+// so a runaway query payload can't be used to hammer the upstream.
+const maxReqBodyBytes = 256 << 10 // 256 KiB
 
 // Bounds on the host-side listener. The peer is the untrusted in-sandbox process:
 // gatewayIdleTimeout reclaims a connection held open without sending (slowloris),
@@ -231,12 +241,18 @@ func (g *Gateway) acceptLoop() {
 //	-> {"method":"GET","path":"/alert-rules","query":{"bgid":"1"}}
 //	<- {"ok":true,"status":200,"data":{"dat":[...],"err":""}}
 //
-// Only GET is honored; path is relative to n9e's /api/n9e prefix (the prefix is
-// added by the gateway and tolerated if the skill includes it).
+// GET is honored by default; POST is honored only for the read-only data-query
+// allowlist, where the query goes in `body` (a JSON object), e.g.:
+//
+//	-> {"method":"POST","path":"/ds-query","body":{"cate":"prometheus","datasource_id":1,"query":[...]}}
+//
+// path is relative to n9e's /api/n9e prefix (the prefix is added by the gateway
+// and tolerated if the skill includes it).
 type request struct {
 	Method string            `json:"method"`
 	Path   string            `json:"path"`
 	Query  map[string]string `json:"query"`
+	Body   json.RawMessage   `json:"body,omitempty"` // JSON body for POST data-query endpoints
 }
 
 type response struct {
@@ -296,15 +312,17 @@ func (g *Gateway) handleRequest(line []byte) response {
 		g.audit(method, p, "denied")
 		return response{Error: err.Error()}
 	}
-	return g.proxy(method, p, req.Query)
+	if len(req.Body) > maxReqBodyBytes {
+		g.audit(method, p, "body_too_large")
+		return response{Error: fmt.Sprintf("request body too large (%d > %d bytes)", len(req.Body), maxReqBodyBytes)}
+	}
+	return g.proxy(method, p, req.Query, req.Body)
 }
 
-// checkAllowed is the deny-list gate: GET only, and the path must not match a
-// blacklisted prefix.
+// checkAllowed is the method+path gate: GET by default (deny-list), POST only for
+// the read-only data-query allowlist, and a small allow-exception for safe
+// sub-paths shadowed by a broad deny prefix. Everything else is refused.
 func (g *Gateway) checkAllowed(method, p string) error {
-	if method != http.MethodGet {
-		return fmt.Errorf("method %s not allowed: the skill gateway is read-only (GET only)", method)
-	}
 	if !strings.HasPrefix(p, "/") {
 		return fmt.Errorf("path must start with /")
 	}
@@ -317,6 +335,22 @@ func (g *Gateway) checkAllowed(method, p string) error {
 	if strings.Contains(p, "%") {
 		return fmt.Errorf("path must not be percent-encoded; put parameters in the query field")
 	}
+	switch method {
+	case http.MethodGet:
+		// A safe sub-path re-permitted despite a broad deny prefix (e.g. the
+		// secret-redacted /datasource/brief) bypasses the deny-list below.
+		if getAllowExceptions[p] {
+			return nil
+		}
+	case http.MethodPost:
+		// POST is refused for everything except the read-only data-query allowlist.
+		if !postAllowN9eAPIPaths[p] {
+			return fmt.Errorf("POST %q is not allowed: the gateway permits POST only for read-only data-query endpoints", p)
+		}
+	default:
+		return fmt.Errorf("method %s not allowed: the skill gateway allows GET, or POST to a read-only query endpoint", method)
+	}
+	// Deny-list applies to both GET and POST (defense in depth).
 	low := strings.ToLower(p)
 	for _, d := range g.denyPaths {
 		if strings.HasPrefix(low, d) {
@@ -328,9 +362,13 @@ func (g *Gateway) checkAllowed(method, p string) error {
 
 // proxy forwards the call to n9e's own API as the bound user and returns the
 // (size-capped) response. n9e's route middleware enforces the user's RBAC.
-func (g *Gateway) proxy(method, p string, query map[string]string) response {
+func (g *Gateway) proxy(method, p string, query map[string]string, body []byte) response {
 	u := g.baseURL + "/api/n9e" + p
-	httpReq, err := http.NewRequest(method, u, nil)
+	var bodyReader io.Reader
+	if len(body) > 0 {
+		bodyReader = bytes.NewReader(body)
+	}
+	httpReq, err := http.NewRequest(method, u, bodyReader)
 	if err != nil {
 		g.audit(method, p, "error")
 		return response{Error: "build request: " + err.Error()}
@@ -344,6 +382,9 @@ func (g *Gateway) proxy(method, p string, query map[string]string) response {
 	}
 	httpReq.Header.Set(g.tokenHeader, g.token)
 	httpReq.Header.Set("X-Language", "en")
+	if len(body) > 0 {
+		httpReq.Header.Set("Content-Type", "application/json")
+	}
 
 	resp, err := g.client.Do(httpReq)
 	if err != nil {
@@ -351,15 +392,15 @@ func (g *Gateway) proxy(method, p string, query map[string]string) response {
 		return response{Error: "upstream call failed: " + err.Error()}
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxRespBytes))
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, maxRespBytes))
 	g.audit(method, p, fmt.Sprintf("status_%d", resp.StatusCode))
 
 	out := response{OK: resp.StatusCode >= 200 && resp.StatusCode < 300, Status: resp.StatusCode}
 	var parsed any
-	if json.Unmarshal(body, &parsed) == nil {
+	if json.Unmarshal(respBody, &parsed) == nil {
 		out.Data = parsed
 	} else {
-		out.Data = string(body)
+		out.Data = string(respBody)
 	}
 	if !out.OK && out.Error == "" {
 		out.Error = fmt.Sprintf("n9e api returned status %d", resp.StatusCode)

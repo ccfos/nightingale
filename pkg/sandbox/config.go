@@ -1,6 +1,8 @@
 package sandbox
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -32,7 +34,10 @@ type Config struct {
 	Disabled bool
 
 	// Engine selects the backend: auto | bubblewrap | confined | unsafe.
-	// auto follows the capability tier table (§6).
+	// auto walks the strength-ordered feasibility ladder (strongest first,
+	// runsc > bubblewrap > confined > unsafe) and picks the first engine this
+	// host can actually build. An explicit name forces that engine, degrading to
+	// unsafe-exec if it cannot be built (unless RequireIsolation=true).
 	Engine string
 
 	// Egress is the single-knob egress preset (§10.1): off | open | allowlist.
@@ -60,14 +65,19 @@ type Config struct {
 	// Unrecognized values fail safe to off.
 	N9eAPI string
 
-	// DevMode permits the unsafe engine when capabilities are insufficient
-	// (non-Linux / userns off). Production must leave this false.
-	DevMode bool
+	// RequireIsolation is the safety ceiling. When true, skill execution is
+	// REFUSED whenever the only feasible engine is unsafe-exec (no isolation) —
+	// i.e. it restores the fail-closed posture for security-sensitive deployments.
+	// It overrides everything below it, including an explicit Engine="unsafe".
+	// The zero value (false) means fail-open: unsafe-exec runs (loudly) as the
+	// last resort so skill scripts stay runnable on any host, while auto still
+	// picks the strongest engine each host can actually provide.
+	RequireIsolation bool
 
 	// ContainerAsBoundary lets auto degrade to the container-confined engine
 	// when userns is unavailable — an explicit operator acknowledgement that the
 	// outer container is the host boundary (§5.3 / 档 0.5). Without it, auto
-	// stays disabled rather than silently lowering isolation.
+	// skips the confined engine rather than silently lowering isolation.
 	ContainerAsBoundary bool
 
 	DataDir string
@@ -153,7 +163,6 @@ type EgressProxyConfig struct {
 
 // Defaults (mirrors §8.2 / §16.3).
 const (
-	defaultDataDir          = "/var/lib/n9e/sandbox"
 	defaultTimeoutSeconds   = 30
 	defaultMemoryMB         = 256
 	defaultCPUQuota         = "100000 100000"
@@ -180,7 +189,12 @@ func (c *Config) PreCheck() {
 		c.N9eAPI = N9eAPIReadonly
 	}
 	if c.DataDir == "" {
-		c.DataDir = defaultDataDir
+		// Default to an always-writable temp location so skill execution works
+		// out of the box on non-root deployments too (a non-root process cannot
+		// create the FHS /var/lib path). Workspaces are per-run and ephemeral —
+		// NewWorkspace creates sessions/<execID> and Cleanup() removes it — so
+		// temp is the right lifecycle. Operators can pin a fixed path via DataDir.
+		c.DataDir = filepath.Join(os.TempDir(), "n9e-sandbox")
 	}
 	if c.SeccompMode == "" {
 		c.SeccompMode = "enforce"

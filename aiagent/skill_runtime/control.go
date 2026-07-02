@@ -17,16 +17,22 @@ import (
 // down right after. Both are reached over UNIX sockets bind-mounted into the
 // sandbox — no real network — so the script talks to them while staying isolated.
 //
-// Phase 1 wires them ONLY for the bubblewrap engine: egress needs a real network
-// namespace + the forwarder, and the gateway socket needs a mount namespace to
-// bind into one sandbox. On the other engines these channels are simply absent
-// (the run still works, just without egress / n9e-API access), which is the safe
-// default.
+// Egress (§10) needs a real network namespace + the forwarder, so it is wired
+// ONLY for engines that can enforce it (bubblewrap). The Skill Gateway (§12) is
+// reachable on ANY engine: namespace engines bind its socket to a fixed in-
+// sandbox path, while the unsafe-exec engine (which runs directly on the host) is
+// handed the real host socket path via the same env var. So an unsafe-exec run
+// still gets read-only n9e-API access — the gateway enforces RBAC + deny-paths
+// server-side either way — just no egress proxy.
 
 type controlChannels struct {
 	egress  *sandbox.EgressProxy
 	gateway *skillgateway.Gateway
 	dir     string // per-exec host dir holding the sockets
+	// bindMounts is true when the engine isolates via namespaces, so the sockets
+	// are bind-mounted to fixed in-sandbox paths. When false (unsafe-exec), the
+	// run reaches the sockets at their real host paths instead.
+	bindMounts bool
 }
 
 // resolveNetwork picks a run's egress posture from the Egress preset (§10.1):
@@ -53,7 +59,10 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 	bindsMounts := d.Sandbox.EngineCaps().Namespaces
 
 	needEgress := netMode == sandbox.NetworkProxy
-	needGateway := bindsMounts && d.DBCtx != nil && user != nil && cfg.N9eAPIEnabled() && d.N9eBaseURL != ""
+	// The gateway works on any engine — namespace engines get a bind-mounted
+	// socket, unsafe-exec gets the host socket path (see env()/mounts()). So it is
+	// NOT gated on bindsMounts.
+	needGateway := d.DBCtx != nil && user != nil && cfg.N9eAPIEnabled() && d.N9eBaseURL != ""
 	if !needEgress && !needGateway {
 		return nil, nil
 	}
@@ -62,7 +71,7 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("create control dir: %w", err)
 	}
-	cc := &controlChannels{dir: dir}
+	cc := &controlChannels{dir: dir, bindMounts: bindsMounts}
 
 	if needEgress {
 		// open → allowlist=["*"], denyPrivate=false (public + private reachable);
@@ -114,7 +123,9 @@ func setupControlChannels(d Deps, execID, skillName string, netMode sandbox.Netw
 // mounts returns the control-socket bind-mounts for the ExecSpec (engine binds
 // them onto the sandbox's private /run tmpfs).
 func (c *controlChannels) mounts() []sandbox.MountSpec {
-	if c == nil {
+	if c == nil || !c.bindMounts {
+		// Non-namespace engine (unsafe-exec): nothing is bind-mounted; the run
+		// reaches the sockets at their real host paths (see env()).
 		return nil
 	}
 	var m []sandbox.MountSpec
@@ -143,9 +154,19 @@ func (c *controlChannels) env() map[string]string {
 		e["https_proxy"] = proxyURL
 	}
 	if c.gateway != nil {
-		e[sandbox.GatewaySocketEnv] = sandbox.GatewaySocketTarget
+		e[sandbox.GatewaySocketEnv] = gatewayEnvValue(c.bindMounts, c.gateway.SocketPath())
 	}
 	return e
+}
+
+// gatewayEnvValue is the value of N9E_SKILL_GATEWAY handed to the run: the fixed
+// in-sandbox bind path for namespace engines, or the real host socket path for
+// unsafe-exec (which has no mount namespace and runs directly on the host).
+func gatewayEnvValue(bindMounts bool, hostSocketPath string) string {
+	if bindMounts {
+		return sandbox.GatewaySocketTarget
+	}
+	return hostSocketPath
 }
 
 func (c *controlChannels) close() {

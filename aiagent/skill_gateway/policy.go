@@ -31,6 +31,31 @@ var defaultDenyN9eAPIPaths = []string{
 	"/password", // any password-change/reset endpoints
 }
 
+// postAllowN9eAPIPaths is the allowlist of read-only DATA-query endpoints the
+// gateway may forward with POST. They are POST only because they carry a JSON
+// query body that is too large/structured for query params — not because they
+// mutate state: each runs the query under the caller's RBAC (the handler's
+// CheckDsPerm) and returns time-series / log DATA, never config or secrets. POST
+// to any path NOT in this set is refused, so this is an allowlist, not the GET
+// deny-list model. Matched as exact, normalized paths (relative to /api/n9e).
+var postAllowN9eAPIPaths = map[string]bool{
+	"/ds-query":            true, // unified datasource query (metrics/logs by cate)
+	"/query-range-batch":   true, // Prometheus range query (batch)
+	"/query-instant-batch": true, // Prometheus instant query (batch)
+	"/logs-query":          true, // log query (v2)
+	"/log-query":           true, // log query
+	"/log-query-batch":     true, // log query (batch)
+}
+
+// getAllowExceptions are GET paths that must stay reachable even though they sit
+// under a denied prefix. /datasource/brief is the SECRET-REDACTED datasource
+// list (the handler runs RedactSecrets; it's what the UI dropdowns use) — skills
+// need it to discover datasource ids/cates to query, but the broad "/datasource"
+// deny prefix would otherwise block it. Matched as an exact, normalized path.
+var getAllowExceptions = map[string]bool{
+	"/datasource/brief": true,
+}
+
 // mergeDenyPaths combines the built-in blacklist with operator-supplied extras
 // (Deny.N9eAPI), normalizing each to a lowercase, leading-slash prefix.
 func mergeDenyPaths(extra []string) []string {
