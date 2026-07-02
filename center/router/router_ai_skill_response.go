@@ -44,7 +44,7 @@ func (rt *Router) fillBuiltinGitHasNewVersion(s *models.AISkill, gitInfo models.
 		Token:    token,
 		Subdir:   gitInfo.Subdir,
 	}
-	latest, ok := rt.aiSkillRemoteCommitCache.Get(cfg)
+	latest, ok := rt.aiSkillRemoteCommitCache.Get(s.Name, cfg)
 	if !ok || latest == "" || gitInfo.CurrentCommit == "" {
 		return
 	}
