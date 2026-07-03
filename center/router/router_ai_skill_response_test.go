@@ -10,7 +10,7 @@ import (
 )
 
 func TestDecorateAISkillBuiltinKeepsOnlyCurrentCommit(t *testing.T) {
-	rt := &Router{aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(0)}
+	rt := &Router{aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(0, nil)}
 	s := &models.AISkill{
 		Name:       "builtin-git-skill",
 		SourceType: models.AISkillSourceGit,
@@ -48,7 +48,7 @@ func TestDecorateAISkillBuiltinKeepsOnlyCurrentCommit(t *testing.T) {
 }
 
 func TestDecorateAISkillBuiltinKeepsEmptyCurrentCommitField(t *testing.T) {
-	rt := &Router{aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(0)}
+	rt := &Router{aiSkillRemoteCommitCache: skill.NewRemoteCommitCache(0, nil)}
 	s := &models.AISkill{
 		Name:      "builtin-git-skill",
 		CreatedBy: "system",
