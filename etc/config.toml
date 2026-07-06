@@ -87,8 +87,9 @@ OpenRSA = false
 #   alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles
 # List names explicitly to restrict (unknown names are ignored, never widened).
 # MCPToolsets = ["alerts", "dashboards"]
-# MCPReadOnly: register only read-only MCP tools (no create/update/delete)
-# MCPReadOnly = false
+# MCPEnableWriteTools: /mcp exposes read-only tools by default; set true to
+# also register write tools (create/update/delete) — an explicit opt-in.
+# MCPEnableWriteTools = false
 
 [DB]
 # mysql postgres sqlite

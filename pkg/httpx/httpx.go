@@ -57,14 +57,14 @@ type A2AConfig struct {
 	// is derived from the incoming request (Host + X-Forwarded-Proto / TLS).
 	BaseURL string
 	// MCPToolsets is the enabled toolset whitelist for the /mcp endpoint. Empty
-	// means the default set (all toolsets except metrics, which goes through the
-	// raw datasource proxy and is not yet compatible); use ["all"] to include it.
+	// means everything registered (all default toolsets, plus embedder extras).
 	// Valid names: alerts, targets, datasource, mutes, busi_groups, notify_rules,
 	// alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles.
 	MCPToolsets []string
-	// MCPReadOnly registers only read-only MCP tools (no create/update/delete)
-	// when true.
-	MCPReadOnly bool
+	// MCPEnableWriteTools also registers write MCP tools (create/update/delete)
+	// when true. The default (false) exposes read-only tools ONLY — mutating
+	// the system through /mcp is an explicit config opt-in.
+	MCPEnableWriteTools bool
 }
 
 type RSAConfig struct {

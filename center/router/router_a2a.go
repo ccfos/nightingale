@@ -239,7 +239,7 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 		// carrying the caller's X-User-Token so RBAC applies unchanged.
 		mcpHandler := http.StripPrefix("/mcp", a2a.NewMCPHandler(r, a2a.MCPConfig{
 			Toolsets:      rt.HTTP.A2A.MCPToolsets,
-			ReadOnly:      rt.HTTP.A2A.MCPReadOnly,
+			ReadOnly:      !rt.HTTP.A2A.MCPEnableWriteTools,
 			TokenHeader:   tokenHeader,
 			ExtraToolsets: rt.MCPExtraToolsets,
 		}))
