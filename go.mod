@@ -43,7 +43,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/modelcontextprotocol/go-sdk v1.4.0
 	github.com/mojocn/base64Captcha v1.3.6
-	github.com/n9e/n9e-mcp-server v0.1.2-0.20260706182736-e2d465e36b3a // commit e2d465e36b3a: metrics tools decode the raw Prometheus proxy envelope; NOT PUSHED YET — push n9e-mcp-server main, then go mod tidy
+	github.com/n9e/n9e-mcp-server v0.1.2-0.20260706102736-e2d465e36b3a // commit e2d465e36b3a: metrics tools decode the raw Prometheus proxy envelope
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -86,7 +86,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 )
 
-require golang.org/x/sync v0.19.0
+require (
+	github.com/google/jsonschema-go v0.4.2
+	golang.org/x/sync v0.19.0
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -113,7 +116,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
