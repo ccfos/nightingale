@@ -14,7 +14,7 @@
                 "hide": true,
                 "definition": "prometheus",
                 "regex": "",
-                "defaultValue": 10
+                "defaultValue": ""
             },
             {
                 "name": "regionId",

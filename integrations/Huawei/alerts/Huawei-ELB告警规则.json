@@ -3,15 +3,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡4层入带宽使用率大于80%",
         "note": "",
@@ -71,15 +62,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡4层出带宽使用率大于80%",
         "note": "",
@@ -139,15 +121,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡4层并发连接数使用率大于80%",
         "note": "",
@@ -207,15 +180,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡4层新建连接数使用率大于80%",
         "note": "",
@@ -275,15 +239,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡7层入带宽使用率大于80%",
         "note": "",
@@ -343,15 +298,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡7层出带宽使用率大于80%",
         "note": "",
@@ -411,15 +357,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡7层并发连接数使用率大于80%",
         "note": "",
@@ -479,15 +416,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡7层新建连接数使用率大于80%",
         "note": "",
@@ -547,15 +475,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡异常主机数大于0",
         "note": "",
@@ -615,15 +534,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    81
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云负载均衡查询速率使用率大于80%",
         "note": "",

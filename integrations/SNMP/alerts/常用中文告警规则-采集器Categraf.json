@@ -4,16 +4,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "H3C 电源状态异常",
@@ -115,16 +106,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "H3C设备 CPU使用率大于70%",
@@ -226,16 +208,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "H3C设备 内存使用率大于70%",
@@ -337,16 +310,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "H3C设备 风扇状态异常",
@@ -448,16 +412,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "ICMP 超时",
@@ -557,16 +512,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Incoming 带宽使用率高",
@@ -666,16 +612,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Interface Down",
@@ -775,16 +712,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Juniper设备 CPU使用率大于70%",
@@ -886,16 +814,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Juniper设备 内存使用率大于70%",
@@ -997,16 +916,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Juniper设备 电源状态异常",
@@ -1108,16 +1018,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Juniper设备 风扇状态异常",
@@ -1219,16 +1120,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Outgoing 带宽使用率高",
@@ -1328,16 +1220,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Ruijie设备 电源状态异常",
@@ -1439,16 +1322,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Ruijie设备 风扇状态异常",
@@ -1550,16 +1424,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Ruijie设备CPU使用率大于70%",
@@ -1661,16 +1526,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "Ruijie设备内存使用率大于70%",
@@ -1772,16 +1628,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "入方向 CRC 错误",
@@ -1881,16 +1728,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "出方向 CRC 错误",
@@ -1990,16 +1828,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "华为设备CPU使用率大于70%",
@@ -2101,16 +1930,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "华为设备内存使用率大于70%",
@@ -2212,16 +2032,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "华为设备电源状态异常",
@@ -2323,16 +2134,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "华为设备风扇状态异常",
@@ -2434,16 +2236,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "设备中断",
@@ -2538,16 +2331,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "设备失去连接",
@@ -2647,16 +2431,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      11
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          11
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "设备重启",

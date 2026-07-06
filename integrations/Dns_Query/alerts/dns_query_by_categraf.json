@@ -1,15 +1,6 @@
 [
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            109
-          ]
-        }
-      ],
       "name": "DNS 响应状态码异常",
       "note": "",
       "prod": "metric",
@@ -45,15 +36,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            109
-          ]
-        }
-      ],
       "name": "DNS查询响应时间大于5秒",
       "note": "",
       "prod": "metric",
@@ -89,15 +71,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            109
-          ]
-        }
-      ],
       "name": "DNS 查询超时",
       "note": "",
       "prod": "metric",
@@ -133,15 +106,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            109
-          ]
-        }
-      ],
       "name": "DNS 查询异常",
       "note": "",
       "prod": "metric",

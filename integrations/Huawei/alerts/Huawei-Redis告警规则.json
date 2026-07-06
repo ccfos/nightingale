@@ -3,15 +3,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云RedisCPU平均使用率大于80%",
         "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的平均值。仅单机/主备/读写分离实例支持。",
@@ -71,15 +62,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis内存利用率大于80%",
         "note": "",
@@ -139,15 +121,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis存在慢日志",
         "note": "",
@@ -207,15 +180,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis带宽使用率大于90%",
         "note": "该指标对于统计周期内的测量对象的CPU使用率进行多次采样，表示多次采样的平均值。仅单机/主备/读写分离实例支持。",
@@ -275,15 +239,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis新建连接数大于10000",
         "note": "单机和主备实例，最大连接数限制为10000，可以根据业务情况对阈值进行调整。",
@@ -343,15 +298,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis最大CPU使用率大于80%",
         "note": "",
@@ -411,15 +357,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis活跃的客户端数量大于8000",
         "note": "单机和主备实例，最大连接数限制为10000，可以根据业务情况对阈值进行调整。",
@@ -479,15 +416,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis流控次数大于0",
         "note": "结合规格限制、网络瞬时输入流量和网络瞬时输出流量，查看是否扩容解决。\nRedis 4.0以上版本的实例才支持该指标，Redis 3.0实例不支持。",
@@ -547,15 +475,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis网络瞬时输入流量大于规格基准带宽的80%",
         "note": "仅Redis 3.0实例的单机/主备实例进行配置，建议按Redis 3.0规格基准带宽的80%进行配置。其他实例不配置。",
@@ -615,15 +534,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    129
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云Redis网络瞬时输出流量大于规格基准带宽的80%",
         "note": "仅Redis 3.0实例的单机/主备实例进行配置，建议按Redis 3.0规格基准带宽的80%进行配置。其他实例不配置。",
@@ -683,13 +593,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 2,
-                "op": "",
-                "values": null
-            }
-        ],
         "cluster": "",
         "name": "华为云RedisProxy节点活跃的客户端数量大于20000",
         "note": "单机和主备实例，最大连接数限制为10000，可以根据业务情况对阈值进行调整。",

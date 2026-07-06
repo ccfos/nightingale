@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Node CPU使用率超过90%",
@@ -92,7 +92,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Node内存使用率超过90%",
@@ -180,8 +180,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Node状态异常",
@@ -269,7 +268,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Node磁盘使用率超过90%",

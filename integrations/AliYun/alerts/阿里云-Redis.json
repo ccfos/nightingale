@@ -1,15 +1,6 @@
 [
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis CPU使用率告警",
     "note": "",
     "prod": "metric",
@@ -44,15 +35,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis QPS使用率告警",
     "note": "",
     "prod": "metric",
@@ -87,15 +69,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 内存使用率告警",
     "note": "",
     "prod": "metric",
@@ -130,15 +103,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 命中率告警",
     "note": "",
     "prod": "metric",
@@ -173,15 +137,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 失败次数告警",
     "note": "",
     "prod": "metric",
@@ -216,15 +171,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 平均响应时间告警",
     "note": "单位毫秒",
     "prod": "metric",
@@ -259,15 +205,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 数据同步延迟告警",
     "note": "单位毫秒",
     "prod": "metric",
@@ -302,15 +239,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 最大响应时间告警",
     "note": "单位毫秒",
     "prod": "metric",
@@ -345,15 +273,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 流入带宽使用率告警",
     "note": "",
     "prod": "metric",
@@ -388,15 +307,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 流出带宽使用率告警",
     "note": "",
     "prod": "metric",
@@ -431,15 +341,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 连接数使用率告警",
     "note": "",
     "prod": "metric",
@@ -474,15 +375,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 Redis 缓存内Key数量告警",
     "note": "",
     "prod": "metric",

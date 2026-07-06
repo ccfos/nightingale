@@ -223,7 +223,7 @@
                 },
                 "version": "3.4.0",
                 "datasourceCate": "prometheus",
-                "datasourceValue": 4,
+                "datasourceValue": "${datasource}",
                 "name": "Power Draw %",
                 "links": [],
                 "description": "The last measured power draw for the entire board, in watts. Only available if power management is supported. This reading is accurate to within +/- 5 watts / The software power limit in watts.",

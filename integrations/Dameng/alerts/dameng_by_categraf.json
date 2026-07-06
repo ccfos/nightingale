@@ -1,15 +1,6 @@
 [
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "Dameng 指标采集耗时过长",
       "note": "采集耗时过长反映数据库响应慢，可能导致监控数据延迟",
       "prod": "metric",
@@ -45,15 +36,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "Dameng 数据库down",
       "note": "",
       "prod": "metric",
@@ -89,15 +71,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "Dameng 缓存命中率过低",
       "note": "缓存命中率低于95%会导致大量磁盘IO，性能下降",
       "prod": "metric",
@@ -133,15 +106,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "Dameng 锁等待线程数异常",
       "note": "存在轻量级锁竞争，会导致SQL执行延迟",
       "prod": "metric",

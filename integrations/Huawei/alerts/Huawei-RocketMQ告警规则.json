@@ -4,16 +4,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      22
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          22
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "RocketMQ broker down",
@@ -101,16 +92,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      22
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          22
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "RocketMQ CPU核均负载大于1.5",
@@ -203,16 +185,7 @@
     "group_id": 0,
     "cate": "prometheus",
     "datasource_ids": [
-      22
-    ],
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          22
-        ]
-      }
+      0
     ],
     "cluster": "",
     "name": "RocketMQ 内存使用率大于85%",

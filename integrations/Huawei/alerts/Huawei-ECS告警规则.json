@@ -3,15 +3,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs cpu使用率大于80%",
         "note": "",
@@ -71,15 +62,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs inode已使用占比大于80%",
         "note": "",
@@ -139,15 +121,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs NTP偏移量大于1秒",
         "note": "",
@@ -207,15 +180,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs TME_WAIT状态的连接超过2万",
         "note": "",
@@ -275,15 +239,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 僵死进程数大于0",
         "note": "",
@@ -343,15 +298,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 内存使用率大于80%",
         "note": "",
@@ -411,15 +357,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 发送丢包率大于50%",
         "note": "",
@@ -479,15 +416,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 发送误包率大于50%",
         "note": "",
@@ -547,15 +475,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 块设备使用率大于80%",
         "note": "",
@@ -615,15 +534,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 接收丢包率大于50%",
         "note": "",
@@ -683,15 +593,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 接收误包率大于50%",
         "note": "",
@@ -751,15 +652,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 磁盘写IOPS过高",
         "note": "",
@@ -819,15 +711,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    131
-                ]
-            }
-        ],
         "cluster": "",
         "name": "华为云ecs 磁盘读IOPS过高",
         "note": "",

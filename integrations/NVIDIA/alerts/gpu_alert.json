@@ -1,15 +1,6 @@
 [
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "GPU XID 错误",
       "note": "xid错误码信息: https://docs.nvidia.com/deploy/xid-errors/analyzing-xid-catalog.html",
       "prod": "metric",
@@ -47,15 +38,6 @@
     },
     {
       "cate": "prometheus",
-      "datasource_queries": [
-        {
-          "match_type": 0,
-          "op": "in",
-          "values": [
-            11
-          ]
-        }
-      ],
       "name": "GPU 温度过高",
       "note": "",
       "prod": "metric",

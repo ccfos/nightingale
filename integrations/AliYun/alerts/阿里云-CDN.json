@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云CDN 边缘状态码5XX占比 超过1%",
@@ -92,7 +92,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云CDN 边缘状态码4XX占比 达到100%",

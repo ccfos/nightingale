@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "RabbitMQ连接数大于1000",
@@ -92,7 +92,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "RabbitMQ消费者数量为0",
@@ -180,7 +180,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "RabbitMQ消息堆积大于1000",

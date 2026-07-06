@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Mongo单节点实例-磁盘利用率大于80%",
@@ -91,7 +91,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Mongo单节点实例-内存利用率大于80%",
@@ -178,7 +178,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Mongo单节点实例-CPU利用率大于50%",
@@ -265,7 +265,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "Mongo单节点实列-QPS超过突增100% ",

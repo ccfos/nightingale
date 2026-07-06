@@ -19,7 +19,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "LLM 服务请求量",
                 "id": "e14a10fa-52bb-4268-ba90-8073b501ae4c",
                 "layout": {
@@ -96,7 +96,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "LLM服务请求平均耗时",
                 "id": "ba44e9f3-9d51-497c-811e-0513171046ab",
                 "layout": {
@@ -174,7 +174,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "每个请求的平均Token数",
                 "id": "5c4de509-4d89-496c-906f-05eddff43cd0",
                 "layout": {
@@ -246,7 +246,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "所选时间范围内输入Token使用量",
                 "id": "e1aa170d-9704-43c1-a1c8-789a9016c946",
                 "layout": {
@@ -315,7 +315,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "输入Token使用量趋势图",
                 "id": "bd59e494-77e4-40dd-a540-0830a0fdacc8",
                 "layout": {
@@ -385,7 +385,7 @@
                     "valueField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "所选时间范围内输出Token使用量",
                 "id": "b51f0fbf-36f6-4f67-800a-27e2a81a5f20",
                 "layout": {
@@ -454,7 +454,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "输出Token使用量趋势图",
                 "id": "db0143db-6c2f-4664-8dee-f3e86de398b0",
                 "layout": {
@@ -519,7 +519,7 @@
                     "yAxisField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "Token使用最多的模型",
                 "id": "3048e8b2-0907-4983-8636-7ea464fe2e2d",
                 "layout": {
@@ -551,7 +551,7 @@
                     "yAxisField": "Value"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 2,
+                "datasourceValue": "${datasource}",
                 "description": "Token使用最多的模型",
                 "id": "aaead75f-92d2-4f34-b58c-d8293a43840a",
                 "layout": {
@@ -578,7 +578,17 @@
                 "version": "3.4.0"
             }
         ],
-        "var": [],
+        "var": [
+            {
+                "defaultValue": "",
+                "definition": "prometheus",
+                "hide": false,
+                "label": "datasource",
+                "name": "datasource",
+                "regex": "",
+                "type": "datasource"
+            }
+        ],
         "version": "3.4.0"
     },
     "uuid": 1775666138972000,

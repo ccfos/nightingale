@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            3
+            0
         ],
         "cluster": "",
         "name": "Abnormal fan status",
@@ -94,7 +94,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            3
+            0
         ],
         "cluster": "",
         "name": "Abnormal power status",
@@ -184,7 +184,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            3
+            0
         ],
         "cluster": "",
         "name": "Abnormal temperature",
@@ -274,7 +274,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            3
+            0
         ],
         "cluster": "",
         "name": "CPU Usage Over 70%",
@@ -364,7 +364,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            3
+            0
         ],
         "cluster": "",
         "name": "Memory Usage Over 70%",

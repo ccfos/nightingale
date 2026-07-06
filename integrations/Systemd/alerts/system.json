@@ -3,15 +3,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    2
-                ]
-            }
-        ],
         "cluster": "",
         "name": "服务状态异常",
         "note": "",
@@ -71,15 +62,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    2
-                ]
-            }
-        ],
         "cluster": "",
         "name": "服务频繁重启",
         "note": "",
@@ -139,15 +121,6 @@
         "id": 0,
         "group_id": 0,
         "cate": "prometheus",
-        "datasource_queries": [
-            {
-                "match_type": 0,
-                "op": "in",
-                "values": [
-                    2
-                ]
-            }
-        ],
         "cluster": "",
         "name": "系统状态异常",
         "note": "",

@@ -4,7 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-7层协议实例Upstream 5xx(Count/Second) 大于10",
@@ -92,7 +92,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-7层协议实例状态码5xx(Count/Second)大于10",
@@ -180,7 +180,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-七层实例QPS使用率大于50%",
@@ -268,7 +268,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-丢弃连接数大于0",
@@ -356,7 +356,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-入方向丢弃流量大于0",
@@ -444,7 +444,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-出方向丢弃流量大于0",
@@ -532,7 +532,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-实例新建连接数使用率大于50%",
@@ -620,7 +620,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            1
+            0
         ],
         "cluster": "",
         "name": "阿里云-负载均衡-实例最大连接数使用率大于50%",

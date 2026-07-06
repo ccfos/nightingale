@@ -4,8 +4,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Deployment Pod 可用性不足70%（replica超过9个pod）",
@@ -93,8 +92,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Job执行失败",
@@ -182,8 +180,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Pod启动超时",
@@ -271,8 +268,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Pod状态异常",
@@ -360,8 +356,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "Pod频繁重启",
@@ -449,8 +444,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "容器CPU使用率超过80%",
@@ -538,8 +532,7 @@
         "group_id": 0,
         "cate": "prometheus",
         "datasource_ids": [
-            14,
-            5
+            0
         ],
         "cluster": "",
         "name": "容器内存超过80%",

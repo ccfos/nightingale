@@ -32,7 +32,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前Nice进程CPU使用率",
                         "id": "c4f558ca-3d91-4116-93c6-8c72217b9373",
                         "layout": {
@@ -108,7 +108,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前iowait状态占用CPU的比率",
                         "id": "62f5492f-3542-4dff-8bf7-03c48fcb57b9",
                         "layout": {
@@ -184,7 +184,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前CPU空闲时间占比",
                         "id": "fed12bf7-d35d-43c6-b5b2-ee03faf82918",
                         "layout": {
@@ -260,7 +260,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前用户空间占用CPU使用率",
                         "id": "5fb91ff9-0110-466d-a41a-404a9231e23e",
                         "layout": {
@@ -336,7 +336,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前内核空间占用CPU使用率",
                         "id": "7191532c-ca72-4638-8ac6-09051e180ac4",
                         "layout": {
@@ -412,7 +412,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象其他占用CPU使用率",
                         "id": "a00e22f7-7f0f-4fdf-9cfa-872438f688f2",
                         "layout": {
@@ -488,7 +488,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前CPU使用率",
                         "id": "6ac07243-1253-4a7b-bd57-19219b22467f",
                         "layout": {
@@ -564,7 +564,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前CPU处理软中断时间占用CPU的比率.",
                         "id": "84dd8d9b-81ed-4ef8-bb64-321fd40e1a7d",
                         "layout": {
@@ -640,7 +640,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象当前CPU处理中断用时占用CPU的比率\n",
                         "id": "4ca467a9-3efa-4236-a637-0c329c3ce348",
                         "layout": {
@@ -716,7 +716,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去1分钟的CPU单核的平均负载\n",
                         "id": "49d5d28b-aa28-4d60-8297-da889c1f7f13",
                         "layout": {
@@ -792,7 +792,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去5分钟的CPU单核的平均负载\n",
                         "id": "a79bbc4d-c00c-4c0b-9fc3-081de4db099a",
                         "layout": {
@@ -868,7 +868,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去15分钟的CPU单核的平均负载\n",
                         "id": "e8df3ef6-9232-4e38-b48f-6fe8419162ab",
                         "layout": {
@@ -944,7 +944,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去1分钟的CPU平均负载\n",
                         "id": "38eb7650-bb3c-4339-af68-5fe5cb487d40",
                         "layout": {
@@ -1020,7 +1020,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去5分钟的CPU平均负载\n",
                         "id": "ce8a58c9-8bc4-4eb7-bfd0-0304a7a269d4",
                         "layout": {
@@ -1096,7 +1096,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象过去15分钟的CPU平均负载\n",
                         "id": "6a70f22a-85ae-4e85-a18b-092f3528aa18",
                         "layout": {
@@ -1188,7 +1188,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象的内存使用率\n",
                         "id": "55e82383-dc37-4a93-90ad-a211cc8653eb",
                         "layout": {
@@ -1265,7 +1265,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象的Cache占用量",
                         "id": "6fffbdcc-ea3b-4dfe-8306-bca18947815c",
                         "layout": {
@@ -1342,7 +1342,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象的可用内存\n",
                         "id": "fc702940-bc77-4ee2-b388-4f3c4a3d28f6",
                         "layout": {
@@ -1419,7 +1419,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象的所有进程使用的句柄总和\n",
                         "id": "89119e15-f534-4904-81f1-385f3a1b3bef",
                         "layout": {
@@ -1496,7 +1496,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象的Buffer占用量\n",
                         "id": "e6c53400-29c5-4417-aa4a-131da6443113",
                         "layout": {
@@ -1585,7 +1585,7 @@
                             "valueField": "Value"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "0：可读写\n1：只读",
                         "id": "4f367c4d-dd11-4952-a89c-545909450958",
                         "layout": {
@@ -1654,7 +1654,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "3079bef9-eebb-4b96-9e24-c9f6f60fabe0",
                         "layout": {
@@ -1737,7 +1737,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "cdabd642-f373-4252-b4dc-7c4962e0f239",
                         "layout": {
@@ -1820,7 +1820,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "\n",
                         "id": "7d42044b-d9bb-4653-b3c7-0cd3f92d921d",
                         "layout": {
@@ -1897,7 +1897,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "该指标用于统计测量对象磁盘使用率\n",
                         "id": "6b987c12-d683-468d-8bc7-ec3776436616",
                         "layout": {
@@ -1974,7 +1974,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "812cd384-e658-4e67-92e3-4aea800fb149",
                         "layout": {
@@ -2051,7 +2051,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "a909fb7b-bb09-4fc1-83cd-0a547201f9c0",
                         "layout": {
@@ -2128,7 +2128,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "aa65645c-c172-4d9d-a1c5-f73b3d846dcb",
                         "layout": {
@@ -2221,7 +2221,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "d8818fdc-3060-482f-9485-3ecc702325aa",
                         "layout": {
@@ -2298,7 +2298,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "4d6ce6b4-e8c9-470a-9418-2c055fa95190",
                         "layout": {
@@ -2375,7 +2375,7 @@
                             "stack": "off"
                         },
                         "datasourceCate": "prometheus",
-                        "datasourceValue": 131,
+                        "datasourceValue": "${datasource}",
                         "description": "",
                         "id": "09158235-0b59-4b0e-8a49-703fc6b5a3f5",
                         "layout": {
@@ -2469,7 +2469,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "3f8699c3-6af2-44db-90e8-ff154e3ce08e",
                 "layout": {
@@ -2552,7 +2552,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "192905c1-51b5-42aa-8240-1e811bdd3623",
                 "layout": {
@@ -2635,7 +2635,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "5364ffd8-e29b-46af-9419-039c6f11d946",
                 "layout": {
@@ -2712,7 +2712,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "2ab01486-58e7-4853-adc3-1680075a0749",
                 "layout": {
@@ -2789,7 +2789,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "616615c5-4c26-44b1-ac28-d8025d6fab4c",
                 "layout": {
@@ -2866,7 +2866,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "d8723b02-2b30-44dd-9629-c26333628903",
                 "layout": {
@@ -2943,7 +2943,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "09dd3cbd-5382-4b3d-8880-ad1dffc8286d",
                 "layout": {
@@ -3020,7 +3020,7 @@
                     "stack": "off"
                 },
                 "datasourceCate": "prometheus",
-                "datasourceValue": 131,
+                "datasourceValue": "${datasource}",
                 "description": "",
                 "id": "f7f1422a-012b-4fb3-8405-3d2f166abd41",
                 "layout": {

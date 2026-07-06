@@ -14,7 +14,7 @@
                 "definition": "prometheus",
                 "hide": true,
                 "value": 19,
-                "defaultValue": 19
+                "defaultValue": ""
             },
             {
                 "type": "query",

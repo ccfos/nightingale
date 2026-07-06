@@ -12,7 +12,7 @@
         "type": "datasource",
         "hide": false,
         "definition": "prometheus",
-        "defaultValue": 22
+        "defaultValue": ""
       },
       {
         "name": "EPS",

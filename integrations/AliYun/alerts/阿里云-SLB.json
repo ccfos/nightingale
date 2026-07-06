@@ -1,15 +1,6 @@
 [
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 SLB 4XX 占比告警 超过10%",
     "note": "",
     "prod": "metric",
@@ -44,15 +35,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 SLB 5XX 占比告警 超过10%",
     "note": "",
     "prod": "metric",
@@ -87,15 +69,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 SLB 七层实例 QPS 使用率超过80%",
     "note": "",
     "prod": "metric",
@@ -130,15 +103,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 SLB 实例最大连接数使用率超过80%",
     "note": "",
     "prod": "metric",
@@ -173,15 +137,6 @@
   },
   {
     "cate": "prometheus",
-    "datasource_queries": [
-      {
-        "match_type": 0,
-        "op": "in",
-        "values": [
-          123
-        ]
-      }
-    ],
     "name": "阿里云 SLB 每秒Drop连接数超过10",
     "note": "",
     "prod": "metric",

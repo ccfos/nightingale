@@ -13,7 +13,7 @@
                 "type": "datasource",
                 "hide": false,
                 "definition": "prometheus",
-                "defaultValue": 3
+                "defaultValue": ""
             },
             {
                 "name": "clusterDesc",

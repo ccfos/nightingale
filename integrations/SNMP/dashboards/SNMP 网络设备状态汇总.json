@@ -32,7 +32,7 @@
             "valueField": "Value"
           },
           "datasourceCate": "prometheus",
-          "datasourceValue": 2,
+          "datasourceValue": "${datasource}",
           "id": "1b1775ee-142a-49c1-95e4-9f9ab9648bc0",
           "layout": {
             "h": 4,
@@ -114,7 +114,7 @@
             "tableLayout": "fixed"
           },
           "datasourceCate": "prometheus",
-          "datasourceValue": 2,
+          "datasourceValue": "${datasource}",
           "id": "702de8f4-2e1f-497e-ae71-ba89bff1181c",
           "layout": {
             "h": 8,
@@ -180,7 +180,7 @@
             "valueField": "Value"
           },
           "datasourceCate": "prometheus",
-          "datasourceValue": 2,
+          "datasourceValue": "${datasource}",
           "id": "7d333cff-4768-4360-8c4f-7d7efdb3da1a",
           "layout": {
             "h": 4,
@@ -274,7 +274,7 @@
             "tableLayout": "fixed"
           },
           "datasourceCate": "prometheus",
-          "datasourceValue": 2,
+          "datasourceValue": "${datasource}",
           "id": "e303b2a0-8234-4c86-ad77-35a5f51dc7d2",
           "layout": {
             "h": 6,
@@ -316,7 +316,17 @@
           "version": "3.0.0"
         }
       ],
-      "var": [],
+      "var": [
+        {
+          "defaultValue": "",
+          "definition": "prometheus",
+          "hide": false,
+          "label": "datasource",
+          "name": "datasource",
+          "regex": "",
+          "type": "datasource"
+        }
+      ],
       "version": "3.0.0"
     },
     "uuid": 1737358691627000

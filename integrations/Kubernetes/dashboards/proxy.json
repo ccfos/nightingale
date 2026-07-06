@@ -607,7 +607,7 @@
         ],
         "var": [
             {
-                "defaultValue": 40,
+                "defaultValue": "",
                 "definition": "prometheus",
                 "name": "datasource",
                 "type": "datasource"
