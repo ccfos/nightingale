@@ -81,12 +81,11 @@ OpenRSA = false
 # authorization server (MCPAuth) or external-IdP resource-server auth (RSAuth) is enabled.
 # Disable = false
 # DisableMCP = false
-# MCPToolsets: enabled toolset whitelist for the /mcp endpoint. Empty = default
-# set (all toolsets except metrics, whose tools go through the raw datasource
-# proxy and are not yet compatible). Valid names:
+# MCPToolsets: enabled toolset whitelist for the /mcp endpoint. Empty = all
+# default toolsets (metrics included). Valid names:
 #   alerts, targets, datasource, mutes, busi_groups, notify_rules,
 #   alert_subscribes, event_pipelines, users, metrics, logs, dashboards, roles
-# Use ["all"] to include metrics too, or list names explicitly (unknown names are ignored).
+# List names explicitly to restrict (unknown names are ignored, never widened).
 # MCPToolsets = ["alerts", "dashboards"]
 # MCPReadOnly: register only read-only MCP tools (no create/update/delete)
 # MCPReadOnly = false

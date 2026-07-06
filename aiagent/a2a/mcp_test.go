@@ -171,18 +171,17 @@ func TestBuildMCPServerToolsListing(t *testing.T) {
 func TestResolveToolsets(t *testing.T) {
 	all := len(mcptoolset.DefaultToolsets)
 
-	// Empty → center default: all but metrics (metrics tools go through the raw
-	// proxy and would return empty, so they must not be exposed silently).
-	if got := resolveToolsets(MCPConfig{}); len(got) != all-1 || contains(got, "metrics") {
-		t.Fatalf("empty whitelist should be all-except-metrics: %v", got)
+	// Empty → every default toolset, metrics included (its tools decode the
+	// native Prometheus envelope since n9e-mcp-server's doPromGet).
+	if got := resolveToolsets(MCPConfig{}); len(got) != all || !contains(got, "metrics") {
+		t.Fatalf("empty whitelist should be all default toolsets incl. metrics: %v", got)
 	}
-	// Explicit "all" opts back into metrics.
+	// "all" is kept as a config-back-compat synonym for the default.
 	if got := resolveToolsets(MCPConfig{Toolsets: []string{"all"}}); len(got) != all || !contains(got, "metrics") {
 		t.Fatalf("explicit all should include metrics: %v", got)
 	}
-	// Explicit opt-in to the excluded toolset is honored.
 	if got := resolveToolsets(MCPConfig{Toolsets: []string{"metrics"}}); len(got) != 1 || got[0] != "metrics" {
-		t.Fatalf("explicit metrics opt-in should be honored: %v", got)
+		t.Fatalf("metrics-only whitelist should be honored: %v", got)
 	}
 	if got := resolveToolsets(MCPConfig{Toolsets: []string{"mutes"}}); len(got) != 1 || got[0] != "mutes" {
 		t.Fatalf("valid whitelist should pass through: %v", got)

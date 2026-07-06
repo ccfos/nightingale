@@ -37,20 +37,16 @@ const (
 		"datasource management, business group management, and event pipeline/workflow management."
 )
 
-// mcpDefaultExcludedToolsets are kept out of the empty-whitelist default because
-// their tools don't yet work through the center's in-process transport. The
-// metrics tools call the raw /api/n9e/proxy reverse proxy, which returns
-// Prometheus JSON ({"status":"success","data":...}) rather than the {dat,err}
-// envelope n9e-mcp-server's client unwraps — so DoGet yields an empty result.
-// Operators who accept that (or have patched it) can still enable them
-// explicitly via MCPToolsets, or with the "all" keyword.
-var mcpDefaultExcludedToolsets = map[string]bool{"metrics": true}
+// All of n9e-mcp-server's toolsets work through the center's in-process
+// transport, including metrics: its tools decode the native Prometheus
+// envelope the /api/n9e/proxy route forwards (doPromGet in n9e-mcp-server),
+// so the empty-whitelist default is simply every default toolset.
 
 // MCPConfig selects which n9e-mcp-server toolsets /mcp exposes and how the
 // caller's credential is replayed onto the internal API hop.
 type MCPConfig struct {
 	// Toolsets is the enabled toolset whitelist; empty means the center default
-	// (every toolset except those in mcpDefaultExcludedToolsets). Unknown names
+	// (every default toolset, metrics included). Unknown names
 	// are dropped (see resolveToolsets), never widened to all.
 	Toolsets []string
 	// ReadOnly registers only read tools when true.
@@ -131,15 +127,14 @@ func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
 	})
 }
 
-// resolveToolsets returns the enabled-toolset list. An empty whitelist means the
-// center default (all toolsets except mcpDefaultExcludedToolsets); the explicit
-// "all" keyword opts into every toolset including the excluded ones. Otherwise
-// only the known names are kept: an unknown name is dropped with a warning — a
-// typo shrinks the exposed set, it never fails open by widening a restricted
-// whitelist to all toolsets.
+// resolveToolsets returns the enabled-toolset list. An empty whitelist (and
+// the explicit "all" keyword, kept for config back-compat) means every default
+// toolset. Otherwise only the known names are kept: an unknown name is dropped
+// with a warning — a typo shrinks the exposed set, it never fails open by
+// widening a restricted whitelist to all toolsets.
 func resolveToolsets(cfg MCPConfig) []string {
 	if len(cfg.Toolsets) == 0 {
-		return centerDefaultToolsets()
+		return mcptoolset.DefaultToolsets
 	}
 
 	valid := make(map[string]bool, len(mcptoolset.DefaultToolsets))
@@ -154,7 +149,6 @@ func resolveToolsets(cfg MCPConfig) []string {
 		case name == "":
 			continue
 		case name == "all":
-			// Explicit opt-in to everything, including by-default-excluded ones.
 			return mcptoolset.DefaultToolsets
 		case !valid[name]:
 			logx.Warningf(context.Background(), "[MCP] ignoring unknown toolset %q; valid names: %v", name, mcptoolset.DefaultToolsets)
@@ -163,20 +157,6 @@ func resolveToolsets(cfg MCPConfig) []string {
 		}
 	}
 	return enabled
-}
-
-// centerDefaultToolsets is the default set for the in-process /mcp endpoint:
-// n9e-mcp-server's defaults minus the toolsets not yet compatible with the
-// center transport (see mcpDefaultExcludedToolsets).
-func centerDefaultToolsets() []string {
-	out := make([]string, 0, len(mcptoolset.DefaultToolsets))
-	for _, name := range mcptoolset.DefaultToolsets {
-		if mcpDefaultExcludedToolsets[name] {
-			continue
-		}
-		out = append(out, name)
-	}
-	return out
 }
 
 // mcpCredential is the caller's replayable credential, carried from the /mcp
