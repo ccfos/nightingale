@@ -72,9 +72,21 @@ func TestDefaultHistogramStep(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := defaultHistogramStep(c.start, c.end); got != c.want {
+			if got := vlkit.DefaultHistogramStep(c.start, c.end); got != c.want {
 				t.Fatalf("unexpected step: got %q, want %q", got, c.want)
 			}
 		})
+	}
+}
+
+func TestVictoriaLogsFieldSuggestionTypes(t *testing.T) {
+	field := FieldName{Field: "status", Type: "string", Builtin: false}
+	if field.Field != "status" || field.Type != "string" || field.Builtin {
+		t.Fatalf("unexpected field name suggestion: %+v", field)
+	}
+
+	value := FieldValue{Value: "200", Count: 123}
+	if value.Value != "200" || value.Count != 123 {
+		t.Fatalf("unexpected field value suggestion: %+v", value)
 	}
 }

@@ -54,6 +54,17 @@ type HistogramValues struct {
 	Values [][]interface{}        `json:"values"`
 }
 
+type FieldName struct {
+	Field   string `json:"field"`
+	Type    string `json:"type"`
+	Builtin bool   `json:"builtin"`
+}
+
+type FieldValue struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
 // IsInstantQuery 判断是否为即时查询（告警场景）
 func (q *Query) IsInstantQuery() bool {
 	return q.Time > 0 || (q.Start >= 0 && q.Start == q.End)
@@ -143,11 +154,9 @@ func (vl *VictoriaLogs) QueryLog(ctx context.Context, queryParam interface{}) ([
 		result[i] = log
 	}
 
-	// 调用 HitsLogs 获取真实的 total
 	total, err := vl.HitsLogs(ctx, param.Query, param.Start, param.End)
 	if err != nil {
-		// 如果获取 total 失败，使用当前结果数量
-		total = int64(len(logs))
+		return nil, 0, fmt.Errorf("count matching logs failed: %w", err)
 	}
 
 	return result, total, nil
@@ -164,7 +173,7 @@ func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface
 		groupByFields = append(groupByFields, param.GroupBy)
 	}
 	if param.Step == "" {
-		param.Step = defaultHistogramStep(param.Start, param.End)
+		param.Step = victorialogs.DefaultHistogramStep(param.Start, param.End)
 	}
 
 	result, err := vl.QueryHitsWithFieldsLimit(ctx, param.Query, param.Start, param.End, param.Step, param.FieldsLimit, groupByFields...)
@@ -173,6 +182,39 @@ func (vl *VictoriaLogs) QueryHistogram(ctx context.Context, queryParam interface
 	}
 
 	return convertHitsToHistogramValues(result.Hits, param.GroupBy), nil
+}
+
+func (vl *VictoriaLogs) QueryFieldNames(ctx context.Context, query string, start, end int64, limit int, filter string) ([]FieldName, error) {
+	values, err := vl.FieldNames(ctx, query, start, end, limit, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]FieldName, 0, len(values))
+	for _, value := range values {
+		if value.Value == "" {
+			continue
+		}
+		ret = append(ret, FieldName{
+			Field:   value.Value,
+			Type:    "string",
+			Builtin: false,
+		})
+	}
+	return ret, nil
+}
+
+func (vl *VictoriaLogs) QueryFieldValues(ctx context.Context, query string, start, end int64, field string, limit int, filter string) ([]FieldValue, error) {
+	values, err := vl.FieldValues(ctx, query, start, end, field, limit, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]FieldValue, 0, len(values))
+	for _, value := range values {
+		ret = append(ret, FieldValue{Value: value.Value, Count: value.Hits})
+	}
+	return ret, nil
 }
 
 // QueryData 指标数据查询
@@ -365,55 +407,6 @@ func normalizeUnixTimestamp(value float64) int64 {
 		return int64(value / 1000)
 	}
 	return int64(value)
-}
-
-func defaultHistogramStep(start, end int64) string {
-	return histogramWidthToStep(defaultHistogramWidthBySeconds(start, end))
-}
-
-func defaultHistogramWidthBySeconds(start, end int64) int64 {
-	diff := end - start
-	switch {
-	case diff <= 60:
-		return 1
-	case diff <= 300:
-		return 5
-	case diff <= 900:
-		return 30
-	case diff <= 1800:
-		return 30
-	case diff <= 3600:
-		return 60
-	case diff <= 3600*6:
-		return 5 * 60
-	case diff <= 3600*12:
-		return 10 * 60
-	case diff <= 3600*24:
-		return 30 * 60
-	case diff <= 3600*24*2:
-		return 60 * 60
-	case diff <= 3600*24*7:
-		return 3 * 60 * 60
-	case diff <= 3600*24*30:
-		return 12 * 60 * 60
-	case diff <= 3600*24*90:
-		return 24 * 60 * 60
-	default:
-		return 2 * 24 * 60 * 60
-	}
-}
-
-func histogramWidthToStep(width int64) string {
-	switch {
-	case width%86400 == 0:
-		return fmt.Sprintf("%dd", width/86400)
-	case width%3600 == 0:
-		return fmt.Sprintf("%dh", width/3600)
-	case width%60 == 0:
-		return fmt.Sprintf("%dm", width/60)
-	default:
-		return fmt.Sprintf("%ds", width)
-	}
 }
 
 func parseHistogramValue(value interface{}) (float64, bool) {

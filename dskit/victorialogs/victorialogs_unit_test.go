@@ -58,6 +58,32 @@ func TestVictoriaLogs_QueryWithOffsetAddsOffset(t *testing.T) {
 	}
 }
 
+func TestVictoriaLogs_HitsLogsAddsStep(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/select/logsql/hits" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		got = r.Form
+		fmt.Fprintln(w, `{"hits":[{"total":12345,"fields":{},"timestamps":[],"values":[]}]}`)
+	}))
+	defer server.Close()
+
+	total, err := newTestVictoriaLogs(server.URL).HitsLogs(context.Background(), "*", 11, 22)
+	if err != nil {
+		t.Fatalf("HitsLogs error: %v", err)
+	}
+	if total != 12345 {
+		t.Fatalf("unexpected total: %d", total)
+	}
+	if got.Get("step") != "1s" {
+		t.Fatalf("unexpected step: got %q, want %q", got.Get("step"), "1s")
+	}
+}
+
 func TestVictoriaLogs_QueryHitsWithFieldsLimit(t *testing.T) {
 	var got url.Values
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +179,87 @@ func TestVictoriaLogs_StreamFieldValues(t *testing.T) {
 		"query":        "_time:5m",
 		"field":        "service",
 		"limit":        "10",
+		"ignore_pipes": "1",
+	}
+	for key, value := range want {
+		if got.Get(key) != value {
+			t.Fatalf("unexpected %s: got %q, want %q", key, got.Get(key), value)
+		}
+	}
+}
+
+func TestVictoriaLogs_FieldNames(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/select/logsql/field_names" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		got = r.Form
+		fmt.Fprintln(w, `{"values":[{"value":"status","hits":4},{"value":"domain","hits":2}]}`)
+	}))
+	defer server.Close()
+
+	fields, err := newTestVictoriaLogs(server.URL).FieldNames(context.Background(), "service:api", 11, 22, 50, "sta")
+	if err != nil {
+		t.Fatalf("FieldNames error: %v", err)
+	}
+	wantFields := []StreamFieldValue{
+		{Value: "status", Hits: 4},
+		{Value: "domain", Hits: 2},
+	}
+	if !reflect.DeepEqual(fields, wantFields) {
+		t.Fatalf("unexpected fields: %#v", fields)
+	}
+
+	want := map[string]string{
+		"query":        "service:api",
+		"start":        "11",
+		"end":          "22",
+		"limit":        "50",
+		"filter":       "sta",
+		"ignore_pipes": "1",
+	}
+	for key, value := range want {
+		if got.Get(key) != value {
+			t.Fatalf("unexpected %s: got %q, want %q", key, got.Get(key), value)
+		}
+	}
+}
+
+func TestVictoriaLogs_FieldValues(t *testing.T) {
+	var got url.Values
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/select/logsql/field_values" {
+			t.Fatalf("unexpected path: %s", r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatal(err)
+		}
+		got = r.Form
+		fmt.Fprintln(w, `{"values":[{"value":"200","hits":123},{"value":"404","hits":31}]}`)
+	}))
+	defer server.Close()
+
+	values, err := newTestVictoriaLogs(server.URL).FieldValues(context.Background(), "service:api", 11, 22, "status", 20, "20")
+	if err != nil {
+		t.Fatalf("FieldValues error: %v", err)
+	}
+	wantValues := []StreamFieldValue{
+		{Value: "200", Hits: 123},
+		{Value: "404", Hits: 31},
+	}
+	if !reflect.DeepEqual(values, wantValues) {
+		t.Fatalf("unexpected values: %#v", values)
+	}
+
+	want := map[string]string{
+		"query":        "service:api",
+		"field":        "status",
+		"limit":        "20",
+		"filter":       "20",
 		"ignore_pipes": "1",
 	}
 	for key, value := range want {
