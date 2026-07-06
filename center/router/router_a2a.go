@@ -172,12 +172,12 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	r.GET("/.well-known/agent.json", cardHandler)
 	// RFC 9728 Protected Resource Metadata — public, served only while RS auth
 	// is active (else 404). Lets OAuth-aware clients discover the trusted AS.
-	// The path-suffixed alias matches the well-known-URI-insertion form
-	// (`/.well-known/oauth-protected-resource/a2a`) that clients derive from the
-	// endpoint they connect to. There is deliberately no /mcp alias: /mcp is
-	// TokenAuth-only (see its mount below), so it must not advertise OAuth.
+	// The path-suffixed aliases match the well-known-URI-insertion form
+	// (`/.well-known/oauth-protected-resource/a2a`, `.../mcp`) that clients
+	// derive from the endpoint they connect to.
 	r.GET("/.well-known/oauth-protected-resource", rt.oauthProtectedResource)
 	r.GET("/.well-known/oauth-protected-resource/a2a", rt.oauthProtectedResource)
+	r.GET("/.well-known/oauth-protected-resource/mcp", rt.oauthProtectedResource)
 
 	// Built-in OAuth 2.1 Authorization Server endpoints (router_mcp_oauth.go).
 	// Public by design — the AS metadata, DCR, authorize and token endpoints are
@@ -187,7 +187,7 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 	// calls the protected decision API registered in router.go.
 	r.GET(mcpASMetaPath, rt.MCPOAuthServerMetadata)
 	r.GET(mcpASMetaPath+"/a2a", rt.MCPOAuthServerMetadata)
-	// No "/mcp" AS-metadata alias: /mcp is TokenAuth-only (see its mount).
+	r.GET(mcpASMetaPath+"/mcp", rt.MCPOAuthServerMetadata)
 	r.POST(mcpRegisterPath, rt.MCPOAuthRegister)
 	r.GET(mcpAuthorizePath, rt.MCPOAuthAuthorize)
 	r.POST(mcpTokenPath, rt.MCPOAuthToken)
@@ -243,15 +243,16 @@ func (rt *Router) configRegisterA2A(r *gin.Engine) {
 			TokenHeader: tokenHeader,
 		}))
 		mcpGroup := r.Group("/mcp")
-		// /mcp accepts TokenAuth (X-User-Token) ONLY. Unlike /a2a it omits the
-		// OAuth/RS-auth middlewares (rsAuthChallenge/agentOAuthScope): MCP tool
-		// calls replay the caller's X-User-Token onto the internal /api/n9e hop,
-		// and an OAuth/JWT-only caller has no such replayable token. Omitting them
-		// means tokenAuth accepts only a real X-User-Token, so a Bearer/OAuth
-		// caller is rejected at the edge instead of authenticating and then
-		// failing every tool call. The /mcp OAuth discovery aliases are dropped
-		// above for the same reason.
-		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
+		// /mcp accepts TokenAuth (X-User-Token) and OAuth access tokens, with the
+		// same middleware chain as /a2a: rsAuthChallenge attaches the RFC 9728
+		// WWW-Authenticate discovery pointer on 401s, agentOAuthScope marks the
+		// request as agent-plane so tokenAuth accepts OAuth tokens (builtin AS or
+		// external IdP). MCP tool calls replay the caller's raw credential onto
+		// the internal /api/n9e hop — TokenAuth tokens under the configured
+		// header, Bearer tokens under Authorization plus a2a's in-process
+		// dispatch marker that lets the internal tokenAuth treat that hop as
+		// agent-plane too (see a2a.IsMCPInProcDispatch).
+		mcpGroup.Use(rt.a2aRequestLog("MCP"), rt.rsAuthChallenge(), rt.agentOAuthScope(), rt.tokenAuth(), rt.user(), rt.injectA2AUser(), rt.streamingDeadline())
 		mcpGroup.Any("", gin.WrapH(mcpHandler))
 		mcpGroup.Any("/*proxyPath", gin.WrapH(mcpHandler))
 	}

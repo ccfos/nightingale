@@ -228,6 +228,71 @@ func TestMCPHandlerRejectsMissingToken(t *testing.T) {
 	}
 }
 
+// TestInProcRoundTripperBearerCredential covers the OAuth path: when the
+// request context carries a bearer credential, the transport must move the
+// token from the client's hardcoded X-User-Token stamp to Authorization:
+// Bearer (and not replay it under the configured TokenAuth header), so the
+// internal tokenAuth verifies it as an OAuth access token.
+func TestInProcRoundTripperBearerCredential(t *testing.T) {
+	var gotAuthz, gotUserToken, gotConfigured string
+	var gotMarker bool
+	dispatcher := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuthz = r.Header.Get("Authorization")
+		gotUserToken = r.Header.Get("X-User-Token")
+		gotConfigured = r.Header.Get("X-Auth-Token")
+		gotMarker = IsMCPInProcDispatch(r.Context())
+		_, _ = w.Write([]byte(`{"dat":"ok"}`))
+	})
+	rt := &inProcRoundTripper{dispatcher: dispatcher, tokenHeader: "X-Auth-Token"}
+
+	ctx := context.WithValue(context.Background(), mcpTokenCtxKey{}, mcpCredential{token: "acc-tok", bearer: true})
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1/api/n9e/x", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-User-Token", "acc-tok") // what n9e-mcp-server's client sets
+	if _, err := rt.RoundTrip(req); err != nil {
+		t.Fatal(err)
+	}
+	if gotAuthz != "Bearer acc-tok" {
+		t.Fatalf("Authorization = %q, want \"Bearer acc-tok\"", gotAuthz)
+	}
+	if gotUserToken != "" || gotConfigured != "" {
+		t.Fatalf("bearer credential must not ride token headers: X-User-Token=%q X-Auth-Token=%q", gotUserToken, gotConfigured)
+	}
+	if !gotMarker {
+		t.Fatal("internal hop lost the in-process dispatch marker")
+	}
+}
+
+// TestIsMCPInProcDispatch pins the marker contract tokenAuth relies on: true
+// exactly when the context went through NewMCPHandler's credential stash.
+func TestIsMCPInProcDispatch(t *testing.T) {
+	if IsMCPInProcDispatch(context.Background()) {
+		t.Fatal("bare context must not read as in-process dispatch")
+	}
+	ctx := context.WithValue(context.Background(), mcpTokenCtxKey{}, mcpCredential{token: "x"})
+	if !IsMCPInProcDispatch(ctx) {
+		t.Fatal("stashed credential must mark the context as in-process dispatch")
+	}
+}
+
+// TestMCPHandlerAcceptsBearerAtEntry ensures an Authorization-only caller gets
+// past the credential-presence backstop (the MCP protocol layer answers, not
+// the 401 gate).
+func TestMCPHandlerAcceptsBearerAtEntry(t *testing.T) {
+	h := NewMCPHandler(http.NotFoundHandler(), MCPConfig{})
+
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{}`))
+	req.Header.Set("Authorization", "Bearer acc-tok")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code == http.StatusUnauthorized {
+		t.Fatalf("bearer caller rejected at entry: %s", rec.Body.String())
+	}
+}
+
 // TestInProcRoundTripperReplaysConfiguredHeader covers a non-default TokenAuth
 // header: the client always sets X-User-Token, so the transport must also place
 // the token under the configured header for the internal tokenAuth to see it.

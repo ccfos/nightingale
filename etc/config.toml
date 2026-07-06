@@ -77,6 +77,8 @@ OpenRSA = false
 
 [HTTP.A2A]
 # The /a2a and /mcp endpoints are enabled by default and reuse HTTP.TokenAuth (X-User-Token).
+# Both also accept OAuth access tokens (Authorization: Bearer) when the built-in
+# authorization server (MCPAuth) or external-IdP resource-server auth (RSAuth) is enabled.
 # Disable = false
 # DisableMCP = false
 # MCPToolsets: enabled toolset whitelist for the /mcp endpoint. Empty = default

@@ -15,10 +15,16 @@ import (
 // only reaches the routes if the in-process hop replays this same token.
 const e2eToken = "tok-e2e"
 
+// e2eBearer is the OAuth access token the fake tokenAuth accepts — but, like
+// the real one, only on requests carrying the in-process dispatch marker.
+const e2eBearer = "oauth-acc-e2e"
+
 // e2eState records what the internal /api/n9e routes observed, so the test can
 // prove a tool call actually dispatched in-process with the caller's identity.
 type e2eState struct {
 	sawToken      string
+	sawAuthz      string
+	sawMarker     bool
 	lastListGroup string
 	createdNote   string
 }
@@ -33,12 +39,19 @@ func newMCPTestServer(t *testing.T, cfg MCPConfig) (*httptest.Server, *e2eState)
 	st := &e2eState{}
 	r := gin.New()
 
-	// Internal API: the in-process hop must present the caller's X-User-Token to
-	// be authorized — a foreign/absent token is rejected, exactly like RBAC.
+	// Internal API gate mirroring the real tokenAuth: a fixed X-User-Token is
+	// always accepted; an OAuth Bearer token is accepted ONLY on requests
+	// carrying the in-process dispatch marker (agent-plane replay) — a Bearer
+	// caller hitting the API directly from outside stays rejected.
 	api := r.Group("/api/n9e")
 	api.Use(func(c *gin.Context) {
 		st.sawToken = c.GetHeader("X-User-Token")
-		if st.sawToken != e2eToken {
+		st.sawAuthz = c.GetHeader("Authorization")
+		st.sawMarker = IsMCPInProcDispatch(c.Request.Context())
+		switch {
+		case st.sawToken == e2eToken:
+		case st.sawAuthz == "Bearer "+e2eBearer && st.sawMarker:
+		default:
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"err": "no permission"})
 			return
 		}
@@ -57,11 +70,12 @@ func newMCPTestServer(t *testing.T, cfg MCPConfig) (*httptest.Server, *e2eState)
 		c.JSON(http.StatusOK, gin.H{"dat": 1001, "err": ""})
 	})
 
-	// /mcp on the SAME engine r, gated by a token check like the real chain.
+	// /mcp on the SAME engine r, gated by a credential check like the real
+	// chain (which accepts TokenAuth and, via agentOAuthScope, OAuth Bearer).
 	mcpHandler := http.StripPrefix("/mcp", NewMCPHandler(r, cfg))
 	mcpGroup := r.Group("/mcp")
 	mcpGroup.Use(func(c *gin.Context) {
-		if c.GetHeader("X-User-Token") == "" {
+		if c.GetHeader("X-User-Token") == "" && c.GetHeader("Authorization") == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"err": "unauthorized"})
 			return
 		}
@@ -95,14 +109,38 @@ func connectMCP(t *testing.T, ctx context.Context, endpoint, token string) *mcp.
 }
 
 type headerRoundTripper struct {
-	base  http.RoundTripper
-	token string
+	base   http.RoundTripper
+	token  string
+	bearer bool // send as Authorization: Bearer instead of X-User-Token
 }
 
 func (t *headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req = req.Clone(req.Context())
-	req.Header.Set("X-User-Token", t.token)
+	if t.bearer {
+		req.Header.Set("Authorization", "Bearer "+t.token)
+	} else {
+		req.Header.Set("X-User-Token", t.token)
+	}
 	return t.base.RoundTrip(req)
+}
+
+// connectMCPBearer dials /mcp as an OAuth client: the only credential on the
+// wire is an Authorization: Bearer access token.
+func connectMCPBearer(t *testing.T, ctx context.Context, endpoint, accessToken string) *mcp.ClientSession {
+	t.Helper()
+	hc := &http.Client{Transport: &headerRoundTripper{base: http.DefaultTransport, token: accessToken, bearer: true}}
+	transport := &mcp.StreamableClientTransport{
+		Endpoint:             endpoint,
+		HTTPClient:           hc,
+		MaxRetries:           -1,
+		DisableStandaloneSSE: true,
+	}
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "e2e-oauth", Version: "0"}, nil).Connect(ctx, transport, nil)
+	if err != nil {
+		t.Fatalf("mcp connect (bearer): %v", err)
+	}
+	t.Cleanup(func() { cs.Close() })
+	return cs
 }
 
 // TestMCPEndToEndOverHTTP drives the full MCP protocol against a live /mcp: it
@@ -184,6 +222,63 @@ func TestMCPEndToEndRBACRejectsForeignToken(t *testing.T) {
 	}
 	if res == nil || !res.IsError {
 		t.Fatalf("expected a tool error for a foreign token, got %+v", res)
+	}
+}
+
+// TestMCPEndToEndOverHTTPWithBearer drives the full MCP protocol as an OAuth
+// caller: the only credential is an Authorization: Bearer access token. The
+// internal hop must present exactly that credential (no X-User-Token) plus the
+// in-process dispatch marker, and the tool call must succeed.
+func TestMCPEndToEndOverHTTPWithBearer(t *testing.T) {
+	ctx := context.Background()
+	srv, st := newMCPTestServer(t, MCPConfig{Toolsets: []string{"mutes"}})
+	cs := connectMCPBearer(t, ctx, srv.URL+"/mcp", e2eBearer)
+
+	res, err := cs.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "list_mutes",
+		Arguments: map[string]any{"group_id": 42},
+	})
+	if err != nil {
+		t.Fatalf("call list_mutes: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("list_mutes returned tool error: %s", toolText(res))
+	}
+	if st.lastListGroup != "42" {
+		t.Fatalf("internal route saw group %q, want 42", st.lastListGroup)
+	}
+	if st.sawAuthz != "Bearer "+e2eBearer {
+		t.Fatalf("internal route saw Authorization %q, want the caller's bearer token", st.sawAuthz)
+	}
+	if st.sawToken != "" {
+		t.Fatalf("bearer flow must not fabricate an X-User-Token, saw %q", st.sawToken)
+	}
+	if !st.sawMarker {
+		t.Fatal("internal route did not see the in-process dispatch marker")
+	}
+}
+
+// TestMCPEndToEndBearerRejectedOutsideDispatch proves the isolation the marker
+// buys: the same OAuth token that works through /mcp is rejected when thrown
+// directly at the internal API from outside (no in-process dispatch marker).
+func TestMCPEndToEndBearerRejectedOutsideDispatch(t *testing.T) {
+	srv, st := newMCPTestServer(t, MCPConfig{Toolsets: []string{"mutes"}})
+
+	req, err := http.NewRequest(http.MethodGet, srv.URL+"/api/n9e/busi-group/7/alert-mutes", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+e2eBearer)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("direct external bearer call: status = %d, want 403", resp.StatusCode)
+	}
+	if st.sawMarker {
+		t.Fatal("external request must not carry the in-process dispatch marker")
 	}
 }
 

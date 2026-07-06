@@ -72,13 +72,18 @@ type MCPConfig struct {
 // n9e-mcp-server. dispatcher is typed as http.Handler (not *gin.Engine) so this
 // package does not depend on center/router.
 //
-// Only TokenAuth (X-User-Token) callers are supported: their token is the only
-// credential that can be replayed onto the internal hop. The mount deliberately
-// omits the OAuth/RS-auth middlewares (and /mcp OAuth discovery aliases), so
-// Bearer/OAuth callers are rejected at the edge and never reach here. The
-// token-presence check below is a defence-in-depth backstop for any caller that
-// still authenticates without a replayable token (e.g. a session-JWT cookie):
-// it returns a clear 401 rather than a toolset whose every call fails.
+// Callers authenticate with either the TokenAuth header (X-User-Token) or an
+// OAuth access token (Authorization: Bearer — builtin AS or external IdP; the
+// same credentials the /mcp gin group's tokenAuth accepts at the edge). The
+// raw credential is replayed onto the internal hop as-is: TokenAuth tokens
+// under the configured header, Bearer tokens under Authorization. The internal
+// tokenAuth normally rejects OAuth tokens outside the agent plane; it makes an
+// exception for requests carrying the in-process dispatch marker
+// (IsMCPInProcDispatch), which only this package can attach. The
+// credential-presence check below is a defence-in-depth backstop for any
+// caller that still authenticates without a replayable header credential
+// (e.g. a session cookie): it returns a clear 401 rather than a toolset whose
+// every call fails.
 func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
 	tokenHeader := cfg.TokenHeader
 	if tokenHeader == "" {
@@ -101,20 +106,27 @@ func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
 	)
 
 	authErrBody, _ := json.Marshal(map[string]string{
-		"error": "nightingale MCP requires " + tokenHeader + " authentication; Bearer/JWT/OAuth callers are not supported yet",
+		"error": "nightingale MCP requires " + tokenHeader + " or OAuth Bearer (Authorization header) authentication",
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := strings.TrimSpace(r.Header.Get(tokenHeader))
-		if token == "" {
+		// TokenAuth header first (existing semantics), Bearer as the OAuth path.
+		cred := mcpCredential{token: strings.TrimSpace(r.Header.Get(tokenHeader))}
+		if cred.token == "" {
+			if raw := strings.TrimSpace(r.Header.Get("Authorization")); len(raw) > 7 && strings.EqualFold(raw[:7], "Bearer ") {
+				cred = mcpCredential{token: strings.TrimSpace(raw[7:]), bearer: true}
+			}
+		}
+		if cred.token == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write(authErrBody)
 			return
 		}
-		// Stash the caller token so the shared server's receiving middleware can
-		// build a token-scoped client for this request without any cache. The SDK
-		// threads req.Context() through to that middleware (via server.Connect).
-		r = r.WithContext(context.WithValue(r.Context(), mcpTokenCtxKey{}, token))
+		// Stash the caller credential so the shared server's receiving middleware
+		// can build a caller-scoped client for this request without any cache. The
+		// SDK threads req.Context() through to that middleware (via
+		// server.Connect) and onward into each tool's outbound API request.
+		r = r.WithContext(context.WithValue(r.Context(), mcpTokenCtxKey{}, cred))
 		streamable.ServeHTTP(w, r)
 	})
 }
@@ -167,10 +179,31 @@ func centerDefaultToolsets() []string {
 	return out
 }
 
-// mcpTokenCtxKey carries the caller's token from the /mcp HTTP entrypoint
-// (NewMCPHandler stashes it per request) to the shared server's receiving
-// middleware below.
+// mcpCredential is the caller's replayable credential, carried from the /mcp
+// HTTP entrypoint (NewMCPHandler stashes it per request) to the shared
+// server's receiving middleware and the in-process RoundTripper. bearer marks
+// a credential that arrived as "Authorization: Bearer" (OAuth access token or
+// JWT) and must be replayed under that header on the internal hop, rather
+// than as an X-User-Token.
+type mcpCredential struct {
+	token  string
+	bearer bool
+}
+
+// mcpTokenCtxKey is the context key under which the mcpCredential travels.
 type mcpTokenCtxKey struct{}
+
+// IsMCPInProcDispatch reports whether ctx belongs to the center's in-process
+// /mcp tool dispatch — i.e. the request entered through an authenticated /mcp
+// call and its credential is being replayed onto the internal /api/n9e hop.
+// The center's tokenAuth uses this as the agent-plane marker to accept OAuth
+// access tokens on that hop, which it otherwise only does under the /a2a and
+// /mcp gin groups. The key type is unexported, so nothing outside this
+// package can forge the marker onto an external request.
+func IsMCPInProcDispatch(ctx context.Context) bool {
+	_, ok := ctx.Value(mcpTokenCtxKey{}).(mcpCredential)
+	return ok
+}
 
 // buildMCPServer assembles the single shared mcp.Server. Tools speak to the
 // center via a token-scoped in-process client that the receiving middleware
@@ -190,10 +223,10 @@ func buildMCPServer(httpClient *http.Client, enabled []string, readOnly bool) *m
 	// request context through to this middleware.
 	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
-			token, _ := ctx.Value(mcpTokenCtxKey{}).(string)
+			cred, _ := ctx.Value(mcpTokenCtxKey{}).(mcpCredential)
 			// Inputs are fixed and valid (non-nil client, constant base URL), so
 			// this cannot error.
-			n9eClient, _ := mcpclient.NewClientWithHTTPClient(token, mcpInternalBaseURL, mcpUserAgent, httpClient)
+			n9eClient, _ := mcpclient.NewClientWithHTTPClient(cred.token, mcpInternalBaseURL, mcpUserAgent, httpClient)
 			return next(mcpclient.ContextWithClient(ctx, n9eClient), method, req)
 		}
 	})
@@ -224,10 +257,21 @@ func (t *inProcRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	if req.RemoteAddr == "" {
 		req.RemoteAddr = "127.0.0.1:0"
 	}
-	// n9e-mcp-server's client hardcodes the token under X-User-Token; if the
-	// center authenticates a different header, replay the token there too so the
-	// internal tokenAuth sees it. No-op when the headers match.
-	if t.tokenHeader != "" && t.tokenHeader != mcpUserTokenHeader {
+	// n9e-mcp-server's client hardcodes the credential under X-User-Token. A
+	// Bearer (OAuth) caller's credential must instead reach the internal
+	// tokenAuth as "Authorization: Bearer": move it there and drop the
+	// X-User-Token stamp. The internal tokenAuth accepts OAuth tokens on this
+	// hop because req.Context() carries the in-process dispatch marker (see
+	// IsMCPInProcDispatch) — the same context NewMCPHandler stashed the
+	// credential into, threaded here through the SDK and the client's
+	// NewRequestWithContext.
+	if cred, ok := req.Context().Value(mcpTokenCtxKey{}).(mcpCredential); ok && cred.bearer {
+		req.Header.Del(mcpUserTokenHeader)
+		req.Header.Set("Authorization", "Bearer "+cred.token)
+	} else if t.tokenHeader != "" && t.tokenHeader != mcpUserTokenHeader {
+		// TokenAuth caller with a non-default header configured: replay the
+		// token there too so the internal tokenAuth sees it. No-op when the
+		// headers match.
 		if tok := req.Header.Get(mcpUserTokenHeader); tok != "" {
 			req.Header.Set(t.tokenHeader, tok)
 		}
