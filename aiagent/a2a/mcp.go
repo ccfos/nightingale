@@ -1,173 +1,309 @@
 package a2a
 
 import (
+	"bytes"
 	"context"
-	"errors"
-	"fmt"
+	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 
-	a2asdk "github.com/a2aproject/a2a-go/v2/a2a"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	mcpapi "github.com/n9e/n9e-mcp-server/pkg/api"
+	mcpclient "github.com/n9e/n9e-mcp-server/pkg/client"
+	mcptoolset "github.com/n9e/n9e-mcp-server/pkg/toolset"
 )
 
-// NewMCPHandler builds an MCP Streamable HTTP handler that exposes a single
-// tool wrapping the n9e assistant pipeline. Mount it under a gin group that
-// applies the n9e tokenAuth middleware; the handler picks the user up from
-// request.Context (see WithUser).
+const (
+	// mcpUserTokenHeader is the header n9e-mcp-server's client hardcodes on its
+	// outbound API requests, and the default header the center authenticates
+	// with. When the center is configured with a different TokenAuth header
+	// (MCPConfig.TokenHeader), the in-process hop replays the token under that
+	// header too — see inProcRoundTripper.
+	mcpUserTokenHeader = "X-User-Token"
+
+	// mcpInternalBaseURL is a placeholder base for the in-process transport. The
+	// RoundTripper never dials, so only the request path/method/headers matter;
+	// the host is meaningless.
+	mcpInternalBaseURL = "http://127.0.0.1"
+
+	mcpUserAgent = "nightingale-center-mcp"
+
+	mcpInstructions = "Nightingale (n9e) monitoring MCP Server. Provides alert rule management, " +
+		"active/history alert querying, alert mute/silence management, notification rules, " +
+		"alert subscriptions, user/team management, monitored target management, " +
+		"datasource management, business group management, and event pipeline/workflow management."
+)
+
+// mcpDefaultExcludedToolsets are kept out of the empty-whitelist default because
+// their tools don't yet work through the center's in-process transport. The
+// metrics tools call the raw /api/n9e/proxy reverse proxy, which returns
+// Prometheus JSON ({"status":"success","data":...}) rather than the {dat,err}
+// envelope n9e-mcp-server's client unwraps — so DoGet yields an empty result.
+// Operators who accept that (or have patched it) can still enable them
+// explicitly via MCPToolsets, or with the "all" keyword.
+var mcpDefaultExcludedToolsets = map[string]bool{"metrics": true}
+
+// MCPConfig selects which n9e-mcp-server toolsets /mcp exposes and how the
+// caller's credential is replayed onto the internal API hop.
+type MCPConfig struct {
+	// Toolsets is the enabled toolset whitelist; empty means the center default
+	// (every toolset except those in mcpDefaultExcludedToolsets). Unknown names
+	// are dropped (see resolveToolsets), never widened to all.
+	Toolsets []string
+	// ReadOnly registers only read tools when true.
+	ReadOnly bool
+	// TokenHeader is the center's configured TokenAuth header name (defaults to
+	// X-User-Token). The caller's token is read from and replayed under it.
+	TokenHeader string
+}
+
+// NewMCPHandler builds an MCP Streamable HTTP handler that exposes the
+// n9e-mcp-server toolset (~60 fine-grained tools across 13 toolsets), running
+// entirely inside the center process. Mount it under a gin group that applies
+// the n9e tokenAuth middleware.
 //
-// The handler is intentionally minimal — natural-language in, plain-text out.
-// Per-tool decomposition (one MCP tool per builtin n9e tool) is a follow-up.
-func NewMCPHandler(backend AssistantBackend) http.Handler {
-	getServer := func(*http.Request) *mcp.Server {
-		s := mcp.NewServer(&mcp.Implementation{
-			Name:    "Nightingale MCP Server",
-			Version: "1.0.0",
-		}, nil)
-
-		mcp.AddTool(s, &mcp.Tool{
-			Name:        "n9e_assistant",
-			Description: "Operate the Nightingale platform via natural language. Returns the assistant's final response as text.",
-		}, func(ctx context.Context, _ *mcp.CallToolRequest, in mcpInput) (*mcp.CallToolResult, *mcpOutput, error) {
-			return mcpToolHandler(ctx, backend, in)
-		})
-
-		return s
+// Each tool call is dispatched back into dispatcher (the center gin engine) as
+// an in-process HTTP request against /api/n9e/..., carrying the caller's
+// TokenAuth token so RBAC and business-group permissions apply exactly as for a
+// real API call — the tool table and behaviour stay identical to the standalone
+// n9e-mcp-server. dispatcher is typed as http.Handler (not *gin.Engine) so this
+// package does not depend on center/router.
+//
+// Only TokenAuth (X-User-Token) callers are supported: their token is the only
+// credential that can be replayed onto the internal hop. The mount deliberately
+// omits the OAuth/RS-auth middlewares (and /mcp OAuth discovery aliases), so
+// Bearer/OAuth callers are rejected at the edge and never reach here. The
+// token-presence check below is a defence-in-depth backstop for any caller that
+// still authenticates without a replayable token (e.g. a session-JWT cookie):
+// it returns a clear 401 rather than a toolset whose every call fails.
+func NewMCPHandler(dispatcher http.Handler, cfg MCPConfig) http.Handler {
+	tokenHeader := cfg.TokenHeader
+	if tokenHeader == "" {
+		tokenHeader = mcpUserTokenHeader
 	}
 
-	return mcp.NewStreamableHTTPHandler(getServer, &mcp.StreamableHTTPOptions{
-		Stateless: true,
+	// One shared *http.Client whose transport dispatches in-process. The caller's
+	// token rides per-request in the header the client sets outbound, so a single
+	// transport is safe to reuse.
+	httpClient := &http.Client{Transport: &inProcRoundTripper{dispatcher: dispatcher, tokenHeader: tokenHeader}}
+
+	// A single shared server: the ~60 tools are registered once, and the
+	// per-caller n9e client is built on demand from the token in the request
+	// context (stashed below). There is deliberately no per-token server cache —
+	// such a cache never evicts and would grow unbounded as tokens rotate.
+	server := buildMCPServer(httpClient, resolveToolsets(cfg), cfg.ReadOnly)
+	streamable := mcp.NewStreamableHTTPHandler(
+		func(*http.Request) *mcp.Server { return server },
+		&mcp.StreamableHTTPOptions{Stateless: true},
+	)
+
+	authErrBody, _ := json.Marshal(map[string]string{
+		"error": "nightingale MCP requires " + tokenHeader + " authentication; Bearer/JWT/OAuth callers are not supported yet",
+	})
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := strings.TrimSpace(r.Header.Get(tokenHeader))
+		if token == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write(authErrBody)
+			return
+		}
+		// Stash the caller token so the shared server's receiving middleware can
+		// build a token-scoped client for this request without any cache. The SDK
+		// threads req.Context() through to that middleware (via server.Connect).
+		r = r.WithContext(context.WithValue(r.Context(), mcpTokenCtxKey{}, token))
+		streamable.ServeHTTP(w, r)
 	})
 }
 
-type mcpInput struct {
-	Message string `json:"message" jsonschema:"User request or question for the n9e assistant."`
-	ChatID  string `json:"chat_id,omitempty" jsonschema:"Optional existing chat ID; when omitted a new chat is created."`
-}
+// resolveToolsets returns the enabled-toolset list. An empty whitelist means the
+// center default (all toolsets except mcpDefaultExcludedToolsets); the explicit
+// "all" keyword opts into every toolset including the excluded ones. Otherwise
+// only the known names are kept: an unknown name is dropped with a warning — a
+// typo shrinks the exposed set, it never fails open by widening a restricted
+// whitelist to all toolsets.
+func resolveToolsets(cfg MCPConfig) []string {
+	if len(cfg.Toolsets) == 0 {
+		return centerDefaultToolsets()
+	}
 
-type mcpOutput struct {
-	Content string `json:"content" jsonschema:"Final assistant response text."`
-	ChatID  string `json:"chat_id" jsonschema:"Chat identifier; reuse it to continue the same conversation."`
-	SeqID   int64  `json:"seq_id" jsonschema:"Sequence number of this message inside the chat."`
-}
+	valid := make(map[string]bool, len(mcptoolset.DefaultToolsets))
+	for _, name := range mcptoolset.DefaultToolsets {
+		valid[name] = true
+	}
 
-// drainStream reads content deltas into sb until either the stream closes or
-// the caller ctx is cancelled. On caller-side cancellation it proxies the
-// intent into CancelAssistantMessage so the runner goroutine exits promptly
-// instead of running to its 15min budget while no one is listening.
-func drainStream(ctx context.Context, backend AssistantBackend, result *MessageStartResult, sb *strings.Builder) {
-	streamCh := backend.StreamBus().Read(ctx, result.ChatID, result.StreamID)
-	for {
-		select {
-		case msg, ok := <-streamCh:
-			if !ok {
-				return
-			}
-			if msg.P == "content" {
-				sb.WriteString(msg.V)
-			}
-		case <-ctx.Done():
-			// Use a background ctx for the cancel RPC: the caller ctx is
-			// already done, so threading it through would abort the cancel
-			// write itself before it reaches Redis.
-			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
-			if cerr := backend.CancelAssistantMessage(cleanupCtx, result.ChatID, result.SeqID); cerr != nil &&
-				!errors.Is(cerr, a2asdk.ErrTaskNotFound) {
-				// ErrTaskNotFound just means the runner already reached a
-				// terminal state on its own — race with natural finish, fine.
-				logx.Warningf(ctx, "[MCP] cancel on disconnect chat_id=%s seq_id=%d: %v",
-					result.ChatID, result.SeqID, cerr)
-			}
-			cleanupCancel()
-			return
+	enabled := make([]string, 0, len(cfg.Toolsets))
+	for _, raw := range cfg.Toolsets {
+		name := strings.TrimSpace(raw)
+		switch {
+		case name == "":
+			continue
+		case name == "all":
+			// Explicit opt-in to everything, including by-default-excluded ones.
+			return mcptoolset.DefaultToolsets
+		case !valid[name]:
+			logx.Warningf(context.Background(), "[MCP] ignoring unknown toolset %q; valid names: %v", name, mcptoolset.DefaultToolsets)
+		default:
+			enabled = append(enabled, name)
 		}
 	}
+	return enabled
 }
 
-func mcpToolHandler(ctx context.Context, backend AssistantBackend, in mcpInput) (*mcp.CallToolResult, *mcpOutput, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		logx.Warningf(ctx, "[MCP] tool reject: unauthenticated request")
-		return nil, nil, errors.New("a2a/mcp: unauthenticated request")
-	}
-	if strings.TrimSpace(in.Message) == "" {
-		logx.Warningf(ctx, "[MCP] tool reject user_id=%d: empty message", user.Id)
-		return nil, nil, errors.New("a2a/mcp: message is required")
-	}
-
-	logx.Infof(ctx, "[MCP] tool start user_id=%d username=%s chat_id=%s message_len=%d",
-		user.Id, user.Username, in.ChatID, len(in.Message))
-
-	// EnsureAssistantChat handles all chatID shapes (empty/unknown/owned/foreign),
-	// so the only error here is a DB failure. Don't echo client input back.
-	chat, err := backend.EnsureAssistantChat(user.Id, in.ChatID, models.AssistantPageInfo{})
-	if err != nil {
-		logx.Errorf(ctx, "[MCP] ensure chat failed user_id=%d in_chat_id=%s: %v", user.Id, in.ChatID, err)
-		return nil, nil, fmt.Errorf("ensure chat: %w", err)
-	}
-	logx.Infof(ctx, "[MCP] chat ensured user_id=%d chat_id=%s", user.Id, chat.ChatID)
-
-	result, _, err := backend.StartAssistantMessage(user.Id, chat,
-		models.AssistantMessageQuery{Content: in.Message}, "")
-	if err != nil {
-		logx.Errorf(ctx, "[MCP] start message failed user_id=%d chat_id=%s: %v", user.Id, chat.ChatID, err)
-		return nil, nil, fmt.Errorf("start message: %w", err)
-	}
-	logx.Infof(ctx, "[MCP] message started user_id=%d chat_id=%s seq_id=%d stream_id=%s",
-		user.Id, result.ChatID, result.SeqID, result.StreamID)
-
-	// Drain the stream — we only care about the final text. The agent may emit
-	// reasoning ("reason") deltas too; those are dropped here intentionally
-	// to match the natural-language-out contract.
-	//
-	// MCP itself does not expose a Cancel verb, so a caller disconnect would
-	// otherwise leave the runner goroutine churning until its 15min budget
-	// expires — burning LLM quota and holding the per-chat ChatLock so any
-	// follow-up message:send returns 409. Watch ctx.Done() and proxy the
-	// caller's intent into the existing CancelAssistantMessage path (pubsub
-	// + Redis cancel mark) so the runner exits within milliseconds.
-	var sb strings.Builder
-	drainStream(ctx, backend, result, &sb)
-
-	// Mirror executor.terminalState: a closed stream alone doesn't tell us
-	// whether the message succeeded, errored, or was cancelled — that lives
-	// in the MsgState snapshot (ErrCode/ErrMsg). Without this lookup the MCP
-	// caller would get a fake-success response (empty or partially-streamed
-	// content) for failed/cancelled turns.
-	//
-	// Use Background for the snapshot read: if the caller's ctx already
-	// cancelled mid-stream, propagating that cancel into MessageSnapshot
-	// would mask the real terminal state behind context.Canceled. A short
-	// background read keeps the error attribution honest.
-	snapCtx, snapCancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer snapCancel()
-	if snap, _ := backend.MessageSnapshot(snapCtx, result.ChatID, result.SeqID); snap != nil && snap.ErrCode != 0 {
-		errMsg := snap.ErrMsg
-		if errMsg == "" {
-			errMsg = "assistant message terminated with error"
+// centerDefaultToolsets is the default set for the in-process /mcp endpoint:
+// n9e-mcp-server's defaults minus the toolsets not yet compatible with the
+// center transport (see mcpDefaultExcludedToolsets).
+func centerDefaultToolsets() []string {
+	out := make([]string, 0, len(mcptoolset.DefaultToolsets))
+	for _, name := range mcptoolset.DefaultToolsets {
+		if mcpDefaultExcludedToolsets[name] {
+			continue
 		}
-		if snap.ErrCode == int(models.MessageStatusCancel) {
-			logx.Infof(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Canceled err=%q bytes=%d",
-				user.Id, result.ChatID, result.SeqID, errMsg, sb.Len())
-			return nil, nil, fmt.Errorf("a2a/mcp: cancelled: %s", errMsg)
+		out = append(out, name)
+	}
+	return out
+}
+
+// mcpTokenCtxKey carries the caller's token from the /mcp HTTP entrypoint
+// (NewMCPHandler stashes it per request) to the shared server's receiving
+// middleware below.
+type mcpTokenCtxKey struct{}
+
+// buildMCPServer assembles the single shared mcp.Server. Tools speak to the
+// center via a token-scoped in-process client that the receiving middleware
+// builds on demand from the token in the request context — no per-token
+// server or client cache to grow unbounded as tokens rotate.
+func buildMCPServer(httpClient *http.Client, enabled []string, readOnly bool) *mcp.Server {
+	server := mcp.NewServer(&mcp.Implementation{
+		Name:    "Nightingale MCP Server",
+		Version: "1.0.0",
+	}, &mcp.ServerOptions{
+		Instructions: mcpInstructions,
+	})
+
+	// Build the caller-scoped client per request and inject it so every tool
+	// handler resolves it from ctx, exactly as the standalone n9e-mcp-server
+	// does. The token was stashed by NewMCPHandler; the SDK threads the HTTP
+	// request context through to this middleware.
+	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+			token, _ := ctx.Value(mcpTokenCtxKey{}).(string)
+			// Inputs are fixed and valid (non-nil client, constant base URL), so
+			// this cannot error.
+			n9eClient, _ := mcpclient.NewClientWithHTTPClient(token, mcpInternalBaseURL, mcpUserAgent, httpClient)
+			return next(mcpclient.ContextWithClient(ctx, n9eClient), method, req)
 		}
-		logx.Errorf(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Failed err=%q bytes=%d",
-			user.Id, result.ChatID, result.SeqID, errMsg, sb.Len())
-		return nil, nil, fmt.Errorf("a2a/mcp: %s", errMsg)
+	})
+
+	group := mcpapi.DefaultToolsetGroup(mcpclient.ClientFromContext, readOnly)
+	// enabled holds only known names (resolveToolsets), so this cannot error.
+	_ = group.EnableToolsets(enabled)
+	group.RegisterAll(server)
+
+	return server
+}
+
+// inProcRoundTripper turns each outbound tool request into an in-process call on
+// the center gin engine, so n9e-mcp-server's tools reach /api/n9e/... without
+// opening a socket. The request carries the caller's token, so the internal
+// tokenAuth chain authenticates the same caller and RBAC applies unchanged.
+//
+// Re-entrancy is safe: /api/n9e/... and /mcp are distinct routes, so ServeHTTP
+// does not recurse, and gin pulls a fresh *gin.Context from its pool per call.
+type inProcRoundTripper struct {
+	dispatcher  http.Handler
+	tokenHeader string
+}
+
+func (t *inProcRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// The client builds a fresh *http.Request per call and never reuses it, so
+	// adjusting it here is safe.
+	if req.RemoteAddr == "" {
+		req.RemoteAddr = "127.0.0.1:0"
+	}
+	// n9e-mcp-server's client hardcodes the token under X-User-Token; if the
+	// center authenticates a different header, replay the token there too so the
+	// internal tokenAuth sees it. No-op when the headers match.
+	if t.tokenHeader != "" && t.tokenHeader != mcpUserTokenHeader {
+		if tok := req.Header.Get(mcpUserTokenHeader); tok != "" {
+			req.Header.Set(t.tokenHeader, tok)
+		}
 	}
 
-	answer := sb.String()
-	logx.Infof(ctx, "[MCP] tool terminal user_id=%d chat_id=%s seq_id=%d state=Completed bytes=%d",
-		user.Id, result.ChatID, result.SeqID, len(answer))
-	return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: answer}},
-		}, &mcpOutput{
-			Content: answer,
-			ChatID:  result.ChatID,
-			SeqID:   result.SeqID,
-		}, nil
+	rec := &responseCapture{header: make(http.Header)}
+	t.dispatcher.ServeHTTP(rec, req)
+
+	status, header, body := rec.status, rec.header, rec.body.Bytes()
+	if status == 0 {
+		status = http.StatusOK
+	}
+	if rec.overflow {
+		// The internal response blew past the cap. Fail closed with a
+		// non-retryable 4xx (a 5xx would make the client re-run the oversized
+		// query) and a tiny body, so nothing further is buffered and the tool
+		// gets a clear error instead of a truncated payload.
+		status = http.StatusRequestEntityTooLarge
+		header = http.Header{"Content-Type": {"application/json"}}
+		body = []byte(`{"err":"nightingale MCP: internal API response exceeded the 64MiB cap"}`)
+	}
+	return &http.Response{
+		Status:        http.StatusText(status),
+		StatusCode:    status,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Header:        header,
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+	}, nil
+}
+
+// mcpMaxInternalResponseBytes bounds how much of an internal /api/n9e response
+// the transport buffers in the center's heap. It matches n9e-mcp-server's own
+// largest response cap (its dashboardMaxResponseSize, 64 MiB); the client's
+// per-request LimitReader only runs after RoundTrip returns, so without this a
+// pathologically large query result would buffer unbounded here and could OOM
+// the whole center process.
+const mcpMaxInternalResponseBytes = 64 << 20 // 64 MiB
+
+// responseCapture is a minimal http.ResponseWriter that buffers the in-process
+// response so RoundTrip can hand it back as an *http.Response. It stops
+// buffering past mcpMaxInternalResponseBytes and flags overflow so RoundTrip can
+// fail the call rather than let the heap grow without bound.
+type responseCapture struct {
+	header   http.Header
+	body     bytes.Buffer
+	status   int
+	overflow bool
+}
+
+func (r *responseCapture) Header() http.Header { return r.header }
+
+func (r *responseCapture) WriteHeader(status int) {
+	if r.status == 0 {
+		r.status = status
+	}
+}
+
+func (r *responseCapture) Write(b []byte) (int, error) {
+	if r.status == 0 {
+		r.status = http.StatusOK
+	}
+	if r.overflow {
+		// Already capped: drop the excess but report success so the underlying
+		// handler runs to completion instead of erroring mid-write.
+		return len(b), nil
+	}
+	if room := mcpMaxInternalResponseBytes - r.body.Len(); len(b) > room {
+		if room > 0 {
+			r.body.Write(b[:room])
+		}
+		r.overflow = true
+		return len(b), nil
+	}
+	return r.body.Write(b)
 }
